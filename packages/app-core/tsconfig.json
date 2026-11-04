@@ -1,0 +1,4 @@
+{
+  "extends": "@tripflix/config/tsconfig/library.json",
+  "include": ["src"]
+}

@@ -1,0 +1,5 @@
+# Thay @gh-<tên> bằng GitHub username thật trước khi bật branch protection.
+* @gh-thanh
+/apps/mobile/ @gh-trang
+/RULES.md @gh-trang @gh-thanh
+/CLAUDE.md @gh-trang @gh-thanh

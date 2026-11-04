@@ -1,0 +1,13 @@
+{
+  "plugins": ["typescript", "react", "nextjs", "jsx-a11y"],
+  "rules": {
+    "typescript/no-explicit-any": "warn",
+    "no-console": "error",
+    "react/react-in-jsx-scope": "off"
+  },
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "ignorePatterns": [".next", "dist", ".expo", "packages/api-client/src/generated/**"]
+}

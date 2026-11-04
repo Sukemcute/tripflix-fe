@@ -1,0 +1,6 @@
+.next
+.expo
+dist
+node_modules
+pnpm-lock.yaml
+packages/api-client/src/generated

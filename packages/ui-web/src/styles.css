@@ -1,0 +1,14 @@
+/* CSS chung của web và admin. Mỗi app import file này một lần trong app/globals.css. */
+@import "tailwindcss";
+@import "@tripflix/tokens/tokens.css";
+
+/* Cho Tailwind quét class trong component của package này. */
+@source "./";
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    background: var(--color-background);
+  }
+}

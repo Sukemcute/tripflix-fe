@@ -1,0 +1,4 @@
+@import "@tripflix/ui-web/styles.css";
+
+/* Cho Tailwind quét class trong code của app. */
+@source "../";

@@ -1,0 +1,35 @@
+{
+  "name": "@tripflix/admin",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3200",
+    "build": "next build",
+    "start": "next start --port 3200",
+    "lint": "oxlint -c ../../.oxlintrc.json src",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "catalog:",
+    "@tripflix/api-client": "workspace:*",
+    "@tripflix/app-core": "workspace:*",
+    "@tripflix/i18n": "workspace:*",
+    "@tripflix/tokens": "workspace:*",
+    "@tripflix/ui-web": "workspace:*",
+    "@tripflix/utils": "workspace:*",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "catalog:",
+    "@tripflix/config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "oxlint": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
+  }
+}

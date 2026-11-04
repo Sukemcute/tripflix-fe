@@ -1,0 +1,9 @@
+{
+  "name": "@tripflix/config",
+  "version": "0.0.0",
+  "private": true,
+  "files": ["tsconfig"],
+  "exports": {
+    "./tsconfig/*": "./tsconfig/*"
+  }
+}

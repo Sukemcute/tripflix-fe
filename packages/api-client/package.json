@@ -1,0 +1,33 @@
+{
+  "name": "@tripflix/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./core-api/*": "./src/generated/core-api/*.ts",
+    "./ai-service/*": "./src/generated/ai-service/*.ts"
+  },
+  "scripts": {
+    "gen": "orval --config orval.config.ts && prettier --write src/generated",
+    "lint": "oxlint -c ../../.oxlintrc.json src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "catalog:"
+  },
+  "devDependencies": {
+    "@tripflix/config": "workspace:*",
+    "@types/react": "catalog:",
+    "orval": "catalog:",
+    "oxlint": "catalog:",
+    "prettier": "catalog:",
+    "react": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
