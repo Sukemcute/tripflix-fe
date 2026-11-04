@@ -4,11 +4,11 @@ AI agents: read this file and [RULES.md](RULES.md) before changing code.
 
 ## Canonical system architecture
 
-![Tripflix system architecture v4.4](docs/architecture/06-kien-truc-tong-quan.png)
+![Tripflix system architecture v4.5](docs/architecture/06-kien-truc-tong-quan.png)
 
-The diagram above is the canonical system view (v4.4, 2026-11-04). The presentation layer separates Front Office (`apps/mobile`, `apps/web`, for guests and members) from Back Office (`apps/admin`, for moderators and superadmins). These are distinct product surfaces that use the same Traefik gateway and `core-api`; admin permissions are enforced by backend role guards. Video uploads go directly to S3, then playback uses CloudFront. Do not send video through the API Gateway.
+The diagram above is the canonical system view (v4.5, 2026-11-04). The presentation layer separates Front Office (`apps/mobile`, `apps/web`) is the guest/member area for discovery, posting, and booking. Back Office (`apps/admin`) is the internal Admin Console for `moderator` and `superadmin` operations and moderation. Both surfaces use the same Traefik API Gateway and `core-api`; admin permissions are enforced by backend role guards. Video uploads go directly to S3, then playback uses CloudFront. Do not send video through the API Gateway.
 
-The [editable diagram](docs/architecture/06-kien-truc-tong-quan.drawio) is the source for the preview. Supporting decisions and repo structure are in [architecture doc 10](docs/architecture/10-de-xuat-kien-truc-va-repo.md) and [architecture doc 11](docs/architecture/11-de-xuat-cau-truc-repo.md). If a supporting document conflicts with the v4.4 diagram, flag the conflict and follow the diagram until the architecture is reconciled.
+The [editable diagram](docs/architecture/06-kien-truc-tong-quan.drawio) is the source for the preview. Supporting decisions and repo structure are in [architecture doc 10](docs/architecture/10-de-xuat-kien-truc-va-repo.md) and [architecture doc 11](docs/architecture/11-de-xuat-cau-truc-repo.md). If a supporting document conflicts with the v4.5 diagram, flag the conflict and follow the diagram until the architecture is reconciled.
 
 ## Frontend boundaries
 
