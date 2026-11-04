@@ -2,7 +2,7 @@ name: publish
 
 on:
   push:
-    branches: [dev, main]
+    branches: [develop, main]
     tags: ["v*", "web-v*", "admin-v*"]
 
 permissions:
