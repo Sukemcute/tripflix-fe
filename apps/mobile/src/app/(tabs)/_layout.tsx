@@ -31,7 +31,13 @@ export default function TabsLayout() {
           name={tab.name}
           options={{
             title: t(tab.label),
-            tabBarIcon: ({ color, size }) => <Ionicons name={tab.icon} color={color} size={size} />,
+            tabBarIcon: ({ focused, size }) => (
+              <Ionicons
+                name={tab.icon}
+                color={focused ? colors.coral : colors.textSubtle}
+                size={size}
+              />
+            ),
           }}
         />
       ))}
