@@ -3,6 +3,7 @@ import { useStaySearch, type StayFilters } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { formatPrice } from './trip-card';
+import { StayThumbnail } from './stay-thumbnail';
 
 export function LiveSearchScreen({
   initialQuery = '',
@@ -158,6 +159,7 @@ export function LiveSearchScreen({
         {search.stays.data?.items.map((stay) => (
           <article className="trip-card" key={stay.hotelId}>
             <div className="trip-card-body">
+              <StayThumbnail url={stay.thumbnail} name={stay.name} />
               <p className="eyebrow">
                 {stay.province.name}
                 {stay.stars ? ` · ${stay.stars} ★` : ''}
