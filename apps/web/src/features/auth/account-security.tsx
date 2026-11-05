@@ -7,13 +7,20 @@ import { useEffect, useRef, useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AuthErrorNotice, AuthField, PasswordField } from './auth-fields';
 
-/** Tab "Tài khoản": hồ sơ, đổi mật khẩu và các thiết bị đang đăng nhập, mỗi phần một thẻ riêng. */
+/**
+ * Tab "Tài khoản": hồ sơ, đổi mật khẩu và các thiết bị đang đăng nhập, mỗi phần một thẻ riêng.
+ * Màn rộng: cột trái hồ sơ + thiết bị, cột phải đổi mật khẩu. Màn hẹp: một cột theo thứ tự hồ sơ, mật khẩu, thiết bị.
+ */
 export function AccountSecurity({ displayName, userId }: { displayName: string; userId: string }) {
   return (
     <div className="account-grid">
-      <ProfilePanel displayName={displayName} />
-      <PasswordPanel />
-      <DevicesPanel userId={userId} />
+      <div className="account-column">
+        <ProfilePanel displayName={displayName} />
+        <DevicesPanel userId={userId} />
+      </div>
+      <div className="account-column">
+        <PasswordPanel />
+      </div>
     </div>
   );
 }
@@ -28,7 +35,7 @@ function ProfilePanel({ displayName }: { displayName: string }) {
     },
   });
   return (
-    <section className="account-panel">
+    <section className="account-panel account-profile">
       <h2>{vi.api.profileSection}</h2>
       <p className="auth-hint">{vi.api.profileHint}</p>
       <form
@@ -74,7 +81,7 @@ function PasswordPanel() {
     },
   });
   return (
-    <section className="account-panel">
+    <section className="account-panel account-password">
       <h2>{vi.api.changePassword}</h2>
       <p className="auth-hint">{vi.api.changePasswordHint}</p>
       <form
@@ -169,6 +176,7 @@ function DevicesPanel({ userId }: { userId: string }) {
       />
       <ApiErrorNotice error={action.error} />
       {devices.isPending && <p className="auth-hint">{vi.api.loading}</p>}
+      {devices.data?.length === 0 && <p className="auth-hint">{vi.api.noDevices}</p>}
       <ul className="device-list">
         {devices.data?.map((device) => (
           <li key={device.id} className="device-item">

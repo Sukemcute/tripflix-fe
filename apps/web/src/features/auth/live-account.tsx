@@ -2,6 +2,7 @@
 import { useApiSession, socialApi } from '@tripflix/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
@@ -35,17 +36,23 @@ export function LiveAccount() {
       </main>
     );
   return (
-    <main id="content" className="ota-container results-page">
-      <h1>{user.displayName}</h1>
-      <p>{user.email}</p>
-      <nav className="filter-bar">
+    <main id="content" className="ota-container results-page account-page">
+      <header className="account-hero">
+        <span className="account-avatar" aria-hidden="true">
+          {getInitial(user.displayName)}
+        </span>
+        <div className="account-identity">
+          <h1>{user.displayName}</h1>
+          <p>
+            {user.email}
+            <span className="account-role">{describeRole(user.role)}</span>
+          </p>
+        </div>
+        <Image className="account-mascot" src="/brand/tripi-welcome.png" alt="" width={120} height={120} />
+      </header>
+      <nav className="account-tabs" aria-label={vi.api.accountSections}>
         {(['profile', 'mine', 'bookmarks', 'create'] as const).map((kind) => (
-          <button
-            key={kind}
-            className="secondary-button"
-            aria-pressed={tab === kind}
-            onClick={() => setTab(kind)}
-          >
+          <button key={kind} type="button" aria-pressed={tab === kind} onClick={() => setTab(kind)}>
             {kind === 'profile'
               ? vi.api.account
               : kind === 'mine'
@@ -66,6 +73,17 @@ export function LiveAccount() {
     </main>
   );
 }
+/** Chữ cái đầu của tên để làm avatar; tên trống thì dùng dấu chấm. */
+function getInitial(displayName: string): string {
+  return Array.from(displayName.trim())[0]?.toUpperCase() ?? '·';
+}
+
+function describeRole(role: string): string {
+  if (role === 'superadmin') return vi.api.superadmin;
+  if (role === 'moderator') return vi.api.moderator;
+  return vi.api.user;
+}
+
 function CreateDraft() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');

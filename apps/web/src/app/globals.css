@@ -1203,11 +1203,117 @@ h3 {
   justify-content: center;
   min-height: 44px;
 }
+/* Trang tài khoản (TF06D): thẻ đầu trang, hàng tab gạch chân, hai cột thẻ */
+.account-page {
+  padding-top: 32px;
+}
+.account-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 32px;
+  border-radius: 24px;
+  background: var(--color-warm-mist);
+  overflow: hidden;
+}
+.account-hero::after {
+  content: '';
+  position: absolute;
+  right: -60px;
+  bottom: -90px;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: var(--color-sun-soft);
+}
+.account-avatar {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  background: var(--color-coral-ink);
+  color: var(--color-background);
+  font-size: 30px;
+  font-weight: 700;
+  box-shadow: 0 0 0 4px var(--color-background);
+}
+.account-avatar,
+.account-identity {
+  position: relative;
+  z-index: 1;
+}
+.account-identity {
+  min-width: 0;
+}
+.account-page .account-identity h1 {
+  margin: 0;
+  font-size: 30px;
+  overflow-wrap: anywhere;
+}
+.account-identity p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 6px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.account-role {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+.account-mascot {
+  position: relative;
+  z-index: 1;
+  width: 96px;
+  height: auto;
+  margin-block: -12px;
+}
+.account-tabs {
+  display: flex;
+  gap: 28px;
+  margin: 24px 0 28px;
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.account-tabs button {
+  flex: none;
+  margin-bottom: -1px;
+  padding: 14px 2px;
+  border-bottom: 2px solid var(--color-transparent);
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+.account-tabs button:hover {
+  color: var(--color-ink);
+}
+.account-tabs button[aria-pressed='true'] {
+  border-bottom-color: var(--color-coral-ink);
+  color: var(--color-ink);
+  font-weight: 700;
+}
 .account-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   align-items: start;
+}
+.account-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
 }
 .account-panel {
   display: flex;
@@ -1217,12 +1323,16 @@ h3 {
   border: 1px solid var(--color-border);
   border-radius: 20px;
   background: var(--color-background);
+  box-shadow: 0 16px 32px -28px var(--color-overlay);
+}
+.account-panel h2 {
+  font-size: 20px;
+}
+.account-panel > .auth-hint {
+  margin-top: -6px;
 }
 .account-panel .primary-button {
   align-self: flex-start;
-}
-.account-devices {
-  grid-column: 1 / -1;
 }
 .device-list {
   display: grid;
@@ -1287,6 +1397,19 @@ h3 {
   .account-grid {
     grid-template-columns: 1fr;
   }
+  /* Một cột: bỏ khung cột để sắp lại thứ tự hồ sơ → mật khẩu → thiết bị. */
+  .account-column {
+    display: contents;
+  }
+  .account-profile {
+    order: 1;
+  }
+  .account-password {
+    order: 2;
+  }
+  .account-devices {
+    order: 3;
+  }
 }
 @media (max-width: 640px) {
   .auth-card,
@@ -1296,5 +1419,33 @@ h3 {
   .device-item {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .account-page {
+    padding-top: 20px;
+  }
+  .account-hero {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+  .account-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+  .account-page .account-identity h1 {
+    font-size: 24px;
+  }
+  .account-hero::after {
+    right: -70px;
+    bottom: -100px;
+    width: 160px;
+    height: 160px;
+  }
+  .account-mascot {
+    display: none;
+  }
+  .account-tabs {
+    gap: 20px;
   }
 }
