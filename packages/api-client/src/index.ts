@@ -7,6 +7,15 @@ export { SessionClient, type SessionOptions, type TokenStorage } from './session
 export { getApiErrorKind, getAuthErrorKind, readEntity, readPage, type AuthAction } from './response';
 export { socialApi } from './social';
 export { useSocialPosts } from './queries';
+export {
+  usePostSummary,
+  useSummaryExperience,
+  useSummaryEvidence,
+  getPostSummary,
+  type PostSummary,
+  type SummaryPoint,
+  type SummaryFilter,
+} from './post-summary';
 export { feedApi, useReelsFeed } from './feed';
 export { updateReelSocialCache } from './reel-social-cache';
 export { useStaySearch, getFutureDate, type StayFilters } from './stay-search';

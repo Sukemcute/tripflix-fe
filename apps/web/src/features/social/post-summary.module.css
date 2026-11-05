@@ -1,0 +1,144 @@
+.root {
+  max-width: 760px;
+  background: var(--color-warm-mist);
+  border-radius: 20px;
+  padding: 16px;
+  margin-block: 16px 24px;
+  color: var(--color-ink);
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header img {
+  flex-shrink: 0;
+  object-fit: contain;
+}
+.heading {
+  flex: 1;
+  min-width: 0;
+}
+.root .heading h2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: -0.2px;
+  margin: 0;
+}
+.root .heading p {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 4px 0 0;
+}
+.ai {
+  color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+  font-size: 10px;
+  line-height: 18px;
+  border-radius: 6px;
+  padding-inline: 6px;
+  letter-spacing: 0;
+}
+.primary {
+  display: block;
+  width: 100%;
+  min-height: 50px;
+  background: var(--color-coral-ink);
+  color: var(--color-background);
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 20px;
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 160ms ease;
+}
+.primary:hover {
+  opacity: 0.9;
+}
+.primary:disabled {
+  opacity: 0.5;
+}
+.iconButton {
+  flex-shrink: 0;
+  background: transparent;
+  border: 0;
+  min-height: 44px;
+  min-width: 44px;
+  color: var(--color-text-muted);
+  font-size: 24px;
+}
+.body {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.body h3,
+.body p {
+  margin: 0;
+}
+.root .body p {
+  font-size: 14px;
+  color: var(--color-ink);
+  line-height: 1.75;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.body h3 {
+  font-size: 13px;
+  font-weight: 600;
+}
+.textAction {
+  min-height: 44px;
+  background: transparent;
+  border: 0;
+  color: var(--color-teal-ink);
+  padding: 8px 0;
+  font-weight: 600;
+  font-size: 12px;
+  text-align: left;
+  justify-self: start;
+}
+.textAction:hover {
+  text-decoration: underline;
+}
+.root .body .error {
+  color: var(--color-coral-ink);
+  font-size: 13px;
+}
+.footer {
+  border-top: 1px solid var(--color-border);
+  padding-top: 8px;
+}
+.loading {
+  display: grid;
+  gap: 12px;
+}
+.loading > span {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.skeleton {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--color-border);
+}
+.skeleton:last-child {
+  width: 65%;
+}
+.empty {
+  display: grid;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .root {
+    padding: 12px;
+  }
+}

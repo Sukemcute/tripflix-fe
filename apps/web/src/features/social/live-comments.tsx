@@ -5,6 +5,7 @@ import { vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import Link from 'next/link';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { CommunitySummary } from './post-summary';
 import { getInitial } from '@/features/auth/account-helpers';
 
 /**
@@ -45,6 +46,7 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
 
   return (
     <div className={parentCommentId ? 'comment-thread is-reply' : 'comment-thread'}>
+      {!parentCommentId && <CommunitySummary key={postId} postId={postId} />}
       {/* Đang sửa một bình luận thì ẩn ô viết mới, để trên trang chỉ có một nút "Gửi". */}
       {user && editing ? null : user ? (
         <form
