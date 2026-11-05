@@ -56,6 +56,7 @@ pnpm --filter @tripflix/mobile exec expo start --web
 - Kiểm tra lại trước PR ngày 2026-11-05: `pnpm check` qua (lint, typecheck, **37/37 test**); build Web/Admin qua; `tools/verify-mentor-demo.cjs` qua **7/7 nhóm**, **10 ảnh**, không có browser runtime error. Dùng Chromium có sẵn ngoài repo; ảnh và `verification.json` nằm trong thư mục `pre-pr/` dưới đường dẫn evidence bên dưới.
 - CI lần đầu phát hiện `next build` và `next typegen` chạy song song, gây TS6053 vì file `.next/types` bị thay thế khi TypeScript đang đọc. Thêm `apps/web/turbo.json` và `apps/admin/turbo.json` để build phụ thuộc typecheck; kiểm tra đồ thị task xác nhận thứ tự này, không sửa workflow chung hay bỏ qua kiểm tra.
 - Sau sửa thứ tự task: `pnpm turbo run lint typecheck test build --affected --force` qua **19/19 tác vụ**, không dùng cache.
+- `node tools/verify-reel-comments.cjs`: **3/3 nhóm** qua, **3 ảnh**, không có browser runtime error; kiểm tra thích/trả lời/gửi bình luận, bản nháp riêng từng bài, bố cục 320/390/430px, chiều cao thu hẹp và đóng bằng Escape. Evidence tại `reel-comments-pre-pr/` dưới đường dẫn bên dưới; bàn phím và cử chỉ native cần review trên thiết bị.
 - `pnpm check`: lint, typecheck và **37/37 unit test** trong 8 file; gồm 5 test mới cho parser/filter/sort, feed ordering, detail lookup và chống redirect ra URL ngoài khi đăng nhập.
 - `node tools/verify-mentor-demo.cjs`: **7 nhóm kiểm tra**, **10 ảnh**, 9 tổ hợp route/viewport Web, 3 viewport Admin và 2 viewport chi tiết Mobile; không có browser runtime error.
 - `node tools/verify-mobile-review.cjs`: **10 nhóm kiểm tra cũ**, **42 lượt route/viewport** (320/390/430), **22 ảnh**, không tràn ngang document và không có browser runtime error. Gồm luồng đặt chuyến, giữ ngữ cảnh đăng nhập, snapshot đơn, media picker và phục hồi checkout.
@@ -73,6 +74,18 @@ pnpm --filter @tripflix/mobile exec expo start --web
 - Playwright chạy từ runtime có sẵn ngoài repo; không thêm dependency.
 
 ## Ranh giới tích hợp và ảnh hưởng
+
+## Cập nhật UI bình luận Reels — 2026-11-05
+
+- Thay nội dung một bình luận trong sheet dùng chung bằng `features/feed/reel-comments.tsx`; không đổi component Sheet của các màn khác.
+- Sheet từ dưới lên, cao khoảng 81% viewport (tối đa 720px), giữ lộ phần Reel phía sau; danh sách cuộn riêng và composer ghim ở đáy, có xử lý safe area/keyboard bằng React Native.
+- Có tab Nổi bật/Mới nhất, avatar chữ, tên/thời gian, thích, mở/ẩn trả lời, nhãn tác giả đúng Reel, phản ứng nhanh, trả lời đúng người và gửi bình luận mẫu.
+- Bình luận, lượt thích, bản nháp và số đếm giữ riêng theo Reel trong phiên component; tải lại app sẽ reset. Không gửi nội dung lên backend. Không cho thao tác vuốt feed đổi Reel trong lúc sheet mở.
+- `node tools/verify-reel-comments.cjs`: 3 nhóm kiểm tra qua, 3 ảnh; kiểm tra 320/390/430px và viewport thấp 480px, gửi nội dung trống bị chặn, giữ draft, reply đúng người, không lẫn dữ liệu giữa các Reel, Escape và đóng bằng nút. Không có browser runtime error.
+- `pnpm check`: lint/typecheck qua, 37/37 unit test. Android export qua, 41 assets; chưa kiểm tra keyboard/gesture trên Android hoặc iOS thật.
+- Ảnh và `verification.json` lưu ngoài repo ở `C:/Users/ADMIN/.codex/visualizations/2026/11/04/01a1a6b2-bc84-7e00-b05d-e282325e65d6/reel-comments/`.
+
+## Ranh giới tích hợp và ảnh hưởng (tiếp)
 
 - `apps/web`, `apps/admin` thuộc Thành; `apps/mobile` thuộc Trang. Người dùng đã yêu cầu hoàn thiện cả ba phần cho demo; giữ các route, tab và chữ ký component cũ.
 - UI được chia trong `features/discovery`, `features/auth`, `features/shell`; route chỉ lắp ghép. Token dùng hệ thống hiện có, copy mới trong `packages/i18n/src/demo.ts`.
