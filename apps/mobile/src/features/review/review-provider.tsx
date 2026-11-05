@@ -1,4 +1,4 @@
-import { calculateTripQuote, shiftTripDate, type TripSelection } from '@tripflix/app-core';
+import { calculateTripQuote, shiftTripDate, type DemoTripSlug, type TripSelection } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import type { ImageSource } from 'expo-image';
 import { router, type Href } from 'expo-router';
@@ -34,6 +34,10 @@ function useReviewState() {
   const [isSignedIn, setSignedIn] = useState(false);
   const [isSaved, setSaved] = useState(false);
   const [isLiked, setLiked] = useState(false);
+  const [extraSaved, setExtraSaved] = useState<DemoTripSlug[]>([]);
+  const [extraLiked, setExtraLiked] = useState<DemoTripSlug[]>([]);
+  const [feedMode, setFeedMode] = useState<'for-you' | 'trending'>('for-you');
+  const [feedIndex, setFeedIndex] = useState(0);
   const [query, setQuery] = useState<string>(vi.mobile.explore.defaultQuery);
   const [order, setOrder] = useState<ReviewOrder | null>(null);
   const [contact, setContact] = useState({ name: '', email: '', phone: '', hasConsent: false });
@@ -42,22 +46,33 @@ function useReviewState() {
   const [media, setMedia] = useState<ReviewMedia[]>([]);
   const [isCompletedTrip, setCompletedTrip] = useState(true);
   const [isPostPending, setPostPending] = useState(false);
-  const pendingAction = useRef<{ action: GatedAction; returnTo: Href } | null>(null);
+  const pendingAction = useRef<{ action: GatedAction; returnTo: Href; tripSlug: DemoTripSlug } | null>(null);
   const isConfirming = useRef(false);
 
-  function runAction(action: GatedAction) {
-    if (action === 'save') setSaved((saved) => !saved);
-    else if (action === 'like') setLiked((liked) => !liked);
+  function toggleInteraction(action: 'save' | 'like', tripSlug: DemoTripSlug) {
+    if (tripSlug === 'nha-trang') {
+      if (action === 'save') setSaved((saved) => !saved);
+      else setLiked((liked) => !liked);
+    } else {
+      const update = action === 'save' ? setExtraSaved : setExtraLiked;
+      update((slugs) =>
+        slugs.includes(tripSlug) ? slugs.filter((slug) => slug !== tripSlug) : [...slugs, tripSlug],
+      );
+    }
+  }
+
+  function runAction(action: GatedAction, tripSlug: DemoTripSlug) {
+    if (action === 'save' || action === 'like') toggleInteraction(action, tripSlug);
     else {
       if (action === 'checkout') isConfirming.current = false;
       router.push(action === 'create' ? '/create' : '/checkout');
     }
   }
 
-  function requireAccount(action: GatedAction, returnTo: Href) {
-    if (isSignedIn) runAction(action);
+  function requireAccount(action: GatedAction, returnTo: Href, tripSlug: DemoTripSlug = 'nha-trang') {
+    if (isSignedIn) runAction(action, tripSlug);
     else {
-      pendingAction.current = { action, returnTo };
+      pendingAction.current = { action, returnTo, tripSlug };
       router.push('/login');
     }
   }
@@ -71,8 +86,8 @@ function useReviewState() {
       isConfirming.current = false;
       return router.replace(fallback);
     }
-    if (pending.action === 'save') setSaved((saved) => !saved);
-    if (pending.action === 'like') setLiked((liked) => !liked);
+    if (pending.action === 'save' || pending.action === 'like')
+      toggleInteraction(pending.action, pending.tripSlug);
     router.replace(
       pending.action === 'checkout'
         ? '/checkout'
@@ -107,6 +122,8 @@ function useReviewState() {
     setSignedIn(false);
     setSaved(false);
     setLiked(false);
+    setExtraSaved([]);
+    setExtraLiked([]);
     setOrder(null);
     setContact({ name: '', email: '', phone: '', hasConsent: false });
     setMedia([]);
@@ -122,6 +139,13 @@ function useReviewState() {
     isSignedIn,
     isSaved,
     isLiked,
+    isTripSaved: (slug: DemoTripSlug) => (slug === 'nha-trang' ? isSaved : extraSaved.includes(slug)),
+    isTripLiked: (slug: DemoTripSlug) => (slug === 'nha-trang' ? isLiked : extraLiked.includes(slug)),
+    savedTripSlugs: [...(isSaved ? ['nha-trang' as const] : []), ...extraSaved],
+    feedMode,
+    setFeedMode,
+    feedIndex,
+    setFeedIndex,
     query,
     setQuery,
     order,

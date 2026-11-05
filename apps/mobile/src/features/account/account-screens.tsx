@@ -181,7 +181,7 @@ export function ProfileScreen() {
         {[
           { count: review.isPostPending ? 1 : 0, label: copy.profile.posts },
           { count: review.order ? 2 : 1, label: copy.profile.trips },
-          { count: review.isSaved ? 1 : 0, label: copy.profile.saved },
+          { count: review.savedTripSlugs.length, label: copy.profile.saved },
         ].map((stat) => (
           <View key={stat.label} style={{ alignItems: 'center', gap: s.xs }}>
             <Txt variant="heading">{stat.count}</Txt>
@@ -241,8 +241,12 @@ export function SavedScreen() {
           {copy.profile.savedBody}
         </Txt>
       </View>
-      {review.isSaved && params.scenario !== 'empty' ? (
-        <TripCard />
+      {review.savedTripSlugs.length > 0 && params.scenario !== 'empty' ? (
+        <>
+          {review.savedTripSlugs.map((slug) => (
+            <TripCard key={slug} tripSlug={slug} />
+          ))}
+        </>
       ) : (
         <Empty
           title={copy.profile.emptyTitle}

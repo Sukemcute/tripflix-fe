@@ -1,33 +1,49 @@
+import { getDemoFeed, type DemoTripSlug } from '@tripflix/app-core';
+import { t, vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout as layout, nativeFonts as f, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { Pressable, Share, StyleSheet, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { PanResponder, Pressable, Share, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  assets,
-  Badge,
-  Button,
-  copy,
-  Icon,
-  IconButton,
-  money,
-  Row,
-  Sheet,
-  Txt,
-  ui,
-} from '@/components/mobile-ui';
+import { assets, Badge, Button, copy, Icon, IconButton, money, Row, Txt, ui } from '@/components/mobile-ui';
 import { useReview } from '@/features/review/review-provider';
+import { INITIAL_COMMENT_COUNT, ReelComments } from './reel-comments';
 
 export function FeedScreen() {
   const review = useReview();
-  const [tab, setTab] = useState(0);
+  const { setFeedIndex } = review;
+  const trips = getDemoFeed(review.feedMode);
+  const index = Math.min(review.feedIndex, trips.length - 1);
+  const trip = trips[index]!;
+  const content = vi.demo.trips[trip.slug];
+  const isBaseTrip = trip.slug === 'nha-trang';
+  const isLiked = review.isTripLiked(trip.slug);
+  const isSaved = review.isTripSaved(trip.slug);
+  const tab = review.feedMode === 'for-you' ? 0 : 1;
+  const move = (delta: number) => review.setFeedIndex(Math.max(0, Math.min(trips.length - 1, index + delta)));
   const [hasComments, setComments] = useState(false);
+  const swipe = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_event, gesture) =>
+          !hasComments && Math.abs(gesture.dy) > 40 && Math.abs(gesture.dy) > Math.abs(gesture.dx) * 1.5,
+        onPanResponderRelease: (_event, gesture) => {
+          if (Math.abs(gesture.dy) > 65)
+            setFeedIndex(Math.max(0, Math.min(trips.length - 1, index + (gesture.dy < 0 ? 1 : -1))));
+        },
+      }),
+    [index, trips.length, setFeedIndex, hasComments],
+  );
+  const [commentCounts, setCommentCounts] = useState<Partial<Record<DemoTripSlug, number>>>({});
+  const updateCommentCount = useCallback((slug: DemoTripSlug, count: number) => {
+    setCommentCounts((previous) => (previous[slug] === count ? previous : { ...previous, [slug]: count }));
+  }, []);
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={styles.screen}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.screen} {...swipe.panHandlers}>
       <StatusBar style="light" />
-      <Image source={assets.beach} style={StyleSheet.absoluteFill} contentFit="cover" />
+      <Image source={assets[trip.image]} style={StyleSheet.absoluteFill} contentFit="cover" />
       <View style={[StyleSheet.absoluteFill, { backgroundColor: c.overlay }]} />
       <Row style={styles.top}>
         {[copy.feed.forYou, copy.feed.trending].map((title, index) => (
@@ -35,7 +51,10 @@ export function FeedScreen() {
             key={title}
             accessibilityRole="tab"
             accessibilityState={{ selected: index === tab }}
-            onPress={() => setTab(index)}
+            onPress={() => {
+              review.setFeedMode(index === 0 ? 'for-you' : 'trending');
+              review.setFeedIndex(0);
+            }}
             style={[styles.tab, index === tab && { borderBottomColor: c.background }]}
           >
             <Txt variant="label" style={{ color: c.background, opacity: tab === index ? 1 : 0.7 }}>
@@ -56,34 +75,34 @@ export function FeedScreen() {
         <Row style={{ alignItems: 'flex-end' }}>
           <View style={{ flex: 1, gap: s.md }}>
             <Badge tone="sun" icon="location-outline">
-              {copy.common.destination}
+              {content.destination}
             </Badge>
             <Txt variant="title" style={styles.headline}>
-              {copy.feed.headline}
+              {content.headline}
             </Txt>
             <Row>
               <View style={styles.avatar}>
-                <Txt variant="label">{copy.feed.initials}</Txt>
+                <Txt variant="label">{isBaseTrip ? copy.feed.initials : vi.demo.feed.initials}</Txt>
               </View>
               <Txt variant="label" style={{ color: c.background }}>
-                {copy.feed.handle}
+                {isBaseTrip ? copy.feed.handle : vi.demo.feed.creator}
               </Txt>
               <Icon name="checkmark-circle-outline" color={c.background} size={20} />
             </Row>
             <Txt variant="small" style={{ color: c.background }}>
-              {copy.feed.caption}
+              {content.caption}
             </Txt>
           </View>
           <View style={styles.actions}>
             <View style={styles.action}>
               <IconButton
-                name={review.isLiked ? 'heart' : 'heart-outline'}
+                name={isLiked ? 'heart' : 'heart-outline'}
                 label={copy.common.like}
-                color={review.isLiked ? c.coral : c.background}
-                onPress={() => review.requireAccount('like', '/(tabs)')}
+                color={isLiked ? c.coral : c.background}
+                onPress={() => review.requireAccount('like', '/(tabs)', trip.slug)}
               />
               <Txt variant="caption" style={styles.white}>
-                {review.isLiked ? '1.249' : copy.feed.likeCount}
+                {new Intl.NumberFormat('vi-VN').format(trip.likes + (isLiked ? 1 : 0))}
               </Txt>
             </View>
             <View style={styles.action}>
@@ -94,18 +113,18 @@ export function FeedScreen() {
                 onPress={() => setComments(true)}
               />
               <Txt variant="caption" style={styles.white}>
-                {copy.feed.commentCount}
+                {commentCounts[trip.slug] ?? INITIAL_COMMENT_COUNT}
               </Txt>
             </View>
             <View style={styles.action}>
               <IconButton
-                name={review.isSaved ? 'bookmark' : 'bookmark-outline'}
+                name={isSaved ? 'bookmark' : 'bookmark-outline'}
                 label={copy.common.save}
                 color={c.background}
-                onPress={() => review.requireAccount('save', '/(tabs)')}
+                onPress={() => review.requireAccount('save', '/(tabs)', trip.slug)}
               />
               <Txt variant="caption" style={styles.white}>
-                {review.isSaved ? copy.common.saved : copy.common.save}
+                {isSaved ? copy.common.saved : copy.common.save}
               </Txt>
             </View>
             <IconButton
@@ -113,7 +132,7 @@ export function FeedScreen() {
               label={copy.common.share}
               color={c.background}
               onPress={() => {
-                void Share.share({ message: copy.feed.shareMessage }).catch(() => {});
+                void Share.share({ message: `${content.title} · ${content.caption}` }).catch(() => {});
               }}
             />
           </View>
@@ -121,27 +140,52 @@ export function FeedScreen() {
         <View style={styles.trip}>
           <Row style={{ justifyContent: 'space-between' }}>
             <View style={ui.flex}>
-              <Txt variant="label">{copy.common.tripName}</Txt>
+              <Txt variant="label">{content.title}</Txt>
               <Txt variant="caption" style={ui.muted}>
-                {money(3_390_000)}
+                {money(trip.pricePerGuest)}
                 {copy.common.perGuest} · {copy.common.reference}
               </Txt>
             </View>
             <Icon name="arrow-up-outline" />
           </Row>
-          <Button icon="arrow-forward" onPress={() => router.push('/itinerary')}>
-            {copy.feed.tripCta}
+          <Button
+            icon="arrow-forward"
+            onPress={() =>
+              router.push(
+                isBaseTrip ? '/itinerary' : { pathname: '/trip/[slug]', params: { slug: trip.slug } },
+              )
+            }
+          >
+            {isBaseTrip ? copy.feed.tripCta : vi.demo.common.detail}
           </Button>
         </View>
         <Txt variant="caption" style={[styles.white, { opacity: 0.8 }]}>
           {copy.feed.coverNotice}
         </Txt>
+        <Row style={{ justifyContent: 'space-between' }}>
+          <IconButton
+            name="chevron-up"
+            label={vi.demo.feed.previous}
+            color={c.background}
+            onPress={() => move(-1)}
+          />
+          <Txt variant="caption" style={styles.white} accessibilityLiveRegion="polite">
+            {t('demo.feed.position', { current: index + 1, total: trips.length })}
+          </Txt>
+          <IconButton
+            name="chevron-down"
+            label={vi.demo.feed.next}
+            color={c.background}
+            onPress={() => move(1)}
+          />
+        </Row>
       </View>
-      <Sheet title={copy.feed.commentTitle} visible={hasComments} onClose={() => setComments(false)}>
-        <Badge>{copy.common.demo}</Badge>
-        <Txt variant="label">{copy.feed.commentAuthor}</Txt>
-        <Txt>{copy.feed.comment}</Txt>
-      </Sheet>
+      <ReelComments
+        visible={hasComments}
+        tripSlug={trip.slug}
+        onClose={() => setComments(false)}
+        onCountChange={updateCommentCount}
+      />
     </SafeAreaView>
   );
 }
