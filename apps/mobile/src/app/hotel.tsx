@@ -1,1 +1,1 @@
-export { HotelScreen as default } from '@/features/booking/detail-screens';
+export { LiveHotelScreen as default } from '@/features/discovery/live-discovery-screens';

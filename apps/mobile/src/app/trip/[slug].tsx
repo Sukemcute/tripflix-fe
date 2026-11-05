@@ -1,1 +1,1 @@
-export { FeedTripDetailScreen as default } from '@/features/discovery/feed-trip-detail-screen';
+export { LivePostDetailScreen as default } from '@/features/feed/live-feed-screen';

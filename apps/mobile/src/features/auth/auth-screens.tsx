@@ -1,4 +1,5 @@
 import { colors as c, spacing as s } from '@tripflix/tokens';
+import { vi } from '@tripflix/i18n';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -60,7 +61,7 @@ export function OnboardingScreen() {
         </Txt>
       </View>
       <Txt variant="caption" style={[ui.muted, ui.center]}>
-        {copy.common.demoNotice}
+        {vi.api.loginBody}
       </Txt>
     </Screen>
   );

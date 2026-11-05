@@ -1,0 +1,147 @@
+.hero {
+  background:
+    radial-gradient(ellipse at 42% 45%, var(--color-sea-mist), transparent 70%), var(--color-surface);
+  overflow: hidden;
+}
+.inner {
+  position: relative;
+  isolation: isolate;
+  container-type: inline-size;
+  width: min(1280px, calc(100% - 64px));
+  margin-inline: auto;
+  padding: clamp(36px, 6vw, 86px) 0 44px;
+}
+.copy {
+  position: relative;
+  width: 52%;
+}
+.copy h1 {
+  margin-block: 20px 24px;
+  color: var(--color-teal-ink);
+  white-space: pre-line;
+  font-size: clamp(33px, 4.1vw, 60px);
+  line-height: 1.13;
+  letter-spacing: -0.055em;
+}
+.kicker,
+.activityLabel {
+  color: var(--color-teal-ink);
+  font-size: 12px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.description {
+  color: var(--color-text-muted);
+  max-width: 40ch;
+  line-height: 1.8;
+}
+.activityLabel {
+  margin: 42px 0 14px;
+}
+.activities {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(8px, 2vw, 28px);
+}
+.activity {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 8px 14px;
+  background: var(--color-coral);
+  color: var(--color-ink);
+  border-radius: 12px 44% 12px 4px;
+}
+.activity img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1.25;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.activity strong {
+  padding-inline: 5px;
+  font-size: clamp(11px, 1.2vw, 15px);
+}
+.activity:nth-child(2) {
+  background: var(--color-teal-ink);
+  color: var(--color-background);
+  border-radius: 12px 12px 44% 4px;
+}
+.activity:nth-child(3) {
+  border-radius: 44% 12px 12px 4px;
+}
+.art {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.world,
+.water,
+.kayak {
+  position: absolute;
+  height: auto;
+}
+.world {
+  width: 85%;
+  left: 10%;
+  top: 0;
+  opacity: 0.07;
+}
+.water {
+  width: 52%;
+  right: -2%;
+  top: 2%;
+}
+.kayak {
+  width: 77%;
+  right: -20%;
+  top: -12%;
+  clip-path: url(#ota-kayak-clip);
+}
+.orbits {
+  position: absolute;
+  left: 54%;
+  top: 22%;
+  width: 35%;
+  aspect-ratio: 1;
+}
+.orbits i {
+  position: absolute;
+  inset: 0;
+  border: 1px dashed var(--color-sun);
+  border-radius: 50%;
+}
+.orbits i:nth-child(2) {
+  inset: 8%;
+}
+.orbits i:nth-child(3) {
+  inset: 16%;
+}
+@media (max-width: 640px) {
+  .inner {
+    width: calc(100% - 36px);
+    padding-bottom: 24px;
+  }
+  .copy {
+    width: 100%;
+  }
+  .art {
+    top: 292px;
+    height: 260px;
+  }
+  .water {
+    width: 58%;
+  }
+  .kayak {
+    width: 79%;
+    right: -16%;
+  }
+  .orbits {
+    width: 40%;
+  }
+  .activityLabel {
+    margin-top: 265px;
+  }
+}

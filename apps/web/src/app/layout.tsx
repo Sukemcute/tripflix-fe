@@ -31,16 +31,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 />
               </Link>
               <nav aria-label={vi.demo.common.explore}>
-                <Link href="/search">{vi.demo.web.navTrips}</Link>
-                <Link href="/#how">{vi.demo.web.navAbout}</Link>
+                <Link href="/#content">{vi.api.hotels}</Link>
+                <Link href="/inspiration">{vi.api.inspiration}</Link>
+                <Link href="/account">{vi.api.account}</Link>
               </nav>
-              <span className="demo-badge">{vi.demo.common.badge}</span>
+              <Link href="/#content" className="primary-button ota-header-cta">
+                {vi.api.otaFindStay}
+              </Link>
             </div>
           </header>
           {children}
           <footer className="ota-footer ota-container">
             <strong>{vi.demo.web.footer}</strong>
-            <p>{vi.demo.common.notice}</p>
+            <p>{vi.api.bookingUnavailable}</p>
           </footer>
         </Providers>
       </body>

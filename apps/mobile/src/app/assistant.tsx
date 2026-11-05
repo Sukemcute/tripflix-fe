@@ -1,1 +1,1 @@
-export { AssistantScreen as default } from '@/features/discovery/discovery-screens';
+export { LiveAssistantScreen as default } from '@/features/discovery/live-discovery-screens';

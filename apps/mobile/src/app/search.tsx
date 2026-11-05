@@ -1,1 +1,1 @@
-export { SearchScreen as default } from '@/features/discovery/discovery-screens';
+export { LiveSearchEntry as default } from '@/features/discovery/live-discovery-screens';

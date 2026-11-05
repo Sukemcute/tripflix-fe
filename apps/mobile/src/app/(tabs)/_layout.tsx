@@ -1,10 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { t, type MessageKey } from '@tripflix/i18n';
 import { colors, nativeFonts, spacing } from '@tripflix/tokens';
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import type { ComponentProps } from 'react';
 import { View } from 'react-native';
-import { useReview } from '@/features/review/review-provider';
+import { useApiSession } from '@tripflix/api-client';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -18,7 +18,7 @@ const TABS: readonly { name: string; label: MessageKey; icon: IconName }[] = [
 ];
 
 export default function TabsLayout() {
-  const review = useReview();
+  const { user, isReady } = useApiSession();
   return (
     <Tabs
       screenOptions={{
@@ -39,7 +39,8 @@ export default function TabsLayout() {
               ? {
                   tabPress: (event) => {
                     event.preventDefault();
-                    review.requireAccount('create', '/(tabs)');
+                    if (!isReady) return;
+                    router.push(user ? '/create' : { pathname: '/login', params: { returnTo: '/create' } });
                   },
                 }
               : undefined

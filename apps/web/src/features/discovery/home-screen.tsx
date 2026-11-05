@@ -1,9 +1,8 @@
-import { getDemoFeed } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
 import { SearchForm } from '@/features/discovery/search-form';
-import { TripCard } from '@/features/discovery/trip-card';
+import { PublicPosts } from '@/features/social/live-posts';
 
 export default function HomeScreen() {
   const copy = vi.demo;
@@ -30,7 +29,7 @@ export default function HomeScreen() {
           <div className="hero-caption">
             <span>{copy.trips['nha-trang'].tags}</span>
             <strong>{copy.trips['nha-trang'].title}</strong>
-            <Link href="/trips/nha-trang">
+            <Link href="/search?q=Nha%20Trang">
               {copy.common.detail} <span aria-hidden="true">↗</span>
             </Link>
           </div>
@@ -40,7 +39,11 @@ export default function HomeScreen() {
         <SearchForm />
         <div className="suggested-queries">
           <span>{copy.web.suggestions}</span>
-          {[copy.web.suggestion1, copy.web.suggestion2, copy.web.suggestion3].map((query) => (
+          {[
+            copy.trips['nha-trang'].destination,
+            copy.trips['hoi-an'].destination,
+            copy.trips['da-nang'].destination,
+          ].map((query) => (
             <Link key={query} href={`/search?q=${encodeURIComponent(query)}`}>
               {query}
               <span aria-hidden="true">↗</span>
@@ -56,17 +59,13 @@ export default function HomeScreen() {
           </div>
           <p className="muted">{copy.web.curatedBody}</p>
         </div>
-        <div className="trip-grid">
-          {getDemoFeed('trending').map((trip) => (
-            <TripCard key={trip.slug} trip={trip} />
-          ))}
-        </div>
+        <PublicPosts />
       </section>
       <section className="how-section" id="how">
         <Image src="/brand/tripi-welcome.png" alt={vi.mobile.common.mascot} width={120} height={120} />
         <div>
           <h2>{copy.web.howTitle}</h2>
-          <p>{copy.web.howBody}</p>
+          <p>{vi.api.choosePlace}</p>
         </div>
       </section>
     </main>
