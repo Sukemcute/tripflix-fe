@@ -5,7 +5,7 @@ import { useEvent } from 'expo';
 import { Image } from 'expo-image';
 import { VideoView, type VideoPlayer } from 'expo-video';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Button, Icon, Txt } from '@/components/mobile-ui';
 import { ReelSocialOverlay } from './reel-social-overlay';
@@ -19,18 +19,18 @@ function PlayerSurface({
   width,
   height,
   isPaused,
-  onToggle,
   onRetry,
   onAttach,
+  isHidden,
 }: {
   player: VideoPlayer;
   item: ReelItem;
   width: number;
   height: number;
   isPaused: boolean;
-  onToggle: () => void;
   onRetry: () => void;
   onAttach?: () => void;
+  isHidden: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const [hasFrame, setHasFrame] = useState(false);
@@ -61,12 +61,6 @@ function PlayerSurface({
           ) : null}
         </View>
       </View>
-      <Pressable
-        style={StyleSheet.absoluteFill}
-        accessibilityRole="button"
-        accessibilityLabel={isPaused ? copy.play : copy.pause}
-        onPress={onToggle}
-      />
       {status === 'loading' && (
         <View pointerEvents="none" style={styles.center}>
           <ActivityIndicator color={colors.background} accessibilityLabel={copy.loading} />
@@ -78,7 +72,7 @@ function PlayerSurface({
         </View>
       )}
       {status === 'error' && <VideoNotice text={copy.failed} onRetry={onRetry} />}
-      {__DEV__ && level !== null && (
+      {__DEV__ && level !== null && !isHidden && (
         <View style={[styles.quality, { top: insets.top + 64 }]} pointerEvents="none">
           <Txt variant="caption" style={styles.light}>
             {t('mobile.reels.currentQuality', { level })}
@@ -91,7 +85,7 @@ function PlayerSurface({
 
 function VideoNotice({ text, onRetry }: { text: string; onRetry?: () => void }) {
   return (
-    <View style={styles.center}>
+    <View style={styles.center} pointerEvents="box-none">
       <View style={styles.notice}>
         <Txt style={styles.light}>{text}</Txt>
         {onRetry && <Button onPress={onRetry}>{copy.retry}</Button>}
@@ -136,6 +130,8 @@ export function ReelSlide({
   onCommentsVisibilityChange: (visible: boolean) => void;
 }) {
   const poster = selectReelPoster(item.playback.posters, width);
+  const [isHidden, setIsHidden] = useState(false);
+  const held = useRef(false);
   return (
     <View
       testID={`reel-${item.id}`}
@@ -155,6 +151,24 @@ export function ReelSlide({
           />
         </View>
       ) : null}
+      <Pressable
+        style={StyleSheet.absoluteFill}
+        accessibilityRole="button"
+        accessibilityLabel={isPaused ? copy.play : copy.pause}
+        accessibilityHint={copy.holdToHide}
+        delayLongPress={350}
+        onPressIn={() => {
+          held.current = false;
+        }}
+        onLongPress={() => {
+          held.current = true;
+          setIsHidden(true);
+        }}
+        onPressOut={() => setIsHidden(false)}
+        onPress={() => {
+          if (!held.current) onToggle();
+        }}
+      />
       {player && isLoaded && (
         <PlayerSurface
           key={`${item.id}:${item.playback.hlsUrl}`}
@@ -163,9 +177,9 @@ export function ReelSlide({
           width={width}
           height={height}
           isPaused={isPaused}
-          onToggle={onToggle}
           onRetry={onRetry}
           onAttach={onAttach}
+          isHidden={isActive && isHidden}
         />
       )}
       {blockedReason ? (
@@ -173,7 +187,7 @@ export function ReelSlide({
       ) : hasError ? (
         <VideoNotice text={copy.failed} onRetry={onRetry} />
       ) : !isLoaded ? (
-        <View style={styles.center}>
+        <View style={styles.center} pointerEvents="none">
           <ActivityIndicator color={colors.background} accessibilityLabel={copy.loading} />
         </View>
       ) : null}
@@ -182,6 +196,7 @@ export function ReelSlide({
         isActive={isActive}
         isSample={isSample}
         isMuted={isMuted}
+        isHidden={isActive && isHidden}
         onMute={onMute}
         onCommentsVisibilityChange={onCommentsVisibilityChange}
       />

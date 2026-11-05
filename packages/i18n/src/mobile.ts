@@ -81,6 +81,10 @@ export const mobile = {
     unmute: 'Bật tiếng',
     offline: 'Bạn đang mất kết nối. Kiểm tra mạng rồi thử lại nhé.',
     detail: 'Xem bài đăng',
+    showMore: 'Xem thêm',
+    showLess: 'Thu gọn',
+    holdToHide: 'Chạm để phát hoặc dừng. Nhấn giữ để tạm ẩn giao diện.',
+    socialRetry: 'Chưa thực hiện được. Chạm để thử lại.',
   },
   reelComments: {
     title: '{count} bình luận',

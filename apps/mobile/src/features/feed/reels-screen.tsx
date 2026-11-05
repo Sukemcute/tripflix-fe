@@ -56,6 +56,19 @@ const DEMO_REELS = readDemoReels();
 export function ReelsScreen() {
   const [isSample, setIsSample] = useState(false);
   const feed = useReelsFeed({ enabled: !isSample });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const refreshInFlight = useRef(false);
+  const refreshFeed = async () => {
+    if (refreshInFlight.current) return;
+    refreshInFlight.current = true;
+    setIsRefreshing(true);
+    try {
+      await feed.refetch();
+    } finally {
+      refreshInFlight.current = false;
+      setIsRefreshing(false);
+    }
+  };
   const items = useMemo(
     () =>
       (feed.data?.pages.flatMap((page) => page.items) ?? [])
@@ -94,9 +107,9 @@ export function ReelsScreen() {
           onLoadMore={loadMore}
           isFetchingMore={feed.isFetchingNextPage}
           onRefresh={() => {
-            void feed.refetch();
+            void refreshFeed();
           }}
-          isRefreshing={feed.isRefetching && !feed.isFetchingNextPage}
+          isRefreshing={isRefreshing}
         />
       </View>
     );
