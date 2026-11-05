@@ -40,6 +40,8 @@ interface CommentThread extends Comment {
 }
 
 function createThreads(slug: DemoTripSlug): CommentThread[] {
+  const creatorName = slug === 'nha-trang' ? copy.creatorName : vi.demo.feed.creator;
+  const creatorInitials = slug === 'nha-trang' ? copy.creatorInitials : vi.demo.feed.initials;
   const firstText =
     slug === 'hoi-an' ? copy.first.hoiAn : slug === 'da-nang' ? copy.first.daNang : copy.first.text;
   return [
@@ -54,8 +56,8 @@ function createThreads(slug: DemoTripSlug): CommentThread[] {
       replies: [
         {
           id: 'creator-first',
-          name: copy.creatorName,
-          initials: copy.creatorInitials,
+          name: creatorName,
+          initials: creatorInitials,
           text: copy.creatorReply,
           age: copy.first.age,
           likes: 36,
@@ -84,8 +86,8 @@ function createThreads(slug: DemoTripSlug): CommentThread[] {
       replies: [
         {
           id: 'creator-second',
-          name: copy.creatorName,
-          initials: copy.creatorInitials,
+          name: creatorName,
+          initials: creatorInitials,
           text: copy.priceReply,
           age: copy.second.age,
           likes: 18,
