@@ -105,6 +105,8 @@ export const api = {
   deviceCount: '{count} thiết bị',
   showMoreDevices: 'Xem thêm {count} thiết bị',
   showFewerDevices: 'Thu gọn',
+  // Menu tài khoản trên header web (TF06H)
+  accountMenu: 'Menu tài khoản',
   accountSections: 'Các mục trong tài khoản',
   lastActive: 'Hoạt động lần cuối {time}',
   logoutAllConfirm: 'Đăng xuất khỏi mọi thiết bị, kể cả thiết bị này?',

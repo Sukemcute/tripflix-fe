@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import './globals.css';
+import { HeaderAccount } from '@/features/auth/header-account';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
@@ -33,11 +34,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <nav aria-label={vi.demo.common.explore}>
                 <Link href="/#content">{vi.api.hotels}</Link>
                 <Link href="/inspiration">{vi.api.inspiration}</Link>
-                <Link href="/account">{vi.api.account}</Link>
               </nav>
-              <Link href="/#content" className="primary-button ota-header-cta">
-                {vi.api.otaFindStay}
-              </Link>
+              <HeaderAccount />
             </div>
           </header>
           {children}
