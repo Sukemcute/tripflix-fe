@@ -99,6 +99,7 @@ export * from './refreshDto';
 export * from './registerDto';
 export * from './resetPasswordDto';
 export * from './resignPartsDto';
+export * from './savePostSummaryDto';
 export * from './serviceTokenDto';
 export * from './serviceTokenDtoTokenType';
 export * from './serviceTokenRequestDto';

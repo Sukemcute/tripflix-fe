@@ -111,7 +111,7 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
             <textarea
               aria-label={editing ? vi.api.edit : vi.api.commentBody}
               value={body}
-              maxLength={2000}
+              maxLength={10000}
               onChange={(event) => setBody(event.target.value)}
             />
           </label>

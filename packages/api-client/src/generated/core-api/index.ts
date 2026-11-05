@@ -10,6 +10,7 @@ export * from './media/media';
 export * from './mock-gateway/mock-gateway';
 export * from './payments/payments';
 export * from './social-admin-moderation/social-admin-moderation';
+export * from './social-ai-summary/social-ai-summary';
 export * from './social-bookmarks/social-bookmarks';
 export * from './social-comments/social-comments';
 export * from './social-posts/social-posts';

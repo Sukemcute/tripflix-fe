@@ -6,10 +6,12 @@
  */
 
 export type CommentsControllerListCommentsParams = {
-  /** Số lượng bình luận */
+  /** Số lượng bình luận (mặc định tối đa 50, chế độ phẳng tối đa 200) */
   limit?: number;
   /** Keyset cursor */
   cursor?: string;
   /** ID bình luận cha nếu muốn xem phản hồi con */
   parent_comment_id?: string;
+  /** Chế độ trả phẳng toàn bộ bình luận và phản hồi mọi cấp (dành cho AI / Indexing) */
+  flat?: boolean;
 };

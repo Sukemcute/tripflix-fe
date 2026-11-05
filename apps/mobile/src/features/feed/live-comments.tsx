@@ -174,7 +174,7 @@ export function LiveComments({
                 value={body}
                 onChangeText={setBody}
                 multiline
-                maxLength={2000}
+                maxLength={10000}
               />
               <Button disabled={mutation.isPending || !body.trim()} onPress={() => mutation.mutate('save')}>
                 {mutation.isPending ? vi.api.saving : vi.api.send}
