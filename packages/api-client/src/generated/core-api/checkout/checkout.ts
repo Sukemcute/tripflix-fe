@@ -21,12 +21,14 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CancelHoldResultDto,
   CheckoutDto,
   CheckoutRequestDto,
   ConfirmThreeDsRequestDto,
   PayRequestDto,
   PayResultDto,
   SetGuestsRequestDto,
+  SetGuestsResultDto,
   StartVnpayRequestDto,
   StartVnpayResultDto,
 } from '../model';
@@ -55,7 +57,14 @@ export type checkoutControllerCreateResponse200 = {
   status: 200;
 };
 
-export type checkoutControllerCreateResponseSuccess = checkoutControllerCreateResponse200 & {
+export type checkoutControllerCreateResponse201 = {
+  data: CheckoutDto;
+  status: 201;
+};
+
+export type checkoutControllerCreateResponseSuccess = (
+  checkoutControllerCreateResponse200 | checkoutControllerCreateResponse201
+) & {
   headers: Headers;
 };
 export type checkoutControllerCreateResponse = checkoutControllerCreateResponseSuccess;
@@ -279,7 +288,7 @@ export function useCheckoutControllerGet<
 }
 
 export type checkoutControllerSetGuestsResponse200 = {
-  data: void;
+  data: SetGuestsResultDto;
   status: 200;
 };
 
@@ -390,7 +399,14 @@ export type checkoutControllerPayResponse200 = {
   status: 200;
 };
 
-export type checkoutControllerPayResponseSuccess = checkoutControllerPayResponse200 & {
+export type checkoutControllerPayResponse202 = {
+  data: PayResultDto;
+  status: 202;
+};
+
+export type checkoutControllerPayResponseSuccess = (
+  checkoutControllerPayResponse200 | checkoutControllerPayResponse202
+) & {
   headers: Headers;
 };
 export type checkoutControllerPayResponse = checkoutControllerPayResponseSuccess;
@@ -597,7 +613,7 @@ export const useCheckoutControllerConfirm3ds = <TError = unknown, TContext = unk
   return useMutation(getCheckoutControllerConfirm3dsMutationOptions(options), queryClient);
 };
 export type checkoutControllerCancelResponse200 = {
-  data: void;
+  data: CancelHoldResultDto;
   status: 200;
 };
 

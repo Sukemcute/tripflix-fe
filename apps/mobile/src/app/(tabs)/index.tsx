@@ -1,1 +1,1 @@
-export { LiveFeedScreen as default } from '@/features/feed/live-feed-screen';
+export { ReelsScreen as default } from '@/features/feed/reels-screen';

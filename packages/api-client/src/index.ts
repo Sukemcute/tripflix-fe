@@ -7,4 +7,5 @@ export { SessionClient, type SessionOptions, type TokenStorage } from './session
 export { getApiErrorKind, readEntity, readPage } from './response';
 export { socialApi } from './social';
 export { useSocialPosts } from './queries';
+export { feedApi, useReelsFeed } from './feed';
 export { useStaySearch, getFutureDate, type StayFilters } from './stay-search';
