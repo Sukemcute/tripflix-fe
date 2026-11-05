@@ -131,6 +131,11 @@ export const api = {
   commentMember: 'Thành viên',
   commentEdited: 'đã sửa',
   hideReplies: 'Ẩn trả lời',
+  // Thanh tìm kiếm trang Cảm hứng (TF06K)
+  searchWhere: 'Bạn muốn đến đâu?',
+  searchShortPlaceholder: 'Nha Trang, Hội An, khách sạn…',
+  searchMinChars: 'Nhập ít nhất 2 ký tự.',
+  suggestionsLabel: 'Gợi ý',
   accountSections: 'Các mục trong tài khoản',
   lastActive: 'Hoạt động lần cuối {time}',
   logoutAllConfirm: 'Đăng xuất khỏi mọi thiết bị, kể cả thiết bị này?',

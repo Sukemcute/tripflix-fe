@@ -37,19 +37,22 @@ export default function HomeScreen() {
       </section>
       <div className="home-search">
         <SearchForm />
-        <div className="suggested-queries">
-          <span>{copy.web.suggestions}</span>
+        <nav className="suggested-queries" aria-label={copy.web.suggestions}>
+          <span>{vi.api.suggestionsLabel}</span>
           {[
             copy.trips['nha-trang'].destination,
             copy.trips['hoi-an'].destination,
             copy.trips['da-nang'].destination,
           ].map((query) => (
             <Link key={query} href={`/search?q=${encodeURIComponent(query)}`}>
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14">
+                <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" />
+                <circle cx="12" cy="10" r="2.4" />
+              </svg>
               {query}
-              <span aria-hidden="true">↗</span>
             </Link>
           ))}
-        </div>
+        </nav>
       </div>
       <section className="curated-section" id="trips">
         <div className="section-heading">
