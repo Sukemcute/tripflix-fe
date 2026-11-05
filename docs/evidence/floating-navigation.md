@@ -1,12 +1,13 @@
 # Thanh điều hướng nổi — mobile
 
 - Ngày: 2026-11-06 (Asia/Bangkok).
-- Phạm vi: chỉnh giao diện theo ảnh người dùng cung cấp, thực hiện tại workspace; chưa commit hoặc push.
+- Phạm vi: thanh điều hướng mobile theo lựa chọn của người dùng; web dùng điều hướng header.
 
 ## Đã làm
 
-- Mobile: thay tab bar mặc định bằng thanh bo góc màu `coralTint`, nút đang chọn nổi màu `coral` trong vòng trắng, icon trắng và icon chưa chọn màu `textMuted`. Dùng tokens màu chủ đạo của Tripflix. Giữ 5 mục và luồng Chia sẻ → đăng nhập / tạo bài; ẩn Inbox như cũ.
-- Vòng tròn trượt theo mục chọn bằng Reanimated spring trên mobile. Có phản hồi nhấn, trạng thái chọn cho trình đọc màn hình và hỗ trợ reduced motion.
+- Mobile: thanh bo góc màu `coralTint`, nút **+ Chia sẻ** luôn nổi bật ở giữa bằng đĩa `coral` 54px, dấu cộng trắng 30px và vòng trắng 66px. Giữ 5 mục và luồng Chia sẻ → đăng nhập / tạo bài; ẩn Inbox như cũ.
+- Theo phản hồi mentor và lựa chọn người dùng, bỏ vòng tròn chạy/phóng to theo tab đang chọn. Bốn tab điều hướng giữ icon 24px và cùng vị trí/kích thước; chỉ đổi từ `textMuted` sang `coralInk` khi chọn.
+- Chia sẻ được đọc như nút hành động; bốn mục còn lại được đọc như tab với trạng thái chọn. Phản hồi nhấn chỉ giảm opacity, không có chuyển động cần xử lý reduced motion.
 - Mobile dành chỗ riêng cho thanh điều hướng.
 - Theo yêu cầu tiếp theo của người dùng, đã gỡ thanh nổi khỏi web: xóa `FloatingNav`, CSS module, import và vị trí render trong layout. Khoảng trống dành cho thanh nổi cũng được gỡ cùng component. Web tiếp tục dùng thanh điều hướng trong header.
 - Không thêm dependency hoặc thay đổi API.
@@ -28,12 +29,21 @@
 - Ảnh và kết quả: `C:/Users/ADMIN/.codex/tmp/tripflix-web-without-floating-nav/` (`web-1440.png`, `web-390.png`, `verification.json`).
 - Không sửa thanh điều hướng mobile trong lượt gỡ web.
 
+### Kiểm tra phiên bản nút + cố định (2026-11-06)
+
+- `pnpm turbo run lint typecheck test --affected`: 20/20 tác vụ thành công, 18 dùng cache; 98 test đạt. Mobile lint/typecheck, kiểm tra boundaries và `git diff --check` đạt.
+- Expo Web + Playwright: 6/6 nhóm kịch bản đạt, không có lỗi JavaScript runtime. Chọn cả bốn tab ở 320/390/430px; nút + giữ nguyên tâm/vị trí/kích thước, icon tab giữ nguyên hình/kích thước và chỉ đổi màu. Không tràn ngang.
+- Bấm + khi chưa đăng nhập đến `/login?returnTo=%2Fcreate`; khi đã đăng nhập đến `/create`. Kiểm tra thêm reduced motion và semantics nút/tab.
+- API/session được mô phỏng. Ảnh `nav-320-guest.png`, `nav-390-guest.png`, `nav-430-guest.png`, `nav-390-member.png` và `verification.json` ở `C:/Users/ADMIN/.codex/tmp/tripflix-fixed-compose-nav/`.
+- Script QA cục bộ: `C:/Users/ADMIN/.codex/tmp/tripflix-reels-qa/verify-fixed-compose-nav.cjs`. Chưa xác minh Android native.
+
 ## Cách kiểm lại
 
 1. Chạy `pnpm --filter @tripflix/web dev`, mở `http://localhost:3100`: web chỉ dùng điều hướng header, không còn thanh nổi cuối màn hình.
 2. Chạy `pnpm --filter @tripflix/mobile exec expo start --web --port 8082`, mở `http://localhost:8082/explore`.
-3. Trên mobile, chọn các mục liên tục, đổi hướng khi vòng tròn đang di chuyển, thu nhỏ màn hình và bật Reduce Motion để kiểm tra.
-4. Chạy app trên Android để xác nhận safe area, bàn phím và cảm giác chuyển động trên thiết bị thật.
+3. Trên mobile, chọn lần lượt Reels, Khám phá, Chuyến đi và Tôi: dấu + luôn nổi ở giữa, icon đang chọn chỉ đổi màu. Kiểm tra lại ở 320px và bật Reduce Motion.
+4. Bấm Chia sẻ khi chưa đăng nhập (đến login với `returnTo=/create`) và sau đăng nhập (đến tạo bài).
+5. Chạy app trên Android để xác nhận safe area và bàn phím trên thiết bị thật.
 
 ## Giới hạn kiểm tra
 
