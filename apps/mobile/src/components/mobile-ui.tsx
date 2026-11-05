@@ -30,6 +30,7 @@ export const copy = vi.mobile;
 export const assets = {
   beach: require('../../assets/brand/beach.jpg'),
   sea: require('../../assets/brand/sea.jpg'),
+  vietnam: require('../../assets/brand/vietnam.jpg'),
   hotel: require('../../assets/brand/hotel.jpg'),
   hoiAn: require('../../assets/brand/hoian.jpg'),
   welcome: require('../../assets/brand/tripi-welcome.png'),
@@ -317,6 +318,7 @@ export function Screen({
   back = true,
   footer,
   right,
+  header,
   padded = true,
   scroll = true,
   background = c.background,
@@ -325,6 +327,7 @@ export function Screen({
   back?: boolean;
   footer?: ReactNode;
   right?: ReactNode;
+  header?: ReactNode;
   padded?: boolean;
   scroll?: boolean;
   background?: string;
@@ -335,7 +338,7 @@ export function Screen({
       style={[ui.screen, { backgroundColor: background }]}
     >
       <KeyboardAvoidingView style={ui.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Header title={title} back={back} right={right} />
+        {header === undefined ? <Header title={title} back={back} right={right} /> : header}
         {scroll ? (
           <ScrollView
             keyboardShouldPersistTaps="handled"
@@ -393,15 +396,17 @@ export function Empty({
   action,
   onAction,
   pose = 'explore',
+  compact = false,
 }: {
   title: string;
   body: string;
   action?: string;
   onAction?: () => void;
   pose?: 'curious' | 'explore';
+  compact?: boolean;
 }) {
   return (
-    <View style={ui.empty}>
+    <View style={[ui.empty, compact ? ui.emptyInset : ui.flex]}>
       <Mascot pose={pose} />
       <Txt variant="heading" style={ui.center}>
         {title}
@@ -541,7 +546,8 @@ export const ui = StyleSheet.create({
     maxHeight: '85%',
     gap: s.lg,
   },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: s.xxl, gap: s.lg },
+  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: s.xxl, gap: s.lg },
+  emptyInset: { marginHorizontal: s.lg },
   priceRow: { justifyContent: 'space-between', paddingVertical: s.sm },
   total: { borderTopWidth: 1, borderTopColor: c.border, paddingTop: s.lg, marginTop: s.sm },
 });

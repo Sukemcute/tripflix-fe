@@ -3,9 +3,13 @@ import { demo } from './demo';
 import { api } from './api';
 import { commerce } from './commerce';
 import { summary } from './summary';
+import { hotel } from './hotel';
+import { ota } from './ota';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
+  ota,
+  hotel,
   summary,
   commerce,
   api,
@@ -13,7 +17,7 @@ export const vi = {
   demo,
   app: {
     name: 'Tripflix',
-    slogan: 'Lướt chuyến hay. Đi y chang.',
+    slogan: 'Chạm cảm hứng, trọn hành trình',
   },
   tabs: {
     feed: 'Lướt',

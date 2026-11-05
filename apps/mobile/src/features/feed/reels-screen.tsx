@@ -1,6 +1,6 @@
 import { useReelsFeed } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
-import { colors, spacing } from '@tripflix/tokens';
+import { colors, mobileLayout, nativeFonts, spacing } from '@tripflix/tokens';
 import { NetworkStateType, useNetworkState } from 'expo-network';
 import { router, useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
+  StyleSheet,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -169,11 +170,13 @@ export function ReelsFeed({
   const [focusedIndex, setFocusedIndex] = useState(0);
   const centeredIndex = useRef(0);
   const [pausedId, setPausedId] = useState<string | null>(null);
+  const [heldId, setHeldId] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [retry, setRetry] = useState<{ id: string; attempt: number } | null>(null);
   const [hasComments, setHasComments] = useState(false);
   const currentIndex = Math.min(activeIndex, Math.max(0, items.length - 1));
   const visibleIndex = Math.min(focusedIndex, Math.max(0, items.length - 1));
+  const hideHeader = heldId !== null && heldId === items[visibleIndex]?.id;
   const isOffline = network.isConnected === false || network.isInternetReachable === false;
   const isDataLimited =
     network.type === NetworkStateType.CELLULAR ||
@@ -213,6 +216,7 @@ export function ReelsFeed({
       centeredIndex.current = index;
       setFocusedIndex(index);
       setPausedId(null);
+      setHeldId(null);
     }
     if (index !== currentIndex && Math.abs(offset - index * layout.height) < 1) settle(index);
   };
@@ -253,7 +257,7 @@ export function ReelsFeed({
               />
             ) : undefined
           }
-          extraData={{ slots, pausedId, isMuted, layout, isOffline, focusedIndex }}
+          extraData={{ slots, pausedId, heldId, layout, isOffline, focusedIndex }}
           renderItem={({ item, index }) => {
             const slot = slots.find((entry) => entry.index === index);
             const blockedReason = isOffline ? copy.offline : undefined;
@@ -268,17 +272,33 @@ export function ReelsFeed({
                 height={layout.height}
                 isActive={visibleIndex === index}
                 isPaused={pausedId === item.id}
-                isMuted={isMuted}
+                isHidden={heldId === item.id}
                 isSample={isSample}
                 onCommentsVisibilityChange={setHasComments}
                 blockedReason={blockedReason}
                 onToggle={() => setPausedId((id) => (id === item.id ? null : item.id))}
-                onMute={() => setIsMuted((value) => !value)}
+                onHoldChange={(isHeld) => setHeldId((id) => (isHeld ? item.id : id === item.id ? null : id))}
                 onRetry={() => setRetry((value) => ({ id: item.id, attempt: (value?.attempt ?? 0) + 1 }))}
               />
             );
           }}
         />
+      )}
+      {!hideHeader && (
+        <View pointerEvents="box-none" style={[styles.header, { top: insets.top + spacing.sm }]}>
+          <View pointerEvents="none" style={styles.headerSpacer} />
+          <View pointerEvents="none">
+            <Txt variant="label" style={styles.headerLabel}>
+              {vi.mobile.feed.forYou}
+            </Txt>
+          </View>
+          <IconButton
+            name={isMuted ? 'volume-mute' : 'volume-high'}
+            label={isMuted ? copy.unmute : copy.mute}
+            color={colors.background}
+            onPress={() => setIsMuted((value) => !value)}
+          />
+        </View>
       )}
       {onExitSample && (
         <View
@@ -300,3 +320,22 @@ export function ReelsFeed({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    position: 'absolute',
+    left: spacing.lg,
+    right: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerSpacer: { width: mobileLayout.touchTarget },
+  headerLabel: {
+    color: colors.background,
+    fontFamily: nativeFonts.bold,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.background,
+    paddingBottom: spacing.sm,
+  },
+});

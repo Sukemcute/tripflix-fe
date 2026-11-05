@@ -4,9 +4,16 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { AmenityDto } from './amenityDto';
 import type { CalendarDayDto } from './calendarDayDto';
+import type { FactsDto } from './factsDto';
+import type { HighlightDto } from './highlightDto';
 import type { HotelRoomOfferDto } from './hotelRoomOfferDto';
+import type { LocationDto } from './locationDto';
+import type { NearbyDto } from './nearbyDto';
+import type { PoliciesDto } from './policiesDto';
 import type { ProvinceDto } from './provinceDto';
+import type { RatingDto } from './ratingDto';
 import type { StayDto } from './stayDto';
 
 export interface HotelDetailDto {
@@ -31,6 +38,24 @@ export interface HotelDetailDto {
    */
   thumbnail: string | null;
   images: string[];
+  /** @nullable */
+  address: string | null;
+  /** @nullable */
+  location: LocationDto | null;
+  /** @nullable */
+  rating: RatingDto | null;
+  /** @nullable */
+  checkInTime: string | null;
+  /** @nullable */
+  checkOutTime: string | null;
+  /** @nullable */
+  description: string | null;
+  highlights: HighlightDto[];
+  nearby: NearbyDto[];
+  amenities: AmenityDto[];
+  languages: string[];
+  facts: FactsDto;
+  policies: PoliciesDto;
   stay: StayDto;
   /**
    * Giá một đêm rẻ nhất cho kỳ ở này (VND)

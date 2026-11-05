@@ -24,9 +24,11 @@ import type {
   CommentsControllerListCommentsParams,
   CreateCommentDto,
   DeletedSocialItemDto,
+  SetCommentReactionDto,
   SocialCommentDto,
   SocialCommentPageDto,
   UpdateCommentDto,
+  UpdatedCommentReactionDto,
 } from '../model';
 
 import { http } from '../../../http';
@@ -332,6 +334,128 @@ export function useCommentsControllerListComments<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export type commentsControllerSetCommentReactionResponse200 = {
+  data: UpdatedCommentReactionDto;
+  status: 200;
+};
+
+export type commentsControllerSetCommentReactionResponseSuccess =
+  commentsControllerSetCommentReactionResponse200 & {
+    headers: Headers;
+  };
+export type commentsControllerSetCommentReactionResponse =
+  commentsControllerSetCommentReactionResponseSuccess;
+
+export const getCommentsControllerSetCommentReactionUrl = (commentId: string) => {
+  return `/api/v1/comments/${commentId}/reaction`;
+};
+
+/**
+ * @summary Thả tim hoặc hủy thả tim cho bình luận (FR11 - Idempotent)
+ */
+export const commentsControllerSetCommentReaction = async (
+  commentId: string,
+  setCommentReactionDto: SetCommentReactionDto,
+  options?: Parameters<typeof http>[1],
+): Promise<commentsControllerSetCommentReactionResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<commentsControllerSetCommentReactionResponse>(
+    getCommentsControllerSetCommentReactionUrl(commentId),
+    {
+      ...options,
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+      body: JSON.stringify(setCommentReactionDto),
+    },
+  );
+};
+
+export const getCommentsControllerSetCommentReactionMutationKey = () =>
+  ['commentsControllerSetCommentReaction'] as const;
+
+export const getCommentsControllerSetCommentReactionMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>,
+    TError,
+    CommentsControllerSetCommentReactionMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>,
+  TError,
+  CommentsControllerSetCommentReactionMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCommentsControllerSetCommentReactionMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>,
+    CommentsControllerSetCommentReactionMutationVariables
+  > = (props) => {
+    const { commentId, data } = props ?? {};
+
+    return commentsControllerSetCommentReaction(commentId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CommentsControllerSetCommentReactionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>
+>;
+export type CommentsControllerSetCommentReactionMutationBody = SetCommentReactionDto;
+export type CommentsControllerSetCommentReactionMutationError = unknown;
+export type CommentsControllerSetCommentReactionMutationVariables = {
+  commentId: string;
+  data: SetCommentReactionDto;
+};
+
+/**
+ * @summary Thả tim hoặc hủy thả tim cho bình luận (FR11 - Idempotent)
+ */
+export const useCommentsControllerSetCommentReaction = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>,
+      TError,
+      CommentsControllerSetCommentReactionMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>,
+  TError,
+  CommentsControllerSetCommentReactionMutationVariables,
+  TContext
+> => {
+  return useMutation(getCommentsControllerSetCommentReactionMutationOptions(options), queryClient);
+};
 export type commentsControllerEditCommentResponse200 = {
   data: SocialCommentDto;
   status: 200;

@@ -1,0 +1,25 @@
+.withCover:global(.trip-card-body) {
+  padding-top: 0;
+}
+.cover {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  margin-inline: -24px;
+  border-radius: 17px 17px 0 0;
+  overflow: hidden;
+  background: var(--color-sea-mist);
+}
+.cover img {
+  object-fit: cover;
+}
+.mascotCover {
+  background: linear-gradient(135deg, var(--color-sea-mist), var(--color-sun-soft));
+}
+.mascotCover img {
+  width: 32%;
+  max-width: 140px;
+  height: auto;
+  object-fit: contain;
+}

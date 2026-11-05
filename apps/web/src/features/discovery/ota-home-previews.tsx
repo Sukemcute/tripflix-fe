@@ -1,0 +1,184 @@
+'use client';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  getAvailableStays,
+  getFutureDate,
+  useApiSession,
+  useSocialPosts,
+  type StayFilters,
+} from '@tripflix/api-client';
+import { t, vi } from '@tripflix/i18n';
+import Image from 'next/image';
+import Link from 'next/link';
+import { ApiErrorNotice } from '@/features/shared/api-state';
+import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
+import { formatPrice } from './trip-card';
+import { StayThumbnail } from './stay-thumbnail';
+import styles from './ota-home.module.css';
+
+export function HomeStayPreview() {
+  const { isReady } = useApiSession();
+  const [destination, setDestination] = useState<(typeof OTA_DESTINATIONS)[number]>(OTA_DESTINATIONS[0]);
+  const [dates] = useState(() => ({ checkIn: getFutureDate(1), checkOut: getFutureDate(3) }));
+  const filters: StayFilters = {
+    ...dates,
+    placeId: destination.id,
+    adults: '2',
+    rooms: '',
+    minStars: '',
+    priceMin: '',
+    priceMax: '',
+    sort: 'stars',
+  };
+  const query = useQuery({
+    queryKey: ['discovery', 'home-stays', filters],
+    enabled: isReady,
+    queryFn: ({ signal }) => getAvailableStays(filters, { signal, limit: 3 }),
+  });
+  return (
+    <section className={styles.stayBand} aria-labelledby="home-stays-title" data-home-reveal>
+      <div className={`ota-container ${styles.stayContent}`}>
+        <div className={styles.stayHeader} data-home-banner>
+          <div className={styles.stayCopy}>
+            <p className={styles.stayKicker}>
+              <span aria-hidden="true">✦</span> {vi.ota.staysEyebrow}
+            </p>
+            <h2 id="home-stays-title">{vi.ota.staysTitle}</h2>
+            <p>{vi.ota.staysIntro}</p>
+            <Link className={styles.stayAction} href={getDestinationHref(destination)}>
+              {t('ota.browseDestination', { name: destination.name })} <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+          <div className={styles.stayScene} aria-hidden="true">
+            <Image
+              key={destination.id}
+              className={styles.stayLandscape}
+              src={destination.image}
+              alt=""
+              fill
+              sizes="(max-width: 640px) 90vw, 38vw"
+            />
+            <Image
+              className={styles.stayMascot}
+              src="/brand/tripi-depart.png"
+              alt=""
+              width={210}
+              height={210}
+              sizes="(max-width: 640px) 102px, 210px"
+            />
+            <span>{destination.name}</span>
+          </div>
+        </div>
+        <div className={styles.previewTools}>
+          <fieldset className={styles.chips} aria-label={vi.api.destination}>
+            {OTA_DESTINATIONS.map((place) => (
+              <button
+                type="button"
+                key={place.id}
+                aria-pressed={place.id === destination.id}
+                onClick={() => setDestination(place)}
+              >
+                {place.name}
+              </button>
+            ))}
+          </fieldset>
+          <p>
+            <span aria-hidden="true">◷</span>
+            {t('ota.stayDates', {
+              start: dates.checkIn.split('-').reverse().join('/'),
+              end: dates.checkOut.split('-').reverse().join('/'),
+              adults: 2,
+            })}
+          </p>
+        </div>
+        <ApiErrorNotice
+          error={query.error}
+          retry={() => {
+            void query.refetch();
+          }}
+        />
+        {query.isPending && <output className={styles.state}>{vi.api.loading}</output>}
+        {query.data?.items.length === 0 && (
+          <p className={styles.state}>
+            {vi.ota.noMatchingStays}. {vi.ota.noStaysHint}
+          </p>
+        )}
+        <div className={styles.stayGrid}>
+          {query.data?.items.map((stay) => (
+            <article className={styles.hotelCard} key={stay.hotelId}>
+              <Link
+                href={{
+                  pathname: `/hotels/${encodeURIComponent(stay.hotelId)}`,
+                  query: { ...dates, adults: 2 },
+                }}
+              >
+                <div className={styles.hotelPhoto}>
+                  <StayThumbnail url={stay.thumbnail} name={stay.name} />
+                </div>
+                <div className={styles.hotelInfo}>
+                  <p className={styles.stayLocation}>{stay.province.name}</p>
+                  {stay.stars ? <p className={styles.stayRating}>{stay.stars} ★</p> : null}
+                  <h3>{stay.name}</h3>
+                  <div className={styles.stayPriceRow}>
+                    <p>
+                      <strong>{formatPrice(stay.unitPrice)}</strong> <small>{vi.hotel.perNight}</small>
+                    </p>
+                    <span className={styles.stayCardArrow} aria-hidden="true">
+                      ↗
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function HomeStoryPreview() {
+  const query = useSocialPosts();
+  const posts = query.data?.pages[0]?.items.slice(0, 3);
+  return (
+    <section
+      className={`ota-container ${styles.section} ${styles.stories}`}
+      aria-labelledby="home-stories-title"
+      data-home-reveal
+    >
+      <p className="eyebrow">{vi.ota.storiesEyebrow}</p>
+      <div className={styles.sectionHead}>
+        <div>
+          <h2 id="home-stories-title">{vi.ota.storiesTitle}</h2>
+          <p>{vi.ota.storiesIntro}</p>
+        </div>
+        <Link className={styles.textLink} href="/inspiration">
+          {vi.ota.allStories} <span aria-hidden="true">↗</span>
+        </Link>
+      </div>
+      <ApiErrorNotice
+        error={query.error}
+        retry={() => {
+          void query.refetch();
+        }}
+      />
+      {query.isPending && <output className={styles.state}>{vi.api.loading}</output>}
+      {posts?.length === 0 && <p className={styles.state}>{vi.api.noPosts}</p>}
+      <div className={styles.previewGrid}>
+        {posts?.map((post) => (
+          <article className={styles.story} key={post.id}>
+            <p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.ota.story}</p>
+            <h3>
+              <Link href={`/trips/${encodeURIComponent(post.id)}`}>{post.title}</Link>
+            </h3>
+            <p className={styles.excerpt}>{post.body}</p>
+            <small>
+              {post.reactionTotal} {vi.api.like} · {post.commentCount} {vi.api.comments}
+            </small>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}

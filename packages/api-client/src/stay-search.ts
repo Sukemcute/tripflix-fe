@@ -21,7 +21,27 @@ export function getFutureDate(days: number): string {
   date.setDate(date.getDate() + days);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
-export function useStaySearch(initialQuery = '') {
+export async function getAvailableStays(
+  filters: StayFilters,
+  options: { signal?: AbortSignal; cursor?: string; limit?: number } = {},
+) {
+  const query = Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== '')) as {
+    placeId: string;
+    checkIn: string;
+    checkOut: string;
+    adults: string;
+  } & Partial<StayFilters>;
+  return readPage(
+    (
+      await staysControllerListStays(
+        { ...query, cursor: options.cursor, limit: options.limit },
+        { signal: options.signal },
+      )
+    ).data,
+  );
+}
+
+export function useStaySearch(initialQuery = '', initialFilters?: Partial<StayFilters>) {
   const { isReady } = useApiSession();
   const [text, setText] = useState(initialQuery);
   const [debounced, setDebounced] = useState(initialQuery);
@@ -36,8 +56,9 @@ export function useStaySearch(initialQuery = '') {
     priceMin: '',
     priceMax: '',
     sort: 'price',
+    ...initialFilters,
   });
-  const [submitted, setSubmitted] = useState<StayFilters | null>(null);
+  const [submitted, setSubmitted] = useState<StayFilters | null>(initialFilters?.placeId ? filters : null);
   const [cursor, setCursor] = useState<string | undefined>();
   useEffect(() => {
     const timeout = setTimeout(() => setDebounced(text.trim()), 250);
@@ -45,7 +66,11 @@ export function useStaySearch(initialQuery = '') {
   }, [text]);
   const suggestions = useQuery({
     queryKey: ['discovery', 'suggest', debounced],
-    enabled: isReady && debounced.length >= 2 && debounced.length <= 100,
+    enabled:
+      isReady &&
+      (!initialFilters?.placeId || !filters.placeId) &&
+      debounced.length >= 2 &&
+      debounced.length <= 100,
     queryFn: async ({ signal }) =>
       readPage((await suggestControllerSuggest({ q: debounced, types: 'place,hotel' }, { signal })).data),
   });
@@ -54,12 +79,7 @@ export function useStaySearch(initialQuery = '') {
     enabled: isReady && !!submitted,
     queryFn: async ({ signal }) => {
       if (!submitted) throw new Error('Search has not been submitted');
-      const query = Object.fromEntries(Object.entries(submitted).filter(([, value]) => value !== '')) as Omit<
-        StayFilters,
-        'rooms' | 'minStars' | 'priceMin' | 'priceMax'
-      > &
-        Partial<StayFilters>;
-      return readPage((await staysControllerListStays({ ...query, cursor }, { signal })).data);
+      return getAvailableStays(submitted, { cursor, signal });
     },
   });
   return {

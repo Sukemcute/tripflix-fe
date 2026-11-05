@@ -7,7 +7,20 @@ import { vi } from '@tripflix/i18n';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { RequireAccount } from '@/components/api-state';
-import { Button, Card, Field, money, Notice, PriceRow, Screen, Segments, Txt } from '@/components/mobile-ui';
+import {
+  Badge,
+  Button,
+  Card,
+  copy,
+  Field,
+  formatDate,
+  money,
+  Notice,
+  PriceRow,
+  Screen,
+  Segments,
+  Txt,
+} from '@/components/mobile-ui';
 import { CommerceError, HoldTimer, useCommerceOrder } from './commerce-state';
 import { useCommerce } from './commerce-provider';
 import { PaymentSuccessScreen } from './payment-success';
@@ -36,29 +49,44 @@ export function CommerceCartScreen() {
     );
   const item = draft.request.items[0]!;
   return (
-    <Screen title={text.review}>
+    <Screen
+      title={text.review}
+      footer={
+        <>
+          <PriceRow total label={text.total} amount={money(draft.total)} />
+          {!user ? (
+            <Button
+              icon="arrow-forward"
+              onPress={() => router.push({ pathname: '/login', params: { returnTo: '/cart' } })}
+            >
+              {text.login}
+            </Button>
+          ) : (
+            <Button
+              icon="arrow-forward"
+              disabled={!isReady || mutation.isPending}
+              onPress={() => mutation.mutate()}
+            >
+              {mutation.isPending ? vi.api.loading : text.hold}
+            </Button>
+          )}
+        </>
+      }
+    >
       <Txt variant="title">{draft.hotelName}</Txt>
       <Card>
+        <Badge icon="bed-outline">{copy.hotel.title}</Badge>
         <Txt variant="heading">{draft.roomName}</Txt>
         <Txt>{draft.rateName}</Txt>
         <Txt>
-          {item.checkIn} → {item.checkOut}
+          {formatDate(item.checkIn)}
+          {item.checkOut && ` → ${formatDate(item.checkOut)}`}
         </Txt>
         <Txt>
           {item.qty} {vi.api.rooms} · {draft.request.adults} {text.guests}
         </Txt>
-        <PriceRow total label={text.total} amount={money(draft.total)} />
       </Card>
       <CommerceError error={mutation.error} />
-      {!user ? (
-        <Button onPress={() => router.push({ pathname: '/login', params: { returnTo: '/cart' } })}>
-          {text.login}
-        </Button>
-      ) : (
-        <Button disabled={!isReady || mutation.isPending} onPress={() => mutation.mutate()}>
-          {mutation.isPending ? vi.api.loading : text.hold}
-        </Button>
-      )}
     </Screen>
   );
 }

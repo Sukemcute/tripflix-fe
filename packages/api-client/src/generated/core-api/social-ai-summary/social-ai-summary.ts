@@ -20,7 +20,7 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { SavePostSummaryDto } from '../model';
+import type { PostSummaryResponseDto, SavePostSummaryDto } from '../model';
 
 import { http } from '../../../http';
 
@@ -46,6 +46,16 @@ export type postSummaryControllerSaveSummaryResponse200 = {
   status: 200;
 };
 
+export type postSummaryControllerSaveSummaryResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type postSummaryControllerSaveSummaryResponse401 = {
+  data: void;
+  status: 401;
+};
+
 export type postSummaryControllerSaveSummaryResponse403 = {
   data: void;
   status: 403;
@@ -60,7 +70,10 @@ export type postSummaryControllerSaveSummaryResponseSuccess = postSummaryControl
   headers: Headers;
 };
 export type postSummaryControllerSaveSummaryResponseError = (
-  postSummaryControllerSaveSummaryResponse403 | postSummaryControllerSaveSummaryResponse404
+  | postSummaryControllerSaveSummaryResponse400
+  | postSummaryControllerSaveSummaryResponse401
+  | postSummaryControllerSaveSummaryResponse403
+  | postSummaryControllerSaveSummaryResponse404
 ) & {
   headers: Headers;
 };
@@ -174,8 +187,13 @@ export const usePostSummaryControllerSaveSummary = <TError = void, TContext = un
   return useMutation(getPostSummaryControllerSaveSummaryMutationOptions(options), queryClient);
 };
 export type postSummaryControllerGetSummaryResponse200 = {
-  data: void;
+  data: PostSummaryResponseDto;
   status: 200;
+};
+
+export type postSummaryControllerGetSummaryResponse400 = {
+  data: void;
+  status: 400;
 };
 
 export type postSummaryControllerGetSummaryResponse404 = {
@@ -186,7 +204,9 @@ export type postSummaryControllerGetSummaryResponse404 = {
 export type postSummaryControllerGetSummaryResponseSuccess = postSummaryControllerGetSummaryResponse200 & {
   headers: Headers;
 };
-export type postSummaryControllerGetSummaryResponseError = postSummaryControllerGetSummaryResponse404 & {
+export type postSummaryControllerGetSummaryResponseError = (
+  postSummaryControllerGetSummaryResponse400 | postSummaryControllerGetSummaryResponse404
+) & {
   headers: Headers;
 };
 

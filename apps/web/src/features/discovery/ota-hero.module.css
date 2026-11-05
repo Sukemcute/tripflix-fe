@@ -1,203 +1,261 @@
 .hero {
-  background:
-    radial-gradient(ellipse at 42% 45%, var(--color-sea-mist), transparent 70%), var(--color-surface);
-  overflow: hidden;
+  background: var(--color-sea-mist);
+  overflow: clip;
 }
 .inner {
-  position: relative;
-  isolation: isolate;
-  container-type: inline-size;
-  width: min(1600px, calc(100% - clamp(48px, 8vw, 160px)));
-  margin-inline: auto;
-  min-height: clamp(520px, calc(100svh - 230px), 740px);
-  padding: clamp(28px, 4vh, 48px) 0 130px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  align-items: center;
+  gap: clamp(36px, 6vw, 104px);
+  padding-block: clamp(36px, 5vw, 80px) clamp(100px, 9vw, 140px);
 }
 .copy {
   position: relative;
-  width: 49%;
+  z-index: 1;
+}
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-teal-ink);
+  font: 700 0.7rem var(--font-mono);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.kicker span {
+  font-size: 1.2rem;
 }
 .copy h1 {
-  margin-block: 16px 18px;
+  margin-block: 22px 24px;
   color: var(--color-teal-ink);
+  font-size: clamp(2.6rem, 5.05vw, 6rem);
+  line-height: 1.08;
+  letter-spacing: -0.075em;
   white-space: pre-line;
-  font-size: clamp(34px, 3.25vw, 58px);
-  line-height: 1.13;
-  letter-spacing: -0.055em;
 }
-.kicker,
-.activityLabel {
+.copy h1::first-line {
+  color: var(--color-ink);
+}
+.description {
+  max-width: 41ch;
+  font-size: clamp(0.88rem, 1.18vw, 1.04rem);
+  line-height: 1.75;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  margin-top: 28px;
+}
+.searchAction,
+.scrollAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.searchAction {
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-background);
+}
+.searchAction:hover {
+  background: var(--color-teal-ink);
+}
+.scrollAction {
   color: var(--color-teal-ink);
-  font-size: 12px;
+}
+.scrollAction:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.scrollAction span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  aspect-ratio: 1;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+.activities {
+  margin-top: clamp(24px, 3.5vw, 48px);
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--color-teal-ink) 25%, transparent);
+}
+.activities p {
+  margin-bottom: 10px;
+  color: var(--color-teal-ink);
+  font: 700 0.68rem var(--font-mono);
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
-.description {
-  color: var(--color-text-muted);
-  max-width: 40ch;
-  font-size: 14px;
-  line-height: 1.8;
+.activities > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
 }
-.activityLabel {
-  margin: 24px 0 12px;
+.activities a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
-.activities {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(10px, 1.4vw, 22px);
-  max-width: 560px;
+.activities a:hover {
+  color: var(--color-teal-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
-.activity {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-  padding: 6px 6px 10px;
-  background: var(--color-teal);
-  color: var(--color-ink);
-  border-radius: 12px 44% 12px 4px;
-  transition: transform 180ms;
-}
-.activity:hover {
-  transform: translateY(-4px);
-}
-.activity img {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1.9;
+.activities img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   object-fit: cover;
-  border-radius: inherit;
-}
-.activity strong {
-  padding-inline: 5px;
-  font-size: clamp(11px, 1vw, 13px);
-}
-.activity:nth-child(2) {
-  background: var(--color-teal-ink);
-  color: var(--color-background);
-  border-radius: 12px 12px 44% 4px;
-}
-.activity:nth-child(3) {
-  border-radius: 44% 12px 12px 4px;
 }
 .art {
+  position: relative;
+  margin: 0;
+}
+.frame {
+  position: relative;
+  min-height: 340px;
+  aspect-ratio: 1.3;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 44% 44% 20px 20px / 17% 17% 20px 20px;
+  background: var(--color-teal-ink);
+}
+.photo {
+  object-fit: cover;
+  object-position: 50% 63%;
+}
+.frameIndex {
   position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
+  top: 12%;
+  right: 8%;
+  padding: 6px 9px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: var(--color-overlay);
+  color: var(--color-background);
+  font: 0.7rem var(--font-mono);
+  letter-spacing: 0.08em;
 }
-.world,
-.water,
-.kayak {
+.route {
   position: absolute;
-  height: auto;
+  bottom: 14%;
+  left: 5%;
+  width: 24%;
+  height: 60%;
+  color: var(--color-sun-soft);
 }
-.world {
-  width: 85%;
-  left: 10%;
-  top: 0;
-  opacity: 0.07;
-}
-.water {
-  width: auto;
-  height: 100%;
-  right: 0;
-  top: 0;
-}
-.kayak {
-  width: auto;
-  height: 150%;
-  right: -12%;
-  top: -28%;
-  clip-path: url(#ota-kayak-clip);
-}
-.orbits {
+.caption {
   position: absolute;
-  left: 54%;
-  top: 22%;
-  width: 35%;
-  aspect-ratio: 1;
+  bottom: 18px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--color-ink);
+  color: var(--color-background);
+  font: 0.7rem var(--font-mono);
 }
-.orbits i {
+.caption span {
+  color: var(--color-sun);
+}
+.tripiGreeting {
   position: absolute;
-  inset: 0;
-  border: 1px dashed var(--color-sun);
-  border-radius: 50%;
+  right: 16px;
+  bottom: -18px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-teal-ink);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-ink) 14%, transparent);
+  font-size: 0.68rem;
+  font-weight: 700;
 }
-.orbits i:nth-child(2) {
-  inset: 8%;
+.tripiGreeting img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
 }
-.orbits i:nth-child(3) {
-  inset: 16%;
-}
-@media (min-width: 901px) and (max-height: 820px) {
+@media (max-width: 760px) {
   .inner {
-    min-height: calc(100svh - 240px);
-    padding-block: 24px 110px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding-bottom: 54px;
   }
   .copy h1 {
-    margin-block: 10px 12px;
-    font-size: clamp(32px, 3vw, 48px);
+    margin-block: 14px 16px;
+    font-size: clamp(2.1rem, 10vw, 4.75rem);
   }
-  .description {
-    font-size: 13px;
-    line-height: 1.6;
-  }
-  .activityLabel {
+  .actions {
     margin-top: 16px;
   }
-  .activity img {
-    aspect-ratio: 2.5;
+  .frame {
+    min-height: 0;
+    aspect-ratio: 1.4;
+  }
+  .caption {
+    bottom: 26px;
+    left: 12px;
+  }
+  .route {
+    height: 48%;
   }
 }
-@media (max-width: 900px) {
-  .inner {
-    width: calc(100% - 40px);
-    min-height: clamp(500px, calc(100svh - 340px), 620px);
-  }
-  .copy {
-    width: 58%;
-  }
-  .copy h1 {
-    font-size: clamp(32px, 4.2vw, 40px);
-  }
-  .water {
-    right: -12%;
-    opacity: 0.75;
-  }
-  .kayak {
-    right: -34%;
-  }
-}
-@media (max-width: 640px) {
-  .inner {
-    width: calc(100% - 32px);
-    min-height: auto;
-    padding: 28px 0 64px;
-  }
-  .copy {
-    width: 100%;
+@media (prefers-reduced-motion: no-preference) {
+  .copy,
+  .art {
+    animation: arrive 760ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
   }
   .art {
-    top: 260px;
-    height: 180px;
+    animation-delay: 90ms;
   }
-  .water {
-    height: 100%;
-    right: 2%;
-    opacity: 1;
+  .scrollAction span,
+  .searchAction span {
+    transition: transform 220ms ease;
   }
-  .kayak {
-    height: 160%;
-    right: -20%;
+  .scrollAction:is(:hover, :focus-visible) span {
+    transform: translateY(3px);
   }
-  .orbits {
-    width: 40%;
-  }
-  .activityLabel {
-    margin-top: 190px;
+  .searchAction:is(:hover, :focus-visible) span {
+    transform: translate(2px, -2px);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .activity {
-    transition: none;
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .photo,
+  .route,
+  .tripiGreeting {
+    transition: transform 420ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  }
+  .photo {
+    transform: translate(calc(var(--pointer-x, 0) * -34px), calc(var(--pointer-y, 0) * -24px)) scale(1.09);
+  }
+  .route,
+  .tripiGreeting {
+    transform: translate(calc(var(--pointer-x, 0) * 20px), calc(var(--pointer-y, 0) * 14px));
+  }
+}
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

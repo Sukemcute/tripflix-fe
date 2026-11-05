@@ -12,6 +12,18 @@ export interface HotelRoomOfferDto {
   productId: string;
   name: string;
   maxGuests: number;
+  /** @nullable */
+  bedType: string | null;
+  /** @nullable */
+  areaM2: number | null;
+  /**
+   * city | sea | garden | mountain | pool | river
+   * @nullable
+   */
+  view: string | null;
+  /** URL ảnh phòng */
+  images: string[];
+  amenities: string[];
   /** Số phòng cần cho số khách đã chọn */
   roomsNeeded: number;
   isAvailable: boolean;

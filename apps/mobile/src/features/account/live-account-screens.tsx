@@ -3,14 +3,152 @@ import { useApiSession } from '@tripflix/api-client';
 import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import type { UserDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
-import { router } from 'expo-router';
+import { colors as c, mobileLayout, nativeFonts, spacing as s } from '@tripflix/tokens';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { Button, Card, Field, Notice, Screen, Txt } from '@/components/mobile-ui';
+import { Pressable, StyleSheet, View } from 'react-native';
+import {
+  Button,
+  Card,
+  copy,
+  Field,
+  Icon,
+  IconButton,
+  Logo,
+  Notice,
+  Screen,
+  Sheet,
+  Txt,
+  ui,
+} from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount, UnavailableScreen } from '@/components/api-state';
 
+const profile = copy.profile;
+
 export function LiveProfileScreen() {
+  const { user, isReady, error, session } = useApiSession();
+  const [help, setHelp] = useState(false);
+  const login = () => router.push({ pathname: '/login', params: { returnTo: '/(tabs)/me' } });
+  const links = [
+    { label: profile.myTrips, icon: 'bag-handle-outline', onPress: () => router.navigate('/(tabs)/trips') },
+    { label: profile.savedTrips, icon: 'bookmark-outline', onPress: () => router.push('/saved') },
+    {
+      label: profile.create,
+      icon: 'create-outline',
+      onPress: () => router.push(user ? '/create' : { pathname: '/login', params: { returnTo: '/create' } }),
+    },
+    {
+      label: copy.common.notification,
+      icon: 'notifications-outline',
+      onPress: () => router.push('/notifications'),
+    },
+    { label: profile.help, icon: 'help-buoy-outline', onPress: () => setHelp(true) },
+  ] as const;
+  const stats = [
+    {
+      label: profile.posts,
+      icon: 'albums-outline',
+      onPress: () => router.push({ pathname: '/search', params: { view: 'mine' } }),
+    },
+    { label: copy.tabs.trips, icon: 'bag-handle-outline', onPress: links[0].onPress },
+    { label: profile.saved, icon: 'bookmark-outline', onPress: links[1].onPress },
+  ] as const;
+  const initials = user?.displayName
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => Array.from(part)[0])
+    .join('')
+    .toLocaleUpperCase('vi-VN');
+
+  return (
+    <Screen header={null} padded={false}>
+      <View>
+        <View style={styles.cover}>
+          <Logo />
+          <IconButton
+            name="settings-outline"
+            label={profile.settings}
+            light
+            onPress={() =>
+              router.push(
+                user
+                  ? '/account-settings'
+                  : {
+                      pathname: '/login',
+                      params: { returnTo: '/account-settings' },
+                    },
+              )
+            }
+          />
+        </View>
+        <View style={styles.profileBody}>
+          <View style={styles.avatar}>
+            <Txt variant="title" style={styles.avatarText}>
+              {initials || 'TF'}
+            </Txt>
+          </View>
+          <Txt variant="title" style={styles.profileName}>
+            {isReady ? (user?.displayName ?? profile.guest) : vi.api.loading}
+          </Txt>
+          {isReady && (
+            <Txt variant="small" style={ui.muted}>
+              {user?.email ?? profile.body}
+            </Txt>
+          )}
+          {isReady && !user && (
+            <Button onPress={login} style={styles.signIn}>
+              {profile.login}
+            </Button>
+          )}
+          <ApiErrorNotice
+            error={error}
+            retry={() => {
+              void session.initialize();
+            }}
+          />
+          <View style={styles.stats}>
+            {stats.map((item, index) => (
+              <Pressable
+                key={item.label}
+                accessibilityRole="button"
+                onPress={item.onPress}
+                style={[styles.stat, index < stats.length - 1 && styles.statDivider]}
+              >
+                <Icon name={item.icon} size={20} />
+                <Txt variant="caption" style={[ui.center, ui.muted]}>
+                  {item.label}
+                </Txt>
+              </Pressable>
+            ))}
+          </View>
+          {links.map((item) => (
+            <Pressable key={item.label} accessibilityRole="button" onPress={item.onPress} style={styles.menu}>
+              <View style={styles.menuIcon}>
+                <Icon name={item.icon} color={c.tealInk} size={20} />
+              </View>
+              <Txt variant="small" style={ui.flex}>
+                {item.label}
+              </Txt>
+              <Icon name="chevron-forward" size={16} color={c.textMuted} />
+            </Pressable>
+          ))}
+          <Txt variant="caption" style={[ui.center, ui.muted, styles.tagline]}>
+            {vi.app.slogan}.
+          </Txt>
+        </View>
+      </View>
+      <Sheet title={profile.help} visible={help} onClose={() => setHelp(false)}>
+        <Txt variant="small">{profile.liveHelpBody}</Txt>
+      </Sheet>
+    </Screen>
+  );
+}
+
+export function LiveAccountSettingsScreen() {
   const { user, isReady } = useApiSession();
-  if (!isReady || !user) return <RequireAccount />;
+  if (!isReady) return <RequireAccount />;
+  if (!user) return <Redirect href="/(tabs)/me" />;
   return <ProfileEditor key={user.id} user={user} />;
 }
 function ProfileEditor({ user }: { user: UserDto }) {
@@ -46,18 +184,11 @@ function ProfileEditor({ user }: { user: UserDto }) {
     },
   });
   return (
-    <Screen title={vi.api.account} back={false}>
+    <Screen title={profile.settings}>
       <Txt variant="title">{user.displayName}</Txt>
-      <Txt>{user.email}</Txt>
-      <Button tone="secondary" onPress={() => router.push('/saved')}>
-        {vi.api.bookmarks}
-      </Button>
-      <Button tone="secondary" onPress={() => router.push('/create')}>
-        {vi.api.create}
-      </Button>
-      <Button tone="secondary" onPress={() => router.push({ pathname: '/search', params: { view: 'mine' } })}>
-        {vi.api.myPosts}
-      </Button>
+      <Txt variant="small" style={ui.muted}>
+        {user.email}
+      </Txt>
       <Field label={vi.api.displayName} value={name} onChangeText={setName} maxLength={50} />
       <Button disabled={mutation.isPending || !name.trim()} onPress={() => mutation.mutate('profile')}>
         {vi.api.save}
@@ -120,8 +251,79 @@ function ProfileEditor({ user }: { user: UserDto }) {
   );
 }
 export function LiveNotificationsScreen() {
-  return <UnavailableScreen message={vi.api.notificationUnavailable} />;
+  return (
+    <Screen title={copy.notifications.title}>
+      <View style={{ gap: s.sm }}>
+        <Txt variant="title">{copy.notifications.headline}</Txt>
+        <View style={styles.notification}>
+          <View style={styles.menuIcon}>
+            <Icon name="notifications-outline" color={c.tealInk} size={20} />
+          </View>
+          <View style={ui.flex}>
+            <Txt variant="small" style={ui.muted}>
+              {vi.api.notificationUnavailable}
+            </Txt>
+          </View>
+        </View>
+      </View>
+    </Screen>
+  );
 }
 export function LiveTripsScreen() {
   return <UnavailableScreen />;
 }
+
+const styles = StyleSheet.create({
+  cover: {
+    height: 120,
+    backgroundColor: c.seaMist,
+    padding: mobileLayout.gutter,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  profileBody: { paddingHorizontal: mobileLayout.gutter },
+  avatar: {
+    marginTop: -39,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 4,
+    borderColor: c.background,
+    backgroundColor: c.sunSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { fontSize: 24, lineHeight: 32, fontFamily: nativeFonts.bold },
+  profileName: { fontSize: 23, lineHeight: 32, marginTop: s.md, marginBottom: s.xs },
+  signIn: { marginTop: s.lg },
+  stats: { flexDirection: 'row', marginVertical: s.xl },
+  stat: {
+    flex: 1,
+    gap: s.xs,
+    minHeight: mobileLayout.touchTarget,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: s.xs,
+  },
+  statDivider: {
+    borderRightColor: c.border,
+    borderRightWidth: StyleSheet.hairlineWidth,
+  },
+  menu: { flexDirection: 'row', alignItems: 'center', gap: s.md, paddingVertical: s.md, minHeight: 60 },
+  menuIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.seaMist,
+  },
+  notification: {
+    flexDirection: 'row',
+    gap: s.md,
+    paddingVertical: s.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: c.border,
+  },
+  tagline: { marginTop: s.xl },
+});
