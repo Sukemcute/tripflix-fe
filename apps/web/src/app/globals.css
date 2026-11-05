@@ -76,7 +76,7 @@ h3 {
   font-size: 14px;
 }
 .header-content nav a:hover {
-  color: var(--color-coral-ink);
+  color: var(--color-teal-ink);
 }
 .demo-badge {
   display: inline-flex;
@@ -168,7 +168,7 @@ h3 {
 .hero-caption a {
   font-size: 12px;
   align-self: center;
-  color: var(--color-coral-ink);
+  color: var(--color-teal-ink);
 }
 .home-search {
   border: 1px solid var(--color-border);
@@ -242,7 +242,7 @@ h3 {
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  background: var(--color-coral-ink);
+  background: var(--color-teal-ink);
   color: var(--color-background);
   font-size: 15px;
   font-weight: 700;
@@ -430,11 +430,11 @@ h3 {
     transform 0.18s;
 }
 .primary-button {
-  background: var(--color-coral-ink);
+  background: var(--color-teal-ink);
   color: var(--color-background);
 }
 .primary-button:hover {
-  background: var(--color-ink);
+  background: color-mix(in srgb, var(--color-teal-ink) 78%, var(--color-ink));
 }
 .primary-button:active,
 .secondary-button:active {
@@ -551,7 +551,7 @@ h3 {
   margin-top: auto;
 }
 .trip-card-bottom strong {
-  color: var(--color-coral-ink);
+  color: var(--color-teal-ink);
   font-size: 18px;
   font-variant-numeric: tabular-nums;
 }
@@ -1073,7 +1073,7 @@ h3 {
   }
 }
 
-/* Đăng nhập, quên mật khẩu, trang tài khoản (TF06A) */
+/* Đăng nhập, quên mật khẩu, trang tài khoản (TF06A). Màu nhấn teal từ TF06L; đỏ cam chỉ còn cho lỗi và thao tác nguy hiểm. */
 .auth-page {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
@@ -1213,7 +1213,7 @@ h3 {
   line-height: 1.7;
 }
 .auth-link {
-  color: var(--color-coral-ink);
+  color: var(--color-teal-ink);
   font-size: 13px;
   font-weight: 700;
 }
@@ -1296,7 +1296,7 @@ h3 {
   width: 72px;
   height: 72px;
   border-radius: 999px;
-  background: var(--color-coral-ink);
+  background: var(--color-teal-ink);
   color: var(--color-background);
   font-size: 30px;
   font-weight: 700;
@@ -1446,7 +1446,7 @@ h3 {
   color: var(--color-ink);
 }
 .account-tabs button[aria-pressed='true'] {
-  border-bottom-color: var(--color-coral-ink);
+  border-bottom-color: var(--color-teal-ink);
   color: var(--color-ink);
   font-weight: 700;
 }
@@ -1780,7 +1780,7 @@ h3 {
 .post-cover-badge {
   padding: 4px 10px;
   border-radius: 999px;
-  background: var(--color-coral-ink);
+  background: var(--color-teal-ink);
   color: var(--color-background);
   font-size: 11px;
   font-weight: 700;
