@@ -1,0 +1,12 @@
+{
+  "checks": [
+    "like/save update immediately without feed requests or moving the reel",
+    "failed mutation restores the selected state and count",
+    "inline retry recovers after a failed save",
+    "long caption expands in a bounded scroll area and collapses",
+    "hold hides the overlay; release restores it without toggling playback",
+    "320/390/430px: pinned composer, list scroll arbitration, header swipe and top-of-list dismissal"
+  ],
+  "errors": [],
+  "platform": "Expo web / Chromium; mocked API. iPhone keyboard and touch arbitration need device verification."
+}
