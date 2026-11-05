@@ -5,6 +5,7 @@ import { vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import Link from 'next/link';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { CommunitySummary } from './post-summary';
 
 export function LiveComments({ postId, parentCommentId }: { postId: string; parentCommentId?: string }) {
   const { user } = useApiSession();
@@ -36,6 +37,7 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
   return (
     <>
       <h2>{parentCommentId ? vi.api.reply : vi.api.comments}</h2>
+      {!parentCommentId && <CommunitySummary key={postId} postId={postId} />}
       <ApiErrorNotice
         error={query.error}
         retry={() => {

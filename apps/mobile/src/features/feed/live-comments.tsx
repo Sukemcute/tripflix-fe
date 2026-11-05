@@ -8,6 +8,7 @@ import { Button, Card, Field, Icon, Notice, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 import { router } from 'expo-router';
 import { ReelCommentComposer } from './reel-comment-composer';
+import { CommunitySummary } from './post-summary';
 
 function CommentAction({
   compact,
@@ -79,12 +80,14 @@ export function LiveComments({
       await Promise.all([
         client.invalidateQueries({ queryKey: ['social', 'comments', postId] }),
         client.invalidateQueries({ queryKey: ['social', 'post', postId] }),
+        client.invalidateQueries({ queryKey: ['social', 'summary', postId] }),
         client.invalidateQueries({ queryKey: ['feed'], refetchType: 'none' }),
       ]);
     },
   });
   const content = (
     <>
+      {!parentCommentId && <CommunitySummary key={postId} postId={postId} />}
       <ApiErrorNotice
         error={query.error}
         retry={() => {
