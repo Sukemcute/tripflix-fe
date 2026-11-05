@@ -22,10 +22,16 @@ import type {
 
 import type {
   ChangePasswordDto,
+  ForgotPasswordAcceptedDto,
+  ForgotPasswordDto,
+  GoogleLoginDto,
   JwksDto,
   LoginDto,
   RefreshDto,
   RegisterDto,
+  ResetPasswordDto,
+  ServiceTokenDto,
+  ServiceTokenRequestDto,
   SessionDto,
   TokenPairDto,
   UpdateProfileDto,
@@ -264,6 +270,133 @@ export const useAuthControllerLogin = <TError = void, TContext = unknown>(
   TContext
 > => {
   return useMutation(getAuthControllerLoginMutationOptions(options), queryClient);
+};
+export type authControllerLoginWithGoogleResponse200 = {
+  data: TokenPairDto;
+  status: 200;
+};
+
+export type authControllerLoginWithGoogleResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type authControllerLoginWithGoogleResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type authControllerLoginWithGoogleResponse503 = {
+  data: void;
+  status: 503;
+};
+
+export type authControllerLoginWithGoogleResponseSuccess = authControllerLoginWithGoogleResponse200 & {
+  headers: Headers;
+};
+export type authControllerLoginWithGoogleResponseError = (
+  | authControllerLoginWithGoogleResponse401
+  | authControllerLoginWithGoogleResponse403
+  | authControllerLoginWithGoogleResponse503
+) & {
+  headers: Headers;
+};
+
+export type authControllerLoginWithGoogleResponse =
+  authControllerLoginWithGoogleResponseSuccess | authControllerLoginWithGoogleResponseError;
+
+export const getAuthControllerLoginWithGoogleUrl = () => {
+  return `/api/auth/google`;
+};
+
+export const authControllerLoginWithGoogle = async (
+  googleLoginDto: GoogleLoginDto,
+  options?: Parameters<typeof http>[1],
+): Promise<authControllerLoginWithGoogleResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<authControllerLoginWithGoogleResponse>(getAuthControllerLoginWithGoogleUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(googleLoginDto),
+  });
+};
+
+export const getAuthControllerLoginWithGoogleMutationKey = () => ['authControllerLoginWithGoogle'] as const;
+
+export const getAuthControllerLoginWithGoogleMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerLoginWithGoogle>>,
+    TError,
+    AuthControllerLoginWithGoogleMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authControllerLoginWithGoogle>>,
+  TError,
+  AuthControllerLoginWithGoogleMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAuthControllerLoginWithGoogleMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authControllerLoginWithGoogle>>,
+    AuthControllerLoginWithGoogleMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return authControllerLoginWithGoogle(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerLoginWithGoogleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerLoginWithGoogle>>
+>;
+export type AuthControllerLoginWithGoogleMutationBody = GoogleLoginDto;
+export type AuthControllerLoginWithGoogleMutationError = void;
+export type AuthControllerLoginWithGoogleMutationVariables = { data: GoogleLoginDto };
+
+export const useAuthControllerLoginWithGoogle = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerLoginWithGoogle>>,
+      TError,
+      AuthControllerLoginWithGoogleMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authControllerLoginWithGoogle>>,
+  TError,
+  AuthControllerLoginWithGoogleMutationVariables,
+  TContext
+> => {
+  return useMutation(getAuthControllerLoginWithGoogleMutationOptions(options), queryClient);
 };
 export type authControllerRefreshResponse200 = {
   data: TokenPairDto;
@@ -1048,6 +1181,345 @@ export const useAccountControllerLogoutAll = <TError = unknown, TContext = unkno
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof accountControllerLogoutAll>>, TError, void, TContext> => {
   return useMutation(getAccountControllerLogoutAllMutationOptions(options), queryClient);
+};
+export type passwordResetControllerForgotResponse202 = {
+  data: ForgotPasswordAcceptedDto;
+  status: 202;
+};
+
+export type passwordResetControllerForgotResponse429 = {
+  data: void;
+  status: 429;
+};
+
+export type passwordResetControllerForgotResponseSuccess = passwordResetControllerForgotResponse202 & {
+  headers: Headers;
+};
+export type passwordResetControllerForgotResponseError = passwordResetControllerForgotResponse429 & {
+  headers: Headers;
+};
+
+export type passwordResetControllerForgotResponse =
+  passwordResetControllerForgotResponseSuccess | passwordResetControllerForgotResponseError;
+
+export const getPasswordResetControllerForgotUrl = () => {
+  return `/api/auth/password/forgot`;
+};
+
+export const passwordResetControllerForgot = async (
+  forgotPasswordDto: ForgotPasswordDto,
+  options?: Parameters<typeof http>[1],
+): Promise<passwordResetControllerForgotResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<passwordResetControllerForgotResponse>(getPasswordResetControllerForgotUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(forgotPasswordDto),
+  });
+};
+
+export const getPasswordResetControllerForgotMutationKey = () => ['passwordResetControllerForgot'] as const;
+
+export const getPasswordResetControllerForgotMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof passwordResetControllerForgot>>,
+    TError,
+    PasswordResetControllerForgotMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof passwordResetControllerForgot>>,
+  TError,
+  PasswordResetControllerForgotMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPasswordResetControllerForgotMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof passwordResetControllerForgot>>,
+    PasswordResetControllerForgotMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return passwordResetControllerForgot(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PasswordResetControllerForgotMutationResult = NonNullable<
+  Awaited<ReturnType<typeof passwordResetControllerForgot>>
+>;
+export type PasswordResetControllerForgotMutationBody = ForgotPasswordDto;
+export type PasswordResetControllerForgotMutationError = void;
+export type PasswordResetControllerForgotMutationVariables = { data: ForgotPasswordDto };
+
+export const usePasswordResetControllerForgot = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof passwordResetControllerForgot>>,
+      TError,
+      PasswordResetControllerForgotMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof passwordResetControllerForgot>>,
+  TError,
+  PasswordResetControllerForgotMutationVariables,
+  TContext
+> => {
+  return useMutation(getPasswordResetControllerForgotMutationOptions(options), queryClient);
+};
+export type passwordResetControllerResetResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type passwordResetControllerResetResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type passwordResetControllerResetResponseSuccess = passwordResetControllerResetResponse204 & {
+  headers: Headers;
+};
+export type passwordResetControllerResetResponseError = passwordResetControllerResetResponse400 & {
+  headers: Headers;
+};
+
+export type passwordResetControllerResetResponse =
+  passwordResetControllerResetResponseSuccess | passwordResetControllerResetResponseError;
+
+export const getPasswordResetControllerResetUrl = () => {
+  return `/api/auth/password/reset`;
+};
+
+export const passwordResetControllerReset = async (
+  resetPasswordDto: ResetPasswordDto,
+  options?: Parameters<typeof http>[1],
+): Promise<passwordResetControllerResetResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<passwordResetControllerResetResponse>(getPasswordResetControllerResetUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(resetPasswordDto),
+  });
+};
+
+export const getPasswordResetControllerResetMutationKey = () => ['passwordResetControllerReset'] as const;
+
+export const getPasswordResetControllerResetMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof passwordResetControllerReset>>,
+    TError,
+    PasswordResetControllerResetMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof passwordResetControllerReset>>,
+  TError,
+  PasswordResetControllerResetMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPasswordResetControllerResetMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof passwordResetControllerReset>>,
+    PasswordResetControllerResetMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return passwordResetControllerReset(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PasswordResetControllerResetMutationResult = NonNullable<
+  Awaited<ReturnType<typeof passwordResetControllerReset>>
+>;
+export type PasswordResetControllerResetMutationBody = ResetPasswordDto;
+export type PasswordResetControllerResetMutationError = void;
+export type PasswordResetControllerResetMutationVariables = { data: ResetPasswordDto };
+
+export const usePasswordResetControllerReset = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof passwordResetControllerReset>>,
+      TError,
+      PasswordResetControllerResetMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof passwordResetControllerReset>>,
+  TError,
+  PasswordResetControllerResetMutationVariables,
+  TContext
+> => {
+  return useMutation(getPasswordResetControllerResetMutationOptions(options), queryClient);
+};
+export type serviceTokenControllerIssueResponse200 = {
+  data: ServiceTokenDto;
+  status: 200;
+};
+
+export type serviceTokenControllerIssueResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type serviceTokenControllerIssueResponseSuccess = serviceTokenControllerIssueResponse200 & {
+  headers: Headers;
+};
+export type serviceTokenControllerIssueResponseError = serviceTokenControllerIssueResponse401 & {
+  headers: Headers;
+};
+
+export type serviceTokenControllerIssueResponse =
+  serviceTokenControllerIssueResponseSuccess | serviceTokenControllerIssueResponseError;
+
+export const getServiceTokenControllerIssueUrl = () => {
+  return `/api/auth/service-token`;
+};
+
+export const serviceTokenControllerIssue = async (
+  serviceTokenRequestDto: ServiceTokenRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<serviceTokenControllerIssueResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<serviceTokenControllerIssueResponse>(getServiceTokenControllerIssueUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serviceTokenRequestDto),
+  });
+};
+
+export const getServiceTokenControllerIssueMutationKey = () => ['serviceTokenControllerIssue'] as const;
+
+export const getServiceTokenControllerIssueMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof serviceTokenControllerIssue>>,
+    TError,
+    ServiceTokenControllerIssueMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof serviceTokenControllerIssue>>,
+  TError,
+  ServiceTokenControllerIssueMutationVariables,
+  TContext
+> => {
+  const mutationKey = getServiceTokenControllerIssueMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof serviceTokenControllerIssue>>,
+    ServiceTokenControllerIssueMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return serviceTokenControllerIssue(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ServiceTokenControllerIssueMutationResult = NonNullable<
+  Awaited<ReturnType<typeof serviceTokenControllerIssue>>
+>;
+export type ServiceTokenControllerIssueMutationBody = ServiceTokenRequestDto;
+export type ServiceTokenControllerIssueMutationError = void;
+export type ServiceTokenControllerIssueMutationVariables = { data: ServiceTokenRequestDto };
+
+export const useServiceTokenControllerIssue = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof serviceTokenControllerIssue>>,
+      TError,
+      ServiceTokenControllerIssueMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof serviceTokenControllerIssue>>,
+  TError,
+  ServiceTokenControllerIssueMutationVariables,
+  TContext
+> => {
+  return useMutation(getServiceTokenControllerIssueMutationOptions(options), queryClient);
 };
 export type jwksControllerGetJwksResponse200 = {
   data: JwksDto;

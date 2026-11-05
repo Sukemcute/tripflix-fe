@@ -18,6 +18,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  HomeRecommendationsControllerRecommendForHomeParams,
+  HomeRecommendationsDto,
   StayPageDto,
   StaysControllerListStaysParams,
   SuggestControllerSuggestParams,
@@ -354,6 +356,207 @@ export function useStaysControllerListStays<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getStaysControllerListStaysQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type homeRecommendationsControllerRecommendForHomeResponse200 = {
+  data: HomeRecommendationsDto;
+  status: 200;
+};
+
+export type homeRecommendationsControllerRecommendForHomeResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type homeRecommendationsControllerRecommendForHomeResponseSuccess =
+  homeRecommendationsControllerRecommendForHomeResponse200 & {
+    headers: Headers;
+  };
+export type homeRecommendationsControllerRecommendForHomeResponseError =
+  homeRecommendationsControllerRecommendForHomeResponse400 & {
+    headers: Headers;
+  };
+
+export type homeRecommendationsControllerRecommendForHomeResponse =
+  | homeRecommendationsControllerRecommendForHomeResponseSuccess
+  | homeRecommendationsControllerRecommendForHomeResponseError;
+
+export const getHomeRecommendationsControllerRecommendForHomeUrl = (
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recommendations/home?${stringifiedParams}`
+    : `/api/recommendations/home`;
+};
+
+/**
+ * Công khai, không cần đăng nhập. Server không lưu gì về người dùng.
+ *
+ * - `recentPlaceIds`: các nơi người dùng vừa chọn ở `/api/suggest` (`refId` của dòng `place`), web tự nhớ ở trình duyệt, mới nhất trước. Dùng tối đa 3 nơi, mỗi nơi 2 khách sạn: lý do "Vì bạn vừa tìm …".
+ * - Phần còn lại là khách sạn rẻ hơn giá trung bình cùng hạng sao từ 10%, mỗi tỉnh một khách sạn: lý do "Rẻ hơn X% so với …".
+ * - Giá là "từ X/đêm" trong 30 ngày tới; còn phòng và giá thật cho ngày cụ thể xem ở trang chi tiết hoặc `/api/stays`.
+ * @summary Gợi ý khách sạn cho trang chủ web, mỗi gợi ý kèm lý do ngắn
+ */
+export const homeRecommendationsControllerRecommendForHome = async (
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+  options?: Parameters<typeof http>[1],
+): Promise<homeRecommendationsControllerRecommendForHomeResponse> => {
+  return http<homeRecommendationsControllerRecommendForHomeResponse>(
+    getHomeRecommendationsControllerRecommendForHomeUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getHomeRecommendationsControllerRecommendForHomeQueryKey = (
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+) => {
+  return [`/api/recommendations/home`, ...(params ? [params] : [])] as const;
+};
+
+export const getHomeRecommendationsControllerRecommendForHomeQueryOptions = <
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+  TError = void,
+>(
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getHomeRecommendationsControllerRecommendForHomeQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>> = ({
+    signal,
+  }) => homeRecommendationsControllerRecommendForHome(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type HomeRecommendationsControllerRecommendForHomeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>
+>;
+export type HomeRecommendationsControllerRecommendForHomeQueryError = void;
+
+export function useHomeRecommendationsControllerRecommendForHome<
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+  TError = void,
+>(
+  params: undefined | HomeRecommendationsControllerRecommendForHomeParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+          TError,
+          Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useHomeRecommendationsControllerRecommendForHome<
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+  TError = void,
+>(
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+          TError,
+          Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useHomeRecommendationsControllerRecommendForHome<
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+  TError = void,
+>(
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Gợi ý khách sạn cho trang chủ web, mỗi gợi ý kèm lý do ngắn
+ */
+
+export function useHomeRecommendationsControllerRecommendForHome<
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+  TError = void,
+>(
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getHomeRecommendationsControllerRecommendForHomeQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
