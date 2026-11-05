@@ -8,13 +8,15 @@ import { useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { PublicPosts } from '@/features/social/live-posts';
 import { AccountSecurity } from './account-security';
+import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
+import { ADMIN_URL, getInitial, isStaffRole } from './account-helpers';
 
 // Màn đăng nhập nằm ở login-form.tsx; giữ export ở đây để app/login/page.tsx không phải đổi.
 export { LiveLogin } from './login-form';
 
-export function LiveAccount() {
+export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTab }) {
   const { user, isReady, session, error } = useApiSession();
-  const [tab, setTab] = useState<'profile' | 'mine' | 'bookmarks' | 'create'>('profile');
+  const [tab, setTab] = useState<AccountTab>(initialTab);
   if (!isReady)
     return (
       <main id="content" className="ota-container results-page account-page">
@@ -44,7 +46,7 @@ export function LiveAccount() {
         <div className="account-identity">
           <h1>{user.displayName}</h1>
           <p>
-            {user.email}
+            <span className="account-email">{user.email}</span>
             <span className="account-role">{describeRole(user.role)}</span>
           </p>
         </div>
@@ -52,7 +54,7 @@ export function LiveAccount() {
       </header>
       <AdminAreaCard role={user.role} />
       <nav className="account-tabs" aria-label={vi.api.accountSections}>
-        {(['profile', 'mine', 'bookmarks', 'create'] as const).map((kind) => (
+        {ACCOUNT_TABS.map((kind) => (
           <button key={kind} type="button" aria-pressed={tab === kind} onClick={() => setTab(kind)}>
             {kind === 'profile'
               ? vi.api.account
@@ -107,12 +109,9 @@ function AccountGuest() {
   );
 }
 
-// Trống thì ẩn thẻ Khu vực quản trị (ví dụ môi trường chưa có trang admin).
-const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL ?? 'http://localhost:3200';
-
 /** Thẻ dẫn sang trang quản trị, chỉ hiện với kiểm duyệt viên và quản trị viên. */
 function AdminAreaCard({ role }: { role: string }) {
-  if (!ADMIN_URL || (role !== 'moderator' && role !== 'superadmin')) return null;
+  if (!ADMIN_URL || !isStaffRole(role)) return null;
   return (
     <section className="account-admin" aria-labelledby="account-admin-title">
       <div>
@@ -124,11 +123,6 @@ function AdminAreaCard({ role }: { role: string }) {
       </a>
     </section>
   );
-}
-
-/** Chữ cái đầu của tên để làm avatar; tên trống thì dùng dấu chấm. */
-function getInitial(displayName: string): string {
-  return Array.from(displayName.trim())[0]?.toUpperCase() ?? '·';
 }
 
 function describeRole(role: string): string {
