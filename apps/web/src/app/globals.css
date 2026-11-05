@@ -53,7 +53,7 @@ h3 {
   text-wrap: balance;
 }
 .ota-container {
-  width: min(1240px, calc(100% - 64px));
+  width: min(1600px, calc(100% - clamp(48px, 8vw, 160px)));
   margin-inline: auto;
 }
 .ota-header {
@@ -61,7 +61,7 @@ h3 {
   background: var(--color-background);
 }
 .header-content {
-  min-height: 94px;
+  min-height: 80px;
   display: flex;
   align-items: center;
   gap: 48px;
@@ -216,51 +216,13 @@ h3 {
 }
 .ota-home.results-page {
   padding-top: 0;
-}
-.ota-home .search-form {
+  padding-bottom: 0;
   position: relative;
-  margin-top: -18px;
-  padding: 20px 24px;
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  background: var(--color-background);
-  display: grid;
-  grid-template-columns: minmax(210px, 1.5fr) repeat(3, minmax(105px, 1fr));
-  align-items: start;
-  gap: 12px 16px;
+  margin-top: -100px;
+  scroll-margin-top: 24px;
 }
-.ota-home .filter-bar {
-  display: contents;
-}
-.ota-home .filter-bar label {
-  margin: 0;
-}
-.ota-home .ota-place-field {
-  grid-column: 1;
-  grid-row: 1;
-}
-.ota-home .ota-place-field > label {
-  font-size: 11px;
-  margin-bottom: 8px;
-}
-.ota-home .search-form > .suggested-queries {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  margin: 0;
-}
-.ota-home .search-form > :is(output, p, [role='alert']) {
-  grid-column: 1 / -1;
-}
-.ota-home .search-form > button[type='submit'] {
-  margin: 0;
-  align-self: end;
-  background: var(--color-teal-ink);
-}
-.ota-home .filter-bar input,
-.ota-home .filter-bar select,
-.ota-home .ota-place-field > input {
-  min-width: 0;
-  background: var(--color-sea-mist);
+.ota-home > .result-grid:empty {
+  display: none;
 }
 .ota-destinations {
   padding-block: 48px 64px;
@@ -290,24 +252,12 @@ h3 {
   color: var(--color-background);
   font-size: 22px;
 }
-@media (max-width: 900px) {
-  .ota-home .search-form {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .ota-home .ota-place-field {
-    grid-column: 1 / -1;
-  }
-}
 @media (max-width: 640px) {
   .ota-header .ota-header-cta {
     display: none;
   }
-  .ota-home .search-form {
-    margin-top: 0;
-    padding: 16px;
-  }
-  .ota-home .search-form > button[type='submit'] {
-    grid-column: 1 / -1;
+  .ota-home.results-page {
+    margin-top: -32px;
   }
 }
 .search-form > input,

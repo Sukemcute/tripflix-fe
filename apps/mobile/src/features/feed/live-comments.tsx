@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import { socialApi, useApiSession } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, radius, spacing } from '@tripflix/tokens';
-import { useState, type PropsWithChildren } from 'react';
+import { useState, type PropsWithChildren, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, Card, Field, Icon, Notice, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
@@ -45,11 +45,13 @@ export function LiveComments({
   parentCommentId,
   showHeading = true,
   compact = false,
+  renderContent,
 }: {
   postId: string;
   parentCommentId?: string;
   showHeading?: boolean;
   compact?: boolean;
+  renderContent?: (content: ReactNode) => ReactNode;
 }) {
   const { user } = useApiSession();
   const client = useQueryClient();
@@ -74,13 +76,15 @@ export function LiveComments({
         setBody('');
         setEditing(null);
       }
-      await client.invalidateQueries({ queryKey: ['social'] });
-      await client.invalidateQueries({ queryKey: ['feed'] });
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['social', 'comments', postId] }),
+        client.invalidateQueries({ queryKey: ['social', 'post', postId] }),
+        client.invalidateQueries({ queryKey: ['feed'], refetchType: 'none' }),
+      ]);
     },
   });
-  return (
+  const content = (
     <>
-      {showHeading && <Txt variant="heading">{vi.api.comments}</Txt>}
       <ApiErrorNotice
         error={query.error}
         retry={() => {
@@ -156,53 +160,70 @@ export function LiveComments({
           {vi.api.next}
         </Button>
       )}
-      <ApiErrorNotice error={mutation.error} />
-      {user ? (
-        <>
-          {compact ? (
-            <ReelCommentComposer
-              label={editing ? vi.api.edit : parentCommentId ? vi.api.reply : vi.api.commentBody}
-              value={body}
-              onChange={setBody}
-              onSend={() => mutation.mutate('save')}
-              isPending={mutation.isPending}
-            />
-          ) : (
-            <>
-              <Field
+    </>
+  );
+  return (
+    <>
+      {showHeading && <Txt variant="heading">{vi.api.comments}</Txt>}
+      {renderContent ? renderContent(content) : content}
+      <View style={renderContent ? styles.composer : compact ? undefined : styles.inlineComposer}>
+        <ApiErrorNotice error={mutation.error} />
+        {user ? (
+          <>
+            {compact ? (
+              <ReelCommentComposer
                 label={editing ? vi.api.edit : parentCommentId ? vi.api.reply : vi.api.commentBody}
                 value={body}
-                onChangeText={setBody}
-                multiline
-                maxLength={10000}
+                onChange={setBody}
+                onSend={() => mutation.mutate('save')}
+                isPending={mutation.isPending}
               />
-              <Button disabled={mutation.isPending || !body.trim()} onPress={() => mutation.mutate('save')}>
-                {mutation.isPending ? vi.api.saving : vi.api.send}
+            ) : (
+              <>
+                <Field
+                  label={editing ? vi.api.edit : parentCommentId ? vi.api.reply : vi.api.commentBody}
+                  value={body}
+                  onChangeText={setBody}
+                  multiline
+                  maxLength={10000}
+                />
+                <Button disabled={mutation.isPending || !body.trim()} onPress={() => mutation.mutate('save')}>
+                  {mutation.isPending ? vi.api.saving : vi.api.send}
+                </Button>
+              </>
+            )}
+            {editing && (
+              <Button
+                tone="text"
+                onPress={() => {
+                  setEditing(null);
+                  setBody('');
+                }}
+              >
+                {vi.api.cancel}
               </Button>
-            </>
-          )}
-          {editing && (
-            <Button
-              tone="text"
-              onPress={() => {
-                setEditing(null);
-                setBody('');
-              }}
-            >
-              {vi.api.cancel}
-            </Button>
-          )}
-        </>
-      ) : (
-        <Button onPress={() => router.push({ pathname: '/login', params: { returnTo: `/trip/${postId}` } })}>
-          {vi.api.login}
-        </Button>
-      )}
+            )}
+          </>
+        ) : (
+          <Button
+            onPress={() => router.push({ pathname: '/login', params: { returnTo: `/trip/${postId}` } })}
+          >
+            {vi.api.login}
+          </Button>
+        )}
+      </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  inlineComposer: { gap: spacing.lg },
+  composer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
   comment: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   avatar: {
     width: 36,

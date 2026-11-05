@@ -8,6 +8,7 @@ export { getApiErrorKind, readEntity, readPage } from './response';
 export { socialApi } from './social';
 export { useSocialPosts } from './queries';
 export { feedApi, useReelsFeed } from './feed';
+export { updateReelSocialCache } from './reel-social-cache';
 export { useStaySearch, getFutureDate, type StayFilters } from './stay-search';
 export {
   commerceApi,
