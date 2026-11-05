@@ -3,25 +3,44 @@ import { vi } from '@tripflix/i18n';
 import { colors, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { View } from 'react-native';
-import { Button, Card, formatDate, Icon, money, PriceRow, Screen, Txt, ui } from '@/components/mobile-ui';
+import {
+  Button,
+  Card,
+  formatDate,
+  Icon,
+  Mascot,
+  money,
+  PriceRow,
+  Screen,
+  Txt,
+  ui,
+} from '@/components/mobile-ui';
 
 const text = vi.commerce;
 export function PaymentSuccessScreen({ order }: { order: CheckoutDto }) {
   return (
     <Screen title={text.paid} back={false}>
-      <View style={{ alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xl }}>
-        <View style={{ padding: spacing.xl, borderRadius: radius.pill, backgroundColor: colors.seaMist }}>
-          <Icon name="checkmark-circle" size={64} color={colors.tealInk} />
+      <View style={{ alignItems: 'center', gap: spacing.md }}>
+        <View>
+          <Mascot pose="celebrate" size={148} />
+          <View
+            style={{
+              position: 'absolute',
+              right: 0,
+              bottom: 0,
+              padding: spacing.xs,
+              borderRadius: radius.pill,
+              backgroundColor: colors.seaMist,
+            }}
+          >
+            <Icon name="checkmark-circle" size={32} color={colors.tealInk} />
+          </View>
         </View>
         <Txt variant="title" style={ui.center}>
           {text.paymentSucceeded}
         </Txt>
         <Txt style={[ui.center, ui.muted]}>{text.paymentSuccessBody}</Txt>
       </View>
-      <Card>
-        {order.confirmationCode && <PriceRow label={text.confirmation} amount={order.confirmationCode} />}
-        <PriceRow total label={text.paidAmount} amount={money(order.total)} />
-      </Card>
       <Card>
         {order.items.map((item) => (
           <View key={item.id} style={{ gap: spacing.sm }}>
@@ -34,6 +53,8 @@ export function PaymentSuccessScreen({ order }: { order: CheckoutDto }) {
             </Txt>
           </View>
         ))}
+        {order.confirmationCode && <PriceRow label={text.confirmation} amount={order.confirmationCode} />}
+        <PriceRow total label={text.paidAmount} amount={money(order.total)} />
       </Card>
       <Button icon="arrow-forward" onPress={() => router.replace('/(tabs)/trips')}>
         {text.viewTrips}

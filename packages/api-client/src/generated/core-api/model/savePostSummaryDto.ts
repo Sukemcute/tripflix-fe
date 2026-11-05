@@ -4,14 +4,50 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { SavePostSummaryDtoContent } from './savePostSummaryDtoContent';
+import type { SavePostSummaryDtoSafety } from './savePostSummaryDtoSafety';
+import type { SavePostSummaryDtoStatus } from './savePostSummaryDtoStatus';
 
 export interface SavePostSummaryDto {
-  /** Nội dung tóm tắt tiếng Việt sinh từ AI */
-  summary: string;
+  /** Trạng thái tóm tắt bài viết */
+  status?: SavePostSummaryDtoStatus;
+  /**
+   * Nội dung tóm tắt tiếng Việt sinh từ AI (bắt buộc khi status là ready)
+   * @nullable
+   */
+  summary?: string | null;
   /** Các điểm nổi bật đúc kết từ thảo luận cộng đồng */
-  key_takeaways?: string[];
-  /** Bản băm hash của tập bình luận đã dùng để tóm tắt */
-  input_hash?: string;
+  keyTakeaways?: string[];
+  /**
+   * Bản băm hash của tập bình luận đã dùng để tóm tắt
+   * @nullable
+   */
+  inputHash?: string | null;
   /** Số lượng bình luận tại thời điểm thực hiện tóm tắt */
-  comment_count?: number;
+  commentCount?: number;
+  /**
+   * Chi tiết phân tích cấu trúc: khen/chê, video vs thực tế, trích dẫn commentId
+   * @nullable
+   */
+  content?: SavePostSummaryDtoContent;
+  /**
+   * Cờ và đánh giá an toàn: rủi ro, tin đồn, yêu cầu kiểm duyệt
+   * @nullable
+   */
+  safety?: SavePostSummaryDtoSafety;
+  /**
+   * Phiên bản prompt
+   * @nullable
+   */
+  promptVersion?: string | null;
+  /**
+   * Tên mô hình LLM
+   * @nullable
+   */
+  modelName?: string | null;
+  /**
+   * Thời điểm sinh kết quả
+   * @nullable
+   */
+  generatedAt?: string | null;
 }

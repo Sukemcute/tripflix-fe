@@ -3,9 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { commerceApi, getFutureDate, useApiSession } from '@tripflix/api-client';
 import { isValidTripDate, shiftTripDate } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
+import { mobileLayout, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Button, Card, Field, money, Notice, PriceRow, Screen, Txt } from '@/components/mobile-ui';
+import { View } from 'react-native';
+import { Button, Card, Field, money, Notice, PriceRow, Screen, Txt, ui } from '@/components/mobile-ui';
 import { CommerceError } from './commerce-state';
 import { useCommerce } from './commerce-provider';
 
@@ -46,40 +48,62 @@ export function CommerceHotelScreen() {
     queryFn: ({ signal }) => commerceApi.getHotel(params.id!, stay, signal),
   });
   const hotel = query.data;
+  const photos = hotel?.images.length ? hotel.images : hotel?.thumbnail ? [hotel.thumbnail] : [];
+  const [cover, ...additionalPhotos] = photos;
   return (
     <Screen title={text.hotel}>
       {!params.id && <Notice>{text.noHotel}</Notice>}
-      <Field
-        label={vi.api.checkIn}
-        value={checkIn}
-        onChangeText={setCheckIn}
-        placeholder="YYYY-MM-DD"
-        maxLength={10}
-      />
-      <Field
-        label={vi.api.checkOut}
-        value={checkOut}
-        onChangeText={setCheckOut}
-        placeholder="YYYY-MM-DD"
-        maxLength={10}
-      />
-      <Field
-        label={vi.api.adults}
-        value={adults}
-        onChangeText={setAdults}
-        keyboardType="number-pad"
-        maxLength={1}
-      />
-      {!valid && <Notice tone="error">{text.invalidStay}</Notice>}
-      <Button
-        disabled={!valid || !params.id || query.isFetching}
-        onPress={() => {
-          setStay({ checkIn, checkOut, adults: Number(adults) });
-          if (isUnchanged) void query.refetch();
-        }}
-      >
-        {text.chooseStay}
-      </Button>
+      {hotel && (
+        <View style={{ gap: spacing.sm }}>
+          {cover && (
+            <Image
+              source={cover}
+              style={{ height: 220, borderRadius: mobileLayout.cardRadius }}
+              contentFit="cover"
+              accessibilityLabel={hotel.name}
+            />
+          )}
+          <Txt variant="title">{hotel.name}</Txt>
+          <Txt variant="small" style={ui.muted}>
+            {hotel.province.name}
+            {hotel.stars ? ` · ${hotel.stars} ★` : ''}
+          </Txt>
+        </View>
+      )}
+      <Card>
+        <Txt variant="heading">{text.chooseStay}</Txt>
+        <Field
+          label={vi.api.checkIn}
+          value={checkIn}
+          onChangeText={setCheckIn}
+          placeholder="YYYY-MM-DD"
+          maxLength={10}
+        />
+        <Field
+          label={vi.api.checkOut}
+          value={checkOut}
+          onChangeText={setCheckOut}
+          placeholder="YYYY-MM-DD"
+          maxLength={10}
+        />
+        <Field
+          label={vi.api.adults}
+          value={adults}
+          onChangeText={setAdults}
+          keyboardType="number-pad"
+          maxLength={1}
+        />
+        {!valid && <Notice tone="error">{text.invalidStay}</Notice>}
+        <Button
+          disabled={!valid || !params.id || query.isFetching}
+          onPress={() => {
+            setStay({ checkIn, checkOut, adults: Number(adults) });
+            if (isUnchanged) void query.refetch();
+          }}
+        >
+          {text.chooseStay}
+        </Button>
+      </Card>
       <CommerceError
         error={query.error}
         retry={() => {
@@ -89,19 +113,6 @@ export function CommerceHotelScreen() {
       {query.isFetching && <Txt>{vi.api.loading}</Txt>}
       {hotel && (
         <>
-          <Txt variant="title">{hotel.name}</Txt>
-          <Txt>
-            {hotel.province.name}
-            {hotel.stars ? ` · ${hotel.stars} ★` : ''}
-          </Txt>
-          {(hotel.images.length ? hotel.images : hotel.thumbnail ? [hotel.thumbnail] : []).map((uri) => (
-            <Image
-              key={uri}
-              source={{ uri }}
-              style={{ width: '100%', height: 210 }}
-              accessibilityLabel={hotel.name}
-            />
-          ))}
           <Txt>
             {hotel.stay.checkIn} → {hotel.stay.checkOut} · {hotel.stay.nights} {text.nights} ·{' '}
             {hotel.stay.adults} {text.guests}
@@ -170,6 +181,15 @@ export function CommerceHotelScreen() {
                 </Card>
               ))}
             </Card>
+          ))}
+          {additionalPhotos.map((uri) => (
+            <Image
+              key={uri}
+              source={uri}
+              style={{ height: 210, borderRadius: mobileLayout.cardRadius }}
+              contentFit="cover"
+              accessibilityLabel={hotel.name}
+            />
           ))}
         </>
       )}

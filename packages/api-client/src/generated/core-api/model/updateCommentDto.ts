@@ -7,8 +7,8 @@
 
 export interface UpdateCommentDto {
   /**
-   * Nội dung mới (tối đa 10.000 ký tự)
-   * @maxLength 10000
+   * Nội dung mới (tối đa 2.000 ký tự)
+   * @maxLength 2000
    */
   body: string;
 }

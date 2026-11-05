@@ -18,7 +18,8 @@ export {
 } from './post-summary';
 export { feedApi, useReelsFeed } from './feed';
 export { updateReelSocialCache } from './reel-social-cache';
-export { useStaySearch, getFutureDate, type StayFilters } from './stay-search';
+export { useStaySearch, getAvailableStays, getFutureDate, type StayFilters } from './stay-search';
+export { getHotelReviews, type HotelReviewFilters } from './hotel-reviews';
 export {
   commerceApi,
   createOperation,

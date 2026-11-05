@@ -1,0 +1,709 @@
+.section {
+  padding-block: clamp(52px, 7vw, 100px);
+}
+.sectionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 24px;
+  margin-block: 12px 32px;
+}
+.sectionHead h2 {
+  margin: 0;
+  font-size: clamp(1.75rem, 4.25vw, 4rem);
+  line-height: 1.08;
+  letter-spacing: -0.065em;
+}
+.sectionHead p {
+  margin: 12px 0 0;
+  max-width: 62ch;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.textLink {
+  display: inline-flex;
+  gap: 8px;
+  flex-shrink: 0;
+  color: var(--color-teal-ink);
+  font-size: 13px;
+  font-weight: 700;
+  padding-block: 10px;
+}
+.textLink:hover {
+  text-decoration: underline;
+}
+.destinations {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(200px, 1fr));
+  gap: 16px;
+}
+.destination {
+  position: relative;
+  display: flex;
+  align-items: end;
+  isolation: isolate;
+  min-height: clamp(200px, 19vw, 280px);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-ink);
+  color: var(--color-background);
+  padding: clamp(16px, 2.4vw, 32px);
+}
+.destination:first-child {
+  grid-row: span 2;
+  border-top-left-radius: clamp(22px, 5vw, 76px);
+}
+.destination img {
+  object-fit: cover;
+  z-index: -2;
+}
+.destination::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(0deg, var(--color-ink), var(--color-overlay) 38%, transparent 80%);
+}
+.destination h3 {
+  margin: 6px 0;
+  color: inherit;
+  font-size: clamp(22px, 3.2vw, 44px);
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+}
+.destination div > span {
+  color: var(--color-teal-soft);
+  font-size: 12px;
+}
+.destination p {
+  margin: 0;
+  padding-right: 22px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.destinationArrow {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--color-background);
+  color: var(--color-ink);
+}
+.destination:is(:hover, :focus-visible) .destinationArrow {
+  background: var(--color-sun);
+}
+.destinationIndex {
+  position: absolute;
+  top: 18px;
+  left: 22px;
+  padding: 4px 7px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: var(--color-overlay-heavy);
+  font: 0.75rem var(--font-mono);
+}
+.destination:first-child .destinationIndex {
+  left: clamp(28px, 5vw, 78px);
+}
+.stayBand {
+  background: var(--color-warm-mist);
+  border-block: 1px solid var(--color-border);
+}
+.stayContent {
+  padding-block: clamp(32px, 5vw, 72px);
+}
+.stayHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--color-teal-soft);
+  border-radius: 22px;
+  background: var(--color-sea-mist);
+}
+.stayCopy {
+  align-self: center;
+  padding: clamp(20px, 3vw, 44px);
+}
+.stayCopy h2 {
+  max-width: 24ch;
+  margin-block: 8px;
+  font-size: clamp(1.55rem, 3.35vw, 3.1rem);
+  line-height: 1.1;
+  letter-spacing: -0.055em;
+}
+.stayCopy p {
+  max-width: 54ch;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.stayCopy .stayKicker {
+  color: var(--color-teal-ink);
+  font: 700 0.72rem var(--font-mono);
+}
+.stayKicker span {
+  color: var(--color-coral-ink);
+}
+.stayAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  margin-top: 14px;
+  padding-inline: 12px;
+  border-radius: 999px;
+  background: var(--color-teal);
+  color: var(--color-ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.stayAction:hover {
+  background: var(--color-teal-soft);
+}
+.stayScene {
+  position: relative;
+  min-height: 150px;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--color-teal-soft);
+}
+.stayLandscape {
+  object-fit: cover;
+  z-index: -1;
+}
+.stayMascot {
+  position: absolute;
+  bottom: 2%;
+  left: 7%;
+  width: min(48%, 210px);
+  height: auto;
+  filter: drop-shadow(0 8px 14px var(--color-overlay));
+}
+.stayScene span {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  padding: 5px 9px;
+  border-radius: 5px;
+  background: var(--color-warm-mist);
+  color: var(--color-ink);
+  font: 700 0.72rem var(--font-mono);
+}
+.previewTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-block: 16px;
+}
+.previewTools > p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--color-teal-ink);
+  font-size: 12px;
+}
+.previewTools > p span {
+  font-size: 1.15rem;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chips button {
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.chips button:hover {
+  border-color: var(--color-teal-ink);
+  color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+}
+.chips button[aria-pressed='true'] {
+  border-color: var(--color-teal-ink);
+  background: var(--color-teal-ink);
+  color: var(--color-background);
+}
+.stayGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.previewGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.hotelCard,
+.story {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-background);
+}
+.hotelCard a {
+  display: grid;
+  grid-template-rows: clamp(126px, 16vw, 220px) 1fr;
+  height: 100%;
+}
+.hotelCard a:focus-visible {
+  outline-offset: -3px;
+}
+.hotelPhoto {
+  overflow: hidden;
+  background: var(--color-sea-mist);
+}
+.hotelPhoto :global(.trip-card-photo) {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+}
+.hotelPhoto :global(.trip-card-photo) img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms ease;
+}
+.hotelCard a:hover img {
+  transform: scale(1.035);
+}
+.hotelInfo,
+.story {
+  padding: 18px;
+}
+.hotelInfo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stayLocation {
+  padding-right: 46px;
+  color: var(--color-teal-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.stayRating {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.hotelInfo p,
+.story p {
+  margin: 0;
+}
+.hotelInfo h3,
+.story h3 {
+  margin: 0 0 8px;
+  line-height: 1.45;
+  font-size: 17px;
+}
+.stayPriceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 9px;
+  border-top: 1px solid var(--color-border);
+}
+.hotelInfo strong {
+  color: var(--color-coral-ink);
+  font-size: 17px;
+}
+.hotelInfo small,
+.story small {
+  color: var(--color-text-muted);
+}
+.stayCardArrow {
+  display: grid;
+  flex: 0 0 32px;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+.hotelCard a:is(:hover, :focus-visible) .stayCardArrow {
+  background: var(--color-teal-soft);
+}
+.tripiBanner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 40px);
+  padding: clamp(22px, 2.4vw, 38px) clamp(22px, 4vw, 64px);
+  overflow: hidden;
+  border: 1px solid var(--color-teal-soft);
+  border-radius: 24px;
+  isolation: isolate;
+  background: var(--color-warm-mist);
+  color: var(--color-ink);
+}
+.tripiBanner::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--color-teal-ink) 14%, transparent) 1px, transparent 1.5px)
+      0 0 / 18px 18px,
+    linear-gradient(112deg, var(--color-warm-mist) 26%, var(--color-sea-mist) 72%);
+}
+.tripiCopy {
+  position: relative;
+  z-index: 1;
+}
+.tripiLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border: 1px solid var(--color-teal-soft);
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-teal-ink);
+  font: 700 0.72rem var(--font-mono);
+}
+.tripiLabel span {
+  color: var(--color-coral-ink);
+}
+.tripiBanner h2 {
+  max-width: 23ch;
+  margin-top: 10px;
+  font-size: clamp(1.55rem, 3.15vw, 3.25rem);
+  line-height: 1.1;
+  letter-spacing: -0.055em;
+}
+.tripiIntro {
+  max-width: 49ch;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+.tripiAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  margin-top: 15px;
+  padding: 5px 6px 5px 14px;
+  border-radius: 999px;
+  background: var(--color-teal);
+  color: var(--color-ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.tripiAction span {
+  display: grid;
+  flex: 0 0 32px;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--color-ink);
+  color: var(--color-background);
+}
+.tripiAction:is(:hover, :focus-visible) {
+  background: var(--color-teal-soft);
+}
+.tripiAction:focus-visible {
+  outline-color: var(--color-teal-ink);
+}
+.tripiCollage {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  margin-inline: auto;
+  aspect-ratio: 1.47;
+}
+.tripiRoute {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: var(--color-teal-ink);
+}
+.tripiRoute path {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 7;
+}
+.tripiRoute circle {
+  fill: var(--color-coral-ink);
+}
+.tripiPostcard {
+  position: absolute;
+  width: 43%;
+  padding: clamp(4px, 1vw, 11px);
+  border-radius: 4px;
+  background: var(--color-warm-mist);
+  color: var(--color-ink);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--color-teal-ink) 24%, transparent);
+}
+.tripiPostcard span {
+  display: block;
+  padding: 6px 0 1px;
+  font: 700 clamp(0.6rem, 1vw, 0.75rem) var(--font-mono);
+}
+.tripiPrint {
+  position: relative;
+  aspect-ratio: 1.2;
+  overflow: hidden;
+  background: var(--color-teal-ink);
+}
+.tripiPrint img {
+  object-fit: cover;
+}
+.tripiBeach {
+  top: 12%;
+  left: 8%;
+  rotate: -13deg;
+}
+.tripiTown {
+  top: 27%;
+  right: 7%;
+  rotate: 12deg;
+  text-align: right;
+}
+.tripiMascot {
+  position: absolute;
+  bottom: -2%;
+  left: 23%;
+  width: 55%;
+  height: auto;
+  filter: drop-shadow(0 8px 12px color-mix(in srgb, var(--color-teal-ink) 28%, transparent));
+}
+.tripiStamp {
+  position: absolute;
+  top: 8%;
+  right: 13%;
+  display: grid;
+  place-items: center;
+  width: clamp(27px, 3.5vw, 44px);
+  aspect-ratio: 1;
+  border: 1px dashed var(--color-coral-ink);
+  border-radius: 50%;
+  background: var(--color-sun-soft);
+  color: var(--color-coral-ink);
+  font-size: clamp(1rem, 2.5vw, 2rem);
+  rotate: 12deg;
+}
+.stories {
+  padding-top: 4px;
+}
+.story {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.story a:hover {
+  color: var(--color-teal-ink);
+  text-decoration: underline;
+}
+.story .excerpt {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.65;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.story small {
+  margin-top: auto;
+}
+.state {
+  display: block;
+  padding: 16px 0;
+  color: var(--color-text-muted);
+}
+@media (max-width: 640px) {
+  .sectionHead {
+    display: block;
+    margin-bottom: 16px;
+  }
+  .sectionHead p {
+    margin-top: 8px;
+  }
+  .destinations {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    gap: 12px;
+  }
+  .destination {
+    min-height: 188px;
+    padding: 12px;
+  }
+  .destination:first-child {
+    grid-row: auto;
+    min-height: 230px;
+  }
+  .destination h3 {
+    font-size: 19px;
+  }
+  .destination p {
+    font-size: 11px;
+    padding-right: 14px;
+  }
+  .destinationArrow {
+    top: 12px;
+    right: 12px;
+    width: 32px;
+  }
+  .previewGrid,
+  .stayGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .stayHeader {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .stayScene {
+    min-height: 116px;
+  }
+  .stayMascot {
+    width: 102px;
+  }
+  .hotelCard a {
+    grid-template-rows: clamp(145px, 46vw, 210px) 1fr;
+  }
+  .stories {
+    padding-top: 0;
+  }
+}
+@media (max-width: 760px) {
+  .tripiBanner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .tripiCollage {
+    max-width: 268px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .stayLandscape {
+    animation: stay-photo-in 380ms ease-out both;
+  }
+  :global(html:has([data-home-banner])) {
+    scroll-behavior: smooth;
+  }
+  :global([data-home-entered]) {
+    animation: section-arrive 720ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  }
+  :global([data-home-entered]) .destination:nth-child(2) {
+    animation: section-arrive 840ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  }
+  :global([data-home-entered]) .destination:nth-child(3) {
+    animation: section-arrive 960ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  }
+  :global([data-home-entered]) .tripiPostcard,
+  :global([data-home-entered]) .tripiMascot,
+  :global([data-home-entered]) .tripiStamp {
+    animation: tripi-arrive 800ms cubic-bezier(0.2, 0.75, 0.25, 1.2) backwards;
+  }
+  :global([data-home-entered]) .tripiTown {
+    animation-delay: 90ms;
+  }
+  :global([data-home-entered]) .tripiMascot,
+  :global([data-home-entered]) .tripiStamp {
+    animation-delay: 170ms;
+  }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .stayLandscape {
+    scale: 1.1;
+    translate: calc(var(--pointer-x, 0) * -28px) calc(var(--pointer-y, 0) * -12px);
+    transition: translate 420ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  }
+  .stayMascot {
+    translate: calc(var(--pointer-x, 0) * 22px) calc(var(--pointer-y, 0) * 10px);
+    transition: translate 420ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  }
+  .destination img,
+  .destinationArrow {
+    transition: transform 420ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  }
+  .destination:is(:hover, :focus-visible) img {
+    transform: translate(calc(var(--pointer-x, 0) * -14px), calc(var(--pointer-y, 0) * -12px)) scale(1.08);
+  }
+  .destination:is(:hover, :focus-visible) .destinationArrow {
+    transform: rotate(12deg);
+  }
+  .tripiPostcard,
+  .tripiMascot,
+  .tripiStamp {
+    transition: translate 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  }
+  .tripiBeach,
+  .tripiStamp {
+    translate: calc(var(--pointer-x, 0) * -30px) calc(var(--pointer-y, 0) * -22px);
+  }
+  .tripiTown {
+    translate: calc(var(--pointer-x, 0) * -16px) calc(var(--pointer-y, 0) * -12px);
+  }
+  .tripiMascot {
+    translate: calc(var(--pointer-x, 0) * 44px) calc(var(--pointer-y, 0) * 32px);
+  }
+}
+@keyframes stay-photo-in {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes tripi-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes section-arrive {
+  from {
+    opacity: 0.48;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .destination img,
+  .hotelCard img {
+    transition: none;
+  }
+}

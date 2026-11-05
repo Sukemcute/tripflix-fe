@@ -2,13 +2,13 @@ import { socialApi, useApiSession, useSocialPosts } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { router } from 'expo-router';
-import { Button, Card, Notice, Screen, Txt } from '@/components/mobile-ui';
+import { Button, Card, copy, Empty, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { LiveComments } from './live-comments';
-import { Share } from 'react-native';
+import { Share, View } from 'react-native';
 import * as Linking from 'expo-linking';
 
 export function LivePostCard({ post }: { post: SocialPostDto }) {
@@ -35,21 +35,51 @@ export function LivePostCard({ post }: { post: SocialPostDto }) {
 export function LiveFeedScreen({ kind = 'public' }: { kind?: 'public' | 'mine' | 'bookmarks' }) {
   const { user, isReady } = useApiSession();
   const query = useSocialPosts(kind);
-  if (!isReady || (kind !== 'public' && !user)) return <RequireAccount />;
+  if (!isReady || (kind === 'mine' && !user)) return <RequireAccount />;
   const posts = query.data?.pages.flatMap((page) => page.items);
+  const isSaved = kind === 'bookmarks';
   return (
     <Screen
-      title={kind === 'mine' ? vi.api.myPosts : kind === 'bookmarks' ? vi.api.bookmarks : vi.api.posts}
+      title={kind === 'mine' ? vi.api.myPosts : isSaved ? copy.profile.saved : vi.api.posts}
       back={kind !== 'public'}
     >
+      {isSaved && (
+        <View>
+          <Txt variant="title">{copy.profile.savedHeadline}</Txt>
+          <Txt variant="small" style={ui.muted}>
+            {copy.profile.savedBody}
+          </Txt>
+        </View>
+      )}
       <ApiErrorNotice
         error={query.error}
         retry={() => {
           void query.refetch();
         }}
       />
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
-      {posts?.length === 0 && <Notice>{kind === 'bookmarks' ? vi.api.noBookmarks : vi.api.noPosts}</Notice>}
+      {isSaved && !user ? (
+        <Empty
+          title={copy.profile.savedEmptyHeadline}
+          body={copy.profile.body}
+          compact
+          action={copy.profile.login}
+          onAction={() => router.push({ pathname: '/login', params: { returnTo: '/saved' } })}
+        />
+      ) : query.isPending && !query.error ? (
+        <Txt>{vi.api.loading}</Txt>
+      ) : null}
+      {posts?.length === 0 &&
+        (isSaved ? (
+          <Empty
+            title={copy.profile.savedEmptyHeadline}
+            body={copy.profile.emptyBody}
+            compact
+            action={copy.trips.find}
+            onAction={() => router.navigate('/(tabs)')}
+          />
+        ) : (
+          <Notice>{vi.api.noPosts}</Notice>
+        ))}
       {posts?.map((post) => (
         <LivePostCard key={post.id} post={post} />
       ))}

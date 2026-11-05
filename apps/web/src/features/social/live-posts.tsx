@@ -1,8 +1,11 @@
 'use client';
 import { useApiSession, useSocialPosts } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { getPostCover, POST_COVER_MASCOT } from './post-cover';
+import styles from './live-posts.module.css';
 
 // Trang chi tiết bài viết nằm ở post-detail.tsx; giữ export ở đây để app/trips/[slug]/page.tsx không phải đổi.
 export { LivePostDetail } from './post-detail';
@@ -39,23 +42,41 @@ export function PublicPosts({
         </p>
       )}
       <div className="trip-grid">
-        {posts?.map((post) => (
-          <article key={post.id} className="trip-card">
-            <div className="trip-card-body">
-              <p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.api.posts}</p>
-              <h3>
-                <Link href={`/trips/${post.id}`}>{post.title}</Link>
-              </h3>
-              <p>{post.body}</p>
-              <p className="small muted">
-                {post.reactionTotal} {vi.api.like} · {post.commentCount} {vi.api.comments}
-              </p>
-              <Link href={`/trips/${post.id}`} className="secondary-button">
-                {vi.api.detail}
-              </Link>
-            </div>
-          </article>
-        ))}
+        {posts?.map((post) => {
+          const cover = getPostCover(post.tripAttachment?.destinationName);
+          const hasCover = kind === 'public';
+          return (
+            <article key={post.id} className="trip-card">
+              <div className={hasCover ? `trip-card-body ${styles.withCover}` : 'trip-card-body'}>
+                {hasCover && (
+                  <div className={cover ? styles.cover : `${styles.cover} ${styles.mascotCover}`}>
+                    {cover ? (
+                      <Image
+                        src={cover}
+                        alt=""
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 900px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <Image src={POST_COVER_MASCOT} alt="" width={140} height={140} />
+                    )}
+                  </div>
+                )}
+                <p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.api.posts}</p>
+                <h3>
+                  <Link href={`/trips/${post.id}`}>{post.title}</Link>
+                </h3>
+                <p>{post.body}</p>
+                <p className="small muted">
+                  {post.reactionTotal} {vi.api.like} · {post.commentCount} {vi.api.comments}
+                </p>
+                <Link href={`/trips/${post.id}`} className="secondary-button">
+                  {vi.api.detail}
+                </Link>
+              </div>
+            </article>
+          );
+        })}
       </div>
       {query.hasNextPage && (
         <button

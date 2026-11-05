@@ -7,6 +7,7 @@ import { VideoView, type VideoPlayer } from 'expo-video';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { getFloatingTabBarHeight } from '@/components/floating-tab-bar';
 import { Button, Icon, Txt } from '@/components/mobile-ui';
 import { ReelSocialOverlay } from './reel-social-overlay';
 import type { ReelItem } from './reel-types';
@@ -102,12 +103,12 @@ export function ReelSlide({
   isLoaded,
   hasError,
   isPaused,
-  isMuted,
+  isHidden,
   isActive,
   blockedReason,
   isSample,
   onToggle,
-  onMute,
+  onHoldChange,
   onRetry,
   onAttach,
   onCommentsVisibilityChange,
@@ -119,18 +120,19 @@ export function ReelSlide({
   isLoaded: boolean;
   hasError: boolean;
   isPaused: boolean;
-  isMuted: boolean;
+  isHidden: boolean;
   isActive: boolean;
   blockedReason?: string;
   isSample: boolean;
   onToggle: () => void;
-  onMute: () => void;
+  onHoldChange: (isHeld: boolean) => void;
   onRetry: () => void;
   onAttach?: () => void;
   onCommentsVisibilityChange: (visible: boolean) => void;
 }) {
+  const insets = useSafeAreaInsets();
   const poster = selectReelPoster(item.playback.posters, width);
-  const [isHidden, setIsHidden] = useState(false);
+  const videoBox = fitReelVideo(item.playback.aspect, width, height);
   const held = useRef(false);
   return (
     <View
@@ -139,16 +141,12 @@ export function ReelSlide({
       accessibilityElementsHidden={!isActive}
       importantForAccessibility={isActive ? 'auto' : 'no-hide-descendants'}
     >
-      {item.playback.aspect === '16:9' && !!poster && (
+      {!!poster && (videoBox.width < width || videoBox.height < height) && (
         <Image source={poster} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={25} />
       )}
       {!isLoaded && poster ? (
         <View style={styles.videoLayer}>
-          <Image
-            source={poster}
-            style={fitReelVideo(item.playback.aspect, width, height)}
-            contentFit="contain"
-          />
+          <Image source={poster} style={videoBox} contentFit="contain" />
         </View>
       ) : null}
       <Pressable
@@ -162,9 +160,11 @@ export function ReelSlide({
         }}
         onLongPress={() => {
           held.current = true;
-          setIsHidden(true);
+          onHoldChange(true);
         }}
-        onPressOut={() => setIsHidden(false)}
+        onPressOut={() => {
+          if (held.current) onHoldChange(false);
+        }}
         onPress={() => {
           if (!held.current) onToggle();
         }}
@@ -191,15 +191,18 @@ export function ReelSlide({
           <ActivityIndicator color={colors.background} accessibilityLabel={copy.loading} />
         </View>
       ) : null}
-      <ReelSocialOverlay
-        item={item}
-        isActive={isActive}
-        isSample={isSample}
-        isMuted={isMuted}
-        isHidden={isActive && isHidden}
-        onMute={onMute}
-        onCommentsVisibilityChange={onCommentsVisibilityChange}
-      />
+      <View
+        pointerEvents="box-none"
+        style={[StyleSheet.absoluteFill, { bottom: getFloatingTabBarHeight(insets.bottom) }]}
+      >
+        <ReelSocialOverlay
+          item={item}
+          isActive={isActive}
+          isSample={isSample}
+          isHidden={isActive && isHidden}
+          onCommentsVisibilityChange={onCommentsVisibilityChange}
+        />
+      </View>
     </View>
   );
 }

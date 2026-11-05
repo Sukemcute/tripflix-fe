@@ -76,7 +76,7 @@ h3 {
   font-size: 14px;
 }
 .header-content nav a:hover {
-  color: var(--color-teal-ink);
+  color: var(--color-coral-ink);
 }
 .demo-badge {
   display: inline-flex;
@@ -168,7 +168,7 @@ h3 {
 .hero-caption a {
   font-size: 12px;
   align-self: center;
-  color: var(--color-teal-ink);
+  color: var(--color-coral-ink);
 }
 .home-search {
   /* Khung tìm kiếm dùng chung kiểu với trang chủ (stay-search.module.css), đã có viền riêng (TF06K). */
@@ -240,7 +240,7 @@ h3 {
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  background: var(--color-teal-ink);
+  background: var(--color-coral-ink);
   color: var(--color-background);
   font-size: 15px;
   font-weight: 700;
@@ -323,7 +323,7 @@ h3 {
   padding-top: 0;
   padding-bottom: 0;
   position: relative;
-  margin-top: -100px;
+  margin-top: -52px;
   scroll-margin-top: 24px;
 }
 .ota-home > .result-grid:empty {
@@ -365,7 +365,7 @@ h3 {
     padding-right: 10px;
   }
   .ota-home.results-page {
-    margin-top: -32px;
+    margin-top: -16px;
   }
 }
 .search-form > input,
@@ -428,11 +428,11 @@ h3 {
     transform 0.18s;
 }
 .primary-button {
-  background: var(--color-teal-ink);
+  background: var(--color-coral-ink);
   color: var(--color-background);
 }
 .primary-button:hover {
-  background: color-mix(in srgb, var(--color-teal-ink) 78%, var(--color-ink));
+  background: var(--color-ink);
 }
 .primary-button:active,
 .secondary-button:active {
@@ -573,7 +573,7 @@ h3 {
   margin-top: auto;
 }
 .trip-card-bottom strong {
-  color: var(--color-teal-ink);
+  color: var(--color-coral-ink);
   font-size: 18px;
   font-variant-numeric: tabular-nums;
 }
@@ -1098,7 +1098,7 @@ h3 {
   }
 }
 
-/* Đăng nhập, quên mật khẩu, trang tài khoản (TF06A). Màu nhấn teal từ TF06L; đỏ cam chỉ còn cho lỗi và thao tác nguy hiểm. */
+/* Đăng nhập, quên mật khẩu, trang tài khoản (TF06A) */
 .auth-page {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
@@ -1238,7 +1238,7 @@ h3 {
   line-height: 1.7;
 }
 .auth-link {
-  color: var(--color-teal-ink);
+  color: var(--color-coral-ink);
   font-size: 13px;
   font-weight: 700;
 }
@@ -1321,7 +1321,7 @@ h3 {
   width: 72px;
   height: 72px;
   border-radius: 999px;
-  background: var(--color-teal-ink);
+  background: var(--color-coral-ink);
   color: var(--color-background);
   font-size: 30px;
   font-weight: 700;
@@ -1471,7 +1471,7 @@ h3 {
   color: var(--color-ink);
 }
 .account-tabs button[aria-pressed='true'] {
-  border-bottom-color: var(--color-teal-ink);
+  border-bottom-color: var(--color-coral-ink);
   color: var(--color-ink);
   font-weight: 700;
 }
@@ -1805,7 +1805,7 @@ h3 {
 .post-cover-badge {
   padding: 4px 10px;
   border-radius: 999px;
-  background: var(--color-teal-ink);
+  background: var(--color-coral-ink);
   color: var(--color-background);
   font-size: 11px;
   font-weight: 700;

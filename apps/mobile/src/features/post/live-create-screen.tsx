@@ -2,9 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { socialApi, useApiSession } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
+import { colors, mobileLayout, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Button, Chip, Field, Notice, Row, Screen, Txt } from '@/components/mobile-ui';
+import { StyleSheet, View } from 'react-native';
+import { Button, Chip, copy, Field, Icon, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 
 export function LiveCreateScreen() {
@@ -63,10 +65,42 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
     },
   });
   return (
-    <Screen title={vi.api.create}>
-      <Notice>{vi.api.mediaUnavailable}</Notice>
+    <Screen
+      title={copy.create.title}
+      footer={
+        <Button
+          icon="paper-plane-outline"
+          disabled={mutation.isPending || !title.trim() || !body.trim()}
+          onPress={() => mutation.mutate('publish')}
+        >
+          {vi.api.publish}
+        </Button>
+      }
+    >
+      <View style={{ gap: spacing.sm }}>
+        <Txt variant="title">{copy.create.headline}</Txt>
+        <Txt variant="small" style={ui.muted}>
+          {copy.create.body}
+        </Txt>
+      </View>
+      <View style={styles.media}>
+        <Icon name="cloud-upload-outline" size={26} color={colors.tealInk} />
+        <Txt variant="label" style={ui.center}>
+          {copy.create.upload}
+        </Txt>
+        <Txt variant="caption" style={[ui.center, ui.muted]}>
+          {vi.api.mediaUnavailable}
+        </Txt>
+      </View>
       <Field label={vi.api.title} value={title} onChangeText={setTitle} maxLength={255} />
-      <Field label={vi.api.body} value={body} onChangeText={setBody} multiline />
+      <Field
+        label={copy.create.story}
+        placeholder={copy.create.placeholder}
+        value={body}
+        onChangeText={setBody}
+        multiline
+        style={styles.story}
+      />
       <Field label={vi.api.hashtags} value={hashtags} onChangeText={setHashtags} />
       <Row>
         <Chip selected={visibility === 'public'} onPress={() => setVisibility('public')}>
@@ -80,15 +114,12 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
       {mutation.isSuccess && (
         <Notice>{mutation.variables === 'publish' ? vi.api.published : vi.api.draftSaved}</Notice>
       )}
-      <Button disabled={mutation.isPending || !title.trim()} onPress={() => mutation.mutate('save')}>
-        {mutation.isPending ? vi.api.saving : id ? vi.api.save : vi.api.saveDraft}
-      </Button>
       <Button
         tone="secondary"
-        disabled={mutation.isPending || !title.trim() || !body.trim()}
-        onPress={() => mutation.mutate('publish')}
+        disabled={mutation.isPending || !title.trim()}
+        onPress={() => mutation.mutate('save')}
       >
-        {vi.api.publish}
+        {mutation.isPending ? vi.api.saving : id ? vi.api.save : vi.api.saveDraft}
       </Button>
       {id && (
         <Button
@@ -101,3 +132,16 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  media: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.xl,
+    borderRadius: mobileLayout.cardRadius,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.textSubtle,
+  },
+  story: { minHeight: 100, textAlignVertical: 'top' },
+});

@@ -4,20 +4,25 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
 
 import type {
+  ExploreRequestDto,
+  ExploreResponseDto,
   HomeRecommendationsControllerRecommendForHomeParams,
   HomeRecommendationsDto,
   StayPageDto,
@@ -364,6 +369,131 @@ export function useStaysControllerListStays<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export type exploreControllerSearchResponse200 = {
+  data: ExploreResponseDto;
+  status: 200;
+};
+
+export type exploreControllerSearchResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type exploreControllerSearchResponseSuccess = exploreControllerSearchResponse200 & {
+  headers: Headers;
+};
+export type exploreControllerSearchResponseError = exploreControllerSearchResponse400 & {
+  headers: Headers;
+};
+
+export type exploreControllerSearchResponse =
+  exploreControllerSearchResponseSuccess | exploreControllerSearchResponseError;
+
+export const getExploreControllerSearchUrl = () => {
+  return `/api/search`;
+};
+
+/**
+ * Một ô tìm cho app. Công khai, không cần đăng nhập. Chỉ đọc chỉ mục của discovery (dựng lại mỗi 10 phút).
+ *
+ * - Hiểu nơi (`đà lạt`, `sg`), ý muốn (`ks`, `ăn gì`), ngân sách (`dưới 2tr`), số ngày (`3n2đ`), tên riêng, gõ sai nhẹ, không dấu.
+ * - Gõ có dấu thì tôn trọng dấu (`trứng` ≠ `Trung`). Không có gì khớp thì vùng có `total: 0`, không đoán bừa.
+ * - Vùng câu muốn tìm rỗng: `suggest` là các gợi ý khác (bỏ các từ trong `dropped`).
+ * - `loc` chỉ dùng khi câu không nói nơi.
+ * @summary Tìm khám phá bằng câu tự nhiên, kết quả chia theo vùng (Ở đâu, Lộ trình, Bài viết, Video...)
+ */
+export const exploreControllerSearch = async (
+  exploreRequestDto: ExploreRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<exploreControllerSearchResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<exploreControllerSearchResponse>(getExploreControllerSearchUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(exploreRequestDto),
+  });
+};
+
+export const getExploreControllerSearchMutationKey = () => ['exploreControllerSearch'] as const;
+
+export const getExploreControllerSearchMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof exploreControllerSearch>>,
+    TError,
+    ExploreControllerSearchMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof exploreControllerSearch>>,
+  TError,
+  ExploreControllerSearchMutationVariables,
+  TContext
+> => {
+  const mutationKey = getExploreControllerSearchMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof exploreControllerSearch>>,
+    ExploreControllerSearchMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return exploreControllerSearch(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ExploreControllerSearchMutationResult = NonNullable<
+  Awaited<ReturnType<typeof exploreControllerSearch>>
+>;
+export type ExploreControllerSearchMutationBody = ExploreRequestDto;
+export type ExploreControllerSearchMutationError = void;
+export type ExploreControllerSearchMutationVariables = { data: ExploreRequestDto };
+
+/**
+ * @summary Tìm khám phá bằng câu tự nhiên, kết quả chia theo vùng (Ở đâu, Lộ trình, Bài viết, Video...)
+ */
+export const useExploreControllerSearch = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof exploreControllerSearch>>,
+      TError,
+      ExploreControllerSearchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof exploreControllerSearch>>,
+  TError,
+  ExploreControllerSearchMutationVariables,
+  TContext
+> => {
+  return useMutation(getExploreControllerSearchMutationOptions(options), queryClient);
+};
 export type homeRecommendationsControllerRecommendForHomeResponse200 = {
   data: HomeRecommendationsDto;
   status: 200;

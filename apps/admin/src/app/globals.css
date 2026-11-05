@@ -73,11 +73,11 @@ h3 {
   transition: background 0.2s;
 }
 .admin-primary {
-  background: var(--color-teal-ink);
+  background: var(--color-coral-ink);
   color: var(--color-background);
 }
 .admin-primary:hover {
-  background: color-mix(in srgb, var(--color-teal-ink) 78%, var(--color-ink));
+  background: var(--color-ink);
 }
 .admin-secondary {
   border: 1px solid var(--color-border);

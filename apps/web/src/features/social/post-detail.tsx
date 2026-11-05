@@ -9,17 +9,11 @@ import { useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getInitial } from '@/features/auth/account-helpers';
 import { LiveComments } from './live-comments';
+import { getPostCover, POST_COVER_MASCOT } from './post-cover';
 
 type Reaction = 'like' | 'love' | 'helpful';
 type PostAction = Reaction | 'save' | 'delete' | 'share' | 'publish';
 const REACTIONS: readonly Reaction[] = ['like', 'love', 'helpful'];
-
-/** Ảnh có sẵn cho vài điểm đến (dùng chung với trang chủ); điểm đến khác dùng nền màu thương hiệu. */
-const DESTINATION_COVERS: Record<string, string> = {
-  'nha trang': '/brand/sea.jpg',
-  'hội an': '/brand/hoian.jpg',
-  'đà nẵng': '/brand/home-shore.jpg',
-};
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('vi-VN');
@@ -64,9 +58,7 @@ export function LivePostDetail({ id }: { id: string }) {
   const trip = post?.tripAttachment;
   const isAuthor = !!post && post.authorId === user?.id;
   const authorName = isAuthor ? (user?.displayName ?? vi.api.postYou) : vi.api.postAuthorFallback;
-  const cover = trip?.destinationName
-    ? DESTINATION_COVERS[trip.destinationName.trim().toLowerCase()]
-    : undefined;
+  const cover = getPostCover(trip?.destinationName);
 
   return (
     <main id="content" className="ota-container post-page">
@@ -117,7 +109,7 @@ export function LivePostDetail({ id }: { id: string }) {
                 ) : (
                   <Image
                     className="post-cover-mascot"
-                    src="/brand/tripi-curious.png"
+                    src={POST_COVER_MASCOT}
                     alt=""
                     width={140}
                     height={140}

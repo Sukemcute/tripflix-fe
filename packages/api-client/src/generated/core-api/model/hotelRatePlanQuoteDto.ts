@@ -22,4 +22,15 @@ export interface HotelRatePlanQuoteDto {
    * @nullable
    */
   pricePerNight: number | null;
+  /**
+   * Giá gạch một đêm một phòng (VND), chỉ để hiển thị
+   * @nullable
+   */
+  listPricePerNight: number | null;
+  /**
+   * % giảm so với giá gạch
+   * @nullable
+   */
+  discountPct: number | null;
+  perks: string[];
 }

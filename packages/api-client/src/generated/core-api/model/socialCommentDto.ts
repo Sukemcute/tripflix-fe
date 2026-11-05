@@ -13,6 +13,10 @@ export interface SocialCommentDto {
   parentCommentId: string | null;
   body: string;
   isEdited: boolean;
+  /** Số lượt thích bình luận */
+  likeCount: number;
+  /** Người xem hiện tại đã thích bình luận hay chưa */
+  isLiked: boolean;
   createdAt: string;
   updatedAt: string;
   /** @nullable */

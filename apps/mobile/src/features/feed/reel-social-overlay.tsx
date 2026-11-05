@@ -7,8 +7,7 @@ import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon, IconButton, Txt, type IconName } from '@/components/mobile-ui';
+import { Icon, Txt, type IconName } from '@/components/mobile-ui';
 import { ReelCommentsPanel } from './reel-comments-panel';
 import type { ReelItem } from './reel-types';
 
@@ -53,22 +52,17 @@ export function ReelSocialOverlay({
   item,
   isActive,
   isSample,
-  isMuted,
   isHidden = false,
-  onMute,
   onCommentsVisibilityChange,
 }: {
   item: ReelItem;
   isActive: boolean;
   isSample: boolean;
-  isMuted: boolean;
   isHidden?: boolean;
-  onMute: () => void;
   onCommentsVisibilityChange: (visible: boolean) => void;
 }) {
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
-  const insets = useSafeAreaInsets();
   const [hasComments, setHasComments] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [draft, setDraft] = useState('');
@@ -162,24 +156,6 @@ export function ReelSocialOverlay({
   return (
     <>
       <View
-        style={[styles.top, { top: insets.top + spacing.sm }, isHidden && styles.hidden]}
-        pointerEvents={isHidden ? 'none' : 'box-none'}
-        accessibilityElementsHidden={isHidden}
-        aria-hidden={isHidden}
-        importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
-      >
-        <View style={styles.topSpacer} />
-        <Txt variant="label" style={styles.topLabel}>
-          {vi.mobile.feed.forYou}
-        </Txt>
-        <IconButton
-          name={isMuted ? 'volume-mute' : 'volume-high'}
-          label={isMuted ? copy.unmute : copy.mute}
-          color={colors.background}
-          onPress={onMute}
-        />
-      </View>
-      <View
         style={[styles.rail, isHidden && styles.hidden]}
         pointerEvents={isHidden ? 'none' : 'auto'}
         accessibilityElementsHidden={isHidden}
@@ -269,7 +245,7 @@ export function ReelSocialOverlay({
           </Txt>
           <Icon name={isExpanded ? 'chevron-down' : 'chevron-up'} size={14} color={colors.background} />
         </Pressable>
-        {postId && isExpanded && (
+        {postId && (
           <Pressable
             style={styles.detail}
             accessibilityRole="button"
@@ -278,7 +254,7 @@ export function ReelSocialOverlay({
             <Txt variant="label" style={styles.detailText}>
               {copy.detail}
             </Txt>
-            <Icon name="arrow-forward" size={18} />
+            <Icon name="arrow-forward" size={18} color={colors.background} />
           </Pressable>
         )}
         {!!mutation.error && (
@@ -315,22 +291,6 @@ export function ReelSocialOverlay({
 }
 
 const styles = StyleSheet.create({
-  top: {
-    position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  topSpacer: { width: mobileLayout.touchTarget },
-  topLabel: {
-    color: colors.background,
-    fontFamily: nativeFonts.bold,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.background,
-    paddingBottom: spacing.sm,
-  },
   light: { color: colors.background },
   hidden: { opacity: 0 },
   errorAction: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44 },
@@ -388,10 +348,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
     padding: spacing.md,
-    backgroundColor: colors.sunSoft,
-    borderRadius: radius.sm,
+    backgroundColor: colors.coral,
+    borderRadius: radius.md,
     minHeight: mobileLayout.touchTarget,
   },
-  detailText: { color: colors.ink },
+  detailText: { color: colors.background, flexShrink: 1 },
 });
