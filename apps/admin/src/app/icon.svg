@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 284 298" role="img" aria-label="Biểu tượng Tripflix"><title>Biểu tượng Tripflix</title><defs>
+  <linearGradient id="tripflix-coral" x1="0" y1="0" x2="0.7" y2="1"><stop stop-color="#FF725E"/><stop offset="1" stop-color="#FF5A3C"/></linearGradient>
+  <linearGradient id="tripflix-sun" x1="0" y1="0" x2="0.6" y2="1"><stop stop-color="#FFDE44"/><stop offset="1" stop-color="#FFC531"/></linearGradient>
+  <linearGradient id="tripflix-sea" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#36CFC4"/><stop offset="1" stop-color="#00B2A3"/></linearGradient>
+  <clipPath id="tripflix-play"><path d="M3 193 12 68C14 36 29 12 55 3 72-3 87 1 104 11L251 94C278 108 284 124 281 145 279 161 273 178 252 191L77 289C57 300 34 296 18 284 4 273-1 257 1 236Z"/></clipPath>
+</defs><g clip-path="url(#tripflix-play)">
+  <path fill="url(#tripflix-coral)" d="M-5-5H290V305H-5Z"/>
+  <circle cx="148" cy="166" r="67" fill="url(#tripflix-sun)"/>
+  <path fill="url(#tripflix-sea)" d="M-8 201C47 167 84 166 137 174 191 182 243 170 292 152V310H-8Z"/>
+  <path fill="#00B2A3" opacity=".5" d="M-10 273C25 264 58 240 95 235 130 231 154 245 194 234L295 179V310H-10Z"/>
+  <path fill="#FFFFFF" d="M-8 201C47 167 84 166 137 174 191 182 243 170 292 152V163C242 188 190 195 137 187 84 179 47 179-8 218Z"/>
+  <path fill="#FFFFFF" d="M72 233C98 218 125 220 149 225 164 229 173 229 183 226 161 236 146 236 126 232 109 227 92 228 72 233Z"/>
+</g></svg>
