@@ -171,3 +171,45 @@ describe('session integration', () => {
     expect(session.getSnapshot().user).toBeNull();
   });
 });
+
+describe('Google sign-in', () => {
+  it('web: posts the ID token with the cookie protocol and loads the user like a password login', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(200, { ...pair, refreshToken: undefined }))
+      .mockResolvedValueOnce(json(200, user));
+    const session = new SessionClient({ baseUrl: 'http://api', client: 'web' });
+    await session.loginWithGoogle({ idToken: 'google-id-token', deviceName: 'Chrome · Windows' });
+    expect(session.getSnapshot().user?.id).toBe(user.id);
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(String(url)).toBe('http://api/api/auth/google');
+    expect(JSON.parse(String(init!.body))).toEqual({
+      idToken: 'google-id-token',
+      deviceName: 'Chrome · Windows',
+    });
+    expect(new Headers(init!.headers).get('X-Tripflix-Client')).toBe('web');
+    expect(init!.credentials).toBe('include');
+  });
+
+  it('native: stores the rotated refresh token in secure storage', async () => {
+    const write = vi.fn(async () => undefined);
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(200, pair))
+      .mockResolvedValueOnce(json(200, user));
+    const session = new SessionClient({
+      baseUrl: '',
+      client: 'native',
+      storage: { read: async () => null, write, clear: async () => undefined },
+    });
+    await session.loginWithGoogle({ idToken: 'google-id-token' });
+    expect(write).toHaveBeenCalledWith(pair.refreshToken);
+  });
+
+  it('a rejected Google token never marks the user signed in and never refreshes', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(json(401, { message: 'no' }));
+    const session = new SessionClient({ baseUrl: '', client: 'web' });
+    await expect(session.loginWithGoogle({ idToken: 'bad' })).rejects.toMatchObject({ status: 401 });
+    expect(session.getSnapshot().user).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});

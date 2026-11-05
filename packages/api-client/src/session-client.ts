@@ -1,5 +1,11 @@
 import * as auth from './generated/core-api/auth/auth';
-import type { LoginDto, RegisterDto, TokenPairDto, UserDto } from './generated/core-api/model';
+import type {
+  GoogleLoginDto,
+  LoginDto,
+  RegisterDto,
+  TokenPairDto,
+  UserDto,
+} from './generated/core-api/model';
 import { configureHttp, HttpError, type HttpRequestOptions } from './http';
 import { readEntity } from './response';
 
@@ -130,6 +136,15 @@ export class SessionClient {
   async login(credentials: LoginDto): Promise<void> {
     const version = ++this.version;
     const response = await auth.authControllerLogin(credentials, this.authOptions);
+    if (
+      await this.acceptTokens(readEntity(response.data, ['accessToken', 'tokenType', 'expiresIn']), version)
+    )
+      await this.reloadUser();
+  }
+  /** Google ID token from Google Identity Services; tokens are kept exactly like a password login. */
+  async loginWithGoogle(input: GoogleLoginDto): Promise<void> {
+    const version = ++this.version;
+    const response = await auth.authControllerLoginWithGoogle(input, this.authOptions);
     if (
       await this.acceptTokens(readEntity(response.data, ['accessToken', 'tokenType', 'expiresIn']), version)
     )
