@@ -1,14 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { socialApi, useApiSession } from '@tripflix/api-client';
+import { socialApi, updateReelSocialCache, useApiSession } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, Share, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ApiErrorNotice } from '@/components/api-state';
 import { Icon, IconButton, Txt, type IconName } from '@/components/mobile-ui';
 import { ReelCommentsPanel } from './reel-comments-panel';
 import type { ReelItem } from './reel-types';
@@ -55,6 +54,7 @@ export function ReelSocialOverlay({
   isActive,
   isSample,
   isMuted,
+  isHidden = false,
   onMute,
   onCommentsVisibilityChange,
 }: {
@@ -62,6 +62,7 @@ export function ReelSocialOverlay({
   isActive: boolean;
   isSample: boolean;
   isMuted: boolean;
+  isHidden?: boolean;
   onMute: () => void;
   onCommentsVisibilityChange: (visible: boolean) => void;
 }) {
@@ -69,6 +70,7 @@ export function ReelSocialOverlay({
   const client = useQueryClient();
   const insets = useSafeAreaInsets();
   const [hasComments, setHasComments] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [draft, setDraft] = useState('');
   const [sampleComments, setSampleComments] = useState<{ id: number; body: string }[]>([]);
   const nextCommentId = useRef(0);
@@ -83,7 +85,7 @@ export function ReelSocialOverlay({
   const isLiked = isSample
     ? sampleLiked
     : detail.data
-      ? detail.data.viewerContext.myReaction === 'like'
+      ? detail.data.viewerContext.myReaction !== null
       : !!item.social?.viewerState?.liked;
   const isSaved = isSample
     ? sampleSaved
@@ -101,8 +103,8 @@ export function ReelSocialOverlay({
     shares: isSample ? undefined : (detail.data?.post.shareCount ?? item.social?.counts.shares ?? 0),
   };
   const mutation = useMutation({
-    mutationFn: async (action: 'like' | 'save' | 'share') => {
-      if (action === 'share') {
+    mutationFn: async (action: { type: 'like' | 'save' | 'share'; selected?: boolean }) => {
+      if (action.type === 'share') {
         const result = await Share.share({
           title: item.title,
           message:
@@ -110,17 +112,27 @@ export function ReelSocialOverlay({
             (postId ? Linking.createURL(`/trip/${encodeURIComponent(postId)}`) : item.playback.hlsUrl),
         });
         if (result.action === Share.sharedAction && postId) await socialApi.sharePost(postId);
-        return;
+        return result.action === Share.sharedAction;
       }
       if (!postId) throw new Error('Missing post');
-      if (action === 'like') await socialApi.setReaction(postId, isLiked ? null : 'like');
-      else await socialApi.setBookmark(postId, !isSaved);
+      if (action.type === 'like') await socialApi.setReaction(postId, action.selected ? 'like' : null);
+      else await socialApi.setBookmark(postId, !!action.selected);
     },
-    onSuccess: async () => {
-      if (!postId) return;
+    onMutate: async (action) => {
+      if (action.type === 'share' || !postId || !user) return;
       await Promise.all([
-        client.invalidateQueries({ queryKey: ['social'] }),
-        client.invalidateQueries({ queryKey: ['feed'] }),
+        client.cancelQueries({ queryKey: ['feed', 'for_you', user.id], exact: true }),
+        client.cancelQueries({ queryKey: ['social', 'post', postId, user.id], exact: true }),
+      ]);
+      return updateReelSocialCache(client, user.id, postId, action.type, !!action.selected);
+    },
+    onError: (_error, _action, rollback) => rollback?.(),
+    onSuccess: async (shared, action) => {
+      if (!postId) return;
+      if (action.type === 'share' && !shared) return;
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['social', 'post', postId, user?.id], exact: true }),
+        client.invalidateQueries({ queryKey: ['social', 'bookmarks', user?.id] }),
       ]);
     },
   });
@@ -135,7 +147,8 @@ export function ReelSocialOverlay({
       router.push({ pathname: '/login', params: { returnTo: '/(tabs)' } });
       return;
     }
-    mutation.mutate(action);
+    if (mutation.isPending) return;
+    mutation.mutate({ type: action, selected: action === 'like' ? !isLiked : !isSaved });
   };
   const closeComments = () => {
     setHasComments(false);
@@ -143,10 +156,18 @@ export function ReelSocialOverlay({
   };
   useEffect(() => () => onCommentsVisibilityChange(false), [onCommentsVisibilityChange]);
   const author = isSample ? copy.sampleAuthor : item.social?.author.name || vi.api.author;
+  const title = isSample ? copy.sample : item.title;
+  const caption = isSample ? copy.sampleCaption : item.body;
 
   return (
     <>
-      <View style={[styles.top, { top: insets.top + spacing.sm }]} pointerEvents="box-none">
+      <View
+        style={[styles.top, { top: insets.top + spacing.sm }, isHidden && styles.hidden]}
+        pointerEvents={isHidden ? 'none' : 'box-none'}
+        accessibilityElementsHidden={isHidden}
+        aria-hidden={isHidden}
+        importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
+      >
         <View style={styles.topSpacer} />
         <Txt variant="label" style={styles.topLabel}>
           {vi.mobile.feed.forYou}
@@ -158,7 +179,13 @@ export function ReelSocialOverlay({
           onPress={onMute}
         />
       </View>
-      <View style={styles.rail}>
+      <View
+        style={[styles.rail, isHidden && styles.hidden]}
+        pointerEvents={isHidden ? 'none' : 'auto'}
+        accessibilityElementsHidden={isHidden}
+        aria-hidden={isHidden}
+        importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
+      >
         <RailAction
           icon={isLiked ? 'heart' : 'heart-outline'}
           label={isLiked ? vi.api.unlike : vi.api.like}
@@ -189,10 +216,16 @@ export function ReelSocialOverlay({
           label={vi.api.share}
           count={counts.shares}
           disabled={mutation.isPending}
-          onPress={() => mutation.mutate('share')}
+          onPress={() => mutation.mutate({ type: 'share' })}
         />
       </View>
-      <View style={styles.caption} pointerEvents="box-none">
+      <View
+        style={[styles.caption, isExpanded && styles.expandedCaption, isHidden && styles.hidden]}
+        pointerEvents={isHidden ? 'none' : 'box-none'}
+        accessibilityElementsHidden={isHidden}
+        aria-hidden={isHidden}
+        importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
+      >
         {isSample && (
           <Txt variant="caption" style={styles.sampleBadge}>
             {copy.sample}
@@ -210,13 +243,33 @@ export function ReelSocialOverlay({
             {author}
           </Txt>
         </View>
-        <Txt variant="heading" style={styles.light} numberOfLines={2}>
-          {isSample ? copy.sample : item.title}
-        </Txt>
-        <Txt style={styles.light} numberOfLines={3}>
-          {isSample ? copy.sampleCaption : item.body}
-        </Txt>
-        {postId && (
+        {isExpanded ? (
+          <ScrollView
+            style={styles.expandedText}
+            nestedScrollEnabled
+            contentContainerStyle={{ gap: spacing.sm }}
+          >
+            <Txt style={styles.captionTitle}>{title}</Txt>
+            {!!caption && <Txt style={styles.captionBody}>{caption}</Txt>}
+          </ScrollView>
+        ) : (
+          <Txt style={styles.captionBody} numberOfLines={2}>
+            <Txt style={styles.captionTitle}>{title}</Txt>
+            {caption ? ` · ${caption}` : ''}
+          </Txt>
+        )}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: isExpanded }}
+          onPress={() => setIsExpanded((value) => !value)}
+          style={styles.expandAction}
+        >
+          <Txt variant="label" style={styles.light}>
+            {isExpanded ? copy.showLess : copy.showMore}
+          </Txt>
+          <Icon name={isExpanded ? 'chevron-down' : 'chevron-up'} size={14} color={colors.background} />
+        </Pressable>
+        {postId && isExpanded && (
           <Pressable
             style={styles.detail}
             accessibilityRole="button"
@@ -228,7 +281,21 @@ export function ReelSocialOverlay({
             <Icon name="arrow-forward" size={18} />
           </Pressable>
         )}
-        <ApiErrorNotice error={mutation.error} />
+        {!!mutation.error && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={copy.socialRetry}
+            onPress={() => {
+              if (mutation.variables) mutation.mutate(mutation.variables);
+            }}
+            style={styles.errorAction}
+          >
+            <Icon name="alert-circle-outline" color={colors.sunSoft} size={18} />
+            <Txt variant="caption" style={{ color: colors.sunSoft, flex: 1 }}>
+              {copy.socialRetry}
+            </Txt>
+          </Pressable>
+        )}
       </View>
       <ReelCommentsPanel
         visible={hasComments}
@@ -265,6 +332,19 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   light: { color: colors.background },
+  hidden: { opacity: 0 },
+  errorAction: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44 },
+  captionTitle: { color: colors.background, fontFamily: nativeFonts.semibold, fontSize: 14, lineHeight: 21 },
+  captionBody: { color: colors.background, fontSize: 14, lineHeight: 21 },
+  expandedCaption: { backgroundColor: colors.overlayHeavy },
+  expandedText: { maxHeight: 180, flexShrink: 1 },
+  expandAction: {
+    minHeight: 44,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   rail: { position: 'absolute', right: spacing.sm, bottom: 160, alignItems: 'center', gap: spacing.md },
   railAction: {
     minWidth: 52,
@@ -280,7 +360,9 @@ const styles = StyleSheet.create({
     bottom: spacing.xl,
     gap: spacing.sm,
     backgroundColor: colors.overlay,
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
     borderRadius: radius.md,
   },
   authorRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
