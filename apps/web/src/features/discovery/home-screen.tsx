@@ -1,10 +1,12 @@
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
 import { SearchForm } from '@/features/discovery/search-form';
+import { StaySearchIcon } from '@/features/discovery/stay-search-icon';
 import { PublicPosts } from '@/features/social/live-posts';
 
-export default function HomeScreen() {
+/** Trang Cảm hứng. Có ?q= thì phần danh sách bài thành kết quả tìm bài viết theo từ khoá. */
+export default function HomeScreen({ query = '' }: { query?: string }) {
   const copy = vi.demo;
   return (
     <main id="content" className="ota-container">
@@ -36,30 +38,39 @@ export default function HomeScreen() {
         </div>
       </section>
       <div className="home-search">
-        <SearchForm />
-        <div className="suggested-queries">
-          <span>{copy.web.suggestions}</span>
-          {[
-            copy.trips['nha-trang'].destination,
-            copy.trips['hoi-an'].destination,
-            copy.trips['da-nang'].destination,
-          ].map((query) => (
-            <Link key={query} href={`/search?q=${encodeURIComponent(query)}`}>
-              {query}
-              <span aria-hidden="true">↗</span>
-            </Link>
-          ))}
-        </div>
+        {/* key theo từ khoá: bấm thẻ gợi ý hoặc "Xóa tìm kiếm" trên cùng trang thì ô nhập cập nhật theo. */}
+        <SearchForm
+          key={query}
+          query={query}
+          footer={
+            <nav className="suggested-queries is-chips" aria-label={copy.web.suggestions}>
+              <span>{vi.api.suggestionsLabel}</span>
+              {/* Tên ngắn: tìm theo từ khoá trong bài, "Nha Trang, Khánh Hòa" sẽ không khớp bài nào. */}
+              {Object.values(vi.api.otaDestinations).map((place) => (
+                <Link key={place} href={`/inspiration?q=${encodeURIComponent(place)}#trips`}>
+                  <StaySearchIcon name="place" />
+                  {place}
+                </Link>
+              ))}
+            </nav>
+          }
+        />
       </div>
       <section className="curated-section" id="trips">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">{copy.common.trending}</p>
-            <h2>{copy.web.curatedTitle}</h2>
+            <p className="eyebrow">{query ? vi.api.search : copy.common.trending}</p>
+            <h2>{query ? t('api.searchResultsFor', { query }) : copy.web.curatedTitle}</h2>
           </div>
-          <p className="muted">{copy.web.curatedBody}</p>
+          {query ? (
+            <Link className="secondary-button" href="/inspiration#trips">
+              {vi.api.clearSearch}
+            </Link>
+          ) : (
+            <p className="muted">{copy.web.curatedBody}</p>
+          )}
         </div>
-        <PublicPosts />
+        <PublicPosts keyword={query} />
       </section>
       <section className="how-section" id="how">
         <Image src="/brand/tripi-welcome.png" alt={vi.mobile.common.mascot} width={120} height={120} />

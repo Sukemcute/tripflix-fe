@@ -171,10 +171,8 @@ h3 {
   color: var(--color-coral-ink);
 }
 .home-search {
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  padding: 24px 28px;
-  background: var(--color-background);
+  /* Khung tìm kiếm dùng chung kiểu với trang chủ (stay-search.module.css), đã có viền riêng (TF06K). */
+  margin-top: 8px;
 }
 .search-form label {
   display: block;
@@ -472,6 +470,30 @@ h3 {
 }
 .suggested-queries a:hover {
   border-color: var(--color-teal-ink);
+  color: var(--color-teal-ink);
+}
+/* Thẻ gợi ý ở thanh công cụ dưới khung tìm kiếm trang Cảm hứng (TF06K) */
+.suggested-queries.is-chips {
+  justify-content: flex-end;
+  margin-top: 0;
+  font-size: 12px;
+}
+.suggested-queries.is-chips a {
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 999px;
+  color: var(--color-ink);
+  font-weight: 600;
+}
+.suggested-queries.is-chips a svg {
+  width: 16px;
+  height: 16px;
+  color: var(--color-teal-ink);
+}
+.suggested-queries.is-chips a:hover {
+  background: var(--color-sea-mist);
   color: var(--color-teal-ink);
 }
 .curated-section {
@@ -970,6 +992,9 @@ h3 {
   .suggested-queries > span {
     width: 100%;
     margin-bottom: 4px;
+  }
+  .suggested-queries.is-chips {
+    justify-content: flex-start;
   }
   .curated-section {
     padding-block: 40px;
