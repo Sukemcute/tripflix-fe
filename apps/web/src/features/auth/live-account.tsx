@@ -50,6 +50,7 @@ export function LiveAccount() {
         </div>
         <Image className="account-mascot" src="/brand/tripi-welcome.png" alt="" width={120} height={120} />
       </header>
+      <AdminAreaCard role={user.role} />
       <nav className="account-tabs" aria-label={vi.api.accountSections}>
         {(['profile', 'mine', 'bookmarks', 'create'] as const).map((kind) => (
           <button key={kind} type="button" aria-pressed={tab === kind} onClick={() => setTab(kind)}>
@@ -73,6 +74,25 @@ export function LiveAccount() {
     </main>
   );
 }
+// Trống thì ẩn thẻ Khu vực quản trị (ví dụ môi trường chưa có trang admin).
+const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL ?? 'http://localhost:3200';
+
+/** Thẻ dẫn sang trang quản trị, chỉ hiện với kiểm duyệt viên và quản trị viên. */
+function AdminAreaCard({ role }: { role: string }) {
+  if (!ADMIN_URL || (role !== 'moderator' && role !== 'superadmin')) return null;
+  return (
+    <section className="account-admin" aria-labelledby="account-admin-title">
+      <div>
+        <h2 id="account-admin-title">{vi.api.adminAreaTitle}</h2>
+        <p>{role === 'superadmin' ? vi.api.adminAreaSuperadmin : vi.api.adminAreaModerator}</p>
+      </div>
+      <a className="primary-button" href={ADMIN_URL}>
+        {vi.api.openAdmin}
+      </a>
+    </section>
+  );
+}
+
 /** Chữ cái đầu của tên để làm avatar; tên trống thì dùng dấu chấm. */
 function getInitial(displayName: string): string {
   return Array.from(displayName.trim())[0]?.toUpperCase() ?? '·';
