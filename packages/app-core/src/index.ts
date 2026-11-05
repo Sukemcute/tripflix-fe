@@ -5,3 +5,4 @@ export * from './mobile-review';
 export * from './post-media';
 export * from './demo-catalog';
 export * from './reels';
+export * from './device-name';

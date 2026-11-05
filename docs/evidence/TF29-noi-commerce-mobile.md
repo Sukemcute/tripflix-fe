@@ -36,6 +36,7 @@
 
 - `pnpm gen:api`: pass.
 - `pnpm turbo run lint typecheck test --affected`: pass, 20 tác vụ; 64 unit test (api-client 30, app-core 31, i18n 2, tokens 1). Có 11 test commerce mới. Lint phần thay đổi không có cảnh báo.
+- Trước khi push: đã ghép `origin/develop` mới nhất (`7d0e5b1`) trong checkout riêng và chạy `pnpm turbo run lint typecheck test build --affected`: 22 tác vụ pass, 73 unit test (api-client 36, app-core 34, i18n 2, tokens 1), build Web/Admin pass; kiểm tra ranh giới module pass. Chỉ đưa commerce và sửa nhãn địa điểm vào PR; các thay đổi thiết kế OTA/ảnh thương hiệu đang làm trong workspace chính được giữ ngoài commit.
 - `node tools/check-boundaries.mjs`: pass.
 - `git diff --check`: pass.
 - `node tests/e2e/commerce/checkout.cjs`: lần kiểm lại có 8 kiểm tra pass, không có pageerror. Dùng Chromium 390×844, API/Postgres/Redis local và tài khoản test riêng. GET danh sách TF37, phân trang và đồng bộ đơn ngoài app đều dùng API thật; test dừng nếu endpoint không trả 200. Chỉ lỗi mạng, response 202 và response VNPay âm được tiêm để kiểm tra xử lý giao diện.
