@@ -24,6 +24,7 @@ export const vi = {
   },
   admin: {
     title: 'Tripflix Admin',
+    overview: 'Tổng quan',
     moderation: 'Kiểm duyệt',
     analytics: 'Số liệu',
     inventory: 'Lịch trống & giá',

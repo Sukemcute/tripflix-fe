@@ -495,6 +495,131 @@ h3 {
 .admin-record button {
   flex-shrink: 0;
 }
+/* Tổng quan theo vai trò (TF06E) */
+.admin-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.admin-overview-hero {
+  position: relative;
+  padding: 32px;
+  border-radius: 20px;
+  background: var(--color-warm-mist);
+  overflow: hidden;
+}
+.admin-overview.is-superadmin .admin-overview-hero {
+  background: var(--color-sea-mist);
+}
+.admin-overview-hero::after {
+  content: '';
+  position: absolute;
+  right: -50px;
+  top: -70px;
+  width: 220px;
+  height: 220px;
+  border-radius: 999px;
+  background: var(--color-sun-soft);
+}
+.admin-overview-hero > * {
+  position: relative;
+  z-index: 1;
+}
+.admin-overview-hero h1 {
+  font-size: 30px;
+  letter-spacing: -1px;
+  overflow-wrap: anywhere;
+}
+.admin-overview-hero p {
+  max-width: 560px;
+  margin-top: 10px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.admin-overview-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+.admin-overview-metrics a {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  padding: 20px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-background);
+  transition: border-color 0.2s;
+}
+.admin-overview-metrics a:hover {
+  border-color: var(--color-teal-ink);
+}
+.admin-overview-metrics span {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.admin-overview-metrics strong {
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+.admin-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.admin-overview.is-superadmin .admin-overview-grid {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+.admin-overview-posts li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 28px;
+  border-top: 1px solid var(--color-border);
+}
+.admin-overview-posts strong {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.admin-overview-posts p {
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+.admin-overview-reports {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+  font-size: 10px;
+  font-weight: 700;
+}
+.admin-overview-shortcuts ul {
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 16px;
+  gap: 4px;
+}
+.admin-overview-shortcuts a {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.admin-overview-shortcuts a:hover {
+  background: var(--color-surface);
+  color: var(--color-teal-ink);
+}
 @media (max-width: 1000px) {
   .admin-login-story,
   .admin-login-content {
@@ -516,6 +641,9 @@ h3 {
   .admin-data-heading,
   .admin-record {
     flex-direction: column;
+  }
+  .admin-overview.is-superadmin .admin-overview-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (max-width: 640px) {
@@ -610,6 +738,22 @@ h3 {
   }
   .admin-record {
     padding: 20px;
+  }
+  .admin-overview-hero {
+    padding: 24px 20px;
+  }
+  .admin-overview-hero h1 {
+    font-size: 24px;
+  }
+  .admin-overview-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .admin-overview-metrics li:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  .admin-overview-posts li {
+    padding-inline: 18px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

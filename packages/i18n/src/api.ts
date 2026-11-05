@@ -216,4 +216,25 @@ export const api = {
   hidden: 'Đã ẩn',
   removed: 'Đã gỡ',
   deleted: 'Đã xóa',
+  // Dashboard theo vai trò (TF06E): trang Tổng quan của admin, thẻ Khu vực quản trị trên web
+  overviewGreeting: 'Chào {name}',
+  overviewModeratorHint: 'Bạn có quyền kiểm duyệt bài đăng: xem bài mới, ẩn, gỡ hoặc khôi phục bài vi phạm.',
+  overviewSuperadminHint:
+    'Bạn quản lý toàn hệ thống: kiểm duyệt, nhân sự và tài khoản, lịch trống & giá, đơn hàng.',
+  metricPublished: 'Bài đang hiện',
+  metricHidden: 'Bài đã ẩn',
+  metricRemoved: 'Bài đã gỡ',
+  metricUsers: 'Tài khoản',
+  metricStaff: 'Nhân sự',
+  recentPosts: 'Bài mới đăng',
+  recentPostsHint: 'Năm bài gần nhất. Mở màn Kiểm duyệt để xem chi tiết và xử lý.',
+  noRecentPosts: 'Chưa có bài đăng nào.',
+  openModeration: 'Mở màn Kiểm duyệt',
+  shortcuts: 'Lối tắt',
+  reportCount: '{count} báo cáo',
+  adminAreaTitle: 'Khu vực quản trị',
+  adminAreaModerator: 'Bạn là kiểm duyệt viên. Xem và xử lý bài đăng vi phạm trong trang quản trị.',
+  adminAreaSuperadmin:
+    'Bạn là quản trị viên. Quản lý nhân sự, tài khoản, lịch trống, đơn hàng và kiểm duyệt.',
+  openAdmin: 'Mở trang quản trị',
 } as const;
