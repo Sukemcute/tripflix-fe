@@ -18,6 +18,12 @@
   - Đăng nhập admin xong vào thẳng Tổng quan (`getDemoAdminReturnPath` nhận thêm `/`, mặc định `/`); có `returnTo` hợp lệ thì vẫn theo `returnTo`.
   - Số liệu dùng khoá query `['admin-posts', …]`, nên xử lý bài ở màn Kiểm duyệt xong thì số ở Tổng quan tải lại; số tài khoản, nhân sự dùng chung khoá với màn Nhân sự.
 - **Web `/account`**: moderator và superadmin có thẻ "Khu vực quản trị" (chữ theo vai trò, nút "Mở trang quản trị"). Member không đổi. Địa chỉ lấy từ biến mới `NEXT_PUBLIC_ADMIN_URL` (mặc định `http://localhost:3200`, để trống thì ẩn thẻ).
+- **Căn lề các màn admin** (chỉ CSS trong `apps/admin/src/app/globals.css`, không sửa code màn Kiểm duyệt, Lịch trống):
+  - Hàng lọc `.admin-filters` có khoảng đệm trên (trước đây ô lọc dính viền trên khung ở Kiểm duyệt, Lịch trống); nút trong hàng lọc cao bằng ô nhập, cùng đáy (trước đây "Làm mới", "Xem lịch" bị kéo cao bằng cả nhãn).
+  - Tiêu đề, dòng chữ, thông báo lỗi đặt thẳng trong `.admin-data` thụt vào bằng lề khung (màn Nhân sự trước đây dính viền trái).
+  - Bảng: cột sau cột đầu không xuống dòng, nút trong bảng nhỏ lại và nằm cùng hàng, cột cuối căn phải cả tiêu đề; khoảng đệm giữa các cột 16px nên bảng Nhân sự vừa khung (trước đây thừa khoảng 30px, phải cuộn ngang).
+  - Khung chi tiết bài ở màn Kiểm duyệt xếp theo cột (trước đây tiêu đề, nội dung, ô Lý do, các nút dàn một hàng ngang, nút "Đóng" đè nút "Khôi phục").
+  - Màn Nhân sự: dòng đếm "2 Kiểm duyệt viên" (đếm cả superadmin) đổi thành "2 nhân sự".
 - Khoá chữ mới trong `packages/i18n` (`admin.overview`, `api.overview*`, `api.metric*`, `api.recentPosts`, `api.adminArea*`…). CSS chỉ dùng biến trong `packages/tokens`.
 
 ## Đối chiếu "Xong khi"
@@ -61,6 +67,8 @@ Kiểm thật bằng Chrome (playwright-core, script để ngoài repo) trên ad
 (15) bấm "Mở trang quản trị" → sang app admin
 ```
 
+Kiểm căn lề các màn Nhân sự, Kiểm duyệt (mở chi tiết một bài), Lịch trống ở 1366px và 390px: **18/18 PASS** (ô lọc cách viền khung ≥ 18px, nút cao bằng ô nhập và cùng đáy, bảng không phải cuộn ngang ở desktop, trang không tràn ngang).
+
 Ghi chú: bấm Enter ở form đăng nhập (web, admin) trước khi trang chạy xong JavaScript thì trình duyệt gửi form kiểu HTML và tải lại `/login` (ô nhập trống, không lộ mật khẩu vì input không có `name`). Hành vi có từ trước, không do PR này; script kiểm thật chờ trang tải xong rồi mới điền.
 
 ## Cách kiểm lại
@@ -71,7 +79,7 @@ Ghi chú: bấm Enter ở form đăng nhập (web, admin) trước khi trang ch�
 
 ## Ảnh / video
 
-- Đính kèm trong PR: Tổng quan superadmin, Tổng quan moderator, member bị chặn, superadmin màn hẹp 390px, web `/account` của member / moderator / superadmin. Không commit ảnh vào repo.
+- Đính kèm trong PR: Tổng quan superadmin, Tổng quan moderator, màn Nhân sự / Kiểm duyệt / Lịch trống trước và sau khi căn lề, member bị chặn, superadmin màn hẹp 390px, web `/account` của member / moderator / superadmin. Không commit ảnh vào repo.
 
 ## Ảnh hưởng tới phần của người khác
 

@@ -355,8 +355,39 @@ h3 {
 }
 .admin-filters {
   display: flex;
+  align-items: flex-end;
   gap: 16px;
-  padding: 0 28px 24px;
+  padding: 24px 28px;
+}
+.admin-data-heading + .admin-filters {
+  padding-top: 0;
+}
+/* Nút trong hàng lọc cao bằng ô nhập, không bị kéo giãn theo cả nhãn. */
+.admin-filters > button {
+  flex: none;
+  height: 42px;
+  min-height: 42px;
+}
+.admin-record .admin-filters {
+  padding: 16px 0 0;
+}
+/* Nội dung đặt thẳng trong khung .admin-data: thụt vào bằng lề của khung. */
+.admin-data > h2 {
+  padding: 28px 28px 0;
+  font-size: 17px;
+}
+.admin-data > p:not(.admin-empty),
+.admin-data > output {
+  display: block;
+  padding: 8px 28px 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.admin-data > .admin-error {
+  margin: 0 28px 20px;
+}
+.admin-data > .admin-secondary {
+  margin: 20px 28px;
 }
 .admin-filters label {
   font-size: 11px;
@@ -441,14 +472,35 @@ h3 {
 }
 .admin-data td {
   font-size: 12px;
-  padding: 22px 28px;
+  padding: 16px 28px;
   border-top: 1px solid var(--color-border);
 }
 .admin-data td:first-child {
   min-width: 210px;
 }
-.admin-data td:last-child {
+.admin-data th,
+.admin-data td {
+  padding-inline: 16px;
+}
+.admin-data th:first-child,
+.admin-data td:first-child {
+  padding-left: 28px;
+}
+.admin-data td:last-child,
+.admin-data th:last-child {
+  padding-right: 28px;
   text-align: right;
+}
+/* Cột sau cột đầu không xuống dòng (email, vai trò, trạng thái); bảng rộng thì cuộn ngang trong .admin-table-scroll. */
+.admin-data td:not(:first-child) {
+  white-space: nowrap;
+}
+.admin-data td .admin-secondary {
+  min-height: 36px;
+  padding: 8px 12px;
+}
+.admin-data td .admin-secondary + .admin-secondary {
+  margin-left: 8px;
 }
 .admin-status {
   font-size: 10px;
@@ -494,6 +546,23 @@ h3 {
 }
 .admin-record button {
   flex-shrink: 0;
+}
+/* Khung chi tiết bài ở màn Kiểm duyệt (có ô Lý do): xếp theo cột thay vì một hàng ngang. */
+.admin-record:has(> label) {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.admin-record:has(> label) > p:not(.admin-eyebrow) {
+  max-width: 720px;
+  margin-top: 8px;
+}
+.admin-record:has(> label) > h3 {
+  margin-top: 16px;
+}
+.admin-record:has(> label) > button {
+  align-self: flex-start;
+  margin-top: 16px;
 }
 /* Tổng quan theo vai trò (TF06E) */
 .admin-overview {
@@ -726,15 +795,37 @@ h3 {
     padding: 24px 18px 20px;
   }
   .admin-filters {
-    padding: 0 18px 20px;
+    padding: 20px 18px;
     flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-data > h2 {
+    padding: 24px 18px 0;
+  }
+  .admin-data > p:not(.admin-empty),
+  .admin-data > output {
+    padding-inline: 18px;
+  }
+  .admin-data > .admin-error {
+    margin-inline: 18px;
+  }
+  .admin-data > .admin-secondary {
+    margin-inline: 18px;
   }
   .admin-filters label:last-child {
     max-width: none;
   }
   .admin-data th,
   .admin-data td {
-    padding-inline: 18px;
+    padding-inline: 12px;
+  }
+  .admin-data th:first-child,
+  .admin-data td:first-child {
+    padding-left: 18px;
+  }
+  .admin-data th:last-child,
+  .admin-data td:last-child {
+    padding-right: 18px;
   }
   .admin-record {
     padding: 20px;

@@ -47,7 +47,7 @@ export function StaffManagement() {
       />
       {staff.data && (
         <p>
-          {staff.data.length} {vi.api.moderator}
+          {staff.data.length} {vi.api.metricStaff.toLowerCase()}
         </p>
       )}
       <form
