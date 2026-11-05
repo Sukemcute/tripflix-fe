@@ -171,19 +171,8 @@ h3 {
   color: var(--color-coral-ink);
 }
 .home-search {
-  border: 1px solid var(--color-border);
-  border-radius: 24px;
-  padding: 28px 32px;
-  background: var(--color-background);
-  box-shadow: 0 24px 48px -36px var(--color-overlay);
-}
-.home-search .search-form label {
-  margin-bottom: 14px;
-  font-size: 20px;
-  letter-spacing: -0.4px;
-}
-.home-search .search-form > p {
-  margin: 10px 0 0 20px;
+  /* Khung tìm kiếm dùng chung kiểu với trang chủ (stay-search.module.css), đã có viền riêng (TF06K). */
+  margin-top: 8px;
 }
 .search-form label {
   display: block;
@@ -191,57 +180,22 @@ h3 {
   font-size: 15px;
   margin-bottom: 12px;
 }
-/* Thanh tìm kiếm liền (TF06K): kính lúp + ô nhập + nút trong một khung bo tròn */
 .search-field {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 6px 6px 18px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-warm-mist);
-  transition:
-    border-color 0.18s,
-    box-shadow 0.18s,
-    background 0.18s;
-}
-.search-field:focus-within {
-  border-color: var(--color-teal-ink);
-  background: var(--color-background);
-  box-shadow: 0 0 0 4px var(--color-sea-mist);
-}
-.search-field svg {
-  flex: none;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-.search-field-icon {
-  color: var(--color-text-muted);
+  gap: 12px;
 }
 .search-field input {
   flex: 1;
   width: 100%;
   min-width: 0;
-  padding: 12px 0;
-  border: 0;
-  background: transparent;
-  font-size: 15px;
-  outline: none;
+  padding: 14px 18px;
+  border: 1px solid var(--color-border);
+  background: var(--color-warm-mist);
+  border-radius: 12px;
+  font-size: 14px;
 }
 .search-field input::placeholder {
   color: var(--color-text-muted);
-}
-.search-field input::-webkit-search-cancel-button {
-  cursor: pointer;
-}
-.search-field .primary-button {
-  flex: none;
-  min-height: 48px;
-  gap: 10px;
-  padding: 12px 24px;
-  border-radius: 999px;
 }
 .search-form > p {
   margin-top: 10px;
@@ -500,40 +454,45 @@ h3 {
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--color-border);
-  font-size: 13px;
+  margin-top: 18px;
+  font-size: 10px;
 }
 .suggested-queries > span {
-  margin-right: 6px;
   color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  margin-right: 8px;
 }
 .suggested-queries a {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 6px 14px 6px 10px;
   border: 1px solid var(--color-border);
-  border-radius: 999px;
-  font-weight: 600;
-  transition:
-    border-color 0.18s,
-    background 0.18s,
-    color 0.18s;
-}
-.suggested-queries a svg {
-  fill: none;
-  stroke: var(--color-teal-ink);
-  stroke-width: 2;
+  padding: 8px 10px;
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
 }
 .suggested-queries a:hover {
   border-color: var(--color-teal-ink);
+  color: var(--color-teal-ink);
+}
+/* Thẻ gợi ý ở thanh công cụ dưới khung tìm kiếm trang Cảm hứng (TF06K) */
+.suggested-queries.is-chips {
+  justify-content: flex-end;
+  margin-top: 0;
+  font-size: 12px;
+}
+.suggested-queries.is-chips a {
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 999px;
+  color: var(--color-ink);
+  font-weight: 600;
+}
+.suggested-queries.is-chips a svg {
+  width: 16px;
+  height: 16px;
+  color: var(--color-teal-ink);
+}
+.suggested-queries.is-chips a:hover {
   background: var(--color-sea-mist);
   color: var(--color-teal-ink);
 }
@@ -1021,30 +980,11 @@ h3 {
   .home-search {
     padding: 20px 16px;
   }
-  .home-search .search-form label {
-    font-size: 17px;
-  }
-  .home-search .search-form > p {
-    margin-left: 16px;
-  }
   .search-field {
-    padding-left: 14px;
+    flex-direction: column;
   }
   .search-field input {
-    font-size: 14px;
-  }
-  /* Màn hẹp: nút chỉ còn kính lúp; chữ vẫn có cho trình đọc màn hình. */
-  .search-field .primary-button {
-    width: 48px;
-    padding: 0;
-  }
-  .search-submit-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
+    font-size: 12px;
   }
   .suggested-queries {
     gap: 8px;
@@ -1052,6 +992,9 @@ h3 {
   .suggested-queries > span {
     width: 100%;
     margin-bottom: 4px;
+  }
+  .suggested-queries.is-chips {
+    justify-content: flex-start;
   }
   .curated-section {
     padding-block: 40px;

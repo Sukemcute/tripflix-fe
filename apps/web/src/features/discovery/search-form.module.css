@@ -1,0 +1,24 @@
+/*
+ * Thanh tìm kiếm trang Cảm hứng: dùng chung stay-search.module.css với trang chủ, chỉ đổi lưới còn 2 cột (TF06K).
+ * Lặp tên lớp (.row.row) để thắng các rule của stay-search ở mọi độ rộng (ví dụ lưới 6 cột ở ≤ 1199px, .panel .field).
+ */
+.row.row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.row.row > label {
+  border-right: 0;
+}
+.toolbar {
+  align-items: center;
+}
+@media (max-width: 900px) {
+  .row.row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
