@@ -54,13 +54,23 @@ export function LiveSearchScreen({
           {search.suggestions.data?.items.map((place) => (
             <button
               type="button"
-              className="secondary-button"
+              className="secondary-button max-w-full"
               key={place.id}
               aria-pressed={search.selection?.id === place.id}
+              aria-labelledby={`suggestion-${place.id}-name`}
+              aria-describedby={place.subtitle ? `suggestion-${place.id}-subtitle` : undefined}
               onClick={() => search.choosePlace(place)}
             >
-              {place.name}
-              {place.subtitle ? ` · ${place.subtitle}` : ''}
+              <span className="min-w-0 whitespace-normal text-left">
+                <span className="block" id={`suggestion-${place.id}-name`}>
+                  {place.name}
+                </span>
+                {place.subtitle && (
+                  <span className="small muted block font-normal" id={`suggestion-${place.id}-subtitle`}>
+                    {place.subtitle}
+                  </span>
+                )}
+              </span>
             </button>
           ))}
         </div>

@@ -31,6 +31,7 @@ import type {
   SetGuestsResultDto,
   StartVnpayRequestDto,
   StartVnpayResultDto,
+  TripPageDto,
 } from '../model';
 
 import { http } from '../../../http';
@@ -162,6 +163,125 @@ export const useCheckoutControllerCreate = <TError = unknown, TContext = unknown
 > => {
   return useMutation(getCheckoutControllerCreateMutationOptions(options), queryClient);
 };
+export type checkoutControllerListResponse200 = {
+  data: TripPageDto;
+  status: 200;
+};
+
+export type checkoutControllerListResponseSuccess = checkoutControllerListResponse200 & {
+  headers: Headers;
+};
+export type checkoutControllerListResponse = checkoutControllerListResponseSuccess;
+
+export const getCheckoutControllerListUrl = () => {
+  return `/api/checkout`;
+};
+
+export const checkoutControllerList = async (
+  options?: Parameters<typeof http>[1],
+): Promise<checkoutControllerListResponse> => {
+  return http<checkoutControllerListResponse>(getCheckoutControllerListUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getCheckoutControllerListQueryKey = () => {
+  return [`/api/checkout`] as const;
+};
+
+export const getCheckoutControllerListQueryOptions = <
+  TData = Awaited<ReturnType<typeof checkoutControllerList>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>>;
+  request?: SecondParameter<typeof http>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getCheckoutControllerListQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof checkoutControllerList>>> = ({ signal }) =>
+    checkoutControllerList({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof checkoutControllerList>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CheckoutControllerListQueryResult = NonNullable<
+  Awaited<ReturnType<typeof checkoutControllerList>>
+>;
+export type CheckoutControllerListQueryError = unknown;
+
+export function useCheckoutControllerList<
+  TData = Awaited<ReturnType<typeof checkoutControllerList>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkoutControllerList>>,
+          TError,
+          Awaited<ReturnType<typeof checkoutControllerList>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCheckoutControllerList<
+  TData = Awaited<ReturnType<typeof checkoutControllerList>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkoutControllerList>>,
+          TError,
+          Awaited<ReturnType<typeof checkoutControllerList>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCheckoutControllerList<
+  TData = Awaited<ReturnType<typeof checkoutControllerList>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useCheckoutControllerList<
+  TData = Awaited<ReturnType<typeof checkoutControllerList>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getCheckoutControllerListQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export type checkoutControllerGetResponse200 = {
   data: CheckoutDto;
   status: 200;

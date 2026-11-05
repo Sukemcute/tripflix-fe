@@ -1,1 +1,1 @@
-export { LiveHotelScreen as default } from '@/features/discovery/live-discovery-screens';
+export { CommerceHotelScreen as default } from '@/features/booking/hotel-screen';

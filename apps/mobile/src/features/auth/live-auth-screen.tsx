@@ -22,7 +22,9 @@ export function LiveLoginScreen() {
     onSuccess: () => {
       setPassword('');
       const path =
-        typeof returnTo === 'string' && /^\/(?:\(tabs\)|trip\/[^/?#]+|saved|create)(?:$|\/)/.test(returnTo)
+        typeof returnTo === 'string' &&
+        (/^\/(?:\(tabs\)|trip\/[^/?#]+|saved|create|cart)(?:$|\/)/.test(returnTo) ||
+          /^\/payments\/vnpay\/return(?:\?|$)/.test(returnTo))
           ? returnTo
           : '/(tabs)/me';
       router.replace(path as Href);
