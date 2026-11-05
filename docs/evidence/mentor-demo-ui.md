@@ -54,6 +54,8 @@ pnpm --filter @tripflix/mobile exec expo start --web
 ## Kết quả kiểm tra
 
 - Kiểm tra lại trước PR ngày 2026-11-05: `pnpm check` qua (lint, typecheck, **37/37 test**); build Web/Admin qua; `tools/verify-mentor-demo.cjs` qua **7/7 nhóm**, **10 ảnh**, không có browser runtime error. Dùng Chromium có sẵn ngoài repo; ảnh và `verification.json` nằm trong thư mục `pre-pr/` dưới đường dẫn evidence bên dưới.
+- CI lần đầu phát hiện `next build` và `next typegen` chạy song song, gây TS6053 vì file `.next/types` bị thay thế khi TypeScript đang đọc. Thêm `apps/web/turbo.json` và `apps/admin/turbo.json` để build phụ thuộc typecheck; kiểm tra đồ thị task xác nhận thứ tự này, không sửa workflow chung hay bỏ qua kiểm tra.
+- Sau sửa thứ tự task: `pnpm turbo run lint typecheck test build --affected --force` qua **19/19 tác vụ**, không dùng cache.
 - `pnpm check`: lint, typecheck và **37/37 unit test** trong 8 file; gồm 5 test mới cho parser/filter/sort, feed ordering, detail lookup và chống redirect ra URL ngoài khi đăng nhập.
 - `node tools/verify-mentor-demo.cjs`: **7 nhóm kiểm tra**, **10 ảnh**, 9 tổ hợp route/viewport Web, 3 viewport Admin và 2 viewport chi tiết Mobile; không có browser runtime error.
 - `node tools/verify-mobile-review.cjs`: **10 nhóm kiểm tra cũ**, **42 lượt route/viewport** (320/390/430), **22 ảnh**, không tràn ngang document và không có browser runtime error. Gồm luồng đặt chuyến, giữ ngữ cảnh đăng nhập, snapshot đơn, media picker và phục hồi checkout.
