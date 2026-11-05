@@ -9,6 +9,13 @@ export interface HttpConfig {
   getAccessToken?: () => string | null | Promise<string | null>;
   /** Gọi khi gặp 401: đổi refresh token lấy access token mới. Trả true nếu thành công. */
   refreshAccessToken?: () => Promise<boolean>;
+  credentials?: RequestCredentials;
+}
+
+export interface HttpRequestOptions extends RequestInit {
+  /** Auth endpoints must not recursively try to refresh themselves. */
+  skipAuthRefresh?: boolean;
+  skipAuthorization?: boolean;
 }
 
 let config: HttpConfig = { baseUrl: '' };
@@ -36,15 +43,30 @@ export class HttpError extends Error {
 
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-const newId = () => globalThis.crypto.randomUUID();
+const newId = () =>
+  globalThis.crypto?.randomUUID?.() ??
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const value = Math.floor(Math.random() * 16);
+    return (char === 'x' ? value : (value & 3) | 8).toString(16);
+  });
 
-async function send(url: string, init: RequestInit, idempotencyKey: string | undefined): Promise<Response> {
+async function send(
+  requestConfig: HttpConfig,
+  url: string,
+  init: RequestInit,
+  idempotencyKey: string | undefined,
+  skipAuthorization: boolean | undefined,
+): Promise<Response> {
   const headers = new Headers(init.headers);
-  const token = await config.getAccessToken?.();
+  const token = skipAuthorization ? null : await requestConfig.getAccessToken?.();
   if (token) headers.set('authorization', `Bearer ${token}`);
   if (idempotencyKey && !headers.has('idempotency-key')) headers.set('idempotency-key', idempotencyKey);
   if (!headers.has('x-request-id')) headers.set('x-request-id', newId());
-  return fetch(`${config.baseUrl}${url}`, { ...init, headers });
+  return fetch(`${requestConfig.baseUrl.replace(/\/$/, '')}${url}`, {
+    credentials: requestConfig.credentials,
+    ...init,
+    headers,
+  });
 }
 
 async function readBody(res: Response): Promise<unknown> {
@@ -53,14 +75,21 @@ async function readBody(res: Response): Promise<unknown> {
   return type.includes('application/json') ? res.json() : res.text();
 }
 
-export async function http<T>(url: string, init: RequestInit = {}): Promise<T> {
+export async function http<T>(url: string, options: HttpRequestOptions = {}): Promise<T> {
+  const { skipAuthRefresh, skipAuthorization, ...init } = options;
+  const requestConfig = config;
   const method = (init.method ?? 'GET').toUpperCase();
   // Cùng một key cho lần gửi lại sau refresh, để server không xử lý lệnh ghi hai lần.
   const idempotencyKey = WRITE_METHODS.has(method) ? newId() : undefined;
 
-  let res = await send(url, init, idempotencyKey);
-  if (res.status === 401 && config.refreshAccessToken && (await config.refreshAccessToken())) {
-    res = await send(url, init, idempotencyKey);
+  let res = await send(requestConfig, url, init, idempotencyKey, skipAuthorization);
+  if (
+    res.status === 401 &&
+    !skipAuthRefresh &&
+    requestConfig.refreshAccessToken &&
+    (await requestConfig.refreshAccessToken())
+  ) {
+    res = await send(requestConfig, url, init, idempotencyKey, skipAuthorization);
   }
 
   const data = await readBody(res);

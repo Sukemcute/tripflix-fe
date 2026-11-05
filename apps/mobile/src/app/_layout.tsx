@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { configureHttp } from '@tripflix/api-client';
+import { ApiSessionProvider } from '@tripflix/api-client';
+import * as SecureStore from 'expo-secure-store';
 import { colors, mobileLayout } from '@tripflix/tokens';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -9,8 +10,14 @@ import { ActivityIndicator, Platform, View } from 'react-native';
 import { copy, Txt } from '@/components/mobile-ui';
 import { ReviewProvider } from '@/features/review/review-provider';
 
-// Địa chỉ gateway lấy từ apps/mobile/.env. Token (expo-secure-store) gắn ở đây khi có task đăng nhập.
-configureHttp({ baseUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:8080' });
+const tokenStorage =
+  Platform.OS === 'web'
+    ? undefined
+    : {
+        read: () => SecureStore.getItemAsync('tripflix.refresh'),
+        write: (token: string) => SecureStore.setItemAsync('tripflix.refresh', token),
+        clear: () => SecureStore.deleteItemAsync('tripflix.refresh'),
+      };
 export const unstable_settings = { anchor: 'index' };
 
 export default function RootLayout() {
@@ -40,29 +47,38 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ReviewProvider>
-        <StatusBar style="dark" />
-        {fontError && <Txt variant="caption">{copy.common.fontError}</Txt>}
-        <View
-          style={{
-            flex: 1,
-            width: '100%',
-            alignSelf: 'center',
-            maxWidth: Platform.OS === 'web' ? mobileLayout.contentWidth : undefined,
-          }}
-        >
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.background },
-              animation: 'none',
+      <ApiSessionProvider
+        baseUrl={
+          process.env.EXPO_PUBLIC_API_URL ??
+          (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080')
+        }
+        client={Platform.OS === 'web' ? 'web' : 'native'}
+        storage={tokenStorage}
+      >
+        <ReviewProvider>
+          <StatusBar style="dark" />
+          {fontError && <Txt variant="caption">{copy.common.fontError}</Txt>}
+          <View
+            style={{
+              flex: 1,
+              width: '100%',
+              alignSelf: 'center',
+              maxWidth: Platform.OS === 'web' ? mobileLayout.contentWidth : undefined,
             }}
           >
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(tabs)" />
-          </Stack>
-        </View>
-      </ReviewProvider>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.background },
+                animation: 'none',
+              }}
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(tabs)" />
+            </Stack>
+          </View>
+        </ReviewProvider>
+      </ApiSessionProvider>
     </QueryClientProvider>
   );
 }

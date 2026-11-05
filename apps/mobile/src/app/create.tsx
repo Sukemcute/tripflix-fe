@@ -1,1 +1,1 @@
-export { CreateScreen as default } from '@/features/post/create-screen';
+export { LiveCreateScreen as default } from '@/features/post/live-create-screen';

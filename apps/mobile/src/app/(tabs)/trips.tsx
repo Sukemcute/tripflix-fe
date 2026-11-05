@@ -1,1 +1,1 @@
-export { TripsScreen as default } from '@/features/account/account-screens';
+export { LiveTripsScreen as default } from '@/features/account/live-account-screens';

@@ -1,1 +1,1 @@
-export { SavedScreen as default } from '@/features/account/account-screens';
+export { LiveSavedScreen as default } from '@/features/feed/live-feed-screen';

@@ -1,1 +1,1 @@
-export { ItineraryScreen as default } from '@/features/booking/detail-screens';
+export { UnavailableScreen as default } from '@/components/api-state';

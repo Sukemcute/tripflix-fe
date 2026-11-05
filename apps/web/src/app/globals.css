@@ -202,6 +202,157 @@ h3 {
 .search-form > p {
   margin-top: 10px;
 }
+.ota-header .ota-header-cta {
+  background: var(--color-coral);
+  color: var(--color-ink);
+  margin-left: auto;
+}
+.ota-place-field > input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-warm-mist);
+}
+.ota-home.results-page {
+  padding-top: 0;
+}
+.ota-home .search-form {
+  position: relative;
+  margin-top: -18px;
+  padding: 20px 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-background);
+  display: grid;
+  grid-template-columns: minmax(210px, 1.5fr) repeat(3, minmax(105px, 1fr));
+  align-items: start;
+  gap: 12px 16px;
+}
+.ota-home .filter-bar {
+  display: contents;
+}
+.ota-home .filter-bar label {
+  margin: 0;
+}
+.ota-home .ota-place-field {
+  grid-column: 1;
+  grid-row: 1;
+}
+.ota-home .ota-place-field > label {
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.ota-home .search-form > .suggested-queries {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 0;
+}
+.ota-home .search-form > :is(output, p, [role='alert']) {
+  grid-column: 1 / -1;
+}
+.ota-home .search-form > button[type='submit'] {
+  margin: 0;
+  align-self: end;
+  background: var(--color-teal-ink);
+}
+.ota-home .filter-bar input,
+.ota-home .filter-bar select,
+.ota-home .ota-place-field > input {
+  min-width: 0;
+  background: var(--color-sea-mist);
+}
+.ota-destinations {
+  padding-block: 48px 64px;
+}
+.ota-destinations h2 {
+  margin: 12px 0 24px;
+  font-size: clamp(24px, 3vw, 36px);
+}
+.ota-destinations a {
+  display: grid;
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+}
+.ota-destinations img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+.ota-destinations strong {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 32px 18px 16px;
+  display: flex;
+  justify-content: space-between;
+  background: linear-gradient(transparent, var(--color-ink));
+  color: var(--color-background);
+  font-size: 22px;
+}
+@media (max-width: 900px) {
+  .ota-home .search-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ota-home .ota-place-field {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 640px) {
+  .ota-header .ota-header-cta {
+    display: none;
+  }
+  .ota-home .search-form {
+    margin-top: 0;
+    padding: 16px;
+  }
+  .ota-home .search-form > button[type='submit'] {
+    grid-column: 1 / -1;
+  }
+}
+.search-form > input,
+.search-form label > input,
+.search-form label > textarea {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px 18px;
+  border: 1px solid var(--color-border);
+  background: var(--color-warm-mist);
+  border-radius: 12px;
+  font: inherit;
+}
+.search-form textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+.trip-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  height: 100%;
+}
+.trip-detail > h1 {
+  font-size: 36px;
+  line-height: 1.3;
+  letter-spacing: -1px;
+  margin-block: 16px;
+}
+.secondary-button[aria-pressed='true'] {
+  background: var(--color-sea-mist);
+  border-color: var(--color-teal-ink);
+}
+.secondary-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.search-form > button,
+.trip-detail > button {
+  margin: 8px 8px 8px 0;
+}
 .primary-button,
 .secondary-button {
   min-height: 48px;

@@ -1,8 +1,10 @@
 import { mobile } from './mobile';
 import { demo } from './demo';
+import { api } from './api';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
+  api,
   mobile,
   demo,
   app: {
