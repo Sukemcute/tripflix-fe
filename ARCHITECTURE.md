@@ -6,11 +6,11 @@ AI agents: read this file and [RULES.md](RULES.md) before changing code.
 
 ![Tripflix system architecture](docs/architecture/06-kien-truc-tong-quan.png)
 
-> The PNG preview above is still v4.5 (it shows a separate `commerce` database). The editable `.drawio` file is v4.6 and is canonical: `commerce` is a schema in the `core` database. Re-export the PNG from the `.drawio` file.
+> The PNG preview above is still v4.5 (it shows a separate `commerce` database). The editable `.drawio` file is v4.7 (2026-11-05, replaces v4.6) and is canonical: `commerce` is a schema in the `core` database. Re-export the PNG from the `.drawio` file.
 
-The editable diagram is the canonical system view (v4.6, 2026-11-04). The presentation layer separates Front Office (`apps/mobile`, `apps/web`) is the guest/member area for discovery, posting, and booking. Back Office (`apps/admin`) is the internal Admin Console for `moderator` and `superadmin` operations and moderation. Both surfaces use the same Traefik API Gateway and `core-api`; admin permissions are enforced by backend role guards. Video uploads go directly to S3, then playback uses CloudFront. Do not send video through the API Gateway.
+The editable diagram is the canonical system view (v4.7, 2026-11-05). The presentation layer separates Front Office (`apps/mobile`, `apps/web`) is the guest/member area for discovery, posting, and booking. Back Office (`apps/admin`) is the internal Admin Console for `moderator` and `superadmin` operations and moderation. Both surfaces use the same Traefik API Gateway and `core-api`; admin permissions are enforced by backend role guards. Video uploads go directly to S3, then playback uses CloudFront. Do not send video through the API Gateway.
 
-The [editable diagram](docs/architecture/06-kien-truc-tong-quan.drawio) is the source for the preview. Supporting decisions and repo structure are in [architecture doc 10](docs/architecture/10-de-xuat-kien-truc-va-repo.md) and [architecture doc 11](docs/architecture/11-de-xuat-cau-truc-repo.md). If a supporting document conflicts with the v4.6 diagram, flag the conflict and follow the diagram until the architecture is reconciled.
+The [editable diagram](docs/architecture/06-kien-truc-tong-quan.drawio) is the source for the preview. Supporting decisions and repo structure are in [architecture doc 10](docs/architecture/10-de-xuat-kien-truc-va-repo.md) and [architecture doc 11](docs/architecture/11-de-xuat-cau-truc-repo.md). If a supporting document conflicts with the v4.7 diagram, flag the conflict and follow the diagram until the architecture is reconciled.
 
 ## Frontend boundaries
 
