@@ -29,6 +29,10 @@ CMD pnpm --filter=${APP} dev
 FROM dev AS build
 ARG APP
 ENV NODE_ENV=production
+# Next gắn NEXT_PUBLIC_* vào bundle lúc build. Không truyền thì giữ mặc định như khi chưa có arg.
+ARG NEXT_PUBLIC_API_URL=http://localhost:8080
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
 RUN pnpm turbo run build --filter=${APP}
 
 FROM node:24-slim AS prod
