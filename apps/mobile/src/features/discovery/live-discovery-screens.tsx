@@ -1,6 +1,6 @@
 import { useStaySearch, type StayFilters } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Button, Card, Chip, Field, money, Notice, Row, Screen, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice, UnavailableScreen } from '@/components/api-state';
 import { LiveFeedScreen } from '@/features/feed/live-feed-screen';
@@ -41,7 +41,23 @@ export function LiveSearchScreen() {
           {place.subtitle ? ` · ${place.subtitle}` : ''}
         </Chip>
       ))}
-      {search.selection?.type === 'hotel' && <Notice>{vi.api.hotelUnavailable}</Notice>}
+      {search.selection?.type === 'hotel' && (
+        <Button
+          onPress={() =>
+            router.push({
+              pathname: '/hotel/[id]',
+              params: {
+                id: search.selection!.refId,
+                checkIn: search.filters.checkIn,
+                checkOut: search.filters.checkOut,
+                adults: search.filters.adults,
+              },
+            })
+          }
+        >
+          {vi.commerce.hotel}
+        </Button>
+      )}
       <Field
         label={vi.api.checkIn}
         value={search.filters.checkIn}
@@ -118,7 +134,21 @@ export function LiveSearchScreen() {
           <Txt variant="label">
             {vi.api.total}: {money(stay.totalPrice)}
           </Txt>
-          <Notice>{vi.api.bookingUnavailable}</Notice>
+          <Button
+            onPress={() =>
+              router.push({
+                pathname: '/hotel/[id]',
+                params: {
+                  id: stay.hotelId,
+                  checkIn: search.submitted!.checkIn,
+                  checkOut: search.submitted!.checkOut,
+                  adults: search.submitted!.adults,
+                },
+              })
+            }
+          >
+            {vi.commerce.hotel}
+          </Button>
         </Card>
       ))}
       {search.stays.data?.nextCursor && (

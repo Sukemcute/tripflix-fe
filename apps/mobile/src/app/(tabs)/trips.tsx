@@ -1,1 +1,1 @@
-export { LiveTripsScreen as default } from '@/features/account/live-account-screens';
+export { CommerceTripsScreen as default } from '@/features/booking/trips-screen';

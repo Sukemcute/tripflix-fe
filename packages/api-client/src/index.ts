@@ -9,3 +9,12 @@ export { socialApi } from './social';
 export { useSocialPosts } from './queries';
 export { feedApi, useReelsFeed } from './feed';
 export { useStaySearch, getFutureDate, type StayFilters } from './stay-search';
+export {
+  commerceApi,
+  createOperation,
+  createCheckoutOperation,
+  createCardPaymentOperation,
+  createOtpOperation,
+  createVnpayOperation,
+  type CommerceHotel,
+} from './commerce';
