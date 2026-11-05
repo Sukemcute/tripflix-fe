@@ -132,7 +132,7 @@ export function getDemoFeed(mode: 'for-you' | 'trending'): DemoTrip[] {
 
 export function getDemoAdminReturnPath(value: unknown): string {
   return typeof value === 'string' &&
-    ['/moderation', '/analytics', '/inventory', '/orders', '/staff'].includes(value)
+    ['/', '/moderation', '/analytics', '/inventory', '/orders', '/staff'].includes(value)
     ? value
-    : '/moderation';
+    : '/';
 }

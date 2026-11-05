@@ -43,7 +43,8 @@ describe('mentor demo discovery', () => {
       '/orders?next=https://example.com',
       undefined,
     ])
-      expect(getDemoAdminReturnPath(path)).toBe('/moderation');
+      expect(getDemoAdminReturnPath(path)).toBe('/');
     expect(getDemoAdminReturnPath('/orders')).toBe('/orders');
+    expect(getDemoAdminReturnPath('/moderation')).toBe('/moderation');
   });
 });
