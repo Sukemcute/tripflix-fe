@@ -240,4 +240,7 @@ export const api = {
   adminAreaSuperadmin:
     'Bạn là quản trị viên. Quản lý nhân sự, tài khoản, lịch trống, đơn hàng và kiểm duyệt.',
   openAdmin: 'Mở trang quản trị',
+  // Trang tài khoản khi chưa đăng nhập (TF06F)
+  accountGuestTitle: 'Đăng nhập để xem tài khoản của bạn',
+  accountGuestBody: 'Quản lý hồ sơ, bài đăng, bài đã lưu và các thiết bị đang đăng nhập ở một nơi.',
 } as const;

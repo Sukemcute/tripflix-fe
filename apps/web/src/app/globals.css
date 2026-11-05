@@ -1228,6 +1228,67 @@ h3 {
   height: auto;
   margin-block: -12px;
 }
+/* Trang tài khoản khi chưa đăng nhập và lúc đang tải (TF06F) */
+.account-guest {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 40px;
+  min-height: 320px;
+  padding: 44px 48px;
+  border-radius: 24px;
+  background: var(--color-warm-mist);
+  overflow: hidden;
+}
+.account-guest::after {
+  content: '';
+  position: absolute;
+  right: -80px;
+  bottom: -120px;
+  width: 340px;
+  height: 340px;
+  border-radius: 999px;
+  background: var(--color-sun-soft);
+}
+.account-guest > * {
+  position: relative;
+  z-index: 1;
+}
+.account-guest-body {
+  max-width: 560px;
+}
+.account-page .account-guest h1 {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 34px);
+  line-height: 1.25;
+  letter-spacing: -1px;
+}
+.account-guest-body > p {
+  margin-top: 12px;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  line-height: 1.8;
+}
+.account-guest .auth-benefits {
+  margin-top: 22px;
+}
+.account-guest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+.account-guest-mascot {
+  width: 200px;
+  height: auto;
+}
+.account-guest.is-loading {
+  grid-template-columns: 1fr;
+  place-items: center;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
 .account-admin {
   display: flex;
   align-items: center;
@@ -1426,5 +1487,25 @@ h3 {
     flex-direction: column;
     align-items: flex-start;
     padding: 20px;
+  }
+  .account-guest {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding: 28px 22px;
+  }
+  .account-guest::after {
+    width: 200px;
+    height: 200px;
+    right: -90px;
+    bottom: -110px;
+  }
+  .account-guest-mascot {
+    display: none;
+  }
+  .account-guest-actions {
+    flex-direction: column;
+  }
+  .account-guest-actions > a {
+    width: 100%;
   }
 }

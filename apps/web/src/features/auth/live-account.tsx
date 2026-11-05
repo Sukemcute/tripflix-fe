@@ -17,22 +17,22 @@ export function LiveAccount() {
   const [tab, setTab] = useState<'profile' | 'mine' | 'bookmarks' | 'create'>('profile');
   if (!isReady)
     return (
-      <main id="content" className="ota-container results-page">
-        <output>{vi.api.loading}</output>
+      <main id="content" className="ota-container results-page account-page">
+        <section className="account-guest is-loading" aria-busy="true">
+          <output>{vi.api.loading}</output>
+        </section>
       </main>
     );
   if (!user)
     return (
-      <main id="content" className="ota-container results-page">
+      <main id="content" className="ota-container results-page account-page">
         <ApiErrorNotice
           error={error}
           retry={() => {
             void session.initialize();
           }}
         />
-        <Link className="primary-button" href="/login">
-          {vi.api.loginRequired}
-        </Link>
+        <AccountGuest />
       </main>
     );
   return (
@@ -74,6 +74,39 @@ export function LiveAccount() {
     </main>
   );
 }
+/** Trang tài khoản khi chưa đăng nhập: giải thích trang này để làm gì, nút Đăng nhập và Tạo tài khoản. */
+function AccountGuest() {
+  return (
+    <section className="account-guest" aria-labelledby="account-guest-title">
+      <div className="account-guest-body">
+        <span className="eyebrow">{vi.api.authEyebrow}</span>
+        <h1 id="account-guest-title">{vi.api.accountGuestTitle}</h1>
+        <p>{vi.api.accountGuestBody}</p>
+        <ul className="auth-benefits">
+          {Object.values(vi.api.authBenefits).map((benefit) => (
+            <li key={benefit}>{benefit}</li>
+          ))}
+        </ul>
+        <div className="account-guest-actions">
+          <Link className="primary-button" href="/login?returnTo=/account">
+            {vi.api.login}
+          </Link>
+          <Link className="secondary-button" href="/login?mode=register&returnTo=/account">
+            {vi.api.register}
+          </Link>
+        </div>
+      </div>
+      <Image
+        className="account-guest-mascot"
+        src="/brand/tripi-welcome.png"
+        alt=""
+        width={200}
+        height={200}
+      />
+    </section>
+  );
+}
+
 // Trống thì ẩn thẻ Khu vực quản trị (ví dụ môi trường chưa có trang admin).
 const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL ?? 'http://localhost:3200';
 
