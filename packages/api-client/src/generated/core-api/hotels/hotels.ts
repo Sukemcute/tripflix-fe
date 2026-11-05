@@ -17,7 +17,7 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { HotelDetailDto } from '../model';
+import type { HotelDetailDto, HotelsControllerGetHotelParams } from '../model';
 
 import { http } from '../../../http';
 
@@ -58,22 +58,33 @@ export type hotelsControllerGetHotelResponseError = hotelsControllerGetHotelResp
 export type hotelsControllerGetHotelResponse =
   hotelsControllerGetHotelResponseSuccess | hotelsControllerGetHotelResponseError;
 
-export const getHotelsControllerGetHotelUrl = (id: string) => {
-  return `/api/hotels/${id}`;
+export const getHotelsControllerGetHotelUrl = (id: string, params?: HotelsControllerGetHotelParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hotels/${id}?${stringifiedParams}` : `/api/hotels/${id}`;
 };
 
 export const hotelsControllerGetHotel = async (
   id: string,
+  params?: HotelsControllerGetHotelParams,
   options?: Parameters<typeof http>[1],
 ): Promise<hotelsControllerGetHotelResponse> => {
-  return http<hotelsControllerGetHotelResponse>(getHotelsControllerGetHotelUrl(id), {
+  return http<hotelsControllerGetHotelResponse>(getHotelsControllerGetHotelUrl(id, params), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getHotelsControllerGetHotelQueryKey = (id: string) => {
-  return [`/api/hotels/${id}`] as const;
+export const getHotelsControllerGetHotelQueryKey = (id: string, params?: HotelsControllerGetHotelParams) => {
+  return [`/api/hotels/${id}`, ...(params ? [params] : [])] as const;
 };
 
 export const getHotelsControllerGetHotelQueryOptions = <
@@ -81,6 +92,7 @@ export const getHotelsControllerGetHotelQueryOptions = <
   TError = void,
 >(
   id: string,
+  params?: HotelsControllerGetHotelParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerGetHotel>>, TError, TData>>;
     request?: SecondParameter<typeof http>;
@@ -88,10 +100,10 @@ export const getHotelsControllerGetHotelQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getHotelsControllerGetHotelQueryKey(id);
+  const queryKey = queryOptions?.queryKey ?? getHotelsControllerGetHotelQueryKey(id, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof hotelsControllerGetHotel>>> = ({ signal }) =>
-    hotelsControllerGetHotel(id, { signal, ...requestOptions });
+    hotelsControllerGetHotel(id, params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof hotelsControllerGetHotel>>,
@@ -110,6 +122,7 @@ export function useHotelsControllerGetHotel<
   TError = void,
 >(
   id: string,
+  params: undefined | HotelsControllerGetHotelParams,
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerGetHotel>>, TError, TData>> &
       Pick<
@@ -129,6 +142,7 @@ export function useHotelsControllerGetHotel<
   TError = void,
 >(
   id: string,
+  params?: HotelsControllerGetHotelParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerGetHotel>>, TError, TData>> &
       Pick<
@@ -148,6 +162,7 @@ export function useHotelsControllerGetHotel<
   TError = void,
 >(
   id: string,
+  params?: HotelsControllerGetHotelParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerGetHotel>>, TError, TData>>;
     request?: SecondParameter<typeof http>;
@@ -160,13 +175,14 @@ export function useHotelsControllerGetHotel<
   TError = void,
 >(
   id: string,
+  params?: HotelsControllerGetHotelParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerGetHotel>>, TError, TData>>;
     request?: SecondParameter<typeof http>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getHotelsControllerGetHotelQueryOptions(id, options);
+  const queryOptions = getHotelsControllerGetHotelQueryOptions(id, params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

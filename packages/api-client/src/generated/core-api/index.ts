@@ -3,6 +3,7 @@ export * from './admin-commerce/admin-commerce';
 export * from './auth/auth';
 export * from './checkout/checkout';
 export * from './discovery/discovery';
+export * from './feed/feed';
 export * from './health/health';
 export * from './hotels/hotels';
 export * from './media/media';
