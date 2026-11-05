@@ -73,8 +73,6 @@ pnpm --filter @tripflix/mobile exec expo start --web
 - `production/verification.json` và 10 ảnh kiểm tra trên production build Web/Admin.
 - Playwright chạy từ runtime có sẵn ngoài repo; không thêm dependency.
 
-## Ranh giới tích hợp và ảnh hưởng
-
 ## Cập nhật UI bình luận Reels — 2026-11-05
 
 - Thay nội dung một bình luận trong sheet dùng chung bằng `features/feed/reel-comments.tsx`; không đổi component Sheet của các màn khác.
@@ -85,7 +83,7 @@ pnpm --filter @tripflix/mobile exec expo start --web
 - `pnpm check`: lint/typecheck qua, 37/37 unit test. Android export qua, 41 assets; chưa kiểm tra keyboard/gesture trên Android hoặc iOS thật.
 - Ảnh và `verification.json` lưu ngoài repo ở `C:/Users/ADMIN/.codex/visualizations/2026/11/04/01a1a6b2-bc84-7e00-b05d-e282325e65d6/reel-comments/`.
 
-## Ranh giới tích hợp và ảnh hưởng (tiếp)
+## Ranh giới tích hợp và ảnh hưởng
 
 - `apps/web`, `apps/admin` thuộc Thành; `apps/mobile` thuộc Trang. Người dùng đã yêu cầu hoàn thiện cả ba phần cho demo; giữ các route, tab và chữ ký component cũ.
 - UI được chia trong `features/discovery`, `features/auth`, `features/shell`; route chỉ lắp ghép. Token dùng hệ thống hiện có, copy mới trong `packages/i18n/src/demo.ts`.
