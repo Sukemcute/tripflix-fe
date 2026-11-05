@@ -52,9 +52,13 @@ const detail = {
     body: 'Chuyến đi 3 ngày 2 đêm, ở gần biển và dạo phố buổi tối.',
     status: 'published',
     visibility: 'public',
+    hashtags: [],
+    createdAt: date,
+    publishedAt: date,
     mediaIds: [],
     tripAttachment: null,
     reactionTotal: 32,
+    reactionCounts: { like: 25, love: 5, helpful: 2 },
     commentCount: 18,
     bookmarkCount: 5,
     shareCount: 2,
@@ -171,7 +175,9 @@ async function mount(browser, mode) {
             };
       } else
         body = {
-          items: [rootComment, comment('c3', 'Mình đi chiều thứ bảy, hồ bơi đông hơn trong video.')],
+          items: url.searchParams.has('parent_comment_id')
+            ? [replyComment]
+            : [rootComment, comment('c3', 'Mình đi chiều thứ bảy, hồ bơi đông hơn trong video.')],
           nextCursor: null,
           hasMore: false,
         };
@@ -272,6 +278,18 @@ async function main() {
         }
         assert.equal(state.evidenceRequests, 0, 'summary does not load evidence');
         if (mode === 'web') {
+          await page
+            .getByRole('article')
+            .filter({ hasText: rootComment.body })
+            .getByRole('button', { name: 'Xem trả lời', exact: true })
+            .click();
+          await ui.sees(replyComment.body);
+          assert.equal(
+            await page.getByRole('region', { name: 'Tripi đọc giúp bạn', exact: true }).count(),
+            1,
+          );
+          assert.equal(state.requests, 2, 'opening replies does not request another summary');
+          await ui.click('Ẩn trả lời');
           await page.setViewportSize({ width: 320, height: 844 });
           assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
           await page.screenshot({ path: path.join(output, 'web-320.png'), fullPage: true });

@@ -44,4 +44,11 @@ $env:TRIPFLIX_MOBILE_WEB_URL='http://localhost:8083'
 node tools/verify-ai-summary.cjs
 ```
 
-Chưa commit/push/PR. Các thay đổi điều hướng nổi thuộc công việc khác trong workspace được giữ nguyên.
+## Giải conflict với develop (2026-11-06)
+
+- Gộp `origin/develop` tại `01c2aef` vào nhánh task; conflict duy nhất ở `apps/web/src/features/social/live-comments.tsx`.
+- Giữ giao diện bình luận mới của develop: ô viết phía trên, sửa tại chỗ, avatar, trả lời lồng nhau, phân trang và lỗi. Bổ sung lại import/card AI ở đầu luồng gốc; không lặp card trong trả lời và không lặp tiêu đề bình luận của trang chi tiết.
+- Cập nhật fixture QA theo trang chi tiết mới: `hashtags`, thời gian đăng và `reactionCounts`. Thêm kiểm tra mở/đóng trả lời vẫn chỉ có một card AI và không tự gọi lại summary.
+- `pnpm turbo run lint typecheck test --affected`: 20/20 task thành công, 98 test đạt (13 task dùng cache). Kiểm tra boundaries và diff đạt.
+- Chạy lại `node tools/verify-ai-summary.cjs` trên web: 6/6 nhóm kịch bản đạt, gồm summary, trả lời, cache, loading/hủy, trạng thái lỗi/thử lại và 320px. Không có lỗi JavaScript runtime.
+- Ảnh sau merge và `verification.json`: `C:/Users/ADMIN/.codex/tmp/tripflix-merge-develop-summary/`.

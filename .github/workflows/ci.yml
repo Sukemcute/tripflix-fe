@@ -2,8 +2,8 @@ name: ci
 
 on:
   pull_request:
-  push:
-    branches: [develop, main]
+  # Khi push, publish.yml gọi CI trước rồi mới build image, nên không chạy riêng để khỏi chạy hai lần.
+  workflow_call:
 
 permissions:
   contents: read
