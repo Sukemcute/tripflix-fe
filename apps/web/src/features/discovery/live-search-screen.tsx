@@ -60,6 +60,7 @@ export function LiveSearchScreen({
                 aria-describedby="place-query-hint"
                 aria-controls="place-suggestions"
                 onFocus={() => setSuggestionsOpen(true)}
+                onClick={() => setSuggestionsOpen(true)}
                 onKeyDown={(event) => {
                   if (event.key === 'Escape') setSuggestionsOpen(false);
                 }}
