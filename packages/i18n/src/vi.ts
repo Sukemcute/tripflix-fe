@@ -1,8 +1,10 @@
 import { mobile } from './mobile';
+import { demo } from './demo';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
   mobile,
+  demo,
   app: {
     name: 'Tripflix',
     slogan: 'Lướt chuyến hay. Đi y chang.',
