@@ -8,31 +8,33 @@ import { useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { PublicPosts } from '@/features/social/live-posts';
 import { AccountSecurity } from './account-security';
+import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
+import { ADMIN_URL, getInitial, isStaffRole } from './account-helpers';
 
 // Màn đăng nhập nằm ở login-form.tsx; giữ export ở đây để app/login/page.tsx không phải đổi.
 export { LiveLogin } from './login-form';
 
-export function LiveAccount() {
+export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTab }) {
   const { user, isReady, session, error } = useApiSession();
-  const [tab, setTab] = useState<'profile' | 'mine' | 'bookmarks' | 'create'>('profile');
+  const [tab, setTab] = useState<AccountTab>(initialTab);
   if (!isReady)
     return (
-      <main id="content" className="ota-container results-page">
-        <output>{vi.api.loading}</output>
+      <main id="content" className="ota-container results-page account-page">
+        <section className="account-guest is-loading" aria-busy="true">
+          <output>{vi.api.loading}</output>
+        </section>
       </main>
     );
   if (!user)
     return (
-      <main id="content" className="ota-container results-page">
+      <main id="content" className="ota-container results-page account-page">
         <ApiErrorNotice
           error={error}
           retry={() => {
             void session.initialize();
           }}
         />
-        <Link className="primary-button" href="/login">
-          {vi.api.loginRequired}
-        </Link>
+        <AccountGuest />
       </main>
     );
   return (
@@ -44,14 +46,15 @@ export function LiveAccount() {
         <div className="account-identity">
           <h1>{user.displayName}</h1>
           <p>
-            {user.email}
+            <span className="account-email">{user.email}</span>
             <span className="account-role">{describeRole(user.role)}</span>
           </p>
         </div>
         <Image className="account-mascot" src="/brand/tripi-welcome.png" alt="" width={120} height={120} />
       </header>
+      <AdminAreaCard role={user.role} />
       <nav className="account-tabs" aria-label={vi.api.accountSections}>
-        {(['profile', 'mine', 'bookmarks', 'create'] as const).map((kind) => (
+        {ACCOUNT_TABS.map((kind) => (
           <button key={kind} type="button" aria-pressed={tab === kind} onClick={() => setTab(kind)}>
             {kind === 'profile'
               ? vi.api.account
@@ -73,9 +76,53 @@ export function LiveAccount() {
     </main>
   );
 }
-/** Chữ cái đầu của tên để làm avatar; tên trống thì dùng dấu chấm. */
-function getInitial(displayName: string): string {
-  return Array.from(displayName.trim())[0]?.toUpperCase() ?? '·';
+/** Trang tài khoản khi chưa đăng nhập: giải thích trang này để làm gì, nút Đăng nhập và Tạo tài khoản. */
+function AccountGuest() {
+  return (
+    <section className="account-guest" aria-labelledby="account-guest-title">
+      <div className="account-guest-body">
+        <span className="eyebrow">{vi.api.authEyebrow}</span>
+        <h1 id="account-guest-title">{vi.api.accountGuestTitle}</h1>
+        <p>{vi.api.accountGuestBody}</p>
+        <ul className="auth-benefits">
+          {Object.values(vi.api.authBenefits).map((benefit) => (
+            <li key={benefit}>{benefit}</li>
+          ))}
+        </ul>
+        <div className="account-guest-actions">
+          <Link className="primary-button" href="/login?returnTo=/account">
+            {vi.api.login}
+          </Link>
+          <Link className="secondary-button" href="/login?mode=register&returnTo=/account">
+            {vi.api.register}
+          </Link>
+        </div>
+      </div>
+      <Image
+        className="account-guest-mascot"
+        src="/brand/tripi-welcome.png"
+        alt=""
+        width={200}
+        height={200}
+      />
+    </section>
+  );
+}
+
+/** Thẻ dẫn sang trang quản trị, chỉ hiện với kiểm duyệt viên và quản trị viên. */
+function AdminAreaCard({ role }: { role: string }) {
+  if (!ADMIN_URL || !isStaffRole(role)) return null;
+  return (
+    <section className="account-admin" aria-labelledby="account-admin-title">
+      <div>
+        <h2 id="account-admin-title">{vi.api.adminAreaTitle}</h2>
+        <p>{role === 'superadmin' ? vi.api.adminAreaSuperadmin : vi.api.adminAreaModerator}</p>
+      </div>
+      <a className="primary-button" href={ADMIN_URL}>
+        {vi.api.openAdmin}
+      </a>
+    </section>
+  );
 }
 
 function describeRole(role: string): string {

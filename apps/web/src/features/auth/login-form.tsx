@@ -20,10 +20,17 @@ function readSafeReturnTo(returnTo: string): string {
 
 const readDeviceName = () => describeDevice(navigator.userAgent) ?? undefined;
 
-export function LiveLogin({ returnTo = '/account' }: { returnTo?: string }) {
+export function LiveLogin({
+  returnTo = '/account',
+  initialMode = 'login',
+}: {
+  returnTo?: string;
+  /** Tab mở sẵn, ví dụ ?mode=register từ nút "Tạo tài khoản". */
+  initialMode?: Mode;
+}) {
   const { session, isReady, error } = useApiSession();
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>('login');
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');

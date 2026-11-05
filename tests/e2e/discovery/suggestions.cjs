@@ -28,6 +28,11 @@ assert.ok(['localhost', '127.0.0.1'].includes(new URL(WEB).hostname));
       const primary = await choice.getByText('Hội An', { exact: true }).boundingBox();
       const secondary = await choice.getByText('Đà Nẵng', { exact: true }).boundingBox();
       assert.ok(secondary.y >= primary.y + primary.height, 'Parent province belongs on a separate line');
+      const destination = page.getByLabel('Tìm kiếm', { exact: true });
+      await destination.press('Escape');
+      await expect(choice).toBeHidden();
+      await destination.click();
+      await expect(choice).toBeVisible();
       await choice.click();
       await expect(page.getByLabel('Tìm kiếm', { exact: true })).toHaveValue('Hội An');
       await expect(choice).toBeHidden();
@@ -36,7 +41,7 @@ assert.ok(['localhost', '127.0.0.1'].includes(new URL(WEB).hostname));
       assert.equal(new URL((await request).url()).searchParams.get('placeId'), 'hoi-an');
       await page.screenshot({ path: join(OUTPUT, `06-web-place-${width}.png`), fullPage: true });
       process.stdout.write(
-        `PASS ${width}px: Hội An primary label, Đà Nẵng description, search placeId=hoi-an\n`,
+        `PASS ${width}px: Hội An label, Đà Nẵng description, reopen suggestions after Escape, search placeId=hoi-an\n`,
       );
       await page.close();
     }

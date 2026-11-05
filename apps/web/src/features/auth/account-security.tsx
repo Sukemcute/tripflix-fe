@@ -134,10 +134,14 @@ function PasswordPanel() {
   );
 }
 
+/** Số thiết bị hiện sẵn (gồm thiết bị hiện tại); còn lại ẩn sau nút "Xem thêm". */
+const VISIBLE_DEVICES = 5;
+
 function DevicesPanel({ userId }: { userId: string }) {
   const { session } = useApiSession();
   const client = useQueryClient();
   const [isConfirmingLogoutAll, setConfirmingLogoutAll] = useState(false);
+  const [isShowingAllDevices, setShowingAllDevices] = useState(false);
   const confirmButton = useRef<HTMLButtonElement>(null);
   const logoutAllButton = useRef<HTMLButtonElement>(null);
   const wasConfirming = useRef(false);
@@ -164,9 +168,22 @@ function DevicesPanel({ userId }: { userId: string }) {
     },
     onSuccess: () => client.invalidateQueries({ queryKey: ['account'] }),
   });
+  // Thiết bị hiện tại đứng đầu, sau đó theo lần hoạt động gần nhất.
+  const sortedDevices = [...(devices.data ?? [])].sort(
+    (a, b) =>
+      Number(b.isCurrent) - Number(a.isCurrent) ||
+      new Date(b.lastUsedAt).getTime() - new Date(a.lastUsedAt).getTime(),
+  );
+  const visibleDevices = isShowingAllDevices ? sortedDevices : sortedDevices.slice(0, VISIBLE_DEVICES);
+  const hiddenCount = sortedDevices.length - VISIBLE_DEVICES;
   return (
     <section className="account-panel account-devices">
-      <h2>{vi.api.sessions}</h2>
+      <h2>
+        {vi.api.sessions}
+        {devices.data && (
+          <span className="device-count">{t('api.deviceCount', { count: sortedDevices.length })}</span>
+        )}
+      </h2>
       <p className="auth-hint">{vi.api.devicesHint}</p>
       <ApiErrorNotice
         error={devices.error}
@@ -177,8 +194,8 @@ function DevicesPanel({ userId }: { userId: string }) {
       <ApiErrorNotice error={action.error} />
       {devices.isPending && <p className="auth-hint">{vi.api.loading}</p>}
       {devices.data?.length === 0 && <p className="auth-hint">{vi.api.noDevices}</p>}
-      <ul className="device-list">
-        {devices.data?.map((device) => (
+      <ul className="device-list" id="account-device-list">
+        {visibleDevices.map((device) => (
           <li key={device.id} className="device-item">
             <div>
               <strong>{device.deviceName ?? vi.api.unknownDevice}</strong>
@@ -196,6 +213,17 @@ function DevicesPanel({ userId }: { userId: string }) {
           </li>
         ))}
       </ul>
+      {hiddenCount > 0 && (
+        <button
+          type="button"
+          className="device-toggle"
+          aria-expanded={isShowingAllDevices}
+          aria-controls="account-device-list"
+          onClick={() => setShowingAllDevices(!isShowingAllDevices)}
+        >
+          {isShowingAllDevices ? vi.api.showFewerDevices : t('api.showMoreDevices', { count: hiddenCount })}
+        </button>
+      )}
       {isConfirmingLogoutAll ? (
         <div className="account-confirm" role="alertdialog" aria-label={vi.api.logoutAllConfirm}>
           <p>{vi.api.logoutAllConfirm}</p>

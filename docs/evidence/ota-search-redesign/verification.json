@@ -1,0 +1,115 @@
+{
+  "layouts": [
+    {
+      "width": 1877,
+      "scrollWidth": 1877,
+      "formBottom": 873.5,
+      "viewportHeight": 892,
+      "overflowingControls": 0,
+      "missingImages": 0
+    },
+    {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "formBottom": 881.5,
+      "viewportHeight": 900,
+      "overflowingControls": 0,
+      "missingImages": 0
+    },
+    {
+      "width": 1366,
+      "scrollWidth": 1366,
+      "formBottom": 756,
+      "viewportHeight": 768,
+      "overflowingControls": 0,
+      "missingImages": 0
+    },
+    {
+      "width": 1280,
+      "scrollWidth": 1280,
+      "formBottom": 788,
+      "viewportHeight": 800,
+      "overflowingControls": 0,
+      "missingImages": 0
+    },
+    {
+      "width": 1024,
+      "scrollWidth": 1024,
+      "formBottom": 741.5,
+      "viewportHeight": 768,
+      "overflowingControls": 0,
+      "missingImages": 0
+    },
+    {
+      "width": 768,
+      "scrollWidth": 768,
+      "formBottom": 973,
+      "viewportHeight": 1024,
+      "overflowingControls": 0,
+      "missingImages": 0
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "formBottom": 1101.828125,
+      "viewportHeight": 844,
+      "overflowingControls": 0,
+      "missingImages": 0
+    },
+    {
+      "width": 360,
+      "scrollWidth": 360,
+      "formBottom": 1141.5625,
+      "viewportHeight": 800,
+      "overflowingControls": 0,
+      "missingImages": 0
+    }
+  ],
+  "flows": [
+    {
+      "width": 390,
+      "status": 200,
+      "query": {
+        "placeId": "hoi-an",
+        "checkIn": "2026-11-06",
+        "checkOut": "2026-11-08",
+        "adults": "3",
+        "rooms": "2",
+        "minStars": "3",
+        "priceMax": "3000000",
+        "sort": "stars"
+      },
+      "checks": [
+        "Destination suggestions",
+        "Escape dismisses suggestions",
+        "Selection closes dropdown",
+        "Guest and room inputs",
+        "Advanced filters open/close without overflow",
+        "Search sends selected criteria successfully"
+      ]
+    },
+    {
+      "width": 1280,
+      "status": 200,
+      "query": {
+        "placeId": "hoi-an",
+        "checkIn": "2026-11-06",
+        "checkOut": "2026-11-08",
+        "adults": "3",
+        "rooms": "2",
+        "minStars": "3",
+        "priceMax": "3000000",
+        "sort": "stars"
+      },
+      "checks": [
+        "Destination suggestions",
+        "Escape dismisses suggestions",
+        "Selection closes dropdown",
+        "Guest and room inputs",
+        "Advanced filters open/close without overflow",
+        "Search sends selected criteria successfully"
+      ]
+    }
+  ],
+  "errors": []
+}
