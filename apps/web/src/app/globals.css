@@ -1390,6 +1390,28 @@ h3 {
   color: var(--color-text-muted);
   font-size: 12px;
 }
+/* Đếm và thu gọn danh sách thiết bị (TF06G) */
+.device-count {
+  margin-left: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  vertical-align: middle;
+}
+.device-toggle {
+  align-self: flex-start;
+  padding: 8px 0;
+  color: var(--color-teal-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+.device-toggle:hover {
+  text-decoration: underline;
+}
 .device-badge {
   display: inline-block;
   margin-left: 10px;
