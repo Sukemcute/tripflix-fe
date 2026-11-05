@@ -6,7 +6,10 @@
  */
 
 export interface CreateCommentDto {
-  /** Nội dung bình luận */
+  /**
+   * Nội dung bình luận (tối đa 10.000 ký tự)
+   * @maxLength 10000
+   */
   body: string;
   /** ID bình luận cha nếu là phản hồi */
   parent_comment_id?: string;

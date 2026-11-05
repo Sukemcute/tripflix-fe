@@ -9,6 +9,7 @@
 - Tab Reels dùng màn riêng. `LiveFeedScreen` tiếp tục dùng ở Bài của tôi và Đã lưu.
 - Đã nối API cuối cùng `GET /api/v1/feed` từ PR BE #48. Client được sinh lại bằng `pnpm gen:api`, gọi qua `packages/api-client`, phân trang bằng cursor nguyên gốc và gửi token khi có phiên đăng nhập. Khách xem được theo contracts mới.
 - Feed có trạng thái tải, lỗi, rỗng, kéo để làm mới và tải trang kế tiếp. Bỏ qua mục thiếu nguồn video. Lỗi trang kế tiếp giữ video đã tải và cho thử lại đúng trang, chặn tự lặp yêu cầu lỗi.
+- Đồng bộ contracts sau BE `5ec327b`, gồm query `flat` cho bình luận và client AI Summary. Giới hạn nhập bình luận của mobile và web là 10.000 ký tự theo DTO mới.
 - Giao diện có tác giả, chú thích và thanh thích, bình luận, lưu, chia sẻ. Thích và lưu dùng API social và cập nhật số đếm. Khách được chuyển tới đăng nhập khi tương tác cần tài khoản. Chia sẻ dùng bảng chia sẻ hệ thống và ghi nhận qua API khi thành công.
 - Bảng bình luận dạng sheet dùng lại `LiveComments`, thêm giao diện gọn cho Reels, hỗ trợ gửi, sửa, xoá và trả lời qua API. Mở bảng thì tạm dừng video, đóng bảng phát tiếp. Bình luận của clip thử chỉ lưu trong phiên và có nhãn giải thích. Không giả lập bài đăng thật cho clip mẫu.
 - Màn phát vuốt dọc, ba player dùng lại cho bài trước, hiện tại và sau. Bài hiện tại đặt buffer 30 giây, hai bài cạnh 4 giây.
@@ -26,8 +27,11 @@
 - `expo export --platform android` thành công với code feed mới, tạo bundle Hermes 3,1 MB và assets trong thư mục tạm `C:/Users/ADMIN/AppData/Local/Temp/tripflix-tf08-feed-android-221f636b`. Đây là kiểm tra biên dịch, chưa phải chạy trên Android.
 - Bốn test mới kiểm lựa chọn ảnh bìa, giữ đúng tỷ lệ khung hình, cửa sổ ba player khi vuốt xuôi/ngược/nhảy xa và kích thước giới hạn 540p cho ba chiều video.
 - Ba test API mới kiểm endpoint thật trong client sinh, cursor, huỷ yêu cầu, token tuỳ chọn và lỗi phản hồi.
-- Đã cập nhật local BE từ `develop` tại `90eaa3c`, build thành công, migrate database local thành công. `GET /api/v1/feed?limit=10&tab=for_you` thật trả 200 với `items: []`, `nextCursor: null`. CORS cho origin Expo web đã được xác nhận.
-- Chạy Expo web trên cổng 8085, Playwright dùng phản hồi API giả lập cho trạng thái tải, trang có video, mục chưa ready, cursor, lỗi trang kế tiếp và tải lại, trang rỗng, mở và thoát video mẫu. Clip HLS phát qua CloudFront thật. Không có lỗi JavaScript. Chưa kiểm bằng bài video ready được trả từ database local.
+- Local BE đã cập nhật `develop` tại `5ec327b`, build và migration thành công. Đã chạy `pnpm db:seed` với `SEED_PASSWORD` trong `.env` local. Feed thật trả 10 bài phát được, phân trang limit 3 có 4 trang và không trùng. Toàn bộ là video dọc với mức 360p, 540p. Cả 10 master HLS và 30 poster qua CloudFront trả thành công.
+- Cấu hình commerce local đã chuyển từ database `commerce` cũ sang schema `commerce` trong database `core` theo hướng dẫn TF57. Dùng lệnh cấp quyền/tạo schema idempotent, chạy migration và seed vào `core`, giữ database cũ. Tài khoản đã có được seed giữ nguyên.
+- Mobile `.env` local dùng `http://192.168.2.147:8080`, địa chỉ Wi-Fi của máy chạy BE khi kiểm tra, và thêm origin Expo LAN vào CORS. API và app đều chạy được qua IP này. Đây là cấu hình theo máy, cần đổi nếu IP Wi-Fi đổi.
+- Playwright trên Expo web kiểm bằng API thật qua IP Wi-Fi, feed 10 bài có HLS tự phát, mở bình luận seed trong sheet, đóng/mở bảng thì video dừng/phát đúng. Đăng nhập bằng tài khoản member seed, gửi bình luận và thích bài qua API thật thành công, dọn bình luận thử và phục hồi phản ứng ban đầu sau kiểm tra. Không có lỗi JavaScript.
+- Các case lỗi và phân trang được kiểm thêm bằng API fixture trên mobile web, HLS phát qua CloudFront thật.
 - Lệnh mở Expo Web kèm API URL tạm qua biến shell bị bộ duyệt tự động chặn (`blocked by policy`). Các test trình duyệt dùng cấu hình hiện có và route fixture trong phiên kiểm thử; API thật được kiểm qua HTTP riêng.
 - Link HLS Phong cung cấp trả 200, có 360p, 540p, 720p và ba poster 360/540/720 đều trả 200. Tổng thời lượng playlist là 60 giây.
 - Chromium chạy bản mobile web đã phát HLS thật, thời gian phát tăng, xác nhận tạm dừng, phát tiếp, bật tiếng, mất mạng và tự phát lại khi kết nối phục hồi. Lỗi HTTP 503 của master hiện thông báo, nút tải lại phát thành công sau khi nguồn phục hồi. Không có lỗi JavaScript.
@@ -35,11 +39,14 @@
 - Playwright trên cổng 8081 xác nhận thanh tương tác, mở/đóng bảng bình luận và phát/dừng video, bình luận demo giữ trong phiên. Với API fixture xác nhận PUT reaction, PUT bookmark, POST comment có Idempotency-Key, số đếm làm mới, draft được giữ sau lỗi 503 và xoá sau gửi thành công. Giao diện comment compact đã kiểm lại. Không có lỗi JavaScript.
 - Sau khi thêm tương tác, `pnpm check` qua đủ 57 test, lint không có cảnh báo. `expo export --platform android --max-workers 2` xuất bundle Hermes thành công tại thư mục tạm `tripflix-tf08-social-7a23de06`.
 - Ảnh kiểm tra tương tác tại cùng thư mục ảnh local, tên `tf08-social-reels.png`, `tf08-social-comments.png`, `tf08-api-reels.png` và `tf08-api-comments.png`.
+- Ảnh API và video seed thật tại cùng thư mục, tên `tf08-seeded-reels.png` và `tf08-seeded-comments.png`. Bộ seed có watermark của bên khác, chỉ dùng thử/demo nội bộ theo Phong.
+- Với BE develop mới, `core-api test` qua 346/346 test và `test:int` qua 71/71 test. GET comments `flat=true&limit=200` trả 200; GET AI Summary trả 404 khi bài seed chưa có bản tóm tắt.
 - Ảnh local `C:/Users/ADMIN/.codex/visualizations/2026/11/05/01a1a9aa-8b59-7d62-b98e-78403bb40fde/tf08-phong-player.png` thể hiện nguồn video thử. Các ảnh `tf08-login.png` và `tf08-awaiting-video.png` thể hiện trạng thái chờ trước khi điền nguồn. Đây là ảnh bản web, chưa phải evidence Android.
 
 ## Còn cần để nghiệm thu
 
-- Feed thật local hiện chưa trả video. Evidence TF22 của Phong ghi seed chưa có video phát được, nên cần cập nhật seed ready để kiểm đầu cuối với dữ liệu thật. App đã dùng thẳng feed mới có playback thay cho luồng hai bước lấy `mediaIds` rồi gọi API playback tạm.
+- App dùng feed có sẵn playback thay cho luồng lấy mediaIds rồi gọi API playback tạm. Tác giả seed chưa có tên trong access nên API trả author.name null, app hiển thị nhãn tác giả dự phòng.
+- API AI Summary đã có nhưng OpenAPI chưa khai báo schema phản hồi thành công, client sinh có `data: void`. Cần chủ BE bổ sung DTO phản hồi trước khi nối giao diện tóm tắt có kiểu. Seed chưa có tóm tắt, GET trả 404 đúng thiết kế.
 - Chưa đo tự đổi chất lượng trên Android. Máy hiện tại chưa có adb hoặc thiết bị Android kết nối. `maxResolution`, `bufferOptions` và `videoTrack` là các API native, bản web của expo-video chưa triển khai chúng, nên kết quả trình duyệt chỉ xác nhận luồng phát và giao diện.
 - Cần thử trên điện thoại thật với Wi-Fi, 4G và mạng yếu để nghiệm thu tự đổi chất lượng và thời gian đứng hình. Trên iOS, `maxResolution` là gợi ý cho AVPlayer, cần kiểm riêng nếu tiêu chí yêu cầu trần cứng.
 
@@ -47,9 +54,9 @@
 
 1. `.env` local đã có `EXPO_PUBLIC_REELS_DEMO_HLS_URL` do Phong cấp. Trên máy khác, chép mẫu và điền link thử vào biến này. `EXPO_PUBLIC_REELS_DEMO_POSTER_URL` có thể bỏ trống để dùng ba poster của worker.
 2. Chạy `pnpm --filter @tripflix/mobile start` và mở app bằng Expo Go SDK 58 trên Wi-Fi.
-3. Mở tab Reels. Khi feed chưa có dữ liệu, nhấn Xem video thử nghiệm. Thử phát/tạm dừng, tiếng, chuyển tab và đưa app vào nền. Nút mũi tên quay về feed thật.
+3. Mở tab Reels để xem 10 bài từ seed thật và thử bình luận. Nếu dùng database mới, chạy migrate và seed ở BE trước. Video mẫu ba mức vẫn có thể mở bằng cấu hình demo trên màn rỗng/lỗi để kiểm riêng khi cần.
 4. Chuyển Wi-Fi → 4G → Wi-Fi, xem nhãn độ phân giải trong development, ghi lại thời gian đổi mức và các lần đứng hình. Để video chạy đủ lâu vượt phần đã tải trong bộ đệm 30 giây.
-5. Khi seed đã có dữ liệu, dùng ít nhất ba bài video ready từ API thật để thử vuốt xuôi, ngược, kéo làm mới, phân trang và kiểm bộ đệm trên Android.
+5. Dùng ít nhất ba bài từ API thật để thử vuốt xuôi, ngược, kéo làm mới, phân trang và kiểm bộ đệm trên Android. Seed chỉ có hai mức, dùng master mẫu Phong đã cung cấp nếu cần thử 720p.
 
 ## Ảnh hưởng
 

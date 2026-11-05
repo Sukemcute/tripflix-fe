@@ -26,7 +26,7 @@ export function ReelCommentComposer({
         value={value}
         onChangeText={onChange}
         multiline
-        maxLength={2000}
+        maxLength={10000}
         style={styles.input}
       />
       <Pressable
