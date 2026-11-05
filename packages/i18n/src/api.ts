@@ -101,6 +101,8 @@ export const api = {
   profileSection: 'Hồ sơ',
   profileHint: 'Tên hiển thị xuất hiện trên bài đăng và bình luận của bạn.',
   devicesHint: 'Đăng xuất những thiết bị bạn không còn dùng.',
+  noDevices: 'Chưa có thiết bị nào khác đang đăng nhập.',
+  accountSections: 'Các mục trong tài khoản',
   lastActive: 'Hoạt động lần cuối {time}',
   logoutAllConfirm: 'Đăng xuất khỏi mọi thiết bị, kể cả thiết bị này?',
   logoutAllConfirmButton: 'Đăng xuất tất cả',
