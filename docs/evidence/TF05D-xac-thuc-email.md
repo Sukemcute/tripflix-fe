@@ -31,3 +31,12 @@
 - Hiển thị phản hồi mật khẩu trong khi nhập. Chỉ bật gửi mã khi mật khẩu đạt yêu cầu. Form chỉ gửi yêu cầu tạo tài khoản khi đã có mã gồm 8 chữ số.
 - Chromium và Mailpit đã kiểm cảnh báo mật khẩu yếu, trạng thái chờ mã, từ chối mã sai và chuyển sang trang tài khoản sau mã đúng.
 - Dũng xác nhận đã báo Trang và đồng ý cập nhật màn đăng ký mobile. Mobile đã qua kiểm tra mã nguồn và kiểu dữ liệu. Chưa chạy trên thiết bị Android.
+
+## Cập nhật: đếm ngược gửi lại mã
+
+- Sau khi gửi mã, nút đổi thành "Gửi lại mã sau N giây" và bị khoá tới khi hết giờ. Số giây lấy từ `resendAfterSeconds`, hoặc `retryAfterSeconds` khi gặp `429`. Khi `429` do bấm quá sớm, màn hình hiện số giây còn lại thay cho câu lỗi chung. Đổi email hoặc đổi tab thì bỏ đếm ngược. Thay đổi áp dụng cho cả web và mobile.
+- Câu chú thích sau khi gửi mã cho biết rằng nếu email đã có tài khoản thì người dùng sẽ nhận hướng dẫn đăng nhập thay cho mã.
+- `api-client` có thêm `sendRegistrationCode`. Hàm `requestRegistrationCode` vẫn giữ và được đánh dấu deprecated. Thêm `getRetryAfterSeconds` và `useResendCooldown`, có test.
+- Kết quả sau khi merge `origin/develop`: lint và typecheck của web, mobile, api-client, i18n đều pass. api-client 81/81 test pass, i18n 2/2 test pass.
+- Chưa chụp ảnh giao diện đếm ngược. Mobile chưa chạy trên thiết bị Android.
+- Ảnh hưởng: `apps/web` của Thành và `apps/mobile` của Trang. Cần báo hai bạn trước khi merge.
