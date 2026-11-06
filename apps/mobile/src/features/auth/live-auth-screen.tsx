@@ -158,9 +158,9 @@ export function LiveLoginScreen() {
         />
         {isRegistering && (
           <>
-            <Notice tone={password && strength !== 'passwordStrong' ? 'error' : 'info'}>
-              {password ? vi.api[strength] : vi.api.registerHint}
-            </Notice>
+            {!!password && (
+              <Notice tone={strength === 'passwordStrong' ? 'info' : 'error'}>{vi.api[strength]}</Notice>
+            )}
             <Field
               label={vi.api.registrationCodeLabel}
               value={code}
