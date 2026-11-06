@@ -1181,7 +1181,8 @@ h3 {
 }
 .auth-story {
   position: relative;
-  padding: 40px;
+  /* Đáy giữ đúng chỗ của mascot 180px cũ để thẻ không cao thêm; mascot to hơn nổi lên phía trên. */
+  padding: 40px 40px 236px;
   border-radius: 24px;
   background: var(--color-warm-mist);
   overflow: hidden;
@@ -1219,11 +1220,12 @@ h3 {
   background: var(--color-teal);
 }
 .auth-mascot {
-  display: block;
-  width: 360px;
-  max-width: 70%;
+  position: absolute;
+  right: 40px;
+  bottom: 28px;
+  /* Cao quá 208px thì mascot chạm vùng chữ: khi đó chừa ~430px bên trái cho danh sách lợi ích. */
+  width: clamp(200px, calc(100% - 430px), 280px);
   height: auto;
-  margin: 8px 0 -28px auto;
 }
 .auth-card {
   display: flex;
