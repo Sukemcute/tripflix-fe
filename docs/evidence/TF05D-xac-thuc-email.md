@@ -25,3 +25,9 @@
 ## Ảnh hưởng đến phần của người khác
 
 - Thay đổi web và client dùng chung. Dũng xác nhận đã báo Thành và đồng ý thực hiện.
+
+## Cập nhật form đăng ký web và mobile
+
+- Hiển thị phản hồi mật khẩu trong khi nhập. Chỉ bật gửi mã khi mật khẩu đạt yêu cầu. Form chỉ gửi yêu cầu tạo tài khoản khi đã có mã gồm 8 chữ số.
+- Chromium và Mailpit đã kiểm cảnh báo mật khẩu yếu, trạng thái chờ mã, từ chối mã sai và chuyển sang trang tài khoản sau mã đúng.
+- Dũng xác nhận đã báo Trang và đồng ý cập nhật màn đăng ký mobile. Mobile đã qua kiểm tra mã nguồn và kiểu dữ liệu. Chưa chạy trên thiết bị Android.
