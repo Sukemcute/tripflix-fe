@@ -1278,6 +1278,26 @@ h3 {
   font-size: 13px;
   font-weight: 600;
 }
+/* Nhãn và bộ đếm ký tự "x/tối đa" trên cùng một hàng. */
+.auth-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.auth-label-row label {
+  margin-bottom: 0;
+}
+.auth-count {
+  color: var(--color-text-subtle);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.auth-count.is-full {
+  color: var(--color-coral-ink);
+  font-weight: 700;
+}
 .auth-field input {
   width: 100%;
   padding: 14px 16px;

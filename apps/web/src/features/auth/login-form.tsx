@@ -3,6 +3,8 @@ import { getRetryAfterSeconds, useApiSession, useResendCooldown } from '@tripfli
 import {
   canSendRegistrationCode,
   describeDevice,
+  DISPLAY_NAME_MAX,
+  NEW_PASSWORD_MAX,
   getRegistrationPasswordStrength,
   REGISTRATION_CODE_PATTERN,
   REGISTRATION_PASSWORD_MIN,
@@ -137,7 +139,7 @@ export function LiveLogin({
             id="auth-display-name"
             label={vi.api.displayName}
             required
-            maxLength={50}
+            maxChars={DISPLAY_NAME_MAX}
             autoComplete="name"
             value={displayName}
             onValueChange={setDisplayName}
@@ -168,6 +170,7 @@ export function LiveLogin({
           label={vi.api.password}
           required
           minLength={isRegistering ? REGISTRATION_PASSWORD_MIN : 1}
+          maxChars={isRegistering ? NEW_PASSWORD_MAX : undefined}
           autoComplete={isRegistering ? 'new-password' : 'current-password'}
           value={password}
           disabled={isBusy}

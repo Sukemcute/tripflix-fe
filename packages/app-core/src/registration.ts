@@ -1,4 +1,9 @@
 export const REGISTRATION_PASSWORD_MIN = 12;
+/** Mật khẩu mới (đăng ký, đổi, đặt lại) tối đa 64 ký tự; Core API kiểm lại cùng giới hạn. */
+export const NEW_PASSWORD_MAX = 64;
+/** Mật khẩu đang dùng (đăng nhập, mật khẩu hiện tại): nhận tới 128 cho tài khoản đặt mật khẩu dài từ trước. */
+export const CURRENT_PASSWORD_MAX = 128;
+export const DISPLAY_NAME_MAX = 30;
 export const REGISTRATION_CODE_PATTERN = /^[0-9]{8}$/;
 
 // Phản hồi ngay khi nhập. Core API kiểm lại cùng quy tắc trước khi gửi mã và tạo tài khoản.
@@ -33,4 +38,9 @@ export function canSendRegistrationCode(input: {
     input.email.trim().length > 0 &&
     getRegistrationPasswordStrength(input.password) === 'passwordStrong'
   );
+}
+
+/** Đếm theo ký tự người dùng thấy (emoji tính 1), như Core API đếm. */
+export function countCharacters(text: string): number {
+  return Array.from(text).length;
 }
