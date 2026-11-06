@@ -761,77 +761,81 @@
   }
 }
 
-/* Thẻ bài viết chạy nối đuôi từ phải sang trái như đoàn tàu khi cuộn tới, mỗi thẻ kéo theo vệt khói mờ.
-   Scroll-driven; mỗi thẻ bắt đầu trễ hơn thẻ trước. Màn hẹp, giảm chuyển động hoặc trình duyệt chưa hỗ trợ: hiện bình thường. */
+/* Thẻ bài viết chạy nối đuôi từ phải sang trái như đoàn tàu khi mục này lọt vào màn hình (data-home-entered
+   do ota-home-motion gắn). Chạy theo thời gian, không theo nhịp cuộn, để thẻ cuối luôn tới nơi kể cả khi
+   mục nằm sát cuối trang. Quán tính: lúc chạy ngửa ra sau, lúc phanh chúi về trước, trượt quá rồi lùi về.
+   Mỗi thẻ kéo vệt khói mờ tan dần. Màn hẹp hoặc giảm chuyển động: hiện bình thường. */
 @media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .stories .previewGrid {
-      overflow-x: clip;
-      overflow-clip-margin: 24px;
-    }
-    .stories .story {
-      overflow: visible;
-      animation: story-train-in linear both;
-      animation-timeline: view();
-    }
-    .stories .story:nth-child(1) {
-      animation-range: entry 0% cover 35%;
-    }
-    .stories .story:nth-child(2) {
-      animation-range: entry 12% cover 45%;
-    }
-    .stories .story:nth-child(3) {
-      animation-range: entry 24% cover 55%;
-    }
-    /* Vệt khói phía sau (bên phải) thẻ, tan dần khi thẻ tới chỗ. */
-    .stories .story::before {
-      content: '';
-      position: absolute;
-      top: 18%;
-      bottom: 18%;
-      left: calc(100% - 12px);
-      z-index: -1;
-      width: 160px;
-      border-radius: 50%;
-      background: linear-gradient(
-        90deg,
-        color-mix(in srgb, var(--color-teal-soft) 90%, transparent),
-        color-mix(in srgb, var(--color-warm-mist) 70%, transparent) 55%,
-        transparent
-      );
-      filter: blur(10px);
-      transform-origin: left center;
-      animation: story-train-smoke linear both;
-      animation-timeline: view();
-      animation-range: inherit;
-      pointer-events: none;
-    }
+  .stories .previewGrid {
+    overflow-x: clip;
+    overflow-clip-margin: 24px;
+  }
+  :global([data-home-entered]) .story {
+    overflow: visible;
+    transform-origin: 50% 100%;
+    animation: story-train-in 1600ms cubic-bezier(0.3, 0.6, 0.35, 1) both;
+  }
+  :global([data-home-entered]) .story::before {
+    content: '';
+    position: absolute;
+    top: 18%;
+    bottom: 18%;
+    left: calc(100% - 12px);
+    z-index: -1;
+    width: 160px;
+    border-radius: 50%;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-teal-soft) 90%, transparent),
+      color-mix(in srgb, var(--color-warm-mist) 70%, transparent) 55%,
+      transparent
+    );
+    filter: blur(10px);
+    transform-origin: left center;
+    opacity: 0;
+    animation: story-train-smoke 1600ms ease-out both;
+    pointer-events: none;
+  }
+  /* Nối đuôi: mỗi toa xuất phát trễ hơn toa trước. */
+  :global([data-home-entered]) .story:nth-child(2),
+  :global([data-home-entered]) .story:nth-child(2)::before {
+    animation-delay: 220ms;
+  }
+  :global([data-home-entered]) .story:nth-child(3),
+  :global([data-home-entered]) .story:nth-child(3)::before {
+    animation-delay: 440ms;
   }
 }
-/* Dùng transform (không dùng translate) để không đè hiệu ứng nhích lên khi rê chuột của thẻ. */
+/* transform (không dùng translate) để không đè hiệu ứng nhích lên khi rê chuột. Nghiêng quanh mép dưới thẻ. */
 @keyframes story-train-in {
-  from {
+  0% {
     opacity: 0;
-    transform: translateX(70vw);
+    transform: translateX(70vw) skewX(-9deg);
   }
-  35% {
+  15% {
     opacity: 1;
   }
-  to {
+  62% {
+    transform: translateX(-16px) skewX(7deg);
+  }
+  82% {
+    transform: translateX(5px) skewX(-2deg);
+  }
+  100% {
     opacity: 1;
     transform: none;
   }
 }
 @keyframes story-train-smoke {
-  from {
+  0% {
     opacity: 0.9;
     scale: 1 1;
   }
-  70% {
-    opacity: 0.45;
-    scale: 1.8 1.25;
+  60% {
+    opacity: 0.4;
+    scale: 1.9 1.25;
   }
-  to {
+  100% {
     opacity: 0;
     scale: 2.4 1.4;
   }
