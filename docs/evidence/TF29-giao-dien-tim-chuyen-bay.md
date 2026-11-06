@@ -54,3 +54,12 @@ Ngày thực hiện 2026-11-06. Nhánh làm việc hiện tại là trang/TF10-h
 ## Các phần liên quan
 
 Web thuộc Thành. Mobile thuộc Trang. Logic tra cứu và dựng request dùng chung nằm trong packages/api-client. Các chỉnh sửa giao diện khác đã có trong working tree được giữ lại.
+
+## Kiểm tra runtime local sau phản hồi không tải được sân bay
+
+- Ngày 2026-11-06 đã rebuild và khởi động lại core-api local từ develop.
+- Gateway thật http://localhost:8080/api/flights/routes trả 200 với 135 bản ghi tuyến.
+- Playwright gọi trực tiếp gateway 8080, chọn SGN → CXR, ngày 2026-11-07, hai hành khách. API trả 7 hạng ghế và giao diện hiển thị 3 chuyến.
+- Ảnh kiểm chứng tại C:/Users/ADMIN/AppData/Local/Temp/tripflix-flights-live-gateway.png.
+- Lần chạy migration chung gặp lỗi bảng commerce.reviews đã tồn tại. Đã khởi động API với schema hiện có. Cần đối chiếu migration ledger của commerce trước lần migrate chung tiếp theo.
+- Cấu hình khởi động local được đặt trong file tạm C:/Users/ADMIN/AppData/Local/Temp/tripflix-flights-runtime.override.yaml. Source backend có working tree sạch.
