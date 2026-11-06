@@ -11,6 +11,11 @@ export interface CheckoutItemDto {
   productType: CheckoutItemDtoProductType;
   productId: string;
   productName: string;
+  /**
+   * Tên khách sạn của mục phòng; vé bay là null
+   * @nullable
+   */
+  propertyName: string | null;
   date: string;
   dateTo: string;
   nights: number;

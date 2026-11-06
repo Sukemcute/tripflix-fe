@@ -6,14 +6,16 @@ import type {
 } from '@tripflix/api-client/core-api/model/index';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AdminApiError } from '../shell/api-state';
+import { ModerationPostDetail } from './moderation-post-detail';
 
 export function PostModeration() {
   const client = useQueryClient();
   const [status, setStatus] = useState<AdminPostsControllerListAdminPostsStatus | ''>('');
   const [selected, setSelected] = useState('');
   const [reason, setReason] = useState('');
+  const detailRef = useRef<HTMLElement>(null);
   const query = useInfiniteQuery({
     queryKey: ['admin-posts', status],
     initialPageParam: undefined as string | undefined,
@@ -26,6 +28,12 @@ export function PostModeration() {
     enabled: !!selected,
     queryFn: ({ signal }) => socialApi.getAdminPost(selected, signal),
   });
+  // Bấm "Xem chi tiết" ở bảng thì cuộn tới khung bài khi bài đã tải xong (cuộn sớm hơn thì khung còn trống, bị lệch).
+  // Chỉ cuộn một lần cho mỗi bài: tải lại sau khi ẩn/khôi phục không làm trang nhảy.
+  const loadedId = detail.data?.id;
+  useEffect(() => {
+    if (loadedId) detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [loadedId]);
   const mutation = useMutation({
     mutationFn: (action: CreateModerationActionDtoAction) =>
       socialApi.moderatePost(selected, { action, reason_code: reason.trim() }),
@@ -122,54 +130,35 @@ export function PostModeration() {
         </button>
       )}
       {selected && (
-        <section className="admin-record">
+        <section ref={detailRef} className="admin-post-review" aria-label={vi.api.moderationPostLabel}>
+          <div className="admin-post-review-bar">
+            <p className="admin-eyebrow">{vi.api.moderationPostLabel}</p>
+            <button type="button" className="admin-secondary" onClick={() => setSelected('')}>
+              {vi.api.close}
+            </button>
+          </div>
           <AdminApiError
             error={detail.error}
             retry={() => {
               void detail.refetch();
             }}
           />
-          {detail.isPending && <p>{vi.api.loading}</p>}
+          {detail.isPending && <output>{vi.api.loading}</output>}
           {detail.data && (
-            <>
-              <h2>{detail.data.title}</h2>
-              <p>{detail.data.body}</p>
-              <p>{detail.data.author.display_name}</p>
-              <h3>{vi.api.history}</h3>
-              {detail.data.moderation_history.map((entry) => (
-                <p key={entry.action_id}>
-                  {entry.action} · {entry.reason_code} · {entry.reason_detail} ·{' '}
-                  {new Date(entry.created_at).toLocaleString('vi-VN')}
-                </p>
-              ))}
-              <label>
-                {vi.api.reason}
-                <input
-                  required
-                  maxLength={200}
-                  value={reason}
-                  onChange={(event) => setReason(event.target.value)}
-                />
-              </label>
-              <AdminApiError error={mutation.error} />
-              {mutation.isSuccess && <output>{vi.api.saved}</output>}
-              <div className="admin-filters">
-                {(['hide', 'remove', 'restore'] as const).map((action) => (
-                  <button
-                    key={action}
-                    className="admin-secondary"
-                    disabled={mutation.isPending || !reason.trim()}
-                    onClick={() => mutation.mutate(action)}
-                  >
-                    {vi.api[action]}
-                  </button>
-                ))}
-              </div>
-            </>
+            <ModerationPostDetail
+              post={detail.data}
+              reason={reason}
+              onReasonChange={setReason}
+              onAction={(action) => mutation.mutate(action)}
+              isPending={mutation.isPending}
+              notice={
+                <>
+                  <AdminApiError error={mutation.error} />
+                  {mutation.isSuccess && <output className="admin-post-saved">{vi.api.saved}</output>}
+                </>
+              }
+            />
           )}
-          <button className="admin-secondary" onClick={() => setSelected('')}>
-            {vi.api.close}
-          </button>
         </section>
       )}
     </>

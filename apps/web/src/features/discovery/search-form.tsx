@@ -2,7 +2,8 @@
 
 import { vi } from '@tripflix/i18n';
 import { useRouter } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
+import { validateInspirationKeyword } from './inspiration-keyword';
 import { StaySearchIcon } from './stay-search-icon';
 import styles from './stay-search.module.css';
 import own from './search-form.module.css';
@@ -14,16 +15,20 @@ import own from './search-form.module.css';
  */
 export function SearchForm({
   query = '',
+  initialError,
   compact = false,
   footer,
 }: {
   query?: string;
+  initialError?: string;
   compact?: boolean;
   /** Nội dung bên phải thanh công cụ, ví dụ thẻ gợi ý. */
   footer?: ReactNode;
 }) {
   const router = useRouter();
+  const input = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState(query);
+  const [error, setError] = useState(initialError);
   const [submitted, setSubmitted] = useState<string | null>(null);
   // Đang chờ trang tải kết quả: từ khoá đã gửi khác từ khoá trang đang hiện.
   const isPending = submitted !== null && submitted !== query;
@@ -31,12 +36,20 @@ export function SearchForm({
     <form
       action="/inspiration"
       method="get"
+      noValidate
       className={`search-form ${styles.panel} ${compact ? 'compact-search' : ''}`}
       onSubmit={(event) => {
         event.preventDefault();
-        const keyword = value.trim();
+        const { keyword, error: issue } = validateInspirationKeyword(value);
+        if (issue) {
+          setError(vi.api[issue]);
+          input.current?.focus();
+          return;
+        }
+        setValue(keyword);
+        setError(undefined);
         setSubmitted(keyword);
-        router.push(keyword ? `/inspiration?q=${encodeURIComponent(keyword)}#trips` : '/inspiration#trips');
+        router.push(`/inspiration?q=${encodeURIComponent(keyword)}#trips`);
       }}
     >
       <div className={styles.heading}>
@@ -53,14 +66,19 @@ export function SearchForm({
             <span>{vi.api.searchWhere}</span>
             <input
               id="trip-query"
+              ref={input}
               name="q"
               type="search"
+              autoComplete="off"
               value={value}
-              minLength={2}
-              maxLength={100}
+              required
               placeholder={vi.api.searchShortPlaceholder}
-              aria-describedby="trip-query-hint"
-              onChange={(event) => setValue(event.target.value)}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? 'trip-query-error trip-query-hint' : 'trip-query-hint'}
+              onChange={(event) => {
+                setError(undefined);
+                setValue(event.currentTarget.value);
+              }}
             />
           </span>
         </label>
@@ -69,6 +87,7 @@ export function SearchForm({
           {isPending ? vi.api.searchPostsBusy : vi.api.searchPostsButton}
         </button>
       </div>
+      {error && <p className={own.validationError} id="trip-query-error" role="alert">{error}</p>}
       <div className={`${styles.toolbar} ${own.toolbar}`}>
         <p id="trip-query-hint">{vi.api.searchPostsHint}</p>
         {footer}

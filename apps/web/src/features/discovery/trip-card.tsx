@@ -10,7 +10,7 @@ export const tripImages = {
   hotel: '/brand/hotel.jpg',
 } as const;
 export function formatPrice(amount: number): string {
-  return `${new Intl.NumberFormat('vi-VN').format(amount)}đ`;
+  return `${new Intl.NumberFormat('vi-VN').format(amount)} VNĐ`;
 }
 
 export function TripCard({ trip }: { trip: DemoTrip }) {
