@@ -4,6 +4,7 @@ export * from './auth/auth';
 export * from './checkout/checkout';
 export * from './discovery/discovery';
 export * from './feed/feed';
+export * from './flights/flights';
 export * from './health/health';
 export * from './hotels/hotels';
 export * from './media/media';
