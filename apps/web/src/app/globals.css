@@ -319,6 +319,12 @@ h3 {
   border-radius: 12px;
   background: var(--color-warm-mist);
 }
+.ota-place-field input:focus-visible {
+  outline: none;
+}
+.ota-place-field:has(input:focus-visible) {
+  background: var(--color-sea-mist);
+}
 .ota-home.results-page {
   padding-top: 0;
   padding-bottom: 0;
