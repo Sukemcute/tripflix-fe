@@ -1,0 +1,971 @@
+/* Giao diện trang Thông tin & thanh toán. Các màn khác (Chuyến đi, VNPay) vẫn dùng checkout.module.css. */
+
+.page {
+  --line: color-mix(in srgb, var(--color-teal-ink) 12%, var(--color-border));
+  padding-block: 28px 80px;
+}
+
+/* ---------- Thanh bước ---------- */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 720px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.steps li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 12px;
+}
+
+/* Đường nối giữa các bước; bước đã xong tô Teal. */
+.steps li:not(:last-child)::after {
+  content: '';
+  flex: 1;
+  min-width: 16px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+}
+
+.steps li[data-state='done']::after {
+  background: var(--color-teal-ink);
+}
+
+.steps span {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-background);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.steps li[data-state='current'] {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.steps li[data-state='current'] span {
+  border-color: var(--color-coral-ink);
+  background: var(--color-coral-ink);
+  color: var(--color-background);
+  box-shadow: 0 0 0 5px var(--color-coral-tint);
+}
+
+.steps li[data-state='done'] {
+  color: var(--color-teal-ink);
+}
+
+.steps li[data-state='done'] span {
+  border-color: var(--color-teal-ink);
+  background: var(--color-teal-ink);
+  color: var(--color-background);
+}
+
+/* ---------- Tiêu đề và bố cục ---------- */
+
+.header {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 3.2vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.intro {
+  max-width: 560px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 15px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+  gap: 28px;
+  align-items: start;
+}
+
+.main,
+.form {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+/* ---------- Thẻ nội dung ---------- */
+
+.card {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  margin: 0;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--color-background);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 4%, transparent);
+}
+
+.card:disabled {
+  opacity: 0.75;
+}
+
+/* Legend nổi để nằm trong lưới như các phần tử khác của thẻ. */
+.cardTitle {
+  display: flex;
+  float: left;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  color: var(--color-ink);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.cardTitle > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.cardTitle small {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.cardIcon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+
+.subTitle {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+/* ---------- Ô nhập ---------- */
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.field[data-wide='true'] {
+  grid-column: 1 / -1;
+}
+
+.field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-size: 15px;
+  font-weight: 500;
+  transition:
+    border-color 256ms,
+    background 256ms,
+    box-shadow 256ms;
+}
+
+.field input:hover {
+  border-color: var(--line);
+}
+
+.field input:focus {
+  border-color: var(--color-teal-ink);
+  background: var(--color-background);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-teal-ink) 12%, transparent);
+}
+
+.inputIcon {
+  position: relative;
+  display: block;
+}
+
+.inputIcon svg {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  color: var(--color-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.inputIcon input {
+  padding-left: 44px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+/* ---------- Hành khách ---------- */
+
+.guestsNote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 -4px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--line);
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.guestsNote svg {
+  color: var(--color-teal-ink);
+}
+
+.guest {
+  padding: 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-sea-mist) 55%, var(--color-background));
+}
+
+.guest .field input {
+  background: var(--color-background);
+}
+
+.guestNumber {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--color-teal-ink);
+  color: var(--color-background);
+  font-size: 12px;
+}
+
+/* ---------- Phương thức thanh toán ---------- */
+
+.methods {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.method {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 68px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  cursor: pointer;
+  transition:
+    border-color 256ms,
+    background 256ms;
+}
+
+.method:hover {
+  border-color: color-mix(in srgb, var(--color-coral-ink) 40%, var(--color-border));
+}
+
+/* Nút radio gốc trong suốt phủ cả ô: bấm đâu cũng trúng, bàn phím và trình đọc màn hình vẫn dùng được. */
+.method input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.method:has(input:focus-visible) {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 3px;
+}
+
+.method[data-selected='true'] {
+  border-color: var(--color-coral-ink);
+  background: var(--color-coral-tint);
+}
+
+.methodIcon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.methodIcon[data-method='vnpay'] {
+  background: var(--color-navy);
+  color: var(--color-background);
+  letter-spacing: 0.02em;
+}
+
+.method[data-selected='true'] .methodIcon[data-method='card'] {
+  background: var(--color-coral-ink);
+  color: var(--color-background);
+}
+
+.methodText {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  color: var(--color-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.methodText small {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.methodCheck {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 50%;
+  color: transparent;
+}
+
+.method[data-selected='true'] .methodCheck {
+  border-color: var(--color-coral-ink);
+  background: var(--color-coral-ink);
+  color: var(--color-background);
+}
+
+/* ---------- Thẻ kiểm thử: hình thẻ ngân hàng thu nhỏ ---------- */
+
+.testCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.testCard {
+  --card-from: var(--color-navy);
+  --card-to: color-mix(in srgb, var(--color-navy) 60%, var(--color-teal-ink));
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-content: start;
+  gap: 6px;
+  min-height: 118px;
+  padding: 14px 16px;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  background:
+    radial-gradient(
+      circle at 85% -10%,
+      color-mix(in srgb, var(--color-background) 22%, transparent) 0 40%,
+      transparent 41%
+    ),
+    linear-gradient(135deg, var(--card-from), var(--card-to));
+  color: var(--color-background);
+  text-align: left;
+  box-shadow: 0 10px 20px -14px var(--card-from);
+  transition:
+    transform 288ms,
+    box-shadow 288ms;
+}
+
+.testCard:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 26px -16px var(--card-from);
+}
+
+.testCard[data-tone='master'] {
+  --card-from: var(--color-ink);
+  --card-to: color-mix(in srgb, var(--color-ink) 55%, var(--color-coral-ink));
+}
+
+.testCard[data-tone='secure'] {
+  --card-from: var(--color-teal-ink);
+  --card-to: var(--color-teal);
+}
+
+.testCard[data-tone='declined'] {
+  --card-from: var(--color-coral-ink);
+  --card-to: var(--color-coral);
+}
+
+.testCard[data-tone='funds'] {
+  --card-from: color-mix(in srgb, var(--color-sun) 70%, var(--color-coral-ink));
+  --card-to: var(--color-sun);
+  color: var(--color-ink);
+}
+
+.testCard[data-tone='expired'] {
+  --card-from: var(--color-text-muted);
+  --card-to: var(--color-text-subtle);
+}
+
+.testCard[aria-pressed='true'] {
+  border-color: var(--color-background);
+  box-shadow:
+    0 0 0 3px var(--color-teal-ink),
+    0 16px 26px -16px var(--card-from);
+}
+
+.testCard strong {
+  padding-right: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.cardChip {
+  width: 30px;
+  height: 22px;
+  border-radius: 5px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 45%,
+      color-mix(in srgb, var(--color-ink) 25%, transparent) 45% 55%,
+      transparent 55%
+    ),
+    linear-gradient(var(--color-sun-soft), var(--color-sun));
+}
+
+.cardDigits {
+  align-self: end;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  opacity: 0.92;
+}
+
+.cardBrand {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
+.cardSelected {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  box-shadow: 0 0 0 2px var(--color-teal-ink);
+  display: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-background);
+  color: var(--color-teal-ink);
+}
+
+.testCard[aria-pressed='true'] .cardSelected {
+  display: grid;
+}
+
+/* ---------- Đồng ý điều khoản, OTP, thông báo ---------- */
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--color-surface);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.consent:has(input:checked) {
+  border-color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+}
+
+.consent input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--color-teal-ink);
+}
+
+.consent small {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-text-muted);
+}
+
+.otp {
+  max-width: 460px;
+  border-color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+}
+
+.warning,
+.info {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+}
+
+.warning {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  background: var(--color-sun-soft);
+}
+
+.info {
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+
+.error {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+  font-weight: 600;
+}
+
+/* ---------- Nút thanh toán ---------- */
+
+.payBar {
+  display: grid;
+  gap: 10px;
+}
+
+.payButton {
+  gap: 10px;
+  width: 100%;
+  min-height: 58px;
+  border-radius: 14px;
+  font-size: 16px;
+  box-shadow: 0 16px 28px -18px var(--color-coral-ink);
+}
+
+.payNote {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.payNote svg {
+  color: var(--color-teal-ink);
+}
+
+/* ---------- Tóm tắt đơn (cột phải) ---------- */
+
+.aside {
+  position: sticky;
+  top: 96px;
+  display: grid;
+  gap: 12px;
+}
+
+.summary {
+  --notch: 12px;
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--color-background);
+  box-shadow: 0 18px 36px -26px color-mix(in srgb, var(--color-teal-ink) 60%, transparent);
+  text-align: left;
+}
+
+.summaryHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-background) 7%, transparent) 0 10px,
+      transparent 10px 20px
+    ),
+    var(--color-teal-ink);
+  color: var(--color-background);
+}
+
+.summaryTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.status {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status[data-status='paid'] {
+  background: var(--color-teal-soft);
+  color: var(--color-teal-ink);
+}
+
+.status[data-status='expired'],
+.status[data-status='cancelled'] {
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 20px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+
+.timer svg {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  transform: rotate(-90deg);
+}
+
+.timer circle {
+  fill: none;
+  stroke-width: 4;
+}
+
+.timer circle:first-child {
+  stroke: color-mix(in srgb, currentcolor 18%, transparent);
+}
+
+.timer circle:last-child {
+  stroke: currentcolor;
+  stroke-linecap: round;
+  transition: stroke-dasharray 1600ms linear;
+}
+
+.timer p {
+  display: grid;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer small {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.timer[data-urgent='true'] {
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+
+.item {
+  display: flex;
+  gap: 12px;
+  margin: 0 20px;
+  padding-block: 16px;
+  border-bottom: 1px dashed var(--line);
+}
+
+.itemIcon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+
+.itemBody {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.itemBody h2 {
+  margin: 0 0 2px;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.itemBody p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.itemBody p.property {
+  color: var(--color-teal-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.itemBody p.refundable {
+  color: var(--color-teal-ink);
+  font-weight: 600;
+}
+
+.itemBody p.nonRefundable {
+  color: var(--color-text-muted);
+}
+
+.itemBody p.line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.line b {
+  flex-shrink: 0;
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+
+/* Tổng tiền nằm ở "cuống" dưới đường xé, có hai khuyết bán nguyệt. */
+.total {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0;
+  padding: 18px 20px 20px;
+  border-top: 1.5px dashed var(--line);
+  background: var(--color-warm-mist);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.total::before,
+.total::after {
+  content: '';
+  position: absolute;
+  top: calc(-1 * var(--notch) - 1px);
+  width: calc(var(--notch) * 2);
+  height: calc(var(--notch) * 2);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--color-background);
+}
+
+.total::before {
+  left: calc(-1 * var(--notch) - 1px);
+}
+
+.total::after {
+  right: calc(-1 * var(--notch) - 1px);
+}
+
+.total span {
+  flex-shrink: 0;
+}
+
+.total strong {
+  color: var(--color-coral-ink);
+  font-size: clamp(20px, 5.4vw, 26px);
+  white-space: nowrap;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary > .error {
+  margin: 0 20px 16px;
+}
+
+.statusButton {
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+}
+
+/* ---------- Thanh toán thành công ---------- */
+
+.success {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  max-width: 640px;
+  margin: 24px auto 0;
+  text-align: center;
+}
+
+.success h1 {
+  margin: 8px 0 0;
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 800;
+}
+
+.success > p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.successIcon {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--color-teal);
+  color: var(--color-background);
+  box-shadow:
+    0 0 0 10px var(--color-sea-mist),
+    0 0 0 20px color-mix(in srgb, var(--color-sea-mist) 45%, transparent);
+}
+
+.code {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0;
+  padding: 14px 28px;
+  border: 1.5px dashed var(--color-teal-ink);
+  border-radius: 14px;
+  background: var(--color-sea-mist);
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.code strong {
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: 24px;
+  letter-spacing: 0.1em;
+}
+
+.successSummary {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1000px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aside {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .steps {
+    font-size: 11px;
+  }
+
+  .steps li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .steps li:not(:last-child)::after {
+    display: none;
+  }
+
+  .fields,
+  .methods {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .testCards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .testCard,
+  .timer circle:last-child {
+    transition: none;
+  }
+}
