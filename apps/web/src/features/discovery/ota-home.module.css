@@ -762,14 +762,14 @@
 }
 
 /* Thẻ bài viết chạy nối đuôi từ phải sang trái như đoàn tàu, cuộn tới đâu chạy tới đó (scroll-driven).
-   Mốc là tiến độ cuộn của cả mục "Chuyện kể…" (--stories): ba toa về chỗ xong ngay khi mục lọt hết vào
-   màn hình, nên thẻ cuối luôn tới nơi kể cả khi mục nằm gần cuối trang. Quán tính: lúc chạy ngửa ra sau,
+   Mốc là tiến độ cuộn của hàng thẻ (--story-row), tính bằng px nên thẻ cuối luôn tới nơi kể cả khi mục
+   nằm gần cuối trang. Quán tính: lúc chạy ngửa ra sau,
    lúc phanh chúi về trước, trượt quá rồi lùi về; mỗi thẻ kéo vệt khói mờ.
    Màn hẹp, giảm chuyển động hoặc trình duyệt chưa hỗ trợ: thẻ hiện bình thường. */
 @media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
-    .stories {
-      view-timeline: --stories block;
+    .stories .previewGrid {
+      view-timeline: --story-row block;
     }
     /* Cắt ngang ở body (không ở hàng thẻ) để toa còn ngoài mép phải không tạo thanh cuộn ngang,
        mà thẻ đầu vẫn trượt quá và chúi về trước được mà không bị cắt. */
@@ -780,17 +780,19 @@
       overflow: visible;
       transform-origin: 50% 100%;
       animation: story-train-in linear both;
-      animation-timeline: --stories;
+      animation-timeline: --story-row;
     }
-    /* Nối đuôi: toa sau bắt đầu muộn hơn, toa cuối về chỗ đúng lúc mục lọt hết vào màn hình. */
+    /* Mốc là chính hàng thẻ, khoảng cuộn tính bằng px (cover 0 = mép trên hàng thẻ chạm đáy màn hình):
+       toa 1 chỉ bắt đầu khi hàng thẻ đã ló lên 80px; mỗi toa chạy ~360px cuộn, nối đuôi nhau.
+       Toa cuối xong ở 580px; dưới hàng thẻ còn hơn 1000px để cuộn nên luôn tới nơi. */
     .stories .story:nth-child(1) {
-      animation-range: entry 0% entry 75%;
+      animation-range: cover 80px cover 420px;
     }
     .stories .story:nth-child(2) {
-      animation-range: entry 12% entry 88%;
+      animation-range: cover 150px cover 500px;
     }
     .stories .story:nth-child(3) {
-      animation-range: entry 25% entry 100%;
+      animation-range: cover 220px cover 580px;
     }
     .stories .story::before {
       content: '';
@@ -810,7 +812,7 @@
       filter: blur(10px);
       transform-origin: left center;
       animation: story-train-smoke linear both;
-      animation-timeline: --stories;
+      animation-timeline: --story-row;
       animation-range: inherit;
       pointer-events: none;
     }
