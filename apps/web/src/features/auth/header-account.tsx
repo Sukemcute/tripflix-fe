@@ -91,6 +91,11 @@ export function HeaderAccount() {
               </Link>
             </li>
             <li>
+              <Link href="/bookings" onClick={closeMenu}>
+                {vi.commerce.booked}
+              </Link>
+            </li>
+            <li>
               <Link href="/account?tab=mine" onClick={closeMenu}>
                 {vi.api.myPosts}
               </Link>
