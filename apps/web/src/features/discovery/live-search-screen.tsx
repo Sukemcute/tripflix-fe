@@ -16,14 +16,12 @@ import {
   getStayDateIssue, getStayPriceIssue, getStayToday, isStayInteger, MAX_STAY_GUESTS, MAX_STAY_ROOMS,
 } from './stay-search-validation';
 import { SearchAdBanner } from './search-ad-banner';
+import { SoftStarIcon } from './soft-star-icon';
+import { PriceRangeSlider } from './price-range-slider';
 
 // Vừa chiều cao cột lọc + banner, để trang không bị kéo dài khi nhiều kết quả.
 const RESULTS_PAGE_SIZE = 5;
 const STAR_OPTIONS = ['', '1', '2', '3', '4', '5'];
-const SORT_OPTIONS = [
-  { value: 'price', label: vi.ota.sortPriceShort },
-  { value: 'stars', label: vi.ota.sortStarsShort },
-] as const;
 
 function getSearchHref(filters: StayFilters, placeName: string) {
   const query = new URLSearchParams({ q: placeName });
@@ -355,7 +353,7 @@ export function LiveSearchScreen({
                       {stars ? (
                         <>
                           {stars}
-                          <StaySearchIcon name="star" />
+                          <SoftStarIcon />
                         </>
                       ) : (
                         vi.api.all
@@ -364,18 +362,14 @@ export function LiveSearchScreen({
                   ))}
                 </div>
               </fieldset>
-              <label className={listing.panelGroup}>
-                <span>{vi.api.maxPrice}</span>
-                <span className={listing.priceField}>
-                  <StayPriceInput
-                    form="stay-search-form"
-                    value={search.filters.priceMax}
-                    onChange={(value) => update('priceMax', value)}
-                    errorId={priceError ? 'stay-price-error' : undefined}
-                  />
-                  <span aria-hidden="true">đ</span>
-                </span>
-              </label>
+              <fieldset className={listing.panelGroup}>
+                <legend>{vi.ota.priceRangeTitle}</legend>
+                <PriceRangeSlider
+                  priceMin={search.filters.priceMin}
+                  priceMax={search.filters.priceMax}
+                  onChange={(range) => search.setFilters((previous) => ({ ...previous, ...range }))}
+                />
+              </fieldset>
               {priceError && (
                 <p id="stay-price-error" role="alert" className={listing.filterError}>
                   {priceError}
@@ -384,18 +378,21 @@ export function LiveSearchScreen({
               <fieldset className={listing.panelGroup}>
                 <legend>{vi.demo.web.sort}</legend>
                 <div className={listing.segmented}>
-                  {SORT_OPTIONS.map((option) => (
-                    <label key={option.value} className={listing.chip}>
-                      <input
-                        type="radio"
-                        name="stay-sort"
-                        value={option.value}
-                        checked={search.filters.sort === option.value}
-                        onChange={() => update('sort', option.value)}
-                      />
-                      {option.label}
-                    </label>
-                  ))}
+                  <label className={listing.chip}>
+                    <input
+                      type="radio"
+                      name="stay-sort"
+                      value="price"
+                      checked={search.filters.sort === 'price'}
+                      onChange={() => update('sort', 'price')}
+                    />
+                    {vi.ota.sortPriceAsc}
+                  </label>
+                  {/* shortcut: API chưa có sort giá giảm dần; bật khi BE thêm sort=price_desc. */}
+                  <label className={listing.chip} title={vi.ota.comingSoon}>
+                    <input type="radio" name="stay-sort" value="price_desc" disabled />
+                    {vi.ota.sortPriceDesc}
+                  </label>
                 </div>
               </fieldset>
               <button

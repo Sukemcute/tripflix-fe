@@ -34,7 +34,6 @@ const paths = {
       <path d="M9 21v-5h6v5M9 7h1m4 0h1m-6 4h1m4 0h1" />
     </>
   ),
-  star: <path d="m12 3.6 2.5 5.1 5.6.8-4 4 .9 5.6-5-2.7-5 2.7.9-5.6-4-4 5.6-.8Z" />,
   filter: (
     <>
       <path d="M4 7h9m4 0h3M4 17h3m4 0h9" />
