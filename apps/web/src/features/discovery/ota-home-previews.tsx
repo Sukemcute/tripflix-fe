@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   getAvailableStays,
@@ -129,24 +129,6 @@ export function HomeStayPreview() {
 export function HomeStoryPreview() {
   const query = useSocialPosts();
   const posts = query.data?.pages[0]?.items.slice(0, 3);
-  const gridRef = useRef<HTMLDivElement>(null);
-  const hasPosts = Boolean(posts?.length);
-  // Đoàn tàu: thẻ chờ ngoài mép phải ("ready"), chỉ chạy vào ("run") khi chính hàng thẻ đã lộ ra trên màn hình.
-  useEffect(() => {
-    const grid = gridRef.current;
-    if (!grid || !hasPosts || !('IntersectionObserver' in window)) return;
-    grid.dataset.train = 'ready';
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) return;
-        grid.dataset.train = 'run';
-        observer.disconnect();
-      },
-      { threshold: 0.35 },
-    );
-    observer.observe(grid);
-    return () => observer.disconnect();
-  }, [hasPosts]);
   return (
     <section
       className={`ota-container ${styles.section} ${styles.stories}`}
@@ -170,7 +152,7 @@ export function HomeStoryPreview() {
       />
       {query.isPending && <output className={styles.state}>{vi.api.loading}</output>}
       {posts?.length === 0 && <p className={styles.state}>{vi.api.noPosts}</p>}
-      <div ref={gridRef} className={styles.previewGrid}>
+      <div className={styles.previewGrid}>
         {posts?.map((post) => (
           <article className={styles.story} key={post.id}>
             <p className="pin-tag">{post.tripAttachment?.destinationName ?? vi.ota.story}</p>
