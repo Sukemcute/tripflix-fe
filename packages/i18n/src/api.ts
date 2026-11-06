@@ -47,7 +47,10 @@ export const api = {
   registrationCodeLabel: 'Mã xác thực email',
   registrationSendCode: 'Gửi mã xác thực',
   registrationResendCode: 'Gửi lại mã',
-  registrationCodeSent: 'Nếu địa chỉ có thể đăng ký, mã gồm 8 chữ số sẽ đến hộp thư và có hiệu lực trong 10 phút.',
+  registrationCodeSent:
+    'Mã gồm 8 chữ số sẽ đến hộp thư và có hiệu lực trong 10 phút. Nếu email đã có tài khoản, bạn sẽ nhận hướng dẫn đăng nhập thay cho mã.',
+  registrationResendIn: 'Gửi lại mã sau {seconds} giây',
+  registrationCodeTooSoon: 'Bạn vừa yêu cầu mã. Vui lòng đợi {seconds} giây rồi gửi lại.',
   registrationCodeInvalid: 'Mã xác thực không đúng hoặc đã hết hạn. Hãy kiểm tra lại hoặc yêu cầu mã mới.',
   haveAccount: 'Đã có tài khoản? Đăng nhập',
   noAccount: 'Chưa có tài khoản? Đăng ký',
