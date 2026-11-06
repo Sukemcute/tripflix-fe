@@ -46,7 +46,9 @@ export function PaymentSuccessScreen({ order }: { order: CheckoutDto }) {
           <View key={item.id} style={{ gap: spacing.sm }}>
             <Txt variant="heading">{item.productName}</Txt>
             <Txt>
-              {formatDate(item.date)} → {formatDate(item.dateTo)}
+              {item.productType === 'flight'
+                ? vi.flights.date + ' · ' + formatDate(item.date)
+                : formatDate(item.date) + ' → ' + formatDate(item.dateTo)}
             </Txt>
             <Txt variant="small" style={ui.muted}>
               {item.qty} × {item.ratePlanName}

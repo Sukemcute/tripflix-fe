@@ -8,12 +8,6 @@
 .row.row > label {
   border-right: 0;
 }
-.row label:has(input:focus-visible) {
-  background: var(--color-sea-mist);
-}
-.row input:focus-visible {
-  outline: none;
-}
 .row label:has(input[aria-invalid='true']) {
   background: var(--color-coral-tint);
 }

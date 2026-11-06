@@ -51,28 +51,26 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <nav aria-label={vi.ota.footerExplore}>
                 <strong>{vi.ota.footerExplore}</strong>
                 <Link href="/search">{vi.api.hotels}</Link>
+                <Link href="/flights">{vi.flights.title}</Link>
                 <Link href="/#home-destinations">{vi.ota.discover}</Link>
                 <Link href="/inspiration">{vi.api.inspiration}</Link>
               </nav>
-              <nav className={styles.footerDestinations} aria-label={vi.ota.footerDestinations}>
+              <nav aria-label={vi.ota.footerDestinations}>
                 <strong>{vi.ota.footerDestinations}</strong>
                 {OTA_DESTINATIONS.map((destination) => (
                   <Link key={destination.id} href={getDestinationHref(destination)}>
                     <span className={styles.footerThumbnail}>
                       <Image src={destination.image} alt="" fill sizes="32px" />
                     </span>
-                    {destination.name} <span aria-hidden="true">↗</span>
+                    {destination.name}
                   </Link>
                 ))}
               </nav>
               <div className={styles.footerPostcard}>
                 <div>
-                  <p className={styles.footerPostcardLabel}>
-                    <span aria-hidden="true">✦</span> {vi.ota.fieldNotes}
-                  </p>
                   <h2>{vi.ota.footerTitle}</h2>
                   <Link className={styles.footerAction} href="/#ota-search">
-                    {vi.ota.heroSearch} <span aria-hidden="true">↗</span>
+                    {vi.ota.heroSearch}
                   </Link>
                 </div>
                 <span className={styles.footerPostcardPhoto}>
@@ -86,7 +84,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 {vi.api.bookingUnavailable}
               </p>
               <a href="#top">
-                {vi.ota.backToTop} <span aria-hidden="true">↑</span>
+                {vi.ota.backToTop}
               </a>
             </div>
           </footer>

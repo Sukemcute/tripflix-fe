@@ -6,7 +6,7 @@
   justify-content: space-between;
   align-items: end;
   gap: 24px;
-  margin-block: 12px 32px;
+  margin-bottom: 32px;
 }
 .sectionHead h2 {
   margin: 0;
@@ -23,7 +23,6 @@
 }
 .textLink {
   display: inline-flex;
-  gap: 8px;
   flex-shrink: 0;
   color: var(--color-teal-ink);
   font-size: 13px;
@@ -83,34 +82,6 @@
   font-size: 12px;
   line-height: 1.6;
 }
-.destinationArrow {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--color-background);
-  color: var(--color-ink);
-}
-.destination:is(:hover, :focus-visible) .destinationArrow {
-  background: var(--color-sun);
-}
-.destinationIndex {
-  position: absolute;
-  top: 18px;
-  left: 22px;
-  padding: 4px 7px;
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  background: var(--color-overlay-heavy);
-  font: 0.75rem var(--font-mono);
-}
-.destination:first-child .destinationIndex {
-  left: clamp(28px, 5vw, 78px);
-}
 .stayBand {
   background: var(--color-warm-mist);
   border-block: 1px solid var(--color-border);
@@ -133,7 +104,7 @@
 }
 .stayCopy h2 {
   max-width: 24ch;
-  margin-block: 8px;
+  margin-bottom: 8px;
   font-size: clamp(1.55rem, 3.35vw, 3.1rem);
   line-height: 1.1;
   letter-spacing: -0.055em;
@@ -144,17 +115,9 @@
   line-height: 1.55;
   text-wrap: pretty;
 }
-.stayCopy .stayKicker {
-  color: var(--color-teal-ink);
-  font: 700 0.72rem var(--font-mono);
-}
-.stayKicker span {
-  color: var(--color-coral-ink);
-}
 .stayAction {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   min-height: 42px;
   margin-top: 14px;
   padding-inline: 12px;
@@ -186,39 +149,11 @@
   height: auto;
   filter: drop-shadow(0 8px 14px var(--color-overlay));
 }
-.stayScene span {
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
-  padding: 5px 9px;
-  border-radius: 5px;
-  background: var(--color-warm-mist);
-  color: var(--color-ink);
-  font: 700 0.72rem var(--font-mono);
-}
-.previewTools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 24px;
-  margin-block: 16px;
-}
-.previewTools > p {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: var(--color-teal-ink);
-  font-size: 12px;
-}
-.previewTools > p span {
-  font-size: 1.15rem;
-}
 .chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-block: 16px;
 }
 .chips button {
   min-height: 40px;
@@ -363,23 +298,8 @@
   position: relative;
   z-index: 1;
 }
-.tripiLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 10px;
-  border: 1px solid var(--color-teal-soft);
-  border-radius: 999px;
-  background: var(--color-background);
-  color: var(--color-teal-ink);
-  font: 700 0.72rem var(--font-mono);
-}
-.tripiLabel span {
-  color: var(--color-coral-ink);
-}
 .tripiBanner h2 {
   max-width: 23ch;
-  margin-top: 10px;
   font-size: clamp(1.55rem, 3.15vw, 3.25rem);
   line-height: 1.1;
   letter-spacing: -0.055em;
@@ -393,25 +313,14 @@
 .tripiAction {
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
   min-height: 44px;
   margin-top: 15px;
-  padding: 5px 6px 5px 14px;
+  padding: 5px 14px;
   border-radius: 999px;
   background: var(--color-teal);
   color: var(--color-ink);
   font-size: 0.85rem;
   font-weight: 700;
-}
-.tripiAction span {
-  display: grid;
-  flex: 0 0 32px;
-  place-items: center;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--color-ink);
-  color: var(--color-background);
 }
 .tripiAction:is(:hover, :focus-visible) {
   background: var(--color-teal-soft);
@@ -557,11 +466,6 @@
     font-size: 11px;
     padding-right: 14px;
   }
-  .destinationArrow {
-    top: 12px;
-    right: 12px;
-    width: 32px;
-  }
   .previewGrid,
   .stayGrid {
     grid-template-columns: 1fr;
@@ -631,15 +535,11 @@
     translate: calc(var(--pointer-x, 0) * 22px) calc(var(--pointer-y, 0) * 10px);
     transition: translate 420ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
-  .destination img,
-  .destinationArrow {
+  .destination img {
     transition: transform 420ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
   .destination:is(:hover, :focus-visible) img {
     transform: translate(calc(var(--pointer-x, 0) * -14px), calc(var(--pointer-y, 0) * -12px)) scale(1.08);
-  }
-  .destination:is(:hover, :focus-visible) .destinationArrow {
-    transform: rotate(12deg);
   }
   .tripiPostcard,
   .tripiMascot,

@@ -38,7 +38,7 @@ export function LiveLoginScreen() {
       const path =
         typeof returnTo === 'string' &&
         (/^\/(?:\(tabs\)|trip\/[^/?#]+|saved|create|cart|account-settings)(?:$|\/)/.test(returnTo) ||
-          /^\/payments\/vnpay\/return(?:\?|$)/.test(returnTo))
+          /^\/(?:flights|payments\/vnpay\/return)(?:\?|$)/.test(returnTo))
           ? returnTo
           : '/(tabs)/me';
       router.dismissTo(path as Href);

@@ -41,13 +41,10 @@ export function HomeStayPreview() {
       <div className={`ota-container ${styles.stayContent}`}>
         <div className={styles.stayHeader} data-home-banner>
           <div className={styles.stayCopy}>
-            <p className={styles.stayKicker}>
-              <span aria-hidden="true">✦</span> {vi.ota.staysEyebrow}
-            </p>
             <h2 id="home-stays-title">{vi.ota.staysTitle}</h2>
             <p>{vi.ota.staysIntro}</p>
             <Link className={styles.stayAction} href={getDestinationHref(destination)}>
-              {t('ota.browseDestination', { name: destination.name })} <span aria-hidden="true">↗</span>
+              {t('ota.browseDestination', { name: destination.name })}
             </Link>
           </div>
           <div className={styles.stayScene} aria-hidden="true">
@@ -67,31 +64,20 @@ export function HomeStayPreview() {
               height={210}
               sizes="(max-width: 640px) 102px, 210px"
             />
-            <span>{destination.name}</span>
           </div>
         </div>
-        <div className={styles.previewTools}>
-          <fieldset className={styles.chips} aria-label={vi.api.destination}>
-            {OTA_DESTINATIONS.map((place) => (
-              <button
-                type="button"
-                key={place.id}
-                aria-pressed={place.id === destination.id}
-                onClick={() => setDestination(place)}
-              >
-                {place.name}
-              </button>
-            ))}
-          </fieldset>
-          <p>
-            <span aria-hidden="true">◷</span>
-            {t('ota.stayDates', {
-              start: dates.checkIn.split('-').reverse().join('/'),
-              end: dates.checkOut.split('-').reverse().join('/'),
-              adults: 2,
-            })}
-          </p>
-        </div>
+        <fieldset className={styles.chips} aria-label={vi.api.destination}>
+          {OTA_DESTINATIONS.map((place) => (
+            <button
+              type="button"
+              key={place.id}
+              aria-pressed={place.id === destination.id}
+              onClick={() => setDestination(place)}
+            >
+              {place.name}
+            </button>
+          ))}
+        </fieldset>
         <ApiErrorNotice
           error={query.error}
           retry={() => {
@@ -142,14 +128,13 @@ export function HomeStoryPreview() {
       aria-labelledby="home-stories-title"
       data-home-reveal
     >
-      <p className="eyebrow">{vi.ota.storiesEyebrow}</p>
       <div className={styles.sectionHead}>
         <div>
           <h2 id="home-stories-title">{vi.ota.storiesTitle}</h2>
           <p>{vi.ota.storiesIntro}</p>
         </div>
         <Link className={styles.textLink} href="/inspiration">
-          {vi.ota.allStories} <span aria-hidden="true">↗</span>
+          {vi.ota.allStories}
         </Link>
       </div>
       <ApiErrorNotice

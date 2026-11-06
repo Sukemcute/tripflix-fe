@@ -206,7 +206,7 @@ export function HotelReviews({ id }: { id: string }) {
                   ))}
                 </div>
               )}
-              <HotelGallery images={review.images} name={review.title ?? review.authorName} compact />
+              <HotelGallery images={review.images} name={review.title ?? review.authorName} layout="compact" />
               {review.helpfulCount > 0 && (
                 <p className="small muted">{t('hotel.helpfulCount', { count: review.helpfulCount })}</p>
               )}

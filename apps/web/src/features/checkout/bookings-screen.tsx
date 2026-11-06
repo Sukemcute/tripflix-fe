@@ -1,7 +1,7 @@
 'use client';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { commerceApi, useApiSession } from '@tripflix/api-client';
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import Link from 'next/link';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { CheckoutError } from './checkout-error';
@@ -57,7 +57,9 @@ export function BookingsScreen() {
                 {item.propertyName && <p className={styles.property}>{item.propertyName}</p>}
                 <h2>{item.productName}</h2>
                 <p>
-                  {formatDate(item.date)} → {formatDate(item.dateTo)} · {item.nights} {copy.nights} · {item.qty} ×{' '}
+                  {item.productType === 'flight'
+                    ? `${formatDate(item.date)} · ${t('flights.passengers', { count: item.qty })} · `
+                    : `${formatDate(item.date)} → ${formatDate(item.dateTo)} · ${item.nights} ${copy.nights} · ${item.qty} × `}
                   {item.ratePlanName}
                 </p>
               </div>

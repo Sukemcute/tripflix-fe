@@ -32,15 +32,23 @@ select {
 }
 button,
 a,
-input,
-select {
+input:is([type='checkbox'], [type='radio']) {
   outline-offset: 5px;
 }
 button:focus-visible,
 a:focus-visible,
-input:focus-visible,
-select:focus-visible {
+input:is([type='checkbox'], [type='radio']):focus-visible {
   outline: 2px solid var(--color-teal-ink);
+}
+:where(input:not([type='checkbox'], [type='radio']), select, textarea):focus {
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 1px var(--color-teal-ink);
+}
+@media (forced-colors: active) {
+  :where(input:not([type='checkbox'], [type='radio']), select, textarea):focus {
+    outline-color: Highlight;
+  }
 }
 button:not(:disabled),
 select {
@@ -318,12 +326,6 @@ h3 {
   border: 1px solid var(--color-border);
   border-radius: 12px;
   background: var(--color-warm-mist);
-}
-.ota-place-field input:focus-visible {
-  outline: none;
-}
-.ota-place-field:has(input:focus-visible) {
-  background: var(--color-sea-mist);
 }
 .ota-home.results-page {
   padding-top: 0;
@@ -1213,9 +1215,10 @@ h3 {
   border-radius: 12px;
   background: var(--color-warm-mist);
 }
-.auth-field input:focus-visible {
+.auth-field input:focus {
   border-color: var(--color-teal-ink);
   background: var(--color-background);
+  box-shadow: none;
 }
 .auth-password {
   position: relative;
@@ -1823,12 +1826,13 @@ h3 {
 .post-editor textarea {
   min-height: 120px;
 }
-.post-editor input:focus-visible,
-.post-editor textarea:focus-visible,
-.comment-form textarea:focus-visible,
-.comment-edit textarea:focus-visible {
+.post-editor input:focus,
+.post-editor textarea:focus,
+.comment-form textarea:focus,
+.comment-edit textarea:focus {
   border-color: var(--color-teal-ink);
   background: var(--color-background);
+  box-shadow: none;
 }
 /* Bình luận */
 .comment-thread {
@@ -2152,7 +2156,6 @@ h3 {
 }
 .profile-fields.is-editing .profile-field:not(.is-locked):focus-within {
   border-color: var(--color-coral-ink);
-  box-shadow: 0 0 0 3px var(--color-coral-tint);
 }
 .profile-field input,
 .profile-field select {
@@ -2164,7 +2167,9 @@ h3 {
   color: var(--color-ink);
   font-size: 16px;
   font-weight: 600;
-  outline: none;
+}
+.profile-field :is(input, select):focus {
+  box-shadow: none;
 }
 .profile-field input::placeholder {
   color: var(--color-text-subtle);
@@ -2289,13 +2294,12 @@ h3 {
     border-color 0.18s,
     box-shadow 0.18s;
 }
-.account-page .auth-field input:focus-visible,
-.composer-field input:focus-visible,
-.composer-field textarea:focus-visible {
+.account-page .auth-field input:focus,
+.composer-field input:focus,
+.composer-field textarea:focus {
   border-color: var(--color-coral-ink);
   background: var(--color-background);
-  box-shadow: 0 0 0 3px var(--color-coral-tint);
-  outline: none;
+  box-shadow: none;
 }
 .composer-field input::placeholder,
 .composer-field textarea::placeholder {
