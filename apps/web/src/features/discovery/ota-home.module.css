@@ -761,21 +761,25 @@
   }
 }
 
-/* Thẻ bài viết chạy nối đuôi từ phải sang trái như đoàn tàu khi mục này lọt vào màn hình (data-home-entered
-   do ota-home-motion gắn). Chạy theo thời gian, không theo nhịp cuộn, để thẻ cuối luôn tới nơi kể cả khi
-   mục nằm sát cuối trang. Quán tính: lúc chạy ngửa ra sau, lúc phanh chúi về trước, trượt quá rồi lùi về.
-   Mỗi thẻ kéo vệt khói mờ tan dần. Màn hẹp hoặc giảm chuyển động: hiện bình thường. */
+/* Thẻ bài viết chạy nối đuôi từ phải sang trái như đoàn tàu khi hàng thẻ lộ ra trên màn hình
+   (data-train: "ready" = chờ ngoài mép phải, "run" = chạy vào; do HomeStoryPreview gắn).
+   Quán tính: lúc chạy ngửa ra sau, lúc phanh chúi về trước, trượt quá rồi lùi về; mỗi thẻ kéo vệt khói mờ.
+   Không có JS, màn hẹp hoặc giảm chuyển động: thẻ hiện bình thường. */
 @media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
-  .stories .previewGrid {
+  .previewGrid[data-train] {
     overflow-x: clip;
     overflow-clip-margin: 24px;
   }
-  :global([data-home-entered]) .story {
+  .previewGrid[data-train='ready'] .story {
+    opacity: 0;
+    transform: translateX(70vw);
+  }
+  .previewGrid[data-train='run'] .story {
     overflow: visible;
     transform-origin: 50% 100%;
     animation: story-train-in 3200ms cubic-bezier(0.3, 0.6, 0.35, 1) both;
   }
-  :global([data-home-entered]) .story::before {
+  .previewGrid[data-train='run'] .story::before {
     content: '';
     position: absolute;
     top: 18%;
@@ -797,12 +801,12 @@
     pointer-events: none;
   }
   /* Nối đuôi: mỗi toa xuất phát trễ hơn toa trước. */
-  :global([data-home-entered]) .story:nth-child(2),
-  :global([data-home-entered]) .story:nth-child(2)::before {
+  .previewGrid[data-train='run'] .story:nth-child(2),
+  .previewGrid[data-train='run'] .story:nth-child(2)::before {
     animation-delay: 440ms;
   }
-  :global([data-home-entered]) .story:nth-child(3),
-  :global([data-home-entered]) .story:nth-child(3)::before {
+  .previewGrid[data-train='run'] .story:nth-child(3),
+  .previewGrid[data-train='run'] .story:nth-child(3)::before {
     animation-delay: 880ms;
   }
 }
