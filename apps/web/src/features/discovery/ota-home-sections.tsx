@@ -14,18 +14,17 @@ export function OtaHomeSections() {
         aria-labelledby="destinations-title"
         data-home-reveal
       >
-        <p className="eyebrow">{vi.ota.discover}</p>
         <div className={styles.sectionHead}>
           <div>
             <h2 id="destinations-title">{vi.ota.destinationTitle}</h2>
             <p>{vi.ota.destinationIntro}</p>
           </div>
           <Link className={styles.textLink} href="/search">
-            {vi.ota.browseHotels} <span aria-hidden="true">↗</span>
+            {vi.ota.browseHotels}
           </Link>
         </div>
         <div className={styles.destinations}>
-          {OTA_DESTINATIONS.map((destination, index) => (
+          {OTA_DESTINATIONS.map((destination) => (
             <Link
               key={destination.id}
               href={getDestinationHref(destination)}
@@ -34,17 +33,11 @@ export function OtaHomeSections() {
               data-home-banner
             >
               <Image src={destination.image} alt="" fill sizes="(max-width: 640px) 100vw, 48vw" />
-              <span className={styles.destinationIndex} aria-hidden="true">
-                {String(index + 1).padStart(2, '0')}
-              </span>
               <div>
                 <span>{destination.region}</span>
                 <h3>{destination.name}</h3>
                 <p>{destination.description}</p>
               </div>
-              <span className={styles.destinationArrow} aria-hidden="true">
-                ↗
-              </span>
             </Link>
           ))}
         </div>
@@ -57,13 +50,10 @@ export function OtaHomeSections() {
       >
         <div className={styles.tripiBanner} data-home-banner>
           <div className={styles.tripiCopy}>
-            <p className={styles.tripiLabel}>
-              <span aria-hidden="true">✦</span> {vi.ota.tripi}
-            </p>
             <h2 id="home-tripi-title">{vi.ota.tripiTitle}</h2>
             <p className={styles.tripiIntro}>{vi.ota.tripiIntro}</p>
             <Link href="/inspiration" className={styles.tripiAction}>
-              {vi.ota.tripiAction} <span aria-hidden="true">↗</span>
+              {vi.ota.tripiAction}
             </Link>
           </div>
           <div className={styles.tripiCollage} aria-hidden="true">

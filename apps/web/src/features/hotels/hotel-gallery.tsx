@@ -10,6 +10,12 @@ const galleryIconPaths = {
   next: 'M9 6l6 6-6 6',
 };
 
+const galleryLayouts = {
+  grid: styles.gallery,
+  compact: styles.compactGallery,
+  carousel: styles.roomCarousel,
+};
+
 function GalleryIcon({ name }: { name: keyof typeof galleryIconPaths }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
@@ -31,11 +37,11 @@ export function HotelPhoto({ url, alt }: { url: string; alt: string }) {
 export function HotelGallery({
   images,
   name,
-  compact = false,
+  layout = 'grid',
 }: {
   images: string[];
   name: string;
-  compact?: boolean;
+  layout?: keyof typeof galleryLayouts;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const activeThumbnail = useRef<HTMLButtonElement>(null);
@@ -71,13 +77,22 @@ export function HotelGallery({
     }
   }, [activeIndex]);
   if (!count) return null;
+  const isCarousel = layout === 'carousel';
+  const previews = isCarousel
+    ? [{ url: urls[activeIndex]!, position: activeIndex }]
+    : urls.slice(0, layout === 'compact' ? 3 : 5).map((url, position) => ({ url, position }));
   return (
     <>
-      <div className={compact ? styles.compactGallery : styles.gallery}>
-        {urls.slice(0, compact ? 3 : 5).map((url, position) => (
+      <div
+        className={galleryLayouts[layout]}
+        role={isCarousel ? 'group' : undefined}
+        aria-label={isCarousel ? `${vi.hotel.gallery}: ${name}` : undefined}
+      >
+        {previews.map(({ url, position }) => (
           <button
             type="button"
-            key={url}
+            key={isCarousel ? 'active-photo' : url}
+            className={isCarousel ? styles.carouselPhoto : undefined}
             aria-haspopup="dialog"
             onClick={() => {
               setIndex(position);
@@ -85,14 +100,25 @@ export function HotelGallery({
             }}
             aria-label={`${vi.hotel.photo} ${position + 1}: ${name}`}
           >
-            <HotelPhoto url={url} alt={`${name} · ${vi.hotel.photo} ${position + 1}`} />
-            {!compact && position === Math.min(4, count - 1) && (
+            <HotelPhoto key={url} url={url} alt={`${name} · ${vi.hotel.photo} ${position + 1}`} />
+            {layout === 'grid' && position === Math.min(4, count - 1) && (
               <span className={styles.galleryCount}>
                 {vi.hotel.gallery} ({count})
               </span>
             )}
           </button>
         ))}
+        {isCarousel && count > 1 && (
+          <>
+            <button className={styles.carouselArrow} type="button" aria-label={vi.hotel.previous} onClick={() => move(-1)}>
+              <GalleryIcon name="previous" />
+            </button>
+            <button className={styles.carouselArrow} type="button" aria-label={vi.hotel.next} onClick={() => move(1)}>
+              <GalleryIcon name="next" />
+            </button>
+            <output className={styles.carouselCount}>{activeIndex + 1} / {count}</output>
+          </>
+        )}
       </div>
       <dialog
         ref={dialog}

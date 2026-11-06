@@ -12,18 +12,15 @@
 .copy {
   position: relative;
   z-index: 1;
+  padding-block-start: 24px;
 }
-.kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--color-teal-ink);
-  font: 700 0.7rem var(--font-mono);
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-.kicker span {
-  font-size: 1.2rem;
+.heroMascot {
+  position: absolute;
+  inset-block-end: calc(100% - 46px);
+  inset-inline-start: -8px;
+  width: clamp(76px, 7.5vw, 116px);
+  height: auto;
+  pointer-events: none;
 }
 .copy h1 {
   margin-block: 22px 24px;
@@ -53,7 +50,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   min-height: 46px;
   font-size: 0.82rem;
   font-weight: 700;
@@ -74,38 +70,25 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-.scrollAction span {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  aspect-ratio: 1;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-}
 .activities {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  gap: clamp(6px, 1.2vw, 14px);
+  overflow-x: auto;
   margin-top: clamp(24px, 3.5vw, 48px);
   padding-top: 14px;
   border-top: 1px solid color-mix(in srgb, var(--color-teal-ink) 25%, transparent);
 }
-.activities p {
-  margin-bottom: 10px;
-  color: var(--color-teal-ink);
-  font: 700 0.68rem var(--font-mono);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-.activities > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-}
 .activities a {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 6px;
   min-height: 36px;
   font-size: 0.75rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 .activities a:hover {
   color: var(--color-teal-ink);
@@ -135,18 +118,6 @@
   object-fit: cover;
   object-position: 50% 63%;
 }
-.frameIndex {
-  position: absolute;
-  top: 12%;
-  right: 8%;
-  padding: 6px 9px;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  background: var(--color-overlay);
-  color: var(--color-background);
-  font: 0.7rem var(--font-mono);
-  letter-spacing: 0.08em;
-}
 .route {
   position: absolute;
   bottom: 14%;
@@ -155,47 +126,15 @@
   height: 60%;
   color: var(--color-sun-soft);
 }
-.caption {
-  position: absolute;
-  bottom: 18px;
-  left: 18px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: var(--color-ink);
-  color: var(--color-background);
-  font: 0.7rem var(--font-mono);
-}
-.caption span {
-  color: var(--color-sun);
-}
-.tripiGreeting {
-  position: absolute;
-  right: 16px;
-  bottom: -18px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 12px 4px 4px;
-  border-radius: 999px;
-  background: var(--color-background);
-  color: var(--color-teal-ink);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-ink) 14%, transparent);
-  font-size: 0.68rem;
-  font-weight: 700;
-}
-.tripiGreeting img {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-}
 @media (max-width: 760px) {
   .inner {
     grid-template-columns: minmax(0, 1fr);
     gap: 28px;
     padding-bottom: 54px;
+  }
+  .heroMascot {
+    inset-block-end: calc(100% - 38px);
+    width: 74px;
   }
   .copy h1 {
     margin-block: 14px 16px;
@@ -208,12 +147,14 @@
     min-height: 0;
     aspect-ratio: 1.4;
   }
-  .caption {
-    bottom: 26px;
-    left: 12px;
-  }
   .route {
     height: 48%;
+  }
+}
+@media (max-width: 480px) {
+  .activities img {
+    width: 24px;
+    height: 24px;
   }
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -224,28 +165,16 @@
   .art {
     animation-delay: 90ms;
   }
-  .scrollAction span,
-  .searchAction span {
-    transition: transform 220ms ease;
-  }
-  .scrollAction:is(:hover, :focus-visible) span {
-    transform: translateY(3px);
-  }
-  .searchAction:is(:hover, :focus-visible) span {
-    transform: translate(2px, -2px);
-  }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .photo,
-  .route,
-  .tripiGreeting {
+  .route {
     transition: transform 420ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
   .photo {
     transform: translate(calc(var(--pointer-x, 0) * -34px), calc(var(--pointer-y, 0) * -24px)) scale(1.09);
   }
-  .route,
-  .tripiGreeting {
+  .route {
     transform: translate(calc(var(--pointer-x, 0) * 20px), calc(var(--pointer-y, 0) * 14px));
   }
 }

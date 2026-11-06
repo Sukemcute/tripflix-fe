@@ -90,8 +90,11 @@
   color: #667b78;
   font-weight: 400;
 }
-.field input:focus-visible {
-  outline-offset: 2px;
+.field:has(input:focus) {
+  background: var(--color-sea-mist);
+}
+.field input:focus {
+  box-shadow: none;
 }
 .placeField {
   position: relative;

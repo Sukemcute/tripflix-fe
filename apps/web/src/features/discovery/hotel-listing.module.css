@@ -494,8 +494,8 @@
   font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
-.budgetInputs input:focus-visible {
-  outline: none;
+.budgetInputs input:focus {
+  box-shadow: none;
 }
 .budgetInputs label:has([aria-invalid='true']) {
   border-color: var(--color-coral-ink);

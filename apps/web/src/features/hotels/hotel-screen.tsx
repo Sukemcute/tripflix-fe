@@ -268,7 +268,7 @@ export function HotelScreen({
               {hotel.rooms.map((room) => (
                 <article className={styles.room} key={room.productId}>
                   <div className={styles.roomInfo}>
-                    <HotelGallery images={room.images ?? []} name={room.name} compact />
+                    <HotelGallery images={room.images ?? []} name={room.name} layout="carousel" />
                     <h3>{room.name}</h3>
                     <ul className={styles.roomFacts}>
                       {room.areaM2 !== null && room.areaM2 !== undefined && <li>{room.areaM2} m²</li>}
@@ -305,7 +305,7 @@ export function HotelScreen({
                   <div className={styles.rates}>
                     {room.ratePlans.map((rate) => (
                       <div key={rate.code} className={styles.rate}>
-                        <div>
+                        <div className={styles.rateDetails}>
                           <h4>{rate.name}</h4>
                           {rate.perks?.length > 0 && (
                             <ul>
@@ -317,32 +317,34 @@ export function HotelScreen({
                               ))}
                             </ul>
                           )}
-                          <p className={rate.isRefundable ? styles.refundable : 'small muted'}>
+                          <p className={styles.ratePolicy} data-refundable={rate.isRefundable}>
                             {rate.isRefundable
                               ? t('hotel.freeCancel', { days: rate.freeCancelDays })
                               : copy.nonRefundable}
                           </p>
                         </div>
                         <div className={styles.ratePrice}>
-                          {rate.discountPct !== null && rate.discountPct > 0 && (
-                            <span className={styles.discount}>-{rate.discountPct}%</span>
-                          )}
-                          {rate.listPricePerNight !== null &&
-                            rate.pricePerNight !== null &&
-                            rate.listPricePerNight > rate.pricePerNight && (
-                              <del>{formatPrice(rate.listPricePerNight)}</del>
+                          <div className={styles.rateAmount}>
+                            {rate.listPricePerNight !== null &&
+                              rate.pricePerNight !== null &&
+                              rate.listPricePerNight > rate.pricePerNight && (
+                                <del>{formatPrice(rate.listPricePerNight)}</del>
+                              )}
+                            {rate.discountPct !== null && rate.discountPct > 0 && (
+                              <span className={styles.discount}>-{rate.discountPct}%</span>
                             )}
+                          </div>
                           {rate.pricePerNight !== null ? (
-                            <>
+                            <div className={styles.rateAmount}>
                               <strong>{formatPrice(rate.pricePerNight)}</strong>
                               <small>{copy.perNight}</small>
-                            </>
+                            </div>
                           ) : (
                             <p>{copy.rateUnavailable}</p>
                           )}
                           {rate.totalPrice !== null && (
                             <p>
-                              {copy.total}: <b>{formatPrice(rate.totalPrice)}</b>
+                              {copy.total} · <b>{formatPrice(rate.totalPrice)}</b>
                             </p>
                           )}
                           {room.isAvailable && rate.totalPrice !== null && (

@@ -444,7 +444,9 @@ function OrderSummary({ order, total }: { order: Order; total: number }) {
           {item.propertyName && <p className={styles.property}>{item.propertyName}</p>}
           <h2>{item.productName}</h2>
           <p>
-            {formatDate(item.date)} → {formatDate(item.dateTo)} · {item.nights} {copy.nights}
+            {item.productType === 'flight'
+              ? `${vi.flights.date} · ${formatDate(item.date)}`
+              : `${formatDate(item.date)} → ${formatDate(item.dateTo)} · ${item.nights} ${copy.nights}`}
           </p>
           <p>
             {item.qty} × {item.ratePlanName} · {order.adults} {copy.guests}
@@ -455,7 +457,9 @@ function OrderSummary({ order, total }: { order: Order; total: number }) {
           </p>
           <p className={styles.line}>
             <span>
-              {formatPrice(item.unitPrice)} × {item.nights} {copy.nights} × {item.qty}
+              {formatPrice(item.unitPrice)} × {item.productType === 'flight'
+                ? t('flights.passengers', { count: item.qty })
+                : `${item.nights} ${copy.nights} × ${item.qty}`}
             </span>
             <b>{formatPrice(item.lineTotal)}</b>
           </p>

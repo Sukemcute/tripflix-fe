@@ -503,7 +503,9 @@ export function OrderSummary({ order }: { order: NonNullable<ReturnType<typeof u
         <Card key={item.id}>
           <Txt variant="heading">{item.productName}</Txt>
           <Txt>
-            {item.date} → {item.dateTo}
+            {item.productType === 'flight'
+              ? vi.flights.date + ' · ' + formatDate(item.date)
+              : item.date + ' → ' + item.dateTo}
           </Txt>
           <Txt>
             {item.qty} × {item.ratePlanName}
