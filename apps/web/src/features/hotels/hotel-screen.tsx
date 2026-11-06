@@ -6,6 +6,7 @@ import { isValidTripDate, shiftTripDate } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { BookRateButton } from '@/features/checkout/book-rate-button';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { HotelGallery } from './hotel-gallery';
@@ -348,6 +349,19 @@ export function HotelScreen({
                               {copy.total}: <b>{formatPrice(rate.totalPrice)}</b>
                             </p>
                           )}
+                          {room.isAvailable && rate.totalPrice !== null && (
+                            <BookRateButton
+                              booking={{
+                                productId: room.productId,
+                                ratePlanCode: rate.code,
+                                checkIn: hotel.stay.checkIn,
+                                checkOut: hotel.stay.checkOut,
+                                adults: hotel.stay.adults,
+                                roomCount: room.roomsNeeded,
+                              }}
+                              isDisabled={query.isFetching}
+                            />
+                          )}
                         </div>
                       </div>
                     ))}
@@ -355,7 +369,6 @@ export function HotelScreen({
                 </article>
               ))}
             </div>
-            <p className={styles.notice}>{vi.api.bookingUnavailable}</p>
           </section>
           {hasAmenities && (
             <section id="amenities" className={styles.section}>

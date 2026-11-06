@@ -15,7 +15,9 @@ type Mode = 'login' | 'register';
 
 /** Chỉ quay lại các trang của web, không chuyển hướng sang địa chỉ lạ truyền qua ?returnTo=. */
 function readSafeReturnTo(returnTo: string): string {
-  return /^\/(?:account|trips\/[^/?#]+|search)(?:$|[?#])/.test(returnTo) ? returnTo : '/account';
+  return /^\/(?:account|trips\/[^/?#]+|search|bookings|hotels\/[^/?#]+|checkout\/[^/?#]+)(?:$|[?#])/.test(returnTo)
+    ? returnTo
+    : '/account';
 }
 
 const readDeviceName = () => describeDevice(navigator.userAgent) ?? undefined;

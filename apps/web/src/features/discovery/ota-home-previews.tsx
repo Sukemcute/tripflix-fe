@@ -120,14 +120,9 @@ export function HomeStayPreview() {
                   <p className={styles.stayLocation}>{stay.province.name}</p>
                   {stay.stars ? <p className={styles.stayRating}>{stay.stars} ★</p> : null}
                   <h3>{stay.name}</h3>
-                  <div className={styles.stayPriceRow}>
-                    <p>
-                      <strong>{formatPrice(stay.unitPrice)}</strong> <small>{vi.hotel.perNight}</small>
-                    </p>
-                    <span className={styles.stayCardArrow} aria-hidden="true">
-                      ↗
-                    </span>
-                  </div>
+                  <p className={styles.stayPriceRow}>
+                    <strong>{formatPrice(stay.unitPrice)}</strong> <small>{vi.hotel.perNight}</small>
+                  </p>
                 </div>
               </Link>
             </article>

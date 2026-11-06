@@ -1,4 +1,6 @@
+import { vi } from '@tripflix/i18n';
 import HomeScreen from '@/features/discovery/home-screen';
+import { validateInspirationKeyword } from '@/features/discovery/inspiration-keyword';
 
 export default async function InspirationPage({
   searchParams,
@@ -6,5 +8,6 @@ export default async function InspirationPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { q } = await searchParams;
-  return <HomeScreen query={typeof q === 'string' ? q.trim().slice(0, 100) : ''} />;
+  const result = q === undefined ? null : validateInspirationKeyword(q);
+  return <HomeScreen query={result?.keyword} queryError={result?.error ? vi.api[result.error] : undefined} />;
 }
