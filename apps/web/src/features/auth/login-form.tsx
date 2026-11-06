@@ -1,6 +1,7 @@
 'use client';
 import { getRetryAfterSeconds, useApiSession, useResendCooldown } from '@tripflix/api-client';
 import {
+  canSendRegistrationCode,
   describeDevice,
   getRegistrationPasswordStrength,
   REGISTRATION_CODE_PATTERN,
@@ -64,8 +65,10 @@ export function LiveLogin({
   });
   // 429 vì bấm quá sớm: nút đã đếm ngược, thay câu lỗi chung bằng số giây còn lại.
   const isTooSoon = cooldown.isWaiting && getRetryAfterSeconds(requestCode.error) !== undefined;
-  const canRegister =
-    strength === 'passwordStrong' && !!registrationId && REGISTRATION_CODE_PATTERN.test(code);
+  const canSendCode = canSendRegistrationCode({ displayName, email, password });
+  // Email, mật khẩu đã ổn mà còn thiếu tên: báo rõ vì sao nút gửi mã đang khoá.
+  const isMissingName = !displayName.trim() && strength === 'passwordStrong' && !!email.trim();
+  const canRegister = canSendCode && !!registrationId && REGISTRATION_CODE_PATTERN.test(code);
 
   const credentials = useMutation({
     mutationFn: () =>
@@ -138,6 +141,8 @@ export function LiveLogin({
             autoComplete="name"
             value={displayName}
             onValueChange={setDisplayName}
+            aria-invalid={isMissingName || undefined}
+            aria-describedby={isMissingName ? 'registration-needs-name' : undefined}
           />
         )}
         <AuthField
@@ -193,9 +198,7 @@ export function LiveLogin({
             <button
               type="button"
               className="secondary-button"
-              disabled={
-                !isReady || isBusy || cooldown.isWaiting || strength !== 'passwordStrong' || !email.trim()
-              }
+              disabled={!isReady || isBusy || cooldown.isWaiting || !canSendCode}
               onClick={() => {
                 credentials.reset();
                 requestCode.mutate();
@@ -209,6 +212,15 @@ export function LiveLogin({
                     ? vi.api.registrationResendCode
                     : vi.api.registrationSendCode}
             </button>
+            {isMissingName && (
+              <p id="registration-needs-name" className="auth-warning" role="status">
+                <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 8v5M12 16h.01" />
+                </svg>
+                {vi.api.registrationNeedsName}
+              </p>
+            )}
             {registrationId && <output className="auth-hint">{vi.api.registrationCodeSent}</output>}
             {isTooSoon ? (
               <p role="alert" className="auth-error">
