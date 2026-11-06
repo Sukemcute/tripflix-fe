@@ -21,3 +21,16 @@ export function getRegistrationPasswordStrength(
     return 'passwordWeak';
   return 'passwordStrong';
 }
+
+/** Đủ điều kiện xin mã đăng ký: đã nhập tên hiển thị, email và mật khẩu đạt yêu cầu. */
+export function canSendRegistrationCode(input: {
+  displayName: string;
+  email: string;
+  password: string;
+}): boolean {
+  return (
+    input.displayName.trim().length > 0 &&
+    input.email.trim().length > 0 &&
+    getRegistrationPasswordStrength(input.password) === 'passwordStrong'
+  );
+}
