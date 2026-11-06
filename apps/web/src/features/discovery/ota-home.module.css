@@ -708,6 +708,16 @@
 
 /* 3 thẻ khách sạn xoè ra như quạt tay khi cuộn tới: bắt đầu nhỏ, chồng ở giữa, nghiêng quanh điểm dưới thẻ,
    rồi phóng to và bung về chỗ theo nhịp cuộn (scroll-driven; trình duyệt chưa hỗ trợ thì thẻ hiện bình thường). */
+/* Desktop: thẻ giữa là tâm quạt — cột rộng hơn, ảnh cao hơn; hai thẻ bên canh giữa nên thẻ giữa nhô cả trên lẫn dưới. */
+@media (min-width: 641px) {
+  .stayGrid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr);
+    align-items: center;
+  }
+  .stayGrid > .hotelCard:nth-child(2) a {
+    grid-template-rows: clamp(160px, 20vw, 290px) 1fr;
+  }
+}
 @media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .stayGrid > .hotelCard {
