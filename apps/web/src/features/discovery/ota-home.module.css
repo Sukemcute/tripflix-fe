@@ -154,6 +154,48 @@
   height: auto;
   filter: drop-shadow(0 8px 14px var(--color-overlay));
 }
+/* Desktop: ảnh phủ cả thẻ, nội dung trên tấm kính mờ kiểu macOS để màu thẻ và ảnh hoà vào nhau. */
+@media (min-width: 641px) {
+  .stayHeader {
+    position: relative;
+    isolation: isolate;
+    min-height: clamp(260px, 25vw, 340px);
+    border-color: color-mix(in srgb, var(--color-background) 60%, transparent);
+  }
+  .stayScene {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+  .stayScene::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-sea-mist) 70%, transparent) 0%,
+      transparent 60%
+    );
+  }
+  .stayMascot {
+    z-index: 1;
+    left: auto;
+    right: 10%;
+    width: min(26%, 220px);
+  }
+  .stayCopy {
+    margin: clamp(14px, 2vw, 26px);
+    padding: clamp(20px, 2.6vw, 36px);
+    border: 1px solid color-mix(in srgb, var(--color-background) 70%, transparent);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--color-background) 58%, transparent);
+    box-shadow:
+      0 18px 40px -24px var(--color-overlay-heavy),
+      inset 0 1px 0 color-mix(in srgb, var(--color-background) 85%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+  }
+}
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -241,16 +283,19 @@
   font-size: 0.75rem;
   font-weight: 700;
 }
-.stayRating {
+/* Hạng sao là thẻ ghim vàng (.pin-tag ở globals.css), ghim ở góc phải thông tin khách sạn. */
+.hotelInfo .stayRating {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  padding: 4px 7px;
-  border-radius: 5px;
-  background: var(--color-sun-soft);
-  color: var(--color-ink);
-  font-size: 0.7rem;
-  font-weight: 700;
+  top: 12px;
+  right: 12px;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  font-size: 13px;
+}
+.stayRating svg {
+  width: 15px;
+  height: 15px;
 }
 .hotelInfo p,
 .story p {
@@ -294,10 +339,21 @@
   position: absolute;
   z-index: -1;
   inset: 0;
-  background:
-    radial-gradient(circle, color-mix(in srgb, var(--color-teal-ink) 14%, transparent) 1px, transparent 1.5px)
-      0 0 / 18px 18px,
-    linear-gradient(112deg, var(--color-warm-mist) 26%, var(--color-sea-mist) 72%);
+  background: linear-gradient(112deg, var(--color-warm-mist) 26%, var(--color-sea-mist) 72%);
+}
+/* Dấu chìm bản đồ tròn, rất mờ, nằm sau ảnh và Tripi. */
+.tripiBanner::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: clamp(-40px, 2vw, 40px);
+  width: clamp(320px, 38vw, 560px);
+  aspect-ratio: 1400 / 1340;
+  translate: 0 -50%;
+  background: url('/brand/home-world.svg') center / contain no-repeat;
+  opacity: 0.07;
+  pointer-events: none;
 }
 .tripiCopy {
   position: relative;
@@ -421,9 +477,59 @@
   flex-direction: column;
   gap: 10px;
 }
-.story a:hover {
+/* Cả thẻ bấm được: link tiêu đề phủ toàn thẻ bằng ::after (vẫn chỉ một link cho trình đọc màn hình). */
+.story {
+  position: relative;
+  transition:
+    border-color 400ms,
+    translate 400ms,
+    box-shadow 400ms;
+}
+.story h3 a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.story:has(a:is(:hover, :focus-visible)) {
+  border-color: var(--color-teal);
+  translate: 0 -3px;
+  box-shadow: 0 14px 28px -20px var(--color-overlay-heavy);
+}
+.story:has(a:is(:hover, :focus-visible)) h3 {
   color: var(--color-teal-ink);
-  text-decoration: underline;
+}
+.story h3 a:focus-visible {
+  outline: none;
+}
+.story:has(h3 a:focus-visible) {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 3px;
+}
+.storyStats {
+  display: flex;
+  gap: 14px;
+  margin-top: auto;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.storyStats > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.storyStats svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linejoin: round;
+}
+.storyStats > span:first-child svg {
+  color: var(--color-coral);
+  fill: var(--color-coral-tint);
 }
 .story .excerpt {
   color: var(--color-text-muted);

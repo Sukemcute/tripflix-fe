@@ -15,6 +15,7 @@ import { ApiErrorNotice } from '@/features/shared/api-state';
 import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
 import { formatPrice } from './trip-card';
 import { StayThumbnail } from './stay-thumbnail';
+import { SoftStarIcon } from './soft-star-icon';
 import styles from './ota-home.module.css';
 
 export function HomeStayPreview() {
@@ -54,7 +55,7 @@ export function HomeStayPreview() {
               src={destination.image}
               alt=""
               fill
-              sizes="(max-width: 640px) 90vw, 38vw"
+              sizes="(max-width: 640px) 90vw, 100vw"
             />
             <Image
               className={styles.stayMascot}
@@ -104,7 +105,13 @@ export function HomeStayPreview() {
                 </div>
                 <div className={styles.hotelInfo}>
                   <p className={styles.stayLocation}>{stay.province.name}</p>
-                  {stay.stars ? <p className={styles.stayRating}>{stay.stars} ★</p> : null}
+                  {stay.stars ? (
+                    <p className={`pin-tag ${styles.stayRating}`}>
+                      <span aria-hidden="true">{stay.stars}</span>
+                      <SoftStarIcon />
+                      <span className="sr-only">{t('ota.starsExact', { count: stay.stars })}</span>
+                    </p>
+                  ) : null}
                   <h3>{stay.name}</h3>
                   <p className={styles.stayPriceRow}>
                     <strong>{formatPrice(stay.unitPrice)}</strong> <small>{vi.hotel.perNight}</small>
@@ -153,9 +160,22 @@ export function HomeStoryPreview() {
               <Link href={`/trips/${encodeURIComponent(post.id)}`}>{post.title}</Link>
             </h3>
             <p className={styles.excerpt}>{post.body}</p>
-            <small>
-              {post.reactionTotal} {vi.api.like} · {post.commentCount} {vi.api.comments}
-            </small>
+            <p className={styles.storyStats}>
+              <span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" />
+                </svg>
+                {post.reactionTotal}
+                <span className="sr-only"> {vi.api.like}</span>
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 18.5V6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H9.5L5 18.5Z" />
+                </svg>
+                {post.commentCount}
+                <span className="sr-only"> {vi.api.comments}</span>
+              </span>
+            </p>
           </article>
         ))}
       </div>
