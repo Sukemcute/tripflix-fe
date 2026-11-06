@@ -7,4 +7,6 @@
 
 export interface RegistrationCodeResultDto {
   registrationId: string;
+  /** Số giây phải đợi trước khi xin mã lại cho email này */
+  resendAfterSeconds: number;
 }

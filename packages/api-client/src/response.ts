@@ -71,6 +71,13 @@ export function getAuthErrorKind(error: unknown, action: AuthAction): AuthErrorK
   }
 }
 
+/** 429 của core-api có retryAfterSeconds trong body (thời gian phải đợi); không có thì undefined. */
+export function getRetryAfterSeconds(error: unknown): number | undefined {
+  if (!(error instanceof HttpError) || error.status !== 429) return;
+  const seconds = (error.body as { retryAfterSeconds?: unknown } | null)?.retryAfterSeconds;
+  return typeof seconds === 'number' && seconds > 0 ? Math.ceil(seconds) : undefined;
+}
+
 export function getRegistrationFieldError(error: unknown): string | undefined {
   if (!(error instanceof HttpError) || error.status !== 400 || !hasFieldErrors(error)) return;
   const { errors } = error.body as { errors: { message?: unknown }[] };

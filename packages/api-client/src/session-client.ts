@@ -5,6 +5,7 @@ import type {
   MyProfileDto,
   RegisterDto,
   RegistrationCodeDto,
+  RegistrationCodeResultDto,
   TokenPairDto,
 } from './generated/core-api/model';
 import { configureHttp, HttpError, type HttpRequestOptions } from './http';
@@ -156,9 +157,18 @@ export class SessionClient {
     const { email, password } = credentials;
     await this.login({ email, password });
   }
+  /** @deprecated Dùng sendRegistrationCode để biết cả thời gian chờ trước khi gửi lại mã. */
   async requestRegistrationCode(input: RegistrationCodeDto): Promise<string> {
+    return (await this.sendRegistrationCode(input)).registrationId;
+  }
+  async sendRegistrationCode(input: RegistrationCodeDto): Promise<RegistrationCodeResultDto> {
     const response = await auth.authControllerRequestRegistrationCode(input, this.authOptions);
-    return readEntity(response.data, ['registrationId']).registrationId;
+    const { registrationId, resendAfterSeconds } = readEntity(response.data, ['registrationId']);
+    // Backend cũ chưa trả resendAfterSeconds: không chặn nút gửi lại.
+    return {
+      registrationId,
+      resendAfterSeconds: typeof resendAfterSeconds === 'number' ? resendAfterSeconds : 0,
+    };
   }
   async reloadUser(): Promise<MyProfileDto> {
     const version = this.version;
