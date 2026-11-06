@@ -63,7 +63,7 @@
 /* Nút đen loang Teal; chữ chuyển Ink cho đủ tương phản trên Teal. */
 .searchAction {
   --ripple-color: var(--color-teal);
-  transition: color 0.3s;
+  transition: color 480ms;
 }
 .searchAction:is(:hover, :focus-visible) {
   color: var(--color-ink);
@@ -165,16 +165,16 @@
 @media (prefers-reduced-motion: no-preference) {
   .copy,
   .art {
-    animation: arrive 760ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
+    animation: arrive 1216ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
   }
   .art {
-    animation-delay: 90ms;
+    animation-delay: 144ms;
   }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .photo,
   .route {
-    transition: transform 420ms cubic-bezier(0.2, 0.7, 0.25, 1);
+    transition: transform 672ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
   .photo {
     transform: translate(calc(var(--pointer-x, 0) * -34px), calc(var(--pointer-y, 0) * -24px)) scale(1.09);

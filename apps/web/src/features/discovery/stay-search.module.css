@@ -49,7 +49,7 @@
   padding: 10px 16px;
   border-right: 1px solid #e4ecea;
   border-radius: 12px;
-  transition: background 180ms;
+  transition: background 288ms;
 }
 .field:hover,
 .field:focus-within {
@@ -145,7 +145,7 @@
 /* Nút xanh loang Coral; chữ chuyển Ink cho đủ tương phản trên Coral. */
 .submit {
   --ripple-color: var(--color-coral);
-  transition: color 0.3s;
+  transition: color 480ms;
 }
 .submit:hover:not(:disabled) {
   color: var(--color-ink);
