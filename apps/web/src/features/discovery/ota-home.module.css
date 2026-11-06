@@ -771,9 +771,10 @@
     .stories {
       view-timeline: --stories block;
     }
-    .stories .previewGrid {
+    /* Cắt ngang ở body (không ở hàng thẻ) để toa còn ngoài mép phải không tạo thanh cuộn ngang,
+       mà thẻ đầu vẫn trượt quá và chúi về trước được mà không bị cắt. */
+    :global(body):has(.stories) {
       overflow-x: clip;
-      overflow-clip-margin: 24px;
     }
     .stories .story {
       overflow: visible;
