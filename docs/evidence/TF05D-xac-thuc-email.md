@@ -59,3 +59,10 @@
 - Mobile: dùng cùng các giới hạn ở màn đăng ký và màn cài đặt tài khoản.
 - Kiểm tra: lint, typecheck và test của app-core, web, mobile đều pass (7/7 task). app-core 41/41 test, có test mới cho `countCharacters`. Chưa chụp ảnh giao diện, mobile chưa chạy trên Android.
 - Ảnh hưởng: `apps/web` (Thành), `apps/mobile` (Trang), trong đó có `live-account-screens.tsx` của Trang.
+
+## Cập nhật: bỏ dòng gợi ý mật khẩu khi ô còn trống
+
+- Nhánh `dung/TF05D-bo-goi-y-mat-khau` · 2026-11-06
+- Bỏ dòng "Dùng mật khẩu từ 12 đến 128 ký tự và tránh các mật khẩu phổ biến." trên web và mobile. Dòng này còn ghi sai giới hạn (nay là 64), và bộ đếm `0/64` cạnh nhãn đã cho biết giới hạn. Khi bắt đầu gõ, phản hồi ngắn, yếu hoặc mạnh vẫn hiện như cũ. Xoá khoá i18n `registerHint` vì không còn nơi nào dùng.
+- Kiểm tra: lint, typecheck và test của web, mobile, i18n đều pass (7/7 task).
+- Ảnh hưởng: `apps/web` (Thành), `apps/mobile` (Trang).
