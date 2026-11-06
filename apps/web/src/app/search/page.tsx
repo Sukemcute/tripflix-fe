@@ -37,8 +37,8 @@ export default async function SearchPage({
     checkOut = addStayDays(today, 3);
   }
   const initialFilters: Partial<StayFilters> = { placeId, checkIn, checkOut };
-  const limits = { adults: MAX_STAY_GUESTS, rooms: MAX_STAY_ROOMS, minStars: 5 } as const;
-  for (const key of ['adults', 'rooms', 'minStars'] as const) {
+  const limits = { adults: MAX_STAY_GUESTS, rooms: MAX_STAY_ROOMS, minStars: 5, stars: 5 } as const;
+  for (const key of ['adults', 'rooms', 'minStars', 'stars'] as const) {
     const value = read(key);
     if (isStayInteger(value, 1, limits[key])) initialFilters[key] = String(Number(value));
   }
@@ -50,7 +50,8 @@ export default async function SearchPage({
     initialFilters.priceMin = validMin;
     initialFilters.priceMax = validMax;
   }
-  if (read('sort') === 'stars') initialFilters.sort = 'stars';
+  const sort = read('sort');
+  if (sort === 'stars' || sort === 'price_desc') initialFilters.sort = sort;
   return (
     <main id="content" className={`ota-container ${styles.page}`}>
       <header className={styles.banner}>
