@@ -2,9 +2,11 @@ import * as auth from './generated/core-api/auth/auth';
 import type {
   GoogleLoginDto,
   LoginDto,
+  MyProfileDto,
   RegisterDto,
+  RegistrationCodeDto,
+  RegistrationCodeResultDto,
   TokenPairDto,
-  UserDto,
 } from './generated/core-api/model';
 import { configureHttp, HttpError, type HttpRequestOptions } from './http';
 import { readEntity } from './response';
@@ -20,7 +22,7 @@ export interface SessionOptions {
   storage?: TokenStorage;
 }
 export interface SessionState {
-  user: UserDto | null;
+  user: MyProfileDto | null;
   isReady: boolean;
   error: unknown;
 }
@@ -152,14 +154,32 @@ export class SessionClient {
   }
   async register(credentials: RegisterDto): Promise<void> {
     await auth.authControllerRegister(credentials, this.authOptions);
-    await this.login(credentials);
+    const { email, password } = credentials;
+    await this.login({ email, password });
   }
-  async reloadUser(): Promise<UserDto> {
+  /** @deprecated Dùng sendRegistrationCode để biết cả thời gian chờ trước khi gửi lại mã. */
+  async requestRegistrationCode(input: RegistrationCodeDto): Promise<string> {
+    return (await this.sendRegistrationCode(input)).registrationId;
+  }
+  async sendRegistrationCode(input: RegistrationCodeDto): Promise<RegistrationCodeResultDto> {
+    const response = await auth.authControllerRequestRegistrationCode(input, this.authOptions);
+    const { registrationId, resendAfterSeconds } = readEntity(response.data, ['registrationId']);
+    // Backend cũ chưa trả resendAfterSeconds: không chặn nút gửi lại.
+    return {
+      registrationId,
+      resendAfterSeconds: typeof resendAfterSeconds === 'number' ? resendAfterSeconds : 0,
+    };
+  }
+  async reloadUser(): Promise<MyProfileDto> {
     const version = this.version;
     const response = await auth.authControllerGetMe();
     const user = readEntity(response.data, ['id', 'email', 'displayName', 'role']);
     if (version === this.version) this.publish({ user, error: null });
     return user;
+  }
+
+  async refreshUser(): Promise<void> {
+    if (await this.refresh()) await this.reloadUser();
   }
   async logout(): Promise<void> {
     await auth.authControllerLogout({

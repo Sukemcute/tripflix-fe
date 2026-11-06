@@ -11,6 +11,7 @@ import { PublicPosts } from '@/features/social/live-posts';
 import { PostComposer } from '@/features/social/post-composer';
 import { ProfileInfoCard } from './account-profile';
 import { AccountSecurity } from './account-security';
+import { EmailVerificationNotice } from './email-verification-notice';
 import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
 import { ADMIN_URL, getInitial, isStaffRole } from './account-helpers';
 
@@ -91,6 +92,7 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
           <ApiErrorNotice error={logout.error} />
         </aside>
         <div className="profile-main">
+          {user.emailVerified === false && <EmailVerificationNotice key={`verify-${user.id}`} />}
           {tab === 'profile' ? (
             <ProfileInfoCard key={user.id} userId={user.id} />
           ) : tab === 'security' ? (
