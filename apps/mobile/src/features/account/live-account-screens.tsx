@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApiSession } from '@tripflix/api-client';
 import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import type { UserDto } from '@tripflix/api-client/core-api/model/index';
+import { DISPLAY_NAME_MAX, NEW_PASSWORD_MAX } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, nativeFonts, spacing as s } from '@tripflix/tokens';
 import { Redirect, router } from 'expo-router';
@@ -189,7 +190,7 @@ function ProfileEditor({ user }: { user: UserDto }) {
       <Txt variant="small" style={ui.muted}>
         {user.email}
       </Txt>
-      <Field label={vi.api.displayName} value={name} onChangeText={setName} maxLength={50} />
+      <Field label={vi.api.displayName} value={name} onChangeText={setName} maxLength={DISPLAY_NAME_MAX} />
       <Button disabled={mutation.isPending || !name.trim()} onPress={() => mutation.mutate('profile')}>
         {vi.api.save}
       </Button>
@@ -207,7 +208,7 @@ function ProfileEditor({ user }: { user: UserDto }) {
         onChangeText={setNewPassword}
         secureTextEntry
         autoComplete="new-password"
-        maxLength={128}
+        maxLength={NEW_PASSWORD_MAX}
       />
       <Button
         disabled={mutation.isPending || !currentPassword || newPassword.length < 8}

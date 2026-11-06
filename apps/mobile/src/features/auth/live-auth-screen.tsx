@@ -8,7 +8,10 @@ import {
 } from '@tripflix/api-client';
 import {
   canSendRegistrationCode,
+  CURRENT_PASSWORD_MAX,
+  DISPLAY_NAME_MAX,
   getRegistrationPasswordStrength,
+  NEW_PASSWORD_MAX,
   REGISTRATION_CODE_PATTERN,
 } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
@@ -124,7 +127,7 @@ export function LiveLoginScreen() {
             label={vi.api.displayName}
             value={displayName}
             onChangeText={setDisplayName}
-            maxLength={50}
+            maxLength={DISPLAY_NAME_MAX}
           />
         )}
         <Field
@@ -151,7 +154,7 @@ export function LiveLoginScreen() {
           editable={!isBusy}
           secureTextEntry
           autoComplete={isRegistering ? 'new-password' : 'current-password'}
-          maxLength={128}
+          maxLength={isRegistering ? NEW_PASSWORD_MAX : CURRENT_PASSWORD_MAX}
         />
         {isRegistering && (
           <>

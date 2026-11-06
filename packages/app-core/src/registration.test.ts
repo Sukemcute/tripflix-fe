@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canSendRegistrationCode, getRegistrationPasswordStrength } from './registration';
+import { canSendRegistrationCode, countCharacters, getRegistrationPasswordStrength } from './registration';
 
 describe('registration password feedback', () => {
   it.each([
@@ -22,5 +22,14 @@ describe('canSendRegistrationCode', () => {
     expect(canSendRegistrationCode({ ...ready, displayName: '   ' })).toBe(false);
     expect(canSendRegistrationCode({ ...ready, email: ' ' })).toBe(false);
     expect(canSendRegistrationCode({ ...ready, password: 'Password123456' })).toBe(false);
+  });
+});
+
+describe('countCharacters', () => {
+  it('counts an emoji as one character, like Core API', () => {
+    expect(countCharacters('')).toBe(0);
+    expect(countCharacters('Lan')).toBe(3);
+    expect(countCharacters('Đà Lạt')).toBe(6);
+    expect(countCharacters('😀😀')).toBe(2);
   });
 });
