@@ -91,7 +91,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 220ms;
+  transition: transform 352ms;
 }
 .gallery button:hover img,
 .compactGallery button:hover img {
@@ -204,8 +204,8 @@
   background: var(--color-background);
   color: inherit;
   transition:
-    background-color 180ms,
-    border-color 180ms;
+    background-color 288ms,
+    border-color 288ms;
 }
 .photoControl svg {
   width: 18px;
@@ -235,7 +235,7 @@
   background: var(--color-surface);
   font-size: 0.75rem;
   opacity: 0.6;
-  transition: opacity 180ms;
+  transition: opacity 288ms;
 }
 .photoThumbnails button:is(:hover, :focus-visible, [aria-current]) {
   opacity: 1;
@@ -875,7 +875,7 @@
   border: 1px solid var(--color-border);
   border-radius: 18px;
   background: var(--color-background);
-  transition: border-color 0.15s ease;
+  transition: border-color 240ms ease;
 }
 .review:hover {
   border-color: var(--color-teal-soft);

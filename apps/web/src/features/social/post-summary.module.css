@@ -56,7 +56,7 @@
   margin-top: 16px;
   font-size: 14px;
   font-weight: 600;
-  transition: opacity 160ms ease;
+  transition: opacity 256ms ease;
 }
 .primary:hover {
   opacity: 0.9;

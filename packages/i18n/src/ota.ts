@@ -97,6 +97,7 @@ export const ota = {
   footerExplore: 'Lên kế hoạch',
   footerInspiration: 'Cảm hứng du lịch',
   footerTitle: 'Hẹn bạn ở chuyến đi tới.',
+  footerTag: 'Tripi gửi bạn',
   footerDestinations: 'Điểm đến nổi bật',
   backToTop: 'Về đầu trang',
   footerCopy: 'Tìm nơi ở, đọc chia sẻ và lên kế hoạch cho chuyến đi theo cách của bạn.',

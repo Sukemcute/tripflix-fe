@@ -31,8 +31,8 @@ export function AuthShell({
           className="auth-mascot"
           src="/brand/tripi-welcome.png"
           alt={vi.mobile.common.mascot}
-          width={200}
-          height={200}
+          width={400}
+          height={400}
           loading="eager"
         />
       </section>

@@ -122,13 +122,18 @@
   margin-top: 14px;
   padding-inline: 12px;
   border-radius: 999px;
-  background: var(--color-teal);
-  color: var(--color-ink);
+  background: var(--color-teal-ink);
+  color: var(--color-background);
   font-size: 0.8rem;
   font-weight: 700;
 }
-.stayAction:hover {
-  background: var(--color-teal-soft);
+/* Cùng màu nút "Tìm phòng trống"; loang Coral, chữ chuyển Ink. */
+.stayAction {
+  --ripple-color: var(--color-coral);
+  transition: color 480ms;
+}
+.stayAction:is(:hover, :focus-visible) {
+  color: var(--color-ink);
 }
 .stayScene {
   position: relative;
@@ -148,6 +153,28 @@
   width: min(48%, 210px);
   height: auto;
   filter: drop-shadow(0 8px 14px var(--color-overlay));
+}
+/* Ảnh chuyển dần vào nền thẻ ở mép trái (desktop) để thẻ và ảnh liền một khối. */
+@media (min-width: 641px) {
+  /* Chia đôi chữ và ảnh. */
+  .stayHeader {
+    position: relative;
+    isolation: isolate;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .stayScene::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 45%;
+    background: linear-gradient(
+      90deg,
+      var(--color-sea-mist) 0%,
+      color-mix(in srgb, var(--color-sea-mist) 55%, transparent) 40%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
 }
 .chips {
   display: flex;
@@ -215,7 +242,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 220ms ease;
+  transition: transform 352ms ease;
 }
 .hotelCard a:hover img {
   transform: scale(1.035);
@@ -236,16 +263,34 @@
   font-size: 0.75rem;
   font-weight: 700;
 }
-.stayRating {
+/* Hạng sao là thẻ ghim vàng (.pin-tag ở globals.css), ghim ở góc phải thông tin khách sạn. */
+.hotelInfo .stayRating {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  padding: 4px 7px;
-  border-radius: 5px;
-  background: var(--color-sun-soft);
-  color: var(--color-ink);
-  font-size: 0.7rem;
-  font-weight: 700;
+  top: 12px;
+  right: 12px;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  font-size: 13px;
+}
+.hotelInfo .stayRating {
+  gap: 3px;
+  padding-block: 4px;
+  background: var(--color-coral);
+  color: var(--color-background);
+  font-size: 14px;
+  font-weight: 800;
+  text-shadow: 0 1px 1px color-mix(in srgb, var(--color-coral-ink) 80%, transparent);
+}
+.hotelInfo .stayRating::before {
+  background: var(--color-background);
+  box-shadow: inset -1px -1px 0 var(--color-border);
+}
+.stayRating svg {
+  width: 17px;
+  height: 17px;
+  filter: drop-shadow(0 0 0.6px var(--color-background))
+    drop-shadow(0 1px 1.5px color-mix(in srgb, var(--color-coral-ink) 70%, transparent));
 }
 .hotelInfo p,
 .story p {
@@ -289,10 +334,21 @@
   position: absolute;
   z-index: -1;
   inset: 0;
-  background:
-    radial-gradient(circle, color-mix(in srgb, var(--color-teal-ink) 14%, transparent) 1px, transparent 1.5px)
-      0 0 / 18px 18px,
-    linear-gradient(112deg, var(--color-warm-mist) 26%, var(--color-sea-mist) 72%);
+  background: linear-gradient(112deg, var(--color-warm-mist) 26%, var(--color-sea-mist) 72%);
+}
+/* Dấu chìm bản đồ tròn, rất mờ, nằm sau ảnh và Tripi. */
+.tripiBanner::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: -6%;
+  width: 66%;
+  aspect-ratio: 1400 / 1340;
+  translate: 0 -50%;
+  background: url('/brand/home-world.svg') center / contain no-repeat;
+  opacity: 0.07;
+  pointer-events: none;
 }
 .tripiCopy {
   position: relative;
@@ -322,8 +378,8 @@
   font-size: 0.85rem;
   font-weight: 700;
 }
-.tripiAction:is(:hover, :focus-visible) {
-  background: var(--color-teal-soft);
+.tripiAction {
+  --ripple-color: var(--color-coral);
 }
 .tripiAction:focus-visible {
   outline-color: var(--color-teal-ink);
@@ -416,9 +472,63 @@
   flex-direction: column;
   gap: 10px;
 }
-.story a:hover {
+/* Cả thẻ bấm được: link tiêu đề phủ toàn thẻ bằng ::after (vẫn chỉ một link cho trình đọc màn hình). */
+.story {
+  position: relative;
+  transition:
+    border-color 400ms,
+    translate 400ms,
+    box-shadow 400ms;
+}
+.story h3 a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.story:has(a:is(:hover, :focus-visible)) {
+  border-color: var(--color-teal);
+  translate: 0 -3px;
+  box-shadow: 0 14px 28px -20px var(--color-overlay-heavy);
+}
+.story:has(a:is(:hover, :focus-visible)) h3 {
   color: var(--color-teal-ink);
-  text-decoration: underline;
+}
+.story h3 a:focus-visible {
+  outline: none;
+}
+.story:has(h3 a:focus-visible) {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 3px;
+}
+.storyStats {
+  display: flex;
+  gap: 14px;
+  margin-top: auto;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.storyStats > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.storyStats svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linejoin: round;
+}
+.storyStats > span:first-child svg {
+  color: var(--color-coral);
+  fill: var(--color-coral);
+}
+.storyStats > span:last-child svg {
+  color: var(--color-sun);
+  fill: var(--color-sun);
 }
 .story .excerpt {
   color: var(--color-text-muted);
@@ -498,45 +608,45 @@
 }
 @media (prefers-reduced-motion: no-preference) {
   .stayLandscape {
-    animation: stay-photo-in 380ms ease-out both;
+    animation: stay-photo-in 608ms ease-out both;
   }
   :global(html:has([data-home-banner])) {
     scroll-behavior: smooth;
   }
   :global([data-home-entered]) {
-    animation: section-arrive 720ms cubic-bezier(0.2, 0.7, 0.25, 1);
+    animation: section-arrive 1152ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
   :global([data-home-entered]) .destination:nth-child(2) {
-    animation: section-arrive 840ms cubic-bezier(0.2, 0.7, 0.25, 1);
+    animation: section-arrive 1344ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
   :global([data-home-entered]) .destination:nth-child(3) {
-    animation: section-arrive 960ms cubic-bezier(0.2, 0.7, 0.25, 1);
+    animation: section-arrive 1536ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
   :global([data-home-entered]) .tripiPostcard,
   :global([data-home-entered]) .tripiMascot,
   :global([data-home-entered]) .tripiStamp {
-    animation: tripi-arrive 800ms cubic-bezier(0.2, 0.75, 0.25, 1.2) backwards;
+    animation: tripi-arrive 1280ms cubic-bezier(0.2, 0.75, 0.25, 1.2) backwards;
   }
   :global([data-home-entered]) .tripiTown {
-    animation-delay: 90ms;
+    animation-delay: 144ms;
   }
   :global([data-home-entered]) .tripiMascot,
   :global([data-home-entered]) .tripiStamp {
-    animation-delay: 170ms;
+    animation-delay: 272ms;
   }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .stayLandscape {
     scale: 1.1;
     translate: calc(var(--pointer-x, 0) * -28px) calc(var(--pointer-y, 0) * -12px);
-    transition: translate 420ms cubic-bezier(0.2, 0.7, 0.25, 1);
+    transition: translate 672ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
   .stayMascot {
     translate: calc(var(--pointer-x, 0) * 22px) calc(var(--pointer-y, 0) * 10px);
-    transition: translate 420ms cubic-bezier(0.2, 0.7, 0.25, 1);
+    transition: translate 672ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
   .destination img {
-    transition: transform 420ms cubic-bezier(0.2, 0.7, 0.25, 1);
+    transition: transform 672ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
   .destination:is(:hover, :focus-visible) img {
     transform: translate(calc(var(--pointer-x, 0) * -14px), calc(var(--pointer-y, 0) * -12px)) scale(1.08);
@@ -544,7 +654,7 @@
   .tripiPostcard,
   .tripiMascot,
   .tripiStamp {
-    transition: translate 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+    transition: translate 720ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
   .tripiBeach,
   .tripiStamp {

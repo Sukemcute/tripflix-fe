@@ -62,7 +62,7 @@ export function PublicPosts({
                     )}
                   </div>
                 )}
-                <p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.api.posts}</p>
+                <p className="pin-tag">{post.tripAttachment?.destinationName ?? vi.api.posts}</p>
                 <h3>
                   <Link href={`/trips/${post.id}`}>{post.title}</Link>
                 </h3>

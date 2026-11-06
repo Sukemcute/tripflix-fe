@@ -71,10 +71,10 @@
 }
 @media (prefers-reduced-motion: no-preference) {
   .heroPhoto img {
-    animation: stay-photo-settle 1800ms ease-out;
+    animation: stay-photo-settle 2880ms ease-out;
   }
   .tripiSpot img {
-    animation: tripi-greet 1650ms ease-in-out 150ms;
+    animation: tripi-greet 2640ms ease-in-out 240ms;
   }
 }
 @keyframes stay-photo-settle {
@@ -169,7 +169,7 @@
   color: var(--color-teal-ink);
   font-size: 12px;
   font-weight: 600;
-  transition: background 160ms;
+  transition: background 256ms;
 }
 .panelReset:hover {
   background: var(--color-sea-mist);
@@ -241,9 +241,9 @@
   font-weight: 600;
   cursor: pointer;
   transition:
-    border-color 160ms,
-    background 160ms,
-    color 160ms;
+    border-color 256ms,
+    background 256ms,
+    color 256ms;
 }
 .chip input {
   position: absolute;
@@ -625,8 +625,8 @@
   background: var(--color-background);
   color: inherit;
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color 240ms ease,
+    box-shadow 240ms ease;
 }
 .card:hover {
   border-color: var(--color-teal-ink);
@@ -639,7 +639,7 @@
   outline-offset: -3px;
 }
 .photo img {
-  transition: transform 0.3s ease;
+  transition: transform 480ms ease;
 }
 .card:hover .photo img {
   transform: scale(1.035);

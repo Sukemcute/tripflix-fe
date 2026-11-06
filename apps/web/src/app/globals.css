@@ -235,7 +235,7 @@ h3 {
   background: var(--color-background);
   font-size: 14px;
   font-weight: 600;
-  transition: border-color 0.2s;
+  transition: border-color 320ms;
 }
 .header-account-toggle:hover,
 .header-account-toggle[aria-expanded='true'] {
@@ -266,7 +266,7 @@ h3 {
   border-right: 2px solid var(--color-text-muted);
   border-bottom: 2px solid var(--color-text-muted);
   transform: translateY(-2px) rotate(45deg);
-  transition: transform 0.2s;
+  transition: transform 320ms;
 }
 .header-account-toggle[aria-expanded='true'] .header-account-caret {
   transform: translateY(2px) rotate(-135deg);
@@ -407,6 +407,36 @@ h3 {
   letter-spacing: -1px;
   margin-block: 16px;
 }
+/* Thẻ ghim kiểu nhãn hành lý: đầu nhọn có lỗ xỏ, ghim đỏ, hơi nghiêng. */
+.pin-tag {
+  position: relative;
+  align-self: flex-start;
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 4px;
+  padding: 5px 14px 5px 24px;
+  background: var(--color-sun);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  clip-path: polygon(12px 0, 100% 0, 100% 100%, 12px 100%, 0 50%);
+  rotate: -2deg;
+  transform-origin: left center;
+}
+.pin-tag::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 9px;
+  width: 7px;
+  height: 7px;
+  translate: 0 -50%;
+  border-radius: 50%;
+  background: var(--color-coral);
+  box-shadow: inset -1px -1px 0 var(--color-coral-ink);
+}
 .secondary-button[aria-pressed='true'] {
   background: var(--color-sea-mist);
   border-color: var(--color-teal-ink);
@@ -432,15 +462,44 @@ h3 {
   font-weight: 700;
   white-space: nowrap;
   transition:
-    background 0.18s,
-    transform 0.18s;
+    background 288ms,
+    transform 288ms;
+}
+/* Hiệu ứng loang: lớp màu tròn lan ra từ chỗ con trỏ đi vào (--ripple-x/y do ButtonRipple ghi). */
+.primary-button,
+.secondary-button,
+.ripple-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.primary-button::before,
+.secondary-button::before,
+.ripple-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--ripple-color);
+  clip-path: circle(0 at var(--ripple-x, 50%) var(--ripple-y, 50%));
+  transition: clip-path 720ms ease-out;
+  pointer-events: none;
+}
+:is(.primary-button, .secondary-button, .ripple-button):is(:hover, :focus-visible):not(:disabled, [aria-disabled='true'])::before {
+  clip-path: circle(160% at var(--ripple-x, 50%) var(--ripple-y, 50%));
+}
+@media (prefers-reduced-motion: reduce) {
+  .primary-button::before,
+  .secondary-button::before,
+  .ripple-button::before {
+    transition: none;
+  }
 }
 .primary-button {
+  --ripple-color: var(--color-ink);
   background: var(--color-coral-ink);
   color: var(--color-background);
-}
-.primary-button:hover {
-  background: var(--color-ink);
 }
 .primary-button:active,
 .secondary-button:active {
@@ -454,8 +513,14 @@ h3 {
   background: var(--color-background);
   border: 1px solid var(--color-border);
 }
-.secondary-button:hover {
-  background: var(--color-surface);
+.secondary-button {
+  --ripple-color: var(--color-sea-mist);
+  transition:
+    border-color 480ms,
+    transform 288ms;
+}
+.secondary-button:hover:not(:disabled) {
+  border-color: var(--color-teal-ink);
 }
 .suggested-queries {
   display: flex;
@@ -549,7 +614,7 @@ h3 {
   height: 100%;
   width: 100%;
   object-fit: cover;
-  transition: transform 0.3s;
+  transition: transform 480ms;
 }
 .trip-card-link:hover .trip-card-photo img {
   transform: scale(1.035);
@@ -1118,7 +1183,8 @@ h3 {
 .auth-story {
   position: sticky;
   top: 24px;
-  padding: 40px;
+  /* Đáy giữ đúng chỗ của mascot 180px cũ để thẻ không cao thêm; mascot to hơn nổi lên phía trên. */
+  padding: 40px 40px 236px;
   border-radius: 24px;
   background: var(--color-warm-mist);
   overflow: hidden;
@@ -1156,10 +1222,12 @@ h3 {
   background: var(--color-teal);
 }
 .auth-mascot {
-  display: block;
-  width: 180px;
+  position: absolute;
+  right: 40px;
+  bottom: 28px;
+  /* Cao quá 208px thì mascot chạm vùng chữ: khi đó chừa ~430px bên trái cho danh sách lợi ích. */
+  width: clamp(200px, calc(100% - 430px), 280px);
   height: auto;
-  margin: 28px 0 -12px auto;
 }
 .auth-card {
   display: flex;
@@ -1749,8 +1817,8 @@ h3 {
   font-size: 13px;
   font-weight: 600;
   transition:
-    background 0.18s,
-    border-color 0.18s;
+    background 288ms,
+    border-color 288ms;
 }
 .post-chip:hover {
   background: var(--color-surface);
@@ -2087,8 +2155,8 @@ h3 {
   font-weight: 600;
   text-align: left;
   transition:
-    background 0.18s,
-    color 0.18s;
+    background 288ms,
+    color 288ms;
 }
 .profile-nav svg,
 .profile-card-header svg,
@@ -2170,9 +2238,9 @@ h3 {
   border-radius: 16px;
   background: var(--color-surface);
   transition:
-    border-color 0.18s,
-    box-shadow 0.18s,
-    background 0.18s;
+    border-color 288ms,
+    box-shadow 288ms,
+    background 288ms;
 }
 .profile-field-label {
   color: var(--color-text-muted);
@@ -2380,8 +2448,8 @@ h3 {
   background: var(--color-background);
   font-size: 15px;
   transition:
-    border-color 0.18s,
-    box-shadow 0.18s;
+    border-color 288ms,
+    box-shadow 288ms;
 }
 .account-page .auth-field input:focus,
 .composer-field input:focus,

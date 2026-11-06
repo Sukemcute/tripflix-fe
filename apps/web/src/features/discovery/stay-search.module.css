@@ -11,13 +11,13 @@
   display: flex;
   align-items: center;
   gap: 24px;
-  padding-bottom: 18px;
+  padding-bottom: 12px;
 }
 .service {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  padding: 10px 18px;
+  padding: 7px 16px;
   border-radius: 999px;
   background: var(--color-sea-mist);
   color: var(--color-teal-ink);
@@ -49,7 +49,7 @@
   padding: 10px 16px;
   border-right: 1px solid #e4ecea;
   border-radius: 12px;
-  transition: background 180ms;
+  transition: background 288ms;
 }
 .field:hover,
 .field:focus-within {
@@ -142,8 +142,13 @@
   background: var(--color-teal-ink);
   color: white;
 }
+/* Nút xanh loang Coral; chữ chuyển Ink cho đủ tương phản trên Coral. */
+.submit {
+  --ripple-color: var(--color-coral);
+  transition: color 480ms;
+}
 .submit:hover:not(:disabled) {
-  background: #004f49;
+  color: var(--color-ink);
 }
 .submit:disabled {
   opacity: 0.65;
@@ -182,8 +187,99 @@
   outline: 2px solid var(--color-teal-ink);
   outline-offset: 4px;
 }
-.advanced[open] summary {
-  margin-bottom: 16px;
+/* Bộ lọc thêm trượt ngang ra (phải sang trái) trong khoảng trống của hàng tab rồi thu lại;
+   hàng cao cố định nên mở ra không đẩy trang, không đè ô tìm hay nút tìm. */
+.heading {
+  min-height: 44px;
+}
+.inlineFilters {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  translate: 32px 0;
+  clip-path: inset(-6px -6px -6px 100%);
+  transition:
+    clip-path 720ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    translate 720ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    opacity 480ms;
+}
+.inlineFilters[data-open='true'] {
+  opacity: 1;
+  translate: 0 0;
+  clip-path: inset(-6px -6px -6px 0);
+}
+.inlineFilters label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.panel .inlineFilters :is(select, input) {
+  width: 132px;
+  min-height: 36px;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-sea-mist);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.moreFiltersToggle {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  color: var(--color-teal-ink);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.moreFiltersToggle[aria-expanded='true'] {
+  color: var(--color-coral-ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .inlineFilters {
+    transition: none;
+  }
+}
+/* Màn hẹp không đủ chỗ trên một hàng: bộ lọc xuống dòng riêng, mở/đóng bằng chiều cao. */
+@media (max-width: 1100px) {
+  .heading {
+    flex-wrap: wrap;
+  }
+  .inlineFilters {
+    order: 3;
+    flex: 1 0 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    max-height: 0;
+    translate: 0 -8px;
+    clip-path: inset(0 -6px 100% -6px);
+    transition:
+      max-height 720ms cubic-bezier(0.2, 0.7, 0.25, 1),
+      clip-path 720ms cubic-bezier(0.2, 0.7, 0.25, 1),
+      translate 720ms,
+      opacity 480ms;
+  }
+  .inlineFilters[data-open='true'] {
+    max-height: 260px;
+    translate: 0 0;
+    clip-path: inset(-6px -6px -6px -6px);
+  }
+  .moreFiltersToggle {
+    margin-left: auto;
+  }
 }
 .panel .advancedFields {
   position: absolute;
