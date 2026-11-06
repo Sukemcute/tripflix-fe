@@ -15,7 +15,7 @@
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.95fr) minmax(0, 1.4fr);
   align-items: start;
   gap: 24px clamp(18px, 2.8vw, 46px);
-  padding-block: clamp(28px, 4vw, 52px) 28px;
+  padding-block: clamp(28px, 4vw, 52px) clamp(24px, 3vw, 40px);
 }
 .footerIdentity strong {
   display: block;
@@ -72,6 +72,7 @@
   object-fit: cover;
 }
 .footerPostcard {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(52px, 6vw, 88px);
   align-items: center;
@@ -99,18 +100,30 @@
   rotate: 4deg;
 }
 .footerAction {
+  --ripple-color: var(--color-ink);
   display: inline-flex;
   align-items: center;
   min-height: 36px;
-  padding-inline: 10px;
+  padding-inline: 14px;
   border-radius: 999px;
   background: var(--color-teal);
   color: var(--color-ink);
   font-size: 0.74rem;
   font-weight: 700;
+  transition: color 0.3s;
 }
 .footerAction:is(:hover, :focus-visible) {
-  background: var(--color-teal-soft);
+  color: var(--color-background);
+}
+/* Tripi đứng trước góc dưới bên trái của ảnh bưu thiếp. */
+.footerMascot {
+  position: absolute;
+  right: clamp(44px, 5vw, 72px);
+  bottom: -10px;
+  width: clamp(64px, 6vw, 84px);
+  height: auto;
+  filter: drop-shadow(0 6px 8px var(--color-overlay));
+  pointer-events: none;
 }
 .footerBase {
   display: flex;

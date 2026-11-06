@@ -148,7 +148,7 @@ export function HomeStoryPreview() {
       <div className={styles.previewGrid}>
         {posts?.map((post) => (
           <article className={styles.story} key={post.id}>
-            <p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.ota.story}</p>
+            <p className="pin-tag">{post.tripAttachment?.destinationName ?? vi.ota.story}</p>
             <h3>
               <Link href={`/trips/${encodeURIComponent(post.id)}`}>{post.title}</Link>
             </h3>

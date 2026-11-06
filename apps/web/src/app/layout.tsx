@@ -8,6 +8,7 @@ import { HeaderAccount } from '@/features/auth/header-account';
 import { Providers } from './providers';
 import { OtaNavigation } from '@/features/discovery/ota-navigation';
 import { OTA_DESTINATIONS, getDestinationHref } from '@/features/discovery/ota-destinations';
+import { TripiMascot } from '@/features/mascot/tripi-mascot';
 import { ButtonRipple } from '@/features/shared/button-ripple';
 import styles from '@/features/discovery/ota-shell.module.css';
 
@@ -71,23 +72,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <div className={styles.footerPostcard}>
                 <div>
                   <h2>{vi.ota.footerTitle}</h2>
-                  <Link className={styles.footerAction} href="/#ota-search">
-                    {vi.ota.heroSearch}
-                  </Link>
+                  <a className={`ripple-button ${styles.footerAction}`} href="#top">
+                    {vi.ota.backToTop}
+                  </a>
                 </div>
                 <span className={styles.footerPostcardPhoto}>
                   <Image src="/brand/home-shore.jpg" alt="" fill sizes="88px" />
                 </span>
+                <TripiMascot pose="hero-welcome" size={84} alt="" className={styles.footerMascot} />
               </div>
-            </div>
-            <div className={`ota-container ${styles.footerBase}`}>
-              <p>
-                <span aria-hidden="true" />
-                {vi.api.bookingUnavailable}
-              </p>
-              <a href="#top">
-                {vi.ota.backToTop}
-              </a>
             </div>
           </footer>
         </Providers>

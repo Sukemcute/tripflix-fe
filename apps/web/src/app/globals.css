@@ -407,6 +407,36 @@ h3 {
   letter-spacing: -1px;
   margin-block: 16px;
 }
+/* Thẻ ghim kiểu nhãn hành lý: đầu nhọn có lỗ xỏ, ghim đỏ, hơi nghiêng. */
+.pin-tag {
+  position: relative;
+  align-self: flex-start;
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 4px;
+  padding: 5px 14px 5px 24px;
+  background: var(--color-sun);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  clip-path: polygon(12px 0, 100% 0, 100% 100%, 12px 100%, 0 50%);
+  rotate: -2deg;
+  transform-origin: left center;
+}
+.pin-tag::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 9px;
+  width: 7px;
+  height: 7px;
+  translate: 0 -50%;
+  border-radius: 50%;
+  background: var(--color-coral);
+  box-shadow: inset -1px -1px 0 var(--color-coral-ink);
+}
 .secondary-button[aria-pressed='true'] {
   background: var(--color-sea-mist);
   border-color: var(--color-teal-ink);
@@ -1190,9 +1220,10 @@ h3 {
 }
 .auth-mascot {
   display: block;
-  width: 180px;
+  width: 360px;
+  max-width: 70%;
   height: auto;
-  margin: 28px 0 -12px auto;
+  margin: 8px 0 -28px auto;
 }
 .auth-card {
   display: flex;
