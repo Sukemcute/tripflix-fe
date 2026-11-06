@@ -249,7 +249,8 @@ export const getStaysControllerListStaysUrl = (params: StaysControllerListStaysP
  *
  * - Chọn tỉnh thì gồm cả các điểm đến trong tỉnh (Lâm Đồng gồm Đà Lạt); chọn điểm đến thì chỉ điểm đến đó.
  * - Chỉ trả khách sạn **còn phòng** cho đúng ngày và số khách; giá là giá thật từ commerce, gói giá mặc định.
- * - Lọc `minStars`, `priceMin`/`priceMax` theo giá một đêm một phòng. `sort=price` (mặc định, rẻ trước) hoặc `stars` (nhiều sao trước).
+ * - Lọc `minStars` (từ X sao trở lên), `stars` (đúng X sao; gửi cả hai thì áp cả hai), `priceMin`/`priceMax` theo giá một đêm một phòng.
+ * - `sort=price` (mặc định, rẻ trước), `price_desc` (đắt trước) hoặc `stars` (nhiều sao trước).
  * - Không phải tìm theo chữ: muốn tìm theo tên thì dùng `/api/suggest`.
  * @summary Khách sạn còn phòng ở một nơi cho ngày đã chọn (trang kết quả web OTA)
  */

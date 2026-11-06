@@ -16,6 +16,9 @@ export type StaysControllerListStaysParams = {
   priceMax?: unknown;
   /** VND, một đêm một phòng */
   priceMin?: unknown;
+  /** Đúng X sao (1–5) */
+  stars?: unknown;
+  /** Từ X sao trở lên */
   minStars?: unknown;
   /** Bỏ trống thì commerce tự tính theo số khách */
   rooms?: unknown;

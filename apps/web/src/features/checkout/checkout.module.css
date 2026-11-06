@@ -114,6 +114,7 @@
 }
 .field input:focus {
   border-color: var(--color-teal-ink);
+  box-shadow: none;
 }
 .methods {
   display: grid;

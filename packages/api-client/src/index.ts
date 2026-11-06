@@ -26,6 +26,8 @@ export {
 export { feedApi, useReelsFeed } from './feed';
 export { updateReelSocialCache } from './reel-social-cache';
 export { useStaySearch, getAvailableStays, getFutureDate, type StayFilters } from './stay-search';
+export { buildFlightCheckout, getFlightToday, parseFlightSearch, type FlightSearch } from './flight-search';
+export { useFlightOffers, useFlightRoutes } from './flight-queries';
 export { getHotelReviews, type HotelReviewFilters } from './hotel-reviews';
 export { getExploreResults, useExploreSearch } from './explore-search';
 export type { ExploreItemDto, ExploreUnderstoodDto } from './generated/core-api/model';

@@ -71,6 +71,9 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
           <Txt variant="title">{copy.explore.browseTitle}</Txt>
         </View>
       )}
+      <Button tone="teal" icon="airplane-outline" onPress={() => router.push('/flights')}>
+        {vi.flights.title}
+      </Button>
       <View style={styles.searchBar}>
         <Icon name="search-outline" color={colors.textMuted} size={20} />
         <TextInput

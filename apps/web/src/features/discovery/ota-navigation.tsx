@@ -7,6 +7,7 @@ import styles from './ota-shell.module.css';
 const NAVIGATION = [
   { href: '/', label: vi.ota.home },
   { href: '/search', label: vi.api.hotels },
+  { href: '/flights', label: vi.flights.title },
   { href: '/inspiration', label: vi.api.inspiration },
 ] as const;
 

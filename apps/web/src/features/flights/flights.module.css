@@ -1,0 +1,190 @@
+.page {
+  padding-block: clamp(24px, 4vw, 56px) 72px;
+}
+
+.banner {
+  display: grid;
+  gap: 12px;
+  padding: clamp(24px, 5vw, 64px);
+  border-radius: 24px 24px 0 0;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+
+.banner h1 {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.055em;
+}
+
+.form,
+.card {
+  border: 1px solid var(--color-teal-soft);
+  background: var(--color-surface);
+}
+
+.form {
+  display: grid;
+  gap: 8px;
+  border-radius: 0 0 24px 24px;
+  padding: clamp(16px, 3vw, 28px);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.page label {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: var(--color-ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.page :is(input, select) {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--color-teal-soft);
+  border-radius: 10px;
+  padding-inline: 10px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 400;
+}
+
+.fields input[list] {
+  text-transform: uppercase;
+}
+
+.fields button {
+  min-height: 44px;
+}
+
+.results {
+  display: grid;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.results h2 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 800;
+}
+
+.card {
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.flightInfo,
+.fare {
+  display: grid;
+  align-items: center;
+  gap: 20px;
+  padding: clamp(16px, 3vw, 24px);
+}
+
+.flightInfo {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.flightInfo h3 {
+  margin-top: 6px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.route {
+  display: grid;
+  grid-template-columns: auto minmax(30px, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  width: min(100%, 300px);
+  justify-self: end;
+}
+
+.route div {
+  display: grid;
+  font-variant-numeric: tabular-nums;
+}
+
+.route strong {
+  color: var(--color-teal-ink);
+  font-size: 1.2rem;
+}
+
+.routeLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-teal-ink);
+}
+
+.routeLine::before,
+.routeLine::after {
+  content: '';
+  flex: 1;
+  border-top: 1px dashed var(--color-teal-soft);
+}
+
+.fare {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 220px) minmax(0, 260px);
+  border-top: 1px solid var(--color-teal-soft);
+  background: var(--color-sea-mist);
+}
+
+.options {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.total,
+.booking {
+  display: grid;
+  justify-items: start;
+  gap: 3px;
+}
+
+.total strong {
+  font-size: 1.25rem;
+  color: var(--color-teal-ink);
+}
+
+@media (max-width: 760px) {
+  .fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fields button {
+    grid-column: 1 / -1;
+  }
+
+  .fare {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .options {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .flightInfo {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .route {
+    width: 100%;
+  }
+}

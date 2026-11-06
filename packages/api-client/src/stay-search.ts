@@ -12,9 +12,11 @@ export interface StayFilters {
   adults: string;
   rooms: string;
   minStars: string;
+  /** Đúng một hạng sao (1–5); khác minStars là "từ X sao trở lên". */
+  stars?: string;
   priceMin: string;
   priceMax: string;
-  sort: 'price' | 'stars';
+  sort: 'price' | 'price_desc' | 'stars';
 }
 export function getFutureDate(days: number): string {
   const date = new Date();
@@ -25,7 +27,9 @@ export async function getAvailableStays(
   filters: StayFilters,
   options: { signal?: AbortSignal; cursor?: string; limit?: number } = {},
 ) {
-  const query = Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== '')) as {
+  const query = Object.fromEntries(
+    Object.entries(filters).filter(([, value]) => value !== '' && value !== undefined),
+  ) as {
     placeId: string;
     checkIn: string;
     checkOut: string;

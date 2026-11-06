@@ -29,4 +29,14 @@ describe('getAvailableStays', () => {
     expect(url.searchParams.get('placeId')).toBe('nha-trang');
     expect(url.searchParams.has('minStars')).toBe(false);
   });
+
+  it('gửi đúng hạng sao và sắp giá cao trước', async () => {
+    const send = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(json({ items: [], nextCursor: null, total: 0 }));
+    await getAvailableStays({ ...filters, stars: '3', sort: 'price_desc' });
+    const url = new URL(String(send.mock.calls[0]![0]));
+    expect(url.searchParams.get('stars')).toBe('3');
+    expect(url.searchParams.get('sort')).toBe('price_desc');
+  });
 });
