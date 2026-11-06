@@ -40,3 +40,13 @@
 - Kết quả sau khi merge `origin/develop`: lint và typecheck của web, mobile, api-client, i18n đều pass. api-client 81/81 test pass, i18n 2/2 test pass.
 - Chưa chụp ảnh giao diện đếm ngược. Mobile chưa chạy trên thiết bị Android.
 - Ảnh hưởng: `apps/web` của Thành và `apps/mobile` của Trang. Cần báo hai bạn trước khi merge.
+
+## Sửa lỗi: bắt buộc tên hiển thị trước khi gửi mã, form đăng nhập nền trắng
+
+- Nhánh `dung/TF05D-bat-buoc-ten-khi-gui-ma` · 2026-11-06
+- Lỗi: chưa nhập tên hiển thị vẫn bấm được "Gửi mã xác thực". Thêm `canSendRegistrationCode` ở `packages/app-core`. Hàm này yêu cầu đã nhập tên, email và có mật khẩu mạnh. Web và mobile dùng chung hàm này cho nút gửi mã và nút tạo tài khoản.
+- Khi email và mật khẩu đã đạt mà còn thiếu tên: web hiện cảnh báo nền vàng có icon "Nhập tên hiển thị để gửi mã xác thực." và tô viền cam ô "Tên hiển thị" (`aria-invalid`). Mobile hiện `Notice` cùng nội dung.
+- Ô nhập đăng nhập, đăng ký, quên và đặt lại mật khẩu đổi từ nền kem sang nền trắng có viền, khi focus viền cam như trang tài khoản. Chặn nền xanh của autofill.
+- `.auth-page` bám đầu trang (`align-items: start`), cột giới thiệu `sticky`: form dài ra khi hiện dòng nhắc thì cột trái không bị đẩy theo.
+- Kiểm tra sau khi cập nhật `origin/develop`: lint, typecheck của app-core, i18n, web, mobile đều pass (10/10 task). app-core 40/40 test, có test mới cho `canSendRegistrationCode`. i18n 2/2 test. Chưa chụp ảnh giao diện. Mobile chưa chạy trên Android.
+- Ảnh hưởng: `apps/web` (Thành), `apps/mobile` (Trang).
