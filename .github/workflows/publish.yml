@@ -45,7 +45,11 @@ jobs:
           file: apps/${{ matrix.app }}/Dockerfile
           target: prod
           push: true
-          build-args: ${{ matrix.app == 'web' && format('NEXT_PUBLIC_API_URL={0}', env.STAGING_API_URL) || '' }}
+          # Mỗi dòng một biến; dòng trống (bản admin) bị bỏ qua. GOOGLE_CLIENT_ID là biến (Variables) của repo,
+          # không phải secret: Client ID công khai. Chưa đặt thì web không hiện nút Google.
+          build-args: |
+            ${{ matrix.app == 'web' && format('NEXT_PUBLIC_API_URL={0}', env.STAGING_API_URL) || '' }}
+            ${{ matrix.app == 'web' && format('NEXT_PUBLIC_GOOGLE_CLIENT_ID={0}', vars.GOOGLE_CLIENT_ID) || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 

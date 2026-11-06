@@ -30,6 +30,9 @@ import type {
   MyProfileDto,
   RefreshDto,
   RegisterDto,
+  RegistrationCodeDto,
+  RegistrationCodeResultDto,
+  ResendVerificationResultDto,
   ResetPasswordDto,
   ServiceTokenDto,
   ServiceTokenRequestDto,
@@ -37,6 +40,7 @@ import type {
   TokenPairDto,
   UpdateProfileDto,
   UserDto,
+  VerifyEmailDto,
 } from '../model';
 
 import { http } from '../../../http';
@@ -58,6 +62,115 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
+export type authControllerRequestRegistrationCodeResponse202 = {
+  data: RegistrationCodeResultDto;
+  status: 202;
+};
+
+export type authControllerRequestRegistrationCodeResponseSuccess =
+  authControllerRequestRegistrationCodeResponse202 & {
+    headers: Headers;
+  };
+export type authControllerRequestRegistrationCodeResponse =
+  authControllerRequestRegistrationCodeResponseSuccess;
+
+export const getAuthControllerRequestRegistrationCodeUrl = () => {
+  return `/api/auth/registration-code`;
+};
+
+export const authControllerRequestRegistrationCode = async (
+  registrationCodeDto: RegistrationCodeDto,
+  options?: Parameters<typeof http>[1],
+): Promise<authControllerRequestRegistrationCodeResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<authControllerRequestRegistrationCodeResponse>(getAuthControllerRequestRegistrationCodeUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(registrationCodeDto),
+  });
+};
+
+export const getAuthControllerRequestRegistrationCodeMutationKey = () =>
+  ['authControllerRequestRegistrationCode'] as const;
+
+export const getAuthControllerRequestRegistrationCodeMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerRequestRegistrationCode>>,
+    TError,
+    AuthControllerRequestRegistrationCodeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authControllerRequestRegistrationCode>>,
+  TError,
+  AuthControllerRequestRegistrationCodeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAuthControllerRequestRegistrationCodeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authControllerRequestRegistrationCode>>,
+    AuthControllerRequestRegistrationCodeMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return authControllerRequestRegistrationCode(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerRequestRegistrationCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerRequestRegistrationCode>>
+>;
+export type AuthControllerRequestRegistrationCodeMutationBody = RegistrationCodeDto;
+export type AuthControllerRequestRegistrationCodeMutationError = unknown;
+export type AuthControllerRequestRegistrationCodeMutationVariables = { data: RegistrationCodeDto };
+
+export const useAuthControllerRequestRegistrationCode = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerRequestRegistrationCode>>,
+      TError,
+      AuthControllerRequestRegistrationCodeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authControllerRequestRegistrationCode>>,
+  TError,
+  AuthControllerRequestRegistrationCodeMutationVariables,
+  TContext
+> => {
+  return useMutation(getAuthControllerRequestRegistrationCodeMutationOptions(options), queryClient);
+};
 export type authControllerRegisterResponse201 = {
   data: UserDto;
   status: 201;
@@ -1408,6 +1521,220 @@ export const usePasswordResetControllerReset = <TError = void, TContext = unknow
   TContext
 > => {
   return useMutation(getPasswordResetControllerResetMutationOptions(options), queryClient);
+};
+export type emailVerificationControllerVerifyResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type emailVerificationControllerVerifyResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type emailVerificationControllerVerifyResponseSuccess =
+  emailVerificationControllerVerifyResponse204 & {
+    headers: Headers;
+  };
+export type emailVerificationControllerVerifyResponseError = emailVerificationControllerVerifyResponse400 & {
+  headers: Headers;
+};
+
+export type emailVerificationControllerVerifyResponse =
+  emailVerificationControllerVerifyResponseSuccess | emailVerificationControllerVerifyResponseError;
+
+export const getEmailVerificationControllerVerifyUrl = () => {
+  return `/api/auth/email/verify`;
+};
+
+export const emailVerificationControllerVerify = async (
+  verifyEmailDto: VerifyEmailDto,
+  options?: Parameters<typeof http>[1],
+): Promise<emailVerificationControllerVerifyResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<emailVerificationControllerVerifyResponse>(getEmailVerificationControllerVerifyUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(verifyEmailDto),
+  });
+};
+
+export const getEmailVerificationControllerVerifyMutationKey = () =>
+  ['emailVerificationControllerVerify'] as const;
+
+export const getEmailVerificationControllerVerifyMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof emailVerificationControllerVerify>>,
+    TError,
+    EmailVerificationControllerVerifyMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof emailVerificationControllerVerify>>,
+  TError,
+  EmailVerificationControllerVerifyMutationVariables,
+  TContext
+> => {
+  const mutationKey = getEmailVerificationControllerVerifyMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof emailVerificationControllerVerify>>,
+    EmailVerificationControllerVerifyMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return emailVerificationControllerVerify(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type EmailVerificationControllerVerifyMutationResult = NonNullable<
+  Awaited<ReturnType<typeof emailVerificationControllerVerify>>
+>;
+export type EmailVerificationControllerVerifyMutationBody = VerifyEmailDto;
+export type EmailVerificationControllerVerifyMutationError = void;
+export type EmailVerificationControllerVerifyMutationVariables = { data: VerifyEmailDto };
+
+export const useEmailVerificationControllerVerify = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof emailVerificationControllerVerify>>,
+      TError,
+      EmailVerificationControllerVerifyMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof emailVerificationControllerVerify>>,
+  TError,
+  EmailVerificationControllerVerifyMutationVariables,
+  TContext
+> => {
+  return useMutation(getEmailVerificationControllerVerifyMutationOptions(options), queryClient);
+};
+export type emailVerificationControllerResendResponse200 = {
+  data: ResendVerificationResultDto;
+  status: 200;
+};
+
+export type emailVerificationControllerResendResponse429 = {
+  data: void;
+  status: 429;
+};
+
+export type emailVerificationControllerResendResponseSuccess =
+  emailVerificationControllerResendResponse200 & {
+    headers: Headers;
+  };
+export type emailVerificationControllerResendResponseError = emailVerificationControllerResendResponse429 & {
+  headers: Headers;
+};
+
+export type emailVerificationControllerResendResponse =
+  emailVerificationControllerResendResponseSuccess | emailVerificationControllerResendResponseError;
+
+export const getEmailVerificationControllerResendUrl = () => {
+  return `/api/auth/email/verification`;
+};
+
+export const emailVerificationControllerResend = async (
+  options?: Parameters<typeof http>[1],
+): Promise<emailVerificationControllerResendResponse> => {
+  return http<emailVerificationControllerResendResponse>(getEmailVerificationControllerResendUrl(), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getEmailVerificationControllerResendMutationKey = () =>
+  ['emailVerificationControllerResend'] as const;
+
+export const getEmailVerificationControllerResendMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof emailVerificationControllerResend>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof emailVerificationControllerResend>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = getEmailVerificationControllerResendMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof emailVerificationControllerResend>>,
+    void
+  > = () => {
+    return emailVerificationControllerResend(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type EmailVerificationControllerResendMutationResult = NonNullable<
+  Awaited<ReturnType<typeof emailVerificationControllerResend>>
+>;
+
+export type EmailVerificationControllerResendMutationError = void;
+
+export const useEmailVerificationControllerResend = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof emailVerificationControllerResend>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof emailVerificationControllerResend>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getEmailVerificationControllerResendMutationOptions(options), queryClient);
 };
 export type serviceTokenControllerIssueResponse200 = {
   data: ServiceTokenDto;

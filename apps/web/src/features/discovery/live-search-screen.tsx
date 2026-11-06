@@ -12,6 +12,8 @@ import { StaySearchIcon } from './stay-search-icon';
 import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
 import listing from './hotel-listing.module.css';
 import { StayPriceInput } from './stay-price-input';
+import { SoftDatePicker } from '@/features/shared/soft-date-picker';
+import { SoftSelect } from '@/features/shared/soft-select';
 import {
   getStayDateIssue, getStayPriceIssue, getStayToday, isStayInteger, MAX_STAY_GUESTS, MAX_STAY_ROOMS,
 } from './stay-search-validation';
@@ -47,6 +49,7 @@ export function LiveSearchScreen({
   const router = useRouter();
   const [suggestionsOpen, setSuggestionsOpen] = useState(!initialFilters?.placeId);
   const [showValidation, setShowValidation] = useState(false);
+  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
   const today = getStayToday();
   const { checkIn, checkOut, adults, rooms, priceMin, priceMax } = search.filters;
   const dateIssue = getStayDateIssue(checkIn, checkOut, today);
@@ -110,7 +113,52 @@ export function LiveSearchScreen({
               <StaySearchIcon name="hotel" />
               {vi.api.hotels}
             </span>
-            <span className={styles.headingHint}>{vi.api.otaSearchIntro}</span>
+            {/* Bộ lọc thêm trượt ngang ra trong khoảng trống của hàng tab, không đè lên ô tìm hay nút tìm. */}
+            <div
+              id="home-more-filters"
+              className={styles.inlineFilters}
+              data-open={moreFiltersOpen}
+              inert={!moreFiltersOpen}
+            >
+                <label>
+                  {vi.api.minStars}
+                  <SoftSelect
+                    className={styles.inlineSelect}
+                    value={search.filters.minStars}
+                    onChange={(value) => update('minStars', value)}
+                    options={[
+                      { value: '', label: vi.api.all },
+                      ...[1, 2, 3, 4, 5].map((stars) => ({ value: String(stars), label: String(stars) })),
+                    ]}
+                  />
+                </label>
+                <label>
+                  {vi.api.maxPrice}
+                  <StayPriceInput value={priceMax} onChange={(value) => update('priceMax', value)} errorId={priceError ? 'stay-home-price-error' : undefined} />
+                </label>
+                <label>
+                  {vi.demo.web.sort}
+                  <SoftSelect
+                    className={styles.inlineSelect}
+                    value={search.filters.sort}
+                    onChange={(value) => update('sort', value)}
+                    options={[
+                      { value: 'price', label: vi.api.price },
+                      { value: 'stars', label: vi.api.stars },
+                    ]}
+                  />
+                </label>
+            </div>
+            <button
+              type="button"
+              className={styles.moreFiltersToggle}
+              aria-expanded={moreFiltersOpen}
+              aria-controls="home-more-filters"
+              onClick={() => setMoreFiltersOpen((open) => !open)}
+            >
+              <StaySearchIcon name="filter" />
+              {vi.api.otaMoreFilters}
+            </button>
           </div>
         )}
         <div className={styles.searchRow}>
@@ -129,7 +177,7 @@ export function LiveSearchScreen({
                 maxLength={100}
                 placeholder={vi.api.otaPlacePlaceholder}
                 autoComplete="off"
-                aria-describedby="place-query-hint"
+                aria-describedby={isHomepage ? undefined : 'place-query-hint'}
                 aria-controls="place-suggestions"
                 onFocus={() => setSuggestionsOpen(true)}
                 onClick={() => setSuggestionsOpen(true)}
@@ -193,33 +241,37 @@ export function LiveSearchScreen({
               </div>
             </div>
           </div>
-          <label className={styles.field}>
+          <label className={styles.field} htmlFor="stay-check-in">
             <StaySearchIcon name="calendar" />
             <span className={styles.fieldContent}>
               <span>{vi.api.checkIn}</span>
-              <input
-                type="date"
+              <SoftDatePicker
+                id="stay-check-in"
+                appearance="bare"
+                className={styles.dateField}
                 required
                 min={today}
                 value={checkIn}
                 aria-invalid={showValidation && tripIssue === 'invalidCheckIn' || undefined}
                 aria-describedby={tripError && tripIssue === 'invalidCheckIn' ? 'stay-trip-error' : undefined}
-                onChange={(event) => update('checkIn', event.target.value)}
+                onChange={(value) => update('checkIn', value)}
               />
             </span>
           </label>
-          <label className={styles.field}>
+          <label className={styles.field} htmlFor="stay-check-out">
             <StaySearchIcon name="calendar" />
             <span className={styles.fieldContent}>
               <span>{vi.api.checkOut}</span>
-              <input
-                type="date"
+              <SoftDatePicker
+                id="stay-check-out"
+                appearance="bare"
+                className={styles.dateField}
                 required
                 min={checkIn || today}
                 value={checkOut}
                 aria-invalid={showValidation && (tripIssue === 'invalidDates' || tripIssue === 'stayTooLong') || undefined}
                 aria-describedby={tripError && (tripIssue === 'invalidDates' || tripIssue === 'stayTooLong') ? 'stay-trip-error' : undefined}
-                onChange={(event) => update('checkOut', event.target.value)}
+                onChange={(value) => update('checkOut', value)}
               />
             </span>
           </label>
@@ -264,47 +316,11 @@ export function LiveSearchScreen({
             {search.stays.isFetching ? vi.api.loading : vi.api.findStays}
           </button>
         </div>
-        <div className={styles.toolbar}>
-          <p id="place-query-hint">{vi.api.searchHint}</p>
-          {isHomepage && (
-            <details className={styles.advanced}>
-              <summary>
-                <StaySearchIcon name="filter" />
-                {vi.api.otaMoreFilters}
-              </summary>
-              <div className={`filter-bar ${styles.advancedFields}`}>
-                <label>
-                  {vi.api.minStars}
-                  <select
-                    value={search.filters.minStars}
-                    onChange={(event) => update('minStars', event.target.value)}
-                  >
-                    <option value="">{vi.api.all}</option>
-                    {[1, 2, 3, 4, 5].map((stars) => (
-                      <option key={stars} value={stars}>
-                        {stars}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  {vi.api.maxPrice}
-                  <StayPriceInput value={priceMax} onChange={(value) => update('priceMax', value)} errorId={priceError ? 'stay-home-price-error' : undefined} />
-                </label>
-                <label>
-                  {vi.demo.web.sort}
-                  <select
-                    value={search.filters.sort}
-                    onChange={(event) => update('sort', event.target.value)}
-                  >
-                    <option value="price">{vi.api.price}</option>
-                    <option value="stars">{vi.api.stars}</option>
-                  </select>
-                </label>
-              </div>
-            </details>
-          )}
-        </div>
+        {!isHomepage && (
+          <div className={styles.toolbar}>
+            <p id="place-query-hint">{vi.api.searchHint}</p>
+          </div>
+        )}
         {tripError && <p id="stay-trip-error" role="alert" className={listing.filterError}>{tripError}</p>}
         {isHomepage && priceError && <p id="stay-home-price-error" role="alert" className={listing.filterError}>{priceError}</p>}
       </form>

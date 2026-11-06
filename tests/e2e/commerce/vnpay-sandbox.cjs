@@ -4,6 +4,7 @@ const { mkdir, writeFile } = require('node:fs/promises');
 const { join } = require('node:path');
 const { tmpdir, networkInterfaces } = require('node:os');
 const runtime = process.env.PLAYWRIGHT_PACKAGE || 'playwright';
+const { registerAccount } = require('../../fixtures/register-account.cjs');
 const { chromium } = require(runtime);
 const { expect } = require(runtime + '/test');
 const { CommercePage } = require('../../pages/commerce-page.cjs');
@@ -78,7 +79,7 @@ class VnpaySandboxPage {
   try {
     const email = `vnpay-direct-${Date.now()}@example.test`,
       password = `Sandbox-${crypto.randomUUID()}!`;
-    await api('/api/auth/register', 'POST', { email, password, displayName: 'VNPay sandbox direct' });
+    await registerAccount(api, { email, password, displayName: 'VNPay sandbox direct' });
     token = (await api('/api/auth/login', 'POST', { email, password })).accessToken;
     await view.login(email, password);
     orderId = await view.hold(

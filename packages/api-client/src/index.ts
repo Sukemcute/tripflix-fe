@@ -4,7 +4,16 @@
 export { configureHttp, http, HttpError, type HttpConfig, type HttpResponse } from './http';
 export { ApiSessionProvider, useApiSession } from './session';
 export { SessionClient, type SessionOptions, type TokenStorage } from './session-client';
-export { getApiErrorKind, getAuthErrorKind, readEntity, readPage, type AuthAction } from './response';
+export {
+  getApiErrorKind,
+  getAuthErrorKind,
+  getRegistrationFieldError,
+  getRetryAfterSeconds,
+  readEntity,
+  readPage,
+  type AuthAction,
+} from './response';
+export { getSecondsLeft, useResendCooldown } from './resend-cooldown';
 export { socialApi } from './social';
 export { useSocialPosts } from './queries';
 export {

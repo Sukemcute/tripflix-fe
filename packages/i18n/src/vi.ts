@@ -6,10 +6,12 @@ import { summary } from './summary';
 import { hotel } from './hotel';
 import { ota } from './ota';
 import { flights } from './flights';
+import { privacy } from './privacy';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
   flights,
+  privacy,
   ota,
   hotel,
   summary,
@@ -45,6 +47,14 @@ export const vi = {
     comingSoon: 'Đang xây dựng',
     retry: 'Thử lại',
     loading: 'Đang tải…',
+    chooseOption: 'Chọn',
+    chooseDate: 'Chọn ngày',
+    previousMonth: 'Tháng trước',
+    nextMonth: 'Tháng sau',
+    monthYear: 'Tháng {month}, {year}',
+    month: 'Tháng {month}',
+    year: 'Năm',
+    weekdaysShort: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
   },
   booking: {
     holdExpiresIn: 'Giữ chỗ còn {time}',
