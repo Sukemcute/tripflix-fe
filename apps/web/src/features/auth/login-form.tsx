@@ -1,12 +1,12 @@
 'use client';
-import { useApiSession } from '@tripflix/api-client';
+import { getRetryAfterSeconds, useApiSession, useResendCooldown } from '@tripflix/api-client';
 import {
   describeDevice,
   getRegistrationPasswordStrength,
   REGISTRATION_CODE_PATTERN,
   REGISTRATION_PASSWORD_MIN,
 } from '@tripflix/app-core';
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -49,13 +49,21 @@ export function LiveLogin({
   const strength = getRegistrationPasswordStrength(password);
   const goBack = useCallback(() => router.replace(readSafeReturnTo(returnTo)), [router, returnTo]);
 
+  const cooldown = useResendCooldown();
   const requestCode = useMutation({
-    mutationFn: () => session.requestRegistrationCode({ email: email.trim(), password }),
-    onSuccess: (id) => {
+    mutationFn: () => session.sendRegistrationCode({ email: email.trim(), password }),
+    onSuccess: ({ registrationId: id, resendAfterSeconds }) => {
       setRegistrationId(id);
       setCode('');
+      cooldown.start(resendAfterSeconds);
+    },
+    onError: (err) => {
+      const seconds = getRetryAfterSeconds(err);
+      if (seconds) cooldown.start(seconds);
     },
   });
+  // 429 vì bấm quá sớm: nút đã đếm ngược, thay câu lỗi chung bằng số giây còn lại.
+  const isTooSoon = cooldown.isWaiting && getRetryAfterSeconds(requestCode.error) !== undefined;
   const canRegister =
     strength === 'passwordStrong' && !!registrationId && REGISTRATION_CODE_PATTERN.test(code);
 
@@ -87,6 +95,7 @@ export function LiveLogin({
     credentials.reset();
     google.reset();
     requestCode.reset();
+    cooldown.clear();
     setCode('');
     setRegistrationId(undefined);
   };
@@ -145,6 +154,7 @@ export function LiveLogin({
             setCode('');
             setRegistrationId(undefined);
             requestCode.reset();
+            cooldown.clear();
             credentials.reset();
           }}
         />
@@ -183,7 +193,9 @@ export function LiveLogin({
             <button
               type="button"
               className="secondary-button"
-              disabled={!isReady || isBusy || strength !== 'passwordStrong' || !email.trim()}
+              disabled={
+                !isReady || isBusy || cooldown.isWaiting || strength !== 'passwordStrong' || !email.trim()
+              }
               onClick={() => {
                 credentials.reset();
                 requestCode.mutate();
@@ -191,12 +203,20 @@ export function LiveLogin({
             >
               {requestCode.isPending
                 ? vi.api.sending
-                : registrationId
-                  ? vi.api.registrationResendCode
-                  : vi.api.registrationSendCode}
+                : cooldown.isWaiting
+                  ? t('api.registrationResendIn', { seconds: cooldown.secondsLeft })
+                  : registrationId
+                    ? vi.api.registrationResendCode
+                    : vi.api.registrationSendCode}
             </button>
             {registrationId && <output className="auth-hint">{vi.api.registrationCodeSent}</output>}
-            <AuthErrorNotice error={requestCode.error} action="register" />
+            {isTooSoon ? (
+              <p role="alert" className="auth-error">
+                {t('api.registrationCodeTooSoon', { seconds: cooldown.secondsLeft })}
+              </p>
+            ) : (
+              <AuthErrorNotice error={requestCode.error} action="register" />
+            )}
           </>
         ) : (
           <Link className="auth-link auth-forgot" href="/forgot-password">
