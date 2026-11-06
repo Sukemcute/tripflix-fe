@@ -472,29 +472,30 @@ export function LiveSearchScreen({
                   },
                 };
                 return (
-                  <article className={listing.card} key={stay.hotelId}>
-                    <div className={listing.photo}>
-                      <StayThumbnail url={stay.thumbnail} name={stay.name} />
-                    </div>
-                    <div className={listing.cardInfo}>
-                      <p className="eyebrow">
-                        {stay.province.name}
-                        {stay.stars ? ` · ${stay.stars} ★` : ''}
-                      </p>
-                      <h3>
-                        <Link href={href}>{stay.name}</Link>
-                      </h3>
-                    </div>
-                    <div className={listing.price}>
-                      <strong>{formatPrice(stay.unitPrice)}</strong>
-                      <span>{vi.hotel.perNight}</span>
-                      <p>
-                        {vi.api.total} · {formatPrice(stay.totalPrice)}
-                      </p>
-                      <Link className="primary-button" href={href}>
-                        {vi.hotel.chooseRoom}
-                      </Link>
-                    </div>
+                  // Cả card là một link như card khách sạn ở trang chủ: bấm chỗ nào cũng mở trang khách sạn.
+                  <article key={stay.hotelId}>
+                    <Link className={listing.card} href={href}>
+                      <div className={listing.photo}>
+                        <StayThumbnail url={stay.thumbnail} name={stay.name} />
+                      </div>
+                      <div className={listing.cardInfo}>
+                        <p className="eyebrow">
+                          {stay.province.name}
+                          {stay.stars ? ` · ${stay.stars} ★` : ''}
+                        </p>
+                        <h3>{stay.name}</h3>
+                      </div>
+                      <div className={listing.price}>
+                        <strong>{formatPrice(stay.unitPrice)}</strong>
+                        <span>{vi.hotel.perNight}</span>
+                        <p>
+                          {vi.api.total} · {formatPrice(stay.totalPrice)}
+                        </p>
+                        <span className="primary-button" aria-hidden="true">
+                          {vi.hotel.chooseRoom}
+                        </span>
+                      </div>
+                    </Link>
                   </article>
                 );
               })}
