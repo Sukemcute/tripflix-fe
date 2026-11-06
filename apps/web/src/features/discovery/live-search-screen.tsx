@@ -11,6 +11,10 @@ import styles from './stay-search.module.css';
 import { StaySearchIcon } from './stay-search-icon';
 import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
 import listing from './hotel-listing.module.css';
+import { SearchAdBanner } from './search-ad-banner';
+
+// Vừa chiều cao cột lọc + banner, để trang không bị kéo dài khi nhiều kết quả.
+const RESULTS_PAGE_SIZE = 5;
 
 function getSearchHref(filters: StayFilters, placeName: string) {
   const query = new URLSearchParams({ q: placeName });
@@ -29,7 +33,10 @@ export function LiveSearchScreen({
   initialFilters?: Partial<StayFilters>;
   isHomepage?: boolean;
 }) {
-  const search = useStaySearch(initialQuery, initialFilters);
+  const search = useStaySearch(initialQuery, initialFilters, {
+    pageSize: isHomepage ? undefined : RESULTS_PAGE_SIZE,
+  });
+  const pageCount = Math.ceil((search.stays.data?.total ?? 0) / RESULTS_PAGE_SIZE);
   const router = useRouter();
   const [suggestionsOpen, setSuggestionsOpen] = useState(!initialFilters?.placeId);
   const [hasInvalidDates, setHasInvalidDates] = useState(false);
@@ -276,78 +283,81 @@ export function LiveSearchScreen({
       </form>
       {!isHomepage && (
         <div className={listing.layout}>
-          <aside className={listing.filters} aria-labelledby="stay-filter-title">
-            <h2 id="stay-filter-title">
-              <StaySearchIcon name="filter" />
-              {vi.ota.filterTitle}
-            </h2>
-            <label>
-              {vi.api.minStars}
-              <select
-                form="stay-search-form"
-                value={search.filters.minStars}
-                onChange={(event) => update('minStars', event.target.value)}
-              >
-                <option value="">{vi.api.all}</option>
-                {[1, 2, 3, 4, 5].map((stars) => (
-                  <option key={stars} value={stars}>
-                    {stars} ★
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              {vi.api.maxPrice}
-              <input
-                form="stay-search-form"
-                type="number"
-                min={0}
-                value={search.filters.priceMax}
-                onChange={(event) => update('priceMax', event.target.value)}
-              />
-            </label>
-            <label>
-              {vi.demo.web.sort}
-              <select
-                form="stay-search-form"
-                value={search.filters.sort}
-                onChange={(event) => update('sort', event.target.value)}
-              >
-                <option value="price">{vi.ota.lowerPrice}</option>
-                <option value="stars">{vi.ota.higherStars}</option>
-              </select>
-            </label>
-            <button
-              className="secondary-button"
-              type="submit"
-              form="stay-search-form"
-              disabled={!search.filters.placeId || search.stays.isFetching}
-            >
-              {vi.ota.applyFilters}
-            </button>
-            {(search.filters.minStars ||
-              search.filters.priceMin ||
-              search.filters.priceMax ||
-              search.filters.sort !== 'price') && (
+          <div className={listing.sidebar}>
+            <aside className={listing.filters} aria-labelledby="stay-filter-title">
+              <h2 id="stay-filter-title">
+                <StaySearchIcon name="filter" />
+                {vi.ota.filterTitle}
+              </h2>
+              <label>
+                {vi.api.minStars}
+                <select
+                  form="stay-search-form"
+                  value={search.filters.minStars}
+                  onChange={(event) => update('minStars', event.target.value)}
+                >
+                  <option value="">{vi.api.all}</option>
+                  {[1, 2, 3, 4, 5].map((stars) => (
+                    <option key={stars} value={stars}>
+                      {stars} ★
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {vi.api.maxPrice}
+                <input
+                  form="stay-search-form"
+                  type="number"
+                  min={0}
+                  value={search.filters.priceMax}
+                  onChange={(event) => update('priceMax', event.target.value)}
+                />
+              </label>
+              <label>
+                {vi.demo.web.sort}
+                <select
+                  form="stay-search-form"
+                  value={search.filters.sort}
+                  onChange={(event) => update('sort', event.target.value)}
+                >
+                  <option value="price">{vi.ota.lowerPrice}</option>
+                  <option value="stars">{vi.ota.higherStars}</option>
+                </select>
+              </label>
               <button
-                type="button"
-                className={listing.clearFilters}
-                onClick={() => {
-                  const cleared = {
-                    ...search.filters,
-                    minStars: '',
-                    priceMin: '',
-                    priceMax: '',
-                    sort: 'price',
-                  } as const;
-                  search.setFilters(cleared);
-                  if (cleared.placeId) router.push(getSearchHref(cleared, placeName), { scroll: false });
-                }}
+                className="secondary-button"
+                type="submit"
+                form="stay-search-form"
+                disabled={!search.filters.placeId || search.stays.isFetching}
               >
-                {vi.ota.clearFilters}
+                {vi.ota.applyFilters}
               </button>
-            )}
-          </aside>
+              {(search.filters.minStars ||
+                search.filters.priceMin ||
+                search.filters.priceMax ||
+                search.filters.sort !== 'price') && (
+                <button
+                  type="button"
+                  className={listing.clearFilters}
+                  onClick={() => {
+                    const cleared = {
+                      ...search.filters,
+                      minStars: '',
+                      priceMin: '',
+                      priceMax: '',
+                      sort: 'price',
+                    } as const;
+                    search.setFilters(cleared);
+                    if (cleared.placeId) router.push(getSearchHref(cleared, placeName), { scroll: false });
+                  }}
+                >
+                  {vi.ota.clearFilters}
+                </button>
+              )}
+            </aside>
+            <SearchAdBanner />
+          </div>
           <section
             className={listing.results}
             aria-labelledby="stay-results-title"
@@ -432,25 +442,31 @@ export function LiveSearchScreen({
                 );
               })}
             </div>
-            {(search.cursor || search.stays.data?.nextCursor) && (
-              <div className={listing.paging}>
-                {search.cursor && (
-                  <button className="secondary-button" onClick={search.first}>
-                    {vi.ota.firstPage}
-                  </button>
-                )}
-                {search.stays.data?.nextCursor && (
-                  <button
-                    className="secondary-button"
-                    disabled={search.stays.isFetching}
-                    onClick={search.next}
-                  >
-                    {vi.api.next}
-                  </button>
-                )}
-              </div>
-            )}
           </section>
+          {(search.pageNumber > 1 || search.stays.data?.nextCursor) && (
+            <nav className={listing.paging} aria-label={vi.ota.pagination}>
+              <button
+                className="secondary-button"
+                disabled={search.pageNumber === 1 || search.stays.isFetching}
+                onClick={search.previous}
+              >
+                {vi.ota.previousPage}
+              </button>
+              <output aria-live="polite">
+                {t('ota.pageOf', {
+                  page: search.pageNumber,
+                  total: Math.max(pageCount, search.pageNumber),
+                })}
+              </output>
+              <button
+                className="secondary-button"
+                disabled={!search.stays.data?.nextCursor || search.stays.isFetching}
+                onClick={search.next}
+              >
+                {vi.ota.nextPage}
+              </button>
+            </nav>
+          )}
         </div>
       )}
     </Container>
