@@ -20,7 +20,7 @@
 Chưa có: vùng Ăn gì / Cà phê / Chơi gì rỗng vì chưa có nguồn POI (C18).
 
 ## Kết quả kiểm tra
-- `pnpm turbo run lint typecheck test --affected`: 20/20 task pass; api-client 69 test (2 test mới trong `explore-search.test.ts`).
+- `pnpm turbo run lint typecheck test --affected`: 20/20 task pass; api-client 67/67 test pass (gồm 2 test mới trong `explore-search.test.ts`).
 - Chạy thật trên stack local (`localhost:3100/inspiration?q=…`), không có lỗi console từ luồng tìm (chỉ có 401 refresh của khách chưa đăng nhập, có sẵn từ trước).
 
 ## Cách kiểm lại
