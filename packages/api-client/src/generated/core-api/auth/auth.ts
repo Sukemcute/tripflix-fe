@@ -27,6 +27,7 @@ import type {
   GoogleLoginDto,
   JwksDto,
   LoginDto,
+  MyProfileDto,
   RefreshDto,
   RegisterDto,
   ResetPasswordDto,
@@ -570,7 +571,7 @@ export const useAuthControllerLogout = <TError = unknown, TContext = unknown>(
   return useMutation(getAuthControllerLogoutMutationOptions(options), queryClient);
 };
 export type authControllerGetMeResponse200 = {
-  data: UserDto;
+  data: MyProfileDto;
   status: 200;
 };
 
@@ -687,7 +688,7 @@ export function useAuthControllerGetMe<
 }
 
 export type accountControllerUpdateProfileResponse200 = {
-  data: UserDto;
+  data: MyProfileDto;
   status: 200;
 };
 

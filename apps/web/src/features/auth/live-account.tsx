@@ -1,12 +1,15 @@
 'use client';
-import { useApiSession, socialApi } from '@tripflix/api-client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useApiSession } from '@tripflix/api-client';
+import { useMutation } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState, type ReactNode } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { PublicPosts } from '@/features/social/live-posts';
+import { PostComposer } from '@/features/social/post-composer';
+import { ProfileInfoCard } from './account-profile';
 import { AccountSecurity } from './account-security';
 import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
 import { ADMIN_URL, getInitial, isStaffRole } from './account-helpers';
@@ -14,9 +17,18 @@ import { ADMIN_URL, getInitial, isStaffRole } from './account-helpers';
 // Màn đăng nhập nằm ở login-form.tsx; giữ export ở đây để app/login/page.tsx không phải đổi.
 export { LiveLogin } from './login-form';
 
+/**
+ * Trang tài khoản dạng hồ sơ (TF06M): cột trái avatar, thẻ thành viên, menu; bên phải nội dung mục đang chọn.
+ * ?tab= mở sẵn một mục (xem account-tabs.ts).
+ */
 export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTab }) {
   const { user, isReady, session, error } = useApiSession();
+  const router = useRouter();
   const [tab, setTab] = useState<AccountTab>(initialTab);
+  const logout = useMutation({
+    mutationFn: () => session.logout(),
+    onSuccess: () => router.push('/'),
+  });
   if (!isReady)
     return (
       <main id="content" className="ota-container results-page account-page">
@@ -39,43 +51,122 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
     );
   return (
     <main id="content" className="ota-container results-page account-page">
-      <header className="account-hero">
-        <span className="account-avatar" aria-hidden="true">
-          {getInitial(user.displayName)}
-        </span>
-        <div className="account-identity">
-          <h1>{user.displayName}</h1>
-          <p>
-            <span className="account-email">{user.email}</span>
+      <div className="profile-layout">
+        <aside className="profile-aside">
+          <div className="profile-identity">
+            <span className="profile-avatar" aria-hidden="true">
+              {getInitial(user.displayName)}
+            </span>
+            <h1>{user.displayName}</h1>
             <span className="account-role">{describeRole(user.role)}</span>
-          </p>
+          </div>
+          <nav className="profile-nav" aria-label={vi.api.accountNavLabel}>
+            {ACCOUNT_TABS.map((kind) => (
+              <button
+                key={kind}
+                type="button"
+                aria-current={tab === kind ? 'page' : undefined}
+                onClick={() => setTab(kind)}
+              >
+                <NavIcon name={kind} />
+                {TAB_LABELS[kind]}
+              </button>
+            ))}
+            {ADMIN_URL && isStaffRole(user.role) && (
+              <a href={ADMIN_URL}>
+                <NavIcon name="admin" />
+                {vi.api.openAdmin}
+              </a>
+            )}
+            <button
+              type="button"
+              className="is-logout"
+              disabled={logout.isPending}
+              onClick={() => logout.mutate()}
+            >
+              <NavIcon name="logout" />
+              {vi.api.logout}
+            </button>
+          </nav>
+          <ApiErrorNotice error={logout.error} />
+        </aside>
+        <div className="profile-main">
+          {tab === 'profile' ? (
+            <ProfileInfoCard key={user.id} userId={user.id} />
+          ) : tab === 'security' ? (
+            <AccountSecurity key={user.id} userId={user.id} />
+          ) : tab === 'create' ? (
+            <PostComposer />
+          ) : (
+            <section className="profile-card" aria-label={TAB_LABELS[tab]}>
+              <h2>{TAB_LABELS[tab]}</h2>
+              <PublicPosts kind={tab} />
+            </section>
+          )}
         </div>
-        <Image className="account-mascot" src="/brand/tripi-welcome.png" alt="" width={120} height={120} />
-      </header>
-      <AdminAreaCard role={user.role} />
-      <nav className="account-tabs" aria-label={vi.api.accountSections}>
-        {ACCOUNT_TABS.map((kind) => (
-          <button key={kind} type="button" aria-pressed={tab === kind} onClick={() => setTab(kind)}>
-            {kind === 'profile'
-              ? vi.api.account
-              : kind === 'mine'
-                ? vi.api.myPosts
-                : kind === 'bookmarks'
-                  ? vi.api.bookmarks
-                  : vi.api.create}
-          </button>
-        ))}
-      </nav>
-      {tab === 'profile' ? (
-        <AccountSecurity key={user.id} displayName={user.displayName} userId={user.id} />
-      ) : tab === 'create' ? (
-        <CreateDraft />
-      ) : (
-        <PublicPosts kind={tab} />
-      )}
+      </div>
     </main>
   );
 }
+
+const TAB_LABELS: Record<AccountTab, string> = {
+  profile: vi.api.profileInfoTitle,
+  security: vi.api.accountNavSecurity,
+  mine: vi.api.myPosts,
+  bookmarks: vi.api.bookmarks,
+  create: vi.api.create,
+};
+
+const NAV_ICONS: Record<AccountTab | 'admin' | 'logout', ReactNode> = {
+  profile: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </>
+  ),
+  security: (
+    <>
+      <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z" />
+      <path d="m9 12 2 2 4-4" />
+    </>
+  ),
+  mine: (
+    <>
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <path d="M8 8h8M8 12h8M8 16h5" />
+    </>
+  ),
+  bookmarks: <path d="M6 3h12v18l-6-4-6 4V3Z" />,
+  create: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v8M8 12h8" />
+    </>
+  ),
+  admin: (
+    <>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </>
+  ),
+  logout: (
+    <>
+      <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" />
+      <path d="M10 16 6 12l4-4M6 12h10" />
+    </>
+  ),
+};
+
+function NavIcon({ name }: { name: keyof typeof NAV_ICONS }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20">
+      {NAV_ICONS[name]}
+    </svg>
+  );
+}
+
 /** Trang tài khoản khi chưa đăng nhập: giải thích trang này để làm gì, nút Đăng nhập và Tạo tài khoản. */
 function AccountGuest() {
   return (
@@ -109,71 +200,8 @@ function AccountGuest() {
   );
 }
 
-/** Thẻ dẫn sang trang quản trị, chỉ hiện với kiểm duyệt viên và quản trị viên. */
-function AdminAreaCard({ role }: { role: string }) {
-  if (!ADMIN_URL || !isStaffRole(role)) return null;
-  return (
-    <section className="account-admin" aria-labelledby="account-admin-title">
-      <div>
-        <h2 id="account-admin-title">{vi.api.adminAreaTitle}</h2>
-        <p>{role === 'superadmin' ? vi.api.adminAreaSuperadmin : vi.api.adminAreaModerator}</p>
-      </div>
-      <a className="primary-button" href={ADMIN_URL}>
-        {vi.api.openAdmin}
-      </a>
-    </section>
-  );
-}
-
 function describeRole(role: string): string {
   if (role === 'superadmin') return vi.api.superadmin;
   if (role === 'moderator') return vi.api.moderator;
   return vi.api.user;
-}
-
-function CreateDraft() {
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [id, setId] = useState<string>();
-  const client = useQueryClient();
-  const mutation = useMutation({
-    mutationFn: () =>
-      id
-        ? socialApi.updatePost(id, { title: title.trim(), body })
-        : socialApi.createDraft({ title: title.trim(), body, post_type: 'vlog' }),
-    onSuccess: async (post) => {
-      setId(post.id);
-      await client.invalidateQueries({ queryKey: ['social'] });
-    },
-  });
-  return (
-    <form
-      className="search-form"
-      onSubmit={(event) => {
-        event.preventDefault();
-        mutation.mutate();
-      }}
-    >
-      <h2>{vi.api.create}</h2>
-      <p>{vi.api.mediaUnavailable}</p>
-      <label>
-        {vi.api.title}
-        <input required maxLength={255} value={title} onChange={(event) => setTitle(event.target.value)} />
-      </label>
-      <label>
-        {vi.api.body}
-        <textarea aria-label={vi.api.body} value={body} onChange={(event) => setBody(event.target.value)} />
-      </label>
-      <ApiErrorNotice error={mutation.error} />
-      {mutation.isSuccess && <output>{vi.api.draftSaved}</output>}
-      <button className="primary-button" disabled={mutation.isPending || !title.trim()}>
-        {mutation.isPending ? vi.api.saving : vi.api.saveDraft}
-      </button>
-      {id && (
-        <Link className="secondary-button" href={`/trips/${id}`}>
-          {vi.api.detail}
-        </Link>
-      )}
-    </form>
-  );
 }
