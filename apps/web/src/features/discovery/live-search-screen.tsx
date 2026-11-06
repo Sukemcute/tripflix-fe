@@ -47,6 +47,7 @@ export function LiveSearchScreen({
   const router = useRouter();
   const [suggestionsOpen, setSuggestionsOpen] = useState(!initialFilters?.placeId);
   const [showValidation, setShowValidation] = useState(false);
+  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
   const today = getStayToday();
   const { checkIn, checkOut, adults, rooms, priceMin, priceMax } = search.filters;
   const dateIssue = getStayDateIssue(checkIn, checkOut, today);
@@ -110,12 +111,13 @@ export function LiveSearchScreen({
               <StaySearchIcon name="hotel" />
               {vi.api.hotels}
             </span>
-            <details className={styles.advanced}>
-              <summary>
-                <StaySearchIcon name="filter" />
-                {vi.api.otaMoreFilters}
-              </summary>
-              <div className={`filter-bar ${styles.advancedFields}`}>
+            {/* Bộ lọc thêm trượt ngang ra trong khoảng trống của hàng tab, không đè lên ô tìm hay nút tìm. */}
+            <div
+              id="home-more-filters"
+              className={styles.inlineFilters}
+              data-open={moreFiltersOpen}
+              inert={!moreFiltersOpen}
+            >
                 <label>
                   {vi.api.minStars}
                   <select
@@ -144,8 +146,17 @@ export function LiveSearchScreen({
                     <option value="stars">{vi.api.stars}</option>
                   </select>
                 </label>
-              </div>
-            </details>
+            </div>
+            <button
+              type="button"
+              className={styles.moreFiltersToggle}
+              aria-expanded={moreFiltersOpen}
+              aria-controls="home-more-filters"
+              onClick={() => setMoreFiltersOpen((open) => !open)}
+            >
+              <StaySearchIcon name="filter" />
+              {vi.api.otaMoreFilters}
+            </button>
           </div>
         )}
         <div className={styles.searchRow}>

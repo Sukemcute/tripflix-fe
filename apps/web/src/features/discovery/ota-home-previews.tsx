@@ -1,5 +1,5 @@
 'use client';
-import { useState, type CSSProperties } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   getAvailableStays,
@@ -40,11 +40,7 @@ export function HomeStayPreview() {
   return (
     <section className={styles.stayBand} aria-labelledby="home-stays-title" data-home-reveal>
       <div className={`ota-container ${styles.stayContent}`}>
-        <div
-          className={styles.stayHeader}
-          data-home-banner
-          style={{ '--stay-photo': `url(${destination.image})` } as CSSProperties}
-        >
+        <div className={styles.stayHeader} data-home-banner>
           <div className={styles.stayCopy}>
             <h2 id="home-stays-title">{vi.ota.staysTitle}</h2>
             <p>{vi.ota.staysIntro}</p>
