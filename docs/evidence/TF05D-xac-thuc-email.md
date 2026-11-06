@@ -50,3 +50,12 @@
 - `.auth-page` bám đầu trang (`align-items: start`), cột giới thiệu `sticky`: form dài ra khi hiện dòng nhắc thì cột trái không bị đẩy theo.
 - Kiểm tra sau khi cập nhật `origin/develop`: lint, typecheck của app-core, i18n, web, mobile đều pass (10/10 task). app-core 40/40 test, có test mới cho `canSendRegistrationCode`. i18n 2/2 test. Chưa chụp ảnh giao diện. Mobile chưa chạy trên Android.
 - Ảnh hưởng: `apps/web` (Thành), `apps/mobile` (Trang).
+
+## Cập nhật: mật khẩu mới tối đa 64, tên hiển thị tối đa 30, có bộ đếm
+
+- Nhánh `dung/TF05D-gioi-han-mat-khau-va-ten` · 2026-11-06 · Đi cùng PR BE Sukemcute/tripflix-be#78.
+- `packages/app-core`: thêm `NEW_PASSWORD_MAX = 64`, `CURRENT_PASSWORD_MAX = 128`, `DISPLAY_NAME_MAX = 30` và hàm `countCharacters`. Hàm này đếm emoji là 1 ký tự, giống cách Core API đếm.
+- Web: `AuthField` và `PasswordField` có thêm `maxChars`, hiện bộ đếm "x/tối đa" cạnh nhãn, chuyển màu cam khi chạm giới hạn. Áp dụng cho tên khi đăng ký (30), mật khẩu khi đăng ký (64), mật khẩu mới khi đổi và đặt lại (64), ô tên trong hồ sơ (30). Ô đăng nhập và ô mật khẩu hiện tại vẫn nhận tới 128 và không có bộ đếm.
+- Mobile: dùng cùng các giới hạn ở màn đăng ký và màn cài đặt tài khoản.
+- Kiểm tra: lint, typecheck và test của app-core, web, mobile đều pass (7/7 task). app-core 41/41 test, có test mới cho `countCharacters`. Chưa chụp ảnh giao diện, mobile chưa chạy trên Android.
+- Ảnh hưởng: `apps/web` (Thành), `apps/mobile` (Trang), trong đó có `live-account-screens.tsx` của Trang.
