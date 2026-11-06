@@ -175,19 +175,19 @@ export function LiveLogin({
           value={password}
           disabled={isBusy}
           onValueChange={setPassword}
-          aria-describedby={isRegistering ? 'registration-password-strength' : undefined}
+          aria-describedby={isRegistering && password ? 'registration-password-strength' : undefined}
         />
         {isRegistering ? (
           <>
-            <p
-              id="registration-password-strength"
-              className={
-                !password ? 'auth-hint' : strength === 'passwordStrong' ? 'auth-success' : 'auth-error'
-              }
-              aria-live="polite"
-            >
-              {password ? vi.api[strength] : vi.api.registerHint}
-            </p>
+            {password && (
+              <p
+                id="registration-password-strength"
+                className={strength === 'passwordStrong' ? 'auth-success' : 'auth-error'}
+                aria-live="polite"
+              >
+                {vi.api[strength]}
+              </p>
+            )}
             <AuthField
               id="auth-email-code"
               label={vi.api.registrationCodeLabel}
