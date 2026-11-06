@@ -261,10 +261,6 @@ export function HotelScreen({
                 {copy.invalidStay}
               </p>
             )}
-            <p className="small muted">
-              {hotel.stay.checkIn} → {hotel.stay.checkOut} · {hotel.stay.nights} {copy.nights} ·{' '}
-              {hotel.stay.adults} {copy.guests}
-            </p>
             {query.isFetching && <output>{vi.common.loading}</output>}
             {!hotel.isAvailable && <p className={styles.notice}>{copy.unavailable}</p>}
             {!hotel.rooms.length && <p className="empty-state">{copy.noRooms}</p>}
