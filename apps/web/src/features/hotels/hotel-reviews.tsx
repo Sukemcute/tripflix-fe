@@ -16,6 +16,11 @@ const formatDate = (date: string, monthOnly = false) =>
       : { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' },
   ).format(new Date(date));
 
+const AVATAR_TONES = ['teal', 'coral', 'sun'] as const;
+/** Màu avatar cố định theo tên để cùng một người luôn cùng màu. */
+const pickAvatarTone = (name: string) =>
+  AVATAR_TONES[[...name].reduce((sum, char) => sum + char.charCodeAt(0), 0) % AVATAR_TONES.length];
+
 export function HotelReviews({ id }: { id: string }) {
   const { isReady } = useApiSession();
   const [filters, setFilters] = useState<HotelReviewFilters>({ sort: 'newest', page: 1, limit: 5 });
@@ -160,11 +165,11 @@ export function HotelReviews({ id }: { id: string }) {
           )}
         </div>
       )}
-      <div aria-busy={query.isFetching}>
+      <div className={styles.reviewList} aria-busy={query.isFetching}>
         {query.data?.items.map((review) => (
           <article key={review.id} className={styles.review}>
             <div className={styles.reviewAuthor}>
-              <span className={styles.avatar} aria-hidden="true">
+              <span className={styles.avatar} data-tone={pickAvatarTone(review.authorName)} aria-hidden="true">
                 {review.authorName
                   .trim()
                   .split(/\s+/)
@@ -189,9 +194,9 @@ export function HotelReviews({ id }: { id: string }) {
             </div>
             <div className={styles.reviewBody}>
               <div className={styles.reviewTop}>
-                <span className={styles.stars} aria-label={`${review.rating} / 5`}>
+                <span className={styles.reviewStars} aria-label={`${review.rating} / 5`}>
                   {'★'.repeat(review.rating)}
-                  {'☆'.repeat(5 - review.rating)}
+                  <span>{'★'.repeat(5 - review.rating)}</span>
                 </span>
                 <time dateTime={review.createdAt}>
                   {copy.written}: {formatDate(review.createdAt)}
@@ -200,7 +205,7 @@ export function HotelReviews({ id }: { id: string }) {
               {review.title && <h3>{review.title}</h3>}
               <p>{review.body}</p>
               {review.tags.length > 0 && (
-                <div className={styles.chips}>
+                <div className={styles.reviewTags}>
                   {review.tags.map((tag) => (
                     <span key={tag}>{tag}</span>
                   ))}
@@ -208,7 +213,7 @@ export function HotelReviews({ id }: { id: string }) {
               )}
               <HotelGallery images={review.images} name={review.title ?? review.authorName} layout="compact" />
               {review.helpfulCount > 0 && (
-                <p className="small muted">{t('hotel.helpfulCount', { count: review.helpfulCount })}</p>
+                <p className={styles.helpful}>{t('hotel.helpfulCount', { count: review.helpfulCount })}</p>
               )}
             </div>
           </article>
