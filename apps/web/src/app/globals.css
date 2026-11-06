@@ -2268,3 +2268,82 @@ h3 {
     transition: none;
   }
 }
+
+/* Ô nhập trong trang tài khoản: nền trắng, viền; focus viền cam (TF06M) */
+.account-page .auth-field input,
+.composer-field input,
+.composer-field textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-background);
+  font-size: 15px;
+  transition:
+    border-color 0.18s,
+    box-shadow 0.18s;
+}
+.account-page .auth-field input:focus-visible,
+.composer-field input:focus-visible,
+.composer-field textarea:focus-visible {
+  border-color: var(--color-coral-ink);
+  background: var(--color-background);
+  box-shadow: 0 0 0 3px var(--color-coral-tint);
+  outline: none;
+}
+.composer-field input::placeholder,
+.composer-field textarea::placeholder {
+  color: var(--color-text-subtle);
+}
+/* Chia sẻ trải nghiệm */
+.composer .profile-note {
+  margin-bottom: 24px;
+}
+.composer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.composer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.composer-field label {
+  font-size: 14px;
+  font-weight: 700;
+}
+.composer-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.composer-count {
+  color: var(--color-text-subtle);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.composer-field textarea {
+  min-height: 200px;
+  line-height: 1.7;
+  resize: vertical;
+}
+.composer-tags {
+  margin-left: 0;
+}
+.composer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+@media (prefers-reduced-motion: reduce) {
+  .composer-field input,
+  .composer-field textarea,
+  .account-page .auth-field input {
+    transition: none;
+  }
+}

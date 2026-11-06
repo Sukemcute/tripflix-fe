@@ -124,6 +124,15 @@ export const api = {
   profileSaved: 'Đã lưu thông tin cá nhân.',
   accountNavSecurity: 'Bảo mật & thiết bị',
   accountNavLabel: 'Mục trong tài khoản',
+  // Chia sẻ trải nghiệm trong trang tài khoản (TF06M)
+  composerHint:
+    'Kể lại chuyến đi của bạn: đi đâu, ở đâu, ăn gì, mất bao nhiêu. Bài hay sẽ giúp người khác chọn chuyến.',
+  composerTitlePlaceholder: 'Ví dụ: 3 ngày 2 đêm ở Hội An, chi phí dưới 3 triệu',
+  composerBodyPlaceholder: 'Lịch trình từng ngày, chỗ ở, món nên thử, mẹo nhỏ…',
+  composerHashtagsPlaceholder: 'hoian, phoco, amthuc',
+  composerHashtagsHint: 'Tối đa 10 hashtag, cách nhau bằng dấu phẩy hoặc dấu cách.',
+  composerDraftNote: 'Bản nháp chỉ bạn thấy. Mở bài để kiểm tra rồi bấm "Đăng bài".',
+  composerCount: '{count}/{max}',
   // Trang chi tiết bài viết (TF06J)
   postVideoBadge: 'Video',
   postWatchOnApp: 'Xem video trên app Tripflix',

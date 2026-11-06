@@ -1,6 +1,6 @@
 'use client';
-import { useApiSession, socialApi } from '@tripflix/api-client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useApiSession } from '@tripflix/api-client';
+import { useMutation } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { PublicPosts } from '@/features/social/live-posts';
+import { PostComposer } from '@/features/social/post-composer';
 import { ProfileInfoCard } from './account-profile';
 import { AccountSecurity } from './account-security';
 import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
@@ -95,9 +96,7 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
           ) : tab === 'security' ? (
             <AccountSecurity key={user.id} userId={user.id} />
           ) : tab === 'create' ? (
-            <section className="profile-card">
-              <CreateDraft />
-            </section>
+            <PostComposer />
           ) : (
             <section className="profile-card" aria-label={TAB_LABELS[tab]}>
               <h2>{TAB_LABELS[tab]}</h2>
@@ -205,51 +204,4 @@ function describeRole(role: string): string {
   if (role === 'superadmin') return vi.api.superadmin;
   if (role === 'moderator') return vi.api.moderator;
   return vi.api.user;
-}
-
-function CreateDraft() {
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [id, setId] = useState<string>();
-  const client = useQueryClient();
-  const mutation = useMutation({
-    mutationFn: () =>
-      id
-        ? socialApi.updatePost(id, { title: title.trim(), body })
-        : socialApi.createDraft({ title: title.trim(), body, post_type: 'vlog' }),
-    onSuccess: async (post) => {
-      setId(post.id);
-      await client.invalidateQueries({ queryKey: ['social'] });
-    },
-  });
-  return (
-    <form
-      className="search-form"
-      onSubmit={(event) => {
-        event.preventDefault();
-        mutation.mutate();
-      }}
-    >
-      <h2>{vi.api.create}</h2>
-      <p>{vi.api.mediaUnavailable}</p>
-      <label>
-        {vi.api.title}
-        <input required maxLength={255} value={title} onChange={(event) => setTitle(event.target.value)} />
-      </label>
-      <label>
-        {vi.api.body}
-        <textarea aria-label={vi.api.body} value={body} onChange={(event) => setBody(event.target.value)} />
-      </label>
-      <ApiErrorNotice error={mutation.error} />
-      {mutation.isSuccess && <output>{vi.api.draftSaved}</output>}
-      <button className="primary-button" disabled={mutation.isPending || !title.trim()}>
-        {mutation.isPending ? vi.api.saving : vi.api.saveDraft}
-      </button>
-      {id && (
-        <Link className="secondary-button" href={`/trips/${id}`}>
-          {vi.api.detail}
-        </Link>
-      )}
-    </form>
-  );
 }
