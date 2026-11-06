@@ -11,6 +11,11 @@ import styles from './stay-search.module.css';
 import { StaySearchIcon } from './stay-search-icon';
 import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
 import listing from './hotel-listing.module.css';
+import { StayPriceInput } from './stay-price-input';
+import { DEFAULT_STAY_FACETS, StayResultFilters } from './stay-result-filters';
+import {
+  getStayDateIssue, getStayPriceIssue, getStayToday, isStayInteger, MAX_STAY_GUESTS, MAX_STAY_ROOMS,
+} from './stay-search-validation';
 
 function getSearchHref(filters: StayFilters, placeName: string) {
   const query = new URLSearchParams({ q: placeName });
@@ -32,7 +37,17 @@ export function LiveSearchScreen({
   const search = useStaySearch(initialQuery, initialFilters);
   const router = useRouter();
   const [suggestionsOpen, setSuggestionsOpen] = useState(!initialFilters?.placeId);
-  const [hasInvalidDates, setHasInvalidDates] = useState(false);
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
+  const today = getStayToday();
+  const { checkIn, checkOut, adults, rooms, priceMin, priceMax } = search.filters;
+  const dateIssue = getStayDateIssue(checkIn, checkOut, today);
+  const priceIssue = getStayPriceIssue(priceMin, priceMax);
+  const guestsInvalid = !isStayInteger(adults, 1, MAX_STAY_GUESTS);
+  const roomsInvalid = !!rooms && !isStayInteger(rooms, 1, MAX_STAY_ROOMS);
+  const tripIssue = dateIssue ?? (guestsInvalid ? 'invalidGuests' : roomsInvalid ? 'invalidRooms' : null);
+  const tripError = showValidation && tripIssue ? vi.ota[tripIssue] : undefined;
+  const priceError = showValidation && priceIssue ? vi.ota[priceIssue] : undefined;
   const update = (key: keyof StayFilters, value: string) =>
     search.setFilters((previous) => ({ ...previous, [key]: value }));
   const placeName = search.selection?.name ?? search.text;
@@ -48,14 +63,24 @@ export function LiveSearchScreen({
         id="stay-search-form"
         className={`search-form ${styles.panel} ${isHomepage ? '' : listing.searchPanel}`}
         aria-label={vi.api.findStays}
+        noValidate
         onSubmit={(event) => {
           event.preventDefault();
           if (!canSubmit) return;
-          if (search.filters.checkOut <= search.filters.checkIn) {
-            setHasInvalidDates(true);
+          if (tripIssue || priceIssue) {
+            const form = event.currentTarget;
+            setShowValidation(true);
+            if (priceIssue) setFiltersExpanded(true);
+            requestAnimationFrame(() => {
+              const invalidField = Array.from(form.elements).find(
+                (field): field is HTMLInputElement => field instanceof HTMLInputElement && field.getAttribute('aria-invalid') === 'true',
+              );
+              invalidField?.focus();
+            });
             return;
           }
-          setHasInvalidDates(false);
+          setShowValidation(false);
+          setFiltersExpanded(false);
           setSuggestionsOpen(false);
           if (search.selection?.type === 'hotel') {
             router.push(
@@ -168,7 +193,10 @@ export function LiveSearchScreen({
               <input
                 type="date"
                 required
-                value={search.filters.checkIn}
+                min={today}
+                value={checkIn}
+                aria-invalid={showValidation && tripIssue === 'invalidCheckIn' || undefined}
+                aria-describedby={tripError && tripIssue === 'invalidCheckIn' ? 'stay-trip-error' : undefined}
                 onChange={(event) => update('checkIn', event.target.value)}
               />
             </span>
@@ -180,7 +208,10 @@ export function LiveSearchScreen({
               <input
                 type="date"
                 required
-                value={search.filters.checkOut}
+                min={checkIn || today}
+                value={checkOut}
+                aria-invalid={showValidation && (tripIssue === 'invalidDates' || tripIssue === 'stayTooLong') || undefined}
+                aria-describedby={tripError && (tripIssue === 'invalidDates' || tripIssue === 'stayTooLong') ? 'stay-trip-error' : undefined}
                 onChange={(event) => update('checkOut', event.target.value)}
               />
             </span>
@@ -192,9 +223,11 @@ export function LiveSearchScreen({
               <input
                 type="number"
                 min={1}
-                max={9}
+                max={MAX_STAY_GUESTS}
                 required
-                value={search.filters.adults}
+                value={adults}
+                aria-invalid={showValidation && tripIssue === 'invalidGuests' || undefined}
+                aria-describedby={tripError && tripIssue === 'invalidGuests' ? 'stay-trip-error' : undefined}
                 onChange={(event) => update('adults', event.target.value)}
               />
             </span>
@@ -206,9 +239,11 @@ export function LiveSearchScreen({
               <input
                 type="number"
                 min={1}
-                max={99}
+                max={MAX_STAY_ROOMS}
                 placeholder={vi.api.all}
-                value={search.filters.rooms}
+                value={rooms}
+                aria-invalid={showValidation && tripIssue === 'invalidRooms' || undefined}
+                aria-describedby={tripError && tripIssue === 'invalidRooms' ? 'stay-trip-error' : undefined}
                 onChange={(event) => update('rooms', event.target.value)}
               />
             </span>
@@ -247,12 +282,7 @@ export function LiveSearchScreen({
                 </label>
                 <label>
                   {vi.api.maxPrice}
-                  <input
-                    type="number"
-                    min={0}
-                    value={search.filters.priceMax}
-                    onChange={(event) => update('priceMax', event.target.value)}
-                  />
+                  <StayPriceInput value={priceMax} onChange={(value) => update('priceMax', value)} errorId={priceError ? 'stay-home-price-error' : undefined} />
                 </label>
                 <label>
                   {vi.demo.web.sort}
@@ -268,86 +298,25 @@ export function LiveSearchScreen({
             </details>
           )}
         </div>
-        {hasInvalidDates && (
-          <p role="alert" className={listing.dateError}>
-            {vi.ota.invalidDates}
-          </p>
-        )}
+        {tripError && <p id="stay-trip-error" role="alert" className={listing.filterError}>{tripError}</p>}
+        {isHomepage && priceError && <p id="stay-home-price-error" role="alert" className={listing.filterError}>{priceError}</p>}
       </form>
       {!isHomepage && (
         <div className={listing.layout}>
-          <aside className={listing.filters} aria-labelledby="stay-filter-title">
-            <h2 id="stay-filter-title">
-              <StaySearchIcon name="filter" />
-              {vi.ota.filterTitle}
-            </h2>
-            <label>
-              {vi.api.minStars}
-              <select
-                form="stay-search-form"
-                value={search.filters.minStars}
-                onChange={(event) => update('minStars', event.target.value)}
-              >
-                <option value="">{vi.api.all}</option>
-                {[1, 2, 3, 4, 5].map((stars) => (
-                  <option key={stars} value={stars}>
-                    {stars} ★
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              {vi.api.maxPrice}
-              <input
-                form="stay-search-form"
-                type="number"
-                min={0}
-                value={search.filters.priceMax}
-                onChange={(event) => update('priceMax', event.target.value)}
-              />
-            </label>
-            <label>
-              {vi.demo.web.sort}
-              <select
-                form="stay-search-form"
-                value={search.filters.sort}
-                onChange={(event) => update('sort', event.target.value)}
-              >
-                <option value="price">{vi.ota.lowerPrice}</option>
-                <option value="stars">{vi.ota.higherStars}</option>
-              </select>
-            </label>
-            <button
-              className="secondary-button"
-              type="submit"
-              form="stay-search-form"
-              disabled={!search.filters.placeId || search.stays.isFetching}
-            >
-              {vi.ota.applyFilters}
-            </button>
-            {(search.filters.minStars ||
-              search.filters.priceMin ||
-              search.filters.priceMax ||
-              search.filters.sort !== 'price') && (
-              <button
-                type="button"
-                className={listing.clearFilters}
-                onClick={() => {
-                  const cleared = {
-                    ...search.filters,
-                    minStars: '',
-                    priceMin: '',
-                    priceMax: '',
-                    sort: 'price',
-                  } as const;
-                  search.setFilters(cleared);
-                  if (cleared.placeId) router.push(getSearchHref(cleared, placeName), { scroll: false });
-                }}
-              >
-                {vi.ota.clearFilters}
-              </button>
-            )}
-          </aside>
+          <StayResultFilters
+            filters={search.filters}
+            update={(patch) => search.setFilters((previous) => ({ ...previous, ...patch }))}
+            expanded={filtersExpanded}
+            toggle={() => setFiltersExpanded((previous) => !previous)}
+            priceError={priceError}
+            disabled={!search.filters.placeId || search.stays.isFetching}
+            reset={() => {
+              search.setFilters((previous) => ({ ...previous, ...DEFAULT_STAY_FACETS }));
+              if (!search.submitted) return;
+              const href = getSearchHref({ ...search.submitted, ...DEFAULT_STAY_FACETS }, initialQuery);
+              if (href !== resultHref) router.push(href, { scroll: false });
+            }}
+          />
           <section
             className={listing.results}
             aria-labelledby="stay-results-title"

@@ -119,29 +119,137 @@
   font-size: 12px;
 }
 .photoDialog {
-  width: min(1000px, calc(100% - 32px));
-  max-height: 95dvh;
-  padding: 16px;
-  border: 0;
-  border-radius: 16px;
-  background: var(--color-background);
-  color: var(--color-ink);
+  --viewer-line: color-mix(in srgb, var(--color-background) 17%, transparent);
+  --viewer-padding: clamp(0.75rem, 2vw, 1.25rem);
+  inset: 0;
+  width: min(72rem, calc(100% - 2 * var(--viewer-padding)));
+  height: min(50rem, calc(100dvh - 2 * var(--viewer-padding)));
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--viewer-line);
+  border-radius: 20px;
+  background: var(--color-ink);
+  color: var(--color-background);
+  box-shadow: 0 24px 80px var(--color-overlay-heavy);
 }
 .photoDialog::backdrop {
   background: var(--color-overlay-heavy);
 }
-.photoDialog > img {
+:global(html):has(.photoDialog[open]) {
+  overflow: hidden;
+}
+.photoViewer {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  height: 100%;
+  padding: var(--viewer-padding);
+}
+.photoHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+.photoHeader strong {
+  display: block;
+  overflow: hidden;
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.photoHeader output {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-border);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.photoStage {
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-ink) 72%, black);
+}
+.photoStage > img {
   display: block;
   width: 100%;
-  max-height: 72dvh;
-  height: auto;
+  height: 100%;
+  min-height: 0;
   object-fit: contain;
 }
-.dialogToolbar {
-  display: flex;
+.photoStage .missingPhoto {
+  min-height: 0;
+  background: transparent;
+  color: var(--color-border);
+}
+.photoNavigation {
+  display: grid;
+  grid-template-columns: auto minmax(0, auto) auto;
   align-items: center;
-  justify-content: space-between;
-  padding-block: 8px;
+  justify-content: center;
+  gap: 12px;
+}
+.photoControl {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid var(--viewer-line);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-background) 7%, transparent);
+  color: inherit;
+  transition: background-color 180ms;
+}
+.photoControl svg {
+  width: 20px;
+  height: 20px;
+}
+.photoControl:hover {
+  background: var(--viewer-line);
+}
+.photoThumbnails {
+  display: flex;
+  gap: 8px;
+  max-width: 28rem;
+  overflow-x: auto;
+  padding: 4px;
+  scrollbar-width: thin;
+  color-scheme: dark;
+}
+.photoThumbnails button {
+  position: relative;
+  display: grid;
+  flex: 0 0 64px;
+  height: 48px;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: var(--viewer-line);
+  font-size: 0.75rem;
+  opacity: 0.72;
+  transition: opacity 180ms;
+}
+.photoThumbnails button:is(:hover, :focus-visible, [aria-current]) {
+  opacity: 1;
+}
+.photoThumbnails button[aria-current] {
+  border-color: var(--color-teal-soft);
+}
+.photoThumbnails img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photoDialog button:focus-visible {
+  outline: 2px solid var(--color-teal-soft);
+  outline-offset: 2px;
 }
 .sectionNav {
   display: flex;
@@ -663,6 +771,20 @@
   }
 }
 @media (max-width: 640px) {
+  .photoDialog {
+    height: fit-content;
+    max-height: calc(100dvh - 2 * var(--viewer-padding));
+  }
+  .photoViewer {
+    height: auto;
+  }
+  .photoStage > img {
+    height: auto;
+    max-height: calc(100dvh - 11rem);
+  }
+  .photoStage .missingPhoto {
+    min-height: 7rem;
+  }
   .page {
     padding-block: 20px 40px;
   }
@@ -751,7 +873,9 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .gallery img,
-  .compactGallery img {
+  .compactGallery img,
+  .photoControl,
+  .photoThumbnails button {
     transition: none;
   }
 }

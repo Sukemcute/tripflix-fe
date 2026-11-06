@@ -6,7 +6,7 @@ import { StaySearchIcon } from '@/features/discovery/stay-search-icon';
 import { PublicPosts } from '@/features/social/live-posts';
 
 /** Trang Cảm hứng. Có ?q= thì phần danh sách bài thành kết quả tìm bài viết theo từ khoá. */
-export default function HomeScreen({ query = '' }: { query?: string }) {
+export default function HomeScreen({ query = '', queryError }: { query?: string; queryError?: string }) {
   const copy = vi.demo;
   return (
     <main id="content" className="ota-container">
@@ -40,8 +40,9 @@ export default function HomeScreen({ query = '' }: { query?: string }) {
       <div className="home-search">
         {/* key theo từ khoá: bấm thẻ gợi ý hoặc "Xóa tìm kiếm" trên cùng trang thì ô nhập cập nhật theo. */}
         <SearchForm
-          key={query}
+          key={JSON.stringify([query, queryError])}
           query={query}
+          initialError={queryError}
           footer={
             <nav className="suggested-queries is-chips" aria-label={copy.web.suggestions}>
               <span>{vi.api.suggestionsLabel}</span>
