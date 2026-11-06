@@ -232,7 +232,7 @@
 }
 .chip svg {
   flex-shrink: 0;
-  filter: drop-shadow(0 1.5px 1.5px color-mix(in srgb, var(--color-coral-ink) 30%, transparent));
+  filter: drop-shadow(1px 2px 1.5px color-mix(in srgb, var(--color-ink) 22%, transparent));
 }
 .chip:has(input:disabled) {
   cursor: not-allowed;
@@ -249,6 +249,9 @@
 .chip:has(input:focus-visible) {
   outline: 2px solid var(--color-teal-ink);
   outline-offset: 2px;
+}
+.segmented .chip svg {
+  filter: none;
 }
 .segmented .chip {
   min-height: 40px;
@@ -271,13 +274,23 @@
   gap: 12px;
 }
 .priceRangeValue {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--color-ink);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-muted);
   font-size: 12px;
   white-space: nowrap;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.priceRangeBox {
+  padding: 7px 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 /* Sóng giá phía trên; phần trong khoảng đã chọn tô đậm hơn. Hai input range chồng nhau,
@@ -338,7 +351,6 @@
   cursor: grab;
   pointer-events: auto;
   appearance: none;
-  transition: transform 140ms;
 }
 .priceRangeTrack input::-moz-range-thumb {
   width: 12px;
@@ -351,7 +363,6 @@
 }
 .priceRangeTrack input:active::-webkit-slider-thumb {
   cursor: grabbing;
-  transform: scale(1.15);
 }
 .priceRangeTrack input:focus-visible {
   outline: none;

@@ -378,20 +378,21 @@ export function LiveSearchScreen({
               <fieldset className={listing.panelGroup}>
                 <legend>{vi.demo.web.sort}</legend>
                 <div className={listing.segmented}>
-                  <label className={listing.chip}>
+                  <label className={listing.chip} title={vi.ota.sortPriceAsc}>
                     <input
                       type="radio"
                       name="stay-sort"
                       value="price"
+                      aria-label={vi.ota.sortPriceAsc}
                       checked={search.filters.sort === 'price'}
                       onChange={() => update('sort', 'price')}
                     />
-                    {vi.ota.sortPriceAsc}
+                    <StaySearchIcon name="sortAsc" />
                   </label>
                   {/* shortcut: API chưa có sort giá giảm dần; bật khi BE thêm sort=price_desc. */}
-                  <label className={listing.chip} title={vi.ota.comingSoon}>
-                    <input type="radio" name="stay-sort" value="price_desc" disabled />
-                    {vi.ota.sortPriceDesc}
+                  <label className={listing.chip} title={`${vi.ota.sortPriceDesc} (${vi.ota.comingSoon})`}>
+                    <input type="radio" name="stay-sort" value="price_desc" aria-label={vi.ota.sortPriceDesc} disabled />
+                    <StaySearchIcon name="sortDesc" />
                   </label>
                 </div>
               </fieldset>
