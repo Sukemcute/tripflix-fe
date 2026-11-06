@@ -6,10 +6,12 @@ import { summary } from './summary';
 import { hotel } from './hotel';
 import { ota } from './ota';
 import { flights } from './flights';
+import { privacy } from './privacy';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
   flights,
+  privacy,
   ota,
   hotel,
   summary,
