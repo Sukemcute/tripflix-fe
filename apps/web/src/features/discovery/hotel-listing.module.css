@@ -135,64 +135,179 @@
   gap: 16px;
   min-width: 0;
 }
-/* Khung lọc dạng thẻ (bản TF11), tách class riêng để không đụng .filters của bộ lọc TF10. */
+/* Khung lọc dạng thẻ (bản TF11), tách class riêng để không đụng .filters của bộ lọc TF10.
+   Theo mẫu chip/segmented của các trang đặt phòng; "Đặt lại" nằm ở đầu khung để không đẩy banner. */
 .filterPanel {
   display: grid;
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
   padding: 18px;
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--color-surface);
 }
-.filterPanel h2 {
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+}
+.panelHead h2 {
   display: flex;
   gap: 8px;
   align-items: center;
   margin: 0;
   font-size: 15px;
 }
-.filterPanel h2 svg {
+.panelHead h2 svg {
   color: var(--color-teal-ink);
 }
-.filterPanel label {
+.panelReset {
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--color-teal-ink);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 160ms;
+}
+.panelReset:hover {
+  background: var(--color-sea-mist);
+}
+.panelGroup {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.panelGroup > legend,
+.panelGroup > span:first-child {
+  margin-bottom: 8px;
+  padding: 0;
   color: var(--color-text-muted);
   font-size: 12px;
 }
-.filterPanel :is(select, input) {
-  min-height: 42px;
-  width: 100%;
-  padding: 8px 10px;
+.panelGroup > span:first-child {
+  margin-bottom: 0;
+}
+.starChips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--color-surface-muted);
+}
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 6px 8px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--color-background);
   color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 160ms,
+    background 160ms,
+    color 160ms;
+}
+.chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.chip svg {
+  width: 15px;
+  height: 15px;
+  color: var(--color-sun);
+  fill: var(--color-sun);
+}
+.chip:hover {
+  border-color: var(--color-teal);
+}
+.chip:has(input:checked) {
+  border-color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+.chip:has(input:focus-visible) {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
+}
+.segmented .chip {
+  min-height: 34px;
+  border-color: var(--color-transparent);
+  border-radius: 9px;
+  background: var(--color-transparent);
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.segmented .chip:has(input:checked) {
+  border-color: var(--color-transparent);
+  background: var(--color-background);
+  color: var(--color-ink);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-ink) 14%, transparent);
+}
+.priceField {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background);
+  transition: border-color 160ms;
+}
+.priceField:focus-within {
+  border-color: var(--color-teal-ink);
+}
+.priceField input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--color-ink);
   font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.priceField input:focus-visible {
+  outline: none;
+}
+.priceField > span {
+  color: var(--color-text-muted);
+  font-size: 13px;
 }
 .filterPanel .filterError {
-  margin: -8px 0 0;
-}
-.filterPanelClear {
-  justify-self: start;
-  padding: 6px 0;
-  color: var(--color-teal-ink);
-  font-size: 12px;
-  text-decoration: underline;
+  margin: -10px 0 0;
 }
 @media (max-width: 840px) {
   .filterPanel {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .filterPanel h2 {
+  .panelHead {
     grid-column: 1 / -1;
   }
 }
 @media (max-width: 560px) {
   .filterPanel {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: 1fr;
   }
 }
 .filters {
