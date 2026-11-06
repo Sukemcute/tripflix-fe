@@ -4,6 +4,8 @@ import { useFlightRoutes, type FlightSearch } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { SoftDatePicker } from '@/features/shared/soft-date-picker';
+import { SoftSelect } from '@/features/shared/soft-select';
 import styles from './flights.module.css';
 
 const copy = vi.flights;
@@ -21,56 +23,52 @@ export function FlightSearchForm({ initial, today }: { initial: FlightSearch | n
       <div className={styles.fields}>
         <label>
           {copy.from}
-          <select
+          <SoftSelect
             name="from"
             aria-label={copy.from}
             required
             value={from}
             disabled={!routes.data?.length}
-            onChange={(event) => {
-              setFrom(event.target.value);
+            onChange={(value) => {
+              setFrom(value);
               setTo('');
             }}
-          >
-            <option value="">{copy.selectAirport}</option>
-            {routes.data?.map(({ airport }) => (
-              <option key={airport} value={airport}>
-                {airportNames[airport] ? airport + ' · ' + airportNames[airport] : airport}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: copy.selectAirport },
+              ...(routes.data ?? []).map(({ airport }) => ({
+                value: airport,
+                label: airportNames[airport] ? airport + ' · ' + airportNames[airport] : airport,
+              })),
+            ]}
+          />
         </label>
         <label>
           {copy.to}
-          <select
+          <SoftSelect
             name="to"
             aria-label={copy.to}
             required
             value={to}
             disabled={!destinations.length}
-            onChange={(event) => setTo(event.target.value)}
-          >
-            <option value="">{from ? copy.selectAirport : copy.selectOriginFirst}</option>
-            {destinations.map(({ code, name }) => (
-              <option key={code} value={code}>
-                {code} · {name}
-              </option>
-            ))}
-          </select>
+            onChange={setTo}
+            options={[
+              { value: '', label: from ? copy.selectAirport : copy.selectOriginFirst },
+              ...destinations.map(({ code, name }) => ({ value: code, label: `${code} · ${name}` })),
+            ]}
+          />
         </label>
         <label>
           {copy.date}
-          <input name="date" type="date" min={today} required defaultValue={initial?.date ?? today} />
+          <SoftDatePicker name="date" min={today} required defaultValue={initial?.date ?? today} />
         </label>
         <label>
           {copy.adults}
-          <select name="passengers" aria-label={copy.adults} defaultValue={initial?.passengers ?? 1}>
-            {Array.from({ length: 9 }, (_, index) => index + 1).map((count) => (
-              <option key={count} value={count}>
-                {count}
-              </option>
-            ))}
-          </select>
+          <SoftSelect
+            name="passengers"
+            aria-label={copy.adults}
+            defaultValue={String(initial?.passengers ?? 1)}
+            options={Array.from({ length: 9 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }))}
+          />
         </label>
         <button type="submit" className="primary-button" disabled={!canSearch}>
           {copy.search}

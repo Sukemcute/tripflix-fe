@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { SearchForm } from '@/features/discovery/search-form';
 import { formatPrice, TripCard } from '@/features/discovery/trip-card';
+import { SoftSelect } from '@/features/shared/soft-select';
 
 export default async function SearchScreen({
   searchParams,
@@ -52,19 +53,29 @@ export default async function SearchScreen({
             <input type="hidden" name="q" value={query} />
             <label htmlFor="trip-category">
               {copy.web.category}
-              <select id="trip-category" name="category" defaultValue={category}>
-                <option value="all">{copy.web.all}</option>
-                <option value="sea">{copy.web.sea}</option>
-                <option value="culture">{copy.web.culture}</option>
-                <option value="hotel">{copy.web.hotel}</option>
-              </select>
+              <SoftSelect
+                id="trip-category"
+                name="category"
+                defaultValue={category}
+                options={[
+                  { value: 'all', label: copy.web.all },
+                  { value: 'sea', label: copy.web.sea },
+                  { value: 'culture', label: copy.web.culture },
+                  { value: 'hotel', label: copy.web.hotel },
+                ]}
+              />
             </label>
             <label htmlFor="trip-sort">
               {copy.web.sort}
-              <select id="trip-sort" name="sort" defaultValue={sort}>
-                <option value="recommended">{copy.web.recommended}</option>
-                <option value="price">{copy.web.priceAscending}</option>
-              </select>
+              <SoftSelect
+                id="trip-sort"
+                name="sort"
+                defaultValue={sort}
+                options={[
+                  { value: 'recommended', label: copy.web.recommended },
+                  { value: 'price', label: copy.web.priceAscending },
+                ]}
+              />
             </label>
             <button type="submit" className="secondary-button">
               {copy.web.apply}

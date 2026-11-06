@@ -7,6 +7,8 @@ import { DISPLAY_NAME_MAX } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { useState, type ReactNode } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { SoftDatePicker } from '@/features/shared/soft-date-picker';
+import { SoftSelect } from '@/features/shared/soft-select';
 
 type Gender = keyof typeof vi.api.genderOptions;
 type FieldName = 'displayName' | 'phone' | 'dateOfBirth' | 'gender' | 'nationality';
@@ -198,13 +200,12 @@ export function ProfileInfoCard({ userId }: { userId: string }) {
           value={describeDate(data.dateOfBirth)}
         >
           {isEditing && (
-            <input
+            <SoftDatePicker
               id="profile-dob"
-              type="date"
-              autoComplete="bday"
               max={TODAY}
+              yearRange={[1920, Number(TODAY.slice(0, 4))]}
               value={draft.dateOfBirth}
-              onChange={(event) => update('dateOfBirth', event.target.value)}
+              onChange={(value) => update('dateOfBirth', value)}
             />
           )}
         </ProfileField>
@@ -215,18 +216,18 @@ export function ProfileInfoCard({ userId }: { userId: string }) {
           value={describeGender(data.gender)}
         >
           {isEditing && (
-            <select
+            <SoftSelect
               id="profile-gender"
               value={draft.gender}
-              onChange={(event) => update('gender', event.target.value)}
-            >
-              <option value="">{vi.api.genderUnset}</option>
-              {(Object.keys(vi.api.genderOptions) as Gender[]).map((gender) => (
-                <option key={gender} value={gender}>
-                  {vi.api.genderOptions[gender]}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => update('gender', value)}
+              options={[
+                { value: '', label: vi.api.genderUnset },
+                ...(Object.keys(vi.api.genderOptions) as Gender[]).map((gender) => ({
+                  value: gender,
+                  label: vi.api.genderOptions[gender],
+                })),
+              ]}
+            />
           )}
         </ProfileField>
         <ProfileField
@@ -236,18 +237,15 @@ export function ProfileInfoCard({ userId }: { userId: string }) {
           value={data.nationality ? describeNationality(data.nationality) : null}
         >
           {isEditing && (
-            <select
+            <SoftSelect
               id="profile-nationality"
               value={draft.nationality}
-              onChange={(event) => update('nationality', event.target.value)}
-            >
-              <option value="">{vi.api.nationalityUnset}</option>
-              {NATIONALITIES.map((code) => (
-                <option key={code} value={code}>
-                  {describeNationality(code)}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => update('nationality', value)}
+              options={[
+                { value: '', label: vi.api.nationalityUnset },
+                ...NATIONALITIES.map((code) => ({ value: code, label: describeNationality(code) })),
+              ]}
+            />
           )}
         </ProfileField>
         <div className="profile-field is-locked">

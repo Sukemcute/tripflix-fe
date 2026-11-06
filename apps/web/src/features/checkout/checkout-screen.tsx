@@ -13,6 +13,7 @@ import { holdCountdown, isValidTripDate } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import Link from 'next/link';
 import { formatPrice } from '@/features/discovery/trip-card';
+import { SoftDatePicker } from '@/features/shared/soft-date-picker';
 import { CheckoutError } from './checkout-error';
 import styles from './checkout.module.css';
 
@@ -381,6 +382,9 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
   );
 }
 
+// Năm sinh chọn được trong lịch: 1920 tới năm nay (tính một lần khi nạp file).
+const BIRTH_YEAR_RANGE = [1920, new Date().getFullYear()] as const;
+
 function Field({
   label,
   value,
@@ -396,7 +400,18 @@ function Field({
   return (
     <label className={styles.field} data-wide={wide}>
       <span>{label}</span>
-      <input {...input} value={value} onChange={(event) => onChange(event.target.value)} />
+      {input.type === 'date' ? (
+        <SoftDatePicker
+          value={value}
+          onChange={onChange}
+          required={input.required}
+          disabled={input.disabled}
+          max={typeof input.max === 'string' ? input.max : undefined}
+          yearRange={BIRTH_YEAR_RANGE}
+        />
+      ) : (
+        <input {...input} value={value} onChange={(event) => onChange(event.target.value)} />
+      )}
     </label>
   );
 }

@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { CheckoutError } from '@/features/checkout/checkout-error';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { SoftSelect } from '@/features/shared/soft-select';
 import styles from './flights.module.css';
 
 const copy = vi.flights;
@@ -137,39 +138,33 @@ function FlightCard({
         <div className={styles.options}>
           <label>
             {copy.cabin}
-            <select
+            <SoftSelect
               value={cabin.productId}
               aria-label={copy.cabin}
               disabled={isLocked}
-              onChange={(event) => {
-                setProductId(event.target.value);
+              onChange={(value) => {
+                setProductId(value);
                 setFareCode('');
               }}
-            >
-              {cabins.map((offer) => (
-                <option key={offer.productId} value={offer.productId}>
-                  {offer.cabinName}
-                  {!offer.isAvailable && ' · ' + getReason(offer)}
-                </option>
-              ))}
-            </select>
+              options={cabins.map((offer) => ({
+                value: offer.productId,
+                label: offer.cabinName + (offer.isAvailable ? '' : ' · ' + getReason(offer)),
+              }))}
+            />
           </label>
           {cabin.isAvailable && cabin.fares.length > 0 && (
             <label>
               {copy.fare}
-              <select
+              <SoftSelect
                 value={fare?.code}
                 aria-label={copy.fare}
                 disabled={isLocked}
-                onChange={(event) => setFareCode(event.target.value)}
-              >
-                {cabin.fares.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {option.name}
-                    {option.totalPrice != null && ' · ' + formatPrice(option.totalPrice)}
-                  </option>
-                ))}
-              </select>
+                onChange={setFareCode}
+                options={cabin.fares.map((option) => ({
+                  value: option.code,
+                  label: option.name + (option.totalPrice != null ? ' · ' + formatPrice(option.totalPrice) : ''),
+                }))}
+              />
             </label>
           )}
         </div>
