@@ -3,7 +3,7 @@ export const ota = {
   fieldNotes: 'Nhật ký xê dịch',
   heroIntro:
     'Từ một cuối tuần bên biển đến những ngày rong ruổi qua phố cổ. Tìm nơi ở và gom cảm hứng cho chuyến đi theo cách của bạn.',
-  heroSearch: 'Tìm nơi lưu trú',
+  heroSearch: 'Chọn chuyến đi của bạn',
   heroExplore: 'Lướt xuống khám phá',
   heroFrame: 'Một ngày trên mặt nước',
   heroPhoto: 'Hai người chèo kayak trên mặt nước xanh',

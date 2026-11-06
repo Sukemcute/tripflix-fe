@@ -9,6 +9,9 @@ const ACTIVITIES = [
   ['home-kayaking.jpg', vi.api.otaActivities.kayak],
 ] as const;
 
+// Tách khẩu hiệu thành 2 dòng cố định: "Chạm cảm hứng," (đen, không xuống dòng) và "trọn hành trình".
+const [SLOGAN_FIRST, SLOGAN_SECOND] = vi.app.slogan.split(', ');
+
 export function OtaHero() {
   return (
     <header className={styles.hero}>
@@ -22,14 +25,13 @@ export function OtaHero() {
             height={116}
             sizes="(max-width: 760px) 74px, (max-width: 1013px) 76px, (max-width: 1547px) 7.5vw, 116px"
           />
-          <h1>{vi.app.slogan.replace(', ', ',\n')}</h1>
+          <h1>
+            <span className={styles.titleFirst}>{SLOGAN_FIRST},</span> {SLOGAN_SECOND}
+          </h1>
           <p className={styles.description}>{vi.ota.heroIntro}</p>
           <div className={styles.actions}>
             <a className={`ripple-button ${styles.searchAction}`} href="#ota-search">
               {vi.ota.heroSearch}
-            </a>
-            <a className={styles.scrollAction} href="#home-destinations">
-              {vi.ota.heroExplore}
             </a>
           </div>
           <nav className={styles.activities} aria-label={vi.api.otaActivityLabel}>
