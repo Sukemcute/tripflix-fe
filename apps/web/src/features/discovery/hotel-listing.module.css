@@ -192,13 +192,30 @@
 .panelGroup > span:first-child {
   margin-bottom: 0;
 }
+/* Nhóm sao chìm xuống giống phần sắp xếp; mức đang chọn nổi lên nền trắng. */
 .starChips {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--color-surface-muted);
 }
 .starChips .chip {
-  border-radius: 10px;
+  border-color: var(--color-transparent);
+  border-radius: 9px;
+  background: var(--color-transparent);
+  color: var(--color-text-muted);
+}
+.starChips .chip:hover {
+  border-color: var(--color-transparent);
+  background: color-mix(in srgb, var(--color-background) 55%, transparent);
+}
+.starChips .chip:has(input:checked) {
+  border-color: var(--color-transparent);
+  background: var(--color-background);
+  color: var(--color-ink);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-ink) 14%, transparent);
 }
 .segmented {
   display: grid;
