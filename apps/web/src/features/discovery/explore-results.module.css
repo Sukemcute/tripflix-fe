@@ -1,0 +1,30 @@
+.understood {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+.chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+.section {
+  margin-bottom: 40px;
+}
+.sectionTitle {
+  margin-bottom: 16px;
+  font-size: 20px;
+}
+.mascot {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 32%;
+  height: auto;
+  object-fit: contain;
+}

@@ -339,33 +339,38 @@ function dateAfter(days) {
       await memberAdmin.visible('Trang này dành cho quản trị viên và kiểm duyệt viên.');
     });
     await check('Đổi hồ sơ, mật khẩu và thu hồi phiên được lưu thật', async () => {
+      // Trang tài khoản dạng hồ sơ (TF06M): xem trước, bấm "Chỉnh sửa" mới sửa; mật khẩu, thiết bị ở mục "Bảo mật & thiết bị".
       await web.login(email, password);
       await web.page.getByRole('heading', { name: displayName, exact: true }).waitFor();
+      await web.click('Chỉnh sửa');
       await web.fill('Tên hiển thị', `${displayName} mới`);
+      await web.fill('Số điện thoại', '0912 345 678');
       await web.click('Lưu thay đổi');
       await web.page.getByRole('heading', { name: `${displayName} mới`, exact: true }).waitFor();
       await web.page.reload();
       await web.page.getByRole('heading', { name: `${displayName} mới`, exact: true }).waitFor();
+      await web.visible('0912345678');
+      await web.click('Bảo mật & thiết bị');
       await web.fill('Mật khẩu hiện tại', memberPassword);
       await web.fill('Mật khẩu mới', `${password}-updated`);
+      await web.fill('Nhập lại mật khẩu mới', `${password}-updated`);
       await web.click('Đổi mật khẩu');
-      await web.visible('Đã lưu thay đổi.');
+      await web.visible('Đã đổi mật khẩu. Các thiết bị khác đã được đăng xuất.');
       memberPassword = `${password}-updated`;
       memberToken = await loginApi(email);
-      await web.page.reload();
-      // Only the other device has a heading without the current-session suffix.
-      const other = web.page
-        .getByRole('heading', { name: 'Thiết bị chưa đặt tên', exact: true })
-        .locator('..');
+      await web.visit('/account?tab=security');
+      // Thiết bị đăng nhập qua API không có tên; thiết bị của trình duyệt có nhãn "Thiết bị hiện tại".
+      const other = web.page.getByRole('listitem').filter({ hasText: 'Thiết bị chưa đặt tên' }).first();
       await other.getByRole('button', { name: 'Đăng xuất thiết bị', exact: true }).click();
-      await web.visible('Đã lưu thay đổi.');
+      await other.waitFor({ state: 'detached' });
       const revoked = await fetch(new URL('/api/auth/me', API), {
         headers: { authorization: `Bearer ${memberToken}` },
       });
       assert.equal(revoked.status, 401);
       memberToken = await loginApi(email);
       await web.click('Đăng xuất mọi thiết bị');
-      await web.page.getByRole('link', { name: 'Đăng nhập để tiếp tục', exact: true }).waitFor();
+      await web.click('Đăng xuất tất cả');
+      await web.page.getByRole('link', { name: 'Đăng nhập', exact: true }).first().waitFor();
     });
     assert.deepEqual(errors, [], 'No browser runtime errors');
     await writeFile(
