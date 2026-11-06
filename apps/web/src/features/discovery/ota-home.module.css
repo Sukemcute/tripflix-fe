@@ -122,13 +122,18 @@
   margin-top: 14px;
   padding-inline: 12px;
   border-radius: 999px;
-  background: var(--color-teal);
-  color: var(--color-ink);
+  background: var(--color-teal-ink);
+  color: var(--color-background);
   font-size: 0.8rem;
   font-weight: 700;
 }
+/* Cùng màu nút "Tìm phòng trống"; loang Coral, chữ chuyển Ink. */
 .stayAction {
-  --ripple-color: var(--color-teal-soft);
+  --ripple-color: var(--color-coral);
+  transition: color 0.3s;
+}
+.stayAction:is(:hover, :focus-visible) {
+  color: var(--color-ink);
 }
 .stayScene {
   position: relative;
@@ -323,7 +328,7 @@
   font-weight: 700;
 }
 .tripiAction {
-  --ripple-color: var(--color-teal-soft);
+  --ripple-color: var(--color-coral);
 }
 .tripiAction:focus-visible {
   outline-color: var(--color-teal-ink);

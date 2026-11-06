@@ -142,8 +142,13 @@
   background: var(--color-teal-ink);
   color: white;
 }
+/* Nút xanh loang Coral; chữ chuyển Ink cho đủ tương phản trên Coral. */
+.submit {
+  --ripple-color: var(--color-coral);
+  transition: color 0.3s;
+}
 .submit:hover:not(:disabled) {
-  background: #004f49;
+  color: var(--color-ink);
 }
 .submit:disabled {
   opacity: 0.65;

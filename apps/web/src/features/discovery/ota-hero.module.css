@@ -60,9 +60,13 @@
   background: var(--color-ink);
   color: var(--color-background);
 }
-/* Màu hover cũ giờ là màu loang (ripple-button ở globals.css). */
+/* Nút đen loang Teal; chữ chuyển Ink cho đủ tương phản trên Teal. */
 .searchAction {
-  --ripple-color: var(--color-teal-ink);
+  --ripple-color: var(--color-teal);
+  transition: color 0.3s;
+}
+.searchAction:is(:hover, :focus-visible) {
+  color: var(--color-ink);
 }
 .scrollAction {
   color: var(--color-teal-ink);
