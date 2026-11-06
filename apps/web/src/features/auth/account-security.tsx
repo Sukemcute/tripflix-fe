@@ -1,6 +1,7 @@
 'use client';
 import { useApiSession } from '@tripflix/api-client';
 import * as auth from '@tripflix/api-client/core-api/auth/auth';
+import { NEW_PASSWORD_MAX } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
@@ -63,6 +64,7 @@ function PasswordPanel() {
           label={vi.api.newPassword}
           required
           minLength={8}
+          maxChars={NEW_PASSWORD_MAX}
           autoComplete="new-password"
           value={newPassword}
           onValueChange={setNewPassword}
@@ -72,6 +74,7 @@ function PasswordPanel() {
           label={vi.api.confirmPassword}
           required
           minLength={8}
+          maxChars={NEW_PASSWORD_MAX}
           autoComplete="new-password"
           value={confirmation}
           onValueChange={setConfirmation}

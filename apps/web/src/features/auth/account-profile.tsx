@@ -3,6 +3,7 @@ import { HttpError, useApiSession } from '@tripflix/api-client';
 import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import type { MyProfileDto, UpdateProfileDto } from '@tripflix/api-client/core-api/model/index';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { DISPLAY_NAME_MAX } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { useState, type ReactNode } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
@@ -169,7 +170,7 @@ export function ProfileInfoCard({ userId }: { userId: string }) {
             <input
               id="profile-display-name"
               required
-              maxLength={50}
+              maxLength={DISPLAY_NAME_MAX}
               autoComplete="name"
               value={draft.displayName}
               onChange={(event) => update('displayName', event.target.value)}
