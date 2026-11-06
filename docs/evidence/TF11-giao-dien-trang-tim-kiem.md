@@ -11,7 +11,13 @@
   - Màn ≤840px (một cột): ẩn banner để không đẩy kết quả xuống.
 - `packages/api-client`: `useStaySearch` nhận thêm `pageSize` (tuỳ chọn), thêm `previous` và `pageNumber`; tự nhớ cursor các trang trước vì API chỉ trả `nextCursor`. Chỉ thêm, trang chủ và mobile không đổi hành vi.
 - `packages/i18n`: chuỗi cho phân trang và banner.
-- Merge `develop` mới (có bộ lọc TF10 của Trang). Theo yêu cầu của Bảo, trang `/search` dùng lại khung "Lọc kết quả" dạng thẻ cũ (Số sao tối thiểu, Giá tối đa, Sắp xếp) với class riêng `.filterPanel`; `StayResultFilters` và CSS `.filters` của Trang giữ nguyên, chỉ ngừng dùng ở trang này. Lỗi giá của TF10 vẫn hiện dưới ô Giá tối đa. Cột trái về tối đa 240px.
+- Merge `develop` mới (có bộ lọc TF10 của Trang). Theo yêu cầu của Bảo, trang `/search` dùng khung "Lọc kết quả" dạng thẻ riêng (class `.filterPanel`); `StayResultFilters` và CSS `.filters` của Trang giữ nguyên, chỉ ngừng dùng ở trang này. Cột trái về tối đa 240px.
+- Khung "Lọc kết quả" làm lại theo mẫu chip/segmented của các trang đặt phòng (tham khảo Baymard, LogRocket, Setproduct, Shopify):
+  - Hạng sao: 6 chip (Tất cả, 1–5) với icon sao vàng vẽ bằng SVG (`soft-star-icon.tsx`), dùng radio thật nên đi được bằng bàn phím.
+  - Khoảng giá mỗi đêm (VND): thanh trượt 2 nút 0–10 triệu, bước 50.000, vùng sóng trang trí phía trên; giá hiện trong 2 ô rộng cố định ngăn bằng "–". Đang kéo chỉ đổi nháp trong thanh trượt, thả tay mới đẩy lên bộ lọc (tránh render lại cả màn làm nút kéo rung). Gửi `priceMin`/`priceMax` có sẵn của API.
+  - Sắp xếp: 2 icon "Giá thấp đến cao" / "Giá cao đến thấp"; mục sau tạm khoá vì API chưa có `sort=price_desc`.
+  - "Đặt lại" nằm ở dòng tiêu đề nên hiện ra không đẩy banner.
+- Giới hạn còn lại (cần BE, module discovery của Duy): chip sao vẫn lọc "từ N sao trở lên" (`minStars`) vì API chưa có lọc đúng một mức sao; chưa có `sort=price_desc`; vùng sóng chưa phải phân bố giá thật.
 
 ## Đối chiếu "Xong khi"
 | Tiêu chí | Đạt | Bằng chứng |
@@ -21,9 +27,12 @@
 | Banner dài đúng bằng 5 thẻ phòng, không co lại ở trang 2 | Có | Đo trên trình duyệt sau khi merge develop (1536px): đáy banner = đáy thẻ thứ 5 ở trang 1, trang 2 và khi quay lại trang 1; trước merge đã đo thêm ở 1024px |
 | Ảnh banner không bị vỡ | Có | Ảnh 900×1125, `sizes` khai báo 640px |
 | Gửi đúng `limit`/`cursor` cho API | Có | `packages/api-client/src/stay-search.test.ts` |
+| Lọc theo khoảng giá bằng thanh trượt | Có | Khoảng 1–4 triệu ở Nha Trang: 3 khách sạn 1.200.000đ, 1.630.000đ, 2.990.000đ; URL có `priceMin`/`priceMax` |
+| Hiện "Đặt lại" không làm lệch banner | Có | Khung lọc giữ 426px trước và sau khi chọn lọc; đáy banner = đáy thẻ thứ 5 |
+| Chỉ hiện đúng mức sao đã chọn, sắp xếp giá giảm dần | Chưa | Cần API BE (đã soạn yêu cầu gửi Duy) |
 
 ## Kết quả kiểm tra
-`pnpm turbo run lint typecheck test --filter=@tripflix/web... --filter=@tripflix/mobile`: 21/21 task pass sau khi merge develop. Test: api-client 68 pass, app-core 34, utils 4, i18n 2, tokens 1; 0 fail. Lint 0 cảnh báo.
+`pnpm turbo run lint typecheck test --filter=@tripflix/web... --filter=@tripflix/mobile`: 21/21 task pass (lần chạy cuối sau commit bộ lọc: web 19/19). Test: api-client 68 pass, app-core 34, utils 4, i18n 2, tokens 1; 0 fail. Lint 0 cảnh báo.
 
 ## Cách kiểm lại
 1. `tripflix-be`: `pnpm stack:be`, đợi `core-api` healthy.
