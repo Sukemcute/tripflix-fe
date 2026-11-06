@@ -156,6 +156,10 @@
 }
 /* Ảnh chuyển dần vào nền thẻ ở mép trái (desktop) để thẻ và ảnh liền một khối. */
 @media (min-width: 641px) {
+  /* Tripi nhích sát về phía đường chia đôi. */
+  .stayMascot {
+    left: 1%;
+  }
   /* Chia đôi chữ và ảnh. */
   .stayHeader {
     position: relative;
