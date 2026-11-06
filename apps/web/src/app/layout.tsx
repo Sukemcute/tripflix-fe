@@ -71,6 +71,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               </nav>
               <div className={styles.footerPostcard}>
                 <div>
+                  <span className={styles.footerTag}>{vi.ota.footerTag}</span>
                   <h2>{vi.ota.footerTitle}</h2>
                   <a className={`ripple-button ${styles.footerAction}`} href="#top">
                     {vi.ota.backToTop}
@@ -79,7 +80,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <span className={styles.footerPostcardPhoto}>
                   <Image src="/brand/home-shore.jpg" alt="" fill sizes="88px" />
                 </span>
-                <TripiMascot pose="hero-welcome" size={84} alt="" className={styles.footerMascot} />
+                <span className={styles.footerTape} aria-hidden="true" />
+                <TripiMascot pose="action-vacation" size={104} alt="" className={styles.footerMascot} />
               </div>
             </div>
           </footer>

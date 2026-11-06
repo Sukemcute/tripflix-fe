@@ -111,14 +111,68 @@
   font-size: 0.74rem;
   font-weight: 700;
 }
-/* Tripi đứng trước góc dưới bên trái của ảnh bưu thiếp. */
+/* Tripi nằm ghế biển trước góc ảnh bưu thiếp, nhấp nhô nhẹ. */
 .footerMascot {
   position: absolute;
-  right: clamp(44px, 5vw, 72px);
-  bottom: -10px;
-  width: clamp(64px, 6vw, 84px);
+  right: clamp(48px, 5.4vw, 80px);
+  bottom: -6px;
+  width: clamp(72px, 7vw, 104px);
   height: auto;
   filter: drop-shadow(0 6px 8px var(--color-overlay));
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .footerMascot {
+    animation: footer-tripi-float 5600ms ease-in-out infinite;
+  }
+}
+@keyframes footer-tripi-float {
+  0%,
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  50% {
+    translate: 0 -5px;
+    rotate: -2deg;
+  }
+}
+/* Nhãn ghim kiểu khác thẻ bài viết: nền Teal Ink, đinh ghim tròn vàng. */
+.footerTag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 3px 10px 3px 20px;
+  border-radius: 999px;
+  background: var(--color-teal-ink);
+  color: var(--color-background);
+  font-size: 0.68rem;
+  font-weight: 700;
+  rotate: -2deg;
+}
+.footerTag::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  translate: 0 -50%;
+  border-radius: 50%;
+  background: var(--color-sun);
+  box-shadow: 0 1px 1px var(--color-overlay);
+}
+/* Băng dính washi vàng dán ảnh lên thẻ. */
+.footerTape {
+  position: absolute;
+  top: 4px;
+  right: clamp(20px, 3vw, 44px);
+  width: 46px;
+  height: 14px;
+  background: color-mix(in srgb, var(--color-sun) 70%, transparent);
+  rotate: -8deg;
   pointer-events: none;
 }
 .footerBase {
