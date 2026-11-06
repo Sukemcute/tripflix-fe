@@ -1,6 +1,7 @@
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ExploreResults } from '@/features/discovery/explore-results';
 import { SearchForm } from '@/features/discovery/search-form';
 import { StaySearchIcon } from '@/features/discovery/stay-search-icon';
 import { PublicPosts } from '@/features/social/live-posts';
@@ -70,7 +71,8 @@ export default function HomeScreen({ query = '' }: { query?: string }) {
             <p className="muted">{copy.web.curatedBody}</p>
           )}
         </div>
-        <PublicPosts keyword={query} />
+        {/* Có câu tìm: đi qua discovery (hiểu không dấu, viết tắt, ngân sách); không có: bài nổi bật như cũ. */}
+        {query ? <ExploreResults query={query} /> : <PublicPosts />}
       </section>
       <section className="how-section" id="how">
         <Image src="/brand/tripi-welcome.png" alt={vi.mobile.common.mascot} width={120} height={120} />
