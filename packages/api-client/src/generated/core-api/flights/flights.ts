@@ -18,9 +18,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  FlightCalendarResultDto,
   FlightOfferDto,
   FlightRouteDto,
   FlightSearchResultDto,
+  FlightsControllerGetCalendarParams,
   FlightsControllerGetFlightParams,
   FlightsControllerSearchParams,
 } from '../model';
@@ -173,6 +175,147 @@ export function useFlightsControllerSearch<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getFlightsControllerSearchQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type flightsControllerGetCalendarResponse200 = {
+  data: FlightCalendarResultDto;
+  status: 200;
+};
+
+export type flightsControllerGetCalendarResponseSuccess = flightsControllerGetCalendarResponse200 & {
+  headers: Headers;
+};
+export type flightsControllerGetCalendarResponse = flightsControllerGetCalendarResponseSuccess;
+
+export const getFlightsControllerGetCalendarUrl = (params: FlightsControllerGetCalendarParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/flights/calendar?${stringifiedParams}`
+    : `/api/flights/calendar`;
+};
+
+export const flightsControllerGetCalendar = async (
+  params: FlightsControllerGetCalendarParams,
+  options?: Parameters<typeof http>[1],
+): Promise<flightsControllerGetCalendarResponse> => {
+  return http<flightsControllerGetCalendarResponse>(getFlightsControllerGetCalendarUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getFlightsControllerGetCalendarQueryKey = (params?: FlightsControllerGetCalendarParams) => {
+  return [`/api/flights/calendar`, ...(params ? [params] : [])] as const;
+};
+
+export const getFlightsControllerGetCalendarQueryOptions = <
+  TData = Awaited<ReturnType<typeof flightsControllerGetCalendar>>,
+  TError = unknown,
+>(
+  params: FlightsControllerGetCalendarParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof flightsControllerGetCalendar>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getFlightsControllerGetCalendarQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof flightsControllerGetCalendar>>> = ({ signal }) =>
+    flightsControllerGetCalendar(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof flightsControllerGetCalendar>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type FlightsControllerGetCalendarQueryResult = NonNullable<
+  Awaited<ReturnType<typeof flightsControllerGetCalendar>>
+>;
+export type FlightsControllerGetCalendarQueryError = unknown;
+
+export function useFlightsControllerGetCalendar<
+  TData = Awaited<ReturnType<typeof flightsControllerGetCalendar>>,
+  TError = unknown,
+>(
+  params: FlightsControllerGetCalendarParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof flightsControllerGetCalendar>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof flightsControllerGetCalendar>>,
+          TError,
+          Awaited<ReturnType<typeof flightsControllerGetCalendar>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useFlightsControllerGetCalendar<
+  TData = Awaited<ReturnType<typeof flightsControllerGetCalendar>>,
+  TError = unknown,
+>(
+  params: FlightsControllerGetCalendarParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof flightsControllerGetCalendar>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof flightsControllerGetCalendar>>,
+          TError,
+          Awaited<ReturnType<typeof flightsControllerGetCalendar>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useFlightsControllerGetCalendar<
+  TData = Awaited<ReturnType<typeof flightsControllerGetCalendar>>,
+  TError = unknown,
+>(
+  params: FlightsControllerGetCalendarParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof flightsControllerGetCalendar>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useFlightsControllerGetCalendar<
+  TData = Awaited<ReturnType<typeof flightsControllerGetCalendar>>,
+  TError = unknown,
+>(
+  params: FlightsControllerGetCalendarParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof flightsControllerGetCalendar>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getFlightsControllerGetCalendarQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

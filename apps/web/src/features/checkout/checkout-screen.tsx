@@ -15,7 +15,8 @@ import Link from 'next/link';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { SoftDatePicker } from '@/features/shared/soft-date-picker';
 import { CheckoutError } from './checkout-error';
-import styles from './checkout.module.css';
+import { CheckoutIcon, type CheckoutIconName } from './checkout-icon';
+import styles from './checkout-form.module.css';
 
 const copy = vi.commerce;
 type Order = Awaited<ReturnType<typeof commerceApi.getCheckout>>;
@@ -208,7 +209,10 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
   return (
     <main className={`ota-container ${styles.page}`}>
       <Steps current={2} />
-      <h1 className={styles.title}>{copy.checkout}</h1>
+      <header className={styles.header}>
+        <h1 className={styles.title}>{copy.checkout}</h1>
+        <p className={styles.intro}>{copy.checkoutIntro}</p>
+      </header>
       <div className={styles.layout}>
         <section className={styles.main}>
           {isExpired ? (
@@ -229,15 +233,34 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
               }}
             >
               <fieldset className={styles.card} disabled={isLocked}>
-                <legend className={styles.cardTitle}>{copy.contact}</legend>
+                <legend className={styles.cardTitle}>
+                  <span className={styles.cardIcon}>
+                    <CheckoutIcon name="user" />
+                  </span>
+                  <span>
+                    {copy.contact}
+                    <small>{copy.contactHint}</small>
+                  </span>
+                </legend>
                 <div className={styles.fields}>
                   <Field label={copy.name} value={name} onChange={setName} autoComplete="name" wide />
                   <Field label={copy.phone} value={phone} onChange={setPhone} autoComplete="tel" type="tel" />
-                  <Field label={copy.email} value={email} onChange={setEmail} autoComplete="email" type="email" />
+                  <Field
+                    label={copy.email}
+                    value={email}
+                    onChange={setEmail}
+                    autoComplete="email"
+                    type="email"
+                  />
                 </div>
+                <p className={styles.guestsNote}>
+                  <CheckoutIcon name="users" size={18} />
+                  {copy.guestsHint}
+                </p>
                 {Array.from({ length: order.passengersRequired }, (_, index) => (
-                  <div key={index} className={styles.fields}>
+                  <div key={index} className={`${styles.fields} ${styles.guest}`}>
                     <p className={styles.subTitle}>
+                      <span className={styles.guestNumber}>{index + 1}</span>
                       {copy.guest} {index + 1}
                     </p>
                     <Field
@@ -256,7 +279,15 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
               </fieldset>
 
               <fieldset className={styles.card} disabled={isLocked}>
-                <legend className={styles.cardTitle}>{copy.pay}</legend>
+                <legend className={styles.cardTitle}>
+                  <span className={styles.cardIcon}>
+                    <CheckoutIcon name="wallet" />
+                  </span>
+                  <span>
+                    {copy.pay}
+                    <small>{copy.payHint}</small>
+                  </span>
+                </legend>
                 <div className={styles.methods} role="radiogroup">
                   {(['card', 'vnpay'] as const).map((value) => (
                     <label key={value} className={styles.method} data-selected={method === value}>
@@ -267,7 +298,16 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                         checked={method === value}
                         onChange={() => setMethod(value)}
                       />
-                      <span>{value === 'card' ? copy.card : copy.vnpay}</span>
+                      <span className={styles.methodIcon} data-method={value}>
+                        {value === 'card' ? <CheckoutIcon name="card" /> : 'VN'}
+                      </span>
+                      <span className={styles.methodText}>
+                        {value === 'card' ? copy.card : copy.vnpay}
+                        <small>{value === 'card' ? copy.cardHint : copy.vnpayHint}</small>
+                      </span>
+                      <span className={styles.methodCheck} aria-hidden="true">
+                        <CheckoutIcon name="check" size={14} />
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -281,11 +321,21 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                           key={card.number}
                           type="button"
                           className={styles.testCard}
+                          data-tone={getCardTone(card.label, card.number)}
                           aria-pressed={cardNumber === card.number}
                           onClick={() => setCardNumber(card.number)}
                         >
+                          <span className={styles.cardChip} aria-hidden="true" />
                           <strong>{card.label}</strong>
-                          <span>{card.number.replace(/(\d{4})(?=\d)/g, '$1 ')}</span>
+                          <span className={styles.cardDigits}>
+                            {card.number.replace(/(\d{4})(?=\d)/g, '$1 ')}
+                          </span>
+                          <span className={styles.cardBrand} aria-hidden="true">
+                            {card.number.startsWith('5') ? 'Mastercard' : 'VISA'}
+                          </span>
+                          <span className={styles.cardSelected} aria-hidden="true">
+                            <CheckoutIcon name="check" size={14} />
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -295,12 +345,17 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                       onChange={setCardNumber}
                       inputMode="numeric"
                       autoComplete="off"
+                      icon="card"
                       wide
                     />
                   </>
                 )}
                 <label className={styles.consent}>
-                  <input type="checkbox" checked={hasConsent} onChange={(event) => setConsent(event.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={hasConsent}
+                    onChange={(event) => setConsent(event.target.checked)}
+                  />
                   <span>
                     {copy.policy}
                     <small>
@@ -312,8 +367,15 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
 
               {challengeId && (
                 <div className={`${styles.card} ${styles.otp}`}>
-                  <p className={styles.cardTitle}>{copy.otp}</p>
-                  <p className="small muted">{copy.otpHint}</p>
+                  <p className={styles.cardTitle}>
+                    <span className={styles.cardIcon}>
+                      <CheckoutIcon name="shield" />
+                    </span>
+                    <span>
+                      {copy.otp}
+                      <small>{copy.otpHint}</small>
+                    </span>
+                  </p>
                   <Field
                     label={copy.otp}
                     value={otp}
@@ -358,28 +420,48 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
               <CheckoutError error={payment.error} />
 
               {!challengeId && (
-                <button
-                  type="submit"
-                  className={`primary-button ${styles.payButton}`}
-                  disabled={
-                    isLocked || newTotal !== undefined || (method === 'card' && !cardNumber.trim())
-                  }
-                >
-                  {payment.isPending ? vi.api.loading : `${copy.pay} ${formatPrice(total)}`}
-                </button>
+                <div className={styles.payBar}>
+                  <button
+                    type="submit"
+                    className={`primary-button ${styles.payButton}`}
+                    disabled={isLocked || newTotal !== undefined || (method === 'card' && !cardNumber.trim())}
+                  >
+                    <CheckoutIcon name="lock" size={18} />
+                    {payment.isPending ? vi.api.loading : `${copy.pay} ${formatPrice(total)}`}
+                  </button>
+                  <p className={styles.payNote}>
+                    <CheckoutIcon name="shield" size={16} />
+                    {copy.payHint}
+                  </p>
+                </div>
               )}
             </form>
           )}
         </section>
         <aside className={styles.aside}>
           <OrderSummary order={order} total={total} />
-          <button type="button" className={styles.linkButton} onClick={() => void query.refetch()}>
+          <button
+            type="button"
+            className={`secondary-button ${styles.statusButton}`}
+            onClick={() => void query.refetch()}
+          >
+            <CheckoutIcon name="refresh" size={16} />
             {copy.checkStatus}
           </button>
         </aside>
       </div>
     </main>
   );
+}
+
+/** Màu thẻ kiểm thử theo kết quả mô phỏng, để nhìn là biết thẻ nào thành công, thẻ nào lỗi. */
+function getCardTone(label: string, number: string): string {
+  const text = label.toLowerCase();
+  if (text.includes('3d')) return 'secure';
+  if (text.includes('từ chối')) return 'declined';
+  if (text.includes('không đủ')) return 'funds';
+  if (text.includes('hết hạn')) return 'expired';
+  return number.startsWith('5') ? 'master' : 'visa';
 }
 
 // Năm sinh chọn được trong lịch: 1920 tới năm nay (tính một lần khi nạp file).
@@ -390,12 +472,14 @@ function Field({
   value,
   onChange,
   wide,
+  icon,
   ...input
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   wide?: boolean;
+  icon?: CheckoutIconName;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
   return (
     <label className={styles.field} data-wide={wide}>
@@ -409,6 +493,11 @@ function Field({
           max={typeof input.max === 'string' ? input.max : undefined}
           yearRange={BIRTH_YEAR_RANGE}
         />
+      ) : icon ? (
+        <span className={styles.inputIcon}>
+          <CheckoutIcon name={icon} size={18} />
+          <input {...input} value={value} onChange={(event) => onChange(event.target.value)} />
+        </span>
       ) : (
         <input {...input} value={value} onChange={(event) => onChange(event.target.value)} />
       )}
@@ -421,14 +510,20 @@ function Steps({ current }: { current: 1 | 2 | 3 }) {
   return (
     <ol className={styles.steps}>
       {labels.map((label, index) => (
-        <li key={label} data-state={index + 1 < current ? 'done' : index + 1 === current ? 'current' : 'next'}>
-          <span>{index + 1}</span>
+        <li
+          key={label}
+          data-state={index + 1 < current ? 'done' : index + 1 === current ? 'current' : 'next'}
+        >
+          <span>{index + 1 < current ? <CheckoutIcon name="check" size={14} /> : index + 1}</span>
           {label}
         </li>
       ))}
     </ol>
   );
 }
+
+// Giữ chỗ 30 phút (TF30); vòng đếm ngược vẽ theo phần thời gian còn lại.
+const HOLD_SECONDS = 30 * 60;
 
 function HoldTimer({ expiresAt }: { expiresAt: string }) {
   const [now, setNow] = useState(() => new Date());
@@ -438,10 +533,18 @@ function HoldTimer({ expiresAt }: { expiresAt: string }) {
   }, [expiresAt]);
   const countdown = holdCountdown(expiresAt, now);
   const time = `${Math.floor(countdown.secondsLeft / 60)}:${String(countdown.secondsLeft % 60).padStart(2, '0')}`;
+  const ratio = Math.max(0, Math.min(1, countdown.secondsLeft / HOLD_SECONDS));
   return (
-    <p className={styles.timer} data-urgent={countdown.secondsLeft < 300} aria-live="polite">
-      {countdown.expired ? vi.booking.holdExpired : t('booking.holdExpiresIn', { time })}
-    </p>
+    <div className={styles.timer} data-urgent={countdown.secondsLeft < 300}>
+      <svg viewBox="0 0 36 36" aria-hidden="true">
+        <circle cx="18" cy="18" r="15.5" />
+        <circle cx="18" cy="18" r="15.5" pathLength={100} strokeDasharray={`${ratio * 100} 100`} />
+      </svg>
+      <p aria-live="polite">
+        <small>{copy.holdLeft}</small>
+        {countdown.expired ? vi.booking.holdExpired : t('booking.holdExpiresIn', { time })}
+      </p>
+    </div>
   );
 }
 
@@ -449,35 +552,42 @@ function OrderSummary({ order, total }: { order: Order; total: number }) {
   return (
     <div className={styles.summary}>
       <div className={styles.summaryHead}>
+        <span className={styles.summaryTitle}>{copy.summaryTitle}</span>
         <span className={styles.status} data-status={order.status}>
           {copy.status[order.status as keyof typeof copy.status] ?? order.status}
         </span>
-        {order.status === 'pending' && <HoldTimer expiresAt={order.holdExpiresAt} />}
       </div>
+      {order.status === 'pending' && <HoldTimer expiresAt={order.holdExpiresAt} />}
       {order.items.map((item) => (
         <div key={item.id} className={styles.item}>
-          {item.propertyName && <p className={styles.property}>{item.propertyName}</p>}
-          <h2>{item.productName}</h2>
-          <p>
-            {item.productType === 'flight'
-              ? `${vi.flights.date} · ${formatDate(item.date)}`
-              : `${formatDate(item.date)} → ${formatDate(item.dateTo)} · ${item.nights} ${copy.nights}`}
-          </p>
-          <p>
-            {item.qty} × {item.ratePlanName} · {order.adults} {copy.guests}
-          </p>
-          <p className={item.isRefundable ? styles.refundable : 'small muted'}>
-            {item.isRefundable ? copy.refundable : copy.nonRefundable}
-            {item.freeCancelUntil && ` · ${copy.freeCancel} ${formatDate(item.freeCancelUntil)}`}
-          </p>
-          <p className={styles.line}>
-            <span>
-              {formatPrice(item.unitPrice)} × {item.productType === 'flight'
-                ? t('flights.passengers', { count: item.qty })
-                : `${item.nights} ${copy.nights} × ${item.qty}`}
-            </span>
-            <b>{formatPrice(item.lineTotal)}</b>
-          </p>
+          <span className={styles.itemIcon} aria-hidden="true">
+            <CheckoutIcon name={item.productType === 'flight' ? 'plane' : 'bed'} size={18} />
+          </span>
+          <div className={styles.itemBody}>
+            {item.propertyName && <p className={styles.property}>{item.propertyName}</p>}
+            <h2>{item.productName}</h2>
+            <p>
+              {item.productType === 'flight'
+                ? `${vi.flights.date} · ${formatDate(item.date)}`
+                : `${formatDate(item.date)} → ${formatDate(item.dateTo)} · ${item.nights} ${copy.nights}`}
+            </p>
+            <p>
+              {item.qty} × {item.ratePlanName} · {order.adults} {copy.guests}
+            </p>
+            <p className={item.isRefundable ? styles.refundable : styles.nonRefundable}>
+              {item.isRefundable ? copy.refundable : copy.nonRefundable}
+              {item.freeCancelUntil && ` · ${copy.freeCancel} ${formatDate(item.freeCancelUntil)}`}
+            </p>
+            <p className={styles.line}>
+              <span>
+                {formatPrice(item.unitPrice)} ×{' '}
+                {item.productType === 'flight'
+                  ? t('flights.passengers', { count: item.qty })
+                  : `${item.nights} ${copy.nights} × ${item.qty}`}
+              </span>
+              <b>{formatPrice(item.lineTotal)}</b>
+            </p>
+          </div>
         </div>
       ))}
       <p className={styles.total}>
@@ -495,7 +605,7 @@ function PaymentSuccess({ order }: { order: Order }) {
       <Steps current={3} />
       <div className={styles.success}>
         <div className={styles.successIcon} aria-hidden>
-          ✓
+          <CheckoutIcon name="check" size={40} />
         </div>
         <h1>{copy.paymentSucceeded}</h1>
         <p>{copy.paymentSuccessBody}</p>

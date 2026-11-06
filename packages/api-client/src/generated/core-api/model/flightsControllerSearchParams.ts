@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { FlightsControllerSearchSort } from './flightsControllerSearchSort';
 
 export type FlightsControllerSearchParams = {
   /** Mã sân bay đi (IATA) */
@@ -17,4 +18,6 @@ export type FlightsControllerSearchParams = {
    * @maximum 9
    */
   passengers?: number;
+  /** recommended: còn ghế trước, rồi giờ bay, rồi giá. Chuyến hết ghế luôn ở cuối. */
+  sort?: FlightsControllerSearchSort;
 };
