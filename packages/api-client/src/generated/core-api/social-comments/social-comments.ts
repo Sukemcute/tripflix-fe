@@ -55,10 +55,20 @@ export type commentsControllerCreateCommentResponse201 = {
   status: 201;
 };
 
+export type commentsControllerCreateCommentResponse403 = {
+  data: void;
+  status: 403;
+};
+
 export type commentsControllerCreateCommentResponseSuccess = commentsControllerCreateCommentResponse201 & {
   headers: Headers;
 };
-export type commentsControllerCreateCommentResponse = commentsControllerCreateCommentResponseSuccess;
+export type commentsControllerCreateCommentResponseError = commentsControllerCreateCommentResponse403 & {
+  headers: Headers;
+};
+
+export type commentsControllerCreateCommentResponse =
+  commentsControllerCreateCommentResponseSuccess | commentsControllerCreateCommentResponseError;
 
 export const getCommentsControllerCreateCommentUrl = (postId: string) => {
   return `/api/v1/posts/${postId}/comments`;
@@ -100,7 +110,7 @@ export const getCommentsControllerCreateCommentMutationKey = () =>
   ['commentsControllerCreateComment'] as const;
 
 export const getCommentsControllerCreateCommentMutationOptions = <
-  TError = unknown,
+  TError = void,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -139,13 +149,13 @@ export type CommentsControllerCreateCommentMutationResult = NonNullable<
   Awaited<ReturnType<typeof commentsControllerCreateComment>>
 >;
 export type CommentsControllerCreateCommentMutationBody = CreateCommentDto;
-export type CommentsControllerCreateCommentMutationError = unknown;
+export type CommentsControllerCreateCommentMutationError = void;
 export type CommentsControllerCreateCommentMutationVariables = { postId: string; data: CreateCommentDto };
 
 /**
  * @summary Tạo bình luận mới trên bài đăng (FR11)
  */
-export const useCommentsControllerCreateComment = <TError = unknown, TContext = unknown>(
+export const useCommentsControllerCreateComment = <TError = void, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof commentsControllerCreateComment>>,

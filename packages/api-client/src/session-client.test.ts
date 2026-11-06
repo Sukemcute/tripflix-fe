@@ -213,3 +213,23 @@ describe('Google sign-in', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('sendRegistrationCode', () => {
+  it('returns the resend wait; an older backend without it does not block resending', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(202, { registrationId: 'reg-1', resendAfterSeconds: 60 }))
+      .mockResolvedValueOnce(json(202, { registrationId: 'reg-2' }))
+      .mockResolvedValueOnce(json(202, { registrationId: 'reg-3', resendAfterSeconds: 60 }));
+    const session = new SessionClient({ baseUrl: 'http://api/', client: 'web' });
+    const input = { email: user.email, password: 'example-password' };
+    expect(await session.sendRegistrationCode(input)).toEqual({
+      registrationId: 'reg-1',
+      resendAfterSeconds: 60,
+    });
+    expect(await session.sendRegistrationCode(input)).toEqual({
+      registrationId: 'reg-2',
+      resendAfterSeconds: 0,
+    });
+    expect(await session.requestRegistrationCode(input)).toBe('reg-3');
+  });
+});

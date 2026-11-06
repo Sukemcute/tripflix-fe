@@ -4,6 +4,7 @@ const { mkdir, writeFile } = require('node:fs/promises');
 const { join } = require('node:path');
 const { tmpdir } = require('node:os');
 const runtime = process.env.PLAYWRIGHT_PACKAGE || 'playwright';
+const { registerAccount } = require('../../fixtures/register-account.cjs');
 const { chromium } = require(runtime);
 const { expect } = require(runtime + '/test');
 const { CommercePage } = require('../../pages/commerce-page.cjs');
@@ -47,7 +48,7 @@ function record(name) {
   try {
     const email = `return-ui-${Date.now()}@example.test`,
       password = `Return-${crypto.randomUUID()}!`;
-    await api('/api/auth/register', 'POST', { email, password, displayName: 'Payment return UI test' });
+    await registerAccount(api, { email, password, displayName: 'Payment return UI test' });
     token = (await api('/api/auth/login', 'POST', { email, password })).accessToken;
     const checkIn = dateAfter(16),
       checkOut = dateAfter(18);

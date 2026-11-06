@@ -13,15 +13,6 @@ const formatDate = (date: string) => date.split('-').reverse().join('/');
 /** Chuyến đi của tôi: mọi đơn của người đang đăng nhập, mới đặt trước. */
 export function BookingsScreen() {
   const { user, isReady } = useApiSession();
-  const query = useInfiniteQuery({
-    queryKey: ['commerce', 'trips', user?.id],
-    enabled: isReady && !!user,
-    initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam, signal }) => commerceApi.listTrips(pageParam, signal),
-    getNextPageParam: (page) => page.nextCursor ?? undefined,
-  });
-  const trips = query.data?.pages.flatMap((page) => page.trips) ?? [];
-
   return (
     <main className={`ota-container ${styles.page}`}>
       <h1 className={styles.title}>{copy.booked}</h1>
@@ -33,12 +24,42 @@ export function BookingsScreen() {
           </Link>
         </div>
       )}
+      <BookingsList />
+    </main>
+  );
+}
+
+/** Danh sách chuyến đã đặt, không có khung trang: dùng ở /bookings và mục "Chuyến đã đặt" của /account. */
+export function BookingsList() {
+  const { user, isReady } = useApiSession();
+  const query = useInfiniteQuery({
+    queryKey: ['commerce', 'trips', user?.id],
+    enabled: isReady && !!user,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }) => commerceApi.listTrips(pageParam, signal),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+  });
+  const trips = query.data?.pages.flatMap((page) => page.trips) ?? [];
+
+  return (
+    <>
       {query.isPending && !!user && <p>{vi.api.loading}</p>}
       <CheckoutError error={query.error} retry={() => void query.refetch()} />
       {query.isSuccess && !trips.length && (
-        <div className={styles.card}>
-          <p>{copy.noTrips}</p>
-          <Link className="primary-button" href="/search">
+        <div className="account-empty">
+          <span className="account-empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="28" height="28">
+              <rect x="3" y="7" width="18" height="13" rx="2" />
+              <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18" />
+            </svg>
+          </span>
+          <h3>{copy.noTrips}</h3>
+          <p>{copy.noTripsHint}</p>
+          <Link className="primary-button account-empty-action" href="/search">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
             {copy.findHotel}
           </Link>
         </div>
@@ -81,6 +102,6 @@ export function BookingsScreen() {
           {query.isFetchingNextPage ? vi.api.loading : vi.api.next}
         </button>
       )}
-    </main>
+    </>
   );
 }

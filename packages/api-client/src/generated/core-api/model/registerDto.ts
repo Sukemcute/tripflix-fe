@@ -8,10 +8,13 @@
 export interface RegisterDto {
   email: string;
   /**
-   * @minLength 8
+   * @minLength 12
    * @maxLength 128
    */
   password: string;
   /** @maxLength 50 */
   displayName: string;
+  registrationId: string;
+  /** @pattern ^[0-9]{8}$ */
+  code: string;
 }

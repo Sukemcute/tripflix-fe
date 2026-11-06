@@ -6,11 +6,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
+import { BookingsList } from '@/features/checkout/bookings-screen';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { PublicPosts } from '@/features/social/live-posts';
 import { PostComposer } from '@/features/social/post-composer';
 import { ProfileInfoCard } from './account-profile';
 import { AccountSecurity } from './account-security';
+import { EmailVerificationNotice } from './email-verification-notice';
 import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
 import { ADMIN_URL, getInitial, isStaffRole } from './account-helpers';
 
@@ -91,17 +93,25 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
           <ApiErrorNotice error={logout.error} />
         </aside>
         <div className="profile-main">
+          {user.emailVerified === false && <EmailVerificationNotice key={`verify-${user.id}`} />}
           {tab === 'profile' ? (
             <ProfileInfoCard key={user.id} userId={user.id} />
           ) : tab === 'security' ? (
             <AccountSecurity key={user.id} userId={user.id} />
           ) : tab === 'create' ? (
             <PostComposer />
+          ) : tab === 'bookings' ? (
+            <AccountSection id="account-bookings" title={TAB_LABELS[tab]} hint={vi.commerce.bookedHint}>
+              <BookingsList />
+            </AccountSection>
           ) : (
-            <section className="profile-card" aria-label={TAB_LABELS[tab]}>
-              <h2>{TAB_LABELS[tab]}</h2>
+            <AccountSection
+              id={`account-${tab}`}
+              title={TAB_LABELS[tab]}
+              hint={tab === 'mine' ? vi.api.myPostsHint : vi.api.bookmarksHint}
+            >
               <PublicPosts kind={tab} />
-            </section>
+            </AccountSection>
           )}
         </div>
       </div>
@@ -109,9 +119,35 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
   );
 }
 
+/** Khung một mục trong trang tài khoản, cùng kiểu với "Thông tin cá nhân": tiêu đề, dòng mô tả, rồi nội dung. */
+function AccountSection({
+  id,
+  title,
+  hint,
+  children,
+}: {
+  id: string;
+  title: string;
+  hint: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="profile-card" aria-labelledby={`${id}-title`}>
+      <header className="profile-card-header">
+        <div>
+          <h2 id={`${id}-title`}>{title}</h2>
+          <p className="auth-hint">{hint}</p>
+        </div>
+      </header>
+      {children}
+    </section>
+  );
+}
+
 const TAB_LABELS: Record<AccountTab, string> = {
   profile: vi.api.profileInfoTitle,
   security: vi.api.accountNavSecurity,
+  bookings: vi.commerce.booked,
   mine: vi.api.myPosts,
   bookmarks: vi.api.bookmarks,
   create: vi.api.create,
@@ -128,6 +164,12 @@ const NAV_ICONS: Record<AccountTab | 'admin' | 'logout', ReactNode> = {
     <>
       <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z" />
       <path d="m9 12 2 2 4-4" />
+    </>
+  ),
+  bookings: (
+    <>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18" />
     </>
   ),
   mine: (

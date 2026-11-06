@@ -1,5 +1,17 @@
-import { HttpError, useApiSession } from '@tripflix/api-client';
-import { vi } from '@tripflix/i18n';
+import {
+  getAuthErrorKind,
+  getRegistrationFieldError,
+  getRetryAfterSeconds,
+  HttpError,
+  useApiSession,
+  useResendCooldown,
+} from '@tripflix/api-client';
+import {
+  canSendRegistrationCode,
+  getRegistrationPasswordStrength,
+  REGISTRATION_CODE_PATTERN,
+} from '@tripflix/app-core';
+import { t, vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, spacing as s } from '@tripflix/tokens';
 import { useMutation } from '@tanstack/react-query';
 import { Image } from 'expo-image';
@@ -27,10 +39,34 @@ export function LiveLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [code, setCode] = useState('');
+  const [registrationId, setRegistrationId] = useState<string>();
+  const strength = getRegistrationPasswordStrength(password);
+  const cooldown = useResendCooldown();
+  const requestCode = useMutation({
+    mutationFn: () => session.sendRegistrationCode({ email: email.trim(), password }),
+    onSuccess: ({ registrationId: id, resendAfterSeconds }) => {
+      setRegistrationId(id);
+      setCode('');
+      cooldown.start(resendAfterSeconds);
+    },
+    onError: (err) => {
+      const seconds = getRetryAfterSeconds(err);
+      if (seconds) cooldown.start(seconds);
+    },
+  });
+  const canSendCode = canSendRegistrationCode({ displayName, email, password });
+  const canRegister = canSendCode && !!registrationId && REGISTRATION_CODE_PATTERN.test(code);
   const mutation = useMutation({
     mutationFn: async () => {
       if (isRegistering)
-        await session.register({ email: email.trim(), password, displayName: displayName.trim() });
+        await session.register({
+          email: email.trim(),
+          password,
+          displayName: displayName.trim(),
+          registrationId: registrationId ?? '',
+          code,
+        });
       else await session.login({ email: email.trim(), password });
     },
     onSuccess: () => {
@@ -44,6 +80,18 @@ export function LiveLoginScreen() {
       router.dismissTo(path as Href);
     },
   });
+  const isBusy = mutation.isPending || requestCode.isPending;
+  const registrationError = (error: unknown) => {
+    const fieldError = getRegistrationFieldError(error);
+    const kind = getAuthErrorKind(error, 'register');
+    return fieldError ?? (kind ? vi.api[kind] : undefined);
+  };
+  const formError = isRegistering ? registrationError(mutation.error) : undefined;
+  // 429 vì bấm quá sớm: nút đã đếm ngược, thay câu lỗi chung bằng số giây còn lại.
+  const sendError =
+    cooldown.isWaiting && getRetryAfterSeconds(requestCode.error) !== undefined
+      ? t('api.registrationCodeTooSoon', { seconds: cooldown.secondsLeft })
+      : registrationError(requestCode.error);
   return (
     <Screen header={null} padded={false}>
       <View style={styles.hero}>
@@ -82,7 +130,15 @@ export function LiveLoginScreen() {
         <Field
           label={vi.api.email}
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(value) => {
+            setEmail(value);
+            setCode('');
+            setRegistrationId(undefined);
+            requestCode.reset();
+            cooldown.clear();
+            mutation.reset();
+          }}
+          editable={!isBusy}
           keyboardType="email-address"
           autoCapitalize="none"
           autoComplete="email"
@@ -92,12 +148,55 @@ export function LiveLoginScreen() {
           label={vi.api.password}
           value={password}
           onChangeText={setPassword}
+          editable={!isBusy}
           secureTextEntry
           autoComplete={isRegistering ? 'new-password' : 'current-password'}
           maxLength={128}
         />
-        {isRegistering && <Notice>{vi.api.registerHint}</Notice>}
-        {mutation.error instanceof HttpError && mutation.error.status === 401 ? (
+        {isRegistering && (
+          <>
+            <Notice tone={password && strength !== 'passwordStrong' ? 'error' : 'info'}>
+              {password ? vi.api[strength] : vi.api.registerHint}
+            </Notice>
+            <Field
+              label={vi.api.registrationCodeLabel}
+              value={code}
+              onChangeText={(value) => setCode(value.replace(/[^0-9]/g, ''))}
+              keyboardType="number-pad"
+              autoComplete="one-time-code"
+              maxLength={8}
+              editable={!isBusy && !!registrationId}
+            />
+            <Button
+              tone="text"
+              disabled={!isReady || isBusy || cooldown.isWaiting || !canSendCode}
+              onPress={() => {
+                mutation.reset();
+                requestCode.mutate();
+              }}
+            >
+              {requestCode.isPending
+                ? vi.api.sending
+                : cooldown.isWaiting
+                  ? t('api.registrationResendIn', { seconds: cooldown.secondsLeft })
+                  : registrationId
+                    ? vi.api.registrationResendCode
+                    : vi.api.registrationSendCode}
+            </Button>
+            {!displayName.trim() && strength === 'passwordStrong' && !!email.trim() && (
+              <Notice>{vi.api.registrationNeedsName}</Notice>
+            )}
+            {registrationId && <Notice>{vi.api.registrationCodeSent}</Notice>}
+            {sendError ? (
+              <Notice tone="error">{sendError}</Notice>
+            ) : (
+              <ApiErrorNotice error={requestCode.error} />
+            )}
+          </>
+        )}
+        {formError ? (
+          <Notice tone="error">{formError}</Notice>
+        ) : mutation.error instanceof HttpError && mutation.error.status === 401 ? (
           <Notice tone="error">{vi.api.wrongCredentials}</Notice>
         ) : (
           <ApiErrorNotice error={mutation.error} />
@@ -106,10 +205,10 @@ export function LiveLoginScreen() {
           icon="arrow-forward"
           disabled={
             !isReady ||
-            mutation.isPending ||
+            isBusy ||
             !email.trim() ||
             !password ||
-            (isRegistering && !displayName.trim())
+            (isRegistering && (!displayName.trim() || !canRegister))
           }
           onPress={() => mutation.mutate()}
         >
@@ -117,10 +216,14 @@ export function LiveLoginScreen() {
         </Button>
         <Button
           tone="text"
-          disabled={mutation.isPending}
+          disabled={isBusy}
           onPress={() => {
             setRegistering(!isRegistering);
             mutation.reset();
+            requestCode.reset();
+            cooldown.clear();
+            setCode('');
+            setRegistrationId(undefined);
           }}
         >
           {isRegistering ? vi.api.haveAccount : vi.api.noAccount}

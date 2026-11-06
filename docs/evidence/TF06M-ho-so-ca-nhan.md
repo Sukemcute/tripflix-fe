@@ -57,3 +57,13 @@ Lỗi tìm ra khi kiểm và đã sửa: ở 390px hàng menu cuộn ngang kéo 
 ## Ảnh hưởng tới phần của người khác
 
 - Có: `apps/web/src/features/auth/live-account.tsx`, `account-security.tsx`, `account-tabs.ts`, `apps/web/src/app/globals.css`, `packages/i18n`, `packages/api-client/src/generated` (sinh tự động), `tests/e2e/api-integration.cjs` (chủ: Thành). Đã báo Thành trước khi làm.
+
+## Cập nhật: Chuyến đã đặt trong trang tài khoản, khung chung cho các mục
+
+- Nhánh `dung/TF06M-chuyen-da-dat-trong-tai-khoan` · 2026-11-06
+- Thêm mục "Chuyến đã đặt" ở cột trái `/account`, ngay dưới "Bảo mật & thiết bị", mở bằng `?tab=bookings`. Trong menu tài khoản trên header, mục "Chuyến đã đặt" trỏ về `/account?tab=bookings`. Trang `/bookings` vẫn giữ nguyên.
+- Tách `BookingsList` khỏi `BookingsScreen` để dùng ở cả `/bookings` và trang tài khoản. Cách tải đơn, phân trang và hiển thị không đổi.
+- Thay khung báo "Bạn chưa có chuyến đi nào." bằng khối trạng thái trống có icon, dòng mô tả và nút "Tìm khách sạn" vừa với nội dung.
+- Các mục Bảo mật & thiết bị, Chuyến đã đặt, Bài đăng của tôi và Bài đã lưu dùng chung khung với "Thông tin cá nhân": thẻ `profile-card` và phần đầu `profile-card-header` có tiêu đề cùng dòng mô tả. Thêm `AccountSection` trong `live-account.tsx`.
+- Kiểm tra: `pnpm turbo run lint typecheck test --filter=@tripflix/web --filter=@tripflix/i18n`, 5/5 task pass, i18n 2/2 test. Web dev server trả 200 cho `/account?tab=bookings|security|mine` và `/bookings`. Chưa chụp ảnh giao diện, chưa có test giao diện vì web chưa có test runner.
+- Ảnh hưởng: `apps/web/src/features/checkout/bookings-screen.tsx` và link trong `header-account.tsx` (Thắng). Các file `apps/web` khác thuộc phần của Thành. Cần báo Thắng và Thành trước khi mở PR.

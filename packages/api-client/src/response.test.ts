@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { HttpError } from './http';
-import { getAuthErrorKind } from './response';
+import { getApiErrorKind, getAuthErrorKind, getRetryAfterSeconds } from './response';
+
+describe('getApiErrorKind', () => {
+  it('distinguishes unverified email from other forbidden responses', () => {
+    expect(getApiErrorKind(new HttpError(403, { code: 'email_unverified' }))).toBe('emailUnverified');
+    expect(getApiErrorKind(new HttpError(403, { code: 'other' }))).toBe('forbidden');
+  });
+});
 
 const fieldErrors = {
   message: 'Dữ liệu gửi lên không hợp lệ',
@@ -40,5 +47,15 @@ describe('getAuthErrorKind', () => {
     expect(getAuthErrorKind(new HttpError(500, {}), 'register')).toBeNull();
     expect(getAuthErrorKind(new TypeError('offline'), 'login')).toBeNull();
     expect(getAuthErrorKind(new HttpError(202, {}), 'forgotPassword')).toBeNull();
+  });
+});
+
+describe('getRetryAfterSeconds', () => {
+  it('reads the wait from a 429 body only', () => {
+    expect(getRetryAfterSeconds(new HttpError(429, { retryAfterSeconds: 42 }))).toBe(42);
+    expect(getRetryAfterSeconds(new HttpError(429, { retryAfterSeconds: 1.2 }))).toBe(2);
+    expect(getRetryAfterSeconds(new HttpError(429, { message: 'chậm lại' }))).toBeUndefined();
+    expect(getRetryAfterSeconds(new HttpError(400, { retryAfterSeconds: 42 }))).toBeUndefined();
+    expect(getRetryAfterSeconds(new Error('x'))).toBeUndefined();
   });
 });
