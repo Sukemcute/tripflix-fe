@@ -6,7 +6,11 @@ import {
   useApiSession,
   useResendCooldown,
 } from '@tripflix/api-client';
-import { getRegistrationPasswordStrength, REGISTRATION_CODE_PATTERN } from '@tripflix/app-core';
+import {
+  canSendRegistrationCode,
+  getRegistrationPasswordStrength,
+  REGISTRATION_CODE_PATTERN,
+} from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, spacing as s } from '@tripflix/tokens';
 import { useMutation } from '@tanstack/react-query';
@@ -51,8 +55,8 @@ export function LiveLoginScreen() {
       if (seconds) cooldown.start(seconds);
     },
   });
-  const canRegister =
-    strength === 'passwordStrong' && !!registrationId && REGISTRATION_CODE_PATTERN.test(code);
+  const canSendCode = canSendRegistrationCode({ displayName, email, password });
+  const canRegister = canSendCode && !!registrationId && REGISTRATION_CODE_PATTERN.test(code);
   const mutation = useMutation({
     mutationFn: async () => {
       if (isRegistering)
@@ -165,9 +169,7 @@ export function LiveLoginScreen() {
             />
             <Button
               tone="text"
-              disabled={
-                !isReady || isBusy || cooldown.isWaiting || strength !== 'passwordStrong' || !email.trim()
-              }
+              disabled={!isReady || isBusy || cooldown.isWaiting || !canSendCode}
               onPress={() => {
                 mutation.reset();
                 requestCode.mutate();
@@ -181,6 +183,9 @@ export function LiveLoginScreen() {
                     ? vi.api.registrationResendCode
                     : vi.api.registrationSendCode}
             </Button>
+            {!displayName.trim() && strength === 'passwordStrong' && !!email.trim() && (
+              <Notice>{vi.api.registrationNeedsName}</Notice>
+            )}
             {registrationId && <Notice>{vi.api.registrationCodeSent}</Notice>}
             {sendError ? (
               <Notice tone="error">{sendError}</Notice>

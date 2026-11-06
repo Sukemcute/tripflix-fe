@@ -41,6 +41,7 @@ export const api = {
   password: 'Mật khẩu',
   displayName: 'Tên hiển thị',
   registerHint: 'Dùng mật khẩu từ 12 đến 128 ký tự và tránh các mật khẩu phổ biến.',
+  registrationNeedsName: 'Nhập tên hiển thị để gửi mã xác thực.',
   passwordShort: 'Mật khẩu yếu. Cần ít nhất 12 ký tự.',
   passwordWeak: 'Mật khẩu yếu. Hãy tránh mật khẩu dễ đoán hoặc lặp lại.',
   passwordStrong: 'Mật khẩu mạnh, đạt yêu cầu đăng ký.',

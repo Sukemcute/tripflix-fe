@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRegistrationPasswordStrength } from './registration';
+import { canSendRegistrationCode, getRegistrationPasswordStrength } from './registration';
 
 describe('registration password feedback', () => {
   it.each([
@@ -10,5 +10,17 @@ describe('registration password feedback', () => {
     ['Mua dong tren nui', 'passwordStrong'],
   ])('classifies %s as %s', (password, strength) => {
     expect(getRegistrationPasswordStrength(password)).toBe(strength);
+  });
+});
+
+describe('canSendRegistrationCode', () => {
+  const ready = { displayName: 'Lan', email: 'lan@example.com', password: 'Mua dong tren nui' };
+
+  it('needs a display name, an email and a strong password', () => {
+    expect(canSendRegistrationCode(ready)).toBe(true);
+    expect(canSendRegistrationCode({ ...ready, displayName: '' })).toBe(false);
+    expect(canSendRegistrationCode({ ...ready, displayName: '   ' })).toBe(false);
+    expect(canSendRegistrationCode({ ...ready, email: ' ' })).toBe(false);
+    expect(canSendRegistrationCode({ ...ready, password: 'Password123456' })).toBe(false);
   });
 });

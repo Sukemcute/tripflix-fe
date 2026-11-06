@@ -1111,11 +1111,13 @@ h3 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
   gap: 56px;
-  align-items: center;
+  /* Bám đầu trang: form dài ra khi hiện thêm dòng nhắc thì cột trái không bị đẩy theo. */
+  align-items: start;
   padding-block: 48px 72px;
 }
 .auth-story {
-  position: relative;
+  position: sticky;
+  top: 24px;
   padding: 40px;
   border-radius: 24px;
   background: var(--color-warm-mist);
@@ -1213,12 +1215,25 @@ h3 {
   padding: 14px 16px;
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  background: var(--color-warm-mist);
+  background: var(--color-background);
+  transition:
+    border-color 0.18s,
+    box-shadow 0.18s;
 }
 .auth-field input:focus {
-  border-color: var(--color-teal-ink);
+  border-color: var(--color-coral-ink);
   background: var(--color-background);
   box-shadow: none;
+}
+/* Trình duyệt tự điền (autofill) tô nền xanh: giữ nền trắng như các ô khác. */
+.auth-field input:-webkit-autofill,
+.auth-field input:-webkit-autofill:hover,
+.auth-field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-ink);
+  box-shadow: 0 0 0 1000px var(--color-background) inset;
+}
+.auth-field input[aria-invalid='true'] {
+  border-color: var(--color-coral-ink);
 }
 .auth-password {
   position: relative;
@@ -1263,6 +1278,27 @@ h3 {
 }
 .auth-submit {
   width: 100%;
+}
+.auth-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-warning);
+  border-radius: 12px;
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.auth-warning svg {
+  flex: none;
+  fill: none;
+  stroke: var(--color-coral-ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .auth-error,
 .auth-success {
