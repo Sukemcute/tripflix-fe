@@ -705,3 +705,150 @@
     transition: none;
   }
 }
+
+/* 3 thẻ khách sạn xoè ra như quạt tay khi cuộn tới: bắt đầu nhỏ, chồng ở giữa, nghiêng quanh điểm dưới thẻ,
+   rồi phóng to và bung về chỗ theo nhịp cuộn (scroll-driven; trình duyệt chưa hỗ trợ thì thẻ hiện bình thường). */
+/* Desktop: 3 thẻ bằng nhau khi đã xoè hết. */
+@media (min-width: 641px) {
+  .stayGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .stayGrid > .hotelCard {
+      transform-origin: 50% 140%;
+      animation: stay-fan-out linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 45%;
+    }
+    .stayGrid > .hotelCard:nth-child(1) {
+      --fan-x: calc(100% + 16px);
+      --fan-y: 36px;
+      --fan-rotate: -9deg;
+      --fan-scale: 0.6;
+    }
+    /* Thẻ giữa trồi lên từ dưới, nằm trên hai thẻ bên. */
+    .stayGrid > .hotelCard:nth-child(2) {
+      --fan-x: 0px;
+      --fan-y: 90px;
+      --fan-rotate: 0deg;
+      --fan-scale: 0.9;
+      z-index: 1;
+    }
+    .stayGrid > .hotelCard:nth-child(3) {
+      --fan-x: calc(-100% - 16px);
+      --fan-y: 36px;
+      --fan-rotate: 9deg;
+      --fan-scale: 0.6;
+    }
+  }
+}
+@keyframes stay-fan-out {
+  /* Phóng từ nhỏ ra lớn, hiện dần. */
+  from {
+    opacity: 0.35;
+    translate: var(--fan-x, 0px) var(--fan-y, 36px);
+    rotate: var(--fan-rotate, 0deg);
+    /* Lúc bung: hai thẻ bên nhỏ hơn thẻ giữa; xoè hết thì cả ba về 1. */
+    scale: var(--fan-scale, 0.6);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+}
+
+/* Thẻ bài viết chạy nối đuôi từ phải sang trái như đoàn tàu, cuộn tới đâu chạy tới đó (scroll-driven).
+   Mốc là tiến độ cuộn của hàng thẻ (--story-row), tính bằng px nên thẻ cuối luôn tới nơi kể cả khi mục
+   nằm gần cuối trang. Quán tính: lúc chạy ngửa ra sau,
+   lúc phanh chúi về trước, trượt quá rồi lùi về; mỗi thẻ kéo vệt khói mờ.
+   Màn hẹp, giảm chuyển động hoặc trình duyệt chưa hỗ trợ: thẻ hiện bình thường. */
+@media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .stories .previewGrid {
+      view-timeline: --story-row block;
+    }
+    /* Cắt ngang ở body (không ở hàng thẻ) để toa còn ngoài mép phải không tạo thanh cuộn ngang,
+       mà thẻ đầu vẫn trượt quá và chúi về trước được mà không bị cắt. */
+    :global(body):has(.stories) {
+      overflow-x: clip;
+    }
+    .stories .story {
+      overflow: visible;
+      transform-origin: 50% 100%;
+      animation: story-train-in linear both;
+      animation-timeline: --story-row;
+    }
+    /* Mốc là chính hàng thẻ, khoảng cuộn tính bằng px (cover 0 = mép trên hàng thẻ chạm đáy màn hình):
+       toa 1 chỉ bắt đầu khi hàng thẻ đã ló lên 80px; mỗi toa chạy ~360px cuộn, nối đuôi nhau.
+       Toa cuối xong ở 580px; dưới hàng thẻ còn hơn 1000px để cuộn nên luôn tới nơi. */
+    .stories .story:nth-child(1) {
+      animation-range: cover 80px cover 420px;
+    }
+    .stories .story:nth-child(2) {
+      animation-range: cover 150px cover 500px;
+    }
+    .stories .story:nth-child(3) {
+      animation-range: cover 220px cover 580px;
+    }
+    .stories .story::before {
+      content: '';
+      position: absolute;
+      top: 18%;
+      bottom: 18%;
+      left: calc(100% - 12px);
+      z-index: -1;
+      width: 160px;
+      border-radius: 50%;
+      background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--color-teal-soft) 90%, transparent),
+        color-mix(in srgb, var(--color-warm-mist) 70%, transparent) 55%,
+        transparent
+      );
+      filter: blur(10px);
+      transform-origin: left center;
+      animation: story-train-smoke linear both;
+      animation-timeline: --story-row;
+      animation-range: inherit;
+      pointer-events: none;
+    }
+  }
+}
+/* transform (không dùng translate) để không đè hiệu ứng nhích lên khi rê chuột. Nghiêng quanh mép dưới thẻ. */
+@keyframes story-train-in {
+  0% {
+    opacity: 0;
+    transform: translateX(70vw) skewX(-9deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  62% {
+    transform: translateX(-16px) skewX(7deg);
+  }
+  82% {
+    transform: translateX(5px) skewX(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes story-train-smoke {
+  0% {
+    opacity: 0.9;
+    scale: 1 1;
+  }
+  60% {
+    opacity: 0.4;
+    scale: 1.9 1.25;
+  }
+  100% {
+    opacity: 0;
+    scale: 2.4 1.4;
+  }
+}
