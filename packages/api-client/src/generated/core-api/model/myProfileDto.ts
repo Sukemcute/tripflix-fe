@@ -13,6 +13,8 @@ export interface MyProfileDto {
   displayName: string;
   role: MyProfileDtoRole;
   createdAt: string;
+  /** Đã xác thực email (TF05D). false: chưa đăng bài, bình luận được; gửi lại link bằng POST /auth/email/verification */
+  emailVerified: boolean;
   /** @nullable */
   phone: string | null;
   /** @nullable */

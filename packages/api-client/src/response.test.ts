@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { HttpError } from './http';
-import { getAuthErrorKind } from './response';
+import { getApiErrorKind, getAuthErrorKind } from './response';
+
+describe('getApiErrorKind', () => {
+  it('distinguishes unverified email from other forbidden responses', () => {
+    expect(getApiErrorKind(new HttpError(403, { code: 'email_unverified' }))).toBe('emailUnverified');
+    expect(getApiErrorKind(new HttpError(403, { code: 'other' }))).toBe('forbidden');
+  });
+});
 
 const fieldErrors = {
   message: 'Dữ liệu gửi lên không hợp lệ',

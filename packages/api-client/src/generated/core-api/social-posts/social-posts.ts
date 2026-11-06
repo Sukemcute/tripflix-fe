@@ -57,10 +57,20 @@ export type postsControllerCreateDraftResponse201 = {
   status: 201;
 };
 
+export type postsControllerCreateDraftResponse403 = {
+  data: void;
+  status: 403;
+};
+
 export type postsControllerCreateDraftResponseSuccess = postsControllerCreateDraftResponse201 & {
   headers: Headers;
 };
-export type postsControllerCreateDraftResponse = postsControllerCreateDraftResponseSuccess;
+export type postsControllerCreateDraftResponseError = postsControllerCreateDraftResponse403 & {
+  headers: Headers;
+};
+
+export type postsControllerCreateDraftResponse =
+  postsControllerCreateDraftResponseSuccess | postsControllerCreateDraftResponseError;
 
 export const getPostsControllerCreateDraftUrl = () => {
   return `/api/v1/posts`;
@@ -99,7 +109,7 @@ export const postsControllerCreateDraft = async (
 
 export const getPostsControllerCreateDraftMutationKey = () => ['postsControllerCreateDraft'] as const;
 
-export const getPostsControllerCreateDraftMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+export const getPostsControllerCreateDraftMutationOptions = <TError = void, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof postsControllerCreateDraft>>,
     TError,
@@ -136,13 +146,13 @@ export type PostsControllerCreateDraftMutationResult = NonNullable<
   Awaited<ReturnType<typeof postsControllerCreateDraft>>
 >;
 export type PostsControllerCreateDraftMutationBody = CreatePostDto;
-export type PostsControllerCreateDraftMutationError = unknown;
+export type PostsControllerCreateDraftMutationError = void;
 export type PostsControllerCreateDraftMutationVariables = { data: CreatePostDto };
 
 /**
  * @summary Tạo bản nháp bài đăng (FR1)
  */
-export const usePostsControllerCreateDraft = <TError = unknown, TContext = unknown>(
+export const usePostsControllerCreateDraft = <TError = void, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof postsControllerCreateDraft>>,
@@ -803,12 +813,22 @@ export type postsControllerPublishPostResponse201 = {
   status: 201;
 };
 
+export type postsControllerPublishPostResponse403 = {
+  data: void;
+  status: 403;
+};
+
 export type postsControllerPublishPostResponseSuccess = (
   postsControllerPublishPostResponse200 | postsControllerPublishPostResponse201
 ) & {
   headers: Headers;
 };
-export type postsControllerPublishPostResponse = postsControllerPublishPostResponseSuccess;
+export type postsControllerPublishPostResponseError = postsControllerPublishPostResponse403 & {
+  headers: Headers;
+};
+
+export type postsControllerPublishPostResponse =
+  postsControllerPublishPostResponseSuccess | postsControllerPublishPostResponseError;
 
 export const getPostsControllerPublishPostUrl = (id: string) => {
   return `/api/v1/posts/${id}/publish`;
@@ -829,7 +849,7 @@ export const postsControllerPublishPost = async (
 
 export const getPostsControllerPublishPostMutationKey = () => ['postsControllerPublishPost'] as const;
 
-export const getPostsControllerPublishPostMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+export const getPostsControllerPublishPostMutationOptions = <TError = void, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof postsControllerPublishPost>>,
     TError,
@@ -866,13 +886,13 @@ export type PostsControllerPublishPostMutationResult = NonNullable<
   Awaited<ReturnType<typeof postsControllerPublishPost>>
 >;
 
-export type PostsControllerPublishPostMutationError = unknown;
+export type PostsControllerPublishPostMutationError = void;
 export type PostsControllerPublishPostMutationVariables = { id: string };
 
 /**
  * @summary Xuất bản bản nháp thành bài đăng công khai (FR2, FR3)
  */
-export const usePostsControllerPublishPost = <TError = unknown, TContext = unknown>(
+export const usePostsControllerPublishPost = <TError = void, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof postsControllerPublishPost>>,

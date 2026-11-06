@@ -2,9 +2,9 @@ import * as auth from './generated/core-api/auth/auth';
 import type {
   GoogleLoginDto,
   LoginDto,
+  MyProfileDto,
   RegisterDto,
   TokenPairDto,
-  UserDto,
 } from './generated/core-api/model';
 import { configureHttp, HttpError, type HttpRequestOptions } from './http';
 import { readEntity } from './response';
@@ -20,7 +20,7 @@ export interface SessionOptions {
   storage?: TokenStorage;
 }
 export interface SessionState {
-  user: UserDto | null;
+  user: MyProfileDto | null;
   isReady: boolean;
   error: unknown;
 }
@@ -154,12 +154,16 @@ export class SessionClient {
     await auth.authControllerRegister(credentials, this.authOptions);
     await this.login(credentials);
   }
-  async reloadUser(): Promise<UserDto> {
+  async reloadUser(): Promise<MyProfileDto> {
     const version = this.version;
     const response = await auth.authControllerGetMe();
     const user = readEntity(response.data, ['id', 'email', 'displayName', 'role']);
     if (version === this.version) this.publish({ user, error: null });
     return user;
+  }
+
+  async refreshUser(): Promise<void> {
+    if (await this.refresh()) await this.reloadUser();
   }
   async logout(): Promise<void> {
     await auth.authControllerLogout({

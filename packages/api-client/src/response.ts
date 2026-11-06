@@ -1,7 +1,15 @@
 import { HttpError } from './http';
 
 type ApiErrorKind =
-  'network' | 'expired' | 'forbidden' | 'missing' | 'conflict' | 'rateLimit' | 'invalid' | 'error';
+  | 'network'
+  | 'expired'
+  | 'forbidden'
+  | 'emailUnverified'
+  | 'missing'
+  | 'conflict'
+  | 'rateLimit'
+  | 'invalid'
+  | 'error';
 const HTTP_ERROR_KINDS: Partial<Record<number, ApiErrorKind>> = {
   400: 'invalid',
   401: 'expired',
@@ -15,6 +23,8 @@ const HTTP_ERROR_KINDS: Partial<Record<number, ApiErrorKind>> = {
 export function getApiErrorKind(error: unknown): ApiErrorKind {
   if (error instanceof TypeError) return 'network';
   if (!(error instanceof HttpError)) return 'error';
+  const body = error.body as { code?: unknown } | null;
+  if (error.status === 403 && body?.code === 'email_unverified') return 'emailUnverified';
   return HTTP_ERROR_KINDS[error.status] ?? 'error';
 }
 
