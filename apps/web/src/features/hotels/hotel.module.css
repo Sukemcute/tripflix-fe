@@ -119,22 +119,23 @@
   font-size: 12px;
 }
 .photoDialog {
-  --viewer-line: color-mix(in srgb, var(--color-background) 17%, transparent);
-  --viewer-padding: clamp(0.75rem, 2vw, 1.25rem);
+  --viewer-line: var(--color-border);
+  --viewer-padding: clamp(0.75rem, 2vw, 1.125rem);
   inset: 0;
-  width: min(72rem, calc(100% - 2 * var(--viewer-padding)));
-  height: min(50rem, calc(100dvh - 2 * var(--viewer-padding)));
+  width: min(60rem, calc(100% - 2 * var(--viewer-padding)));
+  height: min(44rem, calc(100dvh - 2 * var(--viewer-padding)));
   margin: auto;
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--viewer-line);
-  border-radius: 20px;
-  background: var(--color-ink);
-  color: var(--color-background);
-  box-shadow: 0 24px 80px var(--color-overlay-heavy);
+  border-radius: 18px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  box-shadow: 0 24px 64px var(--color-overlay);
 }
 .photoDialog::backdrop {
-  background: var(--color-overlay-heavy);
+  background: var(--color-overlay);
+  backdrop-filter: blur(2px);
 }
 :global(html):has(.photoDialog[open]) {
   overflow: hidden;
@@ -162,7 +163,7 @@
 .photoHeader output {
   display: block;
   margin-top: 2px;
-  color: var(--color-border);
+  color: var(--color-text-muted);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
@@ -172,7 +173,7 @@
   place-items: center;
   overflow: hidden;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--color-ink) 72%, black);
+  background: var(--color-surface);
 }
 .photoStage > img {
   display: block;
@@ -184,7 +185,7 @@
 .photoStage .missingPhoto {
   min-height: 0;
   background: transparent;
-  color: var(--color-border);
+  color: var(--color-text-muted);
 }
 .photoNavigation {
   display: grid;
@@ -195,21 +196,24 @@
 }
 .photoControl {
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   place-items: center;
   border: 1px solid var(--viewer-line);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--color-background) 7%, transparent);
+  background: var(--color-background);
   color: inherit;
-  transition: background-color 180ms;
+  transition:
+    background-color 180ms,
+    border-color 180ms;
 }
 .photoControl svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 .photoControl:hover {
-  background: var(--viewer-line);
+  background: var(--color-surface);
+  border-color: var(--color-teal-ink);
 }
 .photoThumbnails {
   display: flex;
@@ -218,7 +222,6 @@
   overflow-x: auto;
   padding: 4px;
   scrollbar-width: thin;
-  color-scheme: dark;
 }
 .photoThumbnails button {
   position: relative;
@@ -229,16 +232,16 @@
   overflow: hidden;
   border: 2px solid transparent;
   border-radius: 8px;
-  background: var(--viewer-line);
+  background: var(--color-surface);
   font-size: 0.75rem;
-  opacity: 0.72;
+  opacity: 0.6;
   transition: opacity 180ms;
 }
 .photoThumbnails button:is(:hover, :focus-visible, [aria-current]) {
   opacity: 1;
 }
 .photoThumbnails button[aria-current] {
-  border-color: var(--color-teal-soft);
+  border-color: var(--color-coral-ink);
 }
 .photoThumbnails img {
   position: absolute;
@@ -248,7 +251,7 @@
   object-fit: cover;
 }
 .photoDialog button:focus-visible {
-  outline: 2px solid var(--color-teal-soft);
+  outline: 2px solid var(--color-teal-ink);
   outline-offset: 2px;
 }
 .sectionNav {
