@@ -22,4 +22,14 @@ export interface FlightFareQuoteDto {
    * @nullable
    */
   totalPrice: number | null;
+  /**
+   * Hành lý xách tay (kg/khách)
+   * @nullable
+   */
+  carryOnKg: number | null;
+  /**
+   * Hành lý ký gửi (kg/khách); 0 là không có
+   * @nullable
+   */
+  checkedKg: number | null;
 }

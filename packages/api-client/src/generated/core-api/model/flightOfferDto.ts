@@ -16,12 +16,31 @@ export interface FlightOfferDto {
   name: string;
   /** @nullable */
   airline: string | null;
+  /**
+   * Mã IATA của hãng, dùng gắn logo
+   * @nullable
+   */
+  airlineCode: string | null;
+  /** @nullable */
+  flightNumber: string | null;
   fromAirport: string;
   toAirport: string;
   /** @nullable */
   departTime: string | null;
   /** @nullable */
   arriveTime: string | null;
+  /**
+   * Thời gian bay (phút)
+   * @nullable
+   */
+  durationMinutes: number | null;
+  /** Số điểm dừng; 0 là bay thẳng */
+  stops: number;
+  /**
+   * Y phổ thông, W phổ thông đặc biệt, J thương gia
+   * @nullable
+   */
+  cabinCode: string | null;
   cabinName: string;
   destination: FlightDestinationDto;
   isAvailable: boolean;
@@ -37,5 +56,7 @@ export interface FlightOfferDto {
    * @nullable
    */
   priceFrom: number | null;
+  /** Giá đã gồm thuế, phí */
+  isPriceTaxIncluded: boolean;
   fares: FlightFareQuoteDto[];
 }

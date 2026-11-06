@@ -9,6 +9,6 @@ import type { FlightSearchEchoDto } from './flightSearchEchoDto';
 
 export interface FlightSearchResultDto {
   query: FlightSearchEchoDto;
-  /** Còn ghế lên trước, rồi theo giờ bay, rồi giá */
+  /** Xếp theo tham số sort; chuyến hết ghế luôn ở cuối */
   flights: FlightOfferDto[];
 }
