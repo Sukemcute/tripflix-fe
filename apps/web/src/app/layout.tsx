@@ -50,6 +50,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 </Link>
                 <strong>{vi.app.slogan}</strong>
                 <p>{vi.ota.footerCopy}</p>
+                <Link className={styles.footerLegal} href="/chinh-sach-bao-mat">
+                  {vi.privacy.footerLink}
+                </Link>
               </div>
               <nav aria-label={vi.ota.footerExplore}>
                 <strong>{vi.ota.footerExplore}</strong>
