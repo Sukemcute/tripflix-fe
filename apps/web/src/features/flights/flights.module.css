@@ -150,7 +150,7 @@
   width: clamp(170px, 15vw, 230px);
   height: auto;
   filter: drop-shadow(0 18px 20px rgb(0 40 36 / 28%));
-  animation: float 5s ease-in-out infinite;
+  animation: float 8s ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -167,7 +167,7 @@
   padding: 12px 16px;
   border-radius: 20px;
   background: var(--color-surface-muted);
-  transition: background 180ms;
+  transition: background 288ms;
 }
 
 .featureCard:hover {
@@ -191,7 +191,7 @@
   height: 30px;
   border-radius: 50%;
   background: white;
-  transition: transform 180ms;
+  transition: transform 288ms;
 }
 
 .featureCard:hover .featureArrow {
@@ -301,8 +301,8 @@
   border-radius: 14px;
   background: var(--color-background);
   transition:
-    border-color 160ms,
-    box-shadow 160ms;
+    border-color 256ms,
+    box-shadow 256ms;
 }
 
 .field:hover {
@@ -399,7 +399,7 @@
 .chevron {
   flex-shrink: 0;
   color: var(--color-text-subtle);
-  transition: transform 180ms;
+  transition: transform 288ms;
 }
 
 .field[data-open] .chevron {
@@ -422,8 +422,8 @@
   box-shadow: 0 6px 16px -6px rgb(0 76 68 / 40%);
   transform: translate(-50%, -50%);
   transition:
-    transform 240ms,
-    background 160ms;
+    transform 384ms,
+    background 256ms;
 }
 
 .swapButton:hover:not(:disabled) {
@@ -481,7 +481,7 @@
   border: 1px solid #cfe5e0;
   border-radius: 50%;
   color: var(--color-teal-ink);
-  transition: background 160ms;
+  transition: background 256ms;
 }
 
 .stepper button:hover:not(:disabled) {
@@ -524,13 +524,13 @@
   white-space: nowrap;
   box-shadow: 0 12px 24px -12px rgb(188 51 30 / 70%);
   transition:
-    background 180ms,
-    transform 180ms;
+    background 288ms,
+    transform 288ms;
 }
 
-.searchButton:hover:not(:disabled) {
-  background: #9f2a18;
-  transform: translateY(-1px);
+/* Nút Coral loang Ink, chữ giữ trắng (quy tắc button TF11). */
+.searchButton {
+  --ripple-color: var(--color-ink);
 }
 
 .searchButton:disabled {
@@ -566,7 +566,7 @@
   border-radius: 20px;
   background: white;
   box-shadow: 0 24px 50px -12px rgb(0 60 54 / 28%);
-  animation: popIn 160ms ease-out;
+  animation: popIn 256ms ease-out;
 }
 
 @keyframes popIn {
@@ -711,7 +711,7 @@
   background: white;
   color: var(--color-teal-ink);
   pointer-events: auto;
-  transition: background 160ms;
+  transition: background 256ms;
 }
 
 .calendarNav button:first-child svg {
@@ -769,8 +769,8 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   transition:
-    background 120ms,
-    color 120ms;
+    background 192ms,
+    color 192ms;
 }
 
 .calendarGrid button[data-weekend] {
@@ -830,7 +830,7 @@
   color: var(--color-teal-ink);
   font-size: 13px;
   font-weight: 700;
-  transition: background 160ms;
+  transition: background 256ms;
 }
 
 .calendarFooter button:hover {
@@ -917,7 +917,7 @@
 }
 
 .loadingState img {
-  animation: float 3s ease-in-out infinite;
+  animation: float 4.8s ease-in-out infinite;
 }
 
 .detailLink {
@@ -925,7 +925,7 @@
   text-decoration: underline;
   text-decoration-color: transparent;
   text-underline-offset: 3px;
-  transition: text-decoration-color 160ms;
+  transition: text-decoration-color 256ms;
 }
 
 .detailLink:hover {
@@ -994,11 +994,16 @@
   color: var(--color-coral-ink);
   font-size: 14px;
   font-weight: 700;
-  transition: background 160ms;
+  transition: background 256ms;
 }
 
-.stayLink:hover {
-  background: var(--color-coral-tint);
+/* Nút phụ loang Sea Mist, viền chuyển Teal Ink. */
+.stayLink {
+  --ripple-color: var(--color-sea-mist);
+}
+
+.stayLink:is(:hover, :focus-visible) {
+  border-color: var(--color-teal-ink);
 }
 
 /* ---------- Dải ngày kèm giá và sắp xếp ---------- */
@@ -1044,7 +1049,7 @@
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
-  transition: opacity 160ms;
+  transition: opacity 256ms;
 }
 
 .stripDays[aria-busy] {
@@ -1059,7 +1064,7 @@
   padding: 8px 4px;
   border-radius: 10px;
   text-align: center;
-  transition: background 140ms;
+  transition: background 224ms;
 }
 
 .stripDays a:hover {
@@ -1118,8 +1123,8 @@
   color: var(--color-ink);
   font-weight: 600;
   transition:
-    border-color 140ms,
-    background 140ms;
+    border-color 224ms,
+    background 224ms;
 }
 
 .sortBar a:hover {
@@ -1146,8 +1151,8 @@
   border-radius: 12px;
   background: linear-gradient(90deg, color-mix(in srgb, var(--airline) 7%, white) 0, white 320px);
   transition:
-    border-color 160ms,
-    box-shadow 160ms;
+    border-color 256ms,
+    box-shadow 256ms;
 }
 
 .card:hover {
@@ -1447,20 +1452,29 @@
   font-weight: 700;
   white-space: nowrap;
   transition:
-    background 160ms,
-    color 160ms;
+    background 256ms,
+    color 256ms;
 }
 
-.toggleButton:hover {
-  border-color: #9f2a18;
-  background: #9f2a18;
+.toggleButton {
+  --ripple-color: var(--color-ink);
 }
 
+.toggleButton:is(:hover, :focus-visible) {
+  border-color: var(--color-ink);
+}
+
+/* Đang mở: thành nút phụ, loang Sea Mist. */
 .toggleButton[aria-expanded='true'] {
+  --ripple-color: var(--color-sea-mist);
   border-color: #f2c9bb;
   background: white;
   color: var(--color-coral-ink);
   box-shadow: none;
+}
+
+.toggleButton[aria-expanded='true']:is(:hover, :focus-visible) {
+  border-color: var(--color-teal-ink);
 }
 
 .toggleButton[aria-expanded='true'] svg {
@@ -1480,7 +1494,7 @@
 .cardBody {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
-  animation: popIn 160ms ease-out;
+  animation: popIn 256ms ease-out;
 }
 
 .cardMain {
@@ -1543,11 +1557,17 @@
   color: white;
   font-size: 13px;
   font-weight: 700;
-  transition: background 160ms;
+  transition: background 256ms;
 }
 
-.tClose:hover {
-  background: rgb(255 255 255 / 16%);
+/* Nút phụ trên dải màu hãng: loang Sea Mist, chữ chuyển Ink cho đủ tương phản. */
+.tClose {
+  --ripple-color: var(--color-sea-mist);
+}
+
+.tClose:is(:hover, :focus-visible) {
+  border-color: var(--color-sea-mist);
+  color: var(--color-ink);
 }
 
 .tClose svg {
@@ -1759,7 +1779,7 @@
   padding: 4px 0 10px;
   border-bottom: 2px solid transparent;
   text-align: left;
-  transition: border-color 160ms;
+  transition: border-color 256ms;
 }
 
 .cabinTabs button span {
@@ -1805,7 +1825,7 @@
   gap: 14px;
   padding: 10px 14px;
   cursor: pointer;
-  transition: background 140ms;
+  transition: background 224ms;
 }
 
 .fareRow + .fareRow {
@@ -1946,11 +1966,12 @@
   font-size: 14px;
   font-weight: 700;
   text-align: center;
-  transition: background 160ms;
+  transition: background 256ms;
 }
 
-.bookButton:hover {
-  background: #9f2a18;
+/* Nút Coral loang Ink, chữ giữ trắng. */
+.bookButton {
+  --ripple-color: var(--color-ink);
 }
 
 .bookButton:disabled {

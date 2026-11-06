@@ -253,7 +253,7 @@ export function StaySuggestion({
         <span>{copy.stayText}</span>
       </div>
       <Link
-        className={styles.stayLink}
+        className={'ripple-button ' + styles.stayLink}
         href={
           '/search?' +
           new URLSearchParams({
@@ -404,7 +404,7 @@ export function FlightCard({
             )}
             <button
               type="button"
-              className={styles.toggleButton}
+              className={'ripple-button ' + styles.toggleButton}
               aria-expanded={isOpen}
               aria-controls={bodyId}
               onClick={() => setIsOpen((value) => !value)}
@@ -441,7 +441,7 @@ export function FlightCard({
               {!isInitiallyOpen && (
                 <button
                   type="button"
-                  className={styles.tClose}
+                  className={'ripple-button ' + styles.tClose}
                   aria-expanded={isOpen}
                   aria-controls={bodyId}
                   onClick={() => setIsOpen(false)}
@@ -603,7 +603,7 @@ export function FlightCard({
             <div className={styles.stubActions}>
               {canBook && !isLocked && returnTo ? (
                 <Link
-                  className={styles.bookButton}
+                  className={'ripple-button ' + styles.bookButton}
                   href={
                     '/login?returnTo=' +
                     encodeURIComponent(
@@ -618,7 +618,7 @@ export function FlightCard({
               ) : (
                 <button
                   type="button"
-                  className={styles.bookButton}
+                  className={'ripple-button ' + styles.bookButton}
                   disabled={isLocked || !canBook}
                   onClick={() => fare && onHold(cabin.productId, fare.code)}
                 >

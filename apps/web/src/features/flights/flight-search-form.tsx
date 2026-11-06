@@ -119,7 +119,7 @@ export function FlightSearchForm({ initial, today }: { initial: FlightSearch | n
             {initial?.sort && <input type="hidden" name="sort" value={initial.sort} />}
           </fieldset>
         </div>
-        <button type="submit" className={styles.searchButton} disabled={!canSearch}>
+        <button type="submit" className={'ripple-button ' + styles.searchButton} disabled={!canSearch}>
           <FlightIcon name="search" size={20} />
           {copy.search}
         </button>

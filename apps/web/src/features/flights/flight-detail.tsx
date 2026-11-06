@@ -86,7 +86,7 @@ function Detail({ productId, date, passengers, initialFareCode }: FlightDetailPr
         <div className={styles.loadingState} role="alert">
           <Image src="/brand/tripi-library/expr-curious.png" alt="" width={88} height={88} />
           <span>{copy.detailNotFound}</span>
-          <Link className={styles.stayLink} href="/flights">
+          <Link className={'ripple-button ' + styles.stayLink} href="/flights">
             {copy.detailSearchAgain}
           </Link>
         </div>
