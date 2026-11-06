@@ -107,6 +107,23 @@ export const api = {
   showFewerDevices: 'Thu gọn',
   // Menu tài khoản trên header web (TF06H)
   accountMenu: 'Menu tài khoản',
+  // Trang tài khoản dạng hồ sơ (TF06M)
+  profileInfoTitle: 'Thông tin cá nhân',
+  profileInfoHint: 'Chỉ dùng để cá nhân hoá trải nghiệm và điền sẵn khi bạn đặt phòng. Chỉ bạn xem được.',
+  profileEdit: 'Chỉnh sửa',
+  profileEmpty: '—',
+  phone: 'Số điện thoại',
+  phonePlaceholder: 'Ví dụ 0912 345 678',
+  dateOfBirth: 'Ngày sinh',
+  gender: 'Giới tính',
+  genderOptions: { male: 'Nam', female: 'Nữ', other: 'Khác' },
+  genderUnset: 'Chưa chọn',
+  nationality: 'Quốc tịch',
+  nationalityUnset: 'Chưa chọn',
+  emailLocked: 'Email dùng để đăng nhập, không đổi ở đây.',
+  profileSaved: 'Đã lưu thông tin cá nhân.',
+  accountNavSecurity: 'Bảo mật & thiết bị',
+  accountNavLabel: 'Mục trong tài khoản',
   // Trang chi tiết bài viết (TF06J)
   postVideoBadge: 'Video',
   postWatchOnApp: 'Xem video trên app Tripflix',

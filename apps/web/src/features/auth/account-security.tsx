@@ -5,62 +5,15 @@ import { t, vi } from '@tripflix/i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
-import { AuthErrorNotice, AuthField, PasswordField } from './auth-fields';
+import { AuthErrorNotice, PasswordField } from './auth-fields';
 
-/**
- * Tab "Tài khoản": hồ sơ, đổi mật khẩu và các thiết bị đang đăng nhập, mỗi phần một thẻ riêng.
- * Màn rộng: cột trái hồ sơ + thiết bị, cột phải đổi mật khẩu. Màn hẹp: một cột theo thứ tự hồ sơ, mật khẩu, thiết bị.
- */
-export function AccountSecurity({ displayName, userId }: { displayName: string; userId: string }) {
+/** Mục "Bảo mật & thiết bị" của trang tài khoản: đổi mật khẩu, rồi các thiết bị đang đăng nhập. */
+export function AccountSecurity({ userId }: { userId: string }) {
   return (
-    <div className="account-grid">
-      <div className="account-column">
-        <ProfilePanel displayName={displayName} />
-        <DevicesPanel userId={userId} />
-      </div>
-      <div className="account-column">
-        <PasswordPanel />
-      </div>
+    <div className="profile-stack">
+      <PasswordPanel />
+      <DevicesPanel userId={userId} />
     </div>
-  );
-}
-
-function ProfilePanel({ displayName }: { displayName: string }) {
-  const { session } = useApiSession();
-  const [name, setName] = useState(displayName);
-  const save = useMutation({
-    mutationFn: async () => {
-      await auth.accountControllerUpdateProfile({ displayName: name.trim() });
-      await session.reloadUser();
-    },
-  });
-  return (
-    <section className="account-panel account-profile">
-      <h2>{vi.api.profileSection}</h2>
-      <p className="auth-hint">{vi.api.profileHint}</p>
-      <form
-        className="auth-form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          save.mutate();
-        }}
-      >
-        <AuthField
-          id="account-display-name"
-          label={vi.api.displayName}
-          required
-          maxLength={50}
-          autoComplete="name"
-          value={name}
-          onValueChange={setName}
-        />
-        <ApiErrorNotice error={save.error} />
-        {save.isSuccess && <output className="auth-success">{vi.api.saved}</output>}
-        <button className="primary-button" disabled={save.isPending || !name.trim()}>
-          {save.isPending ? vi.api.saving : vi.api.save}
-        </button>
-      </form>
-    </section>
   );
 }
 
