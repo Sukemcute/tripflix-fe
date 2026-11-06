@@ -271,26 +271,43 @@
   gap: 12px;
 }
 .priceRangeValue {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
   color: var(--color-ink);
-  font-size: 13px;
+  font-size: 12px;
+  white-space: nowrap;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-/* Hai input range chồng nhau; vạch màu giữa hai nút lấy vị trí từ --range-start/--range-end. */
+/* Sóng giá phía trên; phần trong khoảng đã chọn tô đậm hơn. Hai input range chồng nhau,
+   vạch coral giữa hai nút lấy vị trí từ --range-start/--range-end. */
+.priceRangeChart svg {
+  display: block;
+  width: 100%;
+  height: 44px;
+}
+.priceRangeArea {
+  fill: var(--color-coral-tint);
+}
+.priceRangeAreaActive {
+  fill: color-mix(in srgb, var(--color-coral) 22%, var(--color-background));
+}
 .priceRangeTrack {
   position: relative;
-  height: 24px;
+  height: 20px;
+  margin-top: -10px;
 }
 .priceRangeTrack::before {
   content: '';
   position: absolute;
-  inset: 10px 0;
+  inset: 9px 0;
   border-radius: 999px;
   background: linear-gradient(
     90deg,
     var(--color-border) var(--range-start),
-    var(--color-teal) var(--range-start),
-    var(--color-teal) var(--range-end),
+    var(--color-coral) var(--range-start),
+    var(--color-coral) var(--range-end),
     var(--color-border) var(--range-end)
   );
 }
@@ -298,50 +315,53 @@
   position: absolute;
   inset: 0;
   width: 100%;
-  height: 24px;
+  height: 20px;
   margin: 0;
   background: none;
   pointer-events: none;
   appearance: none;
 }
 .priceRangeTrack input::-webkit-slider-runnable-track {
-  height: 24px;
+  height: 20px;
   background: none;
 }
 .priceRangeTrack input::-moz-range-track {
   background: none;
 }
 .priceRangeTrack input::-webkit-slider-thumb {
-  width: 22px;
-  height: 22px;
-  margin-top: 1px;
-  border: 2px solid var(--color-teal-ink);
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 2px solid var(--color-coral);
   border-radius: 50%;
   background: var(--color-background);
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-ink) 20%, transparent);
   cursor: grab;
   pointer-events: auto;
   appearance: none;
+  transition: transform 140ms;
 }
 .priceRangeTrack input::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--color-teal-ink);
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--color-coral);
   border-radius: 50%;
   background: var(--color-background);
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-ink) 20%, transparent);
   cursor: grab;
   pointer-events: auto;
+}
+.priceRangeTrack input:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.15);
 }
 .priceRangeTrack input:focus-visible {
   outline: none;
 }
 .priceRangeTrack input:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid var(--color-teal-ink);
+  outline: 2px solid var(--color-coral-ink);
   outline-offset: 2px;
 }
 .priceRangeTrack input:focus-visible::-moz-range-thumb {
-  outline: 2px solid var(--color-teal-ink);
+  outline: 2px solid var(--color-coral-ink);
   outline-offset: 2px;
 }
 .filterPanel .filterError {
