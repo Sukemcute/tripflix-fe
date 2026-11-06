@@ -234,6 +234,24 @@
   font-size: 12px;
   font-weight: 600;
 }
+/* Ô chọn mềm (SoftSelect) trong hàng bộ lọc thêm: gọn 36px, nền Sea Mist như các ô bên cạnh. */
+.inlineSelect {
+  width: 132px;
+}
+.inlineSelect button {
+  min-height: 36px;
+  border-radius: 10px;
+  background: var(--color-sea-mist);
+  font-size: 12px;
+  font-weight: 600;
+}
+/* Ô ngày mềm (SoftDatePicker kiểu trần) trong khung tìm phòng, thẳng hàng với ô nhập cũ. */
+.dateField {
+  margin-top: 4px;
+}
+.dateField button {
+  font-size: 13px;
+}
 .moreFiltersToggle {
   display: inline-flex;
   flex-shrink: 0;

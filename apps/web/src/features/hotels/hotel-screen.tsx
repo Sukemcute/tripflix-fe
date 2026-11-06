@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BookRateButton } from '@/features/checkout/book-rate-button';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { SoftDatePicker } from '@/features/shared/soft-date-picker';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { HotelGallery } from './hotel-gallery';
 import { HotelIcon } from './hotel-icon';
@@ -223,22 +224,20 @@ export function HotelScreen({
             >
               <label>
                 {copy.checkIn}
-                <input
-                  type="date"
+                <SoftDatePicker
                   required
                   min={getFutureDate(0)}
                   value={draft.checkIn}
-                  onChange={(event) => setDraft({ ...draft, checkIn: event.target.value })}
+                  onChange={(checkIn) => setDraft({ ...draft, checkIn })}
                 />
               </label>
               <label>
                 {copy.checkOut}
-                <input
-                  type="date"
+                <SoftDatePicker
                   required
                   min={shiftTripDate(draft.checkIn || getFutureDate(0), 1)}
                   value={draft.checkOut}
-                  onChange={(event) => setDraft({ ...draft, checkOut: event.target.value })}
+                  onChange={(checkOut) => setDraft({ ...draft, checkOut })}
                 />
               </label>
               <label>

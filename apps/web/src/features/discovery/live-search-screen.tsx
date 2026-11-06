@@ -12,6 +12,8 @@ import { StaySearchIcon } from './stay-search-icon';
 import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
 import listing from './hotel-listing.module.css';
 import { StayPriceInput } from './stay-price-input';
+import { SoftDatePicker } from '@/features/shared/soft-date-picker';
+import { SoftSelect } from '@/features/shared/soft-select';
 import {
   getStayDateIssue, getStayPriceIssue, getStayToday, isStayInteger, MAX_STAY_GUESTS, MAX_STAY_ROOMS,
 } from './stay-search-validation';
@@ -120,17 +122,15 @@ export function LiveSearchScreen({
             >
                 <label>
                   {vi.api.minStars}
-                  <select
+                  <SoftSelect
+                    className={styles.inlineSelect}
                     value={search.filters.minStars}
-                    onChange={(event) => update('minStars', event.target.value)}
-                  >
-                    <option value="">{vi.api.all}</option>
-                    {[1, 2, 3, 4, 5].map((stars) => (
-                      <option key={stars} value={stars}>
-                        {stars}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(value) => update('minStars', value)}
+                    options={[
+                      { value: '', label: vi.api.all },
+                      ...[1, 2, 3, 4, 5].map((stars) => ({ value: String(stars), label: String(stars) })),
+                    ]}
+                  />
                 </label>
                 <label>
                   {vi.api.maxPrice}
@@ -138,13 +138,15 @@ export function LiveSearchScreen({
                 </label>
                 <label>
                   {vi.demo.web.sort}
-                  <select
+                  <SoftSelect
+                    className={styles.inlineSelect}
                     value={search.filters.sort}
-                    onChange={(event) => update('sort', event.target.value)}
-                  >
-                    <option value="price">{vi.api.price}</option>
-                    <option value="stars">{vi.api.stars}</option>
-                  </select>
+                    onChange={(value) => update('sort', value)}
+                    options={[
+                      { value: 'price', label: vi.api.price },
+                      { value: 'stars', label: vi.api.stars },
+                    ]}
+                  />
                 </label>
             </div>
             <button
@@ -239,33 +241,37 @@ export function LiveSearchScreen({
               </div>
             </div>
           </div>
-          <label className={styles.field}>
+          <label className={styles.field} htmlFor="stay-check-in">
             <StaySearchIcon name="calendar" />
             <span className={styles.fieldContent}>
               <span>{vi.api.checkIn}</span>
-              <input
-                type="date"
+              <SoftDatePicker
+                id="stay-check-in"
+                appearance="bare"
+                className={styles.dateField}
                 required
                 min={today}
                 value={checkIn}
                 aria-invalid={showValidation && tripIssue === 'invalidCheckIn' || undefined}
                 aria-describedby={tripError && tripIssue === 'invalidCheckIn' ? 'stay-trip-error' : undefined}
-                onChange={(event) => update('checkIn', event.target.value)}
+                onChange={(value) => update('checkIn', value)}
               />
             </span>
           </label>
-          <label className={styles.field}>
+          <label className={styles.field} htmlFor="stay-check-out">
             <StaySearchIcon name="calendar" />
             <span className={styles.fieldContent}>
               <span>{vi.api.checkOut}</span>
-              <input
-                type="date"
+              <SoftDatePicker
+                id="stay-check-out"
+                appearance="bare"
+                className={styles.dateField}
                 required
                 min={checkIn || today}
                 value={checkOut}
                 aria-invalid={showValidation && (tripIssue === 'invalidDates' || tripIssue === 'stayTooLong') || undefined}
                 aria-describedby={tripError && (tripIssue === 'invalidDates' || tripIssue === 'stayTooLong') ? 'stay-trip-error' : undefined}
-                onChange={(event) => update('checkOut', event.target.value)}
+                onChange={(value) => update('checkOut', value)}
               />
             </span>
           </label>

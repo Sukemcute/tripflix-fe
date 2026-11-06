@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getHotelReviews, useApiSession, type HotelReviewFilters } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { SoftSelect } from '@/features/shared/soft-select';
 import { HotelGallery } from './hotel-gallery';
 import styles from './hotel.module.css';
 
@@ -75,53 +76,38 @@ export function HotelReviews({ id }: { id: string }) {
       <div className={styles.reviewFilters}>
         <label>
           {copy.sort}
-          <select
+          <SoftSelect
             aria-label={copy.sort}
             value={filters.sort}
-            onChange={(event) => updateFilters({ sort: event.target.value as HotelReviewFilters['sort'] })}
-          >
-            {(['newest', 'highest', 'lowest', 'helpful'] as const).map((key) => (
-              <option key={key} value={key}>
-                {copy[key]}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => updateFilters({ sort: value as HotelReviewFilters['sort'] })}
+            options={(['newest', 'highest', 'lowest', 'helpful'] as const).map((key) => ({ value: key, label: copy[key] }))}
+          />
         </label>
         <label>
           {copy.rating}
-          <select
+          <SoftSelect
             aria-label={copy.rating}
-            value={filters.rating ?? ''}
-            onChange={(event) =>
-              updateFilters({ rating: event.target.value ? Number(event.target.value) : undefined })
-            }
-          >
-            <option value="">{copy.allRatings}</option>
-            {[5, 4, 3, 2, 1].map((rating) => (
-              <option key={rating} value={rating}>
-                {rating} ★
-              </option>
-            ))}
-          </select>
+            value={filters.rating ? String(filters.rating) : ''}
+            onChange={(value) => updateFilters({ rating: value ? Number(value) : undefined })}
+            options={[
+              { value: '', label: copy.allRatings },
+              ...[5, 4, 3, 2, 1].map((rating) => ({ value: String(rating), label: `${rating} ★` })),
+            ]}
+          />
         </label>
         <label>
           {copy.traveler}
-          <select
+          <SoftSelect
             aria-label={copy.traveler}
             value={filters.travelerType ?? ''}
-            onChange={(event) =>
-              updateFilters({
-                travelerType: (event.target.value || undefined) as HotelReviewFilters['travelerType'],
-              })
+            onChange={(value) =>
+              updateFilters({ travelerType: (value || undefined) as HotelReviewFilters['travelerType'] })
             }
-          >
-            <option value="">{copy.allTravelers}</option>
-            {Object.entries(copy.travelerTypes).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: copy.allTravelers },
+              ...Object.entries(copy.travelerTypes).map(([key, label]) => ({ value: key, label })),
+            ]}
+          />
         </label>
       </div>
       {summary && summary.tags.length > 0 && (
