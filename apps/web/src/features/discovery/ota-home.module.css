@@ -705,3 +705,41 @@
     transition: none;
   }
 }
+
+/* 3 thẻ khách sạn xoè ra như quạt tay khi cuộn tới: bắt đầu chồng ở giữa, nghiêng quanh điểm dưới thẻ,
+   rồi bung về chỗ theo nhịp cuộn (scroll-driven; trình duyệt chưa hỗ trợ thì thẻ hiện bình thường). */
+@media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .stayGrid > .hotelCard {
+      transform-origin: 50% 140%;
+      animation: stay-fan-out linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 45%;
+    }
+    .stayGrid > .hotelCard:nth-child(1) {
+      --fan-x: calc(100% + 16px);
+      --fan-rotate: -9deg;
+    }
+    .stayGrid > .hotelCard:nth-child(2) {
+      --fan-x: 0px;
+      --fan-rotate: 0deg;
+      z-index: 1;
+    }
+    .stayGrid > .hotelCard:nth-child(3) {
+      --fan-x: calc(-100% - 16px);
+      --fan-rotate: 9deg;
+    }
+  }
+}
+@keyframes stay-fan-out {
+  from {
+    translate: var(--fan-x, 0px) 28px;
+    rotate: var(--fan-rotate, 0deg);
+    scale: 0.92;
+  }
+  to {
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+}
