@@ -11,7 +11,7 @@
   - Màn ≤840px (một cột): ẩn banner để không đẩy kết quả xuống.
 - `packages/api-client`: `useStaySearch` nhận thêm `pageSize` (tuỳ chọn), thêm `previous` và `pageNumber`; tự nhớ cursor các trang trước vì API chỉ trả `nextCursor`. Chỉ thêm, trang chủ và mobile không đổi hành vi.
 - `packages/i18n`: chuỗi cho phân trang và banner.
-- Merge `develop` mới (bộ lọc TF10 của Trang): giữ `StayResultFilters` và `.filterError`, chỉ bọc thêm cột sidebar chứa banner.
+- Merge `develop` mới (có bộ lọc TF10 của Trang). Theo yêu cầu của Bảo, trang `/search` dùng lại khung "Lọc kết quả" dạng thẻ cũ (Số sao tối thiểu, Giá tối đa, Sắp xếp) với class riêng `.filterPanel`; `StayResultFilters` và CSS `.filters` của Trang giữ nguyên, chỉ ngừng dùng ở trang này. Lỗi giá của TF10 vẫn hiện dưới ô Giá tối đa. Cột trái về tối đa 240px.
 
 ## Đối chiếu "Xong khi"
 | Tiêu chí | Đạt | Bằng chứng |
@@ -35,5 +35,6 @@
 - Đính kèm trong PR.
 
 ## Ảnh hưởng tới phần của người khác
-- Có: `apps/web` (chủ Thành) — `live-search-screen.tsx`, `hotel-listing.module.css`, thêm `search-ad-banner.tsx`. Giải xung đột với code TF10 của Trang, giữ nguyên bộ lọc mới của Trang.
+- Có: `apps/web` (chủ Thành) — `live-search-screen.tsx`, `hotel-listing.module.css`, thêm `search-ad-banner.tsx`.
+- Có: bộ lọc TF10 của Trang. Trang `/search` không còn dùng `StayResultFilters` (mất giá tối thiểu, ngân sách nhanh, chọn sao dạng nút, thu gọn trên màn hẹp). File và CSS của Trang không bị xoá. Bảo đã được cảnh báo và đồng ý; cần báo Trang.
 - `packages/api-client/src/stay-search.ts`: chỉ thêm tham số tuỳ chọn và hàm mới, không đổi chữ ký cũ; `apps/mobile` typecheck pass.
