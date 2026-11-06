@@ -55,7 +55,7 @@ export function HomeStayPreview() {
               src={destination.image}
               alt=""
               fill
-              sizes="(max-width: 640px) 90vw, 100vw"
+              sizes="(max-width: 640px) 90vw, 38vw"
             />
             <Image
               className={styles.stayMascot}

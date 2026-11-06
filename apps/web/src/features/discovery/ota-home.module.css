@@ -154,46 +154,20 @@
   height: auto;
   filter: drop-shadow(0 8px 14px var(--color-overlay));
 }
-/* Desktop: ảnh phủ cả thẻ, nội dung trên tấm kính mờ kiểu macOS để màu thẻ và ảnh hoà vào nhau. */
+/* Ảnh chuyển dần vào nền thẻ ở mép trái (desktop) để thẻ và ảnh liền một khối. */
 @media (min-width: 641px) {
-  .stayHeader {
-    position: relative;
-    isolation: isolate;
-    min-height: clamp(260px, 25vw, 340px);
-    border-color: color-mix(in srgb, var(--color-background) 60%, transparent);
-  }
-  .stayScene {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-  }
-  .stayScene::after {
+  .stayScene::before {
     content: '';
     position: absolute;
-    inset: 0;
+    inset: 0 auto 0 0;
+    width: 45%;
     background: linear-gradient(
       90deg,
-      color-mix(in srgb, var(--color-sea-mist) 70%, transparent) 0%,
-      transparent 60%
+      var(--color-sea-mist) 0%,
+      color-mix(in srgb, var(--color-sea-mist) 55%, transparent) 40%,
+      transparent 100%
     );
-  }
-  .stayMascot {
-    z-index: 1;
-    left: auto;
-    right: 10%;
-    width: min(26%, 220px);
-  }
-  .stayCopy {
-    margin: clamp(14px, 2vw, 26px);
-    padding: clamp(20px, 2.6vw, 36px);
-    border: 1px solid color-mix(in srgb, var(--color-background) 70%, transparent);
-    border-radius: 18px;
-    background: color-mix(in srgb, var(--color-background) 58%, transparent);
-    box-shadow:
-      0 18px 40px -24px var(--color-overlay-heavy),
-      inset 0 1px 0 color-mix(in srgb, var(--color-background) 85%, transparent);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    backdrop-filter: blur(18px) saturate(160%);
+    pointer-events: none;
   }
 }
 .chips {
@@ -293,9 +267,18 @@
   margin: 0;
   font-size: 13px;
 }
+.hotelInfo .stayRating {
+  background: var(--color-coral);
+  color: var(--color-ink);
+}
+.hotelInfo .stayRating::before {
+  background: var(--color-background);
+  box-shadow: inset -1px -1px 0 var(--color-border);
+}
 .stayRating svg {
   width: 15px;
   height: 15px;
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--color-ink) 35%, transparent));
 }
 .hotelInfo p,
 .story p {
@@ -347,8 +330,8 @@
   position: absolute;
   z-index: -1;
   top: 50%;
-  right: clamp(-40px, 2vw, 40px);
-  width: clamp(320px, 38vw, 560px);
+  right: -6%;
+  width: 66%;
   aspect-ratio: 1400 / 1340;
   translate: 0 -50%;
   background: url('/brand/home-world.svg') center / contain no-repeat;
@@ -529,7 +512,11 @@
 }
 .storyStats > span:first-child svg {
   color: var(--color-coral);
-  fill: var(--color-coral-tint);
+  fill: var(--color-coral);
+}
+.storyStats > span:last-child svg {
+  color: var(--color-sun);
+  fill: var(--color-sun);
 }
 .story .excerpt {
   color: var(--color-text-muted);
