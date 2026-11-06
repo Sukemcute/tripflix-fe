@@ -6,3 +6,4 @@ export * from './post-media';
 export * from './demo-catalog';
 export * from './reels';
 export * from './device-name';
+export * from './registration';

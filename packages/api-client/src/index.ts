@@ -4,7 +4,14 @@
 export { configureHttp, http, HttpError, type HttpConfig, type HttpResponse } from './http';
 export { ApiSessionProvider, useApiSession } from './session';
 export { SessionClient, type SessionOptions, type TokenStorage } from './session-client';
-export { getApiErrorKind, getAuthErrorKind, readEntity, readPage, type AuthAction } from './response';
+export {
+  getApiErrorKind,
+  getAuthErrorKind,
+  getRegistrationFieldError,
+  readEntity,
+  readPage,
+  type AuthAction,
+} from './response';
 export { socialApi } from './social';
 export { useSocialPosts } from './queries';
 export {

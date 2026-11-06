@@ -4,6 +4,7 @@ import type {
   LoginDto,
   MyProfileDto,
   RegisterDto,
+  RegistrationCodeDto,
   TokenPairDto,
 } from './generated/core-api/model';
 import { configureHttp, HttpError, type HttpRequestOptions } from './http';
@@ -152,7 +153,12 @@ export class SessionClient {
   }
   async register(credentials: RegisterDto): Promise<void> {
     await auth.authControllerRegister(credentials, this.authOptions);
-    await this.login(credentials);
+    const { email, password } = credentials;
+    await this.login({ email, password });
+  }
+  async requestRegistrationCode(input: RegistrationCodeDto): Promise<string> {
+    const response = await auth.authControllerRequestRegistrationCode(input, this.authOptions);
+    return readEntity(response.data, ['registrationId']).registrationId;
   }
   async reloadUser(): Promise<MyProfileDto> {
     const version = this.version;

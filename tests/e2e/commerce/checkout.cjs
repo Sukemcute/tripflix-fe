@@ -7,6 +7,7 @@ const runtime = process.env.PLAYWRIGHT_PACKAGE || 'playwright';
 const { chromium } = require(runtime);
 const { expect } = require(runtime + '/test');
 const { CommercePage } = require('../../pages/commerce-page.cjs');
+const { registerAccount } = require('../../fixtures/register-account.cjs');
 const API = process.env.API_PREVIEW_URL || 'http://localhost:8080';
 const MOBILE = process.env.MOBILE_PREVIEW_URL || 'http://localhost:8081';
 const OUTPUT = process.env.COMMERCE_EVIDENCE_DIR || join(tmpdir(), 'tripflix-commerce');
@@ -65,7 +66,7 @@ function record(name) {
     checkOut = dateAfter(9);
   const hotelPath = `/hotel/P-h-dn-01?checkIn=${checkIn}&checkOut=${checkOut}&adults=2`;
   try {
-    await api('/api/auth/register', 'POST', { email, password, displayName: 'Kiểm thử commerce' });
+    await registerAccount(api, { email, password, displayName: 'Kiểm thử commerce' });
     token = (await api('/api/auth/login', 'POST', { email, password })).accessToken;
     const listProbe = await fetch(new URL('/api/checkout', API), {
       headers: { authorization: `Bearer ${token}` },

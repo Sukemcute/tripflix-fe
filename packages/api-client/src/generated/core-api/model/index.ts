@@ -122,6 +122,8 @@ export * from './ratingCountDto';
 export * from './ratingDto';
 export * from './refreshDto';
 export * from './registerDto';
+export * from './registrationCodeDto';
+export * from './registrationCodeResultDto';
 export * from './resendVerificationResultDto';
 export * from './resendVerificationResultDtoStatus';
 export * from './resetPasswordDto';

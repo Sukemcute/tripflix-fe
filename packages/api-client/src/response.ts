@@ -33,6 +33,7 @@ export type AuthAction =
 type AuthErrorKind =
   | 'wrongCredentials'
   | 'accountExists'
+  | 'registrationCodeInvalid'
   | 'tooManyAttempts'
   | 'googleFailed'
   | 'googleUnavailable'
@@ -56,7 +57,8 @@ export function getAuthErrorKind(error: unknown, action: AuthAction): AuthErrorK
     case 'login':
       return error.status === 401 ? 'wrongCredentials' : null;
     case 'register':
-      return error.status === 409 ? 'accountExists' : null;
+      if (error.status === 409) return 'accountExists';
+      return error.status === 400 && !hasFieldErrors(error) ? 'registrationCodeInvalid' : null;
     case 'google':
       if (error.status === 401) return 'googleFailed';
       return error.status === 503 ? 'googleUnavailable' : null;
@@ -67,6 +69,13 @@ export function getAuthErrorKind(error: unknown, action: AuthAction): AuthErrorK
     case 'forgotPassword':
       return null;
   }
+}
+
+export function getRegistrationFieldError(error: unknown): string | undefined {
+  if (!(error instanceof HttpError) || error.status !== 400 || !hasFieldErrors(error)) return;
+  const { errors } = error.body as { errors: { message?: unknown }[] };
+  const message = errors[0]?.message;
+  return typeof message === 'string' ? message : undefined;
 }
 
 /** Check essential response fields at the HTTP boundary, including schemas that used to be undocumented. */

@@ -1,5 +1,10 @@
 'use client';
-import { getApiErrorKind, getAuthErrorKind, type AuthAction } from '@tripflix/api-client';
+import {
+  getApiErrorKind,
+  getAuthErrorKind,
+  getRegistrationFieldError,
+  type AuthAction,
+} from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { useState, type InputHTMLAttributes } from 'react';
 
@@ -53,9 +58,10 @@ export function PasswordField({ id, label, value, onValueChange, ...input }: Omi
 export function AuthErrorNotice({ error, action }: { error: unknown; action: AuthAction }) {
   if (!error) return null;
   const kind = getAuthErrorKind(error, action);
+  const fieldError = action === 'register' ? getRegistrationFieldError(error) : undefined;
   return (
     <p role="alert" className="auth-error">
-      {kind ? vi.api[kind] : vi.api[getApiErrorKind(error)]}
+      {fieldError ?? (kind ? vi.api[kind] : vi.api[getApiErrorKind(error)])}
     </p>
   );
 }

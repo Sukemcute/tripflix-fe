@@ -30,6 +30,8 @@ import type {
   MyProfileDto,
   RefreshDto,
   RegisterDto,
+  RegistrationCodeDto,
+  RegistrationCodeResultDto,
   ResendVerificationResultDto,
   ResetPasswordDto,
   ServiceTokenDto,
@@ -60,6 +62,115 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
+export type authControllerRequestRegistrationCodeResponse202 = {
+  data: RegistrationCodeResultDto;
+  status: 202;
+};
+
+export type authControllerRequestRegistrationCodeResponseSuccess =
+  authControllerRequestRegistrationCodeResponse202 & {
+    headers: Headers;
+  };
+export type authControllerRequestRegistrationCodeResponse =
+  authControllerRequestRegistrationCodeResponseSuccess;
+
+export const getAuthControllerRequestRegistrationCodeUrl = () => {
+  return `/api/auth/registration-code`;
+};
+
+export const authControllerRequestRegistrationCode = async (
+  registrationCodeDto: RegistrationCodeDto,
+  options?: Parameters<typeof http>[1],
+): Promise<authControllerRequestRegistrationCodeResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<authControllerRequestRegistrationCodeResponse>(getAuthControllerRequestRegistrationCodeUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(registrationCodeDto),
+  });
+};
+
+export const getAuthControllerRequestRegistrationCodeMutationKey = () =>
+  ['authControllerRequestRegistrationCode'] as const;
+
+export const getAuthControllerRequestRegistrationCodeMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerRequestRegistrationCode>>,
+    TError,
+    AuthControllerRequestRegistrationCodeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authControllerRequestRegistrationCode>>,
+  TError,
+  AuthControllerRequestRegistrationCodeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAuthControllerRequestRegistrationCodeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authControllerRequestRegistrationCode>>,
+    AuthControllerRequestRegistrationCodeMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return authControllerRequestRegistrationCode(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerRequestRegistrationCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerRequestRegistrationCode>>
+>;
+export type AuthControllerRequestRegistrationCodeMutationBody = RegistrationCodeDto;
+export type AuthControllerRequestRegistrationCodeMutationError = unknown;
+export type AuthControllerRequestRegistrationCodeMutationVariables = { data: RegistrationCodeDto };
+
+export const useAuthControllerRequestRegistrationCode = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerRequestRegistrationCode>>,
+      TError,
+      AuthControllerRequestRegistrationCodeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authControllerRequestRegistrationCode>>,
+  TError,
+  AuthControllerRequestRegistrationCodeMutationVariables,
+  TContext
+> => {
+  return useMutation(getAuthControllerRequestRegistrationCodeMutationOptions(options), queryClient);
+};
 export type authControllerRegisterResponse201 = {
   data: UserDto;
   status: 201;
