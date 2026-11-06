@@ -8,6 +8,7 @@ import { HeaderAccount } from '@/features/auth/header-account';
 import { Providers } from './providers';
 import { OtaNavigation } from '@/features/discovery/ota-navigation';
 import { OTA_DESTINATIONS, getDestinationHref } from '@/features/discovery/ota-destinations';
+import { ButtonRipple } from '@/features/shared/button-ripple';
 import styles from '@/features/discovery/ota-shell.module.css';
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {vi.demo.common.explore}
         </a>
         <Providers>
+          <ButtonRipple />
           <header className="ota-header" id="top">
             <div className="ota-container header-content">
               <Link href="/" aria-label={vi.demo.common.logo}>

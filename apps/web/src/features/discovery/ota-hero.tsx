@@ -25,7 +25,7 @@ export function OtaHero() {
           <h1>{vi.app.slogan.replace(', ', ',\n')}</h1>
           <p className={styles.description}>{vi.ota.heroIntro}</p>
           <div className={styles.actions}>
-            <a className={styles.searchAction} href="#ota-search">
+            <a className={`ripple-button ${styles.searchAction}`} href="#ota-search">
               {vi.ota.heroSearch}
             </a>
             <a className={styles.scrollAction} href="#home-destinations">

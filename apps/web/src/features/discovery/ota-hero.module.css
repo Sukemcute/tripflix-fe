@@ -60,8 +60,9 @@
   background: var(--color-ink);
   color: var(--color-background);
 }
-.searchAction:hover {
-  background: var(--color-teal-ink);
+/* Màu hover cũ giờ là màu loang (ripple-button ở globals.css). */
+.searchAction {
+  --ripple-color: var(--color-teal-ink);
 }
 .scrollAction {
   color: var(--color-teal-ink);

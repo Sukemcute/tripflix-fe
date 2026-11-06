@@ -435,12 +435,41 @@ h3 {
     background 0.18s,
     transform 0.18s;
 }
+/* Hiệu ứng loang: lớp màu tròn lan ra từ chỗ con trỏ đi vào (--ripple-x/y do ButtonRipple ghi). */
+.primary-button,
+.secondary-button,
+.ripple-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.primary-button::before,
+.secondary-button::before,
+.ripple-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--ripple-color);
+  clip-path: circle(0 at var(--ripple-x, 50%) var(--ripple-y, 50%));
+  transition: clip-path 0.45s ease-out;
+  pointer-events: none;
+}
+:is(.primary-button, .secondary-button, .ripple-button):is(:hover, :focus-visible):not(:disabled, [aria-disabled='true'])::before {
+  clip-path: circle(160% at var(--ripple-x, 50%) var(--ripple-y, 50%));
+}
+@media (prefers-reduced-motion: reduce) {
+  .primary-button::before,
+  .secondary-button::before,
+  .ripple-button::before {
+    transition: none;
+  }
+}
 .primary-button {
+  --ripple-color: var(--color-ink);
   background: var(--color-coral-ink);
   color: var(--color-background);
-}
-.primary-button:hover {
-  background: var(--color-ink);
 }
 .primary-button:active,
 .secondary-button:active {
@@ -454,8 +483,14 @@ h3 {
   background: var(--color-background);
   border: 1px solid var(--color-border);
 }
-.secondary-button:hover {
-  background: var(--color-surface);
+.secondary-button {
+  --ripple-color: var(--color-sea-mist);
+  transition:
+    border-color 0.3s,
+    transform 0.18s;
+}
+.secondary-button:hover:not(:disabled) {
+  border-color: var(--color-teal-ink);
 }
 .suggested-queries {
   display: flex;

@@ -127,8 +127,8 @@
   font-size: 0.8rem;
   font-weight: 700;
 }
-.stayAction:hover {
-  background: var(--color-teal-soft);
+.stayAction {
+  --ripple-color: var(--color-teal-soft);
 }
 .stayScene {
   position: relative;
@@ -322,8 +322,8 @@
   font-size: 0.85rem;
   font-weight: 700;
 }
-.tripiAction:is(:hover, :focus-visible) {
-  background: var(--color-teal-soft);
+.tripiAction {
+  --ripple-color: var(--color-teal-soft);
 }
 .tripiAction:focus-visible {
   outline-color: var(--color-teal-ink);

@@ -43,7 +43,7 @@ export function HomeStayPreview() {
           <div className={styles.stayCopy}>
             <h2 id="home-stays-title">{vi.ota.staysTitle}</h2>
             <p>{vi.ota.staysIntro}</p>
-            <Link className={styles.stayAction} href={getDestinationHref(destination)}>
+            <Link className={`ripple-button ${styles.stayAction}`} href={getDestinationHref(destination)}>
               {t('ota.browseDestination', { name: destination.name })}
             </Link>
           </div>
