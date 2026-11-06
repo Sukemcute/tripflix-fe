@@ -156,6 +156,23 @@
 }
 /* Ảnh chuyển dần vào nền thẻ ở mép trái (desktop) để thẻ và ảnh liền một khối. */
 @media (min-width: 641px) {
+  /* Chia đôi; nửa trái có "ảnh chìm" của chính điểm đến, nhạt dần về giữa để nối với ảnh thật. */
+  .stayHeader {
+    position: relative;
+    isolation: isolate;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .stayHeader::before {
+    content: '';
+    position: absolute;
+    inset: 0 50% 0 0;
+    z-index: -1;
+    background: var(--stay-photo) center / cover no-repeat;
+    opacity: 0.14;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 45%, black 75%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, black 45%, black 75%, transparent 100%);
+    pointer-events: none;
+  }
   .stayScene::before {
     content: '';
     position: absolute;
@@ -268,17 +285,23 @@
   font-size: 13px;
 }
 .hotelInfo .stayRating {
+  gap: 3px;
+  padding-block: 4px;
   background: var(--color-coral);
-  color: var(--color-ink);
+  color: var(--color-background);
+  font-size: 14px;
+  font-weight: 800;
+  text-shadow: 0 1px 1px color-mix(in srgb, var(--color-coral-ink) 80%, transparent);
 }
 .hotelInfo .stayRating::before {
   background: var(--color-background);
   box-shadow: inset -1px -1px 0 var(--color-border);
 }
 .stayRating svg {
-  width: 15px;
-  height: 15px;
-  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--color-ink) 35%, transparent));
+  width: 17px;
+  height: 17px;
+  filter: drop-shadow(0 0 0.6px var(--color-background))
+    drop-shadow(0 1px 1.5px color-mix(in srgb, var(--color-coral-ink) 70%, transparent));
 }
 .hotelInfo p,
 .story p {
