@@ -59,7 +59,7 @@ export function LiveSearchScreen({
   const update = (key: keyof StayFilters, value: string) =>
     search.setFilters((previous) => ({ ...previous, [key]: value }));
   const placeName = search.selection?.name ?? search.text;
-  const hasFacets = !!(search.filters.minStars || search.filters.priceMin || search.filters.priceMax || search.filters.sort !== 'price');
+  const hasFacets = !!(search.filters.minStars || search.filters.stars || search.filters.priceMin || search.filters.priceMax || search.filters.sort !== 'price');
   const resultHref = search.submitted ? getSearchHref(search.submitted, initialQuery) : '/search';
   const canSubmit = !!search.filters.placeId || search.selection?.type === 'hotel';
   const Container = isHomepage ? 'section' : 'div';
@@ -325,6 +325,7 @@ export function LiveSearchScreen({
                       const cleared = {
                         ...search.filters,
                         minStars: '',
+                        stars: '',
                         priceMin: '',
                         priceMax: '',
                         sort: 'price',
@@ -338,17 +339,18 @@ export function LiveSearchScreen({
                 )}
               </div>
               <fieldset className={listing.panelGroup}>
-                <legend>{vi.api.minStars}</legend>
+                <legend>{vi.ota.starRating}</legend>
                 <div className={listing.starChips}>
                   {STAR_OPTIONS.map((stars) => (
                     <label key={stars || 'all'} className={listing.chip}>
                       <input
                         type="radio"
-                        name="stay-min-stars"
+                        name="stay-stars"
                         value={stars}
-                        checked={search.filters.minStars === stars}
-                        aria-label={stars ? t('ota.starsAtLeast', { count: stars }) : vi.api.all}
-                        onChange={() => update('minStars', stars)}
+                        checked={(search.filters.stars ?? '') === stars}
+                        aria-label={stars ? t('ota.starsExact', { count: stars }) : vi.api.all}
+                        // Chip lọc đúng hạng sao; bỏ minStars (có thể còn từ trang chủ) để hai điều kiện không chồng nhau.
+                        onChange={() => search.setFilters((previous) => ({ ...previous, stars, minStars: '' }))}
                       />
                       {stars ? (
                         <>
@@ -389,9 +391,15 @@ export function LiveSearchScreen({
                     />
                     <StaySearchIcon name="sortAsc" />
                   </label>
-                  {/* shortcut: API chưa có sort giá giảm dần; bật khi BE thêm sort=price_desc. */}
-                  <label className={listing.chip} title={`${vi.ota.sortPriceDesc} (${vi.ota.comingSoon})`}>
-                    <input type="radio" name="stay-sort" value="price_desc" aria-label={vi.ota.sortPriceDesc} disabled />
+                  <label className={listing.chip} title={vi.ota.sortPriceDesc}>
+                    <input
+                      type="radio"
+                      name="stay-sort"
+                      value="price_desc"
+                      aria-label={vi.ota.sortPriceDesc}
+                      checked={search.filters.sort === 'price_desc'}
+                      onChange={() => update('sort', 'price_desc')}
+                    />
                     <StaySearchIcon name="sortDesc" />
                   </label>
                 </div>

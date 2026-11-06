@@ -34,9 +34,9 @@ const paths = {
       <path d="M9 21v-5h6v5M9 7h1m4 0h1m-6 4h1m4 0h1" />
     </>
   ),
-  // Vạch ngắn → dài: giá tăng dần; dài → ngắn: giá giảm dần.
-  sortAsc: <path d="M3 6h4M3 12h7M3 18h10M19 4v15m-3.5-3.5L19 19l3.5-3.5" />,
-  sortDesc: <path d="M3 6h10M3 12h7M3 18h4M19 4v15m-3.5-3.5L19 19l3.5-3.5" />,
+  // Cột thấp → cao + mũi tên lên: giá tăng dần; cột cao → thấp + mũi tên xuống: giá giảm dần.
+  sortAsc: <path d="M4 20v-4M8.5 20v-8M13 20V8M19.5 20V5m-3.5 3.5L19.5 5 23 8.5" />,
+  sortDesc: <path d="M4 20V8M8.5 20v-8M13 20v-4M19.5 5v15m-3.5-3.5 3.5 3.5 3.5-3.5" />,
   filter: (
     <>
       <path d="M4 7h9m4 0h3M4 17h3m4 0h9" />

@@ -10,5 +10,6 @@ export type StaysControllerListStaysSort =
 
 export const StaysControllerListStaysSort = {
   price: 'price',
+  price_desc: 'price_desc',
   stars: 'stars',
 } as const;
