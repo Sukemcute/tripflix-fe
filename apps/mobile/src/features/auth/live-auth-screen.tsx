@@ -1,6 +1,13 @@
-import { getAuthErrorKind, getRegistrationFieldError, HttpError, useApiSession } from '@tripflix/api-client';
+import {
+  getAuthErrorKind,
+  getRegistrationFieldError,
+  getRetryAfterSeconds,
+  HttpError,
+  useApiSession,
+  useResendCooldown,
+} from '@tripflix/api-client';
 import { getRegistrationPasswordStrength, REGISTRATION_CODE_PATTERN } from '@tripflix/app-core';
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, spacing as s } from '@tripflix/tokens';
 import { useMutation } from '@tanstack/react-query';
 import { Image } from 'expo-image';
@@ -31,11 +38,17 @@ export function LiveLoginScreen() {
   const [code, setCode] = useState('');
   const [registrationId, setRegistrationId] = useState<string>();
   const strength = getRegistrationPasswordStrength(password);
+  const cooldown = useResendCooldown();
   const requestCode = useMutation({
-    mutationFn: () => session.requestRegistrationCode({ email: email.trim(), password }),
-    onSuccess: (id) => {
+    mutationFn: () => session.sendRegistrationCode({ email: email.trim(), password }),
+    onSuccess: ({ registrationId: id, resendAfterSeconds }) => {
       setRegistrationId(id);
       setCode('');
+      cooldown.start(resendAfterSeconds);
+    },
+    onError: (err) => {
+      const seconds = getRetryAfterSeconds(err);
+      if (seconds) cooldown.start(seconds);
     },
   });
   const canRegister =
@@ -70,7 +83,11 @@ export function LiveLoginScreen() {
     return fieldError ?? (kind ? vi.api[kind] : undefined);
   };
   const formError = isRegistering ? registrationError(mutation.error) : undefined;
-  const sendError = registrationError(requestCode.error);
+  // 429 vì bấm quá sớm: nút đã đếm ngược, thay câu lỗi chung bằng số giây còn lại.
+  const sendError =
+    cooldown.isWaiting && getRetryAfterSeconds(requestCode.error) !== undefined
+      ? t('api.registrationCodeTooSoon', { seconds: cooldown.secondsLeft })
+      : registrationError(requestCode.error);
   return (
     <Screen header={null} padded={false}>
       <View style={styles.hero}>
@@ -114,6 +131,7 @@ export function LiveLoginScreen() {
             setCode('');
             setRegistrationId(undefined);
             requestCode.reset();
+            cooldown.clear();
             mutation.reset();
           }}
           editable={!isBusy}
@@ -147,7 +165,9 @@ export function LiveLoginScreen() {
             />
             <Button
               tone="text"
-              disabled={!isReady || isBusy || strength !== 'passwordStrong' || !email.trim()}
+              disabled={
+                !isReady || isBusy || cooldown.isWaiting || strength !== 'passwordStrong' || !email.trim()
+              }
               onPress={() => {
                 mutation.reset();
                 requestCode.mutate();
@@ -155,9 +175,11 @@ export function LiveLoginScreen() {
             >
               {requestCode.isPending
                 ? vi.api.sending
-                : registrationId
-                  ? vi.api.registrationResendCode
-                  : vi.api.registrationSendCode}
+                : cooldown.isWaiting
+                  ? t('api.registrationResendIn', { seconds: cooldown.secondsLeft })
+                  : registrationId
+                    ? vi.api.registrationResendCode
+                    : vi.api.registrationSendCode}
             </Button>
             {registrationId && <Notice>{vi.api.registrationCodeSent}</Notice>}
             {sendError ? (
@@ -194,6 +216,7 @@ export function LiveLoginScreen() {
             setRegistering(!isRegistering);
             mutation.reset();
             requestCode.reset();
+            cooldown.clear();
             setCode('');
             setRegistrationId(undefined);
           }}
