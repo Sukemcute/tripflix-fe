@@ -726,6 +726,11 @@ export function buildCombosFromApi(
       : preset.description;
 
     const stayImage = resolveStayImage(slug, bestHotel?.thumbnail);
+    const stayHref =
+      item.otherDealsCount && item.otherDealsCount > 0
+        ? `/search?placeId=${slug}`
+        : `/search?placeId=${slug}&q=${encodeURIComponent(bestHotel?.name ?? preset.name)}`;
+
     const stay: StayRecommendation = {
       name: bestHotel?.name ?? `Khách sạn tại ${preset.name}`,
       region: `${preset.name}${bestHotel?.stars ? ` · ${bestHotel.stars} sao` : ''}`,
@@ -734,7 +739,7 @@ export function buildCombosFromApi(
       priceFrom: bestHotel?.priceFrom ?? 1_200_000,
       description: stayDescription,
       image: stayImage,
-      href: `/search?placeId=${slug}&q=${encodeURIComponent(bestHotel?.name ?? preset.name)}`,
+      href: stayHref,
       otherDealsCount: item.otherDealsCount,
     };
 

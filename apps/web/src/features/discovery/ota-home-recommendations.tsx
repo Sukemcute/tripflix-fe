@@ -200,19 +200,16 @@ export function OtaHomeRecommendations() {
                 {activeCombo.stay.region}
                 {activeCombo.stay.stars ? <SoftStarIcon /> : null}
               </span>
-              <h3 style={{ fontSize: 'clamp(20px, 2.4vw, 30px)' }}>{activeCombo.stay.name}</h3>
+              <h3>{activeCombo.stay.name}</h3>
               <p>{activeCombo.stay.description}</p>
-              {typeof activeCombo.stay.otherDealsCount === 'number' && activeCombo.stay.otherDealsCount > 0 ? (
-                <div>
-                  <span className={styles.otherDealsNote}>
-                    Còn ít nhất khoảng {activeCombo.stay.otherDealsCount} khách sạn có deal hời nữa
-                  </span>
-                </div>
-              ) : null}
             </div>
             <div className={styles.comboMeta}>
               <strong>{formatPrice(activeCombo.stay.priceFrom)}</strong>
-              <span aria-hidden="true">Xem phòng →</span>
+              <span aria-hidden="true">
+                {typeof activeCombo.stay.otherDealsCount === 'number' && activeCombo.stay.otherDealsCount > 0
+                  ? `Khám phá thêm ${activeCombo.stay.otherDealsCount} deal hời →`
+                  : 'Xem phòng →'}
+              </span>
             </div>
           </div>
         </Link>
@@ -236,12 +233,12 @@ export function OtaHomeRecommendations() {
             </span>
             <div>
               <span>{activeCombo.experience.location}</span>
-              <h3 style={{ fontSize: 'clamp(20px, 2.4vw, 30px)' }}>{activeCombo.experience.name}</h3>
+              <h3>{activeCombo.experience.name}</h3>
               <p>{activeCombo.experience.description}</p>
             </div>
             <div className={styles.comboMeta}>
               <strong>{activeCombo.experience.ratingText}</strong>
-              <span aria-hidden="true">Chi tiết →</span>
+              <span aria-hidden="true">Xem chi tiết →</span>
             </div>
           </div>
         </Link>
