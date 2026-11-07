@@ -17,11 +17,21 @@ const addDays = (iso: string, days: number) =>
   new Date(new Date(iso + 'T00:00:00Z').getTime() + days * DAY_MS).toISOString().slice(0, 10);
 const weekdayOf = (iso: string) => WEEKDAYS[(new Date(iso + 'T00:00:00Z').getUTCDay() + 6) % 7];
 
+interface FlightDateStripProps {
+  /** Chặng đang chọn: lấy giá theo ngày của đúng chặng này. */
+  search: FlightSearch;
+  /** Đường dẫn khi bấm một ngày; khứ hồi cần giữ ngày còn lại và chuyến đã chọn. */
+  hrefFor: (date: string) => string;
+  /** Ngày sớm nhất hiện trên dải, ví dụ chiều về không trước ngày đi. */
+  minDate?: string;
+}
+
 /** 7 ngày quanh ngày đang tìm, mỗi ngày kèm giá rẻ nhất; bấm để đổi ngày bay. */
-export function FlightDateStrip({ search }: { search: FlightSearch }) {
+export function FlightDateStrip({ search, hrefFor, minDate }: FlightDateStripProps) {
   const today = getFlightToday();
+  const earliest = minDate && minDate > today ? minDate : today;
   const centered = addDays(search.date, -3);
-  const [start, setStart] = useState(centered < today ? today : centered);
+  const [start, setStart] = useState(centered < earliest ? earliest : centered);
   const end = addDays(start, STRIP_DAYS - 1);
   const calendar = useFlightCalendar({
     from: search.from,
@@ -48,26 +58,16 @@ export function FlightDateStrip({ search }: { search: FlightSearch }) {
     .filter(Boolean)
     .join(' ');
 
-  const hrefFor = (date: string) =>
-    '/flights?' +
-    new URLSearchParams({
-      from: search.from,
-      to: search.to,
-      date,
-      passengers: String(search.passengers),
-      ...(search.sort ? { sort: search.sort } : {}),
-    });
-
   return (
     <nav className={styles.dateStrip} aria-label={copy.datesLabel}>
       <button
         type="button"
         className={styles.stripArrow}
         aria-label={copy.previousDays}
-        disabled={start <= today}
+        disabled={start <= earliest}
         onClick={() => {
           const previous = addDays(start, -STRIP_DAYS);
-          setStart(previous < today ? today : previous);
+          setStart(previous < earliest ? earliest : previous);
         }}
       >
         <FlightIcon name="chevron" size={18} />

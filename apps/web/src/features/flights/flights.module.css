@@ -2176,6 +2176,233 @@
   letter-spacing: 0.18em;
 }
 
+/* ---------- Khứ hồi ---------- */
+
+.tripTabs {
+  display: inline-flex;
+  gap: 4px;
+  margin: 0;
+  padding: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-sea-mist);
+}
+
+.tripTabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  color: var(--color-teal-ink);
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    background 256ms,
+    color 256ms,
+    box-shadow 256ms;
+}
+
+.tripTabs button:hover:not([aria-pressed='true']) {
+  background: rgb(255 255 255 / 60%);
+}
+
+.tripTabs button[aria-pressed='true'] {
+  background: white;
+  color: var(--color-ink);
+  box-shadow: 0 6px 14px -8px rgb(0 76 68 / 45%);
+}
+
+.tripTabs button:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
+}
+
+.searchRow[data-round] {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.7fr) minmax(0, 0.95fr) auto;
+}
+
+.dateFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.searchRow[data-round] .dateFields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Lịch của ô ngày về mở canh phải để không tràn khỏi khung tìm kiếm. */
+.dateFields > :nth-child(2) .popover {
+  right: 0;
+  left: auto;
+}
+
+.calendarGrid button[data-in-range] {
+  border-radius: 0;
+  background: var(--color-sea-mist);
+}
+
+.calendarGrid button[data-range-start]:not([aria-pressed='true']) {
+  box-shadow: inset 0 0 0 2px var(--color-teal-ink);
+}
+
+.roundSummary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.roundLeg {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px dashed #cfe5e0;
+  border-radius: 18px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.roundLeg[data-active] {
+  border: 1px solid var(--color-teal-ink);
+  background: white;
+  box-shadow: 0 14px 30px -20px rgb(0 76 68 / 55%);
+}
+
+.roundLeg[data-done] {
+  border-style: solid;
+  border-color: #dce9e6;
+  background: white;
+}
+
+.roundLegIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+
+.roundLeg[data-active] .roundLegIcon {
+  background: var(--color-teal-ink);
+  color: white;
+}
+
+.roundLegText {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.roundLegText > span {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roundLegText strong {
+  color: var(--color-ink);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.roundLegText .roundLegLabel {
+  color: var(--color-teal-ink);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.roundLegPrice {
+  flex: none;
+  color: var(--color-ink);
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.roundChange {
+  flex: none;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+  font-size: 12px;
+  font-weight: 700;
+  transition: background 256ms;
+}
+
+.roundChange:hover {
+  background: var(--color-teal-soft);
+}
+
+.roundNotice {
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--color-sun-soft);
+  color: #7a5600;
+  font-size: 14px;
+}
+
+.roundNotice a {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+@media (max-width: 1100px) {
+  .searchRow[data-round] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .searchRow[data-round] .dateFields {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .roundSummary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dateFields > :nth-child(2) .popover {
+    right: auto;
+    left: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .searchRow[data-round] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .roundLeg {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+
+  /* Giá và nút "Đổi chuyến đi" xuống hàng dưới, thẳng cột với chữ. */
+  .roundLegText {
+    flex-basis: calc(100% - 50px);
+  }
+
+  .roundLegPrice {
+    margin-left: 50px;
+  }
+
+  .roundChange {
+    margin-left: auto;
+  }
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 1100px) {
