@@ -64,6 +64,39 @@ function formatDuration(
   return minutes ? t('flights.duration', { hours, minutes }) : t('flights.durationHours', { hours });
 }
 
+/** Hãng có logo trong public/airlines/<mã IATA>.png. */
+const AIRLINE_LOGOS = new Set(['VN', 'VJ', 'VU', 'QH', 'BL']);
+const AIRLINE_NAME_CODES: [RegExp, string][] = [
+  [/vietnam airlines/i, 'VN'],
+  [/vietjet/i, 'VJ'],
+  [/vietravel/i, 'VU'],
+  [/bamboo/i, 'QH'],
+  [/pacific/i, 'BL'],
+];
+
+/** Mã IATA của hãng: lấy từ BE, thiếu (dữ liệu cũ) thì đoán theo tên hãng. */
+function resolveAirlineCode(flight: Pick<FlightOfferDto, 'airlineCode' | 'airline'>): string | null {
+  if (flight.airlineCode) return flight.airlineCode.toUpperCase();
+  const match = AIRLINE_NAME_CODES.find(([pattern]) => pattern.test(flight.airline ?? ''));
+  return match?.[1] ?? null;
+}
+
+function AirlineLogo({ code, airline }: { code: string | null; airline: string | null }) {
+  return (
+    <span
+      className={styles.airlineBadge}
+      data-logo={(code && AIRLINE_LOGOS.has(code)) || undefined}
+      aria-hidden="true"
+    >
+      {code && AIRLINE_LOGOS.has(code) ? (
+        <Image src={'/airlines/' + code + '.png'} alt="" width={64} height={64} />
+      ) : (
+        (code ?? getAirlineInitials(airline))
+      )}
+    </span>
+  );
+}
+
 function getAirlineInitials(airline: string | null): string {
   const words = (airline ?? '')
     .replace(/\(.*?\)/g, '')
@@ -327,13 +360,14 @@ export function FlightCard({
     .sort((a, b) => (a.priceFrom ?? 0) - (b.priceFrom ?? 0))[0];
   const cheapestFare = cheapest?.fares.find((option) => option.pricePerPerson === cheapest.priceFrom);
   const airlineName = flight.airline ?? flight.name;
+  const airlineCode = resolveAirlineCode(flight);
 
   return (
     <article
       className={styles.card}
       aria-label={flight.name}
       data-open={isOpen || undefined}
-      data-airline={flight.airlineCode ?? undefined}
+      data-airline={airlineCode ?? undefined}
     >
       {tags.length > 0 && (
         <div className={styles.cardTags}>
@@ -347,9 +381,7 @@ export function FlightCard({
       {!isOpen && (
         <div className={styles.row}>
           <div className={styles.airline}>
-            <span className={styles.airlineBadge} aria-hidden="true">
-              {flight.airlineCode ?? getAirlineInitials(flight.airline)}
-            </span>
+            <AirlineLogo code={airlineCode} airline={flight.airline} />
             <div>
               <h3>
                 {detailQuery ? (
@@ -419,9 +451,7 @@ export function FlightCard({
         <div id={bodyId} className={styles.cardBody}>
           <div className={styles.cardMain}>
             <div className={styles.tBand}>
-              <span className={styles.airlineBadge} aria-hidden="true">
-                {flight.airlineCode ?? getAirlineInitials(flight.airline)}
-              </span>
+              <AirlineLogo code={airlineCode} airline={flight.airline} />
               <h3>
                 {detailQuery ? (
                   <Link
