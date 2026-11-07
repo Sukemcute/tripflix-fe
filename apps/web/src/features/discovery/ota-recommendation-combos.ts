@@ -555,7 +555,8 @@ export const RECOMMENDATION_COMBOS: readonly RecommendationCombo[] = [
       priceFrom: 2450000,
       description: 'Hồ bơi nước biển 2.500m² và bãi cát trắng riêng tư nép mình bên vịnh biển.',
       image: '/brand/hotel.jpg',
-      href: '/search?placeId=nha-trang&q=Amiana',
+      href: '/search?placeId=nha-trang',
+      otherDealsCount: 3,
     },
     experience: {
       name: DESTINATION_PRESETS['nha-trang']!.experience.name,
@@ -587,7 +588,8 @@ export const RECOMMENDATION_COMBOS: readonly RecommendationCombo[] = [
       priceFrom: 1850000,
       description: 'Kiến trúc lâu đài giữa rừng thông bạt ngàn, view ôm trọn hồ Tuyền Lâm.',
       image: '/brand/hotel.jpg',
-      href: '/search?placeId=da-lat&q=Dalat+Edensee',
+      href: '/search?placeId=da-lat',
+      otherDealsCount: 3,
     },
     experience: {
       name: DESTINATION_PRESETS['da-lat']!.experience.name,
@@ -619,7 +621,8 @@ export const RECOMMENDATION_COMBOS: readonly RecommendationCombo[] = [
       priceFrom: 1620000,
       description: 'Nằm giữa dòng sông Hoài thơ mộng, tặng kèm vé xem show Ký Ức Hội An.',
       image: '/brand/hotel.jpg',
-      href: '/search?placeId=hoi-an&q=Hội+An+Memories',
+      href: '/search?placeId=hoi-an',
+      otherDealsCount: 3,
     },
     experience: {
       name: DESTINATION_PRESETS['hoi-an']!.experience.name,
@@ -651,7 +654,8 @@ export const RECOMMENDATION_COMBOS: readonly RecommendationCombo[] = [
       priceFrom: 3600000,
       description: 'Khu nghỉ dưỡng 2 mặt biển độc nhất ngắm trọn bình minh và hoàng hôn.',
       image: '/brand/destinations/phu-quoc-view.jpg',
-      href: '/search?placeId=phu-quoc&q=Premier+Village',
+      href: '/search?placeId=phu-quoc',
+      otherDealsCount: 3,
     },
     experience: {
       name: DESTINATION_PRESETS['phu-quoc']!.experience.name,
