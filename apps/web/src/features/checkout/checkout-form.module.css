@@ -5,6 +5,25 @@
   padding-block: 28px 80px;
 }
 
+/* ---------- Quay lại trang trước ---------- */
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 6px 12px 6px 8px;
+  border-radius: 999px;
+  color: var(--color-teal-ink);
+  font-size: 14px;
+  font-weight: 700;
+  transition: background 256ms;
+}
+
+.backLink:is(:hover, :focus-visible) {
+  background: color-mix(in srgb, var(--color-teal-ink) 8%, transparent);
+}
+
 /* ---------- Thanh bước ---------- */
 
 .steps {
@@ -120,7 +139,7 @@
   margin: 0;
   padding: 24px;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 12px;
   background: var(--color-background);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 4%, transparent);
 }
@@ -154,14 +173,11 @@
   font-weight: 400;
 }
 
+/* Icon đứng thẳng cạnh tiêu đề, không ô nền. */
 .cardIcon {
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: var(--color-sea-mist);
   color: var(--color-teal-ink);
 }
 
@@ -198,11 +214,11 @@
 
 .field input {
   width: 100%;
-  min-height: 48px;
+  min-height: 46px;
   padding: 10px 14px;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background);
   color: var(--color-ink);
   font-size: 15px;
   font-weight: 500;
@@ -213,7 +229,7 @@
 }
 
 .field input:hover {
-  border-color: var(--line);
+  border-color: color-mix(in srgb, var(--color-teal-ink) 40%, var(--color-border));
 }
 
 .field input:focus {
@@ -261,7 +277,7 @@
 
 .guest {
   padding: 16px;
-  border-radius: 14px;
+  border-radius: 8px;
   background: color-mix(in srgb, var(--color-sea-mist) 55%, var(--color-background));
 }
 
@@ -295,8 +311,8 @@
   gap: 12px;
   min-height: 68px;
   padding: 12px 16px;
-  border: 1.5px solid var(--line);
-  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
   cursor: pointer;
   transition:
     border-color 256ms,
@@ -329,28 +345,21 @@
   background: var(--color-coral-tint);
 }
 
+/* Icon thẻ hoặc logo VNPay, đặt thẳng trên ô, không ô nền. */
 .methodIcon {
-  display: grid;
+  display: flex;
   flex-shrink: 0;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: var(--color-surface-muted);
+  align-items: center;
   color: var(--color-ink);
-  font-size: 13px;
-  font-weight: 800;
 }
 
-.methodIcon[data-method='vnpay'] {
-  background: var(--color-navy);
-  color: var(--color-background);
-  letter-spacing: 0.02em;
+.methodIcon[data-method='vnpay'] img {
+  width: 84px;
+  height: auto;
 }
 
 .method[data-selected='true'] .methodIcon[data-method='card'] {
-  background: var(--color-coral-ink);
-  color: var(--color-background);
+  color: var(--color-coral-ink);
 }
 
 .methodText {
@@ -404,7 +413,7 @@
   min-height: 118px;
   padding: 14px 16px;
   border: 2px solid transparent;
-  border-radius: 14px;
+  border-radius: 8px;
   background:
     radial-gradient(
       circle at 85% -10%,
@@ -524,7 +533,7 @@
   gap: 12px;
   padding: 14px 16px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 8px;
   background: var(--color-surface);
   font-size: 14px;
   cursor: pointer;
@@ -559,7 +568,7 @@
 .info {
   margin: 0;
   padding: 14px 16px;
-  border-radius: 14px;
+  border-radius: 8px;
 }
 
 .warning {
@@ -577,7 +586,7 @@
 .error {
   margin: 0;
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--color-coral-tint);
   color: var(--color-coral-ink);
   font-weight: 600;
@@ -594,7 +603,7 @@
   gap: 10px;
   width: 100%;
   min-height: 58px;
-  border-radius: 14px;
+  border-radius: 8px;
   font-size: 16px;
   box-shadow: 0 16px 28px -18px var(--color-coral-ink);
 }
@@ -628,7 +637,7 @@
   display: grid;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 12px;
   background: var(--color-background);
   box-shadow: 0 18px 36px -26px color-mix(in srgb, var(--color-teal-ink) 60%, transparent);
   text-align: left;
@@ -683,7 +692,7 @@
   gap: 12px;
   margin: 16px 20px 0;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--color-sea-mist);
   color: var(--color-teal-ink);
 }
@@ -740,12 +749,15 @@
 .itemIcon {
   display: grid;
   flex-shrink: 0;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--color-coral-tint);
+  place-items: start center;
+  padding-top: 2px;
   color: var(--color-coral-ink);
+}
+
+/* Ô chọn ngày dùng chung: cùng cỡ và góc bo với các ô nhập trong form. */
+.datePicker button {
+  min-height: 46px;
+  border-radius: 8px;
 }
 
 .itemBody {
@@ -796,7 +808,7 @@
   white-space: nowrap;
 }
 
-/* Tổng tiền nằm ở "cuống" dưới đường xé, có hai khuyết bán nguyệt. */
+/* Tổng tiền nằm ở "cuống" dưới đường xé. */
 .total {
   position: relative;
   display: flex;
@@ -809,26 +821,6 @@
   background: var(--color-warm-mist);
   color: var(--color-ink);
   font-weight: 600;
-}
-
-.total::before,
-.total::after {
-  content: '';
-  position: absolute;
-  top: calc(-1 * var(--notch) - 1px);
-  width: calc(var(--notch) * 2);
-  height: calc(var(--notch) * 2);
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: var(--color-background);
-}
-
-.total::before {
-  left: calc(-1 * var(--notch) - 1px);
-}
-
-.total::after {
-  right: calc(-1 * var(--notch) - 1px);
 }
 
 .total span {
@@ -895,7 +887,7 @@
   margin: 10px 0;
   padding: 14px 28px;
   border: 1.5px dashed var(--color-teal-ink);
-  border-radius: 14px;
+  border-radius: 8px;
   background: var(--color-sea-mist);
   color: var(--color-text-muted);
   font-size: 13px;
