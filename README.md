@@ -16,7 +16,7 @@ Web chạy ở `http://localhost:3100`, admin ở `http://localhost:3200`. Chạ
 
 Các lệnh dưới đây dùng PowerShell. Mở Docker Desktop trước; cần có ba repo `tripflix-be`, `tripflix-fe`, `tripflix-ai` cạnh nhau, đã cài dependencies và cấu hình môi trường local theo README của BE. Thay đường dẫn nếu clone ở vị trí khác.
 
-### Terminal 1: backend, AI, Web và Admin
+### Terminal 1: backend, Web và Admin
 
 ```powershell
 cd D:\Sukem\VinUni\VSF\tripflix\tripflix-be
@@ -24,15 +24,33 @@ pnpm stack:up
 pnpm stack:ps
 ```
 
-`stack:up` build và khởi động các service trong Docker, đồng thời chạy migration và seed. Đợi các service khởi động xong trước khi mở ứng dụng.
+`stack:up` build và khởi động BE, Web, Admin và gateway trong Docker, đồng thời chạy migration và seed. Lệnh này **không bật AI** để khởi động nhanh hơn. Đợi các service khởi động xong trước khi mở ứng dụng.
 
-| Thành phần  | Địa chỉ trên máy tính      |
-| ----------- | -------------------------- |
-| Web         | http://localhost:3100      |
-| Admin       | http://localhost:3200      |
-| API gateway | http://localhost:8080      |
-| Swagger     | http://localhost:3000/docs |
-| Mailpit     | http://localhost:8025      |
+Khi cần tính năng AI (trợ lý, tóm tắt bài viết), bật thêm AI lên stack đang chạy:
+
+```powershell
+pnpm stack:ai        # bật ai-service + ai-summary-worker
+pnpm stack:ai:down   # tắt riêng AI, BE vẫn chạy
+```
+
+Muốn chạy cả hệ thống kèm AI ngay từ đầu thì dùng `pnpm stack:full` thay cho `pnpm stack:up`. Khi AI tắt, các lời gọi `/ai/*` trả lỗi 502; bài viết mới vẫn được tóm tắt bù khi bật AI lại.
+
+| Lệnh                                        | Chạy gì                                      |
+| ------------------------------------------- | -------------------------------------------- |
+| `pnpm stack:up`                             | BE, Web, Admin, gateway (không AI)           |
+| `pnpm stack:watch`                          | Như trên, sửa code thì container tự cập nhật |
+| `pnpm stack:ai` / `pnpm stack:ai:down`      | Bật / tắt riêng AI                           |
+| `pnpm stack:full` / `pnpm stack:watch:full` | Cả hệ thống kèm AI                           |
+| `pnpm stack:be`                             | Chỉ BE + gateway                             |
+
+| Thành phần  | Địa chỉ trên máy tính                     |
+| ----------- | ----------------------------------------- |
+| Web         | http://localhost:3100                     |
+| Admin       | http://localhost:3200                     |
+| API gateway | http://localhost:8080                     |
+| Swagger     | http://localhost:3000/docs                |
+| Mailpit     | http://localhost:8025                     |
+| AI service  | http://localhost:8000 (khi đã `stack:ai`) |
 
 ### Terminal 2: mobile bằng Expo Go
 
@@ -66,7 +84,7 @@ pnpm stack:logs
 pnpm stack:down
 ```
 
-`stack:logs` theo dõi log; nhấn `Ctrl+C` để thoát xem log. `stack:down` dừng các service và giữ dữ liệu local. Dừng Expo bằng `Ctrl+C` trong terminal mobile.
+`stack:logs` theo dõi log; nhấn `Ctrl+C` để thoát xem log. `stack:down` dừng tất cả service, kể cả AI, và giữ dữ liệu local. Dừng Expo bằng `Ctrl+C` trong terminal mobile.
 
 ### Khi muốn sửa Web/Admin với hot reload
 
