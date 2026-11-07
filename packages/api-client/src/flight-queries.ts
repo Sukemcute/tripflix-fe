@@ -37,11 +37,15 @@ export function useFlightOffers(search: FlightSearch) {
 }
 
 /** Một hạng ghế của một chuyến, báo giá đúng ngày bay và số khách (GET /flights/:id). */
-export function useFlightOffer(productId: string, query: { date: string; passengers: number }) {
+export function useFlightOffer(
+  productId: string,
+  query: { date: string; passengers: number },
+  options: { enabled?: boolean } = {},
+) {
   const { isReady } = useApiSession();
   return useQuery({
     queryKey: ['commerce', 'flight-offer', productId, query],
-    enabled: isReady,
+    enabled: isReady && (options.enabled ?? true),
     staleTime: 0,
     retry: false,
     queryFn: async ({ signal }) => {

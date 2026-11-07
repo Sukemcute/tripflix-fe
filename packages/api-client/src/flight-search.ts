@@ -18,6 +18,13 @@ export function getFlightToday() {
 
 const FLIGHT_SORTS: readonly string[] = Object.values(FlightsControllerSearchSort);
 
+/** Ngày YYYY-MM-DD có thật trên lịch (loại 2026-02-30). */
+function isCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const day = new Date(`${value}T00:00:00Z`);
+  return Number.isFinite(day.getTime()) && day.toISOString().slice(0, 10) === value;
+}
+
 export function parseFlightSearch(
   input: { from: string; to: string; date: string; passengers: string; sort?: string },
   today = getFlightToday(),
@@ -28,9 +35,7 @@ export function parseFlightSearch(
   const passengers = Number(input.passengers);
   const airportCode = /^[A-Z]{3}$/;
   if (!airportCode.test(from) || !airportCode.test(to) || from === to) return null;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < today) return null;
-  const day = new Date(`${date}T00:00:00Z`);
-  if (!Number.isFinite(day.getTime()) || day.toISOString().slice(0, 10) !== date) return null;
+  if (!isCalendarDate(date) || date < today) return null;
   if (!/^[1-9]$/.test(input.passengers)) return null;
   const sort =
     input.sort && FLIGHT_SORTS.includes(input.sort) ? (input.sort as FlightsControllerSearchSort) : undefined;
@@ -75,4 +80,38 @@ export function buildFlightCheckout(
   ratePlanCode: string,
 ): CheckoutRequestDto {
   return { adults: search.passengers, items: [{ productId, checkIn: search.date, ratePlanCode }] };
+}
+
+/** Ngày về của vé khứ hồi: ngày có thật, không trước ngày đi. */
+export function parseFlightReturnDate(value: string, departDate: string): string | null {
+  const date = value.trim();
+  return isCalendarDate(date) && date >= departDate ? date : null;
+}
+
+/** Lượt tìm chiều về: đảo hai sân bay, bay vào ngày về, giữ số khách và cách sắp xếp. */
+export function getReturnFlightSearch(search: FlightSearch, returnDate: string): FlightSearch {
+  const { from, to, passengers, sort } = search;
+  const returnSearch: FlightSearch = { from: to, to: from, date: returnDate, passengers };
+  return sort ? { ...returnSearch, sort } : returnSearch;
+}
+
+export interface FlightLegChoice {
+  productId: string;
+  ratePlanCode: string;
+}
+
+/** Một đơn gồm hai vé: chiều đi bay ngày đi, chiều về bay ngày về, cùng số khách. */
+export function buildRoundTripCheckout(
+  search: FlightSearch,
+  returnDate: string,
+  outbound: FlightLegChoice,
+  inbound: FlightLegChoice,
+): CheckoutRequestDto {
+  return {
+    adults: search.passengers,
+    items: [
+      { productId: outbound.productId, checkIn: search.date, ratePlanCode: outbound.ratePlanCode },
+      { productId: inbound.productId, checkIn: returnDate, ratePlanCode: inbound.ratePlanCode },
+    ],
+  };
 }
