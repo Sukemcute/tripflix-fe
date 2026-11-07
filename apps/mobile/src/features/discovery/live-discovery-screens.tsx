@@ -407,12 +407,7 @@ function StayRecommendations() {
       if (response.status !== 200 || !Array.isArray(response.data.items)) {
         throw new Error('Unexpected hotel recommendations response');
       }
-      return response.data.items.flatMap((dest) =>
-        dest.hotels.map((hotel) => ({
-          ...hotel,
-          province: dest.province,
-        })),
-      );
+      return response.data.items;
     },
   });
 
@@ -427,37 +422,54 @@ function StayRecommendations() {
         }}
       />
       {query.data?.length === 0 && <Notice>{vi.api.noSuggestions}</Notice>}
-      {query.data?.map((stay) => (
-        <Card key={stay.hotelId}>
-          {stay.thumbnail && (
-            <Image
-              source={stay.thumbnail}
-              style={{
-                width: '100%',
-                aspectRatio: 16 / 9,
-                borderRadius: radius.md,
-                backgroundColor: colors.seaMist,
-              }}
-              contentFit="cover"
-            />
-          )}
-          <Txt variant="heading">{stay.name}</Txt>
-          <Txt>
-            {stay.province.name}
-            {stay.stars ? ` · ${stay.stars} ★` : ''}
-          </Txt>
-          <Txt variant="small">{stay.reason.text}</Txt>
-          <Txt variant="label">
-            {vi.hotel.from} {money(stay.priceFrom)} / {vi.api.perNight}
-          </Txt>
-          <Button
-            tone="secondary"
-            onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: stay.hotelId } })}
-          >
-            {vi.commerce.hotel}
-          </Button>
-        </Card>
-      ))}
+      {query.data?.map((dest) => {
+        const bestStay = dest.hotels[0];
+        if (!bestStay) return null;
+        return (
+          <Card key={dest.province.slug || bestStay.hotelId}>
+            {bestStay.thumbnail && (
+              <Image
+                source={bestStay.thumbnail}
+                style={{
+                  width: '100%',
+                  aspectRatio: 16 / 9,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.seaMist,
+                }}
+                contentFit="cover"
+              />
+            )}
+            <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <Badge tone="teal">{dest.province.name}</Badge>
+              {bestStay.stars ? (
+                <Txt variant="caption" style={{ color: colors.textMuted }}>
+                  {bestStay.stars} ★
+                </Txt>
+              ) : null}
+            </Row>
+            <Txt variant="heading">{bestStay.name}</Txt>
+            <Txt variant="small">{bestStay.reason.text}</Txt>
+            <Txt variant="label">
+              {vi.hotel.from} {money(bestStay.priceFrom)} / {vi.api.perNight}
+            </Txt>
+            <Button
+              tone="secondary"
+              onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: bestStay.hotelId } })}
+            >
+              {vi.commerce.hotel}
+            </Button>
+            {dest.otherDealsCount > 0 && (
+              <Button
+                tone="text"
+                onPress={() => router.push({ pathname: '/search', params: { q: dest.province.name } })}
+                icon="arrow-forward"
+              >
+                {`Khám phá thêm ${dest.otherDealsCount} deal hời`}
+              </Button>
+            )}
+          </Card>
+        );
+      })}
     </>
   );
 }
