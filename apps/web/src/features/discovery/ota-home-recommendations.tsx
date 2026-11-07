@@ -202,6 +202,13 @@ export function OtaHomeRecommendations() {
               </span>
               <h3 style={{ fontSize: 'clamp(20px, 2.4vw, 30px)' }}>{activeCombo.stay.name}</h3>
               <p>{activeCombo.stay.description}</p>
+              {typeof activeCombo.stay.otherDealsCount === 'number' && activeCombo.stay.otherDealsCount > 0 ? (
+                <div>
+                  <span className={styles.otherDealsNote}>
+                    Còn ít nhất khoảng {activeCombo.stay.otherDealsCount} khách sạn có deal hời nữa
+                  </span>
+                </div>
+              ) : null}
             </div>
             <div className={styles.comboMeta}>
               <strong>{formatPrice(activeCombo.stay.priceFrom)}</strong>

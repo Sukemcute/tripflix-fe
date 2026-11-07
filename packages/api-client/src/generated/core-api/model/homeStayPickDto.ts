@@ -4,10 +4,9 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import type { HomeProvinceDto } from './homeProvinceDto';
 import type { HomeReasonDto } from './homeReasonDto';
 
-export interface HomePickDto {
+export interface HomeStayPickDto {
   /** Mã khách sạn của commerce; mở trang chi tiết bằng mã này */
   hotelId: string;
   name: string;
@@ -20,7 +19,6 @@ export interface HomePickDto {
    * @nullable
    */
   brand: string | null;
-  province: HomeProvinceDto;
   /** Giá thấp nhất một đêm một phòng trong 30 ngày tới (VND), hiện "từ X/đêm" */
   priceFrom: number;
   reason: HomeReasonDto;

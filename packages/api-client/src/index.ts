@@ -37,7 +37,12 @@ export {
   useHomeRecommendations,
   type HomeRecommendationsFilters,
 } from './recommendations';
-export type { ExploreItemDto, ExploreUnderstoodDto, HomePickDto } from './generated/core-api/model';
+export type {
+  ExploreItemDto,
+  ExploreUnderstoodDto,
+  HomeDestinationPickDto,
+  HomeStayPickDto,
+} from './generated/core-api/model';
 export {
   commerceApi,
   createOperation,

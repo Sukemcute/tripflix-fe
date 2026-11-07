@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { homeRecommendationsControllerRecommendForHome } from './generated/core-api/discovery/discovery';
 import type {
-  HomePickDto,
+  HomeDestinationPickDto,
   HomeRecommendationsControllerRecommendForHomeParams,
 } from './generated/core-api/model';
 import { useApiSession } from './session';
@@ -14,7 +14,7 @@ export interface HomeRecommendationsFilters {
 export async function getHomeRecommendations(
   filters: HomeRecommendationsFilters = {},
   signal?: AbortSignal,
-): Promise<HomePickDto[]> {
+): Promise<HomeDestinationPickDto[]> {
   const params: HomeRecommendationsControllerRecommendForHomeParams = {};
   if (filters.recentPlaceIds && filters.recentPlaceIds.length > 0) {
     params.recentPlaceIds = filters.recentPlaceIds.join(',');

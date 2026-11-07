@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getHomeRecommendations } from './recommendations';
 import { configureHttp } from './http';
+import type { HomeDestinationPickDto } from './generated/core-api/model';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -10,16 +11,22 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('home recommendations API', () => {
   it('calls /api/recommendations/home with query params and returns items', async () => {
-    const mockItems = [
+    const mockItems: HomeDestinationPickDto[] = [
       {
-        hotelId: 'P-vn-h-da-lat-1',
-        name: 'Dalat Edensee Lake Resort',
-        thumbnail: '/images/hotel.jpg',
-        stars: 5,
-        brand: null,
         province: { slug: 'da-lat', name: 'Đà Lạt' },
-        priceFrom: 1_850_000,
-        reason: { code: 'recent_place', text: 'Vì bạn vừa tìm Đà Lạt' },
+        hotels: [
+          {
+            hotelId: 'P-vn-h-da-lat-1',
+            name: 'Dalat Edensee Lake Resort',
+            thumbnail: '/images/hotel.jpg',
+            stars: 5,
+            brand: null,
+            priceFrom: 1_850_000,
+            reason: { code: 'recent_place', text: 'Vì bạn vừa tìm Đà Lạt' },
+          },
+        ],
+        totalDealsCount: 3,
+        otherDealsCount: 2,
       },
     ];
     const send = vi.spyOn(globalThis, 'fetch').mockResolvedValue(json({ items: mockItems }));

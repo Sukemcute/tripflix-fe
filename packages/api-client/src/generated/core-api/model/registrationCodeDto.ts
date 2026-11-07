@@ -9,7 +9,7 @@ export interface RegistrationCodeDto {
   email: string;
   /**
    * @minLength 12
-   * @maxLength 128
+   * @maxLength 64
    */
   password: string;
 }

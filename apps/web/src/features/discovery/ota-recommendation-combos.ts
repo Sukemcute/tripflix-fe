@@ -1,4 +1,4 @@
-import type { HomePickDto } from '@tripflix/api-client';
+import type { HomeDestinationPickDto, HomeStayPickDto } from '@tripflix/api-client';
 import {
   DEFAULT_DESTINATION_FALLBACK,
   DEFAULT_EXPERIENCE_FALLBACK,
@@ -40,6 +40,7 @@ export interface StayRecommendation {
   description: string;
   image: string;
   href: string;
+  otherDealsCount?: number;
 }
 
 export interface ExperienceRecommendation {
@@ -667,7 +668,8 @@ export const RECOMMENDATION_COMBOS: readonly RecommendationCombo[] = [
 /**
  * Rút gọn câu text lý do khách sạn thành badge ngắn gọn cho Box 2.
  */
-function formatStayBadge(reason: HomePickDto['reason']): string {
+function formatStayBadge(reason?: HomeStayPickDto['reason']): string {
+  if (!reason) return 'Deal tốt nhất';
   if (reason.code === 'recent_place') {
     return 'Gợi ý cho bạn';
   }
@@ -686,7 +688,7 @@ function formatStayBadge(reason: HomePickDto['reason']): string {
  * - Box 3: Ảnh cà phê/ẩm thực (từ API nếu có, hoặc FE asset registry)
  */
 export function buildCombosFromApi(
-  items: readonly HomePickDto[],
+  items: readonly HomeDestinationPickDto[],
   baseCombos: readonly RecommendationCombo[],
 ): RecommendationCombo[] {
   if (!items || items.length === 0) return [...baseCombos];
@@ -700,35 +702,40 @@ export function buildCombosFromApi(
     usedSlugs.add(slug);
 
     const preset = getDestinationPreset(slug, item.province.name);
+    const bestHotel = item.hotels && item.hotels.length > 0 ? item.hotels[0] : null;
 
     // Box 1: Điểm đến tâm điểm & lý do vì sao nên đi
     const destinationImage = resolveDestinationSpotlightImage(slug, preset.image);
+    const isRecentPlace = bestHotel?.reason.code === 'recent_place';
     const destination: DestinationSpotlight = {
       name: preset.name,
       region: preset.region,
-      badge: item.reason.code === 'recent_place' ? 'Vì bạn vừa tìm' : preset.badge,
+      badge: isRecentPlace ? 'Vì bạn vừa tìm' : preset.badge,
       description: preset.description,
       meta: preset.meta,
       image: destinationImage,
       href: `/search?placeId=${slug}&q=${encodeURIComponent(preset.name)}`,
     };
 
-    // Box 2: Khách sạn & Ưu đãi giá tốt
-    const stayBadge = formatStayBadge(item.reason);
-    const stayDescription = item.brand
-      ? `Khách sạn thương hiệu ${item.brand} với dịch vụ chuẩn mực và tiện nghi cao cấp.`
-      : `${item.reason.text}. Vị trí trung tâm thuận tiện di chuyển tới các điểm tham quan.`;
+    // Box 2: Khách sạn & Ưu đãi giá tốt nhất
+    const stayBadge = formatStayBadge(bestHotel?.reason);
+    const stayDescription = bestHotel?.brand
+      ? `Khách sạn thương hiệu ${bestHotel.brand} với dịch vụ chuẩn mực và tiện nghi cao cấp.`
+      : bestHotel?.reason.text
+      ? `${bestHotel.reason.text}. Vị trí trung tâm thuận tiện di chuyển tới các điểm tham quan.`
+      : preset.description;
 
-    const stayImage = resolveStayImage(slug, item.thumbnail);
+    const stayImage = resolveStayImage(slug, bestHotel?.thumbnail);
     const stay: StayRecommendation = {
-      name: item.name,
-      region: `${preset.name}${item.stars ? ` · ${item.stars} sao` : ''}`,
+      name: bestHotel?.name ?? `Khách sạn tại ${preset.name}`,
+      region: `${preset.name}${bestHotel?.stars ? ` · ${bestHotel.stars} sao` : ''}`,
       badge: stayBadge,
-      stars: item.stars ?? 4,
-      priceFrom: item.priceFrom,
+      stars: bestHotel?.stars ?? 4,
+      priceFrom: bestHotel?.priceFrom ?? 1_200_000,
       description: stayDescription,
       image: stayImage,
-      href: `/search?placeId=${slug}&q=${encodeURIComponent(item.name)}`,
+      href: `/search?placeId=${slug}&q=${encodeURIComponent(bestHotel?.name ?? preset.name)}`,
+      otherDealsCount: item.otherDealsCount,
     };
 
     // Box 3: Cà phê & Trải nghiệm địa phương
