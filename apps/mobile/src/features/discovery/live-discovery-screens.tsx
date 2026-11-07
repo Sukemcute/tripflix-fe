@@ -407,7 +407,12 @@ function StayRecommendations() {
       if (response.status !== 200 || !Array.isArray(response.data.items)) {
         throw new Error('Unexpected hotel recommendations response');
       }
-      return response.data.items;
+      return response.data.items.flatMap((dest) =>
+        dest.hotels.map((hotel) => ({
+          ...hotel,
+          province: dest.province,
+        })),
+      );
     },
   });
 
