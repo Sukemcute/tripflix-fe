@@ -26,6 +26,12 @@ type SoftDatePickerProps = {
   'aria-invalid'?: boolean;
 };
 
+const VIETNAM_DATE = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+
+export function getVietnamToday() {
+  return VIETNAM_DATE.format(new Date());
+}
+
 export function toIsoDate(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
@@ -91,14 +97,14 @@ export function SoftDatePicker({
 }: SoftDatePickerProps) {
   const [ownValue, setOwnValue] = useState(defaultValue);
   const current = value ?? ownValue;
-  const [focused, setFocused] = useState(() => current || clampDate(toIsoDate(new Date()), min, max));
+  const [focused, setFocused] = useState(() => current || clampDate(getVietnamToday(), min, max));
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDialogElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const baseId = useId();
-  // Lấy ngày hôm nay một lần khi tạo ô, không gọi Date mỗi lần render.
-  const [today] = useState(() => toIsoDate(new Date()));
+  // Lấy ngày hôm nay một lần khi tạo ô theo múi giờ Việt Nam, đồng bộ giữa SSR và Client.
+  const [today] = useState(() => getVietnamToday());
   const days = getMonthGrid(focused);
   const viewMonth = fromIsoDate(focused).getMonth();
   const viewYear = fromIsoDate(focused).getFullYear();

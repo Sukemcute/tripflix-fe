@@ -18,10 +18,13 @@ export interface StayFilters {
   priceMax: string;
   sort: 'price' | 'price_desc' | 'stars';
 }
+const VIETNAM_DATE = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+
 export function getFutureDate(days: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const today = VIETNAM_DATE.format(new Date());
+  const [year, month, day] = today.split('-').map(Number);
+  const date = new Date(Date.UTC(year!, month! - 1, day! + days));
+  return date.toISOString().split('T')[0]!;
 }
 export async function getAvailableStays(
   filters: StayFilters,

@@ -1,47 +1,14 @@
-import { t, vi } from '@tripflix/i18n';
+import { vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
-import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
+import { OtaHomeRecommendations } from './ota-home-recommendations';
 import { HomeStayPreview, HomeStoryPreview } from './ota-home-previews';
 import styles from './ota-home.module.css';
 
 export function OtaHomeSections() {
   return (
     <>
-      <section
-        id="home-destinations"
-        className={`ota-container ${styles.section}`}
-        aria-labelledby="destinations-title"
-        data-home-reveal
-      >
-        <div className={styles.sectionHead}>
-          <div>
-            <h2 id="destinations-title">{vi.ota.destinationTitle}</h2>
-            <p>{vi.ota.destinationIntro}</p>
-          </div>
-          <Link className={styles.textLink} href="/search">
-            {vi.ota.browseHotels}
-          </Link>
-        </div>
-        <div className={styles.destinations}>
-          {OTA_DESTINATIONS.map((destination) => (
-            <Link
-              key={destination.id}
-              href={getDestinationHref(destination)}
-              className={styles.destination}
-              aria-label={t('ota.browseDestination', { name: destination.name })}
-              data-home-banner
-            >
-              <Image src={destination.image} alt="" fill sizes="(max-width: 640px) 100vw, 48vw" />
-              <div>
-                <span>{destination.region}</span>
-                <h3>{destination.name}</h3>
-                <p>{destination.description}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <OtaHomeRecommendations />
       <HomeStayPreview />
       <section
         className={`ota-container ${styles.section}`}
