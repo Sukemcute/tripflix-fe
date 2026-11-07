@@ -64,8 +64,14 @@ function formatDuration(
   return minutes ? t('flights.duration', { hours, minutes }) : t('flights.durationHours', { hours });
 }
 
-/** Hãng có logo trong public/airlines/<mã IATA>.png. */
-const AIRLINE_LOGOS = new Set(['VN', 'VJ', 'VU', 'QH', 'BL']);
+/** Logo chữ nền trong suốt của hãng, trong public/airlines. */
+const AIRLINE_LOGOS: Record<string, string> = {
+  VN: '/airlines/VN.svg',
+  VJ: '/airlines/VJ.svg',
+  VU: '/airlines/VU.png',
+  QH: '/airlines/QH.svg',
+  BL: '/airlines/BL.svg',
+};
 const AIRLINE_NAME_CODES: [RegExp, string][] = [
   [/vietnam airlines/i, 'VN'],
   [/vietjet/i, 'VJ'],
@@ -82,17 +88,17 @@ function resolveAirlineCode(flight: Pick<FlightOfferDto, 'airlineCode' | 'airlin
 }
 
 function AirlineLogo({ code, airline }: { code: string | null; airline: string | null }) {
+  const logo = code ? AIRLINE_LOGOS[code] : undefined;
+  if (logo) {
+    return (
+      <span className={styles.airlineLogo} aria-hidden="true">
+        <Image src={logo} alt="" width={120} height={32} unoptimized />
+      </span>
+    );
+  }
   return (
-    <span
-      className={styles.airlineBadge}
-      data-logo={(code && AIRLINE_LOGOS.has(code)) || undefined}
-      aria-hidden="true"
-    >
-      {code && AIRLINE_LOGOS.has(code) ? (
-        <Image src={'/airlines/' + code + '.png'} alt="" width={64} height={64} />
-      ) : (
-        (code ?? getAirlineInitials(airline))
-      )}
+    <span className={styles.airlineBadge} aria-hidden="true">
+      {code ?? getAirlineInitials(airline)}
     </span>
   );
 }
@@ -359,8 +365,18 @@ export function FlightCard({
     .filter((offer) => offer.isAvailable && offer.priceFrom != null)
     .sort((a, b) => (a.priceFrom ?? 0) - (b.priceFrom ?? 0))[0];
   const cheapestFare = cheapest?.fares.find((option) => option.pricePerPerson === cheapest.priceFrom);
-  const airlineName = flight.airline ?? flight.name;
+  // Dữ liệu seed gắn đuôi "(mô phỏng)" vào tên hãng; không hiển thị đuôi này.
+  const airlineName = (flight.airline ?? flight.name).replace(/\s*\(mô phỏng\)\s*$/i, '');
   const airlineCode = resolveAirlineCode(flight);
+  const logoSrc = airlineCode ? AIRLINE_LOGOS[airlineCode] : undefined;
+  // Có logo thì logo thay cho tên hãng; tên vẫn nằm ở alt cho trình đọc màn hình.
+  const airlineMark = logoSrc ? (
+    <span className={styles.airlineLogo}>
+      <Image src={logoSrc} alt={airlineName} width={120} height={32} unoptimized />
+    </span>
+  ) : (
+    airlineName
+  );
 
   return (
     <article
@@ -380,20 +396,20 @@ export function FlightCard({
       )}
       {!isOpen && (
         <div className={styles.row}>
-          <div className={styles.airline}>
-            <AirlineLogo code={airlineCode} airline={flight.airline} />
+          <div className={styles.airline} data-logo={logoSrc ? true : undefined}>
+            {!logoSrc && <AirlineLogo code={airlineCode} airline={flight.airline} />}
             <div>
-              <h3>
+              <h3 title={airlineName}>
                 {detailQuery ? (
                   <Link
                     className={styles.detailLink}
                     href={'/flights/' + encodeURIComponent(cabin.productId) + '?' + detailQuery}
                     title={copy.viewDetail}
                   >
-                    {airlineName}
+                    {airlineMark}
                   </Link>
                 ) : (
-                  airlineName
+                  airlineMark
                 )}
               </h3>
               <p>
@@ -451,18 +467,18 @@ export function FlightCard({
         <div id={bodyId} className={styles.cardBody}>
           <div className={styles.cardMain}>
             <div className={styles.tBand}>
-              <AirlineLogo code={airlineCode} airline={flight.airline} />
-              <h3>
+              {!logoSrc && <AirlineLogo code={airlineCode} airline={flight.airline} />}
+              <h3 title={airlineName}>
                 {detailQuery ? (
                   <Link
                     className={styles.detailLink}
                     href={'/flights/' + encodeURIComponent(cabin.productId) + '?' + detailQuery}
                     title={copy.viewDetail}
                   >
-                    {airlineName}
+                    {airlineMark}
                   </Link>
                 ) : (
-                  airlineName
+                  airlineMark
                 )}
               </h3>
               <span className={styles.tTag}>

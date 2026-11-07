@@ -1010,20 +1010,20 @@
 
 .dateStrip {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 6px;
   border: 1px solid #e3ebe9;
-  border-radius: 14px;
+  border-radius: 12px;
   background: white;
 }
 
 .stripArrow {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   color: var(--color-teal-ink);
 }
@@ -1045,7 +1045,9 @@
   cursor: not-allowed;
 }
 
+/* Dải ngày gọn: hai dòng chữ, bên dưới là đường giá mảnh nối các ngày. */
 .stripDays {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
@@ -1056,13 +1058,37 @@
   opacity: 0.6;
 }
 
+.stripLine {
+  position: absolute;
+  right: 0;
+  bottom: 6px;
+  left: 0;
+  width: 100%;
+  height: 16px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.stripLine polyline {
+  fill: none;
+  stroke: #c9dbd7;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.stripDays li {
+  position: relative;
+  z-index: 1;
+}
+
 .stripDays a {
   position: relative;
   display: grid;
   justify-items: center;
-  gap: 1px;
-  padding: 8px 4px;
-  border-radius: 10px;
+  gap: 2px;
+  padding: 6px 4px 26px;
+  border-radius: 8px;
   text-align: center;
   transition: background 224ms;
 }
@@ -1071,7 +1097,7 @@
   background: var(--color-surface);
 }
 
-.stripWeekday {
+.stripDate {
   color: var(--color-text-muted);
   font-size: 12px;
   white-space: nowrap;
@@ -1082,25 +1108,58 @@
   font-size: 14px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.stripDays small {
-  color: var(--color-coral-ink);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
+.stripDot {
+  position: absolute;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  margin-bottom: -3.5px;
+  border: 1.5px solid white;
+  border-radius: 50%;
+  background: #9fbfb9;
+  box-sizing: content-box;
+  transform: translateX(-50%);
 }
 
 .stripDays a[data-cheapest] strong {
   color: var(--color-coral-ink);
 }
 
-.stripDays a[aria-current='date'] {
-  background: var(--color-teal-ink);
+.stripDays a[data-cheapest] .stripDot {
+  background: var(--color-coral-ink);
 }
 
-.stripDays a[aria-current='date'] :is(span, strong, small) {
-  color: white;
+.stripDays a[data-empty] strong {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.stripDays a[aria-current='date'] {
+  background: var(--color-sea-mist);
+}
+
+.stripDays a[aria-current='date'] :is(.stripDate, strong) {
+  color: var(--color-teal-ink);
+}
+
+.stripDays a[aria-current='date'] .stripDot {
+  width: 9px;
+  height: 9px;
+  margin-bottom: -4.5px;
+  background: var(--color-teal-ink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-teal-ink) 18%, transparent);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .sortBar {
@@ -1146,18 +1205,74 @@
   --notch: 9px;
   --big-notch: 14px;
   position: relative;
-  border: 1px solid var(--line);
-  border-left: 4px solid var(--airline);
+  border: 1px solid #d3e1de;
   border-radius: 12px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--airline) 7%, white) 0, white 320px);
+  background: white;
+  box-shadow:
+    0 1px 2px rgb(24 36 43 / 5%),
+    0 6px 16px -12px rgb(24 36 43 / 22%);
   transition:
+    transform 256ms cubic-bezier(0.2, 0.8, 0.2, 1),
     border-color 256ms,
     box-shadow 256ms;
+  /* Thẻ lần lượt trồi lên khi danh sách hiện ra. */
+  animation: cardIn 480ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--card-index, 0) * 60ms);
 }
 
-.card:hover {
-  border-color: #c9dbd7;
-  border-left-color: var(--airline);
+/* Rê chuột: thẻ nhấc nhẹ, viền và bóng ngả theo màu hãng. */
+.card:not([data-open]):hover {
+  border-color: color-mix(in srgb, var(--airline) 45%, #d3e1de);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--airline) 20%, transparent),
+    0 18px 32px -20px color-mix(in srgb, var(--airline) 55%, transparent);
+  transform: translateY(-2px);
+}
+
+.results > .card:nth-of-type(2) {
+  --card-index: 1;
+}
+
+.results > .card:nth-of-type(3) {
+  --card-index: 2;
+}
+
+.results > .card:nth-of-type(4) {
+  --card-index: 3;
+}
+
+.results > .card:nth-of-type(5) {
+  --card-index: 4;
+}
+
+.results > .card:nth-of-type(6) {
+  --card-index: 5;
+}
+
+.results > .card:nth-of-type(7) {
+  --card-index: 6;
+}
+
+.results > .card:nth-of-type(8) {
+  --card-index: 7;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+    transition: none;
+  }
+
+  .card:not([data-open]):hover {
+    transform: none;
+  }
 }
 
 .card[data-airline='VJ'] {
@@ -1242,19 +1357,30 @@
   box-shadow: 0 6px 12px -8px var(--airline);
 }
 
-/* Logo thật (public/airlines/<IATA>.png): ô vuông có sẵn nền màu hãng. */
-.airlineBadge[data-logo] {
-  overflow: hidden;
-  background: white;
-  box-shadow:
-    0 0 0 1px rgb(24 36 43 / 8%),
-    0 6px 12px -8px var(--airline);
+/* Logo chữ của hãng (public/airlines): đặt thẳng trên nền, không khung. */
+.airlineLogo {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  width: 120px;
+  height: 28px;
 }
 
-.airlineBadge[data-logo] img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.airline[data-logo] h3 {
+  overflow: visible;
+}
+
+.airline[data-logo] p {
+  margin-top: 6px;
+}
+
+.airlineLogo img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .airline h3 {
@@ -1498,7 +1624,6 @@
 
 /* Phần mở rộng: chuyển hẳn thành tấm vé lớn, dải màu theo hãng. */
 .card[data-open] {
-  border-left-width: 1px;
   border-radius: 14px;
   background: white;
   box-shadow:
@@ -1525,9 +1650,10 @@
   min-height: 62px;
   /* Chừa nửa chiều cao răng ở đáy để chữ không bị cắt. */
   padding: 12px 22px calc(12px + var(--tooth) / 2);
+  /* Nền đậm theo màu hãng, chữ trắng; logo chuyển sang bản trắng (xem .tBand .airlineLogo img). */
   background:
-    radial-gradient(120% 140% at 0 0, rgb(255 255 255 / 16%), transparent 55%),
-    linear-gradient(180deg, transparent, rgb(0 0 0 / 12%)), var(--airline);
+    linear-gradient(180deg, transparent, rgb(0 0 0 / 14%)),
+    color-mix(in srgb, var(--airline) 88%, black);
   color: white;
   /* Mép dưới răng cưa (zigzag) như mép vé xé. */
   mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / var(--tooth) 100%;
@@ -1553,15 +1679,18 @@
   border-radius: 10px;
   background: white;
   color: var(--airline);
-  box-shadow:
-    0 0 0 2px rgb(255 255 255 / 85%),
-    0 6px 14px -6px rgb(0 0 0 / 45%);
+}
+
+/* Logo màu chìm trên nền đậm: đổi thành logo trắng đơn sắc. */
+.tBand .airlineLogo img {
+  filter: brightness(0) invert(1);
 }
 
 .tTag {
   flex-shrink: 0;
   padding: 4px 10px;
-  border: 1px solid rgb(255 255 255 / 40%);
+  border: 1px solid rgb(255 255 255 / 45%);
+  color: white;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
@@ -1577,19 +1706,23 @@
   padding: 6px 12px;
   border: 1px solid rgb(255 255 255 / 55%);
   border-radius: 8px;
+  background: transparent;
   color: white;
   font-size: 13px;
   font-weight: 700;
-  transition: background 256ms;
+  transition:
+    background 256ms,
+    border-color 256ms;
 }
 
-/* Nút phụ trên dải màu hãng: loang Sea Mist, chữ chuyển Ink cho đủ tương phản. */
 .tClose {
   --ripple-color: var(--color-sea-mist);
 }
 
+/* Rê chuột: nền Sea Mist, chữ chuyển Ink cho đủ tương phản. */
 .tClose:is(:hover, :focus-visible) {
   border-color: var(--color-sea-mist);
+  background: var(--color-sea-mist);
   color: var(--color-ink);
 }
 
@@ -2224,6 +2357,10 @@
     overflow-x: auto;
     grid-template-columns: repeat(7, 74px);
     scrollbar-width: none;
+  }
+
+  .stripLine {
+    width: calc(7 * 74px + 6 * 4px);
   }
 }
 
