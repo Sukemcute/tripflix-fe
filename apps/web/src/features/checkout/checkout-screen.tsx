@@ -11,7 +11,9 @@ import {
 } from '@tripflix/api-client';
 import { holdCountdown, isValidTripDate } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
+import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { SoftDatePicker } from '@/features/shared/soft-date-picker';
 import { CheckoutError } from './checkout-error';
@@ -200,6 +202,11 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
     (order.status === 'pending' && holdCountdown(order.holdExpiresAt).expired);
   const isLocked = payment.isPending || order.status !== 'pending' || isExpired || !!challengeId;
   const total = acceptedTotal ?? order.total;
+  const flightItem = order.items.find((item) => item.productType === 'flight');
+  // Trang để quay lại khi không có lịch sử trong trang (mở thẳng link): vé bay về trang chuyến, phòng về tìm khách sạn.
+  const productHref = flightItem
+    ? `/flights/${encodeURIComponent(flightItem.productId)}?${new URLSearchParams({ date: flightItem.date, passengers: String(flightItem.qty) })}`
+    : '/search';
   const editGuest = (index: number, key: keyof GuestDraft, value: string) =>
     setGuests((previous) => ({
       ...previous,
@@ -208,6 +215,7 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
 
   return (
     <main className={`ota-container ${styles.page}`}>
+      <BackLink fallbackHref={productHref} label={flightItem ? copy.backToFlight : copy.backToHotel} />
       <Steps current={2} />
       <header className={styles.header}>
         <h1 className={styles.title}>{copy.checkout}</h1>
@@ -218,10 +226,10 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
           {isExpired ? (
             <div className={styles.card}>
               <p role="alert" className={styles.error}>
-                {copy.expired}
+                {flightItem ? copy.expiredFlight : copy.expired}
               </p>
-              <Link className="primary-button" href="/search">
-                {copy.findHotel}
+              <Link className="primary-button" href={productHref}>
+                {flightItem ? copy.findFlight : copy.findHotel}
               </Link>
             </div>
           ) : (
@@ -299,7 +307,11 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                         onChange={() => setMethod(value)}
                       />
                       <span className={styles.methodIcon} data-method={value}>
-                        {value === 'card' ? <CheckoutIcon name="card" /> : 'VN'}
+                        {value === 'card' ? (
+                          <CheckoutIcon name="card" size={22} />
+                        ) : (
+                          <Image src="/payments/vnpay.svg" alt="" width={84} height={26} unoptimized />
+                        )}
                       </span>
                       <span className={styles.methodText}>
                         {value === 'card' ? copy.card : copy.vnpay}
@@ -492,6 +504,7 @@ function Field({
           disabled={input.disabled}
           max={typeof input.max === 'string' ? input.max : undefined}
           yearRange={BIRTH_YEAR_RANGE}
+          className={styles.datePicker}
         />
       ) : icon ? (
         <span className={styles.inputIcon}>
@@ -502,6 +515,27 @@ function Field({
         <input {...input} value={value} onChange={(event) => onChange(event.target.value)} />
       )}
     </label>
+  );
+}
+
+/** Quay lại trang trước trong Tripflix; mở thẳng link (không có trang trước) thì về trang sản phẩm. */
+function BackLink({ fallbackHref, label }: { fallbackHref: string; label: string }) {
+  const router = useRouter();
+  return (
+    <Link
+      className={styles.backLink}
+      href={fallbackHref}
+      onClick={(event) => {
+        const hasPreviousPage =
+          window.history.length > 1 && document.referrer.startsWith(window.location.origin);
+        if (!hasPreviousPage) return;
+        event.preventDefault();
+        router.back();
+      }}
+    >
+      <CheckoutIcon name="back" size={16} />
+      {label}
+    </Link>
   );
 }
 

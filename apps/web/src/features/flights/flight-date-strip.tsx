@@ -34,6 +34,19 @@ export function FlightDateStrip({ search }: { search: FlightSearch }) {
   const prices = new Map(calendar.data?.map((day) => [day.date, day.isAvailable ? day.priceFrom : null]));
   const available = [...prices.values()].filter((price): price is number => price != null);
   const lowest = available.length ? Math.min(...available) : null;
+  const highest = available.length ? Math.max(...available) : null;
+  // Độ cao của chấm giá trên đường biểu đồ (px, 0–10): ngày đắt nhất cao nhất.
+  const lift = (price: number) =>
+    lowest == null || highest == null || highest === lowest
+      ? 5
+      : Math.round(((price - lowest) / (highest - lowest)) * 10);
+  const linePoints = days
+    .map((date, index) => {
+      const price = prices.get(date);
+      return price != null ? `${index + 0.5},${13 - lift(price)}` : null;
+    })
+    .filter(Boolean)
+    .join(' ');
 
   const hrefFor = (date: string) =>
     '/flights?' +
@@ -60,28 +73,40 @@ export function FlightDateStrip({ search }: { search: FlightSearch }) {
         <FlightIcon name="chevron" size={18} />
       </button>
       <ol className={styles.stripDays} aria-busy={calendar.isFetching || undefined}>
+        {linePoints && (
+          <svg className={styles.stripLine} viewBox={`0 0 ${STRIP_DAYS} 16`} preserveAspectRatio="none" aria-hidden="true">
+            <polyline points={linePoints} />
+          </svg>
+        )}
         {days.map((date) => {
           const price = prices.get(date);
           const isSelected = date === search.date;
+          const isCheapest = price != null && price === lowest;
+          const isLoading = calendar.data === undefined;
           return (
             <li key={date}>
               <Link
                 href={hrefFor(date)}
                 scroll={false}
                 aria-current={isSelected ? 'date' : undefined}
-                data-cheapest={(price != null && price === lowest) || undefined}
+                data-cheapest={isCheapest || undefined}
+                data-empty={(!isLoading && price == null) || undefined}
+                title={isCheapest ? copy.cheapest : undefined}
               >
-                <span className={styles.stripWeekday}>
-                  {weekdayOf(date)}, {date.slice(8, 10)}/{date.slice(5, 7)}
+                <span className={styles.stripDate}>
+                  {weekdayOf(date)} · {date.slice(8, 10)}/{date.slice(5, 7)}
                 </span>
                 <strong>
-                  {calendar.data === undefined
+                  {isLoading
                     ? '…'
                     : price != null
                       ? t('flights.millions', { value: millionFormatter.format(price / 1_000_000) })
                       : copy.noFlightsDay}
                 </strong>
-                {price != null && price === lowest && <small>{copy.cheapest}</small>}
+                {isCheapest && <span className={styles.srOnly}>{copy.cheapest}</span>}
+                {price != null && (
+                  <span className={styles.stripDot} style={{ bottom: 9 + lift(price) }} aria-hidden="true" />
+                )}
               </Link>
             </li>
           );
