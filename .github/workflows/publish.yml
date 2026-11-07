@@ -3,7 +3,7 @@ name: publish
 on:
   push:
     branches: [develop, main]
-    tags: ["v*", "web-v*", "admin-v*"]
+    tags: ["v*", "web-v*", "admin-v*", "mobile-v*"]
 
 permissions:
   contents: read
@@ -14,7 +14,9 @@ env:
   STAGING_API_URL: https://api.tripflix.io.vn
 
 jobs:
+  # Tag mobile-v* chỉ build APK, không chạy lại CI và không build image web, admin.
   check:
+    if: ${{ !startsWith(github.ref, 'refs/tags/mobile-v') }}
     uses: ./.github/workflows/ci.yml
 
   web:
@@ -24,8 +26,11 @@ jobs:
       matrix:
         app: [web, admin]
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      # Builder buildx cần cho cache type=gha (driver docker mặc định không ghi được cache này).
+      - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -52,6 +57,9 @@ jobs:
             ${{ matrix.app == 'web' && format('NEXT_PUBLIC_GOOGLE_CLIENT_ID={0}', vars.GOOGLE_CLIENT_ID) || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Mỗi app một scope cache, để web và admin không ghi đè cache của nhau.
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,scope=${{ matrix.app }},mode=max
 
   deploy-web:
     needs: web
@@ -65,6 +73,7 @@ jobs:
   mobile:
     if: startsWith(github.ref, 'refs/tags/mobile-v')
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
