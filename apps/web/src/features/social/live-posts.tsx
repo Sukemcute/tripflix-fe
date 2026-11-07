@@ -15,7 +15,6 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
-import { useTheme } from '@/features/shared/theme-context';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import styles from './live-posts.module.css';
 
@@ -432,7 +431,6 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
   const { isReady, user } = useApiSession();
   const client = useQueryClient();
 
-  const { theme } = useTheme();
   const [filterMode, setFilterMode] = useState<FeedFilterMode>('all');
   const [searchInput, setSearchInput] = useState<string>(initialKeyword);
   const [activePostId, setActivePostId] = useState<string | null>(null);
@@ -847,6 +845,17 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
     };
   }, [isSearchOpen]);
 
+  // Đảm bảo loại bỏ thuộc tính data-theme còn sót lại, giữ mặc định Light Mode
+  useEffect(() => {
+    document.documentElement.removeAttribute('data-theme');
+    try {
+      localStorage.removeItem('tripflix.theme');
+      localStorage.removeItem('tripflix.inspiration.theme');
+    } catch {
+      // Bỏ qua lỗi truy cập Storage
+    }
+  }, []);
+
   if (!isReady) {
     return <output className="empty-state">{vi.api.loading}</output>;
   }
@@ -854,7 +863,7 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
   const hasActiveSearchOrFilter = searchInput.trim() !== '' || filterMode !== 'all';
 
   return (
-    <div className={`${styles.immersiveRoot} ${theme === 'dark' ? styles.themeDark : ''}`}>
+    <div className={styles.immersiveRoot}>
       {/* Nội dung chính: 3 Panel Đồng bộ theo activePost */}
       <div className={`${styles.viewerGrid} ${gridLayoutClass}`}>
         {/* ================================================================
