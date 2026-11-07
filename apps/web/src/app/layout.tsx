@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import './globals.css';
 import { HeaderAccount } from '@/features/auth/header-account';
+import { HeaderThemeToggle } from '@/features/shared/header-theme-toggle';
 import { Providers } from './providers';
 import { OtaNavigation } from '@/features/discovery/ota-navigation';
 import { OTA_DESTINATIONS, getDestinationHref } from '@/features/discovery/ota-destinations';
@@ -38,7 +39,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 />
               </Link>
               <OtaNavigation />
-              <HeaderAccount />
+              <div className="header-right-group">
+                <HeaderThemeToggle />
+                <HeaderAccount />
+              </div>
             </div>
           </header>
           {children}
