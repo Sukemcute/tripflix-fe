@@ -12,7 +12,7 @@ const ICONS: Record<string, IconName> = {
   trips: 'bag-handle-outline',
   me: 'person-outline',
 };
-const COMPOSE_SIZE = 60;
+const COMPOSE_SIZE = 68;
 const SHOULDER_RADIUS = 10;
 const DOCK_HEIGHT = 80;
 const SURFACE_TOP = 22;
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     left: '50%',
     marginLeft: -COMPOSE_SIZE / 2 - 1,
     width: COMPOSE_SIZE + 2,
-    top: COMPOSE_SIZE - 2,
+    top: COMPOSE_SIZE - 4,
     bottom: 0,
     backgroundColor: colors.coralTint,
   },
