@@ -13,7 +13,7 @@ const ICONS: Record<string, IconName> = {
   me: 'person-outline',
 };
 const COMPOSE_SIZE = 60;
-const SHOULDER_SIZE = 10;
+const SHOULDER_RADIUS = 10;
 const DOCK_HEIGHT = 80;
 const SURFACE_TOP = 22;
 
@@ -40,15 +40,13 @@ export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, ins
       ]}
     >
       <View accessibilityRole="tablist" pointerEvents="box-none" style={styles.dock}>
-        <View pointerEvents="none" style={[styles.surface, overlaysVideo && styles.videoSurface]} />
-        {!overlaysVideo && (
-          <View pointerEvents="none" style={styles.notchContainer}>
-            <View style={styles.shoulderLeft}>
-              <View style={styles.shoulderCutoutLeft} />
-            </View>
-            <View style={styles.shoulderRight}>
-              <View style={styles.shoulderCutoutRight} />
-            </View>
+        {overlaysVideo ? (
+          <View pointerEvents="none" style={[styles.surface, styles.videoSurface]} />
+        ) : (
+          <View pointerEvents="none" style={styles.surfaceContainer}>
+            <View style={styles.surfaceLeft} />
+            <View style={styles.surfaceRight} />
+            <View style={styles.surfaceBridge} />
           </View>
         )}
         {routes.map((route) => {
@@ -135,52 +133,47 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     backgroundColor: colors.coralTint,
   },
-  videoSurface: { backgroundColor: colors.overlayHeavy },
-  notchContainer: {
+  surfaceContainer: {
     position: 'absolute',
     top: 0,
     bottom: 0,
     left: 0,
     right: 0,
   },
-  shoulderLeft: {
+  surfaceLeft: {
     position: 'absolute',
     top: SURFACE_TOP,
+    bottom: 0,
+    left: 0,
     right: '50%',
-    marginRight: COMPOSE_SIZE / 2 - 1,
-    width: SHOULDER_SIZE,
-    height: SHOULDER_SIZE,
+    marginRight: COMPOSE_SIZE / 2,
+    borderTopLeftRadius: 18,
+    borderBottomLeftRadius: 18,
+    borderTopRightRadius: SHOULDER_RADIUS,
     backgroundColor: colors.coralTint,
-    overflow: 'hidden',
   },
-  shoulderCutoutLeft: {
-    position: 'absolute',
-    top: -SHOULDER_SIZE,
-    right: -SHOULDER_SIZE,
-    width: SHOULDER_SIZE * 2,
-    height: SHOULDER_SIZE * 2,
-    borderRadius: SHOULDER_SIZE,
-    backgroundColor: colors.background,
-  },
-  shoulderRight: {
+  surfaceRight: {
     position: 'absolute',
     top: SURFACE_TOP,
+    bottom: 0,
     left: '50%',
-    marginLeft: COMPOSE_SIZE / 2 - 1,
-    width: SHOULDER_SIZE,
-    height: SHOULDER_SIZE,
+    right: 0,
+    marginLeft: COMPOSE_SIZE / 2,
+    borderTopRightRadius: 18,
+    borderBottomRightRadius: 18,
+    borderTopLeftRadius: SHOULDER_RADIUS,
     backgroundColor: colors.coralTint,
-    overflow: 'hidden',
   },
-  shoulderCutoutRight: {
+  surfaceBridge: {
     position: 'absolute',
-    top: -SHOULDER_SIZE,
-    left: -SHOULDER_SIZE,
-    width: SHOULDER_SIZE * 2,
-    height: SHOULDER_SIZE * 2,
-    borderRadius: SHOULDER_SIZE,
-    backgroundColor: colors.background,
+    left: '50%',
+    marginLeft: -COMPOSE_SIZE / 2 - 1,
+    width: COMPOSE_SIZE + 2,
+    top: COMPOSE_SIZE - 2,
+    bottom: 0,
+    backgroundColor: colors.coralTint,
   },
+  videoSurface: { backgroundColor: colors.overlayHeavy },
   composeTab: { justifyContent: 'flex-start', alignItems: 'center' },
   composeHighlight: {
     width: COMPOSE_SIZE,
