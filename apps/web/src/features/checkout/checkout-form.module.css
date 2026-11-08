@@ -238,6 +238,33 @@
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-teal-ink) 12%, transparent);
 }
 
+/* Ô sai: viền đỏ và câu báo ngay bên dưới. */
+.field[data-invalid='true'] > span:first-child {
+  color: var(--color-coral-ink);
+}
+
+.field input[aria-invalid='true'],
+.field input[aria-invalid='true']:hover {
+  border-color: var(--color-coral-ink);
+  background: var(--color-coral-tint);
+}
+
+.field input[aria-invalid='true']:focus {
+  border-color: var(--color-coral-ink);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-coral-ink) 14%, transparent);
+}
+
+.datePicker button[aria-invalid='true'] {
+  background: var(--color-coral-tint);
+}
+
+.fieldError {
+  color: var(--color-coral-ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .inputIcon {
   position: relative;
   display: block;

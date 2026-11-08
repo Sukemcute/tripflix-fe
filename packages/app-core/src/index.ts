@@ -7,3 +7,4 @@ export * from './demo-catalog';
 export * from './reels';
 export * from './device-name';
 export * from './registration';
+export * from './checkout-guests';
