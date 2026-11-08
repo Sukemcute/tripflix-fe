@@ -15,6 +15,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/features/discovery/trip-card';
+import { formatPassengerMix } from '@/features/flights/passenger-picker';
 import { SoftDatePicker } from '@/features/shared/soft-date-picker';
 import { CheckoutError } from './checkout-error';
 import { CheckoutIcon, type CheckoutIconName } from './checkout-icon';
@@ -205,7 +206,12 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
   const flightItem = order.items.find((item) => item.productType === 'flight');
   // Trang để quay lại khi không có lịch sử trong trang (mở thẳng link): vé bay về trang chuyến, phòng về tìm khách sạn.
   const productHref = flightItem
-    ? `/flights/${encodeURIComponent(flightItem.productId)}?${new URLSearchParams({ date: flightItem.date, passengers: String(flightItem.qty) })}`
+    ? `/flights/${encodeURIComponent(flightItem.productId)}?${new URLSearchParams({
+        date: flightItem.date,
+        passengers: String(order.adults),
+        ...(order.children ? { children: String(order.children) } : {}),
+        ...(order.infants ? { infants: String(order.infants) } : {}),
+      })}`
     : '/search';
   const editGuest = (index: number, key: keyof GuestDraft, value: string) =>
     setGuests((previous) => ({
@@ -270,6 +276,9 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                     <p className={styles.subTitle}>
                       <span className={styles.guestNumber}>{index + 1}</span>
                       {copy.guest} {index + 1}
+                      {order.passengerTypes[index] && (
+                        <span className={styles.guestType}>{copy.guestTypes[order.passengerTypes[index]]}</span>
+                      )}
                     </p>
                     <Field
                       label={copy.name}
@@ -606,7 +615,9 @@ function OrderSummary({ order, total }: { order: Order; total: number }) {
                 : `${formatDate(item.date)} → ${formatDate(item.dateTo)} · ${item.nights} ${copy.nights}`}
             </p>
             <p>
-              {item.qty} × {item.ratePlanName} · {order.adults} {copy.guests}
+              {item.productType === 'flight' && (order.children > 0 || order.infants > 0)
+                ? `${item.ratePlanName} · ${formatPassengerMix({ adults: order.adults, children: order.children, infants: order.infants })}`
+                : `${item.qty} × ${item.ratePlanName} · ${order.adults} ${copy.guests}`}
             </p>
             <p className={item.isRefundable ? styles.refundable : styles.nonRefundable}>
               {item.isRefundable ? copy.refundable : copy.nonRefundable}
@@ -614,10 +625,13 @@ function OrderSummary({ order, total }: { order: Order; total: number }) {
             </p>
             <p className={styles.line}>
               <span>
-                {formatPrice(item.unitPrice)} ×{' '}
-                {item.productType === 'flight'
-                  ? t('flights.passengers', { count: item.qty })
-                  : `${item.nights} ${copy.nights} × ${item.qty}`}
+                {item.productType === 'flight' && (order.children > 0 || order.infants > 0)
+                  ? t('flights.passengers', { count: order.adults + order.children + order.infants })
+                  : `${formatPrice(item.unitPrice)} × ${
+                      item.productType === 'flight'
+                        ? t('flights.passengers', { count: item.qty })
+                        : `${item.nights} ${copy.nights} × ${item.qty}`
+                    }`}
               </span>
               <b>{formatPrice(item.lineTotal)}</b>
             </p>

@@ -23,6 +23,11 @@ export const commerce = {
   phone: 'Số điện thoại',
   email: 'Email (tuỳ chọn)',
   guest: 'Hành khách',
+  guestTypes: {
+    adult: 'Người lớn',
+    child: 'Trẻ em · 2–11 tuổi vào ngày bay',
+    infant: 'Em bé · dưới 2 tuổi vào ngày bay',
+  },
   birthdate: 'Ngày sinh (YYYY-MM-DD)',
   invalidContact: 'Nhập họ tên, số điện thoại 10–11 số bắt đầu bằng 0 và email hợp lệ (nếu có).',
   invalidGuests: 'Nhập đầy đủ họ tên và ngày sinh hợp lệ của từng hành khách.',

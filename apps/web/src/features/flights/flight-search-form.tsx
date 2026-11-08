@@ -1,17 +1,17 @@
 'use client';
 
-import { useFlightRoutes, type FlightSearch } from '@tripflix/api-client';
+import { getFlightPassengerMix, useFlightRoutes, type FlightSearch } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AirportPicker, type AirportOption } from './airport-picker';
 import { DatePicker } from './date-picker';
 import { FlightIcon } from './flight-icon';
+import { PassengerPicker } from './passenger-picker';
 import styles from './flights.module.css';
 
 const copy = vi.flights;
 const airportNames: Readonly<Record<string, string>> = copy.airports;
-const MAX_PASSENGERS = 9;
 /** Ngày về mặc định khi mới bật khứ hồi: 3 ngày sau ngày đi. */
 const DEFAULT_STAY_DAYS = 3;
 const addDays = (iso: string, days: number) =>
@@ -41,7 +41,7 @@ export function FlightSearchForm({
   const routes = useFlightRoutes();
   const [from, setFrom] = useState(initial?.from ?? '');
   const [to, setTo] = useState(initial?.to ?? '');
-  const [passengers, setPassengers] = useState(initial?.passengers ?? 1);
+  const [passengerMix, setPassengerMix] = useState(getFlightPassengerMix(initial ?? { passengers: 1 }));
   const [tripType, setTripType] = useState<FlightTripType>(initialTripType);
   const initialDate = initial?.date && initial.date >= today ? initial.date : today;
   const [date, setDate] = useState(initialDate);
@@ -155,37 +155,8 @@ export function FlightSearchForm({
             />
           )}
         </div>
-        <div className={styles.field + ' ' + styles.passengerField}>
-          <span className={styles.fieldIcon}>
-            <FlightIcon name="users" size={22} />
-          </span>
-          <fieldset className={styles.fieldBody}>
-            <legend className={styles.fieldLabel}>{copy.adults}</legend>
-            <span className={styles.stepper}>
-              <button
-                type="button"
-                aria-label={copy.decreasePassengers}
-                disabled={passengers <= 1}
-                onClick={() => setPassengers((count) => count - 1)}
-              >
-                <FlightIcon name="minus" size={16} />
-              </button>
-              <output aria-live="polite">
-                {passengers} <span>{copy.passengersUnit}</span>
-              </output>
-              <button
-                type="button"
-                aria-label={copy.increasePassengers}
-                disabled={passengers >= MAX_PASSENGERS}
-                onClick={() => setPassengers((count) => count + 1)}
-              >
-                <FlightIcon name="plus" size={16} />
-              </button>
-            </span>
-            <input type="hidden" name="passengers" value={passengers} />
-            {initial?.sort && <input type="hidden" name="sort" value={initial.sort} />}
-          </fieldset>
-        </div>
+        <PassengerPicker value={passengerMix} onChange={setPassengerMix} />
+        {initial?.sort && <input type="hidden" name="sort" value={initial.sort} />}
         <button type="submit" className={'ripple-button ' + styles.searchButton} disabled={!canSearch}>
           <FlightIcon name="search" size={20} />
           {copy.search}

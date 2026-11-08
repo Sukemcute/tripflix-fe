@@ -21,6 +21,8 @@ export default async function FlightsPage({ searchParams }: PageProps<'/flights'
     to: read('to'),
     date: read('date'),
     passengers: read('passengers') || '1',
+    children: read('children'),
+    infants: read('infants'),
     sort: read('sort'),
   };
   const search = parseFlightSearch(draft, today);
@@ -31,7 +33,7 @@ export default async function FlightsPage({ searchParams }: PageProps<'/flights'
     returnDate && read('out') && read('outFare')
       ? { productId: read('out'), ratePlanCode: read('outFare') }
       : null;
-  const hasSearch = ['from', 'to', 'date', 'passengers'].some((key) => key in params);
+  const hasSearch = ['from', 'to', 'date', 'passengers', 'children', 'infants'].some((key) => key in params);
 
   return (
     <main id="content" className={'ota-container ' + styles.page}>

@@ -2377,6 +2377,10 @@
     right: auto;
     left: 0;
   }
+
+  .passengerField .passengerPopover {
+    width: 100%;
+  }
 }
 
 @media (max-width: 560px) {
@@ -2401,6 +2405,66 @@
   .roundChange {
     margin-left: auto;
   }
+}
+
+/* ---------- Hành khách: người lớn, trẻ em, em bé ---------- */
+
+/* Popover là fieldset nằm trong .passengerField: viết cụ thể hơn để không bị rule fieldset ở trên xoá viền. */
+.passengerField .passengerPopover {
+  right: 0;
+  left: auto;
+  width: 340px;
+  margin: 0;
+  padding: 8px 18px 16px;
+  border: 1px solid #dce9e6;
+}
+
+.passengerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px dashed #e1ecea;
+}
+
+.passengerText {
+  display: grid;
+  gap: 2px;
+}
+
+.passengerText strong {
+  color: var(--color-ink);
+  font-size: 15px;
+}
+
+.passengerText span {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.passengerRow .stepper output {
+  min-width: 24px;
+}
+
+.passengerFooter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.passengerFooter button {
+  flex: none;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--color-teal-ink);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 /* ---------- Responsive ---------- */

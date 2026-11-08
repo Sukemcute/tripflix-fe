@@ -5,11 +5,13 @@ import {
   buildFlightCheckout,
   buildRoundTripCheckout,
   createCheckoutOperation,
+  getFlightPassengerMix,
   getReturnFlightSearch,
   useApiSession,
   useFlightOffer,
   useFlightOffers,
   type FlightLegChoice,
+  type FlightPassengerMix,
   type FlightSearch,
 } from '@tripflix/api-client';
 import type { FlightOfferDto } from '@tripflix/api-client/core-api/model/index';
@@ -24,6 +26,7 @@ import { addStayDays, MAX_STAY_GUESTS } from '@/features/discovery/stay-search-v
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { FlightDateStrip } from './flight-date-strip';
 import { FlightIcon } from './flight-icon';
+import { formatPassengerMix } from './passenger-picker';
 import { toAirportOption } from './flight-search-form';
 import styles from './flights.module.css';
 
@@ -210,6 +213,8 @@ function buildFlightsQuery(search: FlightSearch, round?: RoundTripState): URLSea
     date: search.date,
     passengers: String(search.passengers),
   });
+  if (search.children) params.set('children', String(search.children));
+  if (search.infants) params.set('infants', String(search.infants));
   if (search.sort) params.set('sort', search.sort);
   if (round) {
     params.set('trip', 'round');
@@ -236,9 +241,15 @@ function Results({ search, returnDate, outbound, initialProductId, initialFareCo
   // Lượt tìm của chặng đang chọn: chiều về thì đảo hai sân bay và bay vào ngày về.
   const legSearch = round && roundOutbound ? getReturnFlightSearch(search, round.returnDate) : search;
   const query = useFlightOffers(legSearch);
+  const passengerMix = getFlightPassengerMix(search);
+  const passengerQuery = {
+    passengers: search.passengers,
+    ...(search.children ? { children: search.children } : {}),
+    ...(search.infants ? { infants: search.infants } : {}),
+  };
   const outboundQuery = useFlightOffer(
     roundOutbound?.productId ?? '',
-    { date: search.date, passengers: search.passengers },
+    { date: search.date, ...passengerQuery },
     { enabled: roundOutbound !== null },
   );
   const outboundFare = outboundQuery.data?.fares.find((fare) => fare.code === roundOutbound?.ratePlanCode);
@@ -252,7 +263,7 @@ function Results({ search, returnDate, outbound, initialProductId, initialFareCo
   const outboundStepHref = '/flights?' + buildFlightsQuery(search, round && { ...round, outbound: null });
   const detailQuery = new URLSearchParams({
     date: search.date,
-    passengers: String(search.passengers),
+    ...Object.fromEntries(Object.entries(passengerQuery).map(([key, count]) => [key, String(count)])),
   }).toString();
   const fromCity = toAirportOption(legSearch.from).city;
   const toCity = toAirportOption(legSearch.to).city;
@@ -296,7 +307,7 @@ function Results({ search, returnDate, outbound, initialProductId, initialFareCo
           </span>
           <span>
             <FlightIcon name="users" size={16} />
-            {t('flights.passengers', { count: search.passengers })}
+            {formatPassengerMix(passengerMix)}
           </span>
           {query.data && query.data.length > 0 && (
             <span className={styles.countChip}>
@@ -377,6 +388,7 @@ function Results({ search, returnDate, outbound, initialProductId, initialFareCo
               tags={highlights.get(first.flightKey)}
               date={legSearch.date}
               passengers={search.passengers}
+              passengerMix={passengerMix}
               legLabel={round ? (roundOutbound ? copy.returnLeg : copy.outboundLeg) : copy.oneWay}
               chooseLabel={round ? (roundOutbound ? copy.chooseReturn : copy.chooseOutbound) : copy.choose}
               outboundTotal={outboundTotal ?? undefined}
@@ -501,7 +513,7 @@ export function StaySuggestion({
             placeId: destination.slug,
             checkIn: search.date,
             checkOut: checkOut ?? addStayDays(search.date, 2),
-            adults: String(Math.min(search.passengers, MAX_STAY_GUESTS)),
+            adults: String(Math.min(search.passengers + (search.children ?? 0), MAX_STAY_GUESTS)),
           })
         }
       >
@@ -525,6 +537,7 @@ export function FlightCard({
   tags = [],
   date,
   passengers,
+  passengerMix = { adults: passengers, children: 0, infants: 0 },
   legLabel = copy.oneWay,
   chooseLabel = copy.choose,
   outboundTotal,
@@ -547,6 +560,8 @@ export function FlightCard({
   /** Ngày bay YYYY-MM-DD và số khách, in ở hàng thông tin của vé khi mở. */
   date: string;
   passengers: number;
+  /** Nhóm khách để hiện giá trẻ em, em bé; bỏ trống là chỉ có người lớn. */
+  passengerMix?: FlightPassengerMix;
   /** Nhãn chặng trên dải đầu vé: "Một chiều", "Chiều đi", "Chiều về". */
   legLabel?: string;
   chooseLabel?: string;
@@ -750,7 +765,9 @@ export function FlightCard({
                 </div>
                 <div>
                   <dt>{copy.factPassengers}</dt>
-                  <dd>{passengers}</dd>
+                  <dd title={formatPassengerMix(passengerMix)}>
+                    {passengerMix.adults + passengerMix.children + passengerMix.infants}
+                  </dd>
                 </div>
               </dl>
             </div>
@@ -838,7 +855,20 @@ export function FlightCard({
                         outbound: formatPrice(outboundTotal),
                         inbound: formatPrice(totalPrice),
                       })
-                    : t('flights.perPassenger', { price: formatPrice(unitPrice) })}
+                    : passengerMix.children > 0 || passengerMix.infants > 0
+                      ? // Có trẻ em, em bé thì ghi giá từng loại khách, không để "/ khách" bị hiểu là giá chung.
+                        [
+                          copy.passengerTypes.adult.label + ' ' + formatPrice(unitPrice),
+                          passengerMix.children > 0 && fare.childPrice != null
+                            ? copy.passengerTypes.child.label + ' ' + formatPrice(fare.childPrice)
+                            : null,
+                          passengerMix.infants > 0 && fare.infantPrice != null
+                            ? copy.passengerTypes.infant.label + ' ' + formatPrice(fare.infantPrice)
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ') + copy.perPerson
+                      : t('flights.perPassenger', { price: formatPrice(unitPrice) })}
                   {flight.isPriceTaxIncluded && ' · ' + copy.taxIncluded}
                 </span>
               </div>

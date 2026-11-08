@@ -39,6 +39,8 @@ export function FlightDateStrip({ search, hrefFor, minDate }: FlightDateStripPro
     start,
     end,
     passengers: search.passengers,
+    children: search.children,
+    infants: search.infants,
   });
   const days = Array.from({ length: STRIP_DAYS }, (_, index) => addDays(start, index));
   const prices = new Map(calendar.data?.map((day) => [day.date, day.isAvailable ? day.priceFrom : null]));
