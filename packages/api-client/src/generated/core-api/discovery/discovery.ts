@@ -665,10 +665,11 @@ export const getHomeRecommendationsControllerRecommendForHomeUrl = (
 /**
  * Công khai, không cần đăng nhập. Server không lưu gì về người dùng.
  *
- * - `recentPlaceIds`: các nơi người dùng vừa chọn ở `/api/suggest` (`refId` của dòng `place`), web tự nhớ ở trình duyệt, mới nhất trước. Dùng tối đa 3 nơi, mỗi nơi 2 khách sạn: lý do "Vì bạn vừa tìm …".
- * - Phần còn lại là khách sạn rẻ hơn giá trung bình cùng hạng sao từ 10%, mỗi tỉnh một khách sạn: lý do "Rẻ hơn X% so với …".
+ * - `recentPlaceIds`: các nơi người dùng vừa chọn ở `/api/suggest` (`refId` của dòng `place`), web tự nhớ ở trình duyệt, mới nhất trước. Dùng tối đa 3 nơi: lý do "Vì bạn vừa tìm …".
+ * - Phần còn lại là các điểm đến có khách sạn rẻ hơn giá trung bình cùng hạng sao từ 10%: lý do "Rẻ hơn X% so với …".
+ * - Mỗi điểm đến trả về danh sách khách sạn tốt nhất (`hotels`) kèm số lượng deal còn lại (`otherDealsCount`).
  * - Giá là "từ X/đêm" trong 30 ngày tới; còn phòng và giá thật cho ngày cụ thể xem ở trang chi tiết hoặc `/api/stays`.
- * @summary Gợi ý khách sạn cho trang chủ web, mỗi gợi ý kèm lý do ngắn
+ * @summary Gợi ý điểm đến và khách sạn deal hời cho trang chủ web
  */
 export const homeRecommendationsControllerRecommendForHome = async (
   params?: HomeRecommendationsControllerRecommendForHomeParams,
@@ -793,7 +794,7 @@ export function useHomeRecommendationsControllerRecommendForHome<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Gợi ý khách sạn cho trang chủ web, mỗi gợi ý kèm lý do ngắn
+ * @summary Gợi ý điểm đến và khách sạn deal hời cho trang chủ web
  */
 
 export function useHomeRecommendationsControllerRecommendForHome<

@@ -45,7 +45,17 @@ export {
 export { useFlightCalendar, useFlightOffer, useFlightOffers, useFlightRoutes } from './flight-queries';
 export { getHotelReviews, type HotelReviewFilters } from './hotel-reviews';
 export { getExploreResults, useExploreSearch } from './explore-search';
-export type { ExploreItemDto, ExploreUnderstoodDto } from './generated/core-api/model';
+export {
+  getHomeRecommendations,
+  useHomeRecommendations,
+  type HomeRecommendationsFilters,
+} from './recommendations';
+export type {
+  ExploreItemDto,
+  ExploreUnderstoodDto,
+  HomeDestinationPickDto,
+  HomeStayPickDto,
+} from './generated/core-api/model';
 export {
   commerceApi,
   createOperation,
