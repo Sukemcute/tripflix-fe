@@ -12,10 +12,8 @@ const ICONS: Record<string, IconName> = {
   trips: 'bag-handle-outline',
   me: 'person-outline',
 };
-const COMPOSE_SIZE = 68;
-const SHOULDER_RADIUS = 10;
+const COMPOSE_SIZE = 66;
 const DOCK_HEIGHT = 80;
-const SURFACE_TOP = 22;
 
 export function getFloatingTabBarHeight(bottomInset: number) {
   return spacing.xs + DOCK_HEIGHT + Math.max(bottomInset, spacing.md);
@@ -40,15 +38,7 @@ export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, ins
       ]}
     >
       <View accessibilityRole="tablist" pointerEvents="box-none" style={styles.dock}>
-        {overlaysVideo ? (
-          <View pointerEvents="none" style={[styles.surface, styles.videoSurface]} />
-        ) : (
-          <View pointerEvents="none" style={styles.surfaceContainer}>
-            <View style={styles.surfaceLeft} />
-            <View style={styles.surfaceRight} />
-            <View style={styles.surfaceBridge} />
-          </View>
-        )}
+        <View pointerEvents="none" style={[styles.surface, overlaysVideo && styles.videoSurface]} />
         {routes.map((route) => {
           const options = descriptors[route.key]!.options;
           const isFocused = route.key === activeRoute?.key;
@@ -126,51 +116,11 @@ const styles = StyleSheet.create({
   dock: { height: DOCK_HEIGHT, flexDirection: 'row' },
   surface: {
     position: 'absolute',
-    top: SURFACE_TOP,
+    top: 22,
     bottom: 0,
     left: 0,
     right: 0,
     borderRadius: 18,
-    backgroundColor: colors.coralTint,
-  },
-  surfaceContainer: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  surfaceLeft: {
-    position: 'absolute',
-    top: SURFACE_TOP,
-    bottom: 0,
-    left: 0,
-    right: '50%',
-    marginRight: COMPOSE_SIZE / 2,
-    borderTopLeftRadius: 18,
-    borderBottomLeftRadius: 18,
-    borderTopRightRadius: SHOULDER_RADIUS,
-    backgroundColor: colors.coralTint,
-  },
-  surfaceRight: {
-    position: 'absolute',
-    top: SURFACE_TOP,
-    bottom: 0,
-    left: '50%',
-    right: 0,
-    marginLeft: COMPOSE_SIZE / 2,
-    borderTopRightRadius: 18,
-    borderBottomRightRadius: 18,
-    borderTopLeftRadius: SHOULDER_RADIUS,
-    backgroundColor: colors.coralTint,
-  },
-  surfaceBridge: {
-    position: 'absolute',
-    left: '50%',
-    marginLeft: -COMPOSE_SIZE / 2 - 1,
-    width: COMPOSE_SIZE + 2,
-    top: COMPOSE_SIZE - 4,
-    bottom: 0,
     backgroundColor: colors.coralTint,
   },
   videoSurface: { backgroundColor: colors.overlayHeavy },
@@ -182,7 +132,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
   },
   videoComposeHighlight: { backgroundColor: 'transparent' },
   disc: {
