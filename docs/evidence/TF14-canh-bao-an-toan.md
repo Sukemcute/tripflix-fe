@@ -19,7 +19,8 @@
 1. Bài có tóm tắt với `safety.warnings` khác rỗng → mở "Tóm tắt từ cộng đồng" → thấy khối "Lưu ý từ cộng đồng".
 
 ## Ảnh / video
-- Chưa chụp: cần chạy app thật và đính kèm ảnh vào PR.
+- Web (khổ 1280 px và 390 px): ảnh đính kèm trong PR #62. Chạy web của nhánh với stack local (\`next dev -p 3101\`, API thật qua gateway), riêng response \`GET ai-summary\` được giả lập có \`safety.warnings\` vì dữ liệu local chưa có bài nào có cảnh báo.
+- Mobile: chưa chụp, cần chạy Expo.
 
 ## Ảnh hưởng tới phần của người khác
 - Không.
