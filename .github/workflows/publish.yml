@@ -8,6 +8,14 @@ on:
 permissions:
   contents: read
   packages: write
+  # changes đọc lần publish thành công gần nhất.
+  actions: read
+
+# Merge mới vào develop, main thì huỷ lần publish cũ đang chạy: changes của lần mới so với lần thành công
+# gần nhất nên vẫn build đủ phần thay đổi của lần bị huỷ. Tag không huỷ.
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/heads/') }}
 
 env:
   # Next gắn địa chỉ này vào bundle lúc build. Hiện chỉ có một server là staging.
@@ -19,12 +27,33 @@ jobs:
     if: ${{ !startsWith(github.ref, 'refs/tags/mobile-v') }}
     uses: ./.github/workflows/ci.yml
 
+  # Chỉ build image của app có thay đổi; đổi packages/ hay file gốc thì build lại cả hai.
+  # Mỗi image tốn khoảng 2 phút Actions và một bản trong GHCR.
+  changes:
+    if: ${{ !startsWith(github.ref, 'refs/tags/mobile-v') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      apps: ${{ steps.pick.outputs.apps }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          bash .github/scripts/changed-images.sh
+          "web admin"
+          '^(packages/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|turbo\.json$|\.nvmrc$|\.dockerignore$|\.github/workflows/publish\.yml$|\.github/scripts/)'
+
   web:
-    needs: check
+    needs: [check, changes]
+    if: needs.changes.outputs.apps != '[]'
     strategy:
       fail-fast: false
       matrix:
-        app: [web, admin]
+        app: ${{ fromJSON(needs.changes.outputs.apps) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -61,9 +90,11 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,scope=${{ matrix.app }},mode=max
 
+  # Server chạy image web đúng commit (sha-xxxxxxx), nên chỉ deploy khi lần này có build web.
+  # Chỉ admin đổi thì web trên server giữ nguyên bản đang chạy.
   deploy-web:
-    needs: web
-    if: github.ref == 'refs/heads/develop'
+    needs: [web, changes]
+    if: github.ref == 'refs/heads/develop' && contains(fromJSON(needs.changes.outputs.apps), 'web')
     uses: ./.github/workflows/deploy-web.yml
     with:
       commit: ${{ github.sha }}
