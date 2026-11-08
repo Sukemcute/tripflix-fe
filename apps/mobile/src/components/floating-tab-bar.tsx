@@ -12,7 +12,7 @@ const ICONS: Record<string, IconName> = {
   trips: 'bag-handle-outline',
   me: 'person-outline',
 };
-const COMPOSE_SIZE = 66;
+const COMPOSE_SIZE = 60;
 const DOCK_HEIGHT = 80;
 
 export function getFloatingTabBarHeight(bottomInset: number) {
@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   videoComposeHighlight: { backgroundColor: 'transparent' },
   disc: {
