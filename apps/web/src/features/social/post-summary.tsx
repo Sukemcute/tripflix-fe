@@ -54,6 +54,12 @@ export function CommunitySummary({ postId }: { postId: string }) {
         </div>
       ) : (
         <div className={styles.body}>
+          {summary?.hasSafetyWarnings && (
+            <div role="note" className={styles.safety}>
+              <h3>{copy.safetyTitle}</h3>
+              <p>{copy.safety}</p>
+            </div>
+          )}
           {summary?.status === 'ready' ? (
             <p>{summary.summary}</p>
           ) : (
