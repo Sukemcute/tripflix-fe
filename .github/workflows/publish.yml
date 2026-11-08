@@ -79,6 +79,8 @@ jobs:
           file: apps/${{ matrix.app }}/Dockerfile
           target: prod
           push: true
+          # Không đẩy attestation: mỗi lần build chỉ còn một phiên bản trong GHCR thay vì ba.
+          provenance: false
           # Mỗi dòng một biến; dòng trống (bản admin) bị bỏ qua. GOOGLE_CLIENT_ID là biến (Variables) của repo,
           # không phải secret: Client ID công khai. Chưa đặt thì web không hiện nút Google.
           build-args: |
