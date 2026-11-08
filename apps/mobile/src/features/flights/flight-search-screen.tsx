@@ -2,11 +2,15 @@ import { useMutation } from '@tanstack/react-query';
 import {
   buildFlightCheckout,
   createCheckoutOperation,
+  getFlightPassengerMix,
   getFlightToday,
+  isValidFlightPassengerMix,
+  MAX_FLIGHT_SEATS,
   parseFlightSearch,
   useApiSession,
   useFlightOffers,
   useFlightRoutes,
+  type FlightPassengerMix,
   type FlightSearch,
 } from '@tripflix/api-client';
 import type { FlightOfferDto } from '@tripflix/api-client/core-api/model/index';
@@ -36,11 +40,37 @@ import { CommerceError } from '@/features/booking/commerce-state';
 
 const copy = vi.flights;
 const airportNames: Readonly<Record<string, string>> = copy.airports;
-const passengerOptions = Array.from({ length: 9 }, (_, index) => {
-  const value = String(index + 1);
-  return { value, label: t('flights.passengers', { count: value }) };
-});
+const PASSENGER_TYPES = [
+  ['adult', 'passengers'],
+  ['child', 'children'],
+  ['infant', 'infants'],
+] as const;
 const getReason = (offer: FlightOfferDto) => (offer.reason ? copy.reasons[offer.reason] : copy.unavailable);
+
+/** "2 người lớn, 1 trẻ em": chỉ kể loại khách có trong nhóm. */
+function formatPassengerMix(mix: FlightPassengerMix): string {
+  return (
+    [
+      ['adult', mix.adults],
+      ['child', mix.children],
+      ['infant', mix.infants],
+    ] as const
+  )
+    .filter(([, count]) => count > 0)
+    .map(([type, count]) => t(`flights.passengerTypes.${type}.count`, { count }))
+    .join(', ');
+}
+
+/** Nhóm khách đang nhập trong form (chuỗi số như tham số URL). */
+const readDraftMix = (draft: {
+  passengers: string;
+  children: string;
+  infants: string;
+}): FlightPassengerMix => ({
+  adults: Number(draft.passengers) || 0,
+  children: Number(draft.children) || 0,
+  infants: Number(draft.infants) || 0,
+});
 
 type Picker = 'from' | 'to' | 'passengers';
 type HoldSelection = { search: FlightSearch; flightKey: string; productId: string; fareCode: string };
@@ -56,6 +86,8 @@ export function FlightSearchScreen() {
     to: read('to'),
     date: read('date'),
     passengers: read('passengers') || '1',
+    children: read('children'),
+    infants: read('infants'),
   };
   const search = parseFlightSearch(initial);
   const [draft, setDraft] = useState({ ...initial, date: search?.date ?? getFlightToday() });
@@ -85,7 +117,22 @@ export function FlightSearchScreen() {
   const choices = {
     from: { label: copy.from, options: origins },
     to: { label: copy.to, options: destinations },
-    passengers: { label: copy.adults, options: passengerOptions },
+  };
+  const draftMix = readDraftMix(draft);
+  // Thêm, bớt một khách mà vẫn đúng luật: tối đa 9 ghế, mỗi em bé một người lớn.
+  const changePassengers = (field: (typeof PASSENGER_TYPES)[number][1], step: 1 | -1) => {
+    const next = {
+      ...draftMix,
+      ...(field === 'passengers' ? { adults: draftMix.adults + step } : { [field]: draftMix[field] + step }),
+    };
+    const fixed = { ...next, infants: Math.min(next.infants, next.adults) };
+    if (!isValidFlightPassengerMix(fixed)) return;
+    setDraft((previous) => ({
+      ...previous,
+      passengers: String(fixed.adults),
+      children: fixed.children ? String(fixed.children) : '',
+      infants: fixed.infants ? String(fixed.infants) : '',
+    }));
   };
   const isLocked = hold.isPending || hold.isSuccess;
 
@@ -101,6 +148,8 @@ export function FlightSearchScreen() {
     router.setParams({
       ...valid,
       passengers: String(valid.passengers),
+      children: valid.children ? String(valid.children) : undefined,
+      infants: valid.infants ? String(valid.infants) : undefined,
       productId: undefined,
       ratePlanCode: undefined,
     });
@@ -109,9 +158,12 @@ export function FlightSearchScreen() {
   function chooseFlight(selection: HoldSelection) {
     if (!isReady || isLocked) return;
     if (!user) {
+      const { children, infants, ...adultSearch } = selection.search;
       const query = new URLSearchParams({
-        ...selection.search,
+        ...adultSearch,
         passengers: String(selection.search.passengers),
+        ...(children ? { children: String(children) } : {}),
+        ...(infants ? { infants: String(infants) } : {}),
         productId: selection.productId,
         ratePlanCode: selection.fareCode,
       });
@@ -160,7 +212,7 @@ export function FlightSearchScreen() {
             disabled={isLocked}
             onPress={() => setPicker('passengers')}
           >
-            {t('flights.passengers', { count: draft.passengers })}
+            {formatPassengerMix(draftMix)}
           </Button>
         </View>
         <Button
@@ -175,7 +227,48 @@ export function FlightSearchScreen() {
         <ApiErrorNotice error={routes.error} retry={() => void routes.refetch()} />
         {routes.data?.length === 0 && <Notice>{copy.noRoutes}</Notice>}
       </Card>
-      {picker && (
+      {picker === 'passengers' && (
+        <Sheet title={copy.pickPassengers} visible onClose={() => setPicker(undefined)}>
+          {PASSENGER_TYPES.map(([type, field]) => {
+            const count = field === 'passengers' ? draftMix.adults : draftMix[field];
+            const seats = draftMix.adults + draftMix.children;
+            const canIncrease =
+              type === 'infant' ? draftMix.infants < draftMix.adults : seats < MAX_FLIGHT_SEATS;
+            const canDecrease = type === 'adult' ? draftMix.adults > 1 : count > 0;
+            const label = copy.passengerTypes[type].label;
+            return (
+              <Row key={type} style={{ justifyContent: 'space-between' }}>
+                <View style={{ flex: 1 }}>
+                  <Txt variant="label">{label}</Txt>
+                  <Txt variant="small" style={ui.muted}>
+                    {copy.passengerTypes[type].hint}
+                  </Txt>
+                </View>
+                <Row style={{ gap: spacing.sm }}>
+                  <Button
+                    tone="secondary"
+                    disabled={!canDecrease}
+                    onPress={() => changePassengers(field, -1)}
+                  >
+                    −
+                  </Button>
+                  <Txt variant="label" accessibilityLabel={label + ' ' + count}>
+                    {count}
+                  </Txt>
+                  <Button tone="secondary" disabled={!canIncrease} onPress={() => changePassengers(field, 1)}>
+                    +
+                  </Button>
+                </Row>
+              </Row>
+            );
+          })}
+          <Txt variant="small" style={ui.muted}>
+            {copy.passengerRules}
+          </Txt>
+          <Button onPress={() => setPicker(undefined)}>{copy.passengersDone}</Button>
+        </Sheet>
+      )}
+      {picker && picker !== 'passengers' && (
         <Sheet title={choices[picker].label} visible onClose={() => setPicker(undefined)}>
           {choices[picker].options.map(({ value, label }) => (
             <Chip
@@ -240,7 +333,7 @@ function FlightResults({
       <View style={{ gap: spacing.xs }}>
         <Txt variant="heading">{t('flights.results', { from: search.from, to: search.to })}</Txt>
         <Txt variant="small" style={ui.muted}>
-          {formatDate(search.date)} · {t('flights.passengers', { count: search.passengers })}
+          {formatDate(search.date)} · {formatPassengerMix(getFlightPassengerMix(search))}
         </Txt>
       </View>
       {query.isPending && <Txt>{vi.api.loading}</Txt>}
@@ -258,6 +351,7 @@ function FlightResults({
               isLocked={isLocked}
               isHolding={isHolding && holdKey === first.flightKey}
               isSignedIn={isSignedIn}
+              passengerMix={getFlightPassengerMix(search)}
               error={holdKey === first.flightKey ? holdError : null}
               onChoose={(productId, fareCode) =>
                 onChoose({ search, productId, fareCode, flightKey: first.flightKey })
@@ -277,9 +371,11 @@ function FlightCard({
   isLocked,
   isHolding,
   isSignedIn,
+  passengerMix,
   onChoose,
   error,
 }: {
+  passengerMix: FlightPassengerMix;
   flight: FlightOfferDto;
   cabins: FlightOfferDto[];
   initialProductId: string;
@@ -351,6 +447,12 @@ function FlightCard({
           <PriceRow total label={vi.commerce.total} amount={money(totalPrice)} />
           <Txt variant="small" style={ui.muted}>
             {t('flights.perPassenger', { price: money(unitPrice) })}
+            {passengerMix.children > 0 && fare.childPrice != null
+              ? ' · ' + copy.passengerTypes.child.label + ' ' + money(fare.childPrice)
+              : ''}
+            {passengerMix.infants > 0 && fare.infantPrice != null
+              ? ' · ' + copy.passengerTypes.infant.label + ' ' + money(fare.infantPrice)
+              : ''}
           </Txt>
           {cabin.remaining != null && (
             <Txt variant="small">{t('flights.remaining', { count: cabin.remaining })}</Txt>

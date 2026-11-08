@@ -13,6 +13,18 @@ export interface CheckoutRequestDto {
    */
   adults: number;
   /**
+   * Chỉ khi giỏ có vé bay: trẻ em 2–11 tuổi, chiếm ghế, giá 75%; cộng người lớn tối đa 9
+   * @minimum 0
+   * @maximum 8
+   */
+  children?: number;
+  /**
+   * Chỉ khi giỏ có vé bay: em bé dưới 2 tuổi (tới chặng cuối), không chiếm ghế, giá 10%; không quá số người lớn
+   * @minimum 0
+   * @maximum 9
+   */
+  infants?: number;
+  /**
    * Bài đăng dẫn tới đơn này (Đặt y chang)
    * @nullable
    */

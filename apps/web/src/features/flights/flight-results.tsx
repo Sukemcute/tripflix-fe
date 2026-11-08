@@ -3,9 +3,15 @@
 import { useMutation } from '@tanstack/react-query';
 import {
   buildFlightCheckout,
+  buildRoundTripCheckout,
   createCheckoutOperation,
+  getFlightPassengerMix,
+  getReturnFlightSearch,
   useApiSession,
+  useFlightOffer,
   useFlightOffers,
+  type FlightLegChoice,
+  type FlightPassengerMix,
   type FlightSearch,
 } from '@tripflix/api-client';
 import type { FlightOfferDto } from '@tripflix/api-client/core-api/model/index';
@@ -20,6 +26,7 @@ import { addStayDays, MAX_STAY_GUESTS } from '@/features/discovery/stay-search-v
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { FlightDateStrip } from './flight-date-strip';
 import { FlightIcon } from './flight-icon';
+import { formatPassengerMix } from './passenger-picker';
 import { toAirportOption } from './flight-search-form';
 import styles from './flights.module.css';
 
@@ -119,13 +126,29 @@ function getAirlineInitials(airline: string | null): string {
   return initials.toUpperCase() || '✈';
 }
 
-/** Giữ chỗ một hạng ghế rồi chuyển sang trang thanh toán. Chỉ cần ngày bay và số khách của lượt tìm. */
-export function useFlightHold(search: FlightSearch) {
+/** Khứ hồi: ngày về và chiều đi đã chọn, để giữ chỗ cả hai chặng trong một đơn. */
+interface RoundTripHold {
+  returnDate: string;
+  outbound: FlightLegChoice;
+}
+
+/**
+ * Giữ chỗ một hạng ghế rồi chuyển sang trang thanh toán. Chỉ cần ngày bay và số khách của lượt tìm.
+ * Có `round` thì hạng ghế được chọn là chiều về, đơn gồm cả chiều đi đã chọn trước đó.
+ */
+export function useFlightHold(search: FlightSearch, round?: RoundTripHold) {
   const router = useRouter();
   const [create] = useState(createCheckoutOperation);
   return useMutation({
     mutationFn: ({ productId, fareCode }: { productId: string; fareCode: string; flightKey: string }) =>
-      create(buildFlightCheckout(search, productId, fareCode)),
+      create(
+        round
+          ? buildRoundTripCheckout(search, round.returnDate, round.outbound, {
+              productId,
+              ratePlanCode: fareCode,
+            })
+          : buildFlightCheckout(search, productId, fareCode),
+      ),
     retry: false,
     onSuccess: ({ orderId }) => router.push('/checkout/' + encodeURIComponent(orderId)),
   });
@@ -169,8 +192,39 @@ function getHighlights(flights: FlightOfferDto[][]) {
 
 interface FlightResultsProps {
   search: FlightSearch;
+  /** Có ngày về là vé khứ hồi. */
+  returnDate: string | null;
+  /** Chiều đi đã chọn của vé khứ hồi; có thì đang ở bước chọn chuyến về. */
+  outbound: FlightLegChoice | null;
   initialProductId: string;
   initialFareCode: string;
+}
+
+interface RoundTripState {
+  returnDate: string;
+  outbound: FlightLegChoice | null;
+}
+
+/** Tham số URL của trang /flights, giữ đủ trạng thái khứ hồi để chia sẻ link hay quay lại sau đăng nhập. */
+function buildFlightsQuery(search: FlightSearch, round?: RoundTripState): URLSearchParams {
+  const params = new URLSearchParams({
+    from: search.from,
+    to: search.to,
+    date: search.date,
+    passengers: String(search.passengers),
+  });
+  if (search.children) params.set('children', String(search.children));
+  if (search.infants) params.set('infants', String(search.infants));
+  if (search.sort) params.set('sort', search.sort);
+  if (round) {
+    params.set('trip', 'round');
+    params.set('returnDate', round.returnDate);
+    if (round.outbound) {
+      params.set('out', round.outbound.productId);
+      params.set('outFare', round.outbound.ratePlanCode);
+    }
+  }
+  return params;
 }
 
 export function FlightResults(props: FlightResultsProps) {
@@ -178,37 +232,82 @@ export function FlightResults(props: FlightResultsProps) {
   return <Results key={user?.id ?? 'guest'} {...props} />;
 }
 
-function Results({ search, initialProductId, initialFareCode }: FlightResultsProps) {
+function Results({ search, returnDate, outbound, initialProductId, initialFareCode }: FlightResultsProps) {
   const { user, isReady } = useApiSession();
-  const query = useFlightOffers(search);
-  const hold = useFlightHold(search);
-  const params = new URLSearchParams({ ...search, passengers: String(search.passengers) });
+  const router = useRouter();
+  const round: RoundTripState | undefined = returnDate ? { returnDate, outbound } : undefined;
+  const roundOutbound = round?.outbound ?? null;
+  const isOutboundStep = round !== undefined && roundOutbound === null;
+  // Lượt tìm của chặng đang chọn: chiều về thì đảo hai sân bay và bay vào ngày về.
+  const legSearch = round && roundOutbound ? getReturnFlightSearch(search, round.returnDate) : search;
+  const query = useFlightOffers(legSearch);
+  const passengerMix = getFlightPassengerMix(search);
+  const passengerQuery = {
+    passengers: search.passengers,
+    ...(search.children ? { children: search.children } : {}),
+    ...(search.infants ? { infants: search.infants } : {}),
+  };
+  const outboundQuery = useFlightOffer(
+    roundOutbound?.productId ?? '',
+    { date: search.date, ...passengerQuery },
+    { enabled: roundOutbound !== null },
+  );
+  const outboundFare = outboundQuery.data?.fares.find((fare) => fare.code === roundOutbound?.ratePlanCode);
+  const outboundTotal = outboundQuery.data?.isAvailable ? (outboundFare?.totalPrice ?? null) : null;
+  const isOutboundGone = roundOutbound !== null && outboundQuery.isSuccess && outboundTotal === null;
+  const hold = useFlightHold(
+    search,
+    round && roundOutbound ? { returnDate: round.returnDate, outbound: roundOutbound } : undefined,
+  );
+  const params = buildFlightsQuery(search, round);
+  const outboundStepHref = '/flights?' + buildFlightsQuery(search, round && { ...round, outbound: null });
   const detailQuery = new URLSearchParams({
     date: search.date,
-    passengers: String(search.passengers),
+    ...Object.fromEntries(Object.entries(passengerQuery).map(([key, count]) => [key, String(count)])),
   }).toString();
-  const fromCity = toAirportOption(search.from).city;
-  const toCity = toAirportOption(search.to).city;
+  const fromCity = toAirportOption(legSearch.from).city;
+  const toCity = toAirportOption(legSearch.to).city;
   const destination = query.data?.[0]?.[0]?.destination;
   const highlights = getHighlights(query.data ?? []);
+  // Chọn chiều đi chỉ chuyển sang bước sau, không giữ chỗ; chiều về cần chiều đi còn bán được.
+  const isLocked = isOutboundStep
+    ? !isReady
+    : !isReady || hold.isPending || hold.isSuccess || (roundOutbound !== null && outboundTotal === null);
+  const hrefForDate = (date: string) => {
+    if (!round) return '/flights?' + buildFlightsQuery({ ...search, date });
+    if (roundOutbound) return '/flights?' + buildFlightsQuery(search, { ...round, returnDate: date });
+    // Đổi ngày đi: ngày về không được sớm hơn ngày đi.
+    const nextReturn = round.returnDate < date ? date : round.returnDate;
+    return '/flights?' + buildFlightsQuery({ ...search, date }, { returnDate: nextReturn, outbound: null });
+  };
+  const chooseOutbound = (productId: string, fareCode: string) => {
+    if (!round) return;
+    router.push(
+      '/flights?' + buildFlightsQuery(search, { ...round, outbound: { productId, ratePlanCode: fareCode } }),
+    );
+  };
 
   return (
     <section aria-labelledby="flight-results" className={styles.results}>
       <header className={styles.resultsHeader}>
         <div>
           <p className="eyebrow">
-            {fromCity} → {toCity}
+            {round
+              ? copy.roundTrip + ' · ' + (roundOutbound ? copy.roundStepReturn : copy.roundStepOutbound)
+              : fromCity + ' → ' + toCity}
           </p>
-          <h2 id="flight-results">{t('flights.results', { from: search.from, to: search.to })}</h2>
+          <h2 id="flight-results">
+            {round ? fromCity + ' → ' + toCity : t('flights.results', { from: search.from, to: search.to })}
+          </h2>
         </div>
         <div className={styles.resultsMeta}>
           <span>
             <FlightIcon name="calendar" size={16} />
-            {formatFlightDate(search.date)}
+            {formatFlightDate(legSearch.date)}
           </span>
           <span>
             <FlightIcon name="users" size={16} />
-            {t('flights.passengers', { count: search.passengers })}
+            {formatPassengerMix(passengerMix)}
           </span>
           {query.data && query.data.length > 0 && (
             <span className={styles.countChip}>
@@ -217,7 +316,30 @@ function Results({ search, initialProductId, initialFareCode }: FlightResultsPro
           )}
         </div>
       </header>
-      <FlightDateStrip search={search} />
+      {round && (
+        <RoundTripSummary
+          search={search}
+          returnDate={round.returnDate}
+          isReturnStep={roundOutbound !== null}
+          outbound={outboundQuery.data ?? null}
+          outboundFare={outboundFare}
+          changeOutboundHref={outboundStepHref}
+        />
+      )}
+      {isOutboundGone && (
+        <p role="alert" className={styles.roundNotice}>
+          {copy.outboundGone} <Link href={outboundStepHref}>{copy.changeOutbound}</Link>
+        </p>
+      )}
+      {roundOutbound && (
+        <ApiErrorNotice error={outboundQuery.error} retry={() => void outboundQuery.refetch()} />
+      )}
+      <FlightDateStrip
+        key={legSearch.from + legSearch.date}
+        search={legSearch}
+        hrefFor={hrefForDate}
+        minDate={roundOutbound ? search.date : undefined}
+      />
       <nav className={styles.sortBar} aria-label={copy.sortLabel}>
         <span>{copy.sortLabel}</span>
         {SORT_OPTIONS.map(([value, label]) => {
@@ -256,23 +378,112 @@ function Results({ search, initialProductId, initialFareCode }: FlightResultsPro
               key={first.flightKey}
               flight={first}
               cabins={[first, ...otherCabins]}
-              isLocked={!isReady || hold.isPending || hold.isSuccess}
+              isLocked={isLocked}
               isHolding={hold.isPending && hold.variables?.flightKey === first.flightKey}
-              returnTo={user ? undefined : '/flights?' + params}
+              // Chọn chiều đi chưa giữ chỗ nên chưa cần đăng nhập.
+              returnTo={user || isOutboundStep ? undefined : '/flights?' + params}
               initialProductId={initialProductId}
               initialFareCode={initialFareCode}
-              detailQuery={detailQuery}
+              detailQuery={round ? undefined : detailQuery}
               tags={highlights.get(first.flightKey)}
-              date={search.date}
+              date={legSearch.date}
               passengers={search.passengers}
+              passengerMix={passengerMix}
+              legLabel={round ? (roundOutbound ? copy.returnLeg : copy.outboundLeg) : copy.oneWay}
+              chooseLabel={round ? (roundOutbound ? copy.chooseReturn : copy.chooseOutbound) : copy.choose}
+              outboundTotal={outboundTotal ?? undefined}
               onHold={(productId, fareCode) =>
-                hold.mutate({ productId, fareCode, flightKey: first.flightKey })
+                isOutboundStep
+                  ? chooseOutbound(productId, fareCode)
+                  : hold.mutate({ productId, fareCode, flightKey: first.flightKey })
               }
               error={hold.variables?.flightKey === first.flightKey ? hold.error : null}
             />
           ),
       )}
-      {destination && <StaySuggestion destination={destination} search={search} />}
+      {destination && !roundOutbound && (
+        <StaySuggestion
+          destination={destination}
+          search={search}
+          checkOut={round && round.returnDate > search.date ? round.returnDate : undefined}
+        />
+      )}
+    </section>
+  );
+}
+
+/** Hai chặng của vé khứ hồi: chặng đã chọn hiện chuyến và gói vé, chặng đang chọn được tô nổi. */
+function RoundTripSummary({
+  search,
+  returnDate,
+  isReturnStep,
+  outbound,
+  outboundFare,
+  changeOutboundHref,
+}: {
+  search: FlightSearch;
+  returnDate: string;
+  isReturnStep: boolean;
+  outbound: FlightOfferDto | null;
+  outboundFare: FlightOfferDto['fares'][number] | undefined;
+  changeOutboundHref: string;
+}) {
+  const shortDate = (iso: string) => iso.slice(8, 10) + '/' + iso.slice(5, 7);
+  const outboundText = outbound
+    ? [
+        outbound.flightNumber ?? outbound.flightKey,
+        (outbound.departTime?.slice(0, 5) ?? '--:--') + '–' + (outbound.arriveTime?.slice(0, 5) ?? '--:--'),
+        outbound.cabinName,
+        outboundFare?.name.split(' · ')[0],
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : isReturnStep
+      ? vi.api.loading
+      : copy.notChosenYet;
+
+  return (
+    <section className={styles.roundSummary} aria-label={copy.roundTrip}>
+      <div
+        className={styles.roundLeg}
+        data-active={!isReturnStep || undefined}
+        data-done={isReturnStep || undefined}
+      >
+        <span className={styles.roundLegIcon} aria-hidden="true">
+          <FlightIcon name={isReturnStep ? 'check' : 'takeoff'} size={18} />
+        </span>
+        <div className={styles.roundLegText}>
+          <span className={styles.roundLegLabel}>
+            {copy.outboundLeg} · {shortDate(search.date)}
+          </span>
+          <strong>
+            {search.from} → {search.to}
+          </strong>
+          <span>{outboundText}</span>
+        </div>
+        {isReturnStep && outboundFare?.totalPrice != null && (
+          <span className={styles.roundLegPrice}>{formatAmount(outboundFare.totalPrice)} ₫</span>
+        )}
+        {isReturnStep && (
+          <Link className={styles.roundChange} href={changeOutboundHref}>
+            {copy.changeOutbound}
+          </Link>
+        )}
+      </div>
+      <div className={styles.roundLeg} data-active={isReturnStep || undefined}>
+        <span className={styles.roundLegIcon} aria-hidden="true">
+          <FlightIcon name="landing" size={18} />
+        </span>
+        <div className={styles.roundLegText}>
+          <span className={styles.roundLegLabel}>
+            {copy.returnLeg} · {shortDate(returnDate)}
+          </span>
+          <strong>
+            {search.to} → {search.from}
+          </strong>
+          <span>{isReturnStep ? copy.roundStepReturn : copy.pickOutboundFirst}</span>
+        </div>
+      </div>
     </section>
   );
 }
@@ -280,9 +491,12 @@ function Results({ search, initialProductId, initialFareCode }: FlightResultsPro
 export function StaySuggestion({
   destination,
   search,
+  checkOut,
 }: {
   destination: FlightOfferDto['destination'];
   search: FlightSearch;
+  /** Ngày trả phòng; vé khứ hồi dùng ngày về, mặc định ở 2 đêm. */
+  checkOut?: string;
 }) {
   return (
     <aside className={styles.staySuggestion}>
@@ -298,8 +512,8 @@ export function StaySuggestion({
           new URLSearchParams({
             placeId: destination.slug,
             checkIn: search.date,
-            checkOut: addStayDays(search.date, 2),
-            adults: String(Math.min(search.passengers, MAX_STAY_GUESTS)),
+            checkOut: checkOut ?? addStayDays(search.date, 2),
+            adults: String(Math.min(search.passengers + (search.children ?? 0), MAX_STAY_GUESTS)),
           })
         }
       >
@@ -323,6 +537,10 @@ export function FlightCard({
   tags = [],
   date,
   passengers,
+  passengerMix = { adults: passengers, children: 0, infants: 0 },
+  legLabel = copy.oneWay,
+  chooseLabel = copy.choose,
+  outboundTotal,
   onHold,
   error,
 }: {
@@ -342,6 +560,13 @@ export function FlightCard({
   /** Ngày bay YYYY-MM-DD và số khách, in ở hàng thông tin của vé khi mở. */
   date: string;
   passengers: number;
+  /** Nhóm khách để hiện giá trẻ em, em bé; bỏ trống là chỉ có người lớn. */
+  passengerMix?: FlightPassengerMix;
+  /** Nhãn chặng trên dải đầu vé: "Một chiều", "Chiều đi", "Chiều về". */
+  legLabel?: string;
+  chooseLabel?: string;
+  /** Tiền chiều đi đã chọn; có thì cuống vé hiện tổng khứ hồi. */
+  outboundTotal?: number;
   onHold: (productId: string, fareCode: string) => void;
   error: unknown;
 }) {
@@ -482,7 +707,7 @@ export function FlightCard({
                 )}
               </h3>
               <span className={styles.tTag}>
-                {copy.oneWay} · {cabin.cabinName}
+                {legLabel} · {cabin.cabinName}
               </span>
               {!isInitiallyOpen && (
                 <button
@@ -540,7 +765,9 @@ export function FlightCard({
                 </div>
                 <div>
                   <dt>{copy.factPassengers}</dt>
-                  <dd>{passengers}</dd>
+                  <dd title={formatPassengerMix(passengerMix)}>
+                    {passengerMix.adults + passengerMix.children + passengerMix.infants}
+                  </dd>
                 </div>
               </dl>
             </div>
@@ -615,13 +842,33 @@ export function FlightCard({
             </div>
             {canBook ? (
               <div className={styles.stubPrice}>
-                <span className={styles.stubLabel}>{vi.commerce.total}</span>
+                <span className={styles.stubLabel}>
+                  {outboundTotal != null ? copy.roundTotal : vi.commerce.total}
+                </span>
                 <p className={styles.amount}>
-                  <strong>{formatAmount(totalPrice)}</strong>
+                  <strong>{formatAmount(totalPrice + (outboundTotal ?? 0))}</strong>
                   <span>VNĐ</span>
                 </p>
                 <span className={styles.stubNote}>
-                  {t('flights.perPassenger', { price: formatPrice(unitPrice) })}
+                  {outboundTotal != null
+                    ? t('flights.roundBreakdown', {
+                        outbound: formatPrice(outboundTotal),
+                        inbound: formatPrice(totalPrice),
+                      })
+                    : passengerMix.children > 0 || passengerMix.infants > 0
+                      ? // Có trẻ em, em bé thì ghi giá từng loại khách, không để "/ khách" bị hiểu là giá chung.
+                        [
+                          copy.passengerTypes.adult.label + ' ' + formatPrice(unitPrice),
+                          passengerMix.children > 0 && fare.childPrice != null
+                            ? copy.passengerTypes.child.label + ' ' + formatPrice(fare.childPrice)
+                            : null,
+                          passengerMix.infants > 0 && fare.infantPrice != null
+                            ? copy.passengerTypes.infant.label + ' ' + formatPrice(fare.infantPrice)
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ') + copy.perPerson
+                      : t('flights.perPassenger', { price: formatPrice(unitPrice) })}
                   {flight.isPriceTaxIncluded && ' · ' + copy.taxIncluded}
                 </span>
               </div>
@@ -668,7 +915,7 @@ export function FlightCard({
                   disabled={isLocked || !canBook}
                   onClick={() => fare && onHold(cabin.productId, fare.code)}
                 >
-                  {isHolding ? vi.api.loading : copy.choose}
+                  {isHolding ? vi.api.loading : chooseLabel}
                 </button>
               )}
               {canBook && cabin.remaining != null && (

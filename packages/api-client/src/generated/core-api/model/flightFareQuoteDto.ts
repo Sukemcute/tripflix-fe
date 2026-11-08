@@ -13,12 +13,22 @@ export interface FlightFareQuoteDto {
   /** Hoàn vé miễn phí trước ngày bay bao nhiêu ngày */
   freeCancelDays: number;
   /**
-   * Giá một vé (VND); null khi không bán được
+   * Giá một vé người lớn (VND); null khi không bán được
    * @nullable
    */
   pricePerPerson: number | null;
   /**
-   * Cả nhóm hành khách (VND); null khi không bán được
+   * Giá một vé trẻ em 2–11 tuổi (75%, VND); null khi không bán được
+   * @nullable
+   */
+  childPrice: number | null;
+  /**
+   * Giá một vé em bé dưới 2 tuổi (10%, VND); null khi không bán được
+   * @nullable
+   */
+  infantPrice: number | null;
+  /**
+   * Cả nhóm: người lớn, trẻ em, em bé (VND); null khi không bán được
    * @nullable
    */
   totalPrice: number | null;

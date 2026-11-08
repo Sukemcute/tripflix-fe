@@ -285,6 +285,15 @@
   background: var(--color-background);
 }
 
+.guestType {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .guestNumber {
   display: grid;
   place-items: center;

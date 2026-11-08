@@ -28,7 +28,20 @@ export {
 export { feedApi, useReelsFeed } from './feed';
 export { updateReelSocialCache } from './reel-social-cache';
 export { useStaySearch, getAvailableStays, getFutureDate, type StayFilters } from './stay-search';
-export { buildFlightCheckout, getFlightToday, parseFlightSearch, type FlightSearch } from './flight-search';
+export {
+  buildFlightCheckout,
+  buildRoundTripCheckout,
+  getFlightPassengerMix,
+  getFlightToday,
+  getReturnFlightSearch,
+  isValidFlightPassengerMix,
+  MAX_FLIGHT_SEATS,
+  parseFlightReturnDate,
+  parseFlightSearch,
+  type FlightLegChoice,
+  type FlightPassengerMix,
+  type FlightSearch,
+} from './flight-search';
 export { useFlightCalendar, useFlightOffer, useFlightOffers, useFlightRoutes } from './flight-queries';
 export { getHotelReviews, type HotelReviewFilters } from './hotel-reviews';
 export { getExploreResults, useExploreSearch } from './explore-search';
