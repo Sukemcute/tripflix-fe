@@ -14,7 +14,7 @@
 | Người lớn ngày sinh dưới 12 tuổi: báo ngay dưới ô ngày sinh đúng hành khách | Đạt | `checkout-guests.test.ts` › "người lớn sinh hôm nay báo sai tuổi người lớn ở đúng ô ngày sinh"; ảnh màn hình |
 | Thiếu tên, số điện thoại sai, email sai: báo đúng ô | Đạt | `checkout-guests.test.ts` › "báo riêng từng ô liên hệ và hành khách" |
 | Hiện lỗi theo ô khi server trả về | Đạt | `readServerFieldErrors` trong `checkout-screen.tsx`, đọc `errors[]` của BE TF69 |
-| Test pass, có ảnh evidence | Đạt test / ảnh bổ sung trong PR | xem bên dưới |
+| Test pass, có ảnh evidence | Đạt | xem bên dưới |
 
 ## Kết quả kiểm tra
 - `pnpm turbo run lint typecheck test --affected`: 20/20 task pass; app-core 46 test pass (thêm 5), i18n 2, api-client 91, tokens 1. Lint web có 6 cảnh báo cũ ở `flights/` và `auth/`, không thuộc task này.
@@ -25,7 +25,7 @@
 3. Xoá số điện thoại, nhập email sai rồi bấm Thanh toán: từng ô có câu riêng, câu tổng ghi số ô còn sai.
 
 ## Ảnh / video
-- Đính trong PR.
+- Màn checkout sau khi sửa, chạy stack local, người lớn ngày sinh 08/11/2026: ảnh đính ở comment Jira [SCRUM-73](https://tripflix.atlassian.net/browse/SCRUM-73?focusedCommentId=10005). Ô ngày sinh hành khách 1 viền đỏ, dưới ghi "Hành khách 1 là người lớn, phải đủ 12 tuổi vào ngày bay.", câu tổng "Còn 1 ô chưa đúng, xem các ô viền đỏ bên trên."
 
 ## Ảnh hưởng tới phần của người khác
 - Có: `apps/web/src/features/checkout/` của Thành (`checkout-screen.tsx`, `checkout-form.module.css`). Người dùng đã đồng ý sửa trong phiên. Không đổi props hay export của component dùng chung; `Field` là component nội bộ của file, chỉ thêm prop `error`. Form thêm `noValidate` vì đã tự báo lỗi từng ô.
