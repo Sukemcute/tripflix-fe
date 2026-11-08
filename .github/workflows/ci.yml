@@ -8,9 +8,15 @@ on:
 permissions:
   contents: read
 
+# PR: lần push mới huỷ lần chạy cũ. Nhánh develop, main không huỷ để commit nào cũng được kiểm đủ.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,7 +27,15 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run lint typecheck test build --affected
+      # PR chỉ kiểm phần bị ảnh hưởng so với nhánh đích.
+      - name: Kiểm phần bị ảnh hưởng (PR)
+        if: github.event_name == 'pull_request'
+        run: pnpm turbo run lint typecheck test build --affected
         env:
-          TURBO_SCM_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+          TURBO_SCM_BASE: origin/${{ github.base_ref }}
+      # Push lên develop, main, tag: kiểm toàn bộ. Không dùng --affected vì không có nhánh gốc rõ ràng để so,
+      # có thể bỏ sót (ví dụ merge release vào main bị coi là không đổi gì) mà image vẫn được build.
+      - name: Kiểm toàn bộ (push)
+        if: github.event_name != 'pull_request'
+        run: pnpm turbo run lint typecheck test build
       - run: node tools/check-boundaries.mjs
