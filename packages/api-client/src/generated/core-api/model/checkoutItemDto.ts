@@ -20,8 +20,18 @@ export interface CheckoutItemDto {
   dateTo: string;
   nights: number;
   qty: number;
-  /** Một đêm một phòng / một vé (VND) */
+  /** Phòng: một đêm một phòng. Vé bay: một vé người lớn (VND). Vé bay có trẻ em, em bé thì lineTotal khác unitPrice × qty */
   unitPrice: number;
+  /**
+   * Vé bay: một vé trẻ em (VND); phòng là null
+   * @nullable
+   */
+  childUnitPrice: number | null;
+  /**
+   * Vé bay: một vé em bé (VND); phòng là null. lineTotal = unitPrice × adults + childUnitPrice × children + infantUnitPrice × infants
+   * @nullable
+   */
+  infantUnitPrice: number | null;
   lineTotal: number;
   ratePlanCode: string;
   ratePlanName: string;

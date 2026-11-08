@@ -277,7 +277,9 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                       <span className={styles.guestNumber}>{index + 1}</span>
                       {copy.guest} {index + 1}
                       {order.passengerTypes[index] && (
-                        <span className={styles.guestType}>{copy.guestTypes[order.passengerTypes[index]]}</span>
+                        <span className={styles.guestType}>
+                          {copy.guestTypes[order.passengerTypes[index]]}
+                        </span>
                       )}
                     </p>
                     <Field
@@ -626,7 +628,15 @@ function OrderSummary({ order, total }: { order: Order; total: number }) {
             <p className={styles.line}>
               <span>
                 {item.productType === 'flight' && (order.children > 0 || order.infants > 0)
-                  ? t('flights.passengers', { count: order.adults + order.children + order.infants })
+                  ? // unitPrice là giá người lớn; lineTotal gồm cả trẻ em, em bé nên ghi đơn giá từng loại khách.
+                    [
+                      [vi.flights.passengerTypes.adult.label, item.unitPrice, order.adults],
+                      [vi.flights.passengerTypes.child.label, item.childUnitPrice, order.children],
+                      [vi.flights.passengerTypes.infant.label, item.infantUnitPrice, order.infants],
+                    ]
+                      .filter(([, price, count]) => price != null && Number(count) > 0)
+                      .map(([label, price, count]) => `${label} ${formatPrice(Number(price))} × ${count}`)
+                      .join(' · ')
                   : `${formatPrice(item.unitPrice)} × ${
                       item.productType === 'flight'
                         ? t('flights.passengers', { count: item.qty })

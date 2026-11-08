@@ -12,7 +12,7 @@
   - Ô "Số hành khách" mở bảng chọn **Người lớn / Trẻ em / Em bé**. Mỗi dòng có tuổi gợi ý; các nút +/− tự khoá khi chạm luật.
   - Kết quả và trang chi tiết chuyến hiện "2 người lớn, 1 trẻ em, 1 em bé".
   - Cuống vé ghi giá từng loại khách và tổng cả nhóm.
-  - Trang thanh toán gắn nhãn loại cho từng hành khách ("Trẻ em · 2–11 tuổi vào ngày bay"). Tóm tắt đơn vé bay ghi nhóm khách thay cho "số vé × đơn giá".
+  - Trang thanh toán gắn nhãn loại cho từng hành khách ("Trẻ em · 2–11 tuổi vào ngày bay"). Dòng vé bay có trẻ em, em bé ghi đơn giá từng loại khách ("Người lớn 2.530.000 × 2 · Trẻ em 1.900.000 × 1 · Em bé 250.000 × 1") từ `unitPrice`, `childUnitPrice`, `infantUnitPrice` của BE (sửa theo review PR BE #83), không còn chia tổng cho số vé.
 - Mobile: màn tìm vé có sheet chọn 3 loại khách, thẻ chuyến ghi giá trẻ em và em bé, form hành khách ghi loại của từng người.
 
 ## Đối chiếu "Xong khi"
