@@ -39,7 +39,7 @@ export function useFlightOffers(search: FlightSearch) {
 /** Một hạng ghế của một chuyến, báo giá đúng ngày bay và số khách (GET /flights/:id). */
 export function useFlightOffer(
   productId: string,
-  query: { date: string; passengers: number },
+  query: { date: string; passengers: number; children?: number; infants?: number },
   options: { enabled?: boolean } = {},
 ) {
   const { isReady } = useApiSession();
@@ -65,6 +65,8 @@ export function useFlightCalendar(query: {
   start: string;
   end: string;
   passengers: number;
+  children?: number;
+  infants?: number;
 }) {
   const { isReady } = useApiSession();
   return useQuery({

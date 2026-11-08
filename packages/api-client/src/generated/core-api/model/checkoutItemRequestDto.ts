@@ -12,7 +12,7 @@ export interface CheckoutItemRequestDto {
   checkIn: string;
   /** Ngày trả phòng (bắt buộc với phòng) */
   checkOut?: string;
-  /** Số phòng; bỏ trống thì tự tính theo số khách. Vé bay luôn bằng số khách */
+  /** Số phòng; bỏ trống thì tự tính theo số khách. Vé bay luôn bằng số ghế (người lớn + trẻ em) */
   qty?: number;
   /** Mặc định gói đầu tiên */
   ratePlanCode?: string;

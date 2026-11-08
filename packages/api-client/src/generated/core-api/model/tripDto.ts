@@ -12,6 +12,10 @@ export interface TripDto {
   status: TripDtoStatus;
   total: number;
   adults: number;
+  /** Trẻ em 2–11 tuổi (vé bay) */
+  children: number;
+  /** Em bé dưới 2 tuổi (vé bay) */
+  infants: number;
   /** @nullable */
   confirmationCode: string | null;
   /** @nullable */

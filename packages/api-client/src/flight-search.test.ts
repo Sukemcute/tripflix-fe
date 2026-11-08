@@ -3,7 +3,9 @@ import type { FlightOfferDto } from './generated/core-api/model';
 import {
   buildFlightCheckout,
   buildRoundTripCheckout,
+  getFlightPassengerMix,
   getReturnFlightSearch,
+  isValidFlightPassengerMix,
   groupFlightOffers,
   groupFlightRoutes,
   parseFlightReturnDate,
@@ -121,6 +123,38 @@ describe('flight search', () => {
         { productId: 'back-J', checkIn: '2026-11-09', ratePlanCode: 'FLEX' },
       ],
     });
+  });
+
+  it('reads children and infants, keeps them in the return search and in the checkout', () => {
+    const search = parseFlightSearch({ ...draft, children: '1', infants: '2' }, today)!;
+    expect(search).toEqual({ from: 'HAN', to: 'CXR', date: today, passengers: 2, children: 1, infants: 2 });
+    expect(getReturnFlightSearch(search, '2026-11-09')).toMatchObject({
+      from: 'CXR',
+      children: 1,
+      infants: 2,
+    });
+    expect(buildFlightCheckout(search, 'flight-cabin', 'ECO')).toEqual({
+      adults: 2,
+      children: 1,
+      infants: 2,
+      items: [{ productId: 'flight-cabin', checkIn: today, ratePlanCode: 'ECO' }],
+    });
+    // Không có trẻ em, em bé thì không gửi hai trường này.
+    expect(parseFlightSearch({ ...draft, children: '0', infants: '' }, today)).not.toHaveProperty('children');
+  });
+
+  it.each([{ children: '8' }, { infants: '3' }, { children: 'x' }, { children: '-1' }])(
+    'rejects an impossible passenger mix %j',
+    (invalid) => {
+      expect(parseFlightSearch({ ...draft, ...invalid }, today)).toBeNull();
+    },
+  );
+
+  it('checks the passenger mix rules', () => {
+    expect(isValidFlightPassengerMix({ adults: 2, children: 7, infants: 2 })).toBe(true);
+    expect(isValidFlightPassengerMix({ adults: 2, children: 8, infants: 0 })).toBe(false);
+    expect(isValidFlightPassengerMix({ adults: 1, children: 0, infants: 2 })).toBe(false);
+    expect(getFlightPassengerMix({ passengers: 3 })).toEqual({ adults: 3, children: 0, infants: 0 });
   });
 
   it.each([

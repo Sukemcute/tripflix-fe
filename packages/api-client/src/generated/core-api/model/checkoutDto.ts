@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { CheckoutDtoPassengerTypesItem } from './checkoutDtoPassengerTypesItem';
 import type { CheckoutDtoStatus } from './checkoutDtoStatus';
 import type { CheckoutItemDto } from './checkoutItemDto';
 
@@ -13,6 +14,10 @@ export interface CheckoutDto {
   holdExpiresAt: string;
   total: number;
   adults: number;
+  /** Trẻ em 2–11 tuổi (vé bay) */
+  children: number;
+  /** Em bé dưới 2 tuổi (vé bay) */
+  infants: number;
   /** @nullable */
   confirmationCode: string | null;
   /** @nullable */
@@ -21,5 +26,7 @@ export interface CheckoutDto {
   isGuestInfoComplete: boolean;
   /** Số hành khách cần nhập (0 khi không có vé bay) */
   passengersRequired: number;
+  /** Loại của từng hành khách cần nhập, đúng thứ tự guests; tuổi kiểm tại ngày bay đầu tiên (người lớn từ 12, trẻ em 2–11, em bé dưới 2) */
+  passengerTypes: CheckoutDtoPassengerTypesItem[];
   policyVersion: string;
 }

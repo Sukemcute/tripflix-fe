@@ -31,11 +31,15 @@ export { useStaySearch, getAvailableStays, getFutureDate, type StayFilters } fro
 export {
   buildFlightCheckout,
   buildRoundTripCheckout,
+  getFlightPassengerMix,
   getFlightToday,
   getReturnFlightSearch,
+  isValidFlightPassengerMix,
+  MAX_FLIGHT_SEATS,
   parseFlightReturnDate,
   parseFlightSearch,
   type FlightLegChoice,
+  type FlightPassengerMix,
   type FlightSearch,
 } from './flight-search';
 export { useFlightCalendar, useFlightOffer, useFlightOffers, useFlightRoutes } from './flight-queries';

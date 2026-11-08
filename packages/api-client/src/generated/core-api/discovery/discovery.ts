@@ -25,6 +25,8 @@ import type {
   ExploreResponseDto,
   HomeRecommendationsControllerRecommendForHomeParams,
   HomeRecommendationsDto,
+  SearchPostsRequestDto,
+  SearchPostsResponseDto,
   StayPageDto,
   StaysControllerListStaysParams,
   SuggestControllerSuggestParams,
@@ -494,6 +496,130 @@ export const useExploreControllerSearch = <TError = void, TContext = unknown>(
   TContext
 > => {
   return useMutation(getExploreControllerSearchMutationOptions(options), queryClient);
+};
+export type exploreControllerSearchPostsResponse200 = {
+  data: SearchPostsResponseDto;
+  status: 200;
+};
+
+export type exploreControllerSearchPostsResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type exploreControllerSearchPostsResponseSuccess = exploreControllerSearchPostsResponse200 & {
+  headers: Headers;
+};
+export type exploreControllerSearchPostsResponseError = exploreControllerSearchPostsResponse400 & {
+  headers: Headers;
+};
+
+export type exploreControllerSearchPostsResponse =
+  exploreControllerSearchPostsResponseSuccess | exploreControllerSearchPostsResponseError;
+
+export const getExploreControllerSearchPostsUrl = () => {
+  return `/api/search/posts`;
+};
+
+/**
+ * Cho tab tìm bài trên app và web Cảm hứng. Công khai. Cùng bộ hiểu câu và chỉ mục với `POST /api/search`.
+ *
+ * - `postType`: `all` (mặc định), `plan`, `video`, `post`. Video kèm lộ trình thuộc cả `plan` và `video`; với `all` chỉ trả một lần.
+ * - Ngân sách trong câu là lọc cứng theo chi phí mỗi người của lộ trình. Bài bị ẩn hoặc xoá không trả về.
+ * - Phân trang: gửi `nextCursor` của trang trước vào `cursor`. Không có kết quả thì `items: []`, `total: 0`.
+ * @summary Tìm bài (lộ trình, video, bài viết) bằng câu tự nhiên, có phân trang
+ */
+export const exploreControllerSearchPosts = async (
+  searchPostsRequestDto: SearchPostsRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<exploreControllerSearchPostsResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<exploreControllerSearchPostsResponse>(getExploreControllerSearchPostsUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(searchPostsRequestDto),
+  });
+};
+
+export const getExploreControllerSearchPostsMutationKey = () => ['exploreControllerSearchPosts'] as const;
+
+export const getExploreControllerSearchPostsMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof exploreControllerSearchPosts>>,
+    TError,
+    ExploreControllerSearchPostsMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof exploreControllerSearchPosts>>,
+  TError,
+  ExploreControllerSearchPostsMutationVariables,
+  TContext
+> => {
+  const mutationKey = getExploreControllerSearchPostsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof exploreControllerSearchPosts>>,
+    ExploreControllerSearchPostsMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return exploreControllerSearchPosts(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ExploreControllerSearchPostsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof exploreControllerSearchPosts>>
+>;
+export type ExploreControllerSearchPostsMutationBody = SearchPostsRequestDto;
+export type ExploreControllerSearchPostsMutationError = void;
+export type ExploreControllerSearchPostsMutationVariables = { data: SearchPostsRequestDto };
+
+/**
+ * @summary Tìm bài (lộ trình, video, bài viết) bằng câu tự nhiên, có phân trang
+ */
+export const useExploreControllerSearchPosts = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof exploreControllerSearchPosts>>,
+      TError,
+      ExploreControllerSearchPostsMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof exploreControllerSearchPosts>>,
+  TError,
+  ExploreControllerSearchPostsMutationVariables,
+  TContext
+> => {
+  return useMutation(getExploreControllerSearchPostsMutationOptions(options), queryClient);
 };
 export type homeRecommendationsControllerRecommendForHomeResponse200 = {
   data: HomeRecommendationsDto;

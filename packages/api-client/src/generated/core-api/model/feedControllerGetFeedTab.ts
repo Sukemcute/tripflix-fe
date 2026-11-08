@@ -10,4 +10,5 @@ export type FeedControllerGetFeedTab =
 
 export const FeedControllerGetFeedTab = {
   for_you: 'for_you',
+  hot: 'hot',
 } as const;
