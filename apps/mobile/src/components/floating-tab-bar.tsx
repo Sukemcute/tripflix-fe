@@ -13,7 +13,9 @@ const ICONS: Record<string, IconName> = {
   me: 'person-outline',
 };
 const COMPOSE_SIZE = 60;
+const SHOULDER_SIZE = 10;
 const DOCK_HEIGHT = 80;
+const SURFACE_TOP = 22;
 
 export function getFloatingTabBarHeight(bottomInset: number) {
   return spacing.xs + DOCK_HEIGHT + Math.max(bottomInset, spacing.md);
@@ -39,6 +41,16 @@ export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, ins
     >
       <View accessibilityRole="tablist" pointerEvents="box-none" style={styles.dock}>
         <View pointerEvents="none" style={[styles.surface, overlaysVideo && styles.videoSurface]} />
+        {!overlaysVideo && (
+          <View pointerEvents="none" style={styles.notchContainer}>
+            <View style={styles.shoulderLeft}>
+              <View style={styles.shoulderCutoutLeft} />
+            </View>
+            <View style={styles.shoulderRight}>
+              <View style={styles.shoulderCutoutRight} />
+            </View>
+          </View>
+        )}
         {routes.map((route) => {
           const options = descriptors[route.key]!.options;
           const isFocused = route.key === activeRoute?.key;
@@ -116,7 +128,7 @@ const styles = StyleSheet.create({
   dock: { height: DOCK_HEIGHT, flexDirection: 'row' },
   surface: {
     position: 'absolute',
-    top: 22,
+    top: SURFACE_TOP,
     bottom: 0,
     left: 0,
     right: 0,
@@ -124,6 +136,51 @@ const styles = StyleSheet.create({
     backgroundColor: colors.coralTint,
   },
   videoSurface: { backgroundColor: colors.overlayHeavy },
+  notchContainer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  shoulderLeft: {
+    position: 'absolute',
+    top: SURFACE_TOP,
+    right: '50%',
+    marginRight: COMPOSE_SIZE / 2 - 1,
+    width: SHOULDER_SIZE,
+    height: SHOULDER_SIZE,
+    backgroundColor: colors.coralTint,
+    overflow: 'hidden',
+  },
+  shoulderCutoutLeft: {
+    position: 'absolute',
+    top: -SHOULDER_SIZE,
+    right: -SHOULDER_SIZE,
+    width: SHOULDER_SIZE * 2,
+    height: SHOULDER_SIZE * 2,
+    borderRadius: SHOULDER_SIZE,
+    backgroundColor: colors.background,
+  },
+  shoulderRight: {
+    position: 'absolute',
+    top: SURFACE_TOP,
+    left: '50%',
+    marginLeft: COMPOSE_SIZE / 2 - 1,
+    width: SHOULDER_SIZE,
+    height: SHOULDER_SIZE,
+    backgroundColor: colors.coralTint,
+    overflow: 'hidden',
+  },
+  shoulderCutoutRight: {
+    position: 'absolute',
+    top: -SHOULDER_SIZE,
+    left: -SHOULDER_SIZE,
+    width: SHOULDER_SIZE * 2,
+    height: SHOULDER_SIZE * 2,
+    borderRadius: SHOULDER_SIZE,
+    backgroundColor: colors.background,
+  },
   composeTab: { justifyContent: 'flex-start', alignItems: 'center' },
   composeHighlight: {
     width: COMPOSE_SIZE,
