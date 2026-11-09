@@ -11,12 +11,13 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
+  Pressable,
   StyleSheet,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import { Button, IconButton, Screen, Txt } from '@/components/mobile-ui';
+import { Button, Icon, IconButton, Screen, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 import { ReelSlide } from './reel-slide';
 import type { ReelItem } from './reel-types';
@@ -130,7 +131,10 @@ export function ReelsScreen() {
               {vi.api.next}
             </Button>
           )}
-          <Button tone="secondary" onPress={() => router.push('/(tabs)/explore')}>
+          <Button
+            tone="secondary"
+            onPress={() => router.push({ pathname: '/(tabs)/explore', params: { autoFocus: '1' } })}
+          >
             {vi.api.search}
           </Button>
         </>
@@ -285,19 +289,32 @@ export function ReelsFeed({
         />
       )}
       {!hideHeader && (
-        <View pointerEvents="box-none" style={[styles.header, { top: insets.top + spacing.sm }]}>
-          <View pointerEvents="none" style={styles.headerSpacer} />
-          <View pointerEvents="none">
-            <Txt variant="label" style={styles.headerLabel}>
-              {vi.mobile.feed.forYou}
-            </Txt>
+        <View pointerEvents="box-none" style={[styles.headerContainer, { top: insets.top + spacing.xs }]}>
+          <View pointerEvents="box-none" style={styles.headerTopRow}>
+            <View pointerEvents="none" style={styles.headerSpacer} />
+            <View pointerEvents="none">
+              <Txt variant="label" style={styles.headerLabel}>
+                {vi.mobile.feed.forYou}
+              </Txt>
+            </View>
+            <IconButton
+              name={isMuted ? 'volume-mute' : 'volume-high'}
+              label={isMuted ? copy.unmute : copy.mute}
+              color={colors.background}
+              onPress={() => setIsMuted((value) => !value)}
+            />
           </View>
-          <IconButton
-            name={isMuted ? 'volume-mute' : 'volume-high'}
-            label={isMuted ? copy.unmute : copy.mute}
-            color={colors.background}
-            onPress={() => setIsMuted((value) => !value)}
-          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={vi.api.search}
+            onPress={() => router.push({ pathname: '/(tabs)/explore', params: { autoFocus: '1' } })}
+            style={({ pressed }) => [styles.searchBar, pressed && styles.searchBarPressed]}
+          >
+            <Icon name="search-outline" size={16} color="rgba(255, 255, 255, 0.9)" />
+            <Txt numberOfLines={1} style={styles.searchPlaceholder}>
+              Tìm bài viết, lộ trình, video...
+            </Txt>
+          </Pressable>
         </View>
       )}
       {onExitSample && (
@@ -322,10 +339,13 @@ export function ReelsFeed({
 }
 
 const styles = StyleSheet.create({
-  header: {
+  headerContainer: {
     position: 'absolute',
     left: spacing.lg,
     right: spacing.lg,
+    gap: spacing.xs,
+  },
+  headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -336,6 +356,25 @@ const styles = StyleSheet.create({
     fontFamily: nativeFonts.bold,
     borderBottomWidth: 2,
     borderBottomColor: colors.background,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    height: 36,
+    gap: spacing.sm,
+  },
+  searchBarPressed: {
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+  },
+  searchPlaceholder: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 13,
+    flex: 1,
   },
 });

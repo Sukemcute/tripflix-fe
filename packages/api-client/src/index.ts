@@ -27,6 +27,7 @@ export {
 } from './post-summary';
 export { feedApi, useReelsFeed } from './feed';
 export { updateReelSocialCache } from './reel-social-cache';
+export { evictPostFromCache, isPostNotFoundError } from './post-cache';
 export { useStaySearch, getAvailableStays, getFutureDate, type StayFilters } from './stay-search';
 export {
   buildFlightCheckout,
@@ -44,7 +45,7 @@ export {
 } from './flight-search';
 export { useFlightCalendar, useFlightOffer, useFlightOffers, useFlightRoutes } from './flight-queries';
 export { getHotelReviews, type HotelReviewFilters } from './hotel-reviews';
-export { getExploreResults, useExploreSearch } from './explore-search';
+export { getExploreResults, getPostSearchResults, useExploreSearch, usePostSearch } from './explore-search';
 export {
   getHomeRecommendations,
   useHomeRecommendations,
@@ -55,6 +56,9 @@ export type {
   ExploreUnderstoodDto,
   HomeDestinationPickDto,
   HomeStayPickDto,
+  SearchPostsRequestDto,
+  SearchPostsResponseDto,
+  SearchPostsRequestDtoPostType,
 } from './generated/core-api/model';
 export {
   commerceApi,
@@ -65,3 +69,4 @@ export {
   createVnpayOperation,
   type CommerceHotel,
 } from './commerce';
+export { uploadChunkToPresignedUrl } from './media-upload';

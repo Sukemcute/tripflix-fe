@@ -226,7 +226,7 @@ function AccountGuest() {
           <Link className="primary-button" href="/login?returnTo=/account">
             {vi.api.login}
           </Link>
-          <Link className="secondary-button" href="/login?mode=register&returnTo=/account">
+          <Link className="secondary-button" href="/register?returnTo=%2Faccount">
             {vi.api.register}
           </Link>
         </div>
