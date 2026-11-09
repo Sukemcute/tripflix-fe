@@ -2096,6 +2096,7 @@ function CommentNode({
     isEdited: boolean;
     likeCount: number;
     isLiked: boolean;
+    authorName?: string | null;
   };
   isReply?: boolean;
   loginHref: string;
@@ -2110,7 +2111,7 @@ function CommentNode({
 
   const isMine = comment.authorId === user?.id;
   const isPostAuthor = comment.authorId === postAuthorId;
-  const authorDisplay = formatAuthorDisplay(comment.authorId, null, user?.id, user?.displayName);
+  const authorDisplay = formatAuthorDisplay(comment.authorId, comment.authorName, user?.id, user?.displayName);
 
   const isCommentLiked = optimisticLiked ?? comment.isLiked;
   const displayCommentLikes = Math.max(

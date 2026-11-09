@@ -94,7 +94,9 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
       <ol className="comment-list">
         {comments.map((comment) => {
           const isMine = comment.authorId === user?.id;
-          const name = isMine ? (user?.displayName ?? vi.api.postYou) : vi.api.commentMember;
+          const name = isMine
+            ? (user?.displayName ?? vi.api.postYou)
+            : comment.authorName?.trim() || vi.api.commentMember;
           return (
             <li key={comment.id}>
               <article className="comment">
@@ -104,7 +106,7 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
                 <div className="comment-body">
                   <p className="comment-meta">
                     <strong>{name}</strong>
-                    {!isMine && <span>{comment.authorId.slice(0, 8)}</span>}
+                    {!isMine && !comment.authorName && <span>{comment.authorId.slice(0, 8)}</span>}
                     <span>{new Date(comment.createdAt).toLocaleDateString('vi-VN')}</span>
                     {comment.isEdited && <span>{vi.api.commentEdited}</span>}
                   </p>
