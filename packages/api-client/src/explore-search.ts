@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { exploreControllerSearch } from './generated/core-api/discovery/discovery';
-import type { ExploreResponseDto } from './generated/core-api/model';
+import { exploreControllerSearch, exploreControllerSearchPosts } from './generated/core-api/discovery/discovery';
+import type {
+  ExploreResponseDto,
+  SearchPostsRequestDto,
+  SearchPostsResponseDto,
+} from './generated/core-api/model';
 import { readEntity } from './response';
 import { useApiSession } from './session';
 
@@ -20,3 +24,38 @@ export function useExploreSearch(q: string) {
     queryFn: ({ signal }) => getExploreResults(query, signal),
   });
 }
+
+/** Tìm bài (lộ trình, video, bài viết) bằng câu tự nhiên có phân trang (POST /api/search/posts). */
+export async function getPostSearchResults(
+  params: SearchPostsRequestDto,
+  signal?: AbortSignal,
+): Promise<SearchPostsResponseDto> {
+  const response = await exploreControllerSearchPosts(params, { signal });
+  return readEntity(response.data, ['understood', 'items', 'total', 'nextCursor']) as SearchPostsResponseDto;
+}
+
+/** Hook tìm bài trên app: dùng useQuery cache theo params */
+export function usePostSearch(params: {
+  q: string;
+  postType?: SearchPostsRequestDto['postType'];
+  cursor?: string | null;
+  limit?: number;
+}) {
+  const { isReady } = useApiSession();
+  const query = params.q.trim();
+  return useQuery({
+    queryKey: ['discovery', 'posts', query, params.postType ?? 'all', params.cursor ?? null, params.limit ?? 20],
+    enabled: isReady && query.length > 0,
+    queryFn: ({ signal }) =>
+      getPostSearchResults(
+        {
+          q: query,
+          postType: params.postType,
+          cursor: params.cursor,
+          limit: params.limit,
+        },
+        signal,
+      ),
+  });
+}
+
