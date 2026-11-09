@@ -37,6 +37,9 @@ function SafeComboImage({
       alt={alt}
       fill
       sizes="(max-width: 640px) 100vw, 48vw"
+      // Ảnh khách sạn nằm trên CDN media, không qua bộ tối ưu ảnh của Next
+      // (giống stay-thumbnail, hotel-gallery).
+      unoptimized
       onError={() => setFailed(true)}
     />
   );
