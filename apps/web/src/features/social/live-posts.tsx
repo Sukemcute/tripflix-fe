@@ -1,18 +1,29 @@
 'use client';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  HttpError,
   socialApi,
   updateReelSocialCache,
   useApiSession,
   useReelsFeed,
   useSocialPosts,
 } from '@tripflix/api-client';
+import {
+  mediaUploadControllerCreateUpload,
+  mediaUploadControllerCompleteUpload,
+} from '@tripflix/api-client/core-api/media/media';
+import type {
+  SocialPostDto,
+  TripAttachmentDto,
+  TripItineraryItemDto,
+  UpdatePostDto,
+} from '@tripflix/api-client/core-api/model/index';
 import { commentsControllerSetCommentReaction } from '@tripflix/api-client/core-api/social-comments/social-comments';
 import { selectReelPoster } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
@@ -54,7 +65,10 @@ type SocialIconName =
   | 'maximize'
   | 'sun'
   | 'moon'
-  | 'plus';
+  | 'plus'
+  | 'upload'
+  | 'trash'
+  | 'video';
 
 /** Bộ icon vector đồng nhất nét 1.85px theo chuẩn Instagram / Threads / Lucide. */
 function SocialIcon({ name, size = 18 }: { name: SocialIconName; size?: number }) {
@@ -282,6 +296,25 @@ function SocialIcon({ name, size = 18 }: { name: SocialIconName; size?: number }
           <path d="M12 5v14M5 12h14" />
         </svg>
       );
+    case 'upload':
+      return (
+        <svg {...common}>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+        </svg>
+      );
+    case 'trash':
+      return (
+        <svg {...common}>
+          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" />
+        </svg>
+      );
+    case 'video':
+      return (
+        <svg {...common}>
+          <rect x="2" y="4" width="15" height="16" rx="2" />
+          <path d="m17 9 5-3v12l-5-3" />
+        </svg>
+      );
   }
 }
 
@@ -440,11 +473,18 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
   const [isRightOpen, setRightOpen] = useState(true);
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [isComposerModalOpen, setComposerModalOpen] = useState(false);
+  const [composerInitialView, setComposerInitialView] = useState<'compose' | 'drafts'>('compose');
 
   // Media player session states
   const [isMuted, setMuted] = useState(true);
   const [volume, setVolume] = useState(0.8);
   const [isPlaying, setPlaying] = useState(true);
+  const [slideDirection, setSlideDirection] = useState<'down' | 'up' | null>(null);
+  const [outgoingPost, setOutgoingPost] = useState<SocialPostDto | null>(null);
+  const [isSlideAnimating, setIsSlideAnimating] = useState(false);
+  const isSlideAnimatingRef = useRef(false);
+  const slideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const centerPanelRef = useRef<HTMLElement | null>(null);
   const [showPlayFlash, setShowPlayFlash] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
   const [mediaErrorPostId, setMediaErrorPostId] = useState<string | null>(null);
@@ -534,9 +574,35 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
     }
   }, [activeIndex, posts.length, postsQuery]);
 
+  // Hàm phát video tự động an toàn (xử lý autoplay policy của browser)
+  const attemptPlayVideo = useCallback(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = isMuted;
+    const playPromise = el.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          setPlaying(true);
+        })
+        .catch(() => {
+          // Nếu browser chặn unmuted autoplay, thử lại với muted = true
+          el.muted = true;
+          setMuted(true);
+          void el.play()
+            .then(() => {
+              setPlaying(true);
+            })
+            .catch(() => {
+              setPlaying(false);
+            });
+        });
+    }
+  }, [isMuted]);
+
   // Khi chuyển bài (activePost?.id thay đổi):
-  // 1. Dừng và giải phóng video cũ
-  // 2. Reset scroll của danh sách bình luận về đầu
+  // 1. Reset scroll của danh sách bình luận về đầu
+  // 2. Kích hoạt tự động phát video nếu bài viết mới có video
   useEffect(() => {
     if (rightScrollRef.current) {
       rightScrollRef.current.scrollTop = 0;
@@ -544,21 +610,55 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
 
     const videoEl = videoRef.current;
     if (videoEl) {
-      videoEl.pause();
       videoEl.currentTime = 0;
+      attemptPlayVideo();
     }
-  }, [activePost?.id]);
+  }, [activePost?.id, attemptPlayVideo]);
 
-  function selectPostByOffset(delta: -1 | 1) {
-    if (posts.length === 0) return;
-    const nextIdx = activeIndex + delta;
-    const target = posts[nextIdx];
-    if (target) {
+  useEffect(() => {
+    return () => {
+      if (slideTimerRef.current) {
+        clearTimeout(slideTimerRef.current);
+      }
+    };
+  }, []);
+
+  const selectPostByOffset = useCallback(
+    (delta: -1 | 1) => {
+      if (posts.length === 0 || isSlideAnimatingRef.current) return;
+      const nextIdx = activeIndex + delta;
+      const target = posts[nextIdx];
+      if (!target) return;
+
+      if (galleryState) setGalleryState(null);
+
+      if (activePost && target.id !== activePost.id) {
+        setOutgoingPost(activePost);
+        setSlideDirection(delta === 1 ? 'down' : 'up');
+        setIsSlideAnimating(true);
+        isSlideAnimatingRef.current = true;
+
+        if (slideTimerRef.current) {
+          clearTimeout(slideTimerRef.current);
+        }
+        slideTimerRef.current = setTimeout(() => {
+          setIsSlideAnimating(false);
+          isSlideAnimatingRef.current = false;
+          setOutgoingPost(null);
+        }, 360);
+      }
+
       setVideoProgress(0);
       setPlaying(true);
       setActivePostId(target.id);
-    }
-  }
+    },
+    [posts, activeIndex, galleryState, activePost],
+  );
+
+  const selectPostByOffsetRef = useRef(selectPostByOffset);
+  useEffect(() => {
+    selectPostByOffsetRef.current = selectPostByOffset;
+  }, [selectPostByOffset]);
 
   // Hỗ trợ phím ArrowUp / ArrowDown để chuyển bài, và ArrowLeft / ArrowRight / Escape khi mở Image Gallery
   useEffect(() => {
@@ -760,6 +860,29 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
     ? formatAuthorDisplay(activePost.authorId, reelCard?.author.name, user?.id, user?.displayName)
     : { name: '', handle: '' };
 
+  const outgoingReel = outgoingPost ? reelMap.get(outgoingPost.id) : undefined;
+  const outgoingImages = outgoingPost
+    ? getPostImages({
+        mediaIds: outgoingPost.mediaIds,
+        posterUrl: outgoingReel ? selectReelPoster(outgoingReel.video.posters, 720) : undefined,
+        destinationName: outgoingPost.tripAttachment?.destinationName,
+        hotelName: outgoingPost.tripAttachment?.hotelName,
+        title: outgoingPost.title,
+        body: outgoingPost.body,
+        hashtags: outgoingPost.hashtags,
+        itineraryItems: outgoingPost.tripAttachment?.items,
+      })
+    : [];
+  const outgoingCover = outgoingImages[0]?.src;
+  const outgoingAuthorInfo = outgoingPost
+    ? formatAuthorDisplay(
+        outgoingPost.authorId,
+        outgoingReel?.author.name,
+        user?.id,
+        user?.displayName,
+      )
+    : { name: '', handle: '' };
+
   // Nhóm lịch trình theo từng ngày (Vertical Timeline)
   const groupedDays = useMemo(() => {
     const items = trip?.items ?? [];
@@ -808,13 +931,29 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
     setRightOpen(false);
   }
 
-  function handleStageWheel(event: React.WheelEvent<HTMLDivElement>) {
-    if (Math.abs(event.deltaY) < 28) return;
-    const now = Date.now();
-    if (now < wheelLockUntilRef.current) return;
-    wheelLockUntilRef.current = now + 460;
-    selectPostByOffset(event.deltaY > 0 ? 1 : -1);
-  }
+  // Xử lý cuộn chuột / touchpad native không passive để chặn triệt để hiện tượng kéo trượt cả trang
+  useEffect(() => {
+    const panel = centerPanelRef.current;
+    if (!panel) return;
+
+    function handleNativeWheel(event: WheelEvent) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (Math.abs(event.deltaY) < 24) return;
+
+      const now = Date.now();
+      if (now < wheelLockUntilRef.current || isSlideAnimatingRef.current) return;
+      wheelLockUntilRef.current = now + 480;
+
+      selectPostByOffsetRef.current(event.deltaY > 0 ? 1 : -1);
+    }
+
+    panel.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => {
+      panel.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, []);
 
   function handleToggleFullscreen() {
     const el = stageFrameRef.current;
@@ -1091,9 +1230,9 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
               2. CENTER PANEL — IMMERSIVE MEDIA VIEWER + VERTICAL ACTION BAR
               ================================================================ */}
           <section
+            ref={centerPanelRef}
             className={styles.centerPanel}
             aria-label={activePost ? activePost.title : vi.api.feedNavAria}
-            onWheel={handleStageWheel}
             onTouchStart={(event) => {
               touchStartYRef.current = event.touches[0]?.clientY ?? null;
             }}
@@ -1137,7 +1276,10 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
                     className={styles.floatingCircleAccentBtn}
                     aria-label={vi.api.feedCreatePostCta}
                     title={vi.api.feedCreatePostCta}
-                    onClick={() => setComposerModalOpen(true)}
+                    onClick={() => {
+                      setComposerInitialView('compose');
+                      setComposerModalOpen(true);
+                    }}
                   >
                     <SocialIcon name="plus" size={18} />
                   </button>
@@ -1231,6 +1373,20 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
                       />
                       {vi.api.immersiveFilterSaved}
                     </button>
+                    {user && (
+                      <button
+                        type="button"
+                        className={styles.filterPill}
+                        onClick={() => {
+                          setSearchOpen(false);
+                          setComposerInitialView('drafts');
+                          setComposerModalOpen(true);
+                        }}
+                      >
+                        <SocialIcon name="bookmark" size={14} />
+                        Bản nháp
+                      </button>
+                    )}
                   </nav>
                 </div>
               )}
@@ -1265,6 +1421,72 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
             ) : (
               <>
                 <div ref={stageFrameRef} className={styles.mediaStageFrame}>
+                  {/* Lớp hiển thị bài viết trước đó đang trượt ra (Outgoing card) */}
+                  {isSlideAnimating && outgoingPost && (
+                    <div
+                      className={`${styles.stageOutgoingLayer} ${
+                        slideDirection === 'down'
+                          ? styles.tiktokSlideOutUp
+                          : styles.tiktokSlideOutDown
+                      }`}
+                    >
+                      {outgoingCover && (
+                        <div
+                          className={styles.mediaBackdropBlur}
+                          style={{ backgroundImage: `url(${outgoingCover})` }}
+                        />
+                      )}
+                      {outgoingCover ? (
+                        <Image
+                          src={outgoingCover}
+                          alt=""
+                          fill
+                          sizes="(max-width: 768px) 100vw, 480px"
+                          className={styles.mediaImageElement}
+                          priority
+                          unoptimized={outgoingCover.startsWith('http')}
+                        />
+                      ) : (
+                        <div className={styles.textOnlyStage}>
+                          <h2 className={styles.textOnlyTitle}>{outgoingPost.title}</h2>
+                          <p className={styles.textOnlyBody}>{outgoingPost.body}</p>
+                        </div>
+                      )}
+                      <div className={styles.stageBottomOverlay}>
+                        <div className={styles.overlayAuthorRow}>
+                          <span className={styles.overlayAvatar} aria-hidden="true">
+                            {getInitial(outgoingAuthorInfo.name)}
+                          </span>
+                          <div className={styles.overlayAuthorMeta}>
+                            <div className={styles.overlayAuthorNameRow}>
+                              <span>{outgoingAuthorInfo.name}</span>
+                            </div>
+                            <span className={styles.overlayAuthorHandle}>{outgoingAuthorInfo.handle}</span>
+                          </div>
+                        </div>
+                        <div className={styles.overlayCaptionBox}>
+                          <p
+                            className={`${styles.overlayCaptionText} ${styles.overlayCaptionClamped}`}
+                          >
+                            {outgoingPost.title ? <strong>{outgoingPost.title} · </strong> : null}
+                            {outgoingPost.body}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lớp bài viết mới đang hiển thị / trượt vào (Incoming card) */}
+                  <div
+                    key={activePost.id}
+                    className={`${styles.stageContentLayer} ${
+                      isSlideAnimating
+                        ? slideDirection === 'down'
+                          ? styles.tiktokSlideInUp
+                          : styles.tiktokSlideInDown
+                        : ''
+                    }`}
+                  >
               {coverImage && (
                 <div
                   className={styles.mediaBackdropBlur}
@@ -1362,6 +1584,12 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
                     loop
                     autoPlay
                     muted={isMuted}
+                    onLoadedData={() => {
+                      attemptPlayVideo();
+                    }}
+                    onCanPlay={() => {
+                      attemptPlayVideo();
+                    }}
                     onPlay={() => setPlaying(true)}
                     onPause={() => setPlaying(false)}
                     onTimeUpdate={(event) => {
@@ -1375,7 +1603,7 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
                       const el = videoRef.current;
                       if (!el) return;
                       if (el.paused) {
-                        void el.play();
+                        void el.play().catch(() => {});
                         setPlaying(true);
                       } else {
                         el.pause();
@@ -1403,7 +1631,7 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
                       const el = videoRef.current;
                       if (!el) return;
                       if (el.paused) {
-                        void el.play();
+                        void el.play().catch(() => {});
                         setPlaying(true);
                       } else {
                         el.pause();
@@ -1727,6 +1955,7 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
                   </button>
                 )}
               </div>
+                  </div>
             </div>
 
             {/* Cột phải sát cạnh Media Stage: Vertical Action Bar (Avatar +, Like, Comment, Save, Share) */}
@@ -1928,7 +2157,10 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
 
       {/* Modal Đăng bài nhanh khi nhấn "+ Đăng bài" */}
       {isComposerModalOpen && user && (
-        <ComposerModal onClose={() => setComposerModalOpen(false)} />
+        <ComposerModal
+          initialView={composerInitialView}
+          onClose={() => setComposerModalOpen(false)}
+        />
       )}
     </div>
   );
@@ -1980,7 +2212,10 @@ function RightPanelCommentsSynchronized({
 
   return (
     <>
-      <div ref={scrollContainerRef} className={styles.rightScrollArea}>
+      <div
+        ref={scrollContainerRef}
+        className={styles.rightScrollArea}
+      >
         <ApiErrorNotice error={addMutation.error} />
         <ApiErrorNotice
           error={query.error}
@@ -2334,108 +2569,996 @@ function CommentNode({
   );
 }
 
-/** Modal tạo bài đăng mới khi nhấn nút "+ Đăng bài" trên thanh công cụ. */
-function ComposerModal({ onClose }: { onClose: () => void }) {
+interface ItineraryItemState {
+  id: string;
+  day: number;
+  title: string;
+  location: string;
+  notes: string;
+}
+
+interface ComposerModalProps {
+  onClose: () => void;
+  initialView?: 'compose' | 'drafts';
+  initialDraftId?: string | null;
+}
+
+/** Modal tạo và quản lý bài đăng / bản nháp */
+function ComposerModal({
+  onClose,
+  initialView = 'compose',
+  initialDraftId = null,
+}: ComposerModalProps) {
   const client = useQueryClient();
+  const { user } = useApiSession();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Chế độ xem: 'compose' (soạn thảo) hoặc 'drafts' (danh sách bản nháp)
+  const [viewMode, setViewMode] = useState<'compose' | 'drafts'>(initialView);
+  const [editingDraftId, setEditingDraftId] = useState<string | null>(initialDraftId);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+
+  // Danh sách các bản nháp của tài khoản hiện tại
+  const draftsQuery = useQuery({
+    queryKey: ['social', 'my-drafts', user?.id],
+    queryFn: ({ signal }) => socialApi.listMyPosts({ status: 'draft', limit: 30 }, signal),
+    enabled: Boolean(user?.id),
+  });
+
+  const drafts = draftsQuery.data?.items ?? [];
+  const draftsCount = drafts.length;
+
+  // Mutation xóa bản nháp
+  const deleteDraftMutation = useMutation({
+    mutationFn: (draftId: string) => socialApi.deletePost(draftId),
+    onSuccess: async (_, deletedId) => {
+      if (editingDraftId === deletedId) {
+        setEditingDraftId(null);
+      }
+      await client.invalidateQueries({ queryKey: ['social'] });
+    },
+  });
+
+  // Thông tin bài viết
+  const [postType, setPostType] = useState<'video' | 'vlog'>('video');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [destinationName, setDestinationName] = useState('');
   const [hashtagsText, setHashtagsText] = useState('');
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
 
-  const createMutation = useMutation({
-    mutationFn: async () => {
+  // Phương tiện (Video)
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
+  const [existingMediaId, setExistingMediaId] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadStepText, setUploadStepText] = useState<string>('');
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+
+  // Lịch trình chuyến đi (Trip Attachment)
+  const [enableItinerary, setEnableItinerary] = useState(false);
+  const [destinationName, setDestinationName] = useState('');
+  const [hotelName, setHotelName] = useState('');
+  const [daysCount, setDaysCount] = useState<string>('');
+  const [estimatedCost, setEstimatedCost] = useState<string>('');
+  const [priceDisclaimer, setPriceDisclaimer] = useState('');
+  const [itineraryItems, setItineraryItems] = useState<ItineraryItemState[]>([
+    { id: '1', day: 1, title: '', location: '', notes: '' },
+  ]);
+
+  // Nạp dữ liệu bản nháp vào form để tiếp tục sửa
+  const handleLoadDraft = useCallback((draft: SocialPostDto) => {
+    setEditingDraftId(draft.id);
+    setTitle(draft.title || '');
+    setBody(draft.body || '');
+    setPostType(draft.postType === 'video' ? 'video' : 'vlog');
+    setHashtagsText((draft.hashtags || []).join(', '));
+    setVisibility((draft.visibility as 'public' | 'private') || 'public');
+    setExistingMediaId(draft.mediaIds?.[0] || null);
+    setVideoFile(null);
+    setVideoPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setVideoDuration(null);
+    setUploadError(null);
+    setSaveSuccessMsg(null);
+
+    if (draft.tripAttachment) {
+      setEnableItinerary(true);
+      setDestinationName(draft.tripAttachment.destinationName || '');
+      setHotelName(draft.tripAttachment.hotelName || '');
+      setDaysCount(draft.tripAttachment.daysCount ? String(draft.tripAttachment.daysCount) : '');
+      setEstimatedCost(
+        draft.tripAttachment.estimatedCostPerPerson
+          ? String(draft.tripAttachment.estimatedCostPerPerson)
+          : '',
+      );
+      setPriceDisclaimer(draft.tripAttachment.priceDisclaimer || '');
+      if (draft.tripAttachment.items && draft.tripAttachment.items.length > 0) {
+        setItineraryItems(
+          draft.tripAttachment.items.map((it, idx) => ({
+            id: String(idx + 1),
+            day: it.day,
+            title: it.title,
+            location: it.location || '',
+            notes: it.notes || '',
+          })),
+        );
+      } else {
+        setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+      }
+    } else {
+      setEnableItinerary(false);
+      setDestinationName('');
+      setHotelName('');
+      setDaysCount('');
+      setEstimatedCost('');
+      setPriceDisclaimer('');
+      setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+    }
+
+    setViewMode('compose');
+  }, []);
+
+  const handleNewPost = () => {
+    setEditingDraftId(null);
+    setTitle('');
+    setBody('');
+    setHashtagsText('');
+    setPostType('video');
+    setVisibility('public');
+    setExistingMediaId(null);
+    setVideoFile(null);
+    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    setVideoPreviewUrl(null);
+    setVideoDuration(null);
+    setUploadProgress(0);
+    setUploadStepText('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setEnableItinerary(false);
+    setDestinationName('');
+    setHotelName('');
+    setDaysCount('');
+    setEstimatedCost('');
+    setPriceDisclaimer('');
+    setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+    setUploadError(null);
+    setSaveSuccessMsg(null);
+    setViewMode('compose');
+  };
+
+  // Tự động load draft nếu có initialDraftId
+  useEffect(() => {
+    if (!initialDraftId) return;
+    void socialApi.getPost(initialDraftId).then((res) => {
+      if (res?.post) {
+        handleLoadDraft(res.post);
+      }
+    });
+  }, [initialDraftId, handleLoadDraft]);
+
+  // Thu hồi URL preview khi unmount hoặc đổi file để tránh rò rỉ bộ nhớ
+  useEffect(() => {
+    return () => {
+      if (videoPreviewUrl) {
+        URL.revokeObjectURL(videoPreviewUrl);
+      }
+    };
+  }, [videoPreviewUrl]);
+
+  const handleSelectFile = async (file: File | null) => {
+    setUploadError(null);
+    if (!file) {
+      setVideoFile(null);
+      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+      setVideoPreviewUrl(null);
+      setVideoDuration(null);
+      return;
+    }
+
+    const isMp4 = file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4');
+    const isMov = file.type === 'video/quicktime' || file.name.toLowerCase().endsWith('.mov');
+    if (!isMp4 && !isMov) {
+      setUploadError('Chỉ hỗ trợ video định dạng .mp4 hoặc .mov');
+      return;
+    }
+
+    // Giới hạn 1 GB theo quy định của hệ thống
+    if (file.size > 1024 * 1024 * 1024) {
+      setUploadError('Dung lượng video không được vượt quá 1 GB');
+      return;
+    }
+
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      const duration = await new Promise<number>((resolve, reject) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+          resolve(video.duration);
+        };
+        video.onerror = () => {
+          reject(new Error('Không thể đọc dữ liệu video'));
+        };
+        video.src = previewUrl;
+      });
+
+      if (duration > 300) {
+        URL.revokeObjectURL(previewUrl);
+        setUploadError('Thời lượng video tối đa là 5 phút (300 giây)');
+        return;
+      }
+
+      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+      setVideoFile(file);
+      setVideoPreviewUrl(previewUrl);
+      setVideoDuration(Math.max(1, Math.round(duration)));
+      setPostType('video');
+    } catch {
+      setUploadError('Không thể đọc thông tin video. Vui lòng kiểm tra lại định dạng file.');
+    }
+  };
+
+  const handleRemoveVideo = () => {
+    if (isUploading) return;
+    setVideoFile(null);
+    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    setVideoPreviewUrl(null);
+    setVideoDuration(null);
+    setExistingMediaId(null);
+    setUploadProgress(0);
+    setUploadStepText('');
+    setUploadError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleAddItem = () => {
+    const lastDay = itineraryItems.length > 0 ? itineraryItems[itineraryItems.length - 1]!.day : 1;
+    const newId = Math.random().toString(36).substring(2, 9);
+    setItineraryItems((prev) => [
+      ...prev,
+      { id: newId, day: lastDay, title: '', location: '', notes: '' },
+    ]);
+  };
+
+  const handleRemoveItem = (id: string) => {
+    if (itineraryItems.length <= 1) {
+      setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+      return;
+    }
+    setItineraryItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleUpdateItem = (
+    id: string,
+    field: 'day' | 'title' | 'location' | 'notes',
+    value: string | number,
+  ) => {
+    setItineraryItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    );
+  };
+
+  const uploadVideoMultipart = async (file: File, durationSec: number): Promise<string> => {
+    setIsUploading(true);
+    setUploadProgress(5);
+    setUploadStepText('Đang khởi tạo phiên tải lên...');
+
+    const mimeType =
+      file.name.toLowerCase().endsWith('.mov') || file.type === 'video/quicktime'
+        ? 'video/quicktime'
+        : 'video/mp4';
+
+    const createRes = await mediaUploadControllerCreateUpload({
+      mimeType,
+      fileSizeBytes: file.size,
+      durationSec,
+    });
+
+    if (createRes.status !== 201) {
+      const err = createRes.data as { message?: string };
+      throw new Error(err?.message || 'Khởi tạo tải lên video thất bại');
+    }
+
+    const { assetId, parts, partSizeBytes } = createRes.data;
+    const uploadedParts: Array<{ partNumber: number; etag: string }> = [];
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i]!;
+      const start = i * partSizeBytes;
+      const end = Math.min(file.size, start + partSizeBytes);
+      const chunk = file.slice(start, end);
+
+      setUploadStepText(`Đang tải lên phần ${part.partNumber}/${parts.length}...`);
+
+      const res = await fetch(part.url, {
+        method: 'PUT',
+        body: chunk,
+      });
+
+      if (!res.ok) {
+        throw new Error(`Tải lên phần ${part.partNumber} thất bại (HTTP ${res.status})`);
+      }
+
+      let etag = res.headers.get('ETag') || res.headers.get('etag') || '';
+      if (etag && !etag.startsWith('"')) {
+        etag = `"${etag}"`;
+      }
+      if (!etag) {
+        etag = `"${part.partNumber}"`;
+      }
+
+      uploadedParts.push({
+        partNumber: part.partNumber,
+        etag,
+      });
+
+      const percent = Math.round(((i + 1) / parts.length) * 80) + 5;
+      setUploadProgress(percent);
+    }
+
+    setUploadStepText('Đang hoàn tất và xử lý video...');
+    const completeRes = await mediaUploadControllerCompleteUpload(assetId, {
+      parts: uploadedParts,
+    });
+
+    if (completeRes.status !== 202) {
+      const err = completeRes.data as { message?: string };
+      throw new Error(err?.message || 'Hoàn tất tải lên video thất bại');
+    }
+
+    setUploadProgress(100);
+    setUploadStepText('Tải video thành công!');
+    return assetId;
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async ({ shouldPublish }: { shouldPublish: boolean }) => {
+      setUploadError(null);
+      setSaveSuccessMsg(null);
+
+      if (shouldPublish) {
+        if (!title.trim() || !body.trim()) {
+          throw new Error('Vui lòng điền tiêu đề và nội dung bài viết trước khi đăng.');
+        }
+        if (postType === 'video' && !videoFile && !existingMediaId) {
+          throw new Error('Vui lòng chọn hoặc tải lên một video cho bài viết dạng Video ngắn.');
+        }
+      } else {
+        if (!title.trim() && !body.trim()) {
+          throw new Error('Vui lòng nhập ít nhất tiêu đề hoặc nội dung để lưu bản nháp.');
+        }
+      }
+
+      let uploadedAssetId: string | undefined = existingMediaId || undefined;
+      if (videoFile && videoDuration) {
+        uploadedAssetId = await uploadVideoMultipart(videoFile, videoDuration);
+        setExistingMediaId(uploadedAssetId);
+      }
+
       const parsedTags = hashtagsText
         .split(/[,\s#]+/)
         .map((item) => item.trim())
         .filter(Boolean);
-      const draft = await socialApi.createDraft({
-        post_type: 'vlog',
-        title: title.trim(),
-        body: body.trim(),
-        hashtags: parsedTags,
-        visibility: 'public',
-        ...(destinationName.trim()
-          ? { trip_attachment: { destinationName: destinationName.trim() } }
-          : {}),
-      });
-      await socialApi.publishPost(draft.id);
-      return draft;
+
+      let tripAttachment: TripAttachmentDto | undefined = undefined;
+      if (enableItinerary && destinationName.trim()) {
+        const filteredItems: TripItineraryItemDto[] = itineraryItems
+          .filter((item) => item.title.trim().length > 0)
+          .map((item) => ({
+            day: Number(item.day) || 1,
+            title: item.title.trim(),
+            ...(item.location.trim() ? { location: item.location.trim() } : {}),
+            ...(item.notes.trim() ? { notes: item.notes.trim() } : {}),
+          }));
+
+        const parsedDays = parseInt(daysCount, 10);
+        const parsedCost = parseInt(estimatedCost.replace(/\D/g, ''), 10);
+
+        tripAttachment = {
+          destinationName: destinationName.trim(),
+          ...(hotelName.trim() ? { hotelName: hotelName.trim() } : {}),
+          ...(!Number.isNaN(parsedDays) && parsedDays > 0 ? { daysCount: parsedDays } : {}),
+          ...(!Number.isNaN(parsedCost) && parsedCost > 0 ? { estimatedCostPerPerson: parsedCost } : {}),
+          ...(priceDisclaimer.trim() ? { priceDisclaimer: priceDisclaimer.trim() } : {}),
+          ...(filteredItems.length > 0 ? { items: filteredItems } : {}),
+        };
+      }
+
+      let currentId = editingDraftId;
+
+      if (currentId) {
+        const patchPayload: UpdatePostDto = {
+          title: title.trim() || 'Bản nháp',
+          body: body.trim(),
+          hashtags: parsedTags,
+          visibility,
+          ...(uploadedAssetId ? { media_ids: [uploadedAssetId], cover_media_id: uploadedAssetId } : {}),
+          ...(tripAttachment ? { trip_attachment: tripAttachment } : {}),
+        };
+        await socialApi.updatePost(currentId, patchPayload);
+      } else {
+        const draftPayload = {
+          post_type: videoFile || existingMediaId ? 'video' : postType,
+          title: title.trim() || 'Bản nháp',
+          body: body.trim(),
+          hashtags: parsedTags,
+          visibility,
+          ...(uploadedAssetId ? { media_ids: [uploadedAssetId], cover_media_id: uploadedAssetId } : {}),
+          ...(tripAttachment ? { trip_attachment: tripAttachment } : {}),
+        };
+        const draft = await socialApi.createDraft(draftPayload);
+        currentId = draft.id;
+        setEditingDraftId(draft.id);
+      }
+
+      if (shouldPublish && currentId) {
+        await socialApi.publishPost(currentId);
+      }
+
+      return { id: currentId, published: shouldPublish };
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       await client.invalidateQueries({ queryKey: ['social'] });
-      onClose();
+      if (data.published) {
+        onClose();
+      } else {
+        setSaveSuccessMsg('Đã lưu bản nháp thành công.');
+      }
+    },
+    onError: (err: unknown) => {
+      setIsUploading(false);
+      if (err instanceof HttpError && typeof err.body === 'object' && err.body !== null) {
+        const bodyObj = err.body as { message?: string; code?: string };
+        setUploadError(bodyObj.message || `Lỗi yêu cầu (${err.status})`);
+      } else if (err instanceof Error) {
+        setUploadError(err.message);
+      } else {
+        setUploadError('Đã có lỗi xảy ra.');
+      }
     },
   });
 
+  const isFormBusy = saveMutation.isPending || isUploading;
+
+  // View danh sách các bản nháp
+  if (viewMode === 'drafts') {
+    return (
+      <dialog open className={styles.modalBackdrop} aria-label="Bản nháp của bạn">
+        <div className={styles.composerModalCard}>
+          <div className={styles.panelHeaderBar}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 className={styles.panelHeaderTitle}>Bản nháp của bạn</h3>
+              <span className={styles.composerSectionBadge}>{draftsCount}</span>
+            </div>
+            <div className={styles.composerHeaderActions}>
+              <button
+                type="button"
+                className={styles.composerHeaderDraftsBtn}
+                onClick={handleNewPost}
+              >
+                <SocialIcon name="plus" size={14} />
+                <span>Viết bài mới</span>
+              </button>
+              <button
+                type="button"
+                className={styles.iconGhostBtn}
+                aria-label={vi.api.cancel}
+                onClick={onClose}
+              >
+                <SocialIcon name="close" size={18} />
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.draftsListContainer}>
+            {draftsQuery.isLoading ? (
+              <div className={styles.draftEmptyState}>
+                <output>Đang tải danh sách bản nháp...</output>
+              </div>
+            ) : drafts.length === 0 ? (
+              <div className={styles.draftEmptyState}>
+                <SocialIcon name="bookmark" size={32} />
+                <p>Bạn chưa có bản nháp nào được lưu.</p>
+                <button
+                  type="button"
+                  className={styles.createPostBtn}
+                  onClick={() => setViewMode('compose')}
+                >
+                  Bắt đầu viết bài
+                </button>
+              </div>
+            ) : (
+              drafts.map((draft) => (
+                <div key={draft.id} className={styles.draftCard}>
+                  <div className={styles.draftCardTop}>
+                    <div>
+                      <h4 className={styles.draftTitle}>
+                        {draft.title || '(Chưa có tiêu đề)'}
+                      </h4>
+                      {draft.body && (
+                        <p className={styles.draftSnippet}>{draft.body}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={styles.draftMeta}>
+                    <span className={styles.draftBadge}>
+                      {draft.postType === 'video' ? 'Video' : 'Bài viết'}
+                    </span>
+                    {draft.tripAttachment?.destinationName && (
+                      <span className={styles.draftBadge}>
+                        {draft.tripAttachment.destinationName}
+                      </span>
+                    )}
+                    <span>
+                      {new Date(draft.updatedAt || draft.createdAt).toLocaleDateString('vi-VN')}
+                    </span>
+                  </div>
+
+                  <div className={styles.draftActions}>
+                    <button
+                      type="button"
+                      className={styles.draftDeleteBtn}
+                      disabled={deleteDraftMutation.isPending}
+                      onClick={() => deleteDraftMutation.mutate(draft.id)}
+                    >
+                      Xóa
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.draftResumeBtn}
+                      onClick={() => handleLoadDraft(draft)}
+                    >
+                      Tiếp tục soạn
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className={styles.composerModalFooter}>
+            <button
+              type="button"
+              className={styles.utilityBtn}
+              onClick={() => setViewMode('compose')}
+            >
+              Quay lại soạn thảo
+            </button>
+          </div>
+        </div>
+      </dialog>
+    );
+  }
+
+  // View soạn thảo bài viết
   return (
     <dialog open className={styles.modalBackdrop} aria-label={vi.api.feedCreatePostCta}>
       <form
         className={styles.composerModalCard}
         onSubmit={(event) => {
           event.preventDefault();
-          if (!title.trim() || !body.trim()) return;
-          createMutation.mutate();
+          if (isFormBusy) return;
+          saveMutation.mutate({ shouldPublish: true });
         }}
       >
+        {/* Tiêu đề modal */}
         <div className={styles.panelHeaderBar}>
-          <h3 className={styles.panelHeaderTitle}>{vi.api.feedCreatePostCta}</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 className={styles.panelHeaderTitle}>
+              {editingDraftId ? 'Chỉnh sửa bản nháp' : vi.api.feedCreatePostCta}
+            </h3>
+            {editingDraftId && (
+              <span className={styles.editingDraftBadge}>Đang chỉnh sửa bản nháp</span>
+            )}
+          </div>
+          <div className={styles.composerHeaderActions}>
+            <button
+              type="button"
+              className={styles.composerHeaderDraftsBtn}
+              onClick={() => setViewMode('drafts')}
+              disabled={isFormBusy}
+            >
+              <SocialIcon name="bookmark" size={14} />
+              <span>Bản nháp ({draftsCount})</span>
+            </button>
+            <button
+              type="button"
+              className={styles.iconGhostBtn}
+              aria-label={vi.api.cancel}
+              disabled={isFormBusy}
+              onClick={onClose}
+            >
+              <SocialIcon name="close" size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Thông báo lưu nháp thành công */}
+        {saveSuccessMsg && (
+          <output className={styles.saveSuccessBanner}>
+            <SocialIcon name="sparkles" size={16} />
+            <span>{saveSuccessMsg}</span>
+          </output>
+        )}
+
+        {/* 1. Chọn loại bài viết */}
+        <div className={styles.composerTypeToggle}>
           <button
             type="button"
-            className={styles.iconGhostBtn}
-            aria-label={vi.api.cancel}
-            onClick={onClose}
+            className={`${styles.composerTypeBtn} ${postType === 'video' ? styles.composerTypeBtnActive : ''}`}
+            onClick={() => setPostType('video')}
+            disabled={isFormBusy}
           >
-            <SocialIcon name="close" size={18} />
+            <SocialIcon name="video" size={16} />
+            <span>Video trải nghiệm</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.composerTypeBtn} ${postType === 'vlog' ? styles.composerTypeBtnActive : ''}`}
+            onClick={() => setPostType('vlog')}
+            disabled={isFormBusy}
+          >
+            <SocialIcon name="sparkles" size={16} />
+            <span>Bài viết & Hình ảnh</span>
           </button>
         </div>
 
-        <input
-          className={styles.composerInput}
-          aria-label={vi.api.title}
-          placeholder={vi.api.composerTitlePlaceholder}
-          required
-          maxLength={255}
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-        />
-        <textarea
-          className={styles.composerTextarea}
-          aria-label={vi.api.body}
-          placeholder={vi.api.composerPlaceholder}
-          required
-          rows={4}
-          value={body}
-          onChange={(event) => setBody(event.target.value)}
-        />
-        <div className={styles.composerMetaRow}>
+        {/* 2. Thông tin nội dung bài viết */}
+        <div className={styles.composerSection}>
+          <div className={styles.composerSectionHeader}>
+            <h4 className={styles.composerSectionTitle}>Nội dung bài viết</h4>
+            <span className={styles.composerSectionBadge}>Bắt buộc</span>
+          </div>
+
           <input
             className={styles.composerInput}
-            aria-label={vi.api.composerAttachTripAction}
-            placeholder={vi.api.composerDestinationPlaceholder}
-            value={destinationName}
-            onChange={(event) => setDestinationName(event.target.value)}
+            aria-label={vi.api.title}
+            placeholder={vi.api.composerTitlePlaceholder}
+            required
+            maxLength={255}
+            value={title}
+            disabled={isFormBusy}
+            onChange={(event) => setTitle(event.target.value)}
           />
-          <input
-            className={styles.composerInput}
-            aria-label={vi.api.hashtags}
-            placeholder={vi.api.composerHashtagPlaceholder}
-            value={hashtagsText}
-            onChange={(event) => setHashtagsText(event.target.value)}
+
+          <textarea
+            className={styles.composerTextarea}
+            aria-label={vi.api.body}
+            placeholder={vi.api.composerPlaceholder}
+            required
+            rows={3}
+            value={body}
+            disabled={isFormBusy}
+            onChange={(event) => setBody(event.target.value)}
           />
+
+          <div className={styles.composerMetaRow}>
+            <input
+              className={styles.composerInput}
+              aria-label={vi.api.hashtags}
+              placeholder={vi.api.composerHashtagPlaceholder}
+              value={hashtagsText}
+              disabled={isFormBusy}
+              onChange={(event) => setHashtagsText(event.target.value)}
+            />
+
+            <select
+              className={styles.composerInput}
+              value={visibility}
+              disabled={isFormBusy}
+              onChange={(event) => setVisibility(event.target.value as 'public' | 'private')}
+              aria-label="Quyền riêng tư"
+            >
+              <option value="public">Công khai với mọi người</option>
+              <option value="private">Chỉ mình tôi</option>
+            </select>
+          </div>
         </div>
 
-        <ApiErrorNotice error={createMutation.error} />
+        {/* 3. Tải lên video đính kèm */}
+        <div className={styles.composerSection}>
+          <div className={styles.composerSectionHeader}>
+            <h4 className={styles.composerSectionTitle}>
+              <SocialIcon name="video" size={16} />
+              <span>Video bài đăng</span>
+            </h4>
+            <span className={styles.composerSectionBadge}>
+              {postType === 'video' ? 'Bắt buộc với video' : 'Tùy chọn'}
+            </span>
+          </div>
 
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="video/mp4,video/quicktime"
+            style={{ display: 'none' }}
+            disabled={isFormBusy}
+            onChange={(event) => {
+              const file = event.target.files?.[0] || null;
+              void handleSelectFile(file);
+            }}
+          />
+
+          {!videoFile && !existingMediaId ? (
+            <button
+              type="button"
+              className={styles.composerDropzone}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className={styles.composerDropzoneIcon}>
+                <SocialIcon name="upload" size={22} />
+              </div>
+              <p className={styles.composerDropzoneText}>Kéo thả hoặc nhấn để chọn video</p>
+              <p className={styles.composerDropzoneHint}>Hỗ trợ MP4, MOV (Tối đa 5 phút, 1 GB)</p>
+            </button>
+          ) : (
+            <div className={styles.composerVideoPreviewCard}>
+              {videoPreviewUrl ? (
+                <video
+                  src={videoPreviewUrl}
+                  controls
+                  className={styles.composerVideoElement}
+                >
+                  <track kind="captions" />
+                </video>
+              ) : existingMediaId ? (
+                <div style={{ padding: '8px 12px', fontSize: '0.85rem', color: 'var(--iv-text)' }}>
+                  <span>Video đã lưu trong bản nháp (ID: {existingMediaId.slice(0, 8)}...)</span>
+                </div>
+              ) : null}
+
+              <div className={styles.composerVideoMeta}>
+                <div>
+                  {videoFile ? (
+                    <>
+                      <strong>{videoFile.name}</strong>
+                      <span> — {(videoFile.size / (1024 * 1024)).toFixed(1)} MB</span>
+                      {videoDuration && <span> ({videoDuration}s)</span>}
+                    </>
+                  ) : (
+                    <span>Đã gắn media từ trước</span>
+                  )}
+                </div>
+                {!isUploading && (
+                  <button
+                    type="button"
+                    className={styles.removeItineraryItemBtn}
+                    onClick={handleRemoveVideo}
+                    title="Xóa video đã chọn"
+                    aria-label="Xóa video đã chọn"
+                  >
+                    <SocialIcon name="trash" size={16} />
+                  </button>
+                )}
+              </div>
+
+              {isUploading && (
+                <div className={styles.composerUploadProgressBox}>
+                  <div className={styles.composerProgressText}>
+                    <span>{uploadStepText}</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className={styles.composerProgressBarBg}>
+                    <div
+                      className={styles.composerProgressBarFill}
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 4. Lộ trình chuyến đi (Trip Attachment) */}
+        <div className={styles.composerSection}>
+          <label
+            htmlFor="composer-itinerary-checkbox"
+            className={styles.composerItineraryToggleRow}
+            aria-label="Đính kèm lịch trình chuyến đi"
+          >
+            <div className={styles.composerItineraryToggleInfo}>
+              <div className={styles.composerItineraryToggleTitle}>
+                <SocialIcon name="calendar" size={16} />
+                <span>Đính kèm lịch trình chuyến đi</span>
+              </div>
+              <span className={styles.composerItineraryToggleSubtitle}>
+                Chia sẻ điểm đến, chi phí và từng điểm dừng trong hành trình
+              </span>
+            </div>
+            <input
+              id="composer-itinerary-checkbox"
+              type="checkbox"
+              className={styles.switchInput}
+              checked={enableItinerary}
+              disabled={isFormBusy}
+              onChange={(e) => setEnableItinerary(e.target.checked)}
+            />
+          </label>
+
+          {enableItinerary && (
+            <div className={styles.composerItineraryContainer}>
+              <div className={styles.composerMetaRow}>
+                <input
+                  className={styles.composerInput}
+                  aria-label="Điểm đến chuyến đi"
+                  placeholder="Điểm đến (VD: Đà Lạt, Phú Quốc...)"
+                  value={destinationName}
+                  disabled={isFormBusy}
+                  onChange={(e) => setDestinationName(e.target.value)}
+                />
+                <input
+                  className={styles.composerInput}
+                  aria-label="Khách sạn / Resort"
+                  placeholder="Khách sạn (VD: Terracotta Resort...)"
+                  value={hotelName}
+                  disabled={isFormBusy}
+                  onChange={(e) => setHotelName(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.composerMetaRow}>
+                <input
+                  className={styles.composerInput}
+                  type="number"
+                  min={1}
+                  max={30}
+                  aria-label="Số ngày đi"
+                  placeholder="Số ngày (VD: 3)"
+                  value={daysCount}
+                  disabled={isFormBusy}
+                  onChange={(e) => setDaysCount(e.target.value)}
+                />
+                <input
+                  className={styles.composerInput}
+                  aria-label="Chi phí dự tính"
+                  placeholder="Chi phí / người (VD: 3.500.000 VNĐ)"
+                  value={estimatedCost}
+                  disabled={isFormBusy}
+                  onChange={(e) => setEstimatedCost(e.target.value)}
+                />
+              </div>
+
+              <input
+                className={styles.composerInput}
+                aria-label="Ghi chú chi phí"
+                placeholder="Ghi chú chi phí (VD: Giá tham khảo bao gồm vé máy bay và phòng)"
+                value={priceDisclaimer}
+                disabled={isFormBusy}
+                onChange={(e) => setPriceDisclaimer(e.target.value)}
+              />
+
+              <div className={styles.composerSectionHeader} style={{ marginTop: '4px' }}>
+                <h5 className={styles.composerSectionTitle}>Các hoạt động theo ngày</h5>
+                <span className={styles.composerSectionBadge}>{itineraryItems.length} hoạt động</span>
+              </div>
+
+              {itineraryItems.map((item, index) => (
+                <div key={item.id} className={styles.itineraryItemCard}>
+                  <div className={styles.itineraryItemHeader}>
+                    <label className={styles.itineraryDaySelect} htmlFor={`itinerary-day-${item.id}`}>
+                      Ngày:
+                      <select
+                        id={`itinerary-day-${item.id}`}
+                        className={styles.itineraryDaySelect}
+                        value={item.day}
+                        disabled={isFormBusy}
+                        onChange={(e) => handleUpdateItem(item.id, 'day', Number(e.target.value))}
+                      >
+                        {Array.from({ length: 15 }, (_, i) => i + 1).map((d) => (
+                          <option key={d} value={d}>
+                            Ngày {d}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <input
+                      className={styles.composerInput}
+                      style={{ flex: 1 }}
+                      placeholder="Tên hoạt động (VD: Đón bình minh Cầu Gỗ)"
+                      value={item.title}
+                      disabled={isFormBusy}
+                      onChange={(e) => handleUpdateItem(item.id, 'title', e.target.value)}
+                      required={enableItinerary && index === 0}
+                    />
+
+                    <button
+                      type="button"
+                      className={styles.removeItineraryItemBtn}
+                      onClick={() => handleRemoveItem(item.id)}
+                      disabled={isFormBusy}
+                      title="Xóa hoạt động này"
+                      aria-label="Xóa hoạt động"
+                    >
+                      <SocialIcon name="trash" size={15} />
+                    </button>
+                  </div>
+
+                  <div className={styles.composerMetaRow}>
+                    <input
+                      className={styles.composerInput}
+                      placeholder="Địa điểm / Toạ độ (VD: Đồi chè Cầu Đất)"
+                      value={item.location}
+                      disabled={isFormBusy}
+                      onChange={(e) => handleUpdateItem(item.id, 'location', e.target.value)}
+                    />
+                    <input
+                      className={styles.composerInput}
+                      placeholder="Ghi chú / Mẹo (VD: Nên đến trước 5h30 để săn mây)"
+                      value={item.notes}
+                      disabled={isFormBusy}
+                      onChange={(e) => handleUpdateItem(item.id, 'notes', e.target.value)}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className={styles.addItemBtn}
+                disabled={isFormBusy}
+                onClick={handleAddItem}
+              >
+                <SocialIcon name="plus" size={15} />
+                <span>Thêm hoạt động tiếp theo</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Thông báo lỗi nếu có */}
+        {uploadError && (
+          <div className={styles.uploadErrorBanner} role="alert">
+            <SocialIcon name="info" size={15} />
+            <span>{uploadError}</span>
+          </div>
+        )}
+        <ApiErrorNotice error={saveMutation.error} />
+
+        {/* Nút hành động */}
         <div className={styles.composerModalFooter}>
-          <button type="button" className={styles.utilityBtn} onClick={onClose}>
+          <button
+            type="button"
+            className={styles.utilityBtn}
+            onClick={onClose}
+            disabled={isFormBusy}
+          >
             {vi.api.cancel}
+          </button>
+          <button
+            type="button"
+            className={styles.utilityBtn}
+            disabled={isFormBusy || (!title.trim() && !body.trim())}
+            onClick={() => saveMutation.mutate({ shouldPublish: false })}
+          >
+            {saveMutation.isPending && !saveMutation.variables?.shouldPublish
+              ? 'Đang lưu nháp...'
+              : 'Lưu bản nháp'}
           </button>
           <button
             type="submit"
             className={styles.createPostBtn}
-            disabled={createMutation.isPending || !title.trim() || !body.trim()}
+            disabled={
+              isFormBusy ||
+              !title.trim() ||
+              !body.trim() ||
+              (postType === 'video' && !videoFile && !existingMediaId)
+            }
           >
-            {createMutation.isPending ? vi.api.saving : vi.api.composerSubmit}
+            {isUploading
+              ? 'Đang tải video...'
+              : saveMutation.isPending && saveMutation.variables?.shouldPublish
+                ? vi.api.saving
+                : 'Đăng bài viết'}
           </button>
         </div>
       </form>
