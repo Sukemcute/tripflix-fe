@@ -63,6 +63,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overscroll-behavior: none;
   position: relative;
   transition:
     background-color 220ms ease,
@@ -371,7 +372,7 @@
   background: var(--iv-panel-bg);
   border: 1px solid var(--iv-border);
   border-radius: 20px;
-  box-shadow: var(--iv-shadow);
+  box-shadow: 0 18px 60px -20px rgba(0, 76, 68, 0.18);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -402,7 +403,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--iv-accent);
+  color: var(--color-teal-ink);
 }
 
 .iconGhostBtn {
@@ -502,16 +503,19 @@
   min-height: 40px;
   padding: 8px 14px;
   border-radius: 12px;
-  background: var(--iv-text);
-  color: var(--iv-panel-bg);
+  background: var(--color-teal-ink);
+  color: rgb(255 255 255);
   font-size: 0.84rem;
   font-weight: 800;
   text-decoration: none;
-  transition: opacity 160ms ease;
+  transition:
+    background-color 160ms ease,
+    opacity 160ms ease;
 }
 
 .tripOverviewCta:hover {
-  opacity: 0.9;
+  background: #00564f;
+  opacity: 1;
 }
 
 /* Left Panel Tabs */
@@ -545,12 +549,12 @@
 }
 
 .panelTabItem:hover {
-  color: var(--iv-text);
+  color: var(--color-teal-ink);
 }
 
 .panelTabItemActive {
-  color: var(--iv-accent);
-  border-bottom-color: var(--iv-accent);
+  color: var(--color-teal-ink);
+  border-bottom-color: var(--color-teal-ink);
 }
 
 .leftScrollBody {
@@ -713,6 +717,7 @@
   justify-content: center;
   gap: 16px;
   outline: none;
+  overscroll-behavior: none;
 }
 
 .mediaStageFrame {
@@ -729,6 +734,43 @@
   align-items: center;
   justify-content: center;
   user-select: none;
+  overscroll-behavior: none;
+}
+
+.mediaTrack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  scroll-snap-stop: normal;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  scrollbar-width: none;
+}
+
+.mediaTrack::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.mediaItem {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 0 0 100%;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 
 .mediaBackdropBlur {
@@ -1989,15 +2031,324 @@
 }
 
 .composerModalCard {
-  width: min(560px, 100%);
+  width: min(680px, 100%);
+  max-height: 88vh;
+  overflow-y: auto;
   background: var(--iv-panel-bg);
   color: var(--iv-text);
   border: 1px solid var(--iv-border);
   border-radius: 20px;
-  padding: 20px;
+  padding: 24px;
   box-shadow: var(--iv-shadow);
-  display: grid;
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.composerModalCard::-webkit-scrollbar {
+  width: 6px;
+}
+
+.composerModalCard::-webkit-scrollbar-thumb {
+  background: var(--iv-border);
+  border-radius: 999px;
+}
+
+.composerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.composerSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.composerSectionTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--iv-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.composerSectionBadge {
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--iv-elevated-bg);
+  color: var(--iv-text-muted);
+}
+
+.composerTypeToggle {
+  display: flex;
+  gap: 6px;
+  background: var(--iv-elevated-bg);
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.composerTypeBtn {
+  flex: 1;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 180ms ease;
+  background: transparent;
+  color: var(--iv-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.composerTypeBtnActive {
+  background: var(--iv-panel-bg);
+  color: var(--iv-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+}
+
+.composerDropzone {
+  border: 1.5px dashed var(--iv-border);
+  border-radius: 14px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+  background: var(--iv-elevated-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.composerDropzone:hover {
+  background: var(--iv-hover-bg);
+  border-color: var(--iv-accent);
+}
+
+.composerDropzoneIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--iv-panel-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--iv-accent);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.composerDropzoneText {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--iv-text);
+  margin: 0;
+}
+
+.composerDropzoneHint {
+  font-size: 0.78rem;
+  color: var(--iv-text-muted);
+  margin: 0;
+}
+
+.composerVideoPreviewCard {
+  background: var(--iv-elevated-bg);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--iv-border);
+}
+
+.composerVideoElement {
+  width: 100%;
+  max-height: 220px;
+  border-radius: 10px;
+  background: #000;
+  object-fit: contain;
+}
+
+.composerVideoMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--iv-text-muted);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.composerUploadProgressBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  background: var(--iv-panel-bg);
+  border-radius: 8px;
+}
+
+.composerProgressBarBg {
+  width: 100%;
+  height: 6px;
+  background: var(--iv-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.composerProgressBarFill {
+  height: 100%;
+  background: var(--iv-accent);
+  transition: width 200ms ease;
+  border-radius: 999px;
+}
+
+.composerProgressText {
+  font-size: 0.78rem;
+  color: var(--iv-accent-ink, var(--iv-accent));
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+}
+
+.composerItineraryToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--iv-elevated-bg);
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.composerItineraryToggleInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.composerItineraryToggleTitle {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--iv-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.composerItineraryToggleSubtitle {
+  font-size: 0.76rem;
+  color: var(--iv-text-muted);
+}
+
+.composerItineraryContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--iv-elevated-bg);
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid var(--iv-border);
+}
+
+.itineraryItemCard {
+  background: var(--iv-panel-bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--iv-border);
+}
+
+.itineraryItemHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.itineraryDaySelect {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--iv-border);
+  background: var(--iv-elevated-bg);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--iv-text);
+}
+
+.addItemBtn {
+  padding: 8px 14px;
+  border: 1px dashed var(--iv-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--iv-text);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 180ms ease;
+}
+
+.addItemBtn:hover {
+  background: var(--iv-panel-bg);
+  border-color: var(--iv-accent);
+  color: var(--iv-accent);
+}
+
+.removeItineraryItemBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  color: var(--iv-text-muted);
+  cursor: pointer;
+  transition: all 150ms ease;
+  margin-left: auto;
+}
+
+.removeItineraryItemBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.uploadErrorBanner {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  font-size: 0.82rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.switchInput {
+  width: 38px;
+  height: 20px;
+  accent-color: var(--iv-accent);
+  cursor: pointer;
 }
 
 .composerInput,
@@ -2022,6 +2373,177 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.composerHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.composerHeaderDraftsBtn {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--iv-border);
+  background: var(--iv-elevated-bg);
+  color: var(--iv-text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 180ms ease;
+}
+
+.composerHeaderDraftsBtn:hover {
+  background: var(--iv-hover-bg);
+  border-color: var(--iv-accent);
+  color: var(--iv-accent);
+}
+
+.editingDraftBadge {
+  font-size: 0.74rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.saveSuccessBanner {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.1);
+  color: rgb(22, 101, 52);
+  font-size: 0.84rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.draftsListContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 56vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.draftCard {
+  background: var(--iv-elevated-bg);
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid var(--iv-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 180ms ease;
+}
+
+.draftCard:hover {
+  border-color: var(--iv-border);
+}
+
+.draftCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.draftTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--iv-text);
+  margin: 0;
+}
+
+.draftSnippet {
+  font-size: 0.84rem;
+  color: var(--iv-text-muted);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.draftMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--iv-text-muted);
+  flex-wrap: wrap;
+}
+
+.draftBadge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--iv-panel-bg);
+  font-weight: 500;
+  border: 1px solid var(--iv-border);
+}
+
+.draftActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.draftResumeBtn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 0;
+  background: var(--iv-accent);
+  color: rgb(255 255 255);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 180ms ease;
+}
+
+.draftResumeBtn:hover {
+  opacity: 0.9;
+}
+
+.draftDeleteBtn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--iv-border);
+  background: transparent;
+  color: var(--iv-text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.draftDeleteBtn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.draftEmptyState {
+  padding: 36px 16px;
+  text-align: center;
+  color: var(--iv-text-muted);
+  font-size: 0.88rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
 .drawerBackdrop {
@@ -2128,10 +2650,12 @@
 @media (prefers-reduced-motion: reduce) {
   .immersiveRoot,
   .viewerGrid,
+  .mediaTrack,
   .navArrowBtn,
   .verticalActionCircle,
   .floatingIconBtn,
   .floatingCircleAccentBtn {
-    transition: none;
+    transition: none !important;
+    animation: none;
   }
 }

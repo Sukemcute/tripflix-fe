@@ -69,3 +69,4 @@ export {
   createVnpayOperation,
   type CommerceHotel,
 } from './commerce';
+export { uploadChunkToPresignedUrl } from './media-upload';
