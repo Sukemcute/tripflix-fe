@@ -44,3 +44,81 @@ export function canSendRegistrationCode(input: {
 export function countCharacters(text: string): number {
   return Array.from(text).length;
 }
+
+// Thông tin cá nhân bắt buộc khi đăng ký (TF06O); Core API kiểm lại cùng quy tắc (tuổi 13–120, giới tính, mã quốc gia).
+export const SIGNUP_GENDERS = ['male', 'female', 'other'] as const;
+export type SignupGender = (typeof SIGNUP_GENDERS)[number];
+export const MIN_SIGNUP_AGE = 13;
+export const MAX_SIGNUP_AGE = 120;
+
+/** Mã quốc gia hay gặp (ISO 3166-1 alpha-2), đặt Việt Nam đầu; tên hiển thị do từng app dịch. */
+export const COMMON_NATIONALITIES = [
+  'VN',
+  'US',
+  'GB',
+  'AU',
+  'CA',
+  'CN',
+  'TW',
+  'HK',
+  'JP',
+  'KR',
+  'SG',
+  'TH',
+  'MY',
+  'ID',
+  'PH',
+  'LA',
+  'KH',
+  'IN',
+  'FR',
+  'DE',
+  'IT',
+  'ES',
+  'NL',
+  'RU',
+  'NZ',
+] as const;
+
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** Tuổi tròn năm tại `today` (UTC) của ngày sinh YYYY-MM-DD; null nếu ngày không có thật. */
+export function getAgeOn(dateOfBirth: string, today: Date): number | null {
+  const match = ISO_DATE.exec(dateOfBirth);
+  if (!match) return null;
+  const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day)
+    return null;
+  const isBeforeBirthday =
+    today.getUTCMonth() + 1 < month || (today.getUTCMonth() + 1 === month && today.getUTCDate() < day);
+  return today.getUTCFullYear() - year - (isBeforeBirthday ? 1 : 0);
+}
+
+/** "20/05/2000" (cách gõ trên app) thành "2000-05-20"; sai dạng trả chuỗi rỗng. */
+export function parseDayMonthYear(text: string): string {
+  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text.trim());
+  if (!match) return '';
+  return `${match[3]}-${match[2]!.padStart(2, '0')}-${match[1]!.padStart(2, '0')}`;
+}
+
+export type SignupProfileIssue =
+  | 'signupDateOfBirthMissing'
+  | 'signupAgeOutOfRange'
+  | 'signupGenderMissing'
+  | 'signupNationalityMissing'
+  | 'signupTermsRequired';
+
+/** Lỗi đầu tiên của bước thông tin cá nhân (theo thứ tự trên màn hình); null khi đủ để gửi mã. */
+export function getSignupProfileIssue(
+  input: { dateOfBirth: string; gender: string; nationality: string; hasAcceptedTerms: boolean },
+  today: Date = new Date(),
+): SignupProfileIssue | null {
+  const age = input.dateOfBirth ? getAgeOn(input.dateOfBirth, today) : null;
+  if (age === null) return 'signupDateOfBirthMissing';
+  if (age < MIN_SIGNUP_AGE || age > MAX_SIGNUP_AGE) return 'signupAgeOutOfRange';
+  if (!(SIGNUP_GENDERS as readonly string[]).includes(input.gender)) return 'signupGenderMissing';
+  if (!/^[A-Z]{2}$/.test(input.nationality)) return 'signupNationalityMissing';
+  if (!input.hasAcceptedTerms) return 'signupTermsRequired';
+  return null;
+}

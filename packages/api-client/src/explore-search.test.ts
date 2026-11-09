@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getExploreResults } from './explore-search';
+import { getExploreResults, getPostSearchResults } from './explore-search';
 import { configureHttp } from './http';
 
 const json = (body: unknown, status = 200) =>
@@ -28,4 +28,39 @@ describe('explore search API', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(json({ understood: {} }));
     await expect(getExploreResults('đà lạt')).rejects.toThrow('Unexpected API response');
   });
+
+  it('posts search query to /api/search/posts and returns items and understood', async () => {
+    const body = {
+      understood: { place: 'Đà Lạt', intents: ['plan'], budget: 3_000_000, days: 3, names: [], phrases: [], fixed: {} },
+      items: [
+        {
+          id: 'plan:p1',
+          kind: 'plan',
+          refId: 'trip_dalat_3n2d',
+          title: 'Đà Lạt 3N2Đ chill',
+          subtitle: 'Đà Lạt',
+          thumbnail: 'https://example.com/cover.jpg',
+          reason: '3 ngày · 1500 lượt thích',
+          priceFrom: 2_500_000,
+          days: 3,
+          location: null,
+        },
+      ],
+      total: 1,
+      nextCursor: null,
+    };
+    const send = vi.spyOn(globalThis, 'fetch').mockResolvedValue(json(body));
+    const result = await getPostSearchResults({ q: 'lịch trình đà lạt 3n2đ dưới 3tr' });
+    expect(result).toEqual(body);
+    const [url, init] = send.mock.calls[0]!;
+    expect(new URL(String(url)).pathname).toBe('/api/search/posts');
+    expect(init?.method).toBe('POST');
+    expect(JSON.parse(String(init?.body))).toEqual({ q: 'lịch trình đà lạt 3n2đ dưới 3tr' });
+  });
+
+  it('rejects searchPosts response missing required fields', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(json({ understood: {} }));
+    await expect(getPostSearchResults({ q: 'đà lạt' })).rejects.toThrow('Unexpected API response');
+  });
 });
+

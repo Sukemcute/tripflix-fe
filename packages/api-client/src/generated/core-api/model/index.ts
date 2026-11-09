@@ -138,6 +138,7 @@ export * from './ratingCountDto';
 export * from './ratingDto';
 export * from './refreshDto';
 export * from './registerDto';
+export * from './registerDtoGender';
 export * from './registrationCodeDto';
 export * from './registrationCodeResultDto';
 export * from './resendVerificationResultDto';

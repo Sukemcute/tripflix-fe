@@ -7,7 +7,6 @@ import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { AuthErrorNotice, PasswordField } from './auth-fields';
-import { AuthShell } from './auth-shell';
 
 /** Trang mở từ link trong email: /dat-lai-mat-khau?token=... (khớp AUTH_PASSWORD_RESET_URL của BE). */
 export function ResetPassword({ token }: { token: string | undefined }) {
@@ -20,7 +19,7 @@ export function ResetPassword({ token }: { token: string | undefined }) {
   const isLinkInvalid = !token || getAuthErrorKind(reset.error, 'resetPassword') === 'resetLinkInvalid';
 
   return (
-    <AuthShell>
+    <>
       <h2>{vi.api.resetTitle}</h2>
       {reset.isSuccess ? (
         <>
@@ -83,6 +82,6 @@ export function ResetPassword({ token }: { token: string | undefined }) {
       <Link className="auth-link auth-switch" href="/login">
         {vi.api.backToLogin}
       </Link>
-    </AuthShell>
+    </>
   );
 }

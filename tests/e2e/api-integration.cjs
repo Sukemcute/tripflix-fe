@@ -93,7 +93,7 @@ function dateAfter(days) {
   try {
     await check('Web đăng ký và đăng nhập qua BE thật', async () => {
       await web.visit('/login');
-      await web.click('Chưa có tài khoản? Đăng ký');
+      await web.click('Tạo tài khoản mới');
       await web.fill('Tên hiển thị', displayName);
       await web.fill('Email', email);
       await web.fill('Mật khẩu', password);
