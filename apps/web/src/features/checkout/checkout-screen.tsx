@@ -553,15 +553,9 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
           )}
         </section>
         <aside className={styles.aside}>
-          <OrderSummary order={order} total={total} />
-          <button
-            type="button"
-            className={`secondary-button ${styles.statusButton}`}
-            onClick={() => void query.refetch()}
-          >
-            <CheckoutIcon name="refresh" size={16} />
-            {copy.checkStatus}
-          </button>
+          <OrderSummary order={order} total={total}>
+            <CheckoutPromo />
+          </OrderSummary>
         </aside>
       </div>
     </main>
@@ -695,7 +689,35 @@ function HoldTimer({ expiresAt }: { expiresAt: string }) {
   );
 }
 
-function OrderSummary({ order, total }: { order: Order; total: number }) {
+function CheckoutPromo() {
+  return (
+    <div className={styles.promoArea}>
+      <ul className={styles.perks}>
+        <li>{copy.perkInstantConfirm}</li>
+        <li>{copy.perkViewTrips}</li>
+      </ul>
+      <div className={styles.promo}>
+        <span className={styles.promoTag}>{copy.promoTag}</span>
+        <h3>{copy.promoTitle}</h3>
+        <p>{copy.promoBody}</p>
+        {/* Mở tab mới để không mất thông tin khách đang nhập. */}
+        <Link className={styles.promoLink} href="/search" target="_blank">
+          {copy.promoCta}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function OrderSummary({
+  order,
+  total,
+  children,
+}: {
+  order: Order;
+  total: number;
+  children?: React.ReactNode;
+}) {
   return (
     <div className={styles.summary}>
       <div className={styles.summaryHead}>
@@ -750,6 +772,7 @@ function OrderSummary({ order, total }: { order: Order; total: number }) {
           </div>
         </div>
       ))}
+      {children}
       <p className={styles.total}>
         <span>{copy.total}</span>
         <strong>{formatPrice(total)}</strong>
