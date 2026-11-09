@@ -40,8 +40,9 @@ declare global {
 const GOOGLE_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 
 /**
- * Nút Google chỉ có logo (kiểu "icon" của Google Identity Services), đặt trong ô vuông cùng kiểu ô nhập.
- * Nút do Google tự vẽ trong iframe; chỉ cắt viền mảnh của nó (CSS), không tự vẽ nút giả.
+ * Ô vuông chỉ có logo Google, cùng kiểu ô nhập. Ô và logo do web vẽ; nút thật của Google Identity Services
+ * (kiểu "icon", vẽ trong iframe) được phóng to phủ kín ô và gần như trong suốt, nên bấm chỗ nào trong ô cũng
+ * mở Google, và không lộ nền xanh khi rê chuột của nút Google.
  * Chưa đặt NEXT_PUBLIC_GOOGLE_CLIENT_ID thì không hiện gì (BE cũng trả 503).
  * Google trả ID token (credential), trang gửi cho core-api qua session.loginWithGoogle.
  */
@@ -86,13 +87,9 @@ export function GoogleButton({ onCredential }: { onCredential: (idToken: string)
       </div>
       <div className="auth-google">
         <div className="auth-google-tile">
-          {/* Google tự vẽ nút vào thẻ này, React không đặt phần tử con nào bên trong. */}
+          <Image className="auth-google-mark" src="/brand/google-g.svg" alt="" width={22} height={22} />
+          {/* Google tự vẽ nút vào thẻ này (phủ trên logo, nhận chuột); React không đặt phần tử con bên trong. */}
           <div ref={container} className="auth-google-button" aria-busy={!isScriptReady} />
-          {/*
-            Logo G nằm trên, chuột bấm xuyên xuống nút thật của Google. Google vẽ logo trùng đúng chỗ này;
-            khi Google chưa vẽ (đang tải, origin chưa được cho phép) ô vẫn có logo thay vì trống.
-          */}
-          <Image className="auth-google-mark" src="/brand/google-g.svg" alt="" width={20} height={20} />
         </div>
       </div>
       {!isScriptReady && <p className="auth-hint">{vi.api.googleLoading}</p>}
