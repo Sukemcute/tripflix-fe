@@ -12,7 +12,9 @@ export type GuestFieldError =
   | 'futureDate'
   | 'adultAge'
   | 'childAge'
-  | 'infantAge';
+  | 'infantAge'
+  | 'childRoomAge'
+  | 'infantRoomAge';
 
 export interface CheckoutGuestsInput {
   contact: { fullName: string; phone: string; email: string };
@@ -21,6 +23,8 @@ export interface CheckoutGuestsInput {
   passengerTypes: (PassengerType | null | undefined)[];
   /** Ngày bay đầu và cuối của đơn; không có vé bay thì bỏ trống. */
   travelDates?: { first: string; last: string };
+  /** Ngày nhận phòng sớm nhất; dùng khi đơn không có vé bay. */
+  stayDate?: string;
   /** Hôm nay, YYYY-MM-DD. */
   today: string;
 }
@@ -32,6 +36,14 @@ export function findTravelDates(items: readonly { productType: string; date: str
     .map((item) => item.date)
     .sort();
   return dates.length ? { first: dates[0]!, last: dates.at(-1)! } : undefined;
+}
+
+/** Ngày nhận phòng sớm nhất từ các mục của đơn. */
+export function findStayDate(items: readonly { productType: string; date: string }[]) {
+  return items
+    .filter((item) => item.productType === 'room')
+    .map((item) => item.date)
+    .sort()[0];
 }
 
 /** Tuổi tròn năm của người sinh ngày birthdate tính tới ngày date (YYYY-MM-DD). */
@@ -50,6 +62,12 @@ function findAgeError(type: PassengerType, ageAtFirst: number, ageAtLast: number
   if (type === 'adult') return ageAtFirst >= 12 ? null : 'adultAge';
   if (type === 'child') return ageAtFirst <= 11 && ageAtLast >= 2 ? null : 'childAge';
   return ageAtFirst >= 0 && ageAtLast < 2 ? null : 'infantAge';
+}
+
+function findRoomAgeError(type: PassengerType, age: number): GuestFieldError | null {
+  if (type === 'child') return age >= 4 && age <= 11 ? null : 'childRoomAge';
+  if (type === 'infant') return age >= 0 && age < 4 ? null : 'infantRoomAge';
+  return null;
 }
 
 /**
@@ -78,7 +96,9 @@ export function findCheckoutFieldErrors(input: CheckoutGuestsInput): Record<stri
       const ageError =
         type && dates
           ? findAgeError(type, countAgeOn(birthdate, dates.first), countAgeOn(birthdate, dates.last))
-          : null;
+          : type && input.stayDate
+            ? findRoomAgeError(type, countAgeOn(birthdate, input.stayDate))
+            : null;
       if (ageError) errors[key] = ageError;
     }
   });

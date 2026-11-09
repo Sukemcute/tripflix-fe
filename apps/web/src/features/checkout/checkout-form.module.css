@@ -876,12 +876,6 @@
   margin: 0 20px 16px;
 }
 
-.statusButton {
-  gap: 8px;
-  width: 100%;
-  min-height: 42px;
-}
-
 /* ---------- Thanh toán thành công ---------- */
 
 .success {
