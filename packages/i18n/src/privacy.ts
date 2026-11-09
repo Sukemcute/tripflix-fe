@@ -1,7 +1,7 @@
 // Trang /chinh-sach-bao-mat. Viết theo đúng dữ liệu hệ thống đang lưu; đổi cách lưu, gửi dữ liệu thì sửa trang này.
 export const privacy = {
   title: 'Chính sách bảo mật',
-  updated: 'Cập nhật ngày 06/11/2026',
+  updated: 'Cập nhật ngày 09/11/2026',
   intro:
     'Tripflix là nền tảng xem video, chia sẻ trải nghiệm và đặt phòng, vé cho chuyến đi. Trang này cho biết chúng tôi thu thập dữ liệu nào, dùng vào việc gì và bạn có những quyền gì với dữ liệu của mình.',
   footerLink: 'Chính sách bảo mật',
@@ -13,7 +13,7 @@ export const privacy = {
       google:
         'Đăng nhập bằng Google: Tripflix chỉ nhận mã định danh tài khoản Google, email và tên của bạn. Tripflix không nhận mật khẩu Google và không truy cập Gmail, Drive hay danh bạ.',
       profile:
-        'Thông tin cá nhân bạn tự điền nếu muốn: số điện thoại, ngày sinh, giới tính, quốc tịch. Chỉ bạn xem được các thông tin này, dùng để điền sẵn khi đặt phòng.',
+        'Thông tin cá nhân: ngày sinh, giới tính, quốc tịch (bắt buộc khi đăng ký bằng email) và số điện thoại nếu bạn điền thêm. Chỉ bạn xem được các thông tin này, dùng để điền sẵn khi đặt phòng, vé. Chúng tôi cũng lưu thời điểm bạn đồng ý Điều khoản sử dụng.',
       content: 'Nội dung bạn đăng: bài viết, video, ảnh, bình luận, lượt thích và bài đã lưu.',
       booking:
         'Đặt chỗ: thông tin liên hệ và tên khách trong đơn, lịch sử đơn và thanh toán. Với thẻ, chúng tôi chỉ lưu 4 số cuối. Số thẻ đầy đủ do cổng thanh toán xử lý.',

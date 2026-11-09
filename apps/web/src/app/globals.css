@@ -1171,36 +1171,577 @@ h3 {
   }
 }
 
-/* Đăng nhập, quên mật khẩu, trang tài khoản (TF06A) */
-.auth-page {
+/* Đăng nhập, đăng ký, quên và đặt lại mật khẩu (TF06A; tách trang đăng nhập và đăng ký: TF06O) */
+/* Các trang này toàn màn hình, không có header và footer chung của web. */
+body:has(.auth-fullscreen) .ota-header,
+body:has(.auth-fullscreen) footer {
+  display: none;
+}
+/* Cao đúng một màn hình, trang không cuộn. Màn quá thấp thì chỉ khung form cuộn bên trong. */
+html:has(.auth-fullscreen),
+body:has(.auth-fullscreen) {
+  height: 100%;
+  /* clip (không phải hidden): chặn cả cuộn bằng code, như khi bộ chọn ngày mở popup rồi scrollIntoView. */
+  overflow: clip;
+}
+.auth-fullscreen {
+  height: 100dvh;
+}
+.auth-split {
+  /* Thời gian và nhịp chung của hiệu ứng trượt giữa đăng nhập và đăng ký. */
+  --auth-slide: 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+  position: relative;
+  isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
-  gap: 56px;
-  /* Bám đầu trang: form dài ra khi hiện thêm dòng nhắc thì cột trái không bị đẩy theo. */
-  align-items: start;
-  padding-block: 48px 72px;
-}
-.auth-story {
-  position: sticky;
-  top: 24px;
-  /* Đáy giữ đúng chỗ của mascot 180px cũ để thẻ không cao thêm; mascot to hơn nổi lên phía trên. */
-  padding: 40px 40px 236px;
-  border-radius: 24px;
+  grid-template-columns: minmax(0, 1.3fr) minmax(400px, 1fr);
   background: var(--color-warm-mist);
+  overflow: clip;
+  transition: grid-template-columns var(--auth-slide);
+}
+/*
+ * Đăng ký: cột ảnh co lại, thẻ form rộng ra và trượt sang trái; cụm ảnh, tiêu đề, ảnh nền trượt theo.
+ * Về đăng nhập thì các giá trị trở lại, transition chạy ngược sang phải.
+ */
+.auth-split[data-mode='register'] {
+  grid-template-columns: minmax(0, 0.72fr) minmax(400px, 1.6fr);
+}
+.auth-hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 0;
+  padding: 36px 56px 44px;
+}
+/* Nền ảnh phong cảnh mờ phủ cả trang, phía sau lời chào và thẻ form. */
+.auth-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+.auth-hero-bg img {
+  object-fit: cover;
+  filter: blur(8px) saturate(1.1);
+  /* Phóng để viền mờ của blur không lộ ra ở mép khung, và đủ rộng để trượt ngang khi sang đăng ký. */
+  transform: scale(1.16);
+  transition: transform var(--auth-slide);
+}
+.auth-split[data-mode='register'] .auth-hero-bg img {
+  transform: scale(1.16) translateX(-6%);
+}
+/* Lớp sáng: đậm hơn ở đầu (logo) và chân (tiêu đề) để chữ tối đủ tương phản. */
+.auth-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-background) 70%, transparent) 0%,
+    color-mix(in srgb, var(--color-background) 35%, transparent) 40%,
+    color-mix(in srgb, var(--color-background) 55%, transparent) 65%,
+    color-mix(in srgb, var(--color-background) 85%, transparent) 100%
+  );
+}
+.auth-logo {
+  display: inline-flex;
+  width: fit-content;
+}
+.auth-headline {
+  /* Co theo cả chiều rộng lẫn chiều cao màn hình để vừa một màn hình. */
+  font-size: clamp(34px, min(5vw, 8dvh), 76px);
+  line-height: 1.08;
+  letter-spacing: -2px;
+  transition:
+    font-size var(--auth-slide),
+    transform var(--auth-slide);
+}
+.auth-split[data-mode='register'] .auth-headline {
+  font-size: clamp(28px, min(3vw, 6dvh), 48px);
+}
+/* Hai dòng cố định như hero trang chủ: dòng đầu đen, dòng sau xanh. */
+.auth-headline-first {
+  display: block;
+  white-space: nowrap;
+}
+.auth-headline em {
+  display: block;
+  font-style: normal;
+  color: var(--color-teal-ink);
+}
+/* Cụm ảnh trang trí: vị trí theo phần trăm của khung để co giãn theo cột. */
+.auth-collage {
+  position: relative;
+  align-self: center;
+  /* Cao theo phần còn lại của màn hình (trừ logo và tiêu đề), rộng theo tỉ lệ khung. */
+  height: clamp(200px, calc(100dvh - 400px), 440px);
+  max-width: 100%;
+  aspect-ratio: 580 / 440;
+  transform-origin: left center;
+  transition: transform var(--auth-slide);
+}
+.auth-split[data-mode='register'] .auth-collage {
+  transform: translateX(-12%) scale(0.86);
+}
+.auth-photo,
+.auth-photo-card,
+.auth-chip,
+.auth-heart,
+.auth-mascot-ring {
+  position: absolute;
+  box-shadow: 0 24px 48px -28px var(--color-overlay-heavy);
+}
+.auth-photo {
   overflow: hidden;
+  border-radius: 24px;
 }
-.auth-story h1 {
-  font-size: clamp(28px, 3vw, 40px);
-  line-height: 1.25;
-  letter-spacing: -1px;
+.auth-photo img,
+.auth-photo-card-image img {
+  object-fit: cover;
 }
-.auth-story > p {
-  max-width: 420px;
-  margin-top: 16px;
+.auth-photo-main {
+  top: 0;
+  left: 44%;
+  width: 40%;
+  height: 84%;
+}
+/* Vạch tiến độ như một story đang phát. */
+.auth-photo-progress {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  right: 16px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-overlay);
+}
+.auth-photo-progress::before {
+  content: '';
+  display: block;
+  width: 45%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-background);
+}
+.auth-photo-side {
+  top: 20%;
+  left: 10%;
+  width: 36%;
+  height: 46%;
+}
+.auth-photo-card {
+  top: 50%;
+  left: 22%;
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 10px 14px;
+  border-radius: 18px;
+  background: var(--color-background);
+}
+.auth-photo-card-image {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.auth-photo-card-line {
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+}
+.auth-photo-card-line.is-short {
+  width: 60%;
+}
+.auth-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.auth-chip svg {
+  fill: var(--color-sun);
+}
+.auth-chip-rating {
+  top: 9%;
+  right: 4%;
+}
+.auth-chip-saved {
+  top: 6%;
+  left: 4%;
+  background: var(--color-teal-ink);
+  color: var(--color-background);
+}
+.auth-heart {
+  top: 62%;
+  right: 8%;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: var(--color-coral);
+}
+.auth-heart svg {
+  fill: var(--color-background);
+}
+.auth-mascot-ring {
+  bottom: 0;
+  left: 50%;
+  display: grid;
+  place-items: end center;
+  width: 25%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 4px solid var(--color-teal);
+  border-radius: 999px;
+  background: var(--color-sea-mist);
+}
+.auth-mascot-ring img {
+  width: 92%;
+  height: auto;
+}
+/* Cột phải trong suốt, chỉ thẻ form là khối trắng bo tròn nổi trên ảnh nền. */
+.auth-panel {
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+  padding: 32px 48px 32px 16px;
+  overflow-y: auto;
+}
+.auth-panel-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(100%, 440px);
+  transition: width var(--auth-slide);
+  /* Căn giữa theo chiều dọc, nhưng khi form cao hơn khung thì vẫn cuộn được từ đầu. */
+  margin-block: auto;
+  padding: 36px 32px;
+  /*
+   * Liquid glass: nền trong mờ nhiều lớp, làm mờ và tăng bão hoà ảnh phía sau, viền sáng như mép kính,
+   * ánh phản chiếu ở góc trên (::before). Chrome, Edge thêm khúc xạ (.has-refraction), trình duyệt khác giữ kính mờ.
+   */
+  position: relative;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--color-background) 60%, transparent);
+  border-radius: 28px;
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--color-background) 82%, transparent) 0%,
+      color-mix(in srgb, var(--color-background) 66%, transparent) 55%,
+      color-mix(in srgb, var(--color-background) 76%, transparent) 100%
+    );
+  backdrop-filter: blur(22px) saturate(1.8) brightness(1.04);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-background) 95%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--color-background) 40%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--color-background) 50%, transparent),
+    inset 0 0 24px color-mix(in srgb, var(--color-background) 35%, transparent),
+    0 32px 64px -32px var(--color-overlay-heavy);
+}
+.auth-panel-inner.has-refraction {
+  backdrop-filter: url(#auth-glass-refraction) blur(16px) saturate(1.8) brightness(1.04);
+}
+/* Thẻ đăng ký rộng gấp rưỡi, đủ cho form hai cột; đệm gọn hơn để cả form vừa một màn hình. */
+.auth-split[data-mode='register'] .auth-panel-inner {
+  width: min(100%, 720px);
+  padding-block: 28px;
+}
+.auth-split[data-mode='register'] .auth-card-stack,
+.auth-split[data-mode='register'] .auth-form {
+  gap: 12px;
+}
+/* Màn thấp (laptop 720px): bớt khoảng trên dưới quanh thẻ đăng ký để không phải cuộn trong thẻ. */
+@media (min-width: 901px) {
+  .auth-split[data-mode='register'] .auth-panel {
+    padding-block: 16px;
+  }
+}
+/* Ánh phản chiếu: dải sáng chéo ở góc trên trái, không chặn chuột. */
+.auth-panel-inner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background:
+    radial-gradient(120% 60% at 0% 0%, color-mix(in srgb, var(--color-background) 70%, transparent), transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-background) 30%, transparent), transparent 30%);
+  pointer-events: none;
+}
+.auth-glass-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+/* Tiêu đề trong thẻ (đăng nhập, đăng ký, các bước, quên mật khẩu). */
+.auth-card-stack h2 {
+  font-size: 24px;
+  letter-spacing: -0.5px;
+}
+/* Ô nhập ở các trang đăng nhập, đăng ký: nền trắng, bấm vào thì viền cam phát sáng. */
+.auth-fullscreen .auth-field input {
+  border-color: var(--color-border);
+  background: var(--color-background);
+}
+.auth-fullscreen .auth-field input:hover {
+  border-color: var(--color-text-subtle);
+}
+.auth-fullscreen .auth-field input:focus {
+  border-color: var(--color-coral-ink);
+  background: var(--color-background);
+  box-shadow: 0 0 0 4px var(--color-coral-tint);
+}
+.auth-fullscreen .auth-field input[aria-invalid='true'] {
+  border-color: var(--color-coral-ink);
+}
+.auth-fullscreen .auth-field input:-webkit-autofill {
+  box-shadow: 0 0 0 1000px var(--color-background) inset;
+}
+.auth-fullscreen .auth-field input:-webkit-autofill:focus {
+  box-shadow:
+    0 0 0 1000px var(--color-background) inset,
+    0 0 0 4px var(--color-coral-tint);
+}
+/* Icon thư, ổ khoá ở đầu ô; chuyển màu cam khi đang gõ trong ô. */
+.auth-field-icon {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  display: grid;
+  color: var(--color-text-subtle);
+  pointer-events: none;
+  transition: color 0.15s;
+}
+.auth-field-icon svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.auth-field.has-icon:focus-within .auth-field-icon {
+  color: var(--color-coral-ink);
+}
+/* Nút đăng nhập nổi nhẹ khi rê chuột. */
+.auth-fullscreen .auth-submit {
+  box-shadow: 0 14px 24px -16px var(--color-coral-ink);
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.auth-fullscreen .auth-submit:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 28px -16px var(--color-coral-ink);
+}
+.account-panel h2 {
+  font-size: 24px;
+  letter-spacing: -0.5px;
+}
+/* Nút viền dẫn sang trang đăng ký, tách khỏi form đăng nhập bằng khoảng trống. */
+.auth-create {
+  width: 100%;
+  margin-top: 20px;
+  border-color: var(--color-coral-ink);
+  color: var(--color-coral-ink);
+}
+/* Thân thẻ: chiều cao chạy mượt khi đổi trang hoặc đổi bước (auth-card-body.tsx đặt height theo nội dung). */
+.auth-card-body {
+  overflow: clip;
+  /* Chừa chỗ cho viền cam phát sáng của ô đang gõ, không bị cắt ở mép. */
+  overflow-clip-margin: 8px;
+  transition: height 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.auth-card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* Nội dung mới (trang khác, bước khác) hiện ra mờ dần và trượt nhẹ lên. */
+.auth-card-stack > * {
+  animation: auth-step-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes auth-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-card-body,
+  .auth-split,
+  .auth-split * {
+    transition: none !important;
+  }
+  .auth-card-stack > * {
+    animation: none;
+  }
+}
+/* Nút chữ nhỏ (gửi lại mã). */
+.auth-text-button {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.auth-text-button.is-accent {
+  color: var(--color-coral-ink);
+}
+.auth-text-button:not(:disabled):hover {
+  text-decoration: underline;
+}
+.auth-text-button:disabled {
+  color: var(--color-text-subtle);
+  cursor: default;
+}
+/* Form đăng ký hai cột: trái tên, email; phải ngày sinh, giới tính + quốc tịch; mật khẩu trải hết hàng. */
+.auth-register-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 18px;
+}
+.auth-register-grid .is-wide {
+  grid-column: 1 / -1;
+}
+/* Ngày sinh: ba ô Ngày / Tháng / Năm trên một hàng. */
+.auth-dob-select {
+  display: grid;
+  grid-template-columns: 0.8fr 1.25fr 1fr;
+  gap: 8px;
+}
+/* Bộ chọn ngày, bộ chọn (trigger có aria-haspopup) cao bằng ô nhập chữ bên cạnh. */
+.auth-register-grid .auth-picker [aria-haspopup] {
+  min-height: 48px;
+}
+/* Ô nhập mã hiện sau khi gửi mã, nút "Gửi lại mã" bên cạnh. */
+.auth-code-block {
+  display: grid;
+  gap: 6px;
+}
+.auth-code-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+}
+.auth-code-row .auth-text-button {
+  padding-bottom: 14px;
+}
+/* Ngày sinh, giới tính, quốc tịch: nhãn phía trên, bộ chọn có sẵn của web (soft-date-picker, soft-select). */
+.auth-field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.auth-picker label {
+  font-size: 13px;
+  font-weight: 600;
+}
+/* Ô tick đồng ý điều khoản. */
+.auth-terms {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.auth-terms input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--color-coral-ink);
+  cursor: pointer;
+}
+.auth-terms input[aria-invalid='true'] {
+  outline: 2px solid var(--color-coral-ink);
+  outline-offset: 2px;
+}
+.auth-terms a {
+  color: var(--color-coral-ink);
+  font-weight: 700;
+}
+.auth-terms a:hover {
+  text-decoration: underline;
+}
+/* Nhãn nổi trong ô (trang đăng nhập): nằm giữa ô khi trống, thu nhỏ lên trên khi gõ hoặc có chữ. */
+.auth-field.is-floating {
+  position: relative;
+}
+.auth-field.is-floating .auth-label-row {
+  position: absolute;
+  z-index: 1;
+  top: 21px;
+  left: 17px;
+  margin: 0;
+  pointer-events: none;
+  transition: top 0.15s;
+}
+/* Bộ đếm ký tự ở góc phải ô (chừa nút con mắt ở ô mật khẩu); chỉ hiện khi nhãn đã thu lên. */
+.auth-field.is-floating .auth-label-row {
+  right: 16px;
+}
+.auth-field.is-floating:has(.auth-password) .auth-label-row {
+  right: 60px;
+}
+.auth-field.is-floating .auth-count {
+  transition: opacity 0.15s;
+}
+.auth-field.is-floating:not(:has(input:focus, input:not(:placeholder-shown))) .auth-count {
+  opacity: 0;
+}
+.auth-field.is-floating label {
   color: var(--color-text-muted);
   font-size: 15px;
-  line-height: 1.8;
+  font-weight: 500;
+  transition: font-size 0.15s;
 }
+/* Chữ gõ nằm thấp hơn nhãn đã thu nhỏ khoảng 6px, để hai dòng không dính nhau. */
+.auth-field.is-floating input {
+  min-height: 64px;
+  padding: 30px 16px 10px;
+}
+.auth-field.is-floating .auth-password input {
+  padding-right: 56px;
+}
+/* Ô nhãn nổi có icon: chữ và nhãn lùi vào sau icon (đặt sau luật padding của nhãn nổi để thắng). */
+.auth-field.is-floating.has-icon input {
+  padding-left: 48px;
+}
+.auth-field.is-floating.has-icon .auth-label-row {
+  left: 49px;
+}
+.auth-field.is-floating:has(input:focus, input:not(:placeholder-shown)) .auth-label-row {
+  top: 10px;
+}
+.auth-field.is-floating:has(input:focus, input:not(:placeholder-shown)) label {
+  font-size: 12px;
+}
+/* "Quên mật khẩu?" ngay dưới ô mật khẩu, căn phải, chữ nhỏ màu cam. */
+.auth-forgot {
+  align-self: flex-end;
+  margin-top: -6px;
+  color: var(--color-coral-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.auth-forgot:hover {
+  text-decoration: underline;
+}
+/* Danh sách lợi ích, dùng ở trang tài khoản khi chưa đăng nhập. */
 .auth-benefits {
   display: grid;
   gap: 12px;
@@ -1221,56 +1762,31 @@ h3 {
   border-radius: 999px;
   background: var(--color-teal);
 }
-.auth-mascot {
-  position: absolute;
-  right: 40px;
-  bottom: 28px;
-  /* Cao quá 208px thì mascot chạm vùng chữ: khi đó chừa ~430px bên trái cho danh sách lợi ích. */
-  width: clamp(200px, calc(100% - 430px), 280px);
-  height: auto;
-}
-.auth-card {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 32px;
-  border: 1px solid var(--color-border);
-  border-radius: 24px;
-  background: var(--color-background);
-  box-shadow: 0 24px 48px -32px var(--color-overlay);
-}
-.auth-card h2,
-.account-panel h2 {
-  font-size: 24px;
-  letter-spacing: -0.5px;
-}
-.auth-tabs {
-  min-width: 0;
-  margin: 0;
-  border: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 14px;
-  background: var(--color-surface-muted);
-}
-.auth-tabs button {
-  min-height: 42px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text-muted);
-}
-.auth-tabs button[aria-pressed='true'] {
-  background: var(--color-background);
-  color: var(--color-ink);
-  box-shadow: 0 2px 8px -4px var(--color-overlay);
-}
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+}
+/* Độ mạnh mật khẩu: một dòng chữ nhỏ ngay dưới ô, không chiếm cả khối. */
+.auth-strength {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: -6px;
+  color: var(--color-coral-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.auth-strength::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.auth-strength.is-strong {
+  color: var(--color-teal-ink);
 }
 .auth-field label {
   display: block;
@@ -1300,7 +1816,8 @@ h3 {
 }
 .auth-field input {
   width: 100%;
-  padding: 14px 16px;
+  min-height: 48px;
+  padding: 12px 16px;
   border: 1px solid var(--color-border);
   border-radius: 12px;
   background: var(--color-background);
@@ -1327,22 +1844,39 @@ h3 {
   position: relative;
 }
 .auth-password input {
-  padding-right: 72px;
+  padding-right: 56px;
 }
+/* Edge tự thêm nút hiện mật khẩu và nút xoá vào ô mật khẩu: ẩn đi vì đã có nút con mắt riêng. */
+.auth-password input::-ms-reveal,
+.auth-password input::-ms-clear {
+  display: none;
+}
+/* Nút hình con mắt: mở khi đang ẩn mật khẩu, gạch chéo khi đang hiện. */
 .auth-toggle {
   position: absolute;
   top: 50%;
   right: 8px;
   transform: translateY(-50%);
-  min-height: 36px;
-  padding: 0 12px;
-  border-radius: 8px;
-  color: var(--color-teal-ink);
-  font-size: 12px;
-  font-weight: 700;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 .auth-toggle:hover {
-  background: var(--color-sea-mist);
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+}
+.auth-toggle svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .auth-hint {
   color: var(--color-text-muted);
@@ -1357,10 +1891,6 @@ h3 {
 .auth-link:hover {
   text-decoration: underline;
 }
-.auth-forgot {
-  align-self: flex-end;
-  margin-top: -6px;
-}
 .auth-switch {
   align-self: center;
 }
@@ -1370,15 +1900,17 @@ h3 {
 .auth-warning {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 8px;
+  /* Nằm ngay dưới ô tên hiển thị, nên kéo sát lên ô. */
+  margin-top: -6px;
+  padding: 8px 12px;
   border: 1px solid var(--color-warning);
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--color-sun-soft);
   color: var(--color-ink);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 .auth-warning svg {
   flex: none;
@@ -1421,7 +1953,41 @@ h3 {
 .auth-google {
   display: flex;
   justify-content: center;
-  min-height: 44px;
+  min-height: 52px;
+}
+/* Ô vuông chỉ có logo Google, cùng kiểu ô nhập (nền trắng, viền mảnh, bo 14px). */
+.auth-google-tile {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 52px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-background);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.auth-google-tile:hover {
+  border-color: var(--color-text-subtle);
+}
+.auth-google-tile:focus-within {
+  border-color: var(--color-coral-ink);
+  box-shadow: 0 0 0 4px var(--color-coral-tint);
+}
+/* Cắt viền xám mảnh của nút Google để chỉ còn logo trên nền trắng trong ô của mình. */
+.auth-google-button {
+  display: grid;
+  clip-path: inset(2px);
+}
+/* Nút Google và logo G chồng cùng một ô lưới, logo ở trên nhưng không nhận chuột. */
+.auth-google-tile > * {
+  grid-area: 1 / 1;
+}
+.auth-google-mark {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
 }
 /* Trang tài khoản (TF06D): thẻ đầu trang, hàng tab gạch chân, hai cột thẻ */
 .account-page {
@@ -1585,23 +2151,45 @@ h3 {
   font-weight: 600;
 }
 @media (max-width: 900px) {
-  .auth-page {
+  /* Một cột: trên là logo và lời chào gọn, cụm ảnh ẩn để form lên sớm. */
+  .auth-split,
+  .auth-split[data-mode='register'] {
     grid-template-columns: 1fr;
-    gap: 24px;
-    padding-block: 24px 48px;
+    grid-template-rows: auto minmax(0, 1fr);
   }
-  .auth-story {
-    padding: 28px;
+  /* Một cột: không trượt cụm ảnh (đã ẩn), giữ tiêu đề cỡ gọn ở cả hai trang. */
+  .auth-split[data-mode='register'] .auth-headline {
+    font-size: 28px;
   }
-  .auth-mascot,
+  .auth-hero {
+    gap: 16px;
+    padding: 20px;
+  }
+  .auth-headline {
+    max-width: none;
+    font-size: 28px;
+    letter-spacing: -1px;
+  }
+  .auth-collage,
   .auth-benefits {
     display: none;
   }
+  /* Một cột: thẻ form nằm dưới lời chào, vẫn bo tròn và lộ nền xung quanh. */
+  .auth-panel {
+    padding: 0 16px 16px;
+  }
+  .auth-panel-inner {
+    padding: 24px 20px;
+    border-radius: 24px;
+  }
 }
 @media (max-width: 640px) {
-  .auth-card,
   .account-panel {
     padding: 22px;
+  }
+  .auth-field-pair,
+  .auth-register-grid {
+    grid-template-columns: 1fr;
   }
   .device-item {
     flex-direction: column;

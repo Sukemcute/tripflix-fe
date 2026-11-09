@@ -5,7 +5,6 @@ import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { AuthErrorNotice, AuthField } from './auth-fields';
-import { AuthShell } from './auth-shell';
 
 /** BE luôn trả 202 với cùng một câu, kể cả email không có tài khoản, nên trang cũng chỉ báo một câu. */
 export function ForgotPassword() {
@@ -14,7 +13,7 @@ export function ForgotPassword() {
     mutationFn: () => auth.passwordResetControllerForgot({ email: email.trim() }),
   });
   return (
-    <AuthShell>
+    <>
       <h2>{vi.api.forgotTitle}</h2>
       <p className="auth-hint">{vi.api.forgotBody}</p>
       {request.isSuccess ? (
@@ -46,6 +45,6 @@ export function ForgotPassword() {
       <Link className="auth-link auth-switch" href="/login">
         {vi.api.backToLogin}
       </Link>
-    </AuthShell>
+    </>
   );
 }
