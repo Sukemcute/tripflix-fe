@@ -180,6 +180,8 @@ export function SoftDatePicker({
         popover="auto"
         aria-labelledby={`${baseId}-title`}
         className={`${styles.popover} ${styles.calendar}`}
+        // Ô thường nằm trong <label>: không chặn thì bấm trong lịch sẽ kích hoạt lại nút mở và lịch quay về hôm nay.
+        onClick={(event) => event.preventDefault()}
         onToggle={(event) => {
           setIsOpen(event.newState === 'open');
           if (event.newState === 'closed' && popoverRef.current?.contains(document.activeElement)) {
