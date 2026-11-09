@@ -49,7 +49,7 @@ export function BookRateButton({
   };
 
   return (
-    <div className={styles.adder}>
+    <div className={styles.adder} data-selected={Boolean(line)}>
       <select
         className={styles.qtySelect}
         aria-label={copy.cartSelectRooms}

@@ -9,6 +9,7 @@ import {
   findUnderCapacityStays,
   getBookingCartItemKey,
   listBookingCartLineTotals,
+  listBookingCartStays,
   mergeBookingCart,
   parseBookingCart,
   setBookingCartItemQty,
@@ -75,7 +76,7 @@ describe('booking cart', () => {
     expect(findUnderCapacityStays(cartOf(4, room(), suite))).toEqual([]);
     const otherHotel = room({ productId: 'H2--STD', propertyId: 'H2', propertyName: 'Khách sạn 2' });
     expect(findUnderCapacityStays(cartOf(4, room(), suite, otherHotel))).toEqual([
-      { propertyName: 'Khách sạn 2', capacity: 2 },
+      { propertyName: 'Khách sạn 2', capacity: 2, rooms: 1, reason: 'capacity' },
     ]);
   });
 
@@ -102,6 +103,18 @@ describe('booking cart', () => {
     expect(merged.outcome).toBe('added');
     expect(merged.cart.items.map((line) => [line.productId, line.qty])).toEqual([['H1--STD', 2], ['B', 1]]);
     expect(mergeBookingCart(cartOf(2, room()), cartOf(3, room({ productId: 'B' }))).outcome).toBe('adults_mismatch');
+  });
+
+  it('báo đúng lý do: thiếu người lớn khác với thiếu chỗ', () => {
+    const cart = { adults: 2, children: 4, infants: 0, items: [room({ qty: 3 })] };
+    expect(findUnderCapacityStays(cart)).toEqual([
+      { propertyName: 'Khách sạn 1', capacity: 6, rooms: 3, reason: 'adults' },
+    ]);
+  });
+
+  it('liệt kê từng kỳ ở kèm số phòng', () => {
+    const later = room({ productId: 'B', checkIn: '2026-12-03', checkOut: '2026-12-05' });
+    expect(listBookingCartStays(cartOf(2, room({ qty: 2 }), room({ productId: 'A' }), later)).map((stay) => stay.rooms)).toEqual([3, 1]);
   });
 
   it('đọc giỏ hỏng thành trống và bỏ mục quá hạn', () => {

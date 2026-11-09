@@ -547,7 +547,12 @@ function MediaTrackItem({
   const coverImage = postImages[0]?.src;
   const isMediaError = mediaErrorPostId === post.id;
   const isCaptionExpanded = captionExpandedPostId === post.id;
-  const authorInfo = formatAuthorDisplay(post.authorId, reelCard?.author.name, user?.id, user?.displayName);
+  const authorInfo = formatAuthorDisplay(
+    post.authorId,
+    post.authorName ?? reelCard?.author.name,
+    user?.id,
+    user?.displayName,
+  );
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -1495,7 +1500,12 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
   const displayShares = activePostDetail?.post.shareCount ?? activePost?.shareCount ?? 0;
 
   const authorInfo = activePost
-    ? formatAuthorDisplay(activePost.authorId, reelCard?.author.name, user?.id, user?.displayName)
+    ? formatAuthorDisplay(
+        activePost.authorId,
+        activePost.authorName ?? reelCard?.author.name,
+        user?.id,
+        user?.displayName,
+      )
     : { name: '', handle: '' };
 
 

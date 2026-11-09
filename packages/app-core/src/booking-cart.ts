@@ -36,6 +36,20 @@ export interface UnderCapacityStay {
   capacity: number;
 }
 
+export interface UnderCapacityIssue extends UnderCapacityStay {
+  rooms: number;
+  /** adults: số phòng nhiều hơn số người lớn; capacity: không đủ chỗ cho cả đoàn. */
+  reason: 'adults' | 'capacity';
+}
+
+export interface BookingCartStaySummary {
+  key: string;
+  propertyName: string;
+  checkIn: string;
+  checkOut: string;
+  rooms: number;
+}
+
 export const EMPTY_BOOKING_CART: BookingCart = { adults: 0, children: 0, infants: 0, items: [] };
 
 const hasSameGuests = (first: BookingCartGuests, second: BookingCartGuests): boolean =>
@@ -149,11 +163,33 @@ export function calculateBookingCartTotal(cart: BookingCart): number {
 }
 
 /** Cùng luật với server: mỗi khách sạn trong một kỳ ở phải đủ chỗ cho cả đoàn. */
-export function findUnderCapacityStays(cart: BookingCart): UnderCapacityStay[] {
+export function findUnderCapacityStays(cart: BookingCart): UnderCapacityIssue[] {
   const guests = countBookingCartGuests(cart);
   return groupBookingCartStays(cart)
     .filter((stay) => guests > stay.capacity || cart.adults < stay.rooms)
-    .map(({ propertyName, capacity }) => ({ propertyName, capacity }));
+    .map(({ propertyName, capacity, rooms }) => ({
+      propertyName,
+      capacity,
+      rooms,
+      reason: cart.adults < rooms ? ('adults' as const) : ('capacity' as const),
+    }));
+}
+
+/** Các kỳ ở đang có trong giỏ, để người dùng thấy rõ tổng tiền gồm những phòng nào. */
+export function listBookingCartStays(cart: BookingCart): BookingCartStaySummary[] {
+  const stays = new Map<string, BookingCartStaySummary>();
+  for (const line of cart.items) {
+    const key = [line.propertyId, line.checkIn, line.checkOut].join('|');
+    const stay = stays.get(key);
+    stays.set(key, {
+      key,
+      propertyName: line.propertyName,
+      checkIn: line.checkIn,
+      checkOut: line.checkOut,
+      rooms: (stay?.rooms ?? 0) + line.qty,
+    });
+  }
+  return [...stays.values()];
 }
 
 export function createBookingCartRequest(cart: BookingCart) {
