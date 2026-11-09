@@ -29,11 +29,6 @@ export function OtaHero() {
             <span className={styles.titleFirst}>{SLOGAN_FIRST},</span> {SLOGAN_SECOND}
           </h1>
           <p className={styles.description}>{vi.ota.heroIntro}</p>
-          <div className={styles.actions}>
-            <a className={`ripple-button ${styles.searchAction}`} href="#ota-search">
-              {vi.ota.heroSearch}
-            </a>
-          </div>
           <nav className={styles.activities} aria-label={vi.api.otaActivityLabel}>
             {ACTIVITIES.map(([image, name]) => (
               <Link key={image} href={{ pathname: '/inspiration', query: { q: name } }}>
