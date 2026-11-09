@@ -386,6 +386,7 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                       onChange={(value) => editGuest(index, 'birthdate', value)}
                       error={fieldErrors[`guests[${index}].birthdate`]}
                       type="date"
+                      max={toLocalIsoDate(new Date())}
                     />
                   </div>
                 ))}
