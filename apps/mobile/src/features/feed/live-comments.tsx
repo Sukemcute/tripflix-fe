@@ -107,7 +107,9 @@ export function LiveComments({
             )}
             <Card style={compact ? styles.commentBody : undefined}>
               <Txt variant="caption">
-                {comment.authorId === user?.id ? user.displayName : comment.authorId.slice(0, 8)} ·{' '}
+                {comment.authorId === user?.id
+                  ? user.displayName
+                  : comment.authorName || comment.authorId.slice(0, 8)} ·{' '}
                 {new Date(comment.createdAt).toLocaleDateString('vi-VN')}
               </Txt>
               <Txt>{comment.body}</Txt>
