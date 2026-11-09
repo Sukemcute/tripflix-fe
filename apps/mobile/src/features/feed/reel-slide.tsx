@@ -74,7 +74,7 @@ function PlayerSurface({
       )}
       {status === 'error' && <VideoNotice text={copy.failed} onRetry={onRetry} />}
       {__DEV__ && level !== null && !isHidden && (
-        <View style={[styles.quality, { top: insets.top + 64 }]} pointerEvents="none">
+        <View style={[styles.quality, { top: insets.top + 80 }]} pointerEvents="none">
           <Txt variant="caption" style={styles.light}>
             {t('mobile.reels.currentQuality', { level })}
           </Txt>
