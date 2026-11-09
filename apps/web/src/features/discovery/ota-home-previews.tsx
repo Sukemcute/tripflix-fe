@@ -54,6 +54,9 @@ export function HomeStayPreview() {
   });
   return (
     <section className={styles.stayBand} aria-labelledby="home-stays-title" data-home-reveal>
+      <Image className={styles.stayBackdrop} src="/brand/home-stays-ninh-binh.jpg" alt="" fill sizes="100vw" />
+      <span className={styles.stayEdgeTop} aria-hidden="true" />
+      <span className={styles.stayEdgeBottom} aria-hidden="true" />
       <div className={`ota-container ${styles.stayContent}`}>
         <div className={styles.stayHeader} data-home-banner>
           <div className={styles.stayTicket}>
