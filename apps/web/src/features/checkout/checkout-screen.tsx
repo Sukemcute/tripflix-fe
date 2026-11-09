@@ -747,7 +747,11 @@ function OrderSummary({
             <p>
               {item.productType === 'flight' && (order.children > 0 || order.infants > 0)
                 ? `${item.ratePlanName} · ${formatPassengerMix({ adults: order.adults, children: order.children, infants: order.infants })}`
-                : `${item.qty} × ${item.ratePlanName} · ${order.adults} ${copy.guests}`}
+                : `${item.qty} × ${item.ratePlanName} · ${
+                    order.children > 0 || order.infants > 0
+                      ? formatPassengerMix({ adults: order.adults, children: order.children, infants: order.infants })
+                      : `${order.adults} ${copy.guests}`
+                  }`}
             </p>
             <p className={item.isRefundable ? styles.refundable : styles.nonRefundable}>
               {item.isRefundable ? copy.refundable : copy.nonRefundable}

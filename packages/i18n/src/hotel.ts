@@ -32,6 +32,7 @@ export const hotel = {
   infantsHint: 'Dưới 4 tuổi, miễn phí',
   capacityHint: 'Tính cả người lớn, trẻ em, em bé. Mỗi phòng cần ít nhất 1 người lớn.',
   guestsDone: 'Xong',
+  cannotFitParty: 'Riêng loại phòng này không đủ chỗ cho đoàn, hãy chọn thêm phòng lớn hơn.',
   roomsUnit: 'phòng',
   childSurchargeIncluded: 'Đã giảm cho trẻ em',
   decreaseGuests: 'Bớt',

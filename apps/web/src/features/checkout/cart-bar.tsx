@@ -7,6 +7,7 @@ import {
   countBookingCartGuests,
   EMPTY_BOOKING_CART,
   findUnderCapacityStays,
+  listBookingCartStays,
   mergeBookingCart,
 } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
@@ -16,9 +17,11 @@ import { formatPrice } from '@/features/discovery/trip-card';
 import { CheckoutError } from './checkout-error';
 import { saveBookingCart, saveBookingSelection, useBookingCart, useBookingSelection } from './cart-store';
 import styles from './cart.module.css';
+import { CartWarnings } from './cart-warnings';
 import { useHoldCart } from './use-hold-cart';
 
 const copy = vi.commerce;
+const formatDate = (date: string) => date.split('-').reverse().slice(0, 2).join('/');
 
 /** Thanh ở đáy trang khách sạn: các phòng đang chọn trong phiên, chưa vào giỏ. */
 export function CartBar() {
@@ -30,6 +33,8 @@ export function CartBar() {
   const searchParams = useSearchParams();
   const [notice, setNotice] = useState('');
   const [isAdded, setIsAdded] = useState(false);
+  // Chọn phòng mới thì báo "đã thêm" của lần trước không còn đúng nữa.
+  if (isAdded && selection.items.length) setIsAdded(false);
 
   if (!selection.items.length) {
     if (!isAdded) return null;
@@ -84,12 +89,15 @@ export function CartBar() {
                 {copy.cartChildSurcharge} {formatPrice(surcharge)}
               </span>
             )}
-            {underCapacity.map((stay) => (
-              <p key={stay.propertyName} role="alert" className={styles.warning}>
-                {stay.propertyName}: {copy.cartUnderCapacity} {stay.capacity}/{countBookingCartGuests(selection)}{' '}
-                {copy.guests}.
-              </p>
-            ))}
+            <ul className={styles.barStays}>
+              {listBookingCartStays(selection).map((stay) => (
+                <li key={stay.key}>
+                  {stay.propertyName} · {formatDate(stay.checkIn)} → {formatDate(stay.checkOut)} · {stay.rooms}{' '}
+                  {copy.cartRooms}
+                </li>
+              ))}
+            </ul>
+            <CartWarnings cart={selection} />
             {notice && (
               <p role="alert" className={styles.warning}>
                 {notice}
