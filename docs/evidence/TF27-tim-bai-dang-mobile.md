@@ -26,6 +26,11 @@
       - Ảnh thumbnail, tag phân loại (`Lộ trình · 3N`, `Video`, `Bài viết`), tiêu đề, địa điểm, lý do khớp (`item.reason`), chi phí ước tính (`~... / người`).
       - Bấm vào mở chi tiết bài viết ngay trên app (`/trip/[slug]` với `slug = item.refId`).
       - Hỗ trợ phân trang: Nút "Tiếp tục" với `nextCursor` và nút "Trang trước".
+    - Đưa thanh tìm kiếm lên vị trí trên cùng (`top`) của trang Khám phá, tự động focus và mở bàn phím khi chuyển hướng từ Reels (`autoFocus=1`).
+  - Cập nhật `ReelsScreen` trong `apps/mobile/src/features/feed/reels-screen.tsx`:
+    - Bổ sung thanh tìm kiếm nổi kiểu TikTok (floating glassmorphic pill) ngay dưới header "Dành cho bạn".
+    - Khi bấm vào sẽ chuyển mượt mà sang tab Khám phá và kích hoạt bàn phím ngay lập tức.
+    - Tự động ẩn cùng toàn bộ header khi người dùng giữ màn hình xem toàn cảnh (`hideHeader`).
 
 ## Đối chiếu "Xong khi"
 | Tiêu chí | Đạt | Bằng chứng |
