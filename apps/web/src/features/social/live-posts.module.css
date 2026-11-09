@@ -2030,6 +2030,61 @@
 
 /* --- Responsive Laptop (1024px - 1439px) --- */
 
+.postUnavailableOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(12px);
+  color: #ffffff;
+  text-align: center;
+  z-index: 30;
+  border-radius: inherit;
+}
+
+.postUnavailableIcon {
+  font-size: 44px;
+  margin-bottom: 14px;
+  line-height: 1;
+}
+
+.postUnavailableTitle {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #ffffff;
+}
+
+.postUnavailableDesc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.78);
+  max-width: 320px;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.postUnavailableNextBtn {
+  padding: 8px 22px;
+  background-color: var(--color-coral, #ff4d4f);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(255, 77, 79, 0.35);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.postUnavailableNextBtn:hover {
+  opacity: 0.92;
+  transform: scale(1.03);
+}
+
 @media (max-width: 1439px) {
   .gridThreeCols {
     grid-template-columns: minmax(260px, 310px) minmax(0, 1fr) minmax(320px, 370px);

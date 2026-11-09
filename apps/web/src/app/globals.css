@@ -2241,6 +2241,39 @@ body:has(.auth-fullscreen) {
   margin-top: 24px;
   color: var(--color-text-muted);
 }
+.post-unavailable-card {
+  margin-top: 32px;
+  padding: 48px 24px;
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border-subtle, #e2e8f0);
+  border-radius: 16px;
+  text-align: center;
+  max-width: 520px;
+  margin-inline: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+.post-unavailable-icon {
+  font-size: 40px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+.post-unavailable-card h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text, #1e293b);
+  margin: 0 0 8px;
+}
+.post-unavailable-card p {
+  font-size: 14px;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+.post-unavailable-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
 .post-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
