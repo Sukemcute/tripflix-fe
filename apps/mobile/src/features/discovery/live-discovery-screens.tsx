@@ -32,7 +32,7 @@ import {
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, UnavailableScreen } from '@/components/api-state';
 import { LiveFeedScreen } from '@/features/feed/live-feed-screen';
-import { useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 const RECOMMENDATION_LIMIT = 3;
@@ -189,13 +189,29 @@ function PostSearchResultCard({ item }: { item: ExploreItemDto }) {
 }
 
 export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
-  const { q } = useLocalSearchParams<{ q?: string }>();
+  const { q, autoFocus } = useLocalSearchParams<{ q?: string; autoFocus?: string }>();
+  const [prevQ, setPrevQ] = useState(q);
   const [text, setText] = useState(q ?? '');
   const [submittedQuery, setSubmittedQuery] = useState(q?.trim() ?? '');
   const [postType, setPostType] = useState<SearchPostsRequestDtoPostType>('all');
   const [cursor, setCursor] = useState<string | null>(null);
   const [category, setCategory] = useState<'all' | 'sea' | 'weekend'>('all');
   const input = useRef<ComponentRef<typeof TextInput>>(null);
+
+  if (q !== prevQ) {
+    setPrevQ(q);
+    setText(q ?? '');
+    setSubmittedQuery(q?.trim() ?? '');
+  }
+
+  useEffect(() => {
+    if (autoFocus === '1' || autoFocus === 'true') {
+      const timer = setTimeout(() => {
+        input.current?.focus();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [autoFocus]);
 
   const isBrowsing = !back && !submittedQuery && !text.trim();
 
@@ -242,17 +258,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
         />
       }
     >
-      {isBrowsing && (
-        <View style={{ gap: spacing.xs }}>
-          <Txt variant="small" style={ui.muted}>
-            {copy.explore.intro}
-          </Txt>
-          <Txt variant="title">{copy.explore.browseTitle}</Txt>
-        </View>
-      )}
-      <Button tone="teal" icon="airplane-outline" onPress={() => router.push('/flights')}>
-        {vi.flights.title}
-      </Button>
+      {/* Search Bar at the very top */}
       <View style={styles.searchBar}>
         <Icon name="search-outline" color={colors.textMuted} size={20} />
         <TextInput
@@ -275,6 +281,17 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
 
       {isBrowsing && (
         <>
+          <Button tone="teal" icon="airplane-outline" onPress={() => router.push('/flights')}>
+            {vi.flights.title}
+          </Button>
+
+          <View style={{ gap: spacing.xs }}>
+            <Txt variant="small" style={ui.muted}>
+              {copy.explore.intro}
+            </Txt>
+            <Txt variant="title">{copy.explore.browseTitle}</Txt>
+          </View>
+
           <Row style={styles.categories}>
             <Chip selected={category === 'all'} onPress={() => setCategory('all')}>
               {copy.notifications.all}

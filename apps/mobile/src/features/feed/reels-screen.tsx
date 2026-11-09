@@ -131,7 +131,10 @@ export function ReelsScreen() {
               {vi.api.next}
             </Button>
           )}
-          <Button tone="secondary" onPress={() => router.push('/(tabs)/explore')}>
+          <Button
+            tone="secondary"
+            onPress={() => router.push({ pathname: '/(tabs)/explore', params: { autoFocus: '1' } })}
+          >
             {vi.api.search}
           </Button>
         </>
@@ -304,7 +307,7 @@ export function ReelsFeed({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={vi.api.search}
-            onPress={() => router.push('/(tabs)/explore')}
+            onPress={() => router.push({ pathname: '/(tabs)/explore', params: { autoFocus: '1' } })}
             style={({ pressed }) => [styles.searchBar, pressed && styles.searchBarPressed]}
           >
             <Icon name="search-outline" size={16} color="rgba(255, 255, 255, 0.9)" />
