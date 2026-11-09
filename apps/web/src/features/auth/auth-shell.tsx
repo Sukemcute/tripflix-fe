@@ -5,17 +5,14 @@ import type { ReactNode } from 'react';
 import { AuthCardBody } from './auth-card-body';
 import { AuthSplitFrame } from './auth-split-frame';
 
-/** Logo bấm về trang chủ: các trang đăng nhập, đăng ký không có header chung của web. */
-function AuthLogo({ width = 132 }: { width?: number }) {
+/**
+ * Logo bấm về trang chủ: các trang đăng nhập, đăng ký không có header chung của web. Cùng kích thước và vị trí
+ * với logo trên header trang chủ (142x42, xem .auth-logo), để chuyển trang logo không nhảy.
+ */
+function AuthLogo() {
   return (
     <Link className="auth-logo" href="/" aria-label={vi.api.authHomeLink}>
-      <Image
-        src="/brand/tripflix-logo.svg"
-        alt={vi.demo.common.logo}
-        width={width}
-        height={Math.round(width * 0.3)}
-        priority
-      />
+      <Image src="/brand/tripflix-logo.svg" alt={vi.demo.common.logo} width={142} height={42} priority />
     </Link>
   );
 }

@@ -1211,7 +1211,8 @@ body:has(.auth-fullscreen) {
   justify-content: space-between;
   gap: 24px;
   min-height: 0;
-  padding: 36px 56px 44px;
+  /* Lề trái bằng lề của .ota-container trên trang chủ, để logo và tiêu đề thẳng hàng với logo header. */
+  padding: 0 56px 44px calc((100vw - min(1600px, 100vw - clamp(48px, 8vw, 160px))) / 2);
 }
 /* Nền ảnh phong cảnh mờ phủ cả trang, phía sau lời chào và thẻ form. */
 .auth-hero-bg {
@@ -1242,9 +1243,17 @@ body:has(.auth-fullscreen) {
     color-mix(in srgb, var(--color-background) 85%, transparent) 100%
   );
 }
+/* Hàng logo cao 80px, logo giữa hàng: trùng vị trí logo trên header trang chủ (.header-content). */
 .auth-logo {
-  display: inline-flex;
+  display: flex;
+  align-items: center;
+  flex: none;
   width: fit-content;
+  min-height: 80px;
+}
+.auth-logo img {
+  width: 142px;
+  height: auto;
 }
 .auth-headline {
   /* Co theo cả chiều rộng lẫn chiều cao màn hình để vừa một màn hình. */
@@ -2162,9 +2171,10 @@ body:has(.auth-fullscreen) {
   .auth-split[data-mode='register'] .auth-headline {
     font-size: 28px;
   }
+  /* Như header trang chủ ở màn này: lề 20px, hàng logo 80px. */
   .auth-hero {
     gap: 16px;
-    padding: 20px;
+    padding: 0 20px 20px;
   }
   .auth-headline {
     max-width: none;
@@ -2191,6 +2201,17 @@ body:has(.auth-fullscreen) {
   .auth-field-pair,
   .auth-register-grid {
     grid-template-columns: 1fr;
+  }
+  /* Như header trang chủ ở màn hẹp: lề 16px, logo 120px, cách trên 16px trong hàng 48px. */
+  .auth-hero {
+    padding-inline: 16px;
+  }
+  .auth-logo {
+    min-height: 48px;
+    margin-top: 16px;
+  }
+  .auth-logo img {
+    width: 120px;
   }
   .device-item {
     flex-direction: column;
