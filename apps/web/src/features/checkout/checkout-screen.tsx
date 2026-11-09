@@ -11,6 +11,7 @@ import {
 } from '@tripflix/api-client';
 import {
   findCheckoutFieldErrors,
+  findStayDate,
   findTravelDates,
   holdCountdown,
   type GuestFieldError,
@@ -41,6 +42,8 @@ const BIRTHDATE_MESSAGES: Partial<Record<GuestFieldError, MessageKey>> = {
   adultAge: 'commerce.fieldErrors.adultAge',
   childAge: 'commerce.fieldErrors.childAge',
   infantAge: 'commerce.fieldErrors.infantAge',
+  childRoomAge: 'commerce.fieldErrors.childRoomAge',
+  infantRoomAge: 'commerce.fieldErrors.infantRoomAge',
 };
 
 /** Câu báo cho một ô sai; khoá ô giống tên trường server trả về (contact.phone, guests[0].birthdate). */
@@ -150,6 +153,7 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
         guests: passengers,
         passengerTypes: order.passengerTypes,
         travelDates: findTravelDates(order.items),
+        stayDate: findStayDate(order.items),
         today: toLocalIsoDate(new Date()),
       });
       const messages = Object.fromEntries(
@@ -366,7 +370,7 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                       {copy.guest} {index + 1}
                       {order.passengerTypes[index] && (
                         <span className={styles.guestType}>
-                          {copy.guestTypes[order.passengerTypes[index]]}
+                          {(findTravelDates(order.items) ? copy.guestTypes : copy.roomGuestTypes)[order.passengerTypes[index]]}
                         </span>
                       )}
                     </p>

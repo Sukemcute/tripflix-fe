@@ -1,67 +1,73 @@
 'use client';
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { createCheckoutOperation, useApiSession } from '@tripflix/api-client';
+import {
+  addBookingCartItem,
+  countBookingCartGuests,
+  getBookingCartItemKey,
+  setBookingCartItemQty,
+  type BookingCartGuests,
+  type BookingCartItem,
+} from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { CheckoutError } from './checkout-error';
+import { saveBookingSelection, useBookingSelection } from './cart-store';
+import styles from './cart.module.css';
 
 const copy = vi.commerce;
 
-export interface BookRateInput {
-  productId: string;
-  ratePlanCode: string;
-  checkIn: string;
-  checkOut: string;
-  adults: number;
-  roomCount: number;
-}
+/** Chọn số phòng của một gói giá; số đã chọn nằm trong giỏ, chưa giữ chỗ. */
+export function BookRateButton({
+  booking,
+  guests,
+  isDisabled,
+}: {
+  booking: Omit<BookingCartItem, 'qty'>;
+  guests: BookingCartGuests;
+  isDisabled?: boolean;
+}) {
+  const cart = useBookingSelection();
+  const [notice, setNotice] = useState('');
+  const key = getBookingCartItemKey(booking);
+  const line = cart.items.find((cartLine) => getBookingCartItemKey(cartLine) === key);
 
-/** Giữ chỗ gói giá đã chọn rồi chuyển sang trang thanh toán; chưa đăng nhập thì đăng nhập trước. */
-export function BookRateButton({ booking, isDisabled }: { booking: BookRateInput; isDisabled?: boolean }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const { user, isReady } = useApiSession();
-  // Một operation cho mỗi nút để bấm lại (mất mạng) gửi đúng Idempotency-Key cũ.
-  const [createCheckout] = useState(createCheckoutOperation);
-  const mutation = useMutation({
-    retry: false,
-    mutationFn: () =>
-      createCheckout({
-        adults: booking.adults,
-        items: [
-          {
-            productId: booking.productId,
-            checkIn: booking.checkIn,
-            checkOut: booking.checkOut,
-            qty: booking.roomCount,
-            ratePlanCode: booking.ratePlanCode,
-          },
-        ],
-      }),
-    onSuccess: (order) => router.push(`/checkout/${encodeURIComponent(order.orderId)}`),
-  });
+  const selectQty = (qty: number) => {
+    if (line) {
+      saveBookingSelection(setBookingCartItemQty(cart, key, qty));
+      return;
+    }
+    if (qty === 0) return;
+    const result = addBookingCartItem(cart, { ...booking, qty }, guests);
+    if (result.outcome === 'adults_mismatch') {
+      setNotice(`${copy.cartAdultsMismatch} ${countBookingCartGuests(cart)} ${copy.guests}.`);
+      return;
+    }
+    if (result.outcome === 'full') {
+      setNotice(copy.cartFull);
+      return;
+    }
+    setNotice('');
+    saveBookingSelection(result.cart);
+  };
 
-  if (isReady && !user) {
-    const returnTo = `${pathname}?${searchParams.toString()}`;
-    return (
-      <a className="secondary-button" href={`/login?returnTo=${encodeURIComponent(returnTo)}`}>
-        {copy.login}
-      </a>
-    );
-  }
   return (
-    <>
-      <button
-        type="button"
-        className="primary-button"
-        disabled={isDisabled || !isReady || mutation.isPending}
-        onClick={() => mutation.mutate()}
+    <div className={styles.adder}>
+      <select
+        className={styles.qtySelect}
+        aria-label={copy.cartSelectRooms}
+        value={line?.qty ?? 0}
+        disabled={isDisabled}
+        onChange={(event) => selectQty(Number(event.target.value))}
       >
-        {mutation.isPending ? vi.api.loading : copy.choose}
-      </button>
-      <CheckoutError error={mutation.error} />
-    </>
+        {Array.from({ length: booking.maxQty + 1 }, (_, qty) => (
+          <option key={qty} value={qty}>
+            {qty} {copy.cartRooms}
+          </option>
+        ))}
+      </select>
+      {notice && (
+        <p role="alert" className={styles.warning}>
+          {notice}
+        </p>
+      )}
+    </div>
   );
 }
