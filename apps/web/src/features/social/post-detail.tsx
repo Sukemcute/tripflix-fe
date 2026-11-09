@@ -66,7 +66,9 @@ export function LivePostDetail({ id }: { id: string }) {
   const login = `/login?returnTo=${encodeURIComponent(`/trips/${id}`)}`;
   const trip = post?.tripAttachment;
   const isAuthor = !!post && post.authorId === user?.id;
-  const authorName = isAuthor ? (user?.displayName ?? vi.api.postYou) : vi.api.postAuthorFallback;
+  const authorName = isAuthor
+    ? (user?.displayName ?? vi.api.postYou)
+    : post?.authorName?.trim() || vi.api.postAuthorFallback;
   const cover = getPostCover(trip?.destinationName);
 
   if (isNotFound) {

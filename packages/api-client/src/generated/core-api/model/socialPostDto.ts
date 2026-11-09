@@ -13,6 +13,11 @@ import type { TripAttachmentDto } from './tripAttachmentDto';
 export interface SocialPostDto {
   id: string;
   authorId: string;
+  /**
+   * Tên hiển thị của tác giả
+   * @nullable
+   */
+  authorName?: string | null;
   postType: SocialPostDtoPostType;
   title: string;
   body: string;
