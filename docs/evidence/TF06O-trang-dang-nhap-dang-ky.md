@@ -46,3 +46,4 @@
 - Cách xác định: mở trang server bằng Playwright, chèn CSS tắt lần lượt: tắt khúc xạ thì hết; tắt `clip-path` hoặc `overflow: clip` của thẻ thì vẫn lỗi.
 - Sửa: bỏ bộ lọc khúc xạ, giữ kính mờ, viền sáng, ánh phản chiếu. Lint, typecheck pass; Playwright local: đăng ký và trượt 16/16, đăng nhập 9/9.
 - Ô Google (sửa thêm): còn nền xanh nhạt khi rê chuột (nền của nút Google trong iframe) và chỉ bấm được vùng giữa (nút "icon" cố định ~40px). Ô và logo G giờ do web vẽ; nút thật của Google phóng 2,5 lần phủ kín ô, opacity 0.01. Kiểm trên trang server (chèn CSS mới qua Playwright): bốn góc và giữa ô đều trúng nút Google, bấm góc dưới trái mở cửa sổ accounts.google.com, không còn nền xanh.
+- Logo trang đăng nhập, đăng ký trùng vị trí logo header trang chủ (cùng 142x42, lề trái theo `.ota-container`, giữa hàng 80px; màn ≤640px: 120px, lề 16px). Đo bằng Playwright: 1440px x=58 y=19, 1920px x=160 y=19, 390px x=16 y=22 ở cả `/`, `/login`, `/register`.
