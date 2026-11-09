@@ -1,6 +1,9 @@
 'use client';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  evictPostFromCache,
+  HttpError,
+  isPostNotFoundError,
   socialApi,
   updateReelSocialCache,
   useApiSession,
@@ -521,6 +524,15 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
     enabled: isReady && Boolean(activePost?.id),
     queryFn: ({ signal }) => socialApi.getPost(activePost!.id, signal),
   });
+
+  const isPostNotFound = Boolean(activePost && isPostNotFoundError(postDetailQuery.error));
+
+  // Tự động dọn cache khi bài viết nhận lỗi 404 (đã bị xoá hoặc tạm ẩn do kiểm duyệt)
+  useEffect(() => {
+    if (activePost && isPostNotFoundError(postDetailQuery.error)) {
+      evictPostFromCache(client, activePost.id);
+    }
+  }, [activePost, postDetailQuery.error, client]);
 
   // Tự động tải trang bài viết tiếp theo khi người dùng lướt gần tới cuối danh sách
   useEffect(() => {
@@ -1727,6 +1739,25 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
                   </button>
                 )}
               </div>
+
+              {isPostNotFound && (
+                <div className={styles.postUnavailableOverlay} role="alert">
+                  <div className={styles.postUnavailableIcon} aria-hidden="true">
+                    ⚠️
+                  </div>
+                  <h3 className={styles.postUnavailableTitle}>{vi.api.postUnavailable}</h3>
+                  <p className={styles.postUnavailableDesc}>{vi.api.postUnavailableHint}</p>
+                  {posts.length > 1 && (
+                    <button
+                      type="button"
+                      className={styles.postUnavailableNextBtn}
+                      onClick={() => selectPostByOffset(1)}
+                    >
+                      {vi.api.postUnavailableNext}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Cột phải sát cạnh Media Stage: Vertical Action Bar (Avatar +, Like, Comment, Save, Share) */}

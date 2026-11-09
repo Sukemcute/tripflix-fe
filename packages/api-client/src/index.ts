@@ -27,6 +27,7 @@ export {
 } from './post-summary';
 export { feedApi, useReelsFeed } from './feed';
 export { updateReelSocialCache } from './reel-social-cache';
+export { evictPostFromCache, isPostNotFoundError } from './post-cache';
 export { useStaySearch, getAvailableStays, getFutureDate, type StayFilters } from './stay-search';
 export {
   buildFlightCheckout,
