@@ -1,5 +1,6 @@
 'use client';
 import { vi } from '@tripflix/i18n';
+import Image from 'next/image';
 import Script from 'next/script';
 import { useEffect, useRef, useState } from 'react';
 
@@ -20,13 +21,11 @@ interface GoogleIdentityServices {
       renderButton(
         parent: HTMLElement,
         options: {
-          type: 'standard';
+          type: 'icon';
           theme: 'outline';
           size: 'large';
-          text: 'continue_with';
-          shape: 'pill';
+          shape: 'square';
           locale: string;
-          width: number;
         },
       ): void;
     };
@@ -41,7 +40,9 @@ declare global {
 const GOOGLE_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 
 /**
- * Nút "Tiếp tục với Google". Chưa đặt NEXT_PUBLIC_GOOGLE_CLIENT_ID thì không hiện gì (BE cũng trả 503).
+ * Nút Google chỉ có logo (kiểu "icon" của Google Identity Services), đặt trong ô vuông cùng kiểu ô nhập.
+ * Nút do Google tự vẽ trong iframe; chỉ cắt viền mảnh của nó (CSS), không tự vẽ nút giả.
+ * Chưa đặt NEXT_PUBLIC_GOOGLE_CLIENT_ID thì không hiện gì (BE cũng trả 503).
  * Google trả ID token (credential), trang gửi cho core-api qua session.loginWithGoogle.
  */
 export function GoogleButton({ onCredential }: { onCredential: (idToken: string) => void }) {
@@ -67,13 +68,11 @@ export function GoogleButton({ onCredential }: { onCredential: (idToken: string)
       cancel_on_tap_outside: true,
     });
     google.accounts.id.renderButton(parent, {
-      type: 'standard',
+      type: 'icon',
       theme: 'outline',
       size: 'large',
-      text: 'continue_with',
-      shape: 'pill',
+      shape: 'square',
       locale: 'vi',
-      width: Math.min(parent.offsetWidth || 360, 400),
     });
   }, [clientId, isScriptReady]);
 
@@ -85,8 +84,17 @@ export function GoogleButton({ onCredential }: { onCredential: (idToken: string)
       <div className="auth-divider" aria-hidden="true">
         <span>{vi.api.orContinueWith}</span>
       </div>
-      {/* Google tự vẽ nút vào thẻ này, React không đặt phần tử con nào bên trong. */}
-      <div ref={container} className="auth-google" aria-busy={!isScriptReady} />
+      <div className="auth-google">
+        <div className="auth-google-tile">
+          {/* Google tự vẽ nút vào thẻ này, React không đặt phần tử con nào bên trong. */}
+          <div ref={container} className="auth-google-button" aria-busy={!isScriptReady} />
+          {/*
+            Logo G nằm trên, chuột bấm xuyên xuống nút thật của Google. Google vẽ logo trùng đúng chỗ này;
+            khi Google chưa vẽ (đang tải, origin chưa được cho phép) ô vẫn có logo thay vì trống.
+          */}
+          <Image className="auth-google-mark" src="/brand/google-g.svg" alt="" width={20} height={20} />
+        </div>
+      </div>
       {!isScriptReady && <p className="auth-hint">{vi.api.googleLoading}</p>}
     </>
   );

@@ -6,7 +6,6 @@ import { vi } from '@tripflix/i18n';
 import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { ApiErrorNotice } from '@/features/shared/api-state';
-import { AuthShell } from './auth-shell';
 
 export function VerifyEmail({ token }: { token?: string }) {
   const { session, isReady, user } = useApiSession();
@@ -21,7 +20,7 @@ export function VerifyEmail({ token }: { token?: string }) {
   const isInvalid = !token || getApiErrorKind(verify.error) === 'invalid';
 
   return (
-    <AuthShell>
+    <>
       <h2>{vi.api.verifyEmailTitle}</h2>
       {verify.isSuccess ? (
         <>
@@ -49,6 +48,6 @@ export function VerifyEmail({ token }: { token?: string }) {
       <Link className="auth-link auth-switch" href="/account">
         {vi.api.verifyEmailAccount}
       </Link>
-    </AuthShell>
+    </>
   );
 }
