@@ -13,6 +13,7 @@ import {
   mediaUploadControllerCompleteUpload,
 } from '@tripflix/api-client/core-api/media/media';
 import type {
+  FeedCardDto,
   SocialPostDto,
   TripAttachmentDto,
   TripItineraryItemDto,
@@ -460,6 +461,410 @@ function AccountPostGrid({
  * - Right Panel: Post Details & Comments (Đồng bộ theo activePostId, bình luận cha–con + Sticky Comment Composer)
  * - Mặc định Light Mode + nút chuyển đổi Light / Dark Mode.
  */
+interface MediaTrackItemProps {
+  itemRef?: (el: HTMLDivElement | null) => void;
+  index: number;
+  post: SocialPostDto;
+  isActive: boolean;
+  isNearActive: boolean;
+  reelCard?: FeedCardDto;
+  user: { id: string; displayName: string } | null;
+  videoRef?: React.RefObject<HTMLVideoElement | null>;
+  isMuted: boolean;
+  isPlaying: boolean;
+  showPlayFlash: boolean;
+  videoProgress: number;
+  onVideoTimeUpdate: (e: React.SyntheticEvent<HTMLVideoElement>) => void;
+  mediaErrorPostId: string | null;
+  onMediaError: (postId: string) => void;
+  onTogglePlay: () => void;
+  captionExpandedPostId: string | null;
+  onToggleCaption: (postId: string) => void;
+  onOpenTag: (tag: string) => void;
+  onOpenItinerary: (postId: string) => void;
+  onOpenGallery: (postId: string, imageIndex: number) => void;
+  imageOrientations: Record<string, 'portrait' | 'landscape' | 'square'>;
+  onOrientationDetected: (src: string, orientation: 'portrait' | 'landscape' | 'square') => void;
+}
+
+/**
+ * Tung phan tu noi dung media ben trong Media Track.
+ * Chi co Media Track truot doc ben trong khung 9:16 co dinh (chuan TikTok).
+ */
+function MediaTrackItem({
+  itemRef,
+  index,
+  post,
+  isActive,
+  isNearActive,
+  reelCard,
+  user,
+  videoRef,
+  isMuted,
+  isPlaying,
+  showPlayFlash,
+  videoProgress,
+  onVideoTimeUpdate,
+  mediaErrorPostId,
+  onMediaError,
+  onTogglePlay,
+  captionExpandedPostId,
+  onToggleCaption,
+  onOpenTag,
+  onOpenItinerary,
+  onOpenGallery,
+  imageOrientations,
+  onOrientationDetected,
+}: MediaTrackItemProps) {
+  const trip = post.tripAttachment ?? null;
+  const hasItinerary = Boolean(
+    trip &&
+      (trip.destinationName ||
+        trip.hotelName ||
+        trip.daysCount ||
+        trip.estimatedCostPerPerson ||
+        (trip.items && trip.items.length > 0)),
+  );
+
+  const postImages = useMemo(
+    () =>
+      getPostImages({
+        mediaIds: post.mediaIds,
+        posterUrl: reelCard ? selectReelPoster(reelCard.video.posters, 720) : undefined,
+        destinationName: trip?.destinationName,
+        hotelName: trip?.hotelName,
+        title: post.title,
+        body: post.body,
+        hashtags: post.hashtags,
+        itineraryItems: trip?.items,
+      }),
+    [post, reelCard, trip],
+  );
+
+  const coverImage = postImages[0]?.src;
+  const isMediaError = mediaErrorPostId === post.id;
+  const isCaptionExpanded = captionExpandedPostId === post.id;
+  const authorInfo = formatAuthorDisplay(post.authorId, reelCard?.author.name, user?.id, user?.displayName);
+
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (!isActive && localVideoRef.current) {
+      localVideoRef.current.pause();
+    }
+  }, [isActive]);
+
+  return (
+    <div
+      ref={itemRef}
+      className={styles.mediaItem}
+      data-index={index}
+      data-post-id={post.id}
+      aria-hidden={!isActive}
+    >
+      {coverImage && (
+        <div
+          className={styles.mediaBackdropBlur}
+          style={{ backgroundImage: `url(${coverImage})` }}
+        />
+      )}
+
+      {/* Media Content: Video -> Adaptive Image Grid -> Text-Only */}
+      {reelCard?.video && post.postType === 'video' && !isMediaError ? (
+        <>
+          {isNearActive ? (
+            <video
+              ref={(el) => {
+                localVideoRef.current = el;
+                if (videoRef) {
+                  if (isActive) {
+                    (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
+                  } else if (videoRef.current === el) {
+                    (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = null;
+                  }
+                }
+              }}
+              className={`${styles.mediaVideoElement} ${
+                reelCard.video.aspect === '16:9' ? styles.mediaVideoLandscape : ''
+              }`}
+              src={reelCard.video.hlsUrl}
+              poster={selectReelPoster(reelCard.video.posters, 720)}
+              playsInline
+              loop
+              muted={isMuted}
+              onTimeUpdate={isActive ? onVideoTimeUpdate : undefined}
+              onError={() => onMediaError(post.id)}
+              onClick={isActive ? onTogglePlay : undefined}
+            >
+              <track kind="captions" />
+            </video>
+          ) : (
+            <Image
+              src={coverImage ?? POST_COVER_MASCOT}
+              alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, 480px"
+              className={styles.mediaImageElement}
+              unoptimized={Boolean(coverImage?.startsWith('http'))}
+            />
+          )}
+
+          {isActive && (
+            <>
+              <button
+                type="button"
+                className={`${styles.centerPlayOverlayBtn} ${
+                  !showPlayFlash ? styles.centerPlayOverlayHidden : ''
+                }`}
+                aria-label={isPlaying ? vi.api.immersivePauseVideo : vi.api.immersivePlayVideo}
+                tabIndex={-1}
+                onClick={onTogglePlay}
+              >
+                <SocialIcon name={isPlaying ? 'play' : 'pause'} size={26} />
+              </button>
+              <div className={styles.progressBarTrack} aria-hidden="true">
+                <div
+                  className={styles.progressBarFill}
+                  style={{ width: `${Math.min(100, Math.max(0, videoProgress))}%` }}
+                />
+              </div>
+            </>
+          )}
+        </>
+      ) : postImages.length > 0 ? (
+        (() => {
+          const totalCount = postImages.length;
+          const leadOrientation =
+            (coverImage ? imageOrientations[coverImage] : undefined) ?? 'portrait';
+          const isLeadLandscape = leadOrientation === 'landscape';
+          const visibleCount = totalCount >= 5 ? 5 : totalCount;
+          const visibleList = postImages.slice(0, visibleCount);
+
+          const gridVariantClass =
+            totalCount === 1
+              ? styles.gridSingle
+              : totalCount === 2
+                ? isLeadLandscape
+                  ? styles.gridTwoRows
+                  : styles.gridTwoCols
+                : totalCount === 3
+                  ? isLeadLandscape
+                    ? styles.gridThreeLandscape
+                    : styles.gridThreePortrait
+                  : totalCount === 4
+                    ? isLeadLandscape
+                      ? styles.gridFourLandscape
+                      : styles.gridFour
+                    : styles.gridFiveCollage;
+
+          const fiveTileClasses = [
+            styles.collageLeftTop,
+            styles.collageLeftBottom,
+            styles.collageRightTop,
+            styles.collageRightMiddle,
+            styles.collageRightBottom,
+          ];
+
+          return (
+            <div className={`${styles.adaptiveImageGrid} ${gridVariantClass}`}>
+              {visibleList.map((img, i) => {
+                const imgOrientation = imageOrientations[img.src];
+                const isSingleLandscape = totalCount === 1 && isLeadLandscape;
+
+                let cellSpanClass = '';
+                if (totalCount === 1 && isSingleLandscape) {
+                  cellSpanClass = styles.gridCellSingleBackdrop ?? '';
+                } else if (totalCount === 3 && i === 0) {
+                  cellSpanClass = isLeadLandscape
+                    ? (styles.gridCellSpanTwoCols ?? '')
+                    : (styles.gridCellSpanTwoRows ?? '');
+                } else if (totalCount === 4 && isLeadLandscape && i === 0) {
+                  cellSpanClass = styles.gridCellSpanThreeCols ?? '';
+                } else if (totalCount >= 5) {
+                  cellSpanClass = fiveTileClasses[i] ?? '';
+                }
+
+                const extraCount = totalCount > 5 && i === 4 ? totalCount - 4 : 0;
+                const resolvedObjectPosition =
+                  imgOrientation === 'portrait'
+                    ? 'center 25%'
+                    : imgOrientation === 'landscape'
+                      ? 'center center'
+                      : img.focalPoint;
+
+                return (
+                  <button
+                    key={img.src}
+                    type="button"
+                    className={`${styles.gridCellBtn} ${cellSpanClass}`}
+                    aria-label={t('api.immersiveOpenImageAria', {
+                      index: i + 1,
+                      total: totalCount,
+                    })}
+                    onClick={() => onOpenGallery(post.id, i)}
+                  >
+                    <Image
+                      src={img.src}
+                      alt={post.title}
+                      fill
+                      className={
+                        isSingleLandscape ? styles.gridCellImgContain : styles.gridCellImg
+                      }
+                      style={
+                        isSingleLandscape ? undefined : { objectPosition: resolvedObjectPosition }
+                      }
+                      sizes="(max-width: 1024px) 100vw, 480px"
+                      priority={i === 0 && isActive}
+                      unoptimized={img.src.startsWith('http')}
+                      onLoad={(event) => {
+                        const el = event.currentTarget;
+                        if (!el.naturalWidth || !el.naturalHeight) return;
+                        const ratio = el.naturalWidth / el.naturalHeight;
+                        const nextOrientation: 'portrait' | 'landscape' | 'square' =
+                          ratio > 1.15
+                            ? 'landscape'
+                            : ratio < 0.9
+                              ? 'portrait'
+                              : 'square';
+                        onOrientationDetected(img.src, nextOrientation);
+                      }}
+                    />
+                    {extraCount > 0 && (
+                      <span className={styles.gridCellMoreOverlay} aria-hidden="true">
+                        +{extraCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()
+      ) : (
+        <div className={styles.textOnlyStage}>
+          <h2 className={styles.textOnlyTitle}>{post.title}</h2>
+          <p className={styles.textOnlyBody}>{post.body}</p>
+        </div>
+      )}
+
+      {/* Bottom Post Overlay */}
+      <div className={styles.stageBottomOverlay}>
+        <div className={styles.overlayAuthorRow}>
+          <span className={styles.overlayAvatar} aria-hidden="true">
+            {getInitial(authorInfo.name)}
+          </span>
+          <div className={styles.overlayAuthorMeta}>
+            <div className={styles.overlayAuthorNameRow}>
+              <span>{authorInfo.name}</span>
+              {(post.isVerified || reelCard?.author.isKol) && (
+                <SocialIcon name="verified" size={16} />
+              )}
+            </div>
+            <span className={styles.overlayAuthorHandle}>{authorInfo.handle}</span>
+          </div>
+        </div>
+
+        {Boolean(postImages.length > 0 || reelCard?.video) && (
+          <div className={styles.overlayCaptionBox}>
+            <p
+              className={`${styles.overlayCaptionText} ${
+                !isCaptionExpanded ? styles.overlayCaptionClamped : ''
+              }`}
+            >
+              <strong>{post.title}</strong> — {post.body}
+            </p>
+            {post.body.length > 80 && (
+              <button
+                type="button"
+                className={styles.overlayExpandBtn}
+                onClick={() => onToggleCaption(post.id)}
+              >
+                {isCaptionExpanded ? vi.api.postShowLess : vi.api.postReadMore}
+              </button>
+            )}
+          </div>
+        )}
+
+        {post.hashtags.length > 0 && (
+          <div className={styles.overlayTagRow}>
+            {post.hashtags.slice(0, 4).map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                className={styles.overlayTagPill}
+                onClick={() => onOpenTag(tag)}
+              >
+                #{tag}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {hasItinerary && trip && (
+          <button
+            type="button"
+            className={styles.overlayAttachedTripCard}
+            onClick={() => onOpenItinerary(post.id)}
+          >
+            <div className={styles.overlayTripLeft}>
+              <span className={styles.overlayTripThumb}>
+                <Image
+                  src={coverImage ?? POST_COVER_MASCOT}
+                  alt=""
+                  fill
+                  sizes="44px"
+                  unoptimized={Boolean(coverImage?.startsWith('http'))}
+                />
+              </span>
+              <div className={styles.overlayTripText}>
+                <span className={styles.overlayTripTitle}>
+                  {trip.hotelName ?? trip.destinationName ?? post.title}
+                </span>
+                <span className={styles.overlayTripSub}>
+                  {[
+                    vi.api.immersiveTabSchedule,
+                    trip.items?.length
+                      ? t('api.immersiveStopsCount', { count: trip.items.length })
+                      : trip.daysCount
+                        ? t('api.postTripDaysBadge', { count: trip.daysCount })
+                        : null,
+                    trip.estimatedCostPerPerson
+                      ? `~${trip.estimatedCostPerPerson.toLocaleString('vi-VN')}d/nguoi`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              </div>
+            </div>
+            <SocialIcon name="chevronRight" size={18} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Phan biet con lan chuot vat ly (Mouse Wheel) va ban di cam ung (Touchpad).
+ * - Mouse Wheel: deltaMode !== 0, hoac deltaY co gia tri lon roi rac (>= 50, boi so 100/120), deltaX = 0, khong phai dong su kien lien tuc.
+ * - Touchpad: deltaMode === 0, dong su kien lien tuc tan so cao voi gia tri ban dau nho (< 40) hoac so thap phan.
+ */
+function isPhysicalMouseWheel(event: WheelEvent): boolean {
+  if (event.deltaMode !== 0) return true;
+
+  const absY = Math.abs(event.deltaY);
+  const absX = Math.abs(event.deltaX);
+
+  if (absX === 0 && (absY % 100 === 0 || absY % 120 === 0) && absY >= 100) {
+    return true;
+  }
+
+  return false;
+}
+
+
+
 function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: string }) {
   const { isReady, user } = useApiSession();
   const client = useQueryClient();
@@ -479,12 +884,20 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
   const [isMuted, setMuted] = useState(true);
   const [volume, setVolume] = useState(0.8);
   const [isPlaying, setPlaying] = useState(true);
-  const [slideDirection, setSlideDirection] = useState<'down' | 'up' | null>(null);
-  const [outgoingPost, setOutgoingPost] = useState<SocialPostDto | null>(null);
-  const [isSlideAnimating, setIsSlideAnimating] = useState(false);
-  const isSlideAnimatingRef = useRef(false);
-  const slideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const centerPanelRef = useRef<HTMLElement | null>(null);
+  const trackScrollRef = useRef<HTMLDivElement | null>(null);
+  const mediaItemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const activePostIdRef = useRef<string | null>(activePostId);
+  const lastCommittedPostIdRef = useRef<string | null>(activePostId);
+  const targetIndexRef = useRef<number>(0);
+  const isProgrammaticNavRef = useRef<boolean>(false);
+  const navCooldownRef = useRef<number>(0);
+  const lastWheelTimeRef = useRef<number>(0);
+  const scrollSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollEndSafetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    activePostIdRef.current = activePostId;
+  }, [activePostId]);
   const [showPlayFlash, setShowPlayFlash] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
   const [mediaErrorPostId, setMediaErrorPostId] = useState<string | null>(null);
@@ -505,8 +918,6 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
   const commentInputRef = useRef<HTMLInputElement | null>(null);
   const rightScrollRef = useRef<HTMLDivElement | null>(null);
-  const wheelLockUntilRef = useRef<number>(0);
-  const touchStartYRef = useRef<number | null>(null);
 
   const queryKind = filterMode === 'saved' ? 'bookmarks' : 'public';
   const postsQuery = useSocialPosts(queryKind, filterMode === 'saved' ? '' : searchInput.trim());
@@ -553,7 +964,26 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
 
   const activePost = activeIndex >= 0 ? posts[activeIndex] ?? null : null;
   const isMediaError = Boolean(activePost && mediaErrorPostId === activePost.id);
-  const isCaptionExpanded = Boolean(activePost && captionExpandedPostId === activePost.id);
+
+  const trip = activePost?.tripAttachment ?? null;
+  const reelCard = activePost ? reelMap.get(activePost.id) : undefined;
+  const postImages = activePost
+    ? getPostImages({
+        mediaIds: activePost.mediaIds,
+        posterUrl: reelCard ? selectReelPoster(reelCard.video.posters, 720) : undefined,
+        destinationName: trip?.destinationName,
+        hotelName: trip?.hotelName,
+        title: activePost.title,
+        body: activePost.body,
+        hashtags: activePost.hashtags,
+        itineraryItems: trip?.items,
+      })
+    : [];
+  const coverImage = postImages[0]?.src;
+  const activeGalleryIndex =
+    galleryState && activePost && galleryState.postId === activePost.id
+      ? Math.min(galleryState.index, Math.max(0, postImages.length - 1))
+      : null;
 
   // Lấy viewerContext thực tế của bài đang active (myReaction, isBookmarked)
   const postDetailQuery = useQuery({
@@ -615,50 +1045,266 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
     }
   }, [activePost?.id, attemptPlayVideo]);
 
-  useEffect(() => {
-    return () => {
-      if (slideTimerRef.current) {
-        clearTimeout(slideTimerRef.current);
-      }
-    };
+
+
+  const togglePlayPause = useCallback(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) {
+      void el.play().catch(() => {});
+      setPlaying(true);
+    } else {
+      el.pause();
+      setPlaying(false);
+    }
+    setShowPlayFlash(true);
+    if (playFlashTimerRef.current) {
+      clearTimeout(playFlashTimerRef.current);
+    }
+    playFlashTimerRef.current = setTimeout(() => {
+      setShowPlayFlash(false);
+    }, 700);
   }, []);
 
-  const selectPostByOffset = useCallback(
-    (delta: -1 | 1) => {
-      if (posts.length === 0 || isSlideAnimatingRef.current) return;
-      const nextIdx = activeIndex + delta;
-      const target = posts[nextIdx];
-      if (!target) return;
+  // Chi cap nhat activePostId (va counter 3/10, count like/comment/save/share, comments panel)
+  // khi thao tac luot hoac chuyen bai da hoan tat 100% va dung yen (settled).
+  // TUYET DOI KHONG goi scrollTo hay can thiep vao vi tri de CSS Scroll Snap native tu xu ly muot ma.
+  const commitSettledPost = useCallback(
+    (targetIdx?: number) => {
+      const container = trackScrollRef.current;
+      if (!container || posts.length === 0) return;
+
+      let settledIndex: number;
+      if (typeof targetIdx === 'number') {
+        settledIndex = Math.max(0, Math.min(posts.length - 1, targetIdx));
+      } else {
+        const itemHeight = container.clientHeight;
+        if (itemHeight <= 0) return;
+        const fractionalIndex = container.scrollTop / itemHeight;
+        settledIndex = Math.max(0, Math.min(posts.length - 1, Math.round(fractionalIndex)));
+      }
+
+      const settledPost = posts[settledIndex];
+      if (settledPost && settledPost.id !== activePostIdRef.current) {
+        lastCommittedPostIdRef.current = settledPost.id;
+        activePostIdRef.current = settledPost.id;
+        targetIndexRef.current = settledIndex;
+        setActivePostId(settledPost.id);
+      }
+      isProgrammaticNavRef.current = false;
+    },
+    [posts],
+  );
+
+  // Di chuyen den bai viet muc tieu bang animation cuon tu dinh (CSS Scroll Snap).
+  // Trong suot qua trinh dang cuon, KHONG cap nhat activePostId de giu nguyen UI cu cho den khi chuyen xong hoan toan.
+  const goToIndex = useCallback(
+    (nextIdx: number, smooth = true) => {
+      if (posts.length === 0) return;
+      const clamped = Math.max(0, Math.min(posts.length - 1, nextIdx));
+      const container = trackScrollRef.current;
+      if (!container) return;
 
       if (galleryState) setGalleryState(null);
 
-      if (activePost && target.id !== activePost.id) {
-        setOutgoingPost(activePost);
-        setSlideDirection(delta === 1 ? 'down' : 'up');
-        setIsSlideAnimating(true);
-        isSlideAnimatingRef.current = true;
+      targetIndexRef.current = clamped;
 
-        if (slideTimerRef.current) {
-          clearTimeout(slideTimerRef.current);
+      const targetEl = mediaItemRefs.current[clamped];
+
+      if (!smooth) {
+        isProgrammaticNavRef.current = false;
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'auto', block: 'start' });
+        } else {
+          container.scrollTo({ top: clamped * container.clientHeight, behavior: 'auto' });
         }
-        slideTimerRef.current = setTimeout(() => {
-          setIsSlideAnimating(false);
-          isSlideAnimatingRef.current = false;
-          setOutgoingPost(null);
-        }, 360);
+        commitSettledPost(clamped);
+      } else {
+        isProgrammaticNavRef.current = true;
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          container.scrollTo({
+            top: clamped * container.clientHeight,
+            behavior: 'smooth',
+          });
+        }
+
+        if (scrollEndSafetyTimerRef.current) {
+          clearTimeout(scrollEndSafetyTimerRef.current);
+        }
+        // Bo dem an toan neu scrollend khong duoc trigger
+        scrollEndSafetyTimerRef.current = setTimeout(() => {
+          commitSettledPost(clamped);
+        }, 460);
       }
 
-      setVideoProgress(0);
-      setPlaying(true);
-      setActivePostId(target.id);
+      if (clamped >= posts.length - 2 && postsQuery.hasNextPage && !postsQuery.isFetchingNextPage) {
+        void postsQuery.fetchNextPage();
+      }
     },
-    [posts, activeIndex, galleryState, activePost],
+    [posts, galleryState, postsQuery, commitSettledPost],
   );
 
-  const selectPostByOffsetRef = useRef(selectPostByOffset);
+  // Dieu huong buoc (Step Navigation): dung chung logic luot tu dinh va bo dem debounce 450ms
+  // cho ca Con lan chuot, Phim mui ten ban phim, Nut mui ten tren man hinh, va Vuot touchpad ngoai khung
+  const navigateStep = useCallback(
+    (direction: 1 | -1) => {
+      const now = Date.now();
+      if (now < navCooldownRef.current) return;
+
+      const currentBase = targetIndexRef.current;
+      const nextTarget = currentBase + direction;
+
+      if (direction === 1) {
+        if (nextTarget < posts.length) {
+          navCooldownRef.current = now + 450;
+          goToIndex(nextTarget, true);
+        } else if (postsQuery.hasNextPage && !postsQuery.isFetchingNextPage) {
+          navCooldownRef.current = now + 450;
+          void postsQuery.fetchNextPage();
+        }
+      } else {
+        if (nextTarget >= 0) {
+          navCooldownRef.current = now + 450;
+          goToIndex(nextTarget, true);
+        }
+      }
+    },
+    [posts.length, postsQuery, goToIndex],
+  );
+
+  // Dong bo targetIndexRef theo activeIndex khi da settled hoac chon bai tu ngoai
   useEffect(() => {
-    selectPostByOffsetRef.current = selectPostByOffset;
-  }, [selectPostByOffset]);
+    if (activeIndex >= 0) {
+      targetIndexRef.current = activeIndex;
+    }
+  }, [activeIndex]);
+
+  // Dong bo vi tri cuon chi khi activePostId thay doi tu nguon ben ngoai (Search, filter, click bai viet)
+  useEffect(() => {
+    if (!activePostId || posts.length === 0) return;
+    if (activePostId === lastCommittedPostIdRef.current) return;
+
+    lastCommittedPostIdRef.current = activePostId;
+    const targetIdx = posts.findIndex((p) => p.id === activePostId);
+    if (targetIdx >= 0 && trackScrollRef.current) {
+      const container = trackScrollRef.current;
+      const targetEl = mediaItemRefs.current[targetIdx];
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'auto', block: 'start' });
+      } else {
+        container.scrollTo({ top: targetIdx * container.clientHeight, behavior: 'auto' });
+      }
+    }
+  }, [activePostId, posts]);
+
+  // Lang nghe su kien scrollend native tren media track: chi commit khi scroll hoan tat hoan toan
+  useEffect(() => {
+    const container = trackScrollRef.current;
+    if (!container) return;
+
+    const onScrollEnd = () => {
+      if (scrollSettleTimerRef.current) {
+        clearTimeout(scrollSettleTimerRef.current);
+      }
+      if (scrollEndSafetyTimerRef.current) {
+        clearTimeout(scrollEndSafetyTimerRef.current);
+      }
+
+      if (isProgrammaticNavRef.current) {
+        commitSettledPost(targetIndexRef.current);
+      } else {
+        commitSettledPost();
+      }
+    };
+
+    container.addEventListener('scrollend', onScrollEnd);
+    return () => {
+      container.removeEventListener('scrollend', onScrollEnd);
+      if (scrollSettleTimerRef.current) {
+        clearTimeout(scrollSettleTimerRef.current);
+      }
+      if (scrollEndSafetyTimerRef.current) {
+        clearTimeout(scrollEndSafetyTimerRef.current);
+      }
+    };
+  }, [commitSettledPost]);
+
+  // Tu dong tai them bai viet khi cuon gan cuoi danh sach kem debounce commit khi cuon touchpad dung lai
+  const handleTrackScroll = useCallback(() => {
+    const container = trackScrollRef.current;
+    if (!container) return;
+
+    const scrollBottom = container.scrollTop + container.clientHeight;
+    if (
+      container.scrollHeight - scrollBottom < container.clientHeight * 2 &&
+      postsQuery.hasNextPage &&
+      !postsQuery.isFetchingNextPage
+    ) {
+      void postsQuery.fetchNextPage();
+    }
+
+    // Neu dang trong qua trinh dieu huong co chu dich (bam nut, ban phim, con lan chuot),
+    // KHONG chay debounce tu do de tranh ghi de hoac tinh sai vi tri giua chung
+    if (isProgrammaticNavRef.current) return;
+
+    if (scrollSettleTimerRef.current) {
+      clearTimeout(scrollSettleTimerRef.current);
+    }
+    // Voi thao tac vuot tu do touchpad trong khung, doi 250ms sau su kien scroll cuoi cung
+    // de chac chan ngon tay da roi ra va trinh duyet da snap xong
+    scrollSettleTimerRef.current = setTimeout(() => {
+      commitSettledPost();
+    }, 250);
+  }, [postsQuery, commitSettledPost]);
+
+  // Xu ly cuon tren center panel: dung chung animation luot tu dinh (CSS Scroll Snap)
+  useEffect(() => {
+    const panel = centerPanelRef.current;
+    if (!panel) return;
+
+    function handlePanelWheel(event: WheelEvent) {
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.closest(`.${styles.leftScrollBody}`) ||
+        target?.closest(`.${styles.rightScrollArea}`)
+      ) {
+        return;
+      }
+
+      const now = Date.now();
+      const isInsideTrack = Boolean(trackScrollRef.current?.contains(target));
+      const isMouse = isPhysicalMouseWheel(event);
+      lastWheelTimeRef.current = now;
+
+      // 1. Con lan chuot vat ly: lan 1 nac se luot tu dinh qua 1 bai (ca trong va ngoai khung)
+      if (isMouse) {
+        event.preventDefault();
+        event.stopPropagation();
+        navigateStep(event.deltaY > 0 ? 1 : -1);
+        return;
+      }
+
+      // 2. Touchpad khi con tro nam ngoai khung (khoang den cua center panel, dock, nav buttons):
+      // Ap dung y chang animation luot tu dinh bang cach goi navigateStep voi nguong deltaY
+      if (!isInsideTrack) {
+        event.preventDefault();
+        if (Math.abs(event.deltaY) >= 15) {
+          navigateStep(event.deltaY > 0 ? 1 : -1);
+        }
+      }
+      // 3. Touchpad khi con tro nam trong khung: De trinh duyet cuon tu do va tu dinh (native scroll snap)
+      if (isInsideTrack) {
+        isProgrammaticNavRef.current = false;
+      }
+    }
+
+    panel.addEventListener('wheel', handlePanelWheel, { passive: false });
+    return () => {
+      panel.removeEventListener('wheel', handlePanelWheel);
+    };
+  }, [navigateStep]);
 
   // Hỗ trợ phím ArrowUp / ArrowDown để chuyển bài, và ArrowLeft / ArrowRight / Escape khi mở Image Gallery
   useEffect(() => {
@@ -698,15 +1344,15 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
       }
       if (event.key === 'ArrowDown') {
         event.preventDefault();
-        selectPostByOffset(1);
+        navigateStep(1);
       } else if (event.key === 'ArrowUp') {
         event.preventDefault();
-        selectPostByOffset(-1);
+        navigateStep(-1);
       }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  });
+  }, [galleryState, activePost, postImages.length, navigateStep]);
 
   // Optimistic mutation cho Like / Save / Share với rollback khi lỗi
   const engagementMutation = useMutation({
@@ -795,7 +1441,6 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
     },
   });
 
-  const trip = activePost?.tripAttachment ?? null;
   const hasItinerary = Boolean(
     trip &&
       (trip.destinationName ||
@@ -815,25 +1460,6 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
         : showLeftPanel && !showRightPanel
           ? styles.gridNoRight
           : styles.gridCenterOnly;
-
-  const reelCard = activePost ? reelMap.get(activePost.id) : undefined;
-  const postImages = activePost
-    ? getPostImages({
-        mediaIds: activePost.mediaIds,
-        posterUrl: reelCard ? selectReelPoster(reelCard.video.posters, 720) : undefined,
-        destinationName: trip?.destinationName,
-        hotelName: trip?.hotelName,
-        title: activePost.title,
-        body: activePost.body,
-        hashtags: activePost.hashtags,
-        itineraryItems: trip?.items,
-      })
-    : [];
-  const coverImage = postImages[0]?.src;
-  const activeGalleryIndex =
-    galleryState && activePost && galleryState.postId === activePost.id
-      ? Math.min(galleryState.index, Math.max(0, postImages.length - 1))
-      : null;
 
   const activePostDetail =
     postDetailQuery.data?.post.id === activePost?.id ? postDetailQuery.data : undefined;
@@ -860,28 +1486,7 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
     ? formatAuthorDisplay(activePost.authorId, reelCard?.author.name, user?.id, user?.displayName)
     : { name: '', handle: '' };
 
-  const outgoingReel = outgoingPost ? reelMap.get(outgoingPost.id) : undefined;
-  const outgoingImages = outgoingPost
-    ? getPostImages({
-        mediaIds: outgoingPost.mediaIds,
-        posterUrl: outgoingReel ? selectReelPoster(outgoingReel.video.posters, 720) : undefined,
-        destinationName: outgoingPost.tripAttachment?.destinationName,
-        hotelName: outgoingPost.tripAttachment?.hotelName,
-        title: outgoingPost.title,
-        body: outgoingPost.body,
-        hashtags: outgoingPost.hashtags,
-        itineraryItems: outgoingPost.tripAttachment?.items,
-      })
-    : [];
-  const outgoingCover = outgoingImages[0]?.src;
-  const outgoingAuthorInfo = outgoingPost
-    ? formatAuthorDisplay(
-        outgoingPost.authorId,
-        outgoingReel?.author.name,
-        user?.id,
-        user?.displayName,
-      )
-    : { name: '', handle: '' };
+
 
   // Nhóm lịch trình theo từng ngày (Vertical Timeline)
   const groupedDays = useMemo(() => {
@@ -931,29 +1536,7 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
     setRightOpen(false);
   }
 
-  // Xử lý cuộn chuột / touchpad native không passive để chặn triệt để hiện tượng kéo trượt cả trang
-  useEffect(() => {
-    const panel = centerPanelRef.current;
-    if (!panel) return;
 
-    function handleNativeWheel(event: WheelEvent) {
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (Math.abs(event.deltaY) < 24) return;
-
-      const now = Date.now();
-      if (now < wheelLockUntilRef.current || isSlideAnimatingRef.current) return;
-      wheelLockUntilRef.current = now + 480;
-
-      selectPostByOffsetRef.current(event.deltaY > 0 ? 1 : -1);
-    }
-
-    panel.addEventListener('wheel', handleNativeWheel, { passive: false });
-    return () => {
-      panel.removeEventListener('wheel', handleNativeWheel);
-    };
-  }, []);
 
   function handleToggleFullscreen() {
     const el = stageFrameRef.current;
@@ -1233,17 +1816,6 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
             ref={centerPanelRef}
             className={styles.centerPanel}
             aria-label={activePost ? activePost.title : vi.api.feedNavAria}
-            onTouchStart={(event) => {
-              touchStartYRef.current = event.touches[0]?.clientY ?? null;
-            }}
-            onTouchEnd={(event) => {
-              const startY = touchStartYRef.current;
-              const endY = event.changedTouches[0]?.clientY;
-              if (startY !== null && endY !== undefined && Math.abs(startY - endY) > 50) {
-                selectPostByOffset(startY > endY ? 1 : -1);
-              }
-              touchStartYRef.current = null;
-            }}
           >
             {/* Cột tiện ích xếp dọc mép trái Center Panel (dọc theo Sidebar Lịch trình) */}
             <div ref={searchContainerRef} className={styles.centerFloatingTopLeft}>
@@ -1420,543 +1992,217 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
               </p>
             ) : (
               <>
-                <div ref={stageFrameRef} className={styles.mediaStageFrame}>
-                  {/* Lớp hiển thị bài viết trước đó đang trượt ra (Outgoing card) */}
-                  {isSlideAnimating && outgoingPost && (
-                    <div
-                      className={`${styles.stageOutgoingLayer} ${
-                        slideDirection === 'down'
-                          ? styles.tiktokSlideOutUp
-                          : styles.tiktokSlideOutDown
-                      }`}
-                    >
-                      {outgoingCover && (
-                        <div
-                          className={styles.mediaBackdropBlur}
-                          style={{ backgroundImage: `url(${outgoingCover})` }}
-                        />
-                      )}
-                      {outgoingCover ? (
-                        <Image
-                          src={outgoingCover}
-                          alt=""
-                          fill
-                          sizes="(max-width: 768px) 100vw, 480px"
-                          className={styles.mediaImageElement}
-                          priority
-                          unoptimized={outgoingCover.startsWith('http')}
-                        />
-                      ) : (
-                        <div className={styles.textOnlyStage}>
-                          <h2 className={styles.textOnlyTitle}>{outgoingPost.title}</h2>
-                          <p className={styles.textOnlyBody}>{outgoingPost.body}</p>
-                        </div>
-                      )}
-                      <div className={styles.stageBottomOverlay}>
-                        <div className={styles.overlayAuthorRow}>
-                          <span className={styles.overlayAvatar} aria-hidden="true">
-                            {getInitial(outgoingAuthorInfo.name)}
-                          </span>
-                          <div className={styles.overlayAuthorMeta}>
-                            <div className={styles.overlayAuthorNameRow}>
-                              <span>{outgoingAuthorInfo.name}</span>
+                <div
+                  ref={stageFrameRef}
+                  className={styles.mediaStageFrame}
+                >
+                  {/* Top-Left Volume + Slider & Top-Right Hover Controls (More / Fullscreen) */}
+                  {activeGalleryIndex === null && (
+                    <>
+                      {reelCard?.video && activePost.postType === 'video' && !isMediaError && (
+                        <div className={styles.stageTopLeftControls}>
+                          <div className={styles.volumeControlPill}>
+                            <button
+                              type="button"
+                              className={styles.volumeToggleBtn}
+                              aria-label={
+                                isMuted ? vi.api.immersiveUnmuteVideo : vi.api.immersiveMuteVideo
+                              }
+                              onClick={() => {
+                                const nextMuted = !isMuted;
+                                setMuted(nextMuted);
+                                if (!nextMuted && volume === 0) {
+                                  setVolume(0.8);
+                                  if (videoRef.current) videoRef.current.volume = 0.8;
+                                }
+                                if (videoRef.current) {
+                                  videoRef.current.muted = nextMuted;
+                                }
+                              }}
+                            >
+                              <SocialIcon
+                                name={isMuted || volume === 0 ? 'volumeOff' : 'volumeOn'}
+                                size={18}
+                              />
+                            </button>
+                            <div className={styles.volumeSliderWrap}>
+                              <input
+                                type="range"
+                                min={0}
+                                max={1}
+                                step={0.05}
+                                value={isMuted ? 0 : volume}
+                                aria-label={vi.api.immersiveMuteVideo}
+                                className={styles.volumeRangeInput}
+                                onChange={(event) => {
+                                  const nextVol = Number(event.target.value);
+                                  setVolume(nextVol);
+                                  const nextMuted = nextVol === 0;
+                                  setMuted(nextMuted);
+                                  if (videoRef.current) {
+                                    videoRef.current.volume = nextVol;
+                                    videoRef.current.muted = nextMuted;
+                                  }
+                                }}
+                              />
                             </div>
-                            <span className={styles.overlayAuthorHandle}>{outgoingAuthorInfo.handle}</span>
                           </div>
                         </div>
-                        <div className={styles.overlayCaptionBox}>
-                          <p
-                            className={`${styles.overlayCaptionText} ${styles.overlayCaptionClamped}`}
-                          >
-                            {outgoingPost.title ? <strong>{outgoingPost.title} · </strong> : null}
-                            {outgoingPost.body}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                      )}
 
-                  {/* Lớp bài viết mới đang hiển thị / trượt vào (Incoming card) */}
-                  <div
-                    key={activePost.id}
-                    className={`${styles.stageContentLayer} ${
-                      isSlideAnimating
-                        ? slideDirection === 'down'
-                          ? styles.tiktokSlideInUp
-                          : styles.tiktokSlideInDown
-                        : ''
-                    }`}
-                  >
-              {coverImage && (
-                <div
-                  className={styles.mediaBackdropBlur}
-                  style={{ backgroundImage: `url(${coverImage})` }}
-                />
-              )}
-
-              {/* Top-Left Volume + Slider & Top-Right Hover Controls (More / Fullscreen) */}
-              {activeGalleryIndex === null && (
-                <>
-                  {reelCard?.video && activePost.postType === 'video' && !isMediaError && (
-                    <div className={styles.stageTopLeftControls}>
-                      <div className={styles.volumeControlPill}>
+                      <div className={styles.stageTopControls}>
+                        <Link
+                          href={`/trips/${activePost.id}`}
+                          className={styles.stageCircleBtn}
+                          aria-label={vi.api.postMoreOptions}
+                          title={vi.api.detail}
+                        >
+                          <SocialIcon name="more" size={18} />
+                        </Link>
                         <button
                           type="button"
-                          className={styles.volumeToggleBtn}
-                          aria-label={
-                            isMuted ? vi.api.immersiveUnmuteVideo : vi.api.immersiveMuteVideo
-                          }
-                          onClick={() => {
-                            const nextMuted = !isMuted;
-                            setMuted(nextMuted);
-                            if (!nextMuted && volume === 0) {
-                              setVolume(0.8);
-                              if (videoRef.current) videoRef.current.volume = 0.8;
-                            }
-                            if (videoRef.current) {
-                              videoRef.current.muted = nextMuted;
-                            }
-                          }}
+                          className={styles.stageCircleBtn}
+                          aria-label={vi.api.immersiveFullscreen}
+                          onClick={handleToggleFullscreen}
                         >
-                          <SocialIcon
-                            name={isMuted || volume === 0 ? 'volumeOff' : 'volumeOn'}
-                            size={18}
-                          />
+                          <SocialIcon name="maximize" size={17} />
                         </button>
-                        <div className={styles.volumeSliderWrap}>
-                          <input
-                            type="range"
-                            min={0}
-                            max={1}
-                            step={0.05}
-                            value={isMuted ? 0 : volume}
-                            aria-label={vi.api.immersiveMuteVideo}
-                            className={styles.volumeRangeInput}
-                            onChange={(event) => {
-                              const nextVol = Number(event.target.value);
-                              setVolume(nextVol);
-                              const nextMuted = nextVol === 0;
-                              setMuted(nextMuted);
-                              if (videoRef.current) {
-                                videoRef.current.volume = nextVol;
-                                videoRef.current.muted = nextMuted;
-                              }
-                            }}
-                          />
-                        </div>
                       </div>
-                    </div>
-                  )}
-
-                  <div className={styles.stageTopControls}>
-                    <Link
-                      href={`/trips/${activePost.id}`}
-                      className={styles.stageCircleBtn}
-                      aria-label={vi.api.postMoreOptions}
-                      title={vi.api.detail}
-                    >
-                      <SocialIcon name="more" size={18} />
-                    </Link>
-                    <button
-                      type="button"
-                      className={styles.stageCircleBtn}
-                      aria-label={vi.api.immersiveFullscreen}
-                      onClick={handleToggleFullscreen}
-                    >
-                      <SocialIcon name="maximize" size={17} />
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {/* Media Content: Video -> Adaptive Image Grid -> Text-Only */}
-              {reelCard?.video && activePost.postType === 'video' && !isMediaError ? (
-                <>
-                  <video
-                    key={activePost.id}
-                    ref={videoRef}
-                    className={`${styles.mediaVideoElement} ${
-                      reelCard.video.aspect === '16:9' ? styles.mediaVideoLandscape : ''
-                    }`}
-                    src={reelCard.video.hlsUrl}
-                    poster={selectReelPoster(reelCard.video.posters, 720)}
-                    playsInline
-                    loop
-                    autoPlay
-                    muted={isMuted}
-                    onLoadedData={() => {
-                      attemptPlayVideo();
-                    }}
-                    onCanPlay={() => {
-                      attemptPlayVideo();
-                    }}
-                    onPlay={() => setPlaying(true)}
-                    onPause={() => setPlaying(false)}
-                    onTimeUpdate={(event) => {
-                      const el = event.currentTarget;
-                      if (el.duration > 0) {
-                        setVideoProgress((el.currentTime / el.duration) * 100);
-                      }
-                    }}
-                    onError={() => setMediaErrorPostId(activePost.id)}
-                    onClick={() => {
-                      const el = videoRef.current;
-                      if (!el) return;
-                      if (el.paused) {
-                        void el.play().catch(() => {});
-                        setPlaying(true);
-                      } else {
-                        el.pause();
-                        setPlaying(false);
-                      }
-                      setShowPlayFlash(true);
-                      if (playFlashTimerRef.current) {
-                        clearTimeout(playFlashTimerRef.current);
-                      }
-                      playFlashTimerRef.current = setTimeout(() => {
-                        setShowPlayFlash(false);
-                      }, 700);
-                    }}
-                  >
-                    <track kind="captions" />
-                  </video>
-                  <button
-                    type="button"
-                    className={`${styles.centerPlayOverlayBtn} ${
-                      !showPlayFlash ? styles.centerPlayOverlayHidden : ''
-                    }`}
-                    aria-label={isPlaying ? vi.api.immersivePauseVideo : vi.api.immersivePlayVideo}
-                    tabIndex={-1}
-                    onClick={() => {
-                      const el = videoRef.current;
-                      if (!el) return;
-                      if (el.paused) {
-                        void el.play().catch(() => {});
-                        setPlaying(true);
-                      } else {
-                        el.pause();
-                        setPlaying(false);
-                      }
-                      setShowPlayFlash(true);
-                      if (playFlashTimerRef.current) {
-                        clearTimeout(playFlashTimerRef.current);
-                      }
-                      playFlashTimerRef.current = setTimeout(() => {
-                        setShowPlayFlash(false);
-                      }, 700);
-                    }}
-                  >
-                    <SocialIcon name={isPlaying ? 'play' : 'pause'} size={26} />
-                  </button>
-                  <div className={styles.progressBarTrack} aria-hidden="true">
-                    <div
-                      className={styles.progressBarFill}
-                      style={{ width: `${Math.min(100, Math.max(0, videoProgress))}%` }}
-                    />
-                  </div>
-                </>
-              ) : postImages.length > 0 ? (
-                (() => {
-                  const totalCount = postImages.length;
-                  const leadOrientation =
-                    (coverImage ? imageOrientations[coverImage] : undefined) ?? 'portrait';
-                  const isLeadLandscape = leadOrientation === 'landscape';
-                  const visibleCount = totalCount >= 5 ? 5 : totalCount;
-                  const visibleList = postImages.slice(0, visibleCount);
-
-                  const gridVariantClass =
-                    totalCount === 1
-                      ? styles.gridSingle
-                      : totalCount === 2
-                        ? isLeadLandscape
-                          ? styles.gridTwoRows
-                          : styles.gridTwoCols
-                        : totalCount === 3
-                          ? isLeadLandscape
-                            ? styles.gridThreeLandscape
-                            : styles.gridThreePortrait
-                          : totalCount === 4
-                            ? isLeadLandscape
-                              ? styles.gridFourLandscape
-                              : styles.gridFour
-                            : styles.gridFiveCollage;
-
-                  const fiveTileClasses = [
-                    styles.collageLeftTop,
-                    styles.collageLeftBottom,
-                    styles.collageRightTop,
-                    styles.collageRightMiddle,
-                    styles.collageRightBottom,
-                  ];
-
-                  return (
-                    <div
-                      key={activePost.id}
-                      className={`${styles.adaptiveImageGrid} ${gridVariantClass}`}
-                    >
-                      {visibleList.map((img, idx) => {
-                        const imgOrientation = imageOrientations[img.src];
-                        const isSingleLandscape = totalCount === 1 && isLeadLandscape;
-
-                        let cellSpanClass = '';
-                        if (totalCount === 1 && isSingleLandscape) {
-                          cellSpanClass = styles.gridCellSingleBackdrop ?? '';
-                        } else if (totalCount === 3 && idx === 0) {
-                          cellSpanClass = isLeadLandscape
-                            ? (styles.gridCellSpanTwoCols ?? '')
-                            : (styles.gridCellSpanTwoRows ?? '');
-                        } else if (totalCount === 4 && isLeadLandscape && idx === 0) {
-                          cellSpanClass = styles.gridCellSpanThreeCols ?? '';
-                        } else if (totalCount >= 5) {
-                          cellSpanClass = fiveTileClasses[idx] ?? '';
-                        }
-
-                        const extraCount =
-                          totalCount > 5 && idx === 4 ? totalCount - 4 : 0;
-
-                        const resolvedObjectPosition =
-                          imgOrientation === 'portrait'
-                            ? 'center 25%'
-                            : imgOrientation === 'landscape'
-                              ? 'center center'
-                              : img.focalPoint;
-
-                        return (
-                          <button
-                            key={img.src}
-                            type="button"
-                            className={`${styles.gridCellBtn} ${cellSpanClass}`}
-                            aria-label={t('api.immersiveOpenImageAria', {
-                              index: idx + 1,
-                              total: totalCount,
-                            })}
-                            onClick={() => setGalleryState({ postId: activePost.id, index: idx })}
-                          >
-                            <Image
-                              src={img.src}
-                              alt={activePost.title}
-                              fill
-                              className={
-                                isSingleLandscape ? styles.gridCellImgContain : styles.gridCellImg
-                              }
-                              style={
-                                isSingleLandscape
-                                  ? undefined
-                                  : { objectPosition: resolvedObjectPosition }
-                              }
-                              sizes="(max-width: 1024px) 100vw, 480px"
-                              priority={idx === 0}
-                              unoptimized={img.src.startsWith('http')}
-                              onLoad={(event) => {
-                                const el = event.currentTarget;
-                                if (!el.naturalWidth || !el.naturalHeight) return;
-                                const ratio = el.naturalWidth / el.naturalHeight;
-                                const nextOrientation: 'portrait' | 'landscape' | 'square' =
-                                  ratio > 1.15
-                                    ? 'landscape'
-                                    : ratio < 0.9
-                                      ? 'portrait'
-                                      : 'square';
-                                setImageOrientations((prev) =>
-                                  prev[img.src] === nextOrientation
-                                    ? prev
-                                    : { ...prev, [img.src]: nextOrientation },
-                                );
-                              }}
-                            />
-                            {extraCount > 0 && (
-                              <span className={styles.gridCellMoreOverlay} aria-hidden="true">
-                                +{extraCount}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  );
-                })()
-              ) : (
-                <div className={styles.textOnlyStage}>
-                  <h2 className={styles.textOnlyTitle}>{activePost.title}</h2>
-                  <p className={styles.textOnlyBody}>{activePost.body}</p>
-                </div>
-              )}
-
-              {/* In-Stage Image Gallery (object-fit: contain, 1/N indicator, prev/next slide, close) */}
-              {activeGalleryIndex !== null && postImages[activeGalleryIndex] && (
-                <section
-                  className={styles.galleryStageOverlay}
-                  aria-label={activePost.title}
-                >
-                  <div className={styles.galleryTopBar}>
-                    <span className={styles.galleryCountPill}>
-                      {activeGalleryIndex + 1} / {postImages.length}
-                    </span>
-                    <button
-                      type="button"
-                      className={styles.galleryCloseBtn}
-                      aria-label={vi.api.immersiveCloseGallery}
-                      title={vi.api.immersiveCloseGallery}
-                      onClick={() => setGalleryState(null)}
-                    >
-                      <SocialIcon name="close" size={18} />
-                    </button>
-                  </div>
-
-                  <div className={styles.galleryContainFrame}>
-                    <Image
-                      key={postImages[activeGalleryIndex].src}
-                      src={postImages[activeGalleryIndex].src}
-                      alt={activePost.title}
-                      fill
-                      className={styles.galleryContainImg}
-                      sizes="(max-width: 1024px) 100vw, 540px"
-                      priority
-                      unoptimized={postImages[activeGalleryIndex].src.startsWith('http')}
-                    />
-                  </div>
-
-                  {postImages.length > 1 && (
-                    <>
-                      <button
-                        type="button"
-                        className={`${styles.gallerySlideNavBtn} ${styles.gallerySlidePrev}`}
-                        disabled={activeGalleryIndex <= 0}
-                        aria-label={vi.api.immersivePrevSlide}
-                        title={vi.api.immersivePrevSlide}
-                        onClick={() =>
-                          setGalleryState({
-                            postId: activePost.id,
-                            index: Math.max(0, activeGalleryIndex - 1),
-                          })
-                        }
-                      >
-                        <SocialIcon name="chevronLeft" size={20} />
-                      </button>
-                      <button
-                        type="button"
-                        className={`${styles.gallerySlideNavBtn} ${styles.gallerySlideNext}`}
-                        disabled={activeGalleryIndex >= postImages.length - 1}
-                        aria-label={vi.api.immersiveNextSlide}
-                        title={vi.api.immersiveNextSlide}
-                        onClick={() =>
-                          setGalleryState({
-                            postId: activePost.id,
-                            index: Math.min(postImages.length - 1, activeGalleryIndex + 1),
-                          })
-                        }
-                      >
-                        <SocialIcon name="chevronRight" size={20} />
-                      </button>
                     </>
                   )}
-                </section>
-              )}
 
-              {/* Bottom Post Overlay: Tác giả, Caption, Hashtags, Compact Trip Card */}
-              <div className={styles.stageBottomOverlay}>
-                <div className={styles.overlayAuthorRow}>
-                  <span className={styles.overlayAvatar} aria-hidden="true">
-                    {getInitial(authorInfo.name)}
-                  </span>
-                  <div className={styles.overlayAuthorMeta}>
-                    <div className={styles.overlayAuthorNameRow}>
-                      <span>{authorInfo.name}</span>
-                      {(activePost.isVerified || reelCard?.author.isKol) && (
-                        <SocialIcon name="verified" size={16} />
-                      )}
-                    </div>
-                    <span className={styles.overlayAuthorHandle}>{authorInfo.handle}</span>
-                  </div>
-                </div>
-
-                {Boolean(postImages.length > 0 || reelCard?.video) && (
-                  <div className={styles.overlayCaptionBox}>
-                    <p
-                      className={`${styles.overlayCaptionText} ${
-                        !isCaptionExpanded ? styles.overlayCaptionClamped : ''
-                      }`}
+                  {/* In-Stage Image Gallery (object-fit: contain, 1/N indicator, prev/next slide, close) */}
+                  {activeGalleryIndex !== null && postImages[activeGalleryIndex] && (
+                    <section
+                      className={styles.galleryStageOverlay}
+                      aria-label={activePost.title}
                     >
-                      <strong>{activePost.title}</strong> — {activePost.body}
-                    </p>
-                    {activePost.body.length > 90 && (
-                      <button
-                        type="button"
-                        className={styles.overlayExpandBtn}
-                        onClick={() =>
-                          setCaptionExpandedPostId((prev) =>
-                            prev === activePost.id ? null : activePost.id,
-                          )
-                        }
-                      >
-                        {isCaptionExpanded ? vi.api.postShowLess : vi.api.postReadMore}
-                      </button>
-                    )}
-                  </div>
-                )}
+                      <div className={styles.galleryTopBar}>
+                        <span className={styles.galleryCountPill}>
+                          {activeGalleryIndex + 1} / {postImages.length}
+                        </span>
+                        <button
+                          type="button"
+                          className={styles.galleryCloseBtn}
+                          aria-label={vi.api.immersiveCloseGallery}
+                          title={vi.api.immersiveCloseGallery}
+                          onClick={() => setGalleryState(null)}
+                        >
+                          <SocialIcon name="close" size={18} />
+                        </button>
+                      </div>
 
-                {activePost.hashtags.length > 0 && (
-                  <div className={styles.overlayTagRow}>
-                    {activePost.hashtags.slice(0, 4).map((tag) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        className={styles.overlayTagPill}
-                        onClick={() => {
+                      <div className={styles.galleryContainFrame}>
+                        <Image
+                          key={postImages[activeGalleryIndex].src}
+                          src={postImages[activeGalleryIndex].src}
+                          alt={activePost.title}
+                          fill
+                          className={styles.galleryContainImg}
+                          sizes="(max-width: 1024px) 100vw, 540px"
+                          priority
+                          unoptimized={postImages[activeGalleryIndex].src.startsWith('http')}
+                        />
+                      </div>
+
+                      {postImages.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            className={`${styles.gallerySlideNavBtn} ${styles.gallerySlidePrev}`}
+                            disabled={activeGalleryIndex <= 0}
+                            aria-label={vi.api.immersivePrevSlide}
+                            title={vi.api.immersivePrevSlide}
+                            onClick={() =>
+                              setGalleryState({
+                                postId: activePost.id,
+                                index: Math.max(0, activeGalleryIndex - 1),
+                              })
+                            }
+                          >
+                            <SocialIcon name="chevronLeft" size={20} />
+                          </button>
+                          <button
+                            type="button"
+                            className={`${styles.gallerySlideNavBtn} ${styles.gallerySlideNext}`}
+                            disabled={activeGalleryIndex >= postImages.length - 1}
+                            aria-label={vi.api.immersiveNextSlide}
+                            title={vi.api.immersiveNextSlide}
+                            onClick={() =>
+                              setGalleryState({
+                                postId: activePost.id,
+                                index: Math.min(postImages.length - 1, activeGalleryIndex + 1),
+                              })
+                            }
+                          >
+                            <SocialIcon name="chevronRight" size={20} />
+                          </button>
+                        </>
+                      )}
+                    </section>
+                  )}
+
+                  {/* Media Track: Vung cuon momentum doc voi proximity snap ben trong Viewport 9:16 co dinh */}
+                  <div
+                    ref={trackScrollRef}
+                    className={styles.mediaTrack}
+                    onScroll={handleTrackScroll}
+                    tabIndex={-1}
+                  >
+                    {posts.map((post, idx) => (
+                      <MediaTrackItem
+                        key={post.id}
+                        itemRef={(el) => {
+                          mediaItemRefs.current[idx] = el;
+                        }}
+                        index={idx}
+                        post={post}
+                        isActive={idx === activeIndex}
+                        isNearActive={Math.abs(idx - activeIndex) <= 1}
+                        reelCard={reelMap.get(post.id)}
+                        user={user}
+                        videoRef={idx === activeIndex ? videoRef : undefined}
+                        isMuted={isMuted}
+                        isPlaying={isPlaying}
+                        showPlayFlash={showPlayFlash}
+                        videoProgress={videoProgress}
+                        onVideoTimeUpdate={(e) => {
+                          if (idx === activeIndex) {
+                            const el = e.currentTarget;
+                            if (el.duration > 0) {
+                              setVideoProgress((el.currentTime / el.duration) * 100);
+                            }
+                          }
+                        }}
+                        mediaErrorPostId={mediaErrorPostId}
+                        onMediaError={(pId) => setMediaErrorPostId(pId)}
+                        onTogglePlay={togglePlayPause}
+                        captionExpandedPostId={captionExpandedPostId}
+                        onToggleCaption={(pId) =>
+                          setCaptionExpandedPostId((prev) => (prev === pId ? null : pId))
+                        }
+                        onOpenTag={(tag) => {
                           setSearchInput(tag);
                           setSearchOpen(true);
                           setTimeout(() => searchInputRef.current?.focus(), 0);
                         }}
-                      >
-                        #{tag}
-                      </button>
+                        onOpenItinerary={(pId) => {
+                          if (activePostId !== pId) setActivePostId(pId);
+                          setLeftOpen(true);
+                        }}
+                        onOpenGallery={(pId, imgIdx) =>
+                          setGalleryState({ postId: pId, index: imgIdx })
+                        }
+                        imageOrientations={imageOrientations}
+                        onOrientationDetected={(src, orientation) => {
+                          setImageOrientations((prev) =>
+                            prev[src] === orientation ? prev : { ...prev, [src]: orientation },
+                          );
+                        }}
+                      />
                     ))}
                   </div>
-                )}
-
-                {hasItinerary && trip && (
-                  <button
-                    type="button"
-                    className={styles.overlayAttachedTripCard}
-                    onClick={() => setLeftOpen(true)}
-                  >
-                    <div className={styles.overlayTripLeft}>
-                      <span className={styles.overlayTripThumb}>
-                        <Image
-                          src={coverImage ?? POST_COVER_MASCOT}
-                          alt=""
-                          fill
-                          sizes="44px"
-                          unoptimized={Boolean(coverImage?.startsWith('http'))}
-                        />
-                      </span>
-                      <div className={styles.overlayTripText}>
-                        <span className={styles.overlayTripTitle}>
-                          {trip.hotelName ?? trip.destinationName ?? activePost.title}
-                        </span>
-                        <span className={styles.overlayTripSub}>
-                          {[
-                            vi.api.immersiveTabSchedule,
-                            trip.items?.length
-                              ? t('api.immersiveStopsCount', { count: trip.items.length })
-                              : trip.daysCount
-                                ? t('api.postTripDaysBadge', { count: trip.daysCount })
-                                : null,
-                            trip.estimatedCostPerPerson
-                              ? `~${trip.estimatedCostPerPerson.toLocaleString('vi-VN')}đ/người`
-                              : null,
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </span>
-                      </div>
-                    </div>
-                    <SocialIcon name="chevronRight" size={18} />
-                  </button>
-                )}
-              </div>
-                  </div>
-            </div>
+                </div>
 
             {/* Cột phải sát cạnh Media Stage: Vertical Action Bar (Avatar +, Like, Comment, Save, Share) */}
             <div className={styles.stageSideDock}>
@@ -2086,7 +2332,7 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
               </div>
             </div>
 
-            {/* Cụm nút Chuyển bài (▲ / 1/10 / ▼) nằm giữa chiều cao, sát mép phải của Center Panel */}
+            {/* Cum nut Chuyen bai (Len / Xuong) nam giua chieu cao, sat mep phai cua Center Panel */}
             <div className={styles.navArrowsCluster}>
               <button
                 type="button"
@@ -2094,7 +2340,7 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
                 aria-label={vi.api.immersivePrevPost}
                 title={vi.api.immersivePrevPost}
                 disabled={activeIndex <= 0}
-                onClick={() => selectPostByOffset(-1)}
+                onClick={() => navigateStep(-1)}
               >
                 <SocialIcon name="arrowUp" size={20} />
               </button>
@@ -2109,7 +2355,7 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
                 aria-label={vi.api.immersiveNextPost}
                 title={vi.api.immersiveNextPost}
                 disabled={activeIndex >= posts.length - 1 && !postsQuery.hasNextPage}
-                onClick={() => selectPostByOffset(1)}
+                onClick={() => navigateStep(1)}
               >
                 <SocialIcon name="arrowDown" size={20} />
               </button>
