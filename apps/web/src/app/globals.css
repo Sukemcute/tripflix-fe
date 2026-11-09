@@ -172,6 +172,12 @@ h3 {
     background 0.2s,
     color 0.2s;
 }
+/* Khách chưa đăng nhập (không có giỏ, chuông): chỉ còn nút Đăng nhập, bỏ viên bọc ngoài. */
+.header-actions:has(> .header-login:only-child) {
+  padding: 0;
+  border-color: transparent;
+  background: none;
+}
 .header-actions > a:not(.header-login):hover {
   background: var(--color-background);
   color: var(--color-coral-ink);
