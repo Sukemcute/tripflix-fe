@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import './globals.css';
 import { HeaderAccount } from '@/features/auth/header-account';
+import { CartLink } from '@/features/checkout/cart-link';
 import { Providers } from './providers';
 import { OtaNavigation } from '@/features/discovery/ota-navigation';
 import { OTA_DESTINATIONS, getDestinationHref } from '@/features/discovery/ota-destinations';
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 />
               </Link>
               <OtaNavigation />
+              <CartLink />
               <HeaderAccount />
             </div>
           </header>
