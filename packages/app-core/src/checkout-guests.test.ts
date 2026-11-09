@@ -78,3 +78,17 @@ describe('findTravelDates', () => {
     ).toEqual({ first: '2026-11-08', last: '2026-11-11' });
   });
 });
+
+describe('tuổi khách ở khách sạn', () => {
+  const base = { contact: { fullName: 'A', phone: '0912345678', email: '' }, today: '2026-11-09', stayDate: '2026-12-01' };
+  const check = (type: 'child' | 'infant', birthdate: string) =>
+    findCheckoutFieldErrors({ ...base, guests: [{ fullName: 'B', birthdate }], passengerTypes: [type] });
+
+  it('em bé dưới 4 tuổi, trẻ em từ 4 đến dưới 12 tuổi tại ngày nhận phòng', () => {
+    expect(check('infant', '2023-01-01')).toEqual({});
+    expect(check('infant', '2022-01-01')).toEqual({ 'guests[0].birthdate': 'infantRoomAge' });
+    expect(check('child', '2022-01-01')).toEqual({});
+    expect(check('child', '2023-01-01')).toEqual({ 'guests[0].birthdate': 'childRoomAge' });
+    expect(check('child', '2014-01-01')).toEqual({ 'guests[0].birthdate': 'childRoomAge' });
+  });
+});
