@@ -15,6 +15,7 @@ import { formatPrice } from '@/features/discovery/trip-card';
 import { CheckoutError } from './checkout-error';
 import { saveBookingCart, useBookingCart } from './cart-store';
 import styles from './cart.module.css';
+import { CartWarnings } from './cart-warnings';
 import { useHoldCart } from './use-hold-cart';
 
 const copy = vi.commerce;
@@ -96,11 +97,7 @@ export function CartScreen() {
             <span>{copy.cartSubtotal}</span>
             <strong>{formatPrice(calculateBookingCartTotal(cart))}</strong>
           </p>
-          {underCapacity.map((stay) => (
-            <p key={stay.propertyName} role="alert" className={styles.warning}>
-              {stay.propertyName}: {copy.cartUnderCapacity} {stay.capacity}/{countBookingCartGuests(cart)} {copy.guests}.
-            </p>
-          ))}
+          <CartWarnings cart={cart} />
           <CheckoutError error={hold.error} />
           {isReady && !user ? (
             <Link className="primary-button" href="/login?returnTo=%2Fcart">
