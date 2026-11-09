@@ -45,3 +45,4 @@
 - Nguyên nhân: `backdrop-filter: url(#auth-glass-refraction) …` (khúc xạ SVG, chỉ bật trên Chromium) vẽ lỗi quanh iframe nút Google.
 - Cách xác định: mở trang server bằng Playwright, chèn CSS tắt lần lượt: tắt khúc xạ thì hết; tắt `clip-path` hoặc `overflow: clip` của thẻ thì vẫn lỗi.
 - Sửa: bỏ bộ lọc khúc xạ, giữ kính mờ, viền sáng, ánh phản chiếu. Lint, typecheck pass; Playwright local: đăng ký và trượt 16/16, đăng nhập 9/9.
+- Ô Google (sửa thêm): còn nền xanh nhạt khi rê chuột (nền của nút Google trong iframe) và chỉ bấm được vùng giữa (nút "icon" cố định ~40px). Ô và logo G giờ do web vẽ; nút thật của Google phóng 2,5 lần phủ kín ô, opacity 0.01. Kiểm trên trang server (chèn CSS mới qua Playwright): bốn góc và giữa ô đều trúng nút Google, bấm góc dưới trái mở cửa sổ accounts.google.com, không còn nền xanh.
