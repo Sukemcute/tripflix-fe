@@ -4,6 +4,7 @@ import {
   HttpError,
   socialApi,
   updateReelSocialCache,
+  uploadChunkToPresignedUrl,
   useApiSession,
   useReelsFeed,
   useSocialPosts,
@@ -3124,26 +3125,11 @@ function ComposerModal({
 
       setUploadStepText(`Đang tải lên phần ${part.partNumber}/${parts.length}...`);
 
-      const res = await fetch(part.url, {
-        method: 'PUT',
-        body: chunk,
-      });
-
-      if (!res.ok) {
-        throw new Error(`Tải lên phần ${part.partNumber} thất bại (HTTP ${res.status})`);
-      }
-
-      let etag = res.headers.get('ETag') || res.headers.get('etag') || '';
-      if (etag && !etag.startsWith('"')) {
-        etag = `"${etag}"`;
-      }
-      if (!etag) {
-        etag = `"${part.partNumber}"`;
-      }
+      const { etag } = await uploadChunkToPresignedUrl(part.url, chunk);
 
       uploadedParts.push({
         partNumber: part.partNumber,
-        etag,
+        etag: etag || `"${part.partNumber}"`,
       });
 
       const percent = Math.round(((i + 1) / parts.length) * 80) + 5;
