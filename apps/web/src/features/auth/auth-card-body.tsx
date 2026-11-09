@@ -12,12 +12,6 @@ export function AuthCardBody({ children }: { children: ReactNode }) {
   useEffect(() => {
     const element = content.current;
     if (!element) return;
-    // Khúc xạ của thẻ kính dùng bộ lọc SVG trong backdrop-filter: chỉ Chromium vẽ được, trình duyệt khác giữ kính mờ.
-    const brands = (navigator as Navigator & { userAgentData?: { brands: { brand: string }[] } })
-      .userAgentData?.brands;
-    if (brands?.some(({ brand }) => brand === 'Chromium')) {
-      element.closest('.auth-panel-inner')?.classList.add('has-refraction');
-    }
     const observer = new ResizeObserver(() => setHeight(element.offsetHeight));
     observer.observe(element);
     return () => observer.disconnect();

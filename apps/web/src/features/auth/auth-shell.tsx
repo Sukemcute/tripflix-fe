@@ -68,26 +68,6 @@ export function AuthShell({ children }: { children: ReactNode }) {
       <span className="auth-hero-bg" aria-hidden="true">
         <Image src="/brand/destinations/quang-ninh-view.jpg" alt="" fill sizes="100vw" priority />
       </span>
-      {/* Bộ lọc khúc xạ cho thẻ liquid glass (chỉ Chrome, Edge dùng; xem .has-refraction). */}
-      <svg className="auth-glass-defs" aria-hidden="true" focusable="false">
-        <filter id="auth-glass-refraction" x="0" y="0" width="100%" height="100%">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.006 0.009"
-            numOctaves="2"
-            seed="7"
-            result="noise"
-          />
-          <feGaussianBlur in="noise" stdDeviation="3" result="softNoise" />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="softNoise"
-            scale="42"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-      </svg>
       <section className="auth-hero">
         <AuthLogo />
         <AuthCollage />
