@@ -10,13 +10,15 @@ import {
   DEFAULT_EXPERIENCE_IMAGE,
   DEFAULT_STAY_IMAGE,
   RECOMMENDATION_COMBOS,
+  type RecommendationCombo,
   buildCombosFromApi,
 } from './ota-recommendation-combos';
 import { formatPrice } from './trip-card';
 import { SoftStarIcon } from './soft-star-icon';
 import styles from './ota-home.module.css';
 
-const ROTATE_INTERVAL_MS = 5000;
+const CROSSFADE_MS = 1200;
+const ROTATE_INTERVAL_MS = 7000;
 
 function SafeComboImage({
   src,
@@ -32,24 +34,124 @@ function SafeComboImage({
 
   return (
     <Image
-      key={src}
       src={targetSrc}
       alt={alt}
       fill
       sizes="(max-width: 640px) 100vw, 48vw"
-      // Ảnh khách sạn nằm trên CDN media, không qua bộ tối ưu ảnh của Next
-      // (giống stay-thumbnail, hotel-gallery).
       unoptimized
       onError={() => setFailed(true)}
     />
   );
 }
 
+function DestinationBody({
+  combo,
+  isOutgoing,
+}: {
+  combo: RecommendationCombo;
+  isOutgoing?: boolean;
+}) {
+  return (
+    <>
+      <SafeComboImage
+        src={combo.destination.image}
+        fallback={DEFAULT_DESTINATION_IMAGE}
+        alt={isOutgoing ? '' : combo.destination.name}
+      />
+      <div className={isOutgoing ? styles.cardContentOut : styles.cardContent}>
+        <span className={`${styles.comboBadge} ${styles.badgeTrending}`}>
+          {combo.destination.badge}
+        </span>
+        <div>
+          <span>{combo.destination.region}</span>
+          <h3>{combo.destination.name}</h3>
+          <p className={styles.destinationReason}>{combo.destination.description}</p>
+        </div>
+        <div className={styles.comboMeta}>
+          <strong>{combo.destination.meta}</strong>
+          <span aria-hidden="true">Khám phá điểm đến →</span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function StayBody({
+  combo,
+  isOutgoing,
+}: {
+  combo: RecommendationCombo;
+  isOutgoing?: boolean;
+}) {
+  return (
+    <>
+      <SafeComboImage
+        src={combo.stay.image}
+        fallback={DEFAULT_STAY_IMAGE}
+        alt={isOutgoing ? '' : combo.stay.name}
+      />
+      <div className={isOutgoing ? styles.cardContentOut : styles.cardContent}>
+        <span className={`${styles.comboBadge} ${styles.badgeDeal}`}>
+          {combo.stay.badge}
+        </span>
+        <div>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            {combo.stay.region}
+            {combo.stay.stars ? <SoftStarIcon /> : null}
+          </span>
+          <h3>{combo.stay.name}</h3>
+          <p>{combo.stay.description}</p>
+        </div>
+        <div className={styles.comboMeta}>
+          <strong>{formatPrice(combo.stay.priceFrom)}</strong>
+          <span aria-hidden="true">
+            {typeof combo.stay.otherDealsCount === 'number' && combo.stay.otherDealsCount > 0
+              ? `Khám phá thêm ${combo.stay.otherDealsCount} deal hời →`
+              : 'Xem phòng →'}
+          </span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ExperienceBody({
+  combo,
+  isOutgoing,
+}: {
+  combo: RecommendationCombo;
+  isOutgoing?: boolean;
+}) {
+  return (
+    <>
+      <SafeComboImage
+        src={combo.experience.image}
+        fallback={DEFAULT_EXPERIENCE_IMAGE}
+        alt={isOutgoing ? '' : combo.experience.name}
+      />
+      <div className={isOutgoing ? styles.cardContentOut : styles.cardContent}>
+        <span className={styles.comboBadge}>
+          {combo.experience.badge}
+        </span>
+        <div>
+          <span>{combo.experience.location}</span>
+          <h3>{combo.experience.name}</h3>
+          <p>{combo.experience.description}</p>
+        </div>
+        <div className={styles.comboMeta}>
+          <strong>{combo.experience.ratingText}</strong>
+          <span aria-hidden="true">Xem chi tiết →</span>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export function OtaHomeRecommendations() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const startTimeRef = useRef<number | null>(null);
+  const [prevIndex, setPrevIndex] = useState<number | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: apiPicks } = useHomeRecommendations({ limit: 6 });
   const combos = useMemo(() => {
@@ -57,50 +159,53 @@ export function OtaHomeRecommendations() {
   }, [apiPicks]);
 
   const activeCombo = (combos[activeIndex] ?? combos[0])!;
+  const prevCombo = prevIndex !== null ? combos[prevIndex] ?? null : null;
 
-  const nextCombo = useCallback(() => {
-    setActiveIndex((prev) => (prev + 1) % combos.length);
-    startTimeRef.current = null;
-    setProgress(0);
-  }, [combos.length]);
+  const changeCombo = useCallback(
+    (getNextIndex: (prev: number) => number) => {
+      if (isTransitioning) return;
+      const nextIdx = getNextIndex(activeIndex);
+      if (nextIdx === activeIndex) return;
 
-  const prevCombo = useCallback(() => {
-    setActiveIndex((prev) => (prev - 1 + combos.length) % combos.length);
-    startTimeRef.current = null;
-    setProgress(0);
-  }, [combos.length]);
+      setPrevIndex(activeIndex);
+      setActiveIndex(nextIdx);
+      setIsTransitioning(true);
 
-  const selectCombo = useCallback((index: number) => {
-    setActiveIndex(index);
-    startTimeRef.current = null;
-    setProgress(0);
-  }, []);
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current);
+      }
+
+      transitionTimerRef.current = setTimeout(() => {
+        setIsTransitioning(false);
+        setPrevIndex(null);
+      }, CROSSFADE_MS);
+    },
+    [activeIndex, isTransitioning],
+  );
+
+  const handleNextCombo = useCallback(() => {
+    changeCombo((prev) => (prev + 1) % combos.length);
+  }, [changeCombo, combos.length]);
+
+  const handlePrevCombo = useCallback(() => {
+    changeCombo((prev) => (prev - 1 + combos.length) % combos.length);
+  }, [changeCombo, combos.length]);
 
   useEffect(() => {
-    if (startTimeRef.current === null) {
-      startTimeRef.current = Date.now();
-    }
-    const interval = setInterval(() => {
-      if (isPaused) {
-        if (startTimeRef.current !== null) {
-          startTimeRef.current = Date.now() - (progress / 100) * ROTATE_INTERVAL_MS;
-        }
-        return;
+    const timer = setInterval(() => {
+      handleNextCombo();
+    }, ROTATE_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [handleNextCombo]);
+
+  useEffect(() => {
+    return () => {
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current);
       }
-
-      const now = Date.now();
-      const start = startTimeRef.current ?? now;
-      const elapsed = now - start;
-      const pct = Math.min(100, (elapsed / ROTATE_INTERVAL_MS) * 100);
-      setProgress(pct);
-
-      if (elapsed >= ROTATE_INTERVAL_MS) {
-        nextCombo();
-      }
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [isPaused, progress, nextCombo]);
+    };
+  }, []);
 
   return (
     <section
@@ -109,11 +214,7 @@ export function OtaHomeRecommendations() {
       aria-labelledby="recommendations-title"
       data-home-reveal
     >
-      <div
-        onPointerEnter={() => setIsPaused(true)}
-        onPointerLeave={() => setIsPaused(false)}
-      >
-        <div className={styles.sectionHead}>
+      <div className={styles.sectionHead}>
         <div>
           <h2 id="recommendations-title">{vi.ota.recommendationTitle}</h2>
           <p>{vi.ota.recommendationIntro}</p>
@@ -123,7 +224,7 @@ export function OtaHomeRecommendations() {
             <button
               type="button"
               className={styles.arrowBtn}
-              onClick={prevCombo}
+              onClick={handlePrevCombo}
               aria-label="Gợi ý trước"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -133,7 +234,7 @@ export function OtaHomeRecommendations() {
             <button
               type="button"
               className={styles.arrowBtn}
-              onClick={nextCombo}
+              onClick={handleNextCombo}
               aria-label="Gợi ý tiếp theo"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -147,119 +248,60 @@ export function OtaHomeRecommendations() {
         </div>
       </div>
 
-      <div className={styles.progressTrack} aria-hidden="true">
-        <div className={styles.progressFill} style={{ width: `${progress}%` }} />
-      </div>
-
       <div className={styles.destinations}>
         {/* Ô 1: Điểm đến tâm điểm & Lý do nên đi (Lớn bên trái) */}
         <Link
-          key={`dest-${activeCombo.id}`}
+          key="slot-destination"
           href={activeCombo.destination.href}
           className={styles.destination}
           aria-label={`Khám phá điểm đến ${activeCombo.destination.name}`}
           data-home-banner
         >
-          <SafeComboImage
-            src={activeCombo.destination.image}
-            fallback={DEFAULT_DESTINATION_IMAGE}
-            alt={activeCombo.destination.name}
-          />
-          <div className={styles.cardContent}>
-            <span className={`${styles.comboBadge} ${styles.badgeTrending}`}>
-              {activeCombo.destination.badge}
-            </span>
-            <div>
-              <span>{activeCombo.destination.region}</span>
-              <h3>{activeCombo.destination.name}</h3>
-              <p className={styles.destinationReason}>{activeCombo.destination.description}</p>
+          {prevCombo ? (
+            <div className={styles.cardLayerOutgoing} aria-hidden="true">
+              <DestinationBody combo={prevCombo} isOutgoing />
             </div>
-            <div className={styles.comboMeta}>
-              <strong>{activeCombo.destination.meta}</strong>
-              <span aria-hidden="true">Khám phá điểm đến →</span>
-            </div>
+          ) : null}
+          <div className={isTransitioning ? styles.cardLayerIncoming : styles.cardLayerActive}>
+            <DestinationBody combo={activeCombo} />
           </div>
         </Link>
 
         {/* Ô 2: Nơi lưu trú & Deal hời (Nhỏ phía trên bên phải) */}
         <Link
-          key={`stay-${activeCombo.id}`}
+          key="slot-stay"
           href={activeCombo.stay.href}
           className={styles.destination}
           aria-label={`Đặt phòng tại ${activeCombo.stay.name}`}
           data-home-banner
         >
-          <SafeComboImage
-            src={activeCombo.stay.image}
-            fallback={DEFAULT_STAY_IMAGE}
-            alt={activeCombo.stay.name}
-          />
-          <div className={styles.cardContent}>
-            <span className={`${styles.comboBadge} ${styles.badgeDeal}`}>
-              {activeCombo.stay.badge}
-            </span>
-            <div>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                {activeCombo.stay.region}
-                {activeCombo.stay.stars ? <SoftStarIcon /> : null}
-              </span>
-              <h3>{activeCombo.stay.name}</h3>
-              <p>{activeCombo.stay.description}</p>
+          {prevCombo ? (
+            <div className={styles.cardLayerOutgoing} aria-hidden="true">
+              <StayBody combo={prevCombo} isOutgoing />
             </div>
-            <div className={styles.comboMeta}>
-              <strong>{formatPrice(activeCombo.stay.priceFrom)}</strong>
-              <span aria-hidden="true">
-                {typeof activeCombo.stay.otherDealsCount === 'number' && activeCombo.stay.otherDealsCount > 0
-                  ? `Khám phá thêm ${activeCombo.stay.otherDealsCount} deal hời →`
-                  : 'Xem phòng →'}
-              </span>
-            </div>
+          ) : null}
+          <div className={isTransitioning ? styles.cardLayerIncoming : styles.cardLayerActive}>
+            <StayBody combo={activeCombo} />
           </div>
         </Link>
 
         {/* Ô 3: Cà phê & Ẩm thực (Nhỏ phía dưới bên phải) */}
         <Link
-          key={`exp-${activeCombo.id}`}
+          key="slot-experience"
           href={activeCombo.experience.href}
           className={styles.destination}
           aria-label={`Khám phá ${activeCombo.experience.name}`}
           data-home-banner
         >
-          <SafeComboImage
-            src={activeCombo.experience.image}
-            fallback={DEFAULT_EXPERIENCE_IMAGE}
-            alt={activeCombo.experience.name}
-          />
-          <div className={styles.cardContent}>
-            <span className={styles.comboBadge}>
-              {activeCombo.experience.badge}
-            </span>
-            <div>
-              <span>{activeCombo.experience.location}</span>
-              <h3>{activeCombo.experience.name}</h3>
-              <p>{activeCombo.experience.description}</p>
+          {prevCombo ? (
+            <div className={styles.cardLayerOutgoing} aria-hidden="true">
+              <ExperienceBody combo={prevCombo} isOutgoing />
             </div>
-            <div className={styles.comboMeta}>
-              <strong>{activeCombo.experience.ratingText}</strong>
-              <span aria-hidden="true">Xem chi tiết →</span>
-            </div>
+          ) : null}
+          <div className={isTransitioning ? styles.cardLayerIncoming : styles.cardLayerActive}>
+            <ExperienceBody combo={activeCombo} />
           </div>
         </Link>
-      </div>
-
-      <nav className={styles.topicPills} aria-label="Danh sách điểm đến đề xuất">
-        {combos.map((combo, index) => (
-          <button
-            type="button"
-            key={combo.id}
-            className={styles.topicPill}
-            aria-pressed={index === activeIndex}
-            onClick={() => selectCombo(index)}
-          >
-            {combo.topicLabel}
-          </button>
-        ))}
-      </nav>
       </div>
     </section>
   );
