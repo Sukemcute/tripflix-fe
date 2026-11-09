@@ -876,6 +876,133 @@
   margin: 0 20px 16px;
 }
 
+/* Khung đơn cao hết vùng nhìn dưới header; đơn dài thì cuộn bên trong, tổng tiền luôn ở đáy. */
+.aside {
+  height: calc(100vh - 120px);
+  min-height: 520px;
+}
+
+.aside .summary {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.aside .summary > * {
+  flex-shrink: 0;
+}
+
+.aside .total {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+}
+
+/* Khối gợi ý chỉ lấy phần còn trống, thiếu chỗ thì bỏ bớt chi tiết thay vì đẩy khung phải cuộn. */
+.aside .promoArea {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  container-type: size;
+}
+
+@container (max-height: 300px) {
+  .promoArea .perks {
+    display: none;
+  }
+}
+
+@container (max-height: 190px) {
+  .promoArea .promo p {
+    display: none;
+  }
+}
+
+@container (max-height: 150px) {
+  .promoArea .promo {
+    display: none;
+  }
+}
+
+.promoArea {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 20px;
+}
+
+.perks {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.perks li::before {
+  content: '✓';
+  margin-right: 8px;
+  color: var(--color-teal-ink);
+  font-weight: 800;
+}
+
+.promo {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  min-height: 0;
+  padding: 14px 18px;
+  overflow: hidden;
+  border-radius: 12px;
+  color: var(--color-background);
+  background:
+    radial-gradient(circle at 82% 18%, var(--color-sun) 0 36px, transparent 37px),
+    linear-gradient(180deg, var(--color-teal) 0 50%, var(--color-teal-ink) 100%);
+}
+
+.promo h3,
+.promo p {
+  margin: 0;
+}
+
+.promo h3 {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.promo p {
+  font-size: 13px;
+}
+
+.promoTag {
+  align-self: flex-start;
+  margin-bottom: auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-teal-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.promoLink {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 /* ---------- Thanh toán thành công ---------- */
 
 .success {
@@ -953,6 +1080,22 @@
   .aside {
     position: static;
     order: -1;
+    height: auto;
+    min-height: 0;
+  }
+
+  .aside .summary {
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .aside .total {
+    position: static;
+  }
+
+  .aside .promoArea {
+    flex: none;
+    container-type: normal;
   }
 }
 
