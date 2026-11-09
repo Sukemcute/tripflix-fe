@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import './globals.css';
 import { HeaderAccount } from '@/features/auth/header-account';
 import { CartLink } from '@/features/checkout/cart-link';
+import { HeaderNotifications } from '@/features/notifications/header-notifications';
 import { Providers } from './providers';
 import { OtaNavigation } from '@/features/discovery/ota-navigation';
 import { OtaFooter } from '@/features/discovery/ota-footer';
@@ -37,8 +38,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 />
               </Link>
               <OtaNavigation />
-              <CartLink />
-              <HeaderAccount />
+              {/* Cụm bên phải: giỏ hàng, chuông, tài khoản trong một viên cùng kiểu menu (TF06P). */}
+              <div className="header-actions">
+                <CartLink />
+                <HeaderNotifications />
+                <HeaderAccount />
+              </div>
             </div>
           </header>
           {children}
