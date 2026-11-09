@@ -1,9 +1,29 @@
-.nav a[aria-current='page'] {
-  color: var(--color-teal-ink);
+/* Phần ruột của mục menu (icon + chữ) không tạo hộp riêng, để icon và chữ vẫn xếp theo kiểu của thẻ a. */
+.navItem {
+  display: contents;
+}
+/* Mục vừa bấm khi trang đích còn đang tải: nền cam nhạt nhấp nháy, mục cũ vẫn giữ màu cam tới khi trang mới hiện. */
+.nav a:has(.navItem[data-pending]) {
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+  animation: navPending 0.9s ease-in-out infinite alternate;
+}
+@keyframes navPending {
+  to {
+    background: color-mix(in srgb, var(--color-coral-ink) 18%, var(--color-background));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav a:has(.navItem[data-pending]) {
+    animation: none;
+  }
+}
+/* Mục đang mở: viên nền cam đậm, chữ và icon trắng (TF06P; kiểu viên chung ở .header-content nav, globals.css). */
+.nav a[aria-current='page'],
+.nav a[aria-current='page']:hover {
+  background: var(--color-coral-ink);
+  color: var(--color-background);
   font-weight: 700;
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 8px;
 }
 :global(body:has([class*='immersiveRoot'])) .footer {
   display: none;
