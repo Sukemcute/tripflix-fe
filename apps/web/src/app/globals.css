@@ -1950,8 +1950,10 @@ body:has(.auth-fullscreen) {
 }
 /* Ô vuông chỉ có logo Google, cùng kiểu ô nhập (nền trắng, viền mảnh, bo 14px). */
 .auth-google-tile {
+  position: relative;
   display: grid;
   place-items: center;
+  overflow: hidden;
   width: 72px;
   height: 52px;
   border: 1px solid var(--color-border);
@@ -1968,19 +1970,25 @@ body:has(.auth-fullscreen) {
   border-color: var(--color-coral-ink);
   box-shadow: 0 0 0 4px var(--color-coral-tint);
 }
-/* Cắt viền xám mảnh của nút Google để chỉ còn logo trên nền trắng trong ô của mình. */
-.auth-google-button {
-  display: grid;
-  clip-path: inset(2px);
-}
-/* Nút Google và logo G chồng cùng một ô lưới, logo ở trên nhưng không nhận chuột. */
-.auth-google-tile > * {
-  grid-area: 1 / 1;
+.auth-google-tile:hover .auth-google-mark {
+  transform: scale(1.08);
 }
 .auth-google-mark {
-  position: relative;
-  z-index: 1;
   pointer-events: none;
+  transition: transform 0.15s;
+}
+/*
+ * Nút thật của Google (iframe khoảng 64x44) phủ giữa ô, phóng 2,5 lần cho kín ô 72x52 (ô cắt phần thừa),
+ * gần như trong suốt: thấy ô và logo của web, bấm vào là bấm nút Google. Không để opacity 0 hẳn, để trình duyệt
+ * vẫn coi iframe là đang hiển thị.
+ */
+.auth-google-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  opacity: 0.01;
+  transform: translate(-50%, -50%) scale(2.5);
 }
 /* Trang tài khoản (TF06D): thẻ đầu trang, hàng tab gạch chân, hai cột thẻ */
 .account-page {
@@ -2240,6 +2248,39 @@ body:has(.auth-fullscreen) {
   display: block;
   margin-top: 24px;
   color: var(--color-text-muted);
+}
+.post-unavailable-card {
+  margin-top: 32px;
+  padding: 48px 24px;
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border-subtle, #e2e8f0);
+  border-radius: 16px;
+  text-align: center;
+  max-width: 520px;
+  margin-inline: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+.post-unavailable-icon {
+  font-size: 40px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+.post-unavailable-card h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text, #1e293b);
+  margin: 0 0 8px;
+}
+.post-unavailable-card p {
+  font-size: 14px;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+.post-unavailable-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
 }
 .post-layout {
   display: grid;
