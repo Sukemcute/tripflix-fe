@@ -1461,6 +1461,12 @@ body:has(.auth-fullscreen) {
 .auth-split[data-mode='register'] .auth-form {
   gap: 12px;
 }
+/* Màn thấp (laptop 720px): bớt khoảng trên dưới quanh thẻ đăng ký để không phải cuộn trong thẻ. */
+@media (min-width: 901px) {
+  .auth-split[data-mode='register'] .auth-panel {
+    padding-block: 16px;
+  }
+}
 /* Ánh phản chiếu: dải sáng chéo ở góc trên trái, không chặn chuột. */
 .auth-panel-inner::before {
   content: '';
