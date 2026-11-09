@@ -254,50 +254,173 @@
   padding-block: clamp(32px, 5vw, 72px);
 }
 .stayHeader {
+  position: relative;
+  isolation: isolate;
+  filter: drop-shadow(0 14px 28px rgba(0, 108, 99, 0.1));
+}
+.stayTicket {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   align-items: stretch;
-  overflow: hidden;
-  border: 1px solid var(--color-teal-soft);
+  border: 1.5px solid rgba(0, 108, 99, 0.22);
   border-radius: 22px;
   background: var(--color-sea-mist);
+  overflow: hidden;
+
+  /* TRUE CSS MASK - Khoét lỗ trực tiếp trên layer background của vé */
+  --seam-x: 55.555%;
+  -webkit-mask-image:
+    radial-gradient(circle 14px at var(--seam-x) 0, transparent 13.5px, #000 14px),
+    radial-gradient(circle 14px at var(--seam-x) 100%, transparent 13.5px, #000 14px),
+    radial-gradient(circle 4.5px at var(--seam-x) 8px, transparent 4px, #000 4.5px);
+  -webkit-mask-size:
+    100% 100%,
+    100% 100%,
+    100% 16px;
+  -webkit-mask-repeat:
+    no-repeat,
+    no-repeat,
+    repeat-y;
+  -webkit-mask-composite: destination-in;
+
+  mask-image:
+    radial-gradient(circle 14px at var(--seam-x) 0, transparent 13.5px, #000 14px),
+    radial-gradient(circle 14px at var(--seam-x) 100%, transparent 13.5px, #000 14px),
+    radial-gradient(circle 4.5px at var(--seam-x) 8px, transparent 4px, #000 4.5px);
+  mask-size:
+    100% 100%,
+    100% 100%,
+    100% 16px;
+  mask-repeat:
+    no-repeat,
+    no-repeat,
+    repeat-y;
+  mask-composite: intersect;
 }
 .stayCopy {
   align-self: center;
-  padding: clamp(20px, 3vw, 44px);
+  padding: clamp(14px, 2.2vw, 24px);
+  z-index: 1;
+}
+.stayInnerFrame {
+  border: 2px dashed rgba(0, 108, 99, 0.38);
+  border-radius: 14px;
+  padding: clamp(16px, 2vw, 24px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.stayTicketBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-teal-ink);
+  margin-bottom: 8px;
+}
+.stayTicketStar {
+  color: var(--color-coral);
+  font-size: 12px;
 }
 .stayCopy h2 {
   max-width: 24ch;
   margin-bottom: 8px;
-  font-size: clamp(1.55rem, 3.35vw, 3.1rem);
-  line-height: 1.1;
-  letter-spacing: -0.055em;
+  font-size: clamp(1.45rem, 3.1vw, 2.8rem);
+  line-height: 1.15;
+  letter-spacing: -0.05em;
 }
 .stayCopy p {
-  max-width: 54ch;
+  max-width: 50ch;
   font-size: 0.85rem;
   line-height: 1.55;
   text-wrap: pretty;
+  margin: 0 0 16px;
+}
+.stayActionRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
 }
 .stayAction {
   display: inline-flex;
   align-items: center;
-  min-height: 42px;
-  margin-top: 14px;
-  padding-inline: 12px;
-  border-radius: 999px;
-  background: var(--color-teal-ink);
-  color: var(--color-background);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-/* Cùng màu nút "Tìm phòng trống"; loang Coral, chữ chuyển Ink. */
-.stayAction {
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 18px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--color-teal-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  border: 1.5px solid rgba(0, 108, 99, 0.22);
+  box-shadow: 0 2px 8px rgba(0, 108, 99, 0.06), 0 1px 2px rgba(0, 0, 0, 0.02);
+  flex-shrink: 0;
   --ripple-color: var(--color-coral);
-  transition: color 480ms;
+  transition:
+    color 300ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    border-color 300ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 250ms ease,
+    transform 250ms ease;
+}
+.stayAction svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--color-coral);
+  stroke-width: 2.2;
+  flex-shrink: 0;
+  transition: stroke 300ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 .stayAction:is(:hover, :focus-visible) {
-  color: var(--color-ink);
+  border-color: var(--color-coral);
+  color: #ffffff;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 14px rgba(255, 114, 94, 0.32);
+}
+.stayAction:is(:hover, :focus-visible) svg {
+  stroke: #ffffff;
+}
+.stayDestinationBadge {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  min-height: 44px;
+}
+.stayDestinationText {
+  font-size: clamp(26px, 2.6vw, 36px);
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.2;
+  color: var(--color-coral, #ff725e);
+  display: inline-block;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  padding-inline: 4px;
+  text-shadow: 0 1px 3px rgba(255, 114, 94, 0.18);
+  animation: handwrittenCityIn 950ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.stayDestinationBadge:hover .stayDestinationText {
+  color: #ff5a3c;
+  transform: translateY(-1px) scale(1.05);
+}
+@keyframes handwrittenCityIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .stayScene {
   position: relative;
@@ -306,69 +429,126 @@
   overflow: hidden;
   background: var(--color-teal-soft);
 }
+.stayLandscapePrev,
 .stayLandscape {
   object-fit: cover;
-  z-index: -1;
+}
+.stayLandscapePrev {
+  z-index: 0;
+}
+.stayLandscape {
+  z-index: 1;
+}
+.stayRedStamp {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  z-index: 4;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 2px solid #d32f2f;
+  color: #d32f2f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  font-weight: 800;
+  transform: rotate(-13deg);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 0 0 1.5px rgba(211, 47, 47, 0.35);
+  user-select: none;
+  pointer-events: none;
+}
+.stampOrg {
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  opacity: 0.95;
+}
+.stampAction {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  margin-block: 2.5px;
+  border-block: 1px dashed #d32f2f;
+  padding-block: 1.5px;
+  width: 82%;
+  text-align: center;
+  color: #b71c1c;
+}
+.stampDate {
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  opacity: 0.9;
 }
 .stayMascot {
   position: absolute;
-  bottom: 2%;
-  left: 7%;
-  width: min(48%, 210px);
+  bottom: 0;
+  left: calc(58% - 75px);
+  width: min(36%, 150px);
   height: auto;
-  filter: drop-shadow(0 8px 14px var(--color-overlay));
+  z-index: 6;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.18));
+  pointer-events: none;
 }
-/* Ảnh chuyển dần vào nền thẻ ở mép trái (desktop) để thẻ và ảnh liền một khối. */
+/* Thiết lập bố cục vé du lịch trên desktop */
 @media (min-width: 641px) {
-  /* Tripi nhích sát về phía đường chia đôi. */
+  .stayTicket {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  }
   .stayMascot {
-    left: 1%;
-  }
-  /* Chia đôi chữ và ảnh. */
-  .stayHeader {
-    position: relative;
-    isolation: isolate;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-  .stayScene::before {
-    content: '';
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 45%;
-    background: linear-gradient(
-      90deg,
-      var(--color-sea-mist) 0%,
-      color-mix(in srgb, var(--color-sea-mist) 55%, transparent) 40%,
-      transparent 100%
-    );
-    pointer-events: none;
+    left: calc(55.555% - 95px);
+    width: min(42%, 200px);
+    bottom: 0;
   }
 }
 .chips {
   display: flex;
+  justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-block: 16px;
+  gap: 12px;
+  margin-block: 24px 20px;
+  border: none;
+  padding: 0;
 }
 .chips button {
-  min-height: 40px;
-  padding: 6px 14px;
+  min-height: 42px;
+  padding: 8px 22px;
   border: 1px solid var(--color-border);
   border-radius: 999px;
   background: var(--color-background);
   color: var(--color-ink);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 .chips button:hover {
   border-color: var(--color-teal-ink);
   color: var(--color-teal-ink);
   background: var(--color-sea-mist);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 108, 99, 0.1);
 }
 .chips button[aria-pressed='true'] {
   border-color: var(--color-teal-ink);
   background: var(--color-teal-ink);
   color: var(--color-background);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 108, 99, 0.2);
+}
+.chips button:active {
+  transform: scale(0.97);
 }
 .stayGrid {
   display: grid;
@@ -749,14 +929,23 @@
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  .stayHeader {
+  .stayTicket {
     grid-template-columns: minmax(0, 1fr);
+    -webkit-mask-image: none;
+    mask-image: none;
   }
   .stayScene {
     min-height: 116px;
   }
+  .stayRedStamp {
+    top: 10px;
+    right: 12px;
+    transform: rotate(-13deg) scale(0.8);
+    transform-origin: top right;
+  }
   .stayMascot {
     width: 102px;
+    left: 10px;
   }
   .hotelCard a {
     grid-template-rows: clamp(145px, 46vw, 210px) 1fr;
@@ -776,7 +965,7 @@
 }
 @media (prefers-reduced-motion: no-preference) {
   .stayLandscape {
-    animation: stay-photo-in 608ms ease-out both;
+    animation: stay-photo-in 1100ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
   }
   :global(html:has([data-home-banner])) {
     scroll-behavior: smooth;
@@ -798,6 +987,7 @@
   }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .stayLandscapePrev,
   .stayLandscape {
     scale: 1.1;
     translate: calc(var(--pointer-x, 0) * -28px) calc(var(--pointer-y, 0) * -12px);
@@ -831,7 +1021,7 @@
 }
 @keyframes stay-photo-in {
   from {
-    opacity: 0.35;
+    opacity: 0;
   }
   to {
     opacity: 1;
@@ -859,11 +1049,22 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .cardLayerIncoming,
-  .cardContentOut {
+  .cardContentOut,
+  .chips {
     animation: none !important;
   }
   .hotelCard img {
     transition: none;
+  }
+}
+@keyframes chips-scroll-in {
+  from {
+    opacity: 0.25;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -877,6 +1078,11 @@
 }
 @media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
+    .chips {
+      animation: chips-scroll-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
     .stayGrid > .hotelCard {
       transform-origin: 50% 140%;
       animation: stay-fan-out linear both;

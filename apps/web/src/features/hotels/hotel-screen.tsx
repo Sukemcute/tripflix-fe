@@ -102,7 +102,7 @@ export function HotelScreen({
     room: { maxGuests: number; roomsNeeded: number },
     rate: { totalPrice: number | null },
   ) => {
-    if (!stay.children || rate.totalPrice === null) return 0;
+    if (!stay.children || rate.totalPrice === null || roomCount(room) > stay.adults) return 0;
     const rooms = roomCount(room);
     const surcharge = calculateChildStayDiscount({
       stayTotal: rooms * Math.round(rate.totalPrice / room.roomsNeeded),
@@ -411,7 +411,10 @@ export function HotelScreen({
                           ) : (
                             <p>{copy.rateUnavailable}</p>
                           )}
-                          {rate.totalPrice !== null && (
+                          {rate.totalPrice !== null && roomCount(room) > stay.adults && (
+                            <p className="small muted">{copy.cannotFitParty}</p>
+                          )}
+                          {rate.totalPrice !== null && roomCount(room) <= stay.adults && (
                             <RateTotal
                               totalPrice={roomCount(room) * Math.round(rate.totalPrice / room.roomsNeeded)}
                               surcharge={calculateChildStayDiscount({

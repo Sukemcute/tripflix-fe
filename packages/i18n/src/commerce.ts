@@ -115,6 +115,8 @@ export const commerce = {
   cartFull: 'Giỏ đã đủ 10 mục. Hãy xoá bớt để thêm phòng khác.',
   cartAdultsMismatch: 'Giỏ đang đặt cho',
   cartUnderCapacity: 'chưa đủ chỗ cho cả đoàn:',
+  cartNeedAdults: 'mỗi phòng cần ít nhất 1 người lớn:',
+  cartAdultsUnit: 'người lớn',
   holdLeft: 'Thời gian giữ chỗ',
   viewTrips: 'Xem chuyến đi của tôi',
   booked: 'Chuyến đã đặt',
