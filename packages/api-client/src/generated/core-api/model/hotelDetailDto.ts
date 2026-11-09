@@ -18,6 +18,8 @@ import type { StayDto } from './stayDto';
 
 export interface HotelDetailDto {
   id: string;
+  /** Tên công khai trên URL */
+  slug: string;
   name: string;
   province: ProvinceDto;
   /** @nullable */

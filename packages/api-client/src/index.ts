@@ -15,6 +15,8 @@ export {
 } from './response';
 export { getSecondsLeft, useResendCooldown } from './resend-cooldown';
 export { socialApi } from './social';
+export { moderationApi } from './moderation';
+export { removeUnavailablePost } from './remove-unavailable-post';
 export { useSocialPosts } from './queries';
 export {
   usePostSummary,

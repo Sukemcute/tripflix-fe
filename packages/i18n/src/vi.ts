@@ -8,9 +8,11 @@ import { ota } from './ota';
 import { flights } from './flights';
 import { privacy } from './privacy';
 import { terms } from './terms';
+import { moderation } from './moderation';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
+  moderation,
   flights,
   privacy,
   terms,

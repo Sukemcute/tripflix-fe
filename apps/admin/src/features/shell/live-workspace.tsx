@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 import { adminNav } from './nav';
 import { AdminApiError } from './api-state';
 import { StaffManagement } from '../staff/staff-management';
-import { PostModeration } from '../moderation/post-moderation';
+import { ModerationWorkspace } from '../moderation/moderation-workspace';
 import { InventoryCalendar } from '../inventory/inventory-calendar';
 import { AdminOverview } from '../overview/admin-overview';
 
@@ -119,7 +119,7 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
               ) : (
                 profile.data &&
                 (label === 'admin.moderation' ? (
-                  <PostModeration />
+                  <ModerationWorkspace />
                 ) : user.role !== 'superadmin' ? (
                   <p role="alert">{vi.api.superadminOnly}</p>
                 ) : label === 'admin.staff' ? (

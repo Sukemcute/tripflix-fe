@@ -1128,3 +1128,35 @@ h3 {
     transition: none !important;
   }
 }
+.moderation-case {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background);
+}
+.moderation-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-block: 16px;
+}
+.moderation-case h3 {
+  margin-block: 20px 12px;
+}
+.moderation-case textarea {
+  min-height: 80px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+}
+.moderation-case mark {
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
+}
+.moderation-cover {
+  max-width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 12px;
+}
