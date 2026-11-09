@@ -43,18 +43,33 @@ interface DatePickerProps {
   name: string;
   label: string;
   today: string;
-  initialValue: string;
+  value: string;
+  onChange: (value: string) => void;
+  /** Ngày sớm nhất được chọn, mặc định là hôm nay; ngày về dùng ngày đi. */
+  minDate?: string;
+  /** Tô dải ngày từ đây tới ngày đang chọn, ví dụ từ ngày đi tới ngày về. */
+  rangeStart?: string;
+  dialogLabel?: string;
 }
 
-export function DatePicker({ name, label, today, initialValue }: DatePickerProps) {
+export function DatePicker({
+  name,
+  label,
+  today,
+  value,
+  onChange,
+  minDate = today,
+  rangeStart,
+  dialogLabel = copy.pickDate,
+}: DatePickerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const [value, setValue] = useState(initialValue < today ? today : initialValue);
   const [isOpen, setIsOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(startOfMonth(value));
   const [focusedDate, setFocusedDate] = useState(value);
-  const firstMonth = startOfMonth(today);
+  const firstMonth = startOfMonth(minDate);
+  const tomorrow = addDays(today, 1);
   const months = [visibleMonth, addMonths(visibleMonth, 1)];
 
   useEffect(() => {
@@ -81,12 +96,12 @@ export function DatePicker({ name, label, today, initialValue }: DatePickerProps
     triggerRef.current?.focus();
   };
   const choose = (iso: string) => {
-    setValue(iso);
+    onChange(iso);
     close();
   };
   const moveFocus = (days: number) => {
     const next = addDays(focusedDate, days);
-    if (next < today) return;
+    if (next < minDate) return;
     setFocusedDate(next);
     const nextMonth = startOfMonth(next);
     if (nextMonth < visibleMonth) setVisibleMonth(nextMonth);
@@ -133,7 +148,7 @@ export function DatePicker({ name, label, today, initialValue }: DatePickerProps
         </span>
       </button>
       {isOpen && (
-        <div className={styles.popover + ' ' + styles.calendar} role="dialog" aria-label={copy.pickDate}>
+        <div className={styles.popover + ' ' + styles.calendar} role="dialog" aria-label={dialogLabel}>
           <div className={styles.calendarNav}>
             <button
               type="button"
@@ -174,10 +189,12 @@ export function DatePicker({ name, label, today, initialValue }: DatePickerProps
                         data-date={iso}
                         data-today={iso === today || undefined}
                         data-weekend={index % 7 >= 5 || undefined}
+                        data-range-start={iso === rangeStart || undefined}
+                        data-in-range={(rangeStart && iso > rangeStart && iso < value) || undefined}
                         aria-pressed={iso === value}
                         aria-label={formatWeekday(iso) + ' ' + formatShortDate(iso)}
                         tabIndex={iso === focusedDate ? 0 : -1}
-                        disabled={iso < today}
+                        disabled={iso < minDate}
                         onClick={() => choose(iso)}
                       >
                         {Number(iso.slice(8, 10))}
@@ -191,14 +208,14 @@ export function DatePicker({ name, label, today, initialValue }: DatePickerProps
             ))}
           </div>
           <div className={styles.calendarFooter}>
-            <button type="button" onClick={() => choose(today)}>
+            <button type="button" disabled={today < minDate} onClick={() => choose(today)}>
               {copy.today}
             </button>
-            <button type="button" onClick={() => choose(addDays(today, 1))}>
+            <button type="button" disabled={tomorrow < minDate} onClick={() => choose(tomorrow)}>
               {copy.tomorrow}
             </button>
             <span>
-              {copy.pickDate}:{' '}
+              {dialogLabel}:{' '}
               <strong>{formatWeekday(focusedDate) + ', ' + formatShortDate(focusedDate)}</strong>
             </span>
           </div>

@@ -344,6 +344,7 @@ function CheckoutForm() {
                 <Card key={index}>
                   <Txt>
                     {text.guest} {index + 1}
+                    {order.passengerTypes[index] ? ' · ' + text.guestTypes[order.passengerTypes[index]] : ''}
                   </Txt>
                   <Field
                     label={text.name}

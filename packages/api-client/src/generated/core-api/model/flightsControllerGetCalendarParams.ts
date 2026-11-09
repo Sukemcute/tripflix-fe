@@ -13,8 +13,21 @@ export type FlightsControllerGetCalendarParams = {
   /** Ngày cuối (tính cả ngày này), tối đa 31 ngày */
   end: string;
   /**
+   * Số người lớn
    * @minimum 1
    * @maximum 9
    */
   passengers?: number;
+  /**
+   * Trẻ em 2–11 tuổi, chiếm ghế, giá 75%; cộng người lớn tối đa 9 ghế
+   * @minimum 0
+   * @maximum 8
+   */
+  children?: number;
+  /**
+   * Em bé dưới 2 tuổi, ngồi lòng người lớn (không chiếm ghế), giá 10%; không quá số người lớn
+   * @minimum 0
+   * @maximum 9
+   */
+  infants?: number;
 };

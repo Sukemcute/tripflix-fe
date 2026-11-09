@@ -10,7 +10,7 @@ export interface ResetPasswordDto {
   token: string;
   /**
    * @minLength 8
-   * @maxLength 128
+   * @maxLength 64
    */
   newPassword: string;
 }

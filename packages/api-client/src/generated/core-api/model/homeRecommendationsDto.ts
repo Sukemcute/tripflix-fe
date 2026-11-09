@@ -4,9 +4,9 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import type { HomePickDto } from './homePickDto';
+import type { HomeDestinationPickDto } from './homeDestinationPickDto';
 
 export interface HomeRecommendationsDto {
-  /** Có thể rỗng: chưa có nơi vừa tìm và không có khách sạn nào giá tốt */
-  items: HomePickDto[];
+  /** Danh sách gợi ý điểm đến và khách sạn deal hời trang chủ */
+  items: HomeDestinationPickDto[];
 }

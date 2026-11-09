@@ -2,7 +2,7 @@ import { useSummaryExperience } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, radius, spacing as s } from '@tripflix/tokens';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Icon, IconButton, Mascot, Txt } from '@/components/mobile-ui';
+import { Icon, IconButton, Mascot, Notice, Txt } from '@/components/mobile-ui';
 
 const copy = vi.summary;
 
@@ -54,6 +54,15 @@ export function CommunitySummary({ postId }: { postId: string }) {
         </View>
       ) : (
         <View style={styles.body}>
+          {summary?.hasSafetyWarnings && (
+            <View testID="summary-safety">
+              <Notice tone="warning">
+                <Txt variant="label">{copy.safetyTitle}</Txt>
+                {'\n'}
+                {copy.safety}
+              </Notice>
+            </View>
+          )}
           {summary?.status === 'ready' ? (
             <Txt selectable>{summary.summary}</Txt>
           ) : (

@@ -10,6 +10,8 @@ export const ota = {
   discover: 'Khám phá Việt Nam',
   destinationTitle: 'Bạn muốn thức dậy ở đâu?',
   destinationIntro: 'Bắt đầu từ một nơi muốn đến. Tripflix sẽ tìm phòng trống cho kỳ ở của bạn.',
+  recommendationTitle: 'Gợi ý dành cho bạn',
+  recommendationIntro: 'Combo điểm đến, nơi lưu trú và trải nghiệm nổi bật được chọn lọc theo xu hướng.',
   browseHotels: 'Xem tất cả khách sạn',
   browseDestination: 'Tìm phòng tại {name}',
   destinations: {
