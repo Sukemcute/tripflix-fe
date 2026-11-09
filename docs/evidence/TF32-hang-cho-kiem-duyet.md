@@ -15,7 +15,7 @@
 
 | Tiêu chí | Đạt | Bằng chứng |
 | --- | --- | --- |
-| Hàng chờ/chi tiết/log gọi đúng API | Đạt với API giả trong browser | tools/verify-moderation.cjs |
+| Hàng chờ/chi tiết/log gọi đúng API | Đạt với backend local thật | tools/verify-moderation-live.cjs; bổ sung kiểm tra lỗi bằng verify-moderation.cjs |
 | Bắt buộc lý do; lỗi giữ draft; retry thành công | Đạt | Playwright desktop 1440px và mobile viewport 390px |
 | Gửi báo cáo bằng phiên đăng nhập + Idempotency-Key | Đạt trên Expo web | tools/verify-report.cjs |
 | Bài 404 không hiện nội dung stale | Đạt trên Expo web và test cache | verify-report.cjs, remove-unavailable-post.test.ts |
@@ -29,11 +29,20 @@
 - `tools/verify-report.cjs`: 6 kiểm tra luồng report và 404 trên Expo web; chưa phải bằng chứng Android.
 - Typecheck web từng gặp artifact route types cũ trong `.next/dev/types`; chạy Next dev để sinh lại types hiện tại rồi kiểm tra thành công, không sửa route source hoặc nới tsconfig.
 
+### Kiểm lại trên stack Docker thật
+
+- Lỗi chi tiết admin do database local thiếu cột `content.moderation_actions.target_type` và các cột mới. Lần migrate đầu không áp dụng được vì container chưa có hai thư mục migration mới. Đã đưa đủ migration vào container, chạy migrator module content, kiểm tra cột và build/recreate core-api + admin. Không reset database.
+- `tools/verify-moderation-live.cjs`: **12 kiểm tra pass**, không intercept/mock API. Dùng tài khoản seed local, đăng nhập admin bằng UI, tạo bài/bình luận riêng, gửi report, xử lý hide/restore bằng UI, kiểm count/cascade/provenance/flat comments, từ chối member 403, hide lặp không trừ hai lần, xoá hidden không trừ, restore deleted 409 và audit log. Dọn bài thử bằng soft-delete và đóng hồ sơ thử.
+- Mở lại qua UI bản ghi chi tiết từng trả lỗi trong log: HTTP 200, hiện nội dung và lịch sử. Không sửa bản ghi đó.
+- Web Docker cổng 3100 mở bài thử sau hide: GET 404, hiện thông báo, không còn tiêu đề bài. Đây chưa phải phép đo p95.
+- Expo web ghép backend thật **chưa xác nhận**: lần thử đăng nhập chưa tới màn report; lệnh khởi động lại với API local bị hệ thống chặn `blocked by policy`. Không tính phần này là pass. Các test Expo web API giả trước đó vẫn được ghi riêng.
+
 ## Cách kiểm lại
 
 1. `pnpm gen:api` khi hai repo backend/AI nằm cạnh, sau đó chạy lệnh affected.
 2. Chạy admin dev ở cổng 3201 và Expo web ở 8084 (script hỗ trợ đổi base URL qua env).
 3. Dùng Playwright đã có, đặt PLAYWRIGHT_PACKAGE trỏ tới package runtime; chạy `node tools/verify-moderation.cjs`, `node tools/verify-report.cjs`. Mặc định dùng Edge headless; không thêm dependency vào app.
+4. Stack thật: gateway 8080, admin 3200, web 3100; đặt TF32_LIVE_PASSWORD riêng bằng mật khẩu tài khoản seed test, PLAYWRIGHT_PACKAGE nếu cần; chạy `node tools/verify-moderation-live.cjs`. TF32_LIVE_EXISTING_POST_ID kiểm chi tiết một bài có sẵn theo chế độ chỉ đọc, TF32_LIVE_WEB_URL bật kiểm web. TF32_EVIDENCE_DIR đổi thư mục ảnh. Không ghi credential/token vào evidence.
 
 ## Ảnh / video
 
@@ -42,6 +51,7 @@
 - admin-1440-queue.png, admin-1440-log.png
 - admin-390-queue.png, admin-390-log.png
 - mobile-web-report.png, mobile-web-post-unavailable.png
+- Stack thật tại `.agent/evidence/TF32-live`: live-original-post-detail-loaded.png, live-post-detail-loaded.png, live-queue-detail.png, live-comment-restored.png, live-web-hidden-post.png.
 
 Chưa upload ảnh, chưa push hoặc mở PR.
 
@@ -52,4 +62,4 @@ Chưa upload ảnh, chưa push hoặc mở PR.
 
 ## Còn lại trước nghiệm thu
 
-- Ghép backend thật và cấu hình staging, kiểm tra lại trên Android, gắn evidence vào PR sau khi Trang duyệt.
+- Hoàn tất ghép Expo web thật, cấu hình staging và kiểm tra trên Android, gắn evidence vào PR sau khi Trang duyệt.
