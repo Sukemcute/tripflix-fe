@@ -39,3 +39,9 @@
 - Có: `apps/web` (Thành): `globals.css` phần `.auth-*`, route `app/(auth)`, `features/legal`; `packages/i18n`, `packages/app-core`, `tests/e2e/api-integration.cjs` (đổi chữ nút "Tạo tài khoản mới").
 - Có: `apps/mobile/src/features/auth/live-auth-screen.tsx` (Trang): bắt buộc vì API đăng ký đổi; chưa chạy trên Android.
 - Chưa sửa `SoftDatePicker` dùng chung: đổi năm chỉ đổi lịch, chưa đổi giá trị (đăng ký dùng ba ô chọn riêng).
+
+## Sửa sau khi lên server (2026-11-09)
+- Lỗi: trên https://tripflix.io.vn/login có mảng chữ nhật mờ đè nửa ô Google. Ở local không thấy vì Google chặn origin `localhost` nên không vẽ iframe.
+- Nguyên nhân: `backdrop-filter: url(#auth-glass-refraction) …` (khúc xạ SVG, chỉ bật trên Chromium) vẽ lỗi quanh iframe nút Google.
+- Cách xác định: mở trang server bằng Playwright, chèn CSS tắt lần lượt: tắt khúc xạ thì hết; tắt `clip-path` hoặc `overflow: clip` của thẻ thì vẫn lỗi.
+- Sửa: bỏ bộ lọc khúc xạ, giữ kính mờ, viền sáng, ánh phản chiếu. Lint, typecheck pass; Playwright local: đăng ký và trượt 16/16, đăng nhập 9/9.

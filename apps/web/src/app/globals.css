@@ -1428,7 +1428,8 @@ body:has(.auth-fullscreen) {
   padding: 36px 32px;
   /*
    * Liquid glass: nền trong mờ nhiều lớp, làm mờ và tăng bão hoà ảnh phía sau, viền sáng như mép kính,
-   * ánh phản chiếu ở góc trên (::before). Chrome, Edge thêm khúc xạ (.has-refraction), trình duyệt khác giữ kính mờ.
+   * ánh phản chiếu ở góc trên (::before). Không dùng bộ lọc khúc xạ SVG trong backdrop-filter: Chrome vẽ lỗi
+   * (mảng chữ nhật đè lên) khi trong thẻ có iframe nút Google.
    */
   position: relative;
   isolation: isolate;
@@ -1448,9 +1449,6 @@ body:has(.auth-fullscreen) {
     inset 1px 0 0 color-mix(in srgb, var(--color-background) 50%, transparent),
     inset 0 0 24px color-mix(in srgb, var(--color-background) 35%, transparent),
     0 32px 64px -32px var(--color-overlay-heavy);
-}
-.auth-panel-inner.has-refraction {
-  backdrop-filter: url(#auth-glass-refraction) blur(16px) saturate(1.8) brightness(1.04);
 }
 /* Thẻ đăng ký rộng gấp rưỡi, đủ cho form hai cột; đệm gọn hơn để cả form vừa một màn hình. */
 .auth-split[data-mode='register'] .auth-panel-inner {
@@ -1478,11 +1476,6 @@ body:has(.auth-fullscreen) {
     radial-gradient(120% 60% at 0% 0%, color-mix(in srgb, var(--color-background) 70%, transparent), transparent 60%),
     linear-gradient(180deg, color-mix(in srgb, var(--color-background) 30%, transparent), transparent 30%);
   pointer-events: none;
-}
-.auth-glass-defs {
-  position: absolute;
-  width: 0;
-  height: 0;
 }
 /* Tiêu đề trong thẻ (đăng nhập, đăng ký, các bước, quên mật khẩu). */
 .auth-card-stack h2 {
