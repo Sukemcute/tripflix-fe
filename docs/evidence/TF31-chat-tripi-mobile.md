@@ -62,3 +62,14 @@ Khi có adapter, nhãn xem trước tự tắt. Retry gửi lại cùng lịch s
 ## Ảnh hưởng
 
 Thêm feature `assistant`, gắn provider/bóng chat vào root layout mobile (Trang) và chuyển route `/assistant` sang giao diện mới. Giữ nguyên các màn discovery cũ. Thêm namespace bản dịch; không thay đổi API, code backend hay dữ liệu. Người dùng đã yêu cầu commit, push và tạo PR vào develop trong chat. Giữ nguyên bóng có khung tròn, bóng đổ và icon nhỏ theo lựa chọn cuối cùng.
+
+## Bổ sung animation mở/thu nhỏ — 2026-11-10
+
+- Nhánh `trang/TF31-animation-chat-tripi` từ develop `e7b846a`, sau PR #88 đã merge.
+- Mở: Reanimated spring 300 ms, dampingRatio 0.8, overshootClamping; dịch lên nhẹ 64 px và scale 0.97 → 1, opacity nền và khung đồng bộ. Chỉ animate transform/opacity.
+- Thu nhỏ: ease-out 200 ms chạy ngược từ vị trí hiện tại. Modal giữ mounted đến khi kết thúc, rồi mới hiện lại bóng; bỏ qua yêu cầu đóng lặp.
+- Reduced motion: bỏ translate/scale, chỉ fade 100 ms. Không thêm thư viện.
+- Kiểm tra `verify-assistant-mobile.cjs`: 390 px chuyển động bình thường; 320/430 px reduced motion. Bổ sung tình huống thu nhỏ khi animation mở chưa xong rồi mở lại; các luồng chat trước vẫn pass, không có runtime exception.
+- Lấy mẫu 25 frame ở 390 px: opacity từ 0.758 → 1 và translateY từ 15.51 → 0, ghi nhận 5 transform khác nhau; xác nhận có chuyển động và kết thúc đúng vị trí. Ảnh trong `D:/Sukem/VinUni/VSF/outputs/tripi-chat-20261110/animation/`.
+- `pnpm turbo run lint typecheck test build --affected`: 22/22 tác vụ thành công. Kiểm tra ranh giới module pass. Expo web và Android export pass (2126 modules, Hermes 4.9 MB).
+- Chưa kiểm tra cảm giác chuyển động trên thiết bị Android thật; cần thử mở/thu nhỏ liên tục, Back khi đang mở và bật reduced motion trên thiết bị trước khi phát hành.

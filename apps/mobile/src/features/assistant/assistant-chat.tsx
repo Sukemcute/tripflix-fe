@@ -15,6 +15,16 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import Animated, {
+  Easing,
+  ReduceMotion,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { Icon, IconButton, Mascot, Txt, type IconName } from '@/components/mobile-ui';
 import { useAssistant } from './assistant-provider';
 
@@ -222,23 +232,77 @@ export function AssistantChat({ onMinimize }: { onMinimize: () => void }) {
 export function AssistantDialog() {
   const chat = useAssistant();
   const insets = useSafeAreaInsets();
-  const close = () => {
-    Keyboard.dismiss();
+  const reducedMotion = useReducedMotion();
+  const progress = useSharedValue(0);
+  const isClosing = useRef(false);
+  const backdropMotion = useAnimatedStyle(() => ({ opacity: progress.get() }));
+  const dialogMotion = useAnimatedStyle(() => ({
+    opacity: progress.get(),
+    transform: [
+      { translateY: reducedMotion ? 0 : (1 - progress.get()) * 64 },
+      { scale: reducedMotion ? 1 : 0.97 + progress.get() * 0.03 },
+    ],
+  }));
+  function finishClose() {
     chat.setIsOpen(false);
+  }
+  function open() {
+    isClosing.current = false;
+    progress.set(0);
+    progress.set(
+      reducedMotion
+        ? withTiming(1, { duration: 100, reduceMotion: ReduceMotion.Never })
+        : withSpring(1, {
+            duration: 300,
+            dampingRatio: 0.8,
+            overshootClamping: true,
+            reduceMotion: ReduceMotion.System,
+          }),
+    );
+  }
+  const close = () => {
+    if (isClosing.current) return;
+    isClosing.current = true;
+    Keyboard.dismiss();
+    // Keep the native modal mounted until its exit finishes; otherwise it disappears abruptly.
+    progress.set(
+      withTiming(
+        0,
+        {
+          duration: reducedMotion ? 100 : 200,
+          easing: Easing.bezier(0.23, 1, 0.32, 1),
+          reduceMotion: ReduceMotion.Never,
+        },
+        (finished) => {
+          if (finished) scheduleOnRN(finishClose);
+        },
+      ),
+    );
   };
   return (
-    <Modal visible={chat.isOpen} transparent animationType="none" statusBarTranslucent onRequestClose={close}>
+    <Modal
+      visible={chat.isOpen}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onShow={open}
+      onRequestClose={close}
+    >
       <View style={[styles.backdrop, { paddingTop: insets.top + s.lg }]}>
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { backgroundColor: c.overlay }, backdropMotion]}
+        />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={copy.minimize}
           onPress={close}
           style={StyleSheet.absoluteFill}
         />
-        <View style={styles.dialog} accessibilityViewIsModal>
+        <Animated.View style={[styles.dialog, dialogMotion]} accessibilityViewIsModal>
           <View style={styles.handle} />
           <AssistantChat onMinimize={close} />
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -254,7 +318,7 @@ export function AssistantScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: c.background },
-  backdrop: { flex: 1, backgroundColor: c.overlay, alignItems: 'center', justifyContent: 'flex-end' },
+  backdrop: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
   dialog: {
     width: '100%',
     maxWidth: 430,

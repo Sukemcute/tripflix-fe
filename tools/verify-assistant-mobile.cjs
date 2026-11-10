@@ -42,7 +42,10 @@ class AssistantPage {
   const errors = [];
   try {
     for (const width of [390, 320, 430]) {
-      const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
+      const context = await browser.newContext({
+        viewport: { width, height: 844 },
+        reducedMotion: width === 390 ? 'no-preference' : 'reduce',
+      });
       const page = await context.newPage();
       page.setDefaultTimeout(15000);
       page.on('pageerror', (error) => errors.push(error.message));
@@ -61,6 +64,10 @@ class AssistantPage {
         assert.ok(after.x < width / 2 && after.y < before.y - 100, 'Bubble follows drag and docks left');
         assert.equal(await view.input.count(), 0, 'Drag must not open chat');
       }
+      await view.open();
+      // Interrupt the entrance, then reopen: the exit callback must not leave an invisible modal.
+      await view.button('Thu nhỏ cuộc trò chuyện').last().click({ force: true });
+      await view.bubble.waitFor();
       await view.open();
       assert.equal(await view.button('Gửi tin nhắn cho Tripi').isDisabled(), true);
       await view.snapshot(`02-welcome-${width}`);
