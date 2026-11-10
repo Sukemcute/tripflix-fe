@@ -112,6 +112,22 @@ window.TRIPI_CATALOG = [
     "use": "Thông báo, phát hiện mới"
   },
   {
+    "id": "expr-overload",
+    "label": "Quá tải",
+    "category": "expressions",
+    "file": "expr-overload.png",
+    "source": "Biểu cảm bổ sung tạo bằng ImageGen, tham chiếu expr-surprised.png.",
+    "use": "Phản ứng vui khi Tripi bị quá tải"
+  },
+  {
+    "id": "expr-strike",
+    "label": "Đình công",
+    "category": "expressions",
+    "file": "expr-strike.png",
+    "source": "Biểu cảm bổ sung tạo bằng ImageGen, tham chiếu expr-overload.png.",
+    "use": "Phản ứng vui khi Tripi đình công"
+  },
+  {
     "id": "expr-effort",
     "label": "Cố gắng",
     "category": "expressions",

@@ -84,6 +84,18 @@ export const TRIPI_ASSETS = {
     category: 'expressions',
     use: 'Thông báo, phát hiện mới',
   },
+  'expr-overload': {
+    src: '/brand/tripi-library/expr-overload.png',
+    label: 'Quá tải',
+    category: 'expressions',
+    use: 'Phản ứng vui khi Tripi bị quá tải',
+  },
+  'expr-strike': {
+    src: '/brand/tripi-library/expr-strike.png',
+    label: 'Đình công',
+    category: 'expressions',
+    use: 'Phản ứng vui khi Tripi đình công',
+  },
   'expr-effort': {
     src: '/brand/tripi-library/expr-effort.png',
     label: 'Cố gắng',

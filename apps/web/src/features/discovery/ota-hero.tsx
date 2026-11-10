@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { vi } from '@tripflix/i18n';
+import { TripiLive } from '@/features/mascot/tripi-live';
 import styles from './ota-hero.module.css';
 
 const ACTIVITIES = [
@@ -17,14 +18,7 @@ export function OtaHero() {
     <header className={styles.hero}>
       <div className={`ota-container ${styles.inner}`}>
         <div className={styles.copy}>
-          <Image
-            className={styles.heroMascot}
-            src="/brand/tripi-depart.png"
-            alt=""
-            width={116}
-            height={116}
-            sizes="(max-width: 760px) 74px, (max-width: 1013px) 76px, (max-width: 1547px) 7.5vw, 116px"
-          />
+          <TripiLive className={styles.heroMascot} />
           <h1>
             <span className={styles.titleFirst}>{SLOGAN_FIRST},</span> {SLOGAN_SECOND}
           </h1>
