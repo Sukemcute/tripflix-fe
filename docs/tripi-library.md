@@ -8,7 +8,7 @@
 | Admin  | `apps/admin/public/brand/tripi-library/`  | `apps/admin/src/features/mascot/tripi-assets.ts`  |
 | Mobile | `apps/mobile/assets/brand/tripi-library/` | `apps/mobile/src/features/mascot/tripi-assets.ts` |
 
-Mỗi app có đủ **24 PNG** và **6 animation**, mỗi animation gồm WebP và WebM. Catalog, README và metadata gốc cũng được giữ lại. Bản prototype vẫn được giữ làm nguồn thiết kế.
+Mỗi app có đủ **26 PNG** và **6 animation**, mỗi animation gồm WebP và WebM. Catalog, README và metadata gốc cũng được giữ lại. Bản prototype vẫn được giữ làm nguồn thiết kế.
 
 ## Web
 
@@ -51,4 +51,4 @@ import { TRIPI_ASSETS } from '../mascot/tripi-assets';
 
 `TRIPI_ANIMATIONS` có `source` WebP và ID `fallback` cho PNG. Khi dùng animation trên mobile, chọn PNG nếu người dùng bật giảm chuyển động; WebM được giữ trong thư viện nhưng không tự đóng gói qua registry.
 
-`TripiPose` liệt kê đủ 24 ID ảnh; `TripiAnimation` liệt kê `greeting`, `curious`, `excited`, `searching`, `departure`, `success`. Các component và đường dẫn mascot cũ vẫn hoạt động. Dùng registry mới để chọn các biểu cảm và tư thế bổ sung.
+`TripiPose` liệt kê đủ 26 ID ảnh; `TripiAnimation` liệt kê `greeting`, `curious`, `excited`, `searching`, `departure`, `success`. Các component và đường dẫn mascot cũ vẫn hoạt động. Dùng registry mới để chọn các biểu cảm và tư thế bổ sung.

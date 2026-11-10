@@ -1,0 +1,175 @@
+{
+  "lock": "CHARACTER LOCK — Tripi, the Tripflix travel mascot (see attached reference images):\na chubby, round plush fox with soft 3D plush/felt material and fine fur texture,\nbright orange fur, cream-white muzzle, chest and belly, cream inner ears, pink blush on both cheeks,\nsmall dark-brown triangular nose, big glossy dark-brown eyes with one white highlight,\nteal aviator goggles with cream rims and a brown leather strap resting on the forehead,\nyellow-orange bandana scarf with a small white play-triangle logo, teal backpack with orange straps,\nbig fluffy orange tail with a cream tip. Stubby arms and short legs, 2.5-head proportion.\nSoft studio lighting from the upper left, gentle ambient occlusion, Pixar-like 3D render quality.\nKeep exactly this design, colors, proportions and material. Do not add new accessories.\nIsolated single character, centered, 8% padding, transparent background (or flat #00FF00), no text.",
+  "stickers": [
+    {
+      "file": "expr-laugh.png",
+      "prompt": "Head and shoulders, front view. Laughing out loud: eyes squeezed shut into happy upside-down U arcs, mouth wide open showing pink tongue, cheeks pushed up, one paw near the mouth."
+    },
+    {
+      "file": "expr-wink.png",
+      "prompt": "Head and shoulders, three-quarter view. Playful wink: left eye closed in a curved line, right eye open and sparkling, small confident smile, one paw giving a thumbs-up beside the face."
+    },
+    {
+      "file": "expr-love.png",
+      "prompt": "Head and shoulders, front view. In love: both eyes replaced by glossy pink-red heart shapes, big closed-mouth smile, extra pink blush, both paws pressed together under the chin."
+    },
+    {
+      "file": "expr-sleepy.png",
+      "prompt": "Head and shoulders, front view. Sleepy: heavy half-closed droopy eyelids, small yawn with a tiny open mouth, head tilted 10 degrees, goggles slightly slipped down."
+    },
+    {
+      "file": "expr-thinking.png",
+      "prompt": "Head and shoulders, three-quarter view. Thinking: eyes looking up and to the side, one paw touching the chin, mouth a small sideways squiggle, one ear slightly tilted."
+    },
+    {
+      "file": "expr-sad.png",
+      "prompt": "Head and shoulders, front view. Gently sad, still cute: big watery eyes with an extra highlight, eyebrows raised in the middle, small downturned mouth, ears drooping, paws holding the bandana."
+    },
+    {
+      "file": "expr-gloomy.png",
+      "prompt": "Upper body, front view. Deeply sad and gloomy: shoulders slumped, head hanging down 15 degrees, half-closed downcast eyes looking at the floor, small trembling frown, ears flat against the head, tail drooping, goggles slightly tilted. Soft, muted mood but same bright colors."
+    },
+    {
+      "file": "expr-cry.png",
+      "prompt": "Head and shoulders, front view. Crying, cute not tragic: eyes squeezed shut with two big streams of glossy cartoon tears running down the cheeks, a few tear drops flying sideways, mouth open in a wobbly wail, red nose tip, extra blush, both paws raised near the eyes."
+    },
+    {
+      "file": "expr-cry-soft.png",
+      "prompt": "Head and shoulders, front view. About to cry: big glossy eyes brimming with tears that have not fallen yet, one single tear rolling down one cheek, quivering pouting mouth, inner brows raised, paws clutching the bandana."
+    },
+    {
+      "file": "expr-angry.png",
+      "prompt": "Head and shoulders, front view. Cute angry, pouting: furrowed brows angled down toward the nose, narrowed glaring eyes, cheeks puffed up and red, mouth a tight pout, no floating anger symbols (show anger only through the face). Both paws clenched into fists in front of the chest."
+    },
+    {
+      "file": "expr-furious.png",
+      "prompt": "Upper body, front view. Comically furious: stomping pose, fur slightly puffed up, eyebrows sharply angled, eyes narrowed with small white highlights, mouth open shouting showing teeth, ears pinned back, face flushed deep red, paws in fists raised. Still adorable, not scary."
+    },
+    {
+      "file": "expr-sorry.png",
+      "prompt": "Upper body, front view. Apologetic bow: body leaning forward 15 degrees, eyes closed in soft arcs, sheepish smile, one paw scratching the back of the head."
+    },
+    {
+      "file": "expr-shy.png",
+      "prompt": "Head and shoulders, front view. Shy: eyes looking down to the side, extra strong blush, small wobbly smile, both paws half covering the cheeks."
+    },
+    {
+      "file": "expr-proud.png",
+      "prompt": "Upper body, front view. Proud: chest puffed out, eyes closed in confident arcs, big closed-mouth grin, both paws on hips, goggles gleaming."
+    },
+    {
+      "file": "expr-peace.png",
+      "prompt": "Upper body, three-quarter view. Cheerful selfie pose: one paw making a peace sign next to the face, eyes open and sparkling, open-mouth smile."
+    },
+    {
+      "file": "pose-wave.png",
+      "prompt": "Full body, front view, standing. Friendly hello wave: right arm raised high with paw open and slightly blurred as if waving, left arm relaxed, eyes open, big open-mouth smile."
+    },
+    {
+      "file": "pose-thumbs-up.png",
+      "prompt": "Full body, three-quarter view, standing. Thumbs-up with the right paw toward the viewer, winking left eye, confident grin."
+    }
+  ],
+  "rig": [
+    {
+      "file": "rig-eyes-closed.png",
+      "prompt": "Change only the eyes: both eyes gently closed, drawn as soft downward curved lines with lashes, as in the middle of a blink."
+    },
+    {
+      "file": "rig-eyes-happy.png",
+      "prompt": "Change only the eyes: both eyes closed in happy upward arcs (^ ^), like laughing."
+    },
+    {
+      "file": "rig-eyes-wink.png",
+      "prompt": "Change only the eyes: the character's right eye (viewer's left) closed in a curved line, the other eye unchanged."
+    },
+    {
+      "file": "rig-eyes-heart.png",
+      "prompt": "Change only the eyes: replace both eyes with glossy pink-red heart shapes of the same size."
+    },
+    {
+      "file": "rig-eyes-surprised.png",
+      "prompt": "Change only the eyes: both eyes wide open and round, slightly larger, with two white highlights each."
+    },
+    {
+      "file": "rig-eyes-sleepy.png",
+      "prompt": "Change only the eyes: heavy half-closed droopy eyelids."
+    },
+    {
+      "file": "rig-eyes-sad.png",
+      "prompt": "Change only the eyes: big watery eyes with an extra highlight, inner brows raised."
+    },
+    {
+      "file": "rig-eyes-cry.png",
+      "prompt": "Change only the eyes: both eyes squeezed shut with glossy cartoon tear streams running down both cheeks."
+    },
+    {
+      "file": "rig-eyes-teary.png",
+      "prompt": "Change only the eyes: big glossy eyes brimming with unfallen tears, one tear on the left cheek."
+    },
+    {
+      "file": "rig-eyes-angry.png",
+      "prompt": "Change only the eyes and brows: furrowed brows angled down toward the nose, narrowed glaring eyes."
+    },
+    {
+      "file": "rig-eyes-gloomy.png",
+      "prompt": "Change only the eyes: half-closed eyes looking down at the floor, inner brows raised sadly."
+    },
+    {
+      "file": "rig-eyes-up.png",
+      "prompt": "Change only the eyes: pupils looking up and to the side, as if thinking."
+    },
+    {
+      "file": "rig-mouth-laugh.png",
+      "prompt": "Change only the mouth: wide open laughing mouth with pink tongue."
+    },
+    {
+      "file": "rig-mouth-o.png",
+      "prompt": "Change only the mouth: small round open \"O\" mouth, surprised."
+    },
+    {
+      "file": "rig-mouth-flat.png",
+      "prompt": "Change only the mouth: small neutral flat mouth."
+    },
+    {
+      "file": "rig-mouth-sad.png",
+      "prompt": "Change only the mouth: small downturned sad mouth."
+    },
+    {
+      "file": "rig-mouth-wail.png",
+      "prompt": "Change only the mouth: open wobbly crying mouth, wavy lower lip."
+    },
+    {
+      "file": "rig-mouth-pout.png",
+      "prompt": "Change only the mouth: tight angry pout, cheeks slightly puffed."
+    },
+    {
+      "file": "rig-mouth-shout.png",
+      "prompt": "Change only the mouth: open shouting mouth showing small teeth, angry."
+    },
+    {
+      "file": "rig-mouth-grin.png",
+      "prompt": "Change only the mouth: big closed-mouth grin, cheeks pushed up."
+    },
+    {
+      "file": "rig-arm-wave-up.png",
+      "prompt": "Change only the character's right arm (viewer's left): raise it up beside the head, elbow bent, paw open with the palm facing the viewer, mid-wave. Fill the area where the arm used to be with the same body fur."
+    },
+    {
+      "file": "rig-arm-wave-tilt.png",
+      "prompt": "Same as a raised waving arm, but tilted 25 degrees further outward, the other extreme of the wave."
+    },
+    {
+      "file": "rig-arm-thumbs.png",
+      "prompt": "Change only the character's left arm (viewer's right): bend it in front of the chest giving a thumbs-up."
+    },
+    {
+      "file": "rig-body-no-arms.png",
+      "prompt": "Remove both arms completely. Fill where the arms were with the body's orange fur and cream belly so the torso looks complete and smooth."
+    },
+    {
+      "file": "rig-face-blank.png",
+      "prompt": "Remove the eyes and the mouth completely. Fill with the same cream and orange fur so the face is smooth; keep the nose, blush and goggles."
+    }
+  ]
+}

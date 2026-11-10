@@ -24,6 +24,7 @@ import type {
   AdminControllerSearchUsersParams,
   AdminUserDto,
   AdminUserPageDto,
+  CreateUserDto,
   GrantStaffDto,
   UserDto,
 } from '../model';
@@ -526,6 +527,109 @@ export function useAdminControllerSearchUsers<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export type adminControllerCreateStaffResponse200 = {
+  data: AdminUserDto;
+  status: 200;
+};
+
+export type adminControllerCreateStaffResponseSuccess = adminControllerCreateStaffResponse200 & {
+  headers: Headers;
+};
+export type adminControllerCreateStaffResponse = adminControllerCreateStaffResponseSuccess;
+
+export const getAdminControllerCreateStaffUrl = () => {
+  return `/api/admin/users`;
+};
+
+export const adminControllerCreateStaff = async (
+  createUserDto: CreateUserDto,
+  options?: Parameters<typeof http>[1],
+): Promise<adminControllerCreateStaffResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<adminControllerCreateStaffResponse>(getAdminControllerCreateStaffUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createUserDto),
+  });
+};
+
+export const getAdminControllerCreateStaffMutationKey = () => ['adminControllerCreateStaff'] as const;
+
+export const getAdminControllerCreateStaffMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminControllerCreateStaff>>,
+    TError,
+    AdminControllerCreateStaffMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminControllerCreateStaff>>,
+  TError,
+  AdminControllerCreateStaffMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminControllerCreateStaffMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminControllerCreateStaff>>,
+    AdminControllerCreateStaffMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminControllerCreateStaff(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminControllerCreateStaffMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminControllerCreateStaff>>
+>;
+export type AdminControllerCreateStaffMutationBody = CreateUserDto;
+export type AdminControllerCreateStaffMutationError = unknown;
+export type AdminControllerCreateStaffMutationVariables = { data: CreateUserDto };
+
+export const useAdminControllerCreateStaff = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminControllerCreateStaff>>,
+      TError,
+      AdminControllerCreateStaffMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminControllerCreateStaff>>,
+  TError,
+  AdminControllerCreateStaffMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminControllerCreateStaffMutationOptions(options), queryClient);
+};
 export type adminControllerRevokeModeratorResponse200 = {
   data: AdminUserDto;
   status: 200;

@@ -1,5 +1,5 @@
 'use client';
-import { useApiSession } from '@tripflix/api-client';
+import { changePassword, useApiSession } from '@tripflix/api-client';
 import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import { NEW_PASSWORD_MAX } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
@@ -25,7 +25,8 @@ function PasswordPanel() {
   const [confirmation, setConfirmation] = useState('');
   const [isMismatch, setMismatch] = useState(false);
   const change = useMutation({
-    mutationFn: () => auth.accountControllerChangePassword({ currentPassword, newPassword }),
+    // Cả hai mật khẩu được mã hoá trước khi gửi (TF056).
+    mutationFn: () => changePassword({ currentPassword, newPassword }),
     onSuccess: async () => {
       setCurrentPassword('');
       setNewPassword('');

@@ -22,6 +22,8 @@ export interface SocialCommentDto {
   likeCount: number;
   /** Người xem hiện tại đã thích bình luận hay chưa */
   isLiked: boolean;
+  /** Số trả lời còn hiển thị. Có trong danh sách bình luận; bình luận vừa tạo hoặc vừa sửa thì không có */
+  replyCount?: number;
   createdAt: string;
   updatedAt: string;
   /** @nullable */

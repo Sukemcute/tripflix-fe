@@ -15,10 +15,11 @@
   padding-block-start: 0;
 }
 .heroMascot {
+  position: relative;
   display: block;
-  width: 64px;
+  width: clamp(92px, 8vw, 124px);
   height: auto;
-  pointer-events: none;
+  margin-bottom: 4px;
 }
 .copy h1 {
   margin-block: 8px 16px;
@@ -150,7 +151,9 @@
     padding-block: 20px 40px;
   }
   .heroMascot {
-    display: none;
+    width: 78px;
+    margin-left: auto;
+    margin-bottom: -8px;
   }
   .copy h1 {
     margin-block: 0 10px;
