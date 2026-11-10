@@ -449,6 +449,7 @@ export function LiveSearchScreen({
             <nav className={listing.quickPlaces} aria-label={vi.ota.findByPlace}>
               {OTA_DESTINATIONS.map((destination) => (
                 <Link
+                  prefetch={false}
                   key={destination.id}
                   href={
                     search.submitted
@@ -490,7 +491,7 @@ export function LiveSearchScreen({
                 return (
                   // Cả card là một link như card khách sạn ở trang chủ: bấm chỗ nào cũng mở trang khách sạn.
                   <article key={stay.hotelId}>
-                    <Link className={listing.card} href={href}>
+                    <Link prefetch={false} className={listing.card} href={href}>
                       <div className={listing.photo}>
                         <StayThumbnail url={stay.thumbnail} name={stay.name} />
                       </div>

@@ -41,7 +41,7 @@ export function CancelOrder({ orderId }: { orderId: string }) {
             ? `${copy.cancelRefundLabel}: ${formatPrice(cancel.data.refundAmount)}. ${copy.cancelRefundStatus[cancel.data.refundStatus as keyof typeof copy.cancelRefundStatus] ?? ''}`
             : copy.cancelNoRefund}
         </p>
-        <Link className="primary-button" href="/bookings">
+        <Link prefetch={false} className="primary-button" href="/bookings">
           {copy.viewTrips}
         </Link>
       </div>

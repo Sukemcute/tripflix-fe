@@ -328,7 +328,7 @@ function Results({ search, returnDate, outbound, initialProductId, initialFareCo
       )}
       {isOutboundGone && (
         <p role="alert" className={styles.roundNotice}>
-          {copy.outboundGone} <Link href={outboundStepHref}>{copy.changeOutbound}</Link>
+          {copy.outboundGone} <Link prefetch={false} href={outboundStepHref}>{copy.changeOutbound}</Link>
         </p>
       )}
       {roundOutbound && (
@@ -348,6 +348,7 @@ function Results({ search, returnDate, outbound, initialProductId, initialFareCo
           else sortParams.set('sort', value);
           return (
             <Link
+              prefetch={false}
               key={value}
               href={'/flights?' + sortParams}
               scroll={false}
@@ -465,7 +466,7 @@ function RoundTripSummary({
           <span className={styles.roundLegPrice}>{formatAmount(outboundFare.totalPrice)} ₫</span>
         )}
         {isReturnStep && (
-          <Link className={styles.roundChange} href={changeOutboundHref}>
+          <Link prefetch={false} className={styles.roundChange} href={changeOutboundHref}>
             {copy.changeOutbound}
           </Link>
         )}
@@ -506,6 +507,7 @@ export function StaySuggestion({
         <span>{copy.stayText}</span>
       </div>
       <Link
+        prefetch={false}
         className={'ripple-button ' + styles.stayLink}
         href={
           '/search?' +
@@ -627,6 +629,7 @@ export function FlightCard({
               <h3 title={airlineName}>
                 {detailQuery ? (
                   <Link
+                    prefetch={false}
                     className={styles.detailLink}
                     href={'/flights/' + encodeURIComponent(cabin.productId) + '?' + detailQuery}
                     title={copy.viewDetail}
@@ -696,6 +699,7 @@ export function FlightCard({
               <h3 title={airlineName}>
                 {detailQuery ? (
                   <Link
+                    prefetch={false}
                     className={styles.detailLink}
                     href={'/flights/' + encodeURIComponent(cabin.productId) + '?' + detailQuery}
                     title={copy.viewDetail}
@@ -896,6 +900,7 @@ export function FlightCard({
             <div className={styles.stubActions}>
               {canBook && !isLocked && returnTo ? (
                 <Link
+                  prefetch={false}
                   className={'ripple-button ' + styles.bookButton}
                   href={
                     '/login?returnTo=' +

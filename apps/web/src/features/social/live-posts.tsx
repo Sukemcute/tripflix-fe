@@ -421,7 +421,7 @@ function AccountPostGrid({
   const query = useSocialPosts(kind, keyword);
   const posts = query.data?.pages.flatMap((page) => page.items);
   if (!isReady) return <output>{vi.api.loading}</output>;
-  if (!user) return <Link href="/login">{vi.api.loginRequired}</Link>;
+  if (!user) return <Link prefetch={false} href="/login">{vi.api.loginRequired}</Link>;
   return (
     <>
       <ApiErrorNotice
@@ -458,13 +458,13 @@ function AccountPostGrid({
                 )}
                 <p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.api.posts}</p>
                 <h3>
-                  <Link href={`/trips/${post.id}`}>{post.title}</Link>
+                  <Link prefetch={false} href={`/trips/${post.id}`}>{post.title}</Link>
                 </h3>
                 <p className={styles.postBodyClamped}>{post.body}</p>
                 <p className="small muted">
                   {post.reactionTotal} {vi.api.like} · {post.commentCount} {vi.api.comments}
                 </p>
-                <Link href={`/trips/${post.id}`} className="secondary-button">
+                <Link prefetch={false} href={`/trips/${post.id}`} className="secondary-button">
                   {vi.api.detail}
                 </Link>
               </div>
@@ -1622,7 +1622,7 @@ export function InspirationImmersiveViewer({
             {filterMode === 'saved' && !user ? (
               <div className={`empty-state ${styles.centerEmptyBox}`}>
                 <p>{vi.api.loginRequired}</p>
-                <Link href={loginReturnHref} className={styles.createPostBtn}>
+                <Link prefetch={false} href={loginReturnHref} className={styles.createPostBtn}>
                   {vi.api.login}
                 </Link>
               </div>
@@ -1707,6 +1707,7 @@ export function InspirationImmersiveViewer({
 
                       <div className={styles.stageTopControls}>
                         <Link
+                          prefetch={false}
                           href={`/trips/${activePost.id}`}
                           className={styles.stageCircleBtn}
                           aria-label={vi.api.postMoreOptions}
@@ -1876,6 +1877,7 @@ export function InspirationImmersiveViewer({
             <div className={styles.stageSideDock}>
               <div className={styles.verticalActionsCluster}>
                 <Link
+                  prefetch={false}
                   href={`/trips/${activePost.id}`}
                   className={styles.actionAvatarBadgeWrap}
                   aria-label={authorInfo.name}
@@ -1911,6 +1913,7 @@ export function InspirationImmersiveViewer({
                   </button>
                 ) : (
                   <Link
+                    prefetch={false}
                     href={loginReturnHref}
                     className={styles.verticalActionItem}
                     aria-label={vi.api.like}
@@ -1966,6 +1969,7 @@ export function InspirationImmersiveViewer({
                   </button>
                 ) : (
                   <Link
+                    prefetch={false}
                     href={loginReturnHref}
                     className={styles.verticalActionItem}
                     aria-label={vi.api.bookmark}
@@ -2253,7 +2257,7 @@ export function RightPanelCommentsSynchronized({
             <span className="small muted">Đang kiểm tra phiên đăng nhập...</span>
           </div>
         ) : (
-          <Link className="comment-login" href={loginHref}>
+          <Link prefetch={false} className="comment-login" href={loginHref}>
             {vi.api.commentLogin}
           </Link>
         )}
@@ -2430,6 +2434,7 @@ function CommentNode({
                 </button>
               ) : (
                 <Link
+                  prefetch={false}
                   href={loginHref}
                   className={styles.panelCommentActionBtn}
                   aria-label={vi.api.like}

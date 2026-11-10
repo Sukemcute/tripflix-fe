@@ -10,7 +10,7 @@ export function ApiErrorNotice({ error, retry }: { error: unknown; retry?: () =>
     <div role="alert" className="empty-state">
       <p>{vi.api[kind]}</p>
       {kind === 'emailUnverified' && (
-        <Link className="secondary-button" href="/account">
+        <Link prefetch={false} className="secondary-button" href="/account">
           {vi.api.verifyEmailAccount}
         </Link>
       )}

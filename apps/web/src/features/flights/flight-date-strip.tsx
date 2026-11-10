@@ -88,6 +88,7 @@ export function FlightDateStrip({ search, hrefFor, minDate }: FlightDateStripPro
           return (
             <li key={date}>
               <Link
+                prefetch={false}
                 href={hrefFor(date)}
                 scroll={false}
                 aria-current={isSelected ? 'date' : undefined}
