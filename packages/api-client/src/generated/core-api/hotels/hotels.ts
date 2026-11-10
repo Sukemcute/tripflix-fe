@@ -58,7 +58,7 @@ export type hotelsControllerGetHotelResponseError = hotelsControllerGetHotelResp
 export type hotelsControllerGetHotelResponse =
   hotelsControllerGetHotelResponseSuccess | hotelsControllerGetHotelResponseError;
 
-export const getHotelsControllerGetHotelUrl = (id: string, params?: HotelsControllerGetHotelParams) => {
+export const getHotelsControllerGetHotelUrl = (slug: string, params?: HotelsControllerGetHotelParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -69,29 +69,32 @@ export const getHotelsControllerGetHotelUrl = (id: string, params?: HotelsContro
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/hotels/${id}?${stringifiedParams}` : `/api/hotels/${id}`;
+  return stringifiedParams.length > 0 ? `/api/hotels/${slug}?${stringifiedParams}` : `/api/hotels/${slug}`;
 };
 
 export const hotelsControllerGetHotel = async (
-  id: string,
+  slug: string,
   params?: HotelsControllerGetHotelParams,
   options?: Parameters<typeof http>[1],
 ): Promise<hotelsControllerGetHotelResponse> => {
-  return http<hotelsControllerGetHotelResponse>(getHotelsControllerGetHotelUrl(id, params), {
+  return http<hotelsControllerGetHotelResponse>(getHotelsControllerGetHotelUrl(slug, params), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getHotelsControllerGetHotelQueryKey = (id: string, params?: HotelsControllerGetHotelParams) => {
-  return [`/api/hotels/${id}`, ...(params ? [params] : [])] as const;
+export const getHotelsControllerGetHotelQueryKey = (
+  slug: string,
+  params?: HotelsControllerGetHotelParams,
+) => {
+  return [`/api/hotels/${slug}`, ...(params ? [params] : [])] as const;
 };
 
 export const getHotelsControllerGetHotelQueryOptions = <
   TData = Awaited<ReturnType<typeof hotelsControllerGetHotel>>,
   TError = void,
 >(
-  id: string,
+  slug: string,
   params?: HotelsControllerGetHotelParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerGetHotel>>, TError, TData>>;
@@ -100,16 +103,19 @@ export const getHotelsControllerGetHotelQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getHotelsControllerGetHotelQueryKey(id, params);
+  const queryKey = queryOptions?.queryKey ?? getHotelsControllerGetHotelQueryKey(slug, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof hotelsControllerGetHotel>>> = ({ signal }) =>
-    hotelsControllerGetHotel(id, params, { signal, ...requestOptions });
+    hotelsControllerGetHotel(slug, params, { signal, ...requestOptions });
 
-  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof hotelsControllerGetHotel>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  return {
+    queryKey,
+    queryFn,
+    enabled: slug !== null && slug !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerGetHotel>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 };
 
 export type HotelsControllerGetHotelQueryResult = NonNullable<
@@ -121,7 +127,7 @@ export function useHotelsControllerGetHotel<
   TData = Awaited<ReturnType<typeof hotelsControllerGetHotel>>,
   TError = void,
 >(
-  id: string,
+  slug: string,
   params: undefined | HotelsControllerGetHotelParams,
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerGetHotel>>, TError, TData>> &
@@ -141,7 +147,7 @@ export function useHotelsControllerGetHotel<
   TData = Awaited<ReturnType<typeof hotelsControllerGetHotel>>,
   TError = void,
 >(
-  id: string,
+  slug: string,
   params?: HotelsControllerGetHotelParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerGetHotel>>, TError, TData>> &
@@ -161,7 +167,7 @@ export function useHotelsControllerGetHotel<
   TData = Awaited<ReturnType<typeof hotelsControllerGetHotel>>,
   TError = void,
 >(
-  id: string,
+  slug: string,
   params?: HotelsControllerGetHotelParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerGetHotel>>, TError, TData>>;
@@ -174,7 +180,7 @@ export function useHotelsControllerGetHotel<
   TData = Awaited<ReturnType<typeof hotelsControllerGetHotel>>,
   TError = void,
 >(
-  id: string,
+  slug: string,
   params?: HotelsControllerGetHotelParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerGetHotel>>, TError, TData>>;
@@ -182,7 +188,7 @@ export function useHotelsControllerGetHotel<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getHotelsControllerGetHotelQueryOptions(id, params, options);
+  const queryOptions = getHotelsControllerGetHotelQueryOptions(slug, params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -211,29 +217,29 @@ export type hotelsControllerListReviewsResponseError = hotelsControllerListRevie
 export type hotelsControllerListReviewsResponse =
   hotelsControllerListReviewsResponseSuccess | hotelsControllerListReviewsResponseError;
 
-export const getHotelsControllerListReviewsUrl = (id: string) => {
-  return `/api/hotels/${id}/reviews`;
+export const getHotelsControllerListReviewsUrl = (slug: string) => {
+  return `/api/hotels/${slug}/reviews`;
 };
 
 export const hotelsControllerListReviews = async (
-  id: string,
+  slug: string,
   options?: Parameters<typeof http>[1],
 ): Promise<hotelsControllerListReviewsResponse> => {
-  return http<hotelsControllerListReviewsResponse>(getHotelsControllerListReviewsUrl(id), {
+  return http<hotelsControllerListReviewsResponse>(getHotelsControllerListReviewsUrl(slug), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getHotelsControllerListReviewsQueryKey = (id: string) => {
-  return [`/api/hotels/${id}/reviews`] as const;
+export const getHotelsControllerListReviewsQueryKey = (slug: string) => {
+  return [`/api/hotels/${slug}/reviews`] as const;
 };
 
 export const getHotelsControllerListReviewsQueryOptions = <
   TData = Awaited<ReturnType<typeof hotelsControllerListReviews>>,
   TError = void,
 >(
-  id: string,
+  slug: string,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerListReviews>>, TError, TData>>;
     request?: SecondParameter<typeof http>;
@@ -241,16 +247,19 @@ export const getHotelsControllerListReviewsQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getHotelsControllerListReviewsQueryKey(id);
+  const queryKey = queryOptions?.queryKey ?? getHotelsControllerListReviewsQueryKey(slug);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof hotelsControllerListReviews>>> = ({ signal }) =>
-    hotelsControllerListReviews(id, { signal, ...requestOptions });
+    hotelsControllerListReviews(slug, { signal, ...requestOptions });
 
-  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof hotelsControllerListReviews>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  return {
+    queryKey,
+    queryFn,
+    enabled: slug !== null && slug !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerListReviews>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 };
 
 export type HotelsControllerListReviewsQueryResult = NonNullable<
@@ -262,7 +271,7 @@ export function useHotelsControllerListReviews<
   TData = Awaited<ReturnType<typeof hotelsControllerListReviews>>,
   TError = void,
 >(
-  id: string,
+  slug: string,
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerListReviews>>, TError, TData>> &
       Pick<
@@ -281,7 +290,7 @@ export function useHotelsControllerListReviews<
   TData = Awaited<ReturnType<typeof hotelsControllerListReviews>>,
   TError = void,
 >(
-  id: string,
+  slug: string,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerListReviews>>, TError, TData>> &
       Pick<
@@ -300,7 +309,7 @@ export function useHotelsControllerListReviews<
   TData = Awaited<ReturnType<typeof hotelsControllerListReviews>>,
   TError = void,
 >(
-  id: string,
+  slug: string,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerListReviews>>, TError, TData>>;
     request?: SecondParameter<typeof http>;
@@ -312,14 +321,14 @@ export function useHotelsControllerListReviews<
   TData = Awaited<ReturnType<typeof hotelsControllerListReviews>>,
   TError = void,
 >(
-  id: string,
+  slug: string,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof hotelsControllerListReviews>>, TError, TData>>;
     request?: SecondParameter<typeof http>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getHotelsControllerListReviewsQueryOptions(id, options);
+  const queryOptions = getHotelsControllerListReviewsQueryOptions(slug, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

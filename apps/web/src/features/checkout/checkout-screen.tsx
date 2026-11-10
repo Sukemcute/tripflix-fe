@@ -23,6 +23,7 @@ import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { formatPassengerMix } from '@/features/flights/passenger-picker';
 import { SoftDatePicker } from '@/features/shared/soft-date-picker';
+import { CancelOrder } from './cancel-order';
 import { CheckoutError } from './checkout-error';
 import { CheckoutIcon, type CheckoutIconName } from './checkout-icon';
 import styles from './checkout-form.module.css';
@@ -255,6 +256,8 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
       </main>
     );
   if (order.status === 'paid') return <PaymentSuccess order={order} />;
+  // Đơn đã trả tiền rồi huỷ có mã xác nhận; đơn hết hạn khi chưa trả thì không, nên vẫn dùng màn chọn lại.
+  if (order.status === 'cancelled' && order.confirmationCode) return <OrderCancelled order={order} />;
 
   const isExpired =
     ['expired', 'cancelled'].includes(order.status) ||
@@ -791,6 +794,91 @@ function OrderSummary({
   );
 }
 
+function OrderCancelled({ order }: { order: Order }) {
+  const refund = order.refund ?? null;
+  const step = refund?.status === 'refunded' ? 2 : refund ? 1 : 0;
+  const steps = [copy.refundSteps.cancelled, copy.refundSteps.processing, copy.refundSteps.refunded];
+  return (
+    <main className={`ota-container ${styles.page}`}>
+      <div className={styles.success}>
+        <div className={styles.cancelledIcon} aria-hidden>
+          <CheckoutIcon name="x" size={36} />
+        </div>
+        <h1>{copy.cancelledTitle}</h1>
+        <p>{copy.cancelledBody}</p>
+        <p className={`${styles.code} ${styles.codeCancelled}`}>
+          {copy.cancelledCode}
+          <strong>{order.confirmationCode}</strong>
+        </p>
+        {order.cancelledAt && (
+          <p className={styles.cancelledMeta}>
+            {copy.cancelledAt} {new Date(order.cancelledAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
+          </p>
+        )}
+        <section className={styles.refundCard} aria-label={copy.refundTitle}>
+          <h2>{copy.refundTitle}</h2>
+          {refund ? (
+            <>
+              <ol className={styles.refundSteps}>
+                {steps.map((label, index) => (
+                  <li key={label} data-state={index < step ? 'done' : index === step ? 'current' : 'todo'}>
+                    {label}
+                  </li>
+                ))}
+              </ol>
+              <p className={styles.refundRow}>
+                <span>{copy.refundPaid}</span>
+                <b>{formatPrice(order.total)}</b>
+              </p>
+              <p className={styles.refundRow}>
+                <span>{copy.refundFee}</span>
+                <b>{formatPrice(refund.feeAmount)}</b>
+              </p>
+              <p className={`${styles.refundRow} ${styles.refundTotal}`}>
+                <span>{copy.refundAmount}</span>
+                <b>{formatPrice(refund.amount)}</b>
+              </p>
+              <p className={styles.refundRow}>
+                <span>{copy.refundMethod}</span>
+                <b>{copy.refundMethods[refund.method as keyof typeof copy.refundMethods] ?? refund.method}</b>
+              </p>
+              {refund.bankCode && (
+                <p className={styles.refundRow}>
+                  <span>{copy.refundBank}</span>
+                  <b>{refund.bankCode}</b>
+                </p>
+              )}
+              {refund.refundedAt && (
+                <p className={styles.refundRow}>
+                  <span>{copy.refundDoneAt}</span>
+                  <b>{formatDate(refund.refundedAt.slice(0, 10))}</b>
+                </p>
+              )}
+              <p className={styles.refundNote}>
+                {copy.cancelRefundStatus[refund.status as keyof typeof copy.cancelRefundStatus]}
+                {refund.status === 'processing' && ` ${copy.refundEta}`}
+              </p>
+            </>
+          ) : (
+            <p className={styles.refundNote}>{copy.cancelNoRefund}</p>
+          )}
+        </section>
+        <div className={`${styles.successSummary} ${styles.cancelledSummary}`}>
+          <OrderSummary order={order} total={order.total} />
+        </div>
+        <div className={styles.actions}>
+          <Link className="primary-button" href="/bookings">
+            {copy.viewTrips}
+          </Link>
+          <Link className="secondary-button" href="/search">
+            {copy.bookAgain}
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 function PaymentSuccess({ order }: { order: Order }) {
   return (
     <main className={`ota-container ${styles.page}`}>
@@ -818,6 +906,7 @@ function PaymentSuccess({ order }: { order: Order }) {
             {copy.continueExploring}
           </Link>
         </div>
+        <CancelOrder orderId={order.orderId} />
       </div>
     </main>
   );

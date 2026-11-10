@@ -16,5 +16,9 @@ export interface PayResultDto {
   challengeId?: string;
   /** Khi outcome = pending: chưa rõ kết quả, gọi lại GET /checkout/:id sau ít giây */
   message?: string;
+  /** Mã ngân hàng của giao dịch thanh toán tại VNPay */
+  bankCode?: string;
+  /** Thời điểm thanh toán do VNPay trả về */
+  paidAt?: string;
   checkout?: CheckoutDto;
 }
