@@ -1,4 +1,5 @@
 import { mobile } from './mobile';
+import { assistant } from './assistant';
 import { demo } from './demo';
 import { api } from './api';
 import { commerce } from './commerce';
@@ -12,6 +13,7 @@ import { moderation } from './moderation';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
+  assistant,
   moderation,
   flights,
   privacy,

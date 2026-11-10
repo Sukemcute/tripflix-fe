@@ -10,6 +10,8 @@ import { ActivityIndicator, Platform, View } from 'react-native';
 import { copy, Txt } from '@/components/mobile-ui';
 import { ReviewProvider } from '@/features/review/review-provider';
 import { CommerceProvider } from '@/features/booking/commerce-provider';
+import { AssistantProvider } from '@/features/assistant/assistant-provider';
+import { AssistantBubble } from '@/features/assistant/assistant-bubble';
 
 const tokenStorage =
   Platform.OS === 'web'
@@ -58,27 +60,30 @@ export default function RootLayout() {
       >
         <CommerceProvider>
           <ReviewProvider>
-            <StatusBar style="dark" />
-            {fontError && <Txt variant="caption">{copy.common.fontError}</Txt>}
-            <View
-              style={{
-                flex: 1,
-                width: '100%',
-                alignSelf: 'center',
-                maxWidth: Platform.OS === 'web' ? mobileLayout.contentWidth : undefined,
-              }}
-            >
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: colors.background },
-                  animation: 'none',
+            <AssistantProvider>
+              <StatusBar style="dark" />
+              {fontError && <Txt variant="caption">{copy.common.fontError}</Txt>}
+              <View
+                style={{
+                  flex: 1,
+                  width: '100%',
+                  alignSelf: 'center',
+                  maxWidth: Platform.OS === 'web' ? mobileLayout.contentWidth : undefined,
                 }}
               >
-                <Stack.Screen name="index" />
-                <Stack.Screen name="(tabs)" />
-              </Stack>
-            </View>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: colors.background },
+                    animation: 'none',
+                  }}
+                >
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="(tabs)" />
+                </Stack>
+                <AssistantBubble />
+              </View>
+            </AssistantProvider>
           </ReviewProvider>
         </CommerceProvider>
       </ApiSessionProvider>
