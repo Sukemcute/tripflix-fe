@@ -514,15 +514,14 @@
   overflow: hidden;
   background: var(--color-teal-soft);
 }
-.stayLandscapePrev,
+/* Ảnh của mọi điểm đến luôn nằm sẵn trong DOM (đã tải xong), đổi điểm đến chỉ là mờ dần giữa hai ảnh. */
 .stayLandscape {
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 700ms ease;
 }
-.stayLandscapePrev {
-  z-index: 0;
-}
-.stayLandscape {
-  z-index: 1;
+.stayLandscape[data-active] {
+  opacity: 1;
 }
 .stayRedStamp {
   position: absolute;
@@ -639,6 +638,10 @@
   display: grid;
   grid-template-columns: minmax(0, 1.18fr) repeat(2, minmax(0, 1fr));
   gap: 16px;
+  transition: opacity 250ms ease;
+}
+.stayGrid[aria-busy='true'] {
+  opacity: 0.6;
 }
 .previewGrid {
   display: grid;
@@ -1079,9 +1082,6 @@
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .stayLandscape {
-    animation: stay-photo-in 1100ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
-  }
   :global(html:has([data-home-banner])) {
     scroll-behavior: smooth;
   }
@@ -1102,11 +1102,12 @@
   }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .stayLandscapePrev,
   .stayLandscape {
     scale: 1.1;
     translate: calc(var(--pointer-x, 0) * -28px) calc(var(--pointer-y, 0) * -12px);
-    transition: translate 672ms cubic-bezier(0.2, 0.7, 0.25, 1);
+    transition:
+      translate 672ms cubic-bezier(0.2, 0.7, 0.25, 1),
+      opacity 700ms ease;
   }
   .stayMascot {
     translate: calc(var(--pointer-x, 0) * 22px) calc(var(--pointer-y, 0) * 10px);
@@ -1132,14 +1133,6 @@
   }
   .tripiMascot {
     translate: calc(var(--pointer-x, 0) * 44px) calc(var(--pointer-y, 0) * 32px);
-  }
-}
-@keyframes stay-photo-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }
 @keyframes tripi-arrive {
