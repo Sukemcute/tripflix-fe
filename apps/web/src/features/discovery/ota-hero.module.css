@@ -1,130 +1,69 @@
 .hero {
   position: relative;
   background:
-    radial-gradient(circle at 78% 28%, rgba(0, 166, 153, 0.22) 0%, transparent 60%),
-    radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.12) 0%, transparent 50%),
-    linear-gradient(135deg, #022421 0%, #043e38 38%, #085850 72%, #053b34 100%);
+    url('/brand/hero-tripflix-3d-backdrop.jpg') center top / cover no-repeat,
+    linear-gradient(180deg, #022336 0%, #03344d 100%);
+  min-height: 440px;
   overflow: clip;
-}
-
-/* ==========================================================================
-   LỚP NỀN NGHỆ THUẬT ĐẠI DƯƠNG (MULTI-LAYER ATMOSPHERIC ART BACKDROP)
-   Lấp đầy không gian nền với Typography chìm khổng lồ, đường contour
-   sóng biển, cụm ma trận chấm bi và tia sáng khúc xạ mặt nước.
-   ========================================================================== */
-.backdropArt {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  user-select: none;
-  overflow: hidden;
-  z-index: 1;
-}
-
-/* Chữ chìm khổng lồ VIETNAM chạy ngang nền */
-.watermarkWord {
-  position: absolute;
-  top: 9%;
-  left: 2%;
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(8rem, 16vw, 17rem);
-  font-weight: 900;
-  line-height: 0.8;
-  letter-spacing: -0.04em;
-  color: transparent;
-  -webkit-text-stroke: 1.5px rgba(78, 227, 210, 0.14);
-  opacity: 0.75;
-  white-space: nowrap;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, transparent 75%);
-  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, transparent 75%);
-}
-
-/* Chùm tia sáng khúc xạ mặt nước biển (Sun Rays Caustics) */
-.sunRays {
-  position: absolute;
-  top: -20%;
-  right: 5%;
-  width: 700px;
-  height: 900px;
-  background: conic-gradient(
-    from 220deg at 70% 0%,
-    transparent 0deg,
-    rgba(78, 227, 210, 0.08) 12deg,
-    transparent 20deg,
-    rgba(255, 255, 255, 0.06) 28deg,
-    transparent 38deg,
-    rgba(78, 227, 210, 0.07) 50deg,
-    transparent 65deg
-  );
-  filter: blur(24px);
-  transform: rotate(-10deg);
-  opacity: 0.85;
-}
-
-/* Đường contour sóng biển hữu cơ & họa tiết vector */
-.oceanicContours {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
 }
 
 .inner {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
-  align-items: center;
-  gap: clamp(24px, 3.8vw, 60px);
-  padding-block: clamp(24px, 3.2vh, 40px) clamp(68px, 7.5vh, 88px);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  align-items: end;
+  gap: clamp(20px, 3.2vw, 48px);
+  padding-block: clamp(140px, 15vw, 180px) 46px;
 }
+
 .copy {
   position: relative;
   z-index: 2;
-  padding-block-start: 0;
   container-type: inline-size;
 }
 
-/* Eyebrow du lịch phong cách quốc tế trên nền đại dương */
+/* Eyebrow viên nang mờ trên mặt nước biển */
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 16px;
+  padding: 5px 16px;
   border-radius: 999px;
-  background: rgba(0, 166, 153, 0.18);
-  border: 1px solid rgba(78, 227, 210, 0.35);
-  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  margin-bottom: 12px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 .eyebrowText {
-  color: #4ee3d2;
-  font-size: 0.74rem;
+  color: #ffffff;
+  font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .eyebrowPlane {
-  color: #ffffff;
-  font-size: 0.88rem;
+  color: #38bdf8;
+  font-size: 0.84rem;
   display: inline-block;
   animation: planeFloat 3s ease-in-out infinite alternate;
 }
 @keyframes planeFloat {
   0% {
-    transform: translate(0, 0) rotate(0deg);
+    transform: translate(0, 0);
   }
   100% {
-    transform: translate(3px, -2px) rotate(6deg);
+    transform: translate(3px, 0);
   }
 }
 
-/* Tiêu đề H1: Waterline Ocean Surface Typography Mask */
+/* Tiêu đề H1: Playfair Display sang trọng trên nền đại dương */
 .copy h1 {
-  margin-block: 0 16px;
+  margin-block: 0 12px;
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: min(clamp(2.7rem, 4.2vw, 4.4rem), 14cqi);
+  font-size: min(clamp(2.1rem, 3.2vw, 3.2rem), 14cqi);
   font-weight: 800;
-  line-height: 1.12;
+  line-height: 1.15;
   letter-spacing: -0.025em;
   white-space: pre-line;
 }
@@ -133,53 +72,45 @@
   color: #ffffff;
   font-style: normal;
   white-space: nowrap;
-  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
 }
 .titleSecond {
   position: relative;
   display: inline-block;
   font-style: italic;
   font-weight: 700;
-  /* Hiệu ứng cắt mặt nước biển: nửa trên màu trắng bạc ánh dương, nửa dưới màu ngọc bích đại dương */
   background: linear-gradient(
     180deg,
     #ffffff 0%,
-    #e6faf7 38%,
-    #4ee3d2 44%,
-    #00a699 54%,
-    #38bdf8 76%,
-    #0284c7 100%
+    #e0f7f5 35%,
+    #4ee3d2 60%,
+    #38bdf8 100%
   );
-  background-size: 100% 200%;
+  background-size: 100% 180%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 4px 16px rgba(0, 166, 153, 0.5));
-  animation: waterShimmer 7s ease-in-out infinite alternate;
+  filter: drop-shadow(0 4px 14px rgba(0, 166, 153, 0.45));
 }
-@keyframes waterShimmer {
-  0% {
-    background-position: 0% 15%;
-  }
-  100% {
-    background-position: 0% 85%;
-  }
-}
+
 .description {
   max-width: 44ch;
-  font-size: clamp(0.95rem, 1.18vw, 1.08rem);
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.86);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  margin-block: 0 18px;
+  font-size: clamp(0.86rem, 1vw, 0.98rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  margin-block: 0 14px;
 }
+
 .actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: clamp(10px, 1.4vw, 16px);
-  margin-top: 20px;
+  gap: clamp(10px, 1.2vw, 14px);
+  margin-top: 14px;
 }
+
+/* Nút CTA chính viên nang trắng */
 .primaryCta {
   display: inline-flex;
   align-items: center;
@@ -187,7 +118,7 @@
   padding: 11px 26px;
   border-radius: 999px;
   background: #ffffff;
-  color: #043e38;
+  color: #03344d;
   font-size: 0.88rem;
   font-weight: 800;
   letter-spacing: -0.01em;
@@ -208,6 +139,8 @@
 .primaryCta:hover .ctaArrow {
   transform: translateX(4px);
 }
+
+/* Các pill hoạt động viên nang kính mờ */
 .activities {
   display: flex;
   flex-flow: row nowrap;
@@ -257,349 +190,150 @@
   transform: rotate(6deg) scale(1.08);
 }
 
-.art {
-  position: relative;
-  margin: 0;
-  width: 100%;
-}
-
 /* ==========================================================================
-   FRAME CÁCH ĐIỆU ĐA DẢI VIÊN NANG NGHIÊNG (DIAGONAL PILL SLITS WINDOW)
+   CỤM BÊN PHẢI: THẺ KÍNH MỜ DÁNG NGANG & ĐIỀU HƯỚNG CHẤM
    ========================================================================== */
-.slitsCanvas {
+.sceneContainer {
   position: relative;
-  width: 100%;
-  height: clamp(380px, 36vw, 500px);
-  min-height: 0;
-  isolation: isolate;
-  user-select: none;
-}
-.slitsSvg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  filter: drop-shadow(0 28px 56px rgba(0, 0, 0, 0.38));
-}
-.svgSceneImage {
-  opacity: 0;
-  transition: opacity 900ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-.svgSceneImage[data-active] {
-  opacity: 1;
-}
-.slitGlowBorder {
-  fill: rgba(0, 166, 153, 0.2);
-  filter: blur(14px);
-}
-.slitBorder {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.4);
-  stroke-width: 2;
-  transition: stroke 300ms ease;
-}
-.slitsCanvas:hover .slitBorder {
-  stroke: rgba(78, 227, 210, 0.7);
-}
-.slitAccentBorder {
-  fill: none;
-  stroke: rgba(78, 227, 210, 0.65);
-  stroke-width: 1.5;
-  stroke-dasharray: 6 8;
-  animation: slitBorderDash 20s linear infinite;
-}
-@keyframes slitBorderDash {
-  0% {
-    stroke-dashoffset: 0;
-  }
-  100% {
-    stroke-dashoffset: 200;
-  }
-}
-.slitGhostBorder {
-  fill: none;
-  stroke: rgba(78, 227, 210, 0.22);
-  stroke-width: 1.5;
-  stroke-dasharray: 8 10;
-  animation: ghostDash 25s linear infinite;
-}
-@keyframes ghostDash {
-  to {
-    stroke-dashoffset: -300;
-  }
-}
-
-/* Thẻ nổi Tripi Mascot Đồng Hành (Tương tự thẻ Travorra Happy Travelers) */
-.floatingMascotCard {
-  position: absolute;
-  top: 24px;
-  right: 28px;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 18px 8px 10px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.94);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 14px 34px -6px rgba(0, 0, 0, 0.16);
-  user-select: none;
-  animation: cardFloat 5s ease-in-out infinite alternate;
-  transition:
-    transform 300ms cubic-bezier(0.2, 0.7, 0.25, 1),
-    box-shadow 300ms ease;
-}
-.floatingMascotCard:hover {
-  transform: translateY(-4px) scale(1.03);
-  box-shadow: 0 20px 42px -6px rgba(0, 76, 68, 0.25);
-}
-@keyframes cardFloat {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-6px);
-  }
-}
-.mascotCardAvatar {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #e4f7f4 0%, #b8ebe3 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: visible;
-  box-shadow: 0 4px 10px rgba(0, 166, 153, 0.2);
-}
-.mascotLive {
-  width: 58px;
-  height: 58px;
-  margin-top: -6px;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
-  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.floatingMascotCard:hover .mascotLive {
-  transform: rotate(8deg) scale(1.12);
-}
-.mascotCardContent {
+  z-index: 2;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+  width: 100%;
 }
-.mascotCardHeader {
+
+/* Thẻ kính mờ danh lam thắng cảnh dáng ngang (như mẫu Phố cổ Hội An) */
+.panoramicDestinationCard {
+  width: min(100%, 490px);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-.mascotCardTitle {
-  font-size: 0.86rem;
-  font-weight: 800;
-  color: var(--color-teal-ink);
-  letter-spacing: -0.01em;
-}
-.mascotCardBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: var(--color-teal);
-  color: #ffffff;
-  font-size: 9px;
-  font-weight: 900;
-}
-.mascotCardSubtitle {
-  margin: 1px 0 0;
-  font-size: 0.72rem;
-  color: #55716e;
-  font-weight: 600;
-}
-
-/* Huy hiệu xu hướng du lịch */
-.floatingTrendingBadge {
-  position: absolute;
-  top: 24px;
-  left: clamp(110px, 12vw, 155px);
-  z-index: 4;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(14, 30, 36, 0.7);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-}
-.livePulseDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-teal);
-  box-shadow: 0 0 10px var(--color-teal);
-  animation: pulseBeacon 1.8s ease-in-out infinite;
-}
-@keyframes pulseBeacon {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.4);
-    opacity: 0.65;
-  }
-}
-
-.route {
-  position: absolute;
-  bottom: 24%;
-  left: 6%;
-  width: 22%;
-  height: 48%;
-  color: var(--color-sun-soft);
-  z-index: 3;
-  pointer-events: none;
-}
-.animatedRoutePath {
-  animation: marchDash 10s linear infinite;
-}
-@keyframes marchDash {
-  to {
-    stroke-dashoffset: -120;
-  }
-}
-.radarPulse {
-  animation: radarWave 2.4s ease-out infinite;
-  transform-origin: center;
-}
-@keyframes radarWave {
-  0% {
-    transform: scale(0.6);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(2.2);
-    opacity: 0;
-  }
-}
-
-.floatingDestinationCard {
-  position: absolute;
-  bottom: 24px;
-  left: clamp(36px, 4vw, 54px);
-  right: 28px;
-  max-width: 360px;
-  z-index: 4;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 12px 18px 10px;
-  border-radius: 18px;
-  background: rgba(12, 24, 30, 0.78);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  backdrop-filter: blur(16px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: #ffffff;
-  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5);
-  text-decoration: none;
-  animation: cardEntrance 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px 12px 20px;
+  border-radius: 24px;
+  background: rgba(3, 38, 56, 0.76);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.45);
   transition:
     transform 300ms cubic-bezier(0.2, 0.7, 0.25, 1),
     border-color 300ms ease,
     box-shadow 300ms ease;
 }
-.floatingDestinationCard:hover {
+.panoramicDestinationCard:hover {
   transform: translateY(-4px) scale(1.02);
-  border-color: var(--color-teal);
-  box-shadow: 0 22px 42px -10px color-mix(in srgb, var(--color-teal) 35%, transparent);
+  border-color: rgba(78, 227, 210, 0.6);
+  box-shadow: 0 26px 56px -8px rgba(0, 0, 0, 0.55);
 }
-@keyframes cardEntrance {
-  from {
-    opacity: 0;
-    transform: translateY(14px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-.floatingCardHead {
+
+.destinationCardInfo {
+  flex: 1;
+  min-width: 0;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.destinationCardHead {
+  display: flex;
   align-items: center;
+  gap: 8px;
   margin-bottom: 2px;
 }
-.floatingCardBadge {
+
+.destinationBadge {
   display: inline-block;
-  padding: 2px 7px;
+  padding: 2.5px 8px;
   border-radius: 999px;
-  background: var(--color-coral);
+  background: #ea580c;
   color: #ffffff;
-  font-size: 9.5px;
-  font-weight: 700;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
-.floatingCardRating {
-  font-size: 11px;
+
+.destinationRating {
+  font-size: 0.78rem;
   font-weight: 700;
-  color: var(--color-sun);
+  color: #facc15;
 }
-.floatingCardTitle {
-  font-size: clamp(15px, 1.4vw, 19px);
+
+.destinationTitle {
+  font-size: clamp(1.05rem, 1.35vw, 1.25rem);
   font-weight: 800;
   color: #ffffff;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
 }
-.floatingCardSubtitle {
+
+.destinationSubtitle {
   margin: 0;
-  font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.82);
   line-height: 1.35;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
   overflow: hidden;
 }
-.floatingCardAction {
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--color-teal-soft);
+
+.destinationAction {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #38bdf8;
+  text-decoration: none;
+  transition: color 200ms ease;
 }
-.cardActionArrow {
+.destinationAction:hover {
+  color: #7dd3fc;
+}
+.actionArrow {
   transition: transform 200ms ease;
 }
-.floatingDestinationCard:hover .cardActionArrow {
+.panoramicDestinationCard:hover .actionArrow {
   transform: translateX(4px);
 }
 
-.sceneControls {
-  position: absolute;
-  bottom: 24px;
-  right: 28px;
-  z-index: 5;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 7px;
+/* Khung ảnh thumbnail thực tế bên phải thẻ */
+.destinationCardThumb {
+  position: relative;
+  width: clamp(140px, 15vw, 190px);
+  height: 110px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
+.cardThumbImg {
+  object-fit: cover;
+  transition: transform 500ms ease;
+}
+.panoramicDestinationCard:hover .cardThumbImg {
+  transform: scale(1.06);
+}
+
+/* Thanh điều hướng chấm scene */
+.sceneControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 14px;
+}
+
 .sceneDot {
-  width: 20px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
   border: none;
   padding: 0;
@@ -610,13 +344,14 @@
   overflow: hidden;
 }
 .sceneDotActive {
-  width: 32px;
+  width: 28px;
   background: rgba(255, 255, 255, 0.25);
 }
 .sceneProgressFill {
   position: absolute;
   inset: 0;
-  background: var(--color-teal);
+  background: #ffffff;
+  border-radius: 999px;
   animation: sceneProgress linear forwards;
 }
 @keyframes sceneProgress {
@@ -628,91 +363,77 @@
   }
 }
 
+/* ==========================================================================
+   RESPONSIVE LAYOUT
+   ========================================================================== */
 @media (max-width: 900px) {
   .inner {
     grid-template-columns: minmax(0, 1fr);
     gap: 28px;
-    padding-block: 24px 50px;
+    padding-block: clamp(180px, 24vw, 240px) 48px;
   }
-  .frame {
-    height: 300px;
-    border-radius: 28px;
+  .sceneContainer {
+    align-items: stretch;
   }
-  .floatingMascotCard {
-    top: 14px;
-    right: 14px;
-    padding: 6px 14px 6px 8px;
+  .panoramicDestinationCard {
+    width: 100%;
   }
-  .mascotCardAvatar {
-    width: 40px;
-    height: 40px;
-  }
-  .mascotLive {
-    width: 48px;
-    height: 48px;
-  }
-  .floatingDestinationCard {
-    left: 14px;
-    right: 14px;
-    bottom: 14px;
-    max-width: none;
-  }
-  .route {
-    display: none;
+  .sceneControls {
+    justify-content: center;
+    padding-right: 0;
   }
 }
 
 @media (max-width: 640px) {
-  .slitsCanvas {
-    height: clamp(280px, 75vw, 360px);
-    margin-top: 14px;
+  .hero {
+    background-position: 65% top;
   }
-  .floatingDestinationCard {
-    left: 10px;
-    bottom: 10px;
-    right: 10px;
-    padding: 8px 12px;
-    border-radius: 14px;
-  }
-  .sceneControls {
-    display: none;
-  }
-  .floatingTrendingBadge {
-    display: none;
-  }
-  .mascotCardSubtitle {
-    display: none;
-  }
-  .floatingMascotCard {
-    top: 8px;
-    right: 8px;
-    padding: 4px 10px 4px 6px;
-    border-radius: 999px;
-  }
-  .mascotCardAvatar {
-    width: 32px;
-    height: 32px;
-  }
-  .mascotLive {
-    width: 38px;
-    height: 38px;
+  .inner {
+    padding-block: clamp(120px, 20vw, 150px) 24px;
+    gap: 16px;
   }
   .copy h1 {
-    font-size: min(clamp(1.9rem, 8.5vw, 2.6rem), 13cqi);
+    font-size: min(clamp(1.7rem, 6.8vw, 2.1rem), 13cqi);
+  }
+  .panoramicDestinationCard {
+    width: 100%;
+    max-width: 100%;
+    padding: 8px 10px;
+    gap: 8px;
+    border-radius: 16px;
+    box-sizing: border-box;
+  }
+  .destinationBadge {
+    padding: 2px 6px;
+    font-size: 0.62rem;
+  }
+  .destinationRating {
+    font-size: 0.72rem;
+  }
+  .destinationTitle {
+    font-size: 0.95rem;
+  }
+  .destinationSubtitle {
+    display: none;
+  }
+  .destinationCardThumb {
+    width: 92px;
+    height: 68px;
+    border-radius: 10px;
+    flex-shrink: 0;
   }
   .activities {
     gap: 8px;
-    padding-top: 12px;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .copy,
-  .art {
-    animation: arrive 1216ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
+  .sceneContainer {
+    animation: arrive 1000ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
   }
-  .art {
-    animation-delay: 144ms;
+  .sceneContainer {
+    animation-delay: 150ms;
   }
 }
 @keyframes arrive {
@@ -726,15 +447,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .photoLayer[data-active] .photo,
-  .floatingMascotCard,
-  .eyebrowPlane {
-    animation: none;
-  }
-  .animatedRoutePath,
-  .radarPulse,
-  .livePulseDot,
-  .titleSecond {
+  .eyebrowPlane,
+  .copy,
+  .sceneContainer {
     animation: none;
   }
 }

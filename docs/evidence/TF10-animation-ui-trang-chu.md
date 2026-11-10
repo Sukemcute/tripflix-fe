@@ -3,21 +3,19 @@
 - Notion: N/A · Nhánh: `thanh/TF10-animation-ui-trang-chu` · Người làm: Thành (dùng AI: có) · Ngày: 2026-11-11
 
 ## Đã làm
-- Nâng cấp Hero section thành multi-scene showcase (4 danh thắng nổi tiếng: Vịnh Hạ Long, Phố cổ Hội An, Đảo Ngọc Phú Quốc, Tràng An Ninh Bình) với hiệu ứng zoom chậm Ken Burns, huy hiệu nổi xu hướng glassmorphism, thẻ danh thắng chi tiết, đường nét đứt chuyển động lộ trình di chuyển (marching dashes + radar pulse).
-- Đột phá kiến trúc Hero với Frame Cách Điệu Đa Dải Viên Nang Nghiêng (Diagonal Pill Slits Window) & Waterline Typography:
-  - Xóa bỏ hoàn toàn bố cục "1 góc hình bên phải" truyền thống:
-    - Sử dụng hệ thống 3 dải viên nang nghiêng song song `-40°` (lấy cảm hứng từ mẫu *Travel The World*): vươn dài từ trung tâm sang toàn bộ mép phải, lồng một bức ảnh danh thắng trải dài LIÊN TỤC và LIỀN MẠCH qua cả 3 dải (Seamless Multi-Pill Panorama).
-    - Viền kính phát sáng đa tầng (glow & dash borders) tạo chiều sâu 3D kiến trúc ấn tượng.
-    - Chuyển cảnh 4 danh thắng (Vịnh Hạ Long, Phố cổ Hội An, Đảo Ngọc Phú Quốc, Tràng An Ninh Bình) mượt mà với hiệu ứng crossfade opacity 900ms trên thẻ `<image>`.
-  - Typography Lồng Mặt Nước Biển (Waterline Ocean Surface Text Mask - lấy cảm hứng từ *SeaGuard Cleanup*):
+- Nâng cấp Hero section thành tuyệt tác Typography 3D & Biển đảo danh thắng Việt Nam theo đúng concept art:
+  - Chữ nổi 3D khổng lồ **TRIPFLIX** có viền phát sáng neon cyan rực rỡ phản chiếu mặt nước biển, bên trong các mặt chữ lồng ghép các danh lam thắng cảnh Việt Nam (ruộng bậc thang Mù Cang Chải, Vịnh Hạ Long, chùa cổ, bãi biển Phú Quốc, Cầu Vàng Bà Nà Hills).
+  - Chiếc thuyền gỗ truyền thống lướt trên mặt biển rẽ sóng, tạo vệt nước loang bọt trắng xóa uốn lượn mềm mại qua chân chữ ("hiệu ứng chiếc thuyền đi qua rồi loang nước qua chữ").
+  - Đôi chim hải âu trắng bay liệng trên bầu trời xanh trong vắt.
+  - Typography nửa dưới mặt biển:
     - Dòng 1: `Chạm cảm hứng,` — Chữ trắng tinh khôi nổi bật trên nền đại dương sâu thẳm.
-    - Dòng 2: `trọn hành trình.` — Font *Serif Italic* nghệ thuật với gradient cắt mặt nước biển: nửa trên màu trắng bạc ánh dương, nửa dưới màu ngọc bích đại dương lấp lánh shimmer.
-  - Nền Hero Deep Oceanic Emerald:
-    - Tone màu xanh ngọc bích đại dương sâu thẳm (`#022421 → #043e38 → #085850`) kết hợp hiệu ứng ánh sáng nước biển tỏa nhẹ.
-    - Nút CTA Primary viên nang trắng tinh khôi nổi bật (`#ffffff`, chữ xanh đậm) cùng các pill hoạt động du lịch kính mờ.
+    - Dòng 2: `trọn hành trình.` — Font *Serif Italic* nghệ thuật với gradient cắt mặt nước biển lấp lánh ánh ngọc bích.
+    - Nút CTA Primary viên nang trắng tinh khôi (`#ffffff`, chữ xanh đậm) cùng các pill hoạt động du lịch kính mờ (Dạo biển, Lướt sóng, Chèo kayak).
+  - Thẻ danh lam thắng cảnh kính mờ dáng ngang (*Panoramic Glassmorphism Card*):
+    - Đặt ở nửa dưới mặt biển bên phải, thiết kế dáng ngang hiện đại với badge loại hình di sản/kỳ quan, rating sao, tiêu đề, mô tả và nút "Khám phá ngay →".
+    - Khung thumbnail bo góc tròn hiển thị ảnh chụp thực tế của 4 danh thắng Việt Nam (Vịnh Hạ Long, Phố cổ Hội An, Đảo Ngọc Phú Quốc, Tràng An Ninh Bình) tự động xoay tua mượt mà kèm thanh điều hướng chấm dot.
   - Thanh tìm kiếm Master Floating Search Capsule:
-    - Viên nang nổi độc lập bo tròn `999px` trắng tinh khiết nổi bật như chiếc du thuyền trên mặt biển, 100% Above-the-fold trên mọi độ phân giải.
-- Thêm gradient shimmer cho slogan dòng 2, hiệu ứng nhấc thẻ và đổ bóng mềm mại cho các nút hoạt động.
+    - Viên nang nổi độc lập bo tròn `999px` trắng tinh khiết nổi bật bồng bềnh trên mặt nước biển, đảm bảo 100% Above-the-fold trên mọi độ phân giải màn hình (1280x800, 1440x900) mà không bị che khuất hay kéo dài xuống dưới.
 - Nâng cấp Gợi ý combo nổi bật: hiệu ứng chuyển cảnh mượt mà theo hướng (directional slide-up/down), tương tác 3D tilt và vệt sáng phản chiếu (specular glare) theo chuyển động chuột, thanh timeline mini tiến trình xoay tua combo tự động tạm dừng khi hover.
 - Nâng cấp Khách sạn & Nơi lưu trú: hiệu ứng chia bài so le (staggered entrance) khi chuyển đổi chip điểm đến, zoom nhẹ ảnh phòng, con dấu đỏ Verified đóng dấu nhún nảy khi rê chuột.
 - Nâng cấp Banner Tripi: bưu thiếp bồng bềnh lơ lửng, con dấu ngôi sao xoay chậm 360°, vệt nét đứt chạy liên tục.
