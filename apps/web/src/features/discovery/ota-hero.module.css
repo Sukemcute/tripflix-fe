@@ -1,14 +1,14 @@
 .hero {
   position: relative;
-  background: radial-gradient(120% 120% at 88% 18%, #daf2ee 0%, #ebf8f5 42%, #f7fbf9 100%);
+  background: radial-gradient(circle at 86% 24%, rgba(0, 166, 153, 0.08) 0%, rgba(14, 165, 233, 0.04) 40%, rgba(255, 255, 255, 0) 70%), #ffffff;
   overflow: clip;
 }
 .inner {
   display: grid;
-  grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.14fr);
+  grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.12fr);
   align-items: center;
-  gap: clamp(32px, 4.5vw, 68px);
-  padding-block: clamp(28px, 3.4vh, 44px) clamp(64px, 7.5vh, 84px);
+  gap: clamp(28px, 4vw, 64px);
+  padding-block: clamp(24px, 3.2vh, 40px) clamp(68px, 7.5vh, 88px);
 }
 .copy {
   position: relative;
@@ -53,20 +53,23 @@
 
 .copy h1 {
   margin-block: 0 16px;
-  color: var(--color-teal-ink);
-  font-size: min(clamp(2.4rem, 3.7vw, 3.8rem), 13cqi);
-  font-weight: 900;
-  line-height: 1.1;
-  letter-spacing: -0.05em;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: min(clamp(2.6rem, 4vw, 4.2rem), 14cqi);
+  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -0.025em;
   white-space: pre-line;
 }
 .titleFirst {
   display: block;
-  color: var(--color-ink);
+  color: #0f2422;
+  font-style: normal;
   white-space: nowrap;
 }
 .titleSecond {
   display: inline-block;
+  font-style: italic;
+  font-weight: 700;
   background: linear-gradient(135deg, var(--color-teal-ink) 0%, var(--color-teal) 45%, var(--color-coral) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
@@ -87,7 +90,41 @@
   font-size: clamp(0.92rem, 1.15vw, 1.05rem);
   line-height: 1.7;
   color: #4b635f;
-  margin-block: 0 22px;
+  margin-block: 0 18px;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(10px, 1.4vw, 16px);
+  margin-top: 20px;
+}
+.primaryCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #00A699 0%, #007C6E 100%);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  box-shadow: 0 8px 20px -4px rgba(0, 166, 153, 0.42);
+  transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.primaryCta:hover {
+  background: linear-gradient(135deg, #02bba6 0%, #008778 100%);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 28px -4px rgba(0, 166, 153, 0.58);
+}
+.ctaArrow {
+  font-size: 1rem;
+  transition: transform 250ms ease;
+}
+.primaryCta:hover .ctaArrow {
+  transform: translateX(4px);
 }
 .activities {
   display: flex;
@@ -95,8 +132,6 @@
   align-items: center;
   gap: clamp(8px, 1.2vw, 12px);
   overflow-x: auto;
-  padding-top: 16px;
-  border-top: 1px solid color-mix(in srgb, var(--color-teal-ink) 14%, transparent);
   scrollbar-width: none;
 }
 .activities::-webkit-scrollbar {
@@ -150,15 +185,15 @@
 /* Khung ảnh vòm sóng hữu cơ (Organic Fluid Wave Horizon) */
 .frame {
   position: relative;
-  height: clamp(340px, 32vw, 450px);
+  height: clamp(360px, 34vw, 470px);
   min-height: 0;
   overflow: hidden;
   isolation: isolate;
   /* Bo cong mềm mại bất đối xứng kiểu sóng nước hữu cơ Travorra */
-  border-radius: 140px 36px 36px 80px / 180px 36px 36px 80px;
+  border-radius: 170px 36px 36px 110px / 230px 36px 36px 110px;
   background: var(--color-teal-ink);
   box-shadow:
-    0 28px 70px -20px color-mix(in srgb, var(--color-teal-ink) 35%, transparent),
+    0 32px 76px -18px color-mix(in srgb, var(--color-teal-ink) 36%, transparent),
     0 0 0 1px rgba(255, 255, 255, 0.6) inset;
   transition: box-shadow 450ms ease, transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
@@ -305,7 +340,7 @@
 .floatingTrendingBadge {
   position: absolute;
   top: 24px;
-  left: 28px;
+  left: clamp(110px, 12vw, 155px);
   z-index: 4;
   display: inline-flex;
   align-items: center;

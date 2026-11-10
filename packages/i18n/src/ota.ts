@@ -14,6 +14,7 @@ export const ota = {
   heroEyebrow: 'Khám phá · Nghỉ dưỡng · Tận hưởng',
   heroMascotCardTitle: 'Tripi đồng hành',
   heroMascotCardSubtitle: '50,000+ du khách tin chọn',
+  heroStartExploring: 'Bắt đầu khám phá',
   heroScenes: {
     haLong: {
       title: 'Vịnh Hạ Long',

@@ -88,19 +88,26 @@ export function OtaHero() {
 
           <p className={styles.description}>{vi.ota.heroIntro}</p>
 
-          <nav className={styles.activities} aria-label={vi.api.otaActivityLabel}>
-            {ACTIVITIES.map(([image, name]) => (
-              <Link
-                prefetch={false}
-                key={image}
-                href={{ pathname: '/inspiration', query: { q: name } }}
-                className={styles.activityPill}
-              >
-                <Image src={`/brand/${image}`} alt="" width={28} height={28} />
-                <span>{name}</span>
-              </Link>
-            ))}
-          </nav>
+          <div className={styles.actions}>
+            <a href="#ota-search" className={styles.primaryCta}>
+              <span>{vi.ota.heroStartExploring}</span>
+              <span className={styles.ctaArrow} aria-hidden="true">→</span>
+            </a>
+
+            <nav className={styles.activities} aria-label={vi.api.otaActivityLabel}>
+              {ACTIVITIES.map(([image, name]) => (
+                <Link
+                  prefetch={false}
+                  key={image}
+                  href={{ pathname: '/inspiration', query: { q: name } }}
+                  className={styles.activityPill}
+                >
+                  <Image src={`/brand/${image}`} alt="" width={24} height={24} />
+                  <span>{name}</span>
+                </Link>
+              ))}
+            </nav>
+          </div>
         </div>
 
         <figure
