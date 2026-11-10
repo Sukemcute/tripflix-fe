@@ -75,9 +75,13 @@ async function readBody(res: Response): Promise<unknown> {
   return type.includes('application/json') ? res.json() : res.text();
 }
 
-export async function http<T>(url: string, options: HttpRequestOptions = {}): Promise<T> {
-  const { skipAuthRefresh, skipAuthorization, ...init } = options;
-  const requestConfig = config;
+/**
+ * Gửi request có Bearer token và tự refresh một lần khi 401, trả Response thô (chưa đọc body).
+ * Dùng cho phản hồi dạng stream (SSE) mà code Orval sinh ra không đọc được.
+ */
+export async function httpRaw(url: string, options: HttpRequestOptions & { baseUrl?: string } = {}) {
+  const { skipAuthRefresh, skipAuthorization, baseUrl, ...init } = options;
+  const requestConfig = baseUrl === undefined ? config : { ...config, baseUrl };
   const method = (init.method ?? 'GET').toUpperCase();
   // Cùng một key cho lần gửi lại sau refresh, để server không xử lý lệnh ghi hai lần.
   const idempotencyKey = WRITE_METHODS.has(method) ? newId() : undefined;
@@ -91,7 +95,11 @@ export async function http<T>(url: string, options: HttpRequestOptions = {}): Pr
   ) {
     res = await send(requestConfig, url, init, idempotencyKey, skipAuthorization);
   }
+  return res;
+}
 
+export async function http<T>(url: string, options: HttpRequestOptions = {}): Promise<T> {
+  const res = await httpRaw(url, options);
   const data = await readBody(res);
   if (!res.ok) throw new HttpError(res.status, data);
   return { data, status: res.status, headers: res.headers } as T;
