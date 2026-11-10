@@ -984,7 +984,7 @@ export function InspirationImmersiveViewer({
 
   const effectiveSearch = (searchKeyword !== undefined ? searchKeyword : searchInput).trim();
   const queryKind = filterMode === 'saved' ? 'bookmarks' : 'public';
-  const postsQuery = useSocialPosts(queryKind, filterMode === 'saved' ? '' : effectiveSearch);
+  const postsQuery = useSocialPosts(queryKind, filterMode === 'saved' ? '' : effectiveSearch, 'video');
   const reelsQuery = useReelsFeed({ enabled: isReady });
 
   const reelMap = useMemo(() => {
@@ -1000,9 +1000,15 @@ export function InspirationImmersiveViewer({
     return map;
   }, [reelsQuery.data]);
 
+  // Reels chi lay cac bai viet dang video hoac co reel video dinh kem (loai bo hoan toan bai viet thuong / vlog)
   const rawPosts = useMemo(
-    () => postsQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [postsQuery.data],
+    () =>
+      (postsQuery.data?.pages.flatMap((page) => page.items) ?? []).filter(
+        (post) =>
+          post.postType !== 'vlog' &&
+          (post.postType === 'video' || Boolean(reelMap.get(post.id)?.video)),
+      ),
+    [postsQuery.data, reelMap],
   );
 
   const posts = useMemo(() => {
@@ -2080,6 +2086,41 @@ export function InspirationImmersiveViewer({
   );
 }
 
+interface CommentDraft {
+  body: string;
+  replyTarget: { id: string; authorName: string } | null;
+}
+
+const COMMENT_DRAFTS_STORAGE_KEY = 'tripflix.comment_drafts';
+
+function getCommentDraft(postId: string): CommentDraft | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const raw = sessionStorage.getItem(COMMENT_DRAFTS_STORAGE_KEY);
+    if (!raw) return undefined;
+    const map = JSON.parse(raw) as Record<string, CommentDraft>;
+    return map[postId];
+  } catch {
+    return undefined;
+  }
+}
+
+function saveCommentDraft(postId: string, draft: CommentDraft | null) {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = sessionStorage.getItem(COMMENT_DRAFTS_STORAGE_KEY);
+    const map = (raw ? JSON.parse(raw) : {}) as Record<string, CommentDraft>;
+    if (draft && (draft.body.trim() || draft.replyTarget)) {
+      map[postId] = draft;
+    } else {
+      delete map[postId];
+    }
+    sessionStorage.setItem(COMMENT_DRAFTS_STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 /**
  * Luồng bình luận cha–con đồng bộ theo postId ở Right Panel,
  * đi kèm Sticky Comment Composer cố định ở đáy Right Panel.
@@ -2102,8 +2143,24 @@ export function RightPanelCommentsSynchronized({
 }) {
   const { user, isReady, session } = useApiSession();
   const client = useQueryClient();
-  const [body, setBody] = useState('');
-  const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(null);
+  const initialDraft = getCommentDraft(post.id);
+  const [body, setBody] = useState(initialDraft?.body ?? '');
+  const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(
+    initialDraft?.replyTarget ?? null,
+  );
+
+  const handleBodyChange = (value: string) => {
+    setBody(value);
+    saveCommentDraft(post.id, { body: value, replyTarget });
+  };
+
+  const handleReplySelect = (target: { id: string; authorName: string } | null) => {
+    setReplyTarget(target);
+    saveCommentDraft(post.id, { body, replyTarget: target });
+    if (target) {
+      composerInputRef.current?.focus();
+    }
+  };
 
   const query = useInfiniteQuery({
     queryKey: ['social', 'comments', post.id, undefined, user?.id],
@@ -2140,6 +2197,7 @@ export function RightPanelCommentsSynchronized({
       }
     },
     onSuccess: async () => {
+      saveCommentDraft(post.id, null);
       setBody('');
       setReplyTarget(null);
       await Promise.all([
@@ -2178,10 +2236,7 @@ export function RightPanelCommentsSynchronized({
               postIsVerified={post.isVerified}
               comment={comment}
               loginHref={loginHref}
-              onReplySelect={(target) => {
-                setReplyTarget(target);
-                composerInputRef.current?.focus();
-              }}
+              onReplySelect={(target) => handleReplySelect(target)}
             />
           ))}
         </ol>
@@ -2209,7 +2264,7 @@ export function RightPanelCommentsSynchronized({
               type="button"
               className={styles.panelCommentActionBtn}
               aria-label={vi.api.immersiveCancelReply}
-              onClick={() => setReplyTarget(null)}
+              onClick={() => handleReplySelect(null)}
             >
               {vi.api.cancel}
             </button>
@@ -2241,7 +2296,7 @@ export function RightPanelCommentsSynchronized({
               placeholder={vi.api.commentInputPlaceholder}
               value={body}
               maxLength={10000}
-              onChange={(event) => setBody(event.target.value)}
+              onChange={(event) => handleBodyChange(event.target.value)}
             />
             <button
               type="submit"
@@ -2673,7 +2728,7 @@ export function ComposerModal({
     setTitle('');
     setBody('');
     setHashtagsText('');
-    setPostType('video');
+    setPostType(initialPostType);
     setVisibility('public');
     setExistingMediaId(null);
     setVideoFile(null);
@@ -2936,7 +2991,7 @@ export function ComposerModal({
         await socialApi.updatePost(currentId, patchPayload);
       } else {
         const draftPayload = {
-          post_type: videoFile || existingMediaId ? 'video' : postType,
+          post_type: postType,
           title: title.trim() || 'Bản nháp',
           body: body.trim(),
           hashtags: parsedTags,

@@ -9,6 +9,7 @@ import type { SocialPostDtoReactionCounts } from './socialPostDtoReactionCounts'
 import type { SocialPostDtoStatus } from './socialPostDtoStatus';
 import type { SocialPostDtoVisibility } from './socialPostDtoVisibility';
 import type { TripAttachmentDto } from './tripAttachmentDto';
+import type { PostViewerContextDto } from './postViewerContextDto';
 
 export interface SocialPostDto {
   id: string;
@@ -35,6 +36,8 @@ export interface SocialPostDto {
   commentCount: number;
   shareCount: number;
   bookmarkCount: number;
+  /** @nullable */
+  viewerContext?: PostViewerContextDto | null;
   /** @nullable */
   publishedAt: string | null;
   createdAt: string;

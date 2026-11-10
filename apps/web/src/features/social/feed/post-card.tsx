@@ -218,7 +218,7 @@ export function PostCard({
             onClick={() => onToggleLike(post.id, !isLiked)}
           >
             <SocialIcon name={isLiked ? 'heartFilled' : 'heart'} size={18} />
-            <span>{formatCompactCount(post.reactionTotal + (isLiked ? 1 : 0))}</span>
+            <span>{formatCompactCount(post.reactionTotal)}</span>
           </button>
 
           {/* Comment Button (Mo Contextual Panel phai) */}
@@ -256,7 +256,7 @@ export function PostCard({
             onClick={() => onToggleSave(post.id, !isSaved)}
           >
             <SocialIcon name={isSaved ? 'bookmarkFilled' : 'bookmark'} size={18} />
-            <span>{formatCompactCount(post.bookmarkCount + (isSaved ? 1 : 0))}</span>
+            <span>{formatCompactCount(post.bookmarkCount)}</span>
           </button>
 
           {/* Share Button */}

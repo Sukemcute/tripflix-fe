@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { useQueryClient, useMutation, type InfiniteData } from '@tanstack/react-query';
 import { vi, t } from '@tripflix/i18n';
 import {
   socialApi,
@@ -9,6 +9,7 @@ import {
   useSocialPosts,
   updateReelSocialCache,
 } from '@tripflix/api-client';
+import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { SocialIcon, ComposerModal, RightPanelCommentsSynchronized } from '../live-posts';
 import reelsStyles from '../live-posts.module.css';
 import { type FeedNavFilter } from './floating-nav-rail';
@@ -59,7 +60,6 @@ export function SocialFeedView({
   const [isRightOpen, setIsRightOpen] = useState(true);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [activeFocusedPostId, setActiveFocusedPostId] = useState<string | null>(null);
-  const isCommentPinnedRef = useRef(false);
 
   const mainFeedRef = useRef<HTMLElement | null>(null);
   const rightScrollRef = useRef<HTMLDivElement | null>(null);
@@ -91,8 +91,12 @@ export function SocialFeedView({
       const match = posts.find((p) => p.id === activeFocusedPostId);
       if (match) return match;
     }
-    return posts.find((p) => Boolean(p.tripAttachment)) ?? posts[0] ?? null;
-  }, [activeFocusedPostId, posts]);
+    if (activeCommentPostId) {
+      const match = posts.find((p) => p.id === activeCommentPostId);
+      if (match) return match;
+    }
+    return posts[0] ?? null;
+  }, [activeFocusedPostId, activeCommentPostId, posts]);
 
   const activeItineraryCover = useMemo(() => {
     if (!activeItineraryPost) return undefined;
@@ -106,27 +110,6 @@ export function SocialFeedView({
       itineraryItems: activeItineraryPost.tripAttachment?.items,
     })[0]?.src;
   }, [activeItineraryPost]);
-
-  // Suggested trip from another post if current doesn't have one
-  const suggestedTripPost = useMemo(() => {
-    const postWithTrip = posts.find(
-      (p) => p.id !== activeItineraryPost?.id && Boolean(p.tripAttachment)
-    );
-    if (!postWithTrip || !postWithTrip.tripAttachment) return null;
-    return {
-      title: postWithTrip.title,
-      trip: postWithTrip.tripAttachment,
-      coverImage: getPostImages({
-        mediaIds: postWithTrip.mediaIds,
-        destinationName: postWithTrip.tripAttachment.destinationName,
-        hotelName: postWithTrip.tripAttachment.hotelName,
-        title: postWithTrip.title,
-        body: postWithTrip.body,
-        hashtags: postWithTrip.hashtags,
-        itineraryItems: postWithTrip.tripAttachment.items,
-      })[0]?.src,
-    };
-  }, [activeItineraryPost, posts]);
 
   // Active post for comment thread (dong bo style Reels)
   const activeCommentPost = useMemo(() => {
@@ -186,9 +169,6 @@ export function SocialFeedView({
 
     const updateActivePost = () => {
       tickingRef.current = false;
-      const activeElem = document.activeElement;
-      const isUserTyping = activeElem && (activeElem.tagName === 'INPUT' || activeElem.tagName === 'TEXTAREA');
-      if (isUserTyping) return;
 
       const postElements = container.querySelectorAll<HTMLElement>('[data-feed-post-id]');
       if (postElements.length === 0) return;
@@ -229,13 +209,8 @@ export function SocialFeedView({
       }
 
       if (bestPostId) {
-        const post = posts.find((p) => p.id === bestPostId);
-        if (post?.tripAttachment) {
-          setActiveFocusedPostId(bestPostId);
-        }
-        if (!isCommentPinnedRef.current) {
-          setActiveCommentPostId((prev) => (prev === bestPostId ? prev : bestPostId));
-        }
+        setActiveFocusedPostId(bestPostId);
+        setActiveCommentPostId((prev) => (prev === bestPostId ? prev : bestPostId));
       }
     };
 
@@ -257,6 +232,63 @@ export function SocialFeedView({
       window.removeEventListener('resize', handleScroll);
     };
   }, [posts]);
+
+  // Cho phep cuon danh sach bai viet ngay ca khi con tro chuot nam o vung trong ngoai the bai viet ("khuc ngoai")
+  useEffect(() => {
+    const handleOuterWheel = (event: WheelEvent) => {
+      const feedContainer = mainFeedRef.current;
+      // Chi hoat dong khi feedContainer dang hien thi (khong bi an boi Reels)
+      if (!feedContainer || feedContainer.offsetParent === null) {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+
+      // 1. Neu dang thao tac tren popup modal, dialog hoac o nhap van ban -> Giu nguyen mac dinh
+      if (
+        target?.closest('[role="dialog"]') ||
+        target?.closest('input, textarea, select, [contenteditable="true"]')
+      ) {
+        return;
+      }
+
+      // 2. Neu con tro chuot dang nam trong cot Lich trinh (trai) hoac cot Binh luan (phai):
+      // De 2 cot nay tu cuon noi dung rieng cua chung
+      const isInsideLeftPanel = Boolean(
+        target?.closest(`.${styles.itinerarySidebar}`) ||
+        target?.closest(`.${styles.itineraryInFeed}`)
+      );
+      const isInsideRightPanel = Boolean(
+        target?.closest(`.${reelsStyles.rightPanel}`) ||
+        target?.closest(`.${styles.rightPanelInFeed}`)
+      );
+
+      if (isInsideLeftPanel || isInsideRightPanel) {
+        return;
+      }
+
+      // 3. Neu con tro chuot da nam truc tiep ben trong mainFeedColumn:
+      // Trinh duyet tu dong cuon tu nhien
+      if (feedContainer.contains(target)) {
+        return;
+      }
+
+      // 4. Neu con tro chuot nam o "khuc ngoai" (khoang trong giua cac cot, dock, padding, background):
+      // Chuyen huong cuon vao mainFeedColumn tuong tu nhu ben Reels
+      event.preventDefault();
+
+      let delta = event.deltaY;
+      if (event.deltaMode === 1) delta *= 40;
+      if (event.deltaMode === 2) delta *= 600;
+
+      feedContainer.scrollTop += delta;
+    };
+
+    window.addEventListener('wheel', handleOuterWheel, { passive: false });
+    return () => {
+      window.removeEventListener('wheel', handleOuterWheel);
+    };
+  }, []);
 
   const loginReturnHref = typeof window !== 'undefined'
     ? `/login?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`
@@ -281,6 +313,30 @@ export function SocialFeedView({
       if (payload.type === 'like' && payload.nextSelected !== undefined) {
         const prevLiked = optimisticLikes[payload.postId];
         setOptimisticLikes((prev) => ({ ...prev, [payload.postId]: payload.nextSelected! }));
+
+        // Cap nhat truc tiep so reactionTotal vao React Query cache cua danh sach bai viet
+        client.setQueriesData<InfiniteData<{ items: SocialPostDto[] }>>({ queryKey: ['social'] }, (oldData) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) => {
+                if (item.id !== payload.postId) return item;
+                const delta = payload.nextSelected ? 1 : -1;
+                return {
+                  ...item,
+                  reactionTotal: Math.max(0, item.reactionTotal + delta),
+                  viewerContext: {
+                    myReaction: payload.nextSelected ? 'like' : null,
+                    isBookmarked: item.viewerContext?.isBookmarked ?? false,
+                  },
+                };
+              }),
+            })),
+          };
+        });
+
         const rollbackCache = user
           ? updateReelSocialCache(client, user.id, payload.postId, 'like', payload.nextSelected)
           : undefined;
@@ -295,11 +351,36 @@ export function SocialFeedView({
             return next;
           });
           rollbackCache?.();
+          void client.invalidateQueries({ queryKey: ['social'] });
         }};
       }
       if (payload.type === 'save' && payload.nextSelected !== undefined) {
         const prevSaved = optimisticSaves[payload.postId];
         setOptimisticSaves((prev) => ({ ...prev, [payload.postId]: payload.nextSelected! }));
+
+        // Cap nhat truc tiep so bookmarkCount vao React Query cache cua danh sach bai viet
+        client.setQueriesData<InfiniteData<{ items: SocialPostDto[] }>>({ queryKey: ['social'] }, (oldData) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) => {
+                if (item.id !== payload.postId) return item;
+                const delta = payload.nextSelected ? 1 : -1;
+                return {
+                  ...item,
+                  bookmarkCount: Math.max(0, item.bookmarkCount + delta),
+                  viewerContext: {
+                    myReaction: item.viewerContext?.myReaction ?? null,
+                    isBookmarked: Boolean(payload.nextSelected),
+                  },
+                };
+              }),
+            })),
+          };
+        });
+
         const rollbackCache = user
           ? updateReelSocialCache(client, user.id, payload.postId, 'save', payload.nextSelected)
           : undefined;
@@ -314,15 +395,75 @@ export function SocialFeedView({
             return next;
           });
           rollbackCache?.();
+          void client.invalidateQueries({ queryKey: ['social'] });
         }};
       }
       return {};
+    },
+    onSuccess: (data: { reactionTotal?: number; myReaction?: 'like' | null; bookmarkCount?: number; isBookmarked?: boolean } | unknown, payload) => {
+      const responseData = data as { reactionTotal?: number; myReaction?: 'like' | null; bookmarkCount?: number; isBookmarked?: boolean } | undefined;
+      if (payload.type === 'like' && responseData?.reactionTotal !== undefined) {
+        client.setQueriesData<InfiniteData<{ items: SocialPostDto[] }>>({ queryKey: ['social'] }, (oldData) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) => {
+                if (item.id !== payload.postId) return item;
+                return {
+                  ...item,
+                  reactionTotal: responseData.reactionTotal!,
+                  viewerContext: {
+                    myReaction: responseData.myReaction ?? (payload.nextSelected ? 'like' : null),
+                    isBookmarked: item.viewerContext?.isBookmarked ?? false,
+                  },
+                };
+              }),
+            })),
+          };
+        });
+      }
+      if (payload.type === 'save' && responseData?.bookmarkCount !== undefined) {
+        client.setQueriesData<InfiniteData<{ items: SocialPostDto[] }>>({ queryKey: ['social'] }, (oldData) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) => {
+                if (item.id !== payload.postId) return item;
+                return {
+                  ...item,
+                  bookmarkCount: responseData.bookmarkCount!,
+                  viewerContext: {
+                    myReaction: item.viewerContext?.myReaction ?? null,
+                    isBookmarked: Boolean(responseData.isBookmarked ?? payload.nextSelected),
+                  },
+                };
+              }),
+            })),
+          };
+        });
+      }
     },
     onError: (_err, _vars, context) => {
       context?.rollbackLike?.();
       context?.rollbackSave?.();
     },
-    onSettled: () => {
+    onSettled: (_data, _error, payload) => {
+      if (payload?.postId) {
+        setOptimisticLikes((prev) => {
+          const next = { ...prev };
+          delete next[payload.postId];
+          return next;
+        });
+        setOptimisticSaves((prev) => {
+          const next = { ...prev };
+          delete next[payload.postId];
+          return next;
+        });
+      }
       void client.invalidateQueries({ queryKey: ['social'] });
     },
   });
@@ -372,14 +513,25 @@ export function SocialFeedView({
     });
   }, [posts, engagementMutation]);
 
-  const handleOpenComment = useCallback((postId: string) => {
-    isCommentPinnedRef.current = true;
-    setActiveCommentPostId(postId);
-    setIsRightOpen(true);
-    setTimeout(() => {
-      commentInputRef.current?.focus();
-    }, 80);
-  }, []);
+  const handleToggleComment = useCallback(
+    (postId: string) => {
+      const currentActiveId = activeCommentPostId ?? activeCommentPost?.id;
+      if (isRightOpen && currentActiveId === postId) {
+        // Neu dang mo dung bai viet nay -> Dong lai
+        setIsRightOpen(false);
+        return;
+      }
+
+      // Neu dang dong hoac dang mo bai khac -> Mo panel va tai moi binh luan
+      setActiveCommentPostId(postId);
+      setIsRightOpen(true);
+      void client.invalidateQueries({ queryKey: ['social', 'comments', postId] });
+      setTimeout(() => {
+        commentInputRef.current?.focus();
+      }, 80);
+    },
+    [client, isRightOpen, activeCommentPostId, activeCommentPost?.id]
+  );
 
   // Layout container class selection
   const isLeftVisible = isItineraryOpen;
@@ -406,13 +558,6 @@ export function SocialFeedView({
           coverImage={activeItineraryCover}
           isOpen={isLeftVisible}
           onClose={handleCloseItinerary}
-          suggestedTripPost={suggestedTripPost}
-          onSelectSuggestedTrip={() => {
-            if (suggestedTripPost) {
-              const matched = posts.find((p) => p.title === suggestedTripPost.title);
-              if (matched) setActiveFocusedPostId(matched.id);
-            }
-          }}
         />
       )}
 
@@ -570,12 +715,15 @@ export function SocialFeedView({
             <PostCard
               post={post}
               currentUser={user}
-              isLiked={optimisticLikes[post.id] ?? false}
-              isSaved={optimisticSaves[post.id] ?? false}
-              isCommentActive={activeCommentPostId === post.id && isRightOpen}
+              isLiked={
+                optimisticLikes[post.id] ??
+                (post.viewerContext?.myReaction !== null && post.viewerContext?.myReaction !== undefined)
+              }
+              isSaved={optimisticSaves[post.id] ?? Boolean(post.viewerContext?.isBookmarked)}
+              isCommentActive={activeCommentPost?.id === post.id && isRightOpen}
               onToggleLike={handleLikeToggle}
               onToggleSave={handleSaveToggle}
-              onToggleComment={handleOpenComment}
+              onToggleComment={handleToggleComment}
               onShare={handleShare}
               onViewItinerary={(postId) => {
                 setActiveFocusedPostId(postId);
@@ -618,7 +766,6 @@ export function SocialFeedView({
               title={vi.api.commentPanelClose}
               onClick={() => {
                 setIsRightOpen(false);
-                isCommentPinnedRef.current = false;
               }}
             >
               <SocialIcon name="close" size={17} />
@@ -646,18 +793,7 @@ export function SocialFeedView({
         </aside>
       )}
 
-      {/* Reopen Floating Button when right panel is closed */}
-      {!isRightOpen && (
-        <button
-          type="button"
-          className={styles.reopenContextBtn}
-          title="Mở bình luận"
-          aria-label="Mở bình luận"
-          onClick={() => setIsRightOpen(true)}
-        >
-          <SocialIcon name="comment" size={20} />
-        </button>
-      )}
+
 
       {/* Composer Modal for Creating / Drafting Posts (Rendered locally only when uncontrolled) */}
       {propIsComposerOpen === undefined && localIsComposerOpen && user && (
