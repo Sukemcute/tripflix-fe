@@ -6,6 +6,70 @@
     linear-gradient(135deg, #022421 0%, #043e38 38%, #085850 72%, #053b34 100%);
   overflow: clip;
 }
+
+/* ==========================================================================
+   LỚP NỀN NGHỆ THUẬT ĐẠI DƯƠNG (MULTI-LAYER ATMOSPHERIC ART BACKDROP)
+   Lấp đầy không gian nền với Typography chìm khổng lồ, đường contour
+   sóng biển, cụm ma trận chấm bi và tia sáng khúc xạ mặt nước.
+   ========================================================================== */
+.backdropArt {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* Chữ chìm khổng lồ VIETNAM chạy ngang nền */
+.watermarkWord {
+  position: absolute;
+  top: 9%;
+  left: 2%;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(8rem, 16vw, 17rem);
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(78, 227, 210, 0.14);
+  opacity: 0.75;
+  white-space: nowrap;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, transparent 75%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, transparent 75%);
+}
+
+/* Chùm tia sáng khúc xạ mặt nước biển (Sun Rays Caustics) */
+.sunRays {
+  position: absolute;
+  top: -20%;
+  right: 5%;
+  width: 700px;
+  height: 900px;
+  background: conic-gradient(
+    from 220deg at 70% 0%,
+    transparent 0deg,
+    rgba(78, 227, 210, 0.08) 12deg,
+    transparent 20deg,
+    rgba(255, 255, 255, 0.06) 28deg,
+    transparent 38deg,
+    rgba(78, 227, 210, 0.07) 50deg,
+    transparent 65deg
+  );
+  filter: blur(24px);
+  transform: rotate(-10deg);
+  opacity: 0.85;
+}
+
+/* Đường contour sóng biển hữu cơ & họa tiết vector */
+.oceanicContours {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
 .inner {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
@@ -249,6 +313,18 @@
   }
   100% {
     stroke-dashoffset: 200;
+  }
+}
+.slitGhostBorder {
+  fill: none;
+  stroke: rgba(78, 227, 210, 0.22);
+  stroke-width: 1.5;
+  stroke-dasharray: 8 10;
+  animation: ghostDash 25s linear infinite;
+}
+@keyframes ghostDash {
+  to {
+    stroke-dashoffset: -300;
   }
 }
 
