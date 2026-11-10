@@ -9,7 +9,16 @@ import type {
   TokenPairDto,
 } from './generated/core-api/model';
 import { configureHttp, HttpError, type HttpRequestOptions } from './http';
+import { sendWithPasswords } from './password-encryption';
 import { readEntity, SessionSetupError } from './response';
+
+/** Đăng nhập bằng mật khẩu: client nhận mật khẩu gốc, SessionClient tự mã hoá trước khi gửi. */
+export interface PasswordCredentials {
+  email: string;
+  password: string;
+  deviceName?: string;
+}
+export type RegisterInput = Omit<RegisterDto, 'password' | 'encPassword'> & { password: string };
 
 export interface TokenStorage {
   read(): Promise<string | null>;
@@ -135,9 +144,15 @@ export class SessionClient {
     return this.refreshPromise;
   }
 
-  async login(credentials: LoginDto): Promise<void> {
+  /** Mật khẩu được mã hoá trước khi gửi (TF056); server chưa bật mã hoá thì gửi như cũ. */
+  async login(credentials: PasswordCredentials): Promise<void> {
     const version = ++this.version;
-    const response = await auth.authControllerLogin(credentials, this.authOptions);
+    const { email, password, deviceName } = credentials;
+    const response = await sendWithPasswords(
+      [{ plain: 'password', encrypted: 'encPassword', value: password, purpose: 'login' }],
+      email,
+      (fields) => auth.authControllerLogin({ email, ...(deviceName ? { deviceName } : {}), ...fields } as LoginDto, this.authOptions),
+    );
     await this.completeLogin(response.data, version);
   }
   /** Google ID token from Google Identity Services; tokens are kept exactly like a password login. */
@@ -154,17 +169,22 @@ export class SessionClient {
       throw new SessionSetupError(error);
     }
   }
-  async register(credentials: RegisterDto): Promise<void> {
-    await auth.authControllerRegister(credentials, this.authOptions);
-    const { email, password } = credentials;
-    await this.login({ email, password });
+  async register(credentials: RegisterInput): Promise<void> {
+    const { password, ...rest } = credentials;
+    await sendWithPasswords(
+      [{ plain: 'password', encrypted: 'encPassword', value: password, purpose: 'register' }],
+      rest.email,
+      (fields) => auth.authControllerRegister({ ...rest, ...fields }, this.authOptions),
+    );
+    await this.login({ email: rest.email, password });
   }
   /** @deprecated Dùng sendRegistrationCode để biết cả thời gian chờ trước khi gửi lại mã. */
   async requestRegistrationCode(input: RegistrationCodeDto): Promise<string> {
     return (await this.sendRegistrationCode(input)).registrationId;
   }
+  /** Chỉ gửi email (TF056): mật khẩu chỉ gửi một lần, ở bước đăng ký. */
   async sendRegistrationCode(input: RegistrationCodeDto): Promise<RegistrationCodeResultDto> {
-    const response = await auth.authControllerRequestRegistrationCode(input, this.authOptions);
+    const response = await auth.authControllerRequestRegistrationCode({ email: input.email }, this.authOptions);
     const { registrationId, resendAfterSeconds } = readEntity(response.data, ['registrationId']);
     // Backend cũ chưa trả resendAfterSeconds: không chặn nút gửi lại.
     return {

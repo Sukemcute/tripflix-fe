@@ -7,6 +7,9 @@
 
 export interface LoginDto {
   email: string;
-  password: string;
+  /** Mật khẩu đã mã hoá bằng khoá của GET /auth/password-key, dạng "#TFPWD:1:<keyId>:<ts>:<dữ liệu>". Gửi trường này thay cho trường mật khẩu thường tương ứng, không gửi cả hai. */
+  encPassword?: string;
+  /** Cách cũ, gửi mật khẩu gốc. Bị từ chối khi server bật AUTH_PASSWORD_ENCRYPTION_REQUIRED. */
+  password?: string;
   deviceName?: string;
 }

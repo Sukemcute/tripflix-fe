@@ -1,7 +1,12 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionClient } from './session-client';
 import { http, HttpError, type HttpResponse } from './http';
 import { getApiErrorKind, getAuthErrorKind } from './response';
+import { primePasswordKeyCache } from './password-encryption';
+
+// Các test ở đây kiểm token và phiên; giả như server chưa bật mã hoá mật khẩu để không có request lấy khoá.
+// Mã hoá mật khẩu kiểm riêng ở password-encryption.test.ts.
+beforeEach(() => primePasswordKeyCache(null));
 
 const user = {
   id: 'member-1',
