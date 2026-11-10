@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { staysControllerListStays, suggestControllerSuggest } from './generated/core-api/discovery/discovery';
 import type { SuggestionDto } from './generated/core-api/model';
 import { useApiSession } from './session';
@@ -85,7 +85,7 @@ export function useStaySearch(
     queryKey: ['discovery', 'suggest', debounced],
     enabled:
       isReady &&
-      (!initialFilters?.placeId || !filters.placeId) &&
+      !filters.placeId &&
       debounced.length >= 2 &&
       debounced.length <= 100,
     queryFn: async ({ signal }) =>
@@ -122,6 +122,13 @@ export function useStaySearch(
       goToFirstPage();
       setSubmitted({ ...filters });
     },
+    apply: useCallback((query: string, nextFilters: StayFilters) => {
+      setText(query);
+      setSelection(null);
+      setFilters(nextFilters);
+      setSubmitted(nextFilters.placeId ? { ...nextFilters } : null);
+      goToFirstPage();
+    }, []),
     next: () => {
       const nextCursor = stays.data?.nextCursor;
       if (!nextCursor) return;

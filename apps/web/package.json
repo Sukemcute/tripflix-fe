@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start --port 3100",
     "lint": "oxlint -c ../../.oxlintrc.json src",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@tanstack/react-query": "catalog:",
@@ -30,6 +31,7 @@
     "@types/react-dom": "catalog:",
     "oxlint": "catalog:",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }
