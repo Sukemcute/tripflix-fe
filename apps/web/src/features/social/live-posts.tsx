@@ -31,15 +31,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
+import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import styles from './live-posts.module.css';
 
 // Trang chi tiết bài viết nằm ở post-detail.tsx; giữ export ở đây để app/trips/[slug]/page.tsx không phải đổi.
 export { LivePostDetail } from './post-detail';
 
 type FeedFilterMode = 'all' | 'withTrip' | 'saved';
-type ItineraryTab = 'schedule' | 'destinations' | 'cost';
 
-type SocialIconName =
+export type SocialIconName =
   | 'search'
   | 'sparkles'
   | 'bookmark'
@@ -67,6 +67,10 @@ type SocialIconName =
   | 'volumeOn'
   | 'volumeOff'
   | 'maximize'
+  | 'minimize'
+  | 'users'
+  | 'compass'
+  | 'filter'
   | 'sun'
   | 'moon'
   | 'plus'
@@ -75,7 +79,7 @@ type SocialIconName =
   | 'video';
 
 /** Bộ icon vector đồng nhất nét 1.85px theo chuẩn Instagram / Threads / Lucide. */
-function SocialIcon({ name, size = 18 }: { name: SocialIconName; size?: number }) {
+export function SocialIcon({ name, size = 18 }: { name: SocialIconName; size?: number }) {
   const common = {
     width: size,
     height: size,
@@ -319,10 +323,37 @@ function SocialIcon({ name, size = 18 }: { name: SocialIconName; size?: number }
           <path d="m17 9 5-3v12l-5-3" />
         </svg>
       );
+    case 'minimize':
+      return (
+        <svg {...common}>
+          <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" />
+        </svg>
+      );
+    case 'users':
+      return (
+        <svg {...common}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      );
+    case 'compass':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+        </svg>
+      );
+    case 'filter':
+      return (
+        <svg {...common}>
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+        </svg>
+      );
   }
 }
 
-function formatAuthorDisplay(
+export function formatAuthorDisplay(
   authorId: string,
   feedAuthorName?: string | null,
   currentUserId?: string,
@@ -353,11 +384,11 @@ function formatAuthorDisplay(
   };
 }
 
-function formatDateVi(value: string): string {
+export function formatDateVi(value: string): string {
   return new Date(value).toLocaleDateString('vi-VN');
 }
 
-function formatCompactCount(value: number): string {
+export function formatCompactCount(value: number): string {
   if (value >= 1000) {
     return `${(value / 1000).toFixed(1).replace(/\.0$/, '')}K`;
   }
@@ -873,20 +904,46 @@ function isPhysicalMouseWheel(event: WheelEvent): boolean {
 
 
 
-function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: string }) {
+export interface InspirationImmersiveViewerProps {
+  initialKeyword?: string;
+  searchKeyword?: string;
+  onSearchKeywordChange?: (keyword: string) => void;
+  isItineraryOpen?: boolean;
+  onToggleItinerary?: () => void;
+  onOpenComposer?: (type?: 'video' | 'vlog') => void;
+}
+
+export function InspirationImmersiveViewer({
+  initialKeyword = '',
+  searchKeyword,
+  onSearchKeywordChange,
+  isItineraryOpen: propIsItineraryOpen,
+  onToggleItinerary,
+  onOpenComposer,
+}: InspirationImmersiveViewerProps) {
   const { isReady, user } = useApiSession();
   const client = useQueryClient();
 
-  const [filterMode, setFilterMode] = useState<FeedFilterMode>('all');
+  const [filterMode] = useState<FeedFilterMode>('all');
   const [searchInput, setSearchInput] = useState<string>(initialKeyword);
   const [activePostId, setActivePostId] = useState<string | null>(null);
 
-  const [isLeftOpen, setLeftOpen] = useState(true);
-  const [leftTab, setLeftTab] = useState<ItineraryTab>('schedule');
+  const [internalIsLeftOpen, setInternalIsLeftOpen] = useState(true);
+  const isLeftOpen = propIsItineraryOpen !== undefined ? propIsItineraryOpen : internalIsLeftOpen;
+  const setLeftOpen = useCallback(
+    (open: boolean) => {
+      if (onToggleItinerary) {
+        if ((open && !isLeftOpen) || (!open && isLeftOpen)) {
+          onToggleItinerary();
+        }
+      } else {
+        setInternalIsLeftOpen(open);
+      }
+    },
+    [onToggleItinerary, isLeftOpen]
+  );
   const [isRightOpen, setRightOpen] = useState(true);
-  const [isSearchOpen, setSearchOpen] = useState(false);
   const [isComposerModalOpen, setComposerModalOpen] = useState(false);
-  const [composerInitialView, setComposerInitialView] = useState<'compose' | 'drafts'>('compose');
 
   // Media player session states
   const [isMuted, setMuted] = useState(true);
@@ -922,13 +979,12 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const playFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stageFrameRef = useRef<HTMLDivElement | null>(null);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const searchContainerRef = useRef<HTMLDivElement | null>(null);
   const commentInputRef = useRef<HTMLInputElement | null>(null);
   const rightScrollRef = useRef<HTMLDivElement | null>(null);
 
+  const effectiveSearch = (searchKeyword !== undefined ? searchKeyword : searchInput).trim();
   const queryKind = filterMode === 'saved' ? 'bookmarks' : 'public';
-  const postsQuery = useSocialPosts(queryKind, filterMode === 'saved' ? '' : searchInput.trim());
+  const postsQuery = useSocialPosts(queryKind, filterMode === 'saved' ? '' : effectiveSearch);
   const reelsQuery = useReelsFeed({ enabled: isReady });
 
   const reelMap = useMemo(() => {
@@ -1510,43 +1566,6 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
 
 
 
-  // Nhóm lịch trình theo từng ngày (Vertical Timeline)
-  const groupedDays = useMemo(() => {
-    const items = trip?.items ?? [];
-    const byDay = new Map<number, typeof items>();
-    for (const item of items) {
-      const list = byDay.get(item.day) ?? [];
-      list.push(item);
-      byDay.set(item.day, list);
-    }
-    return [...byDay.entries()].sort((first, second) => first[0] - second[0]);
-  }, [trip?.items]);
-
-  // Trích xuất danh sách POI thực tế từ lịch trình
-  const itineraryPois = useMemo(() => {
-    if (!trip) return [];
-    const seen = new Set<string>();
-    const list: { name: string; sub?: string }[] = [];
-    if (trip.hotelName?.trim()) {
-      seen.add(trip.hotelName.trim().toLowerCase());
-      list.push({ name: trip.hotelName.trim(), sub: trip.destinationName });
-    }
-    for (const item of trip.items ?? []) {
-      const place = (item.location ?? item.title).trim();
-      if (place && !seen.has(place.toLowerCase())) {
-        seen.add(place.toLowerCase());
-        list.push({
-          name: place,
-          sub: t('api.immersiveDayHeading', { day: item.day }),
-        });
-      }
-    }
-    if (list.length === 0 && trip.destinationName?.trim()) {
-      list.push({ name: trip.destinationName.trim() });
-    }
-    return list;
-  }, [trip]);
-
   const loginReturnHref = '/login?returnTo=%2Finspiration';
 
   function handleCommentButtonClick() {
@@ -1557,37 +1576,6 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
     }
     setRightOpen(false);
   }
-
-
-
-  function handleToggleFullscreen() {
-    const el = stageFrameRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else if (el.requestFullscreen) {
-      void el.requestFullscreen();
-    }
-  }
-
-  // Click outside & Escape để tự động đóng Popover tìm kiếm / bộ lọc
-  useEffect(() => {
-    if (!isSearchOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!searchContainerRef.current?.contains(event.target as Node)) {
-        setSearchOpen(false);
-      }
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setSearchOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [isSearchOpen]);
 
   // Đảm bảo loại bỏ thuộc tính data-theme còn sót lại, giữ mặc định Light Mode
   useEffect(() => {
@@ -1604,388 +1592,33 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
     return <output className="empty-state">{vi.api.loading}</output>;
   }
 
-  const hasActiveSearchOrFilter = searchInput.trim() !== '' || filterMode !== 'all';
-
   return (
     <div className={styles.immersiveRoot}>
       {/* Nội dung chính: 3 Panel Đồng bộ theo activePost */}
       <div className={`${styles.viewerGrid} ${gridLayoutClass}`}>
         {/* ================================================================
-            1. LEFT PANEL — ATTACHED ITINERARY (Thu gọn khi không có lịch trình)
+            1. LEFT PANEL — ATTACHED ITINERARY (Dùng chung ItinerarySidebarPanel chuẩn 1 style)
             ================================================================ */}
-        {showLeftPanel && trip && activePost && (
-            <aside className={styles.leftPanel} aria-label={vi.api.immersiveItineraryTitle}>
-              <div className={styles.panelHeaderBar}>
-                <h2 className={styles.panelHeaderTitle}>
-                  <span className={styles.panelHeaderIcon}>
-                    <SocialIcon name="calendar" size={18} />
-                  </span>
-                  {vi.api.immersiveItineraryTitle}
-                </h2>
-                <button
-                  type="button"
-                  className={styles.iconGhostBtn}
-                  aria-label={vi.api.immersiveItineraryCollapse}
-                  title={vi.api.immersiveItineraryCollapse}
-                  onClick={() => setLeftOpen(false)}
-                >
-                  <SocialIcon name="chevronLeft" size={18} />
-                </button>
-              </div>
+        {showLeftPanel && (
+          <ItinerarySidebarPanel
+            className={styles.itineraryInReels}
+            trip={trip}
+            postTitle={activePost?.title}
+            hashtags={activePost?.hashtags}
+            coverImage={coverImage}
+            isOpen={showLeftPanel}
+            onClose={() => setLeftOpen(false)}
+          />
+        )}
 
-              {/* Trip Overview Card */}
-              <div className={styles.tripOverviewCard}>
-                <div className={styles.tripOverviewTop}>
-                  <span className={styles.tripOverviewThumb}>
-                    <Image
-                      src={coverImage ?? POST_COVER_MASCOT}
-                      alt=""
-                      fill
-                      sizes="78px"
-                      unoptimized={Boolean(coverImage?.startsWith('http'))}
-                    />
-                  </span>
-                  <div className={styles.tripOverviewMeta}>
-                    <h3 className={styles.tripOverviewTitle}>
-                      {trip.hotelName ?? trip.destinationName ?? activePost.title}
-                    </h3>
-                    {(trip.destinationName || activePost.hashtags.length > 0) && (
-                      <p className={styles.tripOverviewTags}>
-                        {[trip.destinationName, ...activePost.hashtags.slice(0, 2)]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </p>
-                    )}
-                    <div className={styles.tripOverviewFacts}>
-                      {Boolean(trip.daysCount) && (
-                        <span className={styles.tripFactLine}>
-                          <SocialIcon name="clock" size={14} />
-                          {t('api.postTripDaysBadge', { count: trip.daysCount! })}
-                        </span>
-                      )}
-                      {Boolean(trip.estimatedCostPerPerson) && (
-                        <span className={styles.tripFactLine}>
-                          <SocialIcon name="wallet" size={14} />
-                          ~
-                          {trip.estimatedCostPerPerson!.toLocaleString('vi-VN', {
-                            style: 'currency',
-                            currency: 'VND',
-                          })}
-                          /người
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <Link
-                  href={
-                    trip.hotelId
-                      ? `/hotels/${encodeURIComponent(trip.hotelId)}`
-                      : `/search?q=${encodeURIComponent(
-                          trip.hotelName ?? trip.destinationName ?? activePost.title,
-                        )}`
-                  }
-                  className={styles.tripOverviewCta}
-                >
-                  {vi.api.immersiveViewTripDetail}
-                  <SocialIcon name="arrowUpRight" size={16} />
-                </Link>
-              </div>
-
-              {/* 3 Tabs: Lịch trình | Điểm đến | Chi phí */}
-              <div className={styles.panelTabsRow} role="tablist">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={leftTab === 'schedule'}
-                  className={`${styles.panelTabItem} ${
-                    leftTab === 'schedule' ? styles.panelTabItemActive : ''
-                  }`}
-                  onClick={() => setLeftTab('schedule')}
-                >
-                  {vi.api.immersiveTabSchedule}
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={leftTab === 'destinations'}
-                  className={`${styles.panelTabItem} ${
-                    leftTab === 'destinations' ? styles.panelTabItemActive : ''
-                  }`}
-                  onClick={() => setLeftTab('destinations')}
-                >
-                  {t('api.immersiveTabDestinations', { count: itineraryPois.length })}
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={leftTab === 'cost'}
-                  className={`${styles.panelTabItem} ${
-                    leftTab === 'cost' ? styles.panelTabItemActive : ''
-                  }`}
-                  onClick={() => setLeftTab('cost')}
-                >
-                  {vi.api.immersiveTabCost}
-                </button>
-              </div>
-
-              {/* Nội dung cuộn độc lập của Left Panel */}
-              <div className={styles.leftScrollBody}>
-                {leftTab === 'schedule' && (
-                  <>
-                    {groupedDays.length === 0 ? (
-                      <p className="small muted">{vi.api.immersiveNoTimelineItems}</p>
-                    ) : (
-                      <div className={styles.timelineContainer}>
-                        {groupedDays.map(([dayNumber, dayItems]) => (
-                          <div key={dayNumber} className={styles.timelineDayBlock}>
-                            <span className={styles.timelineDayDot} aria-hidden="true" />
-                            <h4 className={styles.timelineDayTitle}>
-                              {t('api.immersiveDayHeading', { day: dayNumber })}
-                            </h4>
-                            <ol className={styles.timelineStopsList}>
-                              {dayItems.map((stop, stopIdx) => {
-                                const stopCover = getPostCover(
-                                  stop.location ?? trip.destinationName,
-                                  stop.title,
-                                );
-                                return (
-                                  <li key={stopIdx} className={styles.timelineStopCard}>
-                                    {stopCover ? (
-                                      <span className={styles.timelineStopThumb}>
-                                        <Image src={stopCover} alt="" fill sizes="48px" />
-                                      </span>
-                                    ) : null}
-                                    <span className={styles.timelineStopIcon}>
-                                      <SocialIcon name="pin" size={13} />
-                                    </span>
-                                    <div className={styles.timelineStopInfo}>
-                                      <span className={styles.timelineStopName}>{stop.title}</span>
-                                      {(stop.location || stop.notes) && (
-                                        <span className={styles.timelineStopMeta}>
-                                          {[stop.location, stop.notes].filter(Boolean).join(' · ')}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </li>
-                                );
-                              })}
-                            </ol>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {leftTab === 'destinations' && (
-                  <>
-                    {itineraryPois.length === 0 ? (
-                      <p className="small muted">{vi.api.immersiveNoDestinations}</p>
-                    ) : (
-                      <ul className={styles.poiList}>
-                        {itineraryPois.map((poi) => (
-                          <li key={poi.name}>
-                            <Link
-                              href={`/search?q=${encodeURIComponent(poi.name)}`}
-                              className={styles.poiCardLink}
-                            >
-                              <span>
-                                {poi.name}
-                                {poi.sub && (
-                                  <span className="small muted"> · {poi.sub}</span>
-                                )}
-                              </span>
-                              <SocialIcon name="arrowUpRight" size={16} />
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </>
-                )}
-
-                {leftTab === 'cost' && (
-                  <>
-                    {trip.estimatedCostPerPerson ? (
-                      <div className={styles.costBox}>
-                        <span className="small muted">{vi.api.immersiveEstimatedBudgetLabel}</span>
-                        <strong className={styles.costAmount}>
-                          ~
-                          {trip.estimatedCostPerPerson.toLocaleString('vi-VN', {
-                            style: 'currency',
-                            currency: 'VND',
-                          })}
-                        </strong>
-                        {trip.priceDisclaimer && (
-                          <p className="small muted">{trip.priceDisclaimer}</p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="small muted">{vi.api.immersiveNoCostData}</p>
-                    )}
-                  </>
-                )}
-              </div>
-            </aside>
-          )}
-
-          {/* ================================================================
-              2. CENTER PANEL — IMMERSIVE MEDIA VIEWER + VERTICAL ACTION BAR
-              ================================================================ */}
-          <section
-            ref={centerPanelRef}
-            className={styles.centerPanel}
-            aria-label={activePost ? activePost.title : vi.api.feedNavAria}
-          >
-            {/* Cột tiện ích xếp dọc mép trái Center Panel (dọc theo Sidebar Lịch trình) */}
-            <div ref={searchContainerRef} className={styles.centerFloatingTopLeft}>
-              <div className={styles.floatingTopRow}>
-                <button
-                  type="button"
-                  className={`${styles.floatingIconBtn} ${
-                    isSearchOpen || hasActiveSearchOrFilter ? styles.floatingIconBtnActive : ''
-                  }`}
-                  aria-expanded={isSearchOpen}
-                  aria-label={vi.api.feedSearchPlaceholder}
-                  title={vi.api.feedSearchPlaceholder}
-                  onClick={() => {
-                    const next = !isSearchOpen;
-                    setSearchOpen(next);
-                    if (next) {
-                      setTimeout(() => searchInputRef.current?.focus(), 0);
-                    }
-                  }}
-                >
-                  <SocialIcon name="search" size={18} />
-                  {hasActiveSearchOrFilter && (
-                    <span className={styles.floatingActiveDot} aria-hidden="true" />
-                  )}
-                </button>
-
-                {user ? (
-                  <button
-                    type="button"
-                    className={styles.floatingCircleAccentBtn}
-                    aria-label={vi.api.feedCreatePostCta}
-                    title={vi.api.feedCreatePostCta}
-                    onClick={() => {
-                      setComposerInitialView('compose');
-                      setComposerModalOpen(true);
-                    }}
-                  >
-                    <SocialIcon name="plus" size={18} />
-                  </button>
-                ) : (
-                  <Link
-                    href={loginReturnHref}
-                    className={styles.floatingCircleAccentBtn}
-                    aria-label={vi.api.feedCreatePostCta}
-                    title={vi.api.feedCreatePostCta}
-                  >
-                    <SocialIcon name="plus" size={18} />
-                  </Link>
-                )}
-
-                {hasItinerary && !isLeftOpen && (
-                  <button
-                    type="button"
-                    className={styles.floatingIconBtn}
-                    aria-expanded={isLeftOpen}
-                    aria-label={vi.api.immersiveItineraryExpand}
-                    title={vi.api.immersiveItineraryExpand}
-                    onClick={() => setLeftOpen(true)}
-                  >
-                    <SocialIcon name="calendar" size={18} />
-                  </button>
-                )}
-              </div>
-
-              {isSearchOpen && (
-                <div className={styles.floatingSearchPopover}>
-                  <div className={styles.searchPill}>
-                    <SocialIcon name="search" size={16} />
-                    <input
-                      ref={searchInputRef}
-                      type="search"
-                      className={styles.searchInput}
-                      aria-label={vi.api.feedSearchPlaceholder}
-                      placeholder={vi.api.feedSearchPlaceholder}
-                      value={searchInput}
-                      onChange={(event) => {
-                        if (filterMode === 'saved') setFilterMode('all');
-                        setSearchInput(event.target.value);
-                      }}
-                    />
-                    {searchInput && (
-                      <button
-                        type="button"
-                        className={styles.searchClearBtn}
-                        aria-label={vi.api.commentPanelClose}
-                        onClick={() => setSearchInput('')}
-                      >
-                        <SocialIcon name="close" size={12} />
-                      </button>
-                    )}
-                  </div>
-
-                  <nav className={styles.filterGroup} aria-label={vi.api.feedNavAria}>
-                    <button
-                      type="button"
-                      className={`${styles.filterPill} ${
-                        filterMode === 'all' ? styles.filterPillActive : ''
-                      }`}
-                      aria-pressed={filterMode === 'all'}
-                      onClick={() => setFilterMode('all')}
-                    >
-                      <SocialIcon name="sparkles" size={14} />
-                      {vi.api.immersiveFilterAll}
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.filterPill} ${
-                        filterMode === 'withTrip' ? styles.filterPillActive : ''
-                      }`}
-                      aria-pressed={filterMode === 'withTrip'}
-                      onClick={() => setFilterMode('withTrip')}
-                    >
-                      <SocialIcon name="calendar" size={14} />
-                      {vi.api.immersiveFilterWithTrip}
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.filterPill} ${
-                        filterMode === 'saved' ? styles.filterPillActive : ''
-                      }`}
-                      aria-pressed={filterMode === 'saved'}
-                      onClick={() => setFilterMode('saved')}
-                    >
-                      <SocialIcon
-                        name={filterMode === 'saved' ? 'bookmarkFilled' : 'bookmark'}
-                        size={14}
-                      />
-                      {vi.api.immersiveFilterSaved}
-                    </button>
-                    {user && (
-                      <button
-                        type="button"
-                        className={styles.filterPill}
-                        onClick={() => {
-                          setSearchOpen(false);
-                          setComposerInitialView('drafts');
-                          setComposerModalOpen(true);
-                        }}
-                      >
-                        <SocialIcon name="bookmark" size={14} />
-                        Bản nháp
-                      </button>
-                    )}
-                  </nav>
-                </div>
-              )}
-            </div>
-
+        {/* ================================================================
+            2. CENTER PANEL — IMMERSIVE MEDIA VIEWER + VERTICAL ACTION BAR
+            ================================================================ */}
+        <section
+          ref={centerPanelRef}
+          className={styles.centerPanel}
+          aria-label={activePost ? activePost.title : vi.api.feedNavAria}
+        >
             {filterMode === 'saved' && !user ? (
               <div className={`empty-state ${styles.centerEmptyBox}`}>
                 <p>{vi.api.loginRequired}</p>
@@ -2081,14 +1714,6 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
                         >
                           <SocialIcon name="more" size={18} />
                         </Link>
-                        <button
-                          type="button"
-                          className={styles.stageCircleBtn}
-                          aria-label={vi.api.immersiveFullscreen}
-                          onClick={handleToggleFullscreen}
-                        >
-                          <SocialIcon name="maximize" size={17} />
-                        </button>
                       </div>
                     </>
                   )}
@@ -2205,8 +1830,7 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
                         }
                         onOpenTag={(tag) => {
                           setSearchInput(tag);
-                          setSearchOpen(true);
-                          setTimeout(() => searchInputRef.current?.focus(), 0);
+                          onSearchKeywordChange?.(tag);
                         }}
                         onOpenItinerary={(pId) => {
                           if (activePostId !== pId) setActivePostId(pId);
@@ -2227,7 +1851,11 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
                   {isPostNotFound && (
                     <div className={styles.postUnavailableOverlay} role="alert">
                       <div className={styles.postUnavailableIcon} aria-hidden="true">
-                        ⚠️
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="8" x2="12" y2="12" />
+                          <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
                       </div>
                       <h3 className={styles.postUnavailableTitle}>{vi.api.postUnavailable}</h3>
                       <p className={styles.postUnavailableDesc}>{vi.api.postUnavailableHint}</p>
@@ -2384,11 +2012,6 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
               >
                 <SocialIcon name="arrowUp" size={20} />
               </button>
-              {posts.length > 0 && (
-                <span className={styles.postCounterBadge}>
-                  {activeIndex + 1}/{posts.length}
-                </span>
-              )}
               <button
                 type="button"
                 className={styles.navArrowBtn}
@@ -2441,10 +2064,11 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
           )}
         </div>
 
-      {/* Modal Đăng bài nhanh khi nhấn "+ Đăng bài" */}
-      {isComposerModalOpen && user && (
+      {/* Modal Đăng bài nhanh (Chỉ render nội bộ nếu component chạy độc lập, không có onOpenComposer từ cấp cha) */}
+      {!onOpenComposer && isComposerModalOpen && user && (
         <ComposerModal
-          initialView={composerInitialView}
+          initialView="compose"
+          initialPostType="video"
           onClose={() => setComposerModalOpen(false)}
         />
       )}
@@ -2456,7 +2080,7 @@ function InspirationImmersiveViewer({ initialKeyword = '' }: { initialKeyword?: 
  * Luồng bình luận cha–con đồng bộ theo postId ở Right Panel,
  * đi kèm Sticky Comment Composer cố định ở đáy Right Panel.
  */
-function RightPanelCommentsSynchronized({
+export function RightPanelCommentsSynchronized({
   post,
   loginHref,
   scrollContainerRef,
@@ -2465,12 +2089,14 @@ function RightPanelCommentsSynchronized({
   post: {
     id: string;
     authorId: string;
+    authorName?: string | null;
+    isVerified?: boolean;
   };
   loginHref: string;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   composerInputRef: React.RefObject<HTMLInputElement | null>;
 }) {
-  const { user } = useApiSession();
+  const { user, isReady, session } = useApiSession();
   const client = useQueryClient();
   const [body, setBody] = useState('');
   const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(null);
@@ -2483,7 +2109,32 @@ function RightPanelCommentsSynchronized({
   });
 
   const addMutation = useMutation({
-    mutationFn: () => socialApi.addComment(post.id, body.trim(), replyTarget?.id),
+    mutationFn: async () => {
+      try {
+        return await socialApi.addComment(post.id, body.trim(), replyTarget?.id);
+      } catch (error: unknown) {
+        const errObj = error as {
+          response?: { data?: { code?: string } };
+          body?: { code?: string };
+          message?: string;
+          status?: number;
+        };
+        const code = errObj?.response?.data?.code || errObj?.body?.code || '';
+        const isUnverified =
+          code === 'email_unverified' ||
+          errObj?.status === 403 ||
+          Boolean(errObj?.message?.includes('email_unverified'));
+        if (isUnverified && session) {
+          try {
+            await session.refreshUser();
+            return await socialApi.addComment(post.id, body.trim(), replyTarget?.id);
+          } catch {
+            throw error;
+          }
+        }
+        throw error;
+      }
+    },
     onSuccess: async () => {
       setBody('');
       setReplyTarget(null);
@@ -2520,6 +2171,7 @@ function RightPanelCommentsSynchronized({
               key={comment.id}
               postId={post.id}
               postAuthorId={post.authorId}
+              postIsVerified={post.isVerified}
               comment={comment}
               loginHref={loginHref}
               onReplySelect={(target) => {
@@ -2568,9 +2220,16 @@ function RightPanelCommentsSynchronized({
               addMutation.mutate();
             }}
           >
-            <span className={styles.avatarSmall} aria-hidden="true">
-              {getInitial(user.displayName)}
-            </span>
+            <div className={styles.avatarSmallWrap}>
+              <span className={styles.avatarSmall} aria-hidden="true">
+                {getInitial(user.displayName)}
+              </span>
+              {user.emailVerified && (
+                <span className={styles.composerVerifiedBadge} title="Tài khoản đã xác thực">
+                  <SocialIcon name="verified" size={11} />
+                </span>
+              )}
+            </div>
             <input
               ref={composerInputRef}
               className={styles.panelComposerInput}
@@ -2589,6 +2248,10 @@ function RightPanelCommentsSynchronized({
               <SocialIcon name="send" size={15} />
             </button>
           </form>
+        ) : !isReady ? (
+          <div className={styles.composerLoadingPlaceholder}>
+            <span className="small muted">Đang kiểm tra phiên đăng nhập...</span>
+          </div>
         ) : (
           <Link className="comment-login" href={loginHref}>
             {vi.api.commentLogin}
@@ -2602,6 +2265,7 @@ function RightPanelCommentsSynchronized({
 function CommentNode({
   postId,
   postAuthorId,
+  postIsVerified,
   comment,
   isReply = false,
   loginHref,
@@ -2609,6 +2273,7 @@ function CommentNode({
 }: {
   postId: string;
   postAuthorId: string;
+  postIsVerified?: boolean;
   comment: {
     id: string;
     authorId: string;
@@ -2633,6 +2298,7 @@ function CommentNode({
   const isMine = comment.authorId === user?.id;
   const isPostAuthor = comment.authorId === postAuthorId;
   const authorDisplay = formatAuthorDisplay(comment.authorId, comment.authorName, user?.id, user?.displayName);
+  const isAuthorVerified = (isMine && Boolean(user?.emailVerified)) || (isPostAuthor && Boolean(postIsVerified));
 
   const isCommentLiked = optimisticLiked ?? comment.isLiked;
   const displayCommentLikes = Math.max(
@@ -2695,6 +2361,11 @@ function CommentNode({
         <div className={styles.panelCommentContent}>
           <div className={styles.panelCommentMeta}>
             <span className={styles.panelCommentAuthor}>{authorDisplay.name}</span>
+            {isAuthorVerified && (
+              <span className={styles.commentVerifiedIcon} title="Tài khoản đã xác minh">
+                <SocialIcon name="verified" size={13} />
+              </span>
+            )}
             {isPostAuthor && (
               <span className={styles.authorRoleTag}>{vi.api.immersiveAuthorBadge}</span>
             )}
@@ -2829,6 +2500,7 @@ function CommentNode({
                     key={reply.id}
                     postId={postId}
                     postAuthorId={postAuthorId}
+                    postIsVerified={postIsVerified}
                     comment={reply}
                     isReply
                     loginHref={loginHref}
@@ -2864,17 +2536,19 @@ interface ItineraryItemState {
   notes: string;
 }
 
-interface ComposerModalProps {
+export interface ComposerModalProps {
   onClose: () => void;
   initialView?: 'compose' | 'drafts';
   initialDraftId?: string | null;
+  initialPostType?: 'video' | 'vlog';
 }
 
 /** Modal tạo và quản lý bài đăng / bản nháp */
-function ComposerModal({
+export function ComposerModal({
   onClose,
   initialView = 'compose',
   initialDraftId = null,
+  initialPostType = 'vlog',
 }: ComposerModalProps) {
   const client = useQueryClient();
   const { user } = useApiSession();
@@ -2907,7 +2581,7 @@ function ComposerModal({
   });
 
   // Thông tin bài viết
-  const [postType, setPostType] = useState<'video' | 'vlog'>('video');
+  const [postType, setPostType] = useState<'video' | 'vlog'>(initialPostType);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [hashtagsText, setHashtagsText] = useState('');
@@ -3461,8 +3135,17 @@ function ComposerModal({
           </output>
         )}
 
-        {/* 1. Chọn loại bài viết */}
+        {/* 1. Chọn loại bài viết: [ Bài viết ] [ Reels (Video) ] */}
         <div className={styles.composerTypeToggle}>
+          <button
+            type="button"
+            className={`${styles.composerTypeBtn} ${postType === 'vlog' ? styles.composerTypeBtnActive : ''}`}
+            onClick={() => setPostType('vlog')}
+            disabled={isFormBusy}
+          >
+            <SocialIcon name="compass" size={16} />
+            <span>Bài viết</span>
+          </button>
           <button
             type="button"
             className={`${styles.composerTypeBtn} ${postType === 'video' ? styles.composerTypeBtnActive : ''}`}
@@ -3470,16 +3153,7 @@ function ComposerModal({
             disabled={isFormBusy}
           >
             <SocialIcon name="video" size={16} />
-            <span>Video trải nghiệm</span>
-          </button>
-          <button
-            type="button"
-            className={`${styles.composerTypeBtn} ${postType === 'vlog' ? styles.composerTypeBtnActive : ''}`}
-            onClick={() => setPostType('vlog')}
-            disabled={isFormBusy}
-          >
-            <SocialIcon name="sparkles" size={16} />
-            <span>Bài viết & Hình ảnh</span>
+            <span>Reels (Video)</span>
           </button>
         </div>
 
@@ -3535,22 +3209,22 @@ function ComposerModal({
           </div>
         </div>
 
-        {/* 3. Tải lên video đính kèm */}
+        {/* 3. Tải lên phương tiện đính kèm (Ảnh hoặc Video) */}
         <div className={styles.composerSection}>
           <div className={styles.composerSectionHeader}>
             <h4 className={styles.composerSectionTitle}>
-              <SocialIcon name="video" size={16} />
-              <span>Video bài đăng</span>
+              <SocialIcon name={postType === 'video' ? 'video' : 'upload'} size={16} />
+              <span>{postType === 'video' ? 'Video Reels' : 'Hình ảnh / Phương tiện'}</span>
             </h4>
             <span className={styles.composerSectionBadge}>
-              {postType === 'video' ? 'Bắt buộc với video' : 'Tùy chọn'}
+              {postType === 'video' ? 'Bắt buộc với Reels' : 'Tùy chọn'}
             </span>
           </div>
 
           <input
             ref={fileInputRef}
             type="file"
-            accept="video/mp4,video/quicktime"
+            accept={postType === 'video' ? 'video/mp4,video/quicktime,video/webm' : 'image/*,video/*'}
             style={{ display: 'none' }}
             disabled={isFormBusy}
             onChange={(event) => {
@@ -3568,8 +3242,16 @@ function ComposerModal({
               <div className={styles.composerDropzoneIcon}>
                 <SocialIcon name="upload" size={22} />
               </div>
-              <p className={styles.composerDropzoneText}>Kéo thả hoặc nhấn để chọn video</p>
-              <p className={styles.composerDropzoneHint}>Hỗ trợ MP4, MOV (Tối đa 5 phút, 1 GB)</p>
+              <p className={styles.composerDropzoneText}>
+                {postType === 'video'
+                  ? 'Kéo thả hoặc nhấn để chọn video Reels'
+                  : 'Kéo thả hoặc nhấn để chọn ảnh cho bài viết'}
+              </p>
+              <p className={styles.composerDropzoneHint}>
+                {postType === 'video'
+                  ? 'Hỗ trợ MP4, MOV, WEBM (Tối đa 5 phút, 1 GB)'
+                  : 'Hỗ trợ JPG, PNG, WEBP (Tùy chọn tải ảnh hoặc đăng bài chỉ có chữ)'}
+              </p>
             </button>
           ) : (
             <div className={styles.composerVideoPreviewCard}>

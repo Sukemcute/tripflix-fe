@@ -58,7 +58,9 @@
 
   background: var(--iv-page-bg);
   color: var(--iv-text);
-  height: calc(100dvh - 81px);
+  flex: 1;
+  width: 100%;
+  height: calc(100dvh - 80px);
   min-height: 620px;
   display: flex;
   flex-direction: column;
@@ -341,7 +343,7 @@
   width: 100%;
   max-width: 1760px;
   margin: 0 auto;
-  padding: 16px 24px;
+  padding: 16px 20px;
   display: grid;
   gap: 20px;
   align-items: stretch;
@@ -349,19 +351,28 @@
 }
 
 .gridThreeCols {
-  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr) minmax(360px, 420px);
+  grid-template-columns: 340px minmax(0, 1fr) 380px;
 }
 
 .gridNoLeft {
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+  grid-template-columns: minmax(0, 1fr) 380px;
 }
 
 .gridNoRight {
-  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  grid-template-columns: 340px minmax(0, 1fr);
 }
 
 .gridCenterOnly {
   grid-template-columns: minmax(0, 1fr);
+}
+
+/* Itinerary Panel wrapper inside Reels view */
+.itineraryInReels {
+  position: relative !important;
+  top: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
 }
 
 /* ==========================================================================
@@ -1461,7 +1472,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .navArrowBtn {
@@ -1869,6 +1880,38 @@
   flex-shrink: 0;
 }
 
+.avatarSmallWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.composerVerifiedBadge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  color: #FF6A00;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.composerLoadingPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  width: 100%;
+  color: var(--iv-text-muted);
+}
+
 .panelCommentContent {
   flex: 1;
   min-width: 0;
@@ -1888,6 +1931,13 @@
 .panelCommentAuthor {
   font-weight: 800;
   color: var(--iv-text);
+}
+
+.commentVerifiedIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #FF6A00;
 }
 
 .authorRoleTag {
@@ -2023,23 +2073,34 @@
   margin: 0;
   border: 0;
   z-index: 70;
-  background: rgba(8, 9, 12, 0.65);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
   display: grid;
   place-items: center;
   padding: 20px;
+  /* Light Theme tokens explicitly defined for root modal */
+  --iv-panel-bg: #FFFFFF;
+  --iv-elevated-bg: #F8FAFC;
+  --iv-hover-bg: #F1F5F9;
+  --iv-text: #141B3D;
+  --iv-text-muted: #64748B;
+  --iv-border: #E2E8F0;
+  --iv-accent: #FF6A00;
+  --iv-accent-ink: #FFFFFF;
+  --iv-accent-soft: rgba(255, 106, 0, 0.12);
+  --iv-shadow: 0 20px 48px -8px rgba(15, 23, 42, 0.22), 0 4px 16px rgba(15, 23, 42, 0.08);
 }
 
 .composerModalCard {
   width: min(680px, 100%);
   max-height: 88vh;
   overflow-y: auto;
-  background: var(--iv-panel-bg);
-  color: var(--iv-text);
-  border: 1px solid var(--iv-border);
+  background: #FFFFFF !important;
+  color: #141B3D !important;
+  border: 1px solid #E2E8F0 !important;
   border-radius: 20px;
   padding: 24px;
-  box-shadow: var(--iv-shadow);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25), 0 4px 16px rgba(15, 23, 42, 0.08) !important;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -2609,7 +2670,15 @@
 
 @media (max-width: 1439px) {
   .gridThreeCols {
-    grid-template-columns: minmax(260px, 310px) minmax(0, 1fr) minmax(320px, 370px);
+    grid-template-columns: 310px minmax(0, 1fr) 340px;
+  }
+
+  .gridNoLeft {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+
+  .gridNoRight {
+    grid-template-columns: 310px minmax(0, 1fr);
   }
 }
 
