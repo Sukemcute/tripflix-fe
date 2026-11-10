@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   getAvailableStays,
   getFutureDate,
@@ -29,14 +29,7 @@ const handwritingFont = Pacifico({
 export function HomeStayPreview() {
   const { isReady } = useApiSession();
   const [destination, setDestination] = useState<(typeof OTA_DESTINATIONS)[number]>(OTA_DESTINATIONS[0]);
-  const [prevDestination, setPrevDestination] = useState<(typeof OTA_DESTINATIONS)[number] | null>(null);
   const [dates] = useState(() => ({ checkIn: getFutureDate(1), checkOut: getFutureDate(3) }));
-
-  function handleSelectDestination(place: (typeof OTA_DESTINATIONS)[number]) {
-    if (place.id === destination.id) return;
-    setPrevDestination(destination);
-    setDestination(place);
-  }
   const filters: StayFilters = {
     ...dates,
     placeId: destination.id,
@@ -51,9 +44,11 @@ export function HomeStayPreview() {
     queryKey: ['discovery', 'home-stays', filters],
     enabled: isReady,
     queryFn: ({ signal }) => getAvailableStays(filters, { signal, limit: 3 }),
+    // Giữ 3 thẻ cũ trong lúc tải điểm đến mới để dải không sụp chiều cao.
+    placeholderData: keepPreviousData,
   });
   return (
-    <section className={styles.stayBand} aria-labelledby="home-stays-title" data-home-reveal>
+    <section className={styles.stayBand} aria-labelledby="home-stays-title">
       <Image className={styles.stayBackdrop} src="/brand/home-stays-ninh-binh.jpg" alt="" fill sizes="100vw" />
       <span className={styles.stayEdgeTop} aria-hidden="true" />
       <span className={styles.stayEdgeBottom} aria-hidden="true" />
@@ -93,24 +88,17 @@ export function HomeStayPreview() {
               </div>
             </div>
             <div className={styles.stayScene} aria-hidden="true">
-              {prevDestination && prevDestination.id !== destination.id && (
+              {OTA_DESTINATIONS.map((place) => (
                 <Image
-                  key={`prev-${prevDestination.id}`}
-                  className={styles.stayLandscapePrev}
-                  src={prevDestination.image}
+                  key={place.id}
+                  className={styles.stayLandscape}
+                  data-active={place.id === destination.id || undefined}
+                  src={place.image}
                   alt=""
                   fill
                   sizes="(max-width: 640px) 90vw, 38vw"
                 />
-              )}
-              <Image
-                key={`curr-${destination.id}`}
-                className={styles.stayLandscape}
-                src={destination.image}
-                alt=""
-                fill
-                sizes="(max-width: 640px) 90vw, 38vw"
-              />
+              ))}
               <div className={styles.stayRedStamp} aria-hidden="true">
                 <span className={styles.stampOrg}>★ TRIPFLIX ★</span>
                 <span className={styles.stampAction}>VERIFIED</span>
@@ -134,7 +122,7 @@ export function HomeStayPreview() {
               type="button"
               key={place.id}
               aria-pressed={place.id === destination.id}
-              onClick={() => handleSelectDestination(place)}
+              onClick={() => setDestination(place)}
             >
               {place.name}
             </button>
@@ -152,7 +140,7 @@ export function HomeStayPreview() {
             {vi.ota.noMatchingStays}. {vi.ota.noStaysHint}
           </p>
         )}
-        <div className={styles.stayGrid}>
+        <div className={styles.stayGrid} aria-busy={query.isPlaceholderData}>
           {query.data?.items.map((stay) => (
             <article className={styles.hotelCard} key={stay.hotelId}>
               <Link
