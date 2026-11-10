@@ -72,7 +72,14 @@ export {
   createVnpayOperation,
   type CommerceHotel,
 } from './commerce';
-export { uploadChunkToPresignedUrl } from './media-upload';
+export { PresignedUploadError, uploadChunkToPresignedUrl } from './media-upload';
+export {
+  resolveVideoMimeType,
+  uploadVideo,
+  type VideoMimeType,
+  type VideoUploadOptions,
+  type VideoUploadSource,
+} from './video-upload';
 export {
   parseSseEvents,
   sendAssistantMessage,
