@@ -13,11 +13,13 @@ const ICONS: Record<string, IconName> = {
   trips: 'bag-handle-outline',
   me: 'person-outline',
 };
-const BAR_HEIGHT = 64;
-const COMPOSE_SIZE = 44;
-const COMPOSE_RADIUS = 13;
-// The design's 24-unit SVG shown at 28px: a 14-unit line with 3.6-unit stroke and round caps.
-const PLUS_SCALE = 28 / 24;
+// Compact like the iOS tab bar (49pt): smaller icons and a lower bar leave more room for the video.
+const BAR_HEIGHT = 50;
+const ICON_SIZE = 23;
+const COMPOSE_SIZE = 38;
+const COMPOSE_RADIUS = 11;
+// The design's 24-unit SVG shown at 24px: a 14-unit line with 3.6-unit stroke and round caps.
+const PLUS_SCALE = 24 / 24;
 const PLUS_THICKNESS = 3.6 * PLUS_SCALE;
 const PLUS_LENGTH = (14 + 3.6) * PLUS_SCALE;
 
@@ -63,7 +65,7 @@ export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, ins
               <ComposeIcon />
             ) : (
               <>
-                <Ionicons name={ICONS[route.name]!} size={26} color={tint} />
+                <Ionicons name={ICONS[route.name]!} size={ICON_SIZE} color={tint} />
                 <Text
                   aria-hidden
                   numberOfLines={1}
@@ -104,10 +106,10 @@ function ComposeIcon() {
 const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
-    paddingTop: spacing.sm,
+    paddingTop: spacing.xs,
     backgroundColor: colors.tabBar,
   },
-  tab: { flex: 1, height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
+  tab: { flex: 1, height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'center', gap: 2 },
   pressed: { opacity: 0.65 },
   compose: {
     width: COMPOSE_SIZE,
@@ -115,7 +117,7 @@ const styles = StyleSheet.create({
     borderRadius: COMPOSE_RADIUS,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ translateY: -4 }],
+    transform: [{ translateY: -2 }],
   },
   composeFill: { ...StyleSheet.absoluteFill, borderRadius: COMPOSE_RADIUS },
   plusBar: {
@@ -126,5 +128,5 @@ const styles = StyleSheet.create({
   plusShadow: { boxShadow: [{ offsetX: 0, offsetY: 1.5, blurRadius: 2, color: colors.composeIconShadow }] },
   plusHorizontal: { width: PLUS_LENGTH, height: PLUS_THICKNESS },
   plusVertical: { width: PLUS_THICKNESS, height: PLUS_LENGTH },
-  label: { fontFamily: nativeFonts.semibold, fontSize: 12, lineHeight: 16, textAlign: 'center' },
+  label: { fontFamily: nativeFonts.semibold, fontSize: 10, lineHeight: 13, textAlign: 'center' },
 });
