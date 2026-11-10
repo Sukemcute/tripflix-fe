@@ -92,7 +92,7 @@ export default async function SearchScreen({
               <Image src="/brand/tripi-curious.png" alt={vi.mobile.common.mascot} width={150} height={150} />
               <h2>{copy.web.emptyTitle}</h2>
               <p>{copy.web.emptyBody}</p>
-              <Link href="/search" className="primary-button">
+              <Link prefetch={false} href="/search" className="primary-button">
                 {copy.web.reset}
               </Link>
             </div>

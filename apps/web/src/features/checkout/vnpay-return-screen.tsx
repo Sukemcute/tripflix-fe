@@ -33,7 +33,7 @@ export function VnpayReturnScreen({ queryString }: { queryString: string }) {
         {!!queryString && !query.error && query.data?.orderId !== null && <p>{copy.verifyingPayment}</p>}
         {query.data && !query.data.orderId && <p className={styles.error}>{copy.vnpayFailed}</p>}
         <CheckoutError error={query.error} retry={() => void query.refetch()} />
-        <Link className="secondary-button" href="/bookings">
+        <Link prefetch={false} className="secondary-button" href="/bookings">
           {copy.viewTrips}
         </Link>
       </div>

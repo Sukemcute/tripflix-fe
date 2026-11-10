@@ -147,6 +147,7 @@ export function ItinerarySidebarPanel({
             </div>
 
             <Link
+              prefetch={false}
               href={
                 trip.hotelId
                   ? `/hotels/${encodeURIComponent(trip.hotelId)}`
@@ -258,6 +259,7 @@ export function ItinerarySidebarPanel({
                     {itineraryPois.map((poi) => (
                       <li key={poi.name}>
                         <Link
+                          prefetch={false}
                           href={`/search?q=${encodeURIComponent(poi.name)}`}
                           className={styles.itineraryPoiLink}
                         >

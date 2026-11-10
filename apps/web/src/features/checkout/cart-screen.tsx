@@ -31,7 +31,7 @@ export function CartScreen() {
       <main className={`ota-container ${styles.page}`}>
         <h1>{copy.cartTitle}</h1>
         <p className="empty-state">{copy.cartEmpty}</p>
-        <Link className="primary-button" href="/search">
+        <Link prefetch={false} className="primary-button" href="/search">
           {copy.findHotel}
         </Link>
       </main>
@@ -100,7 +100,7 @@ export function CartScreen() {
           <CartWarnings cart={cart} />
           <CheckoutError error={hold.error} />
           {isReady && !user ? (
-            <Link className="primary-button" href="/login?returnTo=%2Fcart">
+            <Link prefetch={false} className="primary-button" href="/login?returnTo=%2Fcart">
               {copy.login}
             </Link>
           ) : (

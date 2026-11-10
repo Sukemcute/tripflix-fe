@@ -79,7 +79,7 @@ export function CheckoutScreen({ id }: { id: string }) {
       <main className={`ota-container ${styles.page}`}>
         <div className={styles.card}>
           <p>{copy.loginToViewPayment}</p>
-          <Link className="primary-button" href={`/login?returnTo=${encodeURIComponent(`/checkout/${id}`)}`}>
+          <Link prefetch={false} className="primary-button" href={`/login?returnTo=${encodeURIComponent(`/checkout/${id}`)}`}>
             {vi.commerce.login}
           </Link>
         </div>
@@ -312,7 +312,7 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
               <p role="alert" className={styles.error}>
                 {flightItem ? copy.expiredFlight : copy.expired}
               </p>
-              <Link className="primary-button" href={productHref}>
+              <Link prefetch={false} className="primary-button" href={productHref}>
                 {flightItem ? copy.findFlight : copy.findHotel}
               </Link>
             </div>
@@ -638,6 +638,7 @@ function BackLink({ fallbackHref, label }: { fallbackHref: string; label: string
   const router = useRouter();
   return (
     <Link
+      prefetch={false}
       className={styles.backLink}
       href={fallbackHref}
       onClick={(event) => {
@@ -709,7 +710,7 @@ function CheckoutPromo() {
         <h3>{copy.promoTitle}</h3>
         <p>{copy.promoBody}</p>
         {/* Mở tab mới để không mất thông tin khách đang nhập. */}
-        <Link className={styles.promoLink} href="/search" target="_blank">
+        <Link prefetch={false} className={styles.promoLink} href="/search" target="_blank">
           {copy.promoCta}
         </Link>
       </div>
@@ -867,10 +868,10 @@ function OrderCancelled({ order }: { order: Order }) {
           <OrderSummary order={order} total={order.total} />
         </div>
         <div className={styles.actions}>
-          <Link className="primary-button" href="/bookings">
+          <Link prefetch={false} className="primary-button" href="/bookings">
             {copy.viewTrips}
           </Link>
-          <Link className="secondary-button" href="/search">
+          <Link prefetch={false} className="secondary-button" href="/search">
             {copy.bookAgain}
           </Link>
         </div>
@@ -899,10 +900,10 @@ function PaymentSuccess({ order }: { order: Order }) {
           <OrderSummary order={order} total={order.total} />
         </div>
         <div className={styles.actions}>
-          <Link className="primary-button" href="/bookings">
+          <Link prefetch={false} className="primary-button" href="/bookings">
             {copy.viewTrips}
           </Link>
-          <Link className="secondary-button" href="/">
+          <Link prefetch={false} className="secondary-button" href="/">
             {copy.continueExploring}
           </Link>
         </div>

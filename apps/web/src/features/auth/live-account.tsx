@@ -223,10 +223,10 @@ function AccountGuest() {
           ))}
         </ul>
         <div className="account-guest-actions">
-          <Link className="primary-button" href="/login?returnTo=/account">
+          <Link prefetch={false} className="primary-button" href="/login?returnTo=/account">
             {vi.api.login}
           </Link>
-          <Link className="secondary-button" href="/register?returnTo=%2Faccount">
+          <Link prefetch={false} className="secondary-button" href="/register?returnTo=%2Faccount">
             {vi.api.register}
           </Link>
         </div>

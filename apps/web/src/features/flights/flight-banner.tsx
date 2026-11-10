@@ -39,7 +39,7 @@ export function FlightBanner({ activeStep }: { activeStep: 1 | 2 }) {
         priority
       />
       <div className={styles.feature}>
-        <Link href="/inspiration" className={styles.featureCard}>
+        <Link prefetch={false} href="/inspiration" className={styles.featureCard}>
           <span className={styles.featureHead}>
             <strong>{copy.featureTitle}</strong>
             <span className={styles.featureArrow} aria-hidden="true">

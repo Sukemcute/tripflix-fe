@@ -442,6 +442,11 @@ export const mobile = {
     permission: 'Cho phép truy cập thư viện ảnh để chọn ảnh hoặc video cho bài viết.',
     tooLong: 'Chọn video dài tối đa 5 phút nhé.',
     pickerError: 'Chưa mở được thư viện ảnh. Vui lòng thử lại.',
+    unsupportedVideo: 'Chỉ đăng được video MP4 hoặc MOV. Hãy chọn video khác.',
+    videoInfo: '{duration} · {size} MB',
+    uploadingVideo: 'Đang tải video lên… {percent}%',
+    uploadFailed: 'Tải video lên chưa xong. Kiểm tra mạng rồi bấm đăng lại, video sẽ tải lại từ đầu.',
+    videoProcessing: 'Video đang được xử lý. Bài sẽ hiện video sau vài phút.',
   },
   notifications: {
     title: 'Thông báo',

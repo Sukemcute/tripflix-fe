@@ -19,7 +19,7 @@ export function BookingsScreen() {
       {isReady && !user && (
         <div className={styles.card}>
           <p>{copy.loginToViewPayment}</p>
-          <Link className="primary-button" href="/login?returnTo=%2Fbookings">
+          <Link prefetch={false} className="primary-button" href="/login?returnTo=%2Fbookings">
             {copy.login}
           </Link>
         </div>
@@ -55,7 +55,7 @@ export function BookingsList() {
           </span>
           <h3>{copy.noTrips}</h3>
           <p>{copy.noTripsHint}</p>
-          <Link className="primary-button account-empty-action" href="/search">
+          <Link prefetch={false} className="primary-button account-empty-action" href="/search">
             <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
@@ -66,7 +66,7 @@ export function BookingsList() {
       )}
       <div className={styles.trips}>
         {trips.map((trip) => (
-          <Link key={trip.orderId} href={`/checkout/${trip.orderId}`} className={styles.trip}>
+          <Link prefetch={false} key={trip.orderId} href={`/checkout/${trip.orderId}`} className={styles.trip}>
             <div className={styles.summaryHead}>
               <span className={styles.status} data-status={trip.status}>
                 {copy.status[trip.status as keyof typeof copy.status] ?? trip.status}
