@@ -1,0 +1,376 @@
+{
+  "tool": "built-in image_gen",
+  "count": 43,
+  "note": "Source artwork. Small differences remain outside edits; alignment and fur edges need review before difference-based cutting. No Rive file produced.",
+  "assets": [
+    {
+      "file": "stickers/expr-laugh.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.351
+    },
+    {
+      "file": "stickers/expr-wink.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.3406
+    },
+    {
+      "file": "stickers/expr-love.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.3376
+    },
+    {
+      "file": "stickers/expr-sleepy.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.3576
+    },
+    {
+      "file": "stickers/expr-thinking.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.3822
+    },
+    {
+      "file": "stickers/expr-sad.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4
+    },
+    {
+      "file": "stickers/expr-gloomy.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4646
+    },
+    {
+      "file": "stickers/expr-cry.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.3331
+    },
+    {
+      "file": "stickers/expr-cry-soft.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.3196
+    },
+    {
+      "file": "stickers/expr-angry.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.3262
+    },
+    {
+      "file": "stickers/expr-furious.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.3817
+    },
+    {
+      "file": "stickers/expr-sorry.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4384
+    },
+    {
+      "file": "stickers/expr-shy.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.2974
+    },
+    {
+      "file": "stickers/expr-proud.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.3926
+    },
+    {
+      "file": "stickers/expr-peace.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.321
+    },
+    {
+      "file": "stickers/pose-wave.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4667
+    },
+    {
+      "file": "stickers/pose-thumbs-up.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.444
+    },
+    {
+      "file": "tripi-rig/rig-base.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4853
+    },
+    {
+      "file": "tripi-rig/rig-eyes-closed.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4831,
+      "outside_edit_changed_fraction_threshold38": 0.0106
+    },
+    {
+      "file": "tripi-rig/rig-eyes-happy.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.472,
+      "outside_edit_changed_fraction_threshold38": 0.0086
+    },
+    {
+      "file": "tripi-rig/rig-eyes-wink.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4835,
+      "outside_edit_changed_fraction_threshold38": 0.0076
+    },
+    {
+      "file": "tripi-rig/rig-eyes-heart.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4832,
+      "outside_edit_changed_fraction_threshold38": 0.0098
+    },
+    {
+      "file": "tripi-rig/rig-eyes-surprised.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4863,
+      "outside_edit_changed_fraction_threshold38": 0.0072
+    },
+    {
+      "file": "tripi-rig/rig-eyes-sleepy.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4811,
+      "outside_edit_changed_fraction_threshold38": 0.0085
+    },
+    {
+      "file": "tripi-rig/rig-eyes-sad.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4848,
+      "outside_edit_changed_fraction_threshold38": 0.0135
+    },
+    {
+      "file": "tripi-rig/rig-eyes-cry.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4705,
+      "outside_edit_changed_fraction_threshold38": 0.0084
+    },
+    {
+      "file": "tripi-rig/rig-eyes-teary.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4851,
+      "outside_edit_changed_fraction_threshold38": 0.0067
+    },
+    {
+      "file": "tripi-rig/rig-eyes-angry.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4855,
+      "outside_edit_changed_fraction_threshold38": 0.0083
+    },
+    {
+      "file": "tripi-rig/rig-eyes-gloomy.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.484,
+      "outside_edit_changed_fraction_threshold38": 0.0095
+    },
+    {
+      "file": "tripi-rig/rig-eyes-up.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4834,
+      "outside_edit_changed_fraction_threshold38": 0.0074
+    },
+    {
+      "file": "tripi-rig/rig-mouth-laugh.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4828,
+      "outside_edit_changed_fraction_threshold38": 0.0082
+    },
+    {
+      "file": "tripi-rig/rig-mouth-o.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4793,
+      "outside_edit_changed_fraction_threshold38": 0.0076
+    },
+    {
+      "file": "tripi-rig/rig-mouth-flat.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4841,
+      "outside_edit_changed_fraction_threshold38": 0.0094
+    },
+    {
+      "file": "tripi-rig/rig-mouth-sad.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4836,
+      "outside_edit_changed_fraction_threshold38": 0.0078
+    },
+    {
+      "file": "tripi-rig/rig-mouth-wail.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.483,
+      "outside_edit_changed_fraction_threshold38": 0.0077
+    },
+    {
+      "file": "tripi-rig/rig-mouth-pout.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4828,
+      "outside_edit_changed_fraction_threshold38": 0.0088
+    },
+    {
+      "file": "tripi-rig/rig-mouth-shout.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4853,
+      "outside_edit_changed_fraction_threshold38": 0.0085
+    },
+    {
+      "file": "tripi-rig/rig-mouth-grin.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4828,
+      "outside_edit_changed_fraction_threshold38": 0.0205
+    },
+    {
+      "file": "tripi-rig/rig-arm-wave-up.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4715,
+      "outside_edit_changed_fraction_threshold38": 0.0105
+    },
+    {
+      "file": "tripi-rig/rig-arm-wave-tilt.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.464,
+      "outside_edit_changed_fraction_threshold38": 0.0121
+    },
+    {
+      "file": "tripi-rig/rig-arm-thumbs.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4806,
+      "outside_edit_changed_fraction_threshold38": 0.0103
+    },
+    {
+      "file": "tripi-rig/rig-body-no-arms.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4923,
+      "outside_edit_changed_fraction_threshold38": 0.0082
+    },
+    {
+      "file": "tripi-rig/rig-face-blank.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "transparent_fraction": 0.4683,
+      "outside_edit_changed_fraction_threshold38": 0.0085
+    }
+  ]
+}
