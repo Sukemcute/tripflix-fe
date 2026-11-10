@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { socialApi, updateReelSocialCache, useApiSession } from '@tripflix/api-client';
+import {
+  HttpError,
+  removeUnavailablePost,
+  socialApi,
+  updateReelSocialCache,
+  useApiSession,
+} from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
@@ -10,6 +16,7 @@ import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
 import { ReelCommentsPanel } from './reel-comments-panel';
 import type { ReelItem } from './reel-types';
+import { ReportButton } from './report-button';
 
 const copy = vi.mobile.reels;
 const number = (value: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value);
@@ -74,8 +81,13 @@ export function ReelSocialOverlay({
   const detail = useQuery({
     queryKey: ['social', 'post', postId, user?.id],
     enabled: isReady && isActive && !!postId,
+    retry: (count, error) => !(error instanceof HttpError && error.status === 404) && count < 2,
     queryFn: ({ signal }) => socialApi.getPost(postId!, signal),
   });
+  const missing = detail.error instanceof HttpError && detail.error.status === 404;
+  useEffect(() => {
+    if (missing && postId) removeUnavailablePost(client, postId);
+  }, [missing, client, postId]);
   const isLiked = isSample
     ? sampleLiked
     : detail.data
@@ -162,6 +174,7 @@ export function ReelSocialOverlay({
         aria-hidden={isHidden}
         importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
       >
+        {!isSample && postId && <ReportButton targetType="post" targetId={postId} compact />}
         <RailAction
           icon={isLiked ? 'heart' : 'heart-outline'}
           label={isLiked ? vi.api.unlike : vi.api.like}

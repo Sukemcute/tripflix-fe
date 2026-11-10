@@ -9,6 +9,7 @@ import { ApiErrorNotice } from '@/components/api-state';
 import { router } from 'expo-router';
 import { ReelCommentComposer } from './reel-comment-composer';
 import { CommunitySummary } from './post-summary';
+import { ReportButton } from './report-button';
 
 function CommentAction({
   compact,
@@ -113,6 +114,7 @@ export function LiveComments({
                 {new Date(comment.createdAt).toLocaleDateString('vi-VN')}
               </Txt>
               <Txt>{comment.body}</Txt>
+              {comment.authorId !== user?.id && <ReportButton targetType="comment" targetId={comment.id} />}
               <View style={compact ? styles.actions : undefined}>
                 {comment.authorId === user?.id && (
                   <>

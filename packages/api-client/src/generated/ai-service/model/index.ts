@@ -6,3 +6,12 @@
  */
 
 export * from './getHealthHealthGet200';
+export * from './hTTPValidationError';
+export * from './moderateItem';
+export * from './moderateRequest';
+export * from './moderateResponse';
+export * from './moderateResult';
+export * from './moderateResultCategories';
+export * from './moderateResultScores';
+export * from './validationError';
+export * from './validationErrorCtx';
