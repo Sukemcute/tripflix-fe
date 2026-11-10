@@ -82,6 +82,10 @@ export default function RootLayout() {
                 >
                   <Stack.Screen name="index" />
                   <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="trip/[slug]"
+                    options={{ animation: 'default', fullScreenGestureEnabled: true }}
+                  />
                 </Stack>
                 <AssistantBubble />
               </AppFrame>

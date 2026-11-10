@@ -83,6 +83,13 @@ export const socialApi = {
   async deleteComment(id: string) {
     return (await comments.commentsControllerDeleteComment(encodeURIComponent(id))).data;
   },
+  async setCommentReaction(id: string, isLiked: boolean) {
+    return (
+      await comments.commentsControllerSetCommentReaction(encodeURIComponent(id), {
+        type: isLiked ? 'like' : null,
+      })
+    ).data;
+  },
   async listAdminPosts(query: AdminPostsControllerListAdminPostsParams = {}, signal?: AbortSignal) {
     return readPage((await moderation.adminPostsControllerListAdminPosts(query, { signal })).data);
   },

@@ -1,5 +1,7 @@
+import { getReelCommentsSheetHeight } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, type ReactNode } from 'react';
 import {
@@ -21,53 +23,81 @@ import {
   type PanGestureActiveEvent,
 } from 'react-native-gesture-handler';
 import Animated, {
-  ReduceMotion,
+  Extrapolation,
+  interpolate,
+  useAnimatedReaction,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
   withSpring,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { IconButton, Notice, Txt } from '@/components/mobile-ui';
+import { SHEET_CLOSE_SPRING, SHEET_OPEN_SPRING } from '@/components/motion';
 import { ReelCommentComposer } from './reel-comment-composer';
 import { LiveComments } from './live-comments';
 
 export function ReelCommentsPanel({
   visible,
+  openProgress,
   postId,
   draft,
   onDraftChange,
   comments,
   onSend,
   onClose,
+  hasBackdrop = false,
+  loginReturnTo = '/(tabs)',
 }: {
   visible: boolean;
+  /** 0 when closed, 1 when fully open; follows the finger so the video can move with the sheet. */
+  openProgress: SharedValue<number>;
   postId?: string;
   draft: string;
   onDraftChange: (value: string) => void;
   comments: readonly { id: number; body: string }[];
   onSend: () => void;
   onClose: () => void;
+  /** Over a video the sheet needs no dimming; over a white page it would otherwise blend in. */
+  hasBackdrop?: boolean;
+  loginReturnTo?: string;
 }) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const translateY = useSharedValue(0);
+  const sheetHeight = getReelCommentsSheetHeight(height);
+  const translateY = useSharedValue(height);
   const scrollY = useSharedValue(0);
   const startX = useSharedValue(0);
   const startY = useSharedValue(0);
   const startOffset = useSharedValue(0);
   const closing = useSharedValue(false);
   const canDrag = useDerivedValue(() => !closing.get());
-  const close = () => {
+  const finishClose = () => {
     Keyboard.dismiss();
     onClose();
   };
+  // Every way of closing shares this path, so the modal only unmounts once the sheet has left.
+  const animateOut = (velocity: number) => {
+    'worklet';
+    closing.set(true);
+    translateY.set(
+      withSpring(height, { ...SHEET_CLOSE_SPRING, velocity }, (finished) => {
+        if (finished) scheduleOnRN(finishClose);
+      }),
+    );
+  };
+  const close = () => {
+    if (closing.get()) return;
+    Keyboard.dismiss();
+    animateOut(0);
+  };
   useEffect(() => {
     if (visible) {
-      translateY.set(0);
       scrollY.set(0);
       closing.set(false);
+      translateY.set(withSpring(0, SHEET_OPEN_SPRING));
     }
   }, [visible, translateY, scrollY, closing]);
   const move = (event: PanGestureActiveEvent) => {
@@ -78,29 +108,16 @@ export function ReelCommentsPanel({
     'worklet';
     const dismiss =
       !event.canceled && (translateY.get() > 100 || (event.velocityY > 800 && translateY.get() > 12));
-    closing.set(dismiss);
-    translateY.set(
-      withSpring(
-        dismiss ? height : 0,
-        {
-          duration: 300,
-          dampingRatio: 0.8,
-          velocity: event.velocityY,
-          overshootClamping: true,
-          reduceMotion: ReduceMotion.System,
-        },
-        (finished) => {
-          if (finished && dismiss) scheduleOnRN(close);
-        },
-      ),
-    );
+    if (dismiss) animateOut(event.velocityY);
+    else translateY.set(withSpring(0, { ...SHEET_CLOSE_SPRING, velocity: event.velocityY }));
   };
   const headerPan = usePanGesture({
     enabled: canDrag,
     activeOffsetY: 12,
     failOffsetX: [-20, 20],
-    onActivate: () => {
-      startOffset.set(translateY.get());
+    onActivate: (event) => {
+      // Activation happens a few points in; subtracting that keeps the sheet from jumping.
+      startOffset.set(translateY.get() - event.translationY);
     },
     onUpdate: move,
     onDeactivate: settle,
@@ -127,13 +144,21 @@ export function ReelCommentsPanel({
       if (dy < -8 || dx > 20 || event.numberOfTouches !== 1) GestureStateManager.fail(event.handlerTag);
       else if (dy > 12 && dy > dx && scrollY.get() <= 1) GestureStateManager.activate(event.handlerTag);
     },
-    onActivate: () => {
-      startOffset.set(translateY.get());
+    onActivate: (event) => {
+      // Activation happens a few points in; subtracting that keeps the sheet from jumping.
+      startOffset.set(translateY.get() - event.translationY);
     },
     onUpdate: move,
     onDeactivate: settle,
   });
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.get() }] }));
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateY.get(), [0, sheetHeight], [1, 0], Extrapolation.CLAMP),
+  }));
+  useAnimatedReaction(
+    () => interpolate(translateY.get(), [0, sheetHeight], [1, 0], Extrapolation.CLAMP),
+    (progress) => openProgress.set(progress),
+  );
   const onScroll = useAnimatedScrollHandler((event) => {
     scrollY.set(event.contentOffset.y);
   });
@@ -159,8 +184,9 @@ export function ReelCommentsPanel({
   );
   if (!visible) return null;
   return (
-    <Modal transparent visible animationType="slide" onRequestClose={close}>
-      <GestureHandlerRootView style={styles.backdrop}>
+    <Modal transparent visible animationType="none" onRequestClose={close}>
+      <GestureHandlerRootView style={styles.root}>
+        {hasBackdrop && <Animated.View pointerEvents="none" style={[styles.backdrop, backdropStyle]} />}
         <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />
         <KeyboardAvoidingView
           pointerEvents="box-none"
@@ -170,7 +196,7 @@ export function ReelCommentsPanel({
           <Animated.View
             style={[
               styles.sheet,
-              { height: Math.min(720, height * 0.78), paddingBottom: Math.max(insets.bottom, spacing.md) },
+              { height: sheetHeight, paddingBottom: Math.max(insets.bottom, spacing.md) },
               sheetStyle,
             ]}
             accessibilityViewIsModal
@@ -188,7 +214,16 @@ export function ReelCommentsPanel({
               </View>
             </GestureDetector>
             {postId ? (
-              <LiveComments postId={postId} showHeading={false} compact renderContent={renderContent} />
+              <LiveComments
+                postId={postId}
+                showHeading={false}
+                compact
+                renderContent={renderContent}
+                onLoginRequired={() => {
+                  close();
+                  router.push({ pathname: '/login', params: { returnTo: loginReturnTo } });
+                }}
+              />
             ) : (
               <>
                 {renderContent(
@@ -224,7 +259,8 @@ export function ReelCommentsPanel({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: colors.overlay },
+  root: { flex: 1 },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: colors.overlay },
   keyboard: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
     width: '100%',

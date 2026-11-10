@@ -27,8 +27,9 @@ export {
   type SummaryPoint,
   type SummaryFilter,
 } from './post-summary';
-export { feedApi, useReelsFeed } from './feed';
-export { updateReelSocialCache } from './reel-social-cache';
+export { feedApi, REEL_FEED_TABS, useReelsFeed, type ReelFeedTab } from './feed';
+export { findCachedFeedCard, updateReelSocialCache } from './reel-social-cache';
+export { updateCommentLikeCache } from './comment-like-cache';
 export { evictPostFromCache, isPostNotFoundError } from './post-cache';
 export { useStaySearch, getAvailableStays, getFutureDate, type StayFilters } from './stay-search';
 export {

@@ -1,22 +1,13 @@
 import { getReelResolutionCap, getReelPlayerIndexes } from '@tripflix/app-core';
 import { useVideoPlayer, type VideoPlayer } from 'expo-video';
+import { Platform } from 'react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReelItem } from './reel-types';
 
 /** Native SharedObjects have mutable setters, outside React's immutable render data. */
-function configurePlayer(
+function applyPlayerLimits(
   player: VideoPlayer,
-  {
-    isCurrent,
-    shouldPlay,
-    isMuted,
-    maxResolution,
-  }: {
-    isCurrent: boolean;
-    shouldPlay: boolean;
-    isMuted: boolean;
-    maxResolution: VideoPlayer['maxResolution'];
-  },
+  { isCurrent, maxResolution }: { isCurrent: boolean; maxResolution: VideoPlayer['maxResolution'] },
 ) {
   player.maxResolution = maxResolution;
   player.bufferOptions = {
@@ -24,6 +15,12 @@ function configurePlayer(
     minBufferForPlayback: 1,
     prioritizeTimeOverSizeThreshold: true,
   };
+}
+
+function applyPlaybackIntent(
+  player: VideoPlayer,
+  { shouldPlay, isMuted }: { shouldPlay: boolean; isMuted: boolean },
+) {
   player.muted = isMuted || !shouldPlay;
   if (shouldPlay) player.play();
   else player.pause();
@@ -59,6 +56,7 @@ function usePlayerSlot({
   const uri = item?.playback.hlsUrl ?? null;
   const request = useMemo(() => ({ sourceKey, uri }), [sourceKey, uri]);
   const queue = useRef(Promise.resolve());
+  const appliedLimitsKey = useRef<string | null>(null);
   const [loadedRequest, setLoadedRequest] = useState<typeof request | null>(null);
   const [failedRequest, setFailedRequest] = useState<typeof request | null>(null);
 
@@ -69,7 +67,12 @@ function usePlayerSlot({
     queue.current = queue.current
       .then(async () => {
         if (controller.signal.aborted) return;
-        await player.replaceAsync(request.uri ? { uri: request.uri, contentType: 'hls' } : null);
+        await player.replaceAsync(
+          request.uri
+            ? // expo-video cannot cache HLS on iOS, so caching is only requested on Android.
+              { uri: request.uri, contentType: 'hls', useCaching: Platform.OS === 'android' }
+            : null,
+        );
         if (!controller.signal.aborted) setLoadedRequest(request);
       })
       .catch(() => {
@@ -84,14 +87,22 @@ function usePlayerSlot({
   const isLoaded = sourceKey !== null && loadedRequest === request;
   const aspect = item?.playback.aspect ?? '9:16';
   const synchronize = useCallback(
-    (status: VideoPlayer['status'] = player.status) =>
-      configurePlayer(player, {
-        isCurrent,
+    (status: VideoPlayer['status'] = player.status) => {
+      // These setters reach the native player, so they only run when a limit really changes.
+      const limitsKey = `${sourceKey}|${isCurrent}|${isDataLimited}`;
+      if (appliedLimitsKey.current !== limitsKey) {
+        appliedLimitsKey.current = limitsKey;
+        applyPlayerLimits(player, {
+          isCurrent,
+          maxResolution: isDataLimited ? getReelResolutionCap(aspect) : null,
+        });
+      }
+      applyPlaybackIntent(player, {
         shouldPlay: shouldPlay && isLoaded && status === 'readyToPlay',
         isMuted,
-        maxResolution: isDataLimited ? getReelResolutionCap(aspect) : null,
-      }),
-    [player, isCurrent, shouldPlay, isMuted, isLoaded, isDataLimited, aspect],
+      });
+    },
+    [player, sourceKey, isCurrent, shouldPlay, isMuted, isLoaded, isDataLimited, aspect],
   );
   useEffect(() => {
     synchronize();

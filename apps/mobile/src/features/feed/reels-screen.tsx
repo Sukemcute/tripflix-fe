@@ -1,6 +1,13 @@
-import { useReelsFeed } from '@tripflix/api-client';
+import {
+  getReelPosterPrefetchUrls,
+  getSwipedTabIndex,
+  layoutReelVideo,
+  selectReelPoster,
+} from '@tripflix/app-core';
+import { useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
-import { colors, mobileLayout, nativeFonts, spacing } from '@tripflix/tokens';
+import { colors, mobileLayout, spacing } from '@tripflix/tokens';
+import { Image } from 'expo-image';
 import { NetworkStateType, useNetworkState } from 'expo-network';
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -11,19 +18,30 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
-  Pressable,
   StyleSheet,
   View,
+  useWindowDimensions,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import { Button, Icon, IconButton, Screen, Txt } from '@/components/mobile-ui';
+import { GestureDetector, GestureHandlerRootView, usePanGesture } from 'react-native-gesture-handler';
+import Animated, {
+  useAnimatedStyle,
+  useDerivedValue,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
+import { Button, Icon, IconButton, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
+import { SHEET_CLOSE_SPRING } from '@/components/motion';
 import { ReelSlide } from './reel-slide';
 import type { ReelItem } from './reel-types';
+import { REEL_TABS, REELS_TAB_BAR_HEIGHT, ReelsTabBar, type ReelTab } from './reels-tab-bar';
 import { usePlayerPool } from './use-player-pool';
 
 const copy = vi.mobile.reels;
+const TAB_EDGE_RESISTANCE = 0.25;
 function readDemoReels(): ReelItem[] {
   const hlsUrl = process.env.EXPO_PUBLIC_REELS_DEMO_HLS_URL;
   if (!__DEV__ || !hlsUrl || !/^https?:\/\//i.test(hlsUrl)) return [];
@@ -58,11 +76,254 @@ const DEMO_REELS = readDemoReels();
 const MAX_JUMP_PAGES = 5;
 
 export function ReelsScreen() {
+  const [tab, setTab] = useState<ReelTab>('for_you');
   const [isSample, setIsSample] = useState(false);
-  const feed = useReelsFeed({ enabled: !isSample });
+  const [isChromeHidden, setIsChromeHidden] = useState(false);
   /** Reel cần mở ngay (ví dụ bấm thẻ video trong khung chat Tripi). */
   const { reel: targetId } = useLocalSearchParams<{ reel?: string }>();
   const clearTarget = useCallback(() => router.setParams({ reel: undefined }), []);
+  const { width } = useWindowDimensions();
+  // The bar follows `tab` at once; the list only changes after the old one has left the screen.
+  const [contentTab, setContentTab] = useState<ReelTab>('for_you');
+  const [coverTab, setCoverTab] = useState<ReelTab | null>(null);
+  const [swapCount, setSwapCount] = useState(0);
+  const [contentSize, setContentSize] = useState({ width: 0, height: 0 });
+  // Loaded up front so a swipe finds its list and first poster ready instead of a dark wait.
+  const forYouFeed = useReelsFeed({ tab: 'for_you' });
+  const hotFeed = useReelsFeed({ tab: 'hot' });
+  const forYouPlaybacks = useMemo(() => readPlaybacks(forYouFeed.data), [forYouFeed.data]);
+  const hotPlaybacks = useMemo(() => readPlaybacks(hotFeed.data), [hotFeed.data]);
+  const firstPlaybackOf = (reelTab: ReelTab) =>
+    reelTab === 'for_you' ? forYouPlaybacks[0] : reelTab === 'hot' ? hotPlaybacks[0] : undefined;
+  useEffect(() => {
+    const urls = [forYouPlaybacks, hotPlaybacks].flatMap((playbacks) =>
+      getReelPosterPrefetchUrls(
+        playbacks.map((playback) => playback.posters),
+        -1,
+        width,
+      ),
+    );
+    if (urls.length > 0) void Image.prefetch(urls, { cachePolicy: 'memory-disk' });
+  }, [forYouPlaybacks, hotPlaybacks, width]);
+  const translateX = useSharedValue(0);
+  const swipeStartX = useSharedValue(0);
+  const tabIndex = useSharedValue(0);
+  const isSwitching = useSharedValue(false);
+  const canSwipe = useDerivedValue(() => !isSwitching.get());
+  const selectedIndex = REEL_TABS.indexOf(tab);
+  const contentIndex = REEL_TABS.indexOf(contentTab);
+  const previousTab = REEL_TABS[contentIndex - 1];
+  const nextTabPreview = REEL_TABS[contentIndex + 1];
+  useEffect(() => {
+    tabIndex.set(selectedIndex);
+  }, [selectedIndex, tabIndex]);
+  const uncoverFrame = useRef(0);
+  // The cover shows the same poster the swipe just landed on, hiding the swap to the real list.
+  useEffect(() => {
+    if (swapCount === 0) return;
+    const resetFrame = requestAnimationFrame(() => {
+      translateX.set(0);
+      isSwitching.set(false);
+      uncoverFrame.current = requestAnimationFrame(() => setCoverTab(null));
+    });
+    return () => {
+      cancelAnimationFrame(resetFrame);
+      cancelAnimationFrame(uncoverFrame.current);
+    };
+  }, [swapCount, isSwitching, translateX]);
+  const commitSwipe = (nextTab: ReelTab) => {
+    setCoverTab(nextTab);
+    setContentTab(nextTab);
+    setSwapCount((count) => count + 1);
+  };
+  const selectTab = (nextTab: ReelTab) => {
+    if (nextTab === tab) return;
+    setTab(nextTab);
+    setContentTab(nextTab);
+    setCoverTab(null);
+    isSwitching.set(false);
+    translateX.set(0);
+  };
+  const tabSwipe = usePanGesture({
+    enabled: canSwipe,
+    // Vertical movement fails this gesture first, so swiping between videos keeps working.
+    activeOffsetX: [-16, 16],
+    failOffsetY: [-12, 12],
+    onActivate: (event) => {
+      // Activation happens 16pt in; starting from there keeps the page from jumping.
+      swipeStartX.set(event.translationX);
+    },
+    onUpdate: (event) => {
+      const translationX = event.translationX - swipeStartX.get();
+      const isPastEdge =
+        (translationX > 0 && tabIndex.get() === 0) ||
+        (translationX < 0 && tabIndex.get() === REEL_TABS.length - 1);
+      translateX.set(translationX * (isPastEdge ? TAB_EDGE_RESISTANCE : 1));
+    },
+    // Runs on the UI thread so the page keeps its velocity even while JS is busy.
+    onDeactivate: (event) => {
+      const currentIndex = tabIndex.get();
+      const nextIndex = getSwipedTabIndex({
+        currentIndex,
+        tabCount: REEL_TABS.length,
+        translationX: event.canceled ? 0 : event.translationX - swipeStartX.get(),
+        velocityX: event.velocityX,
+        width,
+      });
+      const nextTab = REEL_TABS[nextIndex];
+      if (!nextTab || nextIndex === currentIndex) {
+        translateX.set(withSpring(0, { ...SHEET_CLOSE_SPRING, velocity: event.velocityX }));
+        return;
+      }
+      const direction = nextIndex > currentIndex ? 1 : -1;
+      isSwitching.set(true);
+      tabIndex.set(nextIndex);
+      scheduleOnRN(setTab, nextTab);
+      translateX.set(
+        withSpring(-direction * width, { ...SHEET_CLOSE_SPRING, velocity: event.velocityX }, (finished) => {
+          if (finished) scheduleOnRN(commitSwipe, nextTab);
+        }),
+      );
+    },
+  });
+  const contentStyle = useAnimatedStyle(() => ({ transform: [{ translateX: translateX.get() }] }));
+  // Thẻ video trong chat Tripi lấy từ bảng tin Dành cho bạn, nên mở đúng tab đó.
+  useEffect(() => {
+    if (!targetId) return;
+    setIsSample(false);
+    setTab('for_you');
+    setContentTab('for_you');
+    setCoverTab(null);
+    isSwitching.set(false);
+    translateX.set(0);
+  }, [targetId, isSwitching, translateX]);
+
+  if (isSample && DEMO_REELS.length > 0)
+    return <ReelsFeed items={DEMO_REELS} isSample onExitSample={() => setIsSample(false)} />;
+  return (
+    <GestureHandlerRootView style={styles.screen}>
+      <GestureDetector gesture={tabSwipe}>
+        <Animated.View
+          style={[styles.content, contentStyle]}
+          onLayout={(event) => setContentSize(event.nativeEvent.layout)}
+        >
+          {previousTab && (
+            <View style={[styles.preview, { left: -width, width }]} pointerEvents="none">
+              <ReelsTabPreview tab={previousTab} playback={firstPlaybackOf(previousTab)} size={contentSize} />
+            </View>
+          )}
+          {nextTabPreview && (
+            <View style={[styles.preview, { left: width, width }]} pointerEvents="none">
+              <ReelsTabPreview
+                tab={nextTabPreview}
+                playback={firstPlaybackOf(nextTabPreview)}
+                size={contentSize}
+              />
+            </View>
+          )}
+          {contentTab === 'following' ? (
+            <FollowingComingSoon />
+          ) : (
+            // A new key unmounts the old list, which releases its players so its video stops.
+            <ReelsTabFeed
+              key={contentTab}
+              tab={contentTab}
+              initialLayout={contentSize}
+              targetId={contentTab === 'for_you' ? targetId : undefined}
+              onTargetShown={clearTarget}
+              onHiddenChange={setIsChromeHidden}
+              onOpenSample={() => setIsSample(true)}
+            />
+          )}
+        </Animated.View>
+      </GestureDetector>
+      {coverTab && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <ReelsTabPreview tab={coverTab} playback={firstPlaybackOf(coverTab)} size={contentSize} />
+        </View>
+      )}
+      <ReelsTabBar
+        selected={tab}
+        isHidden={isChromeHidden}
+        onSelect={selectTab}
+        onSearch={() => router.push({ pathname: '/(tabs)/explore', params: { autoFocus: '1' } })}
+      />
+    </GestureHandlerRootView>
+  );
+}
+
+type FeedPages = ReturnType<typeof useReelsFeed>['data'];
+
+function readPlaybacks(feedPages: FeedPages): ReelItem['playback'][] {
+  return (feedPages?.pages.flatMap((page) => page.items) ?? []).flatMap((card) =>
+    card.video?.hlsUrl ? [card.video] : [],
+  );
+}
+
+/** Stands in for a tab's list while swiping, without the players a real list would create. */
+function ReelsTabPreview({
+  tab,
+  playback,
+  size,
+}: {
+  tab: ReelTab;
+  playback?: ReelItem['playback'];
+  size: { width: number; height: number };
+}) {
+  if (tab === 'following') return <FollowingComingSoon />;
+  if (!playback || size.width === 0 || size.height === 0)
+    return (
+      <View style={styles.previewFrame}>
+        <ActivityIndicator color={colors.background} accessibilityLabel={copy.loading} />
+      </View>
+    );
+  const { box, contentFit } = layoutReelVideo(playback.aspect, size.width, size.height);
+  return (
+    <View
+      style={styles.previewFrame}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Image
+        source={selectReelPoster(playback.posters, size.width)}
+        cachePolicy="memory-disk"
+        style={box}
+        contentFit={contentFit}
+      />
+    </View>
+  );
+}
+
+function FollowingComingSoon() {
+  return (
+    <View style={styles.message}>
+      <Icon name="people-outline" color={colors.background} size={40} />
+      <Txt variant="heading" style={styles.light}>
+        {copy.followingSoonTitle}
+      </Txt>
+      <Txt style={styles.light}>{copy.followingSoonBody}</Txt>
+      <Button onPress={() => router.push('/(tabs)/explore')}>{vi.api.search}</Button>
+    </View>
+  );
+}
+
+function ReelsTabFeed({
+  tab,
+  initialLayout,
+  targetId,
+  onTargetShown,
+  onHiddenChange,
+  onOpenSample,
+}: {
+  tab: ReelFeedTab;
+  initialLayout: { width: number; height: number };
+  targetId?: string;
+  onTargetShown: () => void;
+  onHiddenChange: (isHidden: boolean) => void;
+  onOpenSample: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  const feed = useReelsFeed({ tab });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const refreshInFlight = useRef(false);
   const refreshFeed = async () => {
@@ -76,20 +337,24 @@ export function ReelsScreen() {
       setIsRefreshing(false);
     }
   };
-  const items = useMemo(
-    () =>
-      (feed.data?.pages.flatMap((page) => page.items) ?? [])
-        .filter((card) => !!card.video?.hlsUrl)
-        .map((card): ReelItem => ({
-          id: card.postId,
-          postId: card.postId,
-          title: card.title,
-          body: card.caption,
-          playback: card.video,
-          social: card,
-        })),
-    [feed.data],
-  );
+  const items = useMemo(() => {
+    // A hot post can move between pages when its score changes while the viewer scrolls.
+    const seenPostIds = new Set<string>();
+    return (feed.data?.pages.flatMap((page) => page.items) ?? [])
+      .filter((card) => {
+        if (!card.video?.hlsUrl || seenPostIds.has(card.postId)) return false;
+        seenPostIds.add(card.postId);
+        return true;
+      })
+      .map((card): ReelItem => ({
+        id: card.postId,
+        postId: card.postId,
+        title: card.title,
+        body: card.caption,
+        playback: card.video,
+        social: card,
+      }));
+  }, [feed.data]);
 
   const isTargetLoaded = !targetId || items.some((item) => item.postId === targetId);
   useEffect(() => {
@@ -110,16 +375,20 @@ export function ReelsScreen() {
     }
     void feed.refetch();
   };
-  if (isSample && DEMO_REELS.length > 0)
-    return <ReelsFeed items={DEMO_REELS} isSample onExitSample={() => setIsSample(false)} />;
   if (items.length > 0)
     return (
       <View style={{ flex: 1 }}>
-        <ApiErrorNotice error={feed.error} retry={retryFeed} />
+        {!!feed.error && (
+          <View style={[styles.errorBanner, { paddingTop: insets.top + spacing.sm + REELS_TAB_BAR_HEIGHT }]}>
+            <ApiErrorNotice error={feed.error} retry={retryFeed} />
+          </View>
+        )}
         <ReelsFeed
           items={items}
+          initialLayout={initialLayout}
+          onHiddenChange={onHiddenChange}
           targetId={targetId}
-          onTargetShown={clearTarget}
+          onTargetShown={onTargetShown}
           onLoadMore={loadMore}
           isFetchingMore={feed.isFetchingNextPage}
           onRefresh={() => {
@@ -130,15 +399,17 @@ export function ReelsScreen() {
       </View>
     );
   return (
-    <Screen title={vi.mobile.tabs.reels}>
+    <View style={styles.message}>
       {feed.isPending ? (
-        <Txt>{feed.fetchStatus === 'paused' ? copy.offline : copy.loading}</Txt>
+        <Txt style={styles.light}>{feed.fetchStatus === 'paused' ? copy.offline : copy.loading}</Txt>
       ) : feed.error ? (
         <ApiErrorNotice error={feed.error} retry={retryFeed} />
       ) : (
         <>
-          <Txt variant="heading">{copy.emptyTitle}</Txt>
-          <Txt>{copy.emptyBody}</Txt>
+          <Txt variant="heading" style={styles.light}>
+            {copy.emptyTitle}
+          </Txt>
+          <Txt style={styles.light}>{copy.emptyBody}</Txt>
           <Button onPress={retryFeed}>{vi.api.retry}</Button>
           {feed.hasNextPage && (
             <Button tone="secondary" onPress={loadMore}>
@@ -154,19 +425,21 @@ export function ReelsScreen() {
         </>
       )}
       {DEMO_REELS.length > 0 && (
-        <Button tone="secondary" onPress={() => setIsSample(true)}>
+        <Button tone="secondary" onPress={onOpenSample}>
           {copy.openSample}
         </Button>
       )}
-    </Screen>
+    </View>
   );
 }
 
 export function ReelsFeed({
   items,
+  initialLayout = { width: 0, height: 0 },
   targetId,
   onTargetShown,
   isSample = false,
+  onHiddenChange,
   onExitSample,
   onLoadMore,
   isFetchingMore = false,
@@ -174,9 +447,11 @@ export function ReelsFeed({
   isRefreshing = false,
 }: {
   items: readonly ReelItem[];
+  initialLayout?: { width: number; height: number };
   targetId?: string;
   onTargetShown?: () => void;
   isSample?: boolean;
+  onHiddenChange?: (isHidden: boolean) => void;
   onExitSample?: () => void;
   onLoadMore?: () => void;
   isFetchingMore?: boolean;
@@ -187,13 +462,13 @@ export function ReelsFeed({
   const isFocused = useIsFocused();
   const network = useNetworkState();
   const [isForeground, setIsForeground] = useState(AppState.currentState === 'active');
-  const [layout, setLayout] = useState({ width: 0, height: 0 });
+  // Known size means the list draws on its first frame, with no dark frame before onLayout.
+  const [layout, setLayout] = useState(initialLayout);
   const [activeIndex, setActiveIndex] = useState(0);
   const [focusedIndex, setFocusedIndex] = useState(0);
   const centeredIndex = useRef(0);
   const [pausedId, setPausedId] = useState<string | null>(null);
   const [heldId, setHeldId] = useState<string | null>(null);
-  const [isMuted, setIsMuted] = useState(true);
   const [retry, setRetry] = useState<{ id: string; attempt: number } | null>(null);
   const [hasComments, setHasComments] = useState(false);
   const currentIndex = Math.min(activeIndex, Math.max(0, items.length - 1));
@@ -210,16 +485,30 @@ export function ReelsFeed({
     activeIndex: currentIndex,
     focusedIndex: visibleIndex,
     isEnabled: isFocused && isForeground && !isOffline,
-    isPaused: hasComments || pausedId === items[visibleIndex]?.id,
-    isMuted,
+    isPaused: pausedId === items[visibleIndex]?.id,
+    isMuted: false,
     isDataLimited,
     retry,
   });
 
   useEffect(() => {
+    if (layout.width === 0) return;
+    const urls = getReelPosterPrefetchUrls(
+      items.map((item) => item.playback.posters),
+      visibleIndex,
+      layout.width,
+    );
+    if (urls.length > 0) void Image.prefetch(urls, { cachePolicy: 'memory-disk' });
+  }, [items, visibleIndex, layout.width]);
+
+  useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => setIsForeground(state === 'active'));
     return () => subscription.remove();
   }, []);
+
+  useEffect(() => {
+    onHiddenChange?.(hideHeader || hasComments);
+  }, [hideHeader, hasComments, onHiddenChange]);
 
   const settle = useCallback((index: number) => {
     centeredIndex.current = index;
@@ -324,35 +613,6 @@ export function ReelsFeed({
           }}
         />
       )}
-      {!hideHeader && (
-        <View pointerEvents="box-none" style={[styles.headerContainer, { top: insets.top + spacing.xs }]}>
-          <View pointerEvents="box-none" style={styles.headerTopRow}>
-            <View pointerEvents="none" style={styles.headerSpacer} />
-            <View pointerEvents="none">
-              <Txt variant="label" style={styles.headerLabel}>
-                {vi.mobile.feed.forYou}
-              </Txt>
-            </View>
-            <IconButton
-              name={isMuted ? 'volume-mute' : 'volume-high'}
-              label={isMuted ? copy.unmute : copy.mute}
-              color={colors.background}
-              onPress={() => setIsMuted((value) => !value)}
-            />
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={vi.api.search}
-            onPress={() => router.push({ pathname: '/(tabs)/explore', params: { autoFocus: '1' } })}
-            style={({ pressed }) => [styles.searchBar, pressed && styles.searchBarPressed]}
-          >
-            <Icon name="search-outline" size={16} color="rgba(255, 255, 255, 0.9)" />
-            <Txt numberOfLines={1} style={styles.searchPlaceholder}>
-              Tìm bài viết, lộ trình, video...
-            </Txt>
-          </Pressable>
-        </View>
-      )}
       {onExitSample && (
         <View
           style={{
@@ -375,42 +635,22 @@ export function ReelsFeed({
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
-    gap: spacing.xs,
-  },
-  headerTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerSpacer: { width: mobileLayout.touchTarget },
-  headerLabel: {
-    color: colors.background,
-    fontFamily: nativeFonts.bold,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.background,
-    paddingBottom: spacing.xs,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
-    borderRadius: 999,
-    paddingHorizontal: spacing.md,
-    height: 36,
-    gap: spacing.sm,
-  },
-  searchBarPressed: {
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-  },
-  searchPlaceholder: {
-    color: 'rgba(255, 255, 255, 0.85)',
-    fontSize: 13,
+  screen: { flex: 1, backgroundColor: colors.ink },
+  content: { flex: 1 },
+  preview: { position: 'absolute', top: 0, bottom: 0 },
+  previewFrame: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.ink },
+  message: {
     flex: 1,
+    justifyContent: 'center',
+    gap: spacing.lg,
+    paddingHorizontal: mobileLayout.gutter,
+    backgroundColor: colors.ink,
   },
+  errorBanner: {
+    gap: spacing.sm,
+    paddingHorizontal: mobileLayout.gutter,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.ink,
+  },
+  light: { color: colors.background },
 });

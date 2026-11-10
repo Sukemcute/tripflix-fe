@@ -16,6 +16,18 @@ it('uses the generated social wire format and includes a write idempotency key',
   expect(JSON.parse(String(init.body))).toEqual({ is_bookmarked: true });
   expect(new Headers(init.headers).get('idempotency-key')).toBeTruthy();
 });
+it('sends an explicit comment reaction so repeating a like cannot toggle it off', async () => {
+  configureHttp({ baseUrl: 'http://api' });
+  const fetchMock = vi
+    .spyOn(globalThis, 'fetch')
+    .mockImplementation(async () => json(200, { commentId: 'comment-1', isLiked: true, likeCount: 1 }));
+  await socialApi.setCommentReaction('comment-1', true);
+  await socialApi.setCommentReaction('comment-1', false);
+  expect(fetchMock.mock.calls[0]?.[0]).toBe('http://api/api/v1/comments/comment-1/reaction');
+  expect(fetchMock.mock.calls[0]?.[1]?.method).toBe('PUT');
+  expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({ type: 'like' });
+  expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toEqual({ type: null });
+});
 it('sends snake_case comment parent fields and retains errors for the UI to retry', async () => {
   configureHttp({ baseUrl: '' });
   const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(json(422, { message: 'invalid' }));
