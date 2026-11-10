@@ -20,11 +20,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { ApiErrorNotice } from '@/components/api-state';
+import { DateSingleField } from '@/components/date-sheet';
 import {
   Button,
   Card,
   Chip,
-  Field,
   Icon,
   Notice,
   PriceRow,
@@ -196,13 +196,12 @@ export function FlightSearchScreen() {
             </View>
           );
         })}
-        <Field
+        <DateSingleField
           label={copy.date}
-          placeholder={copy.dateFormat}
           value={draft.date}
-          maxLength={10}
-          editable={!isLocked}
-          onChangeText={(date) => setDraft((previous) => ({ ...previous, date }))}
+          min={getFlightToday()}
+          isDisabled={isLocked}
+          onChange={(date) => setDraft((previous) => ({ ...previous, date }))}
         />
         <View style={{ gap: spacing.xs }}>
           <Txt variant="label">{copy.adults}</Txt>

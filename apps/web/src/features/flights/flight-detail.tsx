@@ -76,6 +76,7 @@ function Detail({
         <div>
           {offer && (
             <Link
+              prefetch={false}
               className={styles.backLink}
               href={
                 '/flights?' +
@@ -122,7 +123,7 @@ function Detail({
         <div className={styles.loadingState} role="alert">
           <Image src="/brand/tripi-library/expr-curious.png" alt="" width={88} height={88} />
           <span>{copy.detailNotFound}</span>
-          <Link className={'ripple-button ' + styles.stayLink} href="/flights">
+          <Link prefetch={false} className={'ripple-button ' + styles.stayLink} href="/flights">
             {copy.detailSearchAgain}
           </Link>
         </div>

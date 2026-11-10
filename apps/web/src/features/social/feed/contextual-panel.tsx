@@ -94,6 +94,7 @@ export function ContextualPanel({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {TRENDING_DESTINATIONS.map((dest) => (
                 <Link
+                  prefetch={false}
                   key={dest.id}
                   href={`/search?q=${encodeURIComponent(dest.query)}`}
                   className={styles.destinationItem}

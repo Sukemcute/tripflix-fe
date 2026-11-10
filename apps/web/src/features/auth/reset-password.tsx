@@ -24,7 +24,7 @@ export function ResetPassword({ token }: { token: string | undefined }) {
       {reset.isSuccess ? (
         <>
           <output className="auth-success">{vi.api.resetSuccess}</output>
-          <Link className="primary-button auth-submit" href="/login">
+          <Link prefetch={false} className="primary-button auth-submit" href="/login">
             {vi.api.login}
           </Link>
         </>
@@ -33,7 +33,7 @@ export function ResetPassword({ token }: { token: string | undefined }) {
           <p role="alert" className="auth-error">
             {token ? vi.api.resetLinkInvalid : vi.api.resetMissingToken}
           </p>
-          <Link className="primary-button auth-submit" href="/forgot-password">
+          <Link prefetch={false} className="primary-button auth-submit" href="/forgot-password">
             {vi.api.requestNewLink}
           </Link>
         </>
@@ -79,7 +79,7 @@ export function ResetPassword({ token }: { token: string | undefined }) {
           </button>
         </form>
       )}
-      <Link className="auth-link auth-switch" href="/login">
+      <Link prefetch={false} className="auth-link auth-switch" href="/login">
         {vi.api.backToLogin}
       </Link>
     </>

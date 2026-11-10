@@ -1,12 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { commerceApi, HttpError, useApiSession } from '@tripflix/api-client';
 import type { PayResultDto } from '@tripflix/api-client/core-api/model/index';
-import { holdCountdown, isValidTripDate } from '@tripflix/app-core';
-import { vi } from '@tripflix/i18n';
+import {
+  findCheckoutFieldErrors,
+  findStayDate,
+  findTravelDates,
+  holdCountdown,
+  type GuestFieldError,
+} from '@tripflix/app-core';
+import { t, vi, type MessageKey } from '@tripflix/i18n';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import * as Linking from 'expo-linking';
+import { colors, radius, spacing } from '@tripflix/tokens';
+import { Pressable, View } from 'react-native';
 import { RequireAccount } from '@/components/api-state';
+import { DateSingleField } from '@/components/date-sheet';
 import {
   Badge,
   Button,
@@ -14,18 +23,45 @@ import {
   copy,
   Field,
   formatDate,
+  Icon,
+  type IconName,
   money,
   Notice,
   PriceRow,
+  Row,
   Screen,
   Segments,
   Txt,
+  ui,
 } from '@/components/mobile-ui';
 import { CommerceError, HoldTimer, useCommerceOrder } from './commerce-state';
 import { useCommerce } from './commerce-provider';
+import { CancelOrder, OrderCancelledScreen } from './order-cancel';
 import { PaymentSuccessScreen } from './payment-success';
 
 const text = vi.commerce;
+const BIRTHDATE_MESSAGES: Partial<Record<GuestFieldError, MessageKey>> = {
+  required: 'commerce.fieldErrors.birthdateRequired',
+  futureDate: 'commerce.fieldErrors.birthdateFuture',
+  adultAge: 'commerce.fieldErrors.adultAge',
+  childAge: 'commerce.fieldErrors.childAge',
+  infantAge: 'commerce.fieldErrors.infantAge',
+  childRoomAge: 'commerce.fieldErrors.childRoomAge',
+  infantRoomAge: 'commerce.fieldErrors.infantRoomAge',
+};
+/** Câu báo cho từng ô sai, giống web (khoá ô theo tên trường server: guests[0].birthdate). */
+function describeFieldError(field: string, error: GuestFieldError): string {
+  const errors = text.fieldErrors;
+  if (field === 'contact.fullName') return errors.contactName;
+  if (field === 'contact.phone')
+    return error === 'required' ? errors.contactPhoneRequired : errors.contactPhone;
+  if (field === 'contact.email') return errors.contactEmail;
+  const number = Number(/^guests\[(\d+)\]/.exec(field)?.[1] ?? 0) + 1;
+  if (field.endsWith('.fullName')) return t('commerce.fieldErrors.guestName', { number });
+  return t(BIRTHDATE_MESSAGES[error] ?? 'commerce.fieldErrors.birthdateInvalid', { number });
+}
+const toLocalIsoDate = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 function openOrder(id: string) {
   router.replace({ pathname: '/checkout', params: { id } });
 }
@@ -83,7 +119,7 @@ export function CommerceCartScreen() {
           {item.checkOut && ` → ${formatDate(item.checkOut)}`}
         </Txt>
         <Txt>
-          {item.qty} {vi.api.rooms} · {draft.request.adults} {text.guests}
+          {item.qty} {copy.booking.roomUnit} · {draft.request.adults} {text.guests}
         </Txt>
       </Card>
       <CommerceError error={mutation.error} />
@@ -126,6 +162,8 @@ function CheckoutForm() {
   const [challenge, setChallenge] = useState(operations.challenges.get(id));
   const [message, setMessage] = useState('');
   const [validation, setValidation] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [today] = useState(() => toLocalIsoDate(new Date()));
   const [newTotal, setNewTotal] = useState<number>();
   const [acceptedTotal, setAcceptedTotal] = useState<number>();
   const [paymentUrl, setPaymentUrl] = useState(operations.paymentUrls.get(id) ?? '');
@@ -180,31 +218,29 @@ function CheckoutForm() {
         retryPayment.current = () => operations.otp(input);
       } else {
         if (isExpired || order.status !== 'pending' || operations.uncertain.has(id)) return null;
-        if (
-          !name.trim() ||
-          !/^0\d{9,10}$/.test(phone) ||
-          (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
-        ) {
-          setValidation(text.invalidContact);
-          return null;
-        }
-        if (!hasConsent) {
-          setValidation(text.policy);
-          return null;
-        }
         const passengers = Array.from(
           { length: order.passengersRequired },
           (_, index) => guests[index] ?? { fullName: '', birthdate: '' },
         );
-        if (
-          passengers.some(
-            (guest) =>
-              !guest.fullName.trim() ||
-              !isValidTripDate(guest.birthdate, '1900-01-01') ||
-              guest.birthdate > new Date().toISOString().slice(0, 10),
-          )
-        ) {
-          setValidation(text.invalidGuests);
+        const invalidFields = findCheckoutFieldErrors({
+          contact: { fullName: name, phone, email },
+          guests: passengers,
+          passengerTypes: order.passengerTypes,
+          travelDates: findTravelDates(order.items),
+          stayDate: findStayDate(order.items),
+          today: toLocalIsoDate(new Date()),
+        });
+        const messages = Object.fromEntries(
+          Object.entries(invalidFields).map(([field, error]) => [field, describeFieldError(field, error)]),
+        );
+        setFieldErrors(messages);
+        if (Object.keys(messages).length) {
+          setValidation(t('commerce.invalidFields', { count: Object.keys(messages).length }));
+          return null;
+        }
+        setValidation('');
+        if (!hasConsent) {
+          setValidation(text.policy);
           return null;
         }
         await commerceApi.setGuests(id, {
@@ -296,8 +332,32 @@ function CheckoutForm() {
         [key]: value,
       },
     }));
+  const canPay = !!order && !isExpired && !challenge && order.status === 'pending';
+  const payTotal = order ? (acceptedTotal ?? order.total) : 0;
+  const isPayDisabled =
+    isLocked || !hasConsent || newTotal !== undefined || (method === 0 && !cardNumber.trim());
   return (
-    <Screen title={text.checkout}>
+    <Screen
+      title={text.checkout}
+      background={colors.surface}
+      footer={
+        canPay ? (
+          <Row style={{ justifyContent: 'space-between', alignItems: 'center', gap: spacing.md }}>
+            <View>
+              <Txt variant="small" style={ui.muted}>
+                {text.total}
+              </Txt>
+              <Txt variant="heading" style={{ color: colors.coralInk }}>
+                {money(payTotal)}
+              </Txt>
+            </View>
+            <Button disabled={isPayDisabled} onPress={() => payment.mutate('pay')} style={{ flex: 1 }}>
+              {payment.isPending ? vi.api.loading : text.pay}
+            </Button>
+          </Row>
+        ) : undefined
+      }
+    >
       <CommerceError
         error={query.error}
         retry={() => {
@@ -307,8 +367,22 @@ function CheckoutForm() {
       {query.isPending && <Txt>{vi.api.loading}</Txt>}
       {order && (
         <>
-          <OrderSummary order={order} />
-          {order.status === 'pending' && <HoldTimer expiresAt={order.holdExpiresAt} />}
+          {order.status === 'pending' && !isExpired && (
+            <Row
+              style={{
+                gap: spacing.sm,
+                alignItems: 'center',
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.sm,
+                borderRadius: radius.pill,
+                backgroundColor: colors.coralTint,
+              }}
+            >
+              <Icon name="time-outline" size={18} color={colors.coralInk} />
+              <HoldTimer expiresAt={order.holdExpiresAt} />
+            </Row>
+          )}
+          <CheckoutSummary order={order} total={payTotal} />
           {isExpired ? (
             <>
               <Notice tone="error">{text.expired}</Notice>
@@ -316,76 +390,111 @@ function CheckoutForm() {
             </>
           ) : (
             <>
-              <Txt variant="heading">{text.contact}</Txt>
-              <Field
-                label={text.name}
-                value={name}
-                editable={!isLocked && !challenge}
-                onChangeText={setName}
-                autoComplete="name"
-              />
-              <Field
-                label={text.phone}
-                value={phone}
-                editable={!isLocked && !challenge}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                autoComplete="tel"
-              />
-              <Field
-                label={text.email}
-                value={email}
-                editable={!isLocked && !challenge}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+              <FormCard title={text.contact} icon="person-outline">
+                <Field
+                  label={text.name}
+                  value={name}
+                  editable={!isLocked && !challenge}
+                  onChangeText={setName}
+                  autoComplete="name"
+                  error={fieldErrors['contact.fullName']}
+                />
+                <Field
+                  label={text.phone}
+                  value={phone}
+                  editable={!isLocked && !challenge}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                  error={fieldErrors['contact.phone']}
+                  autoComplete="tel"
+                />
+                <Field
+                  label={text.email}
+                  value={email}
+                  editable={!isLocked && !challenge}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  error={fieldErrors['contact.email']}
+                  autoCapitalize="none"
+                />
+              </FormCard>
               {Array.from({ length: order.passengersRequired }, (_, index) => (
-                <Card key={index}>
-                  <Txt>
-                    {text.guest} {index + 1}
-                    {order.passengerTypes[index] ? ' · ' + text.guestTypes[order.passengerTypes[index]] : ''}
-                  </Txt>
+                <FormCard
+                  key={index}
+                  icon="people-outline"
+                  title={`${text.guest} ${index + 1}`}
+                  subtitle={
+                    order.passengerTypes[index]
+                      ? (findTravelDates(order.items) ? text.guestTypes : text.roomGuestTypes)[
+                          order.passengerTypes[index]
+                        ]
+                      : undefined
+                  }
+                >
                   <Field
                     label={text.name}
                     value={guests[index]?.fullName ?? ''}
                     editable={!isLocked && !challenge}
                     onChangeText={(value) => editGuest(index, 'fullName', value)}
+                    error={fieldErrors[`guests[${index}].fullName`]}
                   />
-                  <Field
+                  <DateSingleField
                     label={text.birthdate}
                     value={guests[index]?.birthdate ?? ''}
-                    editable={!isLocked && !challenge}
-                    onChangeText={(value) => editGuest(index, 'birthdate', value)}
-                    placeholder="YYYY-MM-DD"
-                    maxLength={10}
+                    min="1900-01-01"
+                    max={today}
+                    isDisabled={isLocked || !!challenge}
+                    onChange={(value) => editGuest(index, 'birthdate', value)}
+                    error={fieldErrors[`guests[${index}].birthdate`]}
                   />
-                </Card>
+                </FormCard>
               ))}
               {!challenge && (
-                <>
+                <FormCard title={text.paymentMethod} icon="card-outline">
                   {!isLocked && (
                     <Segments options={[text.card, text.vnpay]} selected={method} onSelect={setMethod} />
                   )}
-                  {method === 0 && (
+                  {method === 0 ? (
                     <>
-                      <Txt variant="heading">{text.testCards}</Txt>
+                      <Txt variant="small" style={ui.muted}>
+                        {text.testCards}
+                      </Txt>
                       <CommerceError
                         error={cards.error}
                         retry={() => {
                           void cards.refetch();
                         }}
                       />
-                      {cards.data?.map((card) => (
-                        <Button
-                          key={card.number}
-                          tone="secondary"
-                          disabled={isLocked}
-                          onPress={() => setCardNumber(card.number)}
-                        >
-                          {card.label} · {card.number}
-                        </Button>
-                      ))}
+                      {/* Thẻ kiểm thử là các chip nhỏ, chạm để điền số thẻ. */}
+                      <Row style={{ flexWrap: 'wrap', gap: spacing.sm }}>
+                        {cards.data?.map((card) => {
+                          const isActive = cardNumber === card.number;
+                          return (
+                            <Pressable
+                              key={card.number}
+                              accessibilityRole="button"
+                              accessibilityState={{ selected: isActive }}
+                              disabled={isLocked}
+                              onPress={() => setCardNumber(card.number)}
+                              style={{
+                                paddingHorizontal: spacing.md,
+                                paddingVertical: spacing.sm,
+                                borderRadius: radius.pill,
+                                borderWidth: 1,
+                                borderColor: isActive ? colors.tealInk : colors.border,
+                                backgroundColor: isActive ? colors.seaMist : colors.background,
+                              }}
+                            >
+                              <Txt variant="small" style={{ fontWeight: '600', color: colors.ink }}>
+                                {card.label}
+                              </Txt>
+                              <Txt variant="small" style={[ui.muted, { fontSize: 11 }]}>
+                                •••• {card.number.slice(-4)}
+                              </Txt>
+                            </Pressable>
+                          );
+                        })}
+                      </Row>
                       <Field
                         label={text.cardNumber}
                         value={cardNumber}
@@ -394,46 +503,65 @@ function CheckoutForm() {
                         keyboardType="number-pad"
                       />
                     </>
+                  ) : (
+                    <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
+                      <Icon name="open-outline" size={18} color={colors.tealInk} />
+                      <Txt variant="small" style={[ui.muted, { flex: 1 }]}>
+                        {text.vnpayHint}
+                      </Txt>
+                    </Row>
                   )}
-                  <Txt>
-                    {text.policyVersion}: {order.policyVersion}
-                  </Txt>
-                  <Button tone="secondary" disabled={isLocked} onPress={() => setConsent(!hasConsent)}>
-                    {hasConsent ? '☑ ' : '☐ '}
-                    {text.policy}
-                  </Button>
-                  {newTotal !== undefined && (
-                    <>
-                      <Notice tone="warning">
-                        {text.priceChanged} {money(newTotal)}
-                      </Notice>
-                      <Button
-                        disabled={payment.isPending}
-                        onPress={() => {
-                          setAcceptedTotal(newTotal);
-                          setNewTotal(undefined);
-                        }}
-                      >
-                        {text.acceptPrice}
-                      </Button>
-                    </>
-                  )}
-                  <PriceRow total label={text.total} amount={money(acceptedTotal ?? order.total)} />
-                  <Button
-                    disabled={
-                      isLocked ||
-                      !hasConsent ||
-                      newTotal !== undefined ||
-                      (method === 0 && !cardNumber.trim())
-                    }
-                    onPress={() => payment.mutate('pay')}
+                </FormCard>
+              )}
+              {!challenge && (
+                <Pressable
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: hasConsent, disabled: isLocked }}
+                  disabled={isLocked}
+                  onPress={() => setConsent(!hasConsent)}
+                  style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' }}
+                >
+                  <View
+                    style={{
+                      width: 22,
+                      height: 22,
+                      marginTop: 1,
+                      borderRadius: 6,
+                      borderWidth: 2,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderColor: hasConsent ? colors.coral : colors.textSubtle,
+                      backgroundColor: hasConsent ? colors.coral : colors.background,
+                    }}
                   >
-                    {payment.isPending ? vi.api.loading : text.pay}
+                    {hasConsent && <Icon name="checkmark" size={15} color={colors.background} />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Txt variant="small">{text.policy}</Txt>
+                    <Txt variant="small" style={[ui.muted, { fontSize: 11 }]}>
+                      {text.policyVersion}: {order.policyVersion}
+                    </Txt>
+                  </View>
+                </Pressable>
+              )}
+              {newTotal !== undefined && (
+                <>
+                  <Notice tone="warning">
+                    {text.priceChanged} {money(newTotal)}
+                  </Notice>
+                  <Button
+                    disabled={payment.isPending}
+                    onPress={() => {
+                      setAcceptedTotal(newTotal);
+                      setNewTotal(undefined);
+                    }}
+                  >
+                    {text.acceptPrice}
                   </Button>
                 </>
               )}
               {challenge && (
-                <>
+                <FormCard title={text.otp} icon="key-outline">
                   <Notice>{text.otpHint}</Notice>
                   <Field
                     label={text.otp}
@@ -449,7 +577,7 @@ function CheckoutForm() {
                   >
                     {text.confirmOtp}
                   </Button>
-                </>
+                </FormCard>
               )}
             </>
           )}
@@ -483,17 +611,132 @@ function CheckoutForm() {
           )}
           <CommerceError error={payment.error} />
           {validation && <Notice tone="error">{validation}</Notice>}
-          <Button
-            tone="text"
-            onPress={() => {
-              void query.refetch();
-            }}
-          >
-            {text.checkStatus}
-          </Button>
+          {order.status !== 'pending' && (
+            <Button
+              tone="text"
+              onPress={() => {
+                void query.refetch();
+              }}
+            >
+              {text.checkStatus}
+            </Button>
+          )}
         </>
       )}
     </Screen>
+  );
+}
+
+/** Thẻ trắng có tiêu đề + biểu tượng, gom từng phần của màn thanh toán cho gọn. */
+function FormCard({
+  title,
+  subtitle,
+  icon,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  icon: IconName;
+  children: ReactNode;
+}) {
+  return (
+    <View
+      style={{ padding: spacing.md, gap: spacing.md, borderRadius: 20, backgroundColor: colors.background }}
+    >
+      <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
+        <View
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: radius.pill,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.seaMist,
+          }}
+        >
+          <Icon name={icon} size={16} color={colors.tealInk} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Txt variant="label">{title}</Txt>
+          {subtitle && (
+            <Txt variant="small" style={ui.muted}>
+              {subtitle}
+            </Txt>
+          )}
+        </View>
+      </Row>
+      {children}
+    </View>
+  );
+}
+
+/** Tóm tắt đơn gọn: mỗi mục một khối, tổng tiền chỉ một lần. */
+function CheckoutSummary({
+  order,
+  total,
+}: {
+  order: NonNullable<ReturnType<typeof useCommerceOrder>['data']>;
+  total: number;
+}) {
+  return (
+    <View
+      style={{ padding: spacing.md, gap: spacing.md, borderRadius: 20, backgroundColor: colors.background }}
+    >
+      {order.items.map((item) => (
+        <View key={item.id} style={{ gap: 4 }}>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.md }}>
+            <Txt variant="label" style={{ flex: 1 }}>
+              {item.productName}
+            </Txt>
+            <Txt variant="label">{money(item.lineTotal)}</Txt>
+          </Row>
+          <Row style={{ gap: 6 }}>
+            <Icon name="calendar-outline" size={14} color={colors.textMuted} />
+            <Txt variant="small" style={ui.muted}>
+              {item.productType === 'flight'
+                ? formatDate(item.date)
+                : `${formatDate(item.date)} → ${formatDate(item.dateTo)}`}
+            </Txt>
+          </Row>
+          <Txt variant="small" style={ui.muted}>
+            {item.qty} × {item.ratePlanName}
+          </Txt>
+          <View
+            style={{
+              alignSelf: 'flex-start',
+              marginTop: 2,
+              paddingHorizontal: spacing.sm,
+              paddingVertical: 2,
+              borderRadius: radius.pill,
+              backgroundColor: item.isRefundable ? colors.seaMist : colors.surfaceMuted,
+            }}
+          >
+            <Txt variant="small" style={{ color: item.isRefundable ? colors.tealInk : colors.textMuted }}>
+              {item.isRefundable && item.freeCancelUntil
+                ? `${text.freeCancel}: ${formatDate(item.freeCancelUntil.slice(0, 10))}`
+                : item.isRefundable
+                  ? text.refundable
+                  : text.nonRefundable}
+            </Txt>
+          </View>
+        </View>
+      ))}
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingTop: spacing.md,
+          borderTopWidth: 1,
+          borderStyle: 'dashed',
+          borderTopColor: colors.border,
+        }}
+      >
+        <Txt variant="label">{text.total}</Txt>
+        <Txt variant="heading" style={{ color: colors.coralInk }}>
+          {money(total)}
+        </Txt>
+      </View>
+    </View>
   );
 }
 export function OrderSummary({ order }: { order: NonNullable<ReturnType<typeof useCommerceOrder>['data']> }) {
@@ -506,7 +749,7 @@ export function OrderSummary({ order }: { order: NonNullable<ReturnType<typeof u
           <Txt>
             {item.productType === 'flight'
               ? vi.flights.date + ' · ' + formatDate(item.date)
-              : item.date + ' → ' + item.dateTo}
+              : formatDate(item.date) + ' → ' + formatDate(item.dateTo)}
           </Txt>
           <Txt>
             {item.qty} × {item.ratePlanName}
@@ -514,7 +757,7 @@ export function OrderSummary({ order }: { order: NonNullable<ReturnType<typeof u
           <Txt>{item.isRefundable ? text.refundable : text.nonRefundable}</Txt>
           {item.freeCancelUntil && (
             <Txt>
-              {text.freeCancel}: {item.freeCancelUntil}
+              {text.freeCancel}: {formatDate(item.freeCancelUntil.slice(0, 10))}
             </Txt>
           )}
           <PriceRow label={text.total} amount={money(item.lineTotal)} />
@@ -534,6 +777,9 @@ export function CommerceOrderScreen() {
   if (!isReady || !user) return <RequireAccount />;
   if (query.data?.status === 'paid' && pathname === '/success')
     return <PaymentSuccessScreen order={query.data} />;
+  // Đơn đã trả tiền rồi huỷ có mã xác nhận; đơn hết hạn khi chưa trả thì không.
+  if (query.data?.status === 'cancelled' && query.data.confirmationCode)
+    return <OrderCancelledScreen order={query.data} />;
   return (
     <Screen title={query.data?.status === 'paid' ? text.paid : text.detail}>
       <CommerceError
@@ -552,6 +798,7 @@ export function CommerceOrderScreen() {
               <Button onPress={() => openOrder(id)}>{text.checkout}</Button>
             </>
           )}
+          {query.data.status === 'paid' && <CancelOrder orderId={query.data.orderId} />}
         </>
       )}
       <Button onPress={() => router.replace('/(tabs)/trips')}>{text.viewTrips}</Button>

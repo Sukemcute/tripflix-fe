@@ -1,15 +1,28 @@
+import type { AssistantCard } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { createContext, useContext, useEffect, useRef, useState, type PropsWithChildren } from 'react';
 
-export type AssistantMessage = { id: string; role: 'user' | 'assistant'; text: string };
+export type AssistantMessage = {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  /** Thẻ gợi ý Tripi tìm được (video, bài viết, nơi ở). */
+  cards?: AssistantCard[];
+};
+export type AssistantOrigin = { x: number; y: number; width: number; height: number };
 /** Bảo supplies an adapter using the generated API client; no endpoint is assumed here. */
 export type AssistantTransport = (
   messages: readonly AssistantMessage[],
   signal: AbortSignal,
-) => Promise<string>;
+) => Promise<string | { text: string; cards: AssistantCard[] }>;
 
 function useAssistantState(transport?: AssistantTransport) {
   const [isOpen, setIsOpen] = useState(false);
+  const [origin, setOrigin] = useState<AssistantOrigin | null>(null);
+  function openFromBubble(bounds: AssistantOrigin) {
+    setOrigin(bounds);
+    setIsOpen(true);
+  }
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [isPending, setIsPending] = useState(false);
@@ -30,9 +43,10 @@ function useAssistantState(transport?: AssistantTransport) {
     setIsPending(true);
     try {
       const reply = transport ? await transport(next, controller.signal) : vi.assistant.demoReply;
-      if (!reply.trim()) throw new Error('Empty assistant response');
+      const { text: replyText, cards } = typeof reply === 'string' ? { text: reply, cards: [] } : reply;
+      if (!replyText.trim()) throw new Error('Empty assistant response');
       if (!controller.signal.aborted)
-        setMessages([...next, { id: String(++sequence.current), role: 'assistant', text: reply }]);
+        setMessages([...next, { id: String(++sequence.current), role: 'assistant', text: replyText, cards }]);
     } catch {
       if (!controller.signal.aborted) setHasError(true);
     } finally {
@@ -53,6 +67,8 @@ function useAssistantState(transport?: AssistantTransport) {
   return {
     isOpen,
     setIsOpen,
+    origin,
+    openFromBubble,
     draft,
     setDraft,
     messages,

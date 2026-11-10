@@ -242,7 +242,7 @@ export function OtaHomeRecommendations() {
               </svg>
             </button>
           </div>
-          <Link className={styles.textLink} href="/search">
+          <Link prefetch={false} className={styles.textLink} href="/search">
             {vi.ota.browseHotels}
           </Link>
         </div>
@@ -251,6 +251,7 @@ export function OtaHomeRecommendations() {
       <div className={styles.destinations}>
         {/* Ô 1: Điểm đến tâm điểm & Lý do nên đi (Lớn bên trái) */}
         <Link
+          prefetch={false}
           key="slot-destination"
           href={activeCombo.destination.href}
           className={styles.destination}
@@ -269,6 +270,7 @@ export function OtaHomeRecommendations() {
 
         {/* Ô 2: Nơi lưu trú & Deal hời (Nhỏ phía trên bên phải) */}
         <Link
+          prefetch={false}
           key="slot-stay"
           href={activeCombo.stay.href}
           className={styles.destination}
@@ -287,6 +289,7 @@ export function OtaHomeRecommendations() {
 
         {/* Ô 3: Cà phê & Ẩm thực (Nhỏ phía dưới bên phải) */}
         <Link
+          prefetch={false}
           key="slot-experience"
           href={activeCombo.experience.href}
           className={styles.destination}

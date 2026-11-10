@@ -75,7 +75,7 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
         </form>
       ) : (
         !parentCommentId && (
-          <Link className="comment-login" href={loginHref}>
+          <Link prefetch={false} className="comment-login" href={loginHref}>
             {vi.api.commentLogin}
           </Link>
         )

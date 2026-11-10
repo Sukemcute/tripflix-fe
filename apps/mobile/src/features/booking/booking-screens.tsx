@@ -29,6 +29,7 @@ import {
   Txt,
   ui,
 } from '@/components/mobile-ui';
+import { DateSingleField } from '@/components/date-sheet';
 import { useReview } from '@/features/review/review-provider';
 import { LoginScreen } from '@/features/auth/auth-screens';
 
@@ -75,13 +76,11 @@ export function CustomizeScreen() {
           {copy.booking.customizeBody}
         </Txt>
       </View>
-      <Field
+      <DateSingleField
         label={copy.booking.date}
         value={dateDraft}
-        onChangeText={setDateDraft}
-        placeholder="YYYY-MM-DD"
-        autoCapitalize="none"
-        maxLength={10}
+        min={review.today}
+        onChange={setDateDraft}
         error={hasAttempted && !isDateValid ? copy.booking.invalidDate : undefined}
       />
       <Notice>

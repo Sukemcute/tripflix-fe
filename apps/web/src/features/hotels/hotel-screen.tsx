@@ -128,7 +128,7 @@ export function HotelScreen({
   const hasPolicies = policies.length > 0 || !!hotel?.checkInTime || !!hotel?.checkOutTime;
   return (
     <main id="content" className={`ota-container ${styles.page}`}>
-      <Link href={resultsHref ?? '/search'} className={styles.back}>
+      <Link prefetch={false} href={resultsHref ?? '/search'} className={styles.back}>
         ← {resultsHref ? vi.ota.backToResults : copy.back}
       </Link>
       {isMissing ? (

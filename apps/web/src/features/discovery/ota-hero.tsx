@@ -31,7 +31,7 @@ export function OtaHero() {
           <p className={styles.description}>{vi.ota.heroIntro}</p>
           <nav className={styles.activities} aria-label={vi.api.otaActivityLabel}>
             {ACTIVITIES.map(([image, name]) => (
-              <Link key={image} href={{ pathname: '/inspiration', query: { q: name } }}>
+              <Link prefetch={false} key={image} href={{ pathname: '/inspiration', query: { q: name } }}>
                 <Image src={`/brand/${image}`} alt="" width={40} height={40} />
                 <span>{name}</span>
               </Link>
