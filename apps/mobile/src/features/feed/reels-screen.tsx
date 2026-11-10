@@ -2,7 +2,7 @@ import { useReelsFeed } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, spacing } from '@tripflix/tokens';
 import { NetworkStateType, useNetworkState } from 'expo-network';
-import { router, useIsFocused } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -54,10 +54,15 @@ function readDemoReels(): ReelItem[] {
 }
 
 const DEMO_REELS = readDemoReels();
+// shortcut: core chưa có API lấy reel theo id bài; dò tối đa 5 trang feed (50 reel), đủ cho dữ liệu pilot.
+const MAX_JUMP_PAGES = 5;
 
 export function ReelsScreen() {
   const [isSample, setIsSample] = useState(false);
   const feed = useReelsFeed({ enabled: !isSample });
+  /** Reel cần mở ngay (ví dụ bấm thẻ video trong khung chat Tripi). */
+  const { reel: targetId } = useLocalSearchParams<{ reel?: string }>();
+  const clearTarget = useCallback(() => router.setParams({ reel: undefined }), []);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const refreshInFlight = useRef(false);
   const refreshFeed = async () => {
@@ -86,6 +91,13 @@ export function ReelsScreen() {
     [feed.data],
   );
 
+  const isTargetLoaded = !targetId || items.some((item) => item.postId === targetId);
+  useEffect(() => {
+    if (isTargetLoaded || !feed.hasNextPage || feed.isFetching || feed.isError) return;
+    if ((feed.data?.pages.length ?? 0) >= MAX_JUMP_PAGES) return;
+    void feed.fetchNextPage({ cancelRefetch: false });
+  }, [isTargetLoaded, feed]);
+
   const loadMore = () => {
     if (feed.hasNextPage && !feed.isFetching && !feed.isError)
       void feed.fetchNextPage({ cancelRefetch: false });
@@ -106,6 +118,8 @@ export function ReelsScreen() {
         <ApiErrorNotice error={feed.error} retry={retryFeed} />
         <ReelsFeed
           items={items}
+          targetId={targetId}
+          onTargetShown={clearTarget}
           onLoadMore={loadMore}
           isFetchingMore={feed.isFetchingNextPage}
           onRefresh={() => {
@@ -150,6 +164,8 @@ export function ReelsScreen() {
 
 export function ReelsFeed({
   items,
+  targetId,
+  onTargetShown,
   isSample = false,
   onExitSample,
   onLoadMore,
@@ -158,6 +174,8 @@ export function ReelsFeed({
   isRefreshing = false,
 }: {
   items: readonly ReelItem[];
+  targetId?: string;
+  onTargetShown?: () => void;
   isSample?: boolean;
   onExitSample?: () => void;
   onLoadMore?: () => void;
@@ -209,6 +227,23 @@ export function ReelsFeed({
     setActiveIndex(index);
   }, []);
 
+  const list = useRef<FlatList<ReelItem>>(null);
+  const targetIndex = targetId ? items.findIndex((item) => item.postId === targetId) : -1;
+  useEffect(() => {
+    if (targetIndex < 0 || layout.height === 0) return;
+    // Danh sách chỉ dựng vài reel quanh chỗ đang xem, nên cuộn xa bị chặn ở cuối phần đã dựng;
+    // cuộn lại qua vài khung hình để danh sách kịp dựng tiếp. onScroll tự cập nhật reel đang xem.
+    let frame = 0;
+    let attempts = 0;
+    const jump = () => {
+      list.current?.scrollToOffset({ offset: targetIndex * layout.height, animated: false });
+      if (++attempts < 10) frame = requestAnimationFrame(jump);
+      else onTargetShown?.();
+    };
+    jump();
+    return () => cancelAnimationFrame(frame);
+  }, [targetIndex, layout.height, onTargetShown]);
+
   const indexAt = (offset: number) =>
     Math.max(0, Math.min(items.length - 1, Math.round(offset / layout.height)));
 
@@ -233,6 +268,7 @@ export function ReelsFeed({
       {isFocused && <StatusBar style="light" />}
       {layout.height > 0 && layout.width > 0 && (
         <FlatList
+          ref={list}
           testID="reels-list"
           data={items}
           keyExtractor={(item) => item.id}
