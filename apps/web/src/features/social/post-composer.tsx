@@ -115,7 +115,7 @@ export function PostComposer() {
             {mutation.isPending ? vi.api.saving : vi.api.saveDraft}
           </button>
           {id && (
-            <Link className="secondary-button" href={`/trips/${id}`}>
+            <Link prefetch={false} className="secondary-button" href={`/trips/${id}`}>
               {vi.api.detail}
             </Link>
           )}

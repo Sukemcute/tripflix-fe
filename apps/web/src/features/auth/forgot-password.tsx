@@ -42,7 +42,7 @@ export function ForgotPassword() {
           </button>
         </form>
       )}
-      <Link className="auth-link auth-switch" href="/login">
+      <Link prefetch={false} className="auth-link auth-switch" href="/login">
         {vi.api.backToLogin}
       </Link>
     </>

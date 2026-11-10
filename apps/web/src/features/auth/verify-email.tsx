@@ -45,7 +45,7 @@ export function VerifyEmail({ token }: { token?: string }) {
           </button>
         </>
       )}
-      <Link className="auth-link auth-switch" href="/account">
+      <Link prefetch={false} className="auth-link auth-switch" href="/account">
         {vi.api.verifyEmailAccount}
       </Link>
     </>

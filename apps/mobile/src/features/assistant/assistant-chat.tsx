@@ -28,6 +28,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 import { Icon, IconButton, Mascot, Txt, type IconName } from '@/components/mobile-ui';
 import { useAssistant } from './assistant-provider';
+import { AssistantCards } from './assistant-cards';
 
 const copy = vi.assistant;
 
@@ -145,6 +146,7 @@ export function AssistantChat({ onMinimize }: { onMinimize: () => void }) {
                 <Txt selectable style={{ color: message.role === 'user' ? c.background : c.ink }}>
                   {message.text}
                 </Txt>
+                {!!message.cards?.length && <AssistantCards cards={message.cards} onOpen={close} />}
               </View>
             </View>
           ))

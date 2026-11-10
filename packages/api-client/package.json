@@ -16,6 +16,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@noble/ciphers": "catalog:",
+    "@noble/curves": "catalog:",
+    "@noble/hashes": "catalog:",
     "@tanstack/react-query": "catalog:"
   },
   "peerDependencies": {

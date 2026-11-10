@@ -31,6 +31,10 @@ export const colors = {
   coralTint: '#FFF0EB',
   overlay: '#18242B80',
   overlayHeavy: '#18242BCC',
+  tabBar: '#000000',
+  composeStart: '#FFAA38',
+  composeEnd: '#EA432D',
+  composeIconShadow: '#60180E47',
   transparent: 'transparent',
 } as const;
 

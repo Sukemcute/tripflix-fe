@@ -74,7 +74,7 @@ export function LivePostDetail({ id }: { id: string }) {
   if (isNotFound) {
     return (
       <main id="content" className="ota-container post-page">
-        <Link className="post-back" href="/">
+        <Link prefetch={false} className="post-back" href="/">
           {vi.api.back}
         </Link>
         <section className="post-unavailable-card" role="alert">
@@ -88,7 +88,7 @@ export function LivePostDetail({ id }: { id: string }) {
           <h2>{vi.api.postUnavailable}</h2>
           <p>{vi.api.postUnavailableHint}</p>
           <div className="post-unavailable-actions">
-            <Link className="primary-button" href="/">
+            <Link prefetch={false} className="primary-button" href="/">
               {vi.api.backHome}
             </Link>
           </div>
@@ -99,7 +99,7 @@ export function LivePostDetail({ id }: { id: string }) {
 
   return (
     <main id="content" className="ota-container post-page">
-      <Link className="post-back" href="/">
+      <Link prefetch={false} className="post-back" href="/">
         {vi.api.back}
       </Link>
       <ApiErrorNotice
@@ -208,6 +208,7 @@ export function LivePostDetail({ id }: { id: string }) {
                     </button>
                   ) : (
                     <Link
+                      prefetch={false}
                       key={reaction}
                       className="post-chip"
                       href={login}
@@ -231,7 +232,7 @@ export function LivePostDetail({ id }: { id: string }) {
                     {viewer?.isBookmarked ? vi.api.unbookmark : vi.api.bookmark}
                   </button>
                 ) : (
-                  <Link className="post-chip" href={login}>
+                  <Link prefetch={false} className="post-chip" href={login}>
                     {vi.api.bookmark}
                   </Link>
                 )}
@@ -269,6 +270,7 @@ export function LivePostDetail({ id }: { id: string }) {
                 </ul>
                 {trip.hotelName && (
                   <Link
+                    prefetch={false}
                     className="primary-button post-card-cta"
                     href={`/search?q=${encodeURIComponent(trip.hotelName)}`}
                   >

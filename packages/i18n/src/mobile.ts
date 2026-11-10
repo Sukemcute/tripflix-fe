@@ -35,7 +35,7 @@ export const mobile = {
     logo: 'Tripflix',
     mascot: 'Tripi, người bạn đồng hành',
   },
-  tabs: { reels: 'Reels', explore: 'Khám phá', create: 'Chia sẻ', trips: 'Chuyến đi', profile: 'Tôi' },
+  tabs: { reels: 'Reels', explore: 'Khám phá', create: 'Đăng bài', trips: 'Chuyến đi', profile: 'Tôi' },
   onboarding: {
     title: 'Chạm cảm hứng,\ntrọn hành trình.',
     body: 'Khám phá chuyến đi thật từ những người cùng gu. Thấy thích? Mình đi thôi.',
@@ -46,6 +46,8 @@ export const mobile = {
   feed: {
     forYou: 'Dành cho bạn',
     trending: 'Thịnh hành',
+    hot: 'Đang hot',
+    following: 'Đang theo dõi',
     headline: 'Thích biển này.\nMình đi thôi.',
     hoiAnHeadline: 'Chậm một nhịp.\nThương một phố.',
     caption: '3 ngày trốn phố, chỉ mang theo một chiếc mood thật chill. #NhaTrang #ĐiLàMê',
@@ -64,6 +66,8 @@ export const mobile = {
   reels: {
     emptyTitle: 'Chuyến đi tiếp theo đang chờ bạn',
     emptyBody: 'Video sẽ xuất hiện tại đây khi sẵn sàng. Cùng khám phá điểm đến trong lúc chờ nhé.',
+    followingSoonTitle: 'Sắp ra mắt',
+    followingSoonBody: 'Bạn sẽ sớm xem được video mới từ những người mình theo dõi ngay tại đây.',
     sample: 'Video thử nghiệm',
     openSample: 'Xem video thử nghiệm',
     backToFeed: 'Trở về bảng tin',
@@ -144,6 +148,7 @@ export const mobile = {
   explore: {
     intro: 'Thế giới còn nhiều điều hay,',
     browseTitle: 'Đi đâu tiếp đây?',
+    hotelResults: 'Khách sạn',
     livePlaceholder: 'Bạn muốn đi đâu?',
     mood: 'Bật mood xê dịch',
     beachHero: 'Một chiếc hẹn\nvới biển xanh.',
@@ -189,6 +194,14 @@ export const mobile = {
     natureQuery: 'Đi Đà Lạt',
     weekendQuery: 'Cuối tuần 3 ngày 2 đêm, có gì vui?',
     hoiAnBody: 'Lộ trình Hội An đang được chuẩn bị. Bạn có thể xem chuyến Nha Trang để thử luồng đặt.',
+  },
+  postDetail: {
+    more: 'Tùy chọn khác',
+    itinerary: 'Lịch trình',
+    dayShort: 'N{day}',
+    stay: 'Nơi ở',
+    pricePerPerson: 'Khoảng {price}/người',
+    openHotel: 'Xem khách sạn {name}',
   },
   itinerary: {
     title: 'Nha Trang,\nđi là mê.',
@@ -429,6 +442,11 @@ export const mobile = {
     permission: 'Cho phép truy cập thư viện ảnh để chọn ảnh hoặc video cho bài viết.',
     tooLong: 'Chọn video dài tối đa 5 phút nhé.',
     pickerError: 'Chưa mở được thư viện ảnh. Vui lòng thử lại.',
+    unsupportedVideo: 'Chỉ đăng được video MP4 hoặc MOV. Hãy chọn video khác.',
+    videoInfo: '{duration} · {size} MB',
+    uploadingVideo: 'Đang tải video lên… {percent}%',
+    uploadFailed: 'Tải video lên chưa xong. Kiểm tra mạng rồi bấm đăng lại, video sẽ tải lại từ đầu.',
+    videoProcessing: 'Video đang được xử lý. Bài sẽ hiện video sau vài phút.',
   },
   notifications: {
     title: 'Thông báo',

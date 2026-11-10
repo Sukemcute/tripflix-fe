@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, Card, Field, Icon, Notice, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 import { router } from 'expo-router';
+import { CommentLikeButton } from './comment-like-button';
 import { ReelCommentComposer } from './reel-comment-composer';
 import { CommunitySummary } from './post-summary';
 import { ReportButton } from './report-button';
@@ -48,20 +49,27 @@ export function LiveComments({
   showHeading = true,
   compact = false,
   renderContent,
+  onLoginRequired,
 }: {
   postId: string;
   parentCommentId?: string;
   showHeading?: boolean;
   compact?: boolean;
   renderContent?: (content: ReactNode) => ReactNode;
+  /** A sheet in a Modal must close first, because the login screen would open behind it. */
+  onLoginRequired?: () => void;
 }) {
   const { user } = useApiSession();
   const client = useQueryClient();
   const [body, setBody] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
   const [replying, setReplying] = useState<string | undefined>();
+  const goToLogin =
+    onLoginRequired ?? (() => router.push({ pathname: '/login', params: { returnTo: `/trip/${postId}` } }));
+  // Whether a comment is liked depends on who is viewing, so each viewer keeps a separate list.
+  const queryKey = ['social', 'comments', postId, parentCommentId, user?.id];
   const query = useInfiniteQuery({
-    queryKey: ['social', 'comments', postId, parentCommentId],
+    queryKey,
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) => socialApi.listComments(postId, pageParam, parentCommentId, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
@@ -99,64 +107,81 @@ export function LiveComments({
       {query.data?.pages[0]?.items.length === 0 && <Notice>{vi.api.noComments}</Notice>}
       {query.data?.pages
         .flatMap((page) => page.items)
-        .map((comment) => (
-          <View key={comment.id} style={compact ? styles.comment : undefined}>
-            {compact && (
-              <View style={styles.avatar}>
-                <Icon name="person-outline" size={18} color={colors.tealInk} />
-              </View>
-            )}
-            <Card style={compact ? styles.commentBody : undefined}>
-              <Txt variant="caption">
-                {comment.authorId === user?.id
-                  ? user.displayName
-                  : comment.authorName || comment.authorId.slice(0, 8)} ·{' '}
-                {new Date(comment.createdAt).toLocaleDateString('vi-VN')}
-              </Txt>
-              <Txt>{comment.body}</Txt>
-              {comment.authorId !== user?.id && <ReportButton targetType="comment" targetId={comment.id} />}
-              <View style={compact ? styles.actions : undefined}>
-                {comment.authorId === user?.id && (
-                  <>
-                    <CommentAction
-                      compact={compact}
-                      disabled={mutation.isPending}
-                      onPress={() => {
-                        setEditing(comment.id);
-                        setBody(comment.body);
-                      }}
-                    >
-                      {vi.api.edit}
-                    </CommentAction>
-                    <CommentAction
-                      compact={compact}
-                      disabled={mutation.isPending}
-                      onPress={() => mutation.mutate(comment.id)}
-                    >
-                      {vi.api.remove}
-                    </CommentAction>
-                  </>
-                )}
-                {!parentCommentId && (
-                  <CommentAction
-                    compact={compact}
-                    onPress={() => setReplying(replying === comment.id ? undefined : comment.id)}
-                  >
-                    {vi.api.replies}
-                  </CommentAction>
-                )}
-              </View>
-              {!parentCommentId && replying === comment.id && (
-                <LiveComments
-                  postId={postId}
-                  parentCommentId={comment.id}
-                  showHeading={!compact}
-                  compact={compact}
-                />
+        .map((comment) => {
+          const authorName =
+            comment.authorId === user?.id
+              ? user.displayName
+              : comment.authorName || comment.authorId.slice(0, 8);
+          const likeButton = !comment.deletedAt && (
+            <CommentLikeButton
+              commentId={comment.id}
+              isLiked={comment.isLiked}
+              likeCount={comment.likeCount}
+              authorName={authorName}
+              queryKey={queryKey}
+              isStacked={compact}
+              onLoginRequired={goToLogin}
+            />
+          );
+          return (
+            <View key={comment.id} style={compact ? styles.comment : undefined}>
+              {compact && (
+                <View style={styles.avatar}>
+                  <Icon name="person-outline" size={18} color={colors.tealInk} />
+                </View>
               )}
-            </Card>
-          </View>
-        ))}
+              <Card style={compact ? styles.commentBody : undefined}>
+                <Txt variant="caption">
+                  {authorName} · {new Date(comment.createdAt).toLocaleDateString('vi-VN')}
+                </Txt>
+                <Txt>{comment.body}</Txt>
+                {comment.authorId !== user?.id && <ReportButton targetType="comment" targetId={comment.id} />}
+                {!compact && likeButton}
+                <View style={compact ? styles.actions : undefined}>
+                  {comment.authorId === user?.id && (
+                    <>
+                      <CommentAction
+                        compact={compact}
+                        disabled={mutation.isPending}
+                        onPress={() => {
+                          setEditing(comment.id);
+                          setBody(comment.body);
+                        }}
+                      >
+                        {vi.api.edit}
+                      </CommentAction>
+                      <CommentAction
+                        compact={compact}
+                        disabled={mutation.isPending}
+                        onPress={() => mutation.mutate(comment.id)}
+                      >
+                        {vi.api.remove}
+                      </CommentAction>
+                    </>
+                  )}
+                  {!parentCommentId && (
+                    <CommentAction
+                      compact={compact}
+                      onPress={() => setReplying(replying === comment.id ? undefined : comment.id)}
+                    >
+                      {vi.api.replies}
+                    </CommentAction>
+                  )}
+                </View>
+                {!parentCommentId && replying === comment.id && (
+                  <LiveComments
+                    postId={postId}
+                    parentCommentId={comment.id}
+                    showHeading={!compact}
+                    compact={compact}
+                    onLoginRequired={onLoginRequired}
+                  />
+                )}
+              </Card>
+              {compact && likeButton}
+            </View>
+          );
+        })}
       {query.hasNextPage && (
         <Button
           disabled={query.isFetchingNextPage}
@@ -212,11 +237,7 @@ export function LiveComments({
             )}
           </>
         ) : (
-          <Button
-            onPress={() => router.push({ pathname: '/login', params: { returnTo: `/trip/${postId}` } })}
-          >
-            {vi.api.login}
-          </Button>
+          <Button onPress={goToLogin}>{vi.api.login}</Button>
         )}
       </View>
     </>

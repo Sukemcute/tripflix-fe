@@ -1,9 +1,25 @@
 // Hook và type sinh ra import theo đường dẫn con, ví dụ:
 //   import { useHealthControllerCheck } from '@tripflix/api-client/core-api/health/health';
 //   import type { ParseQueryResponse } from '@tripflix/api-client/ai-service/model';
-export { configureHttp, http, HttpError, type HttpConfig, type HttpResponse } from './http';
+export { configureHttp, http, httpRaw, HttpError, type HttpConfig, type HttpResponse } from './http';
 export { ApiSessionProvider, useApiSession } from './session';
-export { SessionClient, type SessionOptions, type TokenStorage } from './session-client';
+export {
+  SessionClient,
+  type PasswordCredentials,
+  type RegisterInput,
+  type SessionOptions,
+  type TokenStorage,
+} from './session-client';
+export {
+  encryptPassword,
+  PASSWORD_ENVELOPE_INVALID_CODE,
+  resetPasswordKeyCache,
+  sendWithPasswords,
+  type PasswordField,
+  type PasswordKey,
+  type PasswordPurpose,
+} from './password-encryption';
+export { changePassword, resetPassword } from './password-actions';
 export {
   getApiErrorKind,
   getAuthErrorKind,
@@ -27,8 +43,9 @@ export {
   type SummaryPoint,
   type SummaryFilter,
 } from './post-summary';
-export { feedApi, useReelsFeed } from './feed';
-export { updateReelSocialCache } from './reel-social-cache';
+export { feedApi, REEL_FEED_TABS, useReelsFeed, type ReelFeedTab } from './feed';
+export { findCachedFeedCard, updateReelSocialCache } from './reel-social-cache';
+export { updateCommentLikeCache } from './comment-like-cache';
 export { evictPostFromCache, isPostNotFoundError } from './post-cache';
 export { useStaySearch, getAvailableStays, getFutureDate, type StayFilters } from './stay-search';
 export {
@@ -72,4 +89,18 @@ export {
   createVnpayOperation,
   type CommerceHotel,
 } from './commerce';
-export { uploadChunkToPresignedUrl } from './media-upload';
+export { PresignedUploadError, uploadChunkToPresignedUrl } from './media-upload';
+export {
+  resolveVideoMimeType,
+  uploadVideo,
+  type VideoMimeType,
+  type VideoUploadOptions,
+  type VideoUploadSource,
+} from './video-upload';
+export {
+  parseSseEvents,
+  sendAssistantMessage,
+  type AssistantAnswer,
+  type AssistantAnswerKind,
+  type AssistantCard,
+} from './assistant';

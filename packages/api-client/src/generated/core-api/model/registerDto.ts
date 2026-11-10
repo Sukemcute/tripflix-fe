@@ -8,11 +8,14 @@ import type { RegisterDtoGender } from './registerDtoGender';
 
 export interface RegisterDto {
   email: string;
+  /** Mật khẩu đã mã hoá bằng khoá của GET /auth/password-key, dạng "#TFPWD:1:<keyId>:<ts>:<dữ liệu>". Gửi trường này thay cho trường mật khẩu thường tương ứng, không gửi cả hai. */
+  encPassword?: string;
   /**
+   * Cách cũ, gửi mật khẩu gốc. Bị từ chối khi server bật AUTH_PASSWORD_ENCRYPTION_REQUIRED.
    * @minLength 12
    * @maxLength 64
    */
-  password: string;
+  password?: string;
   /** @maxLength 30 */
   displayName: string;
   registrationId: string;

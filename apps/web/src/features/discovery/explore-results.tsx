@@ -87,7 +87,7 @@ function ExploreCard({ item }: { item: ExploreItemDto }) {
     : null;
   return (
     <article className="trip-card">
-      <Link className="trip-card-link" href={href}>
+      <Link prefetch={false} className="trip-card-link" href={href}>
         {isStay ? (
           <StayThumbnail url={item.thumbnail} name={item.title} />
         ) : (

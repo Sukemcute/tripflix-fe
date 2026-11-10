@@ -1,1 +1,1 @@
-export { LivePostDetailScreen as default } from '@/features/feed/live-feed-screen';
+export { LivePostDetailScreen as default } from '@/features/feed/live-post-detail-screen';

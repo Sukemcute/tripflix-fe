@@ -1,198 +1,251 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { commerceApi, getFutureDate, useApiSession } from '@tripflix/api-client';
-import { isValidTripDate, shiftTripDate } from '@tripflix/app-core';
-import { vi } from '@tripflix/i18n';
-import { mobileLayout, spacing } from '@tripflix/tokens';
-import { Image } from 'expo-image';
+import { t, vi } from '@tripflix/i18n';
+import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
+import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
-import { View } from 'react-native';
-import { Button, Card, Field, money, Notice, PriceRow, Screen, Txt, ui } from '@/components/mobile-ui';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Button, Icon, Mascot, money, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { CommerceError } from './commerce-state';
-import { useCommerce } from './commerce-provider';
+import { CartLink } from './cart-ui';
+import { HotelInfoSections, HotelReviewsSection } from './hotel-detail-sections';
+import { PhotoGallery } from './hotel-parts';
 
 const text = vi.commerce;
+const hotelText = vi.hotel;
+const HERO_OVERLAP = 24;
+const MIN_HERO_HEIGHT = 200;
+
+function FloatingButton({
+  children,
+  label,
+  onPress,
+}: {
+  children: ReactNode;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: radius.pill,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.background,
+        opacity: 0.94,
+      }}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
 export function CommerceHotelScreen() {
   const params = useLocalSearchParams<{
     id?: string;
     checkIn?: string;
     checkOut?: string;
     adults?: string;
-    sourcePostId?: string;
+    children?: string;
+    infants?: string;
   }>();
   const { isReady } = useApiSession();
-  const { setDraft } = useCommerce();
-  const [checkIn, setCheckIn] = useState(params.checkIn ?? getFutureDate(1));
-  const [checkOut, setCheckOut] = useState(params.checkOut ?? getFutureDate(3));
-  const [adults, setAdults] = useState(params.adults ?? '2');
-  const [stay, setStay] = useState({ checkIn, checkOut, adults: Number(adults) });
-  const valid =
-    isValidTripDate(checkIn, shiftTripDate(getFutureDate(0), -1)) &&
-    isValidTripDate(checkOut, checkIn) &&
-    checkOut > checkIn &&
-    /^\d+$/.test(adults) &&
-    Number(adults) >= 1 &&
-    Number(adults) <= 9;
-  const isUnchanged =
-    checkIn === stay.checkIn && checkOut === stay.checkOut && Number(adults) === stay.adults;
+  const today = getFutureDate(0);
+  const stay = {
+    checkIn: params.checkIn && params.checkIn >= today ? params.checkIn : getFutureDate(1),
+    checkOut: params.checkOut ?? getFutureDate(3),
+    adults: Number(params.adults ?? 2) || 2,
+  };
   const query = useQuery({
     queryKey: ['commerce', 'hotel', params.id, stay],
-    enabled:
-      isReady &&
-      !!params.id &&
-      isValidTripDate(stay.checkIn, shiftTripDate(getFutureDate(0), -1)) &&
-      isValidTripDate(stay.checkOut, stay.checkIn) &&
-      Number.isInteger(stay.adults) &&
-      stay.adults >= 1 &&
-      stay.adults <= 9,
+    enabled: isReady && !!params.id,
     queryFn: ({ signal }) => commerceApi.getHotel(params.id!, stay, signal),
   });
   const hotel = query.data;
-  const photos = hotel?.images.length ? hotel.images : hotel?.thumbnail ? [hotel.thumbnail] : [];
-  const [cover, ...additionalPhotos] = photos;
-  return (
-    <Screen title={text.hotel}>
-      {!params.id && <Notice>{text.noHotel}</Notice>}
-      {hotel && (
-        <View style={{ gap: spacing.sm }}>
-          {cover && (
-            <Image
-              source={cover}
-              style={{ height: 220, borderRadius: mobileLayout.cardRadius }}
-              contentFit="cover"
-              accessibilityLabel={hotel.name}
-            />
-          )}
-          <Txt variant="title">{hotel.name}</Txt>
+  // Ảnh + thẻ thông tin vừa khít một màn hình: ảnh lấy phần chiều cao còn lại sau thẻ.
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const [infoHeight, setInfoHeight] = useState(0);
+  const heroHeight =
+    viewportHeight && infoHeight
+      ? Math.max(MIN_HERO_HEIGHT, viewportHeight - infoHeight + HERO_OVERLAP)
+      : undefined;
+  // Chọn phòng ở màn riêng (như Agoda) để màn chi tiết gọn, mang theo kỳ ở và số khách.
+  const openRooms = () =>
+    router.push({
+      pathname: '/hotel-rooms',
+      params: {
+        id: params.id ?? '',
+        checkIn: stay.checkIn,
+        checkOut: stay.checkOut,
+        adults: String(stay.adults),
+        children: params.children ?? '0',
+        infants: params.infants ?? '0',
+      },
+    });
+  const photos = hotel ? (hotel.images.length ? hotel.images : hotel.thumbnail ? [hotel.thumbnail] : []) : [];
+  const footer = hotel?.priceFrom ? (
+    <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <View>
+        <Txt variant="small" style={ui.muted}>
+          {hotelText.from}
+        </Txt>
+        <Txt variant="heading" style={{ color: colors.coralInk }}>
+          {money(hotel.priceFrom)}
           <Txt variant="small" style={ui.muted}>
-            {hotel.province.name}
-            {hotel.stars ? ` · ${hotel.stars} ★` : ''}
+            {` ${hotelText.perNightShort}`}
           </Txt>
+        </Txt>
+      </View>
+      <Button onPress={openRooms}>{hotelText.chooseRoom}</Button>
+    </Row>
+  ) : undefined;
+
+  return (
+    <Screen header={null} scroll={false} padded={false} footer={footer}>
+      <ScrollView
+        onLayout={(event) => setViewportHeight(Math.round(event.nativeEvent.layout.height))}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: spacing.xl }}
+      >
+        <View>
+          <PhotoGallery
+            images={photos}
+            name={hotel?.name ?? text.hotel}
+            ratio={4 / 3}
+            rounded={0}
+            height={heroHeight}
+            counterBottom={36}
+          />
+          <Row
+            style={{
+              position: 'absolute',
+              top: spacing.md,
+              left: spacing.md,
+              right: spacing.md,
+              justifyContent: 'space-between',
+            }}
+          >
+            <FloatingButton
+              label={vi.mobile.common.back}
+              onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+            >
+              <Icon name="arrow-back" size={20} />
+            </FloatingButton>
+            <View
+              style={{
+                borderRadius: radius.pill,
+                backgroundColor: colors.background,
+                opacity: 0.94,
+                padding: 4,
+              }}
+            >
+              <CartLink />
+            </View>
+          </Row>
         </View>
-      )}
-      <Card>
-        <Txt variant="heading">{text.chooseStay}</Txt>
-        <Field
-          label={vi.api.checkIn}
-          value={checkIn}
-          onChangeText={setCheckIn}
-          placeholder="YYYY-MM-DD"
-          maxLength={10}
-        />
-        <Field
-          label={vi.api.checkOut}
-          value={checkOut}
-          onChangeText={setCheckOut}
-          placeholder="YYYY-MM-DD"
-          maxLength={10}
-        />
-        <Field
-          label={vi.api.adults}
-          value={adults}
-          onChangeText={setAdults}
-          keyboardType="number-pad"
-          maxLength={1}
-        />
-        {!valid && <Notice tone="error">{text.invalidStay}</Notice>}
-        <Button
-          disabled={!valid || !params.id || query.isFetching}
-          onPress={() => {
-            setStay({ checkIn, checkOut, adults: Number(adults) });
-            if (isUnchanged) void query.refetch();
+
+        {/* Thẻ thông tin giống băng rôn web: nền xanh nhạt, vòng vàng bên phải, linh vật Tripi. */}
+        <View
+          onLayout={(event) => setInfoHeight(Math.round(event.nativeEvent.layout.height))}
+          style={{
+            marginTop: -HERO_OVERLAP,
+            borderTopLeftRadius: mobileLayout.sheetRadius,
+            borderTopRightRadius: mobileLayout.sheetRadius,
+            overflow: 'hidden',
+            backgroundColor: colors.seaMist,
+            paddingHorizontal: mobileLayout.gutter,
+            paddingVertical: spacing.lg,
+            gap: spacing.xs,
           }}
         >
-          {text.chooseStay}
-        </Button>
-      </Card>
-      <CommerceError
-        error={query.error}
-        retry={() => {
-          void query.refetch();
-        }}
-      />
-      {query.isFetching && <Txt>{vi.api.loading}</Txt>}
-      {hotel && (
-        <>
-          <Txt>
-            {hotel.stay.checkIn} → {hotel.stay.checkOut} · {hotel.stay.nights} {text.nights} ·{' '}
-            {hotel.stay.adults} {text.guests}
-          </Txt>
-          {!hotel.isAvailable && <Notice tone="warning">{text.unavailable}</Notice>}
-          <Txt variant="heading">{text.rooms}</Txt>
-          {hotel.rooms.map((room) => (
-            <Card key={room.productId}>
-              <Txt variant="heading">{room.name}</Txt>
-              {room.remaining !== null && (
-                <Txt>
-                  {text.remaining}: {room.remaining}
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              right: -140,
+              top: -40,
+              width: 300,
+              height: 300,
+              borderRadius: 150,
+              backgroundColor: colors.sunSoft,
+            }}
+          />
+          <View pointerEvents="none" style={{ position: 'absolute', right: 4, top: 6 }}>
+            <Mascot pose="explore" size={104} />
+          </View>
+          {!params.id && <Notice>{text.noHotel}</Notice>}
+          {hotel && (
+            <>
+              <Txt variant="small" style={{ color: colors.tealInk, fontWeight: '700' }}>
+                {hotel.province.name}
+              </Txt>
+              <Txt variant="title" style={{ maxWidth: '68%' }}>
+                {hotel.name}
+              </Txt>
+              {hotel.stars ? (
+                <Txt style={{ color: colors.coralInk, letterSpacing: 2 }}>{'★'.repeat(hotel.stars)}</Txt>
+              ) : null}
+              {hotel.address && (
+                <Txt variant="small" style={[ui.muted, { maxWidth: '70%' }]}>
+                  {hotel.address}
                 </Txt>
               )}
-              <Txt>
-                {text.roomsNeeded}: {room.roomsNeeded}
-              </Txt>
-              {!room.isAvailable && (
-                <Notice tone="warning">{room.reason ? text.reasons[room.reason] : text.unavailable}</Notice>
+              {hotel.location && (
+                <Pressable
+                  accessibilityRole="link"
+                  onPress={() =>
+                    void Linking.openURL(
+                      `https://www.google.com/maps/search/?api=1&query=${hotel.location!.lat},${hotel.location!.lng}`,
+                    )
+                  }
+                >
+                  <Txt variant="small" style={{ color: colors.tealInk, fontWeight: '600' }}>
+                    {hotelText.map} ↗
+                  </Txt>
+                </Pressable>
               )}
-              {room.ratePlans.map((rate) => (
-                <Card key={rate.code}>
-                  <Txt variant="label">{rate.name}</Txt>
-                  <Txt>{rate.isRefundable ? text.refundable : text.nonRefundable}</Txt>
-                  {rate.pricePerNight !== null && (
-                    <PriceRow label={text.perNight} amount={money(rate.pricePerNight)} />
-                  )}
-                  {rate.totalPrice !== null && (
-                    <PriceRow label={text.total} amount={money(rate.totalPrice)} />
-                  )}
-                  <Button
-                    disabled={
-                      !valid ||
-                      !isUnchanged ||
-                      query.isFetching ||
-                      !!query.error ||
-                      !room.isAvailable ||
-                      rate.totalPrice === null
-                    }
-                    onPress={() => {
-                      setDraft({
-                        hotelId: hotel.id,
-                        hotelName: hotel.name,
-                        roomName: room.name,
-                        rateName: rate.name,
-                        total: rate.totalPrice!,
-                        request: {
-                          adults: hotel.stay.adults,
-                          sourcePostId: params.sourcePostId ?? null,
-                          items: [
-                            {
-                              productId: room.productId,
-                              checkIn: hotel.stay.checkIn,
-                              checkOut: hotel.stay.checkOut,
-                              qty: room.roomsNeeded,
-                              ratePlanCode: rate.code,
-                            },
-                          ],
-                        },
-                      });
-                      router.push('/cart');
+              {hotel.rating && (
+                <Row style={{ gap: spacing.sm, alignItems: 'center', marginTop: spacing.xs }}>
+                  <View
+                    style={{
+                      paddingHorizontal: spacing.sm,
+                      paddingVertical: 4,
+                      borderRadius: radius.pill,
+                      backgroundColor: colors.background,
                     }}
                   >
-                    {text.choose}
-                  </Button>
-                </Card>
-              ))}
-            </Card>
-          ))}
-          {additionalPhotos.map((uri) => (
-            <Image
-              key={uri}
-              source={uri}
-              style={{ height: 210, borderRadius: mobileLayout.cardRadius }}
-              contentFit="cover"
-              accessibilityLabel={hotel.name}
-            />
-          ))}
-        </>
-      )}
+                    <Txt variant="label" style={{ color: colors.tealInk }}>
+                      {hotel.rating.average.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} / 5
+                    </Txt>
+                  </View>
+                  <Txt variant="small" style={ui.muted}>
+                    {t('hotel.reviewCount', { count: hotel.rating.count })}
+                    {hotel.rating.source ? ` · ${hotel.rating.source}` : ''}
+                  </Txt>
+                </Row>
+              )}
+            </>
+          )}
+        </View>
+
+        <View style={{ paddingHorizontal: mobileLayout.gutter }}>
+          <CommerceError
+            error={query.error}
+            retry={() => {
+              void query.refetch();
+            }}
+          />
+          {query.isPending && <Txt style={{ paddingVertical: spacing.lg }}>{hotelText.loading}</Txt>}
+          {hotel && <HotelInfoSections hotel={hotel} />}
+          {params.id && <HotelReviewsSection id={params.id} />}
+        </View>
+      </ScrollView>
     </Screen>
   );
 }

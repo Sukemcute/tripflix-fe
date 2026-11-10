@@ -6,7 +6,7 @@ export default function NotFound() {
     <main id="content" className="ota-container empty-state">
       <h1>{vi.demo.web.notFoundTitle}</h1>
       <p>{vi.demo.web.notFoundBody}</p>
-      <Link href="/search" className="primary-button">
+      <Link prefetch={false} href="/search" className="primary-button">
         {vi.demo.common.explore}
       </Link>
     </main>

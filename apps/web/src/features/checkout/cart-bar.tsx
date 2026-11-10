@@ -44,7 +44,7 @@ export function CartBar() {
         <div className={styles.bar} role="status">
           <div className={`ota-container ${styles.barContent}`}>
             <span className={styles.barAdded}>✓ {copy.cartAdded}</span>
-            <Link className="secondary-button" href="/cart">
+            <Link prefetch={false} className="secondary-button" href="/cart">
               {copy.cartView}
             </Link>
           </div>
@@ -120,7 +120,7 @@ export function CartBar() {
               {copy.cartAdd}
             </button>
             {isReady && !user ? (
-              <Link className="primary-button" href={`/login?returnTo=${encodeURIComponent(returnTo)}`}>
+              <Link prefetch={false} className="primary-button" href={`/login?returnTo=${encodeURIComponent(returnTo)}`}>
                 {copy.login}
               </Link>
             ) : (
