@@ -7,6 +7,7 @@
 import type { CheckoutDtoPassengerTypesItem } from './checkoutDtoPassengerTypesItem';
 import type { CheckoutDtoStatus } from './checkoutDtoStatus';
 import type { CheckoutItemDto } from './checkoutItemDto';
+import type { CheckoutRefundDto } from './checkoutRefundDto';
 
 export interface CheckoutDto {
   orderId: string;
@@ -22,6 +23,10 @@ export interface CheckoutDto {
   confirmationCode: string | null;
   /** @nullable */
   cancelReason: string | null;
+  /** @nullable */
+  cancelledAt?: string | null;
+  /** @nullable */
+  refund?: CheckoutRefundDto | null;
   items: CheckoutItemDto[];
   isGuestInfoComplete: boolean;
   /** Số hành khách cần nhập (0 khi không có vé bay) */

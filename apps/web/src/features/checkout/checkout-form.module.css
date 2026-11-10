@@ -1068,6 +1068,114 @@
   margin-top: 16px;
 }
 
+/* ---------- Đơn đã huỷ: xám, khác hẳn màn thanh toán thành công ---------- */
+
+.cancelledIcon {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  color: var(--color-background);
+  box-shadow:
+    0 0 0 10px var(--color-border),
+    0 0 0 20px color-mix(in srgb, var(--color-border) 45%, transparent);
+}
+
+.codeCancelled {
+  border-color: var(--color-text-muted);
+  background: var(--color-background);
+}
+
+.codeCancelled strong {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.cancelledMeta {
+  font-size: 14px;
+}
+
+.refundCard {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--color-background);
+  text-align: left;
+}
+
+.refundCard h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.refundSteps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  text-align: center;
+}
+
+.refundSteps li {
+  padding-top: 10px;
+  border-top: 4px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.refundSteps li[data-state='done'] {
+  border-color: var(--color-teal);
+  color: var(--color-teal-ink);
+}
+
+.refundSteps li[data-state='current'] {
+  border-color: var(--color-coral-ink);
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.refundRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.refundRow b {
+  color: var(--color-ink);
+}
+
+.refundTotal {
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+  font-size: 17px;
+}
+
+.refundTotal b {
+  color: var(--color-teal-ink);
+}
+
+.refundNote {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+/* Đơn đã huỷ: làm nhạt danh sách phòng, vé để không nhầm với đơn còn hiệu lực. */
+.cancelledSummary {
+  opacity: 0.6;
+  filter: grayscale(1);
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 1000px) {
@@ -1131,4 +1239,49 @@
   .timer circle:last-child {
     transition: none;
   }
+}
+
+.cancelLink {
+  margin-top: 8px;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--color-coral-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cancelPanel {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 460px);
+  margin-top: 12px;
+  padding: 18px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background);
+  text-align: left;
+}
+
+.cancelPanel p {
+  margin: 0;
+}
+
+.cancelRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cancelNote {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.cancelActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }

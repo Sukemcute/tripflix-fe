@@ -87,6 +87,9 @@ export const commerceApi = {
       stay: { checkIn: stay.checkIn, checkOut: stay.checkOut, nights: stay.nights, adults: stay.adults },
     };
   },
+  async getCancelQuote(id: string, signal?: AbortSignal) {
+    return (await checkout.checkoutControllerCancelQuote(encodeURIComponent(id), { signal })).data;
+  },
   async getCheckout(id: string, signal?: AbortSignal) {
     return readEntity((await checkout.checkoutControllerGet(encodeURIComponent(id), { signal })).data, [
       'orderId',
@@ -143,6 +146,12 @@ export const commerceApi = {
   },
 };
 
+export function createCancelPaidOperation() {
+  return createOperation(
+    async (id: string, key) =>
+      (await checkout.checkoutControllerCancelPaid(encodeURIComponent(id), headers(key))).data,
+  );
+}
 export function createCheckoutOperation() {
   return createOperation(
     async (body: CheckoutRequestDto, key) =>

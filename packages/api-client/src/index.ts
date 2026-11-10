@@ -67,6 +67,7 @@ export {
   createOperation,
   createCheckoutOperation,
   createCardPaymentOperation,
+  createCancelPaidOperation,
   createOtpOperation,
   createVnpayOperation,
   type CommerceHotel,
