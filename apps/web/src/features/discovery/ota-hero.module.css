@@ -1,18 +1,283 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,900&display=swap');
+
 .hero {
   position: relative;
+  /* Nền đại dương nhiệt đới: Bầu trời xanh nắng ấm chuyển dần sang nước biển ngọc bích */
   background:
-    url('/brand/hero-tripflix-3d-backdrop.jpg') center top / cover no-repeat,
-    linear-gradient(180deg, #022336 0%, #03344d 100%);
-  min-height: 440px;
+    radial-gradient(circle at 82% 10%, rgba(254, 240, 138, 0.4) 0%, rgba(56, 189, 248, 0.2) 30%, transparent 65%),
+    radial-gradient(circle at 45% 0%, #0284c7 0%, #0369a1 40%, #075985 75%, #083344 100%),
+    linear-gradient(180deg, #0284c7 0%, #0369a1 55%, #083344 100%);
+  min-height: clamp(500px, 46vw, 590px);
   overflow: clip;
 }
 
+/* ==========================================================================
+   LỚP KHÔNG GIAN BẦU TRỜI & NÚI ĐÁ VÔI VỊNH HẠ LONG
+   ========================================================================== */
+.karstBackdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.sunRays {
+  position: absolute;
+  top: -70px;
+  right: 15%;
+  width: 580px;
+  height: 460px;
+  background: conic-gradient(
+    from 192deg at 72% 0%,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.22) 12deg,
+    transparent 22deg,
+    rgba(254, 240, 138, 0.24) 34deg,
+    transparent 45deg,
+    rgba(186, 230, 253, 0.2) 58deg,
+    transparent 75deg
+  );
+  filter: blur(28px);
+  pointer-events: none;
+}
+
+.seagull {
+  position: absolute;
+  fill: #ffffff;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  pointer-events: none;
+}
+.gull1 {
+  top: 24px;
+  left: 24%;
+  width: 26px;
+  transform: rotate(-6deg);
+  animation: gullFloat 5.2s ease-in-out infinite alternate;
+}
+.gull2 {
+  top: 16px;
+  right: 18%;
+  width: 32px;
+  transform: rotate(12deg);
+  animation: gullFloat 4.4s ease-in-out infinite alternate-reverse;
+}
+
+/* Dãy núi đá vôi Vịnh Hạ Long tạo chiều sâu không gian kỳ vĩ */
+.karstSvg {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  width: 100%;
+  height: 280px;
+}
+
+@keyframes gullFloat {
+  0% {
+    transform: translateY(0) rotate(-6deg);
+  }
+  100% {
+    transform: translateY(-7px) rotate(4deg);
+  }
+}
+
 .inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block: clamp(20px, 2.5vh, 32px) clamp(40px, 4.5vh, 52px);
+}
+
+/* ==========================================================================
+   FIGMA-STYLE MODULAR VECTOR TYPOGRAPHY SYSTEM
+   Từng chữ cái là một Frame độc lập lồng một ảnh danh lam thắng cảnh thực tế
+   ========================================================================== */
+.brandCanvasWrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: clamp(14px, 2vh, 26px);
+}
+
+.tripflixBrandCanvas {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 0.45vw, 8px);
+  user-select: none;
+  padding-top: 4px;
+  z-index: 4;
+  /* Phản chiếu mặt nước biển tự nhiên với độ trong mờ tinh tế */
+  -webkit-box-reflect: below -28px linear-gradient(
+    transparent 58%,
+    rgba(3, 105, 161, 0.12) 78%,
+    rgba(56, 189, 248, 0.3) 100%
+  );
+}
+
+.letterFrame {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  perspective: 900px;
+  transition: transform 280ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+
+.letterFrame:hover {
+  transform: translateY(-10px) scale(1.06);
+  z-index: 15;
+}
+
+/* Khối 3D Bevel Extrusion đa tầng chân thực như Figma 3D */
+.letter3dExtrusion {
+  position: absolute;
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(5.4rem, 9.8vw, 9.8rem);
+  font-weight: 900;
+  font-style: italic;
+  color: #0284c7;
+  transform: translate(6px, 12px) scaleX(1.1) skewX(-7deg);
+  -webkit-text-stroke: 4px #0369a1;
+  text-shadow:
+    1px 1px 0 #0284c7,
+    2px 2px 0 #0369a1,
+    3px 3px 0 #075985,
+    4px 4px 0 #0c4a6e,
+    5px 5px 0 #083344,
+    6px 6px 0 #041f2c,
+    8px 14px 24px rgba(2, 44, 67, 0.7);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Mặt chữ lồng ảnh danh lam thắng cảnh + viền pha lê trắng nổi bật */
+.letterFace {
+  position: relative;
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(5.4rem, 9.8vw, 9.8rem);
+  font-weight: 900;
+  font-style: italic;
+  transform: scaleX(1.1) skewX(-7deg);
+  background-size: cover;
+  background-position: center;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  /* Viền kính pha lê trắng sắc nét */
+  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.95);
+  filter: drop-shadow(0 4px 14px rgba(2, 132, 199, 0.6)) drop-shadow(0 0 16px rgba(56, 189, 248, 0.65));
+  z-index: 2;
+  transition:
+    filter 300ms ease,
+    -webkit-text-stroke 300ms ease;
+}
+
+.letterFrame:hover .letterFace {
+  -webkit-text-stroke: 3px #ffffff;
+  filter: drop-shadow(0 0 28px #38bdf8) drop-shadow(0 0 14px #ffffff);
+}
+
+/* Tooltip hiển thị tên danh lam thắng cảnh khi hover */
+.letterBadge {
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(3, 40, 60, 0.94);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(125, 211, 252, 0.7);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  z-index: 20;
+}
+.badgeTag {
+  color: #38bdf8;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.badgeName {
+  color: #ffffff;
+}
+
+.letterFrame:hover .letterBadge {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================================================
+   CON THUYỀN GỖ & VỆT BỌT NƯỚC SỦI XUNG QUANH THUYỀN
+   ========================================================================== */
+.boatWakeGroup {
+  position: absolute;
+  bottom: -28px;
+  right: clamp(10px, 3.2vw, 55px);
+  width: 180px;
+  height: 120px;
+  pointer-events: none;
+  z-index: 7;
+}
+
+.heroBoat {
+  position: absolute;
+  right: 14px;
+  bottom: 24px;
+  width: clamp(110px, 11vw, 142px);
+  height: auto;
+  z-index: 5;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.4));
+  animation: boatSway 4s ease-in-out infinite alternate;
+}
+
+@keyframes boatSway {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-4px) rotate(1.8deg);
+  }
+}
+
+.wakeWaterSvg {
+  position: absolute;
+  right: 4px;
+  bottom: 14px;
+  width: 160px;
+  height: 48px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ==========================================================================
+   BỐ CỤC 2 CỘT NỬA DƯỚI MẶT NƯỚC BIỂN
+   ========================================================================== */
+.bottomSection {
+  width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   align-items: end;
   gap: clamp(20px, 3.2vw, 48px);
-  padding-block: clamp(140px, 15vw, 180px) 46px;
 }
 
 .copy {
@@ -115,7 +380,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 11px 26px;
+  padding: 10px 24px;
   border-radius: 999px;
   background: #ffffff;
   color: #03344d;
@@ -203,7 +468,7 @@
   width: 100%;
 }
 
-/* Thẻ kính mờ danh lam thắng cảnh dáng ngang (như mẫu Phố cổ Hội An) */
+/* Thẻ kính mờ danh lam thắng cảnh dáng ngang */
 .panoramicDestinationCard {
   width: min(100%, 490px);
   min-width: 0;
@@ -367,10 +632,9 @@
    RESPONSIVE LAYOUT
    ========================================================================== */
 @media (max-width: 900px) {
-  .inner {
+  .bottomSection {
     grid-template-columns: minmax(0, 1fr);
     gap: 28px;
-    padding-block: clamp(180px, 24vw, 240px) 48px;
   }
   .sceneContainer {
     align-items: stretch;
@@ -385,12 +649,47 @@
 }
 
 @media (max-width: 640px) {
-  .hero {
-    background-position: 65% top;
-  }
   .inner {
-    padding-block: clamp(120px, 20vw, 150px) 24px;
-    gap: 16px;
+    padding-block: 16px 20px;
+  }
+  .brandCanvasWrapper {
+    margin-bottom: 14px;
+  }
+  .tripflixBrandCanvas {
+    gap: 2px;
+  }
+  .letter3dExtrusion,
+  .letterFace {
+    font-size: clamp(1.95rem, 9.2vw, 3.0rem);
+    transform: scaleX(1.05) skewX(-5deg);
+  }
+  .letter3dExtrusion {
+    transform: translate(3px, 6px) scaleX(1.05) skewX(-5deg);
+    -webkit-text-stroke: 2.5px #0369a1;
+  }
+  .letterFace {
+    -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.95);
+  }
+  .boatWakeGroup {
+    width: 120px;
+    height: 80px;
+    bottom: -16px;
+    right: 4px;
+  }
+  .heroBoat {
+    width: 72px;
+    right: 6px;
+    bottom: 12px;
+  }
+  .wakeWaterSvg {
+    width: 90px;
+    height: 30px;
+  }
+  .heroBoat {
+    width: 80px;
+  }
+  .wakeWaterSvg {
+    display: none;
   }
   .copy h1 {
     font-size: min(clamp(1.7rem, 6.8vw, 2.1rem), 13cqi);
@@ -417,8 +716,8 @@
     display: none;
   }
   .destinationCardThumb {
-    width: 92px;
-    height: 68px;
+    width: 80px;
+    height: 64px;
     border-radius: 10px;
     flex-shrink: 0;
   }
@@ -428,18 +727,18 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .copy,
-  .sceneContainer {
-    animation: arrive 1000ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
+  .brandCanvasWrapper,
+  .bottomSection {
+    animation: arrive 900ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
   }
-  .sceneContainer {
-    animation-delay: 150ms;
+  .bottomSection {
+    animation-delay: 120ms;
   }
 }
 @keyframes arrive {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -448,8 +747,10 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .eyebrowPlane,
-  .copy,
-  .sceneContainer {
+  .heroBoat,
+  .seagull,
+  .brandCanvasWrapper,
+  .bottomSection {
     animation: none;
   }
 }
