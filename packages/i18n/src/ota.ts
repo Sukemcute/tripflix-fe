@@ -10,6 +10,7 @@ export const ota = {
   heroTrendingBadge: 'Xu hướng du lịch 2026',
   heroExploreNow: 'Khám phá ngay',
   heroTopRated: 'Đánh giá cao',
+  heroMascotTag: 'Tripi cùng bạn vi vu',
   heroScenes: {
     haLong: {
       title: 'Vịnh Hạ Long',

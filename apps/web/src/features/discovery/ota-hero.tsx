@@ -76,12 +76,24 @@ export function OtaHero() {
     <header className={styles.hero}>
       <div className={`ota-container ${styles.inner}`}>
         <div className={styles.copy}>
-          <TripiLive className={styles.heroMascot} />
+          {/* Huy hiệu linh vật Tripi đồng hành thông minh */}
+          <div className={styles.companionBadge}>
+            <div className={styles.companionMascotWrapper}>
+              <TripiLive className={styles.companionMascot} />
+            </div>
+            <div className={styles.companionTextGroup}>
+              <span className={styles.companionPulseDot} aria-hidden="true" />
+              <span className={styles.companionTag}>{vi.ota.heroMascotTag}</span>
+            </div>
+          </div>
+
           <h1>
             <span className={styles.titleFirst}>{SLOGAN_FIRST},</span>{' '}
             <span className={styles.titleSecond}>{SLOGAN_SECOND}</span>
           </h1>
+
           <p className={styles.description}>{vi.ota.heroIntro}</p>
+
           <nav className={styles.activities} aria-label={vi.api.otaActivityLabel}>
             {ACTIVITIES.map(([image, name]) => (
               <Link
@@ -90,7 +102,7 @@ export function OtaHero() {
                 href={{ pathname: '/inspiration', query: { q: name } }}
                 className={styles.activityPill}
               >
-                <Image src={`/brand/${image}`} alt="" width={40} height={40} />
+                <Image src={`/brand/${image}`} alt="" width={28} height={28} />
                 <span>{name}</span>
               </Link>
             ))}

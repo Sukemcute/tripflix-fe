@@ -519,9 +519,9 @@ h3 {
 }
 .ota-home.results-page {
   padding-top: 0;
-  padding-bottom: 0;
+  padding-bottom: 24px;
   position: relative;
-  margin-top: -52px;
+  margin-top: -36px;
   scroll-margin-top: 24px;
 }
 .ota-home > .result-grid:empty {
