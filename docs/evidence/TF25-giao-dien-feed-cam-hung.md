@@ -13,6 +13,7 @@
   - Dock icon 64px phong cách Instagram với tooltip nổi, nút chuyển đổi view Bài viết / Reels, bộ lọc feed, nút bật/tắt lộ trình và tạo bài viết.
 - **`apps/web/src/features/social/feed/social-feed-view.tsx` & `social-feed.module.css`**:
   - Giao diện feed dạng 3 cột responsive: cột trái hiển thị thông tin lộ trình của bài viết đang chọn, cột giữa cuộn bài viết vô tận, cột phải hiển thị bình luận & tương tác.
+  - Tối ưu thuật toán nhận diện bài viết active bằng đường đọc trọng tâm (Reading Focus Line ở 35% viewport) kết hợp `requestAnimationFrame`, đảm bảo đồng bộ chính xác tức thời sang cột Lịch trình và Bình luận.
 - **`apps/web/src/features/social/feed/post-card.tsx` & `adaptive-post-media.tsx`**:
   - Component thẻ bài viết hỗ trợ thả tim, bình luận, lưu bài viết, chia sẻ, hiển thị badge tác giả và lưới ảnh thích ứng (1 ảnh lớn, 2 ảnh ngang, 3 ảnh dạng tạp chí, 4+ ảnh dạng mosaic kèm số lượng còn lại).
 - **`apps/web/src/features/social/feed/contextual-panel.tsx` & `itinerary-sidebar-panel.tsx`**:
