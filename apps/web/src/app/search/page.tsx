@@ -1,5 +1,9 @@
 import { LiveSearchScreen } from '@/features/discovery/live-search-screen';
 import { OTA_DESTINATIONS } from '@/features/discovery/ota-destinations';
+import {
+  addStayDays, getStayDateIssue, getStayPriceIssue, getStayToday, isStayDate, isStayInteger,
+  MAX_STAY_GUESTS, MAX_STAY_PRICE, MAX_STAY_ROOMS,
+} from '@/features/discovery/stay-search-validation';
 import styles from '@/features/discovery/hotel-listing.module.css';
 import type { StayFilters } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
@@ -23,16 +27,31 @@ export default async function SearchPage({
   const defaultPlace = OTA_DESTINATIONS[0];
   const placeId = /^[a-z0-9-]{1,100}$/i.test(requestedPlace) ? requestedPlace : query ? '' : defaultPlace.id;
   const placeName = query || OTA_DESTINATIONS.find((place) => place.id === placeId)?.name || placeId;
-  const initialFilters: Partial<StayFilters> = { placeId };
-  for (const key of ['checkIn', 'checkOut'] as const) {
-    const value = read(key);
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) initialFilters[key] = value;
+  const today = getStayToday();
+  const requestedCheckIn = read('checkIn');
+  const requestedCheckOut = read('checkOut');
+  let checkIn = isStayDate(requestedCheckIn) && requestedCheckIn >= today ? requestedCheckIn : addStayDays(today, 1);
+  let checkOut = getStayDateIssue(checkIn, requestedCheckOut, today) ? addStayDays(checkIn, 2) : requestedCheckOut;
+  if (!isStayDate(checkOut)) {
+    checkIn = addStayDays(today, 1);
+    checkOut = addStayDays(today, 3);
   }
-  for (const key of ['adults', 'rooms', 'minStars', 'priceMin', 'priceMax'] as const) {
+  const initialFilters: Partial<StayFilters> = { placeId, checkIn, checkOut };
+  const limits = { adults: MAX_STAY_GUESTS, rooms: MAX_STAY_ROOMS, minStars: 5, stars: 5 } as const;
+  for (const key of ['adults', 'rooms', 'minStars', 'stars'] as const) {
     const value = read(key);
-    if (/^\d{1,10}$/.test(value)) initialFilters[key] = value;
+    if (isStayInteger(value, 1, limits[key])) initialFilters[key] = String(Number(value));
   }
-  if (read('sort') === 'stars') initialFilters.sort = 'stars';
+  const priceMin = read('priceMin');
+  const priceMax = read('priceMax');
+  const validMin = isStayInteger(priceMin, 0, MAX_STAY_PRICE) ? String(Number(priceMin)) : '';
+  const validMax = isStayInteger(priceMax, 0, MAX_STAY_PRICE) ? String(Number(priceMax)) : '';
+  if (!getStayPriceIssue(validMin, validMax)) {
+    initialFilters.priceMin = validMin;
+    initialFilters.priceMax = validMax;
+  }
+  const sort = read('sort');
+  if (sort === 'stars' || sort === 'price_desc') initialFilters.sort = sort;
   return (
     <main id="content" className={`ota-container ${styles.page}`}>
       <header className={styles.banner}>

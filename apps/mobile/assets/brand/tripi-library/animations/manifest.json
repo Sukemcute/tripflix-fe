@@ -1,0 +1,242 @@
+[
+  {
+    "id": "greeting",
+    "label": "Chào bạn",
+    "file": "greeting.webp",
+    "webp": "greeting.webp",
+    "webm": "greeting.webm",
+    "duration": 3,
+    "fps": 24,
+    "width": 512,
+    "height": 512,
+    "description": "Transparent 2D raster reaction loop; not original 3D rig animation.",
+    "frames": 72,
+    "webpFrames": 72,
+    "uniqueFrames": 42,
+    "alpha": [
+      0,
+      254
+    ],
+    "webpBytes": 2959716,
+    "webmBytes": 374950,
+    "webpDuration": 3.0,
+    "webmDuration": 3,
+    "decodedWebmFrames": 72,
+    "decodedWebmUniqueFrames": 72,
+    "decodedWebmAlpha": [
+      0,
+      255
+    ],
+    "webpAlpha": [
+      0,
+      254
+    ],
+    "cornersAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "loopBoundaryMeanDifference": 3.0221
+  },
+  {
+    "id": "curious",
+    "label": "Tò mò",
+    "file": "curious.webp",
+    "webp": "curious.webp",
+    "webm": "curious.webm",
+    "duration": 3,
+    "fps": 24,
+    "width": 512,
+    "height": 512,
+    "description": "Transparent 2D raster reaction loop; not original 3D rig animation.",
+    "frames": 72,
+    "webpFrames": 72,
+    "uniqueFrames": 71,
+    "alpha": [
+      0,
+      254
+    ],
+    "webpBytes": 1597328,
+    "webmBytes": 258088,
+    "webpDuration": 3.0,
+    "webmDuration": 3,
+    "decodedWebmFrames": 72,
+    "decodedWebmUniqueFrames": 72,
+    "decodedWebmAlpha": [
+      0,
+      255
+    ],
+    "webpAlpha": [
+      0,
+      254
+    ],
+    "cornersAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "loopBoundaryMeanDifference": 2.3891
+  },
+  {
+    "id": "excited",
+    "label": "Phấn khích",
+    "file": "excited.webp",
+    "webp": "excited.webp",
+    "webm": "excited.webm",
+    "duration": 3,
+    "fps": 24,
+    "width": 512,
+    "height": 512,
+    "description": "Transparent 2D raster reaction loop; not original 3D rig animation.",
+    "frames": 72,
+    "webpFrames": 72,
+    "uniqueFrames": 63,
+    "alpha": [
+      0,
+      254
+    ],
+    "webpBytes": 2221622,
+    "webmBytes": 192310,
+    "webpDuration": 3.0,
+    "webmDuration": 3,
+    "decodedWebmFrames": 72,
+    "decodedWebmUniqueFrames": 72,
+    "decodedWebmAlpha": [
+      0,
+      255
+    ],
+    "webpAlpha": [
+      0,
+      254
+    ],
+    "cornersAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "loopBoundaryMeanDifference": 3.4484
+  },
+  {
+    "id": "searching",
+    "label": "Đang tìm chuyến",
+    "file": "searching.webp",
+    "webp": "searching.webp",
+    "webm": "searching.webm",
+    "duration": 3,
+    "fps": 24,
+    "width": 512,
+    "height": 512,
+    "description": "Transparent 2D raster reaction loop; not original 3D rig animation.",
+    "frames": 72,
+    "webpFrames": 72,
+    "uniqueFrames": 71,
+    "alpha": [
+      0,
+      254
+    ],
+    "webpBytes": 2092252,
+    "webmBytes": 307794,
+    "webpDuration": 3.0,
+    "webmDuration": 3,
+    "decodedWebmFrames": 72,
+    "decodedWebmUniqueFrames": 72,
+    "decodedWebmAlpha": [
+      0,
+      255
+    ],
+    "webpAlpha": [
+      0,
+      254
+    ],
+    "cornersAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "loopBoundaryMeanDifference": 3.4978
+  },
+  {
+    "id": "departure",
+    "label": "Lên đường",
+    "file": "departure.webp",
+    "webp": "departure.webp",
+    "webm": "departure.webm",
+    "duration": 3,
+    "fps": 24,
+    "width": 512,
+    "height": 512,
+    "description": "Transparent 2D raster reaction loop; not original 3D rig animation.",
+    "frames": 72,
+    "webpFrames": 72,
+    "uniqueFrames": 60,
+    "alpha": [
+      0,
+      254
+    ],
+    "webpBytes": 2325490,
+    "webmBytes": 417138,
+    "webpDuration": 3.0,
+    "webmDuration": 3,
+    "decodedWebmFrames": 72,
+    "decodedWebmUniqueFrames": 72,
+    "decodedWebmAlpha": [
+      0,
+      255
+    ],
+    "webpAlpha": [
+      0,
+      254
+    ],
+    "cornersAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "loopBoundaryMeanDifference": 3.9128
+  },
+  {
+    "id": "success",
+    "label": "Thành công",
+    "file": "success.webp",
+    "webp": "success.webp",
+    "webm": "success.webm",
+    "duration": 3,
+    "fps": 24,
+    "width": 512,
+    "height": 512,
+    "description": "Transparent 2D raster reaction loop; not original 3D rig animation.",
+    "frames": 72,
+    "webpFrames": 72,
+    "uniqueFrames": 69,
+    "alpha": [
+      0,
+      254
+    ],
+    "webpBytes": 2099294,
+    "webmBytes": 251752,
+    "webpDuration": 3.0,
+    "webmDuration": 3,
+    "decodedWebmFrames": 72,
+    "decodedWebmUniqueFrames": 72,
+    "decodedWebmAlpha": [
+      0,
+      255
+    ],
+    "webpAlpha": [
+      0,
+      254
+    ],
+    "cornersAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "loopBoundaryMeanDifference": 2.1047
+  }
+]

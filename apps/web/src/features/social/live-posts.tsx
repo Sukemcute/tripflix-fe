@@ -1,14 +1,399 @@
 'use client';
-import { useApiSession, useSocialPosts } from '@tripflix/api-client';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  evictPostFromCache,
+  HttpError,
+  isPostNotFoundError,
+  socialApi,
+  updateReelSocialCache,
+  uploadChunkToPresignedUrl,
+  useApiSession,
+  useReelsFeed,
+  useSocialPosts,
+} from '@tripflix/api-client';
+import {
+  mediaUploadControllerCreateUpload,
+  mediaUploadControllerCompleteUpload,
+} from '@tripflix/api-client/core-api/media/media';
+import type {
+  FeedCardDto,
+  SocialPostDto,
+  TripAttachmentDto,
+  TripItineraryItemDto,
+  UpdatePostDto,
+} from '@tripflix/api-client/core-api/model/index';
+import { commentsControllerSetCommentReaction } from '@tripflix/api-client/core-api/social-comments/social-comments';
+import { selectReelPoster } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
-import { getPostCover, POST_COVER_MASCOT } from './post-cover';
+import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
+import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import styles from './live-posts.module.css';
 
 // Trang chi tiết bài viết nằm ở post-detail.tsx; giữ export ở đây để app/trips/[slug]/page.tsx không phải đổi.
 export { LivePostDetail } from './post-detail';
+
+type FeedFilterMode = 'all' | 'withTrip' | 'saved';
+
+export type SocialIconName =
+  | 'search'
+  | 'sparkles'
+  | 'bookmark'
+  | 'bookmarkFilled'
+  | 'verified'
+  | 'pin'
+  | 'more'
+  | 'heart'
+  | 'heartFilled'
+  | 'comment'
+  | 'share'
+  | 'arrowUp'
+  | 'arrowDown'
+  | 'arrowUpRight'
+  | 'calendar'
+  | 'clock'
+  | 'wallet'
+  | 'chevronRight'
+  | 'chevronLeft'
+  | 'info'
+  | 'close'
+  | 'send'
+  | 'play'
+  | 'pause'
+  | 'volumeOn'
+  | 'volumeOff'
+  | 'maximize'
+  | 'minimize'
+  | 'users'
+  | 'compass'
+  | 'filter'
+  | 'sun'
+  | 'moon'
+  | 'plus'
+  | 'upload'
+  | 'trash'
+  | 'video';
+
+/** Bộ icon vector đồng nhất nét 1.85px theo chuẩn Instagram / Threads / Lucide. */
+export function SocialIcon({ name, size = 18 }: { name: SocialIconName; size?: number }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.85,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    'aria-hidden': true as const,
+  };
+
+  switch (name) {
+    case 'search':
+      return (
+        <svg {...common}>
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+      );
+    case 'sparkles':
+      return (
+        <svg {...common}>
+          <path d="M12 3c.6 3.7 2.3 5.4 6 6-3.7.6-5.4 2.3-6 6-.6-3.7-2.3-5.4-6-6 3.7-.6 5.4-2.3 6-6Z" />
+          <path d="M19 15c.3 1.6 1 2.3 2.6 2.6-1.6.3-2.3 1-2.6 2.6-.3-1.6-1-2.3-2.6-2.6 1.6-.3 2.3-1 2.6-2.6Z" />
+        </svg>
+      );
+    case 'bookmark':
+      return (
+        <svg {...common}>
+          <path d="M6 4.8A1.8 1.8 0 0 1 7.8 3h8.4A1.8 1.8 0 0 1 18 4.8V21l-6-3.8L6 21V4.8Z" />
+        </svg>
+      );
+    case 'bookmarkFilled':
+      return (
+        <svg {...common} fill="currentColor">
+          <path d="M6 4.8A1.8 1.8 0 0 1 7.8 3h8.4A1.8 1.8 0 0 1 18 4.8V21l-6-3.8L6 21V4.8Z" />
+        </svg>
+      );
+    case 'verified':
+      return (
+        <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path
+            d="M20 1.5 22.36 4.95 25.72 2.4 26.91 6.44 30.87 5.03 30.75 9.25 35.97 9.13 33.56 13.09 37.6 14.28 35.05 17.64 38.5 20 35.05 22.36 37.6 25.72 33.56 26.91 34.97 30.87 30.75 30.75 30.87 34.97 26.91 33.56 25.72 37.6 22.36 35.05 20 38.5 17.64 35.05 14.28 37.6 13.09 33.56 9.13 34.97 9.25 30.75 5.03 30.87 6.44 26.91 2.4 25.72 4.95 22.36 1.5 20 4.95 17.64 2.4 14.28 6.44 13.09 5.03 9.13 9.25 9.25 9.13 5.03 13.09 6.44 14.28 2.4 17.64 4.95Z"
+            fill="#2D9BEF"
+            stroke="#2D9BEF"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M13.2 20.4 17.8 25 27.2 15.6"
+            stroke="#FFFFFF"
+            strokeWidth="3.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+    case 'pin':
+      return (
+        <svg {...common}>
+          <path d="M12 21s-6-5.2-6-10a6 6 0 1 1 12 0c0 4.8-6 10-6 10Z" />
+          <circle cx="12" cy="11" r="2.2" />
+        </svg>
+      );
+    case 'more':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="5.5" cy="12" r="1.75" />
+          <circle cx="12" cy="12" r="1.75" />
+          <circle cx="18.5" cy="12" r="1.75" />
+        </svg>
+      );
+    case 'heart':
+      return (
+        <svg {...common}>
+          <path d="M12 20.3s-7.5-4.6-9.1-9C1.8 8 3.8 4.5 7.3 4.5c2 0 3.5 1.1 4.7 2.6 1.2-1.5 2.7-2.6 4.7-2.6 3.5 0 5.5 3.5 4.4 6.8-1.6 4.4-9.1 9-9.1 9Z" />
+        </svg>
+      );
+    case 'heartFilled':
+      return (
+        <svg {...common} fill="currentColor">
+          <path d="M12 20.3s-7.5-4.6-9.1-9C1.8 8 3.8 4.5 7.3 4.5c2 0 3.5 1.1 4.7 2.6 1.2-1.5 2.7-2.6 4.7-2.6 3.5 0 5.5 3.5 4.4 6.8-1.6 4.4-9.1 9-9.1 9Z" />
+        </svg>
+      );
+    case 'comment':
+      return (
+        <svg {...common}>
+          <path d="M20.5 11.8a8.4 8.4 0 0 1-12.5 7.3L3.5 20.5l1.5-4.3A8.4 8.4 0 1 1 20.5 11.8Z" />
+        </svg>
+      );
+    case 'share':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M13.5 4.2a1 1 0 0 1 1.7-.7l6.5 6.5a1.4 1.4 0 0 1 0 2l-6.5 6.5a1 1 0 0 1-1.7-.7v-3.5c-4.6 0-7.9 1.5-10.2 4.8-.5.7-1.6.2-1.4-.7 1.3-6.6 5.4-10.3 11.6-10.7V4.2Z" />
+        </svg>
+      );
+    case 'arrowUp':
+      return (
+        <svg {...common}>
+          <path d="m18 15-6-6-6 6" />
+        </svg>
+      );
+    case 'arrowDown':
+      return (
+        <svg {...common}>
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      );
+    case 'arrowUpRight':
+      return (
+        <svg {...common}>
+          <path d="M7 17 17 7" />
+          <path d="M8 7h9v9" />
+        </svg>
+      );
+    case 'calendar':
+      return (
+        <svg {...common}>
+          <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+          <path d="M8 3.5v3M16 3.5v3M3.5 9.5h17" />
+        </svg>
+      );
+    case 'clock':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="8.5" />
+          <path d="M12 7.5V12l3 2" />
+        </svg>
+      );
+    case 'wallet':
+      return (
+        <svg {...common}>
+          <rect x="3" y="6" width="18" height="13" rx="2.5" />
+          <path d="M16 12.5h.01" />
+          <path d="M3 10h18" />
+        </svg>
+      );
+    case 'chevronRight':
+      return (
+        <svg {...common}>
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      );
+    case 'chevronLeft':
+      return (
+        <svg {...common}>
+          <path d="m15 6-6 6 6 6" />
+        </svg>
+      );
+    case 'info':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 11v5" />
+          <circle cx="12" cy="8" r="0.6" fill="currentColor" />
+        </svg>
+      );
+    case 'close':
+      return (
+        <svg {...common}>
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      );
+    case 'send':
+      return (
+        <svg {...common}>
+          <path d="m21 3-9.5 9.5" />
+          <path d="m21 3-6.5 18-3-8.5L3 9.5 21 3Z" />
+        </svg>
+      );
+    case 'play':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M8 5.5v13l11-6.5-11-6.5Z" />
+        </svg>
+      );
+    case 'pause':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <rect x="6.5" y="5" width="4" height="14" rx="1" />
+          <rect x="13.5" y="5" width="4" height="14" rx="1" />
+        </svg>
+      );
+    case 'volumeOn':
+      return (
+        <svg {...common}>
+          <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+          <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+          <path d="M18.5 6a8.5 8.5 0 0 1 0 12" />
+        </svg>
+      );
+    case 'volumeOff':
+      return (
+        <svg {...common}>
+          <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+          <path d="m21 9-6 6M15 9l6 6" />
+        </svg>
+      );
+    case 'maximize':
+      return (
+        <svg {...common}>
+          <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" />
+        </svg>
+      );
+    case 'sun':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+        </svg>
+      );
+    case 'moon':
+      return (
+        <svg {...common}>
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+        </svg>
+      );
+    case 'plus':
+      return (
+        <svg {...common}>
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      );
+    case 'upload':
+      return (
+        <svg {...common}>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+        </svg>
+      );
+    case 'trash':
+      return (
+        <svg {...common}>
+          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" />
+        </svg>
+      );
+    case 'video':
+      return (
+        <svg {...common}>
+          <rect x="2" y="4" width="15" height="16" rx="2" />
+          <path d="m17 9 5-3v12l-5-3" />
+        </svg>
+      );
+    case 'minimize':
+      return (
+        <svg {...common}>
+          <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" />
+        </svg>
+      );
+    case 'users':
+      return (
+        <svg {...common}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      );
+    case 'compass':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+        </svg>
+      );
+    case 'filter':
+      return (
+        <svg {...common}>
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+        </svg>
+      );
+  }
+}
+
+export function formatAuthorDisplay(
+  authorId: string,
+  feedAuthorName?: string | null,
+  currentUserId?: string,
+  currentDisplayName?: string | null,
+) {
+  if (currentUserId && authorId === currentUserId) {
+    const name = currentDisplayName?.trim() || vi.api.postYou;
+    const handle = name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '_');
+    return { name, handle: `@${handle || 'me'}` };
+  }
+  if (feedAuthorName?.trim()) {
+    const clean = feedAuthorName.trim();
+    const handle = clean
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '_');
+    return { name: clean, handle: `@${handle}` };
+  }
+  const shortId = authorId.slice(0, 6).toLowerCase();
+  return {
+    name: `${vi.api.commentMember} ${shortId}`,
+    handle: `@user_${shortId}`,
+  };
+}
+
+export function formatDateVi(value: string): string {
+  return new Date(value).toLocaleDateString('vi-VN');
+}
+
+export function formatCompactCount(value: number): string {
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+  }
+  return String(value);
+}
 
 export function PublicPosts({
   kind = 'public',
@@ -18,11 +403,25 @@ export function PublicPosts({
   /** Chỉ với bài công khai: tìm theo tiêu đề và nội dung (GET /v1/posts?keyword=). */
   keyword?: string;
 }) {
+  if (kind !== 'public') {
+    return <AccountPostGrid kind={kind} keyword={keyword} />;
+  }
+  return <InspirationImmersiveViewer initialKeyword={keyword} />;
+}
+
+/** Giữ nguyên hiển thị dạng lưới cho trang Tài khoản (/account: bài của tôi & bài đã lưu). */
+function AccountPostGrid({
+  kind,
+  keyword = '',
+}: {
+  kind: 'mine' | 'bookmarks';
+  keyword?: string;
+}) {
   const { isReady, user } = useApiSession();
   const query = useSocialPosts(kind, keyword);
   const posts = query.data?.pages.flatMap((page) => page.items);
   if (!isReady) return <output>{vi.api.loading}</output>;
-  if (kind !== 'public' && !user) return <Link href="/login">{vi.api.loginRequired}</Link>;
+  if (!user) return <Link href="/login">{vi.api.loginRequired}</Link>;
   return (
     <>
       <ApiErrorNotice
@@ -43,30 +442,25 @@ export function PublicPosts({
       )}
       <div className="trip-grid">
         {posts?.map((post) => {
-          const cover = getPostCover(post.tripAttachment?.destinationName);
-          const hasCover = kind === 'public';
+          const cover = getPostCover(post.tripAttachment?.destinationName, post.title, post.hashtags);
           return (
             <article key={post.id} className="trip-card">
-              <div className={hasCover ? `trip-card-body ${styles.withCover}` : 'trip-card-body'}>
-                {hasCover && (
-                  <div className={cover ? styles.cover : `${styles.cover} ${styles.mascotCover}`}>
-                    {cover ? (
-                      <Image
-                        src={cover}
-                        alt=""
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 900px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <Image src={POST_COVER_MASCOT} alt="" width={140} height={140} />
-                    )}
+              <div className="trip-card-body">
+                {cover && (
+                  <div className={styles.cover}>
+                    <Image
+                      src={cover}
+                      alt=""
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 900px) 50vw, 33vw"
+                    />
                   </div>
                 )}
                 <p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.api.posts}</p>
                 <h3>
                   <Link href={`/trips/${post.id}`}>{post.title}</Link>
                 </h3>
-                <p>{post.body}</p>
+                <p className={styles.postBodyClamped}>{post.body}</p>
                 <p className="small muted">
                   {post.reactionTotal} {vi.api.like} · {post.commentCount} {vi.api.comments}
                 </p>
@@ -80,6 +474,7 @@ export function PublicPosts({
       </div>
       {query.hasNextPage && (
         <button
+          type="button"
           className="secondary-button"
           disabled={query.isFetchingNextPage}
           onClick={() => {
@@ -90,5 +485,3037 @@ export function PublicPosts({
         </button>
       )}
     </>
+  );
+}
+
+/**
+ * TRIPFLIX — INSPIRATION IMMERSIVE 3-PANEL VIEWER
+ * - Left Panel: Attached Itinerary (Tự động thu gọn khi bài không có lịch trình đính kèm)
+ * - Center Panel: Immersive Media Viewer (Video HLS/MP4, Ảnh, hoặc Text-only post + Vertical Action Bar + Post Navigation)
+ * - Right Panel: Post Details & Comments (Đồng bộ theo activePostId, bình luận cha–con + Sticky Comment Composer)
+ * - Mặc định Light Mode + nút chuyển đổi Light / Dark Mode.
+ */
+interface MediaTrackItemProps {
+  itemRef?: (el: HTMLDivElement | null) => void;
+  index: number;
+  post: SocialPostDto;
+  isActive: boolean;
+  isNearActive: boolean;
+  reelCard?: FeedCardDto;
+  user: { id: string; displayName: string } | null;
+  videoRef?: React.RefObject<HTMLVideoElement | null>;
+  isMuted: boolean;
+  isPlaying: boolean;
+  showPlayFlash: boolean;
+  videoProgress: number;
+  onVideoTimeUpdate: (e: React.SyntheticEvent<HTMLVideoElement>) => void;
+  mediaErrorPostId: string | null;
+  onMediaError: (postId: string) => void;
+  onTogglePlay: () => void;
+  captionExpandedPostId: string | null;
+  onToggleCaption: (postId: string) => void;
+  onOpenTag: (tag: string) => void;
+  onOpenItinerary: (postId: string) => void;
+  onOpenGallery: (postId: string, imageIndex: number) => void;
+  imageOrientations: Record<string, 'portrait' | 'landscape' | 'square'>;
+  onOrientationDetected: (src: string, orientation: 'portrait' | 'landscape' | 'square') => void;
+}
+
+/**
+ * Tung phan tu noi dung media ben trong Media Track.
+ * Chi co Media Track truot doc ben trong khung 9:16 co dinh (chuan TikTok).
+ */
+function MediaTrackItem({
+  itemRef,
+  index,
+  post,
+  isActive,
+  isNearActive,
+  reelCard,
+  user,
+  videoRef,
+  isMuted,
+  isPlaying,
+  showPlayFlash,
+  videoProgress,
+  onVideoTimeUpdate,
+  mediaErrorPostId,
+  onMediaError,
+  onTogglePlay,
+  captionExpandedPostId,
+  onToggleCaption,
+  onOpenTag,
+  onOpenItinerary,
+  onOpenGallery,
+  imageOrientations,
+  onOrientationDetected,
+}: MediaTrackItemProps) {
+  const trip = post.tripAttachment ?? null;
+  const hasItinerary = Boolean(
+    trip &&
+      (trip.destinationName ||
+        trip.hotelName ||
+        trip.daysCount ||
+        trip.estimatedCostPerPerson ||
+        (trip.items && trip.items.length > 0)),
+  );
+
+  const postImages = useMemo(
+    () =>
+      getPostImages({
+        mediaIds: post.mediaIds,
+        posterUrl: reelCard ? selectReelPoster(reelCard.video.posters, 720) : undefined,
+        destinationName: trip?.destinationName,
+        hotelName: trip?.hotelName,
+        title: post.title,
+        body: post.body,
+        hashtags: post.hashtags,
+        itineraryItems: trip?.items,
+      }),
+    [post, reelCard, trip],
+  );
+
+  const coverImage = postImages[0]?.src;
+  const isMediaError = mediaErrorPostId === post.id;
+  const isCaptionExpanded = captionExpandedPostId === post.id;
+  const authorInfo = formatAuthorDisplay(
+    post.authorId,
+    post.authorName ?? reelCard?.author.name,
+    user?.id,
+    user?.displayName,
+  );
+
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (!isActive && localVideoRef.current) {
+      localVideoRef.current.pause();
+    }
+  }, [isActive]);
+
+  return (
+    <div
+      ref={itemRef}
+      className={styles.mediaItem}
+      data-index={index}
+      data-post-id={post.id}
+      aria-hidden={!isActive}
+    >
+      {coverImage && (
+        <div
+          className={styles.mediaBackdropBlur}
+          style={{ backgroundImage: `url(${coverImage})` }}
+        />
+      )}
+
+      {/* Media Content: Video -> Adaptive Image Grid -> Text-Only */}
+      {reelCard?.video && post.postType === 'video' && !isMediaError ? (
+        <>
+          {isNearActive ? (
+            <video
+              ref={(el) => {
+                localVideoRef.current = el;
+                if (videoRef) {
+                  if (isActive) {
+                    (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
+                  } else if (videoRef.current === el) {
+                    (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = null;
+                  }
+                }
+              }}
+              className={`${styles.mediaVideoElement} ${
+                reelCard.video.aspect === '16:9' ? styles.mediaVideoLandscape : ''
+              }`}
+              src={reelCard.video.hlsUrl}
+              poster={selectReelPoster(reelCard.video.posters, 720)}
+              playsInline
+              loop
+              muted={isMuted}
+              onTimeUpdate={isActive ? onVideoTimeUpdate : undefined}
+              onError={() => onMediaError(post.id)}
+              onClick={isActive ? onTogglePlay : undefined}
+            >
+              <track kind="captions" />
+            </video>
+          ) : (
+            <Image
+              src={coverImage ?? POST_COVER_MASCOT}
+              alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, 480px"
+              className={styles.mediaImageElement}
+              unoptimized={Boolean(coverImage?.startsWith('http'))}
+            />
+          )}
+
+          {isActive && (
+            <>
+              <button
+                type="button"
+                className={`${styles.centerPlayOverlayBtn} ${
+                  !showPlayFlash ? styles.centerPlayOverlayHidden : ''
+                }`}
+                aria-label={isPlaying ? vi.api.immersivePauseVideo : vi.api.immersivePlayVideo}
+                tabIndex={-1}
+                onClick={onTogglePlay}
+              >
+                <SocialIcon name={isPlaying ? 'play' : 'pause'} size={26} />
+              </button>
+              <div className={styles.progressBarTrack} aria-hidden="true">
+                <div
+                  className={styles.progressBarFill}
+                  style={{ width: `${Math.min(100, Math.max(0, videoProgress))}%` }}
+                />
+              </div>
+            </>
+          )}
+        </>
+      ) : postImages.length > 0 ? (
+        (() => {
+          const totalCount = postImages.length;
+          const leadOrientation =
+            (coverImage ? imageOrientations[coverImage] : undefined) ?? 'portrait';
+          const isLeadLandscape = leadOrientation === 'landscape';
+          const visibleCount = totalCount >= 5 ? 5 : totalCount;
+          const visibleList = postImages.slice(0, visibleCount);
+
+          const gridVariantClass =
+            totalCount === 1
+              ? styles.gridSingle
+              : totalCount === 2
+                ? isLeadLandscape
+                  ? styles.gridTwoRows
+                  : styles.gridTwoCols
+                : totalCount === 3
+                  ? isLeadLandscape
+                    ? styles.gridThreeLandscape
+                    : styles.gridThreePortrait
+                  : totalCount === 4
+                    ? isLeadLandscape
+                      ? styles.gridFourLandscape
+                      : styles.gridFour
+                    : styles.gridFiveCollage;
+
+          const fiveTileClasses = [
+            styles.collageLeftTop,
+            styles.collageLeftBottom,
+            styles.collageRightTop,
+            styles.collageRightMiddle,
+            styles.collageRightBottom,
+          ];
+
+          return (
+            <div className={`${styles.adaptiveImageGrid} ${gridVariantClass}`}>
+              {visibleList.map((img, i) => {
+                const imgOrientation = imageOrientations[img.src];
+                const isSingleLandscape = totalCount === 1 && isLeadLandscape;
+
+                let cellSpanClass = '';
+                if (totalCount === 1 && isSingleLandscape) {
+                  cellSpanClass = styles.gridCellSingleBackdrop ?? '';
+                } else if (totalCount === 3 && i === 0) {
+                  cellSpanClass = isLeadLandscape
+                    ? (styles.gridCellSpanTwoCols ?? '')
+                    : (styles.gridCellSpanTwoRows ?? '');
+                } else if (totalCount === 4 && isLeadLandscape && i === 0) {
+                  cellSpanClass = styles.gridCellSpanThreeCols ?? '';
+                } else if (totalCount >= 5) {
+                  cellSpanClass = fiveTileClasses[i] ?? '';
+                }
+
+                const extraCount = totalCount > 5 && i === 4 ? totalCount - 4 : 0;
+                const resolvedObjectPosition =
+                  imgOrientation === 'portrait'
+                    ? 'center 25%'
+                    : imgOrientation === 'landscape'
+                      ? 'center center'
+                      : img.focalPoint;
+
+                return (
+                  <button
+                    key={img.src}
+                    type="button"
+                    className={`${styles.gridCellBtn} ${cellSpanClass}`}
+                    aria-label={t('api.immersiveOpenImageAria', {
+                      index: i + 1,
+                      total: totalCount,
+                    })}
+                    onClick={() => onOpenGallery(post.id, i)}
+                  >
+                    <Image
+                      src={img.src}
+                      alt={post.title}
+                      fill
+                      className={
+                        isSingleLandscape ? styles.gridCellImgContain : styles.gridCellImg
+                      }
+                      style={
+                        isSingleLandscape ? undefined : { objectPosition: resolvedObjectPosition }
+                      }
+                      sizes="(max-width: 1024px) 100vw, 480px"
+                      priority={i === 0 && isActive}
+                      unoptimized={img.src.startsWith('http')}
+                      onLoad={(event) => {
+                        const el = event.currentTarget;
+                        if (!el.naturalWidth || !el.naturalHeight) return;
+                        const ratio = el.naturalWidth / el.naturalHeight;
+                        const nextOrientation: 'portrait' | 'landscape' | 'square' =
+                          ratio > 1.15
+                            ? 'landscape'
+                            : ratio < 0.9
+                              ? 'portrait'
+                              : 'square';
+                        onOrientationDetected(img.src, nextOrientation);
+                      }}
+                    />
+                    {extraCount > 0 && (
+                      <span className={styles.gridCellMoreOverlay} aria-hidden="true">
+                        +{extraCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()
+      ) : (
+        <div className={styles.textOnlyStage}>
+          <h2 className={styles.textOnlyTitle}>{post.title}</h2>
+          <p className={styles.textOnlyBody}>{post.body}</p>
+        </div>
+      )}
+
+      {/* Bottom Post Overlay */}
+      <div className={styles.stageBottomOverlay}>
+        <div className={styles.overlayAuthorRow}>
+          <span className={styles.overlayAvatar} aria-hidden="true">
+            {getInitial(authorInfo.name)}
+          </span>
+          <div className={styles.overlayAuthorMeta}>
+            <div className={styles.overlayAuthorNameRow}>
+              <span>{authorInfo.name}</span>
+              {(post.isVerified || reelCard?.author.isKol) && (
+                <SocialIcon name="verified" size={16} />
+              )}
+            </div>
+            <span className={styles.overlayAuthorHandle}>{authorInfo.handle}</span>
+          </div>
+        </div>
+
+        {Boolean(postImages.length > 0 || reelCard?.video) && (
+          <div className={styles.overlayCaptionBox}>
+            <p
+              className={`${styles.overlayCaptionText} ${
+                !isCaptionExpanded ? styles.overlayCaptionClamped : ''
+              }`}
+            >
+              <strong>{post.title}</strong> — {post.body}
+            </p>
+            {post.body.length > 80 && (
+              <button
+                type="button"
+                className={styles.overlayExpandBtn}
+                onClick={() => onToggleCaption(post.id)}
+              >
+                {isCaptionExpanded ? vi.api.postShowLess : vi.api.postReadMore}
+              </button>
+            )}
+          </div>
+        )}
+
+        {post.hashtags.length > 0 && (
+          <div className={styles.overlayTagRow}>
+            {post.hashtags.slice(0, 4).map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                className={styles.overlayTagPill}
+                onClick={() => onOpenTag(tag)}
+              >
+                #{tag}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {hasItinerary && trip && (
+          <button
+            type="button"
+            className={styles.overlayAttachedTripCard}
+            onClick={() => onOpenItinerary(post.id)}
+          >
+            <div className={styles.overlayTripLeft}>
+              <span className={styles.overlayTripThumb}>
+                <Image
+                  src={coverImage ?? POST_COVER_MASCOT}
+                  alt=""
+                  fill
+                  sizes="44px"
+                  unoptimized={Boolean(coverImage?.startsWith('http'))}
+                />
+              </span>
+              <div className={styles.overlayTripText}>
+                <span className={styles.overlayTripTitle}>
+                  {trip.hotelName ?? trip.destinationName ?? post.title}
+                </span>
+                <span className={styles.overlayTripSub}>
+                  {[
+                    vi.api.immersiveTabSchedule,
+                    trip.items?.length
+                      ? t('api.immersiveStopsCount', { count: trip.items.length })
+                      : trip.daysCount
+                        ? t('api.postTripDaysBadge', { count: trip.daysCount })
+                        : null,
+                    trip.estimatedCostPerPerson
+                      ? `~${trip.estimatedCostPerPerson.toLocaleString('vi-VN')}d/nguoi`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              </div>
+            </div>
+            <SocialIcon name="chevronRight" size={18} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Phan biet con lan chuot vat ly (Mouse Wheel) va ban di cam ung (Touchpad).
+ * - Mouse Wheel: deltaMode !== 0, hoac deltaY co gia tri lon roi rac (>= 50, boi so 100/120), deltaX = 0, khong phai dong su kien lien tuc.
+ * - Touchpad: deltaMode === 0, dong su kien lien tuc tan so cao voi gia tri ban dau nho (< 40) hoac so thap phan.
+ */
+function isPhysicalMouseWheel(event: WheelEvent): boolean {
+  if (event.deltaMode !== 0) return true;
+
+  const absY = Math.abs(event.deltaY);
+  const absX = Math.abs(event.deltaX);
+
+  if (absX === 0 && (absY % 100 === 0 || absY % 120 === 0) && absY >= 100) {
+    return true;
+  }
+
+  return false;
+}
+
+
+
+export interface InspirationImmersiveViewerProps {
+  initialKeyword?: string;
+  searchKeyword?: string;
+  onSearchKeywordChange?: (keyword: string) => void;
+  isItineraryOpen?: boolean;
+  onToggleItinerary?: () => void;
+  onOpenComposer?: (type?: 'video' | 'vlog') => void;
+}
+
+export function InspirationImmersiveViewer({
+  initialKeyword = '',
+  searchKeyword,
+  onSearchKeywordChange,
+  isItineraryOpen: propIsItineraryOpen,
+  onToggleItinerary,
+  onOpenComposer,
+}: InspirationImmersiveViewerProps) {
+  const { isReady, user } = useApiSession();
+  const client = useQueryClient();
+
+  const [filterMode] = useState<FeedFilterMode>('all');
+  const [searchInput, setSearchInput] = useState<string>(initialKeyword);
+  const [activePostId, setActivePostId] = useState<string | null>(null);
+
+  const [internalIsLeftOpen, setInternalIsLeftOpen] = useState(true);
+  const isLeftOpen = propIsItineraryOpen !== undefined ? propIsItineraryOpen : internalIsLeftOpen;
+  const setLeftOpen = useCallback(
+    (open: boolean) => {
+      if (onToggleItinerary) {
+        if ((open && !isLeftOpen) || (!open && isLeftOpen)) {
+          onToggleItinerary();
+        }
+      } else {
+        setInternalIsLeftOpen(open);
+      }
+    },
+    [onToggleItinerary, isLeftOpen]
+  );
+  const [isRightOpen, setRightOpen] = useState(true);
+  const [isComposerModalOpen, setComposerModalOpen] = useState(false);
+
+  // Media player session states
+  const [isMuted, setMuted] = useState(true);
+  const [volume, setVolume] = useState(0.8);
+  const [isPlaying, setPlaying] = useState(true);
+  const centerPanelRef = useRef<HTMLElement | null>(null);
+  const trackScrollRef = useRef<HTMLDivElement | null>(null);
+  const mediaItemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const activePostIdRef = useRef<string | null>(activePostId);
+  const lastCommittedPostIdRef = useRef<string | null>(activePostId);
+  const targetIndexRef = useRef<number>(0);
+  const isProgrammaticNavRef = useRef<boolean>(false);
+  const navCooldownRef = useRef<number>(0);
+  const lastWheelTimeRef = useRef<number>(0);
+  const scrollSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollEndSafetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    activePostIdRef.current = activePostId;
+  }, [activePostId]);
+  const [showPlayFlash, setShowPlayFlash] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [mediaErrorPostId, setMediaErrorPostId] = useState<string | null>(null);
+  const [captionExpandedPostId, setCaptionExpandedPostId] = useState<string | null>(null);
+  const [galleryState, setGalleryState] = useState<{ postId: string; index: number } | null>(null);
+  const [imageOrientations, setImageOrientations] = useState<
+    Record<string, 'portrait' | 'landscape' | 'square'>
+  >({});
+
+  // Optimistic states per postId
+  const [optimisticLikes, setOptimisticLikes] = useState<Record<string, boolean>>({});
+  const [optimisticSaves, setOptimisticSaves] = useState<Record<string, boolean>>({});
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const playFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stageFrameRef = useRef<HTMLDivElement | null>(null);
+  const commentInputRef = useRef<HTMLInputElement | null>(null);
+  const rightScrollRef = useRef<HTMLDivElement | null>(null);
+
+  const effectiveSearch = (searchKeyword !== undefined ? searchKeyword : searchInput).trim();
+  const queryKind = filterMode === 'saved' ? 'bookmarks' : 'public';
+  const postsQuery = useSocialPosts(queryKind, filterMode === 'saved' ? '' : effectiveSearch);
+  const reelsQuery = useReelsFeed({ enabled: isReady });
+
+  const reelMap = useMemo(() => {
+    const map = new Map<
+      string,
+      NonNullable<typeof reelsQuery.data>['pages'][number]['items'][number]
+    >();
+    for (const page of reelsQuery.data?.pages ?? []) {
+      for (const item of page.items) {
+        map.set(item.postId, item);
+      }
+    }
+    return map;
+  }, [reelsQuery.data]);
+
+  const rawPosts = useMemo(
+    () => postsQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [postsQuery.data],
+  );
+
+  const posts = useMemo(() => {
+    if (filterMode !== 'withTrip') return rawPosts;
+    return rawPosts.filter((post) => {
+      const trip = post.tripAttachment;
+      return Boolean(
+        trip &&
+          (trip.destinationName ||
+            trip.hotelName ||
+            trip.daysCount ||
+            trip.estimatedCostPerPerson ||
+            (trip.items && trip.items.length > 0)),
+      );
+    });
+  }, [rawPosts, filterMode]);
+
+  const activeIndex = useMemo(() => {
+    if (posts.length === 0) return -1;
+    const found = posts.findIndex((item) => item.id === activePostId);
+    return found >= 0 ? found : 0;
+  }, [posts, activePostId]);
+
+  const activePost = activeIndex >= 0 ? posts[activeIndex] ?? null : null;
+  const isMediaError = Boolean(activePost && mediaErrorPostId === activePost.id);
+
+  const trip = activePost?.tripAttachment ?? null;
+  const reelCard = activePost ? reelMap.get(activePost.id) : undefined;
+  const postImages = activePost
+    ? getPostImages({
+        mediaIds: activePost.mediaIds,
+        posterUrl: reelCard ? selectReelPoster(reelCard.video.posters, 720) : undefined,
+        destinationName: trip?.destinationName,
+        hotelName: trip?.hotelName,
+        title: activePost.title,
+        body: activePost.body,
+        hashtags: activePost.hashtags,
+        itineraryItems: trip?.items,
+      })
+    : [];
+  const coverImage = postImages[0]?.src;
+  const activeGalleryIndex =
+    galleryState && activePost && galleryState.postId === activePost.id
+      ? Math.min(galleryState.index, Math.max(0, postImages.length - 1))
+      : null;
+
+  // Lấy viewerContext thực tế của bài đang active (myReaction, isBookmarked)
+  const postDetailQuery = useQuery({
+    queryKey: ['social', 'post', activePost?.id, user?.id],
+    enabled: isReady && Boolean(activePost?.id),
+    queryFn: ({ signal }) => socialApi.getPost(activePost!.id, signal),
+  });
+
+  const isPostNotFound = Boolean(activePost && isPostNotFoundError(postDetailQuery.error));
+
+  // Tự động dọn cache khi bài viết nhận lỗi 404 (đã bị xoá hoặc tạm ẩn do kiểm duyệt)
+  useEffect(() => {
+    if (activePost && isPostNotFoundError(postDetailQuery.error)) {
+      evictPostFromCache(client, activePost.id);
+    }
+  }, [activePost, postDetailQuery.error, client]);
+
+  // Tự động tải trang bài viết tiếp theo khi người dùng lướt gần tới cuối danh sách
+  useEffect(() => {
+    if (
+      activeIndex >= 0 &&
+      activeIndex >= posts.length - 2 &&
+      postsQuery.hasNextPage &&
+      !postsQuery.isFetchingNextPage
+    ) {
+      void postsQuery.fetchNextPage();
+    }
+  }, [activeIndex, posts.length, postsQuery]);
+
+  // Hàm phát video tự động an toàn (xử lý autoplay policy của browser)
+  const attemptPlayVideo = useCallback(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = isMuted;
+    const playPromise = el.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          setPlaying(true);
+        })
+        .catch(() => {
+          // Nếu browser chặn unmuted autoplay, thử lại với muted = true
+          el.muted = true;
+          setMuted(true);
+          void el.play()
+            .then(() => {
+              setPlaying(true);
+            })
+            .catch(() => {
+              setPlaying(false);
+            });
+        });
+    }
+  }, [isMuted]);
+
+  // Khi chuyển bài (activePost?.id thay đổi):
+  // 1. Reset scroll của danh sách bình luận về đầu
+  // 2. Kích hoạt tự động phát video nếu bài viết mới có video
+  useEffect(() => {
+    if (rightScrollRef.current) {
+      rightScrollRef.current.scrollTop = 0;
+    }
+
+    const videoEl = videoRef.current;
+    if (videoEl) {
+      videoEl.currentTime = 0;
+      attemptPlayVideo();
+    }
+  }, [activePost?.id, attemptPlayVideo]);
+
+
+
+  const togglePlayPause = useCallback(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) {
+      void el.play().catch(() => {});
+      setPlaying(true);
+    } else {
+      el.pause();
+      setPlaying(false);
+    }
+    setShowPlayFlash(true);
+    if (playFlashTimerRef.current) {
+      clearTimeout(playFlashTimerRef.current);
+    }
+    playFlashTimerRef.current = setTimeout(() => {
+      setShowPlayFlash(false);
+    }, 700);
+  }, []);
+
+  // Chi cap nhat activePostId (va counter 3/10, count like/comment/save/share, comments panel)
+  // khi thao tac luot hoac chuyen bai da hoan tat 100% va dung yen (settled).
+  // TUYET DOI KHONG goi scrollTo hay can thiep vao vi tri de CSS Scroll Snap native tu xu ly muot ma.
+  const commitSettledPost = useCallback(
+    (targetIdx?: number) => {
+      const container = trackScrollRef.current;
+      if (!container || posts.length === 0) return;
+
+      let settledIndex: number;
+      if (typeof targetIdx === 'number') {
+        settledIndex = Math.max(0, Math.min(posts.length - 1, targetIdx));
+      } else {
+        const itemHeight = container.clientHeight;
+        if (itemHeight <= 0) return;
+        const fractionalIndex = container.scrollTop / itemHeight;
+        settledIndex = Math.max(0, Math.min(posts.length - 1, Math.round(fractionalIndex)));
+      }
+
+      const settledPost = posts[settledIndex];
+      if (settledPost && settledPost.id !== activePostIdRef.current) {
+        lastCommittedPostIdRef.current = settledPost.id;
+        activePostIdRef.current = settledPost.id;
+        targetIndexRef.current = settledIndex;
+        setActivePostId(settledPost.id);
+      }
+      isProgrammaticNavRef.current = false;
+    },
+    [posts],
+  );
+
+  // Di chuyen den bai viet muc tieu bang animation cuon tu dinh (CSS Scroll Snap).
+  // Trong suot qua trinh dang cuon, KHONG cap nhat activePostId de giu nguyen UI cu cho den khi chuyen xong hoan toan.
+  const goToIndex = useCallback(
+    (nextIdx: number, smooth = true) => {
+      if (posts.length === 0) return;
+      const clamped = Math.max(0, Math.min(posts.length - 1, nextIdx));
+      const container = trackScrollRef.current;
+      if (!container) return;
+
+      if (galleryState) setGalleryState(null);
+
+      targetIndexRef.current = clamped;
+
+      const targetEl = mediaItemRefs.current[clamped];
+
+      if (!smooth) {
+        isProgrammaticNavRef.current = false;
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'auto', block: 'start' });
+        } else {
+          container.scrollTo({ top: clamped * container.clientHeight, behavior: 'auto' });
+        }
+        commitSettledPost(clamped);
+      } else {
+        isProgrammaticNavRef.current = true;
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          container.scrollTo({
+            top: clamped * container.clientHeight,
+            behavior: 'smooth',
+          });
+        }
+
+        if (scrollEndSafetyTimerRef.current) {
+          clearTimeout(scrollEndSafetyTimerRef.current);
+        }
+        // Bo dem an toan neu scrollend khong duoc trigger
+        scrollEndSafetyTimerRef.current = setTimeout(() => {
+          commitSettledPost(clamped);
+        }, 460);
+      }
+
+      if (clamped >= posts.length - 2 && postsQuery.hasNextPage && !postsQuery.isFetchingNextPage) {
+        void postsQuery.fetchNextPage();
+      }
+    },
+    [posts, galleryState, postsQuery, commitSettledPost],
+  );
+
+  // Dieu huong buoc (Step Navigation): dung chung logic luot tu dinh va bo dem debounce 450ms
+  // cho ca Con lan chuot, Phim mui ten ban phim, Nut mui ten tren man hinh, va Vuot touchpad ngoai khung
+  const navigateStep = useCallback(
+    (direction: 1 | -1) => {
+      const now = Date.now();
+      if (now < navCooldownRef.current) return;
+
+      const currentBase = targetIndexRef.current;
+      const nextTarget = currentBase + direction;
+
+      if (direction === 1) {
+        if (nextTarget < posts.length) {
+          navCooldownRef.current = now + 450;
+          goToIndex(nextTarget, true);
+        } else if (postsQuery.hasNextPage && !postsQuery.isFetchingNextPage) {
+          navCooldownRef.current = now + 450;
+          void postsQuery.fetchNextPage();
+        }
+      } else {
+        if (nextTarget >= 0) {
+          navCooldownRef.current = now + 450;
+          goToIndex(nextTarget, true);
+        }
+      }
+    },
+    [posts.length, postsQuery, goToIndex],
+  );
+
+  // Dong bo targetIndexRef theo activeIndex khi da settled hoac chon bai tu ngoai
+  useEffect(() => {
+    if (activeIndex >= 0) {
+      targetIndexRef.current = activeIndex;
+    }
+  }, [activeIndex]);
+
+  // Dong bo vi tri cuon chi khi activePostId thay doi tu nguon ben ngoai (Search, filter, click bai viet)
+  useEffect(() => {
+    if (!activePostId || posts.length === 0) return;
+    if (activePostId === lastCommittedPostIdRef.current) return;
+
+    lastCommittedPostIdRef.current = activePostId;
+    const targetIdx = posts.findIndex((p) => p.id === activePostId);
+    if (targetIdx >= 0 && trackScrollRef.current) {
+      const container = trackScrollRef.current;
+      const targetEl = mediaItemRefs.current[targetIdx];
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'auto', block: 'start' });
+      } else {
+        container.scrollTo({ top: targetIdx * container.clientHeight, behavior: 'auto' });
+      }
+    }
+  }, [activePostId, posts]);
+
+  // Lang nghe su kien scrollend native tren media track: chi commit khi scroll hoan tat hoan toan
+  useEffect(() => {
+    const container = trackScrollRef.current;
+    if (!container) return;
+
+    const onScrollEnd = () => {
+      if (scrollSettleTimerRef.current) {
+        clearTimeout(scrollSettleTimerRef.current);
+      }
+      if (scrollEndSafetyTimerRef.current) {
+        clearTimeout(scrollEndSafetyTimerRef.current);
+      }
+
+      if (isProgrammaticNavRef.current) {
+        commitSettledPost(targetIndexRef.current);
+      } else {
+        commitSettledPost();
+      }
+    };
+
+    container.addEventListener('scrollend', onScrollEnd);
+    return () => {
+      container.removeEventListener('scrollend', onScrollEnd);
+      if (scrollSettleTimerRef.current) {
+        clearTimeout(scrollSettleTimerRef.current);
+      }
+      if (scrollEndSafetyTimerRef.current) {
+        clearTimeout(scrollEndSafetyTimerRef.current);
+      }
+    };
+  }, [commitSettledPost]);
+
+  // Tu dong tai them bai viet khi cuon gan cuoi danh sach kem debounce commit khi cuon touchpad dung lai
+  const handleTrackScroll = useCallback(() => {
+    const container = trackScrollRef.current;
+    if (!container) return;
+
+    const scrollBottom = container.scrollTop + container.clientHeight;
+    if (
+      container.scrollHeight - scrollBottom < container.clientHeight * 2 &&
+      postsQuery.hasNextPage &&
+      !postsQuery.isFetchingNextPage
+    ) {
+      void postsQuery.fetchNextPage();
+    }
+
+    // Neu dang trong qua trinh dieu huong co chu dich (bam nut, ban phim, con lan chuot),
+    // KHONG chay debounce tu do de tranh ghi de hoac tinh sai vi tri giua chung
+    if (isProgrammaticNavRef.current) return;
+
+    if (scrollSettleTimerRef.current) {
+      clearTimeout(scrollSettleTimerRef.current);
+    }
+    // Voi thao tac vuot tu do touchpad trong khung, doi 250ms sau su kien scroll cuoi cung
+    // de chac chan ngon tay da roi ra va trinh duyet da snap xong
+    scrollSettleTimerRef.current = setTimeout(() => {
+      commitSettledPost();
+    }, 250);
+  }, [postsQuery, commitSettledPost]);
+
+  // Xu ly cuon tren center panel: dung chung animation luot tu dinh (CSS Scroll Snap)
+  useEffect(() => {
+    const panel = centerPanelRef.current;
+    if (!panel) return;
+
+    function handlePanelWheel(event: WheelEvent) {
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.closest(`.${styles.leftScrollBody}`) ||
+        target?.closest(`.${styles.rightScrollArea}`)
+      ) {
+        return;
+      }
+
+      const now = Date.now();
+      const isInsideTrack = Boolean(trackScrollRef.current?.contains(target));
+      const isMouse = isPhysicalMouseWheel(event);
+      lastWheelTimeRef.current = now;
+
+      // 1. Con lan chuot vat ly: lan 1 nac se luot tu dinh qua 1 bai (ca trong va ngoai khung)
+      if (isMouse) {
+        event.preventDefault();
+        event.stopPropagation();
+        navigateStep(event.deltaY > 0 ? 1 : -1);
+        return;
+      }
+
+      // 2. Touchpad khi con tro nam ngoai khung (khoang den cua center panel, dock, nav buttons):
+      // Ap dung y chang animation luot tu dinh bang cach goi navigateStep voi nguong deltaY
+      if (!isInsideTrack) {
+        event.preventDefault();
+        if (Math.abs(event.deltaY) >= 15) {
+          navigateStep(event.deltaY > 0 ? 1 : -1);
+        }
+      }
+      // 3. Touchpad khi con tro nam trong khung: De trinh duyet cuon tu do va tu dinh (native scroll snap)
+      if (isInsideTrack) {
+        isProgrammaticNavRef.current = false;
+      }
+    }
+
+    panel.addEventListener('wheel', handlePanelWheel, { passive: false });
+    return () => {
+      panel.removeEventListener('wheel', handlePanelWheel);
+    };
+  }, [navigateStep]);
+
+  // Hỗ trợ phím ArrowUp / ArrowDown để chuyển bài, và ArrowLeft / ArrowRight / Escape khi mở Image Gallery
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+      ) {
+        return;
+      }
+      if (
+        galleryState &&
+        activePost &&
+        galleryState.postId === activePost.id &&
+        postImages.length > 0
+      ) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          setGalleryState(null);
+          return;
+        }
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          setGalleryState((prev) =>
+            prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null,
+          );
+          return;
+        }
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          setGalleryState((prev) =>
+            prev ? { ...prev, index: Math.min(postImages.length - 1, prev.index + 1) } : null,
+          );
+          return;
+        }
+      }
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        navigateStep(1);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        navigateStep(-1);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [galleryState, activePost, postImages.length, navigateStep]);
+
+  // Optimistic mutation cho Like / Save / Share với rollback khi lỗi
+  const engagementMutation = useMutation({
+    mutationFn: async (payload: {
+      postId: string;
+      type: 'like' | 'save' | 'share';
+      nextSelected?: boolean;
+    }) => {
+      if (payload.type === 'like') {
+        return socialApi.setReaction(payload.postId, payload.nextSelected ? 'like' : null);
+      }
+      if (payload.type === 'save') {
+        return socialApi.setBookmark(payload.postId, Boolean(payload.nextSelected));
+      }
+      const shareUrl =
+        (postDetailQuery.data?.post.id === payload.postId
+          ? postDetailQuery.data?.shareUrl
+          : undefined) || `${window.location.origin}/trips/${payload.postId}`;
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: activePost?.title,
+            url: shareUrl,
+          });
+        } else if (navigator.clipboard) {
+          await navigator.clipboard.writeText(shareUrl);
+        }
+      } catch {
+        // Bỏ qua nếu người dùng đóng hộp thoại chia sẻ hoặc trình duyệt chặn clipboard
+      }
+      return socialApi.sharePost(payload.postId);
+    },
+    onMutate: async (payload) => {
+      if (payload.type === 'like' && payload.nextSelected !== undefined) {
+        const previous = optimisticLikes[payload.postId];
+        setOptimisticLikes((prev) => ({ ...prev, [payload.postId]: payload.nextSelected! }));
+        const rollbackCache = user
+          ? updateReelSocialCache(client, user.id, payload.postId, 'like', payload.nextSelected)
+          : undefined;
+        return { previous, rollbackCache };
+      }
+      if (payload.type === 'save' && payload.nextSelected !== undefined) {
+        const previous = optimisticSaves[payload.postId];
+        setOptimisticSaves((prev) => ({ ...prev, [payload.postId]: payload.nextSelected! }));
+        const rollbackCache = user
+          ? updateReelSocialCache(client, user.id, payload.postId, 'save', payload.nextSelected)
+          : undefined;
+        return { previous, rollbackCache };
+      }
+      return {};
+    },
+    onError: (_, payload, context) => {
+      context?.rollbackCache?.();
+      if (payload.type === 'like') {
+        setOptimisticLikes((prev) => {
+          const next = { ...prev };
+          if (context?.previous === undefined) delete next[payload.postId];
+          else next[payload.postId] = context.previous;
+          return next;
+        });
+      }
+      if (payload.type === 'save') {
+        setOptimisticSaves((prev) => {
+          const next = { ...prev };
+          if (context?.previous === undefined) delete next[payload.postId];
+          else next[payload.postId] = context.previous;
+          return next;
+        });
+      }
+    },
+    onSettled: async (_, __, payload) => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['social'] }),
+        client.invalidateQueries({ queryKey: ['feed'], refetchType: 'none' }),
+      ]);
+      setOptimisticLikes((prev) => {
+        const next = { ...prev };
+        delete next[payload.postId];
+        return next;
+      });
+      setOptimisticSaves((prev) => {
+        const next = { ...prev };
+        delete next[payload.postId];
+        return next;
+      });
+    },
+  });
+
+  const hasItinerary = Boolean(
+    trip &&
+      (trip.destinationName ||
+        trip.hotelName ||
+        trip.daysCount ||
+        trip.estimatedCostPerPerson ||
+        (trip.items && trip.items.length > 0)),
+  );
+  const showLeftPanel = hasItinerary && isLeftOpen;
+  const showRightPanel = Boolean(activePost) && isRightOpen;
+
+  const gridLayoutClass =
+    showLeftPanel && showRightPanel
+      ? styles.gridThreeCols
+      : !showLeftPanel && showRightPanel
+        ? styles.gridNoLeft
+        : showLeftPanel && !showRightPanel
+          ? styles.gridNoRight
+          : styles.gridCenterOnly;
+
+  const activePostDetail =
+    postDetailQuery.data?.post.id === activePost?.id ? postDetailQuery.data : undefined;
+  const viewerContext = activePostDetail?.viewerContext;
+
+  const serverLiked = viewerContext
+    ? viewerContext.myReaction !== null
+    : Boolean(reelCard?.viewerState?.liked);
+  const serverSaved = viewerContext
+    ? viewerContext.isBookmarked
+    : filterMode === 'saved' || Boolean(reelCard?.viewerState?.saved);
+
+  const isLiked = activePost ? (optimisticLikes[activePost.id] ?? serverLiked) : false;
+  const isSaved = activePost ? (optimisticSaves[activePost.id] ?? serverSaved) : false;
+
+  const baseLikes = activePostDetail?.post.reactionTotal ?? activePost?.reactionTotal ?? 0;
+  const baseSaves = activePostDetail?.post.bookmarkCount ?? activePost?.bookmarkCount ?? 0;
+  const displayLikes = Math.max(0, baseLikes + Number(isLiked) - Number(serverLiked));
+  const displaySaves = Math.max(0, baseSaves + Number(isSaved) - Number(serverSaved));
+  const displayComments = activePostDetail?.post.commentCount ?? activePost?.commentCount ?? 0;
+  const displayShares = activePostDetail?.post.shareCount ?? activePost?.shareCount ?? 0;
+
+  const authorInfo = activePost
+    ? formatAuthorDisplay(
+        activePost.authorId,
+        activePost.authorName ?? reelCard?.author.name,
+        user?.id,
+        user?.displayName,
+      )
+    : { name: '', handle: '' };
+
+
+
+  const loginReturnHref = '/login?returnTo=%2Finspiration';
+
+  function handleCommentButtonClick() {
+    if (!isRightOpen) {
+      setRightOpen(true);
+      setTimeout(() => commentInputRef.current?.focus(), 120);
+      return;
+    }
+    setRightOpen(false);
+  }
+
+  // Đảm bảo loại bỏ thuộc tính data-theme còn sót lại, giữ mặc định Light Mode
+  useEffect(() => {
+    document.documentElement.removeAttribute('data-theme');
+    try {
+      localStorage.removeItem('tripflix.theme');
+      localStorage.removeItem('tripflix.inspiration.theme');
+    } catch {
+      // Bỏ qua lỗi truy cập Storage
+    }
+  }, []);
+
+  if (!isReady) {
+    return <output className="empty-state">{vi.api.loading}</output>;
+  }
+
+  return (
+    <div className={styles.immersiveRoot}>
+      {/* Nội dung chính: 3 Panel Đồng bộ theo activePost */}
+      <div className={`${styles.viewerGrid} ${gridLayoutClass}`}>
+        {/* ================================================================
+            1. LEFT PANEL — ATTACHED ITINERARY (Dùng chung ItinerarySidebarPanel chuẩn 1 style)
+            ================================================================ */}
+        {showLeftPanel && (
+          <ItinerarySidebarPanel
+            className={styles.itineraryInReels}
+            trip={trip}
+            postTitle={activePost?.title}
+            hashtags={activePost?.hashtags}
+            coverImage={coverImage}
+            isOpen={showLeftPanel}
+            onClose={() => setLeftOpen(false)}
+          />
+        )}
+
+        {/* ================================================================
+            2. CENTER PANEL — IMMERSIVE MEDIA VIEWER + VERTICAL ACTION BAR
+            ================================================================ */}
+        <section
+          ref={centerPanelRef}
+          className={styles.centerPanel}
+          aria-label={activePost ? activePost.title : vi.api.feedNavAria}
+        >
+            {filterMode === 'saved' && !user ? (
+              <div className={`empty-state ${styles.centerEmptyBox}`}>
+                <p>{vi.api.loginRequired}</p>
+                <Link href={loginReturnHref} className={styles.createPostBtn}>
+                  {vi.api.login}
+                </Link>
+              </div>
+            ) : postsQuery.isPending ? (
+              <output className="empty-state">{vi.api.loading}</output>
+            ) : postsQuery.error ? (
+              <div className={styles.centerEmptyBox}>
+                <ApiErrorNotice
+                  error={postsQuery.error}
+                  retry={() => {
+                    void postsQuery.refetch();
+                  }}
+                />
+              </div>
+            ) : !activePost ? (
+              <p className="empty-state">
+                {filterMode === 'saved'
+                  ? vi.api.noBookmarks
+                  : searchInput.trim()
+                    ? t('api.noPostsForKeyword', { query: searchInput.trim() })
+                    : vi.api.noPosts}
+              </p>
+            ) : (
+              <>
+                <div
+                  ref={stageFrameRef}
+                  className={styles.mediaStageFrame}
+                >
+                  {/* Top-Left Volume + Slider & Top-Right Hover Controls (More / Fullscreen) */}
+                  {activeGalleryIndex === null && (
+                    <>
+                      {reelCard?.video && activePost.postType === 'video' && !isMediaError && (
+                        <div className={styles.stageTopLeftControls}>
+                          <div className={styles.volumeControlPill}>
+                            <button
+                              type="button"
+                              className={styles.volumeToggleBtn}
+                              aria-label={
+                                isMuted ? vi.api.immersiveUnmuteVideo : vi.api.immersiveMuteVideo
+                              }
+                              onClick={() => {
+                                const nextMuted = !isMuted;
+                                setMuted(nextMuted);
+                                if (!nextMuted && volume === 0) {
+                                  setVolume(0.8);
+                                  if (videoRef.current) videoRef.current.volume = 0.8;
+                                }
+                                if (videoRef.current) {
+                                  videoRef.current.muted = nextMuted;
+                                }
+                              }}
+                            >
+                              <SocialIcon
+                                name={isMuted || volume === 0 ? 'volumeOff' : 'volumeOn'}
+                                size={18}
+                              />
+                            </button>
+                            <div className={styles.volumeSliderWrap}>
+                              <input
+                                type="range"
+                                min={0}
+                                max={1}
+                                step={0.05}
+                                value={isMuted ? 0 : volume}
+                                aria-label={vi.api.immersiveMuteVideo}
+                                className={styles.volumeRangeInput}
+                                onChange={(event) => {
+                                  const nextVol = Number(event.target.value);
+                                  setVolume(nextVol);
+                                  const nextMuted = nextVol === 0;
+                                  setMuted(nextMuted);
+                                  if (videoRef.current) {
+                                    videoRef.current.volume = nextVol;
+                                    videoRef.current.muted = nextMuted;
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className={styles.stageTopControls}>
+                        <Link
+                          href={`/trips/${activePost.id}`}
+                          className={styles.stageCircleBtn}
+                          aria-label={vi.api.postMoreOptions}
+                          title={vi.api.detail}
+                        >
+                          <SocialIcon name="more" size={18} />
+                        </Link>
+                      </div>
+                    </>
+                  )}
+
+                  {/* In-Stage Image Gallery (object-fit: contain, 1/N indicator, prev/next slide, close) */}
+                  {activeGalleryIndex !== null && postImages[activeGalleryIndex] && (
+                    <section
+                      className={styles.galleryStageOverlay}
+                      aria-label={activePost.title}
+                    >
+                      <div className={styles.galleryTopBar}>
+                        <span className={styles.galleryCountPill}>
+                          {activeGalleryIndex + 1} / {postImages.length}
+                        </span>
+                        <button
+                          type="button"
+                          className={styles.galleryCloseBtn}
+                          aria-label={vi.api.immersiveCloseGallery}
+                          title={vi.api.immersiveCloseGallery}
+                          onClick={() => setGalleryState(null)}
+                        >
+                          <SocialIcon name="close" size={18} />
+                        </button>
+                      </div>
+
+                      <div className={styles.galleryContainFrame}>
+                        <Image
+                          key={postImages[activeGalleryIndex].src}
+                          src={postImages[activeGalleryIndex].src}
+                          alt={activePost.title}
+                          fill
+                          className={styles.galleryContainImg}
+                          sizes="(max-width: 1024px) 100vw, 540px"
+                          priority
+                          unoptimized={postImages[activeGalleryIndex].src.startsWith('http')}
+                        />
+                      </div>
+
+                      {postImages.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            className={`${styles.gallerySlideNavBtn} ${styles.gallerySlidePrev}`}
+                            disabled={activeGalleryIndex <= 0}
+                            aria-label={vi.api.immersivePrevSlide}
+                            title={vi.api.immersivePrevSlide}
+                            onClick={() =>
+                              setGalleryState({
+                                postId: activePost.id,
+                                index: Math.max(0, activeGalleryIndex - 1),
+                              })
+                            }
+                          >
+                            <SocialIcon name="chevronLeft" size={20} />
+                          </button>
+                          <button
+                            type="button"
+                            className={`${styles.gallerySlideNavBtn} ${styles.gallerySlideNext}`}
+                            disabled={activeGalleryIndex >= postImages.length - 1}
+                            aria-label={vi.api.immersiveNextSlide}
+                            title={vi.api.immersiveNextSlide}
+                            onClick={() =>
+                              setGalleryState({
+                                postId: activePost.id,
+                                index: Math.min(postImages.length - 1, activeGalleryIndex + 1),
+                              })
+                            }
+                          >
+                            <SocialIcon name="chevronRight" size={20} />
+                          </button>
+                        </>
+                      )}
+                    </section>
+                  )}
+
+                  {/* Media Track: Vung cuon momentum doc voi proximity snap ben trong Viewport 9:16 co dinh */}
+                  <div
+                    ref={trackScrollRef}
+                    className={styles.mediaTrack}
+                    onScroll={handleTrackScroll}
+                    tabIndex={-1}
+                  >
+                    {posts.map((post, idx) => (
+                      <MediaTrackItem
+                        key={post.id}
+                        itemRef={(el) => {
+                          mediaItemRefs.current[idx] = el;
+                        }}
+                        index={idx}
+                        post={post}
+                        isActive={idx === activeIndex}
+                        isNearActive={Math.abs(idx - activeIndex) <= 1}
+                        reelCard={reelMap.get(post.id)}
+                        user={user}
+                        videoRef={idx === activeIndex ? videoRef : undefined}
+                        isMuted={isMuted}
+                        isPlaying={isPlaying}
+                        showPlayFlash={showPlayFlash}
+                        videoProgress={videoProgress}
+                        onVideoTimeUpdate={(e) => {
+                          if (idx === activeIndex) {
+                            const el = e.currentTarget;
+                            if (el.duration > 0) {
+                              setVideoProgress((el.currentTime / el.duration) * 100);
+                            }
+                          }
+                        }}
+                        mediaErrorPostId={mediaErrorPostId}
+                        onMediaError={(pId) => setMediaErrorPostId(pId)}
+                        onTogglePlay={togglePlayPause}
+                        captionExpandedPostId={captionExpandedPostId}
+                        onToggleCaption={(pId) =>
+                          setCaptionExpandedPostId((prev) => (prev === pId ? null : pId))
+                        }
+                        onOpenTag={(tag) => {
+                          setSearchInput(tag);
+                          onSearchKeywordChange?.(tag);
+                        }}
+                        onOpenItinerary={(pId) => {
+                          if (activePostId !== pId) setActivePostId(pId);
+                          setLeftOpen(true);
+                        }}
+                        onOpenGallery={(pId, imgIdx) =>
+                          setGalleryState({ postId: pId, index: imgIdx })
+                        }
+                        imageOrientations={imageOrientations}
+                        onOrientationDetected={(src, orientation) => {
+                          setImageOrientations((prev) =>
+                            prev[src] === orientation ? prev : { ...prev, [src]: orientation },
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                  {isPostNotFound && (
+                    <div className={styles.postUnavailableOverlay} role="alert">
+                      <div className={styles.postUnavailableIcon} aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="8" x2="12" y2="12" />
+                          <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                      </div>
+                      <h3 className={styles.postUnavailableTitle}>{vi.api.postUnavailable}</h3>
+                      <p className={styles.postUnavailableDesc}>{vi.api.postUnavailableHint}</p>
+                      {posts.length > 1 && (
+                        <button
+                          type="button"
+                          className={styles.postUnavailableNextBtn}
+                          onClick={() => navigateStep(1)}
+                        >
+                          {vi.api.postUnavailableNext}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+            {/* Cột phải sát cạnh Media Stage: Vertical Action Bar (Avatar +, Like, Comment, Save, Share) */}
+            <div className={styles.stageSideDock}>
+              <div className={styles.verticalActionsCluster}>
+                <Link
+                  href={`/trips/${activePost.id}`}
+                  className={styles.actionAvatarBadgeWrap}
+                  aria-label={authorInfo.name}
+                >
+                  <span className={styles.actionAvatarCircle}>{getInitial(authorInfo.name)}</span>
+                  <span className={styles.actionAvatarPlus} aria-hidden="true">
+                    +
+                  </span>
+                </Link>
+
+                {user ? (
+                  <button
+                    type="button"
+                    className={`${styles.verticalActionItem} ${
+                      isLiked ? styles.verticalActionLiked : ''
+                    }`}
+                    aria-pressed={isLiked}
+                    aria-label={vi.api.like}
+                    onClick={() =>
+                      engagementMutation.mutate({
+                        postId: activePost.id,
+                        type: 'like',
+                        nextSelected: !isLiked,
+                      })
+                    }
+                  >
+                    <span className={styles.verticalActionCircle}>
+                      <SocialIcon name={isLiked ? 'heartFilled' : 'heart'} size={20} />
+                    </span>
+                    <span className={styles.verticalActionCount}>
+                      {formatCompactCount(displayLikes)}
+                    </span>
+                  </button>
+                ) : (
+                  <Link
+                    href={loginReturnHref}
+                    className={styles.verticalActionItem}
+                    aria-label={vi.api.like}
+                  >
+                    <span className={styles.verticalActionCircle}>
+                      <SocialIcon name="heart" size={20} />
+                    </span>
+                    <span className={styles.verticalActionCount}>
+                      {formatCompactCount(displayLikes)}
+                    </span>
+                  </Link>
+                )}
+
+                <button
+                  type="button"
+                  className={`${styles.verticalActionItem} ${
+                    isRightOpen ? styles.verticalActionActive : ''
+                  }`}
+                  aria-expanded={isRightOpen}
+                  aria-label={t('api.commentsWithCount', { count: displayComments })}
+                  onClick={handleCommentButtonClick}
+                >
+                  <span className={styles.verticalActionCircle}>
+                    <SocialIcon name="comment" size={20} />
+                  </span>
+                  <span className={styles.verticalActionCount}>
+                    {formatCompactCount(displayComments)}
+                  </span>
+                </button>
+
+                {user ? (
+                  <button
+                    type="button"
+                    className={`${styles.verticalActionItem} ${
+                      isSaved ? styles.verticalActionSaved : ''
+                    }`}
+                    aria-pressed={isSaved}
+                    aria-label={isSaved ? vi.api.unbookmark : vi.api.bookmark}
+                    onClick={() =>
+                      engagementMutation.mutate({
+                        postId: activePost.id,
+                        type: 'save',
+                        nextSelected: !isSaved,
+                      })
+                    }
+                  >
+                    <span className={styles.verticalActionCircle}>
+                      <SocialIcon name={isSaved ? 'bookmarkFilled' : 'bookmark'} size={20} />
+                    </span>
+                    <span className={styles.verticalActionCount}>
+                      {formatCompactCount(displaySaves)}
+                    </span>
+                  </button>
+                ) : (
+                  <Link
+                    href={loginReturnHref}
+                    className={styles.verticalActionItem}
+                    aria-label={vi.api.bookmark}
+                  >
+                    <span className={styles.verticalActionCircle}>
+                      <SocialIcon name="bookmark" size={20} />
+                    </span>
+                    <span className={styles.verticalActionCount}>
+                      {formatCompactCount(displaySaves)}
+                    </span>
+                  </Link>
+                )}
+
+                <button
+                  type="button"
+                  className={styles.verticalActionItem}
+                  aria-label={vi.api.share}
+                  onClick={() =>
+                    engagementMutation.mutate({
+                      postId: activePost.id,
+                      type: 'share',
+                    })
+                  }
+                >
+                  <span className={styles.verticalActionCircle}>
+                    <SocialIcon name="share" size={20} />
+                  </span>
+                  <span className={styles.verticalActionCount}>
+                    {formatCompactCount(displayShares)}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Cum nut Chuyen bai (Len / Xuong) nam giua chieu cao, sat mep phai cua Center Panel */}
+            <div className={styles.navArrowsCluster}>
+              <button
+                type="button"
+                className={styles.navArrowBtn}
+                aria-label={vi.api.immersivePrevPost}
+                title={vi.api.immersivePrevPost}
+                disabled={activeIndex <= 0}
+                onClick={() => navigateStep(-1)}
+              >
+                <SocialIcon name="arrowUp" size={20} />
+              </button>
+              <button
+                type="button"
+                className={styles.navArrowBtn}
+                aria-label={vi.api.immersiveNextPost}
+                title={vi.api.immersiveNextPost}
+                disabled={activeIndex >= posts.length - 1 && !postsQuery.hasNextPage}
+                onClick={() => navigateStep(1)}
+              >
+                <SocialIcon name="arrowDown" size={20} />
+              </button>
+            </div>
+              </>
+            )}
+          </section>
+
+          {/* ================================================================
+              3. RIGHT PANEL — COMMENTS ONLY
+              ================================================================ */}
+          {showRightPanel && activePost && (
+            <aside className={styles.rightPanel} aria-label={vi.api.commentPanelAria}>
+              <div className={styles.panelHeaderBar}>
+                <h2 className={styles.panelHeaderTitle}>
+                  <span className={styles.panelHeaderIcon}>
+                    <SocialIcon name="comment" size={16} />
+                  </span>
+                  {t('api.commentPanelTabComments', { count: displayComments })}
+                </h2>
+
+                <button
+                  type="button"
+                  className={styles.iconGhostBtn}
+                  aria-label={vi.api.commentPanelClose}
+                  title={vi.api.commentPanelClose}
+                  onClick={() => setRightOpen(false)}
+                >
+                  <SocialIcon name="close" size={17} />
+                </button>
+              </div>
+
+              <ApiErrorNotice error={engagementMutation.error} />
+
+              <RightPanelCommentsSynchronized
+                key={activePost.id}
+                post={activePost}
+                loginHref={loginReturnHref}
+                scrollContainerRef={rightScrollRef}
+                composerInputRef={commentInputRef}
+              />
+            </aside>
+          )}
+        </div>
+
+      {/* Modal Đăng bài nhanh (Chỉ render nội bộ nếu component chạy độc lập, không có onOpenComposer từ cấp cha) */}
+      {!onOpenComposer && isComposerModalOpen && user && (
+        <ComposerModal
+          initialView="compose"
+          initialPostType="video"
+          onClose={() => setComposerModalOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Luồng bình luận cha–con đồng bộ theo postId ở Right Panel,
+ * đi kèm Sticky Comment Composer cố định ở đáy Right Panel.
+ */
+export function RightPanelCommentsSynchronized({
+  post,
+  loginHref,
+  scrollContainerRef,
+  composerInputRef,
+}: {
+  post: {
+    id: string;
+    authorId: string;
+    authorName?: string | null;
+    isVerified?: boolean;
+  };
+  loginHref: string;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+  composerInputRef: React.RefObject<HTMLInputElement | null>;
+}) {
+  const { user, isReady, session } = useApiSession();
+  const client = useQueryClient();
+  const [body, setBody] = useState('');
+  const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(null);
+
+  const query = useInfiniteQuery({
+    queryKey: ['social', 'comments', post.id, undefined, user?.id],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }) => socialApi.listComments(post.id, pageParam, undefined, signal),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+  });
+
+  const addMutation = useMutation({
+    mutationFn: async () => {
+      try {
+        return await socialApi.addComment(post.id, body.trim(), replyTarget?.id);
+      } catch (error: unknown) {
+        const errObj = error as {
+          response?: { data?: { code?: string } };
+          body?: { code?: string };
+          message?: string;
+          status?: number;
+        };
+        const code = errObj?.response?.data?.code || errObj?.body?.code || '';
+        const isUnverified =
+          code === 'email_unverified' ||
+          errObj?.status === 403 ||
+          Boolean(errObj?.message?.includes('email_unverified'));
+        if (isUnverified && session) {
+          try {
+            await session.refreshUser();
+            return await socialApi.addComment(post.id, body.trim(), replyTarget?.id);
+          } catch {
+            throw error;
+          }
+        }
+        throw error;
+      }
+    },
+    onSuccess: async () => {
+      setBody('');
+      setReplyTarget(null);
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['social'] }),
+        client.invalidateQueries({ queryKey: ['feed'], refetchType: 'none' }),
+      ]);
+    },
+  });
+
+  const comments = query.data?.pages.flatMap((page) => page.items) ?? [];
+
+  return (
+    <>
+      <div
+        ref={scrollContainerRef}
+        className={styles.rightScrollArea}
+      >
+        <ApiErrorNotice error={addMutation.error} />
+        <ApiErrorNotice
+          error={query.error}
+          retry={() => {
+            void query.refetch();
+          }}
+        />
+        {query.isPending && <output className="small muted">{vi.api.loading}</output>}
+        {query.isSuccess && comments.length === 0 && (
+          <p className="small muted">{vi.api.noComments}</p>
+        )}
+
+        <ol className={styles.panelCommentList}>
+          {comments.map((comment) => (
+            <CommentNode
+              key={comment.id}
+              postId={post.id}
+              postAuthorId={post.authorId}
+              postIsVerified={post.isVerified}
+              comment={comment}
+              loginHref={loginHref}
+              onReplySelect={(target) => {
+                setReplyTarget(target);
+                composerInputRef.current?.focus();
+              }}
+            />
+          ))}
+        </ol>
+
+        {query.hasNextPage && (
+          <button
+            type="button"
+            className={styles.utilityBtn}
+            disabled={query.isFetchingNextPage}
+            onClick={() => {
+              void query.fetchNextPage();
+            }}
+          >
+            {vi.api.commentLoadMore}
+          </button>
+        )}
+      </div>
+
+      {/* Sticky Comment Composer cố định ở đáy Right Panel */}
+      <div className={styles.stickyComposerBox}>
+        {replyTarget && (
+          <div className={styles.replyingBanner}>
+            <span>{t('api.immersiveReplyingTo', { name: replyTarget.authorName })}</span>
+            <button
+              type="button"
+              className={styles.panelCommentActionBtn}
+              aria-label={vi.api.immersiveCancelReply}
+              onClick={() => setReplyTarget(null)}
+            >
+              {vi.api.cancel}
+            </button>
+          </div>
+        )}
+        {user ? (
+          <form
+            className={styles.panelComposerForm}
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!body.trim()) return;
+              addMutation.mutate();
+            }}
+          >
+            <div className={styles.avatarSmallWrap}>
+              <span className={styles.avatarSmall} aria-hidden="true">
+                {getInitial(user.displayName)}
+              </span>
+              {user.emailVerified && (
+                <span className={styles.composerVerifiedBadge} title="Tài khoản đã xác thực">
+                  <SocialIcon name="verified" size={11} />
+                </span>
+              )}
+            </div>
+            <input
+              ref={composerInputRef}
+              className={styles.panelComposerInput}
+              aria-label={vi.api.commentInputPlaceholder}
+              placeholder={vi.api.commentInputPlaceholder}
+              value={body}
+              maxLength={10000}
+              onChange={(event) => setBody(event.target.value)}
+            />
+            <button
+              type="submit"
+              className={styles.panelSendBtn}
+              aria-label={vi.api.send}
+              disabled={addMutation.isPending || !body.trim()}
+            >
+              <SocialIcon name="send" size={15} />
+            </button>
+          </form>
+        ) : !isReady ? (
+          <div className={styles.composerLoadingPlaceholder}>
+            <span className="small muted">Đang kiểm tra phiên đăng nhập...</span>
+          </div>
+        ) : (
+          <Link className="comment-login" href={loginHref}>
+            {vi.api.commentLogin}
+          </Link>
+        )}
+      </div>
+    </>
+  );
+}
+
+function CommentNode({
+  postId,
+  postAuthorId,
+  postIsVerified,
+  comment,
+  isReply = false,
+  loginHref,
+  onReplySelect,
+}: {
+  postId: string;
+  postAuthorId: string;
+  postIsVerified?: boolean;
+  comment: {
+    id: string;
+    authorId: string;
+    body: string;
+    createdAt: string;
+    isEdited: boolean;
+    likeCount: number;
+    isLiked: boolean;
+    authorName?: string | null;
+  };
+  isReply?: boolean;
+  loginHref: string;
+  onReplySelect: (target: { id: string; authorName: string }) => void;
+}) {
+  const { user } = useApiSession();
+  const client = useQueryClient();
+  const [showReplies, setShowReplies] = useState(true);
+  const [isEditing, setEditing] = useState(false);
+  const [editBody, setEditBody] = useState(comment.body);
+  const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
+
+  const isMine = comment.authorId === user?.id;
+  const isPostAuthor = comment.authorId === postAuthorId;
+  const authorDisplay = formatAuthorDisplay(comment.authorId, comment.authorName, user?.id, user?.displayName);
+  const isAuthorVerified = (isMine && Boolean(user?.emailVerified)) || (isPostAuthor && Boolean(postIsVerified));
+
+  const isCommentLiked = optimisticLiked ?? comment.isLiked;
+  const displayCommentLikes = Math.max(
+    0,
+    comment.likeCount + Number(isCommentLiked) - Number(comment.isLiked),
+  );
+
+  const repliesQuery = useInfiniteQuery({
+    queryKey: ['social', 'comments', postId, comment.id, user?.id],
+    initialPageParam: undefined as string | undefined,
+    enabled: !isReply,
+    queryFn: ({ pageParam, signal }) => socialApi.listComments(postId, pageParam, comment.id, signal),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+  });
+
+  const commentReactionMutation = useMutation({
+    mutationFn: async (nextLiked: boolean) =>
+      (
+        await commentsControllerSetCommentReaction(comment.id, {
+          type: nextLiked ? 'like' : null,
+        })
+      ).data,
+    onMutate: (nextLiked) => {
+      const previous = optimisticLiked;
+      setOptimisticLiked(nextLiked);
+      return { previous };
+    },
+    onError: (_, __, context) => {
+      setOptimisticLiked(context?.previous ?? null);
+    },
+    onSettled: async () => {
+      await client.invalidateQueries({ queryKey: ['social', 'comments', postId] });
+      setOptimisticLiked(null);
+    },
+  });
+
+  const commentMutation = useMutation({
+    mutationFn: async (action: 'edit' | 'delete') => {
+      if (action === 'delete') return socialApi.deleteComment(comment.id);
+      return socialApi.editComment(comment.id, editBody.trim());
+    },
+    onSuccess: async (_, action) => {
+      if (action === 'edit') setEditing(false);
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['social'] }),
+        client.invalidateQueries({ queryKey: ['feed'], refetchType: 'none' }),
+      ]);
+    },
+  });
+
+  const replies = repliesQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const totalReplies = repliesQuery.data?.pages[0]?.total ?? replies.length;
+
+  return (
+    <li className={styles.panelCommentItem}>
+      <div className={styles.panelCommentRow}>
+        <span className={styles.avatarSmall} aria-hidden="true">
+          {getInitial(authorDisplay.name)}
+        </span>
+        <div className={styles.panelCommentContent}>
+          <div className={styles.panelCommentMeta}>
+            <span className={styles.panelCommentAuthor}>{authorDisplay.name}</span>
+            {isAuthorVerified && (
+              <span className={styles.commentVerifiedIcon} title="Tài khoản đã xác minh">
+                <SocialIcon name="verified" size={13} />
+              </span>
+            )}
+            {isPostAuthor && (
+              <span className={styles.authorRoleTag}>{vi.api.immersiveAuthorBadge}</span>
+            )}
+            <span aria-hidden="true">·</span>
+            <span>{formatDateVi(comment.createdAt)}</span>
+            {comment.isEdited && <span>({vi.api.commentEdited})</span>}
+          </div>
+
+          <ApiErrorNotice error={commentMutation.error ?? commentReactionMutation.error} />
+
+          {isEditing ? (
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!editBody.trim()) return;
+                commentMutation.mutate('edit');
+              }}
+            >
+              <textarea
+                className={styles.composerTextarea}
+                aria-label={vi.api.edit}
+                rows={2}
+                value={editBody}
+                onChange={(event) => setEditBody(event.target.value)}
+              />
+              <div className={styles.panelCommentActions}>
+                <button
+                  type="submit"
+                  className={styles.panelCommentActionBtn}
+                  disabled={commentMutation.isPending || !editBody.trim()}
+                >
+                  {vi.api.save}
+                </button>
+                <button
+                  type="button"
+                  className={styles.panelCommentActionBtn}
+                  onClick={() => setEditing(false)}
+                >
+                  {vi.api.cancel}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <p className={styles.panelCommentText}>{comment.body}</p>
+          )}
+
+          {!isEditing && (
+            <div className={styles.panelCommentActions}>
+              {user ? (
+                <button
+                  type="button"
+                  className={`${styles.panelCommentActionBtn} ${
+                    isCommentLiked ? styles.panelCommentActionLiked : ''
+                  }`}
+                  aria-pressed={isCommentLiked}
+                  aria-label={vi.api.like}
+                  disabled={commentReactionMutation.isPending}
+                  onClick={() => commentReactionMutation.mutate(!isCommentLiked)}
+                >
+                  <SocialIcon name={isCommentLiked ? 'heartFilled' : 'heart'} size={13} />
+                  <span>{displayCommentLikes}</span>
+                </button>
+              ) : (
+                <Link
+                  href={loginHref}
+                  className={styles.panelCommentActionBtn}
+                  aria-label={vi.api.like}
+                >
+                  <SocialIcon name="heart" size={13} />
+                  <span>{displayCommentLikes}</span>
+                </Link>
+              )}
+
+              {!isReply && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.panelCommentActionBtn}
+                    onClick={() => {
+                      setShowReplies(true);
+                      onReplySelect({ id: comment.id, authorName: authorDisplay.name });
+                    }}
+                  >
+                    {vi.api.commentReplyAction}
+                  </button>
+                  {totalReplies > 0 && (
+                    <button
+                      type="button"
+                      className={styles.panelCommentActionBtn}
+                      aria-expanded={showReplies}
+                      onClick={() => setShowReplies((prev) => !prev)}
+                    >
+                      {showReplies
+                        ? vi.api.commentHideReplies
+                        : `${vi.api.commentViewReplies} (${totalReplies})`}
+                    </button>
+                  )}
+                </>
+              )}
+
+              {isMine && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.panelCommentActionBtn}
+                    disabled={commentMutation.isPending}
+                    onClick={() => {
+                      setEditBody(comment.body);
+                      setEditing(true);
+                    }}
+                  >
+                    {vi.api.edit}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.panelCommentActionBtn}
+                    disabled={commentMutation.isPending}
+                    onClick={() => commentMutation.mutate('delete')}
+                  >
+                    {vi.api.remove}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {!isReply && showReplies && replies.length > 0 && (
+            <div className={styles.panelReplyWrapper}>
+              <ol className={styles.panelCommentList}>
+                {replies.map((reply) => (
+                  <CommentNode
+                    key={reply.id}
+                    postId={postId}
+                    postAuthorId={postAuthorId}
+                    postIsVerified={postIsVerified}
+                    comment={reply}
+                    isReply
+                    loginHref={loginHref}
+                    onReplySelect={onReplySelect}
+                  />
+                ))}
+              </ol>
+              {repliesQuery.hasNextPage && (
+                <button
+                  type="button"
+                  className={styles.panelCommentActionBtn}
+                  disabled={repliesQuery.isFetchingNextPage}
+                  onClick={() => {
+                    void repliesQuery.fetchNextPage();
+                  }}
+                >
+                  {vi.api.commentLoadMore}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+interface ItineraryItemState {
+  id: string;
+  day: number;
+  title: string;
+  location: string;
+  notes: string;
+}
+
+export interface ComposerModalProps {
+  onClose: () => void;
+  initialView?: 'compose' | 'drafts';
+  initialDraftId?: string | null;
+  initialPostType?: 'video' | 'vlog';
+}
+
+/** Modal tạo và quản lý bài đăng / bản nháp */
+export function ComposerModal({
+  onClose,
+  initialView = 'compose',
+  initialDraftId = null,
+  initialPostType = 'vlog',
+}: ComposerModalProps) {
+  const client = useQueryClient();
+  const { user } = useApiSession();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Chế độ xem: 'compose' (soạn thảo) hoặc 'drafts' (danh sách bản nháp)
+  const [viewMode, setViewMode] = useState<'compose' | 'drafts'>(initialView);
+  const [editingDraftId, setEditingDraftId] = useState<string | null>(initialDraftId);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+
+  // Danh sách các bản nháp của tài khoản hiện tại
+  const draftsQuery = useQuery({
+    queryKey: ['social', 'my-drafts', user?.id],
+    queryFn: ({ signal }) => socialApi.listMyPosts({ status: 'draft', limit: 30 }, signal),
+    enabled: Boolean(user?.id),
+  });
+
+  const drafts = draftsQuery.data?.items ?? [];
+  const draftsCount = drafts.length;
+
+  // Mutation xóa bản nháp
+  const deleteDraftMutation = useMutation({
+    mutationFn: (draftId: string) => socialApi.deletePost(draftId),
+    onSuccess: async (_, deletedId) => {
+      if (editingDraftId === deletedId) {
+        setEditingDraftId(null);
+      }
+      await client.invalidateQueries({ queryKey: ['social'] });
+    },
+  });
+
+  // Thông tin bài viết
+  const [postType, setPostType] = useState<'video' | 'vlog'>(initialPostType);
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [hashtagsText, setHashtagsText] = useState('');
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
+
+  // Phương tiện (Video)
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
+  const [existingMediaId, setExistingMediaId] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadStepText, setUploadStepText] = useState<string>('');
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+
+  // Lịch trình chuyến đi (Trip Attachment)
+  const [enableItinerary, setEnableItinerary] = useState(false);
+  const [destinationName, setDestinationName] = useState('');
+  const [hotelName, setHotelName] = useState('');
+  const [daysCount, setDaysCount] = useState<string>('');
+  const [estimatedCost, setEstimatedCost] = useState<string>('');
+  const [priceDisclaimer, setPriceDisclaimer] = useState('');
+  const [itineraryItems, setItineraryItems] = useState<ItineraryItemState[]>([
+    { id: '1', day: 1, title: '', location: '', notes: '' },
+  ]);
+
+  // Nạp dữ liệu bản nháp vào form để tiếp tục sửa
+  const handleLoadDraft = useCallback((draft: SocialPostDto) => {
+    setEditingDraftId(draft.id);
+    setTitle(draft.title || '');
+    setBody(draft.body || '');
+    setPostType(draft.postType === 'video' ? 'video' : 'vlog');
+    setHashtagsText((draft.hashtags || []).join(', '));
+    setVisibility((draft.visibility as 'public' | 'private') || 'public');
+    setExistingMediaId(draft.mediaIds?.[0] || null);
+    setVideoFile(null);
+    setVideoPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setVideoDuration(null);
+    setUploadError(null);
+    setSaveSuccessMsg(null);
+
+    if (draft.tripAttachment) {
+      setEnableItinerary(true);
+      setDestinationName(draft.tripAttachment.destinationName || '');
+      setHotelName(draft.tripAttachment.hotelName || '');
+      setDaysCount(draft.tripAttachment.daysCount ? String(draft.tripAttachment.daysCount) : '');
+      setEstimatedCost(
+        draft.tripAttachment.estimatedCostPerPerson
+          ? String(draft.tripAttachment.estimatedCostPerPerson)
+          : '',
+      );
+      setPriceDisclaimer(draft.tripAttachment.priceDisclaimer || '');
+      if (draft.tripAttachment.items && draft.tripAttachment.items.length > 0) {
+        setItineraryItems(
+          draft.tripAttachment.items.map((it, idx) => ({
+            id: String(idx + 1),
+            day: it.day,
+            title: it.title,
+            location: it.location || '',
+            notes: it.notes || '',
+          })),
+        );
+      } else {
+        setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+      }
+    } else {
+      setEnableItinerary(false);
+      setDestinationName('');
+      setHotelName('');
+      setDaysCount('');
+      setEstimatedCost('');
+      setPriceDisclaimer('');
+      setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+    }
+
+    setViewMode('compose');
+  }, []);
+
+  const handleNewPost = () => {
+    setEditingDraftId(null);
+    setTitle('');
+    setBody('');
+    setHashtagsText('');
+    setPostType('video');
+    setVisibility('public');
+    setExistingMediaId(null);
+    setVideoFile(null);
+    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    setVideoPreviewUrl(null);
+    setVideoDuration(null);
+    setUploadProgress(0);
+    setUploadStepText('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setEnableItinerary(false);
+    setDestinationName('');
+    setHotelName('');
+    setDaysCount('');
+    setEstimatedCost('');
+    setPriceDisclaimer('');
+    setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+    setUploadError(null);
+    setSaveSuccessMsg(null);
+    setViewMode('compose');
+  };
+
+  // Tự động load draft nếu có initialDraftId
+  useEffect(() => {
+    if (!initialDraftId) return;
+    void socialApi.getPost(initialDraftId).then((res) => {
+      if (res?.post) {
+        handleLoadDraft(res.post);
+      }
+    });
+  }, [initialDraftId, handleLoadDraft]);
+
+  // Thu hồi URL preview khi unmount hoặc đổi file để tránh rò rỉ bộ nhớ
+  useEffect(() => {
+    return () => {
+      if (videoPreviewUrl) {
+        URL.revokeObjectURL(videoPreviewUrl);
+      }
+    };
+  }, [videoPreviewUrl]);
+
+  const handleSelectFile = async (file: File | null) => {
+    setUploadError(null);
+    if (!file) {
+      setVideoFile(null);
+      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+      setVideoPreviewUrl(null);
+      setVideoDuration(null);
+      return;
+    }
+
+    const isMp4 = file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4');
+    const isMov = file.type === 'video/quicktime' || file.name.toLowerCase().endsWith('.mov');
+    if (!isMp4 && !isMov) {
+      setUploadError('Chỉ hỗ trợ video định dạng .mp4 hoặc .mov');
+      return;
+    }
+
+    // Giới hạn 1 GB theo quy định của hệ thống
+    if (file.size > 1024 * 1024 * 1024) {
+      setUploadError('Dung lượng video không được vượt quá 1 GB');
+      return;
+    }
+
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      const duration = await new Promise<number>((resolve, reject) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+          resolve(video.duration);
+        };
+        video.onerror = () => {
+          reject(new Error('Không thể đọc dữ liệu video'));
+        };
+        video.src = previewUrl;
+      });
+
+      if (duration > 300) {
+        URL.revokeObjectURL(previewUrl);
+        setUploadError('Thời lượng video tối đa là 5 phút (300 giây)');
+        return;
+      }
+
+      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+      setVideoFile(file);
+      setVideoPreviewUrl(previewUrl);
+      setVideoDuration(Math.max(1, Math.round(duration)));
+      setPostType('video');
+    } catch {
+      setUploadError('Không thể đọc thông tin video. Vui lòng kiểm tra lại định dạng file.');
+    }
+  };
+
+  const handleRemoveVideo = () => {
+    if (isUploading) return;
+    setVideoFile(null);
+    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    setVideoPreviewUrl(null);
+    setVideoDuration(null);
+    setExistingMediaId(null);
+    setUploadProgress(0);
+    setUploadStepText('');
+    setUploadError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleAddItem = () => {
+    const lastDay = itineraryItems.length > 0 ? itineraryItems[itineraryItems.length - 1]!.day : 1;
+    const newId = Math.random().toString(36).substring(2, 9);
+    setItineraryItems((prev) => [
+      ...prev,
+      { id: newId, day: lastDay, title: '', location: '', notes: '' },
+    ]);
+  };
+
+  const handleRemoveItem = (id: string) => {
+    if (itineraryItems.length <= 1) {
+      setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+      return;
+    }
+    setItineraryItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleUpdateItem = (
+    id: string,
+    field: 'day' | 'title' | 'location' | 'notes',
+    value: string | number,
+  ) => {
+    setItineraryItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    );
+  };
+
+  const uploadVideoMultipart = async (file: File, durationSec: number): Promise<string> => {
+    setIsUploading(true);
+    setUploadProgress(5);
+    setUploadStepText('Đang khởi tạo phiên tải lên...');
+
+    const mimeType =
+      file.name.toLowerCase().endsWith('.mov') || file.type === 'video/quicktime'
+        ? 'video/quicktime'
+        : 'video/mp4';
+
+    const createRes = await mediaUploadControllerCreateUpload({
+      mimeType,
+      fileSizeBytes: file.size,
+      durationSec,
+    });
+
+    if (createRes.status !== 201) {
+      const err = createRes.data as { message?: string };
+      throw new Error(err?.message || 'Khởi tạo tải lên video thất bại');
+    }
+
+    const { assetId, parts, partSizeBytes } = createRes.data;
+    const uploadedParts: Array<{ partNumber: number; etag: string }> = [];
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i]!;
+      const start = i * partSizeBytes;
+      const end = Math.min(file.size, start + partSizeBytes);
+      const chunk = file.slice(start, end);
+
+      setUploadStepText(`Đang tải lên phần ${part.partNumber}/${parts.length}...`);
+
+      const { etag } = await uploadChunkToPresignedUrl(part.url, chunk);
+
+      uploadedParts.push({
+        partNumber: part.partNumber,
+        etag: etag || `"${part.partNumber}"`,
+      });
+
+      const percent = Math.round(((i + 1) / parts.length) * 80) + 5;
+      setUploadProgress(percent);
+    }
+
+    setUploadStepText('Đang hoàn tất và xử lý video...');
+    const completeRes = await mediaUploadControllerCompleteUpload(assetId, {
+      parts: uploadedParts,
+    });
+
+    if (completeRes.status !== 202) {
+      const err = completeRes.data as { message?: string };
+      throw new Error(err?.message || 'Hoàn tất tải lên video thất bại');
+    }
+
+    setUploadProgress(100);
+    setUploadStepText('Tải video thành công!');
+    return assetId;
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async ({ shouldPublish }: { shouldPublish: boolean }) => {
+      setUploadError(null);
+      setSaveSuccessMsg(null);
+
+      if (shouldPublish) {
+        if (!title.trim() || !body.trim()) {
+          throw new Error('Vui lòng điền tiêu đề và nội dung bài viết trước khi đăng.');
+        }
+        if (postType === 'video' && !videoFile && !existingMediaId) {
+          throw new Error('Vui lòng chọn hoặc tải lên một video cho bài viết dạng Video ngắn.');
+        }
+      } else {
+        if (!title.trim() && !body.trim()) {
+          throw new Error('Vui lòng nhập ít nhất tiêu đề hoặc nội dung để lưu bản nháp.');
+        }
+      }
+
+      let uploadedAssetId: string | undefined = existingMediaId || undefined;
+      if (videoFile && videoDuration) {
+        uploadedAssetId = await uploadVideoMultipart(videoFile, videoDuration);
+        setExistingMediaId(uploadedAssetId);
+      }
+
+      const parsedTags = hashtagsText
+        .split(/[,\s#]+/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      let tripAttachment: TripAttachmentDto | undefined = undefined;
+      if (enableItinerary && destinationName.trim()) {
+        const filteredItems: TripItineraryItemDto[] = itineraryItems
+          .filter((item) => item.title.trim().length > 0)
+          .map((item) => ({
+            day: Number(item.day) || 1,
+            title: item.title.trim(),
+            ...(item.location.trim() ? { location: item.location.trim() } : {}),
+            ...(item.notes.trim() ? { notes: item.notes.trim() } : {}),
+          }));
+
+        const parsedDays = parseInt(daysCount, 10);
+        const parsedCost = parseInt(estimatedCost.replace(/\D/g, ''), 10);
+
+        tripAttachment = {
+          destinationName: destinationName.trim(),
+          ...(hotelName.trim() ? { hotelName: hotelName.trim() } : {}),
+          ...(!Number.isNaN(parsedDays) && parsedDays > 0 ? { daysCount: parsedDays } : {}),
+          ...(!Number.isNaN(parsedCost) && parsedCost > 0 ? { estimatedCostPerPerson: parsedCost } : {}),
+          ...(priceDisclaimer.trim() ? { priceDisclaimer: priceDisclaimer.trim() } : {}),
+          ...(filteredItems.length > 0 ? { items: filteredItems } : {}),
+        };
+      }
+
+      let currentId = editingDraftId;
+
+      if (currentId) {
+        const patchPayload: UpdatePostDto = {
+          title: title.trim() || 'Bản nháp',
+          body: body.trim(),
+          hashtags: parsedTags,
+          visibility,
+          ...(uploadedAssetId ? { media_ids: [uploadedAssetId], cover_media_id: uploadedAssetId } : {}),
+          ...(tripAttachment ? { trip_attachment: tripAttachment } : {}),
+        };
+        await socialApi.updatePost(currentId, patchPayload);
+      } else {
+        const draftPayload = {
+          post_type: videoFile || existingMediaId ? 'video' : postType,
+          title: title.trim() || 'Bản nháp',
+          body: body.trim(),
+          hashtags: parsedTags,
+          visibility,
+          ...(uploadedAssetId ? { media_ids: [uploadedAssetId], cover_media_id: uploadedAssetId } : {}),
+          ...(tripAttachment ? { trip_attachment: tripAttachment } : {}),
+        };
+        const draft = await socialApi.createDraft(draftPayload);
+        currentId = draft.id;
+        setEditingDraftId(draft.id);
+      }
+
+      if (shouldPublish && currentId) {
+        await socialApi.publishPost(currentId);
+      }
+
+      return { id: currentId, published: shouldPublish };
+    },
+    onSuccess: async (data) => {
+      await client.invalidateQueries({ queryKey: ['social'] });
+      if (data.published) {
+        onClose();
+      } else {
+        setSaveSuccessMsg('Đã lưu bản nháp thành công.');
+      }
+    },
+    onError: (err: unknown) => {
+      setIsUploading(false);
+      if (err instanceof HttpError && typeof err.body === 'object' && err.body !== null) {
+        const bodyObj = err.body as { message?: string; code?: string };
+        setUploadError(bodyObj.message || `Lỗi yêu cầu (${err.status})`);
+      } else if (err instanceof Error) {
+        setUploadError(err.message);
+      } else {
+        setUploadError('Đã có lỗi xảy ra.');
+      }
+    },
+  });
+
+  const isFormBusy = saveMutation.isPending || isUploading;
+
+  // View danh sách các bản nháp
+  if (viewMode === 'drafts') {
+    return (
+      <dialog open className={styles.modalBackdrop} aria-label="Bản nháp của bạn">
+        <div className={styles.composerModalCard}>
+          <div className={styles.panelHeaderBar}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 className={styles.panelHeaderTitle}>Bản nháp của bạn</h3>
+              <span className={styles.composerSectionBadge}>{draftsCount}</span>
+            </div>
+            <div className={styles.composerHeaderActions}>
+              <button
+                type="button"
+                className={styles.composerHeaderDraftsBtn}
+                onClick={handleNewPost}
+              >
+                <SocialIcon name="plus" size={14} />
+                <span>Viết bài mới</span>
+              </button>
+              <button
+                type="button"
+                className={styles.iconGhostBtn}
+                aria-label={vi.api.cancel}
+                onClick={onClose}
+              >
+                <SocialIcon name="close" size={18} />
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.draftsListContainer}>
+            {draftsQuery.isLoading ? (
+              <div className={styles.draftEmptyState}>
+                <output>Đang tải danh sách bản nháp...</output>
+              </div>
+            ) : drafts.length === 0 ? (
+              <div className={styles.draftEmptyState}>
+                <SocialIcon name="bookmark" size={32} />
+                <p>Bạn chưa có bản nháp nào được lưu.</p>
+                <button
+                  type="button"
+                  className={styles.createPostBtn}
+                  onClick={() => setViewMode('compose')}
+                >
+                  Bắt đầu viết bài
+                </button>
+              </div>
+            ) : (
+              drafts.map((draft) => (
+                <div key={draft.id} className={styles.draftCard}>
+                  <div className={styles.draftCardTop}>
+                    <div>
+                      <h4 className={styles.draftTitle}>
+                        {draft.title || '(Chưa có tiêu đề)'}
+                      </h4>
+                      {draft.body && (
+                        <p className={styles.draftSnippet}>{draft.body}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={styles.draftMeta}>
+                    <span className={styles.draftBadge}>
+                      {draft.postType === 'video' ? 'Video' : 'Bài viết'}
+                    </span>
+                    {draft.tripAttachment?.destinationName && (
+                      <span className={styles.draftBadge}>
+                        {draft.tripAttachment.destinationName}
+                      </span>
+                    )}
+                    <span>
+                      {new Date(draft.updatedAt || draft.createdAt).toLocaleDateString('vi-VN')}
+                    </span>
+                  </div>
+
+                  <div className={styles.draftActions}>
+                    <button
+                      type="button"
+                      className={styles.draftDeleteBtn}
+                      disabled={deleteDraftMutation.isPending}
+                      onClick={() => deleteDraftMutation.mutate(draft.id)}
+                    >
+                      Xóa
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.draftResumeBtn}
+                      onClick={() => handleLoadDraft(draft)}
+                    >
+                      Tiếp tục soạn
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className={styles.composerModalFooter}>
+            <button
+              type="button"
+              className={styles.utilityBtn}
+              onClick={() => setViewMode('compose')}
+            >
+              Quay lại soạn thảo
+            </button>
+          </div>
+        </div>
+      </dialog>
+    );
+  }
+
+  // View soạn thảo bài viết
+  return (
+    <dialog open className={styles.modalBackdrop} aria-label={vi.api.feedCreatePostCta}>
+      <form
+        className={styles.composerModalCard}
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (isFormBusy) return;
+          saveMutation.mutate({ shouldPublish: true });
+        }}
+      >
+        {/* Tiêu đề modal */}
+        <div className={styles.panelHeaderBar}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 className={styles.panelHeaderTitle}>
+              {editingDraftId ? 'Chỉnh sửa bản nháp' : vi.api.feedCreatePostCta}
+            </h3>
+            {editingDraftId && (
+              <span className={styles.editingDraftBadge}>Đang chỉnh sửa bản nháp</span>
+            )}
+          </div>
+          <div className={styles.composerHeaderActions}>
+            <button
+              type="button"
+              className={styles.composerHeaderDraftsBtn}
+              onClick={() => setViewMode('drafts')}
+              disabled={isFormBusy}
+            >
+              <SocialIcon name="bookmark" size={14} />
+              <span>Bản nháp ({draftsCount})</span>
+            </button>
+            <button
+              type="button"
+              className={styles.iconGhostBtn}
+              aria-label={vi.api.cancel}
+              disabled={isFormBusy}
+              onClick={onClose}
+            >
+              <SocialIcon name="close" size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Thông báo lưu nháp thành công */}
+        {saveSuccessMsg && (
+          <output className={styles.saveSuccessBanner}>
+            <SocialIcon name="sparkles" size={16} />
+            <span>{saveSuccessMsg}</span>
+          </output>
+        )}
+
+        {/* 1. Chọn loại bài viết: [ Bài viết ] [ Reels (Video) ] */}
+        <div className={styles.composerTypeToggle}>
+          <button
+            type="button"
+            className={`${styles.composerTypeBtn} ${postType === 'vlog' ? styles.composerTypeBtnActive : ''}`}
+            onClick={() => setPostType('vlog')}
+            disabled={isFormBusy}
+          >
+            <SocialIcon name="compass" size={16} />
+            <span>Bài viết</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.composerTypeBtn} ${postType === 'video' ? styles.composerTypeBtnActive : ''}`}
+            onClick={() => setPostType('video')}
+            disabled={isFormBusy}
+          >
+            <SocialIcon name="video" size={16} />
+            <span>Reels (Video)</span>
+          </button>
+        </div>
+
+        {/* 2. Thông tin nội dung bài viết */}
+        <div className={styles.composerSection}>
+          <div className={styles.composerSectionHeader}>
+            <h4 className={styles.composerSectionTitle}>Nội dung bài viết</h4>
+            <span className={styles.composerSectionBadge}>Bắt buộc</span>
+          </div>
+
+          <input
+            className={styles.composerInput}
+            aria-label={vi.api.title}
+            placeholder={vi.api.composerTitlePlaceholder}
+            required
+            maxLength={255}
+            value={title}
+            disabled={isFormBusy}
+            onChange={(event) => setTitle(event.target.value)}
+          />
+
+          <textarea
+            className={styles.composerTextarea}
+            aria-label={vi.api.body}
+            placeholder={vi.api.composerPlaceholder}
+            required
+            rows={3}
+            value={body}
+            disabled={isFormBusy}
+            onChange={(event) => setBody(event.target.value)}
+          />
+
+          <div className={styles.composerMetaRow}>
+            <input
+              className={styles.composerInput}
+              aria-label={vi.api.hashtags}
+              placeholder={vi.api.composerHashtagPlaceholder}
+              value={hashtagsText}
+              disabled={isFormBusy}
+              onChange={(event) => setHashtagsText(event.target.value)}
+            />
+
+            <select
+              className={styles.composerInput}
+              value={visibility}
+              disabled={isFormBusy}
+              onChange={(event) => setVisibility(event.target.value as 'public' | 'private')}
+              aria-label="Quyền riêng tư"
+            >
+              <option value="public">Công khai với mọi người</option>
+              <option value="private">Chỉ mình tôi</option>
+            </select>
+          </div>
+        </div>
+
+        {/* 3. Tải lên phương tiện đính kèm (Ảnh hoặc Video) */}
+        <div className={styles.composerSection}>
+          <div className={styles.composerSectionHeader}>
+            <h4 className={styles.composerSectionTitle}>
+              <SocialIcon name={postType === 'video' ? 'video' : 'upload'} size={16} />
+              <span>{postType === 'video' ? 'Video Reels' : 'Hình ảnh / Phương tiện'}</span>
+            </h4>
+            <span className={styles.composerSectionBadge}>
+              {postType === 'video' ? 'Bắt buộc với Reels' : 'Tùy chọn'}
+            </span>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={postType === 'video' ? 'video/mp4,video/quicktime,video/webm' : 'image/*,video/*'}
+            style={{ display: 'none' }}
+            disabled={isFormBusy}
+            onChange={(event) => {
+              const file = event.target.files?.[0] || null;
+              void handleSelectFile(file);
+            }}
+          />
+
+          {!videoFile && !existingMediaId ? (
+            <button
+              type="button"
+              className={styles.composerDropzone}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className={styles.composerDropzoneIcon}>
+                <SocialIcon name="upload" size={22} />
+              </div>
+              <p className={styles.composerDropzoneText}>
+                {postType === 'video'
+                  ? 'Kéo thả hoặc nhấn để chọn video Reels'
+                  : 'Kéo thả hoặc nhấn để chọn ảnh cho bài viết'}
+              </p>
+              <p className={styles.composerDropzoneHint}>
+                {postType === 'video'
+                  ? 'Hỗ trợ MP4, MOV, WEBM (Tối đa 5 phút, 1 GB)'
+                  : 'Hỗ trợ JPG, PNG, WEBP (Tùy chọn tải ảnh hoặc đăng bài chỉ có chữ)'}
+              </p>
+            </button>
+          ) : (
+            <div className={styles.composerVideoPreviewCard}>
+              {videoPreviewUrl ? (
+                <video
+                  src={videoPreviewUrl}
+                  controls
+                  className={styles.composerVideoElement}
+                >
+                  <track kind="captions" />
+                </video>
+              ) : existingMediaId ? (
+                <div style={{ padding: '8px 12px', fontSize: '0.85rem', color: 'var(--iv-text)' }}>
+                  <span>Video đã lưu trong bản nháp (ID: {existingMediaId.slice(0, 8)}...)</span>
+                </div>
+              ) : null}
+
+              <div className={styles.composerVideoMeta}>
+                <div>
+                  {videoFile ? (
+                    <>
+                      <strong>{videoFile.name}</strong>
+                      <span> — {(videoFile.size / (1024 * 1024)).toFixed(1)} MB</span>
+                      {videoDuration && <span> ({videoDuration}s)</span>}
+                    </>
+                  ) : (
+                    <span>Đã gắn media từ trước</span>
+                  )}
+                </div>
+                {!isUploading && (
+                  <button
+                    type="button"
+                    className={styles.removeItineraryItemBtn}
+                    onClick={handleRemoveVideo}
+                    title="Xóa video đã chọn"
+                    aria-label="Xóa video đã chọn"
+                  >
+                    <SocialIcon name="trash" size={16} />
+                  </button>
+                )}
+              </div>
+
+              {isUploading && (
+                <div className={styles.composerUploadProgressBox}>
+                  <div className={styles.composerProgressText}>
+                    <span>{uploadStepText}</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className={styles.composerProgressBarBg}>
+                    <div
+                      className={styles.composerProgressBarFill}
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 4. Lộ trình chuyến đi (Trip Attachment) */}
+        <div className={styles.composerSection}>
+          <label
+            htmlFor="composer-itinerary-checkbox"
+            className={styles.composerItineraryToggleRow}
+            aria-label="Đính kèm lịch trình chuyến đi"
+          >
+            <div className={styles.composerItineraryToggleInfo}>
+              <div className={styles.composerItineraryToggleTitle}>
+                <SocialIcon name="calendar" size={16} />
+                <span>Đính kèm lịch trình chuyến đi</span>
+              </div>
+              <span className={styles.composerItineraryToggleSubtitle}>
+                Chia sẻ điểm đến, chi phí và từng điểm dừng trong hành trình
+              </span>
+            </div>
+            <input
+              id="composer-itinerary-checkbox"
+              type="checkbox"
+              className={styles.switchInput}
+              checked={enableItinerary}
+              disabled={isFormBusy}
+              onChange={(e) => setEnableItinerary(e.target.checked)}
+            />
+          </label>
+
+          {enableItinerary && (
+            <div className={styles.composerItineraryContainer}>
+              <div className={styles.composerMetaRow}>
+                <input
+                  className={styles.composerInput}
+                  aria-label="Điểm đến chuyến đi"
+                  placeholder="Điểm đến (VD: Đà Lạt, Phú Quốc...)"
+                  value={destinationName}
+                  disabled={isFormBusy}
+                  onChange={(e) => setDestinationName(e.target.value)}
+                />
+                <input
+                  className={styles.composerInput}
+                  aria-label="Khách sạn / Resort"
+                  placeholder="Khách sạn (VD: Terracotta Resort...)"
+                  value={hotelName}
+                  disabled={isFormBusy}
+                  onChange={(e) => setHotelName(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.composerMetaRow}>
+                <input
+                  className={styles.composerInput}
+                  type="number"
+                  min={1}
+                  max={30}
+                  aria-label="Số ngày đi"
+                  placeholder="Số ngày (VD: 3)"
+                  value={daysCount}
+                  disabled={isFormBusy}
+                  onChange={(e) => setDaysCount(e.target.value)}
+                />
+                <input
+                  className={styles.composerInput}
+                  aria-label="Chi phí dự tính"
+                  placeholder="Chi phí / người (VD: 3.500.000 VNĐ)"
+                  value={estimatedCost}
+                  disabled={isFormBusy}
+                  onChange={(e) => setEstimatedCost(e.target.value)}
+                />
+              </div>
+
+              <input
+                className={styles.composerInput}
+                aria-label="Ghi chú chi phí"
+                placeholder="Ghi chú chi phí (VD: Giá tham khảo bao gồm vé máy bay và phòng)"
+                value={priceDisclaimer}
+                disabled={isFormBusy}
+                onChange={(e) => setPriceDisclaimer(e.target.value)}
+              />
+
+              <div className={styles.composerSectionHeader} style={{ marginTop: '4px' }}>
+                <h5 className={styles.composerSectionTitle}>Các hoạt động theo ngày</h5>
+                <span className={styles.composerSectionBadge}>{itineraryItems.length} hoạt động</span>
+              </div>
+
+              {itineraryItems.map((item, index) => (
+                <div key={item.id} className={styles.itineraryItemCard}>
+                  <div className={styles.itineraryItemHeader}>
+                    <label className={styles.itineraryDaySelect} htmlFor={`itinerary-day-${item.id}`}>
+                      Ngày:
+                      <select
+                        id={`itinerary-day-${item.id}`}
+                        className={styles.itineraryDaySelect}
+                        value={item.day}
+                        disabled={isFormBusy}
+                        onChange={(e) => handleUpdateItem(item.id, 'day', Number(e.target.value))}
+                      >
+                        {Array.from({ length: 15 }, (_, i) => i + 1).map((d) => (
+                          <option key={d} value={d}>
+                            Ngày {d}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <input
+                      className={styles.composerInput}
+                      style={{ flex: 1 }}
+                      placeholder="Tên hoạt động (VD: Đón bình minh Cầu Gỗ)"
+                      value={item.title}
+                      disabled={isFormBusy}
+                      onChange={(e) => handleUpdateItem(item.id, 'title', e.target.value)}
+                      required={enableItinerary && index === 0}
+                    />
+
+                    <button
+                      type="button"
+                      className={styles.removeItineraryItemBtn}
+                      onClick={() => handleRemoveItem(item.id)}
+                      disabled={isFormBusy}
+                      title="Xóa hoạt động này"
+                      aria-label="Xóa hoạt động"
+                    >
+                      <SocialIcon name="trash" size={15} />
+                    </button>
+                  </div>
+
+                  <div className={styles.composerMetaRow}>
+                    <input
+                      className={styles.composerInput}
+                      placeholder="Địa điểm / Toạ độ (VD: Đồi chè Cầu Đất)"
+                      value={item.location}
+                      disabled={isFormBusy}
+                      onChange={(e) => handleUpdateItem(item.id, 'location', e.target.value)}
+                    />
+                    <input
+                      className={styles.composerInput}
+                      placeholder="Ghi chú / Mẹo (VD: Nên đến trước 5h30 để săn mây)"
+                      value={item.notes}
+                      disabled={isFormBusy}
+                      onChange={(e) => handleUpdateItem(item.id, 'notes', e.target.value)}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className={styles.addItemBtn}
+                disabled={isFormBusy}
+                onClick={handleAddItem}
+              >
+                <SocialIcon name="plus" size={15} />
+                <span>Thêm hoạt động tiếp theo</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Thông báo lỗi nếu có */}
+        {uploadError && (
+          <div className={styles.uploadErrorBanner} role="alert">
+            <SocialIcon name="info" size={15} />
+            <span>{uploadError}</span>
+          </div>
+        )}
+        <ApiErrorNotice error={saveMutation.error} />
+
+        {/* Nút hành động */}
+        <div className={styles.composerModalFooter}>
+          <button
+            type="button"
+            className={styles.utilityBtn}
+            onClick={onClose}
+            disabled={isFormBusy}
+          >
+            {vi.api.cancel}
+          </button>
+          <button
+            type="button"
+            className={styles.utilityBtn}
+            disabled={isFormBusy || (!title.trim() && !body.trim())}
+            onClick={() => saveMutation.mutate({ shouldPublish: false })}
+          >
+            {saveMutation.isPending && !saveMutation.variables?.shouldPublish
+              ? 'Đang lưu nháp...'
+              : 'Lưu bản nháp'}
+          </button>
+          <button
+            type="submit"
+            className={styles.createPostBtn}
+            disabled={
+              isFormBusy ||
+              !title.trim() ||
+              !body.trim() ||
+              (postType === 'video' && !videoFile && !existingMediaId)
+            }
+          >
+            {isUploading
+              ? 'Đang tải video...'
+              : saveMutation.isPending && saveMutation.variables?.shouldPublish
+                ? vi.api.saving
+                : 'Đăng bài viết'}
+          </button>
+        </div>
+      </form>
+    </dialog>
   );
 }

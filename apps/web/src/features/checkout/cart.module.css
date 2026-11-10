@@ -1,0 +1,292 @@
+.page {
+  padding-block: 32px 64px;
+}
+
+.page h1 {
+  margin: 0 0 4px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 28px;
+  align-items: start;
+  margin-top: 20px;
+}
+
+.items {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.item h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.item p {
+  margin: 0;
+}
+
+.property {
+  color: var(--color-teal-ink);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.itemActions {
+  display: grid;
+  flex-shrink: 0;
+  justify-items: end;
+  gap: 8px;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stepper button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.stepper button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.remove {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-coral-ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.summary {
+  position: sticky;
+  top: 96px;
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-warm-mist);
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0;
+}
+
+.total strong {
+  color: var(--color-coral-ink);
+  font-size: 22px;
+}
+
+.warning {
+  margin: 0;
+  color: var(--color-coral-ink);
+  font-size: 13px;
+}
+
+.headerLink {
+  position: relative;
+  display: inline-flex;
+  margin-left: auto;
+  padding: 6px;
+  color: var(--color-ink);
+}
+
+/* Header cách nhau 48px; kéo tài khoản lại gần giỏ để hai mục thành một cụm bên phải. */
+.headerLink + :global(.header-account),
+.headerLink + :global(.header-login) {
+  margin-left: -32px;
+}
+
+.headerCount {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-coral-ink);
+  color: var(--color-background);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.adder {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.qtySelect {
+  min-width: 104px;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font: inherit;
+}
+
+.barSpacer {
+  height: 60px;
+}
+
+.bar {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 40;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-background);
+  box-shadow: 0 -10px 28px -20px var(--color-ink);
+}
+
+.barContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-block: 7px;
+}
+
+.barSummary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.barSummary strong {
+  color: var(--color-coral-ink);
+  font-size: 17px;
+}
+
+.barSummary p {
+  flex-basis: 100%;
+}
+
+.barActions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.barActions a,
+.barActions button {
+  min-height: 36px;
+  padding: 6px 16px;
+  font-size: 13px;
+}
+
+@media (max-width: 800px) {
+  .barContent {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .barActions > * {
+    flex: 1;
+  }
+
+  .barSpacer {
+    height: 96px;
+  }
+
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .item {
+    flex-direction: column;
+  }
+
+  .itemActions {
+    justify-items: start;
+  }
+
+  .summary {
+    position: static;
+  }
+}
+
+.surcharge {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.barAdded {
+  color: var(--color-teal-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.barActions .barClear {
+  border: 0;
+  background: none;
+  color: var(--color-coral-ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Khoảng cách header giảm theo màn hình nên phần kéo lại cũng giảm theo. */
+@media (max-width: 900px) {
+  .headerLink + :global(.header-account),
+  .headerLink + :global(.header-login) {
+    margin-left: -12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .headerLink + :global(.header-account),
+  .headerLink + :global(.header-login) {
+    margin-left: -4px;
+  }
+}
+
+.barStays {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}

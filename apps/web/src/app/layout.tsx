@@ -5,10 +5,12 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import './globals.css';
 import { HeaderAccount } from '@/features/auth/header-account';
+import { CartLink } from '@/features/checkout/cart-link';
+import { HeaderNotifications } from '@/features/notifications/header-notifications';
 import { Providers } from './providers';
 import { OtaNavigation } from '@/features/discovery/ota-navigation';
-import { OTA_DESTINATIONS, getDestinationHref } from '@/features/discovery/ota-destinations';
-import styles from '@/features/discovery/ota-shell.module.css';
+import { OtaFooter } from '@/features/discovery/ota-footer';
+import { ButtonRipple } from '@/features/shared/button-ripple';
 
 export const metadata: Metadata = {
   title: t('app.name'),
@@ -23,6 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {vi.demo.common.explore}
         </a>
         <Providers>
+          <ButtonRipple />
           <header className="ota-header" id="top">
             <div className="ota-container header-content">
               <Link href="/" aria-label={vi.demo.common.logo}>
@@ -35,61 +38,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 />
               </Link>
               <OtaNavigation />
-              <HeaderAccount />
+              {/* Cụm bên phải: giỏ hàng, chuông, tài khoản trong một viên cùng kiểu menu (TF06P). */}
+              <div className="header-actions">
+                <CartLink />
+                <HeaderNotifications />
+                <HeaderAccount />
+              </div>
             </div>
           </header>
           {children}
-          <footer className={styles.footer}>
-            <div className={`ota-container ${styles.footerGrid}`}>
-              <div className={styles.footerIdentity}>
-                <Link className={styles.footerBrand} href="/">
-                  <Image src="/brand/tripflix-logo.svg" alt={vi.demo.common.logo} width={142} height={42} />
-                </Link>
-                <strong>{vi.app.slogan}</strong>
-                <p>{vi.ota.footerCopy}</p>
-              </div>
-              <nav aria-label={vi.ota.footerExplore}>
-                <strong>{vi.ota.footerExplore}</strong>
-                <Link href="/search">{vi.api.hotels}</Link>
-                <Link href="/#home-destinations">{vi.ota.discover}</Link>
-                <Link href="/inspiration">{vi.api.inspiration}</Link>
-              </nav>
-              <nav className={styles.footerDestinations} aria-label={vi.ota.footerDestinations}>
-                <strong>{vi.ota.footerDestinations}</strong>
-                {OTA_DESTINATIONS.map((destination) => (
-                  <Link key={destination.id} href={getDestinationHref(destination)}>
-                    <span className={styles.footerThumbnail}>
-                      <Image src={destination.image} alt="" fill sizes="32px" />
-                    </span>
-                    {destination.name} <span aria-hidden="true">↗</span>
-                  </Link>
-                ))}
-              </nav>
-              <div className={styles.footerPostcard}>
-                <div>
-                  <p className={styles.footerPostcardLabel}>
-                    <span aria-hidden="true">✦</span> {vi.ota.fieldNotes}
-                  </p>
-                  <h2>{vi.ota.footerTitle}</h2>
-                  <Link className={styles.footerAction} href="/#ota-search">
-                    {vi.ota.heroSearch} <span aria-hidden="true">↗</span>
-                  </Link>
-                </div>
-                <span className={styles.footerPostcardPhoto}>
-                  <Image src="/brand/home-shore.jpg" alt="" fill sizes="88px" />
-                </span>
-              </div>
-            </div>
-            <div className={`ota-container ${styles.footerBase}`}>
-              <p>
-                <span aria-hidden="true" />
-                {vi.api.bookingUnavailable}
-              </p>
-              <a href="#top">
-                {vi.ota.backToTop} <span aria-hidden="true">↑</span>
-              </a>
-            </div>
-          </footer>
+          <OtaFooter />
         </Providers>
       </body>
     </html>

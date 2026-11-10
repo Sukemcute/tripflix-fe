@@ -56,7 +56,7 @@
   margin-top: 16px;
   font-size: 14px;
   font-weight: 600;
-  transition: opacity 160ms ease;
+  transition: opacity 256ms ease;
 }
 .primary:hover {
   opacity: 0.9;
@@ -132,6 +132,19 @@
 }
 .skeleton:last-child {
   width: 65%;
+}
+/* Cảnh báo an toàn: luôn hiện trên đoạn tóm tắt khi có */
+.safety {
+  display: grid;
+  gap: 4px;
+  background: var(--color-sun-soft);
+  border-left: 4px solid var(--color-warning);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.root .body .safety p {
+  font-size: 13px;
+  line-height: 1.6;
 }
 .empty {
   display: grid;

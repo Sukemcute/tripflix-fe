@@ -9,7 +9,7 @@ import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { NetworkStateType, useNetworkState } from 'expo-network';
-import { router, useIsFocused } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -72,11 +72,16 @@ function readDemoReels(): ReelItem[] {
 }
 
 const DEMO_REELS = readDemoReels();
+// shortcut: core chưa có API lấy reel theo id bài; dò tối đa 5 trang feed (50 reel), đủ cho dữ liệu pilot.
+const MAX_JUMP_PAGES = 5;
 
 export function ReelsScreen() {
   const [tab, setTab] = useState<ReelTab>('for_you');
   const [isSample, setIsSample] = useState(false);
   const [isChromeHidden, setIsChromeHidden] = useState(false);
+  /** Reel cần mở ngay (ví dụ bấm thẻ video trong khung chat Tripi). */
+  const { reel: targetId } = useLocalSearchParams<{ reel?: string }>();
+  const clearTarget = useCallback(() => router.setParams({ reel: undefined }), []);
   const { width } = useWindowDimensions();
   // The bar follows `tab` at once; the list only changes after the old one has left the screen.
   const [contentTab, setContentTab] = useState<ReelTab>('for_you');
@@ -182,15 +187,19 @@ export function ReelsScreen() {
     },
   });
   const contentStyle = useAnimatedStyle(() => ({ transform: [{ translateX: translateX.get() }] }));
+  // Thẻ video trong chat Tripi lấy từ bảng tin Dành cho bạn, nên mở đúng tab đó.
+  useEffect(() => {
+    if (!targetId) return;
+    setIsSample(false);
+    setTab('for_you');
+    setContentTab('for_you');
+    setCoverTab(null);
+    isSwitching.set(false);
+    translateX.set(0);
+  }, [targetId, isSwitching, translateX]);
 
   if (isSample && DEMO_REELS.length > 0)
-    return (
-      <ReelsFeed
-        items={DEMO_REELS}
-        isSample
-        onExitSample={() => setIsSample(false)}
-      />
-    );
+    return <ReelsFeed items={DEMO_REELS} isSample onExitSample={() => setIsSample(false)} />;
   return (
     <GestureHandlerRootView style={styles.screen}>
       <GestureDetector gesture={tabSwipe}>
@@ -220,6 +229,8 @@ export function ReelsScreen() {
               key={contentTab}
               tab={contentTab}
               initialLayout={contentSize}
+              targetId={contentTab === 'for_you' ? targetId : undefined}
+              onTargetShown={clearTarget}
               onHiddenChange={setIsChromeHidden}
               onOpenSample={() => setIsSample(true)}
             />
@@ -231,7 +242,12 @@ export function ReelsScreen() {
           <ReelsTabPreview tab={coverTab} playback={firstPlaybackOf(coverTab)} size={contentSize} />
         </View>
       )}
-      <ReelsTabBar selected={tab} isHidden={isChromeHidden} onSelect={selectTab} />
+      <ReelsTabBar
+        selected={tab}
+        isHidden={isChromeHidden}
+        onSelect={selectTab}
+        onSearch={() => router.push({ pathname: '/(tabs)/explore', params: { autoFocus: '1' } })}
+      />
     </GestureHandlerRootView>
   );
 }
@@ -263,7 +279,11 @@ function ReelsTabPreview({
     );
   const { box, contentFit } = layoutReelVideo(playback.aspect, size.width, size.height);
   return (
-    <View style={styles.previewFrame} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View
+      style={styles.previewFrame}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
       <Image
         source={selectReelPoster(playback.posters, size.width)}
         cachePolicy="memory-disk"
@@ -290,11 +310,15 @@ function FollowingComingSoon() {
 function ReelsTabFeed({
   tab,
   initialLayout,
+  targetId,
+  onTargetShown,
   onHiddenChange,
   onOpenSample,
 }: {
   tab: ReelFeedTab;
   initialLayout: { width: number; height: number };
+  targetId?: string;
+  onTargetShown: () => void;
   onHiddenChange: (isHidden: boolean) => void;
   onOpenSample: () => void;
 }) {
@@ -332,6 +356,13 @@ function ReelsTabFeed({
       }));
   }, [feed.data]);
 
+  const isTargetLoaded = !targetId || items.some((item) => item.postId === targetId);
+  useEffect(() => {
+    if (isTargetLoaded || !feed.hasNextPage || feed.isFetching || feed.isError) return;
+    if ((feed.data?.pages.length ?? 0) >= MAX_JUMP_PAGES) return;
+    void feed.fetchNextPage({ cancelRefetch: false });
+  }, [isTargetLoaded, feed]);
+
   const loadMore = () => {
     if (feed.hasNextPage && !feed.isFetching && !feed.isError)
       void feed.fetchNextPage({ cancelRefetch: false });
@@ -356,6 +387,8 @@ function ReelsTabFeed({
           items={items}
           initialLayout={initialLayout}
           onHiddenChange={onHiddenChange}
+          targetId={targetId}
+          onTargetShown={onTargetShown}
           onLoadMore={loadMore}
           isFetchingMore={feed.isFetchingNextPage}
           onRefresh={() => {
@@ -383,7 +416,10 @@ function ReelsTabFeed({
               {vi.api.next}
             </Button>
           )}
-          <Button tone="secondary" onPress={() => router.push('/(tabs)/explore')}>
+          <Button
+            tone="secondary"
+            onPress={() => router.push({ pathname: '/(tabs)/explore', params: { autoFocus: '1' } })}
+          >
             {vi.api.search}
           </Button>
         </>
@@ -400,6 +436,8 @@ function ReelsTabFeed({
 export function ReelsFeed({
   items,
   initialLayout = { width: 0, height: 0 },
+  targetId,
+  onTargetShown,
   isSample = false,
   onHiddenChange,
   onExitSample,
@@ -410,6 +448,8 @@ export function ReelsFeed({
 }: {
   items: readonly ReelItem[];
   initialLayout?: { width: number; height: number };
+  targetId?: string;
+  onTargetShown?: () => void;
   isSample?: boolean;
   onHiddenChange?: (isHidden: boolean) => void;
   onExitSample?: () => void;
@@ -476,6 +516,23 @@ export function ReelsFeed({
     setActiveIndex(index);
   }, []);
 
+  const list = useRef<FlatList<ReelItem>>(null);
+  const targetIndex = targetId ? items.findIndex((item) => item.postId === targetId) : -1;
+  useEffect(() => {
+    if (targetIndex < 0 || layout.height === 0) return;
+    // Danh sách chỉ dựng vài reel quanh chỗ đang xem, nên cuộn xa bị chặn ở cuối phần đã dựng;
+    // cuộn lại qua vài khung hình để danh sách kịp dựng tiếp. onScroll tự cập nhật reel đang xem.
+    let frame = 0;
+    let attempts = 0;
+    const jump = () => {
+      list.current?.scrollToOffset({ offset: targetIndex * layout.height, animated: false });
+      if (++attempts < 10) frame = requestAnimationFrame(jump);
+      else onTargetShown?.();
+    };
+    jump();
+    return () => cancelAnimationFrame(frame);
+  }, [targetIndex, layout.height, onTargetShown]);
+
   const indexAt = (offset: number) =>
     Math.max(0, Math.min(items.length - 1, Math.round(offset / layout.height)));
 
@@ -500,6 +557,7 @@ export function ReelsFeed({
       {isFocused && <StatusBar style="light" />}
       {layout.height > 0 && layout.width > 0 && (
         <FlatList
+          ref={list}
           testID="reels-list"
           data={items}
           keyExtractor={(item) => item.id}

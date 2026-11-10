@@ -1,6 +1,7 @@
 'use client';
 import { useApiSession } from '@tripflix/api-client';
 import * as auth from '@tripflix/api-client/core-api/auth/auth';
+import { NEW_PASSWORD_MAX } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
@@ -34,9 +35,13 @@ function PasswordPanel() {
     },
   });
   return (
-    <section className="account-panel account-password">
-      <h2>{vi.api.changePassword}</h2>
-      <p className="auth-hint">{vi.api.changePasswordHint}</p>
+    <section className="profile-card account-panel account-password" aria-labelledby="account-password-title">
+      <header className="profile-card-header">
+        <div>
+          <h2 id="account-password-title">{vi.api.changePassword}</h2>
+          <p className="auth-hint">{vi.api.changePasswordHint}</p>
+        </div>
+      </header>
       <form
         className="auth-form"
         onSubmit={(event) => {
@@ -59,6 +64,7 @@ function PasswordPanel() {
           label={vi.api.newPassword}
           required
           minLength={8}
+          maxChars={NEW_PASSWORD_MAX}
           autoComplete="new-password"
           value={newPassword}
           onValueChange={setNewPassword}
@@ -68,6 +74,7 @@ function PasswordPanel() {
           label={vi.api.confirmPassword}
           required
           minLength={8}
+          maxChars={NEW_PASSWORD_MAX}
           autoComplete="new-password"
           value={confirmation}
           onValueChange={setConfirmation}
@@ -130,14 +137,18 @@ function DevicesPanel({ userId }: { userId: string }) {
   const visibleDevices = isShowingAllDevices ? sortedDevices : sortedDevices.slice(0, VISIBLE_DEVICES);
   const hiddenCount = sortedDevices.length - VISIBLE_DEVICES;
   return (
-    <section className="account-panel account-devices">
-      <h2>
-        {vi.api.sessions}
-        {devices.data && (
-          <span className="device-count">{t('api.deviceCount', { count: sortedDevices.length })}</span>
-        )}
-      </h2>
-      <p className="auth-hint">{vi.api.devicesHint}</p>
+    <section className="profile-card account-panel account-devices" aria-labelledby="account-devices-title">
+      <header className="profile-card-header">
+        <div>
+          <h2 id="account-devices-title">
+            {vi.api.sessions}
+            {devices.data && (
+              <span className="device-count">{t('api.deviceCount', { count: sortedDevices.length })}</span>
+            )}
+          </h2>
+          <p className="auth-hint">{vi.api.devicesHint}</p>
+        </div>
+      </header>
       <ApiErrorNotice
         error={devices.error}
         retry={() => {

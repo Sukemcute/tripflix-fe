@@ -91,7 +91,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 220ms;
+  transition: transform 352ms;
 }
 .gallery button:hover img,
 .compactGallery button:hover img {
@@ -119,29 +119,140 @@
   font-size: 12px;
 }
 .photoDialog {
-  width: min(1000px, calc(100% - 32px));
-  max-height: 95dvh;
-  padding: 16px;
-  border: 0;
-  border-radius: 16px;
+  --viewer-line: var(--color-border);
+  --viewer-padding: clamp(0.75rem, 2vw, 1.125rem);
+  inset: 0;
+  width: min(60rem, calc(100% - 2 * var(--viewer-padding)));
+  height: min(44rem, calc(100dvh - 2 * var(--viewer-padding)));
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--viewer-line);
+  border-radius: 18px;
   background: var(--color-background);
   color: var(--color-ink);
+  box-shadow: 0 24px 64px var(--color-overlay);
 }
 .photoDialog::backdrop {
-  background: var(--color-overlay-heavy);
+  background: var(--color-overlay);
+  backdrop-filter: blur(2px);
 }
-.photoDialog > img {
+:global(html):has(.photoDialog[open]) {
+  overflow: hidden;
+}
+.photoViewer {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  height: 100%;
+  padding: var(--viewer-padding);
+}
+.photoHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+.photoHeader strong {
+  display: block;
+  overflow: hidden;
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.photoHeader output {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.photoStage {
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+.photoStage > img {
   display: block;
   width: 100%;
-  max-height: 72dvh;
-  height: auto;
+  height: 100%;
+  min-height: 0;
   object-fit: contain;
 }
-.dialogToolbar {
-  display: flex;
+.photoStage .missingPhoto {
+  min-height: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+}
+.photoNavigation {
+  display: grid;
+  grid-template-columns: auto minmax(0, auto) auto;
   align-items: center;
-  justify-content: space-between;
-  padding-block: 8px;
+  justify-content: center;
+  gap: 12px;
+}
+.photoControl {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--viewer-line);
+  border-radius: 50%;
+  background: var(--color-background);
+  color: inherit;
+  transition:
+    background-color 288ms,
+    border-color 288ms;
+}
+.photoControl svg {
+  width: 18px;
+  height: 18px;
+}
+.photoControl:hover {
+  background: var(--color-surface);
+  border-color: var(--color-teal-ink);
+}
+.photoThumbnails {
+  display: flex;
+  gap: 8px;
+  max-width: 28rem;
+  overflow-x: auto;
+  padding: 4px;
+  scrollbar-width: thin;
+}
+.photoThumbnails button {
+  position: relative;
+  display: grid;
+  flex: 0 0 64px;
+  height: 48px;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: var(--color-surface);
+  font-size: 0.75rem;
+  opacity: 0.6;
+  transition: opacity 288ms;
+}
+.photoThumbnails button:is(:hover, :focus-visible, [aria-current]) {
+  opacity: 1;
+}
+.photoThumbnails button[aria-current] {
+  border-color: var(--color-coral-ink);
+}
+.photoThumbnails img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photoDialog button:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
 }
 .sectionNav {
   display: flex;
@@ -341,40 +452,77 @@
   height: 20px;
 }
 .rates {
+  display: grid;
+  align-content: start;
+  gap: 10px;
   min-width: 0;
+  padding: clamp(10px, 1.4vw, 18px);
+  container-type: inline-size;
 }
 .rate {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.75fr);
-  gap: 24px;
-  padding: 24px;
-  border-bottom: 1px solid var(--color-border);
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 14px 20px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
 }
-.rate:last-child {
-  border-bottom: 0;
+.rateDetails {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
 }
 .rate h4 {
-  font-size: 14px;
-  margin: 0 0 16px;
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
 }
 .rate ul {
   display: grid;
-  gap: 8px;
+  gap: 4px;
 }
-.refundable {
-  color: var(--color-teal-ink);
+.rate li {
+  gap: 6px;
+}
+.ratePolicy {
+  justify-self: start;
+  margin: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
   font-size: 12px;
+  line-height: 1.5;
+}
+.ratePolicy[data-refundable='true'] {
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
 }
 .ratePrice {
   display: flex;
   flex-direction: column;
   align-items: end;
-  gap: 6px;
+  gap: 4px;
+  min-width: 0;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.ratePrice > strong {
-  font-size: 24px;
+.rateAmount {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: end;
+  gap: 2px 7px;
+}
+.rateAmount:empty {
+  display: none;
+}
+.rateAmount strong {
+  font-size: clamp(19px, 2vw, 24px);
+  line-height: 1.15;
   color: var(--color-coral-ink);
 }
 .ratePrice del,
@@ -384,15 +532,37 @@
 }
 .ratePrice p {
   font-size: 12px;
-  margin: 8px 0 0;
+  margin: 0;
+}
+.ratePrice > :is(a, button) {
+  min-height: 38px;
+  margin-top: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  text-align: center;
 }
 .discount {
-  background: var(--color-coral-ink);
-  color: var(--color-background);
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
   border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
+  padding: 2px 5px;
+  font-size: 11px;
   font-weight: 600;
+}
+@container (max-width: 400px) {
+  .rate {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 14px;
+  }
+  .ratePrice {
+    align-items: start;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+    text-align: left;
+  }
+  .rateAmount {
+    justify-content: start;
+  }
 }
 .compactGallery {
   display: flex;
@@ -407,9 +577,64 @@
   padding: 0;
   background: var(--color-surface-muted);
 }
-.roomInfo .compactGallery button {
-  flex-basis: 100%;
+.roomCarousel {
+  position: relative;
   height: 180px;
+}
+.carouselPhoto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  cursor: zoom-in;
+}
+.carouselPhoto img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.carouselArrow {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 8px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 1px solid color-mix(in srgb, var(--color-background) 40%, transparent);
+  border-radius: 50%;
+  background: var(--color-overlay-heavy);
+  color: var(--color-background);
+}
+.carouselArrow + .carouselArrow {
+  inset-inline: auto 8px;
+}
+.carouselArrow svg {
+  width: 20px;
+  height: 20px;
+}
+.carouselArrow:hover {
+  background: var(--color-ink);
+}
+.roomCarousel button:focus-visible {
+  outline-color: var(--color-teal-soft);
+  outline-offset: -3px;
+}
+.carouselCount {
+  position: absolute;
+  inset-block-end: 8px;
+  inset-inline-end: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--color-overlay-heavy);
+  color: var(--color-background);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 .amenityGroups {
   display: grid;
@@ -483,52 +708,113 @@
   font-size: 13px;
   color: var(--color-text-muted);
 }
+/* Đánh giá: Coral cho điểm nhấn chính, Teal cho thông tin, Yellow cho sao; nền Warm Mist / Sea Mist. */
 .reviewOverview {
   display: grid;
-  grid-template-columns: 150px minmax(180px, 1fr) 2fr;
-  gap: 32px;
+  grid-template-columns: 170px minmax(200px, 1fr) minmax(0, 1.6fr);
+  gap: 28px;
   padding: 24px;
-  background: var(--color-surface);
-  border-radius: 16px;
-  margin-bottom: 24px;
+  background: var(--color-warm-mist);
+  border: 1px solid var(--color-coral-tint);
+  border-radius: 20px;
+  margin-bottom: 20px;
   align-items: center;
 }
-.reviewScore > strong {
-  display: block;
-  font-size: 48px;
-  color: var(--color-teal-ink);
-  line-height: 1.2;
-  letter-spacing: -0.05em;
+.reviewScore {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 18px 12px;
+  border-radius: 16px;
+  background: var(--color-background);
+  text-align: center;
 }
-.reviewScore p,
+.reviewScore > strong {
+  display: inline-grid;
+  place-items: center;
+  min-width: 84px;
+  padding: 8px 14px;
+  border-radius: 14px 14px 14px 4px;
+  background: var(--color-coral-ink);
+  color: var(--color-background);
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
 .reviewScore > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.reviewScore p {
+  margin: 0;
   font-size: 12px;
   color: var(--color-text-muted);
 }
 .distribution > div {
   display: grid;
-  grid-template-columns: 32px 1fr 40px;
+  grid-template-columns: 34px 1fr 36px;
   gap: 10px;
   align-items: center;
-  margin-block: 8px;
+  margin-block: 7px;
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.distribution > div > span:last-child {
+  color: var(--color-text-muted);
+  text-align: right;
 }
 .distribution meter {
   width: 100%;
-  height: 12px;
-  accent-color: var(--color-teal-ink);
+  height: 8px;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-background);
+  overflow: hidden;
+}
+.distribution meter::-webkit-meter-bar {
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-background);
+}
+.distribution meter::-webkit-meter-optimum-value,
+.distribution meter::-webkit-meter-suboptimum-value,
+.distribution meter::-webkit-meter-even-less-good-value {
+  border-radius: 999px;
+  background: var(--color-sun);
+}
+.distribution meter::-moz-meter-bar {
+  border-radius: 999px;
+  background: var(--color-sun);
 }
 .reviewSummary {
-  padding-left: 24px;
-  border-left: 1px solid var(--color-border);
+  align-self: stretch;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: var(--color-sea-mist);
 }
 .reviewSummary h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
   font-size: 14px;
-  margin: 0 0 8px;
+  color: var(--color-teal-ink);
+}
+.reviewSummary h3::before {
+  content: '✦';
+  color: var(--color-teal);
 }
 .reviewSummary p {
-  font-size: 13px;
-  margin: 0 0 8px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-ink);
 }
 .reviewSummary small {
   font-size: 11px;
@@ -537,11 +823,18 @@
 .reviewFilters {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-block: 24px;
+  gap: 12px;
+  margin-block: 20px 4px;
 }
 .reviewFilters label {
   min-width: 180px;
+}
+.reviewFilters select {
+  border-radius: 999px;
+  padding-inline: 16px;
+}
+.reviewFilters select:focus {
+  border-color: var(--color-teal-ink);
 }
 .chips {
   display: flex;
@@ -549,39 +842,61 @@
   gap: 8px;
   margin-block: 12px;
 }
-.chips > span {
-  background: var(--color-surface-muted);
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 11px;
-}
 .chips button {
-  min-height: 36px;
+  min-height: 34px;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
   font-size: 12px;
-  padding: 6px 12px;
+  font-weight: 600;
 }
 .chips button span {
-  opacity: 0.7;
-  margin-left: 6px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+.chips button[aria-pressed='true'] {
+  background: var(--color-coral-tint);
+  border-color: var(--color-coral-ink);
+  color: var(--color-coral-ink);
+}
+.chips button[aria-pressed='true'] span {
+  color: inherit;
+}
+.reviewList {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
 }
 .review {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 32px;
-  padding-block: 32px;
-  border-bottom: 1px solid var(--color-border);
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 28px;
+  padding: 22px 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-background);
+  transition: border-color 240ms ease;
+}
+.review:hover {
+  border-color: var(--color-teal-soft);
 }
 .reviewAuthor {
   display: flex;
   gap: 12px;
-  font-size: 13px;
+  font-size: 14px;
 }
 .reviewAuthor p {
   margin: 4px 0;
   font-size: 12px;
+  color: var(--color-teal-ink);
+  font-weight: 600;
+}
+.reviewAuthor p:global(.muted) {
   color: var(--color-text-muted);
+  font-weight: 400;
 }
 .reviewAuthor small {
+  display: block;
   font-size: 11px;
   color: var(--color-text-muted);
 }
@@ -589,12 +904,21 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: var(--color-sea-mist);
   color: var(--color-teal-ink);
   font-weight: 700;
+  font-size: 14px;
+}
+.avatar[data-tone='coral'] {
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+.avatar[data-tone='sun'] {
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
 }
 .reviewTop {
   display: flex;
@@ -602,6 +926,14 @@
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+}
+.reviewStars {
+  color: var(--color-sun);
+  font-size: 15px;
+  letter-spacing: 2px;
+}
+.reviewStars span {
+  color: var(--color-border);
 }
 .reviewTop time {
   font-size: 11px;
@@ -611,19 +943,53 @@
   min-width: 0;
 }
 .reviewBody h3 {
-  margin: 16px 0 8px;
+  margin: 10px 0 6px;
+  font-size: 17px;
 }
 .reviewBody > p {
-  font-size: 13px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--color-ink);
   white-space: pre-line;
+}
+.reviewTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-block: 12px;
+}
+.reviewTags span {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+.helpful {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.helpful::before {
+  content: '👍';
+  font-size: 12px;
 }
 .pagination {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 20px;
   margin-top: 24px;
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.pagination button {
+  border-radius: 999px;
 }
 .skeleton {
   min-height: 500px;
@@ -643,26 +1009,30 @@
     margin: 0 0 24px;
   }
   .reviewOverview {
-    grid-template-columns: 130px 1fr;
+    grid-template-columns: 150px 1fr;
   }
   .reviewSummary {
     grid-column: 1 / -1;
-    padding: 20px 0 0;
-    border-left: 0;
-    border-top: 1px solid var(--color-border);
   }
   .room {
     grid-template-columns: minmax(200px, 1fr) 2fr;
   }
-  .rate {
-    grid-template-columns: 1fr;
-  }
-  .ratePrice {
-    align-items: start;
-    text-align: left;
-  }
 }
 @media (max-width: 640px) {
+  .photoDialog {
+    height: fit-content;
+    max-height: calc(100dvh - 2 * var(--viewer-padding));
+  }
+  .photoViewer {
+    height: auto;
+  }
+  .photoStage > img {
+    height: auto;
+    max-height: calc(100dvh - 11rem);
+  }
+  .photoStage .missingPhoto {
+    min-height: 7rem;
+  }
   .page {
     padding-block: 20px 40px;
   }
@@ -713,9 +1083,6 @@
     border-bottom: 1px solid var(--color-border);
     padding: 20px;
   }
-  .rate {
-    padding: 20px;
-  }
   .amenityGroups,
   .facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -729,13 +1096,14 @@
     gap: 32px;
   }
   .reviewOverview {
-    padding: 20px;
-    gap: 20px;
-    grid-template-columns: 100px 1fr;
+    padding: 16px;
+    gap: 16px;
+    grid-template-columns: 1fr;
   }
   .review {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 14px;
+    padding: 18px;
   }
   .reviewFilters label {
     flex: 1 1 140px;
@@ -751,7 +1119,134 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .gallery img,
-  .compactGallery img {
+  .compactGallery img,
+  .photoControl,
+  .photoThumbnails button {
     transition: none;
   }
+}
+
+.guestPicker {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.guestTrigger {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.guestPopover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 30;
+  display: grid;
+  gap: 14px;
+  width: min(320px, 86vw);
+  margin-top: 8px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background);
+  box-shadow: 0 18px 36px -22px var(--color-ink);
+}
+.guestRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-ink);
+  font-size: 14px;
+}
+.guestRow small {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.guestStepper {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+}
+.guestStepper button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background);
+  color: var(--color-teal-ink);
+  font-size: 18px;
+  cursor: pointer;
+}
+.guestStepper button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Khối đầu trang khách sạn. */
+.heading {
+  position: relative;
+  overflow: hidden;
+  align-items: center;
+  padding: clamp(24px, 4vw, 44px);
+  border-radius: 20px;
+  background: linear-gradient(115deg, var(--color-teal-soft), var(--color-sea-mist) 62%);
+}
+.heading::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 66%;
+  background: linear-gradient(140deg, var(--color-sun-soft), color-mix(in srgb, var(--color-sun) 45%, var(--color-sun-soft)));
+  clip-path: ellipse(96% 130% at 100% 50%);
+}
+.heading::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  right: 30%;
+  bottom: 0;
+  width: 150px;
+  height: 150px;
+  background: url('/brand/tripi-library/action-depart.png') bottom / contain no-repeat;
+}
+.heading > * {
+  position: relative;
+  z-index: 1;
+}
+.heading .rating strong {
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-teal-ink);
+}
+@media (max-width: 1100px) {
+  .heading::before {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .heading {
+    padding-bottom: 28px;
+  }
+  .heading::after {
+    inset: auto 0 0;
+    height: 215px;
+    clip-path: ellipse(120% 100% at 50% 100%);
+  }
+}
+
+/* Gói đã chọn phòng thì đổi màu để dễ nhận ra. */
+.rate:has([data-selected='true']) {
+  border-color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
 }

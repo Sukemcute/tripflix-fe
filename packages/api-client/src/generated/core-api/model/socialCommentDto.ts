@@ -9,6 +9,11 @@ export interface SocialCommentDto {
   id: string;
   postId: string;
   authorId: string;
+  /**
+   * Tên hiển thị của tác giả
+   * @nullable
+   */
+  authorName?: string | null;
   /** @nullable */
   parentCommentId: string | null;
   body: string;

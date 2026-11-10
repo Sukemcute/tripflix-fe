@@ -22,6 +22,8 @@ export default async function HotelPage({
       checkIn={read('checkIn')}
       checkOut={read('checkOut')}
       adults={read('adults')}
+      numChildren={read('children')}
+      numInfants={read('infants')}
       resultsHref={from?.startsWith('/search?') ? from : undefined}
     />
   );

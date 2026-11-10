@@ -148,6 +148,7 @@ export const mobile = {
   explore: {
     intro: 'Thế giới còn nhiều điều hay,',
     browseTitle: 'Đi đâu tiếp đây?',
+    hotelResults: 'Khách sạn',
     livePlaceholder: 'Bạn muốn đi đâu?',
     mood: 'Bật mood xê dịch',
     beachHero: 'Một chiếc hẹn\nvới biển xanh.',

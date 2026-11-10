@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./flight-search": "./src/flight-search.ts",
     "./core-api/*": "./src/generated/core-api/*.ts",
     "./ai-service/*": "./src/generated/ai-service/*.ts"
   },

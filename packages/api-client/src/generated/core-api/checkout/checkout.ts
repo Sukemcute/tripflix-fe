@@ -22,6 +22,8 @@ import type {
 
 import type {
   CancelHoldResultDto,
+  CancelPaidResultDto,
+  CancelQuoteResultDto,
   CheckoutDto,
   CheckoutRequestDto,
   ConfirmThreeDsRequestDto,
@@ -731,6 +733,231 @@ export const useCheckoutControllerConfirm3ds = <TError = unknown, TContext = unk
   TContext
 > => {
   return useMutation(getCheckoutControllerConfirm3dsMutationOptions(options), queryClient);
+};
+export type checkoutControllerCancelQuoteResponse200 = {
+  data: CancelQuoteResultDto;
+  status: 200;
+};
+
+export type checkoutControllerCancelQuoteResponseSuccess = checkoutControllerCancelQuoteResponse200 & {
+  headers: Headers;
+};
+export type checkoutControllerCancelQuoteResponse = checkoutControllerCancelQuoteResponseSuccess;
+
+export const getCheckoutControllerCancelQuoteUrl = (id: string) => {
+  return `/api/checkout/${id}/cancel-quote`;
+};
+
+export const checkoutControllerCancelQuote = async (
+  id: string,
+  options?: Parameters<typeof http>[1],
+): Promise<checkoutControllerCancelQuoteResponse> => {
+  return http<checkoutControllerCancelQuoteResponse>(getCheckoutControllerCancelQuoteUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getCheckoutControllerCancelQuoteQueryKey = (id: string) => {
+  return [`/api/checkout/${id}/cancel-quote`] as const;
+};
+
+export const getCheckoutControllerCancelQuoteQueryOptions = <
+  TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getCheckoutControllerCancelQuoteQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>> = ({ signal }) =>
+    checkoutControllerCancelQuote(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CheckoutControllerCancelQuoteQueryResult = NonNullable<
+  Awaited<ReturnType<typeof checkoutControllerCancelQuote>>
+>;
+export type CheckoutControllerCancelQuoteQueryError = unknown;
+
+export function useCheckoutControllerCancelQuote<
+  TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
+  TError = unknown,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
+          TError,
+          Awaited<ReturnType<typeof checkoutControllerCancelQuote>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCheckoutControllerCancelQuote<
+  TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
+          TError,
+          Awaited<ReturnType<typeof checkoutControllerCancelQuote>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCheckoutControllerCancelQuote<
+  TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useCheckoutControllerCancelQuote<
+  TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getCheckoutControllerCancelQuoteQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type checkoutControllerCancelPaidResponse200 = {
+  data: CancelPaidResultDto;
+  status: 200;
+};
+
+export type checkoutControllerCancelPaidResponseSuccess = checkoutControllerCancelPaidResponse200 & {
+  headers: Headers;
+};
+export type checkoutControllerCancelPaidResponse = checkoutControllerCancelPaidResponseSuccess;
+
+export const getCheckoutControllerCancelPaidUrl = (id: string) => {
+  return `/api/checkout/${id}/cancel-paid`;
+};
+
+export const checkoutControllerCancelPaid = async (
+  id: string,
+  options?: Parameters<typeof http>[1],
+): Promise<checkoutControllerCancelPaidResponse> => {
+  return http<checkoutControllerCancelPaidResponse>(getCheckoutControllerCancelPaidUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getCheckoutControllerCancelPaidMutationKey = () => ['checkoutControllerCancelPaid'] as const;
+
+export const getCheckoutControllerCancelPaidMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof checkoutControllerCancelPaid>>,
+    TError,
+    CheckoutControllerCancelPaidMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof checkoutControllerCancelPaid>>,
+  TError,
+  CheckoutControllerCancelPaidMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCheckoutControllerCancelPaidMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof checkoutControllerCancelPaid>>,
+    CheckoutControllerCancelPaidMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return checkoutControllerCancelPaid(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CheckoutControllerCancelPaidMutationResult = NonNullable<
+  Awaited<ReturnType<typeof checkoutControllerCancelPaid>>
+>;
+
+export type CheckoutControllerCancelPaidMutationError = unknown;
+export type CheckoutControllerCancelPaidMutationVariables = { id: string };
+
+export const useCheckoutControllerCancelPaid = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof checkoutControllerCancelPaid>>,
+      TError,
+      CheckoutControllerCancelPaidMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof checkoutControllerCancelPaid>>,
+  TError,
+  CheckoutControllerCancelPaidMutationVariables,
+  TContext
+> => {
+  return useMutation(getCheckoutControllerCancelPaidMutationOptions(options), queryClient);
 };
 export type checkoutControllerCancelResponse200 = {
   data: CancelHoldResultDto;

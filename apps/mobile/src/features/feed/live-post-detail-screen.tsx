@@ -1,6 +1,8 @@
 import {
   findCachedFeedCard,
+  HttpError,
   REEL_FEED_TABS,
+  removeUnavailablePost,
   socialApi,
   updateReelSocialCache,
   useApiSession,
@@ -13,7 +15,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActionSheetIOS, Alert, Platform, Pressable, Share, StyleSheet, View } from 'react-native';
 import {
   GestureDetector,
@@ -24,10 +26,11 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { ApiErrorNotice } from '@/components/api-state';
-import { Button, Icon, IconButton, money, Screen, Txt } from '@/components/mobile-ui';
+import { Button, Icon, IconButton, money, Notice, Screen, Txt } from '@/components/mobile-ui';
 import { SHEET_CLOSE_SPRING } from '@/components/motion';
 import { PostActionBar } from './post-action-bar';
 import { ReelCommentsPanel } from './reel-comments-panel';
+import { ReportButton } from './report-button';
 
 const copy = vi.mobile.postDetail;
 const NO_COMMENTS: readonly { id: number; body: string }[] = [];
@@ -141,9 +144,14 @@ export function LivePostDetailScreen() {
   const query = useQuery({
     queryKey: ['social', 'post', slug, user?.id],
     enabled: isReady && !!slug,
+    retry: (count, error) => !(error instanceof HttpError && error.status === 404) && count < 2,
     queryFn: ({ signal }) => socialApi.getPost(slug, signal),
   });
-  const post = query.data?.post;
+  const missing = query.error instanceof HttpError && query.error.status === 404;
+  useEffect(() => {
+    if (missing) removeUnavailablePost(client, slug);
+  }, [missing, client, slug]);
+  const post = missing ? undefined : query.data?.post;
   const viewer = query.data?.viewerContext;
   const isLiked = !!viewer?.myReaction;
   const isSaved = !!viewer?.isBookmarked;
@@ -226,7 +234,8 @@ export function LivePostDetailScreen() {
     ]);
   };
   const trip = post?.tripAttachment;
-  const authorName = post?.authorId === user?.id ? user?.displayName : cachedCard?.author.name;
+  const authorName =
+    post?.authorId === user?.id ? user?.displayName : post?.authorName || cachedCard?.author.name;
   const tripFacts = [
     trip?.destinationName,
     trip?.daysCount ? t('api.postDays', { count: trip.daysCount }) : null,
@@ -244,6 +253,8 @@ export function LivePostDetailScreen() {
             right={
               post && post.authorId === user?.id ? (
                 <IconButton name="ellipsis-horizontal" label={copy.more} onPress={openOwnerMenu} />
+              ) : post ? (
+                <ReportButton targetType="post" targetId={post.id} compact />
               ) : undefined
             }
             footer={
@@ -263,13 +274,14 @@ export function LivePostDetailScreen() {
               )
             }
           >
+            {missing && <Notice>{vi.moderation.unavailable}</Notice>}
             <ApiErrorNotice
-              error={query.error}
+              error={missing ? null : query.error}
               retry={() => {
                 void query.refetch();
               }}
             />
-            {!!cachedCard && (
+            {!missing && !!cachedCard && (
               <Image
                 source={cachedCard.video.posters.w720}
                 cachePolicy="memory-disk"

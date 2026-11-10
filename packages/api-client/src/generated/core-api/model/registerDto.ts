@@ -4,14 +4,28 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { RegisterDtoGender } from './registerDtoGender';
 
 export interface RegisterDto {
   email: string;
   /**
-   * @minLength 8
-   * @maxLength 128
+   * @minLength 12
+   * @maxLength 64
    */
   password: string;
-  /** @maxLength 50 */
+  /** @maxLength 30 */
   displayName: string;
+  registrationId: string;
+  /** @pattern ^[0-9]{8}$ */
+  code: string;
+  dateOfBirth: string;
+  gender: RegisterDtoGender;
+  /**
+   * Mã quốc gia ISO 3166-1 alpha-2
+   * @minLength 2
+   * @maxLength 2
+   */
+  nationality: string;
+  /** Đã đọc và đồng ý Điều khoản sử dụng, Chính sách bảo mật */
+  acceptTerms: true;
 }

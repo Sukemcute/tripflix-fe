@@ -1,7 +1,22 @@
 import { HttpError } from './http';
 
+/** Credentials were accepted, but the client could not load the authenticated profile. */
+export class SessionSetupError extends Error {
+  constructor(cause: unknown) {
+    super('Could not load the authenticated profile', { cause });
+  }
+}
+
 type ApiErrorKind =
-  'network' | 'expired' | 'forbidden' | 'missing' | 'conflict' | 'rateLimit' | 'invalid' | 'error';
+  | 'network'
+  | 'expired'
+  | 'forbidden'
+  | 'emailUnverified'
+  | 'missing'
+  | 'conflict'
+  | 'rateLimit'
+  | 'invalid'
+  | 'error';
 const HTTP_ERROR_KINDS: Partial<Record<number, ApiErrorKind>> = {
   400: 'invalid',
   401: 'expired',
@@ -13,8 +28,11 @@ const HTTP_ERROR_KINDS: Partial<Record<number, ApiErrorKind>> = {
 };
 
 export function getApiErrorKind(error: unknown): ApiErrorKind {
+  if (error instanceof SessionSetupError) error = error.cause;
   if (error instanceof TypeError) return 'network';
   if (!(error instanceof HttpError)) return 'error';
+  const body = error.body as { code?: unknown } | null;
+  if (error.status === 403 && body?.code === 'email_unverified') return 'emailUnverified';
   return HTTP_ERROR_KINDS[error.status] ?? 'error';
 }
 
@@ -23,6 +41,7 @@ export type AuthAction =
 type AuthErrorKind =
   | 'wrongCredentials'
   | 'accountExists'
+  | 'registrationCodeInvalid'
   | 'tooManyAttempts'
   | 'googleFailed'
   | 'googleUnavailable'
@@ -46,7 +65,8 @@ export function getAuthErrorKind(error: unknown, action: AuthAction): AuthErrorK
     case 'login':
       return error.status === 401 ? 'wrongCredentials' : null;
     case 'register':
-      return error.status === 409 ? 'accountExists' : null;
+      if (error.status === 409) return 'accountExists';
+      return error.status === 400 && !hasFieldErrors(error) ? 'registrationCodeInvalid' : null;
     case 'google':
       if (error.status === 401) return 'googleFailed';
       return error.status === 503 ? 'googleUnavailable' : null;
@@ -57,6 +77,20 @@ export function getAuthErrorKind(error: unknown, action: AuthAction): AuthErrorK
     case 'forgotPassword':
       return null;
   }
+}
+
+/** 429 của core-api có retryAfterSeconds trong body (thời gian phải đợi); không có thì undefined. */
+export function getRetryAfterSeconds(error: unknown): number | undefined {
+  if (!(error instanceof HttpError) || error.status !== 429) return;
+  const seconds = (error.body as { retryAfterSeconds?: unknown } | null)?.retryAfterSeconds;
+  return typeof seconds === 'number' && seconds > 0 ? Math.ceil(seconds) : undefined;
+}
+
+export function getRegistrationFieldError(error: unknown): string | undefined {
+  if (!(error instanceof HttpError) || error.status !== 400 || !hasFieldErrors(error)) return;
+  const { errors } = error.body as { errors: { message?: unknown }[] };
+  const message = errors[0]?.message;
+  return typeof message === 'string' ? message : undefined;
 }
 
 /** Check essential response fields at the HTTP boundary, including schemas that used to be undocumented. */

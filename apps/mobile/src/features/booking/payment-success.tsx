@@ -3,6 +3,7 @@ import { vi } from '@tripflix/i18n';
 import { colors, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { View } from 'react-native';
+import { CancelOrder } from './order-cancel';
 import {
   Button,
   Card,
@@ -46,7 +47,9 @@ export function PaymentSuccessScreen({ order }: { order: CheckoutDto }) {
           <View key={item.id} style={{ gap: spacing.sm }}>
             <Txt variant="heading">{item.productName}</Txt>
             <Txt>
-              {formatDate(item.date)} → {formatDate(item.dateTo)}
+              {item.productType === 'flight'
+                ? vi.flights.date + ' · ' + formatDate(item.date)
+                : formatDate(item.date) + ' → ' + formatDate(item.dateTo)}
             </Txt>
             <Txt variant="small" style={ui.muted}>
               {item.qty} × {item.ratePlanName}
@@ -68,6 +71,7 @@ export function PaymentSuccessScreen({ order }: { order: CheckoutDto }) {
       <Button tone="text" onPress={() => router.replace('/(tabs)/explore')}>
         {text.continueExploring}
       </Button>
+      <CancelOrder orderId={order.orderId} />
     </Screen>
   );
 }

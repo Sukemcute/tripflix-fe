@@ -9,35 +9,34 @@ const ACTIVITIES = [
   ['home-kayaking.jpg', vi.api.otaActivities.kayak],
 ] as const;
 
+// Tách khẩu hiệu thành 2 dòng cố định: "Chạm cảm hứng," (đen, không xuống dòng) và "trọn hành trình".
+const [SLOGAN_FIRST, SLOGAN_SECOND] = vi.app.slogan.split(', ');
+
 export function OtaHero() {
   return (
     <header className={styles.hero}>
       <div className={`ota-container ${styles.inner}`}>
         <div className={styles.copy}>
-          <p className={styles.kicker}>
-            <span aria-hidden="true">✳</span> Tripflix / {vi.ota.fieldNotes}
-          </p>
-          <h1>{vi.app.slogan.replace(', ', ',\n')}</h1>
+          <Image
+            className={styles.heroMascot}
+            src="/brand/tripi-depart.png"
+            alt=""
+            width={116}
+            height={116}
+            sizes="(max-width: 760px) 74px, (max-width: 1013px) 76px, (max-width: 1547px) 7.5vw, 116px"
+          />
+          <h1>
+            <span className={styles.titleFirst}>{SLOGAN_FIRST},</span> {SLOGAN_SECOND}
+          </h1>
           <p className={styles.description}>{vi.ota.heroIntro}</p>
-          <div className={styles.actions}>
-            <a className={styles.searchAction} href="#ota-search">
-              {vi.ota.heroSearch} <span aria-hidden="true">↗</span>
-            </a>
-            <a className={styles.scrollAction} href="#home-destinations">
-              <span aria-hidden="true">↓</span> {vi.ota.heroExplore}
-            </a>
-          </div>
-          <div className={styles.activities}>
-            <p>{vi.api.otaActivityLabel}</p>
-            <div>
-              {ACTIVITIES.map(([image, name]) => (
-                <Link key={image} href={{ pathname: '/inspiration', query: { q: name } }}>
-                  <Image src={`/brand/${image}`} alt="" width={40} height={40} />
-                  <span>{name}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
+          <nav className={styles.activities} aria-label={vi.api.otaActivityLabel}>
+            {ACTIVITIES.map(([image, name]) => (
+              <Link key={image} href={{ pathname: '/inspiration', query: { q: name } }}>
+                <Image src={`/brand/${image}`} alt="" width={40} height={40} />
+                <span>{name}</span>
+              </Link>
+            ))}
+          </nav>
         </div>
         <figure className={styles.art} data-home-banner>
           <div className={styles.frame}>
@@ -49,9 +48,6 @@ export function OtaHero() {
               sizes="(max-width: 760px) 95vw, 55vw"
               preload
             />
-            <span className={styles.frameIndex} aria-hidden="true">
-              01
-            </span>
             <svg className={styles.route} viewBox="0 0 150 210" fill="none" aria-hidden="true">
               <path
                 d="M 20 190 C 106 168 17 121 81 101 S 155 35 117 19"
@@ -64,14 +60,6 @@ export function OtaHero() {
               <circle cx="117" cy="19" r="5" fill="currentColor" />
             </svg>
           </div>
-          <div className={styles.tripiGreeting}>
-            <Image src="/brand/tripi-welcome.png" alt="" width={64} height={64} />
-            <span>{vi.ota.tripiGreeting}</span>
-          </div>
-          <figcaption className={styles.caption}>
-            <span aria-hidden="true">✦</span>
-            {vi.ota.heroFrame}
-          </figcaption>
         </figure>
       </div>
     </header>

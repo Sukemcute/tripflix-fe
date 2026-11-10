@@ -12,20 +12,27 @@ export interface StayFilters {
   adults: string;
   rooms: string;
   minStars: string;
+  /** Đúng một hạng sao (1–5); khác minStars là "từ X sao trở lên". */
+  stars?: string;
   priceMin: string;
   priceMax: string;
-  sort: 'price' | 'stars';
+  sort: 'price' | 'price_desc' | 'stars';
 }
+const VIETNAM_DATE = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+
 export function getFutureDate(days: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const today = VIETNAM_DATE.format(new Date());
+  const [year, month, day] = today.split('-').map(Number);
+  const date = new Date(Date.UTC(year!, month! - 1, day! + days));
+  return date.toISOString().split('T')[0]!;
 }
 export async function getAvailableStays(
   filters: StayFilters,
   options: { signal?: AbortSignal; cursor?: string; limit?: number } = {},
 ) {
-  const query = Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== '')) as {
+  const query = Object.fromEntries(
+    Object.entries(filters).filter(([, value]) => value !== '' && value !== undefined),
+  ) as {
     placeId: string;
     checkIn: string;
     checkOut: string;
@@ -41,7 +48,11 @@ export async function getAvailableStays(
   );
 }
 
-export function useStaySearch(initialQuery = '', initialFilters?: Partial<StayFilters>) {
+export function useStaySearch(
+  initialQuery = '',
+  initialFilters?: Partial<StayFilters>,
+  options: { pageSize?: number } = {},
+) {
   const { isReady } = useApiSession();
   const [text, setText] = useState(initialQuery);
   const [debounced, setDebounced] = useState(initialQuery);
@@ -60,6 +71,12 @@ export function useStaySearch(initialQuery = '', initialFilters?: Partial<StayFi
   });
   const [submitted, setSubmitted] = useState<StayFilters | null>(initialFilters?.placeId ? filters : null);
   const [cursor, setCursor] = useState<string | undefined>();
+  // API chỉ trả nextCursor, nên tự nhớ cursor các trang trước để quay lại.
+  const [previousCursors, setPreviousCursors] = useState<(string | undefined)[]>([]);
+  const goToFirstPage = () => {
+    setCursor(undefined);
+    setPreviousCursors([]);
+  };
   useEffect(() => {
     const timeout = setTimeout(() => setDebounced(text.trim()), 250);
     return () => clearTimeout(timeout);
@@ -75,11 +92,11 @@ export function useStaySearch(initialQuery = '', initialFilters?: Partial<StayFi
       readPage((await suggestControllerSuggest({ q: debounced, types: 'place,hotel' }, { signal })).data),
   });
   const stays = useQuery({
-    queryKey: ['discovery', 'stays', submitted, cursor],
+    queryKey: ['discovery', 'stays', submitted, cursor, options.pageSize],
     enabled: isReady && !!submitted,
     queryFn: async ({ signal }) => {
       if (!submitted) throw new Error('Search has not been submitted');
-      return getAvailableStays(submitted, { cursor, signal });
+      return getAvailableStays(submitted, { cursor, signal, limit: options.pageSize });
     },
   });
   return {
@@ -102,11 +119,21 @@ export function useStaySearch(initialQuery = '', initialFilters?: Partial<StayFi
       }));
     },
     submit: () => {
-      setCursor(undefined);
+      goToFirstPage();
       setSubmitted({ ...filters });
     },
-    next: () => setCursor(stays.data?.nextCursor ?? undefined),
-    first: () => setCursor(undefined),
+    next: () => {
+      const nextCursor = stays.data?.nextCursor;
+      if (!nextCursor) return;
+      setPreviousCursors((previous) => [...previous, cursor]);
+      setCursor(nextCursor);
+    },
+    previous: () => {
+      setCursor(previousCursors.at(-1));
+      setPreviousCursors((previous) => previous.slice(0, -1));
+    },
+    first: goToFirstPage,
     cursor,
+    pageNumber: previousCursors.length + 1,
   };
 }

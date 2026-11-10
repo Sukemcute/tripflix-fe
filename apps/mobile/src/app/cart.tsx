@@ -1,1 +1,1 @@
-export { CommerceCartScreen as default } from '@/features/booking/live-booking-screens';
+export { CartScreen as default } from '@/features/booking/cart-ui';

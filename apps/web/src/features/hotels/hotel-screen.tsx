@@ -1,12 +1,17 @@
 'use client';
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { commerceApi, getFutureDate, HttpError, useApiSession } from '@tripflix/api-client';
 import { isValidTripDate, shiftTripDate } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { BOOKING_CART_MAX_ROOMS, calculateChildStayDiscount, countRoomsForGuests } from '@tripflix/app-core';
+import { saveBookingSelection, useBookingSelection } from '@/features/checkout/cart-store';
+import { GuestPicker } from './guest-picker';
+import { BookRateButton } from '@/features/checkout/book-rate-button';
+import { CartBar } from '@/features/checkout/cart-bar';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { SoftDatePicker } from '@/features/shared/soft-date-picker';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { HotelGallery } from './hotel-gallery';
 import { HotelIcon } from './hotel-icon';
@@ -16,7 +21,7 @@ import styles from './hotel.module.css';
 const copy = vi.hotel;
 const hasValue = (value: unknown) => value !== null && value !== undefined && value !== '';
 const getLabel = (labels: Record<string, string>, key: string) => labels[key] ?? key;
-type Stay = { checkIn: string; checkOut: string; adults: number };
+type Stay = { checkIn: string; checkOut: string; adults: number; children: number; infants: number };
 function isValidStay(stay: Stay): boolean {
   return (
     isValidTripDate(stay.checkIn, shiftTripDate(getFutureDate(0), -1)) &&
@@ -24,7 +29,38 @@ function isValidStay(stay: Stay): boolean {
     stay.checkOut > stay.checkIn &&
     Number.isInteger(stay.adults) &&
     stay.adults >= 1 &&
-    stay.adults <= 9
+    Number.isInteger(stay.children) &&
+    stay.children >= 0 &&
+    Number.isInteger(stay.infants) &&
+    stay.infants >= 0 &&
+    stay.adults + stay.children + stay.infants <= 9
+  );
+}
+
+/** Giá gợi ý cho số phòng đủ chỗ cả đoàn; tiền thật tính theo số phòng khách chọn. */
+function RateTotal({
+  totalPrice,
+  surcharge,
+  roomCount,
+  guestCount,
+}: {
+  totalPrice: number;
+  surcharge: number;
+  roomCount: number;
+  guestCount: number;
+}) {
+  return (
+    <>
+      <p>
+        {copy.total} ({roomCount} {copy.roomsUnit}, {guestCount} {copy.guests}) ·{' '}
+        <b>{formatPrice(totalPrice - surcharge)}</b>
+      </p>
+      {surcharge > 0 && (
+        <p>
+          {copy.childSurchargeIncluded} {formatPrice(surcharge)}
+        </p>
+      )}
+    </>
   );
 }
 
@@ -33,30 +69,54 @@ export function HotelScreen({
   checkIn,
   checkOut,
   adults,
+  numChildren,
+  numInfants,
   resultsHref,
 }: {
   id: string;
   checkIn?: string;
   checkOut?: string;
   adults?: string;
+  numChildren?: string;
+  numInfants?: string;
   resultsHref?: string;
 }) {
-  const router = useRouter();
   const { isReady } = useApiSession();
   const initial = {
     checkIn: checkIn ?? getFutureDate(1),
     checkOut: checkOut ?? getFutureDate(3),
     adults: adults === undefined ? 2 : Number(adults),
+    children: numChildren === undefined ? 0 : Number(numChildren),
+    infants: numInfants === undefined ? 0 : Number(numInfants),
   };
   const [stay, setStay] = useState<Stay>(
-    isValidStay(initial) ? initial : { checkIn: getFutureDate(1), checkOut: getFutureDate(3), adults: 2 },
+    isValidStay(initial) ? initial : { checkIn: getFutureDate(1), checkOut: getFutureDate(3), adults: 2, children: 0, infants: 0 },
   );
   const [draft, setDraft] = useState(stay);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const selection = useBookingSelection();
+  const roomCount = (room: { maxGuests: number }) => countRoomsForGuests({ ...stay, maxGuests: room.maxGuests });
+  const nights = Math.max(1, Math.round((Date.parse(stay.checkOut) - Date.parse(stay.checkIn)) / 86_400_000));
+  // Giá mỗi phòng mỗi đêm hiển thị phải trừ phần giảm cho trẻ em của đoàn đang chọn.
+  const getChildPricePerNight = (
+    room: { maxGuests: number; roomsNeeded: number },
+    rate: { totalPrice: number | null },
+  ) => {
+    if (!stay.children || rate.totalPrice === null || roomCount(room) > stay.adults) return 0;
+    const rooms = roomCount(room);
+    const surcharge = calculateChildStayDiscount({
+      stayTotal: rooms * Math.round(rate.totalPrice / room.roomsNeeded),
+      capacity: rooms * room.maxGuests,
+      children: stay.children,
+    });
+    return -Math.round(surcharge / rooms / nights);
+  };
   const query = useQuery({
     queryKey: ['commerce', 'hotel', id, stay],
     enabled: isReady,
-    queryFn: ({ signal }) => commerceApi.getHotel(id, stay, signal),
+    queryFn: ({ signal }) => commerceApi.getHotel(id, { checkIn: stay.checkIn, checkOut: stay.checkOut, adults: stay.adults }, signal),
+    // Đổi ngày thì giữ trang đang xem: nếu hiện skeleton, trang co lại và nhảy lên đầu.
+    placeholderData: keepPreviousData,
   });
   const hotel = query.data;
   const isMissing = query.error instanceof HttpError && query.error.status === 404;
@@ -135,7 +195,20 @@ export function HotelScreen({
             {hotel.priceFrom !== null && (
               <div className={styles.headingPrice}>
                 <span>{copy.from}</span>
-                <strong>{formatPrice(hotel.priceFrom)}</strong>
+                <strong>
+                  {formatPrice(
+                    stay.children
+                      ? Math.min(
+                          ...hotel.rooms.flatMap((room) =>
+                            room.ratePlans.flatMap((rate) =>
+                              rate.pricePerNight === null ? [] : [rate.pricePerNight + getChildPricePerNight(room, rate)],
+                            ),
+                          ),
+                          Number.MAX_SAFE_INTEGER,
+                        )
+                      : hotel.priceFrom,
+                  )}
+                </strong>
                 <small>{copy.perNight}</small>
                 <a href="#rooms" className="primary-button">
                   {copy.chooseRoom}
@@ -213,44 +286,41 @@ export function HotelScreen({
                 setHasSubmitted(true);
                 if (!isValidStay(draft)) return;
                 setStay({ ...draft });
-                router.replace(
-                  `/hotels/${encodeURIComponent(id)}?${new URLSearchParams({ checkIn: draft.checkIn, checkOut: draft.checkOut, adults: String(draft.adults), ...(resultsHref ? { from: resultsHref } : {}) })}`,
-                  { scroll: false },
+                // Phòng đang chọn theo số khách mới để tổng tiền và kiểm tra đủ chỗ không lệch với trang.
+                if (selection.items.length) saveBookingSelection({ ...selection, adults: draft.adults, children: draft.children, infants: draft.infants });
+                // Chỉ đổi URL: router.replace sẽ hiện màn loading của route và mất vị trí cuộn.
+                window.history.replaceState(
+                  null,
+                  '',
+                  `/hotels/${encodeURIComponent(id)}?${new URLSearchParams({ checkIn: draft.checkIn, checkOut: draft.checkOut, adults: String(draft.adults), ...(draft.children > 0 ? { children: String(draft.children) } : {}), ...(draft.infants > 0 ? { infants: String(draft.infants) } : {}), ...(resultsHref ? { from: resultsHref } : {}) })}`,
                 );
                 if (JSON.stringify(draft) === JSON.stringify(stay)) void query.refetch();
               }}
             >
               <label>
                 {copy.checkIn}
-                <input
-                  type="date"
+                <SoftDatePicker
                   required
                   min={getFutureDate(0)}
                   value={draft.checkIn}
-                  onChange={(event) => setDraft({ ...draft, checkIn: event.target.value })}
+                  onChange={(checkIn) => setDraft({ ...draft, checkIn })}
                 />
               </label>
               <label>
                 {copy.checkOut}
-                <input
-                  type="date"
+                <SoftDatePicker
                   required
                   min={shiftTripDate(draft.checkIn || getFutureDate(0), 1)}
                   value={draft.checkOut}
-                  onChange={(event) => setDraft({ ...draft, checkOut: event.target.value })}
+                  onChange={(checkOut) => setDraft({ ...draft, checkOut })}
                 />
               </label>
-              <label>
-                {copy.adults}
-                <input
-                  type="number"
-                  min={1}
-                  max={9}
-                  required
-                  value={draft.adults || ''}
-                  onChange={(event) => setDraft({ ...draft, adults: Number(event.target.value) })}
-                />
-              </label>
+              <GuestPicker
+                adults={draft.adults}
+                numChildren={draft.children}
+                numInfants={draft.infants}
+                onChange={(guests) => setDraft({ ...draft, ...guests })}
+              />
               <button className="primary-button" disabled={query.isFetching}>
                 {query.isFetching ? vi.common.loading : copy.update}
               </button>
@@ -260,10 +330,6 @@ export function HotelScreen({
                 {copy.invalidStay}
               </p>
             )}
-            <p className="small muted">
-              {hotel.stay.checkIn} → {hotel.stay.checkOut} · {hotel.stay.nights} {copy.nights} ·{' '}
-              {hotel.stay.adults} {copy.guests}
-            </p>
             {query.isFetching && <output>{vi.common.loading}</output>}
             {!hotel.isAvailable && <p className={styles.notice}>{copy.unavailable}</p>}
             {!hotel.rooms.length && <p className="empty-state">{copy.noRooms}</p>}
@@ -271,13 +337,13 @@ export function HotelScreen({
               {hotel.rooms.map((room) => (
                 <article className={styles.room} key={room.productId}>
                   <div className={styles.roomInfo}>
-                    <HotelGallery images={room.images ?? []} name={room.name} compact />
+                    <HotelGallery images={room.images ?? []} name={room.name} layout="carousel" />
                     <h3>{room.name}</h3>
                     <ul className={styles.roomFacts}>
                       {room.areaM2 !== null && room.areaM2 !== undefined && <li>{room.areaM2} m²</li>}
                       {room.bedType && <li>{room.bedType}</li>}
                       {room.view && <li>{getLabel(copy.views, room.view)}</li>}
-                      <li>
+                      <li title={copy.capacityHint}>
                         {copy.maxGuests} {room.maxGuests} {copy.guests}
                       </li>
                     </ul>
@@ -297,7 +363,7 @@ export function HotelScreen({
                       </p>
                     )}
                     <p className="small muted">
-                      {copy.roomsNeeded}: {room.roomsNeeded}
+                      {copy.roomsNeeded}: {countRoomsForGuests({ ...stay, maxGuests: room.maxGuests })}
                     </p>
                     {!room.isAvailable && (
                       <p className={styles.notice}>
@@ -308,7 +374,7 @@ export function HotelScreen({
                   <div className={styles.rates}>
                     {room.ratePlans.map((rate) => (
                       <div key={rate.code} className={styles.rate}>
-                        <div>
+                        <div className={styles.rateDetails}>
                           <h4>{rate.name}</h4>
                           {rate.perks?.length > 0 && (
                             <ul>
@@ -320,33 +386,64 @@ export function HotelScreen({
                               ))}
                             </ul>
                           )}
-                          <p className={rate.isRefundable ? styles.refundable : 'small muted'}>
+                          <p className={styles.ratePolicy} data-refundable={rate.isRefundable}>
                             {rate.isRefundable
                               ? t('hotel.freeCancel', { days: rate.freeCancelDays })
                               : copy.nonRefundable}
                           </p>
                         </div>
                         <div className={styles.ratePrice}>
-                          {rate.discountPct !== null && rate.discountPct > 0 && (
-                            <span className={styles.discount}>-{rate.discountPct}%</span>
-                          )}
-                          {rate.listPricePerNight !== null &&
-                            rate.pricePerNight !== null &&
-                            rate.listPricePerNight > rate.pricePerNight && (
-                              <del>{formatPrice(rate.listPricePerNight)}</del>
+                          <div className={styles.rateAmount}>
+                            {rate.listPricePerNight !== null &&
+                              rate.pricePerNight !== null &&
+                              rate.listPricePerNight > rate.pricePerNight && (
+                                <del>{formatPrice(rate.listPricePerNight)}</del>
+                              )}
+                            {rate.discountPct !== null && rate.discountPct > 0 && stay.children === 0 && (
+                              <span className={styles.discount}>-{rate.discountPct}%</span>
                             )}
+                          </div>
                           {rate.pricePerNight !== null ? (
-                            <>
-                              <strong>{formatPrice(rate.pricePerNight)}</strong>
+                            <div className={styles.rateAmount}>
+                              <strong>{formatPrice(rate.pricePerNight + getChildPricePerNight(room, rate))}</strong>
                               <small>{copy.perNight}</small>
-                            </>
+                            </div>
                           ) : (
                             <p>{copy.rateUnavailable}</p>
                           )}
-                          {rate.totalPrice !== null && (
-                            <p>
-                              {copy.total}: <b>{formatPrice(rate.totalPrice)}</b>
-                            </p>
+                          {rate.totalPrice !== null && roomCount(room) > stay.adults && (
+                            <p className="small muted">{copy.cannotFitParty}</p>
+                          )}
+                          {rate.totalPrice !== null && roomCount(room) <= stay.adults && (
+                            <RateTotal
+                              totalPrice={roomCount(room) * Math.round(rate.totalPrice / room.roomsNeeded)}
+                              surcharge={calculateChildStayDiscount({
+                                stayTotal: roomCount(room) * Math.round(rate.totalPrice / room.roomsNeeded),
+                                capacity: roomCount(room) * room.maxGuests,
+                                children: stay.children,
+                              })}
+                              roomCount={roomCount(room)}
+                              guestCount={stay.adults + stay.children + stay.infants}
+                            />
+                          )}
+                          {room.isAvailable && rate.totalPrice !== null && (
+                            <BookRateButton
+                              booking={{
+                                productId: room.productId,
+                                ratePlanCode: rate.code,
+                                checkIn: hotel.stay.checkIn,
+                                checkOut: hotel.stay.checkOut,
+                                propertyId: hotel.id,
+                                propertyName: hotel.name,
+                                roomName: room.name,
+                                ratePlanName: rate.name,
+                                maxGuests: room.maxGuests,
+                                stayPricePerRoom: Math.round(rate.totalPrice / room.roomsNeeded),
+                                maxQty: Math.min(room.remaining ?? BOOKING_CART_MAX_ROOMS, BOOKING_CART_MAX_ROOMS),
+                              }}
+                              guests={{ adults: stay.adults, children: stay.children, infants: stay.infants }}
+                              isDisabled={query.isFetching}
+                            />
                           )}
                         </div>
                       </div>
@@ -355,8 +452,8 @@ export function HotelScreen({
                 </article>
               ))}
             </div>
-            <p className={styles.notice}>{vi.api.bookingUnavailable}</p>
           </section>
+          <CartBar />
           {hasAmenities && (
             <section id="amenities" className={styles.section}>
               <h2>{copy.allAmenities}</h2>

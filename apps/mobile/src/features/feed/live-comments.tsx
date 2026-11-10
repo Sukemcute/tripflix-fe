@@ -10,6 +10,7 @@ import { router } from 'expo-router';
 import { CommentLikeButton } from './comment-like-button';
 import { ReelCommentComposer } from './reel-comment-composer';
 import { CommunitySummary } from './post-summary';
+import { ReportButton } from './report-button';
 
 function CommentAction({
   compact,
@@ -107,7 +108,10 @@ export function LiveComments({
       {query.data?.pages
         .flatMap((page) => page.items)
         .map((comment) => {
-          const authorName = comment.authorId === user?.id ? user.displayName : comment.authorId.slice(0, 8);
+          const authorName =
+            comment.authorId === user?.id
+              ? user.displayName
+              : comment.authorName || comment.authorId.slice(0, 8);
           const likeButton = !comment.deletedAt && (
             <CommentLikeButton
               commentId={comment.id}
@@ -131,6 +135,7 @@ export function LiveComments({
                   {authorName} · {new Date(comment.createdAt).toLocaleDateString('vi-VN')}
                 </Txt>
                 <Txt>{comment.body}</Txt>
+                {comment.authorId !== user?.id && <ReportButton targetType="comment" targetId={comment.id} />}
                 {!compact && likeButton}
                 <View style={compact ? styles.actions : undefined}>
                   {comment.authorId === user?.id && (

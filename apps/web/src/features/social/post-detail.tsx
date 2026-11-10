@@ -1,11 +1,11 @@
 'use client';
-import { socialApi, useApiSession } from '@tripflix/api-client';
+import { evictPostFromCache, isPostNotFoundError, socialApi, useApiSession } from '@tripflix/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getInitial } from '@/features/auth/account-helpers';
 import { LiveComments } from './live-comments';
@@ -29,6 +29,15 @@ export function LivePostDetail({ id }: { id: string }) {
     enabled: isReady && !!id,
     queryFn: ({ signal }) => socialApi.getPost(id, signal),
   });
+
+  const isNotFound = isPostNotFoundError(query.error);
+
+  useEffect(() => {
+    if (isNotFound) {
+      evictPostFromCache(client, id);
+    }
+  }, [isNotFound, id, client]);
+
   const [isDeleting, setDeleting] = useState(false);
   const [isShareCopied, setShareCopied] = useState(false);
   const mutation = useMutation({
@@ -57,8 +66,36 @@ export function LivePostDetail({ id }: { id: string }) {
   const login = `/login?returnTo=${encodeURIComponent(`/trips/${id}`)}`;
   const trip = post?.tripAttachment;
   const isAuthor = !!post && post.authorId === user?.id;
-  const authorName = isAuthor ? (user?.displayName ?? vi.api.postYou) : vi.api.postAuthorFallback;
+  const authorName = isAuthor
+    ? (user?.displayName ?? vi.api.postYou)
+    : post?.authorName?.trim() || vi.api.postAuthorFallback;
   const cover = getPostCover(trip?.destinationName);
+
+  if (isNotFound) {
+    return (
+      <main id="content" className="ota-container post-page">
+        <Link className="post-back" href="/">
+          {vi.api.back}
+        </Link>
+        <section className="post-unavailable-card" role="alert">
+          <div className="post-unavailable-icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h2>{vi.api.postUnavailable}</h2>
+          <p>{vi.api.postUnavailableHint}</p>
+          <div className="post-unavailable-actions">
+            <Link className="primary-button" href="/">
+              {vi.api.backHome}
+            </Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main id="content" className="ota-container post-page">

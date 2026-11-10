@@ -32,15 +32,23 @@ select {
 }
 button,
 a,
-input,
-select {
+input:is([type='checkbox'], [type='radio']) {
   outline-offset: 5px;
 }
 button:focus-visible,
 a:focus-visible,
-input:focus-visible,
-select:focus-visible {
+input:is([type='checkbox'], [type='radio']):focus-visible {
   outline: 2px solid var(--color-teal-ink);
+}
+:where(input:not([type='checkbox'], [type='radio']), select, textarea):focus {
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 1px var(--color-teal-ink);
+}
+@media (forced-colors: active) {
+  :where(input:not([type='checkbox'], [type='radio']), select, textarea):focus {
+    outline-color: Highlight;
+  }
 }
 button:not(:disabled),
 select {
@@ -56,9 +64,14 @@ h3 {
   width: min(1600px, calc(100% - clamp(48px, 8vw, 160px)));
   margin-inline: auto;
 }
+/* Header kính (TF06P): đứng yên đầu trang, nền trắng trong mờ, viền xám mảnh mép dưới. */
 .ota-header {
+  position: relative;
+  z-index: 40;
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-background);
+  background: color-mix(in srgb, var(--color-background) 88%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  backdrop-filter: blur(16px) saturate(1.6);
 }
 .header-content {
   min-height: 80px;
@@ -70,13 +83,170 @@ h3 {
   width: 142px;
   height: auto;
 }
+/* Menu header dạng viên trong một viên xám nhạt: mỗi mục có icon, rê chuột nền trắng, mục đang mở nền cam nhạt (TF06P). */
 .header-content nav {
   display: flex;
-  gap: 32px;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface-muted) 60%, transparent);
   font-size: 14px;
 }
+.header-content nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  color: var(--color-ink);
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background 0.1s,
+    color 0.1s,
+    transform 0.08s;
+}
+.header-content nav a svg {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .header-content nav a:hover {
+  background: var(--color-background);
+}
+.header-content nav a:active {
+  transform: scale(0.95);
+}
+/* Nút tròn chỉ có icon trên header (chuông thông báo). */
+.header-icon-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  color: var(--color-ink);
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.header-icon-button svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.header-icon-button:hover,
+.header-icon-button[aria-expanded='true'] {
+  background: var(--color-background);
   color: var(--color-coral-ink);
+}
+/* Cụm bên phải (giỏ hàng, chuông, avatar): một viên cùng kiểu với viên menu, mọi nút tròn 40px. */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface-muted) 60%, transparent);
+}
+/* Bỏ các khoảng kéo sát cũ (giỏ + tài khoản trong cart.module.css): trong viên đã có gap. */
+.ota-header .header-content .header-actions > * {
+  margin-left: 0;
+}
+/* Link giỏ hàng (cart-link.tsx) dùng chung kích thước, hiệu ứng với nút chuông. */
+.header-actions > a:not(.header-login) {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 999px;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+/* Khách chưa đăng nhập (không có giỏ, chuông): chỉ còn nút Đăng nhập, bỏ viên bọc ngoài. */
+.header-actions:has(> .header-login:only-child) {
+  padding: 0;
+  border-color: transparent;
+  background: none;
+}
+.header-actions > a:not(.header-login):hover {
+  background: var(--color-background);
+  color: var(--color-coral-ink);
+}
+.header-notifications {
+  position: relative;
+}
+/* Chưa đăng nhập: nút "Đăng nhập" nằm trong viên, cao bằng các nút tròn. */
+.header-actions > .header-login {
+  min-height: 40px;
+  padding: 8px 18px;
+}
+/* Khung chung của bảng thả xuống trên header. */
+.header-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-background);
+  box-shadow: 0 20px 40px -24px var(--color-overlay);
+  animation: header-popover-in 0.18s ease-out both;
+}
+@keyframes header-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.header-notifications-panel {
+  width: min(340px, calc(100vw - 32px));
+}
+.header-notifications-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 15px;
+}
+.header-notifications-empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 28px 24px 30px;
+  text-align: center;
+}
+.header-notifications-empty strong {
+  font-size: 14px;
+}
+.header-notifications-empty p {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.header-notifications-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 6px;
+  border-radius: 999px;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+.header-notifications-empty-icon svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .demo-badge {
   display: inline-flex;
@@ -209,29 +379,25 @@ h3 {
   position: relative;
 }
 .header-account.is-loading {
-  width: 140px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
 }
 .header-login {
   min-height: 44px;
   padding: 10px 20px;
 }
+/* Avatar tròn (TF06P): chỉ chữ cái đầu, viền cam khi rê chuột hoặc đang mở menu; tổng 40px như các nút cạnh. */
 .header-account-toggle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  max-width: 260px;
-  padding: 5px 12px 5px 5px;
-  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  padding: 1px;
+  border: 2px solid transparent;
   border-radius: 999px;
-  background: var(--color-background);
-  font-size: 14px;
-  font-weight: 600;
   transition: border-color 0.2s;
 }
 .header-account-toggle:hover,
 .header-account-toggle[aria-expanded='true'] {
-  border-color: var(--color-teal-ink);
+  border-color: var(--color-coral-ink);
 }
 .header-account-avatar {
   display: grid;
@@ -245,72 +411,104 @@ h3 {
   font-size: 15px;
   font-weight: 700;
 }
-.header-account-name {
+.header-account-avatar.is-large {
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+}
+/* Thẻ menu tài khoản (TF06P): đầu thẻ avatar + tên + email trên nền cam nhạt, mục có icon, đăng xuất tách riêng. */
+.header-account-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  width: 288px;
+  animation: header-popover-in 0.18s ease-out both;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-background);
+  box-shadow: 0 24px 48px -28px var(--color-overlay);
+}
+.header-account-who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--color-coral-tint), var(--color-warm-mist));
+}
+.header-account-who > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.header-account-who strong,
+.header-account-who > div > span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.header-account-caret {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  margin-inline: 2px;
-  border-right: 2px solid var(--color-text-muted);
-  border-bottom: 2px solid var(--color-text-muted);
-  transform: translateY(-2px) rotate(45deg);
-  transition: transform 0.2s;
-}
-.header-account-toggle[aria-expanded='true'] .header-account-caret {
-  transform: translateY(2px) rotate(-135deg);
-}
-.header-account-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 20;
-  width: 260px;
-  padding: 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  background: var(--color-background);
-  box-shadow: 0 20px 40px -24px var(--color-overlay);
-}
-.header-account-who {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px 12px;
-  border-bottom: 1px solid var(--color-border);
-  overflow-wrap: anywhere;
-}
 .header-account-who strong {
-  font-size: 14px;
+  color: var(--color-ink);
+  font-size: 15px;
 }
-.header-account-who span {
+.header-account-who > div > span {
   color: var(--color-text-muted);
-  font-size: 12px;
+  font-size: 13px;
 }
 .header-account-menu ul {
+  display: grid;
+  gap: 2px;
   padding: 6px 0;
   border-bottom: 1px solid var(--color-border);
 }
 .header-account-menu li a,
 .header-account-logout {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 12px;
+  color: var(--color-ink);
   font-size: 14px;
+  font-weight: 500;
   text-align: left;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
-.header-account-menu li a:hover,
-.header-account-logout:hover {
-  background: var(--color-surface);
+.header-account-menu svg {
+  flex: none;
+  color: var(--color-text-muted);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: color 0.12s;
+}
+.header-account-menu li a:hover {
+  background: var(--color-surface-muted);
+}
+.header-account-menu li a:hover svg {
+  color: var(--color-coral-ink);
 }
 .header-account-logout {
   margin-top: 6px;
   color: var(--color-coral-ink);
   font-weight: 600;
+}
+.header-account-logout svg,
+.header-account-menu .header-account-logout svg {
+  color: currentColor;
+}
+.header-account-logout:hover {
+  background: var(--color-coral-tint);
+}
+.header-account-logout:disabled {
+  opacity: 0.6;
 }
 .ota-place-field > input {
   width: 100%;
@@ -358,12 +556,6 @@ h3 {
   font-size: 22px;
 }
 @media (max-width: 640px) {
-  .header-account-name {
-    display: none;
-  }
-  .header-account-toggle {
-    padding-right: 10px;
-  }
   .ota-home.results-page {
     margin-top: -16px;
   }
@@ -399,6 +591,36 @@ h3 {
   letter-spacing: -1px;
   margin-block: 16px;
 }
+/* Thẻ ghim kiểu nhãn hành lý: đầu nhọn có lỗ xỏ, ghim đỏ, hơi nghiêng. */
+.pin-tag {
+  position: relative;
+  align-self: flex-start;
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 4px;
+  padding: 5px 14px 5px 24px;
+  background: var(--color-sun);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  clip-path: polygon(12px 0, 100% 0, 100% 100%, 12px 100%, 0 50%);
+  rotate: -2deg;
+  transform-origin: left center;
+}
+.pin-tag::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 9px;
+  width: 7px;
+  height: 7px;
+  translate: 0 -50%;
+  border-radius: 50%;
+  background: var(--color-coral);
+  box-shadow: inset -1px -1px 0 var(--color-coral-ink);
+}
 .secondary-button[aria-pressed='true'] {
   background: var(--color-sea-mist);
   border-color: var(--color-teal-ink);
@@ -424,15 +646,44 @@ h3 {
   font-weight: 700;
   white-space: nowrap;
   transition:
-    background 0.18s,
-    transform 0.18s;
+    background 288ms,
+    transform 288ms;
+}
+/* Hiệu ứng loang: lớp màu tròn lan ra từ chỗ con trỏ đi vào (--ripple-x/y do ButtonRipple ghi). */
+.primary-button,
+.secondary-button,
+.ripple-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.primary-button::before,
+.secondary-button::before,
+.ripple-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--ripple-color);
+  clip-path: circle(0 at var(--ripple-x, 50%) var(--ripple-y, 50%));
+  transition: clip-path 720ms ease-out;
+  pointer-events: none;
+}
+:is(.primary-button, .secondary-button, .ripple-button):is(:hover, :focus-visible):not(:disabled, [aria-disabled='true'])::before {
+  clip-path: circle(160% at var(--ripple-x, 50%) var(--ripple-y, 50%));
+}
+@media (prefers-reduced-motion: reduce) {
+  .primary-button::before,
+  .secondary-button::before,
+  .ripple-button::before {
+    transition: none;
+  }
 }
 .primary-button {
+  --ripple-color: var(--color-ink);
   background: var(--color-coral-ink);
   color: var(--color-background);
-}
-.primary-button:hover {
-  background: var(--color-ink);
 }
 .primary-button:active,
 .secondary-button:active {
@@ -446,8 +697,14 @@ h3 {
   background: var(--color-background);
   border: 1px solid var(--color-border);
 }
-.secondary-button:hover {
-  background: var(--color-surface);
+.secondary-button {
+  --ripple-color: var(--color-sea-mist);
+  transition:
+    border-color 480ms,
+    transform 288ms;
+}
+.secondary-button:hover:not(:disabled) {
+  border-color: var(--color-teal-ink);
 }
 .suggested-queries {
   display: flex;
@@ -541,7 +798,7 @@ h3 {
   height: 100%;
   width: 100%;
   object-fit: cover;
-  transition: transform 0.3s;
+  transition: transform 480ms;
 }
 .trip-card-link:hover .trip-card-photo img {
   transform: scale(1.035);
@@ -888,8 +1145,12 @@ h3 {
     min-height: 80px;
   }
   .header-content nav {
-    gap: 20px;
+    gap: 2px;
   }
+  .header-content nav a {
+    padding-inline: 12px;
+  }
+
   .home-hero {
     gap: 24px;
   }
@@ -950,9 +1211,20 @@ h3 {
   .header-content nav {
     order: 3;
     width: 100%;
-    gap: 20px;
+    gap: 2px;
     font-size: 13px;
   }
+  /* Màn hẹp: bỏ icon menu, chia đều bốn mục trên một hàng. */
+  .header-content nav {
+    justify-content: space-between;
+  }
+  .header-content nav a {
+    padding: 8px 8px;
+  }
+  .header-content nav a svg {
+    display: none;
+  }
+
   .header-content > .demo-badge {
     margin-left: 0;
     padding: 5px 8px;
@@ -1098,33 +1370,579 @@ h3 {
   }
 }
 
-/* Đăng nhập, quên mật khẩu, trang tài khoản (TF06A) */
-.auth-page {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
-  gap: 56px;
-  align-items: center;
-  padding-block: 48px 72px;
+/* Đăng nhập, đăng ký, quên và đặt lại mật khẩu (TF06A; tách trang đăng nhập và đăng ký: TF06O) */
+/* Các trang này toàn màn hình, không có header và footer chung của web. */
+body:has(.auth-fullscreen) .ota-header,
+body:has(.auth-fullscreen) footer {
+  display: none;
 }
-.auth-story {
+/* Cao đúng một màn hình, trang không cuộn. Màn quá thấp thì chỉ khung form cuộn bên trong. */
+html:has(.auth-fullscreen),
+body:has(.auth-fullscreen) {
+  height: 100%;
+  /* clip (không phải hidden): chặn cả cuộn bằng code, như khi bộ chọn ngày mở popup rồi scrollIntoView. */
+  overflow: clip;
+}
+.auth-fullscreen {
+  height: 100dvh;
+}
+.auth-split {
+  /* Thời gian và nhịp chung của hiệu ứng trượt giữa đăng nhập và đăng ký. */
+  --auth-slide: 0.7s cubic-bezier(0.65, 0, 0.35, 1);
   position: relative;
-  padding: 40px;
-  border-radius: 24px;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(400px, 1fr);
   background: var(--color-warm-mist);
+  overflow: clip;
+  transition: grid-template-columns var(--auth-slide);
+}
+/*
+ * Đăng ký: cột ảnh co lại, thẻ form rộng ra và trượt sang trái; cụm ảnh, tiêu đề, ảnh nền trượt theo.
+ * Về đăng nhập thì các giá trị trở lại, transition chạy ngược sang phải.
+ */
+.auth-split[data-mode='register'] {
+  grid-template-columns: minmax(0, 0.72fr) minmax(400px, 1.6fr);
+}
+.auth-hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 0;
+  /* Lề trái bằng lề của .ota-container trên trang chủ, để logo và tiêu đề thẳng hàng với logo header. */
+  padding: 0 56px 44px calc((100vw - min(1600px, 100vw - clamp(48px, 8vw, 160px))) / 2);
+}
+/* Nền ảnh phong cảnh mờ phủ cả trang, phía sau lời chào và thẻ form. */
+.auth-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+.auth-hero-bg img {
+  object-fit: cover;
+  filter: blur(8px) saturate(1.1);
+  /* Phóng để viền mờ của blur không lộ ra ở mép khung, và đủ rộng để trượt ngang khi sang đăng ký. */
+  transform: scale(1.16);
+  transition: transform var(--auth-slide);
+}
+.auth-split[data-mode='register'] .auth-hero-bg img {
+  transform: scale(1.16) translateX(-6%);
+}
+/* Lớp sáng: đậm hơn ở đầu (logo) và chân (tiêu đề) để chữ tối đủ tương phản. */
+.auth-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-background) 70%, transparent) 0%,
+    color-mix(in srgb, var(--color-background) 35%, transparent) 40%,
+    color-mix(in srgb, var(--color-background) 55%, transparent) 65%,
+    color-mix(in srgb, var(--color-background) 85%, transparent) 100%
+  );
+}
+/* Hàng logo cao 80px, logo giữa hàng: trùng vị trí logo trên header trang chủ (.header-content). */
+.auth-logo {
+  display: flex;
+  align-items: center;
+  flex: none;
+  width: fit-content;
+  min-height: 80px;
+}
+.auth-logo img {
+  width: 142px;
+  height: auto;
+}
+.auth-headline {
+  /* Co theo cả chiều rộng lẫn chiều cao màn hình để vừa một màn hình. */
+  font-size: clamp(34px, min(5vw, 8dvh), 76px);
+  line-height: 1.08;
+  letter-spacing: -2px;
+  transition:
+    font-size var(--auth-slide),
+    transform var(--auth-slide);
+}
+.auth-split[data-mode='register'] .auth-headline {
+  font-size: clamp(28px, min(3vw, 6dvh), 48px);
+}
+/* Hai dòng cố định như hero trang chủ: dòng đầu đen, dòng sau xanh. */
+.auth-headline-first {
+  display: block;
+  white-space: nowrap;
+}
+.auth-headline em {
+  display: block;
+  font-style: normal;
+  color: var(--color-teal-ink);
+}
+/* Cụm ảnh trang trí: vị trí theo phần trăm của khung để co giãn theo cột. */
+.auth-collage {
+  position: relative;
+  align-self: center;
+  /* Cao theo phần còn lại của màn hình (trừ logo và tiêu đề), rộng theo tỉ lệ khung. */
+  height: clamp(200px, calc(100dvh - 400px), 440px);
+  max-width: 100%;
+  aspect-ratio: 580 / 440;
+  transform-origin: left center;
+  transition: transform var(--auth-slide);
+}
+.auth-split[data-mode='register'] .auth-collage {
+  transform: translateX(-12%) scale(0.86);
+}
+.auth-photo,
+.auth-photo-card,
+.auth-chip,
+.auth-heart,
+.auth-mascot-ring {
+  position: absolute;
+  box-shadow: 0 24px 48px -28px var(--color-overlay-heavy);
+}
+.auth-photo {
   overflow: hidden;
+  border-radius: 24px;
 }
-.auth-story h1 {
-  font-size: clamp(28px, 3vw, 40px);
-  line-height: 1.25;
-  letter-spacing: -1px;
+.auth-photo img,
+.auth-photo-card-image img {
+  object-fit: cover;
 }
-.auth-story > p {
-  max-width: 420px;
-  margin-top: 16px;
+.auth-photo-main {
+  top: 0;
+  left: 44%;
+  width: 40%;
+  height: 84%;
+}
+/* Vạch tiến độ như một story đang phát. */
+.auth-photo-progress {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  right: 16px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-overlay);
+}
+.auth-photo-progress::before {
+  content: '';
+  display: block;
+  width: 45%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-background);
+}
+.auth-photo-side {
+  top: 20%;
+  left: 10%;
+  width: 36%;
+  height: 46%;
+}
+.auth-photo-card {
+  top: 50%;
+  left: 22%;
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 10px 14px;
+  border-radius: 18px;
+  background: var(--color-background);
+}
+.auth-photo-card-image {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.auth-photo-card-line {
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+}
+.auth-photo-card-line.is-short {
+  width: 60%;
+}
+.auth-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.auth-chip svg {
+  fill: var(--color-sun);
+}
+.auth-chip-rating {
+  top: 9%;
+  right: 4%;
+}
+.auth-chip-saved {
+  top: 6%;
+  left: 4%;
+  background: var(--color-teal-ink);
+  color: var(--color-background);
+}
+.auth-heart {
+  top: 62%;
+  right: 8%;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: var(--color-coral);
+}
+.auth-heart svg {
+  fill: var(--color-background);
+}
+.auth-mascot-ring {
+  bottom: 0;
+  left: 50%;
+  display: grid;
+  place-items: end center;
+  width: 25%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 4px solid var(--color-teal);
+  border-radius: 999px;
+  background: var(--color-sea-mist);
+}
+.auth-mascot-ring img {
+  width: 92%;
+  height: auto;
+}
+/* Cột phải trong suốt, chỉ thẻ form là khối trắng bo tròn nổi trên ảnh nền. */
+.auth-panel {
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+  padding: 32px 48px 32px 16px;
+  overflow-y: auto;
+}
+.auth-panel-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(100%, 440px);
+  transition: width var(--auth-slide);
+  /* Căn giữa theo chiều dọc, nhưng khi form cao hơn khung thì vẫn cuộn được từ đầu. */
+  margin-block: auto;
+  padding: 36px 32px;
+  /*
+   * Liquid glass: nền trong mờ nhiều lớp, làm mờ và tăng bão hoà ảnh phía sau, viền sáng như mép kính,
+   * ánh phản chiếu ở góc trên (::before). Không dùng bộ lọc khúc xạ SVG trong backdrop-filter: Chrome vẽ lỗi
+   * (mảng chữ nhật đè lên) khi trong thẻ có iframe nút Google.
+   */
+  position: relative;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--color-background) 60%, transparent);
+  border-radius: 28px;
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--color-background) 82%, transparent) 0%,
+      color-mix(in srgb, var(--color-background) 66%, transparent) 55%,
+      color-mix(in srgb, var(--color-background) 76%, transparent) 100%
+    );
+  backdrop-filter: blur(22px) saturate(1.8) brightness(1.04);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-background) 95%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--color-background) 40%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--color-background) 50%, transparent),
+    inset 0 0 24px color-mix(in srgb, var(--color-background) 35%, transparent),
+    0 32px 64px -32px var(--color-overlay-heavy);
+}
+/* Thẻ đăng ký rộng gấp rưỡi, đủ cho form hai cột; đệm gọn hơn để cả form vừa một màn hình. */
+.auth-split[data-mode='register'] .auth-panel-inner {
+  width: min(100%, 720px);
+  padding-block: 28px;
+}
+.auth-split[data-mode='register'] .auth-card-stack,
+.auth-split[data-mode='register'] .auth-form {
+  gap: 12px;
+}
+/* Màn thấp (laptop 720px): bớt khoảng trên dưới quanh thẻ đăng ký để không phải cuộn trong thẻ. */
+@media (min-width: 901px) {
+  .auth-split[data-mode='register'] .auth-panel {
+    padding-block: 16px;
+  }
+}
+/* Ánh phản chiếu: dải sáng chéo ở góc trên trái, không chặn chuột. */
+.auth-panel-inner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background:
+    radial-gradient(120% 60% at 0% 0%, color-mix(in srgb, var(--color-background) 70%, transparent), transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-background) 30%, transparent), transparent 30%);
+  pointer-events: none;
+}
+/* Tiêu đề trong thẻ (đăng nhập, đăng ký, các bước, quên mật khẩu). */
+.auth-card-stack h2 {
+  font-size: 24px;
+  letter-spacing: -0.5px;
+}
+/* Ô nhập ở các trang đăng nhập, đăng ký: nền trắng, bấm vào thì viền cam phát sáng. */
+.auth-fullscreen .auth-field input {
+  border-color: var(--color-border);
+  background: var(--color-background);
+}
+.auth-fullscreen .auth-field input:hover {
+  border-color: var(--color-text-subtle);
+}
+.auth-fullscreen .auth-field input:focus {
+  border-color: var(--color-coral-ink);
+  background: var(--color-background);
+  box-shadow: 0 0 0 4px var(--color-coral-tint);
+}
+.auth-fullscreen .auth-field input[aria-invalid='true'] {
+  border-color: var(--color-coral-ink);
+}
+.auth-fullscreen .auth-field input:-webkit-autofill {
+  box-shadow: 0 0 0 1000px var(--color-background) inset;
+}
+.auth-fullscreen .auth-field input:-webkit-autofill:focus {
+  box-shadow:
+    0 0 0 1000px var(--color-background) inset,
+    0 0 0 4px var(--color-coral-tint);
+}
+/* Icon thư, ổ khoá ở đầu ô; chuyển màu cam khi đang gõ trong ô. */
+.auth-field-icon {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  display: grid;
+  color: var(--color-text-subtle);
+  pointer-events: none;
+  transition: color 0.15s;
+}
+.auth-field-icon svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.auth-field.has-icon:focus-within .auth-field-icon {
+  color: var(--color-coral-ink);
+}
+/* Nút đăng nhập nổi nhẹ khi rê chuột. */
+.auth-fullscreen .auth-submit {
+  box-shadow: 0 14px 24px -16px var(--color-coral-ink);
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.auth-fullscreen .auth-submit:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 28px -16px var(--color-coral-ink);
+}
+.account-panel h2 {
+  font-size: 24px;
+  letter-spacing: -0.5px;
+}
+/* Nút viền dẫn sang trang đăng ký, tách khỏi form đăng nhập bằng khoảng trống. */
+.auth-create {
+  width: 100%;
+  margin-top: 20px;
+  border-color: var(--color-coral-ink);
+  color: var(--color-coral-ink);
+}
+/* Thân thẻ: chiều cao chạy mượt khi đổi trang hoặc đổi bước (auth-card-body.tsx đặt height theo nội dung). */
+.auth-card-body {
+  overflow: clip;
+  /* Chừa chỗ cho viền cam phát sáng của ô đang gõ, không bị cắt ở mép. */
+  overflow-clip-margin: 8px;
+  transition: height 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.auth-card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* Nội dung mới (trang khác, bước khác) hiện ra mờ dần và trượt nhẹ lên. */
+.auth-card-stack > * {
+  animation: auth-step-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes auth-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-card-body,
+  .auth-split,
+  .auth-split * {
+    transition: none !important;
+  }
+  .auth-card-stack > * {
+    animation: none;
+  }
+}
+/* Nút chữ nhỏ (gửi lại mã). */
+.auth-text-button {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.auth-text-button.is-accent {
+  color: var(--color-coral-ink);
+}
+.auth-text-button:not(:disabled):hover {
+  text-decoration: underline;
+}
+.auth-text-button:disabled {
+  color: var(--color-text-subtle);
+  cursor: default;
+}
+/* Form đăng ký hai cột: trái tên, email; phải ngày sinh, giới tính + quốc tịch; mật khẩu trải hết hàng. */
+.auth-register-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 18px;
+}
+.auth-register-grid .is-wide {
+  grid-column: 1 / -1;
+}
+/* Ngày sinh: ba ô Ngày / Tháng / Năm trên một hàng. */
+.auth-dob-select {
+  display: grid;
+  grid-template-columns: 0.8fr 1.25fr 1fr;
+  gap: 8px;
+}
+/* Bộ chọn ngày, bộ chọn (trigger có aria-haspopup) cao bằng ô nhập chữ bên cạnh. */
+.auth-register-grid .auth-picker [aria-haspopup] {
+  min-height: 48px;
+}
+/* Ô nhập mã hiện sau khi gửi mã, nút "Gửi lại mã" bên cạnh. */
+.auth-code-block {
+  display: grid;
+  gap: 6px;
+}
+.auth-code-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+}
+.auth-code-row .auth-text-button {
+  padding-bottom: 14px;
+}
+/* Ngày sinh, giới tính, quốc tịch: nhãn phía trên, bộ chọn có sẵn của web (soft-date-picker, soft-select). */
+.auth-field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.auth-picker label {
+  font-size: 13px;
+  font-weight: 600;
+}
+/* Ô tick đồng ý điều khoản. */
+.auth-terms {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.auth-terms input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--color-coral-ink);
+  cursor: pointer;
+}
+.auth-terms input[aria-invalid='true'] {
+  outline: 2px solid var(--color-coral-ink);
+  outline-offset: 2px;
+}
+.auth-terms a {
+  color: var(--color-coral-ink);
+  font-weight: 700;
+}
+.auth-terms a:hover {
+  text-decoration: underline;
+}
+/* Nhãn nổi trong ô (trang đăng nhập): nằm giữa ô khi trống, thu nhỏ lên trên khi gõ hoặc có chữ. */
+.auth-field.is-floating {
+  position: relative;
+}
+.auth-field.is-floating .auth-label-row {
+  position: absolute;
+  z-index: 1;
+  top: 21px;
+  left: 17px;
+  margin: 0;
+  pointer-events: none;
+  transition: top 0.15s;
+}
+/* Bộ đếm ký tự ở góc phải ô (chừa nút con mắt ở ô mật khẩu); chỉ hiện khi nhãn đã thu lên. */
+.auth-field.is-floating .auth-label-row {
+  right: 16px;
+}
+.auth-field.is-floating:has(.auth-password) .auth-label-row {
+  right: 60px;
+}
+.auth-field.is-floating .auth-count {
+  transition: opacity 0.15s;
+}
+.auth-field.is-floating:not(:has(input:focus, input:not(:placeholder-shown))) .auth-count {
+  opacity: 0;
+}
+.auth-field.is-floating label {
   color: var(--color-text-muted);
   font-size: 15px;
-  line-height: 1.8;
+  font-weight: 500;
+  transition: font-size 0.15s;
 }
+/* Chữ gõ nằm thấp hơn nhãn đã thu nhỏ khoảng 6px, để hai dòng không dính nhau. */
+.auth-field.is-floating input {
+  min-height: 64px;
+  padding: 30px 16px 10px;
+}
+.auth-field.is-floating .auth-password input {
+  padding-right: 56px;
+}
+/* Ô nhãn nổi có icon: chữ và nhãn lùi vào sau icon (đặt sau luật padding của nhãn nổi để thắng). */
+.auth-field.is-floating.has-icon input {
+  padding-left: 48px;
+}
+.auth-field.is-floating.has-icon .auth-label-row {
+  left: 49px;
+}
+.auth-field.is-floating:has(input:focus, input:not(:placeholder-shown)) .auth-label-row {
+  top: 10px;
+}
+.auth-field.is-floating:has(input:focus, input:not(:placeholder-shown)) label {
+  font-size: 12px;
+}
+/* "Quên mật khẩu?" ngay dưới ô mật khẩu, căn phải, chữ nhỏ màu cam. */
+.auth-forgot {
+  align-self: flex-end;
+  margin-top: -6px;
+  color: var(--color-coral-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.auth-forgot:hover {
+  text-decoration: underline;
+}
+/* Danh sách lợi ích, dùng ở trang tài khoản khi chưa đăng nhập. */
 .auth-benefits {
   display: grid;
   gap: 12px;
@@ -1145,54 +1963,31 @@ h3 {
   border-radius: 999px;
   background: var(--color-teal);
 }
-.auth-mascot {
-  display: block;
-  width: 180px;
-  height: auto;
-  margin: 28px 0 -12px auto;
-}
-.auth-card {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 32px;
-  border: 1px solid var(--color-border);
-  border-radius: 24px;
-  background: var(--color-background);
-  box-shadow: 0 24px 48px -32px var(--color-overlay);
-}
-.auth-card h2,
-.account-panel h2 {
-  font-size: 24px;
-  letter-spacing: -0.5px;
-}
-.auth-tabs {
-  min-width: 0;
-  margin: 0;
-  border: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 14px;
-  background: var(--color-surface-muted);
-}
-.auth-tabs button {
-  min-height: 42px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text-muted);
-}
-.auth-tabs button[aria-pressed='true'] {
-  background: var(--color-background);
-  color: var(--color-ink);
-  box-shadow: 0 2px 8px -4px var(--color-overlay);
-}
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+}
+/* Độ mạnh mật khẩu: một dòng chữ nhỏ ngay dưới ô, không chiếm cả khối. */
+.auth-strength {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: -6px;
+  color: var(--color-coral-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.auth-strength::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.auth-strength.is-strong {
+  color: var(--color-teal-ink);
 }
 .auth-field label {
   display: block;
@@ -1200,37 +1995,89 @@ h3 {
   font-size: 13px;
   font-weight: 600;
 }
+/* Nhãn và bộ đếm ký tự "x/tối đa" trên cùng một hàng. */
+.auth-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.auth-label-row label {
+  margin-bottom: 0;
+}
+.auth-count {
+  color: var(--color-text-subtle);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.auth-count.is-full {
+  color: var(--color-coral-ink);
+  font-weight: 700;
+}
 .auth-field input {
   width: 100%;
-  padding: 14px 16px;
+  min-height: 48px;
+  padding: 12px 16px;
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  background: var(--color-warm-mist);
-}
-.auth-field input:focus-visible {
-  border-color: var(--color-teal-ink);
   background: var(--color-background);
+  transition:
+    border-color 0.18s,
+    box-shadow 0.18s;
+}
+.auth-field input:focus {
+  border-color: var(--color-coral-ink);
+  background: var(--color-background);
+  box-shadow: none;
+}
+/* Trình duyệt tự điền (autofill) tô nền xanh: giữ nền trắng như các ô khác. */
+.auth-field input:-webkit-autofill,
+.auth-field input:-webkit-autofill:hover,
+.auth-field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-ink);
+  box-shadow: 0 0 0 1000px var(--color-background) inset;
+}
+.auth-field input[aria-invalid='true'] {
+  border-color: var(--color-coral-ink);
 }
 .auth-password {
   position: relative;
 }
 .auth-password input {
-  padding-right: 72px;
+  padding-right: 56px;
 }
+/* Edge tự thêm nút hiện mật khẩu và nút xoá vào ô mật khẩu: ẩn đi vì đã có nút con mắt riêng. */
+.auth-password input::-ms-reveal,
+.auth-password input::-ms-clear {
+  display: none;
+}
+/* Nút hình con mắt: mở khi đang ẩn mật khẩu, gạch chéo khi đang hiện. */
 .auth-toggle {
   position: absolute;
   top: 50%;
   right: 8px;
   transform: translateY(-50%);
-  min-height: 36px;
-  padding: 0 12px;
-  border-radius: 8px;
-  color: var(--color-teal-ink);
-  font-size: 12px;
-  font-weight: 700;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 .auth-toggle:hover {
-  background: var(--color-sea-mist);
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+}
+.auth-toggle svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .auth-hint {
   color: var(--color-text-muted);
@@ -1245,15 +2092,34 @@ h3 {
 .auth-link:hover {
   text-decoration: underline;
 }
-.auth-forgot {
-  align-self: flex-end;
-  margin-top: -6px;
-}
 .auth-switch {
   align-self: center;
 }
 .auth-submit {
   width: 100%;
+}
+.auth-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Nằm ngay dưới ô tên hiển thị, nên kéo sát lên ô. */
+  margin-top: -6px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-warning);
+  border-radius: 10px;
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.auth-warning svg {
+  flex: none;
+  fill: none;
+  stroke: var(--color-coral-ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .auth-error,
 .auth-success {
@@ -1288,7 +2154,49 @@ h3 {
 .auth-google {
   display: flex;
   justify-content: center;
-  min-height: 44px;
+  min-height: 52px;
+}
+/* Ô vuông chỉ có logo Google, cùng kiểu ô nhập (nền trắng, viền mảnh, bo 14px). */
+.auth-google-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  width: 72px;
+  height: 52px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-background);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.auth-google-tile:hover {
+  border-color: var(--color-text-subtle);
+}
+.auth-google-tile:focus-within {
+  border-color: var(--color-coral-ink);
+  box-shadow: 0 0 0 4px var(--color-coral-tint);
+}
+.auth-google-tile:hover .auth-google-mark {
+  transform: scale(1.08);
+}
+.auth-google-mark {
+  pointer-events: none;
+  transition: transform 0.15s;
+}
+/*
+ * Nút thật của Google (iframe khoảng 64x44) phủ giữa ô, phóng 2,5 lần cho kín ô 72x52 (ô cắt phần thừa),
+ * gần như trong suốt: thấy ô và logo của web, bấm vào là bấm nút Google. Không để opacity 0 hẳn, để trình duyệt
+ * vẫn coi iframe là đang hiển thị.
+ */
+.auth-google-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  opacity: 0.01;
+  transform: translate(-50%, -50%) scale(2.5);
 }
 /* Trang tài khoản (TF06D): thẻ đầu trang, hàng tab gạch chân, hai cột thẻ */
 .account-page {
@@ -1452,23 +2360,57 @@ h3 {
   font-weight: 600;
 }
 @media (max-width: 900px) {
-  .auth-page {
+  /* Một cột: trên là logo và lời chào gọn, cụm ảnh ẩn để form lên sớm. */
+  .auth-split,
+  .auth-split[data-mode='register'] {
     grid-template-columns: 1fr;
-    gap: 24px;
-    padding-block: 24px 48px;
+    grid-template-rows: auto minmax(0, 1fr);
   }
-  .auth-story {
-    padding: 28px;
+  /* Một cột: không trượt cụm ảnh (đã ẩn), giữ tiêu đề cỡ gọn ở cả hai trang. */
+  .auth-split[data-mode='register'] .auth-headline {
+    font-size: 28px;
   }
-  .auth-mascot,
+  /* Như header trang chủ ở màn này: lề 20px, hàng logo 80px. */
+  .auth-hero {
+    gap: 16px;
+    padding: 0 20px 20px;
+  }
+  .auth-headline {
+    max-width: none;
+    font-size: 28px;
+    letter-spacing: -1px;
+  }
+  .auth-collage,
   .auth-benefits {
     display: none;
   }
+  /* Một cột: thẻ form nằm dưới lời chào, vẫn bo tròn và lộ nền xung quanh. */
+  .auth-panel {
+    padding: 0 16px 16px;
+  }
+  .auth-panel-inner {
+    padding: 24px 20px;
+    border-radius: 24px;
+  }
 }
 @media (max-width: 640px) {
-  .auth-card,
   .account-panel {
     padding: 22px;
+  }
+  .auth-field-pair,
+  .auth-register-grid {
+    grid-template-columns: 1fr;
+  }
+  /* Như header trang chủ ở màn hẹp: lề 16px, logo 120px, cách trên 16px trong hàng 48px. */
+  .auth-hero {
+    padding-inline: 16px;
+  }
+  .auth-logo {
+    min-height: 48px;
+    margin-top: 16px;
+  }
+  .auth-logo img {
+    width: 120px;
   }
   .device-item {
     flex-direction: column;
@@ -1526,6 +2468,39 @@ h3 {
   display: block;
   margin-top: 24px;
   color: var(--color-text-muted);
+}
+.post-unavailable-card {
+  margin-top: 32px;
+  padding: 48px 24px;
+  background-color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border-subtle, #e2e8f0);
+  border-radius: 16px;
+  text-align: center;
+  max-width: 520px;
+  margin-inline: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+.post-unavailable-icon {
+  font-size: 40px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+.post-unavailable-card h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text, #1e293b);
+  margin: 0 0 8px;
+}
+.post-unavailable-card p {
+  font-size: 14px;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+.post-unavailable-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
 }
 .post-layout {
   display: grid;
@@ -1704,8 +2679,8 @@ h3 {
   font-size: 13px;
   font-weight: 600;
   transition:
-    background 0.18s,
-    border-color 0.18s;
+    background 288ms,
+    border-color 288ms;
 }
 .post-chip:hover {
   background: var(--color-surface);
@@ -1817,12 +2792,13 @@ h3 {
 .post-editor textarea {
   min-height: 120px;
 }
-.post-editor input:focus-visible,
-.post-editor textarea:focus-visible,
-.comment-form textarea:focus-visible,
-.comment-edit textarea:focus-visible {
+.post-editor input:focus,
+.post-editor textarea:focus,
+.comment-form textarea:focus,
+.comment-edit textarea:focus {
   border-color: var(--color-teal-ink);
   background: var(--color-background);
+  box-shadow: none;
 }
 /* Bình luận */
 .comment-thread {
@@ -2041,8 +3017,8 @@ h3 {
   font-weight: 600;
   text-align: left;
   transition:
-    background 0.18s,
-    color 0.18s;
+    background 288ms,
+    color 288ms;
 }
 .profile-nav svg,
 .profile-card-header svg,
@@ -2124,9 +3100,9 @@ h3 {
   border-radius: 16px;
   background: var(--color-surface);
   transition:
-    border-color 0.18s,
-    box-shadow 0.18s,
-    background 0.18s;
+    border-color 288ms,
+    box-shadow 288ms,
+    background 288ms;
 }
 .profile-field-label {
   color: var(--color-text-muted);
@@ -2146,7 +3122,6 @@ h3 {
 }
 .profile-fields.is-editing .profile-field:not(.is-locked):focus-within {
   border-color: var(--color-coral-ink);
-  box-shadow: 0 0 0 3px var(--color-coral-tint);
 }
 .profile-field input,
 .profile-field select {
@@ -2158,7 +3133,9 @@ h3 {
   color: var(--color-ink);
   font-size: 16px;
   font-weight: 600;
-  outline: none;
+}
+.profile-field :is(input, select):focus {
+  box-shadow: none;
 }
 .profile-field input::placeholder {
   color: var(--color-text-subtle);
@@ -2207,6 +3184,59 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+/* Mục "Bảo mật & thiết bị" dùng khung profile-card; khoảng cách giữa các phần đã có gap của account-panel. */
+.account-panel > .profile-card-header {
+  margin-bottom: 0;
+}
+/* Trạng thái trống trong một mục tài khoản (ví dụ chưa có chuyến đã đặt). */
+.account-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 24px;
+  border: 1px dashed var(--color-border);
+  border-radius: 20px;
+  background: var(--color-warm-mist);
+  text-align: center;
+}
+.account-empty-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: var(--color-background);
+  color: var(--color-coral-ink);
+  box-shadow: 0 12px 24px -18px var(--color-overlay);
+}
+.account-empty svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.account-empty h3 {
+  margin: 0;
+  font-size: 18px;
+}
+.account-empty p {
+  max-width: 42ch;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.account-empty-action {
+  gap: 8px;
+  margin-top: 10px;
+  padding-inline: 26px;
+}
+.account-empty-action:hover {
+  transform: translateY(-1px);
 }
 @media (max-width: 900px) {
   .profile-layout {
@@ -2280,16 +3310,15 @@ h3 {
   background: var(--color-background);
   font-size: 15px;
   transition:
-    border-color 0.18s,
-    box-shadow 0.18s;
+    border-color 288ms,
+    box-shadow 288ms;
 }
-.account-page .auth-field input:focus-visible,
-.composer-field input:focus-visible,
-.composer-field textarea:focus-visible {
+.account-page .auth-field input:focus,
+.composer-field input:focus,
+.composer-field textarea:focus {
   border-color: var(--color-coral-ink);
   background: var(--color-background);
-  box-shadow: 0 0 0 3px var(--color-coral-tint);
-  outline: none;
+  box-shadow: none;
 }
 .composer-field input::placeholder,
 .composer-field textarea::placeholder {

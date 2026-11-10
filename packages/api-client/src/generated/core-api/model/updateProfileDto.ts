@@ -7,7 +7,7 @@
 import type { UpdateProfileDtoGender } from './updateProfileDtoGender';
 
 export interface UpdateProfileDto {
-  /** @maxLength 50 */
+  /** @maxLength 30 */
   displayName?: string;
   /**
    * 8–15 chữ số, có thể bắt đầu bằng +; dấu cách, chấm, gạch được bỏ. null hoặc "" để xoá.

@@ -6,27 +6,22 @@
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
   align-items: center;
-  gap: clamp(36px, 6vw, 104px);
-  padding-block: clamp(36px, 5vw, 80px) clamp(100px, 9vw, 140px);
+  gap: clamp(32px, 5vw, 80px);
+  padding-block: 28px 80px;
 }
 .copy {
   position: relative;
   z-index: 1;
+  padding-block-start: 0;
 }
-.kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--color-teal-ink);
-  font: 700 0.7rem var(--font-mono);
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-.kicker span {
-  font-size: 1.2rem;
+.heroMascot {
+  display: block;
+  width: 64px;
+  height: auto;
+  pointer-events: none;
 }
 .copy h1 {
-  margin-block: 22px 24px;
+  margin-block: 8px 16px;
   color: var(--color-teal-ink);
   font-size: clamp(2.6rem, 5.05vw, 6rem);
   line-height: 1.08;
@@ -35,6 +30,18 @@
 }
 .copy h1::first-line {
   color: var(--color-ink);
+}
+/* Dòng 1 luôn trên một hàng; cỡ chữ co theo bề rộng cột (cqi) để dòng 1 không tràn. */
+.copy {
+  container-type: inline-size;
+}
+.copy h1 {
+  font-size: min(clamp(2.6rem, 4.1vw, 4.5rem), 12.8cqi);
+}
+.titleFirst {
+  display: block;
+  color: var(--color-ink);
+  white-space: nowrap;
 }
 .description {
   max-width: 41ch;
@@ -53,19 +60,25 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   min-height: 46px;
   font-size: 0.82rem;
   font-weight: 700;
 }
 .searchAction {
-  padding: 10px 16px;
+  min-height: 52px;
+  padding: 12px 30px;
   border-radius: 999px;
+  font-size: 0.92rem;
   background: var(--color-ink);
   color: var(--color-background);
 }
-.searchAction:hover {
-  background: var(--color-teal-ink);
+/* Nút đen loang Teal; chữ chuyển Ink cho đủ tương phản trên Teal. */
+.searchAction {
+  --ripple-color: var(--color-teal);
+  transition: color 480ms;
+}
+.searchAction:is(:hover, :focus-visible) {
+  color: var(--color-ink);
 }
 .scrollAction {
   color: var(--color-teal-ink);
@@ -74,38 +87,25 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-.scrollAction span {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  aspect-ratio: 1;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-}
 .activities {
-  margin-top: clamp(24px, 3.5vw, 48px);
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  gap: clamp(6px, 1.2vw, 14px);
+  overflow-x: auto;
+  margin-top: 20px;
   padding-top: 14px;
   border-top: 1px solid color-mix(in srgb, var(--color-teal-ink) 25%, transparent);
 }
-.activities p {
-  margin-bottom: 10px;
-  color: var(--color-teal-ink);
-  font: 700 0.68rem var(--font-mono);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-.activities > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-}
 .activities a {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 6px;
   min-height: 36px;
   font-size: 0.75rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 .activities a:hover {
   color: var(--color-teal-ink);
@@ -124,8 +124,8 @@
 }
 .frame {
   position: relative;
-  min-height: 340px;
-  aspect-ratio: 1.3;
+  height: clamp(260px, 25vw, 360px);
+  min-height: 0;
   overflow: hidden;
   isolation: isolate;
   border-radius: 44% 44% 20px 20px / 17% 17% 20px 20px;
@@ -135,18 +135,6 @@
   object-fit: cover;
   object-position: 50% 63%;
 }
-.frameIndex {
-  position: absolute;
-  top: 12%;
-  right: 8%;
-  padding: 6px 9px;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  background: var(--color-overlay);
-  color: var(--color-background);
-  font: 0.7rem var(--font-mono);
-  letter-spacing: 0.08em;
-}
 .route {
   position: absolute;
   bottom: 14%;
@@ -155,97 +143,63 @@
   height: 60%;
   color: var(--color-sun-soft);
 }
-.caption {
-  position: absolute;
-  bottom: 18px;
-  left: 18px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: var(--color-ink);
-  color: var(--color-background);
-  font: 0.7rem var(--font-mono);
-}
-.caption span {
-  color: var(--color-sun);
-}
-.tripiGreeting {
-  position: absolute;
-  right: 16px;
-  bottom: -18px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 12px 4px 4px;
-  border-radius: 999px;
-  background: var(--color-background);
-  color: var(--color-teal-ink);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-ink) 14%, transparent);
-  font-size: 0.68rem;
-  font-weight: 700;
-}
-.tripiGreeting img {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-}
 @media (max-width: 760px) {
   .inner {
     grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
-    padding-bottom: 54px;
+    gap: 0;
+    padding-block: 20px 40px;
+  }
+  .heroMascot {
+    display: none;
   }
   .copy h1 {
-    margin-block: 14px 16px;
-    font-size: clamp(2.1rem, 10vw, 4.75rem);
+    margin-block: 0 10px;
+    font-size: min(clamp(2.1rem, 10vw, 4.75rem), 12.8cqi);
   }
   .actions {
     margin-top: 16px;
+  }
+  .art,
+  .activities {
+    display: none;
+  }
+  .description {
+    margin-bottom: 0;
+    font-size: 13px;
+    line-height: 1.6;
   }
   .frame {
     min-height: 0;
     aspect-ratio: 1.4;
   }
-  .caption {
-    bottom: 26px;
-    left: 12px;
-  }
   .route {
     height: 48%;
+  }
+}
+@media (max-width: 480px) {
+  .activities img {
+    width: 24px;
+    height: 24px;
   }
 }
 @media (prefers-reduced-motion: no-preference) {
   .copy,
   .art {
-    animation: arrive 760ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
+    animation: arrive 1216ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
   }
   .art {
-    animation-delay: 90ms;
-  }
-  .scrollAction span,
-  .searchAction span {
-    transition: transform 220ms ease;
-  }
-  .scrollAction:is(:hover, :focus-visible) span {
-    transform: translateY(3px);
-  }
-  .searchAction:is(:hover, :focus-visible) span {
-    transform: translate(2px, -2px);
+    animation-delay: 144ms;
   }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .photo,
-  .route,
-  .tripiGreeting {
-    transition: transform 420ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  .route {
+    transition: transform 672ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
   .photo {
     transform: translate(calc(var(--pointer-x, 0) * -34px), calc(var(--pointer-y, 0) * -24px)) scale(1.09);
   }
-  .route,
-  .tripiGreeting {
+  .route {
     transform: translate(calc(var(--pointer-x, 0) * 20px), calc(var(--pointer-y, 0) * 14px));
   }
 }

@@ -15,12 +15,28 @@ import { ApiErrorNotice } from '@/features/shared/api-state';
 import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
 import { formatPrice } from './trip-card';
 import { StayThumbnail } from './stay-thumbnail';
+import { SoftStarIcon } from './soft-star-icon';
+import { StaySearchIcon } from './stay-search-icon';
+import { Pacifico } from 'next/font/google';
 import styles from './ota-home.module.css';
+
+const handwritingFont = Pacifico({
+  subsets: ['vietnamese', 'latin'],
+  weight: ['400'],
+  display: 'swap',
+});
 
 export function HomeStayPreview() {
   const { isReady } = useApiSession();
   const [destination, setDestination] = useState<(typeof OTA_DESTINATIONS)[number]>(OTA_DESTINATIONS[0]);
+  const [prevDestination, setPrevDestination] = useState<(typeof OTA_DESTINATIONS)[number] | null>(null);
   const [dates] = useState(() => ({ checkIn: getFutureDate(1), checkOut: getFutureDate(3) }));
+
+  function handleSelectDestination(place: (typeof OTA_DESTINATIONS)[number]) {
+    if (place.id === destination.id) return;
+    setPrevDestination(destination);
+    setDestination(place);
+  }
   const filters: StayFilters = {
     ...dates,
     placeId: destination.id,
@@ -38,60 +54,90 @@ export function HomeStayPreview() {
   });
   return (
     <section className={styles.stayBand} aria-labelledby="home-stays-title" data-home-reveal>
+      <Image className={styles.stayBackdrop} src="/brand/home-stays-ninh-binh.jpg" alt="" fill sizes="100vw" />
+      <span className={styles.stayEdgeTop} aria-hidden="true" />
+      <span className={styles.stayEdgeBottom} aria-hidden="true" />
       <div className={`ota-container ${styles.stayContent}`}>
         <div className={styles.stayHeader} data-home-banner>
-          <div className={styles.stayCopy}>
-            <p className={styles.stayKicker}>
-              <span aria-hidden="true">✦</span> {vi.ota.staysEyebrow}
-            </p>
-            <h2 id="home-stays-title">{vi.ota.staysTitle}</h2>
-            <p>{vi.ota.staysIntro}</p>
-            <Link className={styles.stayAction} href={getDestinationHref(destination)}>
-              {t('ota.browseDestination', { name: destination.name })} <span aria-hidden="true">↗</span>
-            </Link>
+          <div className={styles.stayTicket}>
+            <div className={styles.stayCopy}>
+              <div className={styles.stayInnerFrame}>
+                <div className={styles.stayTicketBadge}>
+                  <span className={styles.stayTicketStar}>★</span>
+                  <span>TRIPFLIX TICKET</span>
+                  <span className={styles.stayTicketStar}>★</span>
+                </div>
+                <h2 id="home-stays-title">{vi.ota.staysTitle}</h2>
+                <p>{vi.ota.staysIntro}</p>
+                <div className={styles.stayActionRow}>
+                  <Link
+                    className={`ripple-button ${styles.stayAction}`}
+                    href={getDestinationHref(destination)}
+                    aria-label="Tìm phòng tại điểm đến đã chọn"
+                  >
+                    <StaySearchIcon name="search" />
+                    <span>Tìm phòng tại:</span>
+                  </Link>
+                  <Link
+                    className={styles.stayDestinationBadge}
+                    href={getDestinationHref(destination)}
+                    aria-label={`Điểm đến ${destination.name}`}
+                  >
+                    <span key={destination.id} className={`${handwritingFont.className} ${styles.stayDestinationText}`}>
+                      {destination.name}
+                    </span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+            <div className={styles.stayScene} aria-hidden="true">
+              {prevDestination && prevDestination.id !== destination.id && (
+                <Image
+                  key={`prev-${prevDestination.id}`}
+                  className={styles.stayLandscapePrev}
+                  src={prevDestination.image}
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 90vw, 38vw"
+                />
+              )}
+              <Image
+                key={`curr-${destination.id}`}
+                className={styles.stayLandscape}
+                src={destination.image}
+                alt=""
+                fill
+                sizes="(max-width: 640px) 90vw, 38vw"
+              />
+              <div className={styles.stayRedStamp} aria-hidden="true">
+                <span className={styles.stampOrg}>★ TRIPFLIX ★</span>
+                <span className={styles.stampAction}>VERIFIED</span>
+                <span className={styles.stampDate}>2026 • PASS</span>
+              </div>
+            </div>
           </div>
-          <div className={styles.stayScene} aria-hidden="true">
-            <Image
-              key={destination.id}
-              className={styles.stayLandscape}
-              src={destination.image}
-              alt=""
-              fill
-              sizes="(max-width: 640px) 90vw, 38vw"
-            />
-            <Image
-              className={styles.stayMascot}
-              src="/brand/tripi-depart.png"
-              alt=""
-              width={210}
-              height={210}
-              sizes="(max-width: 640px) 102px, 210px"
-            />
-            <span>{destination.name}</span>
-          </div>
+          <Image
+            className={styles.stayMascot}
+            src="/brand/tripi-depart.png"
+            alt=""
+            width={210}
+            height={210}
+            sizes="(max-width: 640px) 102px, 210px"
+            aria-hidden="true"
+          />
         </div>
-        <div className={styles.previewTools}>
-          <fieldset className={styles.chips} aria-label={vi.api.destination}>
-            {OTA_DESTINATIONS.map((place) => (
-              <button
-                type="button"
-                key={place.id}
-                aria-pressed={place.id === destination.id}
-                onClick={() => setDestination(place)}
-              >
-                {place.name}
-              </button>
-            ))}
-          </fieldset>
-          <p>
-            <span aria-hidden="true">◷</span>
-            {t('ota.stayDates', {
-              start: dates.checkIn.split('-').reverse().join('/'),
-              end: dates.checkOut.split('-').reverse().join('/'),
-              adults: 2,
-            })}
-          </p>
-        </div>
+        <fieldset className={styles.chips} aria-label={vi.api.destination}>
+          {OTA_DESTINATIONS.map((place) => (
+            <button
+              type="button"
+              key={place.id}
+              aria-pressed={place.id === destination.id}
+              onClick={() => handleSelectDestination(place)}
+            >
+              {place.name}
+            </button>
+          ))}
+        </fieldset>
         <ApiErrorNotice
           error={query.error}
           retry={() => {
@@ -118,16 +164,17 @@ export function HomeStayPreview() {
                 </div>
                 <div className={styles.hotelInfo}>
                   <p className={styles.stayLocation}>{stay.province.name}</p>
-                  {stay.stars ? <p className={styles.stayRating}>{stay.stars} ★</p> : null}
-                  <h3>{stay.name}</h3>
-                  <div className={styles.stayPriceRow}>
-                    <p>
-                      <strong>{formatPrice(stay.unitPrice)}</strong> <small>{vi.hotel.perNight}</small>
+                  {stay.stars ? (
+                    <p className={`pin-tag ${styles.stayRating}`}>
+                      <span aria-hidden="true">{stay.stars}</span>
+                      <SoftStarIcon />
+                      <span className="sr-only">{t('ota.starsExact', { count: stay.stars })}</span>
                     </p>
-                    <span className={styles.stayCardArrow} aria-hidden="true">
-                      ↗
-                    </span>
-                  </div>
+                  ) : null}
+                  <h3>{stay.name}</h3>
+                  <p className={styles.stayPriceRow}>
+                    <strong>{formatPrice(stay.unitPrice)}</strong> <small>{vi.hotel.perNight}</small>
+                  </p>
                 </div>
               </Link>
             </article>
@@ -147,14 +194,13 @@ export function HomeStoryPreview() {
       aria-labelledby="home-stories-title"
       data-home-reveal
     >
-      <p className="eyebrow">{vi.ota.storiesEyebrow}</p>
       <div className={styles.sectionHead}>
         <div>
           <h2 id="home-stories-title">{vi.ota.storiesTitle}</h2>
           <p>{vi.ota.storiesIntro}</p>
         </div>
         <Link className={styles.textLink} href="/inspiration">
-          {vi.ota.allStories} <span aria-hidden="true">↗</span>
+          {vi.ota.allStories}
         </Link>
       </div>
       <ApiErrorNotice
@@ -168,14 +214,27 @@ export function HomeStoryPreview() {
       <div className={styles.previewGrid}>
         {posts?.map((post) => (
           <article className={styles.story} key={post.id}>
-            <p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.ota.story}</p>
+            <p className="pin-tag">{post.tripAttachment?.destinationName ?? vi.ota.story}</p>
             <h3>
               <Link href={`/trips/${encodeURIComponent(post.id)}`}>{post.title}</Link>
             </h3>
             <p className={styles.excerpt}>{post.body}</p>
-            <small>
-              {post.reactionTotal} {vi.api.like} · {post.commentCount} {vi.api.comments}
-            </small>
+            <p className={styles.storyStats}>
+              <span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" />
+                </svg>
+                {post.reactionTotal}
+                <span className="sr-only"> {vi.api.like}</span>
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 18.5V6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H9.5L5 18.5Z" />
+                </svg>
+                {post.commentCount}
+                <span className="sr-only"> {vi.api.comments}</span>
+              </span>
+            </p>
           </article>
         ))}
       </div>

@@ -1,10 +1,10 @@
 import type { ReelFeedTab } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, spacing } from '@tripflix/tokens';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Txt } from '@/components/mobile-ui';
+import { IconButton, Txt } from '@/components/mobile-ui';
 import { CHROME_FADE } from '@/components/motion';
 
 export type ReelTab = ReelFeedTab | 'following';
@@ -25,10 +25,12 @@ export function ReelsTabBar({
   selected,
   isHidden,
   onSelect,
+  onSearch,
 }: {
   selected: ReelTab;
   isHidden: boolean;
   onSelect: (tab: ReelTab) => void;
+  onSearch: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const fadeStyle = useAnimatedStyle(() => ({ opacity: withTiming(isHidden ? 0 : 1, CHROME_FADE) }));
@@ -62,6 +64,14 @@ export function ReelsTabBar({
           </Pressable>
         );
       })}
+      <View style={styles.search}>
+        <IconButton
+          name="search-outline"
+          label={vi.api.search}
+          color={colors.background}
+          onPress={onSearch}
+        />
+      </View>
     </Animated.View>
   );
 }
@@ -93,4 +103,5 @@ const styles = StyleSheet.create({
   },
   selectedLabel: { fontFamily: nativeFonts.bold },
   idleLabel: { opacity: 0.75 },
+  search: { position: 'absolute', right: 0, top: 0 },
 });

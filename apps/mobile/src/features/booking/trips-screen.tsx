@@ -93,6 +93,7 @@ function BookedTrips({ tab }: { tab: number }) {
     });
   return (
     <FlatList
+      showsVerticalScrollIndicator={false}
       data={trips ?? []}
       keyExtractor={(trip) => trip.orderId}
       style={ui.flex}

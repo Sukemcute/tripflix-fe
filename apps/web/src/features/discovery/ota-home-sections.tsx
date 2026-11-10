@@ -1,54 +1,14 @@
-import { t, vi } from '@tripflix/i18n';
+import { vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
-import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
+import { OtaHomeRecommendations } from './ota-home-recommendations';
 import { HomeStayPreview, HomeStoryPreview } from './ota-home-previews';
 import styles from './ota-home.module.css';
 
 export function OtaHomeSections() {
   return (
     <>
-      <section
-        id="home-destinations"
-        className={`ota-container ${styles.section}`}
-        aria-labelledby="destinations-title"
-        data-home-reveal
-      >
-        <p className="eyebrow">{vi.ota.discover}</p>
-        <div className={styles.sectionHead}>
-          <div>
-            <h2 id="destinations-title">{vi.ota.destinationTitle}</h2>
-            <p>{vi.ota.destinationIntro}</p>
-          </div>
-          <Link className={styles.textLink} href="/search">
-            {vi.ota.browseHotels} <span aria-hidden="true">↗</span>
-          </Link>
-        </div>
-        <div className={styles.destinations}>
-          {OTA_DESTINATIONS.map((destination, index) => (
-            <Link
-              key={destination.id}
-              href={getDestinationHref(destination)}
-              className={styles.destination}
-              aria-label={t('ota.browseDestination', { name: destination.name })}
-              data-home-banner
-            >
-              <Image src={destination.image} alt="" fill sizes="(max-width: 640px) 100vw, 48vw" />
-              <span className={styles.destinationIndex} aria-hidden="true">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-              <div>
-                <span>{destination.region}</span>
-                <h3>{destination.name}</h3>
-                <p>{destination.description}</p>
-              </div>
-              <span className={styles.destinationArrow} aria-hidden="true">
-                ↗
-              </span>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <OtaHomeRecommendations />
       <HomeStayPreview />
       <section
         className={`ota-container ${styles.section}`}
@@ -57,13 +17,10 @@ export function OtaHomeSections() {
       >
         <div className={styles.tripiBanner} data-home-banner>
           <div className={styles.tripiCopy}>
-            <p className={styles.tripiLabel}>
-              <span aria-hidden="true">✦</span> {vi.ota.tripi}
-            </p>
             <h2 id="home-tripi-title">{vi.ota.tripiTitle}</h2>
             <p className={styles.tripiIntro}>{vi.ota.tripiIntro}</p>
-            <Link href="/inspiration" className={styles.tripiAction}>
-              {vi.ota.tripiAction} <span aria-hidden="true">↗</span>
+            <Link href="/inspiration" className={`ripple-button ${styles.tripiAction}`}>
+              {vi.ota.tripiAction}
             </Link>
           </div>
           <div className={styles.tripiCollage} aria-hidden="true">

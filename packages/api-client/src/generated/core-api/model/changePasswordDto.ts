@@ -9,7 +9,7 @@ export interface ChangePasswordDto {
   currentPassword: string;
   /**
    * @minLength 8
-   * @maxLength 128
+   * @maxLength 64
    */
   newPassword: string;
 }

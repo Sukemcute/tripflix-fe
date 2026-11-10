@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getHotelReviews, useApiSession, type HotelReviewFilters } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { SoftSelect } from '@/features/shared/soft-select';
 import { HotelGallery } from './hotel-gallery';
 import styles from './hotel.module.css';
 
@@ -15,6 +16,11 @@ const formatDate = (date: string, monthOnly = false) =>
       ? { month: '2-digit', year: 'numeric', timeZone: 'UTC' }
       : { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' },
   ).format(new Date(date));
+
+const AVATAR_TONES = ['teal', 'coral', 'sun'] as const;
+/** Màu avatar cố định theo tên để cùng một người luôn cùng màu. */
+const pickAvatarTone = (name: string) =>
+  AVATAR_TONES[[...name].reduce((sum, char) => sum + char.charCodeAt(0), 0) % AVATAR_TONES.length];
 
 export function HotelReviews({ id }: { id: string }) {
   const { isReady } = useApiSession();
@@ -70,53 +76,38 @@ export function HotelReviews({ id }: { id: string }) {
       <div className={styles.reviewFilters}>
         <label>
           {copy.sort}
-          <select
+          <SoftSelect
             aria-label={copy.sort}
             value={filters.sort}
-            onChange={(event) => updateFilters({ sort: event.target.value as HotelReviewFilters['sort'] })}
-          >
-            {(['newest', 'highest', 'lowest', 'helpful'] as const).map((key) => (
-              <option key={key} value={key}>
-                {copy[key]}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => updateFilters({ sort: value as HotelReviewFilters['sort'] })}
+            options={(['newest', 'highest', 'lowest', 'helpful'] as const).map((key) => ({ value: key, label: copy[key] }))}
+          />
         </label>
         <label>
           {copy.rating}
-          <select
+          <SoftSelect
             aria-label={copy.rating}
-            value={filters.rating ?? ''}
-            onChange={(event) =>
-              updateFilters({ rating: event.target.value ? Number(event.target.value) : undefined })
-            }
-          >
-            <option value="">{copy.allRatings}</option>
-            {[5, 4, 3, 2, 1].map((rating) => (
-              <option key={rating} value={rating}>
-                {rating} ★
-              </option>
-            ))}
-          </select>
+            value={filters.rating ? String(filters.rating) : ''}
+            onChange={(value) => updateFilters({ rating: value ? Number(value) : undefined })}
+            options={[
+              { value: '', label: copy.allRatings },
+              ...[5, 4, 3, 2, 1].map((rating) => ({ value: String(rating), label: `${rating} ★` })),
+            ]}
+          />
         </label>
         <label>
           {copy.traveler}
-          <select
+          <SoftSelect
             aria-label={copy.traveler}
             value={filters.travelerType ?? ''}
-            onChange={(event) =>
-              updateFilters({
-                travelerType: (event.target.value || undefined) as HotelReviewFilters['travelerType'],
-              })
+            onChange={(value) =>
+              updateFilters({ travelerType: (value || undefined) as HotelReviewFilters['travelerType'] })
             }
-          >
-            <option value="">{copy.allTravelers}</option>
-            {Object.entries(copy.travelerTypes).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: copy.allTravelers },
+              ...Object.entries(copy.travelerTypes).map(([key, label]) => ({ value: key, label })),
+            ]}
+          />
         </label>
       </div>
       {summary && summary.tags.length > 0 && (
@@ -160,11 +151,11 @@ export function HotelReviews({ id }: { id: string }) {
           )}
         </div>
       )}
-      <div aria-busy={query.isFetching}>
+      <div className={styles.reviewList} aria-busy={query.isFetching}>
         {query.data?.items.map((review) => (
           <article key={review.id} className={styles.review}>
             <div className={styles.reviewAuthor}>
-              <span className={styles.avatar} aria-hidden="true">
+              <span className={styles.avatar} data-tone={pickAvatarTone(review.authorName)} aria-hidden="true">
                 {review.authorName
                   .trim()
                   .split(/\s+/)
@@ -189,9 +180,9 @@ export function HotelReviews({ id }: { id: string }) {
             </div>
             <div className={styles.reviewBody}>
               <div className={styles.reviewTop}>
-                <span className={styles.stars} aria-label={`${review.rating} / 5`}>
+                <span className={styles.reviewStars} aria-label={`${review.rating} / 5`}>
                   {'★'.repeat(review.rating)}
-                  {'☆'.repeat(5 - review.rating)}
+                  <span>{'★'.repeat(5 - review.rating)}</span>
                 </span>
                 <time dateTime={review.createdAt}>
                   {copy.written}: {formatDate(review.createdAt)}
@@ -200,15 +191,15 @@ export function HotelReviews({ id }: { id: string }) {
               {review.title && <h3>{review.title}</h3>}
               <p>{review.body}</p>
               {review.tags.length > 0 && (
-                <div className={styles.chips}>
+                <div className={styles.reviewTags}>
                   {review.tags.map((tag) => (
                     <span key={tag}>{tag}</span>
                   ))}
                 </div>
               )}
-              <HotelGallery images={review.images} name={review.title ?? review.authorName} compact />
+              <HotelGallery images={review.images} name={review.title ?? review.authorName} layout="compact" />
               {review.helpfulCount > 0 && (
-                <p className="small muted">{t('hotel.helpfulCount', { count: review.helpfulCount })}</p>
+                <p className={styles.helpful}>{t('hotel.helpfulCount', { count: review.helpfulCount })}</p>
               )}
             </div>
           </article>

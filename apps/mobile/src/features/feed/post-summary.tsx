@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { IconButton, Mascot, Txt } from '@/components/mobile-ui';
+import { IconButton, Mascot, Notice, Txt } from '@/components/mobile-ui';
 import { CHROME_FADE, SHEET_CLOSE_SPRING, SHEET_OPEN_SPRING } from '@/components/motion';
 
 const copy = vi.summary;
@@ -120,6 +120,15 @@ export function CommunitySummary({ postId }: { postId: string }) {
               </View>
             ) : (
               <View style={styles.body}>
+                {summary?.hasSafetyWarnings && (
+                  <View testID="summary-safety">
+                    <Notice tone="warning">
+                      <Txt variant="label">{copy.safetyTitle}</Txt>
+                      {'\n'}
+                      {copy.safety}
+                    </Notice>
+                  </View>
+                )}
                 {summary?.status === 'ready' ? (
                   <Txt selectable>{summary.summary}</Txt>
                 ) : (

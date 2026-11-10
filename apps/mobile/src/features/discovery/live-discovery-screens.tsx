@@ -1,4 +1,11 @@
-import { useApiSession, useStaySearch, type StayFilters } from '@tripflix/api-client';
+import * as Linking from 'expo-linking';
+import {
+  useApiSession,
+  usePostSearch,
+  type ExploreItemDto,
+  type ExploreUnderstoodDto,
+  type SearchPostsRequestDtoPostType,
+} from '@tripflix/api-client';
 import { homeRecommendationsControllerRecommendForHome } from '@tripflix/api-client/core-api/discovery/discovery';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
@@ -13,8 +20,6 @@ import {
   Chip,
   copy,
   Empty,
-  Field,
-  formatDate,
   Icon,
   IconButton,
   Mascot,
@@ -27,30 +32,221 @@ import {
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, UnavailableScreen } from '@/components/api-state';
 import { LiveFeedScreen } from '@/features/feed/live-feed-screen';
-import { useRef, useState, type ComponentRef } from 'react';
+import { HotelSearchResults } from './hotel-search-results';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 const RECOMMENDATION_LIMIT = 3;
 
+function relaxBudgetQuery(query: string, place?: string | null): string {
+  const cleaned = query
+    .replace(/(dưới|tầm|khoảng|<|<=)?\s*\d+([.,]\d+)?\s*(tr|triệu|k|nghìn|ngàn|vnd|đ)/gi, '')
+    .replace(/ngân sách/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned || place || query;
+}
+
+function relaxDaysQuery(query: string, place?: string | null): string {
+  const cleaned = query
+    .replace(/\d+\s*n\s*\d+\s*đ/gi, '')
+    .replace(/\d+\s*(ngày|đêm)/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned || place || query;
+}
+
+function UnderstoodChips({
+  understood,
+  onRemoveBudget,
+  onRemoveDays,
+}: {
+  understood: ExploreUnderstoodDto;
+  onRemoveBudget?: () => void;
+  onRemoveDays?: () => void;
+}) {
+  const chips: { label: string; onRemove?: () => void }[] = [];
+  if (understood.place) {
+    chips.push({ label: `📍 ${understood.place}` });
+  }
+  if (understood.budget) {
+    chips.push({
+      label: `≤ ${money(understood.budget)} / người`,
+      onRemove: onRemoveBudget,
+    });
+  }
+  if (understood.days) {
+    chips.push({
+      label: `${understood.days} ngày`,
+      onRemove: onRemoveDays,
+    });
+  }
+  for (const [from, to] of Object.entries(understood.fixed ?? {})) {
+    chips.push({ label: `"${from}" → "${to}"` });
+  }
+  for (const name of understood.names ?? []) {
+    chips.push({ label: name });
+  }
+
+  if (chips.length === 0) return null;
+
+  return (
+    <View style={{ gap: spacing.xs }}>
+      <Txt variant="caption" style={ui.muted}>
+        {vi.api.exploreUnderstood}:
+      </Txt>
+      <Row style={styles.categories}>
+        {chips.map((chip, idx) => (
+          <Badge key={idx} icon="sparkles-outline">
+            {chip.label}
+          </Badge>
+        ))}
+      </Row>
+    </View>
+  );
+}
+
+function HotelWebRedirectCard({ place }: { place: string }) {
+  const openWeb = () => {
+    const webUrl = process.env.EXPO_PUBLIC_WEB_URL ?? 'http://localhost:3000';
+    const destinationUrl = `${webUrl}/hotels?q=${encodeURIComponent(place)}`;
+    void Linking.openURL(destinationUrl);
+  };
+
+  return (
+    <Card style={{ backgroundColor: colors.seaMist, borderColor: colors.teal, borderWidth: 1 }}>
+      <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={{ flex: 1, gap: spacing.xs, paddingRight: spacing.sm }}>
+          <Row style={{ gap: spacing.xs, alignItems: 'center' }}>
+            <Icon name="business-outline" size={16} color={colors.tealInk} />
+            <Txt variant="caption" style={{ color: colors.tealInk, fontFamily: nativeFonts.semibold }}>
+              TRIPFLIX WEB
+            </Txt>
+          </Row>
+          <Txt variant="heading">Khách sạn tại {place}</Txt>
+          <Txt variant="small" style={ui.muted}>
+            Xem danh sách phòng, giá và đặt chỗ trên website TripFlix
+          </Txt>
+        </View>
+        <Button tone="teal" icon="arrow-forward" onPress={openWeb}>
+          Mở Web
+        </Button>
+      </Row>
+    </Card>
+  );
+}
+
+function PostSearchResultCard({ item }: { item: ExploreItemDto }) {
+  const isPlan = item.kind === 'plan';
+  const isVideo = item.kind === 'video';
+  const openPost = () =>
+    router.push({
+      pathname: '/trip/[slug]',
+      params: { slug: item.refId },
+    });
+
+  return (
+    <Card>
+      <Pressable accessibilityRole="button" onPress={openPost}>
+        {item.thumbnail ? (
+          <Image
+            source={item.thumbnail}
+            style={{
+              width: '100%',
+              aspectRatio: 16 / 9,
+              borderRadius: radius.md,
+              backgroundColor: colors.seaMist,
+            }}
+            contentFit="cover"
+          />
+        ) : null}
+      </Pressable>
+      <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <Badge tone={isPlan ? 'teal' : isVideo ? 'coral' : 'sun'}>
+          {isPlan ? `Lộ trình ${item.days ? `· ${item.days}N` : ''}` : isVideo ? 'Video' : 'Bài viết'}
+        </Badge>
+        {item.subtitle ? (
+          <Txt variant="caption" style={ui.muted}>
+            📍 {item.subtitle}
+          </Txt>
+        ) : null}
+      </Row>
+      <Txt variant="heading">{item.title}</Txt>
+      {item.reason ? (
+        <Txt variant="small" style={{ color: colors.coralInk }}>
+          {item.reason}
+        </Txt>
+      ) : null}
+      {item.priceFrom != null && (
+        <Txt variant="label">
+          Chi phí: ~{money(item.priceFrom)} / người
+        </Txt>
+      )}
+      <Button tone="secondary" icon="arrow-forward" onPress={openPost}>
+        Xem bài viết
+      </Button>
+    </Card>
+  );
+}
+
 export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
-  const { q } = useLocalSearchParams<{ q?: string }>();
-  const search = useStaySearch(q);
-  const input = useRef<ComponentRef<typeof TextInput>>(null);
+  const { q, autoFocus } = useLocalSearchParams<{ q?: string; autoFocus?: string }>();
+  const [prevQ, setPrevQ] = useState(q);
+  const [text, setText] = useState(q ?? '');
+  const [submittedQuery, setSubmittedQuery] = useState(q?.trim() ?? '');
+  const [postType, setPostType] = useState<SearchPostsRequestDtoPostType>('all');
+  const [cursor, setCursor] = useState<string | null>(null);
   const [category, setCategory] = useState<'all' | 'sea' | 'weekend'>('all');
-  const [editingFilters, setEditingFilters] = useState(false);
-  const { submitted } = search;
-  const isBrowsing = !back && !search.text.trim() && !search.submitted;
-  const update = (key: keyof StayFilters, value: string) =>
-    search.setFilters((previous) => ({ ...previous, [key]: value }));
-  const submit = () => {
-    setEditingFilters(false);
+  const input = useRef<ComponentRef<typeof TextInput>>(null);
+
+  if (q !== prevQ) {
+    setPrevQ(q);
+    setText(q ?? '');
+    setSubmittedQuery(q?.trim() ?? '');
+  }
+
+  useEffect(() => {
+    if (autoFocus === '1' || autoFocus === 'true') {
+      const timer = setTimeout(() => {
+        input.current?.focus();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [autoFocus]);
+
+  const isBrowsing = !back && !submittedQuery && !text.trim();
+
+  const search = usePostSearch({
+    q: submittedQuery,
+    postType,
+    cursor,
+  });
+
+  const submitSearch = (queryToSubmit?: string) => {
+    const target = (queryToSubmit ?? text).trim();
+    if (!target) return;
+    setText(target);
+    setSubmittedQuery(target);
+    setCursor(null);
     input.current?.blur();
-    search.submit();
   };
-  const focusOrSubmit = () => {
-    if (search.filters.placeId && !search.stays.isFetching) submit();
-    else input.current?.focus();
+
+  const clearSearch = () => {
+    setText('');
+    setSubmittedQuery('');
+    setCursor(null);
   };
+
+  const handlePostTypeChange = (type: SearchPostsRequestDtoPostType) => {
+    setPostType(type);
+    setCursor(null);
+  };
+
+  const understood = search.data?.understood;
+  const items = search.data?.items ?? [];
+  const total = search.data?.total ?? 0;
+  const nextCursor = search.data?.nextCursor;
+
   return (
     <Screen
       title={back ? vi.api.search : undefined}
@@ -63,36 +259,40 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
         />
       }
     >
-      {isBrowsing && (
-        <View style={{ gap: spacing.xs }}>
-          <Txt variant="small" style={ui.muted}>
-            {copy.explore.intro}
-          </Txt>
-          <Txt variant="title">{copy.explore.browseTitle}</Txt>
-        </View>
-      )}
+      {/* Search Bar at the very top */}
       <View style={styles.searchBar}>
         <Icon name="search-outline" color={colors.textMuted} size={20} />
         <TextInput
           ref={input}
           accessibilityLabel={vi.api.search}
-          value={search.text}
-          onChangeText={(value) => {
-            search.setText(value);
-            update('placeId', '');
-            setEditingFilters(true);
-          }}
+          value={text}
+          onChangeText={setText}
           maxLength={100}
-          placeholder={copy.explore.livePlaceholder}
+          placeholder="Tìm khách sạn, điểm đến, bài viết..."
           placeholderTextColor={colors.textMuted}
           returnKeyType="search"
-          onSubmitEditing={focusOrSubmit}
+          onSubmitEditing={() => submitSearch()}
           style={styles.searchInput}
         />
-        <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={focusOrSubmit} />
+        {text.length > 0 && (
+          <IconButton name="close-circle-outline" label="Xoá tìm kiếm" onPress={clearSearch} />
+        )}
+        <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={() => submitSearch()} />
       </View>
+
       {isBrowsing && (
         <>
+          <Button tone="teal" icon="airplane-outline" onPress={() => router.push('/flights')}>
+            {vi.flights.title}
+          </Button>
+
+          <View style={{ gap: spacing.xs }}>
+            <Txt variant="small" style={ui.muted}>
+              {copy.explore.intro}
+            </Txt>
+            <Txt variant="title">{copy.explore.browseTitle}</Txt>
+          </View>
+
           <Row style={styles.categories}>
             <Chip selected={category === 'all'} onPress={() => setCategory('all')}>
               {copy.notifications.all}
@@ -105,203 +305,134 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
             </Chip>
           </Row>
           <ExploreHighlights category={category} />
+          <StayRecommendations />
         </>
       )}
-      <ApiErrorNotice
-        error={search.suggestions.error}
-        retry={() => {
-          void search.suggestions.refetch();
-        }}
-      />
-      {(!submitted || editingFilters) && search.suggestions.isFetching && <Txt>{vi.api.loading}</Txt>}
-      {(!submitted || editingFilters) && search.suggestions.data?.items.length === 0 && (
-        <Notice>{vi.api.noSuggestions}</Notice>
-      )}
-      {(!submitted || editingFilters) &&
-        search.suggestions.data?.items.map((place) => (
-          <Chip
-            key={place.id}
-            selected={search.selection?.id === place.id}
-            onPress={() => {
-              search.choosePlace(place);
-              setEditingFilters(true);
-            }}
-          >
-            {place.name}
-            {place.subtitle ? ` · ${place.subtitle}` : ''}
-          </Chip>
-        ))}
-      {search.selection?.type === 'hotel' && (
-        <Button
-          onPress={() =>
-            router.push({
-              pathname: '/hotel/[id]',
-              params: {
-                id: search.selection!.refId,
-                checkIn: search.filters.checkIn,
-                checkOut: search.filters.checkOut,
-                adults: search.filters.adults,
-              },
-            })
-          }
-        >
-          {vi.commerce.hotel}
-        </Button>
-      )}
-      {isBrowsing && <StayRecommendations />}
+
       {!isBrowsing && (
         <>
-          <Row>
-            <Txt variant="title" style={ui.flex}>
-              {copy.explore.searchTitle}
-            </Txt>
-            {submitted && (
-              <IconButton
-                name="options-outline"
-                label={copy.explore.filterTitle}
-                onPress={() => setEditingFilters((value) => !value)}
-              />
-            )}
+          {submittedQuery !== '' && <HotelSearchResults q={submittedQuery} />}
+          {/* Post Type Filter Tabs */}
+          <Row style={styles.categories}>
+            <Chip selected={postType === 'all'} onPress={() => handlePostTypeChange('all')}>
+              Tất cả
+            </Chip>
+            <Chip selected={postType === 'plan'} onPress={() => handlePostTypeChange('plan')}>
+              Lộ trình
+            </Chip>
+            <Chip selected={postType === 'video'} onPress={() => handlePostTypeChange('video')}>
+              Video
+            </Chip>
+            <Chip selected={postType === 'post'} onPress={() => handlePostTypeChange('post')}>
+              Bài viết
+            </Chip>
           </Row>
-          {submitted && !editingFilters && (
-            <View style={{ gap: spacing.sm }}>
-              <Txt variant="small" style={ui.muted}>
-                {copy.explore.stayCriteria}
-              </Txt>
-              <Row style={styles.categories}>
-                <Badge icon="calendar-outline">
-                  {formatDate(submitted.checkIn)} → {formatDate(submitted.checkOut)}
-                </Badge>
-                <Badge icon="people-outline">
-                  {submitted.adults} {vi.commerce.guests}
-                </Badge>
-                {!!submitted.priceMax && Number.isFinite(Number(submitted.priceMax)) && (
-                  <Badge icon="wallet-outline">
-                    ≤ {money(Number(submitted.priceMax))} / {vi.commerce.nights}
-                  </Badge>
-                )}
-              </Row>
-            </View>
+
+          {/* Understood Chips */}
+          {understood && (
+            <UnderstoodChips
+              understood={understood}
+              onRemoveBudget={() => {
+                const next = relaxBudgetQuery(submittedQuery, understood.place);
+                submitSearch(next);
+              }}
+              onRemoveDays={() => {
+                const next = relaxDaysQuery(submittedQuery, understood.place);
+                submitSearch(next);
+              }}
+            />
           )}
-          {(!submitted || editingFilters) && (
-            <Card>
-              <Txt variant="heading">{copy.explore.filterTitle}</Txt>
-              <Field
-                label={vi.api.checkIn}
-                value={search.filters.checkIn}
-                onChangeText={(value) => update('checkIn', value)}
-                placeholder="YYYY-MM-DD"
-                maxLength={10}
-              />
-              <Field
-                label={vi.api.checkOut}
-                value={search.filters.checkOut}
-                onChangeText={(value) => update('checkOut', value)}
-                placeholder="YYYY-MM-DD"
-                maxLength={10}
-              />
-              <Row>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Field
-                    label={vi.api.adults}
-                    value={search.filters.adults}
-                    onChangeText={(value) => update('adults', value)}
-                    keyboardType="number-pad"
-                  />
-                </View>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Field
-                    label={vi.api.rooms}
-                    value={search.filters.rooms}
-                    onChangeText={(value) => update('rooms', value)}
-                    keyboardType="number-pad"
-                  />
-                </View>
-              </Row>
-              <Field
-                label={vi.api.minStars}
-                value={search.filters.minStars}
-                onChangeText={(value) => update('minStars', value)}
-                keyboardType="number-pad"
-              />
-              <Field
-                label={vi.api.maxPrice}
-                value={search.filters.priceMax}
-                onChangeText={(value) => update('priceMax', value)}
-                keyboardType="number-pad"
-              />
-              <Row>
-                <Chip selected={search.filters.sort === 'price'} onPress={() => update('sort', 'price')}>
-                  {vi.api.price}
-                </Chip>
-                <Chip selected={search.filters.sort === 'stars'} onPress={() => update('sort', 'stars')}>
-                  {vi.api.stars}
-                </Chip>
-              </Row>
-              <Button disabled={!search.filters.placeId || search.stays.isFetching} onPress={submit}>
-                {search.stays.isFetching ? vi.api.loading : vi.api.findStays}
-              </Button>
-              {!search.filters.placeId && <Notice>{vi.api.choosePlace}</Notice>}
-            </Card>
-          )}
-          {!!submitted && search.stays.isFetching && <Txt>{vi.api.loading}</Txt>}
+
+          {/* Web Redirect Banner if destination is recognized */}
+          {understood?.place && <HotelWebRedirectCard place={understood.place} />}
+
+          {/* Loading */}
+          {search.isPending && <Txt>{vi.api.loading}</Txt>}
+
+          {/* Error */}
           <ApiErrorNotice
-            error={search.stays.error}
+            error={search.error}
             retry={() => {
-              void search.stays.refetch();
+              void search.refetch();
             }}
           />
-          {search.stays.data?.items.length === 0 && (
-            <Empty pose="curious" title={copy.explore.emptyTitle} body={vi.api.noStays} />
-          )}
-          {search.stays.data?.items.map((stay) => (
-            <Card key={stay.hotelId}>
-              <Row style={styles.result}>
-                {stay.thumbnail && (
-                  <Image source={stay.thumbnail} style={styles.resultPhoto} contentFit="cover" />
-                )}
-                <View style={{ flex: 1, gap: spacing.xs }}>
-                  <Txt variant="heading">{stay.name}</Txt>
-                  <Txt variant="small" style={ui.muted}>
-                    {stay.province.name}
-                    {stay.stars ? ` · ${stay.stars} ★` : ''}
-                  </Txt>
-                  <Txt variant="label" style={{ color: colors.coralInk }}>
-                    {money(stay.unitPrice)} / {vi.api.perNight}
-                  </Txt>
-                  <Txt variant="caption">
-                    {vi.api.total}: {money(stay.totalPrice)}
-                  </Txt>
-                </View>
-              </Row>
-              <Button
-                tone="secondary"
-                icon="arrow-forward"
-                onPress={() =>
-                  router.push({
-                    pathname: '/hotel/[id]',
-                    params: {
-                      id: stay.hotelId,
-                      checkIn: search.submitted!.checkIn,
-                      checkOut: search.submitted!.checkOut,
-                      adults: search.submitted!.adults,
-                    },
-                  })
+
+          {/* Empty State - TF27 Core Requirement */}
+          {!search.isPending && search.data && items.length === 0 && (
+            <View style={{ gap: spacing.lg }}>
+              <Empty
+                pose="curious"
+                title="Không có kết quả phù hợp"
+                body={
+                  understood?.budget
+                    ? `Không tìm thấy bài viết hoặc lộ trình nào phù hợp với ngân sách dưới ${money(understood.budget)}.`
+                    : `Chưa có bài viết phù hợp với "${submittedQuery}". Không hiển thị bài viết không liên quan.`
                 }
-              >
-                {vi.commerce.hotel}
-              </Button>
-            </Card>
-          ))}
-          {search.stays.data?.nextCursor && (
-            <Button disabled={search.stays.isFetching} onPress={search.next}>
-              {vi.api.next}
-            </Button>
+              />
+              <Card>
+                <Txt variant="heading">Gợi ý nới điều kiện tìm kiếm</Txt>
+                <Txt variant="small" style={ui.muted}>
+                  Thử nới lỏng các tiêu chí để khám phá thêm nhiều trải nghiệm:
+                </Txt>
+                <Row style={styles.categories}>
+                  {!!understood?.budget && (
+                    <Chip
+                      onPress={() => {
+                        const next = relaxBudgetQuery(submittedQuery, understood.place);
+                        submitSearch(next);
+                      }}
+                    >
+                      Bỏ giới hạn giá
+                    </Chip>
+                  )}
+                  {!!understood?.days && (
+                    <Chip
+                      onPress={() => {
+                        const next = relaxDaysQuery(submittedQuery, understood.place);
+                        submitSearch(next);
+                      }}
+                    >
+                      Xem mọi số ngày
+                    </Chip>
+                  )}
+                  {!!understood?.place && (
+                    <Chip onPress={() => submitSearch(understood.place!)}>
+                      Tất cả bài tại {understood.place}
+                    </Chip>
+                  )}
+                  <Chip onPress={() => submitSearch('Đà Lạt chill')}>Đà Lạt chill</Chip>
+                  <Chip onPress={() => submitSearch('Hội An')}>Hội An</Chip>
+                  <Chip onPress={() => submitSearch('Hà Giang 3N2Đ')}>Hà Giang 3N2Đ</Chip>
+                </Row>
+              </Card>
+            </View>
           )}
-          {search.cursor && (
-            <Button tone="text" onPress={search.first}>
-              {vi.api.previous}
-            </Button>
+
+          {/* Results List */}
+          {items.length > 0 && (
+            <>
+              <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                <Txt variant="title" style={ui.flex}>
+                  Kết quả tìm kiếm
+                </Txt>
+                <Txt variant="small" style={ui.muted}>
+                  {total} bài viết
+                </Txt>
+              </Row>
+              {items.map((item) => (
+                <PostSearchResultCard key={item.id} item={item} />
+              ))}
+              {nextCursor && (
+                <Button disabled={search.isFetching} onPress={() => setCursor(nextCursor)}>
+                  {vi.api.next}
+                </Button>
+              )}
+              {cursor && (
+                <Button tone="text" onPress={() => setCursor(null)}>
+                  {vi.api.previous}
+                </Button>
+              )}
+            </>
           )}
         </>
       )}
@@ -419,37 +550,98 @@ function StayRecommendations() {
         }}
       />
       {query.data?.length === 0 && <Notice>{vi.api.noSuggestions}</Notice>}
-      {query.data?.map((stay) => (
-        <Card key={stay.hotelId}>
-          {stay.thumbnail && (
-            <Image
-              source={stay.thumbnail}
-              style={{
-                width: '100%',
-                aspectRatio: 16 / 9,
-                borderRadius: radius.md,
-                backgroundColor: colors.seaMist,
-              }}
-              contentFit="cover"
-            />
-          )}
-          <Txt variant="heading">{stay.name}</Txt>
-          <Txt>
-            {stay.province.name}
-            {stay.stars ? ` · ${stay.stars} ★` : ''}
-          </Txt>
-          <Txt variant="small">{stay.reason.text}</Txt>
-          <Txt variant="label">
-            {vi.hotel.from} {money(stay.priceFrom)} / {vi.api.perNight}
-          </Txt>
-          <Button
-            tone="secondary"
-            onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: stay.hotelId } })}
-          >
-            {vi.commerce.hotel}
-          </Button>
-        </Card>
-      ))}
+      {query.data?.map((dest) => {
+        const bestStay = dest.hotels[0];
+        if (!bestStay) return null;
+        return (
+          <Card key={dest.province.slug || bestStay.hotelId} style={{ padding: 0, overflow: 'hidden', gap: 0 }}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={bestStay.name}
+              onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: bestStay.hotelId } })}
+            >
+              <View>
+                {bestStay.thumbnail ? (
+                  <Image
+                    source={bestStay.thumbnail}
+                    style={{ width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.seaMist }}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <View style={{ width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.seaMist }} />
+                )}
+                {/* Nhãn nổi trên ảnh như thẻ khách sạn của web. */}
+                <Row style={{ position: 'absolute', top: spacing.sm, left: spacing.sm, gap: spacing.xs }}>
+                  <Badge tone="teal" icon="location-outline">
+                    {dest.province.name}
+                  </Badge>
+                  {bestStay.stars ? <Badge tone="sun">{`${bestStay.stars} ★`}</Badge> : null}
+                </Row>
+                <View
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    paddingHorizontal: spacing.md,
+                    paddingTop: spacing.xl,
+                    paddingBottom: spacing.sm,
+                    backgroundColor: colors.overlay,
+                  }}
+                >
+                  <Txt variant="heading" style={{ color: colors.background }} numberOfLines={2}>
+                    {bestStay.name}
+                  </Txt>
+                </View>
+              </View>
+            </Pressable>
+            <View style={{ padding: spacing.md, gap: spacing.sm }}>
+              <Row
+                style={{
+                  gap: spacing.xs,
+                  alignItems: 'flex-start',
+                  padding: spacing.sm,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.seaMist,
+                }}
+              >
+                <Icon name="pricetag-outline" size={16} color={colors.tealInk} />
+                <Txt variant="small" style={{ flex: 1, color: colors.tealInk }}>
+                  {bestStay.reason.text}
+                </Txt>
+              </Row>
+              <Row style={{ alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.sm }}>
+                <View style={{ flexShrink: 1 }}>
+                  <Txt variant="small" style={{ color: colors.textMuted }}>
+                    {vi.hotel.from}
+                  </Txt>
+                  <Txt variant="title" style={{ color: colors.coralInk }}>
+                    {money(bestStay.priceFrom)}
+                  </Txt>
+                  <Txt variant="small" style={{ color: colors.textMuted }}>
+                    / {vi.api.perNight}
+                  </Txt>
+                </View>
+                <Button
+                  icon="arrow-forward"
+                  onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: bestStay.hotelId } })}
+                >
+                  {vi.hotel.viewRooms}
+                </Button>
+              </Row>
+              {dest.otherDealsCount > 0 && (
+                <Button
+                  tone="text"
+                  onPress={() => router.push({ pathname: '/search', params: { q: dest.province.name } })}
+                  icon="arrow-forward"
+                >
+                  {`Khám phá thêm ${dest.otherDealsCount} deal hời`}
+                </Button>
+              )}
+            </View>
+          </Card>
+        );
+      })}
     </>
   );
 }

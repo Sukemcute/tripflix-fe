@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getCollapsedCaptionLength } from '@tripflix/app-core';
-import { REEL_FEED_TABS, socialApi, updateReelSocialCache, useApiSession } from '@tripflix/api-client';
+import {
+  HttpError,
+  REEL_FEED_TABS,
+  removeUnavailablePost,
+  socialApi,
+  updateReelSocialCache,
+  useApiSession,
+} from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
@@ -21,6 +28,7 @@ import { Icon, Txt, type IconName } from '@/components/mobile-ui';
 import { SHEET_CLOSE_SPRING, SHEET_OPEN_SPRING } from '@/components/motion';
 import { ReelCommentsPanel } from './reel-comments-panel';
 import type { ReelItem } from './reel-types';
+import { ReportButton } from './report-button';
 
 const copy = vi.mobile.reels;
 const number = (value: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value);
@@ -105,8 +113,13 @@ export function ReelSocialOverlay({
   const detail = useQuery({
     queryKey: ['social', 'post', postId, user?.id],
     enabled: isReady && isActive && !!postId,
+    retry: (count, error) => !(error instanceof HttpError && error.status === 404) && count < 2,
     queryFn: ({ signal }) => socialApi.getPost(postId!, signal),
   });
+  const missing = detail.error instanceof HttpError && detail.error.status === 404;
+  useEffect(() => {
+    if (missing && postId) removeUnavailablePost(client, postId);
+  }, [missing, client, postId]);
   const isLiked = isSample
     ? sampleLiked
     : detail.data
@@ -223,10 +236,7 @@ export function ReelSocialOverlay({
         <LinearGradient colors={[colors.transparent, colors.overlay]} style={StyleSheet.absoluteFill} />
       </Animated.View>
       <Animated.View pointerEvents="none" style={[styles.scrim, styles.expandedScrim, expandedScrimStyle]}>
-        <LinearGradient
-          colors={[colors.transparent, colors.overlayHeavy]}
-          style={StyleSheet.absoluteFill}
-        />
+        <LinearGradient colors={[colors.transparent, colors.overlayHeavy]} style={StyleSheet.absoluteFill} />
       </Animated.View>
       <Animated.View
         style={[styles.rail, chromeStyle]}
@@ -235,6 +245,7 @@ export function ReelSocialOverlay({
         aria-hidden={isHidden}
         importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
       >
+        {!isSample && postId && <ReportButton targetType="post" targetId={postId} compact />}
         <RailAction
           icon={isLiked ? 'heart' : 'heart-outline'}
           label={isLiked ? vi.api.unlike : vi.api.like}
@@ -427,7 +438,13 @@ const styles = StyleSheet.create({
   collapsedLayer: { position: 'absolute', top: 0, left: 0, right: 0 },
   captionPressed: { opacity: 0.7 },
   captionMeasure: { position: 'absolute', left: 0, right: 0, opacity: 0 },
-  rail: { position: 'absolute', right: spacing.sm, bottom: spacing.md, alignItems: 'center', gap: spacing.md },
+  rail: {
+    position: 'absolute',
+    right: spacing.sm,
+    bottom: spacing.md,
+    alignItems: 'center',
+    gap: spacing.md,
+  },
   railCount: { color: colors.background, fontFamily: nativeFonts.semibold, ...TEXT_SHADOW },
   railAction: {
     minWidth: 52,

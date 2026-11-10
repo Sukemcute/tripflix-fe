@@ -10,7 +10,7 @@ export function LivePostCard({ post }: { post: SocialPostDto }) {
   return (
     <Card>
       <Txt variant="caption">
-        {vi.api.author} · {post.authorId.slice(0, 8)}
+        {vi.api.author} · {post.authorName || post.authorId.slice(0, 8)}
       </Txt>
       <Txt variant="heading">{post.title}</Txt>
       <Txt>{post.body}</Txt>
