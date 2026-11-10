@@ -23,7 +23,7 @@
 ## Kết quả kiểm tra
 
 - `pnpm turbo run lint typecheck test --affected`: đạt 20/20 tác vụ.
-- 172 test đạt: api-client 105, app-core 64, i18n 2, tokens 1.
+- 229 test đạt sau khi merge `origin/develop`: api-client 143, app-core 73, web 10, i18n 2, tokens 1.
 - Lint không có lỗi; còn các cảnh báo có sẵn trong web và admin, không thuộc thay đổi mascot.
 - `git diff --check`: đạt.
 - Playwright runtime: `.riv` và `rive.wasm` trả HTTP 200; idle và click đều thay đổi khung hình.
