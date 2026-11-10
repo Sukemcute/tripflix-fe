@@ -12,11 +12,12 @@
 |---|---|---|
 | Cuộn tới dải, viền răng cưa không giật | Có | Sau khi cuộn tới: dải không có `data-home-entered`, `transform: none`, không có animation nào chạy trên dải |
 | Đổi điểm đến, ảnh chuyển mượt | Có | Trước khi bấm cả 3 ảnh đã tải xong; 300ms sau khi bấm "Hội An": ảnh cũ 0.39, ảnh mới 0.61; sau 1,2 giây: 0 và 1 |
-| Đổi điểm đến, thẻ không biến mất | Chưa kiểm | Không gọi được API khi thử (xem dưới) |
+| Đổi điểm đến, thẻ không biến mất | Có | Cổng 3100 với backend thật: bấm Nha Trang → Hội An, lúc nào cũng đủ 3 thẻ, dải giữ nguyên 1584px, không hiện "Đang tải…" |
 
 ## Kết quả kiểm tra
 - `pnpm turbo run lint typecheck test --filter=@tripflix/web`: 2/2 task đạt (web không có task test); lint 0 lỗi, 12 cảnh báo.
-- Thử bằng `next dev` ở cổng 3173, viewport 1440×900. Backend chỉ cho CORS từ cổng 3100 (đang bị Expo web chiếm) nên không tải được danh sách phòng; phần giữ thẻ cũ chưa thử với dữ liệu thật.
+- Viền và ảnh vé: thử bằng `next dev` ở cổng 3173, viewport 1440×900.
+- Thẻ: thử bằng `next dev` ở cổng 3100 với backend local. Backend trả về dưới 30ms nên chưa quan sát được trạng thái thẻ cũ mờ 60% trong lúc tải.
 
 ## Cách kiểm lại
 1. Chạy web ở cổng 3100 với backend, tải lại trang chủ, cuộn tới dải "Có phòng cho chuyến đi sắp tới": viền răng cưa không nhảy.
