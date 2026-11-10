@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseSearchParams } from './search-params';
+import { parseFullSearchParams, parseSearchParams } from './search-params';
 import { addStayDays, getStayToday } from './stay-search-validation';
 
 function createReader(params: Record<string, string>) {
@@ -123,5 +123,34 @@ describe('parseSearchParams', () => {
       createReader({ placeId: 'nha-trang', sort: 'price_desc' }),
     );
     expect(priceDescSort.initialFilters.sort).toBe('price_desc');
+  });
+});
+
+describe('parseFullSearchParams', () => {
+  it('điền mặc định cho trường thiếu và lấy tên điểm đến từ URL', () => {
+    const result = parseFullSearchParams('placeId=da-nang&stars=4&sort=stars');
+    expect(result.placeName).toBe('Đà Nẵng');
+    expect(result.filters).toMatchObject({
+      placeId: 'da-nang',
+      adults: '2',
+      rooms: '',
+      minStars: '',
+      stars: '4',
+      priceMin: '',
+      priceMax: '',
+      sort: 'stars',
+    });
+    expect(result.filters.checkIn).toBeTruthy();
+    expect(result.filters.checkOut).toBeTruthy();
+  });
+
+  it('query rỗng rơi về điểm đến mặc định giống bản render server', () => {
+    const result = parseFullSearchParams('');
+    expect(result.filters.placeId).toBe('nha-trang');
+    expect(result.placeName).toBe('Nha Trang');
+  });
+
+  it('tên điểm đến lấy theo q, không phụ thuộc chữ người dùng đang gõ', () => {
+    expect(parseFullSearchParams('q=Hạ%20Long&placeId=ha-long').placeName).toBe('Hạ Long');
   });
 });

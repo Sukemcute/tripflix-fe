@@ -49,3 +49,24 @@ export function parseSearchParams(read: (key: string) => string): {
 
   return { placeName, initialFilters };
 }
+
+/** Đọc query string đang áp dụng thành đủ bộ lọc (điền mặc định cho trường thiếu) để nạp vào useStaySearch. */
+export function parseFullSearchParams(queryString: string): { placeName: string; filters: StayFilters } {
+  const params = new URLSearchParams(queryString);
+  const { placeName, initialFilters: f } = parseSearchParams((key) => params.get(key) ?? '');
+  return {
+    placeName,
+    filters: {
+      placeId: f.placeId ?? '',
+      checkIn: f.checkIn ?? '',
+      checkOut: f.checkOut ?? '',
+      adults: f.adults ?? '2',
+      rooms: f.rooms ?? '',
+      minStars: f.minStars ?? '',
+      stars: f.stars ?? '',
+      priceMin: f.priceMin ?? '',
+      priceMax: f.priceMax ?? '',
+      sort: f.sort ?? 'price',
+    },
+  };
+}

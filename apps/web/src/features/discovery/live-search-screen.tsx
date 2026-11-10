@@ -17,7 +17,7 @@ import { SoftSelect } from '@/features/shared/soft-select';
 import {
   getStayDateIssue, getStayPriceIssue, getStayToday, isStayInteger, MAX_STAY_GUESTS, MAX_STAY_ROOMS,
 } from './stay-search-validation';
-import { parseSearchParams } from './search-params';
+import { parseFullSearchParams } from './search-params';
 import { SearchAdBanner } from './search-ad-banner';
 import { SoftStarIcon } from './soft-star-icon';
 import { PriceRangeSlider } from './price-range-slider';
@@ -59,23 +59,8 @@ export function LiveSearchScreen({
       return;
     }
     lastAppliedSearchRef.current = searchParamsString;
-    const params = new URLSearchParams(searchParamsString);
-    const { placeName: nextPlace, initialFilters: nextFilters } = parseSearchParams(
-      (key) => params.get(key) ?? '',
-    );
-    const fullFilters: StayFilters = {
-      placeId: nextFilters.placeId ?? '',
-      checkIn: nextFilters.checkIn ?? '',
-      checkOut: nextFilters.checkOut ?? '',
-      adults: nextFilters.adults ?? '2',
-      rooms: nextFilters.rooms ?? '',
-      minStars: nextFilters.minStars ?? '',
-      stars: nextFilters.stars ?? '',
-      priceMin: nextFilters.priceMin ?? '',
-      priceMax: nextFilters.priceMax ?? '',
-      sort: nextFilters.sort ?? 'price',
-    };
-    apply(nextPlace, fullFilters);
+    const next = parseFullSearchParams(searchParamsString);
+    apply(next.placeName, next.filters);
   }, [isHomepage, searchParamsString, apply]);
 
   const [suggestionsOpen, setSuggestionsOpen] = useState(!initialFilters?.placeId);
@@ -94,7 +79,9 @@ export function LiveSearchScreen({
     search.setFilters((previous) => ({ ...previous, [key]: value }));
   const placeName = search.selection?.name ?? search.text;
   const hasFacets = !!(search.filters.minStars || search.filters.stars || search.filters.priceMin || search.filters.priceMax || search.filters.sort !== 'price');
-  const resultHref = search.submitted ? getSearchHref(search.submitted, placeName) : '/search';
+  // Tên điểm đến của kết quả đang hiển thị (theo URL), không phải chữ đang gõ dở trong ô tìm kiếm.
+  const appliedPlaceName = isHomepage ? placeName : parseFullSearchParams(searchParamsString).placeName;
+  const resultHref = search.submitted ? getSearchHref(search.submitted, appliedPlaceName) : '/search';
   const canSubmit = !!search.filters.placeId || search.selection?.type === 'hotel';
   const Container = isHomepage ? 'section' : 'div';
   return (
@@ -480,8 +467,8 @@ export function LiveSearchScreen({
               <h2 id="stay-results-title">{vi.ota.resultTitle}</h2>
               {search.stays.data && (
                 <output>
-                  {placeName
-                    ? t('ota.hotelCountAt', { count: search.stays.data.total, place: placeName })
+                  {appliedPlaceName
+                    ? t('ota.hotelCountAt', { count: search.stays.data.total, place: appliedPlaceName })
                     : t('ota.hotelCount', { count: search.stays.data.total })}
                 </output>
               )}

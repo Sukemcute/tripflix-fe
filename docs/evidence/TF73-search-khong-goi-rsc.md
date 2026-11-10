@@ -19,32 +19,29 @@
   - Chip điểm đến nhanh (`OTA_DESTINATIONS`): Chuyển thẻ `<Link>` sang thẻ `<a>` chuẩn kèm `onClick` chặn click thông thường để gọi `window.history.pushState`, tránh việc Next.js prefetch RSC hay kích hoạt router transition ngầm.
   - Thay thế `initialQuery` tĩnh tại các vị trí tính `resultHref` (dòng ~66), tiêu đề kết quả "N khách sạn tại <place>" (dòng ~481) và link chuyển sang trang chi tiết khách sạn `from: resultHref` bằng `placeName` hiện tại.
 
-## Đối chiếu "Xong khi"
-| Tiêu chí | Đạt | Bằng chứng |
-|---|---|---|
-| Mở `/search?placeId=ha-long` đổi bộ lọc: không có request `_rsc`, chỉ còn REST API `/v1/discovery/stays` | Đạt | Chuyển sang `window.history.pushState`, loại bỏ `router.push` nội bộ trên `/search` |
-| URL cập nhật theo bộ lọc; F5 hoặc chia sẻ link mở đúng kết quả | Đạt | `parseSearchParams` đồng bộ 2 chiều qua URL query string |
-| Back / Forward trình duyệt khôi phục đúng bộ lọc và danh sách | Đạt | Hook lắng nghe `useSearchParams()` kết hợp `search.apply` đồng bộ ngay khi URL lùi/tiến |
-| Hết remount: ô input không mất focus, giao diện không chớp | Đạt | Bỏ `key` trên `<LiveSearchScreen />` ở `SearchPage` |
-| Chọn khách sạn từ gợi ý sang `/hotels/...` và submit từ trang chủ sang `/search` bình thường | Đạt | Giữ nguyên nhánh `router.push` cho `search.selection.type === 'hotel'` và `isHomepage` |
-| Nút quay lại từ trang khách sạn (`from: resultHref`) giữ đúng bộ lọc | Đạt | `resultHref` được tính động theo `search.submitted` và `placeName` hiện tại |
-| Unit tests & Turbo pipeline xanh | Đạt | 7 test trong `search-params.test.ts`, 3 test trong `stay-search.test.ts`, `pnpm turbo run lint typecheck test --affected` 21/21 tasks pass |
+## Sửa sau review PR #90
+- Tiêu đề "N nơi lưu trú tại …" và `resultHref` (link `from=` sang trang khách sạn) trước đây dùng `placeName` lấy từ ô đang gõ nên đổi theo chữ gõ dở. Nay lấy tên điểm đến từ URL đang áp dụng qua `parseFullSearchParams(searchParams.toString()).placeName` (trang chủ vẫn dùng `placeName`).
+- Tách `parseFullSearchParams` trong `search-params.ts` (điền mặc định đủ `StayFilters`), dùng chung cho effect đồng bộ URL → state và cho tiêu đề; thêm 3 test (tổng 10 test trong `search-params.test.ts`).
 
-## Số lượng request trước và sau khi sửa (Cùng thao tác lọc 1 bộ lọc)
-- **Trước khi sửa:**
-  - 1 request Server Component Flight: `GET /search?placeId=ha-long&stars=4&_rsc=...` (Next.js server render lại trang rỗng)
-  - 1 request REST API: `GET /v1/discovery/stays?placeId=ha-long&stars=4`
-  - ➕ Remount toàn bộ component `LiveSearchScreen`, mất focus trên ô nhập.
-  - **Tổng cộng: 2 requests**
-- **Sau khi sửa:**
-  - 0 request `_rsc` (hoàn toàn cập nhật URL ở Client-side bằng History API)
-  - 1 request REST API: `GET /v1/discovery/stays?placeId=ha-long&stars=4`
-  - Giữ nguyên DOM, focus và trạng thái component.
-  - **Tổng cộng: 1 request (giảm 50% số request, loại bỏ 100% request `_rsc` thừa)**
+## Kiểm chứng thật (10/11/2026)
+Môi trường: `pnpm build` rồi `pnpm start` (production, port 3100), API giả ở cổng 18080 (`NEXT_PUBLIC_API_URL=http://localhost:18080`) vì không có backend. Trình duyệt trong app, đọc Network và `performance.getEntriesByType('resource')`.
+
+| Tiêu chí | Kết quả | Quan sát |
+|---|---|---|
+| Đổi bộ lọc không gọi `_rsc` | Đạt | Chọn "4 sao" rồi "Tìm phòng trống": URL thành `...&stars=4`, phát sinh đúng 1 request `GET /api/stays?...&stars=4`; không có request `/search?...&_rsc=` nào cho URL mới. Các `_rsc` còn thấy (`/`, `/flights`, `/inspiration`, `/login`, `/hotels/h1`, `/search` không query) là prefetch của `<Link>` ở header/footer/thẻ khách sạn, thuộc TF72 |
+| Không remount | Đạt | Giữ nguyên cùng một phần tử `#place-query` (so sánh tham chiếu DOM) sau khi lọc và sau Back/Forward; ô nhập giữ focus khi gõ |
+| Back / Forward | Đạt | Back: URL mất `stars=4`, ô nhập trả về "Hội An", radio sao về "Tất cả", gọi lại `stays` không có `stars`. Forward: `stars=4`, radio "4 sao". Không có `_rsc` |
+| Gõ dở không đổi tiêu đề/link | Đạt | Gõ "Đà N" vào ô: tiêu đề vẫn "7 nơi lưu trú tại Hội An"; link khách sạn vẫn mang `from=/search?q=Hội+An&...` |
+| Chip điểm đến | Chưa đo | Khối chip nằm trong phần kết quả, lần đo không click được (kích thước 0). Logic giống nhánh submit; cần Duy bấm tay một lần |
+| Chọn khách sạn / về trang chủ | Chưa đo | Không đổi so với trước (vẫn `router.push`) |
+
+Số request cho cùng một thao tác lọc (đo thật): sau khi sửa = 1 request REST `/api/stays`, 0 request `_rsc` cho URL lọc. Số liệu "trước khi sửa" trong bản evidence cũ là ước lượng từ mô tả của mentor, chưa đo lại trên nhánh `develop`.
+
+Lưu ý khi đo: `isReady` của session đến chậm với API giả (refresh lỗi), nên dữ liệu hiện sau vài giây; không liên quan PR.
 
 ## Kết quả kiểm tra
-- `pnpm turbo run lint typecheck test --affected`: 21/21 task pass (16 cached, 5 executed).
-- `pnpm --filter @tripflix/web test`: 7/7 unit tests pass (`search-params.test.ts`).
+- `pnpm turbo run lint typecheck test --affected`: pass (chạy lại sau khi sửa review).
+- `pnpm --filter @tripflix/web test`: 10/10 unit tests pass (`search-params.test.ts`).
 - `pnpm --filter @tripflix/api-client test`: 17/17 test suites pass (106 unit tests bao gồm `stay-search.test.ts`).
 - `pnpm --filter @tripflix/web typecheck`: 0 lỗi.
 - `pnpm --filter @tripflix/web build`: Build production thành công.
