@@ -11,7 +11,7 @@ import { AuthSplitFrame } from './auth-split-frame';
  */
 function AuthLogo() {
   return (
-    <Link className="auth-logo" href="/" aria-label={vi.api.authHomeLink}>
+    <Link className="auth-logo" href="/" prefetch={false} aria-label={vi.api.authHomeLink}>
       <Image src="/brand/tripflix-logo.svg" alt={vi.demo.common.logo} width={142} height={42} priority />
     </Link>
   );

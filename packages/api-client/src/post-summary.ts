@@ -102,6 +102,14 @@ export function readPostSummary(value: unknown): PostSummary {
 export async function getPostSummary(postId: string, signal?: AbortSignal): Promise<PostSummary | null> {
   try {
     const response = await postSummaryControllerGetSummary(encodeURIComponent(postId), { signal });
+    // Core giữ metadata cho worker, nhưng tạm ngừng trả văn bản có nguồn đã bị ẩn/xoá.
+    if (
+      response.data &&
+      response.data.status === 'ready' &&
+      response.data.summary === null &&
+      response.data.isStale === true
+    )
+      return null;
     return readPostSummary(response.data);
   } catch (error) {
     if (error instanceof HttpError && error.status === 404) return null;

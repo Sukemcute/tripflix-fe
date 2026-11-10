@@ -81,6 +81,25 @@ describe('AI summary response boundary', () => {
 });
 
 describe('AI summary transport', () => {
+  it('bản bị core giữ lại sau moderation hiển thị trạng thái chờ thay vì lỗi hoặc nội dung cũ', async () => {
+    configureHttp({ baseUrl: 'http://api' });
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...ready,
+          summary: null,
+          keyTakeaways: [],
+          content: null,
+          safety: null,
+          isStale: true,
+          sourceCommentIds: ['hidden-source'],
+          inputHash: 'retained-for-worker',
+        }),
+        { headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    expect(await getPostSummary('post-1')).toBeNull();
+  });
   it('loads flat evidence including replies and preserves the opaque cursor and cancellation', async () => {
     configureHttp({ baseUrl: 'http://api' });
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(

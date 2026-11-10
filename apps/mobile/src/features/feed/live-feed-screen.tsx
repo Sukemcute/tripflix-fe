@@ -1,11 +1,18 @@
-import { socialApi, useApiSession, useSocialPosts } from '@tripflix/api-client';
+import {
+  HttpError,
+  removeUnavailablePost,
+  socialApi,
+  useApiSession,
+  useSocialPosts,
+} from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { router } from 'expo-router';
 import { Button, Card, copy, Empty, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { ReportButton } from './report-button';
 import { useLocalSearchParams } from 'expo-router';
 import { LiveComments } from './live-comments';
 import { Share, View } from 'react-native';
@@ -103,8 +110,13 @@ export function LivePostDetailScreen() {
   const query = useQuery({
     queryKey: ['social', 'post', slug, user?.id],
     enabled: isReady && !!slug,
+    retry: (count, error) => !(error instanceof HttpError && error.status === 404) && count < 2,
     queryFn: ({ signal }) => socialApi.getPost(slug, signal),
   });
+  const missing = query.error instanceof HttpError && query.error.status === 404;
+  useEffect(() => {
+    if (missing) removeUnavailablePost(client, slug);
+  }, [missing, client, slug]);
   const mutation = useMutation({
     mutationFn: async (action: 'like' | 'love' | 'helpful' | 'save' | 'delete' | 'share' | 'publish') => {
       if (action === 'delete') return socialApi.deletePost(slug);
@@ -126,10 +138,11 @@ export function LivePostDetailScreen() {
     },
   });
   const [isDeleting, setDeleting] = useState(false);
-  const post = query.data?.post;
+  const post = missing ? undefined : query.data?.post;
   const goLogin = () => router.push({ pathname: '/login', params: { returnTo: `/trip/${slug}` } });
   return (
     <Screen title={vi.api.detail}>
+      {missing && <Notice>{vi.moderation.unavailable}</Notice>}
       <ApiErrorNotice
         error={query.error}
         retry={() => {
@@ -144,6 +157,7 @@ export function LivePostDetailScreen() {
             {vi.api.author} · {post.authorName || post.authorId.slice(0, 8)}
           </Txt>
           <Txt>{post.body}</Txt>
+          <ReportButton targetType="post" targetId={post.id} />
           <Notice>{vi.api.noPreview}</Notice>
           {post.tripAttachment?.items?.map((item, index) => (
             <Card key={index}>

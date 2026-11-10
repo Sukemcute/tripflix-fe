@@ -9,6 +9,8 @@ import type { SavePostSummaryDtoSafety } from './savePostSummaryDtoSafety';
 import type { SavePostSummaryDtoStatus } from './savePostSummaryDtoStatus';
 
 export interface SavePostSummaryDto {
+  /** ID mọi bình luận thực sự vào LLM, kể cả ngữ cảnh; thiếu nghĩa là chưa biết nguồn */
+  sourceCommentIds?: string[];
   /** Trạng thái tóm tắt bài viết */
   status?: SavePostSummaryDtoStatus;
   /**

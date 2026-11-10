@@ -9,6 +9,11 @@ import type { PostSummaryResponseDtoSafety } from './postSummaryResponseDtoSafet
 import type { PostSummaryResponseDtoStatus } from './postSummaryResponseDtoStatus';
 
 export interface PostSummaryResponseDto {
+  /**
+   * Nguồn bình luận; null cho bản cũ, [] nếu không dùng bình luận
+   * @nullable
+   */
+  sourceCommentIds: string[] | null;
   /** Mã bài đăng */
   postId: string;
   /** Trạng thái tóm tắt */

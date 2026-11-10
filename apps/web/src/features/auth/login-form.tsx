@@ -79,7 +79,7 @@ export function LiveLogin({ returnTo }: { returnTo?: string }) {
           onValueChange={setPassword}
         />
         {/* Ngay dưới ô mật khẩu, căn phải: chỗ người dùng tìm khi quên. */}
-        <Link className="auth-forgot" href="/forgot-password">
+        <Link className="auth-forgot" href="/forgot-password" prefetch={false}>
           {vi.api.forgotPassword}
         </Link>
         <AuthErrorNotice error={credentials.error} action="login" />
@@ -89,7 +89,7 @@ export function LiveLogin({ returnTo }: { returnTo?: string }) {
       </form>
       <GoogleButton onCredential={signInWithGoogle} />
       <AuthErrorNotice error={google.error} action="google" />
-      <Link className="secondary-button auth-create" href={withReturnTo('/register', returnTo)}>
+      <Link className="secondary-button auth-create" href={withReturnTo('/register', returnTo)} prefetch={false}>
         {vi.api.authCreateAccount}
       </Link>
     </>

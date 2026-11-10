@@ -661,8 +661,6 @@
 /* ---------- Tóm tắt đơn (cột phải) ---------- */
 
 .aside {
-  position: sticky;
-  top: 96px;
   display: grid;
   gap: 12px;
 }
@@ -876,7 +874,7 @@
   margin: 0 20px 16px;
 }
 
-/* Khung đơn cao hết vùng nhìn dưới header; đơn dài thì cuộn bên trong, tổng tiền luôn ở đáy. */
+/* Khung đơn đứng cùng hàng với Thông tin liên hệ, cuộn theo trang; cao hết vùng nhìn dưới header; đơn dài thì cuộn bên trong, tổng tiền luôn ở đáy. */
 .aside {
   height: calc(100vh - 120px);
   min-height: 520px;

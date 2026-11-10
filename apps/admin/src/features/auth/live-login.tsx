@@ -27,7 +27,7 @@ export function AdminLogin({ returnTo }: { returnTo: string }) {
           <p className="admin-eyebrow">{vi.admin.title}</p>
           <h1>{vi.api.login}</h1>
           <p>{vi.api.staffOnly}</p>
-          <Image src="/brand/tripi-welcome.png" alt={vi.mobile.common.mascot} width={230} height={230} />
+          <Image src="/brand/tripi-welcome.png" alt={vi.mobile.common.mascot} width={230} height={230} priority />
         </div>
       </section>
       <section className="admin-login-content">

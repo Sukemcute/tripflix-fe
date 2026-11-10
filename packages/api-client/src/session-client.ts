@@ -9,7 +9,7 @@ import type {
   TokenPairDto,
 } from './generated/core-api/model';
 import { configureHttp, HttpError, type HttpRequestOptions } from './http';
-import { readEntity } from './response';
+import { readEntity, SessionSetupError } from './response';
 
 export interface TokenStorage {
   read(): Promise<string | null>;
@@ -138,19 +138,21 @@ export class SessionClient {
   async login(credentials: LoginDto): Promise<void> {
     const version = ++this.version;
     const response = await auth.authControllerLogin(credentials, this.authOptions);
-    if (
-      await this.acceptTokens(readEntity(response.data, ['accessToken', 'tokenType', 'expiresIn']), version)
-    )
-      await this.reloadUser();
+    await this.completeLogin(response.data, version);
   }
   /** Google ID token from Google Identity Services; tokens are kept exactly like a password login. */
   async loginWithGoogle(input: GoogleLoginDto): Promise<void> {
     const version = ++this.version;
     const response = await auth.authControllerLoginWithGoogle(input, this.authOptions);
-    if (
-      await this.acceptTokens(readEntity(response.data, ['accessToken', 'tokenType', 'expiresIn']), version)
-    )
+    await this.completeLogin(response.data, version);
+  }
+  private async completeLogin(data: TokenPairDto | void, version: number): Promise<void> {
+    if (!(await this.acceptTokens(readEntity(data, ['accessToken', 'tokenType', 'expiresIn']), version))) return;
+    try {
       await this.reloadUser();
+    } catch (error) {
+      throw new SessionSetupError(error);
+    }
   }
   async register(credentials: RegisterDto): Promise<void> {
     await auth.authControllerRegister(credentials, this.authOptions);

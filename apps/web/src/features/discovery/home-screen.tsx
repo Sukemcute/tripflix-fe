@@ -1,6 +1,6 @@
-import { PublicPosts } from '@/features/social/live-posts';
+import { InspirationView } from '@/features/social/inspiration-view';
 
-/** Trang Cảm hứng: hiển thị trực tiếp giao diện Immersive 3-Panel Viewer (Lịch trình / Media Stage / Bình luận). */
+/** Trang Cam hung: Giao dien Adaptive Split View cho Bai viet va Immersive 3-Panel Viewer cho Reels. */
 export default function HomeScreen({ query = '', queryError }: { query?: string; queryError?: string }) {
   return (
     <main id="content">
@@ -11,7 +11,7 @@ export default function HomeScreen({ query = '', queryError }: { query?: string;
           </p>
         </div>
       )}
-      <PublicPosts keyword={query} />
+      <InspirationView initialKeyword={query} />
     </main>
   );
 }
