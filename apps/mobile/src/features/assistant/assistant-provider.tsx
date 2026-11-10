@@ -2,6 +2,7 @@ import { vi } from '@tripflix/i18n';
 import { createContext, useContext, useEffect, useRef, useState, type PropsWithChildren } from 'react';
 
 export type AssistantMessage = { id: string; role: 'user' | 'assistant'; text: string };
+export type AssistantOrigin = { x: number; y: number; width: number; height: number };
 /** Bảo supplies an adapter using the generated API client; no endpoint is assumed here. */
 export type AssistantTransport = (
   messages: readonly AssistantMessage[],
@@ -10,6 +11,11 @@ export type AssistantTransport = (
 
 function useAssistantState(transport?: AssistantTransport) {
   const [isOpen, setIsOpen] = useState(false);
+  const [origin, setOrigin] = useState<AssistantOrigin | null>(null);
+  function openFromBubble(bounds: AssistantOrigin) {
+    setOrigin(bounds);
+    setIsOpen(true);
+  }
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [isPending, setIsPending] = useState(false);
@@ -53,6 +59,8 @@ function useAssistantState(transport?: AssistantTransport) {
   return {
     isOpen,
     setIsOpen,
+    origin,
+    openFromBubble,
     draft,
     setDraft,
     messages,

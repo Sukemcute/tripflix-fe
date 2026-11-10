@@ -1,7 +1,7 @@
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout } from '@tripflix/tokens';
 import { usePathname, useSegments } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureDetector, GestureHandlerRootView, usePanGesture } from 'react-native-gesture-handler';
 import Animated, {
@@ -35,6 +35,14 @@ export function AssistantBubble() {
   const startY = useSharedValue(0);
   const isDragging = useSharedValue(false);
   const hasDragged = useSharedValue(false);
+  const bubble = useRef<ComponentRef<typeof View>>(null);
+  function openChat() {
+    cancelAnimation(x);
+    cancelAnimation(y);
+    bubble.current?.measureInWindow((left, top, width, height) => {
+      if (width > 0 && height > 0) chat.openFromBubble({ x: left, y: top, width, height });
+    });
+  }
   useEffect(() => {
     x.set((value) => (value < width / 2 ? MARGIN : maxX));
     y.set((value) => Math.max(minY, Math.min(maxY, value)));
@@ -81,7 +89,7 @@ export function AssistantBubble() {
         <GestureHandlerRootView pointerEvents="box-none" style={StyleSheet.absoluteFill}>
           <View pointerEvents="box-none" style={styles.bounds}>
             <GestureDetector gesture={gesture}>
-              <Animated.View style={[styles.bubble, position]}>
+              <Animated.View ref={bubble} collapsable={false} style={[styles.bubble, position]}>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={vi.assistant.open}
@@ -94,9 +102,9 @@ export function AssistantBubble() {
                     x.set(event.nativeEvent.actionName === 'moveLeft' ? MARGIN : maxX)
                   }
                   onPress={() => {
-                    if (!hasDragged.get()) chat.setIsOpen(true);
+                    if (!hasDragged.get()) openChat();
                   }}
-                  onAccessibilityTap={() => chat.setIsOpen(true)}
+                  onAccessibilityTap={openChat}
                   style={styles.touch}
                 >
                   <View pointerEvents="none">
