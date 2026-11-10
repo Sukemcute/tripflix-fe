@@ -23,6 +23,15 @@ it('loads the public feed and passes opaque cursors and cancellation to the gene
   expect(new Headers(fetchMock.mock.calls[0]![1]?.headers).has('authorization')).toBe(false);
 });
 
+it('requests the selected tab', async () => {
+  configureHttp({ baseUrl: 'http://api', getAccessToken: async () => null });
+  const fetchMock = vi
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValue(json(200, { items: [], nextCursor: null }));
+  await feedApi.list(undefined, undefined, 'hot');
+  expect(new URL(String(fetchMock.mock.calls[0]![0])).searchParams.get('tab')).toBe('hot');
+});
+
 it('uses the current session to obtain viewer state without making authentication mandatory', async () => {
   configureHttp({ baseUrl: 'http://api', getAccessToken: async () => 'test-session' });
   const fetchMock = vi

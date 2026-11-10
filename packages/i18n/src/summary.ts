@@ -3,6 +3,7 @@ export const summary = {
   title: 'Tripi đọc giúp bạn',
   intro: 'Đọc nhanh ý kiến trong phần bình luận.',
   open: 'Tóm tắt bằng AI',
+  openShort: 'Tóm tắt',
   cached: 'Xem tóm tắt đã lưu',
   resultTitle: 'Cộng đồng nói gì?',
   expand: 'Xem chi tiết',

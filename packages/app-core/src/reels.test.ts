@@ -1,7 +1,38 @@
 import { describe, expect, it } from 'vitest';
-import { fitReelVideo, getReelResolutionCap, getReelPlayerIndexes, selectReelPoster } from './reels';
+import {
+  fitReelVideo,
+  getCollapsedCaptionLength,
+  getReelCommentsSheetHeight,
+  getReelPosterPrefetchUrls,
+  getReelResolutionCap,
+  getSwipedTabIndex,
+  getReelPlayerIndexes,
+  layoutReelCommentsVideo,
+  layoutReelVideo,
+  selectReelPoster,
+  isBackSwipeComplete,
+} from './reels';
 
 describe('reels playback policy', () => {
+  it('phủ kín màn hình cao với video dọc, giữ toàn khung với trường hợp còn lại', () => {
+    expect(layoutReelVideo('9:16', 360, 800)).toEqual({
+      box: { width: 360, height: 800 },
+      contentFit: 'cover',
+    });
+    expect(layoutReelVideo('9:16', 720, 640)).toEqual({
+      box: { width: 360, height: 640 },
+      contentFit: 'contain',
+    });
+    expect(layoutReelVideo('16:9', 360, 800)).toEqual({
+      box: { width: 360, height: 202.5 },
+      contentFit: 'contain',
+    });
+    expect(layoutReelVideo('1:1', 360, 800)).toEqual({
+      box: { width: 360, height: 360 },
+      contentFit: 'contain',
+    });
+  });
+
   it('giữ toàn khung video dọc, ngang và vuông trong màn hình', () => {
     expect(fitReelVideo('9:16', 360, 800)).toEqual({ width: 360, height: 640 });
     expect(fitReelVideo('16:9', 360, 800)).toEqual({ width: 360, height: 202.5 });
@@ -32,9 +63,75 @@ describe('reels playback policy', () => {
     expect(getReelPlayerIndexes(1, 0)).toEqual([0, null, null]);
   });
 
+  it('chỉ cắt caption dài hơn số dòng cho phép và chừa chỗ cho chữ nối', () => {
+    expect(getCollapsedCaptionLength(['một dòng'], 2, 5)).toBeNull();
+    expect(getCollapsedCaptionLength(['aaaa', 'bbbb'], 2, 2)).toBeNull();
+    expect(getCollapsedCaptionLength(['aaaa', 'bbbb', 'cc'], 2, 3)).toBe(5);
+    expect(getCollapsedCaptionLength(['a', 'b', 'c'], 2, 10)).toBe(0);
+  });
+
+  it('đổi tab khi vuốt đủ xa hoặc đủ nhanh, không vượt quá tab đầu và cuối', () => {
+    const swipe = (currentIndex: number, translationX: number, velocityX: number) =>
+      getSwipedTabIndex({ currentIndex, tabCount: 3, translationX, velocityX, width: 400 });
+    expect(swipe(1, -101, 0)).toBe(2);
+    expect(swipe(1, 101, 0)).toBe(0);
+    expect(swipe(1, -100, 0)).toBe(1);
+    expect(swipe(1, -20, -600)).toBe(2);
+    expect(swipe(1, -200, 600)).toBe(1);
+    expect(swipe(0, 300, 0)).toBe(0);
+    expect(swipe(2, -300, -900)).toBe(2);
+  });
+
+  it('chỉ lấy ảnh bìa của các video phía sau, đúng cỡ và bỏ ảnh rỗng', () => {
+    const posters = (id: string) => ({ w360: `${id}-360`, w540: `${id}-540`, w720: `${id}-720` });
+    const sets = ['a', 'b', 'c', 'd', 'e'].map(posters);
+    expect(getReelPosterPrefetchUrls(sets, 0, 400)).toEqual(['b-540', 'c-540', 'd-540']);
+    expect(getReelPosterPrefetchUrls(sets, 3, 300)).toEqual(['e-360']);
+    expect(getReelPosterPrefetchUrls(sets, 4, 400)).toEqual([]);
+    expect(getReelPosterPrefetchUrls([posters('a'), { w360: '', w540: '', w720: '' }], 0, 400)).toEqual([]);
+  });
+
+  it('thu video vào khoảng trống phía trên sheet bình luận', () => {
+    expect(getReelCommentsSheetHeight(800)).toBe(520);
+    expect(getReelCommentsSheetHeight(1200)).toBe(640);
+    const { scale, translateY } = layoutReelCommentsVideo({
+      windowHeight: 800,
+      slideHeight: 720,
+      topInset: 40,
+      gap: 8,
+    });
+    expect(scale).toBeCloseTo(232 / 720);
+    // Mép trên video sau khi thu nằm đúng dưới vùng an toàn.
+    expect(360 + translateY - (720 * scale) / 2).toBeCloseTo(40);
+    expect(layoutReelCommentsVideo({ windowHeight: 800, slideHeight: 0, topInset: 40, gap: 8 })).toEqual({
+      scale: 1,
+      translateY: 0,
+    });
+  });
+
   it('giới hạn 540p theo đúng chiều cho video dọc, ngang và vuông', () => {
     expect(getReelResolutionCap('9:16')).toEqual({ width: 540, height: 960 });
     expect(getReelResolutionCap('16:9')).toEqual({ width: 960, height: 540 });
     expect(getReelResolutionCap('1:1')).toEqual({ width: 540, height: 540 });
+  });
+});
+
+describe('isBackSwipeComplete', () => {
+  it('leaves after a long enough swipe in either direction', () => {
+    expect(isBackSwipeComplete({ translationX: -81, velocityX: 0 })).toBe(true);
+    expect(isBackSwipeComplete({ translationX: 81, velocityX: 0 })).toBe(true);
+  });
+
+  it('leaves on a short flick', () => {
+    expect(isBackSwipeComplete({ translationX: -30, velocityX: -900 })).toBe(true);
+  });
+
+  it('stays after a small drag or a tiny flick', () => {
+    expect(isBackSwipeComplete({ translationX: -60, velocityX: -100 })).toBe(false);
+    expect(isBackSwipeComplete({ translationX: -10, velocityX: -900 })).toBe(false);
+  });
+
+  it('stays when the finger flicks back the other way', () => {
+    expect(isBackSwipeComplete({ translationX: -60, velocityX: 900 })).toBe(false);
   });
 });

@@ -1,18 +1,42 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { socialApi, updateReelSocialCache, useApiSession } from '@tripflix/api-client';
+import { getCollapsedCaptionLength } from '@tripflix/app-core';
+import { REEL_FEED_TABS, socialApi, updateReelSocialCache, useApiSession } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  type SharedValue,
+} from 'react-native-reanimated';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
+import { SHEET_CLOSE_SPRING, SHEET_OPEN_SPRING } from '@/components/motion';
 import { ReelCommentsPanel } from './reel-comments-panel';
 import type { ReelItem } from './reel-types';
 
 const copy = vi.mobile.reels;
 const number = (value: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value);
+const DETAIL_HEIGHT = 32;
+const CAPTION_LINES = 2;
+const CAPTION_LINE_HEIGHT = 20;
+const CAPTION_MAX_HEIGHT = 180;
+const SHOW_MORE_SUFFIX = `… ${copy.showMore}`;
+// Measured by characters, so keep a little extra room for wide letters in the removed text.
+const SHOW_MORE_RESERVED_CHARS = SHOW_MORE_SUFFIX.length + 4;
+const DETAIL_HIT_SLOP = (mobileLayout.touchTarget - DETAIL_HEIGHT) / 2;
+const TEXT_SHADOW = {
+  textShadowColor: colors.overlayHeavy,
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 2,
+};
 
 function RailAction({
   icon,
@@ -38,9 +62,9 @@ function RailAction({
       onPress={onPress}
       style={({ pressed }) => [styles.railAction, pressed && { opacity: 0.65 }, disabled && { opacity: 0.5 }]}
     >
-      <Icon name={icon} size={30} color={selected ? colors.coral : colors.background} />
+      <Icon name={icon} size={34} color={selected ? colors.coral : colors.background} />
       {count !== undefined && (
-        <Txt variant="caption" style={styles.light}>
+        <Txt variant="caption" style={styles.railCount}>
           {number(count)}
         </Txt>
       )}
@@ -53,18 +77,25 @@ export function ReelSocialOverlay({
   isActive,
   isSample,
   isHidden = false,
+  commentsProgress,
   onCommentsVisibilityChange,
 }: {
   item: ReelItem;
   isActive: boolean;
   isSample: boolean;
   isHidden?: boolean;
+  commentsProgress: SharedValue<number>;
   onCommentsVisibilityChange: (visible: boolean) => void;
 }) {
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
   const [hasComments, setHasComments] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [collapsedLength, setCollapsedLength] = useState<number | null>(null);
+  const [collapsedHeight, setCollapsedHeight] = useState(CAPTION_LINES * CAPTION_LINE_HEIGHT);
+  const [expandedContentHeight, setExpandedContentHeight] = useState(0);
+  const expandedScroll = useRef<ComponentRef<typeof ScrollView>>(null);
+  const expansion = useSharedValue(0);
   const [draft, setDraft] = useState('');
   const [sampleComments, setSampleComments] = useState<{ id: number; body: string }[]>([]);
   const nextCommentId = useRef(0);
@@ -115,7 +146,9 @@ export function ReelSocialOverlay({
     onMutate: async (action) => {
       if (action.type === 'share' || !postId || !user) return;
       await Promise.all([
-        client.cancelQueries({ queryKey: ['feed', 'for_you', user.id], exact: true }),
+        ...REEL_FEED_TABS.map((tab) =>
+          client.cancelQueries({ queryKey: ['feed', tab, user.id], exact: true }),
+        ),
         client.cancelQueries({ queryKey: ['social', 'post', postId, user.id], exact: true }),
       ]);
       return updateReelSocialCache(client, user.id, postId, action.type, !!action.selected);
@@ -146,17 +179,57 @@ export function ReelSocialOverlay({
   };
   const closeComments = () => {
     setHasComments(false);
-    onCommentsVisibilityChange(false);
   };
-  useEffect(() => () => onCommentsVisibilityChange(false), [onCommentsVisibilityChange]);
+  // Only the slide holding open comments reports, so a neighbour leaving the list window cannot resume playback.
+  useEffect(() => {
+    if (!hasComments) return;
+    onCommentsVisibilityChange(true);
+    return () => onCommentsVisibilityChange(false);
+  }, [hasComments, onCommentsVisibilityChange]);
   const author = isSample ? copy.sampleAuthor : item.social?.author.name || vi.api.author;
   const title = isSample ? copy.sample : item.title;
   const caption = isSample ? copy.sampleCaption : item.body;
+  const fullCaption = caption ? `${title} · ${caption}` : title;
+  const visibleCaption =
+    collapsedLength === null ? fullCaption : fullCaption.slice(0, collapsedLength).trimEnd();
+  const expandedHeight = Math.min(CAPTION_MAX_HEIGHT, Math.max(collapsedHeight, expandedContentHeight));
+  const toggleExpanded = (shouldExpand: boolean) => {
+    setIsExpanded(shouldExpand);
+    if (!shouldExpand) expandedScroll.current?.scrollTo({ y: 0, animated: true });
+    expansion.set(withSpring(shouldExpand ? 1 : 0, shouldExpand ? SHEET_OPEN_SPRING : SHEET_CLOSE_SPRING));
+  };
+  const captionTextStyle = useAnimatedStyle(() => ({
+    height: interpolate(expansion.get(), [0, 1], [collapsedHeight, expandedHeight]),
+  }));
+  // Both layers start with the same words, so fading between them reads as one text growing.
+  const collapsedLayerStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(expansion.get(), [0, 0.6], [1, 0], Extrapolation.CLAMP),
+  }));
+  const expandedLayerStyle = useAnimatedStyle(() => ({ opacity: expansion.get() }));
+  // Clears out early so the shrinking video is not covered by the rail and caption.
+  const chromeStyle = useAnimatedStyle(() => ({
+    opacity: isHidden ? 0 : interpolate(commentsProgress.get(), [0, 0.4], [1, 0], Extrapolation.CLAMP),
+  }));
+  const expandedScrimStyle = useAnimatedStyle(() => ({
+    opacity: isHidden
+      ? 0
+      : expansion.get() * interpolate(commentsProgress.get(), [0, 0.4], [1, 0], Extrapolation.CLAMP),
+  }));
 
   return (
     <>
-      <View
-        style={[styles.rail, isHidden && styles.hidden]}
+      {/* The caption has no card, so this keeps white text readable over bright video. */}
+      <Animated.View pointerEvents="none" style={[styles.scrim, chromeStyle]}>
+        <LinearGradient colors={[colors.transparent, colors.overlay]} style={StyleSheet.absoluteFill} />
+      </Animated.View>
+      <Animated.View pointerEvents="none" style={[styles.scrim, styles.expandedScrim, expandedScrimStyle]}>
+        <LinearGradient
+          colors={[colors.transparent, colors.overlayHeavy]}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
+      <Animated.View
+        style={[styles.rail, chromeStyle]}
         pointerEvents={isHidden ? 'none' : 'auto'}
         accessibilityElementsHidden={isHidden}
         aria-hidden={isHidden}
@@ -176,7 +249,6 @@ export function ReelSocialOverlay({
           count={counts.comments}
           onPress={() => {
             setHasComments(true);
-            onCommentsVisibilityChange(true);
           }}
         />
         <RailAction
@@ -194,9 +266,9 @@ export function ReelSocialOverlay({
           disabled={mutation.isPending}
           onPress={() => mutation.mutate({ type: 'share' })}
         />
-      </View>
-      <View
-        style={[styles.caption, isExpanded && styles.expandedCaption, isHidden && styles.hidden]}
+      </Animated.View>
+      <Animated.View
+        style={[styles.caption, chromeStyle]}
         pointerEvents={isHidden ? 'none' : 'box-none'}
         accessibilityElementsHidden={isHidden}
         aria-hidden={isHidden}
@@ -215,46 +287,93 @@ export function ReelSocialOverlay({
               <Icon name="person-outline" color={colors.background} size={18} />
             </View>
           )}
-          <Txt variant="label" style={[styles.light, { flexShrink: 1 }]} numberOfLines={1}>
+          <Txt variant="label" style={styles.author} numberOfLines={1}>
             {author}
           </Txt>
         </View>
-        {isExpanded ? (
-          <ScrollView
-            style={styles.expandedText}
-            nestedScrollEnabled
-            contentContainerStyle={{ gap: spacing.sm }}
+        {/* Lays out the full text unseen: RN cannot place inline text after its own truncation. */}
+        <View
+          style={styles.captionMeasure}
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Txt
+            style={styles.captionBody}
+            onTextLayout={({ nativeEvent }) =>
+              setCollapsedLength(
+                getCollapsedCaptionLength(
+                  nativeEvent.lines.map((line) => line.text),
+                  CAPTION_LINES,
+                  SHOW_MORE_RESERVED_CHARS,
+                ),
+              )
+            }
           >
             <Txt style={styles.captionTitle}>{title}</Txt>
-            {!!caption && <Txt style={styles.captionBody}>{caption}</Txt>}
-          </ScrollView>
-        ) : (
-          <Txt style={styles.captionBody} numberOfLines={2}>
-            <Txt style={styles.captionTitle}>{title}</Txt>
-            {caption ? ` · ${caption}` : ''}
+            {fullCaption.slice(title.length)}
           </Txt>
-        )}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ expanded: isExpanded }}
-          onPress={() => setIsExpanded((value) => !value)}
-          style={styles.expandAction}
-        >
-          <Txt variant="label" style={styles.light}>
-            {isExpanded ? copy.showLess : copy.showMore}
-          </Txt>
-          <Icon name={isExpanded ? 'chevron-down' : 'chevron-up'} size={14} color={colors.background} />
-        </Pressable>
+        </View>
+        <Animated.View style={[styles.captionText, captionTextStyle]}>
+          <Animated.View
+            style={[styles.collapsedLayer, collapsedLayerStyle]}
+            pointerEvents={isExpanded ? 'none' : 'auto'}
+            accessibilityElementsHidden={isExpanded}
+            importantForAccessibility={isExpanded ? 'no-hide-descendants' : 'auto'}
+            onLayout={({ nativeEvent }) => setCollapsedHeight(nativeEvent.layout.height)}
+          >
+            <Pressable
+              accessibilityRole={collapsedLength === null ? undefined : 'button'}
+              accessibilityState={collapsedLength === null ? undefined : { expanded: false }}
+              disabled={collapsedLength === null}
+              onPress={() => toggleExpanded(true)}
+              style={({ pressed }) => pressed && styles.captionPressed}
+            >
+              <Txt style={styles.captionBody} numberOfLines={CAPTION_LINES}>
+                <Txt style={styles.captionTitle}>{visibleCaption.slice(0, title.length)}</Txt>
+                {visibleCaption.slice(title.length)}
+                {collapsedLength !== null && <Txt style={styles.captionTitle}>{SHOW_MORE_SUFFIX}</Txt>}
+              </Txt>
+            </Pressable>
+          </Animated.View>
+          <Animated.View
+            style={[StyleSheet.absoluteFill, expandedLayerStyle]}
+            pointerEvents={isExpanded ? 'auto' : 'none'}
+            accessibilityElementsHidden={!isExpanded}
+            importantForAccessibility={isExpanded ? 'auto' : 'no-hide-descendants'}
+          >
+            <ScrollView
+              ref={expandedScroll}
+              nestedScrollEnabled
+              scrollEnabled={expandedContentHeight > CAPTION_MAX_HEIGHT}
+              onContentSizeChange={(_width, contentHeight) => setExpandedContentHeight(contentHeight)}
+            >
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: true }}
+                onPress={() => toggleExpanded(false)}
+                style={({ pressed }) => pressed && styles.captionPressed}
+              >
+                <Txt style={styles.captionBody}>
+                  <Txt style={styles.captionTitle}>{title}</Txt>
+                  {`${fullCaption.slice(title.length)} `}
+                  <Txt style={styles.captionTitle}>{copy.showLess}</Txt>
+                </Txt>
+              </Pressable>
+            </ScrollView>
+          </Animated.View>
+        </Animated.View>
         {postId && (
           <Pressable
             style={styles.detail}
             accessibilityRole="button"
+            hitSlop={{ top: DETAIL_HIT_SLOP, bottom: DETAIL_HIT_SLOP }}
             onPress={() => router.push({ pathname: '/trip/[slug]', params: { slug: postId } })}
           >
             <Txt variant="label" style={styles.detailText}>
               {copy.detail}
             </Txt>
-            <Icon name="arrow-forward" size={18} color={colors.background} />
+            <Icon name="arrow-forward" size={16} color={colors.background} />
           </Pressable>
         )}
         {!!mutation.error && (
@@ -272,9 +391,10 @@ export function ReelSocialOverlay({
             </Txt>
           </Pressable>
         )}
-      </View>
+      </Animated.View>
       <ReelCommentsPanel
         visible={hasComments}
+        openProgress={commentsProgress}
         postId={postId}
         draft={draft}
         onDraftChange={setDraft}
@@ -292,20 +412,23 @@ export function ReelSocialOverlay({
 
 const styles = StyleSheet.create({
   light: { color: colors.background },
-  hidden: { opacity: 0 },
   errorAction: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44 },
-  captionTitle: { color: colors.background, fontFamily: nativeFonts.semibold, fontSize: 14, lineHeight: 21 },
-  captionBody: { color: colors.background, fontSize: 14, lineHeight: 21 },
-  expandedCaption: { backgroundColor: colors.overlayHeavy },
-  expandedText: { maxHeight: 180, flexShrink: 1 },
-  expandAction: {
-    minHeight: 44,
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+  scrim: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 200 },
+  expandedScrim: { height: 360 },
+  captionTitle: {
+    color: colors.background,
+    fontFamily: nativeFonts.semibold,
+    fontSize: 14,
+    lineHeight: CAPTION_LINE_HEIGHT,
+    ...TEXT_SHADOW,
   },
-  rail: { position: 'absolute', right: spacing.sm, bottom: 160, alignItems: 'center', gap: spacing.md },
+  captionBody: { color: colors.background, fontSize: 14, lineHeight: CAPTION_LINE_HEIGHT, ...TEXT_SHADOW },
+  captionText: { overflow: 'hidden' },
+  collapsedLayer: { position: 'absolute', top: 0, left: 0, right: 0 },
+  captionPressed: { opacity: 0.7 },
+  captionMeasure: { position: 'absolute', left: 0, right: 0, opacity: 0 },
+  rail: { position: 'absolute', right: spacing.sm, bottom: spacing.md, alignItems: 'center', gap: spacing.md },
+  railCount: { color: colors.background, fontFamily: nativeFonts.semibold, ...TEXT_SHADOW },
   railAction: {
     minWidth: 52,
     minHeight: 52,
@@ -316,19 +439,15 @@ const styles = StyleSheet.create({
   caption: {
     position: 'absolute',
     left: spacing.lg,
-    right: 80,
-    bottom: spacing.xl,
-    gap: spacing.sm,
-    backgroundColor: colors.overlay,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xs,
-    borderRadius: radius.md,
+    right: 72,
+    bottom: spacing.md,
+    gap: spacing.xs,
   },
   authorRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
+  author: { flex: 1, color: colors.background, ...TEXT_SHADOW },
   avatar: {
-    width: 34,
-    height: 34,
+    width: 32,
+    height: 32,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.background,
@@ -345,14 +464,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   detail: {
+    alignSelf: 'flex-start',
+    height: DETAIL_HEIGHT,
+    marginTop: spacing.xs,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.md,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
     backgroundColor: colors.coral,
     borderRadius: radius.md,
-    minHeight: mobileLayout.touchTarget,
   },
   detailText: { color: colors.background, flexShrink: 1 },
 });

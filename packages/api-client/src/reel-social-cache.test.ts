@@ -1,6 +1,6 @@
 import { QueryClient, type InfiniteData } from '@tanstack/react-query';
 import { expect, it } from 'vitest';
-import { updateReelSocialCache } from './reel-social-cache';
+import { findCachedFeedCard, updateReelSocialCache } from './reel-social-cache';
 import type { FeedCardDto } from './generated/core-api/model/feedCardDto';
 import type { FeedPageDto } from './generated/core-api/model/feedPageDto';
 import type { SocialPostDetailDto } from './generated/core-api/model/socialPostDetailDto';
@@ -50,6 +50,22 @@ it('updates like/save in place across pages while preserving video identity and 
   expect(read().pageParams).toBe(feed.pageParams);
   expect(read().pages.map((page) => page.nextCursor)).toEqual(['cursor', null]);
   expect(read().pages.flatMap((page) => page.items.map((item) => item.postId))).toEqual(['one', 'two']);
+});
+
+it('keeps the same post in sync across feed tabs, including rollback', () => {
+  const { client, feed, read } = setup();
+  const hotKey = ['feed', 'hot', 'viewer'];
+  client.setQueryData(hotKey, feed);
+  const readHot = () => client.getQueryData<InfiniteData<FeedPageDto>>(hotKey)!;
+
+  const rollback = updateReelSocialCache(client, 'viewer', 'one', 'like', true);
+  expect(read().pages[0]!.items[0]!.counts.likes).toBe(6);
+  expect(readHot().pages[0]!.items[0]!.counts.likes).toBe(6);
+  expect(readHot().pages[0]!.items[0]!.viewerState?.liked).toBe(true);
+
+  rollback();
+  expect(readHot().pages[0]!.items[0]!.counts.likes).toBe(5);
+  expect(readHot().pages[0]!.items[0]!.viewerState?.liked).toBe(false);
 });
 
 it('rolls back just the failed action without discarding successful saves, comments or another reel', () => {
@@ -124,4 +140,14 @@ it('treats an existing non-like reaction as part of the reaction total and resto
   expect(client.getQueryData<SocialPostDetailDto>(detailKey)!.post.reactionTotal).toBe(4);
   rollback();
   expect(client.getQueryData(detailKey)).toEqual(detail);
+});
+
+it('finds a post in any cached feed tab and returns nothing for an unknown post', () => {
+  const client = new QueryClient();
+  client.setQueryData<InfiniteData<FeedPageDto>>(['feed', 'hot', 'viewer'], {
+    pages: [{ items: [card('hot-post')], nextCursor: null }],
+    pageParams: [undefined],
+  });
+  expect(findCachedFeedCard(client, 'hot-post')?.postId).toBe('hot-post');
+  expect(findCachedFeedCard(client, 'missing')).toBeUndefined();
 });

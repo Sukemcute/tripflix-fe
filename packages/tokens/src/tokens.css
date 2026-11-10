@@ -26,6 +26,10 @@
   --color-coral-tint: #FFF0EB;
   --color-overlay: #18242B80;
   --color-overlay-heavy: #18242BCC;
+  --color-tab-bar: #000000;
+  --color-compose-start: #FFAA38;
+  --color-compose-end: #EA432D;
+  --color-compose-icon-shadow: #60180E47;
   --color-transparent: transparent;
   --font-sans: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;

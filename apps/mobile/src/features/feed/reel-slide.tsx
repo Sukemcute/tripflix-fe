@@ -1,4 +1,4 @@
-import { fitReelVideo, selectReelPoster } from '@tripflix/app-core';
+import { layoutReelCommentsVideo, layoutReelVideo, selectReelPoster } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { colors, spacing } from '@tripflix/tokens';
 import { useEvent } from 'expo';
@@ -6,8 +6,8 @@ import { Image } from 'expo-image';
 import { VideoView, type VideoPlayer } from 'expo-video';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { getFloatingTabBarHeight } from '@/components/floating-tab-bar';
+import { ActivityIndicator, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import Animated, { interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { Button, Icon, Txt } from '@/components/mobile-ui';
 import { ReelSocialOverlay } from './reel-social-overlay';
 import type { ReelItem } from './reel-types';
@@ -39,7 +39,7 @@ function PlayerSurface({
   const { videoTrack } = useEvent(player, 'videoTrackChange', { videoTrack: player.videoTrack });
   const level = videoTrack ? Math.min(videoTrack.size.width, videoTrack.size.height) : null;
   const poster = selectReelPoster(item.playback.posters, width);
-  const box = fitReelVideo(item.playback.aspect, width, height);
+  const { box, contentFit } = layoutReelVideo(item.playback.aspect, width, height);
   // Reapply playback intent after the VideoView attaches, including cached/reused sources.
   useEffect(() => {
     onAttach?.();
@@ -51,14 +51,19 @@ function PlayerSurface({
           <VideoView
             player={player}
             style={styles.video}
-            contentFit="contain"
+            contentFit={contentFit}
             surfaceType="textureView"
             nativeControls={false}
             playsInline
             onFirstFrameRender={() => setHasFrame(true)}
           />
           {!hasFrame && poster ? (
-            <Image source={poster} style={StyleSheet.absoluteFill} contentFit="contain" />
+            <Image
+              source={poster}
+              cachePolicy="memory-disk"
+              style={StyleSheet.absoluteFill}
+              contentFit={contentFit}
+            />
           ) : null}
         </View>
       </View>
@@ -130,10 +135,24 @@ export function ReelSlide({
   onAttach?: () => void;
   onCommentsVisibilityChange: (visible: boolean) => void;
 }) {
-  const insets = useSafeAreaInsets();
   const poster = selectReelPoster(item.playback.posters, width);
-  const videoBox = fitReelVideo(item.playback.aspect, width, height);
+  const { box: videoBox, contentFit } = layoutReelVideo(item.playback.aspect, width, height);
   const held = useRef(false);
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const commentsProgress = useSharedValue(0);
+  const commentsVideo = layoutReelCommentsVideo({
+    windowHeight,
+    slideHeight: height,
+    topInset: insets.top,
+    gap: spacing.sm,
+  });
+  const stageStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(commentsProgress.get(), [0, 1], [0, commentsVideo.translateY]) },
+      { scale: interpolate(commentsProgress.get(), [0, 1], [1, commentsVideo.scale]) },
+    ],
+  }));
   return (
     <View
       testID={`reel-${item.id}`}
@@ -141,14 +160,16 @@ export function ReelSlide({
       accessibilityElementsHidden={!isActive}
       importantForAccessibility={isActive ? 'auto' : 'no-hide-descendants'}
     >
-      {!!poster && (videoBox.width < width || videoBox.height < height) && (
-        <Image source={poster} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={25} />
-      )}
-      {!isLoaded && poster ? (
-        <View style={styles.videoLayer}>
-          <Image source={poster} style={videoBox} contentFit="contain" />
-        </View>
-      ) : null}
+      <Animated.View style={[StyleSheet.absoluteFill, stageStyle]} pointerEvents="none">
+        {!!poster && (videoBox.width < width || videoBox.height < height) && (
+          <Image source={poster} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={25} />
+        )}
+        {!isLoaded && poster ? (
+          <View style={styles.videoLayer}>
+            <Image source={poster} cachePolicy="memory-disk" style={videoBox} contentFit={contentFit} />
+          </View>
+        ) : null}
+      </Animated.View>
       <Pressable
         style={StyleSheet.absoluteFill}
         accessibilityRole="button"
@@ -170,17 +191,19 @@ export function ReelSlide({
         }}
       />
       {player && isLoaded && (
-        <PlayerSurface
-          key={`${item.id}:${item.playback.hlsUrl}`}
-          player={player}
-          item={item}
-          width={width}
-          height={height}
-          isPaused={isPaused}
-          onRetry={onRetry}
-          onAttach={onAttach}
-          isHidden={isActive && isHidden}
-        />
+        <Animated.View style={[StyleSheet.absoluteFill, stageStyle]} pointerEvents="box-none">
+          <PlayerSurface
+            key={`${item.id}:${item.playback.hlsUrl}`}
+            player={player}
+            item={item}
+            width={width}
+            height={height}
+            isPaused={isPaused}
+            onRetry={onRetry}
+            onAttach={onAttach}
+            isHidden={isActive && isHidden}
+          />
+        </Animated.View>
       )}
       {blockedReason ? (
         <VideoNotice text={blockedReason} />
@@ -191,18 +214,14 @@ export function ReelSlide({
           <ActivityIndicator color={colors.background} accessibilityLabel={copy.loading} />
         </View>
       ) : null}
-      <View
-        pointerEvents="box-none"
-        style={[StyleSheet.absoluteFill, { bottom: getFloatingTabBarHeight(insets.bottom) }]}
-      >
-        <ReelSocialOverlay
-          item={item}
-          isActive={isActive}
-          isSample={isSample}
-          isHidden={isActive && isHidden}
-          onCommentsVisibilityChange={onCommentsVisibilityChange}
-        />
-      </View>
+      <ReelSocialOverlay
+        item={item}
+        isActive={isActive}
+        isSample={isSample}
+        isHidden={isActive && isHidden}
+        commentsProgress={commentsProgress}
+        onCommentsVisibilityChange={onCommentsVisibilityChange}
+      />
     </View>
   );
 }
@@ -213,7 +232,8 @@ const styles = StyleSheet.create({
   quality: {
     position: 'absolute',
     top: spacing.xl,
-    right: spacing.lg,
+    // The mute button now sits at the top right, directly below the tabs.
+    left: spacing.lg,
     backgroundColor: colors.overlayHeavy,
     padding: spacing.sm,
   },
