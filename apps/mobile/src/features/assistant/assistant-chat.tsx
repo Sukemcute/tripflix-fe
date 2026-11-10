@@ -32,9 +32,17 @@ import { AssistantCards } from './assistant-cards';
 
 const copy = vi.assistant;
 
-export function AssistantChat({ onMinimize }: { onMinimize: () => void }) {
+export function AssistantChat({
+  onMinimize,
+  keyboardOffset = 0,
+}: {
+  onMinimize: () => void;
+  /** Khoảng cách từ đỉnh màn hình tới đỉnh khung chat. KeyboardAvoidingView chỉ biết vị trí trong khung cha, thiếu số này thì bàn phím vẫn che ô soạn tin. */
+  keyboardOffset?: number;
+}) {
   const chat = useAssistant();
   const insets = useSafeAreaInsets();
+  const composerBottom = Math.max(s.md, insets.bottom);
   const list = useRef<ComponentRef<typeof ScrollView>>(null);
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -44,7 +52,12 @@ export function AssistantChat({ onMinimize }: { onMinimize: () => void }) {
     onMinimize();
   }
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      // Khi bàn phím mở, phần đệm cho thanh Home nằm sau bàn phím; trừ ra để ô soạn tin sát bàn phím.
+      keyboardVerticalOffset={keyboardOffset - (composerBottom - s.md)}
+    >
       <View style={styles.header}>
         <View style={styles.avatar}>
           <Mascot size={48} />
@@ -81,6 +94,10 @@ export function AssistantChat({ onMinimize }: { onMinimize: () => void }) {
         keyboardDismissMode="on-drag"
         onContentSizeChange={() => {
           if (chat.messages.length) list.current?.scrollToEnd({ animated: false });
+        }}
+        // Bàn phím mở làm khung danh sách thấp lại; cuộn xuống để tin mới nhất vẫn nằm ngay trên ô soạn tin.
+        onLayout={() => {
+          if (chat.messages.length) list.current?.scrollToEnd({ animated: true });
         }}
       >
         {!chat.messages.length ? (
@@ -173,7 +190,7 @@ export function AssistantChat({ onMinimize }: { onMinimize: () => void }) {
           </View>
         )}
       </ScrollView>
-      <View style={[styles.composerArea, { paddingBottom: Math.max(s.md, insets.bottom) }]}>
+      <View style={[styles.composerArea, { paddingBottom: composerBottom }]}>
         <View style={styles.composer}>
           <TextInput
             ref={input}
@@ -341,7 +358,7 @@ function AssistantModal() {
         >
           <Animated.View style={[{ width: panelWidth, height: panelHeight }, contentMotion]}>
             <View style={styles.handle} />
-            <AssistantChat onMinimize={close} />
+            <AssistantChat onMinimize={close} keyboardOffset={targetY} />
           </Animated.View>
           <Animated.View
             pointerEvents="none"
@@ -361,9 +378,13 @@ function AssistantModal() {
 }
 
 export function AssistantScreen() {
+  const insets = useSafeAreaInsets();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
-      <AssistantChat onMinimize={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))} />
+      <AssistantChat
+        keyboardOffset={insets.top}
+        onMinimize={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+      />
     </SafeAreaView>
   );
 }
@@ -476,7 +497,11 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 48,
     maxHeight: 120,
-    padding: s.md,
+    // Ô nhiều dòng trên iOS bỏ qua cạnh trên của `padding` gộp, nên ghi riêng từng cạnh: (48 - 22) / 2 = 13 để một dòng nằm giữa.
+    paddingHorizontal: s.md,
+    paddingTop: 13,
+    paddingBottom: 13,
+    textAlignVertical: 'center',
     fontFamily: f.regular,
     color: c.ink,
     fontSize: 14,
