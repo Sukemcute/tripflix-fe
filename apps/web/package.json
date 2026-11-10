@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@rive-app/react-canvas": "4.35.0",
     "@tanstack/react-query": "catalog:",
     "@tripflix/api-client": "workspace:*",
     "@tripflix/app-core": "workspace:*",

@@ -1,6 +1,6 @@
 # Tripi · Thư viện mascot
 
-Nguồn: character guide người dùng cung cấp ngày 04/11/2026. Bộ này gồm **24 PNG riêng**, đại diện **25 vị trí** trong ảnh gốc, cùng **6 vòng animation 2D** bổ sung cho giao diện.
+Nguồn: character guide người dùng cung cấp ngày 04/11/2026. Bộ này gồm **26 PNG riêng** và **6 vòng animation 2D**. 24 PNG đại diện cho 25 vị trí trong guide, cộng hai biểu cảm Quá tải và Đình công.
 
 Mở `mascot-library.html` ở thư mục prototype để lọc nhóm, đổi nền xem alpha, phóng to và tải từng file. `tripi-asset-library.zip` chứa trọn bộ và source chuyển động.
 
@@ -8,7 +8,7 @@ Mở `mascot-library.html` ở thư mục prototype để lọc nhóm, đổi n�
 
 | Nhóm | Số hình | Tệp |
 | --- | --- | --- |
-| Biểu cảm | 8 | `expr-happy`, `expr-excited`, `expr-curious`, `expr-confident`, `expr-relaxed`, `expr-surprised`, `expr-effort`, `expr-cheer` |
+| Biểu cảm | 10 | `expr-happy`, `expr-excited`, `expr-curious`, `expr-confident`, `expr-relaxed`, `expr-surprised`, `expr-overload`, `expr-strike`, `expr-effort`, `expr-cheer` |
 | Góc nhìn | 4 | `turn-front`, `turn-left`, `turn-back`, `turn-right` |
 | Hoạt động | 7 | `action-explore`, `action-vlog`, `action-depart`, `action-vacation`, `action-plan`, `action-book`, `action-share` |
 | Nhận diện | 3 | `hero-welcome`, `portrait-profile`, `icon-fox` |
