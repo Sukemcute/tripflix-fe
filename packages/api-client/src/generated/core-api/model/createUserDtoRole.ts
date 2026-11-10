@@ -8,7 +8,5 @@
 export type CreateUserDtoRole = (typeof CreateUserDtoRole)[keyof typeof CreateUserDtoRole];
 
 export const CreateUserDtoRole = {
-  member: 'member',
   moderator: 'moderator',
-  superadmin: 'superadmin',
 } as const;

@@ -19,7 +19,7 @@ export {
   type PasswordKey,
   type PasswordPurpose,
 } from './password-encryption';
-export { changePassword, createStaffUser, resetPassword } from './password-actions';
+export { changePassword, resetPassword } from './password-actions';
 export {
   getApiErrorKind,
   getAuthErrorKind,

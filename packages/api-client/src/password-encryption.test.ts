@@ -1,6 +1,6 @@
 import { createDecipheriv, createPublicKey, diffieHellman, generateKeyPairSync, hkdfSync } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { changePassword, createStaffUser, resetPassword } from './password-actions';
+import { changePassword, resetPassword } from './password-actions';
 import {
   encryptPassword,
   PASSWORD_ENVELOPE_INVALID_CODE,
@@ -257,33 +257,5 @@ describe('đổi, đặt lại mật khẩu, tạo nhân sự', () => {
     expect(body.token).toBe('tok');
     expect(body).not.toHaveProperty('newPassword');
     expect(server.decrypt(String(body.encNewPassword), 'reset', '').p).toBe('mat-khau-moi');
-  });
-
-  it('tạo nhân sự: có mật khẩu thì gửi encPassword gắn email; bỏ trống thì không gửi trường mật khẩu nào', async () => {
-    const created = {
-      id: 'u',
-      email: 'mod@tripflix.vn',
-      displayName: 'Mod',
-      role: 'moderator',
-      status: 'active',
-    };
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => json(201, created));
-    await createStaffUser({
-      email: 'mod@tripflix.vn',
-      displayName: 'Mod',
-      role: 'moderator',
-      password: 'mat-khau-nhan-su',
-    });
-    const withPassword = bodyOf(fetchMock.mock.calls[0]![1]);
-    expect(withPassword).not.toHaveProperty('password');
-    expect(server.decrypt(String(withPassword.encPassword), 'staff_create', 'mod@tripflix.vn').p).toBe(
-      'mat-khau-nhan-su',
-    );
-    await createStaffUser({ email: 'mod2@tripflix.vn', displayName: 'Mod 2', role: 'moderator' });
-    expect(bodyOf(fetchMock.mock.calls[1]![1])).toEqual({
-      email: 'mod2@tripflix.vn',
-      displayName: 'Mod 2',
-      role: 'moderator',
-    });
   });
 });

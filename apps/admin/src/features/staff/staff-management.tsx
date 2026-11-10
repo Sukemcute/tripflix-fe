@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import * as admin from '@tripflix/api-client/core-api/admin/admin';
 import type { AdminUserDto } from '@tripflix/api-client/core-api/model/index';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useApiSession, http } from '@tripflix/api-client';
+import { HttpError, useApiSession } from '@tripflix/api-client';
 import { AdminApiError } from '../shell/api-state';
 
 /** Tạo màu avatar ngẫu nhiên nhưng ổn định dựa trên ký tự đầu */
@@ -41,8 +41,6 @@ export function StaffManagement() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
   const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [newRole, setNewRole] = useState<'moderator' | 'superadmin'>('moderator');
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
 
@@ -76,30 +74,31 @@ export function StaffManagement() {
     },
   });
 
-  // Mutation tạo tài khoản nhân sự mới qua API backend
+  // Tạo kiểm duyệt viên (TF056): không có mật khẩu, nhân sự nhận email để tự đặt mật khẩu.
   const createMutation = useMutation({
-    mutationFn: async (payload: { email: string; displayName: string; password?: string; role: string }) => {
-      return http<AdminUserDto>('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-    },
-    onSuccess: () => {
+    mutationFn: (payload: { email: string; displayName: string }) =>
+      admin.adminControllerCreateStaff({ ...payload, role: 'moderator' }),
+    onSuccess: (_res, payload) => {
       void client.invalidateQueries({ queryKey: ['admin'] });
-      setCreateSuccess(`Đã tạo tài khoản thành công cho ${newDisplayName} (${newEmail})!`);
+      setCreateSuccess(
+        `Đã tạo tài khoản cho ${payload.displayName}. Email đặt mật khẩu đã gửi tới ${payload.email}.`,
+      );
       setNewDisplayName('');
       setNewEmail('');
-      setNewPassword('');
       setCreateError(null);
       setTimeout(() => {
         setShowCreateModal(false);
         setCreateSuccess(null);
-      }, 1500);
+      }, 4000);
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Không thể tạo tài khoản. Vui lòng thử lại.';
-      setCreateError(msg);
+      // Lỗi 4xx của core-api có message tiếng Việt (ví dụ "Email đã tồn tại trong hệ thống").
+      const message = err instanceof HttpError ? (err.body as { message?: unknown } | null)?.message : undefined;
+      setCreateError(
+        typeof message === 'string' && err instanceof HttpError && err.status < 500
+          ? message
+          : 'Không thể tạo tài khoản. Vui lòng thử lại.',
+      );
     },
   });
 
@@ -655,8 +654,6 @@ export function StaffManagement() {
                 createMutation.mutate({
                   displayName: newDisplayName.trim(),
                   email: newEmail.trim(),
-                  password: newPassword.trim() || 'Tripflix@2025',
-                  role: newRole,
                 });
               }}
             >
@@ -712,58 +709,19 @@ export function StaffManagement() {
                 </div>
 
                 <div className="staff-form-group">
-                  <label className="staff-form-label" htmlFor="new-staff-pass">
-                    Mật khẩu khởi tạo (Mặc định: Tripflix@2025)
-                  </label>
-                  <input
-                    id="new-staff-pass"
-                    type="text"
-                    placeholder="Nhập mật khẩu hoặc để trống để dùng mặc định"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="staff-form-input"
-                  />
-                </div>
-
-                <div className="staff-form-group">
-                  <label className="staff-form-label" htmlFor="new-staff-role-select">
-                    Vai trò phân bổ <span style={{ color: '#DC2626' }}>*</span>
-                  </label>
-                  <div className="staff-role-radio-grid">
-                    <label
-                      className={`staff-radio-card ${newRole === 'moderator' ? 'is-selected' : ''}`}
-                      onClick={() => setNewRole('moderator')}
-                    >
-                      <input
-                        id="new-staff-role-select"
-                        type="radio"
-                        name="newRole"
-                        checked={newRole === 'moderator'}
-                        onChange={() => setNewRole('moderator')}
-                      />
-                      <div className="staff-radio-content">
-                        <strong>🛡️ Kiểm duyệt viên (Moderator)</strong>
-                        <span>Chuyên trách duyệt bài, ẩn bài vi phạm và xử lý báo cáo</span>
-                      </div>
-                    </label>
-
-                    <label
-                      className={`staff-radio-card ${newRole === 'superadmin' ? 'is-selected' : ''}`}
-                      onClick={() => setNewRole('superadmin')}
-                    >
-                      <input
-                        type="radio"
-                        name="newRole"
-                        checked={newRole === 'superadmin'}
-                        onChange={() => setNewRole('superadmin')}
-                      />
-                      <div className="staff-radio-content">
-                        <strong>👑 Quản trị viên (Superadmin)</strong>
-                        <span>Toàn quyền quản trị hệ thống, thanh toán và nhân sự</span>
-                      </div>
-                    </label>
+                  <span className="staff-form-label">Vai trò</span>
+                  <div className="staff-radio-card is-selected" id="new-staff-role">
+                    <div className="staff-radio-content">
+                      <strong>🛡️ Kiểm duyệt viên (Moderator)</strong>
+                      <span>Chuyên trách duyệt bài, ẩn bài vi phạm và xử lý báo cáo</span>
+                    </div>
                   </div>
                 </div>
+
+                <p id="new-staff-password-hint" style={{ fontSize: 12, color: '#64748B', margin: 0 }}>
+                  Nhân sự sẽ nhận email để tự đặt mật khẩu. Link có hiệu lực 30 phút; hết hạn thì dùng
+                  &quot;Quên mật khẩu&quot; ở trang đăng nhập.
+                </p>
               </div>
 
               <div className="mod-modal-footer">

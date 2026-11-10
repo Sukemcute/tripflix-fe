@@ -12,8 +12,7 @@ import { readEntity } from './response';
  * Phải khớp từng byte với core-api (access/auth/domain/password-envelope.ts, infra/x25519-password-keyring.ts):
  * X25519 → HKDF-SHA256(salt = khoá tạm ‖ khoá server, info "tripflix-pwd-v1") → AES-256-GCM, AAD gắn mục đích và email.
  */
-export type PasswordPurpose =
-  'login' | 'register' | 'change_current' | 'change_new' | 'reset' | 'staff_create';
+export type PasswordPurpose = 'login' | 'register' | 'change_current' | 'change_new' | 'reset';
 
 export interface PasswordKey {
   keyId: string;
@@ -28,7 +27,7 @@ const PREFIX = '#TFPWD';
 const VERSION = 1;
 const HKDF_INFO = utf8ToBytes('tripflix-pwd-v1');
 /** Mục đích có email trong AAD; đổi và đặt lại mật khẩu dùng chuỗi rỗng. */
-const PURPOSES_WITH_EMAIL: ReadonlySet<PasswordPurpose> = new Set(['login', 'register', 'staff_create']);
+const PURPOSES_WITH_EMAIL: ReadonlySet<PasswordPurpose> = new Set(['login', 'register']);
 
 function toBase64Url(bytes: Uint8Array): string {
   let binary = '';
