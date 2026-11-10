@@ -43,4 +43,7 @@ export const assistant = {
   error: 'Chưa gửi được tin nhắn. Ý tưởng của bạn vẫn được giữ lại.',
   retry: 'Thử gửi lại',
   footer: 'Tripi có thể nhầm. Hãy kiểm tra thông tin trước khi đặt chuyến.',
+  watchVideo: 'Xem video',
+  priceFrom: 'Từ',
+  loginRequired: 'Bạn đăng nhập giúp Tripi nhé, đăng nhập xong là mình gợi ý chuyến đi cho bạn ngay.',
 } as const;

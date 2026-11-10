@@ -1,7 +1,7 @@
 // Hook và type sinh ra import theo đường dẫn con, ví dụ:
 //   import { useHealthControllerCheck } from '@tripflix/api-client/core-api/health/health';
 //   import type { ParseQueryResponse } from '@tripflix/api-client/ai-service/model';
-export { configureHttp, http, HttpError, type HttpConfig, type HttpResponse } from './http';
+export { configureHttp, http, httpRaw, HttpError, type HttpConfig, type HttpResponse } from './http';
 export { ApiSessionProvider, useApiSession } from './session';
 export { SessionClient, type SessionOptions, type TokenStorage } from './session-client';
 export {
@@ -80,3 +80,10 @@ export {
   type VideoUploadOptions,
   type VideoUploadSource,
 } from './video-upload';
+export {
+  parseSseEvents,
+  sendAssistantMessage,
+  type AssistantAnswer,
+  type AssistantAnswerKind,
+  type AssistantCard,
+} from './assistant';

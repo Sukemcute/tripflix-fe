@@ -71,6 +71,7 @@ export function HomeStayPreview() {
                 <p>{vi.ota.staysIntro}</p>
                 <div className={styles.stayActionRow}>
                   <Link
+                    prefetch={false}
                     className={`ripple-button ${styles.stayAction}`}
                     href={getDestinationHref(destination)}
                     aria-label="Tìm phòng tại điểm đến đã chọn"
@@ -79,6 +80,7 @@ export function HomeStayPreview() {
                     <span>Tìm phòng tại:</span>
                   </Link>
                   <Link
+                    prefetch={false}
                     className={styles.stayDestinationBadge}
                     href={getDestinationHref(destination)}
                     aria-label={`Điểm đến ${destination.name}`}
@@ -154,6 +156,7 @@ export function HomeStayPreview() {
           {query.data?.items.map((stay) => (
             <article className={styles.hotelCard} key={stay.hotelId}>
               <Link
+                prefetch={false}
                 href={{
                   pathname: `/hotels/${encodeURIComponent(stay.hotelId)}`,
                   query: { ...dates, adults: 2 },
@@ -199,7 +202,7 @@ export function HomeStoryPreview() {
           <h2 id="home-stories-title">{vi.ota.storiesTitle}</h2>
           <p>{vi.ota.storiesIntro}</p>
         </div>
-        <Link className={styles.textLink} href="/inspiration">
+        <Link prefetch={false} className={styles.textLink} href="/inspiration">
           {vi.ota.allStories}
         </Link>
       </div>
@@ -216,7 +219,7 @@ export function HomeStoryPreview() {
           <article className={styles.story} key={post.id}>
             <p className="pin-tag">{post.tripAttachment?.destinationName ?? vi.ota.story}</p>
             <h3>
-              <Link href={`/trips/${encodeURIComponent(post.id)}`}>{post.title}</Link>
+              <Link prefetch={false} href={`/trips/${encodeURIComponent(post.id)}`}>{post.title}</Link>
             </h3>
             <p className={styles.excerpt}>{post.body}</p>
             <p className={styles.storyStats}>

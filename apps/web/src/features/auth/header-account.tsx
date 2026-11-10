@@ -70,7 +70,7 @@ export function HeaderAccount() {
   if (!isReady) return <span className="header-account is-loading" aria-hidden="true" />;
   if (!user)
     return (
-      <Link className="primary-button header-login" href="/login">
+      <Link prefetch={false} className="primary-button header-login" href="/login">
         {vi.api.login}
       </Link>
     );
@@ -103,19 +103,19 @@ export function HeaderAccount() {
           </div>
           <ul>
             <li>
-              <Link href="/account" onClick={closeMenu}>
+              <Link prefetch={false} href="/account" onClick={closeMenu}>
                 <MenuIcon name="account" />
                 {vi.api.account}
               </Link>
             </li>
             <li>
-              <Link href="/account?tab=bookings" onClick={closeMenu}>
+              <Link prefetch={false} href="/account?tab=bookings" onClick={closeMenu}>
                 <MenuIcon name="bookings" />
                 {vi.commerce.booked}
               </Link>
             </li>
             <li>
-              <Link href="/account?tab=mine" onClick={closeMenu}>
+              <Link prefetch={false} href="/account?tab=mine" onClick={closeMenu}>
                 <MenuIcon name="posts" />
                 {vi.api.myPosts}
               </Link>

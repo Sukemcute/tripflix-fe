@@ -24,7 +24,7 @@ export function SearchAdBanner() {
             <li key={highlight}>{highlight}</li>
           ))}
         </ul>
-        <Link className="primary-button" href={getDestinationHref(AD_DESTINATION)}>
+        <Link prefetch={false} className="primary-button" href={getDestinationHref(AD_DESTINATION)}>
           {vi.ota.adAction}
         </Link>
       </div>

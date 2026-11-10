@@ -19,6 +19,7 @@ export function TripCard({ trip }: { trip: DemoTrip }) {
   return (
     <article className="trip-card">
       <Link
+        prefetch={false}
         href={`/trips/${trip.slug}`}
         className="trip-card-link"
         aria-label={`${copy.common.detail}: ${content.title}`}
