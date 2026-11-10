@@ -268,11 +268,11 @@ export function LiveRegister({ returnTo }: { returnTo?: string }) {
           />
           <span>
             {vi.api.termsAgreePrefix}{' '}
-            <Link href="/dieu-khoan-su-dung" target="_blank">
+            <Link prefetch={false} href="/dieu-khoan-su-dung" target="_blank">
               {vi.terms.title}
             </Link>{' '}
             {vi.api.termsAnd}{' '}
-            <Link href="/chinh-sach-bao-mat" target="_blank">
+            <Link prefetch={false} href="/chinh-sach-bao-mat" target="_blank">
               {vi.privacy.title}
             </Link>
             {vi.api.termsAgreeSuffix}
@@ -350,7 +350,7 @@ export function LiveRegister({ returnTo }: { returnTo?: string }) {
           <AuthErrorNotice error={google.error} action="google" />
         </>
       )}
-      <Link className="auth-link auth-switch" href={withReturnTo('/login', returnTo)}>
+      <Link prefetch={false} className="auth-link auth-switch" href={withReturnTo('/login', returnTo)}>
         {vi.api.haveAccount}
       </Link>
     </>

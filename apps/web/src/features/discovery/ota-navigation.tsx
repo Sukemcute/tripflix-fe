@@ -54,7 +54,7 @@ export function OtaNavigation() {
   return (
     <nav className={styles.nav} aria-label={vi.demo.common.explore}>
       {NAVIGATION.map(({ href, label, icon }) => (
-        <Link key={href} href={href} aria-current={matches(href, pathname) ? 'page' : undefined}>
+        <Link prefetch={false} key={href} href={href} aria-current={matches(href, pathname) ? 'page' : undefined}>
           <NavItemContent icon={icon} label={label} />
         </Link>
       ))}

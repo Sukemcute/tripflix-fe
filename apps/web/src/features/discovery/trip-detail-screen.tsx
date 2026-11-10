@@ -15,6 +15,7 @@ export default async function TripDetailScreen({ params }: { params: Promise<{ s
   return (
     <main id="content" className="ota-container detail-page">
       <Link
+        prefetch={false}
         className="back-link"
         href={`/search?q=${encodeURIComponent(content.destination.split(',')[0]!)}`}
       >

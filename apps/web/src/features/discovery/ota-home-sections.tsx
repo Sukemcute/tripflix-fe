@@ -19,7 +19,7 @@ export function OtaHomeSections() {
           <div className={styles.tripiCopy}>
             <h2 id="home-tripi-title">{vi.ota.tripiTitle}</h2>
             <p className={styles.tripiIntro}>{vi.ota.tripiIntro}</p>
-            <Link href="/inspiration" className={`ripple-button ${styles.tripiAction}`}>
+            <Link prefetch={false} href="/inspiration" className={`ripple-button ${styles.tripiAction}`}>
               {vi.ota.tripiAction}
             </Link>
           </div>
