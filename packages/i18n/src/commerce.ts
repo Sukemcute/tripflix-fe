@@ -58,6 +58,7 @@ export const commerce = {
   card: 'Thẻ giả lập',
   vnpay: 'VNPay',
   testCards: 'Chọn thẻ kiểm thử',
+  paymentMethod: 'Phương thức thanh toán',
   cardNumber: 'Số thẻ',
   pay: 'Thanh toán',
   otp: 'Mã OTP',

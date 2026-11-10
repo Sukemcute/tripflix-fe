@@ -32,6 +32,7 @@ import {
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, UnavailableScreen } from '@/components/api-state';
 import { LiveFeedScreen } from '@/features/feed/live-feed-screen';
+import { HotelSearchResults } from './hotel-search-results';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
@@ -267,7 +268,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
           value={text}
           onChangeText={setText}
           maxLength={100}
-          placeholder="Tìm bài viết, lộ trình, video..."
+          placeholder="Tìm khách sạn, điểm đến, bài viết..."
           placeholderTextColor={colors.textMuted}
           returnKeyType="search"
           onSubmitEditing={() => submitSearch()}
@@ -310,6 +311,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
 
       {!isBrowsing && (
         <>
+          {submittedQuery !== '' && <HotelSearchResults q={submittedQuery} />}
           {/* Post Type Filter Tabs */}
           <Row style={styles.categories}>
             <Chip selected={postType === 'all'} onPress={() => handlePostTypeChange('all')}>
@@ -552,47 +554,91 @@ function StayRecommendations() {
         const bestStay = dest.hotels[0];
         if (!bestStay) return null;
         return (
-          <Card key={dest.province.slug || bestStay.hotelId}>
-            {bestStay.thumbnail && (
-              <Image
-                source={bestStay.thumbnail}
+          <Card key={dest.province.slug || bestStay.hotelId} style={{ padding: 0, overflow: 'hidden', gap: 0 }}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={bestStay.name}
+              onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: bestStay.hotelId } })}
+            >
+              <View>
+                {bestStay.thumbnail ? (
+                  <Image
+                    source={bestStay.thumbnail}
+                    style={{ width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.seaMist }}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <View style={{ width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.seaMist }} />
+                )}
+                {/* Nhãn nổi trên ảnh như thẻ khách sạn của web. */}
+                <Row style={{ position: 'absolute', top: spacing.sm, left: spacing.sm, gap: spacing.xs }}>
+                  <Badge tone="teal" icon="location-outline">
+                    {dest.province.name}
+                  </Badge>
+                  {bestStay.stars ? <Badge tone="sun">{`${bestStay.stars} ★`}</Badge> : null}
+                </Row>
+                <View
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    paddingHorizontal: spacing.md,
+                    paddingTop: spacing.xl,
+                    paddingBottom: spacing.sm,
+                    backgroundColor: colors.overlay,
+                  }}
+                >
+                  <Txt variant="heading" style={{ color: colors.background }} numberOfLines={2}>
+                    {bestStay.name}
+                  </Txt>
+                </View>
+              </View>
+            </Pressable>
+            <View style={{ padding: spacing.md, gap: spacing.sm }}>
+              <Row
                 style={{
-                  width: '100%',
-                  aspectRatio: 16 / 9,
+                  gap: spacing.xs,
+                  alignItems: 'flex-start',
+                  padding: spacing.sm,
                   borderRadius: radius.md,
                   backgroundColor: colors.seaMist,
                 }}
-                contentFit="cover"
-              />
-            )}
-            <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-              <Badge tone="teal">{dest.province.name}</Badge>
-              {bestStay.stars ? (
-                <Txt variant="caption" style={{ color: colors.textMuted }}>
-                  {bestStay.stars} ★
-                </Txt>
-              ) : null}
-            </Row>
-            <Txt variant="heading">{bestStay.name}</Txt>
-            <Txt variant="small">{bestStay.reason.text}</Txt>
-            <Txt variant="label">
-              {vi.hotel.from} {money(bestStay.priceFrom)} / {vi.api.perNight}
-            </Txt>
-            <Button
-              tone="secondary"
-              onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: bestStay.hotelId } })}
-            >
-              {vi.commerce.hotel}
-            </Button>
-            {dest.otherDealsCount > 0 && (
-              <Button
-                tone="text"
-                onPress={() => router.push({ pathname: '/search', params: { q: dest.province.name } })}
-                icon="arrow-forward"
               >
-                {`Khám phá thêm ${dest.otherDealsCount} deal hời`}
-              </Button>
-            )}
+                <Icon name="pricetag-outline" size={16} color={colors.tealInk} />
+                <Txt variant="small" style={{ flex: 1, color: colors.tealInk }}>
+                  {bestStay.reason.text}
+                </Txt>
+              </Row>
+              <Row style={{ alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.sm }}>
+                <View style={{ flexShrink: 1 }}>
+                  <Txt variant="small" style={{ color: colors.textMuted }}>
+                    {vi.hotel.from}
+                  </Txt>
+                  <Txt variant="title" style={{ color: colors.coralInk }}>
+                    {money(bestStay.priceFrom)}
+                  </Txt>
+                  <Txt variant="small" style={{ color: colors.textMuted }}>
+                    / {vi.api.perNight}
+                  </Txt>
+                </View>
+                <Button
+                  icon="arrow-forward"
+                  onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: bestStay.hotelId } })}
+                >
+                  {vi.hotel.viewRooms}
+                </Button>
+              </Row>
+              {dest.otherDealsCount > 0 && (
+                <Button
+                  tone="text"
+                  onPress={() => router.push({ pathname: '/search', params: { q: dest.province.name } })}
+                  icon="arrow-forward"
+                >
+                  {`Khám phá thêm ${dest.otherDealsCount} deal hời`}
+                </Button>
+              )}
+            </View>
           </Card>
         );
       })}

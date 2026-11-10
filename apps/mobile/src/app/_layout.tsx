@@ -7,6 +7,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { ActivityIndicator, Platform, View } from 'react-native';
+import { AppFrame } from '@/components/app-frame';
 import { copy, Txt } from '@/components/mobile-ui';
 import { ReviewProvider } from '@/features/review/review-provider';
 import { CommerceProvider } from '@/features/booking/commerce-provider';
@@ -60,7 +61,7 @@ export default function RootLayout() {
           <ReviewProvider>
             <StatusBar style="dark" />
             {fontError && <Txt variant="caption">{copy.common.fontError}</Txt>}
-            <View
+            <AppFrame
               style={{
                 flex: 1,
                 width: '100%',
@@ -78,7 +79,7 @@ export default function RootLayout() {
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(tabs)" />
               </Stack>
-            </View>
+            </AppFrame>
           </ReviewProvider>
         </CommerceProvider>
       </ApiSessionProvider>
