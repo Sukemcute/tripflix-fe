@@ -73,3 +73,15 @@ Thêm feature `assistant`, gắn provider/bóng chat vào root layout mobile (Tr
 - Lấy mẫu 25 frame ở 390 px: opacity từ 0.758 → 1 và translateY từ 15.51 → 0, ghi nhận 5 transform khác nhau; xác nhận có chuyển động và kết thúc đúng vị trí. Ảnh trong `D:/Sukem/VinUni/VSF/outputs/tripi-chat-20261110/animation/`.
 - `pnpm turbo run lint typecheck test build --affected`: 22/22 tác vụ thành công. Kiểm tra ranh giới module pass. Expo web và Android export pass (2126 modules, Hermes 4.9 MB).
 - Chưa kiểm tra cảm giác chuyển động trên thiết bị Android thật; cần thử mở/thu nhỏ liên tục, Back khi đang mở và bật reduced motion trên thiết bị trước khi phát hành.
+
+### Thiết kế cuối: bung từ bóng theo kiểu Messenger
+
+Thay thế chuyển động scale nhẹ ở mục trên theo phản hồi người dùng. Không sử dụng skill Expo cho lần chỉnh sửa này.
+
+- Đo tọa độ và kích thước bóng tại thời điểm bấm bằng `measureInWindow`, sau khi dừng chuyển động neo mép. Lưu điểm xuất phát trong provider; tôn trọng vị trí bóng đã kéo.
+- Khung nổi bắt đầu đúng 64×64 px, mở rộng cả chiều ngang và dọc tới khung chat trong 360 ms; góc tròn chuyển thành góc cửa sổ. Đóng co về cùng điểm xuất phát trong 280 ms.
+- Chỉ khung clip tuyệt đối đổi kích thước; nội dung bên trong giữ kích thước cuối để chữ không méo hoặc xuống dòng lại mỗi frame. Mascot chuyển sang nội dung chat bằng crossfade.
+- Mỗi lần mở khởi tạo modal animation mới từ tọa độ hiện tại để không chớp về vị trí của lần mở trước. Reduced motion giữ fade 100 ms và bỏ nở khung.
+- Kiểm thử lấy mẫu frame: 64×64 → 390×778 px, xác nhận xuất phát từ mép trái sau khi kéo bóng, thu về cùng tọa độ và chiều rộng/chiều cao nhỏ lại trước khi unmount. Cả 320/430 px reduced motion và các luồng hội thoại pass; không có runtime exception.
+- Kiểm tra cuối: 22/22 tác vụ lint/typecheck/test/build thành công; boundaries và diff check pass; export web và Android thành công, Android 2126 modules/Hermes 4.9 MB. Chưa có kiểm tra hiệu năng thiết bị Android thật.
+- Ảnh giao diện và ảnh đang bung ở `D:/Sukem/VinUni/VSF/outputs/tripi-chat-20261110/messenger/`, lưu ngoài repo. Cập nhật trong PR #89.

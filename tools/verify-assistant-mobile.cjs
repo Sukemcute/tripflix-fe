@@ -23,12 +23,53 @@ class AssistantPage {
     await this.bubble.click();
     await this.input.waitFor();
   }
+  async observeExpansion() {
+    await this.page.evaluate(() => {
+      globalThis.assistantOpeningFrames = (async () => {
+        const frames = [];
+        for (let i = 0; i < 150 && frames.length < 32; i++) {
+          await new Promise(requestAnimationFrame);
+          const frame = document.querySelector('[data-testid="assistant-morph-frame"]');
+          if (frame && frame.checkVisibility({ visibilityProperty: true })) {
+            const { x, y, width, height } = frame.getBoundingClientRect();
+            frames.push({ x, y, width, height });
+          }
+        }
+        return frames;
+      })();
+    });
+    await this.open();
+    return this.page.evaluate(() => globalThis.assistantOpeningFrames);
+  }
   async minimize() {
     await this.button('Thu nhỏ cuộc trò chuyện').last().click();
     await this.bubble.waitFor();
   }
+  async observeCollapse() {
+    await this.page.evaluate(() => {
+      globalThis.assistantClosingFrames = (async () => {
+        const frames = [];
+        for (let i = 0; i < 90; i++) {
+          await new Promise(requestAnimationFrame);
+          const frame = document.querySelector('[data-testid="assistant-morph-frame"]');
+          if (!frame) break;
+          const { x, y, width, height } = frame.getBoundingClientRect();
+          frames.push({ x, y, width, height });
+        }
+        return frames;
+      })();
+    });
+    await this.minimize();
+    return this.page.evaluate(() => globalThis.assistantClosingFrames);
+  }
   async snapshot(name) {
     await this.page.evaluate(() => document.fonts.ready);
+    if (await this.page.getByTestId('assistant-morph-frame').count()) {
+      await this.page.waitForFunction(() => {
+        const frame = document.querySelector('[data-testid="assistant-morph-frame"]');
+        return frame && frame.getBoundingClientRect().width >= Math.min(innerWidth, 430) - 1;
+      });
+    }
     await this.page.screenshot({ path: join(evidence, `${name}.png`) });
   }
 }
@@ -64,7 +105,38 @@ class AssistantPage {
         assert.ok(after.x < width / 2 && after.y < before.y - 100, 'Bubble follows drag and docks left');
         assert.equal(await view.input.count(), 0, 'Drag must not open chat');
       }
-      await view.open();
+      const frames = await view.observeExpansion();
+      assert.ok(frames.length > 1, 'Opening produces visible frames');
+      assert.ok(Math.abs(frames.at(-1).width - width) < 2, 'Chat expands to viewport width');
+      if (width === 390) {
+        assert.ok(frames[0].width < width * 0.65, 'Opening begins at bubble size, not nearly full size');
+        assert.ok(frames.at(-1).height > frames[0].height * 2, 'Chat grows in both dimensions');
+        assert.ok(
+          frames[0].x < width / 2,
+          `Opening follows bubble moved to the left: ${JSON.stringify(frames[0])}`,
+        );
+        process.stdout.write(
+          `Morph: ${Math.round(frames[0].width)}x${Math.round(frames[0].height)} -> ${Math.round(frames.at(-1).width)}x${Math.round(frames.at(-1).height)}\n`,
+        );
+      } else {
+        assert.ok(
+          frames.every((frame) => Math.abs(frame.width - width) < 2),
+          'Reduced motion skips expansion',
+        );
+      }
+      if (width === 390) {
+        const closingFrames = await view.observeCollapse();
+        const last = closingFrames.at(-1);
+        assert.ok(
+          last.width < width * 0.5 && last.height < frames.at(-1).height * 0.5,
+          'Closing contracts back to a bubble',
+        );
+        assert.ok(
+          Math.abs(last.x - frames[0].x) < 24 && Math.abs(last.y - frames[0].y) < 24,
+          'Closing returns to the measured bubble origin',
+        );
+        await view.open();
+      }
       // Interrupt the entrance, then reopen: the exit callback must not leave an invisible modal.
       await view.button('Thu nhỏ cuộc trò chuyện').last().click({ force: true });
       await view.bubble.waitFor();

@@ -1,5 +1,5 @@
 import { vi } from '@tripflix/i18n';
-import { colors as c, nativeFonts as f, spacing as s } from '@tripflix/tokens';
+import { colors as c, mobileLayout, nativeFonts as f, spacing as s } from '@tripflix/tokens';
 import { useRef, useState, type ComponentRef } from 'react';
 import {
   ActivityIndicator,
@@ -12,6 +12,7 @@ import {
   StyleSheet,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -21,8 +22,8 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withSpring,
   withTiming,
+  interpolateColor,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Icon, IconButton, Mascot, Txt, type IconName } from '@/components/mobile-ui';
@@ -231,17 +232,50 @@ export function AssistantChat({ onMinimize }: { onMinimize: () => void }) {
 
 export function AssistantDialog() {
   const chat = useAssistant();
+  // Initialize the animated frame from the latest measured bubble, never a previous opening.
+  return chat.isOpen ? <AssistantModal /> : null;
+}
+
+function AssistantModal() {
+  const chat = useAssistant();
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
+  const viewport = useWindowDimensions();
+  const panelWidth = Math.min(viewport.width, mobileLayout.contentWidth);
+  const panelHeight = (viewport.height - insets.top - s.lg) * 0.94;
+  const targetX = (viewport.width - panelWidth) / 2;
+  const targetY = viewport.height - panelHeight;
+  const origin = chat.origin ?? {
+    x: targetX + panelWidth - 76,
+    y: viewport.height - 168,
+    width: 64,
+    height: 64,
+  };
   const progress = useSharedValue(0);
   const isClosing = useRef(false);
   const backdropMotion = useAnimatedStyle(() => ({ opacity: progress.get() }));
-  const dialogMotion = useAnimatedStyle(() => ({
-    opacity: progress.get(),
-    transform: [
-      { translateY: reducedMotion ? 0 : (1 - progress.get()) * 64 },
-      { scale: reducedMotion ? 1 : 0.97 + progress.get() * 0.03 },
-    ],
+  // Resize only this floating clipping frame. The full-sized chat inside never reflows or stretches.
+  const dialogMotion = useAnimatedStyle(() => {
+    const p = reducedMotion ? 1 : progress.get();
+    return {
+      left: origin.x + (targetX - origin.x) * p,
+      top: origin.y + (targetY - origin.y) * p,
+      width: origin.width + (panelWidth - origin.width) * p,
+      height: origin.height + (panelHeight - origin.height) * p,
+      borderTopLeftRadius: 32 + (28 - 32) * p,
+      borderTopRightRadius: 32 + (28 - 32) * p,
+      borderBottomLeftRadius: 32 * (1 - p),
+      borderBottomRightRadius: 32 * (1 - p),
+      borderWidth: 2 * (1 - p),
+      backgroundColor: interpolateColor(p, [0, 1], [c.warmMist, c.background]),
+      opacity: reducedMotion ? progress.get() : 1,
+    };
+  });
+  const contentMotion = useAnimatedStyle(() => ({
+    opacity: reducedMotion ? 1 : Math.max(0, Math.min(1, (progress.get() - 0.18) / 0.55)),
+  }));
+  const mascotMotion = useAnimatedStyle(() => ({
+    opacity: reducedMotion ? 0 : Math.max(0, 1 - progress.get() / 0.22),
   }));
   function finishClose() {
     chat.setIsOpen(false);
@@ -252,11 +286,10 @@ export function AssistantDialog() {
     progress.set(
       reducedMotion
         ? withTiming(1, { duration: 100, reduceMotion: ReduceMotion.Never })
-        : withSpring(1, {
-            duration: 300,
-            dampingRatio: 0.8,
-            overshootClamping: true,
-            reduceMotion: ReduceMotion.System,
+        : withTiming(1, {
+            duration: 360,
+            easing: Easing.bezier(0.2, 0.8, 0.2, 1),
+            reduceMotion: ReduceMotion.Never,
           }),
     );
   }
@@ -269,8 +302,8 @@ export function AssistantDialog() {
       withTiming(
         0,
         {
-          duration: reducedMotion ? 100 : 200,
-          easing: Easing.bezier(0.23, 1, 0.32, 1),
+          duration: reducedMotion ? 100 : 280,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
           reduceMotion: ReduceMotion.Never,
         },
         (finished) => {
@@ -288,7 +321,7 @@ export function AssistantDialog() {
       onShow={open}
       onRequestClose={close}
     >
-      <View style={[styles.backdrop, { paddingTop: insets.top + s.lg }]}>
+      <View style={styles.backdrop}>
         <Animated.View
           pointerEvents="none"
           style={[StyleSheet.absoluteFill, { backgroundColor: c.overlay }, backdropMotion]}
@@ -299,9 +332,26 @@ export function AssistantDialog() {
           onPress={close}
           style={StyleSheet.absoluteFill}
         />
-        <Animated.View style={[styles.dialog, dialogMotion]} accessibilityViewIsModal>
-          <View style={styles.handle} />
-          <AssistantChat onMinimize={close} />
+        <Animated.View
+          testID="assistant-morph-frame"
+          style={[styles.dialog, dialogMotion]}
+          accessibilityViewIsModal
+        >
+          <Animated.View style={[{ width: panelWidth, height: panelHeight }, contentMotion]}>
+            <View style={styles.handle} />
+            <AssistantChat onMinimize={close} />
+          </Animated.View>
+          <Animated.View
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[styles.morphMascot, mascotMotion]}
+          >
+            <Mascot size={58} />
+            <View style={styles.morphBadge}>
+              <Icon name="sparkles" size={12} color={c.background} />
+            </View>
+          </Animated.View>
         </Animated.View>
       </View>
     </Modal>
@@ -320,14 +370,24 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: c.background },
   backdrop: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
   dialog: {
-    width: '100%',
-    maxWidth: 430,
-    flex: 1,
-    maxHeight: '94%',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    position: 'absolute',
     overflow: 'hidden',
-    backgroundColor: c.background,
+    borderColor: c.background,
+    boxShadow: `0 4px 16px ${c.overlay}`,
+  },
+  morphMascot: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  morphBadge: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: c.coral,
+    borderWidth: 2,
+    borderColor: c.background,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   handle: {
     alignSelf: 'center',
