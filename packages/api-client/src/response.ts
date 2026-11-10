@@ -1,5 +1,12 @@
 import { HttpError } from './http';
 
+/** Credentials were accepted, but the client could not load the authenticated profile. */
+export class SessionSetupError extends Error {
+  constructor(cause: unknown) {
+    super('Could not load the authenticated profile', { cause });
+  }
+}
+
 type ApiErrorKind =
   | 'network'
   | 'expired'
@@ -21,6 +28,7 @@ const HTTP_ERROR_KINDS: Partial<Record<number, ApiErrorKind>> = {
 };
 
 export function getApiErrorKind(error: unknown): ApiErrorKind {
+  if (error instanceof SessionSetupError) error = error.cause;
   if (error instanceof TypeError) return 'network';
   if (!(error instanceof HttpError)) return 'error';
   const body = error.body as { code?: unknown } | null;

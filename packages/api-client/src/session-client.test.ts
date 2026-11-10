@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SessionClient } from './session-client';
 import { http, HttpError, type HttpResponse } from './http';
+import { getApiErrorKind, getAuthErrorKind } from './response';
 
 const user = {
   id: 'member-1',
@@ -15,6 +16,24 @@ const json = (status: number, body: unknown) =>
 afterEach(() => vi.restoreAllMocks());
 
 describe('session integration', () => {
+  it('reports a profile 401 after successful login as a session error', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) =>
+      String(url).endsWith('/auth/login') ? json(200, pair) : json(401, {}),
+    );
+    const session = new SessionClient({ baseUrl: '', client: 'web' });
+
+    const [result] = await Promise.allSettled([session.login({ email: user.email, password: 'example-password' })]);
+    expect(result?.status).toBe('rejected');
+    if (result?.status !== 'rejected') throw new Error('Expected profile loading to fail');
+    expect(getAuthErrorKind(result.reason, 'login')).toBeNull();
+    expect(getApiErrorKind(result.reason)).toBe('expired');
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/api/auth/login',
+      '/api/auth/me',
+      '/api/auth/refresh',
+    ]);
+  });
+
   it('web login uses the HttpOnly cookie protocol; only the access token enters memory', async () => {
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')
@@ -71,6 +90,10 @@ describe('session integration', () => {
     const session = new SessionClient({ baseUrl: '', client: 'web' });
     await Promise.all([session.initialize(), session.initialize()]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe('/api/auth/refresh');
+    expect(new Headers(init?.headers).has('authorization')).toBe(false);
+    expect(JSON.parse(String(init?.body))).toEqual({});
     expect(session.getSnapshot()).toEqual({ user: null, isReady: true, error: null });
   });
 
