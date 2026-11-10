@@ -11,6 +11,9 @@ export const ota = {
   heroExploreNow: 'Khám phá ngay',
   heroTopRated: 'Đánh giá cao',
   heroMascotTag: 'Tripi cùng bạn vi vu',
+  heroEyebrow: 'Khám phá · Nghỉ dưỡng · Tận hưởng',
+  heroMascotCardTitle: 'Tripi đồng hành',
+  heroMascotCardSubtitle: '50,000+ du khách tin chọn',
   heroScenes: {
     haLong: {
       title: 'Vịnh Hạ Long',

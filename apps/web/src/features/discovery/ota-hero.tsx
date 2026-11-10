@@ -76,20 +76,14 @@ export function OtaHero() {
     <header className={styles.hero}>
       <div className={`ota-container ${styles.inner}`}>
         <div className={styles.copy}>
-          {/* Huy hiệu linh vật Tripi đồng hành thông minh */}
-          <div className={styles.companionBadge}>
-            <div className={styles.companionMascotWrapper}>
-              <TripiLive className={styles.companionMascot} />
-            </div>
-            <div className={styles.companionTextGroup}>
-              <span className={styles.companionPulseDot} aria-hidden="true" />
-              <span className={styles.companionTag}>{vi.ota.heroMascotTag}</span>
-            </div>
+          <div className={styles.eyebrow}>
+            <span className={styles.eyebrowText}>{vi.ota.heroEyebrow}</span>
+            <span className={styles.eyebrowPlane} aria-hidden="true">✈</span>
           </div>
 
           <h1>
             <span className={styles.titleFirst}>{SLOGAN_FIRST},</span>{' '}
-            <span className={styles.titleSecond}>{SLOGAN_SECOND}</span>
+            <span className={styles.titleSecond}>{SLOGAN_SECOND}.</span>
           </h1>
 
           <p className={styles.description}>{vi.ota.heroIntro}</p>
@@ -139,6 +133,20 @@ export function OtaHero() {
 
             {/* Lớp phủ chuyển sắc để tăng tương phản chữ */}
             <div className={styles.sceneGradient} aria-hidden="true" />
+
+            {/* Thẻ nổi Tripi Mascot Đồng Hành (Tương tự thẻ Travorra Happy Travelers) */}
+            <aside className={styles.floatingMascotCard} aria-label={vi.ota.heroMascotCardTitle}>
+              <div className={styles.mascotCardAvatar}>
+                <TripiLive className={styles.mascotLive} />
+              </div>
+              <div className={styles.mascotCardContent}>
+                <div className={styles.mascotCardHeader}>
+                  <strong className={styles.mascotCardTitle}>{vi.ota.heroMascotCardTitle}</strong>
+                  <span className={styles.mascotCardBadge}>✓</span>
+                </div>
+                <p className={styles.mascotCardSubtitle}>{vi.ota.heroMascotCardSubtitle}</p>
+              </div>
+            </aside>
 
             {/* Huy hiệu xu hướng nổi góc trên (Floating Glassmorphism) */}
             <div className={styles.floatingTrendingBadge}>

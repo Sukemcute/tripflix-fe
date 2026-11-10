@@ -4,11 +4,12 @@
 
 ## Đã làm
 - Nâng cấp Hero section thành multi-scene showcase (4 danh thắng nổi tiếng: Vịnh Hạ Long, Phố cổ Hội An, Đảo Ngọc Phú Quốc, Tràng An Ninh Bình) với hiệu ứng zoom chậm Ken Burns, huy hiệu nổi xu hướng glassmorphism, thẻ danh thắng chi tiết, đường nét đứt chuyển động lộ trình di chuyển (marching dashes + radar pulse).
-- Tái cấu trúc khu vực Hero và Thanh tìm kiếm chuẩn Above-The-Fold:
-  - Linh vật Tripi được tái thiết kế thành "Huy hiệu đồng hành du lịch" (Travel Companion Badge) tích hợp avatar bo tròn, beacon phát sáng và thông điệp chào đón, tiết kiệm hơn 90px chiều cao.
-  - Tinh chỉnh typography tiêu đề H1 gọn gàng, tăng cường gradient shimmer hoàng hôn.
-  - Tinh chỉnh khung ảnh danh thắng tỷ lệ 16:9 điện ảnh (`height: clamp(210px, 18.5vw, 260px)`).
-  - Tối ưu hóa kích thước thanh tìm kiếm (giảm padding thừa, căn chỉnh input và nút "Tìm phòng trống"), đưa toàn bộ thanh tìm kiếm lên trọn vẹn 100% trong màn hình đầu tiên (Above-the-fold) trên mọi laptop từ 1366x768 trở lên.
+- Tái thiết kế Hero & Thanh tìm kiếm theo phong cách Organic Wave Horizon & Floating Master Capsule (lấy cảm hứng từ Travorra):
+  - Khung ảnh danh thắng dạng vòm sóng hữu cơ mềm mại bất đối xứng (`border-radius: 140px 36px 36px 80px / 180px 36px 36px 80px`), chiều cao khoáng đạt `clamp(340px, 32vw, 450px)` giúp ảnh bung tỏa bao la, không còn bị gò bó hay dẹt ảnh.
+  - Thẻ linh vật Tripi đồng hành nổi 3D (`floatingMascotCard`) đặt trang trọng trên góc ảnh với animation bồng bềnh, avatar tròn phát sáng và thông điệp chào đón kèm rating uy tín.
+  - Eyebrow du lịch phong cách quốc tế `KHÁM PHÁ · NGHỈ DƯỠNG · TẬN HƯỞNG ✈` với icon máy bay chuyển động lơ lửng.
+  - Thanh tìm kiếm nâng cấp thành Floating Search Capsule: bo tròn viên nang `999px`, nền trắng tinh khôi viền mỏng và bóng đổ đa tầng mịn màng, các trường ngăn cách bởi vạch phân cách thanh lịch, nút "Tìm phòng trống" nổi bật với gradient biển và shadow loang màu.
+  - Bố cục 100% Above-the-fold hoàn hảo trên desktop và tự động co giãn thông minh trên mobile.
 - Thêm gradient shimmer cho slogan dòng 2, hiệu ứng nhấc thẻ và đổ bóng mềm mại cho các nút hoạt động.
 - Nâng cấp Gợi ý combo nổi bật: hiệu ứng chuyển cảnh mượt mà theo hướng (directional slide-up/down), tương tác 3D tilt và vệt sáng phản chiếu (specular glare) theo chuyển động chuột, thanh timeline mini tiến trình xoay tua combo tự động tạm dừng khi hover.
 - Nâng cấp Khách sạn & Nơi lưu trú: hiệu ứng chia bài so le (staggered entrance) khi chuyển đổi chip điểm đến, zoom nhẹ ảnh phòng, con dấu đỏ Verified đóng dấu nhún nảy khi rê chuột.
