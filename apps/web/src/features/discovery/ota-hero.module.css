@@ -13,6 +13,7 @@
   position: relative;
   z-index: 1;
   padding-block-start: 0;
+  container-type: inline-size;
 }
 .heroMascot {
   position: relative;
@@ -24,130 +25,373 @@
 .copy h1 {
   margin-block: 8px 16px;
   color: var(--color-teal-ink);
-  font-size: clamp(2.6rem, 5.05vw, 6rem);
+  font-size: min(clamp(2.6rem, 4.1vw, 4.5rem), 12.8cqi);
   line-height: 1.08;
   letter-spacing: -0.075em;
   white-space: pre-line;
-}
-.copy h1::first-line {
-  color: var(--color-ink);
-}
-/* Dòng 1 luôn trên một hàng; cỡ chữ co theo bề rộng cột (cqi) để dòng 1 không tràn. */
-.copy {
-  container-type: inline-size;
-}
-.copy h1 {
-  font-size: min(clamp(2.6rem, 4.1vw, 4.5rem), 12.8cqi);
 }
 .titleFirst {
   display: block;
   color: var(--color-ink);
   white-space: nowrap;
 }
+.titleSecond {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--color-teal-ink) 0%, var(--color-teal) 45%, var(--color-coral) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShimmer 7s ease-in-out infinite alternate;
+}
+@keyframes textShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
 .description {
   max-width: 41ch;
   font-size: clamp(0.88rem, 1.18vw, 1.04rem);
   line-height: 1.75;
 }
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 20px;
-  margin-top: 28px;
-}
-.searchAction,
-.scrollAction {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 46px;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-.searchAction {
-  min-height: 52px;
-  padding: 12px 30px;
-  border-radius: 999px;
-  font-size: 0.92rem;
-  background: var(--color-ink);
-  color: var(--color-background);
-}
-/* Nút đen loang Teal; chữ chuyển Ink cho đủ tương phản trên Teal. */
-.searchAction {
-  --ripple-color: var(--color-teal);
-  transition: color 480ms;
-}
-.searchAction:is(:hover, :focus-visible) {
-  color: var(--color-ink);
-}
-.scrollAction {
-  color: var(--color-teal-ink);
-}
-.scrollAction:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
 .activities {
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
-  gap: clamp(6px, 1.2vw, 14px);
+  gap: clamp(8px, 1.2vw, 14px);
   overflow-x: auto;
-  margin-top: 20px;
-  padding-top: 14px;
+  margin-top: 24px;
+  padding-top: 16px;
   border-top: 1px solid color-mix(in srgb, var(--color-teal-ink) 25%, transparent);
+  scrollbar-width: none;
 }
-.activities a {
-  display: flex;
+.activities::-webkit-scrollbar {
+  display: none;
+}
+.activityPill {
+  display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  font-size: 0.75rem;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 14px 4px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid color-mix(in srgb, var(--color-teal-ink) 18%, transparent);
+  color: var(--color-ink);
+  font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition:
+    transform 280ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 280ms ease,
+    background 200ms ease,
+    border-color 200ms ease;
 }
-.activities a:hover {
+.activityPill:hover {
+  background: #ffffff;
   color: var(--color-teal-ink);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  border-color: var(--color-teal);
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--color-teal) 22%, transparent);
 }
-.activities img {
-  width: 30px;
-  height: 30px;
+.activityPill img {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
+  transition: transform 300ms ease;
 }
+.activityPill:hover img {
+  transform: rotate(6deg) scale(1.08);
+}
+
 .art {
   position: relative;
   margin: 0;
 }
 .frame {
   position: relative;
-  height: clamp(260px, 25vw, 360px);
+  height: clamp(300px, 28vw, 420px);
   min-height: 0;
   overflow: hidden;
   isolation: isolate;
-  border-radius: 44% 44% 20px 20px / 17% 17% 20px 20px;
+  border-radius: 44% 44% 24px 24px / 18% 18% 24px 24px;
   background: var(--color-teal-ink);
+  box-shadow: 0 24px 56px -18px color-mix(in srgb, var(--color-teal-ink) 35%, transparent);
+  transition: box-shadow 450ms ease, transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.frame:hover {
+  box-shadow: 0 32px 68px -18px color-mix(in srgb, var(--color-teal-ink) 45%, transparent);
+}
+.photoLayer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 900ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.photoLayer[data-active] {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 1;
 }
 .photo {
   object-fit: cover;
-  object-position: 50% 63%;
+  object-position: 50% 50%;
+  transition: transform 1200ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
+.photoLayer[data-active] .photo {
+  animation: kenBurnsZoom 9s ease-out forwards;
+}
+@keyframes kenBurnsZoom {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+.sceneGradient {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 16, 26, 0.38) 0%,
+    transparent 35%,
+    rgba(8, 16, 26, 0.2) 60%,
+    rgba(8, 16, 26, 0.85) 100%
+  );
+}
+
+.floatingTrendingBadge {
+  position: absolute;
+  top: 24px;
+  left: clamp(24px, 4vw, 42px);
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(18, 36, 43, 0.72);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  animation: badgeFloat 4s ease-in-out infinite alternate;
+}
+@keyframes badgeFloat {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
+}
+.livePulseDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-teal);
+  box-shadow: 0 0 10px var(--color-teal);
+  animation: pulseBeacon 1.8s ease-in-out infinite;
+}
+@keyframes pulseBeacon {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.65;
+  }
+}
+
 .route {
   position: absolute;
-  bottom: 14%;
+  bottom: 24%;
   left: 5%;
   width: 24%;
-  height: 60%;
+  height: 52%;
   color: var(--color-sun-soft);
+  z-index: 3;
+  pointer-events: none;
 }
+.animatedRoutePath {
+  animation: marchDash 10s linear infinite;
+}
+@keyframes marchDash {
+  to {
+    stroke-dashoffset: -120;
+  }
+}
+.radarPulse {
+  animation: radarWave 2.4s ease-out infinite;
+  transform-origin: center;
+}
+@keyframes radarWave {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.floatingDestinationCard {
+  position: absolute;
+  bottom: 24px;
+  right: 20px;
+  left: clamp(20px, 14vw, 120px);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 18px;
+  border-radius: 16px;
+  background: rgba(14, 27, 34, 0.76);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.5);
+  text-decoration: none;
+  animation: cardEntrance 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    transform 300ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    border-color 300ms ease,
+    box-shadow 300ms ease;
+}
+.floatingDestinationCard:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--color-teal);
+  box-shadow: 0 22px 42px -10px color-mix(in srgb, var(--color-teal) 35%, transparent);
+}
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.floatingCardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.floatingCardBadge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--color-coral);
+  color: #ffffff;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.floatingCardRating {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-sun);
+}
+.floatingCardTitle {
+  font-size: clamp(15px, 1.4vw, 19px);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.floatingCardSubtitle {
+  margin: 0;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+.floatingCardAction {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-teal-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cardActionArrow {
+  transition: transform 200ms ease;
+}
+.floatingDestinationCard:hover .cardActionArrow {
+  transform: translateX(4px);
+}
+
+.sceneControls {
+  position: absolute;
+  bottom: 24px;
+  left: 20px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.sceneDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: all 300ms ease;
+  position: relative;
+  overflow: hidden;
+}
+.sceneDotActive {
+  height: 28px;
+  width: 8px;
+  background: rgba(255, 255, 255, 0.25);
+}
+.sceneProgressFill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-teal);
+  animation: sceneProgress linear forwards;
+}
+@keyframes sceneProgress {
+  from {
+    height: 0%;
+  }
+  to {
+    height: 100%;
+  }
+}
+
 @media (max-width: 760px) {
   .inner {
     grid-template-columns: minmax(0, 1fr);
-    gap: 0;
+    gap: 20px;
     padding-block: 20px 40px;
   }
   .heroMascot {
@@ -159,11 +403,21 @@
     margin-block: 0 10px;
     font-size: min(clamp(2.1rem, 10vw, 4.75rem), 12.8cqi);
   }
-  .actions {
-    margin-top: 16px;
+  .art {
+    display: block;
+    margin-top: 12px;
   }
-  .art,
-  .activities {
+  .frame {
+    height: 240px;
+    border-radius: 20px;
+  }
+  .floatingDestinationCard {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    padding: 10px 14px;
+  }
+  .route {
     display: none;
   }
   .description {
@@ -171,18 +425,11 @@
     font-size: 13px;
     line-height: 1.6;
   }
-  .frame {
-    min-height: 0;
-    aspect-ratio: 1.4;
-  }
-  .route {
-    height: 48%;
-  }
 }
 @media (max-width: 480px) {
   .activities img {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
   }
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -195,12 +442,8 @@
   }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .photo,
   .route {
     transition: transform 672ms cubic-bezier(0.2, 0.7, 0.25, 1);
-  }
-  .photo {
-    transform: translate(calc(var(--pointer-x, 0) * -34px), calc(var(--pointer-y, 0) * -24px)) scale(1.09);
   }
   .route {
     transform: translate(calc(var(--pointer-x, 0) * 20px), calc(var(--pointer-y, 0) * 14px));
@@ -214,5 +457,17 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .photoLayer[data-active] .photo {
+    animation: none;
+  }
+  .animatedRoutePath,
+  .radarPulse,
+  .livePulseDot,
+  .floatingTrendingBadge,
+  .titleSecond {
+    animation: none;
   }
 }

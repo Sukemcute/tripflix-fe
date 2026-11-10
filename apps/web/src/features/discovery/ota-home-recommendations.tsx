@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useHomeRecommendations } from '@tripflix/api-client';
@@ -17,7 +17,7 @@ import { formatPrice } from './trip-card';
 import { SoftStarIcon } from './soft-star-icon';
 import styles from './ota-home.module.css';
 
-const CROSSFADE_MS = 1200;
+const CROSSFADE_MS = 950;
 const ROTATE_INTERVAL_MS = 7000;
 
 function SafeComboImage({
@@ -60,6 +60,7 @@ function DestinationBody({
       />
       <div className={isOutgoing ? styles.cardContentOut : styles.cardContent}>
         <span className={`${styles.comboBadge} ${styles.badgeTrending}`}>
+          <span className={styles.badgeShimmerGlow} aria-hidden="true" />
           {combo.destination.badge}
         </span>
         <div>
@@ -69,7 +70,9 @@ function DestinationBody({
         </div>
         <div className={styles.comboMeta}>
           <strong>{combo.destination.meta}</strong>
-          <span aria-hidden="true">Khám phá điểm đến →</span>
+          <span className={styles.actionPrompt} aria-hidden="true">
+            Khám phá điểm đến <span className={styles.arrowBounce}>→</span>
+          </span>
         </div>
       </div>
     </>
@@ -92,6 +95,7 @@ function StayBody({
       />
       <div className={isOutgoing ? styles.cardContentOut : styles.cardContent}>
         <span className={`${styles.comboBadge} ${styles.badgeDeal}`}>
+          <span className={styles.badgeShimmerGlow} aria-hidden="true" />
           {combo.stay.badge}
         </span>
         <div>
@@ -104,10 +108,11 @@ function StayBody({
         </div>
         <div className={styles.comboMeta}>
           <strong>{formatPrice(combo.stay.priceFrom)}</strong>
-          <span aria-hidden="true">
+          <span className={styles.actionPrompt} aria-hidden="true">
             {typeof combo.stay.otherDealsCount === 'number' && combo.stay.otherDealsCount > 0
-              ? `Khám phá thêm ${combo.stay.otherDealsCount} deal hời →`
-              : 'Xem phòng →'}
+              ? `Thêm ${combo.stay.otherDealsCount} deal hời`
+              : 'Xem phòng'}{' '}
+            <span className={styles.arrowBounce}>→</span>
           </span>
         </div>
       </div>
@@ -131,6 +136,7 @@ function ExperienceBody({
       />
       <div className={isOutgoing ? styles.cardContentOut : styles.cardContent}>
         <span className={styles.comboBadge}>
+          <span className={styles.badgeShimmerGlow} aria-hidden="true" />
           {combo.experience.badge}
         </span>
         <div>
@@ -140,17 +146,45 @@ function ExperienceBody({
         </div>
         <div className={styles.comboMeta}>
           <strong>{combo.experience.ratingText}</strong>
-          <span aria-hidden="true">Xem chi tiết →</span>
+          <span className={styles.actionPrompt} aria-hidden="true">
+            Xem chi tiết <span className={styles.arrowBounce}>→</span>
+          </span>
         </div>
       </div>
     </>
   );
 }
 
+function handleCardMouseMove(e: MouseEvent<HTMLAnchorElement>) {
+  const card = e.currentTarget;
+  const rect = card.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const xPercent = (x / rect.width) * 100;
+  const yPercent = (y / rect.height) * 100;
+  const tiltX = (x / rect.width - 0.5) * 2;
+  const tiltY = (y / rect.height - 0.5) * 2;
+
+  card.style.setProperty('--card-tilt-x', String(tiltX));
+  card.style.setProperty('--card-tilt-y', String(tiltY));
+  card.style.setProperty('--mouse-x', `${xPercent}%`);
+  card.style.setProperty('--mouse-y', `${yPercent}%`);
+}
+
+function handleCardMouseLeave(e: MouseEvent<HTMLAnchorElement>) {
+  const card = e.currentTarget;
+  card.style.removeProperty('--card-tilt-x');
+  card.style.removeProperty('--card-tilt-y');
+  card.style.removeProperty('--mouse-x');
+  card.style.removeProperty('--mouse-y');
+}
+
 export function OtaHomeRecommendations() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [prevIndex, setPrevIndex] = useState<number | null>(null);
+  const [direction, setDirection] = useState<'next' | 'prev'>('next');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: apiPicks } = useHomeRecommendations({ limit: 6 });
@@ -162,11 +196,12 @@ export function OtaHomeRecommendations() {
   const prevCombo = prevIndex !== null ? combos[prevIndex] ?? null : null;
 
   const changeCombo = useCallback(
-    (getNextIndex: (prev: number) => number) => {
+    (getNextIndex: (prev: number) => number, dir: 'next' | 'prev' = 'next') => {
       if (isTransitioning) return;
       const nextIdx = getNextIndex(activeIndex);
       if (nextIdx === activeIndex) return;
 
+      setDirection(dir);
       setPrevIndex(activeIndex);
       setActiveIndex(nextIdx);
       setIsTransitioning(true);
@@ -184,20 +219,29 @@ export function OtaHomeRecommendations() {
   );
 
   const handleNextCombo = useCallback(() => {
-    changeCombo((prev) => (prev + 1) % combos.length);
+    changeCombo((prev) => (prev + 1) % combos.length, 'next');
   }, [changeCombo, combos.length]);
 
   const handlePrevCombo = useCallback(() => {
-    changeCombo((prev) => (prev - 1 + combos.length) % combos.length);
+    changeCombo((prev) => (prev - 1 + combos.length) % combos.length, 'prev');
   }, [changeCombo, combos.length]);
 
+  const handleSelectCombo = useCallback(
+    (targetIdx: number) => {
+      if (targetIdx === activeIndex || isTransitioning) return;
+      changeCombo(() => targetIdx, targetIdx > activeIndex ? 'next' : 'prev');
+    },
+    [activeIndex, isTransitioning, changeCombo],
+  );
+
   useEffect(() => {
+    if (isHovered) return;
     const timer = setInterval(() => {
       handleNextCombo();
     }, ROTATE_INTERVAL_MS);
 
     return () => clearInterval(timer);
-  }, [handleNextCombo]);
+  }, [handleNextCombo, isHovered]);
 
   useEffect(() => {
     return () => {
@@ -206,6 +250,9 @@ export function OtaHomeRecommendations() {
       }
     };
   }, []);
+
+  const incomingLayerClass =
+    direction === 'next' ? styles.cardLayerIncomingNext : styles.cardLayerIncomingPrev;
 
   return (
     <section
@@ -220,6 +267,30 @@ export function OtaHomeRecommendations() {
           <p>{vi.ota.recommendationIntro}</p>
         </div>
         <div className={styles.headActions}>
+          {/* Thanh timeline mini tiến trình theo combo */}
+          <div className={styles.comboTimeline} aria-label="Danh sách combo gợi ý">
+            {combos.map((combo, idx) => (
+              <button
+                type="button"
+                key={combo.destination.name}
+                className={`${styles.timelinePill} ${idx === activeIndex ? styles.timelinePillActive : ''}`}
+                onClick={() => handleSelectCombo(idx)}
+                aria-label={`Gợi ý ${idx + 1}: ${combo.destination.name}`}
+                aria-current={idx === activeIndex ? 'true' : undefined}
+              >
+                <span className={styles.timelineIndex}>0{idx + 1}</span>
+                <span className={styles.timelineLabel}>{combo.destination.name}</span>
+                {idx === activeIndex && !isHovered ? (
+                  <span
+                    key={`fill-${activeIndex}`}
+                    className={styles.timelineFill}
+                    style={{ animationDuration: `${ROTATE_INTERVAL_MS}ms` }}
+                  />
+                ) : null}
+              </button>
+            ))}
+          </div>
+
           <div className={styles.navArrows} aria-label="Điều hướng gợi ý">
             <button
               type="button"
@@ -248,8 +319,12 @@ export function OtaHomeRecommendations() {
         </div>
       </div>
 
-      <div className={styles.destinations}>
-        {/* Ô 1: Điểm đến tâm điểm & Lý do nên đi (Lớn bên trái) */}
+      <div
+        className={styles.destinations}
+        onPointerEnter={() => setIsHovered(true)}
+        onPointerLeave={() => setIsHovered(false)}
+      >
+        {/* Ô 1: Điểm đến tâm điểm (Lớn bên trái) */}
         <Link
           prefetch={false}
           key="slot-destination"
@@ -257,13 +332,16 @@ export function OtaHomeRecommendations() {
           className={styles.destination}
           aria-label={`Khám phá điểm đến ${activeCombo.destination.name}`}
           data-home-banner
+          onMouseMove={handleCardMouseMove}
+          onMouseLeave={handleCardMouseLeave}
         >
+          <div className={styles.cardSpecularGlare} aria-hidden="true" />
           {prevCombo ? (
             <div className={styles.cardLayerOutgoing} aria-hidden="true">
               <DestinationBody combo={prevCombo} isOutgoing />
             </div>
           ) : null}
-          <div className={isTransitioning ? styles.cardLayerIncoming : styles.cardLayerActive}>
+          <div className={isTransitioning ? incomingLayerClass : styles.cardLayerActive}>
             <DestinationBody combo={activeCombo} />
           </div>
         </Link>
@@ -276,13 +354,16 @@ export function OtaHomeRecommendations() {
           className={styles.destination}
           aria-label={`Đặt phòng tại ${activeCombo.stay.name}`}
           data-home-banner
+          onMouseMove={handleCardMouseMove}
+          onMouseLeave={handleCardMouseLeave}
         >
+          <div className={styles.cardSpecularGlare} aria-hidden="true" />
           {prevCombo ? (
             <div className={styles.cardLayerOutgoing} aria-hidden="true">
               <StayBody combo={prevCombo} isOutgoing />
             </div>
           ) : null}
-          <div className={isTransitioning ? styles.cardLayerIncoming : styles.cardLayerActive}>
+          <div className={isTransitioning ? incomingLayerClass : styles.cardLayerActive}>
             <StayBody combo={activeCombo} />
           </div>
         </Link>
@@ -295,13 +376,16 @@ export function OtaHomeRecommendations() {
           className={styles.destination}
           aria-label={`Khám phá ${activeCombo.experience.name}`}
           data-home-banner
+          onMouseMove={handleCardMouseMove}
+          onMouseLeave={handleCardMouseLeave}
         >
+          <div className={styles.cardSpecularGlare} aria-hidden="true" />
           {prevCombo ? (
             <div className={styles.cardLayerOutgoing} aria-hidden="true">
               <ExperienceBody combo={prevCombo} isOutgoing />
             </div>
           ) : null}
-          <div className={isTransitioning ? styles.cardLayerIncoming : styles.cardLayerActive}>
+          <div className={isTransitioning ? incomingLayerClass : styles.cardLayerActive}>
             <ExperienceBody combo={activeCombo} />
           </div>
         </Link>
