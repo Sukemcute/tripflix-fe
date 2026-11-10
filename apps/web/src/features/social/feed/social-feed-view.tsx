@@ -179,36 +179,84 @@ export function SocialFeedView({
 
   // Viewport tracking for active comment post & itinerary post when scrolling feed
   useEffect(() => {
-    const postElements = mainFeedRef.current?.querySelectorAll<HTMLElement>('[data-feed-post-id]');
-    if (!postElements || postElements.length === 0) return;
+    const container = mainFeedRef.current;
+    if (!container) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const activeElem = document.activeElement;
-        const isUserTyping = activeElem && (activeElem.tagName === 'INPUT' || activeElem.tagName === 'TEXTAREA');
-        if (isUserTyping) return;
+    const tickingRef = { current: false };
 
-        for (const entry of entries) {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-            const visiblePostId = entry.target.getAttribute('data-feed-post-id');
-            if (visiblePostId) {
-              const visiblePost = posts.find((p) => p.id === visiblePostId);
-              if (visiblePost?.tripAttachment) {
-                setActiveFocusedPostId(visiblePostId);
-              }
-              if (!isCommentPinnedRef.current && visiblePostId !== activeCommentPostId) {
-                setActiveCommentPostId(visiblePostId);
-              }
-            }
-          }
+    const updateActivePost = () => {
+      tickingRef.current = false;
+      const activeElem = document.activeElement;
+      const isUserTyping = activeElem && (activeElem.tagName === 'INPUT' || activeElem.tagName === 'TEXTAREA');
+      if (isUserTyping) return;
+
+      const postElements = container.querySelectorAll<HTMLElement>('[data-feed-post-id]');
+      if (postElements.length === 0) return;
+
+      const containerRect = container.getBoundingClientRect();
+      // Reading line: 35% from the top of the feed viewport
+      const focusLine = containerRect.top + containerRect.height * 0.35;
+
+      let bestPostId: string | null = null;
+      let minDistance = Infinity;
+
+      for (let i = 0; i < postElements.length; i++) {
+        const el = postElements[i];
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+
+        // Skip elements completely outside container viewport
+        if (rect.bottom <= containerRect.top || rect.top >= containerRect.bottom) {
+          continue;
         }
-      },
-      { root: mainFeedRef.current ?? null, threshold: [0.5] }
-    );
 
-    postElements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [posts, activeCommentPostId]);
+        const id = el.getAttribute('data-feed-post-id');
+        if (!id) continue;
+
+        // If this post spans across the reading focus line, it is definitively the active post!
+        if (rect.top <= focusLine && rect.bottom >= focusLine) {
+          bestPostId = id;
+          break;
+        }
+
+        // Fallback: post closest to the focus line
+        const postCenter = rect.top + rect.height / 2;
+        const dist = Math.abs(postCenter - focusLine);
+        if (dist < minDistance) {
+          minDistance = dist;
+          bestPostId = id;
+        }
+      }
+
+      if (bestPostId) {
+        const post = posts.find((p) => p.id === bestPostId);
+        if (post?.tripAttachment) {
+          setActiveFocusedPostId(bestPostId);
+        }
+        if (!isCommentPinnedRef.current) {
+          setActiveCommentPostId((prev) => (prev === bestPostId ? prev : bestPostId));
+        }
+      }
+    };
+
+    // Run initial detection
+    updateActivePost();
+
+    const handleScroll = () => {
+      if (!tickingRef.current) {
+        window.requestAnimationFrame(updateActivePost);
+        tickingRef.current = true;
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [posts]);
 
   const loginReturnHref = typeof window !== 'undefined'
     ? `/login?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`
@@ -561,11 +609,6 @@ export function SocialFeedView({
                   count: activeCommentPost?.commentCount ?? 0,
                 })}
               </span>
-              {activeCommentPost?.isVerified && (
-                <span className={styles.headerVerifiedBadge} title="Tài khoản đã xác minh">
-                  <SocialIcon name="verified" size={15} />
-                </span>
-              )}
             </h2>
 
             <button

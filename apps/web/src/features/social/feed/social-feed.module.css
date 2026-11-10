@@ -916,15 +916,6 @@
   justify-content: center;
 }
 
-.headerVerifiedBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 6px;
-  color: #FF6A00;
-  vertical-align: middle;
-}
-
 
 
 /* --------------------------------------------------------------------------

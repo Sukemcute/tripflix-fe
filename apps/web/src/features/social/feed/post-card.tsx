@@ -78,7 +78,6 @@ export function PostCard({
     <article
       className={`${styles.postCard} ${isCommentActive ? styles.postCardActiveComment : ''}`}
       aria-label={post.title}
-      data-feed-post-id={post.id}
     >
       {/* 1. Post Header: Avatar, Name, Handle, Date, Menu */}
       <header className={styles.postHeader}>
