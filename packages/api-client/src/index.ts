@@ -3,7 +3,23 @@
 //   import type { ParseQueryResponse } from '@tripflix/api-client/ai-service/model';
 export { configureHttp, http, httpRaw, HttpError, type HttpConfig, type HttpResponse } from './http';
 export { ApiSessionProvider, useApiSession } from './session';
-export { SessionClient, type SessionOptions, type TokenStorage } from './session-client';
+export {
+  SessionClient,
+  type PasswordCredentials,
+  type RegisterInput,
+  type SessionOptions,
+  type TokenStorage,
+} from './session-client';
+export {
+  encryptPassword,
+  PASSWORD_ENVELOPE_INVALID_CODE,
+  resetPasswordKeyCache,
+  sendWithPasswords,
+  type PasswordField,
+  type PasswordKey,
+  type PasswordPurpose,
+} from './password-encryption';
+export { changePassword, resetPassword } from './password-actions';
 export {
   getApiErrorKind,
   getAuthErrorKind,

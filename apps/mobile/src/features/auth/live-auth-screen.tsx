@@ -90,7 +90,7 @@ export function LiveLoginScreen() {
   const strength = getRegistrationPasswordStrength(password);
   const cooldown = useResendCooldown();
   const requestCode = useMutation({
-    mutationFn: () => session.sendRegistrationCode({ email: email.trim(), password }),
+    mutationFn: () => session.sendRegistrationCode({ email: email.trim() }),
     onSuccess: ({ registrationId: id, resendAfterSeconds }) => {
       setRegistrationId(id);
       setCode('');

@@ -6,10 +6,16 @@
  */
 
 export interface ChangePasswordDto {
-  currentPassword: string;
+  /** Mật khẩu đã mã hoá bằng khoá của GET /auth/password-key, dạng "#TFPWD:1:<keyId>:<ts>:<dữ liệu>". Gửi trường này thay cho trường mật khẩu thường tương ứng, không gửi cả hai. */
+  encCurrentPassword?: string;
+  /** Cách cũ, gửi mật khẩu gốc. Bị từ chối khi server bật AUTH_PASSWORD_ENCRYPTION_REQUIRED. */
+  currentPassword?: string;
+  /** Mật khẩu đã mã hoá bằng khoá của GET /auth/password-key, dạng "#TFPWD:1:<keyId>:<ts>:<dữ liệu>". Gửi trường này thay cho trường mật khẩu thường tương ứng, không gửi cả hai. */
+  encNewPassword?: string;
   /**
+   * Cách cũ, gửi mật khẩu gốc. Bị từ chối khi server bật AUTH_PASSWORD_ENCRYPTION_REQUIRED.
    * @minLength 8
    * @maxLength 64
    */
-  newPassword: string;
+  newPassword?: string;
 }

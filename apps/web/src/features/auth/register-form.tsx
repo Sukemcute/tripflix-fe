@@ -92,7 +92,7 @@ export function LiveRegister({ returnTo }: { returnTo?: string }) {
 
   const cooldown = useResendCooldown();
   const requestCode = useMutation({
-    mutationFn: () => session.sendRegistrationCode({ email: email.trim(), password }),
+    mutationFn: () => session.sendRegistrationCode({ email: email.trim() }),
     onSuccess: ({ registrationId: id, resendAfterSeconds }) => {
       setRegistrationId(id);
       setCode('');

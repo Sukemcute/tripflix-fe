@@ -1,3 +1,5 @@
+// Phải nạp trước mọi thứ khác: mã hoá mật khẩu cần crypto.getRandomValues (TF056).
+import '@/polyfills/crypto';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiSessionProvider } from '@tripflix/api-client';
 import * as SecureStore from 'expo-secure-store';

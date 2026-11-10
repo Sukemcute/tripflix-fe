@@ -1,6 +1,5 @@
 'use client';
-import { getAuthErrorKind } from '@tripflix/api-client';
-import * as auth from '@tripflix/api-client/core-api/auth/auth';
+import { getAuthErrorKind, resetPassword } from '@tripflix/api-client';
 import { NEW_PASSWORD_MAX } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { useMutation } from '@tanstack/react-query';
@@ -14,7 +13,8 @@ export function ResetPassword({ token }: { token: string | undefined }) {
   const [confirmation, setConfirmation] = useState('');
   const [isMismatch, setMismatch] = useState(false);
   const reset = useMutation({
-    mutationFn: () => auth.passwordResetControllerReset({ token: token ?? '', newPassword }),
+    // Mật khẩu mới được mã hoá trước khi gửi (TF056).
+    mutationFn: () => resetPassword({ token: token ?? '', newPassword }),
   });
   const isLinkInvalid = !token || getAuthErrorKind(reset.error, 'resetPassword') === 'resetLinkInvalid';
 
