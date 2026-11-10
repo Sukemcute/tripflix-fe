@@ -116,32 +116,63 @@ export function OtaHero() {
           onPointerEnter={() => setIsPaused(true)}
           onPointerLeave={() => setIsPaused(false)}
         >
-          <div className={styles.frame}>
-            {HERO_SCENES.map((scene, idx) => {
-              const isActive = idx === activeScene;
-              return (
-                <div
-                  key={scene.id}
-                  className={styles.photoLayer}
-                  data-active={isActive || undefined}
-                  aria-hidden={!isActive}
-                >
-                  <Image
-                    className={styles.photo}
-                    src={scene.image}
-                    alt={scene.title}
-                    fill
-                    sizes="(max-width: 760px) 95vw, 55vw"
-                    priority={idx === 0}
-                  />
-                </div>
-              );
-            })}
+          <div className={styles.slitsCanvas}>
+            <svg
+              viewBox="0 0 1000 620"
+              className={styles.slitsSvg}
+              preserveAspectRatio="xMidYMid slice"
+              aria-label={current.title}
+            >
+              <defs>
+                {/* 3 Dải viên nang nghiêng nghệ thuật (Diagonal Pill Slits) theo phong cách Travel The World */}
+                <clipPath id="diagonal-pill-slits" clipPathUnits="userSpaceOnUse">
+                  {/* Dải 1: Vươn dài từ gần giữa màn hình, tạo điểm tựa thị giác */}
+                  <rect x="0" y="0" width="920" height="135" rx="67.5" transform="translate(320, 270) rotate(-40)" />
+                  {/* Dải 2: Ở giữa, vươn dài nhất */}
+                  <rect x="0" y="0" width="980" height="150" rx="75" transform="translate(480, 400) rotate(-40)" />
+                  {/* Dải 3: Ở phía dưới góc phải */}
+                  <rect x="0" y="0" width="950" height="150" rx="75" transform="translate(640, 520) rotate(-40)" />
+                  {/* Dải 4: Vệt sáng phụ thanh mảnh tạo nhịp điệu ánh sáng ở góc trên */}
+                  <rect x="0" y="0" width="700" height="34" rx="17" transform="translate(580, 130) rotate(-40)" />
+                </clipPath>
+              </defs>
 
-            {/* Lớp phủ chuyển sắc để tăng tương phản chữ */}
-            <div className={styles.sceneGradient} aria-hidden="true" />
+              {/* Lớp nền phát sáng đa tầng phía sau dải viên nang (Depth Glow) */}
+              <g className={styles.slitGlowGroup} aria-hidden="true">
+                <rect x="0" y="0" width="920" height="135" rx="67.5" transform="translate(320, 270) rotate(-40)" className={styles.slitGlowBorder} />
+                <rect x="0" y="0" width="980" height="150" rx="75" transform="translate(480, 400) rotate(-40)" className={styles.slitGlowBorder} />
+                <rect x="0" y="0" width="950" height="150" rx="75" transform="translate(640, 520) rotate(-40)" className={styles.slitGlowBorder} />
+              </g>
 
-            {/* Thẻ nổi Tripi Mascot Đồng Hành (Tương tự thẻ Travorra Happy Travelers) */}
+              {/* Bức ảnh danh thắng trải dài LIÊN TỤC và LIỀN MẠCH qua cả 3 dải viên nang */}
+              <g clipPath="url(#diagonal-pill-slits)">
+                {HERO_SCENES.map((scene, idx) => {
+                  const isActive = idx === activeScene;
+                  return (
+                    <image
+                      key={scene.id}
+                      href={scene.image}
+                      width="1000"
+                      height="620"
+                      preserveAspectRatio="xMidYMid slice"
+                      className={styles.svgSceneImage}
+                      data-active={isActive || undefined}
+                      aria-hidden={!isActive}
+                    />
+                  );
+                })}
+              </g>
+
+              {/* Viền kính sang trọng phía trên dải viên nang (Glass Borders) */}
+              <g className={styles.slitBorderGroup} aria-hidden="true">
+                <rect x="0" y="0" width="920" height="135" rx="67.5" transform="translate(320, 270) rotate(-40)" className={styles.slitBorder} />
+                <rect x="0" y="0" width="980" height="150" rx="75" transform="translate(480, 400) rotate(-40)" className={styles.slitBorder} />
+                <rect x="0" y="0" width="950" height="150" rx="75" transform="translate(640, 520) rotate(-40)" className={styles.slitBorder} />
+                <rect x="0" y="0" width="700" height="34" rx="17" transform="translate(580, 130) rotate(-40)" className={styles.slitAccentBorder} />
+              </g>
+            </svg>
+
+            {/* Thẻ nổi Tripi Mascot Đồng Hành (3D Avatar) */}
             <aside className={styles.floatingMascotCard} aria-label={vi.ota.heroMascotCardTitle}>
               <div className={styles.mascotCardAvatar}>
                 <TripiLive className={styles.mascotLive} />
@@ -155,27 +186,11 @@ export function OtaHero() {
               </div>
             </aside>
 
-            {/* Huy hiệu xu hướng nổi góc trên (Floating Glassmorphism) */}
+            {/* Huy hiệu xu hướng nổi */}
             <div className={styles.floatingTrendingBadge}>
               <span className={styles.livePulseDot} aria-hidden="true" />
               <span>{vi.ota.heroTrendingBadge}</span>
             </div>
-
-            {/* Lộ trình di chuyển nét đứt chuyển động mượt mà */}
-            <svg className={styles.route} viewBox="0 0 150 210" fill="none" aria-hidden="true">
-              <path
-                className={styles.animatedRoutePath}
-                d="M 20 190 C 106 168 17 121 81 101 S 155 35 117 19"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeDasharray="5 7"
-                strokeLinecap="round"
-              />
-              <circle cx="20" cy="190" r="5" fill="currentColor" />
-              <circle cx="20" cy="190" r="9" className={styles.radarPulse} fill="currentColor" opacity="0.35" />
-              <circle cx="117" cy="19" r="5" fill="currentColor" />
-              <circle cx="117" cy="19" r="9" className={styles.radarPulse} fill="currentColor" opacity="0.35" />
-            </svg>
 
             {/* Thẻ nổi kính mờ chi tiết danh thắng ở góc dưới */}
             <Link

@@ -4,20 +4,19 @@
 
 ## Đã làm
 - Nâng cấp Hero section thành multi-scene showcase (4 danh thắng nổi tiếng: Vịnh Hạ Long, Phố cổ Hội An, Đảo Ngọc Phú Quốc, Tràng An Ninh Bình) với hiệu ứng zoom chậm Ken Burns, huy hiệu nổi xu hướng glassmorphism, thẻ danh thắng chi tiết, đường nét đứt chuyển động lộ trình di chuyển (marching dashes + radar pulse).
-- Tái thiết kế Hero & Thanh tìm kiếm toàn diện theo chuẩn UI/UX Pro Max & Travorra:
-  - Áp dụng triệt để nguyên lý Editorial Luxury Travel & Aurora UI:
-    - Nền trang trắng sáng tinh khôi (#ffffff), loại bỏ hoàn toàn các khung hộp màu xanh mint tù túng, tạo không gian mở khoáng đạt (airy whitespace).
-    - Tiêu đề H1 sử dụng font Serif biên tập cao cấp `Playfair Display`, dòng 1 đen tuyền đậm nét, dòng 2 in nghiêng nghệ thuật cùng gradient shimmer ngọc bích sang coral.
-    - Nút CTA Primary viên nang `Bắt đầu khám phá →` màu xanh ngọc bích rực rỡ với hiệu ứng trượt mũi tên khi hover, đặt cạnh các pill hoạt động du lịch Dạo biển, Lướt sóng, Chèo kayak.
-  - Khung ảnh danh thắng dạng Vòm Sóng Hữu Cơ (Organic Fluid Wave Horizon) bất đối xứng mềm mại (`border-radius: 170px 36px 36px 110px / 230px 36px 36px 110px`), bung tỏa bao la sang nửa phải màn hình.
-  - Thẻ nổi Tripi Mascot Đồng Hành 3D (`floatingMascotCard`) đặt trang trọng ở góc trên ảnh với avatar tròn nổi bật, badge tick xanh chứng nhận và "50,000+ du khách tin chọn" tương tự thẻ Happy Travelers của Travorra.
-  - Huy hiệu Xu hướng du lịch 2026 và thẻ danh thắng chi tiết 4.9★ kính mờ căn chỉnh vị trí an toàn, không bị cắt góc bởi đường cong vòm sóng.
-  - Thanh tìm kiếm nâng cấp thành Viên Nang Nổi Độc Lập (Single Floating Master Search Capsule):
-    - Loại bỏ hoàn toàn hộp bao ngoài thô cứng hai lớp (box-inside-box).
-    - Form trở thành 1 viên nang nổi bồng bềnh `border-radius: 999px` nền trắng tinh khiết, shadow đa tầng siêu mịn, vạch ngăn cách mảnh giữa các trường.
-    - Tab dịch vụ "Khách sạn" và nút "Bộ lọc thêm" nằm nhẹ nhàng trên đỉnh viên nang.
-    - Nút "Tìm phòng trống" viên nang bo tròn rực rỡ ở góc phải.
-    - Hiển thị 100% Above-the-fold trên desktop và tự động co giãn thông minh trên mobile.
+- Đột phá kiến trúc Hero với Frame Cách Điệu Đa Dải Viên Nang Nghiêng (Diagonal Pill Slits Window) & Waterline Typography:
+  - Xóa bỏ hoàn toàn bố cục "1 góc hình bên phải" truyền thống:
+    - Sử dụng hệ thống 3 dải viên nang nghiêng song song `-40°` (lấy cảm hứng từ mẫu *Travel The World*): vươn dài từ trung tâm sang toàn bộ mép phải, lồng một bức ảnh danh thắng trải dài LIÊN TỤC và LIỀN MẠCH qua cả 3 dải (Seamless Multi-Pill Panorama).
+    - Viền kính phát sáng đa tầng (glow & dash borders) tạo chiều sâu 3D kiến trúc ấn tượng.
+    - Chuyển cảnh 4 danh thắng (Vịnh Hạ Long, Phố cổ Hội An, Đảo Ngọc Phú Quốc, Tràng An Ninh Bình) mượt mà với hiệu ứng crossfade opacity 900ms trên thẻ `<image>`.
+  - Typography Lồng Mặt Nước Biển (Waterline Ocean Surface Text Mask - lấy cảm hứng từ *SeaGuard Cleanup*):
+    - Dòng 1: `Chạm cảm hứng,` — Chữ trắng tinh khôi nổi bật trên nền đại dương sâu thẳm.
+    - Dòng 2: `trọn hành trình.` — Font *Serif Italic* nghệ thuật với gradient cắt mặt nước biển: nửa trên màu trắng bạc ánh dương, nửa dưới màu ngọc bích đại dương lấp lánh shimmer.
+  - Nền Hero Deep Oceanic Emerald:
+    - Tone màu xanh ngọc bích đại dương sâu thẳm (`#022421 → #043e38 → #085850`) kết hợp hiệu ứng ánh sáng nước biển tỏa nhẹ.
+    - Nút CTA Primary viên nang trắng tinh khôi nổi bật (`#ffffff`, chữ xanh đậm) cùng các pill hoạt động du lịch kính mờ.
+  - Thanh tìm kiếm Master Floating Search Capsule:
+    - Viên nang nổi độc lập bo tròn `999px` trắng tinh khiết nổi bật như chiếc du thuyền trên mặt biển, 100% Above-the-fold trên mọi độ phân giải.
 - Thêm gradient shimmer cho slogan dòng 2, hiệu ứng nhấc thẻ và đổ bóng mềm mại cho các nút hoạt động.
 - Nâng cấp Gợi ý combo nổi bật: hiệu ứng chuyển cảnh mượt mà theo hướng (directional slide-up/down), tương tác 3D tilt và vệt sáng phản chiếu (specular glare) theo chuyển động chuột, thanh timeline mini tiến trình xoay tua combo tự động tạm dừng khi hover.
 - Nâng cấp Khách sạn & Nơi lưu trú: hiệu ứng chia bài so le (staggered entrance) khi chuyển đổi chip điểm đến, zoom nhẹ ảnh phòng, con dấu đỏ Verified đóng dấu nhún nảy khi rê chuột.

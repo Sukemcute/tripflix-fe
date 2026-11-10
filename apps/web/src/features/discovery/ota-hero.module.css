@@ -1,13 +1,16 @@
 .hero {
   position: relative;
-  background: radial-gradient(circle at 86% 24%, rgba(0, 166, 153, 0.08) 0%, rgba(14, 165, 233, 0.04) 40%, rgba(255, 255, 255, 0) 70%), #ffffff;
+  background:
+    radial-gradient(circle at 78% 28%, rgba(0, 166, 153, 0.22) 0%, transparent 60%),
+    radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.12) 0%, transparent 50%),
+    linear-gradient(135deg, #022421 0%, #043e38 38%, #085850 72%, #053b34 100%);
   overflow: clip;
 }
 .inner {
   display: grid;
-  grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.12fr);
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
   align-items: center;
-  gap: clamp(28px, 4vw, 64px);
+  gap: clamp(24px, 3.8vw, 60px);
   padding-block: clamp(24px, 3.2vh, 40px) clamp(68px, 7.5vh, 88px);
 }
 .copy {
@@ -17,27 +20,27 @@
   container-type: inline-size;
 }
 
-/* Eyebrow du lịch phong cách Travorra */
+/* Eyebrow du lịch phong cách quốc tế trên nền đại dương */
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 6px 16px;
   border-radius: 999px;
-  background: rgba(0, 166, 153, 0.08);
-  border: 1px solid rgba(0, 166, 153, 0.22);
+  background: rgba(0, 166, 153, 0.18);
+  border: 1px solid rgba(78, 227, 210, 0.35);
   margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 76, 68, 0.04);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 .eyebrowText {
-  color: var(--color-teal-ink);
+  color: #4ee3d2;
   font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 .eyebrowPlane {
-  color: var(--color-teal);
+  color: #ffffff;
   font-size: 0.88rem;
   display: inline-block;
   animation: planeFloat 3s ease-in-out infinite alternate;
@@ -51,45 +54,59 @@
   }
 }
 
+/* Tiêu đề H1: Waterline Ocean Surface Typography Mask */
 .copy h1 {
   margin-block: 0 16px;
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: min(clamp(2.6rem, 4vw, 4.2rem), 14cqi);
+  font-size: min(clamp(2.7rem, 4.2vw, 4.4rem), 14cqi);
   font-weight: 800;
-  line-height: 1.14;
+  line-height: 1.12;
   letter-spacing: -0.025em;
   white-space: pre-line;
 }
 .titleFirst {
   display: block;
-  color: #0f2422;
+  color: #ffffff;
   font-style: normal;
   white-space: nowrap;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
 }
 .titleSecond {
+  position: relative;
   display: inline-block;
   font-style: italic;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--color-teal-ink) 0%, var(--color-teal) 45%, var(--color-coral) 100%);
-  background-size: 200% auto;
+  /* Hiệu ứng cắt mặt nước biển: nửa trên màu trắng bạc ánh dương, nửa dưới màu ngọc bích đại dương */
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #e6faf7 38%,
+    #4ee3d2 44%,
+    #00a699 54%,
+    #38bdf8 76%,
+    #0284c7 100%
+  );
+  background-size: 100% 200%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: textShimmer 7s ease-in-out infinite alternate;
+  filter: drop-shadow(0 4px 16px rgba(0, 166, 153, 0.5));
+  animation: waterShimmer 7s ease-in-out infinite alternate;
 }
-@keyframes textShimmer {
+@keyframes waterShimmer {
   0% {
-    background-position: 0% 50%;
+    background-position: 0% 15%;
   }
   100% {
-    background-position: 100% 50%;
+    background-position: 0% 85%;
   }
 }
 .description {
   max-width: 44ch;
-  font-size: clamp(0.92rem, 1.15vw, 1.05rem);
+  font-size: clamp(0.95rem, 1.18vw, 1.08rem);
   line-height: 1.7;
-  color: #4b635f;
+  color: rgba(255, 255, 255, 0.86);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   margin-block: 0 18px;
 }
 .actions {
@@ -103,21 +120,22 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 24px;
+  padding: 11px 26px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #00A699 0%, #007C6E 100%);
-  color: #ffffff;
-  font-size: 0.85rem;
+  background: #ffffff;
+  color: #043e38;
+  font-size: 0.88rem;
   font-weight: 800;
   letter-spacing: -0.01em;
   text-decoration: none;
-  box-shadow: 0 8px 20px -4px rgba(0, 166, 153, 0.42);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.35);
   transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 .primaryCta:hover {
-  background: linear-gradient(135deg, #02bba6 0%, #008778 100%);
+  background: #e6faf7;
+  color: #007c6e;
   transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 12px 28px -4px rgba(0, 166, 153, 0.58);
+  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.45);
 }
 .ctaArrow {
   font-size: 1rem;
@@ -145,26 +163,24 @@
   min-height: 38px;
   padding: 4px 14px 4px 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid color-mix(in srgb, var(--color-teal-ink) 18%, transparent);
-  color: var(--color-ink);
+  background: rgba(255, 255, 255, 0.14);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #ffffff;
   font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
   text-decoration: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition:
-    transform 280ms cubic-bezier(0.2, 0.7, 0.25, 1),
-    box-shadow 280ms ease,
-    background 200ms ease,
-    border-color 200ms ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 .activityPill:hover {
-  background: #ffffff;
-  color: var(--color-teal-ink);
-  border-color: var(--color-teal);
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.65);
+  color: #ffffff;
   transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--color-teal) 22%, transparent);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 .activityPill img {
   width: 26px;
@@ -180,69 +196,60 @@
 .art {
   position: relative;
   margin: 0;
+  width: 100%;
 }
 
-/* Khung ảnh vòm sóng hữu cơ (Organic Fluid Wave Horizon) */
-.frame {
+/* ==========================================================================
+   FRAME CÁCH ĐIỆU ĐA DẢI VIÊN NANG NGHIÊNG (DIAGONAL PILL SLITS WINDOW)
+   ========================================================================== */
+.slitsCanvas {
   position: relative;
-  height: clamp(360px, 34vw, 470px);
+  width: 100%;
+  height: clamp(380px, 36vw, 500px);
   min-height: 0;
-  overflow: hidden;
   isolation: isolate;
-  /* Bo cong mềm mại bất đối xứng kiểu sóng nước hữu cơ Travorra */
-  border-radius: 170px 36px 36px 110px / 230px 36px 36px 110px;
-  background: var(--color-teal-ink);
-  box-shadow:
-    0 32px 76px -18px color-mix(in srgb, var(--color-teal-ink) 36%, transparent),
-    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
-  transition: box-shadow 450ms ease, transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  user-select: none;
 }
-.frame:hover {
-  box-shadow:
-    0 36px 84px -18px color-mix(in srgb, var(--color-teal-ink) 45%, transparent),
-    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+.slitsSvg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 28px 56px rgba(0, 0, 0, 0.38));
 }
-
-.photoLayer {
-  position: absolute;
-  inset: 0;
+.svgSceneImage {
   opacity: 0;
-  pointer-events: none;
   transition: opacity 900ms cubic-bezier(0.4, 0, 0.2, 1);
 }
-.photoLayer[data-active] {
+.svgSceneImage[data-active] {
   opacity: 1;
-  pointer-events: auto;
-  z-index: 1;
 }
-.photo {
-  object-fit: cover;
-  object-position: 50% 50%;
-  transition: transform 1200ms cubic-bezier(0.2, 0.7, 0.25, 1);
+.slitGlowBorder {
+  fill: rgba(0, 166, 153, 0.2);
+  filter: blur(14px);
 }
-.photoLayer[data-active] .photo {
-  animation: kenBurnsZoom 9s ease-out forwards;
+.slitBorder {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 2;
+  transition: stroke 300ms ease;
 }
-@keyframes kenBurnsZoom {
+.slitsCanvas:hover .slitBorder {
+  stroke: rgba(78, 227, 210, 0.7);
+}
+.slitAccentBorder {
+  fill: none;
+  stroke: rgba(78, 227, 210, 0.65);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 8;
+  animation: slitBorderDash 20s linear infinite;
+}
+@keyframes slitBorderDash {
   0% {
-    transform: scale(1);
+    stroke-dashoffset: 0;
   }
   100% {
-    transform: scale(1.08);
+    stroke-dashoffset: 200;
   }
-}
-.sceneGradient {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgba(8, 16, 26, 0.42) 0%,
-    transparent 35%,
-    rgba(8, 16, 26, 0.2) 60%,
-    rgba(8, 16, 26, 0.85) 100%
-  );
 }
 
 /* Thẻ nổi Tripi Mascot Đồng Hành (Tương tự thẻ Travorra Happy Travelers) */
@@ -580,6 +587,20 @@
 }
 
 @media (max-width: 640px) {
+  .slitsCanvas {
+    height: clamp(280px, 75vw, 360px);
+    margin-top: 14px;
+  }
+  .floatingDestinationCard {
+    left: 10px;
+    bottom: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    border-radius: 14px;
+  }
+  .sceneControls {
+    display: none;
+  }
   .floatingTrendingBadge {
     display: none;
   }
@@ -587,6 +608,8 @@
     display: none;
   }
   .floatingMascotCard {
+    top: 8px;
+    right: 8px;
     padding: 4px 10px 4px 6px;
     border-radius: 999px;
   }
