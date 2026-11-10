@@ -12,6 +12,7 @@ import { ReviewProvider } from '@/features/review/review-provider';
 import { CommerceProvider } from '@/features/booking/commerce-provider';
 import { AssistantProvider } from '@/features/assistant/assistant-provider';
 import { AssistantBubble } from '@/features/assistant/assistant-bubble';
+import { assistantTransport } from '@/features/assistant/assistant-transport';
 
 const tokenStorage =
   Platform.OS === 'web'
@@ -60,7 +61,7 @@ export default function RootLayout() {
       >
         <CommerceProvider>
           <ReviewProvider>
-            <AssistantProvider>
+            <AssistantProvider transport={assistantTransport}>
               <StatusBar style="dark" />
               {fontError && <Txt variant="caption">{copy.common.fontError}</Txt>}
               <View
