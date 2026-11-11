@@ -248,41 +248,41 @@ export function OtaHero() {
       </div>
 
       <div className={`ota-container ${styles.inner}`}>
-        {/* Layer 3: Chữ TRIPFLIX 3D NGHIÊNG NĂNG ĐỘNG lồng toàn cảnh Việt Nam */}
+        {/* Layer 3: Chữ TRIPFLIX 3D DỰNG ĐỨNG THẲNG UY NGHI lồng toàn cảnh Việt Nam */}
         <div className={styles.brandCanvasWrapper}>
           <svg className={styles.slantedTripflixSvg} viewBox="0 0 960 150" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <filter id="svg3dShadow" x="-10%" y="-10%" width="125%" height="135%">
-                <feDropShadow dx="3" dy="8" stdDeviation="5" floodColor="#0f766e" floodOpacity="0.4" />
+              <filter id="svg3dShadow" x="-10%" y="-10%" width="125%" height="145%">
+                <feDropShadow dx="0" dy="14" stdDeviation="6" floodColor="#0f766e" floodOpacity="0.45" />
               </filter>
 
-              {/* ClipPath: Chữ TRIPFLIX DÁNG NGHIÊNG NĂNG ĐỘNG (Italic) */}
-              <clipPath id="slantedTripflixMask">
-                <text x="470" y="112" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4">
+              {/* ClipPath: Chữ TRIPFLIX DÁNG ĐỨNG THẲNG UY NGHI (Upright) */}
+              <clipPath id="uprightTripflixMask">
+                <text x="480" y="108" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="normal" fontWeight="900" fontSize="114" letterSpacing="4">
                   TRIPFLIX
                 </text>
               </clipPath>
             </defs>
 
-            {/* KHỐI 3D ISOMETRIC EXTRUSION ĐA TẦNG DÁNG NGHIÊNG TƯƠI SÁNG */}
-            {/* Tầng sâu nhất (Deep Teal-Ocean) */}
-            <text x="476" y="122" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="#0f766e" filter="url(#svg3dShadow)">
+            {/* KHỐI 3D DỰNG ĐỨNG THẲNG ĐỨNG (UPRIGHT ARCHITECTURAL EXTRUSION) */}
+            {/* Tầng chân đế sâu nhất (Deep Teal-Ocean) */}
+            <text x="480" y="118" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="normal" fontWeight="900" fontSize="114" letterSpacing="4" fill="#0c4a6e" filter="url(#svg3dShadow)">
               TRIPFLIX
             </text>
-            {/* Tầng giữa (Sky Aqua) */}
-            <text x="474" y="118" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="#0284c7">
+            {/* Tầng thân giữa (Sky Aqua) */}
+            <text x="480" y="114" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="normal" fontWeight="900" fontSize="114" letterSpacing="4" fill="#0284c7">
               TRIPFLIX
             </text>
-            {/* Tầng cận mặt (Brand Teal #00B2A3) */}
-            <text x="472" y="115" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="#00b2a3">
+            {/* Tầng cận mặt đứng (Brand Teal #00B2A3) */}
+            <text x="480" y="111" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="normal" fontWeight="900" fontSize="114" letterSpacing="4" fill="#00b2a3">
               TRIPFLIX
             </text>
 
             {/* TOÀN CẢNH DANH THẮNG VIỆT NAM LIÊN TỤC LỒNG TRỌN VẸN VÀO CHỮ */}
-            <image href="/brand/vietnam-panorama-tripflix.jpg" x="20" y="0" width="920" height="135" preserveAspectRatio="none" clipPath="url(#slantedTripflixMask)" />
+            <image href="/brand/vietnam-panorama-tripflix.jpg" x="20" y="0" width="920" height="135" preserveAspectRatio="none" clipPath="url(#uprightTripflixMask)" />
 
             {/* ĐƯỜNG VIỀN KÍNH PHA LÊ TRẮNG TINH KHIẾT (KHÔNG BỊ CẮT VÀO ẢNH) */}
-            <text x="470" y="112" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="none" stroke="rgba(255, 255, 255, 0.95)" strokeWidth="2" pointerEvents="none">
+            <text x="480" y="108" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="normal" fontWeight="900" fontSize="114" letterSpacing="4" fill="none" stroke="rgba(255, 255, 255, 0.95)" strokeWidth="2.2" pointerEvents="none">
               TRIPFLIX
             </text>
           </svg>
