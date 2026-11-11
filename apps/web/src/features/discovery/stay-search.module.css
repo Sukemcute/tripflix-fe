@@ -485,11 +485,7 @@
 }
 
 .homepagePanel .heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 32px 10px;
-  margin: 0;
+  display: none;
 }
 
 .homepagePanel .service {

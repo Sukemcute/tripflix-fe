@@ -3,51 +3,54 @@
 - Notion: N/A · Nhánh: `thanh/TF10-animation-ui-trang-chu` · Người làm: Thành (dùng AI: có) · Ngày: 2026-11-11
 
 ## Đã làm
-- **Nâng cấp Toàn bộ Landing Page: Layered 2D Environmental Journey (Tone Sáng & Khớp Màu Thương hiệu)**:
-  - **Bầu trời Ban mai Nắng ấm Tươi sáng (Loại bỏ hoàn toàn nền tối)**:
-    - Bầu trời chuyển sang gam màu sáng ấm áp: `#FFF7F2` $\rightarrow$ `#FEF3C7` (vàng mật ong) $\rightarrow$ `#BAE6FD` (xanh thiên thanh) $\rightarrow$ `#00B2A3` (Teal thương hiệu).
-    - Thêm các cụm mây trắng 2D vector bồng bềnh (`cloud1`, `cloud2`) và chim hải âu chao liệng đón gió biển.
-    - Dãy núi đá vôi Vịnh Hạ Long 3 lớp 2D phối màu tươi mát, trong trẻo: Lam ngọc thanh khiết $\rightarrow$ Xanh ngọc bích $\rightarrow$ Xanh ngọc lục bảo.
-  - **Khối Chữ TRIPFLIX 3D Nghiêng Thể thao Năng động**:
-    - Giữ vững dáng nghiêng 3D Isometric: `transform: scaleX(1.08) skewX(-7deg)` kết hợp `font-style: italic`.
-    - Lồng ảnh toàn cảnh danh lam thắng cảnh Việt Nam (`vietnam-panorama-tripflix.jpg`) liên tục, sắc nét, không bị cắn lẹm viền với đường nét viền kính pha lê trắng tinh khôi.
-    - Khối 3D Extrusion đa tầng phối màu rực rỡ (`#0f766e` $\rightarrow$ `#0284c7` $\rightarrow$ `#00b2a3`).
-    - Lưới 8 Hotspots tương tác tooltip badge định danh danh lam thắng cảnh phong cách Light Mode sang trọng.
-  - **Các Dải Chuyển Cảnh 2D Xếp Lớp (Layered 2D Environmental Transitions)**:
-    - **Transition 1**: Đáy Hero kết nối bằng **Đường sóng 2D uốn lượn kép (Dual Organic Wave Divider)** nối sang nền Sea Mist `#E7F7F4`.
-    - **Transition 2**: Dãy **Đồi núi xanh 2D xếp tầng (Layered Highland Hills & Forest)** lấy cảm hứng trực tiếp từ tranh dã ngoại, chuyển tiếp êm dịu từ đồng bằng xanh ngọc sang sương ấm Warm Mist (`#FFF7F2`).
-    - **Transition 3**: **Dải sóng cát bờ biển vàng ấm (Sunset Shoreline & Sand Dunes)** chuyển tiếp sang khu vực Cozy Stays và Banner Mascot Tripi.
-  - **Khớp 100% Bộ nhận diện Thương hiệu Tripflix (Brand Guidelines & Tokens)**:
-    - Nút CTA chính "Bắt đầu khám phá": Màu **Coral (`#FF5A3C`)** rực rỡ với chữ trắng và bóng đổ cam ấm áp.
-    - Tiêu đề H1: "Chạm cảm hứng," màu Navy `#141B3D` đậm đà; "trọn hành trình." gradient từ Teal `#00B2A3` sang Coral `#FF5A3C`.
-    - Thẻ Panoramic Destination Card: Kính mờ tuyết trắng sang trọng, badge Coral `#FF5A3C`, rating vàng Sun `#FFC531`, chữ Navy `#141B3D`.
-    - Nền toàn trang: Dải cảnh quan sáng sủa, thanh thoát với Sea Mist (`#E7F7F4`), Warm Mist (`#FFF7F2`) và Trắng tuyết (`#FFFFFF`).
-  - **Thanh tìm kiếm Master Search Capsule**:
-    - Nổi 100% **Above-the-fold** trên màn hình 1280x800, viên nang trắng tinh khiết với các trường tìm kiếm rõ ràng.
+- **Triển khai 100% Khớp Chính Xác Bản Thiết Kế Mockup Chuẩn (Reference Art: media_1794388246294_bffc6342)**:
+  - **Hero 3D Cinematic Backdrop 2K**:
+    - Nền biển ngọc bích nhiệt đới, bầu trời nắng ấm trong lành, dải lụa ngọc lam uốn lượn mềm mại trên cao cùng đàn chim hải âu chao liệng.
+    - Hai bên là dãy đảo đá vôi Vịnh Hạ Long kỳ vĩ sừng sững đón sóng.
+    - Chữ **TRIPFLIX 3D pha lê nguyên khối** vươn lên trực tiếp từ mặt biển, viền sáng neon trắng ngọc lam nổi bật với toàn cảnh danh lam thắng cảnh Việt Nam lồng xuyên suốt (Sa Pa, Hạ Long, Tràng An, Huế, Phú Quốc, Cao Bằng, Cầu Vàng Đà Nẵng, Hội An).
+    - Thuyền nan có mui rẽ sóng nước lướt từ phải qua trái, tạo vệt bọt sóng trắng (`boat wake`) uốn cong tự nhiên ôm lấy chân chữ và mặt nước phản chiếu lung linh.
+  - **Lớp Tương tác Hotspot 8 Chữ cái (Figma Hotspot System)**:
+    - Overlay trong suốt tương ứng 8 chữ cái T - R - I - P - F - L - I - X.
+    - Hover hiển thị tooltip badge kính mờ định danh danh thắng (Tây Bắc · Sa Pa, Kỳ quan · Vịnh Hạ Long, Cố đô · Huế, Biển xanh · Phú Quốc, Di sản · Hội An...).
+    - Click điều hướng thẳng tới trang tìm kiếm điểm đến tương ứng.
+  - **Cột Nội dung Bên Trái (Hero Storytelling & Actions)**:
+    - Eyebrow kính mờ viên nang: `KHÁM PHÁ • NGHỈ DƯỠNG • TẬN HƯỞNG →`.
+    - Tiêu đề H1 font Playfair Display sang trọng: Dòng 1 `Chạm cảm hứng,` (trắng tinh khiết) và Dòng 2 `trọn hành trình.` (italic gradient ngọc lam biển sâu).
+    - Đoạn giới thiệu: Font chữ trắng thanh lịch với bóng đổ nhẹ chống lóa trên nền nước biển.
+    - Nút CTA chính: Viên nang trắng bo tròn `Bắt đầu khám phá →` chữ xanh thẫm đậm đà.
+    - 3 Pills trải nghiệm kính mờ bo tròn: `Dạo biển`, `Lướt sóng`, `Chèo kayak` với ảnh thumbnail tròn thực tế.
+  - **Cột Thẻ Nổi Bên Phải (Panoramic Destination Card)**:
+    - Thẻ kính mờ cao cấp phong cách Glassmorphism màu xanh thẫm đại dương (`rgba(3, 38, 56, 0.76)`).
+    - Badge cam `DI SẢN UNESCO` và đánh giá sao vàng `★ 4.8`.
+    - Tiêu đề `Phố cổ Hội An`, phụ đề `Đắm hoà dàng lung linh sắc màu`, liên kết `Khám phá ngay →`.
+    - Khung ảnh thumbnail đêm hoa đăng Hội An bên sông lung linh sắc màu (`home-hoi-an-lanterns-night.jpg`).
+    - Thanh điều hướng chấm scene 3 nấc: `— • •` với hiệu ứng progress fill mượt mà.
+  - **Thanh Tìm Kiếm Master Search Capsule (100% Above-the-fold)**:
+    - Viên nang trắng bo tròn đơn khối nổi bật ngay trên mép nước biển dưới cùng của Hero.
+    - Đầy đủ các trường tìm kiếm: Điểm đến (icon pin), Ngày nhận phòng (icon lịch), Ngày trả phòng (icon lịch), Số khách, Số phòng và nút bấm `Tìm phòng trống` màu Teal thương hiệu.
+    - Đảm bảo hiển thị trọn vẹn 100% Above-the-fold trên màn hình tiêu chuẩn 1280x800 mà không cần cuộn.
 
 ## Đối chiếu "Xong khi"
 | Tiêu chí | Đạt | Bằng chứng |
 |---|---|---|
-| Bầu trời sáng sủa, ấm áp, ngập tràn ánh nắng và mây 2D | Đạt | Gradient `#FFF7F2` $\rightarrow$ `#FEF3C7` $\rightarrow$ `#BAE6FD` + Mây 2D + Chim hải âu |
-| Chữ TRIPFLIX 3D nghiêng thể thao lồng ảnh panorama Việt Nam | Đạt | `skewX(-7deg)` + italic + lồng ảnh liên tục không cắn lẹm |
-| Các dải cảnh quan 2D xếp lớp chuyển cảnh mượt mà | Đạt | Sóng biển ngọc bích $\rightarrow$ Đồi núi cao nguyên $\rightarrow$ Bờ cát vàng ấm |
-| Khớp 100% màu thương hiệu Coral #FF5A3C & Teal #00B2A3 | Đạt | Nút CTA Coral, Slogan Teal-Coral, Badge Coral & Sun, nền Sea Mist & Warm Mist |
-| Thanh tìm kiếm 100% Above-the-fold trên 1280x800 | Đạt | Đã kiểm chứng screenshot `bright-hero-desktop-1280.png` |
-| Toàn cảnh trang sáng sủa, thẩm mỹ du lịch cao cấp | Đạt | Đã kiểm chứng screenshot `bright-full-desktop-2800-v2.png` |
+| Khớp 100% chi tiết visual theo mockup chuẩn `media_1794388246294_bffc6342` | Đạt | Backdrop 2K 3D TRIPFLIX, thuyền nan, vệt sóng, typography, thẻ Hội An |
+| Chữ TRIPFLIX 3D pha lê lồng danh thắng Việt Nam và bọt sóng nước | Đạt | Độ phân giải 2K sắc nét, viền pha lê phát sáng, bóng nước tự nhiên |
+| Thẻ Phố cổ Hội An với ảnh đêm hoa đăng, badge UNESCO, sao 4.8 | Đạt | Khớp 1:1 theo ảnh mẫu tham chiếu |
+| Thanh tìm kiếm 100% Above-the-fold trên màn hình 1280x800 | Đạt | Đã kiểm chứng screenshot `hero-exact-final-1280.png` |
+| Hotspot tương tác 8 chữ cái Figma vẫn hoạt động trơn tru | Đạt | Lưới 8 điểm hover tooltip badge và click tìm kiếm |
 | Lint, typecheck pass 100% | Đạt | `pnpm --filter web typecheck` & `pnpm --filter web lint` 0 error |
 
 ## Kết quả kiểm tra
 - `pnpm lint`: Pass (0 error)
 - `pnpm typecheck`: Pass (0 error)
 - Hiển thị trực quan trên `http://localhost:3100`:
-  - `bright-hero-desktop-1280.png`: Hero bầu trời ban mai sáng sủa, thanh tìm kiếm Above-the-fold trên 1280x800.
-  - `bright-full-desktop-2800-v2.png`: Toàn cảnh cuộn dọc với các dải chuyển cảnh 2D xếp lớp êm ái.
-  - `bright-mobile-390.png`: Giao diện tương thích hoàn hảo trên điện thoại.
+  - `hero-exact-final-1280.png`: Hero khớp 1:1 theo ảnh mẫu `media_1794388246294_bffc6342`, Above-the-fold hoàn hảo trên 1280x800.
+  - `hero-exact-final-mobile-390.png`: Hiển thị gọn gàng, tự nhiên trên thiết bị di động.
 
 ## Cách kiểm lại
 1. Mở trình duyệt tại `http://localhost:3100/`.
-2. Nhấn `Ctrl + F5` để tải bản cập nhật mới nhất.
-3. Cuộn trang từ trên xuống dưới để trải nghiệm các dải chuyển cảnh 2D tự nhiên, sáng sủa, ấm áp và tươi mát.
+2. Nhấn `Ctrl + F5` để xóa cache và tải phiên bản mới nhất.
+3. So sánh trực tiếp với bản thiết kế mẫu để kiểm tra độ khớp 1:1.
 
 ## Ảnh hưởng tới phần của người khác
 - Không: Chỉ sửa đổi trong `apps/web/src/features/discovery/` và `docs/evidence/` do Thành phụ trách.

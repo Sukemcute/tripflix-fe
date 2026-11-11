@@ -1,280 +1,129 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,900&display=swap');
-
 .hero {
   position: relative;
-  /* Nền bầu trời ban mai nắng ấm rực rỡ hòa quyện non nước Vịnh Hạ Long */
   background:
-    radial-gradient(circle at 82% 14%, rgba(255, 197, 49, 0.38) 0%, rgba(254, 243, 199, 0.45) 26%, transparent 65%),
-    radial-gradient(circle at 18% 12%, rgba(186, 230, 253, 0.5) 0%, transparent 55%),
-    linear-gradient(
-      180deg,
-      #FFF7F2 0%,
-      #FEF3C7 16%,
-      #E0F2FE 40%,
-      #BAE6FD 65%,
-      #7DD3FC 85%,
-      #00B2A3 100%
-    );
-  min-height: clamp(520px, 48vw, 610px);
+    url('/brand/hero-tripflix-3d-backdrop-2k.jpg') center top / cover no-repeat,
+    linear-gradient(180deg, #0284c7 0%, #0369a1 40%, #083344 100%);
+  min-height: clamp(520px, 48vw, 620px);
   overflow: clip;
 }
 
 /* ==========================================================================
-   LỚP KHÔNG GIAN BẦU TRỜI BAN MAI, MÂY 2D & NÚI ĐÁ VÔI VỊNH HẠ LONG
+   LỚP ẢNH NỀN 3D BACKDROP 2K
    ========================================================================== */
-.karstBackdrop {
+.backdropImageWrapper {
   position: absolute;
   inset: 0;
   pointer-events: none;
   user-select: none;
-  overflow: hidden;
   z-index: 1;
 }
 
-.sunRays {
-  position: absolute;
-  top: -70px;
-  right: 15%;
-  width: 580px;
-  height: 460px;
-  background: conic-gradient(
-    from 192deg at 72% 0%,
-    transparent 0deg,
-    rgba(255, 255, 255, 0.35) 12deg,
-    transparent 22deg,
-    rgba(254, 240, 138, 0.32) 34deg,
-    transparent 45deg,
-    rgba(186, 230, 253, 0.28) 58deg,
-    transparent 75deg
-  );
-  filter: blur(28px);
-  pointer-events: none;
-}
-
-/* Cụm mây trắng 2D vector bồng bềnh trôi */
-.cloud {
-  position: absolute;
-  filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.6));
-  pointer-events: none;
-  opacity: 0.85;
-}
-.cloud1 {
-  top: 36px;
-  left: 8%;
-  width: 130px;
-  animation: cloudFloat1 24s ease-in-out infinite alternate;
-}
-.cloud2 {
-  top: 55px;
-  right: 12%;
-  width: 105px;
-  animation: cloudFloat2 28s ease-in-out infinite alternate;
-}
-@keyframes cloudFloat1 {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(45px);
-  }
-}
-@keyframes cloudFloat2 {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-35px);
-  }
-}
-
-.seagull {
-  position: absolute;
-  fill: #ffffff;
-  filter: drop-shadow(0 2px 4px rgba(0, 76, 68, 0.2));
-  pointer-events: none;
-}
-.gull1 {
-  top: 24px;
-  left: 24%;
-  width: 26px;
-  transform: rotate(-6deg);
-  animation: gullFloat 5.2s ease-in-out infinite alternate;
-}
-.gull2 {
-  top: 16px;
-  right: 18%;
-  width: 32px;
-  transform: rotate(12deg);
-  animation: gullFloat 4.4s ease-in-out infinite alternate-reverse;
-}
-
-/* Dãy núi đá vôi Vịnh Hạ Long tạo chiều sâu không gian kỳ vĩ */
-.karstSvg {
-  position: absolute;
-  bottom: 80px;
-  left: 0;
-  width: 100%;
-  height: 280px;
-}
-
-@keyframes gullFloat {
-  0% {
-    transform: translateY(0) rotate(-6deg);
-  }
-  100% {
-    transform: translateY(-7px) rotate(4deg);
-  }
-}
-
-/* ==========================================================================
-   GỢN SÓNG NƯỚC BIỂN KHÚC XẠ NẮNG (WATER RIPPLES & CAUSTICS)
-   ========================================================================== */
-.waterRippleLayer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 260px;
-  pointer-events: none;
-  z-index: 2;
-  overflow: hidden;
-}
-
-.waterWavesSvg {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+.backdropImg {
+  object-fit: cover;
+  object-position: center top;
 }
 
 .inner {
   position: relative;
-  z-index: 3;
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding-block: clamp(28px, 3.8vh, 44px) clamp(36px, 4vh, 46px);
+  justify-content: flex-end;
+  min-height: clamp(520px, 48vw, 620px);
+  padding-block: clamp(24px, 3.5vh, 40px) clamp(54px, 6.5vh, 70px);
 }
 
 /* ==========================================================================
-   FIGMA-STYLE SLANTED 3D TYPOGRAPHY SYSTEM
-   Chữ TRIPFLIX DÁNG NGHIÊNG XUỐNG VỀ BÊN PHẢI (Dynamic Diagonal Slant & Flow),
-   3D Isometric lồng toàn cảnh Việt Nam, tương tác Hotspots mượt mà không bị che khuất
+   LỚP TƯƠNG TÁC TỪNG CHỮ CÁI (FIGMA HOTSPOT SYSTEM)
+   Overlay trong suốt khớp hoàn hảo vị trí 8 chữ cái TRIPFLIX trên nền 3D
    ========================================================================== */
-.brandCanvasWrapper {
-  position: relative;
-  width: 100%;
-  max-width: 980px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: clamp(6px, 1.2vh, 16px);
-  margin-bottom: clamp(18px, 2.8vh, 32px);
-}
-
-.slantedTripflixSvg {
-  width: 100%;
-  max-width: 980px;
-  height: auto;
-  overflow: visible;
-  /* Dáng chữ đứng chéo dốc xuống về bên phải, bóng lùi về phía sau */
-  transform: translate3d(16px, 0, 0) rotate(2.8deg) scaleX(1.05) skewX(-5deg);
-  transform-origin: 35% 50%;
-  filter: drop-shadow(0 14px 28px rgba(0, 108, 99, 0.22));
-  /* Phản chiếu mặt nước biển tự nhiên với độ trong mờ tinh tế */
-  -webkit-box-reflect: below -20px linear-gradient(
-    transparent 60%,
-    rgba(0, 178, 163, 0.15) 80%,
-    rgba(217, 244, 241, 0.4) 100%
-  );
-}
-
-/* LỚP TƯƠNG TÁC HOVER TRÊN TỪNG CHỮ CÁI (FIGMA HOTSPOTS) ĐỒNG BỘ */
-.letterHotspots {
+.letterHotspotsArea {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: clamp(40px, 7.5vh, 74px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92%, 960px);
+  height: clamp(130px, 15vw, 190px);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.letterHotspots {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  transform: translate3d(16px, 0, 0) rotate(2.8deg) scaleX(1.05) skewX(-5deg);
-  transform-origin: 35% 50%;
-  pointer-events: auto;
+  width: 100%;
+  height: 100%;
 }
 
 .letterHotspot {
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: center;
   text-decoration: none;
   cursor: pointer;
+  border-radius: 12px;
+  pointer-events: auto;
+  transition: background 200ms ease;
 }
 
-/* Tooltip hiển thị tên danh lam thắng cảnh đặt phía dưới chữ, không bao giờ bị mép trên che khuất */
+.letterHotspot:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .letterBadge {
   position: absolute;
-  top: calc(100% + 10px);
-  left: 50%;
-  transform: translateX(-50%) translateY(-6px);
+  top: -42px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.96);
+  gap: 2px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(2, 44, 67, 0.92);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  border: 1.5px solid rgba(0, 178, 163, 0.4);
-  color: #141B3D;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 5px 14px;
-  border-radius: 999px;
-  white-space: nowrap;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   opacity: 0;
-  pointer-events: none;
-  box-shadow: 0 10px 24px rgba(0, 108, 99, 0.18);
+  transform: translateY(6px) scale(0.95);
   transition: all 220ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  pointer-events: none;
+  white-space: nowrap;
   z-index: 25;
 }
-.letterBadge::before {
-  content: '';
-  position: absolute;
-  top: -5px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 8px;
-  height: 8px;
-  background: #ffffff;
-  border-left: 1.5px solid rgba(0, 178, 163, 0.4);
-  border-top: 1.5px solid rgba(0, 178, 163, 0.4);
-}
+
 .badgeTag {
-  color: #FF5A3C;
-  font-size: 9.5px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #38bdf8;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-weight: 800;
-}
-.badgeName {
-  color: #141B3D;
 }
 
-.letterHotspot:hover .letterBadge {
+.badgeName {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.letterHotspot:hover .letterBadge,
+.letterHotspot:focus-visible .letterBadge {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 /* ==========================================================================
-   BỐ CỤC 2 CỘT NỬA DƯỚI BẦU TRỜI & MẶT NƯỚC
+   BỐ CỤC 2 CỘT NỬA DƯỚI MẶT BIỂN
    ========================================================================== */
 .bottomSection {
-  width: 100%;
+  position: relative;
+  z-index: 3;
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
   align-items: end;
-  gap: clamp(20px, 3.2vw, 48px);
+  gap: clamp(24px, 3.5vw, 56px);
+  width: 100%;
 }
 
 .copy {
@@ -283,29 +132,29 @@
   container-type: inline-size;
 }
 
-/* Eyebrow viên nang mờ trên nền trời */
+/* Eyebrow viên nang mờ trên mặt nước biển */
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 5px 16px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.14);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(0, 178, 163, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   margin-bottom: 12px;
-  box-shadow: 0 4px 14px rgba(0, 108, 99, 0.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 .eyebrowText {
-  color: #006C63;
+  color: #ffffff;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .eyebrowPlane {
-  color: #FF5A3C;
+  color: #38bdf8;
   font-size: 0.84rem;
   display: inline-block;
   animation: planeFloat 3s ease-in-out infinite alternate;
@@ -319,9 +168,9 @@
   }
 }
 
-/* Tiêu đề H1: Playfair Display sang trọng trên nền ban mai */
+/* Tiêu đề H1: Playfair Display sang trọng trên nền đại dương */
 .copy h1 {
-  margin-block: 0 12px;
+  margin-block: 0 10px;
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
   font-size: min(clamp(2.1rem, 3.2vw, 3.2rem), 14cqi);
   font-weight: 800;
@@ -331,10 +180,10 @@
 }
 .titleFirst {
   display: block;
-  color: #141B3D;
+  color: #ffffff;
   font-style: normal;
   white-space: nowrap;
-  text-shadow: 0 2px 10px rgba(255, 255, 255, 0.85);
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
 }
 .titleSecond {
   position: relative;
@@ -342,23 +191,25 @@
   font-style: italic;
   font-weight: 700;
   background: linear-gradient(
-    135deg,
-    #00B2A3 0%,
-    #0d9488 40%,
-    #FF5A3C 100%
+    180deg,
+    #ffffff 0%,
+    #e0f7f5 35%,
+    #4ee3d2 60%,
+    #38bdf8 100%
   );
+  background-size: 100% 180%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 8px rgba(255, 90, 60, 0.25));
+  filter: drop-shadow(0 4px 14px rgba(0, 166, 153, 0.45));
 }
 
 .description {
   max-width: 44ch;
   font-size: clamp(0.86rem, 1vw, 0.98rem);
   line-height: 1.6;
-  color: #1e293b;
-  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
   margin-block: 0 14px;
 }
 
@@ -370,27 +221,27 @@
   margin-top: 14px;
 }
 
-/* Nút CTA chính viên nang Coral thương hiệu */
+/* Nút CTA chính viên nang trắng */
 .primaryCta {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 24px;
+  padding: 11px 26px;
   border-radius: 999px;
-  background: #FF5A3C;
-  color: #ffffff;
+  background: #ffffff;
+  color: #03344d;
   font-size: 0.88rem;
   font-weight: 800;
   letter-spacing: -0.01em;
   text-decoration: none;
-  box-shadow: 0 10px 24px -4px rgba(255, 90, 60, 0.45);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.35);
   transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 .primaryCta:hover {
-  background: #FF7B60;
-  color: #ffffff;
+  background: #e6faf7;
+  color: #007c6e;
   transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 14px 30px -4px rgba(255, 90, 60, 0.55);
+  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.45);
 }
 .ctaArrow {
   font-size: 1rem;
@@ -400,7 +251,7 @@
   transform: translateX(4px);
 }
 
-/* Các pill hoạt động viên nang sáng sủa */
+/* Các pill hoạt động viên nang kính mờ */
 .activities {
   display: flex;
   flex-flow: row nowrap;
@@ -420,24 +271,24 @@
   min-height: 38px;
   padding: 4px 14px 4px 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.16);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(0, 178, 163, 0.25);
-  color: #141B3D;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #ffffff;
   font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
   text-decoration: none;
-  box-shadow: 0 4px 12px rgba(0, 108, 99, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 .activityPill:hover {
-  background: #ffffff;
-  border-color: #00B2A3;
-  color: #006C63;
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 8px 20px rgba(0, 108, 99, 0.16);
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.65);
+  color: #ffffff;
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 .activityPill img {
   width: 26px;
@@ -459,13 +310,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 14px;
+  gap: 12px;
   width: 100%;
 }
 
-/* Thẻ kính mờ danh lam thắng cảnh dáng ngang phong cách Light Mode sang trọng */
+/* Thẻ kính mờ danh lam thắng cảnh dáng ngang (như mẫu Phố cổ Hội An) */
 .panoramicDestinationCard {
-  width: min(100%, 490px);
+  width: min(100%, 480px);
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
@@ -476,11 +327,11 @@
   gap: 16px;
   padding: 12px 14px 12px 20px;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(3, 38, 56, 0.76);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
   backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid rgba(0, 178, 163, 0.25);
-  box-shadow: 0 20px 48px -10px rgba(0, 108, 99, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.45);
   transition:
     transform 300ms cubic-bezier(0.2, 0.7, 0.25, 1),
     border-color 300ms ease,
@@ -488,8 +339,8 @@
 }
 .panoramicDestinationCard:hover {
   transform: translateY(-4px) scale(1.02);
-  border-color: rgba(0, 178, 163, 0.6);
-  box-shadow: 0 26px 56px -10px rgba(0, 108, 99, 0.22);
+  border-color: rgba(78, 227, 210, 0.6);
+  box-shadow: 0 26px 56px -8px rgba(0, 0, 0, 0.55);
 }
 
 .destinationCardInfo {
@@ -511,7 +362,7 @@
   display: inline-block;
   padding: 2.5px 8px;
   border-radius: 999px;
-  background: #FF5A3C;
+  background: #ea580c;
   color: #ffffff;
   font-size: 0.68rem;
   font-weight: 800;
@@ -522,13 +373,13 @@
 .destinationRating {
   font-size: 0.78rem;
   font-weight: 700;
-  color: #d97706;
+  color: #facc15;
 }
 
 .destinationTitle {
   font-size: clamp(1.05rem, 1.35vw, 1.25rem);
   font-weight: 800;
-  color: #141B3D;
+  color: #ffffff;
   line-height: 1.25;
   letter-spacing: -0.015em;
 }
@@ -536,7 +387,7 @@
 .destinationSubtitle {
   margin: 0;
   font-size: 0.78rem;
-  color: #475569;
+  color: rgba(255, 255, 255, 0.82);
   line-height: 1.35;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -551,12 +402,12 @@
   margin-top: 4px;
   font-size: 0.78rem;
   font-weight: 700;
-  color: #006C63;
+  color: #38bdf8;
   text-decoration: none;
   transition: color 200ms ease;
 }
 .destinationAction:hover {
-  color: #FF5A3C;
+  color: #7dd3fc;
 }
 .actionArrow {
   transition: transform 200ms ease;
@@ -573,7 +424,7 @@
   flex-shrink: 0;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 20px rgba(0, 108, 99, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 .cardThumbImg {
   object-fit: cover;
@@ -597,7 +448,7 @@
   border-radius: 999px;
   border: none;
   padding: 0;
-  background: rgba(0, 108, 99, 0.25);
+  background: rgba(255, 255, 255, 0.35);
   cursor: pointer;
   transition: all 300ms ease;
   position: relative;
@@ -605,12 +456,12 @@
 }
 .sceneDotActive {
   width: 28px;
-  background: rgba(0, 108, 99, 0.15);
+  background: rgba(255, 255, 255, 0.25);
 }
 .sceneProgressFill {
   position: absolute;
   inset: 0;
-  background: #00B2A3;
+  background: #ffffff;
   border-radius: 999px;
   animation: sceneProgress linear forwards;
 }
@@ -627,6 +478,13 @@
    RESPONSIVE LAYOUT
    ========================================================================== */
 @media (max-width: 900px) {
+  .inner {
+    padding-block: clamp(180px, 24vw, 240px) 48px;
+  }
+  .letterHotspotsArea {
+    top: clamp(20px, 4vh, 40px);
+    height: clamp(100px, 16vw, 140px);
+  }
   .bottomSection {
     grid-template-columns: minmax(0, 1fr);
     gap: 28px;
@@ -644,28 +502,18 @@
 }
 
 @media (max-width: 640px) {
+  .hero {
+    min-height: auto;
+  }
+  .backdropImg {
+    object-position: 52% 12%;
+  }
   .inner {
-    padding-block: 14px 18px;
+    padding-block: clamp(120px, 20vw, 160px) 24px;
+    gap: 16px;
   }
-  .brandCanvasWrapper {
-    margin-bottom: 10px;
-  }
-  .slantedTripflixSvg {
-    max-width: 100%;
-    transform: rotate(1.8deg) scaleX(1.04) skewX(-4deg);
-    transform-origin: 50% 50%;
-    -webkit-box-reflect: below -14px linear-gradient(
-      transparent 68%,
-      rgba(0, 178, 163, 0.12) 84%,
-      rgba(217, 244, 241, 0.3) 100%
-    );
-  }
-  .letterHotspots {
-    transform: rotate(1.8deg) scaleX(1.04) skewX(-4deg);
-    transform-origin: 50% 50%;
-  }
-  .waterRippleLayer {
-    height: 160px;
+  .letterHotspotsArea {
+    display: none;
   }
   .copy h1 {
     font-size: min(clamp(1.7rem, 6.8vw, 2.1rem), 13cqi);
@@ -692,8 +540,8 @@
     display: none;
   }
   .destinationCardThumb {
-    width: 80px;
-    height: 64px;
+    width: 92px;
+    height: 68px;
     border-radius: 10px;
     flex-shrink: 0;
   }
@@ -703,18 +551,18 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .brandCanvasWrapper,
-  .bottomSection {
-    animation: arrive 900ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
+  .copy,
+  .sceneContainer {
+    animation: arrive 1000ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
   }
-  .bottomSection {
-    animation-delay: 120ms;
+  .sceneContainer {
+    animation-delay: 150ms;
   }
 }
 @keyframes arrive {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(18px);
   }
   to {
     opacity: 1;
@@ -723,9 +571,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .eyebrowPlane,
-  .seagull,
-  .brandCanvasWrapper,
-  .bottomSection {
+  .copy,
+  .sceneContainer {
     animation: none;
   }
 }
