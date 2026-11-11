@@ -27,6 +27,13 @@ export async function getHomeRecommendations(
   return response.data?.items ?? [];
 }
 
+// Gợi ý trang chủ ít đổi: không tự làm mới theo chu kỳ hay khi quay lại cửa sổ (TF84).
+export const HOME_RECOMMENDATIONS_REFRESH = {
+  staleTime: 15 * 60 * 1000,
+  refetchInterval: false,
+  refetchOnWindowFocus: false,
+} as const;
+
 export function useHomeRecommendations(filters: HomeRecommendationsFilters = {}) {
   const { isReady } = useApiSession();
   const recentParam = (filters.recentPlaceIds ?? []).join(',');
@@ -34,9 +41,7 @@ export function useHomeRecommendations(filters: HomeRecommendationsFilters = {})
   return useQuery({
     queryKey: ['discovery', 'home-recommendations', recentParam, filters.limit],
     enabled: isReady,
-    staleTime: 5 * 60 * 1000,
-    refetchInterval: 10 * 60 * 1000,
-    refetchOnWindowFocus: true,
+    ...HOME_RECOMMENDATIONS_REFRESH,
     queryFn: ({ signal }) => getHomeRecommendations(filters, signal),
   });
 }

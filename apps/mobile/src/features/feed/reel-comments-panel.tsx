@@ -3,17 +3,8 @@ import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useEffect, type ReactNode } from 'react';
-import {
-  Keyboard,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { useCallback, useEffect, useRef, type ComponentRef, type ReactNode } from 'react';
+import { Keyboard, Modal, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import {
   GestureDetector,
   GestureHandlerRootView,
@@ -25,6 +16,7 @@ import {
 import Animated, {
   Extrapolation,
   interpolate,
+  useAnimatedKeyboard,
   useAnimatedReaction,
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -151,7 +143,14 @@ export function ReelCommentsPanel({
     onUpdate: move,
     onDeactivate: settle,
   });
-  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.get() }] }));
+  // Khung đứng yên; chỉ phần đáy dãn theo bàn phím từng khung hình, nên ô nhập nằm ngay trên bàn phím
+  // còn danh sách bình luận thấp lại. Lúc bàn phím mở, nó đã che thanh Home nên không cần đệm cho thanh đó.
+  const keyboard = useAnimatedKeyboard();
+  const restingPadding = Math.max(insets.bottom, spacing.md);
+  const sheetStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.get() }],
+    paddingBottom: Math.max(keyboard.height.get() + spacing.sm, restingPadding),
+  }));
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: interpolate(translateY.get(), [0, sheetHeight], [1, 0], Extrapolation.CLAMP),
   }));
@@ -162,11 +161,14 @@ export function ReelCommentsPanel({
   const onScroll = useAnimatedScrollHandler((event) => {
     scrollY.set(event.contentOffset.y);
   });
+  const list = useRef<ComponentRef<typeof Animated.ScrollView>>(null);
+  const revealComment = useCallback((y: number) => list.current?.scrollTo({ y, animated: true }), []);
   const renderContent = (content: ReactNode) => (
     <GestureDetector gesture={listPan}>
       <Animated.View style={styles.list}>
         <GestureDetector gesture={nativeScroll}>
           <Animated.ScrollView
+            ref={list}
             testID="reel-comments-list"
             style={styles.list}
             bounces={false}
@@ -188,17 +190,9 @@ export function ReelCommentsPanel({
       <GestureHandlerRootView style={styles.root}>
         {hasBackdrop && <Animated.View pointerEvents="none" style={[styles.backdrop, backdropStyle]} />}
         <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />
-        <KeyboardAvoidingView
-          pointerEvents="box-none"
-          behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
-          style={styles.keyboard}
-        >
+        <View pointerEvents="box-none" style={styles.keyboard}>
           <Animated.View
-            style={[
-              styles.sheet,
-              { height: sheetHeight, paddingBottom: Math.max(insets.bottom, spacing.md) },
-              sheetStyle,
-            ]}
+            style={[styles.sheet, { height: sheetHeight }, sheetStyle]}
             accessibilityViewIsModal
             accessibilityLabel={vi.api.comments}
             onAccessibilityEscape={close}
@@ -219,6 +213,7 @@ export function ReelCommentsPanel({
                 showHeading={false}
                 compact
                 renderContent={renderContent}
+                onRevealComment={revealComment}
                 onLoginRequired={() => {
                   close();
                   router.push({ pathname: '/login', params: { returnTo: loginReturnTo } });
@@ -252,7 +247,7 @@ export function ReelCommentsPanel({
               </>
             )}
           </Animated.View>
-        </KeyboardAvoidingView>
+        </View>
       </GestureHandlerRootView>
     </Modal>
   );

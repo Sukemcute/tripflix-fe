@@ -447,6 +447,12 @@ export const mobile = {
     uploadingVideo: 'Đang tải video lên… {percent}%',
     uploadFailed: 'Tải video lên chưa xong. Kiểm tra mạng rồi bấm đăng lại, video sẽ tải lại từ đầu.',
     videoProcessing: 'Video đang được xử lý. Bài sẽ hiện video sau vài phút.',
+    videoHint: 'MP4 hoặc MOV, dài tối đa 5 phút',
+    changeVideo: 'Đổi video',
+    saveDraftShort: 'Lưu nháp',
+    hashtagsLabel: 'Hashtag',
+    hashtagsPlaceholder: 'dalat, cafe, homestay',
+    visibility: 'Ai xem được',
   },
   notifications: {
     title: 'Thông báo',

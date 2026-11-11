@@ -14,9 +14,9 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, Mascot } from '@/components/mobile-ui';
 import { AssistantDialog } from './assistant-chat';
-import { useAssistant } from './assistant-provider';
+import { BUBBLE_MASCOT_SIZE, BUBBLE_SIZE, useAssistant } from './assistant-provider';
 
-const SIZE = 64;
+const SIZE = BUBBLE_SIZE;
 const MARGIN = 12;
 
 export function AssistantBubble() {
@@ -108,10 +108,10 @@ export function AssistantBubble() {
                   style={styles.touch}
                 >
                   <View pointerEvents="none">
-                    <Mascot size={58} />
+                    <Mascot size={BUBBLE_MASCOT_SIZE} />
                   </View>
                   <View style={styles.badge}>
-                    <Icon name="sparkles" size={12} color={colors.background} />
+                    <Icon name="sparkles" size={10} color={colors.background} />
                   </View>
                 </Pressable>
               </Animated.View>
@@ -141,9 +141,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -2,
     right: -2,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: colors.coral,
     alignItems: 'center',
     justifyContent: 'center',

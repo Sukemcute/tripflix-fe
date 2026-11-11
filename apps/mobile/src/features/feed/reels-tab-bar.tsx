@@ -17,8 +17,13 @@ const TABS: readonly { id: ReelTab; label: string }[] = [
 
 export const REEL_TABS: readonly ReelTab[] = TABS.map((tab) => tab.id);
 
+// Compact like TikTok's top tabs; hitSlop keeps the tap area at the 44pt touch target.
+const TAB_HEIGHT = 32;
+const TAB_HIT_SLOP = (mobileLayout.touchTarget - TAB_HEIGHT) / 2;
+const INDICATOR_WIDTH = 20;
+
 /** Space content must leave below the safe area so the bar never covers it. */
-export const REELS_TAB_BAR_HEIGHT = mobileLayout.touchTarget + spacing.sm;
+export const REELS_TAB_BAR_HEIGHT = TAB_HEIGHT + spacing.sm;
 
 /** Lives above the slides so it stays reachable on tabs that have no video to show. */
 export function ReelsTabBar({
@@ -50,7 +55,8 @@ export function ReelsTabBar({
             accessibilityRole="tab"
             accessibilityState={{ selected: isSelected }}
             onPress={() => onSelect(tab.id)}
-            style={[styles.tab, isSelected && styles.selectedTab]}
+            hitSlop={{ top: TAB_HIT_SLOP, bottom: TAB_HIT_SLOP, left: spacing.sm, right: spacing.sm }}
+            style={styles.tab}
           >
             <Txt
               variant="label"
@@ -61,6 +67,7 @@ export function ReelsTabBar({
             >
               {tab.label}
             </Txt>
+            <View style={[styles.indicator, !isSelected && styles.hiddenIndicator]} />
           </Pressable>
         );
       })}
@@ -83,25 +90,33 @@ const styles = StyleSheet.create({
     right: spacing.lg,
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: spacing.xl,
+    gap: spacing.lg,
   },
   tab: {
     flexShrink: 1,
-    minHeight: mobileLayout.touchTarget,
+    height: TAB_HEIGHT,
+    alignItems: 'center',
     justifyContent: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: colors.transparent,
   },
-  selectedTab: { borderBottomColor: colors.background },
+  indicator: {
+    position: 'absolute',
+    bottom: 0,
+    width: INDICATOR_WIDTH,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: colors.background,
+  },
+  hiddenIndicator: { opacity: 0 },
   // Video frames can be bright, so the labels need their own contrast.
   label: {
     color: colors.background,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 20,
     textShadowColor: colors.overlayHeavy,
     textShadowRadius: 4,
   },
   selectedLabel: { fontFamily: nativeFonts.bold },
   idleLabel: { opacity: 0.75 },
-  search: { position: 'absolute', right: 0, top: 0 },
+  // The search button keeps its 44pt size, centred on the shorter bar.
+  search: { position: 'absolute', right: 0, top: -TAB_HIT_SLOP },
 });

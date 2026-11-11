@@ -184,8 +184,10 @@ export function OtaHomeRecommendations() {
   const [prevIndex, setPrevIndex] = useState<number | null>(null);
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const pauseReasonsRef = useRef({ hidden: false, offscreen: false, hover: false, focus: false });
+  const [isPaused, setIsPaused] = useState(false);
 
   const { data: apiPicks } = useHomeRecommendations({ limit: 6 });
   const combos = useMemo(() => {
@@ -234,14 +236,36 @@ export function OtaHomeRecommendations() {
     [activeIndex, isTransitioning, changeCombo],
   );
 
+  // Dừng xoay khi tab ẩn, box ngoài viewport, chuột đang trỏ vào hoặc đang focus bàn phím.
+  const setPauseReason = useCallback((reason: keyof typeof pauseReasonsRef.current, value: boolean) => {
+    pauseReasonsRef.current[reason] = value;
+    setIsPaused(Object.values(pauseReasonsRef.current).some(Boolean));
+  }, []);
+
   useEffect(() => {
-    if (isHovered) return;
+    const onVisibility = () => setPauseReason('hidden', document.hidden);
+    onVisibility();
+    document.addEventListener('visibilitychange', onVisibility);
+
+    const observer = new IntersectionObserver(([entry]) =>
+      setPauseReason('offscreen', !entry?.isIntersecting),
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      observer.disconnect();
+    };
+  }, [setPauseReason]);
+
+  useEffect(() => {
+    if (isPaused) return;
     const timer = setInterval(() => {
       handleNextCombo();
     }, ROTATE_INTERVAL_MS);
 
     return () => clearInterval(timer);
-  }, [handleNextCombo, isHovered]);
+  }, [handleNextCombo, isPaused]);
 
   useEffect(() => {
     return () => {
@@ -256,6 +280,13 @@ export function OtaHomeRecommendations() {
 
   return (
     <section
+      ref={sectionRef}
+      // Chỉ chuột thật mới dừng xoay; chạm trên cảm ứng không có pointerleave nên sẽ kẹt.
+      onPointerEnter={(e) => e.pointerType === 'mouse' && setPauseReason('hover', true)}
+      onPointerLeave={() => setPauseReason('hover', false)}
+      // Chỉ focus bằng bàn phím; bấm chuột vào nút mũi tên không làm dừng mãi.
+      onFocus={(e) => e.target.matches(':focus-visible') && setPauseReason('focus', true)}
+      onBlur={() => setPauseReason('focus', false)}
       id="home-recommendations"
       className={`ota-container ${styles.section}`}
       aria-labelledby="recommendations-title"
@@ -280,7 +311,7 @@ export function OtaHomeRecommendations() {
               >
                 <span className={styles.timelineIndex}>0{idx + 1}</span>
                 <span className={styles.timelineLabel}>{combo.destination.name}</span>
-                {idx === activeIndex && !isHovered ? (
+                {idx === activeIndex && !isPaused ? (
                   <span
                     key={`fill-${activeIndex}`}
                     className={styles.timelineFill}
@@ -319,11 +350,7 @@ export function OtaHomeRecommendations() {
         </div>
       </div>
 
-      <div
-        className={styles.destinations}
-        onPointerEnter={() => setIsHovered(true)}
-        onPointerLeave={() => setIsHovered(false)}
-      >
+      <div className={styles.destinations}>
         {/* Ô 1: Điểm đến tâm điểm (Lớn bên trái) */}
         <Link
           prefetch={false}
