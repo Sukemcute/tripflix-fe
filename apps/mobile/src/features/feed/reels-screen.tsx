@@ -8,7 +8,7 @@ import { useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
-import { NetworkStateType, useNetworkState } from 'expo-network';
+import { useNetworkState } from 'expo-network';
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +17,6 @@ import {
   AppState,
   ActivityIndicator,
   FlatList,
-  Platform,
   StyleSheet,
   View,
   useWindowDimensions,
@@ -475,11 +474,9 @@ export function ReelsFeed({
   const visibleIndex = Math.min(focusedIndex, Math.max(0, items.length - 1));
   const hideHeader = heldId !== null && heldId === items[visibleIndex]?.id;
   const isOffline = network.isConnected === false || network.isInternetReachable === false;
-  const isDataLimited =
-    network.type === NetworkStateType.CELLULAR ||
-    (Platform.OS !== 'web' &&
-      network.type !== NetworkStateType.WIFI &&
-      network.type !== NetworkStateType.ETHERNET);
+  // 5G cũng phát bản nét nhất, giống TikTok/Reels. Chỉ nên giới hạn khi người dùng bật "Tiết kiệm dữ liệu" (iOS Low Data
+  // Mode, Android Data Saver); expo-network chưa đọc được các cờ này nên tạm không giới hạn. Khi có module thì gán ở đây.
+  const isDataLimited = false;
   const slots = usePlayerPool({
     items,
     activeIndex: currentIndex,
