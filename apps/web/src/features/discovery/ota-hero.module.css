@@ -154,32 +154,36 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-block: clamp(16px, 2vh, 26px) clamp(36px, 4vh, 46px);
+  padding-block: clamp(28px, 3.8vh, 44px) clamp(36px, 4vh, 46px);
 }
 
 /* ==========================================================================
    FIGMA-STYLE SLANTED 3D TYPOGRAPHY SYSTEM
-   Chữ TRIPFLIX DÁNG NGHIÊNG NĂNG ĐỘNG (Italic), 3D Isometric lồng toàn cảnh Việt Nam
+   Chữ TRIPFLIX DÁNG NGHIÊNG XUỐNG VỀ BÊN PHẢI (Dynamic Diagonal Slant & Flow),
+   3D Isometric lồng toàn cảnh Việt Nam, tương tác Hotspots mượt mà không bị che khuất
    ========================================================================== */
 .brandCanvasWrapper {
   position: relative;
   width: 100%;
-  max-width: 960px;
+  max-width: 980px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: clamp(14px, 2.2vh, 26px);
+  margin-top: clamp(6px, 1.2vh, 16px);
+  margin-bottom: clamp(18px, 2.8vh, 32px);
 }
 
 .slantedTripflixSvg {
   width: 100%;
-  max-width: 960px;
+  max-width: 980px;
   height: auto;
   overflow: visible;
-  transform: scaleX(1.08) skewX(-7deg);
-  filter: drop-shadow(0 14px 28px rgba(2, 44, 67, 0.6));
+  /* Dáng chữ nghiêng xuống về bên phải, dịch thoáng tạo bố cục bất đối xứng nghệ thuật */
+  transform: translate3d(24px, 0, 0) rotate(2.4deg) scaleX(1.06) skewX(-7deg);
+  transform-origin: 35% 50%;
+  filter: drop-shadow(0 12px 26px rgba(0, 108, 99, 0.22));
   /* Phản chiếu mặt nước biển tự nhiên với độ trong mờ tinh tế */
-  -webkit-box-reflect: below -24px linear-gradient(
+  -webkit-box-reflect: below -20px linear-gradient(
     transparent 60%,
     rgba(0, 178, 163, 0.15) 80%,
     rgba(217, 244, 241, 0.4) 100%
@@ -195,7 +199,8 @@
   height: 100%;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  transform: scaleX(1.08) skewX(-7deg);
+  transform: translate3d(24px, 0, 0) rotate(2.4deg) scaleX(1.06) skewX(-7deg);
+  transform-origin: 35% 50%;
   pointer-events: auto;
 }
 
@@ -208,30 +213,42 @@
   cursor: pointer;
 }
 
-/* Tooltip hiển thị tên danh lam thắng cảnh khi hover */
+/* Tooltip hiển thị tên danh lam thắng cảnh đặt phía dưới chữ, không bao giờ bị mép trên che khuất */
 .letterBadge {
   position: absolute;
-  top: -34px;
+  top: calc(100% + 10px);
   left: 50%;
-  transform: translateX(-50%) translateY(8px);
+  transform: translateX(-50%) translateY(-6px);
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.96);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(0, 178, 163, 0.35);
+  border: 1.5px solid rgba(0, 178, 163, 0.4);
   color: #141B3D;
   font-size: 11px;
   font-weight: 800;
-  padding: 4px 12px;
+  padding: 5px 14px;
   border-radius: 999px;
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  box-shadow: 0 8px 24px rgba(0, 108, 99, 0.15);
-  transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
-  z-index: 20;
+  box-shadow: 0 10px 24px rgba(0, 108, 99, 0.18);
+  transition: all 220ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  z-index: 25;
+}
+.letterBadge::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: #ffffff;
+  border-left: 1.5px solid rgba(0, 178, 163, 0.4);
+  border-top: 1.5px solid rgba(0, 178, 163, 0.4);
 }
 .badgeTag {
   color: #FF5A3C;
@@ -635,7 +652,8 @@
   }
   .slantedTripflixSvg {
     max-width: 100%;
-    transform: scaleX(1.05) skewX(-5deg);
+    transform: rotate(1.5deg) scaleX(1.04) skewX(-5deg);
+    transform-origin: 50% 50%;
     -webkit-box-reflect: below -14px linear-gradient(
       transparent 68%,
       rgba(0, 178, 163, 0.12) 84%,
@@ -643,7 +661,8 @@
     );
   }
   .letterHotspots {
-    transform: scaleX(1.05) skewX(-5deg);
+    transform: rotate(1.5deg) scaleX(1.04) skewX(-5deg);
+    transform-origin: 50% 50%;
   }
   .waterRippleLayer {
     height: 160px;
