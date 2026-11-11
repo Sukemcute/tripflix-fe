@@ -2,17 +2,25 @@
 
 .hero {
   position: relative;
-  /* Nền chuyển tiếp: Bầu trời xanh thiên thanh ấm áp nắng sớm hòa quyện xuống mặt biển */
+  /* Nền bầu trời ban mai nắng ấm rực rỡ hòa quyện non nước Vịnh Hạ Long */
   background:
-    radial-gradient(circle at 82% 10%, rgba(254, 240, 138, 0.45) 0%, rgba(56, 189, 248, 0.25) 30%, transparent 65%),
-    radial-gradient(circle at 45% 0%, #0284c7 0%, #0369a1 40%, #075985 75%, #083344 100%),
-    linear-gradient(180deg, #0284c7 0%, #0369a1 55%, #083344 100%);
-  min-height: clamp(500px, 46vw, 580px);
+    radial-gradient(circle at 82% 14%, rgba(255, 197, 49, 0.38) 0%, rgba(254, 243, 199, 0.45) 26%, transparent 65%),
+    radial-gradient(circle at 18% 12%, rgba(186, 230, 253, 0.5) 0%, transparent 55%),
+    linear-gradient(
+      180deg,
+      #FFF7F2 0%,
+      #FEF3C7 16%,
+      #E0F2FE 40%,
+      #BAE6FD 65%,
+      #7DD3FC 85%,
+      #00B2A3 100%
+    );
+  min-height: clamp(520px, 48vw, 610px);
   overflow: clip;
 }
 
 /* ==========================================================================
-   LỚP KHÔNG GIAN BẦU TRỜI & NÚI ĐÁ VÔI VỊNH HẠ LONG
+   LỚP KHÔNG GIAN BẦU TRỜI BAN MAI, MÂY 2D & NÚI ĐÁ VÔI VỊNH HẠ LONG
    ========================================================================== */
 .karstBackdrop {
   position: absolute;
@@ -32,21 +40,57 @@
   background: conic-gradient(
     from 192deg at 72% 0%,
     transparent 0deg,
-    rgba(255, 255, 255, 0.22) 12deg,
+    rgba(255, 255, 255, 0.35) 12deg,
     transparent 22deg,
-    rgba(254, 240, 138, 0.24) 34deg,
+    rgba(254, 240, 138, 0.32) 34deg,
     transparent 45deg,
-    rgba(186, 230, 253, 0.2) 58deg,
+    rgba(186, 230, 253, 0.28) 58deg,
     transparent 75deg
   );
   filter: blur(28px);
   pointer-events: none;
 }
 
+/* Cụm mây trắng 2D vector bồng bềnh trôi */
+.cloud {
+  position: absolute;
+  filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.6));
+  pointer-events: none;
+  opacity: 0.85;
+}
+.cloud1 {
+  top: 36px;
+  left: 8%;
+  width: 130px;
+  animation: cloudFloat1 24s ease-in-out infinite alternate;
+}
+.cloud2 {
+  top: 55px;
+  right: 12%;
+  width: 105px;
+  animation: cloudFloat2 28s ease-in-out infinite alternate;
+}
+@keyframes cloudFloat1 {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(45px);
+  }
+}
+@keyframes cloudFloat2 {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-35px);
+  }
+}
+
 .seagull {
   position: absolute;
   fill: #ffffff;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 2px 4px rgba(0, 76, 68, 0.2));
   pointer-events: none;
 }
 .gull1 {
@@ -137,8 +181,8 @@
   /* Phản chiếu mặt nước biển tự nhiên với độ trong mờ tinh tế */
   -webkit-box-reflect: below -24px linear-gradient(
     transparent 60%,
-    rgba(3, 105, 161, 0.15) 80%,
-    rgba(56, 189, 248, 0.35) 100%
+    rgba(0, 178, 163, 0.15) 80%,
+    rgba(217, 244, 241, 0.4) 100%
   );
 }
 
@@ -173,11 +217,11 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(3, 40, 60, 0.94);
+  background: rgba(255, 255, 255, 0.95);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(125, 211, 252, 0.7);
-  color: #ffffff;
+  border: 1px solid rgba(0, 178, 163, 0.35);
+  color: #141B3D;
   font-size: 11px;
   font-weight: 800;
   padding: 4px 12px;
@@ -185,18 +229,19 @@
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 108, 99, 0.15);
   transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
   z-index: 20;
 }
 .badgeTag {
-  color: #38bdf8;
+  color: #FF5A3C;
   font-size: 9.5px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  font-weight: 800;
 }
 .badgeName {
-  color: #ffffff;
+  color: #141B3D;
 }
 
 .letterHotspot:hover .letterBadge {
@@ -205,7 +250,7 @@
 }
 
 /* ==========================================================================
-   BỐ CỤC 2 CỘT NỬA DƯỚI MẶT NƯỚC BIỂN
+   BỐ CỤC 2 CỘT NỬA DƯỚI BẦU TRỜI & MẶT NƯỚC
    ========================================================================== */
 .bottomSection {
   width: 100%;
@@ -221,29 +266,29 @@
   container-type: inline-size;
 }
 
-/* Eyebrow viên nang mờ trên mặt nước biển */
+/* Eyebrow viên nang mờ trên nền trời */
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 5px 16px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.88);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(0, 178, 163, 0.3);
   margin-bottom: 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 14px rgba(0, 108, 99, 0.08);
 }
 .eyebrowText {
-  color: #ffffff;
+  color: #006C63;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .eyebrowPlane {
-  color: #38bdf8;
+  color: #FF5A3C;
   font-size: 0.84rem;
   display: inline-block;
   animation: planeFloat 3s ease-in-out infinite alternate;
@@ -257,7 +302,7 @@
   }
 }
 
-/* Tiêu đề H1: Playfair Display sang trọng trên nền đại dương */
+/* Tiêu đề H1: Playfair Display sang trọng trên nền ban mai */
 .copy h1 {
   margin-block: 0 12px;
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
@@ -269,10 +314,10 @@
 }
 .titleFirst {
   display: block;
-  color: #ffffff;
+  color: #141B3D;
   font-style: normal;
   white-space: nowrap;
-  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 2px 10px rgba(255, 255, 255, 0.85);
 }
 .titleSecond {
   position: relative;
@@ -280,25 +325,23 @@
   font-style: italic;
   font-weight: 700;
   background: linear-gradient(
-    180deg,
-    #ffffff 0%,
-    #e0f7f5 35%,
-    #4ee3d2 60%,
-    #38bdf8 100%
+    135deg,
+    #00B2A3 0%,
+    #0d9488 40%,
+    #FF5A3C 100%
   );
-  background-size: 100% 180%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 4px 14px rgba(0, 166, 153, 0.45));
+  filter: drop-shadow(0 2px 8px rgba(255, 90, 60, 0.25));
 }
 
 .description {
   max-width: 44ch;
   font-size: clamp(0.86rem, 1vw, 0.98rem);
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.88);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  color: #1e293b;
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.8);
   margin-block: 0 14px;
 }
 
@@ -310,27 +353,27 @@
   margin-top: 14px;
 }
 
-/* Nút CTA chính viên nang trắng */
+/* Nút CTA chính viên nang Coral thương hiệu */
 .primaryCta {
   display: inline-flex;
   align-items: center;
   gap: 10px;
   padding: 10px 24px;
   border-radius: 999px;
-  background: #ffffff;
-  color: #03344d;
+  background: #FF5A3C;
+  color: #ffffff;
   font-size: 0.88rem;
   font-weight: 800;
   letter-spacing: -0.01em;
   text-decoration: none;
-  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 24px -4px rgba(255, 90, 60, 0.45);
   transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 .primaryCta:hover {
-  background: #e6faf7;
-  color: #007c6e;
+  background: #FF7B60;
+  color: #ffffff;
   transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 14px 30px -4px rgba(255, 90, 60, 0.55);
 }
 .ctaArrow {
   font-size: 1rem;
@@ -340,7 +383,7 @@
   transform: translateX(4px);
 }
 
-/* Các pill hoạt động viên nang kính mờ */
+/* Các pill hoạt động viên nang sáng sủa */
 .activities {
   display: flex;
   flex-flow: row nowrap;
@@ -360,24 +403,24 @@
   min-height: 38px;
   padding: 4px 14px 4px 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.88);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  color: #ffffff;
+  border: 1px solid rgba(0, 178, 163, 0.25);
+  color: #141B3D;
   font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
   text-decoration: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 108, 99, 0.08);
   transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 .activityPill:hover {
-  background: rgba(255, 255, 255, 0.28);
-  border-color: rgba(255, 255, 255, 0.65);
-  color: #ffffff;
-  transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  background: #ffffff;
+  border-color: #00B2A3;
+  color: #006C63;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 20px rgba(0, 108, 99, 0.16);
 }
 .activityPill img {
   width: 26px;
@@ -403,7 +446,7 @@
   width: 100%;
 }
 
-/* Thẻ kính mờ danh lam thắng cảnh dáng ngang */
+/* Thẻ kính mờ danh lam thắng cảnh dáng ngang phong cách Light Mode sang trọng */
 .panoramicDestinationCard {
   width: min(100%, 490px);
   min-width: 0;
@@ -416,11 +459,11 @@
   gap: 16px;
   padding: 12px 14px 12px 20px;
   border-radius: 24px;
-  background: rgba(3, 38, 56, 0.76);
+  background: rgba(255, 255, 255, 0.94);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
   backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(0, 178, 163, 0.25);
+  box-shadow: 0 20px 48px -10px rgba(0, 108, 99, 0.16);
   transition:
     transform 300ms cubic-bezier(0.2, 0.7, 0.25, 1),
     border-color 300ms ease,
@@ -428,8 +471,8 @@
 }
 .panoramicDestinationCard:hover {
   transform: translateY(-4px) scale(1.02);
-  border-color: rgba(78, 227, 210, 0.6);
-  box-shadow: 0 26px 56px -8px rgba(0, 0, 0, 0.55);
+  border-color: rgba(0, 178, 163, 0.6);
+  box-shadow: 0 26px 56px -10px rgba(0, 108, 99, 0.22);
 }
 
 .destinationCardInfo {
@@ -451,7 +494,7 @@
   display: inline-block;
   padding: 2.5px 8px;
   border-radius: 999px;
-  background: #ea580c;
+  background: #FF5A3C;
   color: #ffffff;
   font-size: 0.68rem;
   font-weight: 800;
@@ -462,13 +505,13 @@
 .destinationRating {
   font-size: 0.78rem;
   font-weight: 700;
-  color: #facc15;
+  color: #d97706;
 }
 
 .destinationTitle {
   font-size: clamp(1.05rem, 1.35vw, 1.25rem);
   font-weight: 800;
-  color: #ffffff;
+  color: #141B3D;
   line-height: 1.25;
   letter-spacing: -0.015em;
 }
@@ -476,7 +519,7 @@
 .destinationSubtitle {
   margin: 0;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.82);
+  color: #475569;
   line-height: 1.35;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -491,12 +534,12 @@
   margin-top: 4px;
   font-size: 0.78rem;
   font-weight: 700;
-  color: #38bdf8;
+  color: #006C63;
   text-decoration: none;
   transition: color 200ms ease;
 }
 .destinationAction:hover {
-  color: #7dd3fc;
+  color: #FF5A3C;
 }
 .actionArrow {
   transition: transform 200ms ease;
@@ -513,7 +556,7 @@
   flex-shrink: 0;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 20px rgba(0, 108, 99, 0.15);
 }
 .cardThumbImg {
   object-fit: cover;
@@ -537,7 +580,7 @@
   border-radius: 999px;
   border: none;
   padding: 0;
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(0, 108, 99, 0.25);
   cursor: pointer;
   transition: all 300ms ease;
   position: relative;
@@ -545,12 +588,12 @@
 }
 .sceneDotActive {
   width: 28px;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(0, 108, 99, 0.15);
 }
 .sceneProgressFill {
   position: absolute;
   inset: 0;
-  background: #ffffff;
+  background: #00B2A3;
   border-radius: 999px;
   animation: sceneProgress linear forwards;
 }
@@ -595,8 +638,8 @@
     transform: scaleX(1.05) skewX(-5deg);
     -webkit-box-reflect: below -14px linear-gradient(
       transparent 68%,
-      rgba(3, 105, 161, 0.12) 84%,
-      rgba(56, 189, 248, 0.25) 100%
+      rgba(0, 178, 163, 0.12) 84%,
+      rgba(217, 244, 241, 0.3) 100%
     );
   }
   .letterHotspots {

@@ -48,75 +48,99 @@ export function OtaHomeMotion({ children }: { children: ReactNode }) {
     <main
       id="content"
       ref={homeRef}
-      className={styles.oceanCanvas}
+      className={styles.layeredCanvas}
       onPointerMove={trackBannerPointer}
       onPointerOut={resetBannerPointer}
     >
-      {/* CÁC LAYER ĐỒ HỌA THẾ GIỚI ĐẠI DƯƠNG HẬU CẢNH (LARACON VIII SEAMLESS STYLE) */}
-      <div className={styles.oceanBackdropLayer} aria-hidden="true">
-        {/* 1. Tia nắng rọi xuyên qua làn nước biển sâu (Underwater Sunbeams) */}
-        <div className={styles.sunbeams} />
+      {/* CÁC LAYER CẢNH QUAN 2D XẾP LỚP TƯƠI SÁNG (LAYERED 2D ENVIRONMENTAL JOURNEY) */}
+      <div className={styles.landscapeBackdropLayer} aria-hidden="true">
+        {/* 1. Vệt nắng mai vàng mật ong ấm áp xuyên mây (Morning Sunshine Glow) */}
+        <div className={styles.morningSunbeams} />
 
-        {/* 2. Chú cá voi khổng lồ lượn lờ trong làn nước sâu (Laracon VIII Whale) */}
-        <div className={styles.whaleSilhouetteWrapper}>
-          <svg className={styles.whaleSvg} viewBox="0 0 520 220" fill="none">
-            {/* Thân cá voi uốn lượn */}
+        {/* 2. Dải sóng biển ngọc bích 2D chuyển tiếp sau Hero (Shoreline Teal Waves) */}
+        <div className={styles.shoreWaveTransition}>
+          <svg viewBox="0 0 1440 180" preserveAspectRatio="none" fill="none">
             <path
-              d="M 60 110 C 100 65, 200 45, 300 55 C 380 65, 430 90, 480 105 C 440 102, 395 112, 350 135 C 290 165, 210 172, 150 155 C 105 142, 80 128, 60 110 Z"
-              fill="currentColor"
+              d="M 0 60 C 320 20, 640 110, 960 50 C 1200 10, 1360 80, 1440 60 L 1440 180 L 0 180 Z"
+              fill="rgba(0, 178, 163, 0.08)"
             />
-            {/* Đuôi cá voi xoè rộng */}
             <path
-              d="M 65 110 C 45 95, 20 70, 5 75 C 15 95, 30 110, 45 114 C 28 120, 10 138, 5 152 C 22 155, 48 130, 68 116 Z"
-              fill="currentColor"
-            />
-            {/* Vây bơi bên hông */}
-            <path
-              d="M 280 145 C 295 170, 310 195, 325 210 C 322 195, 320 175, 312 155 Z"
-              fill="currentColor"
-              opacity="0.85"
+              d="M 0 95 C 280 65, 560 140, 880 85 C 1140 45, 1320 115, 1440 90 L 1440 180 L 0 180 Z"
+              fill="rgba(217, 244, 241, 0.45)"
             />
           </svg>
         </div>
 
-        {/* Đàn cá nhỏ bơi theo cá voi */}
-        <div className={styles.schoolOfFish}>
-          <svg viewBox="0 0 160 70" fill="rgba(56, 189, 248, 0.5)">
-            <ellipse cx="20" cy="20" rx="8" ry="3" />
-            <polygon points="12,20 6,17 6,23" />
-            <ellipse cx="45" cy="14" rx="7" ry="2.5" />
-            <polygon points="38,14 33,11 33,17" />
-            <ellipse cx="38" cy="32" rx="9" ry="3.5" />
-            <polygon points="29,32 23,29 23,35" />
-            <ellipse cx="70" cy="24" rx="8" ry="3" />
-            <polygon points="62,24 56,21 56,27" />
-            <ellipse cx="95" cy="18" rx="6" ry="2" />
-            <polygon points="89,18 84,16 84,20" />
-            <ellipse cx="85" cy="38" rx="7" ry="2.8" />
-            <polygon points="78,38 73,35 73,41" />
-            <ellipse cx="120" cy="28" rx="8" ry="3" />
-            <polygon points="112,28 106,25 106,31" />
+        {/* 3. Dãy đồi núi xanh 2D xếp tầng (Layered Highland Hills & Forest) - Lấy cảm hứng từ tranh dã ngoại */}
+        <div className={styles.highlandHillsWrapper}>
+          <svg className={styles.highlandHillsSvg} viewBox="0 0 1440 320" preserveAspectRatio="none" fill="none">
+            <defs>
+              <linearGradient id="hillFarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#86efac" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#bbf7d0" stopOpacity="0.45" />
+              </linearGradient>
+              <linearGradient id="hillMidGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#00b2a3" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0.35" />
+              </linearGradient>
+              <linearGradient id="hillNearGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#0f766e" stopOpacity="0.15" />
+                <stop offset="100%" stopColor="#FFF7F2" stopOpacity="0.9" />
+              </linearGradient>
+            </defs>
+
+            {/* Đồi xa mờ sương */}
+            <path
+              d="M 0 140 Q 220 80, 480 125 T 980 90 T 1440 130 L 1440 320 L 0 320 Z"
+              fill="url(#hillFarGrad)"
+            />
+
+            {/* Đồi trung ngọc bích với rặng thông 2D mini */}
+            <path
+              d="M 0 190 Q 340 130, 680 185 T 1200 150 T 1440 180 L 1440 320 L 0 320 Z"
+              fill="url(#hillMidGrad)"
+            />
+
+            {/* Đồi cận uốn lượn chuyển tiếp êm dịu sang Warm Mist */}
+            <path
+              d="M 0 240 Q 260 190, 560 235 T 1060 210 T 1440 245 L 1440 320 L 0 320 Z"
+              fill="url(#hillNearGrad)"
+            />
+
+            {/* Rặng thông 2D cách điệu phong cách Bắc Âu / Đà Lạt */}
+            <g fill="rgba(0, 178, 163, 0.28)">
+              <polygon points="120,175 127,192 113,192" />
+              <polygon points="120,182 129,198 111,198" />
+              <polygon points="135,178 141,192 129,192" />
+              <polygon points="135,185 143,198 127,198" />
+              <polygon points="860,140 867,156 853,156" />
+              <polygon points="860,148 869,164 851,164" />
+              <polygon points="878,144 884,158 872,158" />
+              <polygon points="878,151 886,165 870,165" />
+            </g>
           </svg>
         </div>
 
-        {/* 3. Bong bóng nước bập bềnh nổi lên */}
-        <span className={`${styles.bubble} ${styles.b1}`} />
-        <span className={`${styles.bubble} ${styles.b2}`} />
-        <span className={`${styles.bubble} ${styles.b3}`} />
-        <span className={`${styles.bubble} ${styles.b4}`} />
-        <span className={`${styles.bubble} ${styles.b5}`} />
+        {/* 4. Dải sóng cát bờ biển vàng ấm (Sunset Shoreline & Sand Dunes) */}
+        <div className={styles.sandDunesWrapper}>
+          <svg viewBox="0 0 1440 220" preserveAspectRatio="none" fill="none">
+            <path
+              d="M 0 100 C 380 40, 780 140, 1120 70 C 1280 40, 1380 90, 1440 80 L 1440 220 L 0 220 Z"
+              fill="rgba(254, 243, 199, 0.45)"
+            />
+            <path
+              d="M 0 140 C 320 90, 680 170, 1020 120 C 1220 90, 1350 150, 1440 130 L 1440 220 L 0 220 Z"
+              fill="rgba(255, 247, 242, 0.75)"
+            />
+          </svg>
+        </div>
 
-        {/* 4. Rạn san hô & Rong biển hai bên viền màn hình */}
-        <svg className={styles.coralLeft} viewBox="0 0 140 380" preserveAspectRatio="none">
-          <path d="M 0 380 L 0 120 Q 35 150, 45 200 T 70 280 T 95 380 Z" />
-          <path d="M 0 380 L 0 200 Q 55 180, 65 240 T 115 320 T 130 380 Z" opacity="0.6" />
-          <path d="M 0 380 L 0 60 Q 25 100, 30 180 T 50 300 T 65 380 Z" opacity="0.4" />
+        {/* 5. Cánh chim hải âu chao lượn trên cao nguyên và mây trôi */}
+        <svg className={`${styles.highlandBird} ${styles.hb1}`} viewBox="0 0 24 12">
+          <path d="M0,8 C6,2 10,2 12,6 C14,2 18,2 24,8 C18,6 14,8 12,12 C10,8 6,6 0,8 Z" />
         </svg>
-
-        <svg className={styles.coralRight} viewBox="0 0 160 420" preserveAspectRatio="none">
-          <path d="M 160 420 L 160 100 Q 115 140, 110 210 T 80 310 T 55 420 Z" />
-          <path d="M 160 420 L 160 180 Q 95 190, 85 260 T 40 350 T 20 420 Z" opacity="0.55" />
-          <path d="M 160 420 L 160 40 Q 135 90, 130 180 T 100 290 T 80 420 Z" opacity="0.35" />
+        <svg className={`${styles.highlandBird} ${styles.hb2}`} viewBox="0 0 24 12">
+          <path d="M0,8 C6,2 10,2 12,6 C14,2 18,2 24,8 C18,6 14,8 12,12 C10,8 6,6 0,8 Z" />
         </svg>
       </div>
 

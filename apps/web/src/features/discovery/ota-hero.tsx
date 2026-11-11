@@ -128,9 +128,25 @@ export function OtaHero() {
 
   return (
     <header className={styles.hero}>
-      {/* Layer 1: Không gian đại dương nhiệt đới, núi đá vôi Vịnh Hạ Long & chim hải âu */}
+      {/* Layer 1: Không gian bầu trời ban mai nắng ấm, mây 2D, núi đá vôi Vịnh Hạ Long & chim hải âu */}
       <div className={styles.karstBackdrop} aria-hidden="true">
         <div className={styles.sunRays} />
+
+        {/* Cụm mây trắng 2D bồng bềnh trôi trong nắng sớm */}
+        <svg className={`${styles.cloud} ${styles.cloud1}`} viewBox="0 0 120 40" fill="none">
+          <path
+            d="M 12 32 C 6 32 0 28 0 22 C 0 16 5 12 11 12 C 14 5 22 0 32 0 C 42 0 50 6 54 13 C 58 10 64 8 70 8 C 80 8 88 15 89 24 C 94 23 99 26 100 32 Z"
+            fill="rgba(255, 255, 255, 0.85)"
+          />
+        </svg>
+        <svg className={`${styles.cloud} ${styles.cloud2}`} viewBox="0 0 100 36" fill="none">
+          <path
+            d="M 10 28 C 5 28 0 24 0 19 C 0 14 4 10 9 10 C 12 4 19 0 28 0 C 37 0 44 5 47 11 C 51 9 56 7 61 7 C 70 7 77 13 78 21 C 82 20 87 23 88 28 Z"
+            fill="rgba(255, 255, 255, 0.7)"
+          />
+        </svg>
+
+        {/* Chim hải âu chao liệng đón gió biển */}
         <svg className={`${styles.seagull} ${styles.gull1}`} viewBox="0 0 24 12">
           <path d="M0,8 C6,2 10,2 12,6 C14,2 18,2 24,8 C18,6 14,8 12,12 C10,8 6,6 0,8 Z" />
         </svg>
@@ -138,22 +154,26 @@ export function OtaHero() {
           <path d="M0,8 C6,2 10,2 12,6 C14,2 18,2 24,8 C18,6 14,8 12,12 C10,8 6,6 0,8 Z" />
         </svg>
 
-        {/* Dãy núi đá vôi Vịnh Hạ Long tạo chiều sâu không gian kỳ vĩ */}
+        {/* Dãy núi đá vôi Vịnh Hạ Long 3 lớp 2D tạo chiều sâu non nước hùng vĩ */}
         <svg className={styles.karstSvg} viewBox="0 0 1440 280" preserveAspectRatio="none" fill="none">
           <defs>
+            {/* Lớp xa: Lam ngọc thanh khiết mờ sương */}
             <linearGradient id="farKarstGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#0284c7" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#0369a1" stopOpacity="0.75" />
+              <stop offset="0%" stopColor="#7dd3fc" stopOpacity="0.45" />
+              <stop offset="60%" stopColor="#38bdf8" stopOpacity="0.65" />
+              <stop offset="100%" stopColor="#0284c7" stopOpacity="0.85" />
             </linearGradient>
+            {/* Lớp trung: Xanh non nước ngọc bích tươi tắn */}
             <linearGradient id="midKarstGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#0369a1" stopOpacity="0.6" />
-              <stop offset="40%" stopColor="#047857" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="#075985" stopOpacity="0.9" />
+              <stop offset="0%" stopColor="#2dd4bf" stopOpacity="0.65" />
+              <stop offset="45%" stopColor="#00b2a3" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#0f766e" stopOpacity="0.95" />
             </linearGradient>
+            {/* Lớp cận: Xanh ngọc lục bảo vững chãi đón sóng */}
             <linearGradient id="nearKarstGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#064e3b" stopOpacity="0.75" />
-              <stop offset="50%" stopColor="#065f46" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="#083344" stopOpacity="0.95" />
+              <stop offset="0%" stopColor="#00b2a3" stopOpacity="0.85" />
+              <stop offset="50%" stopColor="#047857" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#064e3b" stopOpacity="0.98" />
             </linearGradient>
           </defs>
 
@@ -170,60 +190,60 @@ export function OtaHero() {
         </svg>
       </div>
 
-      {/* Layer 2: Mặt cắt sóng biển & Gợn sóng khúc xạ nắng (Waterline Transition & Caustics) */}
+      {/* Layer 2: Đường sóng 2D uốn lượn kép (Dual Organic Wave Divider) chuyển tiếp mượt mà */}
       <div className={styles.waterRippleLayer} aria-hidden="true">
         <svg className={styles.waterWavesSvg} viewBox="0 0 1440 260" preserveAspectRatio="none" fill="none">
           <defs>
             <linearGradient id="waveGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgba(255, 255, 255, 0.45)" />
-              <stop offset="30%" stopColor="rgba(56, 189, 248, 0.25)" />
-              <stop offset="100%" stopColor="rgba(3, 105, 161, 0)" />
+              <stop offset="0%" stopColor="rgba(255, 255, 255, 0.65)" />
+              <stop offset="35%" stopColor="rgba(0, 178, 163, 0.35)" />
+              <stop offset="100%" stopColor="rgba(231, 247, 244, 0.85)" />
             </linearGradient>
             <linearGradient id="waveGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgba(186, 230, 253, 0.55)" />
-              <stop offset="50%" stopColor="rgba(14, 165, 233, 0.2)" />
-              <stop offset="100%" stopColor="rgba(2, 68, 100, 0)" />
+              <stop offset="0%" stopColor="rgba(217, 244, 241, 0.8)" />
+              <stop offset="50%" stopColor="rgba(0, 178, 163, 0.45)" />
+              <stop offset="100%" stopColor="#E7F7F4" />
             </linearGradient>
             <linearGradient id="causticGlow" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="rgba(255, 255, 255, 0)" />
-              <stop offset="25%" stopColor="rgba(255, 255, 255, 0.65)" />
-              <stop offset="50%" stopColor="rgba(125, 211, 252, 0.85)" />
-              <stop offset="75%" stopColor="rgba(255, 255, 255, 0.65)" />
+              <stop offset="25%" stopColor="rgba(255, 255, 255, 0.9)" />
+              <stop offset="50%" stopColor="rgba(255, 197, 49, 0.6)" />
+              <stop offset="75%" stopColor="rgba(255, 255, 255, 0.9)" />
               <stop offset="100%" stopColor="rgba(255, 255, 255, 0)" />
             </linearGradient>
-            {/* Mặt cắt thấu kính nước biển (Waterline Lens Cut) phong cách Laracon VIII */}
-            <linearGradient id="waterlineLensGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgba(56, 189, 248, 0.35)" />
-              <stop offset="40%" stopColor="rgba(3, 105, 161, 0.6)" />
-              <stop offset="100%" stopColor="rgba(7, 89, 133, 0.95)" />
+            {/* Lớp sóng chuyển tiếp nối xuống nền Sea Mist */}
+            <linearGradient id="organicWaveTransitionGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgba(0, 178, 163, 0.25)" />
+              <stop offset="40%" stopColor="rgba(217, 244, 241, 0.65)" />
+              <stop offset="100%" stopColor="#E7F7F4" />
             </linearGradient>
           </defs>
 
-          {/* Sóng gợn xa */}
+          {/* Sóng gợn xa lấp lánh ánh mai */}
           <path d="M 0 55 Q 180 40, 360 55 T 720 50 T 1080 58 T 1440 54 L 1440 260 L 0 260 Z" fill="url(#waveGrad1)" />
-          <path d="M 0 53 Q 180 38, 360 53 T 720 48 T 1080 56 T 1440 52" stroke="url(#causticGlow)" strokeWidth="1.8" />
+          <path d="M 0 53 Q 180 38, 360 53 T 720 48 T 1080 56 T 1440 52" stroke="url(#causticGlow)" strokeWidth="2" />
 
-          {/* Sóng gợn trung */}
+          {/* Sóng gợn trung ngọc bích */}
           <path d="M 0 100 Q 240 82, 480 100 T 960 95 T 1440 102 L 1440 260 L 0 260 Z" fill="url(#waveGrad2)" />
-          <path d="M 0 98 Q 240 80, 480 98 T 960 93 T 1440 100" stroke="rgba(255, 255, 255, 0.45)" strokeWidth="1.5" />
+          <path d="M 0 98 Q 240 80, 480 98 T 960 93 T 1440 100" stroke="rgba(255, 255, 255, 0.85)" strokeWidth="1.8" />
 
-          {/* Đường mặt cắt thấu kính nước cuộn sóng (Waterline Cross-Section Curve) */}
+          {/* Đường sóng uốn lượn 2D hữu cơ nối xuống Sea Mist */}
           <path
-            d="M 0 160 C 220 135, 420 175, 720 150 C 1020 125, 1220 170, 1440 145 L 1440 260 L 0 260 Z"
-            fill="url(#waterlineLensGrad)"
+            d="M 0 160 C 240 135, 440 178, 720 152 C 1000 126, 1200 172, 1440 148 L 1440 260 L 0 260 Z"
+            fill="url(#organicWaveTransitionGrad)"
           />
           <path
-            d="M 0 158 C 220 133, 420 173, 720 148 C 1020 123, 1220 168, 1440 143"
-            stroke="rgba(255, 255, 255, 0.6)"
-            strokeWidth="2.2"
+            d="M 0 158 C 240 133, 440 176, 720 150 C 1000 124, 1200 170, 1440 146"
+            stroke="rgba(255, 255, 255, 0.95)"
+            strokeWidth="2.5"
           />
 
-          {/* Bọt sóng sủi tăm li ti dọc theo mép nước */}
-          <circle cx="280" cy="152" r="3" fill="rgba(255, 255, 255, 0.6)" />
-          <circle cx="310" cy="156" r="2" fill="rgba(255, 255, 255, 0.5)" />
-          <circle cx="680" cy="144" r="3.5" fill="rgba(255, 255, 255, 0.7)" />
-          <circle cx="730" cy="148" r="2" fill="rgba(255, 255, 255, 0.5)" />
-          <circle cx="1160" cy="156" r="3" fill="rgba(255, 255, 255, 0.6)" />
+          {/* Bọt sóng sủi tăm li ti viền mép sóng */}
+          <circle cx="280" cy="152" r="3.5" fill="rgba(255, 255, 255, 0.85)" />
+          <circle cx="310" cy="156" r="2.5" fill="rgba(255, 255, 255, 0.75)" />
+          <circle cx="680" cy="144" r="4" fill="rgba(255, 255, 255, 0.9)" />
+          <circle cx="730" cy="148" r="2.8" fill="rgba(255, 255, 255, 0.75)" />
+          <circle cx="1160" cy="156" r="3.5" fill="rgba(255, 255, 255, 0.85)" />
         </svg>
       </div>
 
@@ -233,7 +253,7 @@ export function OtaHero() {
           <svg className={styles.slantedTripflixSvg} viewBox="0 0 960 150" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <filter id="svg3dShadow" x="-10%" y="-10%" width="125%" height="135%">
-                <feDropShadow dx="4" dy="10" stdDeviation="6" floodColor="#012437" floodOpacity="0.75" />
+                <feDropShadow dx="3" dy="8" stdDeviation="5" floodColor="#0f766e" floodOpacity="0.4" />
               </filter>
 
               {/* ClipPath: Chữ TRIPFLIX DÁNG NGHIÊNG NĂNG ĐỘNG (Italic) */}
@@ -244,17 +264,17 @@ export function OtaHero() {
               </clipPath>
             </defs>
 
-            {/* KHỐI 3D ISOMETRIC EXTRUSION ĐA TẦNG DÁNG NGHIÊNG */}
-            {/* Tầng sâu nhất (Deep navy) */}
-            <text x="476" y="122" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="#012638" filter="url(#svg3dShadow)">
+            {/* KHỐI 3D ISOMETRIC EXTRUSION ĐA TẦNG DÁNG NGHIÊNG TƯƠI SÁNG */}
+            {/* Tầng sâu nhất (Deep Teal-Ocean) */}
+            <text x="476" y="122" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="#0f766e" filter="url(#svg3dShadow)">
               TRIPFLIX
             </text>
-            {/* Tầng giữa (Ocean blue) */}
-            <text x="474" y="118" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="#03486a">
+            {/* Tầng giữa (Sky Aqua) */}
+            <text x="474" y="118" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="#0284c7">
               TRIPFLIX
             </text>
-            {/* Tầng cận mặt (Tropical cyan) */}
-            <text x="472" y="115" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="#0284c7">
+            {/* Tầng cận mặt (Brand Teal #00B2A3) */}
+            <text x="472" y="115" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="#00b2a3">
               TRIPFLIX
             </text>
 
