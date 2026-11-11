@@ -170,9 +170,9 @@ export function OtaHero() {
         </svg>
       </div>
 
-      {/* Layer 2: Gợn sóng nước biển khúc xạ nắng (Water ripples & Caustics) */}
+      {/* Layer 2: Mặt cắt sóng biển & Gợn sóng khúc xạ nắng (Waterline Transition & Caustics) */}
       <div className={styles.waterRippleLayer} aria-hidden="true">
-        <svg className={styles.waterWavesSvg} viewBox="0 0 1440 240" preserveAspectRatio="none" fill="none">
+        <svg className={styles.waterWavesSvg} viewBox="0 0 1440 260" preserveAspectRatio="none" fill="none">
           <defs>
             <linearGradient id="waveGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="rgba(255, 255, 255, 0.45)" />
@@ -180,71 +180,94 @@ export function OtaHero() {
               <stop offset="100%" stopColor="rgba(3, 105, 161, 0)" />
             </linearGradient>
             <linearGradient id="waveGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgba(186, 230, 253, 0.5)" />
-              <stop offset="50%" stopColor="rgba(14, 165, 233, 0.15)" />
+              <stop offset="0%" stopColor="rgba(186, 230, 253, 0.55)" />
+              <stop offset="50%" stopColor="rgba(14, 165, 233, 0.2)" />
               <stop offset="100%" stopColor="rgba(2, 68, 100, 0)" />
             </linearGradient>
             <linearGradient id="causticGlow" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="rgba(255, 255, 255, 0)" />
-              <stop offset="25%" stopColor="rgba(255, 255, 255, 0.6)" />
-              <stop offset="50%" stopColor="rgba(125, 211, 252, 0.75)" />
-              <stop offset="75%" stopColor="rgba(255, 255, 255, 0.6)" />
+              <stop offset="25%" stopColor="rgba(255, 255, 255, 0.65)" />
+              <stop offset="50%" stopColor="rgba(125, 211, 252, 0.85)" />
+              <stop offset="75%" stopColor="rgba(255, 255, 255, 0.65)" />
               <stop offset="100%" stopColor="rgba(255, 255, 255, 0)" />
+            </linearGradient>
+            {/* Mặt cắt thấu kính nước biển (Waterline Lens Cut) phong cách Laracon VIII */}
+            <linearGradient id="waterlineLensGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgba(56, 189, 248, 0.35)" />
+              <stop offset="40%" stopColor="rgba(3, 105, 161, 0.6)" />
+              <stop offset="100%" stopColor="rgba(7, 89, 133, 0.95)" />
             </linearGradient>
           </defs>
 
-          {/* Lớp sóng gợn xa 1 */}
-          <path d="M 0 60 Q 180 45, 360 60 T 720 55 T 1080 62 T 1440 58 L 1440 240 L 0 240 Z" fill="url(#waveGrad1)" />
-          <path d="M 0 58 Q 180 43, 360 58 T 720 53 T 1080 60 T 1440 56" stroke="url(#causticGlow)" strokeWidth="1.8" />
+          {/* Sóng gợn xa */}
+          <path d="M 0 55 Q 180 40, 360 55 T 720 50 T 1080 58 T 1440 54 L 1440 260 L 0 260 Z" fill="url(#waveGrad1)" />
+          <path d="M 0 53 Q 180 38, 360 53 T 720 48 T 1080 56 T 1440 52" stroke="url(#causticGlow)" strokeWidth="1.8" />
 
-          {/* Lớp sóng gợn trung 2 */}
-          <path d="M 0 110 Q 240 92, 480 110 T 960 105 T 1440 112 L 1440 240 L 0 240 Z" fill="url(#waveGrad2)" />
-          <path d="M 0 108 Q 240 90, 480 108 T 960 103 T 1440 110" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="1.5" />
+          {/* Sóng gợn trung */}
+          <path d="M 0 100 Q 240 82, 480 100 T 960 95 T 1440 102 L 1440 260 L 0 260 Z" fill="url(#waveGrad2)" />
+          <path d="M 0 98 Q 240 80, 480 98 T 960 93 T 1440 100" stroke="rgba(255, 255, 255, 0.45)" strokeWidth="1.5" />
 
-          {/* Lớp sóng gợn tiền cảnh 3 */}
-          <path d="M 0 165 Q 220 150, 440 165 T 880 160 T 1320 168 T 1440 162" stroke="rgba(255, 255, 255, 0.35)" strokeWidth="1.5" />
-          <path d="M 0 195 Q 260 182, 520 195 T 1040 190 T 1440 198" stroke="rgba(125, 211, 252, 0.3)" strokeWidth="1.2" />
+          {/* Đường mặt cắt thấu kính nước cuộn sóng (Waterline Cross-Section Curve) */}
+          <path
+            d="M 0 160 C 220 135, 420 175, 720 150 C 1020 125, 1220 170, 1440 145 L 1440 260 L 0 260 Z"
+            fill="url(#waterlineLensGrad)"
+          />
+          <path
+            d="M 0 158 C 220 133, 420 173, 720 148 C 1020 123, 1220 168, 1440 143"
+            stroke="rgba(255, 255, 255, 0.6)"
+            strokeWidth="2.2"
+          />
+
+          {/* Bọt sóng sủi tăm li ti dọc theo mép nước */}
+          <circle cx="280" cy="152" r="3" fill="rgba(255, 255, 255, 0.6)" />
+          <circle cx="310" cy="156" r="2" fill="rgba(255, 255, 255, 0.5)" />
+          <circle cx="680" cy="144" r="3.5" fill="rgba(255, 255, 255, 0.7)" />
+          <circle cx="730" cy="148" r="2" fill="rgba(255, 255, 255, 0.5)" />
+          <circle cx="1160" cy="156" r="3" fill="rgba(255, 255, 255, 0.6)" />
         </svg>
       </div>
 
       <div className={`ota-container ${styles.inner}`}>
-        {/* Layer 3: Figma-style Upright Vector Typography Masking (Chữ đứng thẳng lồng toàn cảnh Việt Nam) */}
+        {/* Layer 3: Chữ TRIPFLIX 3D NGHIÊNG NĂNG ĐỘNG lồng toàn cảnh Việt Nam */}
         <div className={styles.brandCanvasWrapper}>
-          <svg className={styles.uprightTripflixSvg} viewBox="0 0 940 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg className={styles.slantedTripflixSvg} viewBox="0 0 960 150" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <filter id="svg3dShadow" x="-10%" y="-10%" width="120%" height="130%">
-                <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="#012437" floodOpacity="0.75" />
+              <filter id="svg3dShadow" x="-10%" y="-10%" width="125%" height="135%">
+                <feDropShadow dx="4" dy="10" stdDeviation="6" floodColor="#012437" floodOpacity="0.75" />
               </filter>
 
-              {/* ClipPath: Chữ TRIPFLIX ĐỨNG THẲNG (Upright), không nghiêng đổ, không biến dạng */}
-              <clipPath id="uprightTripflixMask">
-                <text x="470" y="112" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontWeight="900" fontSize="114" letterSpacing="4">
+              {/* ClipPath: Chữ TRIPFLIX DÁNG NGHIÊNG NĂNG ĐỘNG (Italic) */}
+              <clipPath id="slantedTripflixMask">
+                <text x="470" y="112" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4">
                   TRIPFLIX
                 </text>
               </clipPath>
             </defs>
 
-            {/* KHỐI ĐỘ DÀY 3D ĐỨNG THẲNG (UPRIGHT EXTRUSION) */}
-            <text x="470" y="122" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontWeight="900" fontSize="114" letterSpacing="4" fill="#012638" filter="url(#svg3dShadow)">
+            {/* KHỐI 3D ISOMETRIC EXTRUSION ĐA TẦNG DÁNG NGHIÊNG */}
+            {/* Tầng sâu nhất (Deep navy) */}
+            <text x="476" y="122" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="#012638" filter="url(#svg3dShadow)">
               TRIPFLIX
             </text>
-            <text x="470" y="119" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontWeight="900" fontSize="114" letterSpacing="4" fill="#03486a">
+            {/* Tầng giữa (Ocean blue) */}
+            <text x="474" y="118" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="#03486a">
               TRIPFLIX
             </text>
-            <text x="470" y="116" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontWeight="900" fontSize="114" letterSpacing="4" fill="#0284c7">
+            {/* Tầng cận mặt (Tropical cyan) */}
+            <text x="472" y="115" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="#0284c7">
               TRIPFLIX
             </text>
 
             {/* TOÀN CẢNH DANH THẮNG VIỆT NAM LIÊN TỤC LỒNG TRỌN VẸN VÀO CHỮ */}
-            <image href="/brand/vietnam-panorama-tripflix.jpg" x="20" y="0" width="900" height="135" preserveAspectRatio="none" clipPath="url(#uprightTripflixMask)" />
+            <image href="/brand/vietnam-panorama-tripflix.jpg" x="20" y="0" width="920" height="135" preserveAspectRatio="none" clipPath="url(#slantedTripflixMask)" />
 
             {/* ĐƯỜNG VIỀN KÍNH PHA LÊ TRẮNG TINH KHIẾT (KHÔNG BỊ CẮT VÀO ẢNH) */}
-            <text x="470" y="112" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontWeight="900" fontSize="114" letterSpacing="4" fill="none" stroke="rgba(255, 255, 255, 0.95)" strokeWidth="2" pointerEvents="none">
+            <text x="470" y="112" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontStyle="italic" fontWeight="900" fontSize="114" letterSpacing="4" fill="none" stroke="rgba(255, 255, 255, 0.95)" strokeWidth="2" pointerEvents="none">
               TRIPFLIX
             </text>
           </svg>
 
-          {/* LỚP TƯƠNG TÁC TỪNG CHỮ CÁI (FIGMA HOTSPOTS) */}
+          {/* LỚP TƯƠNG TÁC TỪNG CHỮ CÁI (FIGMA HOTSPOTS) DÁNG NGHIÊNG ĐỒNG BỘ */}
           <div className={styles.letterHotspots} aria-label="Khám phá danh thắng qua từng chữ cái">
             {TRIPFLIX_BRAND_LETTERS.map((item, idx) => (
               <Link

@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,900&display=swap');
 
 .hero {
   position: relative;
-  /* Nền đại dương nhiệt đới: Bầu trời xanh nắng ấm chuyển dần sang nước biển ngọc bích */
+  /* Nền chuyển tiếp: Bầu trời xanh thiên thanh ấm áp nắng sớm hòa quyện xuống mặt biển */
   background:
-    radial-gradient(circle at 82% 10%, rgba(254, 240, 138, 0.4) 0%, rgba(56, 189, 248, 0.2) 30%, transparent 65%),
+    radial-gradient(circle at 82% 10%, rgba(254, 240, 138, 0.45) 0%, rgba(56, 189, 248, 0.25) 30%, transparent 65%),
     radial-gradient(circle at 45% 0%, #0284c7 0%, #0369a1 40%, #075985 75%, #083344 100%),
     linear-gradient(180deg, #0284c7 0%, #0369a1 55%, #083344 100%);
-  min-height: clamp(480px, 44vw, 560px);
+  min-height: clamp(500px, 46vw, 580px);
   overflow: clip;
 }
 
@@ -90,7 +90,7 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 240px;
+  height: 260px;
   pointer-events: none;
   z-index: 2;
   overflow: hidden;
@@ -114,8 +114,8 @@
 }
 
 /* ==========================================================================
-   FIGMA-STYLE UPRIGHT MODULAR VECTOR TYPOGRAPHY SYSTEM
-   Chữ TRIPFLIX ĐỨNG THẲNG (Upright), không nghiêng đổ, lồng toàn cảnh Việt Nam
+   FIGMA-STYLE SLANTED 3D TYPOGRAPHY SYSTEM
+   Chữ TRIPFLIX DÁNG NGHIÊNG NĂNG ĐỘNG (Italic), 3D Isometric lồng toàn cảnh Việt Nam
    ========================================================================== */
 .brandCanvasWrapper {
   position: relative;
@@ -124,24 +124,25 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: clamp(10px, 1.8vh, 20px);
+  margin-bottom: clamp(14px, 2.2vh, 26px);
 }
 
-.uprightTripflixSvg {
+.slantedTripflixSvg {
   width: 100%;
-  max-width: 940px;
+  max-width: 960px;
   height: auto;
   overflow: visible;
-  filter: drop-shadow(0 12px 28px rgba(2, 44, 67, 0.55));
+  transform: scaleX(1.08) skewX(-7deg);
+  filter: drop-shadow(0 14px 28px rgba(2, 44, 67, 0.6));
   /* Phản chiếu mặt nước biển tự nhiên với độ trong mờ tinh tế */
-  -webkit-box-reflect: below -20px linear-gradient(
-    transparent 65%,
-    rgba(3, 105, 161, 0.15) 82%,
+  -webkit-box-reflect: below -24px linear-gradient(
+    transparent 60%,
+    rgba(3, 105, 161, 0.15) 80%,
     rgba(56, 189, 248, 0.35) 100%
   );
 }
 
-/* LỚP TƯƠNG TÁC HOVER TRÊN TỪNG CHỮ CÁI (FIGMA HOTSPOTS) */
+/* LỚP TƯƠNG TÁC HOVER TRÊN TỪNG CHỮ CÁI (FIGMA HOTSPOTS) DÁNG NGHIÊNG ĐỒNG BỘ */
 .letterHotspots {
   position: absolute;
   top: 0;
@@ -150,6 +151,7 @@
   height: 100%;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
+  transform: scaleX(1.08) skewX(-7deg);
   pointer-events: auto;
 }
 
@@ -588,13 +590,17 @@
   .brandCanvasWrapper {
     margin-bottom: 10px;
   }
-  .uprightTripflixSvg {
+  .slantedTripflixSvg {
     max-width: 100%;
-    -webkit-box-reflect: below -12px linear-gradient(
-      transparent 70%,
-      rgba(3, 105, 161, 0.12) 85%,
+    transform: scaleX(1.05) skewX(-5deg);
+    -webkit-box-reflect: below -14px linear-gradient(
+      transparent 68%,
+      rgba(3, 105, 161, 0.12) 84%,
       rgba(56, 189, 248, 0.25) 100%
     );
+  }
+  .letterHotspots {
+    transform: scaleX(1.05) skewX(-5deg);
   }
   .waterRippleLayer {
     height: 160px;

@@ -417,65 +417,33 @@
   color: #ffffff;
 }
 .stayBand {
-  --edge-height: clamp(28px, 4vw, 56px);
+  --edge-height: 0px;
   position: relative;
   isolation: isolate;
-  /* clip (không phải hidden) để dải không thành vùng cuộn riêng, animation theo cuộn của thẻ vẫn bám trang. */
   overflow: clip;
-  background: var(--color-sea-mist);
+  background: rgba(3, 40, 60, 0.65);
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  border-radius: 32px;
+  max-width: 1240px;
+  margin-inline: auto;
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.5);
 }
-/* Ảnh phong cảnh mờ là lớp dưới cùng; độ trong suốt pha với nền Sea Mist cho dịu và dễ đọc chữ. */
+/* Ảnh phong cảnh mờ là lớp dưới cùng; độ trong suốt pha với nền kính mờ đại dương */
 .stayBackdrop {
   z-index: -2;
   object-fit: cover;
-  opacity: 0.72;
-  filter: blur(14px) saturate(1.15);
-  /* Phóng đủ lớn để mép ảnh bị blur làm nhạt (thành vệt sáng) luôn nằm ngoài dải. */
+  opacity: 0.35;
+  filter: blur(20px) saturate(1.2);
   scale: 1.2;
   transition:
     scale 900ms cubic-bezier(0.2, 0.7, 0.25, 1),
     filter 900ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
-/* Mép giấy xé (trên) và sóng mềm (dưới) là lớp giấy phủ lên ảnh; bóng đặt ở thẻ cha vì mask cắt mất bóng của chính nó. */
 .stayEdgeTop,
 .stayEdgeBottom {
-  position: absolute;
-  z-index: -1;
-  inset-inline: 0;
-  /* Khung cao hơn mép giấy 40px để bóng đổ không bị cắt thành một đường thẳng. */
-  height: calc(var(--edge-height) + 40px);
-  pointer-events: none;
-  transition: filter 700ms cubic-bezier(0.2, 0.7, 0.25, 1);
-}
-.stayEdgeTop {
-  top: -2px;
-  filter: drop-shadow(0 3px 3px color-mix(in srgb, var(--color-ink) 16%, transparent));
-}
-.stayEdgeBottom {
-  bottom: -2px;
-  filter: drop-shadow(0 -3px 3px color-mix(in srgb, var(--color-ink) 12%, transparent));
-}
-.stayEdgeTop::before,
-.stayEdgeBottom::before {
-  content: '';
-  position: absolute;
-  inset-inline: 0;
-  height: var(--edge-height);
-  background: var(--color-background);
-}
-.stayEdgeTop::before {
-  top: 0;
-}
-.stayEdgeBottom::before {
-  bottom: 0;
-}
-.stayEdgeTop::before {
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40' preserveAspectRatio='none'%3E%3Cpath d='M0 0h240v22l-6 4-7-5-8 7-6-6-9 5-5-3-8 6-7-7-6 4-9-2-5 6-8-5-7 3-6-6-8 5-9-3-4 5-8-4-6 6-9-6-7 4-5-3-9 6-6-5-8 3-6-4-7 5-9-6-5 4-8-2-6 5-7-6-9 4-7-9V0Z'/%3E%3C/svg%3E") top left / 320px 100% repeat-x;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40' preserveAspectRatio='none'%3E%3Cpath d='M0 0h240v22l-6 4-7-5-8 7-6-6-9 5-5-3-8 6-7-7-6 4-9-2-5 6-8-5-7 3-6-6-8 5-9-3-4 5-8-4-6 6-9-6-7 4-5-3-9 6-6-5-8 3-6-4-7 5-9-6-5 4-8-2-6 5-7-6-9 4-7-9V0Z'/%3E%3C/svg%3E") top left / 320px 100% repeat-x;
-}
-.stayEdgeBottom::before {
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40' preserveAspectRatio='none'%3E%3Cpath d='M0 40V18C40 4 80 4 120 18s80 14 120 0v22Z'/%3E%3C/svg%3E") bottom / 100% 100% no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40' preserveAspectRatio='none'%3E%3Cpath d='M0 40V18C40 4 80 4 120 18s80 14 120 0v22Z'/%3E%3C/svg%3E") bottom / 100% 100% no-repeat;
+  display: none;
 }
 /* Rê chuột vào dải: bóng mép giấy sâu hơn, ảnh nền lùi xuống như một lớp nằm dưới. */
 @media (hover: hover) and (pointer: fine) {
