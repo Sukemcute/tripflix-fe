@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { vi } from '@tripflix/i18n';
+import { TripiMascot } from '@/features/mascot/tripi-mascot';
 import styles from './ota-hero.module.css';
 
 const ACTIVITIES = [
@@ -133,8 +134,8 @@ export function OtaHero() {
 
       <div className={styles.typographyLayer} data-hero-layer="typography">
         <Image
-          src="/brand/hero-layered-v1/tripflix-crystal.svg"
-          alt="TRIPFLIX — tám miền di sản Việt Nam"
+          src="/brand/hero-layered-v1/tripflix-logo-crystal.svg"
+          alt="Tripflix — tám miền di sản Việt Nam"
           width={2400}
           height={660}
           preload
@@ -179,18 +180,17 @@ export function OtaHero() {
         <Image src="/brand/hero-layered-v1/seagulls-ribbon.svg" alt="" fill unoptimized loading="eager" />
       </div>
 
-      <div className={`ota-container ${styles.inner}`} data-hero-layer="ui">
-        <div className={styles.eyebrow}>
-          <span className={styles.eyebrowText}>{vi.ota.heroEyebrow.replace(/·/g, '•')}</span>
-          <span className={styles.eyebrowPlane} aria-hidden="true">→</span>
-        </div>
+      <div className={styles.mascotLayer} aria-hidden="true">
+        <TripiMascot pose="hero-welcome" size={256} alt="" className={styles.mascotImage} />
+      </div>
 
+      <div className={`ota-container ${styles.inner}`} data-hero-layer="ui">
         {/* Bố cục 2 cột nửa dưới mặt biển */}
         <div className={styles.bottomSection}>
           <div className={styles.copy}>
             <h1>
               <span className={styles.titleFirst}>{SLOGAN_FIRST},</span>{' '}
-              <span className={styles.titleSecond}>{SLOGAN_SECOND}.</span>
+              <span className={styles.titleSecond}>{SLOGAN_SECOND}</span>
             </h1>
 
             <p className={styles.description}>{vi.ota.heroIntro}</p>

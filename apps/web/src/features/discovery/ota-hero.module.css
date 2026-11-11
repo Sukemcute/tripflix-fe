@@ -12,7 +12,9 @@
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(180deg, transparent 34%, rgb(0 75 96 / 22%) 54%, #00566edb 100%);
+  background:
+    linear-gradient(90deg, rgb(0 48 67 / 82%) 0%, rgb(0 65 82 / 58%) 32%, transparent 62%),
+    linear-gradient(180deg, transparent 34%, rgb(0 75 96 / 22%) 54%, #00566edb 100%);
 }
 
 /* ==========================================================================
@@ -34,9 +36,9 @@
 .typographyLayer {
   position: absolute;
   z-index: 2;
-  top: 62px;
-  left: 6%;
-  width: 88%;
+  top: 76px;
+  left: 32%;
+  width: 80%;
   transform: translate(calc(var(--pointer-x, 0) * 6px), calc(var(--pointer-y, 0) * 3px));
 }
 .typographyImage {
@@ -67,14 +69,42 @@
 }
 .vectorLayer img { object-fit: fill; }
 
+.mascotLayer {
+  position: absolute;
+  z-index: 3;
+  top: 210px;
+  left: 41%;
+  width: clamp(190px, 16vw, 240px);
+  pointer-events: none;
+  user-select: none;
+}
+.mascotImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 12px 16px rgb(0 51 63 / 24%));
+}
+.mascotLayer::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 20%;
+  bottom: 6%;
+  width: 64%;
+  height: 10px;
+  border: 1px solid rgb(207 255 246 / 35%);
+  border-radius: 50%;
+  background: rgb(185 255 242 / 12%);
+}
+
 .inner {
   position: relative;
   z-index: 4;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
   min-height: clamp(580px, 46vw, 680px);
-  padding-block: clamp(292px, 24vw, 350px) 56px;
+  padding-block: 88px 64px;
   pointer-events: none;
 }
 .inner a, .inner button { pointer-events: auto; }
@@ -86,8 +116,8 @@
 .letterHotspotsArea {
   position: absolute;
   top: 6%;
-  left: 1%;
-  width: 96%;
+  left: 20%;
+  width: 60%;
   height: 64%;
   z-index: 5;
   pointer-events: none;
@@ -95,7 +125,7 @@
 
 .letterHotspots {
   display: grid;
-  grid-template-columns: 1fr 1.18fr 0.46fr 1.08fr 1fr 1fr 0.46fr 1.08fr;
+  grid-template-columns: 53.2fr 37.9fr 24.3fr 54.3fr 39.5fr 21.3fr 21.1fr 53.5fr;
   width: 100%;
   height: 100%;
 }
@@ -169,8 +199,9 @@
   position: relative;
   z-index: 3;
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  align-items: end;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: start;
+  flex: 1;
   gap: clamp(24px, 3.5vw, 56px);
   width: 100%;
   pointer-events: auto;
@@ -180,54 +211,16 @@
   position: relative;
   z-index: 2;
   container-type: inline-size;
-}
-
-/* Eyebrow viên nang mờ trên mặt nước biển */
-.eyebrow {
-  position: absolute;
-  top: 24px;
-  left: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 16px;
-  border-radius: 999px;
-  background: rgba(0, 72, 89, 0.72);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  margin-bottom: 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-}
-.eyebrowText {
-  color: #ffffff;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.eyebrowPlane {
-  color: #38bdf8;
-  font-size: 0.84rem;
-  display: inline-block;
-  animation: planeFloat 3s ease-in-out infinite alternate;
-}
-@keyframes planeFloat {
-  0% {
-    transform: translate(0, 0);
-  }
-  100% {
-    transform: translate(3px, 0);
-  }
+  max-width: 540px;
 }
 
 /* Tiêu đề H1: Playfair Display sang trọng trên nền đại dương */
 .copy h1 {
-  margin-block: 0 10px;
+  margin-block: 0 16px;
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: min(clamp(2.1rem, 3.2vw, 3.2rem), 14cqi);
+  font-size: min(clamp(3.2rem, 5.25vw, 5rem), 14cqi);
   font-weight: 800;
-  line-height: 1.15;
+  line-height: 1.1;
   letter-spacing: -0.025em;
   white-space: pre-line;
 }
@@ -258,7 +251,7 @@
 }
 
 .description {
-  max-width: 60ch;
+  max-width: 44ch;
   font-size: clamp(0.86rem, 1vw, 0.98rem);
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.88);
@@ -367,6 +360,7 @@
   align-items: flex-end;
   gap: 12px;
   width: 100%;
+  align-self: end;
 }
 
 /* Thẻ kính mờ danh lam thắng cảnh dáng ngang (như mẫu Phố cổ Hội An) */
@@ -534,7 +528,15 @@
    ========================================================================== */
 @media (max-width: 900px) {
   .inner {
-    padding-block: clamp(280px, 34vw, 330px) 64px;
+    padding-block: 64px;
+  }
+  .copy {
+    max-width: 44%;
+  }
+  .mascotLayer {
+    top: 210px;
+    left: 60%;
+    width: 160px;
   }
   .bottomSection {
     grid-template-columns: minmax(0, 1fr);
@@ -542,6 +544,8 @@
   }
   .sceneContainer {
     align-items: stretch;
+    width: min(100%, 480px);
+    margin-left: auto;
   }
   .panoramicDestinationCard {
     width: 100%;
@@ -557,32 +561,39 @@
     min-height: auto;
   }
   .hero::after {
-    background: linear-gradient(180deg, transparent 18%, rgb(0 73 94 / 74%) 34%, #00566e 58%);
+    background: linear-gradient(180deg, rgb(0 66 85 / 86%) 0%, rgb(0 73 94 / 80%) 34%, rgb(0 86 110 / 40%) 56%, #00566e 80%);
   }
   .backdropImg {
     object-position: 48% top;
   }
   .typographyLayer {
-    top: 76px;
-    left: 2%;
+    top: 390px;
+    left: 14%;
     width: 96%;
   }
   .boatLayer {
-    top: 150px;
-    right: 3%;
+    top: 430px;
+    right: -3%;
     width: 70%;
   }
-  .eyebrow {
-    top: 24px;
-    left: 0;
-    padding-inline: 10px;
+  .vectorLayer {
+    top: 330px;
   }
-  .eyebrowText {
-    font-size: 0.6rem;
+  .mascotLayer {
+    top: 380px;
+    left: -1%;
+    width: 160px;
   }
   .inner {
-    padding-block: clamp(260px, 55vw, 350px) 64px;
+    padding-block: 32px 64px;
     gap: 16px;
+  }
+  .copy {
+    max-width: 100%;
+    padding-bottom: 210px;
+  }
+  .sceneContainer {
+    width: 100%;
   }
   .letterHotspotsArea {
     display: block;
@@ -600,7 +611,7 @@
     min-width: 24px;
   }
   .copy h1 {
-    font-size: min(clamp(1.7rem, 6.8vw, 2.1rem), 13cqi);
+    font-size: min(clamp(2.4rem, 11vw, 3rem), 13cqi);
   }
   .panoramicDestinationCard {
     width: 100%;
@@ -660,7 +671,6 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .eyebrowPlane,
   .copy,
   .sceneContainer {
     animation: none;

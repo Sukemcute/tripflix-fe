@@ -29,7 +29,7 @@ export const vi = {
   demo,
   app: {
     name: 'Tripflix',
-    slogan: 'Chạm cảm hứng, trọn hành trình',
+    slogan: 'Thấy là thích, nhích là đi',
   },
   tabs: {
     feed: 'Lướt',

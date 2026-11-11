@@ -69,7 +69,7 @@ export const demo = {
     otherTrips: 'Thêm một chút cảm hứng',
     notFoundTitle: 'Chuyến đi này chưa có trong danh mục.',
     notFoundBody: 'Quay về khám phá để chọn một chuyến khác.',
-    footer: 'Tripflix · Chạm cảm hứng, trọn hành trình.',
+    footer: 'Tripflix · Thấy là thích, nhích là đi.',
   },
   feed: {
     previous: 'Bài trước',
