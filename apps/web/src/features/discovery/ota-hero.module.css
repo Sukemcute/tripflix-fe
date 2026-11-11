@@ -1,10 +1,18 @@
 .hero {
   position: relative;
-  background:
-    url('/brand/hero-tripflix-3d-backdrop-2k.jpg') center top / cover no-repeat,
-    linear-gradient(180deg, #0284c7 0%, #0369a1 40%, #083344 100%);
-  min-height: clamp(520px, 48vw, 620px);
+  background: #036779;
+  isolation: isolate;
+  min-height: clamp(580px, 46vw, 680px);
   overflow: clip;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 34%, rgb(0 75 96 / 22%) 54%, #00566edb 100%);
 }
 
 /* ==========================================================================
@@ -15,23 +23,61 @@
   inset: 0;
   pointer-events: none;
   user-select: none;
-  z-index: 1;
+  z-index: 0;
 }
 
 .backdropImg {
   object-fit: cover;
-  object-position: center top;
+  object-position: center bottom;
 }
+
+.typographyLayer {
+  position: absolute;
+  z-index: 2;
+  top: 62px;
+  left: 6%;
+  width: 88%;
+  transform: translate(calc(var(--pointer-x, 0) * 6px), calc(var(--pointer-y, 0) * 3px));
+}
+.typographyImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+.boatLayer {
+  position: absolute;
+  z-index: 3;
+  top: clamp(190px, 18vw, 270px);
+  right: 14%;
+  width: 46%;
+  pointer-events: none;
+}
+.boatImage {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.vectorLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.vectorLayer img { object-fit: fill; }
 
 .inner {
   position: relative;
-  z-index: 2;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  min-height: clamp(520px, 48vw, 620px);
-  padding-block: clamp(24px, 3.5vh, 40px) clamp(54px, 6.5vh, 70px);
+  min-height: clamp(580px, 46vw, 680px);
+  padding-block: clamp(292px, 24vw, 350px) 56px;
+  pointer-events: none;
 }
+.inner a, .inner button { pointer-events: auto; }
 
 /* ==========================================================================
    LỚP TƯƠNG TÁC TỪNG CHỮ CÁI (FIGMA HOTSPOT SYSTEM)
@@ -39,18 +85,17 @@
    ========================================================================== */
 .letterHotspotsArea {
   position: absolute;
-  top: clamp(40px, 7.5vh, 74px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(92%, 960px);
-  height: clamp(130px, 15vw, 190px);
+  top: 6%;
+  left: 1%;
+  width: 96%;
+  height: 64%;
   z-index: 5;
   pointer-events: none;
 }
 
 .letterHotspots {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: 1fr 1.18fr 0.46fr 1.08fr 1fr 1fr 0.46fr 1.08fr;
   width: 100%;
   height: 100%;
 }
@@ -70,10 +115,14 @@
 .letterHotspot:hover {
   background: rgba(255, 255, 255, 0.08);
 }
+.letterHotspot:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 4px;
+}
 
 .letterBadge {
   position: absolute;
-  top: -42px;
+  top: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -124,6 +173,7 @@
   align-items: end;
   gap: clamp(24px, 3.5vw, 56px);
   width: 100%;
+  pointer-events: auto;
 }
 
 .copy {
@@ -134,12 +184,15 @@
 
 /* Eyebrow viên nang mờ trên mặt nước biển */
 .eyebrow {
+  position: absolute;
+  top: 24px;
+  left: 0;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 5px 16px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(0, 72, 89, 0.72);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -205,7 +258,7 @@
 }
 
 .description {
-  max-width: 44ch;
+  max-width: 60ch;
   font-size: clamp(0.86rem, 1vw, 0.98rem);
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.88);
@@ -219,6 +272,8 @@
   align-items: center;
   gap: clamp(10px, 1.2vw, 14px);
   margin-top: 14px;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 /* Nút CTA chính viên nang trắng */
@@ -479,11 +534,7 @@
    ========================================================================== */
 @media (max-width: 900px) {
   .inner {
-    padding-block: clamp(180px, 24vw, 240px) 48px;
-  }
-  .letterHotspotsArea {
-    top: clamp(20px, 4vh, 40px);
-    height: clamp(100px, 16vw, 140px);
+    padding-block: clamp(280px, 34vw, 330px) 64px;
   }
   .bottomSection {
     grid-template-columns: minmax(0, 1fr);
@@ -505,15 +556,48 @@
   .hero {
     min-height: auto;
   }
+  .hero::after {
+    background: linear-gradient(180deg, transparent 18%, rgb(0 73 94 / 74%) 34%, #00566e 58%);
+  }
   .backdropImg {
-    object-position: 52% 12%;
+    object-position: 48% top;
+  }
+  .typographyLayer {
+    top: 76px;
+    left: 2%;
+    width: 96%;
+  }
+  .boatLayer {
+    top: 150px;
+    right: 3%;
+    width: 70%;
+  }
+  .eyebrow {
+    top: 24px;
+    left: 0;
+    padding-inline: 10px;
+  }
+  .eyebrowText {
+    font-size: 0.6rem;
   }
   .inner {
-    padding-block: clamp(120px, 20vw, 160px) 24px;
+    padding-block: clamp(260px, 55vw, 350px) 64px;
     gap: 16px;
   }
   .letterHotspotsArea {
-    display: none;
+    display: block;
+  }
+  .letterBadge {
+    white-space: normal;
+    width: 130px;
+    border-radius: 12px;
+    text-align: center;
+  }
+  .letterHotspot:first-child .letterBadge { left: 0; }
+  .letterHotspot:last-child .letterBadge { right: 0; }
+  .letterHotspot {
+    min-height: 44px;
+    min-width: 24px;
   }
   .copy h1 {
     font-size: min(clamp(1.7rem, 6.8vw, 2.1rem), 13cqi);
@@ -551,6 +635,8 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .typographyLayer { transition: transform 250ms ease-out; }
+  .boatImage { animation: boatFloat 5s ease-in-out infinite; }
   .copy,
   .sceneContainer {
     animation: arrive 1000ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
@@ -558,6 +644,10 @@
   .sceneContainer {
     animation-delay: 150ms;
   }
+}
+@keyframes boatFloat {
+  0%, 100% { transform: translateY(0) rotate(-0.4deg); }
+  50% { transform: translateY(-5px) rotate(0.4deg); }
 }
 @keyframes arrive {
   from {
@@ -575,4 +665,6 @@
   .sceneContainer {
     animation: none;
   }
+  .typographyLayer { transform: none; }
+  .sceneProgressFill { animation: none; }
 }

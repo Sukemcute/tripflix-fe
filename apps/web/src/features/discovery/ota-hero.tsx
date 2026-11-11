@@ -73,7 +73,7 @@ const HERO_SCENES = [
     id: 'hoi-an',
     image: '/brand/home-hoi-an-lanterns-night.jpg',
     title: 'Phố cổ Hội An',
-    subtitle: 'Đắm hoà dàng lung linh sắc màu',
+    subtitle: 'Đêm hoa đăng lung linh sắc màu',
     badge: 'DI SẢN UNESCO',
     rating: '★ 4.8',
     href: '/search?q=Hội+An',
@@ -118,23 +118,30 @@ export function OtaHero() {
   const current = HERO_SCENES[activeScene]!;
 
   return (
-    <header className={styles.hero}>
-      {/* Nền nghệ thuật 3D TRIPFLIX lồng toàn cảnh danh lam thắng cảnh Việt Nam & thuyền nan */}
-      <div className={styles.backdropImageWrapper} aria-hidden="true">
+    <header className={styles.hero} data-home-banner>
+      <div className={styles.backdropImageWrapper} data-hero-layer="scenery" aria-hidden="true">
         <Image
-          src="/brand/hero-tripflix-3d-backdrop-2k.jpg"
-          alt="Tripflix - Kỳ quan Việt Nam"
+          src="/brand/hero-layered-v1/ha-long-clean.webp"
+          alt=""
           fill
-          priority
+          preload
+          unoptimized
           sizes="100vw"
           className={styles.backdropImg}
-          quality={95}
         />
       </div>
 
-      <div className={`ota-container ${styles.inner}`}>
-        {/* Lớp tương tác Hotspots trên 8 chữ cái TRIPFLIX (Figma Hotspot System) */}
-        <div className={styles.letterHotspotsArea} aria-label="Khám phá danh thắng qua từng chữ cái">
+      <div className={styles.typographyLayer} data-hero-layer="typography">
+        <Image
+          src="/brand/hero-layered-v1/tripflix-crystal.svg"
+          alt="TRIPFLIX — tám miền di sản Việt Nam"
+          width={2400}
+          height={660}
+          preload
+          unoptimized
+          className={styles.typographyImage}
+        />
+        <nav className={styles.letterHotspotsArea} aria-label="Khám phá danh thắng qua từng chữ cái">
           <div className={styles.letterHotspots}>
             {TRIPFLIX_BRAND_LETTERS.map((item, idx) => (
               <Link
@@ -142,6 +149,7 @@ export function OtaHero() {
                 href={`/search?q=${encodeURIComponent(item.query)}`}
                 className={styles.letterHotspot}
                 key={`${item.char}-${idx}`}
+                aria-label={`${item.char} — ${item.destination}`}
                 title={`${item.char} — ${item.destination}`}
               >
                 <span className={styles.letterBadge}>
@@ -151,16 +159,35 @@ export function OtaHero() {
               </Link>
             ))}
           </div>
+        </nav>
+      </div>
+
+      <div className={styles.boatLayer} data-hero-layer="boat" aria-hidden="true">
+        <Image
+          src="/brand/hero-layered-v1/boat-wake.webp"
+          alt=""
+          width={1774}
+          height={887}
+          unoptimized
+          loading="eager"
+          sizes="(max-width: 640px) 70vw, 46vw"
+          className={styles.boatImage}
+        />
+      </div>
+
+      <div className={styles.vectorLayer} data-hero-layer="vectors" aria-hidden="true">
+        <Image src="/brand/hero-layered-v1/seagulls-ribbon.svg" alt="" fill unoptimized loading="eager" />
+      </div>
+
+      <div className={`ota-container ${styles.inner}`} data-hero-layer="ui">
+        <div className={styles.eyebrow}>
+          <span className={styles.eyebrowText}>{vi.ota.heroEyebrow.replace(/·/g, '•')}</span>
+          <span className={styles.eyebrowPlane} aria-hidden="true">→</span>
         </div>
 
         {/* Bố cục 2 cột nửa dưới mặt biển */}
         <div className={styles.bottomSection}>
           <div className={styles.copy}>
-            <div className={styles.eyebrow}>
-              <span className={styles.eyebrowText}>{vi.ota.heroEyebrow.replace(/·/g, '•')}</span>
-              <span className={styles.eyebrowPlane} aria-hidden="true">→</span>
-            </div>
-
             <h1>
               <span className={styles.titleFirst}>{SLOGAN_FIRST},</span>{' '}
               <span className={styles.titleSecond}>{SLOGAN_SECOND}.</span>
