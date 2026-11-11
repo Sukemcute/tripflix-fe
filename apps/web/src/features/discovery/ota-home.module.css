@@ -27,6 +27,70 @@
   gap: 16px;
   flex-shrink: 0;
 }
+.comboTimeline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 4px;
+}
+.timelinePill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.timelinePill:hover {
+  border-color: var(--color-teal);
+  color: var(--color-teal-ink);
+  transform: translateY(-1px);
+}
+.timelinePillActive {
+  border-color: var(--color-teal-ink);
+  color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+  font-weight: 700;
+  padding-right: 14px;
+}
+.timelineIndex {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  opacity: 0.7;
+}
+.timelineLabel {
+  white-space: nowrap;
+}
+.timelineFill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2.5px;
+  background: var(--color-teal);
+  animation: timelineFillProgress linear forwards;
+}
+@keyframes timelineFillProgress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+@media (max-width: 900px) {
+  .comboTimeline {
+    display: none;
+  }
+}
 .navArrows {
   display: flex;
   align-items: center;
@@ -76,19 +140,42 @@
   align-items: end;
   isolation: isolate;
   min-height: clamp(190px, 18vw, 260px);
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   background: var(--color-ink);
   color: var(--color-background);
   padding: clamp(14px, 1.8vw, 22px);
   box-shadow: 0 16px 36px -26px var(--color-overlay-heavy);
+  transform: perspective(1000px)
+    rotateX(calc(var(--card-tilt-y, 0) * -6deg))
+    rotateY(calc(var(--card-tilt-x, 0) * 6deg))
+    translateY(0);
   transition:
-    transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1),
-    box-shadow 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+    transform 320ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 320ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 .destination:is(:hover, :focus-within) {
-  transform: translateY(-5px);
-  box-shadow: 0 30px 52px -26px var(--color-overlay-heavy);
+  transform: perspective(1000px)
+    rotateX(calc(var(--card-tilt-y, 0) * -6deg))
+    rotateY(calc(var(--card-tilt-x, 0) * 6deg))
+    translateY(-6px);
+  box-shadow: 0 32px 58px -24px color-mix(in srgb, var(--color-teal-ink) 45%, transparent);
+}
+.cardSpecularGlare {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(
+    circle 320px at var(--mouse-x, -500px) var(--mouse-y, -500px),
+    rgba(255, 255, 255, 0.22) 0%,
+    transparent 65%
+  );
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+.destination:hover .cardSpecularGlare {
+  opacity: 1;
 }
 .destination:first-child {
   grid-row: span 2;
@@ -141,7 +228,9 @@
 }
 .cardLayerActive,
 .cardLayerOutgoing,
-.cardLayerIncoming {
+.cardLayerIncoming,
+.cardLayerIncomingNext,
+.cardLayerIncomingPrev {
   position: absolute;
   inset: 0;
   display: flex;
@@ -157,11 +246,41 @@
 }
 .cardLayerIncoming {
   z-index: 2;
-  animation: cardCrossfadeIn 1200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: cardCrossfadeIn 950ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.cardLayerIncomingNext {
+  z-index: 2;
+  animation: cardSlideInNext 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.cardLayerIncomingPrev {
+  z-index: 2;
+  animation: cardSlideInPrev 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes cardSlideInNext {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes cardSlideInPrev {
+  from {
+    opacity: 0;
+    transform: translateY(-22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .cardLayerActive::before,
 .cardLayerOutgoing::before,
-.cardLayerIncoming::before {
+.cardLayerIncoming::before,
+.cardLayerIncomingNext::before,
+.cardLayerIncomingPrev::before {
   content: '';
   position: absolute;
   z-index: 0;
@@ -187,7 +306,7 @@
   width: 100%;
   position: relative;
   z-index: 1;
-  animation: cardContentOut 500ms ease-out forwards;
+  animation: cardContentOut 400ms ease-out forwards;
 }
 @keyframes cardContentOut {
   from {
@@ -200,17 +319,31 @@
 .destination img {
   object-fit: cover;
   z-index: -1;
+  transform: translate(calc(var(--card-tilt-x, 0) * -8px), calc(var(--card-tilt-y, 0) * -6px)) scale(1.05);
+  transition: transform 400ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 .cardContent {
   width: 100%;
   position: relative;
   z-index: 1;
+  animation: contentStaggerIn 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes contentStaggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .comboBadge {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 2.5px 7px;
+  padding: 2.5px 8px;
   border-radius: 99px;
   font-size: 10.5px;
   font-weight: 700;
@@ -220,6 +353,26 @@
   background: var(--color-overlay-heavy);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+.badgeShimmerGlow {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: shimmerSweep 3.5s infinite;
+  pointer-events: none;
+}
+@keyframes shimmerSweep {
+  0%,
+  65% {
+    left: -100%;
+  }
+  100% {
+    left: 160%;
+  }
 }
 .badgeTrending {
   background: var(--color-coral);
@@ -243,77 +396,54 @@
   font-weight: 700;
   font-size: 12.5px;
 }
-.comboMeta span {
+.actionPrompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   color: var(--color-teal-soft, #a7f3d0);
   font-weight: 600;
   font-size: 11.5px;
   white-space: nowrap;
   transition: color 0.15s ease;
 }
-.destination:hover .comboMeta span {
-  color: #fff;
-  text-decoration: underline;
+.arrowBounce {
+  display: inline-block;
+  transition: transform 200ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.destination:hover .arrowBounce {
+  transform: translateX(4px);
+}
+.destination:hover .actionPrompt {
+  color: #ffffff;
 }
 .stayBand {
-  --edge-height: clamp(28px, 4vw, 56px);
+  --edge-height: 0px;
   position: relative;
   isolation: isolate;
-  /* clip (không phải hidden) để dải không thành vùng cuộn riêng, animation theo cuộn của thẻ vẫn bám trang. */
   overflow: clip;
-  background: var(--color-sea-mist);
+  background: rgba(255, 247, 242, 0.94);
+  border: 1px solid rgba(0, 178, 163, 0.22);
+  border-radius: 32px;
+  max-width: 1240px;
+  margin-inline: auto;
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 20px 50px -10px rgba(0, 108, 99, 0.08);
 }
-/* Ảnh phong cảnh mờ là lớp dưới cùng; độ trong suốt pha với nền Sea Mist cho dịu và dễ đọc chữ. */
+/* Ảnh phong cảnh mờ là lớp dưới cùng; độ trong suốt pha với nền Warm Mist sáng sủa */
 .stayBackdrop {
   z-index: -2;
   object-fit: cover;
-  opacity: 0.72;
-  filter: blur(14px) saturate(1.15);
-  /* Phóng đủ lớn để mép ảnh bị blur làm nhạt (thành vệt sáng) luôn nằm ngoài dải. */
+  opacity: 0.22;
+  filter: blur(20px) saturate(1.1);
   scale: 1.2;
   transition:
     scale 900ms cubic-bezier(0.2, 0.7, 0.25, 1),
     filter 900ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
-/* Mép giấy xé (trên) và sóng mềm (dưới) là lớp giấy phủ lên ảnh; bóng đặt ở thẻ cha vì mask cắt mất bóng của chính nó. */
 .stayEdgeTop,
 .stayEdgeBottom {
-  position: absolute;
-  z-index: -1;
-  inset-inline: 0;
-  /* Khung cao hơn mép giấy 40px để bóng đổ không bị cắt thành một đường thẳng. */
-  height: calc(var(--edge-height) + 40px);
-  pointer-events: none;
-  transition: filter 700ms cubic-bezier(0.2, 0.7, 0.25, 1);
-}
-.stayEdgeTop {
-  top: -2px;
-  filter: drop-shadow(0 3px 3px color-mix(in srgb, var(--color-ink) 16%, transparent));
-}
-.stayEdgeBottom {
-  bottom: -2px;
-  filter: drop-shadow(0 -3px 3px color-mix(in srgb, var(--color-ink) 12%, transparent));
-}
-.stayEdgeTop::before,
-.stayEdgeBottom::before {
-  content: '';
-  position: absolute;
-  inset-inline: 0;
-  height: var(--edge-height);
-  background: var(--color-background);
-}
-.stayEdgeTop::before {
-  top: 0;
-}
-.stayEdgeBottom::before {
-  bottom: 0;
-}
-.stayEdgeTop::before {
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40' preserveAspectRatio='none'%3E%3Cpath d='M0 0h240v22l-6 4-7-5-8 7-6-6-9 5-5-3-8 6-7-7-6 4-9-2-5 6-8-5-7 3-6-6-8 5-9-3-4 5-8-4-6 6-9-6-7 4-5-3-9 6-6-5-8 3-6-4-7 5-9-6-5 4-8-2-6 5-7-6-9 4-7-9V0Z'/%3E%3C/svg%3E") top left / 320px 100% repeat-x;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40' preserveAspectRatio='none'%3E%3Cpath d='M0 0h240v22l-6 4-7-5-8 7-6-6-9 5-5-3-8 6-7-7-6 4-9-2-5 6-8-5-7 3-6-6-8 5-9-3-4 5-8-4-6 6-9-6-7 4-5-3-9 6-6-5-8 3-6-4-7 5-9-6-5 4-8-2-6 5-7-6-9 4-7-9V0Z'/%3E%3C/svg%3E") top left / 320px 100% repeat-x;
-}
-.stayEdgeBottom::before {
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40' preserveAspectRatio='none'%3E%3Cpath d='M0 40V18C40 4 80 4 120 18s80 14 120 0v22Z'/%3E%3C/svg%3E") bottom / 100% 100% no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40' preserveAspectRatio='none'%3E%3Cpath d='M0 40V18C40 4 80 4 120 18s80 14 120 0v22Z'/%3E%3C/svg%3E") bottom / 100% 100% no-repeat;
+  display: none;
 }
 /* Rê chuột vào dải: bóng mép giấy sâu hơn, ảnh nền lùi xuống như một lớp nằm dưới. */
 @media (hover: hover) and (pointer: fine) {
@@ -547,6 +677,15 @@
     inset 0 0 0 1.5px rgba(211, 47, 47, 0.35);
   user-select: none;
   pointer-events: none;
+  transition:
+    transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 350ms ease;
+}
+.stayHeader:hover .stayRedStamp {
+  transform: rotate(-8deg) scale(1.12);
+  box-shadow:
+    0 8px 20px rgba(211, 47, 47, 0.32),
+    inset 0 0 0 1.5px rgba(211, 47, 47, 0.5);
 }
 .stampOrg {
   font-size: 8px;
@@ -582,6 +721,10 @@
   z-index: 6;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.18));
   pointer-events: none;
+  transition: transform 450ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.stayHeader:hover .stayMascot {
+  transform: translateY(-6px) scale(1.04);
 }
 /* Thiết lập bố cục vé du lịch trên desktop */
 @media (min-width: 641px) {
@@ -640,6 +783,28 @@
   gap: 16px;
   transition: opacity 250ms ease;
 }
+.stayGrid > .hotelCard {
+  animation: stayCardIn 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stayGrid > .hotelCard:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stayGrid > .hotelCard:nth-child(2) {
+  animation-delay: 80ms;
+}
+.stayGrid > .hotelCard:nth-child(3) {
+  animation-delay: 160ms;
+}
+@keyframes stayCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 .stayGrid[aria-busy='true'] {
   opacity: 0.6;
 }
@@ -663,14 +828,14 @@
     inset 0 1px 0 color-mix(in srgb, var(--color-background) 70%, transparent),
     0 24px 48px -28px var(--color-overlay-heavy);
   transition:
-    transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1),
-    box-shadow 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+    transform 400ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 400ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 .hotelCard:hover {
   transform: translateY(-6px);
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--color-background) 70%, transparent),
-    0 32px 56px -28px var(--color-overlay-heavy);
+    0 32px 56px -28px color-mix(in srgb, var(--color-teal-ink) 35%, transparent);
 }
 .hotelCard a {
   display: grid;
@@ -695,10 +860,10 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 352ms ease;
+  transition: transform 600ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 .hotelCard a:hover img {
-  transform: scale(1.035);
+  transform: scale(1.07);
 }
 .hotelInfo,
 .story {
@@ -838,18 +1003,26 @@
   align-items: center;
   min-height: 44px;
   margin-top: 15px;
-  padding: 5px 14px;
+  padding: 8px 24px;
   border-radius: 999px;
-  background: var(--color-teal);
-  color: var(--color-ink);
-  font-size: 0.85rem;
+  background: var(--color-coral);
+  color: #ffffff;
+  font-size: 0.88rem;
   font-weight: 700;
+  box-shadow: 0 8px 20px -4px rgba(255, 90, 60, 0.4);
+  transition: all 250ms ease;
+}
+.tripiAction:hover {
+  background: var(--color-coral-soft);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -4px rgba(255, 90, 60, 0.5);
 }
 .tripiAction {
-  --ripple-color: var(--color-coral);
+  --ripple-color: rgba(255, 255, 255, 0.5);
 }
 .tripiAction:focus-visible {
-  outline-color: var(--color-teal-ink);
+  outline-color: var(--color-coral);
 }
 .tripiCollage {
   position: relative;
@@ -897,16 +1070,47 @@
 .tripiPrint img {
   object-fit: cover;
 }
+.tripiRoute path {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 7;
+  animation: tripiMarchDash 12s linear infinite;
+}
+@keyframes tripiMarchDash {
+  to {
+    stroke-dashoffset: -110;
+  }
+}
 .tripiBeach {
   top: 12%;
   left: 8%;
   rotate: -13deg;
+  animation: floatGentle1 6s ease-in-out infinite;
 }
 .tripiTown {
   top: 27%;
   right: 7%;
   rotate: 12deg;
   text-align: right;
+  animation: floatGentle2 7s ease-in-out infinite;
+}
+@keyframes floatGentle1 {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-13deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(-11deg);
+  }
+}
+@keyframes floatGentle2 {
+  0%,
+  100% {
+    transform: translateY(0) rotate(12deg);
+  }
+  50% {
+    transform: translateY(8px) rotate(14deg);
+  }
 }
 .tripiMascot {
   position: absolute;
@@ -929,7 +1133,15 @@
   background: var(--color-sun-soft);
   color: var(--color-coral-ink);
   font-size: clamp(1rem, 2.5vw, 2rem);
-  rotate: 12deg;
+  animation: stampSpinSlow 18s linear infinite;
+}
+@keyframes stampSpinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 .stories {
   padding-top: 4px;
@@ -979,6 +1191,26 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
+}
+.heartReaction svg {
+  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.story:hover .heartReaction svg {
+  animation: heartPulse 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes heartPulse {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.4) rotate(-10deg);
+  }
+  70% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  100% {
+    transform: scale(1.2);
+  }
 }
 .storyStats svg {
   width: 17px;
@@ -1157,9 +1389,26 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .cardLayerIncoming,
+  .cardLayerIncomingNext,
+  .cardLayerIncomingPrev,
   .cardContentOut,
-  .chips {
+  .cardContent,
+  .chips,
+  .stayGrid > .hotelCard,
+  .badgeShimmerGlow,
+  .timelineFill,
+  .tripiBeach,
+  .tripiTown,
+  .tripiStamp,
+  .tripiRoute path,
+  .heartReaction svg {
     animation: none !important;
+  }
+  .destination {
+    transform: none !important;
+  }
+  .cardSpecularGlare {
+    display: none !important;
   }
   .hotelCard img {
     transition: none;

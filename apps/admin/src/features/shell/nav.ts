@@ -13,6 +13,7 @@ export const adminNav: readonly AdminNavItem[] = [
   { href: '/', label: 'admin.overview', icon: 'overview', owner: 'Dũng' },
   { href: '/moderation', label: 'admin.moderation', icon: 'moderation', badge: 312, owner: 'Trang' },
   { href: '/analytics', label: 'admin.analytics', icon: 'analytics', owner: 'Trang' },
+  { href: '/search-monitor', label: 'admin.searchMonitoring', icon: 'analytics', owner: 'Trang' },
   { href: '/orders', label: 'admin.orders', icon: 'orders', owner: 'Thắng' },
   { href: '/staff', label: 'admin.users', icon: 'users', owner: 'Dũng' },
   { href: '/alerts', label: 'admin.alerts', icon: 'alerts', badge: 12, owner: 'Hệ thống' },
