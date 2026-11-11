@@ -19,6 +19,12 @@ export const HEART_POP_UP = {
   reduceMotion: ReduceMotion.System,
 } as const;
 
+/** Thu nhỏ khi ngón tay chạm nút, đủ nhanh để thấy ngay. */
+export const PRESS_DOWN = {
+  duration: 80,
+  reduceMotion: ReduceMotion.System,
+} as const;
+
 export const HEART_POP_SETTLE = {
   duration: 320,
   dampingRatio: 0.5,
