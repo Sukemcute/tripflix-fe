@@ -178,8 +178,9 @@
   max-width: 980px;
   height: auto;
   overflow: visible;
-  /* Dáng chữ dựng đứng 90 độ thẳng thớm, uy nghi, vững chãi, không ngã về sau */
-  transform: none;
+  /* Dáng chữ đứng chéo dốc xuống về bên phải, bóng lùi về phía sau */
+  transform: translate3d(16px, 0, 0) rotate(2.8deg) scaleX(1.05) skewX(-5deg);
+  transform-origin: 35% 50%;
   filter: drop-shadow(0 14px 28px rgba(0, 108, 99, 0.22));
   /* Phản chiếu mặt nước biển tự nhiên với độ trong mờ tinh tế */
   -webkit-box-reflect: below -20px linear-gradient(
@@ -189,7 +190,7 @@
   );
 }
 
-/* LỚP TƯƠNG TÁC HOVER TRÊN TỪNG CHỮ CÁI (FIGMA HOTSPOTS) DÁNG ĐỨNG ĐỒNG BỘ */
+/* LỚP TƯƠNG TÁC HOVER TRÊN TỪNG CHỮ CÁI (FIGMA HOTSPOTS) ĐỒNG BỘ */
 .letterHotspots {
   position: absolute;
   top: 0;
@@ -198,7 +199,8 @@
   height: 100%;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  transform: none;
+  transform: translate3d(16px, 0, 0) rotate(2.8deg) scaleX(1.05) skewX(-5deg);
+  transform-origin: 35% 50%;
   pointer-events: auto;
 }
 
@@ -650,7 +652,8 @@
   }
   .slantedTripflixSvg {
     max-width: 100%;
-    transform: none;
+    transform: rotate(1.8deg) scaleX(1.04) skewX(-4deg);
+    transform-origin: 50% 50%;
     -webkit-box-reflect: below -14px linear-gradient(
       transparent 68%,
       rgba(0, 178, 163, 0.12) 84%,
@@ -658,7 +661,8 @@
     );
   }
   .letterHotspots {
-    transform: none;
+    transform: rotate(1.8deg) scaleX(1.04) skewX(-4deg);
+    transform-origin: 50% 50%;
   }
   .waterRippleLayer {
     height: 160px;
