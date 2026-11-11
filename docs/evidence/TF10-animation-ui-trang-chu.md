@@ -3,59 +3,52 @@
 - Notion: N/A · Nhánh: `thanh/TF10-animation-ui-trang-chu` · Người làm: Thành (dùng AI: có) · Ngày: 2026-11-11
 
 ## Đã làm
-- **Kiến trúc Modular 3D Typography chuẩn Figma Component System**:
-  - Tách từ khóa **TRIPFLIX** thành **8 Frame/Vector độc lập** thay vì dùng một bức ảnh nền tĩnh ghép sẵn:
-    - **T**: Sa Pa • Mù Cang Chải (`/brand/destinations/lao-cai-spotlight.jpg`)
-    - **R**: Vịnh Hạ Long (`/brand/destinations/quang-ninh-spotlight.jpg`)
-    - **I**: Non nước Tràng An • Ninh Bình (`/brand/destinations/ninh-binh-spotlight.jpg`)
-    - **P**: Cố đô Huế (`/brand/destinations/hue-spotlight.jpg`)
-    - **F**: Đảo Ngọc Phú Quốc (`/brand/destinations/phu-quoc-spotlight.jpg`)
-    - **L**: Thác Bản Giốc • Cao Bằng (`/brand/destinations/cao-bang-spotlight.jpg`)
-    - **I**: Cầu Vàng Bà Nà Hills • Đà Nẵng (`/brand/destinations/da-lat-spotlight.jpg`)
-    - **X**: Phố cổ Hội An (`/brand/destinations/hoi-an-spotlight.jpg`)
-  - Mỗi chữ cái sở hữu 3 lớp:
-    1. Lớp khối nổi 3D Isometric Extrusion đa tầng với màu ngọc biển sâu (`letter3dExtrusion`).
-    2. Lớp mặt chữ lồng ảnh thực tế danh thắng bằng kỹ thuật `-webkit-background-clip: text` kết hợp viền kính pha lê trắng sắc nét `-webkit-text-stroke: 2px rgba(255, 255, 255, 0.95)` và ánh sáng ngọc bích dịu mắt.
-    3. Tooltip badge định danh địa danh (`.letterBadge`) nhấc bổng mượt mà khi hover, cho phép click dẫn trực tiếp đến trang tìm kiếm địa phương tương ứng.
-  - Phản chiếu mặt nước biển mềm mại (`-webkit-box-reflect: below -28px linear-gradient(...)`) tạo cảm giác chữ cái đứng uy nghi giữa vịnh biển ngọc.
-- **Tài nguyên Thuyền gỗ truyền thống & Bọt nước tự nhiên**:
-  - Trích xuất và tạo con thuyền gỗ độc lập (`apps/web/public/brand/hero-boat.png`) với người chèo nón lá Việt Nam và mái nan tre.
-  - Cụm bọt sóng ôm trọn chân mạn thuyền (`radialGradient`) và chuyển động bập bềnh đu đưa nhẹ nhàng trên mặt nước (`boatSway`).
-- **Không gian vịnh biển nhiệt đới & Dãy núi đá vôi Vịnh Hạ Long**:
-  - Nền gradient biển nhiệt đới ban ngày tươi sáng, ấm áp với vệt nắng vàng khúc xạ (`.sunRays`) và chim hải âu chao lượn.
-  - Vector silhouette các đảo đá vôi Vịnh Hạ Long mờ ảo phía xa chân trời (`.karstSvg`), tạo chiều sâu không gian kỳ vĩ đậm bản sắc Việt Nam.
-- **Bố cục 2 cột thanh lịch nửa dưới**:
-  - Dòng tiêu đề H1 Playfair Display nghệ thuật: `Chạm cảm hứng, trọn hành trình.` với gradient mint-cyan lấp lánh.
-  - Nút CTA Primary `Bắt đầu khám phá →` và 3 pill hoạt động du lịch (Dạo biển, Lướt sóng, Chèo kayak).
-  - Thẻ danh lam thắng cảnh kính mờ dáng ngang (*Panoramic Destination Card*) tự động xoay tua 4 danh thắng (Hạ Long, Hội An, Phú Quốc, Ninh Bình) kèm thanh tiến trình 4 chấm dot.
+- **Nâng cấp Kiến trúc SVG Upright Typography Masking (Chữ đứng thẳng lồng toàn cảnh Việt Nam)**:
+  - **Chữ TRIPFLIX đứng thẳng 90 độ (Upright)**: Loại bỏ hoàn toàn `skewX(-7deg)` và `font-style: italic` (nằm nghiêng), chuyển sang thế đứng thẳng vững chãi, hiện đại, khỏe khoắn như logo kiến trúc danh lam thắng cảnh, tiết kiệm không gian chiều cao và diện tích chiều ngang.
+  - **Ảnh fix chuẩn, không bị cắt khúc hay cắn lẹm ở viền**: Sử dụng công nghệ SVG `<clipPath id="uprightTripflixMask">` chứa `<text>` toàn từ khóa `TRIPFLIX`, lồng trọn vẹn bức tranh panorama danh thắng Việt Nam liên tục (`/brand/vietnam-panorama-tripflix.jpg`).
+  - **Đường viền kính pha lê trắng tinh khiết**: Layer `<text fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="2">` tách biệt trên cùng, ôm khít nét chữ mà không ăn lẹm hay cắt vào ảnh bên trong.
+  - **Khối nổi 3D Extrusion đa tầng**: 3 lớp độ sâu đứng thẳng (`#012638`, `#03486a`, `#0284c7`) kết hợp bóng đổ drop shadow chân thực.
+  - **Lưới tương tác 8 Hotspots (T - R - I - P - F - L - I - X)**: Phủ 8 điểm tương tác nhạy bén, rê chuột hiển thị Tooltip Badge mờ sang trọng định danh 8 danh thắng từ Bắc chí Nam (Mù Cang Chải, Vịnh Hạ Long, Tràng An, Cố đô Huế, Phú Quốc, Thác Bản Giốc, Bà Nà Hills, Phố cổ Hội An), bấm vào chữ cái chuyển ngay đến trang tìm kiếm địa phương.
+  - **Phản chiếu mặt nước biển tự nhiên**: `-webkit-box-reflect: below -20px linear-gradient(...)` phản chiếu bóng chữ xuống làn nước trong veo.
+- **Bổ sung Lớp gợn sóng nước & Ánh sáng khúc xạ (Water Ripples & Caustics)**:
+  - Tạo lớp SVG gợn sóng nước uốn lượn đa tầng (`.waterRippleLayer` & `.waterWavesSvg`) với các đường cong Bezier mềm mại.
+  - Vệt nắng caustics khúc xạ mặt trời chiếu xuống nước biển (`causticGlow`), làm cho mặt biển ở giữa sống động, có chiều sâu 3 chiều tự nhiên, loại bỏ hoàn toàn cảm giác trống trải.
+- **Loại bỏ con thuyền gỗ theo góp ý người dùng**:
+  - Dỡ bỏ con thuyền gỗ và vệt bọt thuyền, giúp toàn bộ khung cảnh mặt nước biển thoáng đãng, sang trọng, đẳng cấp và thanh thoát.
+- **Phân bố lại bố cục 2 cột cân xứng**:
+  - Cột trái: Eyebrow capsule mờ, tiêu đề H1 `Chạm cảm hứng, trọn hành trình.` với gradient mint-cyan sang trọng, mô tả xúc tích, nút CTA `Bắt đầu khám phá →` và 3 pill hoạt động (Dạo biển, Lướt sóng, Chèo kayak).
+  - Cột phải: Thẻ danh thắng kính mờ dáng ngang xoay tua 4 địa danh (Hạ Long, Hội An, Phú Quốc, Ninh Bình) với thumbnail bo góc và thanh tiến trình 4 chấm.
+  - Khoảng cách giữa chữ TRIPFLIX và 2 cột nội dung bên dưới được thu gọn tối ưu (~16px), tạo bố cục chặt chẽ.
 - **Thanh tìm kiếm Master Search Capsule 100% Above-the-fold**:
-  - Nằm gọn gàng hoàn toàn trên màn hình đầu tiên (1280x800) không bị tràn hoặc che khuất xuống dưới fold.
-  - Responsive hoàn hảo từ màn hình di động (390px) đến 4K desktop.
+  - Nằm trọn vẹn 100% trong màn hình đầu tiên (1280x800) không bị trôi hay che khuất xuống dưới fold.
+  - Co giãn tự nhiên, sắc nét trên màn hình di động (390x844).
 - Tương thích 100% với accessibility `prefers-reduced-motion: reduce`.
 
 ## Đối chiếu "Xong khi"
 | Tiêu chí | Đạt | Bằng chứng |
 |---|---|---|
-| Chữ TRIPFLIX dạng frame modular từng chữ lồng ảnh theo chuẩn Figma | Đạt | 8 letter components độc lập với image masking `-webkit-background-clip: text` |
-| Thanh tìm kiếm 100% Above-the-fold trên màn hình 1280x800 | Đạt | Đã kiểm chứng screenshot Chrome headless `live-app-desktop-1280.png` |
-| Hiệu ứng thuyền gỗ và sóng nước tự nhiên, không dùng ảnh nền phẳng tĩnh | Đạt | Thuyền PNG độc lập + bọt sóng SVG radial gradient |
+| Chữ TRIPFLIX đứng thẳng, ảnh lồng chuẩn không bị cắt khúc viền | Đạt | SVG ClipPath Masking + Panorama Việt Nam liên tục không cắn lẹm ảnh |
+| Mặt nước biển có gợn sóng tự nhiên, loại bỏ con thuyền gỗ | Đạt | SVG Water Waves đa tầng + caustics glow, đã bỏ heroBoat |
+| Thanh tìm kiếm 100% Above-the-fold trên màn hình 1280x800 | Đạt | Đã kiểm chứng screenshot Chrome headless `upright-hero-desktop-3105.png` |
+| Responsive tối ưu trên thiết bị di động (390x844) | Đạt | Đã kiểm chứng screenshot Chrome headless `upright-hero-mobile-390-v2.png` |
 | Lint, typecheck, test pass 100% | Đạt | `pnpm check` (Turbo 6 tasks, 0 error) |
 
 ## Kết quả kiểm tra
 - `pnpm lint`: Pass (0 error, 0 warning)
 - `pnpm typecheck`: Pass (9 packages, 0 error)
 - `pnpm test`: Pass (6 test suites, 241 tests passed)
-- Hiển thị trực quan: Đã kiểm tra thực tế bằng Chrome headless trên `http://localhost:3100`:
-  - Desktop 1280x800: `live-app-desktop-1280.png` (Search Capsule 100% Above-the-fold).
-  - Mobile 390x844: `live-app-mobile-390.png` (8 chữ cái co giãn vừa vặn, không vỡ layout).
+- Hiển thị trực quan: Đã kiểm tra thực tế bằng Chrome headless:
+  - Desktop 1280x800: `upright-hero-desktop-3105.png` (Search Capsule 100% Above-the-fold).
+  - Mobile 390x844: `upright-hero-mobile-390-v2.png` (Co giãn mượt mà, layout cân đối sắc nét).
 
 ## Cách kiểm lại
 1. Chạy `pnpm --filter @tripflix/web dev` hoặc mở trình duyệt tại `http://localhost:3100/`.
 2. Kiểm tra phần Hero:
-   - Rê chuột vào từng chữ cái trong từ **TRIPFLIX**: chữ cái nổi lên 3D, sáng viền và hiển thị tooltip tên địa danh (Mù Cang Chải, Vịnh Hạ Long, Tràng An, Huế, Phú Quốc, Bản Giốc, Bà Nà, Hội An).
-   - Bấm vào bất kỳ chữ cái nào để điều hướng sang trang kết quả tìm kiếm của điểm đến đó.
-   - Quan sát con thuyền gỗ bập bềnh trên mặt nước biển ngọc bích và dãy núi đá vôi Vịnh Hạ Long hùng vĩ phía sau.
+   - Chữ **TRIPFLIX** đứng thẳng vững chãi, không bị nằm nghiêng; ảnh toàn cảnh danh thắng Việt Nam lồng mượt mà, không bị cắt khúc ở viền.
+   - Rê chuột vào từng chữ cái trong từ **TRIPFLIX**: xuất hiện Tooltip Badge định danh danh lam thắng cảnh (Mù Cang Chải, Vịnh Hạ Long, Tràng An, Huế, Phú Quốc, Bản Giốc, Bà Nà Hills, Hội An); click để tìm kiếm địa phương tương ứng.
+   - Quan sát các dải sóng nước gợn sóng uốn lượn lăn tăn với vệt nắng caustics khúc xạ trên mặt biển ngọc bích.
+   - Con thuyền gỗ đã được loại bỏ hoàn toàn, không gian mặt biển sang trọng, thoáng đãng.
 3. Kiểm tra thanh tìm kiếm Master Search Capsule: Nằm trọn vẹn 100% Above-the-fold trên màn hình đầu tiên mà không phải cuộn chuột.
 
 ## Ảnh hưởng tới phần của người khác
-- Không: Chỉ sửa đổi trong `apps/web/src/features/discovery/ota-hero.*` và `docs/evidence/` do Thành phụ trách.
+- Không: Chỉ sửa đổi trong `apps/web/src/features/discovery/ota-hero.*`, `apps/web/public/brand/vietnam-panorama-tripflix.jpg` và `docs/evidence/` do Thành phụ trách.

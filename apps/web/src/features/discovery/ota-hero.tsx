@@ -13,73 +13,57 @@ const ACTIVITIES = [
 ] as const;
 
 /**
- * 8 Frame chữ cái TRIPFLIX độc lập theo chuẩn Figma Component System:
- * Mỗi chữ cái là một Frame/Vector riêng biệt lồng một bức ảnh danh thắng thực tế,
- * có khối 3D extrusion, viền neon cyan phát sáng và tooltip định danh tương tác.
+ * 8 Điểm tương tác trên chữ cái TRIPFLIX (Figma Hotspot System):
+ * Tương ứng 8 chữ cái T - R - I - P - F - L - I - X trên mặt chữ lồng toàn cảnh Việt Nam.
+ * Hover hiển thị Tooltip Badge định danh danh lam thắng cảnh, Click dẫn tới trang tìm kiếm.
  */
 const TRIPFLIX_BRAND_LETTERS = [
   {
     char: 'T',
     tag: 'Tây Bắc',
     destination: 'Sa Pa • Mù Cang Chải',
-    image: '/brand/destinations/lao-cai-spotlight.jpg',
-    position: 'center 45%',
     query: 'Lào Cai',
   },
   {
     char: 'R',
     tag: 'Kỳ quan',
     destination: 'Vịnh Hạ Long',
-    image: '/brand/destinations/quang-ninh-spotlight.jpg',
-    position: 'center 50%',
     query: 'Quảng Ninh',
   },
   {
     char: 'I',
     tag: 'Non nước',
     destination: 'Tràng An • Ninh Bình',
-    image: '/brand/destinations/ninh-binh-spotlight.jpg',
-    position: 'center 62%',
     query: 'Ninh Bình',
   },
   {
     char: 'P',
     tag: 'Cố đô',
     destination: 'Huế • Cổng Tam Quan',
-    image: '/brand/destinations/hue-spotlight.jpg',
-    position: 'center 50%',
     query: 'Huế',
   },
   {
     char: 'F',
     tag: 'Biển xanh',
     destination: 'Đảo Ngọc Phú Quốc',
-    image: '/brand/destinations/phu-quoc-spotlight.jpg',
-    position: 'center 50%',
     query: 'Phú Quốc',
   },
   {
     char: 'L',
     tag: 'Danh thác',
     destination: 'Thác Bản Giốc • Cao Bằng',
-    image: '/brand/destinations/cao-bang-spotlight.jpg',
-    position: 'center 50%',
     query: 'Cao Bằng',
   },
   {
     char: 'I',
     tag: 'Đà Nẵng',
     destination: 'Cầu Vàng Bà Nà',
-    image: '/brand/destinations/da-lat-spotlight.jpg',
-    position: 'center 68%',
     query: 'Đà Nẵng',
   },
   {
     char: 'X',
     tag: 'Di sản',
     destination: 'Phố cổ Hội An',
-    image: '/brand/destinations/hoi-an-spotlight.jpg',
-    position: 'center 50%',
     query: 'Hội An',
   },
 ] as const;
@@ -186,65 +170,96 @@ export function OtaHero() {
         </svg>
       </div>
 
+      {/* Layer 2: Gợn sóng nước biển khúc xạ nắng (Water ripples & Caustics) */}
+      <div className={styles.waterRippleLayer} aria-hidden="true">
+        <svg className={styles.waterWavesSvg} viewBox="0 0 1440 240" preserveAspectRatio="none" fill="none">
+          <defs>
+            <linearGradient id="waveGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgba(255, 255, 255, 0.45)" />
+              <stop offset="30%" stopColor="rgba(56, 189, 248, 0.25)" />
+              <stop offset="100%" stopColor="rgba(3, 105, 161, 0)" />
+            </linearGradient>
+            <linearGradient id="waveGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgba(186, 230, 253, 0.5)" />
+              <stop offset="50%" stopColor="rgba(14, 165, 233, 0.15)" />
+              <stop offset="100%" stopColor="rgba(2, 68, 100, 0)" />
+            </linearGradient>
+            <linearGradient id="causticGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(255, 255, 255, 0)" />
+              <stop offset="25%" stopColor="rgba(255, 255, 255, 0.6)" />
+              <stop offset="50%" stopColor="rgba(125, 211, 252, 0.75)" />
+              <stop offset="75%" stopColor="rgba(255, 255, 255, 0.6)" />
+              <stop offset="100%" stopColor="rgba(255, 255, 255, 0)" />
+            </linearGradient>
+          </defs>
+
+          {/* Lớp sóng gợn xa 1 */}
+          <path d="M 0 60 Q 180 45, 360 60 T 720 55 T 1080 62 T 1440 58 L 1440 240 L 0 240 Z" fill="url(#waveGrad1)" />
+          <path d="M 0 58 Q 180 43, 360 58 T 720 53 T 1080 60 T 1440 56" stroke="url(#causticGlow)" strokeWidth="1.8" />
+
+          {/* Lớp sóng gợn trung 2 */}
+          <path d="M 0 110 Q 240 92, 480 110 T 960 105 T 1440 112 L 1440 240 L 0 240 Z" fill="url(#waveGrad2)" />
+          <path d="M 0 108 Q 240 90, 480 108 T 960 103 T 1440 110" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="1.5" />
+
+          {/* Lớp sóng gợn tiền cảnh 3 */}
+          <path d="M 0 165 Q 220 150, 440 165 T 880 160 T 1320 168 T 1440 162" stroke="rgba(255, 255, 255, 0.35)" strokeWidth="1.5" />
+          <path d="M 0 195 Q 260 182, 520 195 T 1040 190 T 1440 198" stroke="rgba(125, 211, 252, 0.3)" strokeWidth="1.2" />
+        </svg>
+      </div>
+
       <div className={`ota-container ${styles.inner}`}>
-        {/* Layer 2: Figma-style Modular 3D Typography Canvas (Từng chữ cái là 1 frame độc lập lồng ảnh) */}
+        {/* Layer 3: Figma-style Upright Vector Typography Masking (Chữ đứng thẳng lồng toàn cảnh Việt Nam) */}
         <div className={styles.brandCanvasWrapper}>
-          <div className={styles.tripflixBrandCanvas}>
+          <svg className={styles.uprightTripflixSvg} viewBox="0 0 940 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="svg3dShadow" x="-10%" y="-10%" width="120%" height="130%">
+                <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="#012437" floodOpacity="0.75" />
+              </filter>
+
+              {/* ClipPath: Chữ TRIPFLIX ĐỨNG THẲNG (Upright), không nghiêng đổ, không biến dạng */}
+              <clipPath id="uprightTripflixMask">
+                <text x="470" y="112" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontWeight="900" fontSize="114" letterSpacing="4">
+                  TRIPFLIX
+                </text>
+              </clipPath>
+            </defs>
+
+            {/* KHỐI ĐỘ DÀY 3D ĐỨNG THẲNG (UPRIGHT EXTRUSION) */}
+            <text x="470" y="122" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontWeight="900" fontSize="114" letterSpacing="4" fill="#012638" filter="url(#svg3dShadow)">
+              TRIPFLIX
+            </text>
+            <text x="470" y="119" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontWeight="900" fontSize="114" letterSpacing="4" fill="#03486a">
+              TRIPFLIX
+            </text>
+            <text x="470" y="116" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontWeight="900" fontSize="114" letterSpacing="4" fill="#0284c7">
+              TRIPFLIX
+            </text>
+
+            {/* TOÀN CẢNH DANH THẮNG VIỆT NAM LIÊN TỤC LỒNG TRỌN VẸN VÀO CHỮ */}
+            <image href="/brand/vietnam-panorama-tripflix.jpg" x="20" y="0" width="900" height="135" preserveAspectRatio="none" clipPath="url(#uprightTripflixMask)" />
+
+            {/* ĐƯỜNG VIỀN KÍNH PHA LÊ TRẮNG TINH KHIẾT (KHÔNG BỊ CẮT VÀO ẢNH) */}
+            <text x="470" y="112" textAnchor="middle" fontFamily="'Montserrat', sans-serif" fontWeight="900" fontSize="114" letterSpacing="4" fill="none" stroke="rgba(255, 255, 255, 0.95)" strokeWidth="2" pointerEvents="none">
+              TRIPFLIX
+            </text>
+          </svg>
+
+          {/* LỚP TƯƠNG TÁC TỪNG CHỮ CÁI (FIGMA HOTSPOTS) */}
+          <div className={styles.letterHotspots} aria-label="Khám phá danh thắng qua từng chữ cái">
             {TRIPFLIX_BRAND_LETTERS.map((item, idx) => (
               <Link
                 prefetch={false}
                 href={`/search?q=${encodeURIComponent(item.query)}`}
-                className={styles.letterFrame}
+                className={styles.letterHotspot}
                 key={`${item.char}-${idx}`}
                 title={`${item.char} — ${item.destination}`}
               >
-                {/* Khối hộp 3D Isometric Extrusion đa tầng */}
-                <span className={styles.letter3dExtrusion} aria-hidden="true">{item.char}</span>
-                {/* Mặt chữ vector lồng ảnh thực tế danh thắng */}
-                <span
-                  className={styles.letterFace}
-                  style={{
-                    backgroundImage: `url('${item.image}')`,
-                    backgroundPosition: item.position,
-                  }}
-                >
-                  {item.char}
-                </span>
-                {/* Tooltip định danh danh lam thắng cảnh khi hover */}
                 <span className={styles.letterBadge}>
                   <span className={styles.badgeTag}>{item.tag}</span>
                   <strong className={styles.badgeName}>{item.destination}</strong>
                 </span>
               </Link>
             ))}
-          </div>
-
-          {/* Layer 3: Con thuyền gỗ truyền thống & Bọt sóng nước êm dịu quanh thuyền */}
-          <div className={styles.boatWakeGroup} aria-hidden="true">
-            <Image
-              src="/brand/hero-boat.png"
-              alt=""
-              width={140}
-              height={90}
-              className={styles.heroBoat}
-              priority
-            />
-            <svg className={styles.wakeWaterSvg} viewBox="0 0 160 48" fill="none">
-              <defs>
-                <filter id="boatFoamBlur" x="-30%" y="-30%" width="160%" height="160%">
-                  <feGaussianBlur in="SourceGraphic" stdDeviation="3" />
-                </filter>
-                <radialGradient id="boatHullFoam" cx="65%" cy="50%" r="60%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
-                  <stop offset="45%" stopColor="#bae6fd" stopOpacity="0.55" />
-                  <stop offset="80%" stopColor="#38bdf8" stopOpacity="0.15" />
-                  <stop offset="100%" stopColor="#0284c7" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-              {/* Bọt sóng nước ôm tròn chân mạn thuyền */}
-              <ellipse cx="100" cy="24" rx="55" ry="14" fill="url(#boatHullFoam)" />
-              <ellipse cx="50" cy="28" rx="35" ry="9" fill="rgba(255, 255, 255, 0.45)" filter="url(#boatFoamBlur)" />
-            </svg>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
 
 .hero {
   position: relative;
@@ -7,7 +7,7 @@
     radial-gradient(circle at 82% 10%, rgba(254, 240, 138, 0.4) 0%, rgba(56, 189, 248, 0.2) 30%, transparent 65%),
     radial-gradient(circle at 45% 0%, #0284c7 0%, #0369a1 40%, #075985 75%, #083344 100%),
     linear-gradient(180deg, #0284c7 0%, #0369a1 55%, #083344 100%);
-  min-height: clamp(500px, 46vw, 590px);
+  min-height: clamp(480px, 44vw, 560px);
   overflow: clip;
 }
 
@@ -82,113 +82,90 @@
   }
 }
 
+/* ==========================================================================
+   GỢN SÓNG NƯỚC BIỂN KHÚC XẠ NẮNG (WATER RIPPLES & CAUSTICS)
+   ========================================================================== */
+.waterRippleLayer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 240px;
+  pointer-events: none;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.waterWavesSvg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .inner {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-block: clamp(20px, 2.5vh, 32px) clamp(40px, 4.5vh, 52px);
+  padding-block: clamp(16px, 2vh, 26px) clamp(36px, 4vh, 46px);
 }
 
 /* ==========================================================================
-   FIGMA-STYLE MODULAR VECTOR TYPOGRAPHY SYSTEM
-   Từng chữ cái là một Frame độc lập lồng một ảnh danh lam thắng cảnh thực tế
+   FIGMA-STYLE UPRIGHT MODULAR VECTOR TYPOGRAPHY SYSTEM
+   Chữ TRIPFLIX ĐỨNG THẲNG (Upright), không nghiêng đổ, lồng toàn cảnh Việt Nam
    ========================================================================== */
 .brandCanvasWrapper {
   position: relative;
   width: 100%;
+  max-width: 960px;
   display: flex;
-  justify-content: center;
-  margin-bottom: clamp(14px, 2vh, 26px);
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: clamp(10px, 1.8vh, 20px);
 }
 
-.tripflixBrandCanvas {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(2px, 0.45vw, 8px);
-  user-select: none;
-  padding-top: 4px;
-  z-index: 4;
+.uprightTripflixSvg {
+  width: 100%;
+  max-width: 940px;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 12px 28px rgba(2, 44, 67, 0.55));
   /* Phản chiếu mặt nước biển tự nhiên với độ trong mờ tinh tế */
-  -webkit-box-reflect: below -28px linear-gradient(
-    transparent 58%,
-    rgba(3, 105, 161, 0.12) 78%,
-    rgba(56, 189, 248, 0.3) 100%
+  -webkit-box-reflect: below -20px linear-gradient(
+    transparent 65%,
+    rgba(3, 105, 161, 0.15) 82%,
+    rgba(56, 189, 248, 0.35) 100%
   );
 }
 
-.letterFrame {
+/* LỚP TƯƠNG TÁC HOVER TRÊN TỪNG CHỮ CÁI (FIGMA HOTSPOTS) */
+.letterHotspots {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  pointer-events: auto;
+}
+
+.letterHotspot {
   position: relative;
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  align-items: flex-start;
   justify-content: center;
   text-decoration: none;
   cursor: pointer;
-  perspective: 900px;
-  transition: transform 280ms cubic-bezier(0.2, 0.7, 0.25, 1);
-}
-
-.letterFrame:hover {
-  transform: translateY(-10px) scale(1.06);
-  z-index: 15;
-}
-
-/* Khối 3D Bevel Extrusion đa tầng chân thực như Figma 3D */
-.letter3dExtrusion {
-  position: absolute;
-  font-family: 'Montserrat', sans-serif;
-  font-size: clamp(5.4rem, 9.8vw, 9.8rem);
-  font-weight: 900;
-  font-style: italic;
-  color: #0284c7;
-  transform: translate(6px, 12px) scaleX(1.1) skewX(-7deg);
-  -webkit-text-stroke: 4px #0369a1;
-  text-shadow:
-    1px 1px 0 #0284c7,
-    2px 2px 0 #0369a1,
-    3px 3px 0 #075985,
-    4px 4px 0 #0c4a6e,
-    5px 5px 0 #083344,
-    6px 6px 0 #041f2c,
-    8px 14px 24px rgba(2, 44, 67, 0.7);
-  z-index: 1;
-  pointer-events: none;
-}
-
-/* Mặt chữ lồng ảnh danh lam thắng cảnh + viền pha lê trắng nổi bật */
-.letterFace {
-  position: relative;
-  font-family: 'Montserrat', sans-serif;
-  font-size: clamp(5.4rem, 9.8vw, 9.8rem);
-  font-weight: 900;
-  font-style: italic;
-  transform: scaleX(1.1) skewX(-7deg);
-  background-size: cover;
-  background-position: center;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  /* Viền kính pha lê trắng sắc nét */
-  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.95);
-  filter: drop-shadow(0 4px 14px rgba(2, 132, 199, 0.6)) drop-shadow(0 0 16px rgba(56, 189, 248, 0.65));
-  z-index: 2;
-  transition:
-    filter 300ms ease,
-    -webkit-text-stroke 300ms ease;
-}
-
-.letterFrame:hover .letterFace {
-  -webkit-text-stroke: 3px #ffffff;
-  filter: drop-shadow(0 0 28px #38bdf8) drop-shadow(0 0 14px #ffffff);
 }
 
 /* Tooltip hiển thị tên danh lam thắng cảnh khi hover */
 .letterBadge {
   position: absolute;
-  top: -36px;
+  top: -34px;
   left: 50%;
   transform: translateX(-50%) translateY(8px);
   display: flex;
@@ -220,53 +197,9 @@
   color: #ffffff;
 }
 
-.letterFrame:hover .letterBadge {
+.letterHotspot:hover .letterBadge {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
-}
-
-/* ==========================================================================
-   CON THUYỀN GỖ & VỆT BỌT NƯỚC SỦI XUNG QUANH THUYỀN
-   ========================================================================== */
-.boatWakeGroup {
-  position: absolute;
-  bottom: -28px;
-  right: clamp(10px, 3.2vw, 55px);
-  width: 180px;
-  height: 120px;
-  pointer-events: none;
-  z-index: 7;
-}
-
-.heroBoat {
-  position: absolute;
-  right: 14px;
-  bottom: 24px;
-  width: clamp(110px, 11vw, 142px);
-  height: auto;
-  z-index: 5;
-  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.4));
-  animation: boatSway 4s ease-in-out infinite alternate;
-}
-
-@keyframes boatSway {
-  0% {
-    transform: translateY(0) rotate(0deg);
-  }
-  100% {
-    transform: translateY(-4px) rotate(1.8deg);
-  }
-}
-
-.wakeWaterSvg {
-  position: absolute;
-  right: 4px;
-  bottom: 14px;
-  width: 160px;
-  height: 48px;
-  overflow: visible;
-  pointer-events: none;
-  z-index: 3;
 }
 
 /* ==========================================================================
@@ -650,46 +583,21 @@
 
 @media (max-width: 640px) {
   .inner {
-    padding-block: 16px 20px;
+    padding-block: 14px 18px;
   }
   .brandCanvasWrapper {
-    margin-bottom: 14px;
+    margin-bottom: 10px;
   }
-  .tripflixBrandCanvas {
-    gap: 2px;
+  .uprightTripflixSvg {
+    max-width: 100%;
+    -webkit-box-reflect: below -12px linear-gradient(
+      transparent 70%,
+      rgba(3, 105, 161, 0.12) 85%,
+      rgba(56, 189, 248, 0.25) 100%
+    );
   }
-  .letter3dExtrusion,
-  .letterFace {
-    font-size: clamp(1.95rem, 9.2vw, 3.0rem);
-    transform: scaleX(1.05) skewX(-5deg);
-  }
-  .letter3dExtrusion {
-    transform: translate(3px, 6px) scaleX(1.05) skewX(-5deg);
-    -webkit-text-stroke: 2.5px #0369a1;
-  }
-  .letterFace {
-    -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.95);
-  }
-  .boatWakeGroup {
-    width: 120px;
-    height: 80px;
-    bottom: -16px;
-    right: 4px;
-  }
-  .heroBoat {
-    width: 72px;
-    right: 6px;
-    bottom: 12px;
-  }
-  .wakeWaterSvg {
-    width: 90px;
-    height: 30px;
-  }
-  .heroBoat {
-    width: 80px;
-  }
-  .wakeWaterSvg {
-    display: none;
+  .waterRippleLayer {
+    height: 160px;
   }
   .copy h1 {
     font-size: min(clamp(1.7rem, 6.8vw, 2.1rem), 13cqi);
@@ -747,7 +655,6 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .eyebrowPlane,
-  .heroBoat,
   .seagull,
   .brandCanvasWrapper,
   .bottomSection {
