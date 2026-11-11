@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getHomeRecommendations } from './recommendations';
+import { HOME_RECOMMENDATIONS_REFRESH, getHomeRecommendations } from './recommendations';
 import { configureHttp } from './http';
 import type { HomeDestinationPickDto } from './generated/core-api/model';
 
@@ -40,6 +40,12 @@ describe('home recommendations API', () => {
     expect(parsedUrl.searchParams.get('recentPlaceIds')).toBe('da-lat');
     expect(parsedUrl.searchParams.get('limit')).toBe('6');
     expect(init?.method).toBe('GET');
+  });
+
+  it('does not refetch on window focus or on a timer (TF84)', () => {
+    expect(HOME_RECOMMENDATIONS_REFRESH.refetchOnWindowFocus).toBe(false);
+    expect(HOME_RECOMMENDATIONS_REFRESH.refetchInterval).toBe(false);
+    expect(HOME_RECOMMENDATIONS_REFRESH.staleTime).toBeGreaterThan(5 * 60 * 1000);
   });
 
   it('handles empty response gracefully', async () => {
