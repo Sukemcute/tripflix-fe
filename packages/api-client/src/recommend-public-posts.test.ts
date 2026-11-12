@@ -23,6 +23,6 @@ describe('recommendPublicPosts', () => {
     expect(page.items.map((p) => p.id)).toEqual(['b', 'a']);
     expect(page.nextCursor).toBe('c2');
     const url = new URL(String(send.mock.calls[0]![0]));
-    expect(Object.fromEntries(url.searchParams)).toEqual({ mode: 'for_you', limit: '10', cursor: 'c1', postType: 'vlog' });
+    expect(Object.fromEntries(url.searchParams)).toEqual({ mode: 'for_you', limit: '7', cursor: 'c1', postType: 'vlog' });
   });
 });

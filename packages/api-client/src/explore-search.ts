@@ -45,6 +45,9 @@ export async function getPostSearchResults(
 /** Số bài mỗi trang khi tìm theo từ khoá: mỗi bài cần thêm một lần lấy chi tiết nên giữ nhỏ. */
 export const KEYWORD_SEARCH_PAGE_SIZE = 10;
 
+/** Feed gợi ý: màn hình chỉ hiện 1–2 bài, lấy 7 bài một lần rồi tải tiếp khi lướt tới bài 5–6. */
+export const RECOMMEND_PAGE_SIZE = 7;
+
 /**
  * Tìm bài công khai bằng engine của discovery (hiểu câu, bỏ dấu, sửa gõ, ghép/tách chữ), rồi lấy chi tiết từng bài
  * theo đúng thứ tự xếp hạng. Trả cùng dạng trang với socialApi.listPosts nên viewer dùng lại được.
@@ -69,7 +72,7 @@ export async function searchPublicPosts(keyword: string, cursor?: string, signal
  */
 export async function recommendPublicPosts(cursor?: string, signal?: AbortSignal, postType?: 'vlog') {
   const response = await postRecommendationsControllerRecommendPosts(
-    { mode: 'for_you', limit: KEYWORD_SEARCH_PAGE_SIZE, ...(cursor ? { cursor } : {}), ...(postType ? { postType } : {}) },
+    { mode: 'for_you', limit: RECOMMEND_PAGE_SIZE, ...(cursor ? { cursor } : {}), ...(postType ? { postType } : {}) },
     { signal },
   );
   const page = readEntity(response.data, ['items', 'algo', 'nextCursor']) as PostRecommendationsDto;
