@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { configureHttp } from './http';
-import { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime } from './notifications-realtime';
+import {
+  isNotificationsSocketConnected,
+  NOTIFICATION_CREATED_EVENT,
+  useNotificationsRealtime,
+} from './notifications-realtime';
 
 const invalidateQueries = vi.fn();
 let cleanup: (() => void) | void;
@@ -89,5 +93,22 @@ describe('useNotificationsRealtime', () => {
     cleanup?.();
     cleanup = undefined;
     expect(socket.disconnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('ghi nhận trạng thái socket để useNotifications tắt polling, mất kết nối thì tải lại và bật lại', () => {
+    configureHttp({ baseUrl: 'https://gateway.example' });
+    useNotificationsRealtime();
+    expect(isNotificationsSocketConnected('u1')).toBe(false);
+    fire('connect');
+    expect(isNotificationsSocketConnected('u1')).toBe(true);
+    expect(isNotificationsSocketConnected('u2')).toBe(false);
+    invalidateQueries.mockClear();
+    fire('disconnect');
+    expect(isNotificationsSocketConnected('u1')).toBe(false);
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['notifications', 'u1'] });
+    fire('connect');
+    cleanup?.();
+    cleanup = undefined;
+    expect(isNotificationsSocketConnected('u1')).toBe(false);
   });
 });
