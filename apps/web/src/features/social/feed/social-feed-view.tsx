@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, useSyncExternalStore } from 'react';
+import Image from 'next/image';
 import { useQueryClient, useMutation, type InfiniteData } from '@tanstack/react-query';
 import { vi, t } from '@tripflix/i18n';
 import {
@@ -30,6 +31,18 @@ export interface SocialFeedViewProps {
   onCloseComposer?: () => void;
 }
 
+const WIDE_SCREEN_QUERY = '(min-width: 1024px)';
+
+function subscribeWideScreen(onChange: () => void): () => void {
+  const media = window.matchMedia(WIDE_SCREEN_QUERY);
+  media.addEventListener('change', onChange);
+  return () => media.removeEventListener('change', onChange);
+}
+
+function readWideScreen(): boolean {
+  return window.matchMedia(WIDE_SCREEN_QUERY).matches;
+}
+
 export function SocialFeedView({
   initialKeyword = '',
   searchKeyword,
@@ -57,9 +70,13 @@ export function SocialFeedView({
   const handleCloseComposer = onCloseComposer ?? (() => setLocalIsComposerOpen(false));
 
   // Layout states
-  const [isRightOpen, setIsRightOpen] = useState(true);
+  // Màn rộng mở sẵn panel bình luận; người dùng đóng/mở thì giữ lựa chọn đó. Server render coi như đóng để không lệch hydration.
+  const isWideScreen = useSyncExternalStore(subscribeWideScreen, readWideScreen, () => false);
+  const [rightOpenChoice, setIsRightOpen] = useState<boolean | null>(null);
+  const isRightOpen = rightOpenChoice ?? isWideScreen;
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [activeFocusedPostId, setActiveFocusedPostId] = useState<string | null>(null);
+  const [galleryState, setGalleryState] = useState<{ postId: string; index: number } | null>(null);
 
   const mainFeedRef = useRef<HTMLElement | null>(null);
   const rightScrollRef = useRef<HTMLDivElement | null>(null);
@@ -110,6 +127,47 @@ export function SocialFeedView({
       itineraryItems: activeItineraryPost.tripAttachment?.items,
     })[0]?.src;
   }, [activeItineraryPost]);
+
+  // Image Gallery Lightbox state and helpers
+  const activeGalleryPost = useMemo(() => {
+    if (!galleryState) return null;
+    return posts.find((p) => p.id === galleryState.postId) ?? null;
+  }, [galleryState, posts]);
+
+  const activeGalleryImages = useMemo(() => {
+    if (!activeGalleryPost) return [];
+    return getPostImages({
+      mediaIds: activeGalleryPost.mediaIds,
+      destinationName: activeGalleryPost.tripAttachment?.destinationName,
+      hotelName: activeGalleryPost.tripAttachment?.hotelName,
+      title: activeGalleryPost.title,
+      body: activeGalleryPost.body,
+      hashtags: activeGalleryPost.hashtags,
+      itineraryItems: activeGalleryPost.tripAttachment?.items,
+    });
+  }, [activeGalleryPost]);
+
+  useEffect(() => {
+    if (!galleryState) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setGalleryState(null);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setGalleryState((prev) => (prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null));
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setGalleryState((prev) =>
+          prev
+            ? { ...prev, index: Math.min(activeGalleryImages.length - 1, prev.index + 1) }
+            : null,
+        );
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [galleryState, activeGalleryImages.length]);
 
   // Active post for comment thread (dong bo style Reels)
   const activeCommentPost = useMemo(() => {
@@ -210,7 +268,9 @@ export function SocialFeedView({
 
       if (bestPostId) {
         setActiveFocusedPostId(bestPostId);
-        setActiveCommentPostId((prev) => (prev === bestPostId ? prev : bestPostId));
+        if (isRightOpen) {
+          setActiveCommentPostId((prev) => (prev === bestPostId ? prev : bestPostId));
+        }
       }
     };
 
@@ -231,7 +291,7 @@ export function SocialFeedView({
       container.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };
-  }, [posts]);
+  }, [posts, isRightOpen]);
 
   // Cho phep cuon danh sach bai viet ngay ca khi con tro chuot nam o vung trong ngoai the bai viet ("khuc ngoai")
   useEffect(() => {
@@ -729,6 +789,9 @@ export function SocialFeedView({
                 setActiveFocusedPostId(postId);
                 handleOpenItinerary();
               }}
+              onOpenGallery={(postId, imgIdx) => {
+                setGalleryState({ postId, index: imgIdx });
+              }}
             />
           </div>
         ))}
@@ -803,6 +866,94 @@ export function SocialFeedView({
           onClose={handleCloseComposer}
         />
       )}
+
+      {/* 4. In-Feed Image Gallery Lightbox Modal */}
+      {galleryState && activeGalleryPost && activeGalleryImages[galleryState.index] && (() => {
+        const currentImg = activeGalleryImages[galleryState.index];
+        if (!currentImg) return null;
+        return (
+          <dialog
+            open
+            className={reelsStyles.galleryStageOverlay}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              margin: 0,
+              padding: 0,
+              border: 'none',
+              width: '100%',
+              height: '100%',
+              maxWidth: 'none',
+              maxHeight: 'none',
+              background: 'color-mix(in srgb, var(--color-ink) 92%, transparent)',
+            }}
+            aria-modal="true"
+            aria-label={activeGalleryPost.title}
+          >
+            <div className={reelsStyles.galleryTopBar}>
+              <span className={reelsStyles.galleryCountPill}>
+                {galleryState.index + 1} / {activeGalleryImages.length}
+              </span>
+              <button
+                type="button"
+                className={reelsStyles.galleryCloseBtn}
+                aria-label={vi.api.immersiveCloseGallery}
+                title={vi.api.immersiveCloseGallery}
+                onClick={() => setGalleryState(null)}
+              >
+                <SocialIcon name="close" size={18} />
+              </button>
+            </div>
+
+            <div className={reelsStyles.galleryContainFrame}>
+              <Image
+                key={currentImg.src}
+                src={currentImg.src}
+                alt={activeGalleryPost.title}
+                fill
+                className={reelsStyles.galleryContainImg}
+                sizes="100vw"
+                priority
+                unoptimized={currentImg.src.startsWith('http')}
+              />
+            </div>
+
+            {activeGalleryImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className={`${reelsStyles.gallerySlideNavBtn} ${reelsStyles.gallerySlidePrev}`}
+                  disabled={galleryState.index <= 0}
+                  aria-label={vi.api.immersivePrevSlide}
+                  title={vi.api.immersivePrevSlide}
+                  onClick={() =>
+                    setGalleryState((prev) =>
+                      prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null,
+                    )
+                  }
+                >
+                  <SocialIcon name="chevronLeft" size={20} />
+                </button>
+                <button
+                  type="button"
+                  className={`${reelsStyles.gallerySlideNavBtn} ${reelsStyles.gallerySlideNext}`}
+                  disabled={galleryState.index >= activeGalleryImages.length - 1}
+                  aria-label={vi.api.immersiveNextSlide}
+                  title={vi.api.immersiveNextSlide}
+                  onClick={() =>
+                    setGalleryState((prev) =>
+                      prev ? { ...prev, index: Math.min(activeGalleryImages.length - 1, prev.index + 1) } : null,
+                    )
+                  }
+                >
+                  <SocialIcon name="chevronRight" size={20} />
+                </button>
+              </>
+            )}
+          </dialog>
+        );
+      })()}
     </div>
   );
 }

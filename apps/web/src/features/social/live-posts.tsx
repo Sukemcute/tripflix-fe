@@ -32,6 +32,7 @@ import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
+import { CommentSkeletonList } from './comment-skeleton';
 import styles from './live-posts.module.css';
 
 // Trang chi tiết bài viết nằm ở post-detail.tsx; giữ export ở đây để app/trips/[slug]/page.tsx không phải đổi.
@@ -2222,7 +2223,7 @@ export function RightPanelCommentsSynchronized({
             void query.refetch();
           }}
         />
-        {query.isPending && <output className="small muted">{vi.api.loading}</output>}
+        {query.isPending && <CommentSkeletonList count={8} />}
         {query.isSuccess && comments.length === 0 && (
           <p className="small muted">{vi.api.noComments}</p>
         )}
@@ -2349,7 +2350,7 @@ function CommentNode({
 }) {
   const { user } = useApiSession();
   const client = useQueryClient();
-  const [showReplies, setShowReplies] = useState(true);
+  const [showReplies, setShowReplies] = useState(false);
   const [isEditing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState(comment.body);
   const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
@@ -2368,7 +2369,7 @@ function CommentNode({
   const repliesQuery = useInfiniteQuery({
     queryKey: ['social', 'comments', postId, comment.id, user?.id],
     initialPageParam: undefined as string | undefined,
-    enabled: !isReply,
+    enabled: !isReply && showReplies,
     queryFn: ({ pageParam, signal }) => socialApi.listComments(postId, pageParam, comment.id, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
@@ -2409,7 +2410,7 @@ function CommentNode({
   });
 
   const replies = repliesQuery.data?.pages.flatMap((page) => page.items) ?? [];
-  const totalReplies = repliesQuery.data?.pages[0]?.total ?? replies.length;
+  const totalReplies = (comment as { replyCount?: number }).replyCount ?? repliesQuery.data?.pages[0]?.total ?? replies.length;
 
   return (
     <li className={styles.panelCommentItem}>
