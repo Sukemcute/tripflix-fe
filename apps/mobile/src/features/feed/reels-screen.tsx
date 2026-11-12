@@ -2,6 +2,7 @@ import {
   getReelPosterPrefetchUrls,
   getSwipedTabIndex,
   layoutReelVideo,
+  REEL_LOOKAHEAD_COUNT,
   selectReelPoster,
 } from '@tripflix/app-core';
 import { useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
@@ -17,6 +18,7 @@ import {
   AppState,
   ActivityIndicator,
   FlatList,
+  Platform,
   StyleSheet,
   View,
   useWindowDimensions,
@@ -366,10 +368,10 @@ function ReelsTabFeed({
     void feed.fetchNextPage({ cancelRefetch: false });
   }, [isTargetLoaded, feed]);
 
-  const loadMore = () => {
-    if (feed.hasNextPage && !feed.isFetching && !feed.isError)
-      void feed.fetchNextPage({ cancelRefetch: false });
-  };
+  const { hasNextPage, isFetching, isError, fetchNextPage } = feed;
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetching && !isError) void fetchNextPage({ cancelRefetch: false });
+  }, [hasNextPage, isFetching, isError, fetchNextPage]);
   const retryFeed = () => {
     if (feed.isFetching) return;
     if (feed.isFetchNextPageError) {
@@ -479,18 +481,23 @@ export function ReelsFeed({
   const visibleIndex = Math.min(focusedIndex, Math.max(0, items.length - 1));
   const hideHeader = heldId !== null && heldId === items[visibleIndex]?.id;
   const isOffline = network.isConnected === false || network.isInternetReachable === false;
+  const isPlaybackEnabled = isFocused && isForeground && !isOffline;
   // expo-network does not expose system Data Saver / Low Data Mode flags.
   const isDataLimited = false;
   const slots = usePlayerPool({
     items,
     activeIndex: currentIndex,
     focusedIndex: visibleIndex,
-    isEnabled: isFocused && isForeground && !isOffline,
+    isEnabled: isPlaybackEnabled,
     isPaused: isLaunching || pausedId === items[visibleIndex]?.id,
     isMuted: false,
     isDataLimited,
     retry,
   });
+
+  useEffect(() => {
+    if (isPlaybackEnabled && currentIndex + REEL_LOOKAHEAD_COUNT >= items.length - 1) onLoadMore?.();
+  }, [currentIndex, isPlaybackEnabled, items.length, onLoadMore]);
 
   useEffect(() => {
     if (layout.width === 0) return;
@@ -571,11 +578,10 @@ export function ReelsFeed({
           onScroll={onScroll}
           scrollEventThrottle={16}
           onMomentumScrollEnd={(event) => settle(indexAt(event.nativeEvent.contentOffset.y))}
-          windowSize={3}
+          // Web needs a mounted VideoView for each player that is buffering.
+          windowSize={Platform.OS === 'web' ? REEL_LOOKAHEAD_COUNT * 2 + 1 : 3}
           initialNumToRender={3}
-          maxToRenderPerBatch={3}
-          onEndReached={onLoadMore}
-          onEndReachedThreshold={1}
+          maxToRenderPerBatch={Platform.OS === 'web' ? REEL_LOOKAHEAD_COUNT + 2 : 3}
           onRefresh={onRefresh}
           refreshing={isRefreshing}
           ListFooterComponent={

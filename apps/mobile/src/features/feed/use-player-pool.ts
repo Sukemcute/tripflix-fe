@@ -9,11 +9,14 @@ const RENDITION_TIMEOUT_MS = 8_000;
 /** Native SharedObjects have mutable setters, outside React's immutable render data. */
 function applyPlayerLimits(
   player: VideoPlayer,
-  { isCurrent, maxResolution }: { isCurrent: boolean; maxResolution: VideoPlayer['maxResolution'] },
+  { forwardBufferDuration, maxResolution }: {
+    forwardBufferDuration: number;
+    maxResolution: VideoPlayer['maxResolution'];
+  },
 ) {
   player.maxResolution = maxResolution;
   player.bufferOptions = {
-    preferredForwardBufferDuration: isCurrent ? 30 : 4,
+    preferredForwardBufferDuration: forwardBufferDuration,
     minBufferForPlayback: 1,
     prioritizeTimeOverSizeThreshold: true,
   };
@@ -37,6 +40,7 @@ function silencePlayer(player: VideoPlayer) {
 function usePlayerSlot({
   item,
   isCurrent,
+  forwardBufferDuration,
   shouldPlay,
   isMuted,
   isDataLimited,
@@ -44,6 +48,7 @@ function usePlayerSlot({
 }: {
   item?: ReelItem;
   isCurrent: boolean;
+  forwardBufferDuration: number;
   shouldPlay: boolean;
   isMuted: boolean;
   isDataLimited: boolean;
@@ -110,11 +115,11 @@ function usePlayerSlot({
   const synchronize = useCallback(
     (status: VideoPlayer['status'] = player.status) => {
       // These setters reach the native player, so they only run when a limit really changes.
-      const limitsKey = `${sourceKey}|${isCurrent}|${isDataLimited}`;
+      const limitsKey = `${sourceKey}|${forwardBufferDuration}|${isDataLimited}`;
       if (appliedLimitsKey.current !== limitsKey) {
         appliedLimitsKey.current = limitsKey;
         applyPlayerLimits(player, {
-          isCurrent,
+          forwardBufferDuration,
           maxResolution: isDataLimited ? getReelResolutionCap(aspect) : null,
         });
       }
@@ -123,7 +128,7 @@ function usePlayerSlot({
         isMuted,
       });
     },
-    [player, sourceKey, isCurrent, shouldPlay, isMuted, isLoaded, isDataLimited, aspect],
+    [player, sourceKey, forwardBufferDuration, shouldPlay, isMuted, isLoaded, isDataLimited, aspect],
   );
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -197,10 +202,14 @@ export function usePlayerPool({
   };
   const optionsAt = (slot: number) => {
     const item = itemAt(slot);
-    const isCurrent = indexes[slot] === focusedIndex;
+    const index = indexes[slot];
+    const isCurrent = index === focusedIndex;
+    // Keep the two farther-ahead players to roughly one HLS segment on native.
+    const forwardBufferDuration = isCurrent ? 30 : index != null && index > focusedIndex + 1 ? 2 : 4;
     return {
       item,
       isCurrent,
+      forwardBufferDuration,
       shouldPlay: isEnabled && !isPaused && isCurrent,
       isMuted,
       isDataLimited,
@@ -210,5 +219,7 @@ export function usePlayerPool({
   const first = usePlayerSlot(optionsAt(0));
   const second = usePlayerSlot(optionsAt(1));
   const third = usePlayerSlot(optionsAt(2));
-  return [first, second, third].map((slot, index) => ({ ...slot, index: indexes[index] }));
+  const fourth = usePlayerSlot(optionsAt(3));
+  const fifth = usePlayerSlot(optionsAt(4));
+  return [first, second, third, fourth, fifth].map((slot, index) => ({ ...slot, index: indexes[index] }));
 }

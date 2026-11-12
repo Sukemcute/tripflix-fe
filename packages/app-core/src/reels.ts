@@ -141,11 +141,15 @@ export function layoutReelCommentsVideo({
   };
 }
 
-/** Mỗi vị trí trong cửa sổ dùng một slot khác nhau, kể cả khi vuốt ngược. */
+export const REEL_LOOKAHEAD_COUNT = 3;
+
+/** Keep the first load to three videos, then retain one behind and preload three ahead. */
 export function getReelPlayerIndexes(count: number, activeIndex: number): (number | null)[] {
-  const slots: (number | null)[] = [null, null, null];
-  for (let index = Math.max(0, activeIndex - 1); index <= Math.min(count - 1, Math.max(2, activeIndex + 1)); index++) {
-    slots[index % 3] = index;
+  const slots = Array<number | null>(REEL_LOOKAHEAD_COUNT + 2).fill(null);
+  const first = Math.max(0, activeIndex - 1);
+  const last = activeIndex === 0 ? 2 : activeIndex + REEL_LOOKAHEAD_COUNT;
+  for (let index = first; index <= Math.min(count - 1, last); index++) {
+    slots[index % slots.length] = index;
   }
   return slots;
 }
