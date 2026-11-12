@@ -3,6 +3,7 @@ import { configureHttp } from './http';
 import {
   isNotificationsSocketConnected,
   NOTIFICATION_CREATED_EVENT,
+  NOTIFICATION_READ_EVENT,
   useNotificationsRealtime,
 } from './notifications-realtime';
 
@@ -54,8 +55,9 @@ describe('useNotificationsRealtime', () => {
     configureHttp({ baseUrl: 'https://gateway.example' });
     useNotificationsRealtime();
     fire(NOTIFICATION_CREATED_EVENT, { unreadCount: 1 });
+    fire(NOTIFICATION_READ_EVENT, { unreadCount: 0 });
     fire('connect');
-    expect(invalidateQueries).toHaveBeenCalledTimes(2);
+    expect(invalidateQueries).toHaveBeenCalledTimes(3);
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['notifications', 'u1'] });
   });
 
