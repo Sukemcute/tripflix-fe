@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getCollapsedCaptionLength, getReelScale } from '@tripflix/app-core';
+import { getCollapsedCaptionLength, getReelScale, hasTripPlan } from '@tripflix/app-core';
 import {
   HttpError,
   REEL_FEED_TABS,
@@ -39,6 +39,7 @@ import {
 import { ReelCommentsPanel } from './reel-comments-panel';
 import type { ReelItem } from './reel-types';
 import { ReportButton } from './report-button';
+import { TripPlanSheet } from './trip-plan-sheet';
 
 const copy = vi.mobile.reels;
 const number = (value: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value);
@@ -172,6 +173,7 @@ export function ReelSocialOverlay({
     };
   }, [shouldAnchorTripi, railActionSize, anchorTripi, setBubbleHome]);
   const [hasComments, setHasComments] = useState(false);
+  const [isTripPlanOpen, setIsTripPlanOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [collapsedLength, setCollapsedLength] = useState<number | null>(null);
   const [collapsedHeight, setCollapsedHeight] = useState(CAPTION_LINES * CAPTION_LINE_HEIGHT);
@@ -275,6 +277,8 @@ export function ReelSocialOverlay({
   }, [hasComments, onCommentsVisibilityChange]);
   const author = isSample ? copy.sampleAuthor : item.social?.author.name || vi.api.author;
   const title = isSample ? copy.sample : item.title;
+  const tripAttachment = detail.data?.post.tripAttachment;
+  const tripPlan = !isSample && tripAttachment && hasTripPlan(tripAttachment) ? tripAttachment : null;
   const caption = isSample ? copy.sampleCaption : item.body;
   const fullCaption = caption ? `${title} · ${caption}` : title;
   const visibleCaption =
@@ -464,17 +468,18 @@ export function ReelSocialOverlay({
             </ScrollView>
           </Animated.View>
         </Animated.View>
-        {postId && (
+        {/* Chỉ bài người đăng có chia sẻ lộ trình mới có nút: mở lộ trình để đặt y chang. */}
+        {postId && tripPlan && (
           <Pressable
             style={styles.detail}
             accessibilityRole="button"
             hitSlop={{ top: DETAIL_HIT_SLOP, bottom: DETAIL_HIT_SLOP }}
-            onPress={() => router.push({ pathname: '/trip/[slug]', params: { slug: postId } })}
+            onPress={() => setIsTripPlanOpen(true)}
           >
+            <Icon name="map-outline" size={16} color={colors.background} />
             <Txt variant="label" style={styles.detailText}>
-              {copy.detail}
+              {vi.mobile.tripPlan.view}
             </Txt>
-            <Icon name="arrow-forward" size={16} color={colors.background} />
           </Pressable>
         )}
         {!!mutation.error && (
@@ -493,6 +498,16 @@ export function ReelSocialOverlay({
           </Pressable>
         )}
       </Animated.View>
+      {postId && tripPlan && (
+        <TripPlanSheet
+          visible={isTripPlanOpen}
+          onClose={() => setIsTripPlanOpen(false)}
+          postId={postId}
+          postTitle={title}
+          authorName={author}
+          trip={tripPlan}
+        />
+      )}
       <ReelCommentsPanel
         visible={hasComments}
         openProgress={commentsProgress}
