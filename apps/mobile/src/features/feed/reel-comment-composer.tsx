@@ -16,6 +16,7 @@ export function ReelCommentComposer({
   onSend,
   isPending = false,
   focusRequest = 0,
+  authorName,
 }: {
   value: string;
   label?: string;
@@ -25,6 +26,7 @@ export function ReelCommentComposer({
   isPending?: boolean;
   /** Tăng số này để mở bàn phím, ví dụ lúc bấm "Trả lời". */
   focusRequest?: number;
+  authorName?: string;
 }) {
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const [isFocused, setFocused] = useState(false);
@@ -67,6 +69,11 @@ export function ReelCommentComposer({
         </View>
       )}
       <View style={styles.row}>
+        {!!authorName && (
+          <View style={styles.avatar} accessible={false}>
+            <Text style={styles.initial}>{Array.from(authorName.trim())[0]?.toLocaleUpperCase('vi-VN')}</Text>
+          </View>
+        )}
         <TextInput
           ref={input}
           accessibilityLabel={label}
@@ -97,7 +104,7 @@ export function ReelCommentComposer({
           onPress={onSend}
           style={[styles.send, { backgroundColor: isDisabled ? colors.surfaceMuted : colors.coral }]}
         >
-          <Icon name="arrow-up" size={22} color={isDisabled ? colors.textSubtle : colors.background} />
+          <Icon name="arrow-up" size={17} color={isDisabled ? colors.textSubtle : colors.background} />
         </Pressable>
       </View>
     </View>
@@ -115,18 +122,29 @@ const styles = StyleSheet.create({
   },
   emojiPressed: { backgroundColor: colors.surfaceMuted, transform: [{ scale: 0.9 }] },
   emojiText: { fontSize: 24 },
-  row: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, paddingTop: spacing.sm },
+  row: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, paddingTop: spacing.xs },
+  avatar: {
+    width: 30,
+    height: 30,
+    marginBottom: 7,
+    borderRadius: radius.pill,
+    backgroundColor: colors.seaMist,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initial: { fontSize: 11, fontFamily: nativeFonts.semibold, color: colors.tealInk },
   input: {
     flex: 1,
     minHeight: 44,
     maxHeight: 120,
-    borderRadius: radius.lg,
+    borderRadius: radius.pill,
     backgroundColor: colors.surfaceMuted,
     color: colors.ink,
     fontFamily: nativeFonts.regular,
-    fontSize: 14,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    fontSize: 13,
+    lineHeight: 17,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   send: { width: 44, height: 44, borderRadius: radius.pill, justifyContent: 'center', alignItems: 'center' },
 });

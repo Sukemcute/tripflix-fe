@@ -19,10 +19,10 @@ export function CommunitySummary({ postId }: { postId: string }) {
   return (
     <Animated.View entering={SUMMARY_FADE_IN} style={styles.root} testID="community-summary">
       <View style={styles.header}>
-        <Mascot pose="celebrate" size={40} />
+        <Mascot pose="celebrate" size={26} />
         <View style={styles.heading}>
           <View style={styles.sectionHeading}>
-            <Txt variant="label">{copy.resultTitle}</Txt>
+            <Txt variant="label" style={styles.title}>{copy.resultTitle}</Txt>
             <Txt style={styles.ai}>{copy.badge}</Txt>
           </View>
           <Txt variant="caption" style={styles.muted}>
@@ -33,13 +33,13 @@ export function CommunitySummary({ postId }: { postId: string }) {
       {summary.hasSafetyWarnings && (
         <View testID="summary-safety">
           <Notice tone="warning">
-            <Txt variant="label">{copy.safetyTitle}</Txt>
+            <Txt variant="label" style={styles.title}>{copy.safetyTitle}</Txt>
             {'\n'}
             {copy.safety}
           </Notice>
         </View>
       )}
-      <Txt selectable>{summary.summary}</Txt>
+      <Txt variant="small" style={styles.body} selectable>{summary.summary}</Txt>
     </Animated.View>
   );
 }
@@ -48,12 +48,13 @@ const styles = StyleSheet.create({
   root: {
     backgroundColor: c.warmMist,
     borderRadius: mobileLayout.cardRadius,
-    padding: s.md,
-    marginBottom: s.sm,
-    gap: s.md,
+    padding: s.sm,
+    gap: s.xs,
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: s.sm },
-  heading: { flex: 1, gap: s.xs },
+  heading: { flex: 1 },
+  title: { fontSize: 12, lineHeight: 17 },
+  body: { lineHeight: 17 },
   sectionHeading: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: s.sm },
   ai: {
     color: c.tealInk,

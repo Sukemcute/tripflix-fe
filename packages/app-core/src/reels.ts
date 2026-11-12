@@ -100,30 +100,31 @@ export function getSwipedTabIndex({
   return Math.max(0, Math.min(tabCount - 1, nextIndex));
 }
 
-/** Sheet bình luận chiếm khoảng 70% màn hình, chừa phần trên để vẫn thấy video. */
+/** Phần còn lại phía trên khung bình luận dành cho video. */
 export function getReelCommentsSheetHeight(windowHeight: number): number {
-  return Math.min(680, windowHeight * 0.7);
+  return Math.min(680, Math.round(windowHeight * 0.68));
 }
 
-/**
- * Giữ video nguyên cỡ và đẩy lên để phần giữa video nằm giữa khoảng trống phía trên sheet bình luận.
- * Không thu nhỏ video nên phía trên sheet không lộ nền tối của slide.
- */
+/** Căn giữa toàn bộ khung video trong khoảng trống phía trên bình luận. */
 export function layoutReelCommentsVideo({
+  aspect,
+  slideWidth,
   windowHeight,
-  slideHeight,
   topInset,
 }: {
+  aspect: ReelPlayback['aspect'];
+  slideWidth: number;
   windowHeight: number;
-  slideHeight: number;
   topInset: number;
-}): { scale: number; translateY: number } {
-  if (slideHeight <= 0) return { scale: 1, translateY: 0 };
-  const visibleTop = topInset;
+}) {
   const visibleBottom = windowHeight - getReelCommentsSheetHeight(windowHeight);
-  const visibleCenter = (visibleTop + visibleBottom) / 2;
-  // Không kéo mép trên video xuống dưới mép màn hình, kể cả khi khung reel thấp hơn vùng còn thấy.
-  return { scale: 1, translateY: Math.min(0, visibleCenter - slideHeight / 2) };
+  const visibleHeight = Math.max(0, visibleBottom - topInset);
+  const box = fitReelVideo(aspect, slideWidth, visibleHeight);
+  return {
+    ...box,
+    left: (slideWidth - box.width) / 2,
+    top: topInset + (visibleHeight - box.height) / 2,
+  };
 }
 
 /** Mỗi vị trí trong cửa sổ dùng một slot khác nhau, kể cả khi vuốt ngược. */

@@ -22,7 +22,7 @@ export function CommentLikeButton({
   likeCount,
   authorName,
   queryKey,
-  isStacked,
+  compact,
   onLoginRequired,
 }: {
   commentId: string;
@@ -30,8 +30,7 @@ export function CommentLikeButton({
   likeCount: number;
   authorName: string;
   queryKey: QueryKey;
-  /** Heart above the count for the narrow column in the Reels sheet; side by side otherwise. */
-  isStacked: boolean;
+  compact: boolean;
   onLoginRequired: () => void;
 }) {
   const { user, isReady } = useApiSession();
@@ -67,17 +66,17 @@ export function CommentLikeButton({
       })}
       accessibilityState={{ selected: isLiked }}
       onPress={toggle}
-      style={({ pressed }) => [isStacked ? styles.stacked : styles.inline, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.inline, compact && styles.compact, pressed && styles.pressed]}
     >
       <Animated.View style={heartStyle}>
         <Icon
           name={isLiked ? 'heart' : 'heart-outline'}
-          size={20}
+          size={compact ? 15 : 20}
           color={isLiked ? colors.coral : colors.textMuted}
         />
       </Animated.View>
       {likeCount > 0 && (
-        <Txt variant="caption" style={isLiked ? styles.countLiked : styles.count}>
+        <Txt variant="caption" style={[isLiked ? styles.countLiked : styles.count, compact && styles.compactCount]}>
           {countFormat.format(likeCount)}
         </Txt>
       )}
@@ -86,7 +85,6 @@ export function CommentLikeButton({
 }
 
 const styles = StyleSheet.create({
-  stacked: { width: mobileLayout.touchTarget, minHeight: mobileLayout.touchTarget, alignItems: 'center' },
   inline: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -95,6 +93,13 @@ const styles = StyleSheet.create({
     minWidth: mobileLayout.touchTarget,
     minHeight: mobileLayout.touchTarget,
   },
+  compact: {
+    alignSelf: 'center',
+    justifyContent: 'flex-end',
+    minHeight: 26,
+    marginLeft: 'auto',
+  },
+  compactCount: { fontSize: 10, lineHeight: 15 },
   pressed: { opacity: 0.6 },
   count: { color: colors.textMuted },
   countLiked: { color: colors.coralInk },
