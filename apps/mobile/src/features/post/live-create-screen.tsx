@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { startVideoCompression, type VideoCompression } from './video-compress';
 import { toPickedVideo, type PickedVideo } from './video-source';
 import {
   Button,
@@ -60,10 +61,39 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
   // Video đã tải lên ở lần bấm trước (ví dụ tải xong nhưng tạo bài lỗi): không tải lại.
   const [uploadedAssetId, setUploadedAssetId] = useState<string | null>(null);
   const [uploadPercent, setUploadPercent] = useState<number | null>(null);
+  // Nén ngay sau khi chọn, chạy trong lúc người dùng viết bài; bấm đăng thì chờ nén xong rồi tải lên.
+  const compression = useRef<VideoCompression | null>(null);
+  const [compressPercent, setCompressPercent] = useState<number | null>(null);
   const [pickerError, setPickerError] = useState<string | null>(null);
   const [isPicking, setPicking] = useState(false);
   const uploadAbort = useRef<AbortController | null>(null);
-  useEffect(() => () => uploadAbort.current?.abort(), []);
+  useEffect(
+    () => () => {
+      uploadAbort.current?.abort();
+      compression.current?.dispose();
+    },
+    [],
+  );
+
+  function selectVideo(next: PickedVideo | null) {
+    compression.current?.dispose();
+    compression.current = null;
+    setCompressPercent(null);
+    setVideo(next);
+    setUploadedAssetId(null);
+    if (!next) return;
+    const job = startVideoCompression(next, (percent) => {
+      if (compression.current === job) setCompressPercent(percent);
+    });
+    compression.current = job;
+    if (!job.compressing) return;
+    setCompressPercent(0);
+    void job.result.then((prepared) => {
+      if (compression.current !== job) return;
+      setCompressPercent(null);
+      setVideo(prepared);
+    });
+  }
 
   async function pickVideo() {
     setPicking(true);
@@ -80,8 +110,7 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
       const picked = await toPickedVideo(asset);
       if (typeof picked === 'string') return setPickerError(copy.create[picked]);
       if (picked.durationMs > POST_MEDIA_LIMITS.videoDurationMs) return setPickerError(copy.create.tooLong);
-      setVideo(picked);
-      setUploadedAssetId(null);
+      selectVideo(picked);
     } catch {
       setPickerError(copy.create.pickerError);
     } finally {
@@ -92,15 +121,20 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
   async function uploadSelectedVideo(): Promise<string | undefined> {
     if (!video) return undefined;
     if (uploadedAssetId) return uploadedAssetId;
+    const job = compression.current;
+    const source = job ? await job.result : video;
+    if (job && compression.current !== job) throw new Error('Video đã được đổi trong lúc nén');
     const controller = new AbortController();
     uploadAbort.current = controller;
     setUploadPercent(0);
     try {
-      const assetId = await uploadVideo(video, {
+      const assetId = await uploadVideo(source, {
         signal: controller.signal,
         onProgress: (done, total) => setUploadPercent(Math.floor((done / total) * 100)),
       });
       setUploadedAssetId(assetId);
+      // Đã tải lên xong thì xoá file nén tạm; tải lỗi thì giữ để lần bấm sau không phải nén lại.
+      job?.dispose();
       return assetId;
     } finally {
       setUploadPercent(null);
@@ -133,16 +167,19 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
     },
   });
   const isBusy = mutation.isPending || isPicking;
+  const progressPercent = uploadPercent ?? compressPercent;
   const videoLabel = video ? copy.create.videoSelected : copy.create.selectVideo;
   const videoDetail =
     uploadPercent !== null
       ? t('mobile.create.uploadingVideo', { percent: uploadPercent })
-      : video
-        ? t('mobile.create.videoInfo', {
-            duration: formatDuration(video.durationMs),
-            size: (video.sizeBytes / 1_000_000).toFixed(1),
-          })
-        : copy.create.videoHint;
+      : compressPercent !== null
+        ? t('mobile.create.compressingVideo', { percent: compressPercent })
+        : video
+          ? t('mobile.create.videoInfo', {
+              duration: formatDuration(video.durationMs),
+              size: (video.sizeBytes / 1_000_000).toFixed(1),
+            })
+          : copy.create.videoHint;
   return (
     <Screen
       title={copy.create.title}
@@ -193,25 +230,18 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
               variant="caption"
               numberOfLines={1}
               style={ui.muted}
-              accessibilityLiveRegion={uploadPercent !== null ? 'polite' : 'none'}
+              accessibilityLiveRegion={progressPercent !== null ? 'polite' : 'none'}
             >
               {videoDetail}
             </Txt>
-            {uploadPercent !== null && (
+            {progressPercent !== null && (
               <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${uploadPercent}%` }]} />
+                <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
               </View>
             )}
           </View>
           {video && !mutation.isPending && (
-            <IconButton
-              name="close"
-              label={copy.create.remove}
-              onPress={() => {
-                setVideo(null);
-                setUploadedAssetId(null);
-              }}
-            />
+            <IconButton name="close" label={copy.create.remove} onPress={() => selectVideo(null)} />
           )}
         </Pressable>
         {pickerError && <Notice tone="error">{pickerError}</Notice>}
