@@ -1,14 +1,71 @@
 import { describe, expect, it } from 'vitest';
-import { buildTripPlanCheckout, getTripDayDate, hasTripPlan, pickCheapestOffer } from './trip-plan';
+import {
+  buildTripAttachment,
+  buildTripPlanCheckout,
+  EMPTY_TRIP_PLAN_DAY,
+  getTripDayDate,
+  getTripNights,
+  hasTripPlan,
+  pickCheapestOffer,
+} from './trip-plan';
 
 describe('trip plan', () => {
-  it('chỉ coi là có lộ trình khi có hoạt động, chặng đi hoặc chỗ ở', () => {
+  it('dựng trip_attachment từ bản nháp: phương tiện thành mục đầu ngày, bỏ dòng trống', () => {
+    const labels = {
+      flight: 'Máy bay',
+      bus: 'Xe khách',
+      train: 'Tàu hoả',
+      car: 'Ô tô',
+      other: 'Khác',
+    } as const;
+    expect(
+      buildTripAttachment(
+        {
+          destinationName: ' Đà Lạt ',
+          hotel: { hotelId: 'h1', hotelName: 'Ana Mandara' },
+          days: [
+            {
+              activities: [
+                { title: 'Hồ Xuân Hương', location: 'Trung tâm' },
+                { title: '  ', location: '' },
+              ],
+              transport: { mode: 'flight', fromCode: 'SGN', toCode: 'DLI', note: '' },
+            },
+            {
+              ...EMPTY_TRIP_PLAN_DAY,
+              transport: { mode: 'bus', fromCode: '', toCode: '', note: 'Nhà xe Phương Trang' },
+            },
+          ],
+        },
+        labels,
+      ),
+    ).toEqual({
+      daysCount: 2,
+      destinationName: 'Đà Lạt',
+      hotelId: 'h1',
+      hotelName: 'Ana Mandara',
+      items: [
+        { day: 1, title: 'Máy bay SGN → DLI' },
+        { day: 1, title: 'Hồ Xuân Hương', location: 'Trung tâm' },
+        { day: 2, title: 'Xe khách', notes: 'Nhà xe Phương Trang' },
+      ],
+    });
+    expect(
+      buildTripAttachment({ destinationName: '', hotel: null, days: [EMPTY_TRIP_PLAN_DAY] }, labels),
+    ).toBeNull();
+  });
+
+  it('ở tới sáng ngày cuối, ít nhất một đêm', () => {
+    expect(getTripNights(1)).toBe(1);
+    expect(getTripNights(3)).toBe(2);
+  });
+
+  it('chỉ coi là có lộ trình khi có lịch từng ngày hoặc chỗ ở', () => {
     expect(hasTripPlan(null)).toBe(false);
     expect(hasTripPlan({})).toBe(false);
-    expect(hasTripPlan({ items: [], segments: [], stays: [] })).toBe(false);
+    expect(hasTripPlan({ items: [], hotelId: null })).toBe(false);
     expect(hasTripPlan({ items: [{ day: 1 }] })).toBe(true);
-    expect(hasTripPlan({ segments: [{ day: 1 }] })).toBe(true);
-    expect(hasTripPlan({ stays: [{ hotelId: 'h' }] })).toBe(true);
+    expect(hasTripPlan({ hotelId: 'h' })).toBe(true);
   });
 
   it('tính ngày theo ngày khởi hành, qua tháng và năm', () => {
@@ -32,7 +89,9 @@ describe('trip plan', () => {
         { productId: 'standard', isAvailable: true, plans: [{ code: 'RO', totalPrice: 700 }] },
       ]),
     ).toEqual({ productId: 'standard', ratePlanCode: 'RO', totalPrice: 700 });
-    expect(pickCheapestOffer([{ productId: 'x', isAvailable: true, plans: [{ code: 'RO', totalPrice: null }] }])).toBeNull();
+    expect(
+      pickCheapestOffer([{ productId: 'x', isAvailable: true, plans: [{ code: 'RO', totalPrice: null }] }]),
+    ).toBeNull();
   });
 
   it('ghép vé bay và phòng vào một đơn, chỉ gửi trẻ em khi có vé bay', () => {
@@ -47,9 +106,11 @@ describe('trip plan', () => {
         { productId: 'P1', checkIn: '2026-12-01', checkOut: '2026-12-03', ratePlanCode: 'BB' },
       ],
     });
-    expect(buildTripPlanCheckout({ adults: 2, children: 1, sourcePostId: 'post', flights: [], rooms })).not.toHaveProperty(
-      'children',
-    );
-    expect(() => buildTripPlanCheckout({ adults: 1, sourcePostId: 'post', flights: [], rooms: [] })).toThrow();
+    expect(
+      buildTripPlanCheckout({ adults: 2, children: 1, sourcePostId: 'post', flights: [], rooms }),
+    ).not.toHaveProperty('children');
+    expect(() =>
+      buildTripPlanCheckout({ adults: 1, sourcePostId: 'post', flights: [], rooms: [] }),
+    ).toThrow();
   });
 });

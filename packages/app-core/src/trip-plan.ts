@@ -1,25 +1,66 @@
-/** Phương tiện của một chặng trong lộ trình người đăng chia sẻ. */
+/** Phương tiện của một ngày trong lộ trình người đăng chia sẻ (lưu dạng chữ trong lịch từng ngày). */
 export type TripPlanMode = 'flight' | 'bus' | 'train' | 'car' | 'other';
 
-export interface TripPlanSegment {
-  day: number;
-  mode: TripPlanMode;
-  fromCode?: string;
-  toCode?: string;
-  note?: string;
+/** Một ngày trong trình soạn lộ trình lúc đăng bài. */
+export interface TripPlanDayDraft {
+  activities: { title: string; location: string }[];
+  transport: { mode: TripPlanMode | null; fromCode: string; toCode: string; note: string };
 }
 
-export interface TripPlanStay {
-  hotelId: string;
-  checkInDay: number;
-  nights: number;
+export interface TripPlanDraft {
+  destinationName: string;
+  hotel: { hotelId: string; hotelName: string } | null;
+  days: TripPlanDayDraft[];
 }
 
-/** Bài có lộ trình để xem (có hoạt động, chặng đi hoặc chỗ ở) thì mới hiện nút "Xem lộ trình". */
+export const EMPTY_TRIP_PLAN_DAY: TripPlanDayDraft = {
+  activities: [{ title: '', location: '' }],
+  transport: { mode: null, fromCode: '', toCode: '', note: '' },
+};
+
+/**
+ * Bản nháp → trip_attachment gửi core: phương tiện thành mục đầu ngày (vd "Máy bay SGN → DLI"), bỏ dòng trống,
+ * giữ đúng số ngày. Không còn gì thì trả null để đăng như bài thường.
+ * shortcut: core chưa có trường phương tiện, sân bay có cấu trúc nên vé bay chưa đặt kèm được; thêm khi core có.
+ */
+export function buildTripAttachment(
+  draft: TripPlanDraft,
+  modeLabels: Readonly<Record<TripPlanMode, string>>,
+) {
+  const items = draft.days.flatMap((day, index) => {
+    const { mode, fromCode, toCode, note } = day.transport;
+    const transport = mode
+      ? [
+          {
+            day: index + 1,
+            title: fromCode && toCode ? `${modeLabels[mode]} ${fromCode} → ${toCode}` : modeLabels[mode],
+            ...(note.trim() ? { notes: note.trim() } : {}),
+          },
+        ]
+      : [];
+    const activities = day.activities
+      .filter((activity) => activity.title.trim())
+      .map((activity) => ({
+        day: index + 1,
+        title: activity.title.trim(),
+        ...(activity.location.trim() ? { location: activity.location.trim() } : {}),
+      }));
+    return [...transport, ...activities];
+  });
+  if (items.length === 0 && !draft.hotel) return null;
+  return {
+    daysCount: draft.days.length,
+    ...(draft.destinationName.trim() ? { destinationName: draft.destinationName.trim() } : {}),
+    ...(draft.hotel ? { hotelId: draft.hotel.hotelId, hotelName: draft.hotel.hotelName } : {}),
+    items,
+  };
+}
+
+/** Bài có lộ trình để xem (có lịch từng ngày hoặc chỗ ở) thì mới hiện nút "Xem lộ trình". */
 export function hasTripPlan(
-  trip: { items?: readonly unknown[]; segments?: readonly unknown[]; stays?: readonly unknown[] } | null | undefined,
+  trip: { items?: readonly unknown[]; hotelId?: string | null } | null | undefined,
 ): boolean {
-  return !!trip && [trip.items, trip.segments, trip.stays].some((list) => (list?.length ?? 0) > 0);
+  return !!trip && ((trip.items?.length ?? 0) > 0 || !!trip.hotelId);
 }
 
 /** Ngày thứ `day` (bắt đầu từ 1) của chuyến khởi hành ngày `startDate` (YYYY-MM-DD). */
@@ -29,6 +70,11 @@ export function getTripDayDate(startDate: string, day: number): string {
   return date.toISOString().slice(0, 10);
 }
 
+/** Số đêm ở khách sạn của lộ trình `days` ngày: ở tới sáng ngày cuối, ít nhất một đêm. */
+export function getTripNights(days: number): number {
+  return Math.max(1, days - 1);
+}
+
 export interface TripPlanOffer {
   productId: string;
   ratePlanCode: string;
@@ -36,7 +82,7 @@ export interface TripPlanOffer {
 }
 
 /**
- * Lựa chọn rẻ nhất còn bán của một phòng/chuyến bay: dùng chung cho phòng khách sạn (ratePlans) và vé bay (fares).
+ * Lựa chọn rẻ nhất còn bán: dùng cho phòng khách sạn (ratePlans) và vé bay (fares).
  * Không còn lựa chọn nào có giá thì trả null để màn hình báo hết chỗ.
  */
 export function pickCheapestOffer(
