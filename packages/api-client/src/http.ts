@@ -24,6 +24,11 @@ export function configureHttp(next: HttpConfig) {
   config = next;
 }
 
+/** Cấu hình hiện tại, cho kết nối không đi qua fetch (WebSocket /ws) dùng chung địa chỉ gateway và token. */
+export function getHttpConfig(): Readonly<HttpConfig> {
+  return config;
+}
+
 /** Kết quả trả về, đúng dạng Orval (client fetch) mong đợi. */
 export interface HttpResponse<T> {
   data: T;
