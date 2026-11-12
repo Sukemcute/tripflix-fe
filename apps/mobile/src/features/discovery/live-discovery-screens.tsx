@@ -35,6 +35,7 @@ import { LiveFeedScreen } from '@/features/feed/live-feed-screen';
 import { HotelSearchResults } from './hotel-search-results';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { SearchDropPanel } from './search-drop-panel';
 
 const RECOMMENDATION_LIMIT = 3;
 
@@ -197,6 +198,8 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
   const [postType, setPostType] = useState<SearchPostsRequestDtoPostType>('all');
   const [cursor, setCursor] = useState<string | null>(null);
   const [category, setCategory] = useState<'all' | 'sea' | 'weekend'>('all');
+  // Tab Khám phá: bấm thanh search mở khung thả xuống thay vì gõ ngay trên trang.
+  const [isSearchOpen, setIsSearchOpen] = useState(!back && (autoFocus === '1' || autoFocus === 'true'));
   const input = useRef<ComponentRef<typeof TextInput>>(null);
 
   if (q !== prevQ) {
@@ -259,26 +262,41 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
         />
       }
     >
+      <SearchDropPanel visible={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       {/* Search Bar at the very top */}
-      <View style={styles.searchBar}>
-        <Icon name="search-outline" color={colors.textMuted} size={20} />
-        <TextInput
-          ref={input}
-          accessibilityLabel={vi.api.search}
-          value={text}
-          onChangeText={setText}
-          maxLength={100}
-          placeholder="Tìm khách sạn, điểm đến, bài viết..."
-          placeholderTextColor={colors.textMuted}
-          returnKeyType="search"
-          onSubmitEditing={() => submitSearch()}
-          style={styles.searchInput}
-        />
-        {text.length > 0 && (
-          <IconButton name="close-circle-outline" label="Xoá tìm kiếm" onPress={clearSearch} />
+      {!back ? (
+        <Pressable
+          accessibilityRole="search"
+          accessibilityLabel={vi.mobile.searchPanel.placeholder}
+          style={styles.searchBar}
+          onPress={() => setIsSearchOpen(true)}
+        >
+          <Icon name="search-outline" color={colors.textMuted} size={20} />
+          <Txt style={[styles.searchInput, { color: colors.textMuted }]}>
+            {vi.mobile.searchPanel.placeholder}
+          </Txt>
+        </Pressable>
+      ) : (
+        <View style={styles.searchBar}>
+          <Icon name="search-outline" color={colors.textMuted} size={20} />
+          <TextInput
+            ref={input}
+            accessibilityLabel={vi.api.search}
+            value={text}
+            onChangeText={setText}
+            maxLength={100}
+            placeholder="Tìm khách sạn, điểm đến, bài viết..."
+            placeholderTextColor={colors.textMuted}
+            returnKeyType="search"
+            onSubmitEditing={() => submitSearch()}
+            style={styles.searchInput}
+          />
+          {text.length > 0 && (
+            <IconButton name="close-circle-outline" label="Xoá tìm kiếm" onPress={clearSearch} />
         )}
         <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={() => submitSearch()} />
       </View>
+      )}
 
       {isBrowsing && (
         <>
