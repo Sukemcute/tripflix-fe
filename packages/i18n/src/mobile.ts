@@ -503,6 +503,7 @@ export const mobile = {
     pickerError: 'Chưa mở được thư viện ảnh. Vui lòng thử lại.',
     unsupportedVideo: 'Chỉ đăng được video MP4 hoặc MOV. Hãy chọn video khác.',
     videoInfo: '{duration} · {size} MB',
+    compressingVideo: 'Đang nén video… {percent}%',
     uploadingVideo: 'Đang tải video lên… {percent}%',
     uploadFailed: 'Tải video lên chưa xong. Kiểm tra mạng rồi bấm đăng lại, video sẽ tải lại từ đầu.',
     videoProcessing: 'Video đang được xử lý. Bài sẽ hiện video sau vài phút.',

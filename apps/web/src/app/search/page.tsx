@@ -1,5 +1,6 @@
 import { LiveSearchScreen } from '@/features/discovery/live-search-screen';
 import { parseSearchParams } from '@/features/discovery/search-params';
+import { isStayInteger, MAX_STAY_GUESTS } from '@/features/discovery/stay-search-validation';
 import styles from '@/features/discovery/hotel-listing.module.css';
 import { vi } from '@tripflix/i18n';
 import type { Metadata } from 'next';
@@ -18,6 +19,9 @@ export default async function SearchPage({
     return typeof value === 'string' ? value : '';
   };
   const { placeName, initialFilters } = parseSearchParams(read);
+  // Trẻ em, em bé chỉ để mang sang trang khách sạn; tổng khách tối đa 9 như ô chọn khách.
+  const readCount = (key: string) => (isStayInteger(read(key), 0, MAX_STAY_GUESTS) ? Number(read(key)) : 0);
+  const initialGuests = { children: readCount('children'), infants: readCount('infants') };
   return (
     <main id="content" className={`ota-container ${styles.page}`}>
       <header className={styles.banner}>
@@ -42,6 +46,7 @@ export default async function SearchPage({
         </div>
       </header>
       <LiveSearchScreen
+        initialGuests={initialGuests}
         initialQuery={placeName}
         initialFilters={initialFilters}
       />
