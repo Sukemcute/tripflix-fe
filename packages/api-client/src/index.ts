@@ -44,6 +44,16 @@ export {
   type SummaryFilter,
 } from './post-summary';
 export { feedApi, REEL_FEED_TABS, useReelsFeed, type ReelFeedTab } from './feed';
+export {
+  notificationsApi,
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+  type InboxNotification,
+  type NotificationsPage,
+  type NotificationReadResult,
+} from './notifications';
+export { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime } from './notifications-realtime';
 export { findCachedFeedCard, updateReelSocialCache } from './reel-social-cache';
 export { updateCommentLikeCache } from './comment-like-cache';
 export { evictPostFromCache, isPostNotFoundError } from './post-cache';
