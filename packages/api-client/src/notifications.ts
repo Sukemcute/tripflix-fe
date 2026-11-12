@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { http, type HttpResponse } from './http';
+import { http, HttpError, type HttpResponse } from './http';
+import { isNotificationsSocketConnected } from './notifications-realtime';
 import { useApiSession } from './session';
 
 export interface InboxNotification {
@@ -78,6 +79,9 @@ export const notificationsApi = {
   },
 };
 
+const NOTIFICATIONS_POLL_MS = 30_000;
+const MAX_NOTIFICATIONS_RETRIES = 2;
+
 export function useNotifications() {
   const { user, isReady } = useApiSession();
   return useInfiniteQuery({
@@ -86,9 +90,17 @@ export function useNotifications() {
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) => notificationsApi.list(pageParam, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
-    refetchInterval: 30_000,
+    // Có socket /ws thì thông báo mới tự đến; chỉ poll khi socket chưa nối hoặc đã mất.
+    refetchInterval: () => (isNotificationsSocketConnected(user?.id) ? false : NOTIFICATIONS_POLL_MS),
     refetchOnWindowFocus: true,
+    retry: shouldRetryNotifications,
   });
+}
+
+/** Lỗi 4xx (404 khi service chưa chạy, 401, 403) gọi lại vẫn lỗi, nên chỉ thử lại lỗi mạng và 5xx. */
+export function shouldRetryNotifications(failureCount: number, error: unknown): boolean {
+  if (error instanceof HttpError && error.status >= 400 && error.status < 500) return false;
+  return failureCount < MAX_NOTIFICATIONS_RETRIES;
 }
 
 export function useMarkNotificationRead() {

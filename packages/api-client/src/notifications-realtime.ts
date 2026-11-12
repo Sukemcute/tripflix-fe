@@ -11,6 +11,14 @@ const AUTH_EXPIRED_EVENT = 'auth.expired';
 /** Chỉ giữ dạng cần dùng: socket.io-client gắn data của lỗi bắt tay vào Error. */
 type HandshakeError = Error & { data?: { code?: string } };
 
+// Người dùng đang có socket /ws kết nối; useNotifications dựa vào đây để bỏ polling khi đã có realtime.
+let connectedUserId: string | null = null;
+
+/** Socket /ws của người dùng này đang kết nối thì thông báo mới tự đến, không cần poll. */
+export function isNotificationsSocketConnected(userId: string | undefined): boolean {
+  return !!userId && connectedUserId === userId;
+}
+
 /**
  * Mở kết nối WebSocket /ws khi đã đăng nhập, có thông báo mới thì tải lại danh sách ngay (không chờ lượt 30 giây).
  * Socket chỉ báo "có mới"; dữ liệu vẫn lấy qua GET /notifications, nên kết nối lại xong cũng tải lại để bù phần lỡ.
@@ -48,7 +56,14 @@ export function useNotificationsRealtime(): void {
 
     socket.on('connect', () => {
       refreshRetries = 0;
+      connectedUserId = userId;
+      // Tải lại để bù phần lỡ; lượt tải này cũng tính lại refetchInterval nên polling tắt.
       reload();
+    });
+    socket.on('disconnect', () => {
+      if (connectedUserId === userId) connectedUserId = null;
+      // Tải lại để polling 30 giây bật lại trong lúc chờ socket nối lại.
+      if (!isClosed) reload();
     });
     socket.on(NOTIFICATION_CREATED_EVENT, reload);
     socket.on(AUTH_EXPIRED_EVENT, () => void refreshAndReconnect());
@@ -59,6 +74,7 @@ export function useNotificationsRealtime(): void {
 
     return () => {
       isClosed = true;
+      if (connectedUserId === userId) connectedUserId = null;
       socket.disconnect();
     };
   }, [isReady, userId, queryClient]);

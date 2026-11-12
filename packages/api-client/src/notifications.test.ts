@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { configureHttp, HttpError } from './http';
 import {
   notificationsApi,
+  shouldRetryNotifications,
   useNotifications,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
@@ -14,6 +15,11 @@ const hooks = vi.hoisted(() => ({
   invalidate: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('./session', () => ({ useApiSession: hooks.session }));
+const socketState = vi.hoisted(() => ({ connectedUserId: null as string | null }));
+vi.mock('./notifications-realtime', () => ({
+  isNotificationsSocketConnected: (userId: string | undefined) =>
+    !!userId && socketState.connectedUserId === userId,
+}));
 vi.mock('@tanstack/react-query', () => ({
   useInfiniteQuery: hooks.query,
   useMutation: hooks.mutation,
@@ -124,10 +130,32 @@ it.each([
     expect.objectContaining({
       queryKey: ['notifications', user?.id],
       enabled,
-      refetchInterval: 30_000,
       refetchOnWindowFocus: true,
     }),
   );
+});
+
+it('chỉ poll 30 giây khi socket /ws chưa kết nối', () => {
+  hooks.session.mockReturnValue({ isReady: true, user: { id: 'user-1' } });
+  useNotifications();
+  const { refetchInterval } = hooks.query.mock.lastCall![0] as { refetchInterval: () => number | false };
+  socketState.connectedUserId = null;
+  expect(refetchInterval()).toBe(30_000);
+  socketState.connectedUserId = 'user-1';
+  expect(refetchInterval()).toBe(false);
+  socketState.connectedUserId = 'user-2';
+  expect(refetchInterval()).toBe(30_000);
+  socketState.connectedUserId = null;
+});
+
+it.each([
+  { error: new HttpError(404, null), failureCount: 0, expected: false },
+  { error: new HttpError(401, null), failureCount: 0, expected: false },
+  { error: new HttpError(503, null), failureCount: 0, expected: true },
+  { error: new HttpError(503, null), failureCount: 2, expected: false },
+  { error: new TypeError('Failed to fetch'), failureCount: 1, expected: true },
+])('không thử lại lỗi 4xx, thử tối đa 2 lần với lỗi mạng và 5xx: %j', ({ error, failureCount, expected }) => {
+  expect(shouldRetryNotifications(failureCount, error)).toBe(expected);
 });
 
 it('invalidates the current user inbox after successful read mutations', async () => {
