@@ -91,6 +91,7 @@ export function InspirationView({ initialKeyword = '' }: InspirationViewProps) {
         style={{ display: activeView === 'posts' ? 'flex' : 'none' }}
       >
         <SocialFeedView
+          isVisible={activeView === 'posts'}
           initialKeyword={initialKeyword}
           searchKeyword={searchKeyword}
           isItineraryOpen={isItineraryOpen}

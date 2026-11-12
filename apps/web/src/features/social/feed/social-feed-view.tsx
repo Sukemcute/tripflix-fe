@@ -13,6 +13,7 @@ import {
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { SocialIcon, ComposerModal, RightPanelCommentsSynchronized } from '../live-posts';
 import { useHasUserInteracted } from '../use-has-user-interacted';
+import { useSettledFlag } from '../use-settled-flag';
 import { usePresence } from '../use-presence';
 import { useIsWideScreen } from '../use-wide-screen';
 import { nextScrollTarget, stepScrollTowards, wheelDeltaToPixels } from './smooth-wheel-scroll';
@@ -24,6 +25,8 @@ import { getPostImages } from '../post-cover';
 import styles from './social-feed.module.css';
 
 export interface SocialFeedViewProps {
+  /** Tab đang hiện. Tab được giữ mounted khi ẩn, nên hiện lại cũng là bố cục ban đầu: không chạy hiệu ứng. */
+  isVisible?: boolean;
   initialKeyword?: string;
   searchKeyword?: string;
   isItineraryOpen?: boolean;
@@ -36,6 +39,7 @@ export interface SocialFeedViewProps {
 }
 
 export function SocialFeedView({
+  isVisible = true,
   initialKeyword = '',
   searchKeyword,
   isItineraryOpen: propIsItineraryOpen,
@@ -621,9 +625,11 @@ export function SocialFeedView({
   // Giữ sidebar thêm một nhịp khi đóng để chạy hiệu ứng thoát, song song với cột lưới co lại.
   // Chưa thao tác thì bố cục mặc định hiện ngay, không chạy hiệu ứng trượt/co giãn.
   const hasUserInteracted = useHasUserInteracted();
+  const isLayoutSettled = useSettledFlag(isVisible);
+  const isLayoutAnimated = hasUserInteracted && isLayoutSettled;
   // Chỉ những lần mở sau khi người dùng đã thao tác mới có hiệu ứng trượt vào.
-  const leftPresence = usePresence(isLeftVisible, { shouldAnimateEnter: hasUserInteracted });
-  const rightPresence = usePresence(isRightVisible, { shouldAnimateEnter: hasUserInteracted });
+  const leftPresence = usePresence(isLeftVisible, { shouldAnimateEnter: isLayoutAnimated });
+  const rightPresence = usePresence(isRightVisible, { shouldAnimateEnter: isLayoutAnimated });
 
   const containerClassName =
     isLeftVisible && isRightVisible
@@ -635,7 +641,7 @@ export function SocialFeedView({
       : `${styles.splitViewContainer} ${styles.splitViewCenterOnly}`;
 
   return (
-    <div className={`${containerClassName} ${hasUserInteracted ? '' : styles.layoutStatic}`}>
+    <div className={`${containerClassName} ${isLayoutAnimated ? '' : styles.layoutStatic}`}>
       {/* 1. Left Column: Itinerary Sidebar Panel (Nằm ngay bên phải của Dock, cố định vững vàng) */}
       {leftPresence.isRendered && (
         <ItinerarySidebarPanel
