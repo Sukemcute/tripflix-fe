@@ -6,6 +6,9 @@ import { Platform } from 'react-native';
 export interface PickedVideo extends VideoUploadSource {
   uri: string;
   durationMs: number;
+  /** Kích thước hiển thị; 0 nếu thư viện chọn file không báo. */
+  width: number;
+  height: number;
 }
 
 export type PickedVideoError = 'unsupportedVideo' | 'unknownDuration' | 'invalidMedia';
@@ -26,20 +29,36 @@ export async function toPickedVideo(asset: ImagePickerAsset): Promise<PickedVide
       uri: asset.uri,
       durationMs,
       durationSec: durationMs / 1000,
+      width: asset.width,
+      height: asset.height,
       mimeType,
       sizeBytes: blob.size,
       readRange: async (start, end) => blob.slice(start, end),
     };
   }
 
-  const file = new File(asset.uri);
-  const sizeBytes = asset.fileSize || file.size;
-  if (!sizeBytes) return 'invalidMedia';
+  return (
+    fileVideoSource({
+      uri: asset.uri,
+      durationMs,
+      width: asset.width,
+      height: asset.height,
+      mimeType,
+      sizeBytes: asset.fileSize,
+    }) ?? 'invalidMedia'
+  );
+}
+
+/** Nguồn tải lên đọc từng đoạn từ một file trên điện thoại. File rỗng hoặc không đọc được thì trả null. */
+export function fileVideoSource(
+  video: Omit<PickedVideo, 'durationSec' | 'readRange' | 'sizeBytes'> & { sizeBytes?: number },
+): PickedVideo | null {
+  const file = new File(video.uri);
+  const sizeBytes = video.sizeBytes || file.size;
+  if (!sizeBytes) return null;
   return {
-    uri: asset.uri,
-    durationMs,
-    durationSec: durationMs / 1000,
-    mimeType,
+    ...video,
+    durationSec: video.durationMs / 1000,
     sizeBytes,
     readRange: async (start, end) => {
       const handle = file.open(FileMode.ReadOnly);

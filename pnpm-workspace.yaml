@@ -10,6 +10,8 @@ catalog:
   '@noble/curves': 2.4.0
   '@noble/hashes': 2.4.0
   '@tanstack/react-query': ^5.105.3
+  # Realtime thông báo (TF46): client của kênh /ws Socket.IO ở notification-service, cùng bản với tripflix-be.
+  socket.io-client: ^4.8.3
   '@tailwindcss/postcss': ^4.3.4
   '@types/node': ^24.0.0
   '@types/react': ~19.3.0

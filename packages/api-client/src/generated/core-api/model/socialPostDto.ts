@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { PostViewerContextDto } from './postViewerContextDto';
 import type { SocialPostDtoPostType } from './socialPostDtoPostType';
 import type { SocialPostDtoReactionCounts } from './socialPostDtoReactionCounts';
 import type { SocialPostDtoStatus } from './socialPostDtoStatus';
@@ -35,6 +36,8 @@ export interface SocialPostDto {
   commentCount: number;
   shareCount: number;
   bookmarkCount: number;
+  /** @nullable */
+  viewerContext?: PostViewerContextDto | null;
   /** @nullable */
   publishedAt: string | null;
   createdAt: string;

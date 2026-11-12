@@ -11,8 +11,9 @@
    -------------------------------------------------------------------------- */
 
 .feedPageWrapper {
-  height: calc(100dvh - 80px);
-  min-height: calc(100vh - 80px);
+  height: calc(100dvh - 81px);
+  max-height: calc(100dvh - 81px);
+  min-height: 0;
   background: #F8FAFC;
   color: #141B3D;
   font-family: inherit;
@@ -21,6 +22,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .feedViewSlot {
@@ -31,6 +33,7 @@
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .feedViewSlotActive {
@@ -38,9 +41,11 @@
 }
 
 .feedPageWrapperReels {
-  height: calc(100dvh - 80px);
+  height: calc(100dvh - 81px);
+  max-height: calc(100dvh - 81px);
   overflow: hidden;
   padding-left: 64px;
+  box-sizing: border-box;
 }
 
 /* --------------------------------------------------------------------------
@@ -1033,21 +1038,18 @@
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 6px;
+  padding-right: 0;
   padding-bottom: 60px;
-  scrollbar-width: thin;
-  scrollbar-color: #CBD5E1 transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 .mainFeedColumn::-webkit-scrollbar {
-  width: 6px;
-}
-
-.mainFeedColumn::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 999px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Quick Post Composer Bar */
@@ -1206,10 +1208,10 @@
 .postCard {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 18px;
-  padding: 22px;
-  margin-bottom: 22px;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+  border-radius: 16px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text) 4%, transparent);
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 
@@ -1228,7 +1230,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .authorLeft {
@@ -1239,16 +1241,16 @@
 }
 
 .authorAvatar {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background: #FFF0EB;
+  background: var(--color-warm-mist);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   color: #FF6A00;
-  font-size: 16px;
+  font-size: 15px;
   flex-shrink: 0;
   border: 1px solid rgba(255, 106, 0, 0.15);
 }
@@ -1257,6 +1259,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  gap: 2px;
 }
 
 .authorNameRow {
@@ -1268,7 +1271,7 @@
 .authorName {
   font-size: 15px;
   font-weight: 700;
-  color: #141B3D;
+  color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1283,9 +1286,27 @@
 .authorSubRow {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-size: 12px;
   color: #64748B;
+  flex-wrap: wrap;
+}
+
+.authorHandle {
+  color: var(--color-text-muted);
+}
+
+.authorDot {
+  color: var(--color-text-subtle);
+  margin: 0 1px;
+}
+
+.authorLocation {
+  color: var(--color-coral);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .headerMenuBtn {
@@ -1304,16 +1325,20 @@
 
 .headerMenuBtn:hover {
   background: #F1F5F9;
-  color: #141B3D;
+  color: var(--color-text);
 }
 
 /* Post Body */
 .postTitle {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.4;
-  color: #141B3D;
-  margin: 0 0 8px 0;
+  color: var(--color-text);
+  margin: 0 0 6px 0;
+}
+
+.postContentWrap {
+  margin: 0;
 }
 
 .postContent {
@@ -1321,6 +1346,7 @@
   line-height: 1.6;
   color: #334155;
   margin: 0;
+  white-space: pre-line;
   word-break: break-word;
 }
 
@@ -1338,8 +1364,13 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  padding: 0;
+  padding: 2px 0;
   margin-top: 4px;
+  transition: opacity 160ms ease;
+}
+
+.postReadMoreBtn:hover {
+  opacity: 0.85;
 }
 
 .postTagsWrap {
@@ -1350,39 +1381,50 @@
 }
 
 .postTagPill {
-  padding: 4px 10px;
-  background: #F1F5F9;
+  padding: 3px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   color: #FF6A00;
   font-size: 12px;
   font-weight: 600;
-  border: none;
   cursor: pointer;
   transition: all 160ms ease;
 }
 
 .postTagPill:hover {
-  background: rgba(255, 106, 0, 0.12);
+  background: var(--color-warm-mist);
+  border-color: color-mix(in srgb, var(--color-coral) 30%, transparent);
 }
 
-/* Attached Trip Card in Post */
+/* Attached Trip Card in Post (Single Entry Point) */
 .postAttachedTrip {
+  width: 100%;
+  box-sizing: border-box;
   margin-top: 14px;
   background: #F8FAFC;
   border: 1px solid #E2E8F0;
   border-radius: 14px;
-  padding: 12px 16px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
   transition: all 180ms ease;
   text-decoration: none;
+  user-select: none;
+  text-align: left;
 }
 
 .postAttachedTrip:hover {
   background: #F1F5F9;
   border-color: rgba(255, 106, 0, 0.4);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-text) 4%, transparent);
+}
+
+.postAttachedTrip:focus-visible {
+  outline: 2px solid var(--color-coral);
+  outline-offset: 2px;
 }
 
 .tripCardLeft {
@@ -1390,6 +1432,7 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
+  flex: 1;
 }
 
 .tripCardThumb {
@@ -1402,16 +1445,23 @@
   background: #E2E8F0;
 }
 
+.tripThumbImg {
+  object-fit: cover;
+  border-radius: 10px;
+}
+
 .tripCardMeta {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
+  text-align: left;
 }
 
 .tripCardTitle {
   font-size: 14px;
   font-weight: 700;
-  color: #141B3D;
+  color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1420,9 +1470,29 @@
 .tripCardSub {
   font-size: 12px;
   color: #64748B;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Action Bar */
+.tripCardCta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-coral);
+  flex-shrink: 0;
+  margin-left: 16px;
+  transition: transform 160ms ease;
+}
+
+.postAttachedTrip:hover .tripCardCta {
+  transform: translateX(2px);
+}
+
+/* Action Bar: Exactly 4 Primary Actions */
 .postActionBar {
   display: flex;
   align-items: center;
@@ -1435,14 +1505,16 @@
 .actionGroupLeft {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .actionBtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 14px;
+  min-height: 40px;
+  padding: 8px 14px;
   border-radius: 20px;
   border: none;
   background: transparent;
@@ -1450,12 +1522,12 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 180ms ease;
+  transition: all 160ms ease;
 }
 
 .actionBtn:hover {
   background: #F1F5F9;
-  color: #141B3D;
+  color: var(--color-text);
 }
 
 .actionBtnLiked {
@@ -1505,21 +1577,21 @@
 .mediaTwoGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px;
+  gap: 3px;
   height: 380px;
 }
 
 .mediaThreeGrid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 4px;
+  gap: 3px;
   height: 420px;
 }
 
 .mediaThreeRightStack {
   display: grid;
   grid-template-rows: 1fr 1fr;
-  gap: 4px;
+  gap: 3px;
   height: 100%;
 }
 
@@ -1527,7 +1599,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 4px;
+  gap: 3px;
   height: 420px;
 }
 
@@ -1541,11 +1613,12 @@
   border: none;
   padding: 0;
   display: block;
+  border-radius: 0;
 }
 
 .mediaImg {
   object-fit: cover;
-  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 200ms ease;
 }
 
 .mediaCell:hover .mediaImg {
@@ -1555,7 +1628,7 @@
 .mediaOverlayMore {
   position: absolute;
   inset: 0;
-  background: rgba(20, 27, 61, 0.6);
+  background: color-mix(in srgb, var(--color-text) 65%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1753,6 +1826,14 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.commentsPanelInner::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Empty feed state */
@@ -1801,30 +1882,7 @@
   background: #ff7d1a;
 }
 
-.reopenContextBtn {
-  position: fixed;
-  right: 24px;
-  bottom: 28px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  color: #FF6A00;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.12);
-  z-index: 40;
-  transition: all 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
 
-.reopenContextBtn:hover {
-  transform: translateY(-2px) scale(1.05);
-  background: #F8FAFC;
-  border-color: #FF6A00;
-}
 
 .rightPanelInFeed {
   position: relative !important;

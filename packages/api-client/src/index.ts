@@ -44,7 +44,17 @@ export {
   type SummaryFilter,
 } from './post-summary';
 export { feedApi, REEL_FEED_TABS, useReelsFeed, type ReelFeedTab } from './feed';
-export { findCachedFeedCard, updateReelSocialCache } from './reel-social-cache';
+export {
+  notificationsApi,
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+  type InboxNotification,
+  type NotificationsPage,
+  type NotificationReadResult,
+} from './notifications';
+export { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime } from './notifications-realtime';
+export { findCachedFeedCard, removeReelFromSavedFeedCache, updateReelSocialCache } from './reel-social-cache';
 export { updateCommentLikeCache } from './comment-like-cache';
 export { evictPostFromCache, isPostNotFoundError } from './post-cache';
 export { useStaySearch, getAvailableStays, getFutureDate, type StayFilters } from './stay-search';
@@ -64,7 +74,14 @@ export {
 } from './flight-search';
 export { useFlightCalendar, useFlightOffer, useFlightOffers, useFlightRoutes } from './flight-queries';
 export { getHotelReviews, type HotelReviewFilters } from './hotel-reviews';
-export { getExploreResults, getPostSearchResults, useExploreSearch, usePostSearch } from './explore-search';
+export {
+  getExploreResults,
+  getPostSearchResults,
+  searchUsers,
+  useExploreSearch,
+  usePostSearch,
+  useUserSearch,
+} from './explore-search';
 export {
   getHomeRecommendations,
   useHomeRecommendations,

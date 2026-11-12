@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { PostsControllerListMyPostsPostType } from './postsControllerListMyPostsPostType';
 import type { PostsControllerListMyPostsStatus } from './postsControllerListMyPostsStatus';
 
 export type PostsControllerListMyPostsParams = {
@@ -13,4 +14,6 @@ export type PostsControllerListMyPostsParams = {
   cursor?: string;
   /** Trạng thái bài */
   status?: PostsControllerListMyPostsStatus;
+  /** Lọc theo loại bài. Không truyền thì trả mọi loại */
+  post_type?: PostsControllerListMyPostsPostType;
 };
