@@ -10,6 +10,7 @@ import type { FeedControllerGetFeedTab } from './feedControllerGetFeedTab';
 export type FeedControllerGetFeedParams = {
   /** true: chỉ Reels người xem đã lưu, mới nhất trước. Cần đăng nhập, chỉ dùng với tab for_you */
   saved?: FeedControllerGetFeedSaved;
+  author_id?: string;
   cursor?: string;
   /** Tối đa 20 */
   limit?: number;

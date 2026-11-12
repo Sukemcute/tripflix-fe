@@ -4,6 +4,8 @@ import { colors as c, mobileLayout as layout, nativeFonts as f, spacing as s } f
 import { Image, type ImageSource } from 'expo-image';
 import { router } from 'expo-router';
 import {
+  createContext,
+  useContext,
   useRef,
   type ComponentProps,
   type ComponentRef,
@@ -25,6 +27,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { compactType, mobileIconSize } from './mobile-scale';
 
 export const copy = vi.mobile;
 export const assets = {
@@ -47,8 +50,27 @@ export function formatDate(value: string): string {
   return value.split('-').reverse().join('/');
 }
 export type IconName = ComponentProps<typeof Ionicons>['name'];
-export function Icon({ name, size = 22, color = c.ink }: { name: IconName; size?: number; color?: string }) {
-  return <Ionicons name={name} size={size} color={color} accessible={false} aria-hidden />;
+const CompactScreenContext = createContext(false);
+const compactText = {
+  title: compactType.title,
+  heading: compactType.heading,
+  label: compactType.label,
+  body: compactType.body,
+  small: compactType.body,
+  caption: compactType.meta,
+};
+
+export function Icon({ name, size, color = c.ink }: { name: IconName; size?: number; color?: string }) {
+  const compact = useContext(CompactScreenContext);
+  return (
+    <Ionicons
+      name={name}
+      size={size ?? (compact ? mobileIconSize.control : 22)}
+      color={color}
+      accessible={false}
+      aria-hidden
+    />
+  );
 }
 export function Txt({
   children,
@@ -61,11 +83,12 @@ export function Txt({
     style?: StyleProp<TextStyle>;
   } & Omit<ComponentProps<typeof NativeText>, 'style'>
 >) {
+  const compact = useContext(CompactScreenContext);
   return (
     <NativeText
       accessibilityRole={variant === 'title' || variant === 'heading' ? 'header' : undefined}
       {...props}
-      style={[ui.typography, ui[variant], style]}
+      style={[ui.typography, ui[variant], compact && compactText[variant], style]}
     >
       {children}
     </NativeText>
@@ -79,6 +102,7 @@ export function Button({
   icon,
   style,
   testID,
+  compact: compactOverride,
 }: PropsWithChildren<{
   onPress: () => void;
   tone?: 'primary' | 'secondary' | 'teal' | 'text';
@@ -86,7 +110,10 @@ export function Button({
   icon?: IconName;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  compact?: boolean;
 }>) {
+  const compactScreen = useContext(CompactScreenContext);
+  const compact = compactOverride ?? compactScreen;
   const foreground = tone === 'primary' ? c.background : tone === 'text' ? c.coralInk : c.ink;
   return (
     <Pressable
@@ -95,12 +122,12 @@ export function Button({
       accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [ui.button, ui[tone], disabled && ui.disabled, pressed && ui.pressed, style]}
+      style={({ pressed }) => [ui.button, compact && ui.compactButton, ui[tone], disabled && ui.disabled, pressed && ui.pressed, style]}
     >
-      <Txt variant="label" style={{ color: foreground, flexShrink: 1, textAlign: 'center' }}>
+      <Txt variant="label" style={[{ color: foreground, flexShrink: 1, textAlign: 'center' }, compact && ui.compactLabel]}>
         {children}
       </Txt>
-      {icon && <Icon name={icon} color={foreground} size={20} />}
+      {icon && <Icon name={icon} color={foreground} size={compact ? mobileIconSize.control : 20} />}
     </Pressable>
   );
 }
@@ -110,25 +137,32 @@ export function IconButton({
   onPress,
   light = false,
   color = c.ink,
+  size,
+  disabled = false,
 }: {
   name: IconName;
   label: string;
   onPress: () => void;
   light?: boolean;
   color?: string;
+  size?: number;
+  disabled?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         ui.iconButton,
         light && { backgroundColor: c.background },
+        disabled && ui.disabled,
         pressed && ui.pressed,
       ]}
     >
-      <Icon name={name} color={color} />
+      <Icon name={name} color={color} size={size} />
     </Pressable>
   );
 }
@@ -136,13 +170,15 @@ export function Row({ children, style }: PropsWithChildren<{ style?: StyleProp<V
   return <View style={[ui.row, style]}>{children}</View>;
 }
 export function Card({ children, style }: PropsWithChildren<{ style?: StyleProp<ViewStyle> }>) {
-  return <View style={[ui.card, style]}>{children}</View>;
+  const compact = useContext(CompactScreenContext);
+  return <View style={[ui.card, compact && ui.compactCard, style]}>{children}</View>;
 }
 export function Badge({
   children,
   tone = 'teal',
   icon,
 }: PropsWithChildren<{ tone?: 'teal' | 'sun' | 'coral'; icon?: IconName }>) {
+  const compact = useContext(CompactScreenContext);
   const foreground = tone === 'teal' ? c.tealInk : tone === 'coral' ? c.coralInk : c.ink;
   return (
     <View
@@ -151,7 +187,7 @@ export function Badge({
         { backgroundColor: tone === 'teal' ? c.seaMist : tone === 'sun' ? c.sunSoft : c.coralTint },
       ]}
     >
-      {icon && <Icon name={icon} size={14} color={foreground} />}
+      {icon && <Icon name={icon} size={compact ? mobileIconSize.inline : 14} color={foreground} />}
       <Txt variant="caption" style={{ color: foreground, fontFamily: f.semibold }}>
         {children}
       </Txt>
@@ -162,6 +198,7 @@ export function Notice({
   children,
   tone = 'info',
 }: PropsWithChildren<{ tone?: 'info' | 'warning' | 'error' }>) {
+  const compact = useContext(CompactScreenContext);
   return (
     <View
       accessibilityRole={tone === 'error' ? 'alert' : undefined}
@@ -179,7 +216,7 @@ export function Notice({
               : 'shield-checkmark-outline'
         }
         color={tone === 'error' ? c.coralInk : c.tealInk}
-        size={20}
+        size={compact ? mobileIconSize.control : 20}
       />
       <Txt variant="small" style={{ flex: 1, color: tone === 'error' ? c.coralInk : c.ink }}>
         {children}
@@ -191,16 +228,19 @@ export function Field({
   label,
   error,
   style,
+  compact: compactOverride,
   ...props
-}: ComponentProps<typeof TextInput> & { label: string; error?: string; style?: StyleProp<TextStyle> }) {
+}: ComponentProps<typeof TextInput> & { label: string; error?: string; compact?: boolean; style?: StyleProp<TextStyle> }) {
+  const compactScreen = useContext(CompactScreenContext);
+  const compact = compactOverride ?? compactScreen;
   return (
-    <View style={{ gap: s.sm }}>
-      <Txt variant="label">{label}</Txt>
+    <View style={{ gap: compact ? s.xs : s.sm }}>
+      <Txt variant="label" style={compact && ui.compactLabel}>{label}</Txt>
       <TextInput
         {...props}
         accessibilityLabel={label}
         placeholderTextColor={c.textMuted}
-        style={[ui.input, error && { borderColor: c.danger }, style]}
+        style={[ui.input, compact && ui.compactInput, error && { borderColor: c.danger }, style]}
       />
       {error && (
         <Txt accessibilityRole="alert" variant="small" style={{ color: c.coralInk }}>
@@ -322,6 +362,7 @@ export function Screen({
   padded = true,
   scroll = true,
   background = c.background,
+  compact = false,
 }: PropsWithChildren<{
   title?: string;
   back?: boolean;
@@ -331,28 +372,31 @@ export function Screen({
   padded?: boolean;
   scroll?: boolean;
   background?: string;
+  compact?: boolean;
 }>) {
   return (
-    <SafeAreaView
-      edges={['top', 'left', 'right', 'bottom']}
-      style={[ui.screen, { backgroundColor: background }]}
-    >
-      <KeyboardAvoidingView style={ui.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {header === undefined ? <Header title={title} back={back} right={right} /> : header}
-        {scroll ? (
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={[ui.content, padded && ui.pad]}
-            showsVerticalScrollIndicator={false}
-          >
-            {children}
-          </ScrollView>
-        ) : (
-          <View style={[ui.flex, padded && ui.pad]}>{children}</View>
-        )}
-        {footer && <View style={ui.footer}>{footer}</View>}
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <CompactScreenContext.Provider value={compact}>
+      <SafeAreaView
+        edges={['top', 'left', 'right', 'bottom']}
+        style={[ui.screen, { backgroundColor: background }]}
+      >
+        <KeyboardAvoidingView style={ui.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          {header === undefined ? <Header title={title} back={back} right={right} /> : header}
+          {scroll ? (
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={[ui.content, padded && ui.pad]}
+              showsVerticalScrollIndicator={false}
+            >
+              {children}
+            </ScrollView>
+          ) : (
+            <View style={[ui.flex, padded && ui.pad]}>{children}</View>
+          )}
+          {footer && <View style={ui.footer}>{footer}</View>}
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </CompactScreenContext.Provider>
   );
 }
 export function Sheet({
@@ -466,6 +510,8 @@ export const ui = StyleSheet.create({
     justifyContent: 'center',
     gap: s.sm,
   },
+  compactButton: { minHeight: layout.touchTarget, paddingVertical: s.sm, paddingHorizontal: s.md, gap: s.xs },
+  compactLabel: compactType.label,
   primary: { backgroundColor: c.coral },
   secondary: { backgroundColor: c.background, borderWidth: 1, borderColor: c.border },
   teal: { backgroundColor: c.teal },
@@ -488,6 +534,7 @@ export const ui = StyleSheet.create({
     gap: s.md,
     backgroundColor: c.background,
   },
+  compactCard: { padding: s.md, gap: s.sm },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -509,6 +556,12 @@ export const ui = StyleSheet.create({
     fontSize: 14,
     color: c.ink,
     backgroundColor: c.background,
+  },
+  compactInput: {
+    minHeight: layout.touchTarget,
+    ...compactType.body,
+    paddingVertical: s.sm,
+    paddingHorizontal: s.md,
   },
   chip: {
     minHeight: layout.touchTarget,

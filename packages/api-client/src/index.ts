@@ -74,7 +74,14 @@ export {
 } from './flight-search';
 export { useFlightCalendar, useFlightOffer, useFlightOffers, useFlightRoutes } from './flight-queries';
 export { getHotelReviews, type HotelReviewFilters } from './hotel-reviews';
-export { getExploreResults, getPostSearchResults, useExploreSearch, usePostSearch } from './explore-search';
+export {
+  getExploreResults,
+  getPostSearchResults,
+  searchUsers,
+  useExploreSearch,
+  usePostSearch,
+  useUserSearch,
+} from './explore-search';
 export {
   getHomeRecommendations,
   useHomeRecommendations,

@@ -34,6 +34,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { Button, Icon, IconButton, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 import { SHEET_CLOSE_SPRING } from '@/components/motion';
+import { SearchDropPanel } from '@/features/discovery/search-drop-panel';
 import { ReelSlide } from './reel-slide';
 import type { ReelItem } from './reel-types';
 import { REEL_TABS, REELS_TAB_BAR_HEIGHT, ReelsTabBar, type ReelTab } from './reels-tab-bar';
@@ -78,6 +79,7 @@ export function ReelsScreen() {
   const [tab, setTab] = useState<ReelTab>('for_you');
   const [isSample, setIsSample] = useState(false);
   const [isChromeHidden, setIsChromeHidden] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   /** Reel cần mở ngay (ví dụ bấm thẻ video trong khung chat Tripi). */
   const { reel: targetId } = useLocalSearchParams<{ reel?: string }>();
   const clearTarget = useCallback(() => router.setParams({ reel: undefined }), []);
@@ -245,8 +247,9 @@ export function ReelsScreen() {
         selected={tab}
         isHidden={isChromeHidden}
         onSelect={selectTab}
-        onSearch={() => router.push({ pathname: '/(tabs)/explore', params: { autoFocus: '1' } })}
+        onSearch={() => setIsSearchOpen(true)}
       />
+      <SearchDropPanel visible={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </GestureHandlerRootView>
   );
 }

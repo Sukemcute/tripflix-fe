@@ -14,7 +14,6 @@ import { copy, Txt } from '@/components/mobile-ui';
 import { ReviewProvider } from '@/features/review/review-provider';
 import { CommerceProvider } from '@/features/booking/commerce-provider';
 import { AssistantProvider } from '@/features/assistant/assistant-provider';
-import { AssistantBubble } from '@/features/assistant/assistant-bubble';
 import { assistantTransport } from '@/features/assistant/assistant-transport';
 
 const tokenStorage =
@@ -25,7 +24,8 @@ const tokenStorage =
         write: (token: string) => SecureStore.setItemAsync('tripflix.refresh', token),
         clear: () => SecureStore.deleteItemAsync('tripflix.refresh'),
       };
-export const unstable_settings = { anchor: 'index' };
+// Mở app là vào thẳng tab Reels như TikTok; trang chào vẫn ở /onboarding.
+export const unstable_settings = { anchor: '(tabs)' };
 
 export default function RootLayout() {
   const [queryClient] = useState(
@@ -82,14 +82,12 @@ export default function RootLayout() {
                     animation: 'none',
                   }}
                 >
-                  <Stack.Screen name="index" />
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen
                     name="trip/[slug]"
                     options={{ animation: 'default', fullScreenGestureEnabled: true }}
                   />
                 </Stack>
-                <AssistantBubble />
               </AppFrame>
             </AssistantProvider>
           </ReviewProvider>
