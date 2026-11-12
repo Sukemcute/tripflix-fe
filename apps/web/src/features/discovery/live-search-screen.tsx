@@ -553,7 +553,10 @@ export function LiveSearchScreen({
                       <div className={listing.cardInfo}>
                         <p className="eyebrow">
                           {stay.province.name}
-                          {stay.stars ? ` · ${stay.stars} ★` : ''}
+                          {/* Điểm đánh giá của khách thay cho hạng sao, để khớp với điểm ở trang chi tiết. */}
+                          {stay.rating
+                            ? ` · ★ ${t('ota.stayRating', { average: stay.rating.average.toLocaleString('vi-VN'), count: stay.rating.count })}`
+                            : ''}
                         </p>
                         <h3>{stay.name}</h3>
                       </div>
