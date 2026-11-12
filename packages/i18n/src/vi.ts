@@ -11,10 +11,12 @@ import { privacy } from './privacy';
 import { terms } from './terms';
 import { moderation } from './moderation';
 import { searchMonitoring } from './search-monitoring';
+import { discoveryJobs } from './discovery-jobs';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
   searchMonitoring,
+  discoveryJobs,
   assistant,
   moderation,
   flights,
@@ -48,6 +50,8 @@ export const vi = {
     moderation: 'Kiểm duyệt',
     analytics: 'Xu hướng & Gian lận',
     searchMonitoring: 'Theo dõi tìm kiếm',
+    searchJobs: 'Job tìm kiếm',
+    recommendJobs: 'Job gợi ý',
     inventory: 'Lịch trống & giá',
     orders: 'Đơn hàng & Thanh toán',
     users: 'Người dùng',
