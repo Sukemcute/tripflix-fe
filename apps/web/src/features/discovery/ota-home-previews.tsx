@@ -173,7 +173,7 @@ export function HomeStayPreview() {
 
 export function HomeStoryPreview() {
   const { ref, isNear } = useNearViewport();
-  const query = useSocialPosts('public', '', undefined, { enabled: isNear });
+  const query = useSocialPosts('public', '', undefined, 'latest', { enabled: isNear });
   const posts = query.data?.pages[0]?.items.slice(0, 3);
   return (
     <section

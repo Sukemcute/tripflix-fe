@@ -1,8 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { exploreControllerSearch, exploreControllerSearchPosts } from './generated/core-api/discovery/discovery';
+import {
+  exploreControllerSearch,
+  exploreControllerSearchPosts,
+  postRecommendationsControllerRecommendPosts,
+} from './generated/core-api/discovery/discovery';
 import { userSearchControllerSearch } from './generated/core-api/users/users';
 import type {
   ExploreResponseDto,
+  PostRecommendationsDto,
   SearchPostsRequestDto,
   SearchPostsResponseDto,
   UserSearchResponseDto,
@@ -40,6 +45,9 @@ export async function getPostSearchResults(
 /** Số bài mỗi trang khi tìm theo từ khoá: mỗi bài cần thêm một lần lấy chi tiết nên giữ nhỏ. */
 export const KEYWORD_SEARCH_PAGE_SIZE = 10;
 
+/** Feed gợi ý: màn hình chỉ hiện 1–2 bài, lấy 7 bài một lần rồi tải tiếp khi lướt tới bài 5–6. */
+export const RECOMMEND_PAGE_SIZE = 7;
+
 /**
  * Tìm bài công khai bằng engine của discovery (hiểu câu, bỏ dấu, sửa gõ, ghép/tách chữ), rồi lấy chi tiết từng bài
  * theo đúng thứ tự xếp hạng. Trả cùng dạng trang với socialApi.listPosts nên viewer dùng lại được.
@@ -56,6 +64,27 @@ export async function searchPublicPosts(keyword: string, cursor?: string, signal
     ),
   );
   return { items: details.filter((post) => post !== null), nextCursor: found.nextCursor };
+}
+
+/**
+ * Bài gợi ý theo gu (GET /api/recommendations/posts; khách nhận "đang thịnh hành"), rồi lấy chi tiết từng bài
+ * như searchPublicPosts để trả cùng dạng trang với socialApi.listPosts.
+ */
+export async function recommendPublicPosts(cursor?: string, signal?: AbortSignal, postType?: 'vlog') {
+  const response = await postRecommendationsControllerRecommendPosts(
+    { mode: 'for_you', limit: RECOMMEND_PAGE_SIZE, ...(cursor ? { cursor } : {}), ...(postType ? { postType } : {}) },
+    { signal },
+  );
+  const page = readEntity(response.data, ['items', 'algo', 'nextCursor']) as PostRecommendationsDto;
+  const details = await Promise.all(
+    page.items.map((item) =>
+      socialApi.getPost(item.post.id, signal).then(
+        (detail) => detail.post,
+        () => null,
+      ),
+    ),
+  );
+  return { items: details.filter((post) => post !== null), nextCursor: page.nextCursor };
 }
 
 /** Hook tìm bài trên app: dùng useQuery cache theo params */

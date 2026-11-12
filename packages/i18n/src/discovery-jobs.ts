@@ -1,0 +1,61 @@
+/** Hai trang admin theo dõi và chạy ngay job tìm kiếm, gợi ý của discovery (Duy). */
+export const discoveryJobs = {
+  eyebrow: 'Discovery / Job nền',
+  search: {
+    title: 'Job tìm kiếm',
+    description: 'Dựng lại chỉ mục tìm khám phá và chỉ mục gợi ý ô tìm. Bấm chạy ngay để test mà không phải chờ chu kỳ.',
+  },
+  recommend: {
+    title: 'Job gợi ý',
+    description: 'Tính đặc trưng gợi ý (điểm bài, gu người dùng) và dọn hạn lưu bảng thô. Bấm chạy ngay để test mà không phải chờ chu kỳ.',
+  },
+  jobs: {
+    explore: 'Chỉ mục tìm khám phá',
+    suggest: 'Chỉ mục gợi ý ô tìm',
+    recommend_build: 'Tính đặc trưng gợi ý',
+    recommend_purge: 'Dọn hạn lưu bảng thô',
+  },
+  outcome: {
+    running: 'Đang chạy',
+    succeeded: 'Thành công',
+    skipped: 'Bỏ lượt',
+    failed: 'Lỗi',
+  },
+  trigger: {
+    schedule: 'Theo lịch',
+    manual: 'Chạy tay',
+  },
+  every: 'Tự chạy mỗi {interval}',
+  onBoot: 'Chỉ tự chạy lúc khởi động',
+  run: 'Chạy ngay',
+  running: 'Đang chạy…',
+  rejectedRunning: 'Job đang chạy, chưa chạy thêm lượt mới.',
+  superadminOnly: 'Chỉ quản trị hệ thống được chạy job.',
+  polling: 'Làm mới mỗi 2 giây khi có job đang chạy, 30 giây khi không.',
+  checkedAt: 'Cập nhật lúc {time}',
+  history: 'Lịch sử 20 lần chạy gần nhất',
+  noRuns: 'Chưa có lần chạy nào được ghi (lịch sử giữ 7 ngày).',
+  columns: {
+    startedAt: 'Bắt đầu',
+    trigger: 'Cách chạy',
+    outcome: 'Kết quả',
+    duration: 'Thời lượng',
+    summary: 'Tóm tắt',
+    error: 'Lỗi',
+  },
+  summary: {
+    count: '{count} mục',
+    postsUsers: '{posts} bài · {users} người',
+    deleted: 'Đã xoá {deleted} dòng',
+  },
+  stats: {
+    title: 'Số liệu gợi ý',
+    interactionsLast10m: 'Dòng thô nạp trong 10 phút',
+    interactionsLast24h: 'Dòng thô nạp trong 24 giờ',
+    posts: 'Bài trong bảng gợi ý',
+    usersWithFeatures: 'Người đã có gu',
+    algos: 'Thuật toán đang bật',
+    builders: 'Lần chạy từng builder',
+    never: 'Chưa chạy',
+  },
+} as const;

@@ -32,6 +32,8 @@ Production build local chạy trên cổng 3101, Chrome 157, khách chưa đăng
 
 ## Kết quả kiểm tra
 
+- Đồng bộ `origin/develop` tại `8753a8c` (TF28): giữ `publicSource` ở tham số thứ tư của `useSocialPosts`, đưa `options.enabled` sang tham số thứ năm và cập nhật caller trang chủ. Giữ logic phân trang/cache feed gợi ý của develop. Sau xử lý xung đột: 23/23 tác vụ lint/typecheck/test/build thành công; API client 189 test, web 59 test; kiểm tra boundaries không có vi phạm.
+
 - `pnpm turbo run lint typecheck test --affected`: 21/21 task thành công ngày 2026-11-13; lint còn cảnh báo đã có sẵn. Web: 59 test, API client: 187 test, app-core: 91 test; các package khác cũng qua.
 - `pnpm turbo run lint typecheck test build --affected`: 23/23 task thành công sau khi rà soát tùy chọn query tương thích ngược, gồm build web và admin.
 - Web production build thành công với API local.
