@@ -1,3 +1,16 @@
+.homepagePlaceholder {
+  height: 103px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .homepagePlaceholder { height: 194px; }
+}
+
+@media (max-width: 640px) {
+  .homepagePlaceholder { height: 289.5px; }
+}
+
 .panel {
   position: relative;
   z-index: 3;

@@ -16,19 +16,13 @@ import {
 import { formatPrice } from './trip-card';
 import { SoftStarIcon } from './soft-star-icon';
 import styles from './ota-home.module.css';
+import { isOptimizedImageUrl } from '@/lib/remote-images';
+import { useNearViewport } from './use-near-viewport';
 
 const CROSSFADE_MS = 1200;
 const ROTATE_INTERVAL_MS = 7000;
 
-function SafeComboImage({
-  src,
-  fallback,
-  alt,
-}: {
-  src?: string;
-  fallback: string;
-  alt: string;
-}) {
+function SafeComboImage({ src, fallback, alt }: { src?: string; fallback: string; alt: string }) {
   const [failedSource, setFailedSource] = useState<string>();
   const targetSrc = failedSource === src || !src ? fallback : src;
 
@@ -37,21 +31,15 @@ function SafeComboImage({
       src={targetSrc}
       alt={alt}
       fill
-      sizes="(max-width: 640px) 100vw, 48vw"
-      unoptimized
+      sizes="(max-width: 640px) 90vw, (max-width: 1200px) 50vw, 720px"
+      unoptimized={!targetSrc.startsWith('/') && !isOptimizedImageUrl(targetSrc)}
       style={{ objectPosition: src?.includes('da-lat') ? 'center 78%' : 'center' }}
       onError={() => setFailedSource(src)}
     />
   );
 }
 
-function DestinationBody({
-  combo,
-  isOutgoing,
-}: {
-  combo: RecommendationCombo;
-  isOutgoing?: boolean;
-}) {
+function DestinationBody({ combo, isOutgoing }: { combo: RecommendationCombo; isOutgoing?: boolean }) {
   return (
     <>
       <SafeComboImage
@@ -80,13 +68,7 @@ function DestinationBody({
   );
 }
 
-function StayBody({
-  combo,
-  isOutgoing,
-}: {
-  combo: RecommendationCombo;
-  isOutgoing?: boolean;
-}) {
+function StayBody({ combo, isOutgoing }: { combo: RecommendationCombo; isOutgoing?: boolean }) {
   return (
     <>
       <SafeComboImage
@@ -105,12 +87,20 @@ function StayBody({
             {combo.stay.verifiedPrice && combo.stay.stars ? <SoftStarIcon /> : null}
           </span>
           <h3>{combo.stay.verifiedPrice ? combo.stay.name : `Nơi ở tại ${combo.destination.name}`}</h3>
-          <p>{combo.stay.verifiedPrice ? combo.stay.description : 'Khám phá khách sạn, chọn ngày và so sánh giá cho chuyến đi.'}</p>
+          <p>
+            {combo.stay.verifiedPrice
+              ? combo.stay.description
+              : 'Khám phá khách sạn, chọn ngày và so sánh giá cho chuyến đi.'}
+          </p>
         </div>
         <div className={styles.comboMeta}>
-          <strong>{combo.stay.verifiedPrice ? formatPrice(combo.stay.priceFrom) : 'Xem giá theo ngày'}</strong>
+          <strong>
+            {combo.stay.verifiedPrice ? formatPrice(combo.stay.priceFrom) : 'Xem giá theo ngày'}
+          </strong>
           <span className={styles.actionPrompt} aria-hidden="true">
-            {combo.stay.verifiedPrice && typeof combo.stay.otherDealsCount === 'number' && combo.stay.otherDealsCount > 0
+            {combo.stay.verifiedPrice &&
+            typeof combo.stay.otherDealsCount === 'number' &&
+            combo.stay.otherDealsCount > 0
               ? `Thêm ${combo.stay.otherDealsCount} deal hời`
               : 'Xem phòng'}{' '}
             <span className={styles.arrowBounce}>→</span>
@@ -121,13 +111,7 @@ function StayBody({
   );
 }
 
-function ExperienceBody({
-  combo,
-  isOutgoing,
-}: {
-  combo: RecommendationCombo;
-  isOutgoing?: boolean;
-}) {
+function ExperienceBody({ combo, isOutgoing }: { combo: RecommendationCombo; isOutgoing?: boolean }) {
   return (
     <>
       <SafeComboImage
@@ -185,17 +169,17 @@ export function OtaHomeRecommendations() {
   const [prevIndex, setPrevIndex] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const sectionRef = useRef<HTMLElement>(null);
+  const { ref: sectionRef, isNear } = useNearViewport();
   const pauseReasonsRef = useRef({ hidden: false, offscreen: false, hover: false, focus: false });
   const [isPaused, setIsPaused] = useState(false);
 
-  const { data: apiPicks } = useHomeRecommendations({ limit: 6 });
+  const { data: apiPicks } = useHomeRecommendations({ limit: 6 }, { enabled: isNear });
   const combos = useMemo(() => {
     return buildCombosFromApi(apiPicks ?? [], RECOMMENDATION_COMBOS);
   }, [apiPicks]);
 
   const activeCombo = (combos[activeIndex] ?? combos[0])!;
-  const prevCombo = prevIndex !== null ? combos[prevIndex] ?? null : null;
+  const prevCombo = prevIndex !== null ? (combos[prevIndex] ?? null) : null;
 
   const changeCombo = useCallback(
     (getNextIndex: (prev: number) => number) => {
@@ -243,7 +227,7 @@ export function OtaHomeRecommendations() {
       document.removeEventListener('visibilitychange', onVisibility);
       observer.disconnect();
     };
-  }, [setPauseReason]);
+  }, [setPauseReason, sectionRef]);
 
   useEffect(() => {
     if (isPaused) return;

@@ -19,6 +19,8 @@
 
 body {
   color: var(--color-ink);
+  /* Header margins must not move the entire body when the home hero arrives. */
+  display: flow-root;
 }
 button,
 input,
@@ -483,11 +485,12 @@ h3 {
   margin-left: auto;
 }
 
-body:has([data-home-hero]) .ota-header {
+/* Ignore hero markup inside hidden streaming segments until it joins the page. */
+body:has(> [data-living-home] [data-home-hero]) .ota-header {
   border-color: rgb(255 255 255 / 48%);
 }
 @media (min-width: 641px) {
-  body:has([data-home-hero]) .ota-header {
+  body:has(> [data-living-home] [data-home-hero]) .ota-header {
     position: absolute;
     top: 12px;
     left: 50%;
@@ -496,20 +499,20 @@ body:has([data-home-hero]) .ota-header {
     z-index: 50;
   }
 }
-body:has([data-home-hero]) .header-logo-dark { display: none; }
-body:has([data-home-hero]) .header-logo-light { display: block; }
-body:has([data-home-hero]) .header-brand { filter: drop-shadow(0 2px 5px rgb(0 35 45 / 46%)); }
-body:has([data-home-hero]) .header-content nav a,
-body:has([data-home-hero]) .header-icon-button,
-body:has([data-home-hero]) .header-actions > a:not(.header-login) {
+body:has(> [data-living-home] [data-home-hero]) .header-logo-dark { display: none; }
+body:has(> [data-living-home] [data-home-hero]) .header-logo-light { display: block; }
+body:has(> [data-living-home] [data-home-hero]) .header-brand { filter: drop-shadow(0 2px 5px rgb(0 35 45 / 46%)); }
+body:has(> [data-living-home] [data-home-hero]) .header-content nav a,
+body:has(> [data-living-home] [data-home-hero]) .header-icon-button,
+body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-login) {
   color: #fff;
   text-shadow: 0 1px 5px rgb(0 35 45 / 58%);
 }
-body:has([data-home-hero]) .header-content nav a[aria-current='page'] {
+body:has(> [data-living-home] [data-home-hero]) .header-content nav a[aria-current='page'] {
   box-shadow: inset 0 -2px 0 rgb(255 255 255 / 88%);
 }
-body:has([data-home-hero]) .header-content nav a:hover,
-body:has([data-home-hero]) .header-actions > a:not(.header-login):hover {
+body:has(> [data-living-home] [data-home-hero]) .header-content nav a:hover,
+body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-login):hover {
   color: #fff;
   background: rgb(255 255 255 / 14%);
 }
@@ -1257,6 +1260,8 @@ body:has([data-home-hero]) .header-actions > a:not(.header-login):hover {
 }
 .page-loading {
   padding-block: 48px;
+  /* Keep the footer below the viewport while a streamed route is pending. */
+  min-height: 100svh;
 }
 .skeleton {
   background: var(--color-surface-muted);

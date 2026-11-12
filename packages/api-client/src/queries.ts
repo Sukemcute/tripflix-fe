@@ -10,6 +10,7 @@ export function useSocialPosts(
   postType?: 'vlog',
   // 'recommended': khi không có từ khoá, lấy bài gợi ý theo gu của discovery thay cho bài mới nhất.
   publicSource: 'latest' | 'recommended' = 'latest',
+  options: { enabled?: boolean } = {},
 ) {
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
@@ -18,7 +19,7 @@ export function useSocialPosts(
   return useInfiniteQuery({
     queryKey,
     initialPageParam: undefined as string | undefined,
-    enabled: isReady && (kind === 'public' || !!user),
+    enabled: (options.enabled ?? true) && isReady && (kind === 'public' || !!user),
     queryFn: ({ pageParam, signal }) =>
       kind === 'mine'
         ? socialApi.listMyPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal)
