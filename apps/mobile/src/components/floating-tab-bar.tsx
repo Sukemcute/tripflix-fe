@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { mobileIconSize } from './mobile-scale';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 const ICONS: Record<string, IconName> = {
@@ -14,9 +13,12 @@ const ICONS: Record<string, IconName> = {
   trips: 'bag-handle-outline',
   me: 'person-outline',
 };
-// Thấp hơn thanh tab iOS (49pt) như TikTok: icon nhỏ, chừa thêm chỗ cho video.
-const BAR_HEIGHT = 44;
-const COMPOSE_SIZE = 32;
+// Tỉ lệ thanh tab TikTok (~49pt): icon 24 cách mép trên 6, chữ 10; nút tạo là ô ngang 44×30.
+const BAR_HEIGHT = 46;
+const BAR_PADDING_TOP = 6;
+const TAB_ICON_SIZE = 24;
+const COMPOSE_WIDTH = 44;
+const COMPOSE_HEIGHT = 30;
 const COMPOSE_RADIUS = 9;
 // The design's 24-unit SVG shown at 20px: a 14-unit line with 3.6-unit stroke and round caps.
 const PLUS_SCALE = 20 / 24;
@@ -65,7 +67,7 @@ export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, ins
               <ComposeIcon />
             ) : (
               <>
-                <Ionicons name={ICONS[route.name]!} size={mobileIconSize.nav} color={tint} />
+                <Ionicons name={ICONS[route.name]!} size={TAB_ICON_SIZE} color={tint} />
                 <Text
                   aria-hidden
                   numberOfLines={1}
@@ -106,17 +108,18 @@ function ComposeIcon() {
 const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
+    paddingTop: BAR_PADDING_TOP,
     backgroundColor: colors.tabBar,
   },
-  tab: { flex: 1, height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'center', gap: 2 },
+  tab: { flex: 1, height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'flex-start', gap: 3 },
   pressed: { opacity: 0.65 },
   compose: {
-    width: COMPOSE_SIZE,
-    height: COMPOSE_SIZE,
+    width: COMPOSE_WIDTH,
+    height: COMPOSE_HEIGHT,
+    marginTop: (TAB_ICON_SIZE + 3 + 13 - COMPOSE_HEIGHT) / 2,
     borderRadius: COMPOSE_RADIUS,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ translateY: -2 }],
   },
   composeFill: { ...StyleSheet.absoluteFill, borderRadius: COMPOSE_RADIUS },
   plusBar: {
@@ -127,5 +130,5 @@ const styles = StyleSheet.create({
   plusShadow: { boxShadow: [{ offsetX: 0, offsetY: 1.5, blurRadius: 2, color: colors.composeIconShadow }] },
   plusHorizontal: { width: PLUS_LENGTH, height: PLUS_THICKNESS },
   plusVertical: { width: PLUS_THICKNESS, height: PLUS_LENGTH },
-  label: { fontFamily: nativeFonts.semibold, fontSize: 9, lineHeight: 12, textAlign: 'center' },
+  label: { fontFamily: nativeFonts.semibold, fontSize: 10, lineHeight: 13, textAlign: 'center' },
 });

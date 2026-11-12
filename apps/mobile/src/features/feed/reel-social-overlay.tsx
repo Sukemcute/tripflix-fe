@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getCollapsedCaptionLength, getReelScale, hasTripPlan } from '@tripflix/app-core';
+import { getCollapsedCaptionLength, getPostCaption, getReelScale, hasTripPlan } from '@tripflix/app-core';
 import {
   HttpError,
   REEL_FEED_TABS,
@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -26,8 +26,9 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { mobileIconSize } from '@/components/mobile-scale';
 import { AssistantTrigger } from '@/features/assistant/assistant-bubble';
 import {
   HEART_POP_SETTLE,
@@ -39,14 +40,12 @@ import {
 } from '@/components/motion';
 import { ReelCommentsPanel } from './reel-comments-panel';
 import type { ReelItem } from './reel-types';
-import { ReportButton } from './report-button';
 import { TripPlanSheet } from './trip-plan-sheet';
 
 const copy = vi.mobile.reels;
 const number = (value: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value);
-const DETAIL_HEIGHT = 24;
-const CAPTION_LINES = 2;
-const CAPTION_MAX_HEIGHT = 180;
+const DETAIL_HEIGHT = 30;
+const CAPTION_LINES = 3;
 const SHOW_MORE_SUFFIX = `… ${copy.showMore}`;
 // Measured by characters, so keep a little extra room for wide letters in the removed text.
 const SHOW_MORE_RESERVED_CHARS = SHOW_MORE_SUFFIX.length + 4;
@@ -62,6 +61,14 @@ const HEART_POP_SCALE = 1.25;
 const HEART_POP_LIFT = -6;
 const PRESSED_SCALE = 0.88;
 const RAIL_ACTION_SIZE = mobileLayout.touchTarget;
+const CAPTION_BOTTOM = spacing.md;
+// Tỉ lệ đo từ TikTok (ở chuẩn 390pt, nhân getReelScale): icon cột phải 28, số 12; tác giả 16 đậm; caption 14.
+const RAIL_ICON_SIZE = 28;
+const AUTHOR_TYPE = { fontSize: 16, lineHeight: 21 };
+const CAPTION_TYPE = { fontSize: 14, lineHeight: 19 };
+const RAIL_COUNT_TYPE = { fontSize: 12, lineHeight: 15 };
+const DETAIL_TYPE = { fontSize: 13, lineHeight: 17 };
+const AVATAR_SIZE = 26;
 
 function RailAction({
   icon,
@@ -142,15 +149,22 @@ export function ReelSocialOverlay({
 }) {
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
-  const { width } = useWindowDimensions();
+  const { width, height: windowHeight } = useWindowDimensions();
+  const screenWidth = Math.min(width, mobileLayout.contentWidth);
+  // Caption mở rộng tối đa 1/3 màn hình, dài hơn thì cuộn trong khung đó.
+  const captionMaxHeight = Math.round(windowHeight / 3);
+  // Cả cột nút nằm trên dòng tác giả (đáy cột chạm đỉnh dòng tác giả), chừa góc dưới phải cho tính năng sau.
+  const [captionBlockHeight, setCaptionBlockHeight] = useState(0);
+  const [authorRowY, setAuthorRowY] = useState(0);
+  const [isCaptionLong, setIsCaptionLong] = useState(false);
   const reelScale = getReelScale(Math.min(width, mobileLayout.contentWidth));
-  const railIconSize = Math.round(mobileIconSize.reel * reelScale);
+  const railIconSize = Math.round(RAIL_ICON_SIZE * reelScale);
   const tripiSize = Math.round(mobileIconSize.reelTripi * reelScale);
   const [hasComments, setHasComments] = useState(false);
   const [isTripPlanOpen, setIsTripPlanOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [collapsedLength, setCollapsedLength] = useState<number | null>(null);
-  const [collapsedHeight, setCollapsedHeight] = useState(CAPTION_LINES * compactType.body.lineHeight);
+  const [collapsedHeight, setCollapsedHeight] = useState(CAPTION_LINES * CAPTION_TYPE.lineHeight);
   const [expandedContentHeight, setExpandedContentHeight] = useState(0);
   const expandedScroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const expansion = useSharedValue(0);
@@ -254,14 +268,25 @@ export function ReelSocialOverlay({
   const tripAttachment = detail.data?.post.tripAttachment;
   const tripPlan = !isSample && tripAttachment && hasTripPlan(tripAttachment) ? tripAttachment : null;
   const caption = isSample ? copy.sampleCaption : item.body;
-  const fullCaption = caption ? `${title} · ${caption}` : title;
+  // Bài chỉ có caption: không tách tiêu đề in đậm.
+  const fullCaption = isSample ? `${title} · ${caption}` : getPostCaption(item.title, caption);
   const visibleCaption =
     collapsedLength === null ? fullCaption : fullCaption.slice(0, collapsedLength).trimEnd();
-  const expandedHeight = Math.min(CAPTION_MAX_HEIGHT, Math.max(collapsedHeight, expandedContentHeight));
+  const expandedHeight = Math.min(captionMaxHeight, Math.max(collapsedHeight, expandedContentHeight));
+  // Cột icon đặt theo khối caption lúc thu gọn: chỉ đo lại khi caption đã co xong, không đo lúc đang mở hay đang co.
+  const isCaptionSettled = useRef(true);
+  const settleCaption = () => {
+    isCaptionSettled.current = true;
+  };
   const toggleExpanded = (shouldExpand: boolean) => {
+    isCaptionSettled.current = false;
     setIsExpanded(shouldExpand);
     if (!shouldExpand) expandedScroll.current?.scrollTo({ y: 0, animated: true });
-    expansion.set(withSpring(shouldExpand ? 1 : 0, shouldExpand ? SHEET_OPEN_SPRING : SHEET_CLOSE_SPRING));
+    expansion.set(
+      withSpring(shouldExpand ? 1 : 0, shouldExpand ? SHEET_OPEN_SPRING : SHEET_CLOSE_SPRING, (finished) => {
+        if (finished && !shouldExpand) scheduleOnRN(settleCaption);
+      }),
+    );
   };
   const captionTextStyle = useAnimatedStyle(() => ({
     height: interpolate(expansion.get(), [0, 1], [collapsedHeight, expandedHeight]),
@@ -291,7 +316,11 @@ export function ReelSocialOverlay({
         <LinearGradient colors={[colors.transparent, colors.overlayHeavy]} style={StyleSheet.absoluteFill} />
       </Animated.View>
       <Animated.View
-        style={[styles.rail, chromeStyle]}
+        style={[
+          styles.rail,
+          captionBlockHeight > 0 && { bottom: CAPTION_BOTTOM + captionBlockHeight - authorRowY },
+          chromeStyle,
+        ]}
         pointerEvents={isHidden || hasComments ? 'none' : 'auto'}
         accessibilityElementsHidden={isHidden || hasComments}
         aria-hidden={isHidden || hasComments}
@@ -334,24 +363,12 @@ export function ReelSocialOverlay({
             if (!mutation.isPending) mutation.mutate({ type: 'share' });
           }}
         />
-        {/* Cuối cột như TikTok: hành động ít dùng, không lẫn với tim, bình luận. */}
-        {!isSample && postId && (
-          <ReportButton
-            targetType="post"
-            targetId={postId}
-            trigger={(open) => (
-              <RailAction
-                icon="flag-outline"
-                iconSize={mobileIconSize.control}
-                label={vi.moderation.reportTitle}
-                onPress={open}
-              />
-            )}
-          />
-        )}
       </Animated.View>
       <Animated.View
-        style={[styles.caption, { right: RAIL_ACTION_SIZE + spacing.lg }, chromeStyle]}
+        style={[styles.caption, { width: Math.round(screenWidth * 0.75) - spacing.md }, chromeStyle]}
+        onLayout={({ nativeEvent }) => {
+          if (isCaptionSettled.current) setCaptionBlockHeight(nativeEvent.layout.height);
+        }}
         pointerEvents={isHidden ? 'none' : 'box-none'}
         accessibilityElementsHidden={isHidden}
         aria-hidden={isHidden}
@@ -362,12 +379,18 @@ export function ReelSocialOverlay({
             {copy.sample}
           </Txt>
         )}
-        <View style={styles.authorRow}>
+        <View
+          style={styles.authorRow}
+          onLayout={({ nativeEvent }) => {
+            // Chỉ đo khi caption thu gọn, để cột icon không nhảy theo lúc mở rộng.
+            if (isCaptionSettled.current) setAuthorRowY(nativeEvent.layout.y);
+          }}
+        >
           {item.social?.author.avatarUrl ? (
             <Image source={item.social.author.avatarUrl} style={styles.avatar} />
           ) : (
             <View style={styles.avatar}>
-              <Icon name="person-outline" color={colors.background} size={mobileIconSize.inline} />
+              <Icon name="person-outline" color={colors.background} size={14} />
             </View>
           )}
           <Txt variant="label" style={styles.author} numberOfLines={1}>
@@ -383,6 +406,18 @@ export function ReelSocialOverlay({
         >
           <Txt
             style={styles.captionBody}
+            // Web không có onTextLayout: đo chiều cao để biết caption dài hơn 2 dòng.
+            onLayout={({ nativeEvent }) => {
+              const lines = Math.round(nativeEvent.layout.height / CAPTION_TYPE.lineHeight);
+              setIsCaptionLong(lines > CAPTION_LINES);
+              // shortcut: web ước lượng chỗ cắt theo số ký tự mỗi dòng; native đo đúng bằng onTextLayout.
+              if (Platform.OS === 'web')
+                setCollapsedLength(
+                  lines > CAPTION_LINES
+                    ? Math.max(0, Math.floor((fullCaption.length * CAPTION_LINES) / lines) - SHOW_MORE_RESERVED_CHARS)
+                    : null,
+                );
+            }}
             onTextLayout={({ nativeEvent }) =>
               setCollapsedLength(
                 getCollapsedCaptionLength(
@@ -393,8 +428,7 @@ export function ReelSocialOverlay({
               )
             }
           >
-            <Txt style={styles.captionTitle}>{title}</Txt>
-            {fullCaption.slice(title.length)}
+            {fullCaption}
           </Txt>
         </View>
         <Animated.View style={[styles.captionText, captionTextStyle]}>
@@ -406,15 +440,14 @@ export function ReelSocialOverlay({
             onLayout={({ nativeEvent }) => setCollapsedHeight(nativeEvent.layout.height)}
           >
             <Pressable
-              accessibilityRole={collapsedLength === null ? undefined : 'button'}
-              accessibilityState={collapsedLength === null ? undefined : { expanded: false }}
-              disabled={collapsedLength === null}
+              accessibilityRole={isCaptionLong ? 'button' : undefined}
+              accessibilityState={isCaptionLong ? { expanded: false } : undefined}
+              disabled={!isCaptionLong}
               onPress={() => toggleExpanded(true)}
               style={({ pressed }) => pressed && styles.captionPressed}
             >
               <Txt style={styles.captionBody} numberOfLines={CAPTION_LINES}>
-                <Txt style={styles.captionTitle}>{visibleCaption.slice(0, title.length)}</Txt>
-                {visibleCaption.slice(title.length)}
+                {visibleCaption}
                 {collapsedLength !== null && <Txt style={styles.captionTitle}>{SHOW_MORE_SUFFIX}</Txt>}
               </Txt>
             </Pressable>
@@ -428,7 +461,7 @@ export function ReelSocialOverlay({
             <ScrollView
               ref={expandedScroll}
               nestedScrollEnabled
-              scrollEnabled={expandedContentHeight > CAPTION_MAX_HEIGHT}
+              scrollEnabled={expandedContentHeight > captionMaxHeight}
               onContentSizeChange={(_width, contentHeight) => setExpandedContentHeight(contentHeight)}
             >
               <Pressable
@@ -438,8 +471,7 @@ export function ReelSocialOverlay({
                 style={({ pressed }) => pressed && styles.captionPressed}
               >
                 <Txt style={styles.captionBody}>
-                  <Txt style={styles.captionTitle}>{title}</Txt>
-                  {`${fullCaption.slice(title.length)} `}
+                  {`${fullCaption} `}
                   <Txt style={styles.captionTitle}>{copy.showLess}</Txt>
                 </Txt>
               </Pressable>
@@ -454,7 +486,7 @@ export function ReelSocialOverlay({
             hitSlop={{ top: DETAIL_HIT_SLOP, bottom: DETAIL_HIT_SLOP }}
             onPress={() => setIsTripPlanOpen(true)}
           >
-            <Icon name="location-outline" size={mobileIconSize.inline} color={colors.coralInk} />
+            <Icon name="location-outline" size={15} color={colors.coralInk} />
             <Txt variant="label" style={styles.detailText}>
               {vi.mobile.tripPlan.view}
             </Txt>
@@ -514,10 +546,10 @@ const styles = StyleSheet.create({
   captionTitle: {
     color: colors.background,
     fontFamily: nativeFonts.semibold,
-    ...compactType.body,
+    ...CAPTION_TYPE,
     ...TEXT_SHADOW,
   },
-  captionBody: { color: colors.background, ...compactType.body, ...TEXT_SHADOW },
+  captionBody: { color: colors.background, ...CAPTION_TYPE, ...TEXT_SHADOW },
   captionText: { overflow: 'hidden' },
   collapsedLayer: { position: 'absolute', top: 0, left: 0, right: 0 },
   captionPressed: { opacity: 0.7 },
@@ -531,7 +563,7 @@ const styles = StyleSheet.create({
   },
   railCount: {
     color: colors.background,
-    ...compactType.label,
+    ...RAIL_COUNT_TYPE,
     fontFamily: nativeFonts.semibold,
     ...TEXT_SHADOW,
   },
@@ -545,14 +577,20 @@ const styles = StyleSheet.create({
   caption: {
     position: 'absolute',
     left: spacing.md,
-    bottom: spacing.md,
+    bottom: CAPTION_BOTTOM,
     gap: spacing.xs,
   },
   authorRow: { flexDirection: 'row', gap: spacing.xs, alignItems: 'center' },
-  author: { flex: 1, color: colors.background, ...compactType.body, ...TEXT_SHADOW },
+  author: {
+    flex: 1,
+    color: colors.background,
+    fontFamily: nativeFonts.semibold,
+    ...AUTHOR_TYPE,
+    ...TEXT_SHADOW,
+  },
   avatar: {
-    width: 22,
-    height: 22,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.background,
@@ -574,9 +612,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
     backgroundColor: colors.warmMist,
     borderRadius: radius.pill,
   },
-  detailText: { color: colors.ink, flexShrink: 1, ...compactType.label },
+  detailText: { color: colors.ink, flexShrink: 1, fontFamily: nativeFonts.semibold, ...DETAIL_TYPE },
 });
