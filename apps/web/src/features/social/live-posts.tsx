@@ -758,10 +758,11 @@ function MediaTrackItem({
       data-post-id={post.id}
       aria-hidden={!isActive}
     >
-      {hasBackdrop && reelPoster && (
+      {hasBackdrop && reelCard && (
         <div
           className={styles.mediaBackdropBlur}
-          style={{ backgroundImage: `url(${reelPoster})` }}
+          // Ảnh đằng nào cũng bị làm mờ nên dùng poster nhỏ nhất: giải mã nhanh, tốn ít bộ nhớ hơn.
+          style={{ backgroundImage: `url(${selectReelPoster(reelCard.video.posters, 360)})` }}
         />
       )}
 
