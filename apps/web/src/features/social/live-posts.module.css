@@ -1846,10 +1846,6 @@
   min-width: 0;
   display: grid;
   gap: 4px;
-  padding: 9px 12px 8px;
-  border-radius: 4px 16px 16px 16px;
-  background: var(--color-surface);
-  border: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
 }
 
 .panelCommentMeta {
