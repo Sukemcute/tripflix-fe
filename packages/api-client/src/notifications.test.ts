@@ -94,6 +94,12 @@ it('posts read actions with encoded IDs, authentication and idempotency keys', a
   }
 });
 
+it('sends the newest seen notification as the read-all boundary', async () => {
+  const send = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => json({ unreadCount: 1 }));
+  expect(await notificationsApi.markAllRead('newest-seen')).toEqual({ unreadCount: 1 });
+  expect(send.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ throughId: 'newest-seen' }));
+});
+
 it('preserves HttpError failures for list and read actions', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async () => json({ message: 'Unavailable' }, 503));
   await expect(notificationsApi.list()).rejects.toBeInstanceOf(HttpError);

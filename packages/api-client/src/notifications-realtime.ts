@@ -6,6 +6,7 @@ import { useApiSession } from './session';
 
 /** Sự kiện notification-service phát khi có thông báo mới (README notification-service, TF46). */
 export const NOTIFICATION_CREATED_EVENT = 'notification.created';
+export const NOTIFICATION_READ_EVENT = 'notification.read';
 const AUTH_EXPIRED_EVENT = 'auth.expired';
 
 /** Chỉ giữ dạng cần dùng: socket.io-client gắn data của lỗi bắt tay vào Error. */
@@ -66,6 +67,7 @@ export function useNotificationsRealtime(): void {
       if (!isClosed) reload();
     });
     socket.on(NOTIFICATION_CREATED_EVENT, reload);
+    socket.on(NOTIFICATION_READ_EVENT, reload);
     socket.on(AUTH_EXPIRED_EVENT, () => void refreshAndReconnect());
     socket.on('connect_error', (error: HandshakeError) => {
       // 'unavailable' (Redis, JWKS lỗi) để socket.io tự thử lại; 'unauthorized' thì phải có token mới.

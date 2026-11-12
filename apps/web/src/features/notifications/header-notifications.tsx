@@ -25,6 +25,7 @@ export function HeaderNotifications() {
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const unreadCount = notifications.data?.pages[0]?.unreadCount ?? 0;
+  const latestSeenId = notifications.data?.pages[0]?.items[0]?.id;
   const items = [
     ...new Map(
       (notifications.data?.pages.flatMap((page) => page.items) ?? []).map((item) => [item.id, item]),
@@ -57,12 +58,12 @@ export function HeaderNotifications() {
         <div id="header-notifications-panel" className="header-popover header-notifications-panel">
           <div className="header-notifications-head">
             <strong>{vi.api.notificationsTitle}</strong>
-            {unreadCount > 0 && (
+            {unreadCount > 0 && latestSeenId && (
               <button
                 type="button"
                 className="header-notifications-read-all"
                 disabled={markAllRead.isPending || markRead.isPending}
-                onClick={() => markAllRead.mutate()}
+                onClick={() => markAllRead.mutate(latestSeenId)}
               >
                 {vi.api.notificationsMarkAllRead}
               </button>
@@ -78,7 +79,12 @@ export function HeaderNotifications() {
               if (markRead.variables !== undefined) markRead.mutate(markRead.variables);
             }}
           />
-          <ApiErrorNotice error={markAllRead.error} retry={() => markAllRead.mutate()} />
+          <ApiErrorNotice
+            error={markAllRead.error}
+            retry={() => {
+              if (markAllRead.variables !== undefined) markAllRead.mutate(markAllRead.variables);
+            }}
+          />
           {items.length > 0 && (
             <ul className="header-notifications-list">
               {items.map((item) => {

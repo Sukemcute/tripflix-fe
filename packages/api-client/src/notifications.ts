@@ -50,8 +50,14 @@ function isReadResult(value: unknown): value is NotificationReadResult {
   return isRecord(value) && Number.isInteger(value.unreadCount) && Number(value.unreadCount) >= 0;
 }
 
-async function markNotificationsRead(path: string): Promise<NotificationReadResult> {
-  const { data } = await http<HttpResponse<unknown>>(path, { method: 'POST' });
+async function markNotificationsRead(path: string, throughId?: string): Promise<NotificationReadResult> {
+  const { data } = await http<HttpResponse<unknown>>(path, {
+    method: 'POST',
+    ...(throughId === undefined ? {} : {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ throughId }),
+    }),
+  });
   if (!isReadResult(data)) throw new Error('Unexpected notification read response');
   return data;
 }
@@ -74,8 +80,8 @@ export const notificationsApi = {
   markRead(id: string): Promise<NotificationReadResult> {
     return markNotificationsRead(`/notifications/${encodeURIComponent(id)}/read`);
   },
-  markAllRead(): Promise<NotificationReadResult> {
-    return markNotificationsRead('/notifications/read-all');
+  markAllRead(throughId?: string): Promise<NotificationReadResult> {
+    return markNotificationsRead('/notifications/read-all', throughId);
   },
 };
 
@@ -116,7 +122,7 @@ export function useMarkAllNotificationsRead() {
   const { user } = useApiSession();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => notificationsApi.markAllRead(),
+    mutationFn: (throughId?: string) => notificationsApi.markAllRead(throughId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] }),
   });
 }
