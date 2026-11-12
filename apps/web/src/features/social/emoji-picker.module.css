@@ -1,0 +1,78 @@
+/* Bảng emoji bật lên phía trên ô nhập bình luận */
+.picker {
+  /* Reset style mặc định của <dialog> (mở không modal). */
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  /* Căn theo khung nhập (cả chiều ngang panel), cách đều hai bên nên luôn vừa khít panel. */
+  position: absolute;
+  inset: auto 12px calc(100% + 6px) 12px;
+  z-index: 20;
+  width: auto;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  box-shadow: 0 18px 40px -18px color-mix(in srgb, var(--color-ink) 45%, transparent);
+  overflow: hidden;
+  animation: pickerFadeIn 140ms ease-out both;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 2px;
+  max-height: min(232px, 40dvh);
+  overflow-y: auto;
+  padding: 8px;
+  overscroll-behavior: contain;
+}
+
+.recentRow {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 2px;
+  padding: 6px 8px 8px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.emojiBtn {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-transparent);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    transform 120ms ease;
+}
+
+.emojiBtn:hover,
+.emojiBtn:focus-visible {
+  background: var(--color-surface-muted);
+  transform: scale(1.12);
+  outline: none;
+}
+
+@keyframes pickerFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picker {
+    animation: none;
+  }
+
+  .emojiBtn {
+    transition: none;
+  }
+}
