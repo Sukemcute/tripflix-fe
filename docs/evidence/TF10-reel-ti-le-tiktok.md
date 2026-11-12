@@ -8,7 +8,7 @@
 - Cột hành động reel:
   - Icon 28 theo chuẩn 390pt, tự co giãn theo `getReelScale`.
   - Bỏ cờ báo cáo; vẫn báo cáo được ở trang chi tiết bài.
-  - Đỉnh nút chia sẻ thẳng đỉnh dòng tác giả, chừa góc dưới phải cho tính năng sau.
+  - Cả cột nút nằm trên dòng tác giả (đáy cột chạm đỉnh dòng tác giả), chừa góc dưới phải cho tính năng sau.
   - Cột không nhảy theo caption khi mở hoặc thu gọn: chỉ đo lại khi hiệu ứng thu gọn đã xong.
 - Chữ trên reel:
   - Tác giả 16 đậm, avatar 26. Caption 14/19, rộng 3/4 màn hình.
@@ -27,7 +27,7 @@
   - Mobile lint còn 1 cảnh báo có sẵn ở `reels-screen.tsx`.
 - Expo web, khung iPhone 14 Pro Max 430×932, đo DOM:
   - Thanh tab cao 52, icon cách mép trên 6.
-  - Đỉnh nút chia sẻ = đỉnh dòng tác giả (y=505).
+  - Đáy cột nút = đỉnh dòng tác giả (y=747).
   - Caption kết thúc ở 3/4 bề ngang.
   - Theo dõi mỗi 30ms qua một lần mở rồi thu gọn: nút chia sẻ đứng yên ở y=505 trong hơn 280 lần đo.
   - Màn đăng bài không còn ô "Tiêu đề".
