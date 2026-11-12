@@ -153,10 +153,9 @@ export function ReelSocialOverlay({
   const screenWidth = Math.min(width, mobileLayout.contentWidth);
   // Caption mở rộng tối đa 1/3 màn hình, dài hơn thì cuộn trong khung đó.
   const captionMaxHeight = Math.round(windowHeight / 3);
-  // Đỉnh nút chia sẻ thẳng đỉnh dòng tác giả, chừa góc dưới phải cho tính năng sau.
+  // Cả cột nút nằm trên dòng tác giả (đáy cột chạm đỉnh dòng tác giả), chừa góc dưới phải cho tính năng sau.
   const [captionBlockHeight, setCaptionBlockHeight] = useState(0);
   const [authorRowY, setAuthorRowY] = useState(0);
-  const [shareHeight, setShareHeight] = useState(0);
   const [isCaptionLong, setIsCaptionLong] = useState(false);
   const reelScale = getReelScale(Math.min(width, mobileLayout.contentWidth));
   const railIconSize = Math.round(RAIL_ICON_SIZE * reelScale);
@@ -319,8 +318,7 @@ export function ReelSocialOverlay({
       <Animated.View
         style={[
           styles.rail,
-          captionBlockHeight > 0 &&
-            shareHeight > 0 && { bottom: CAPTION_BOTTOM + captionBlockHeight - authorRowY - shareHeight },
+          captionBlockHeight > 0 && { bottom: CAPTION_BOTTOM + captionBlockHeight - authorRowY },
           chromeStyle,
         ]}
         pointerEvents={isHidden || hasComments ? 'none' : 'auto'}
@@ -355,18 +353,16 @@ export function ReelSocialOverlay({
           selected={isSaved}
           onPress={() => interact('save')}
         />
-        <View onLayout={({ nativeEvent }) => setShareHeight(nativeEvent.layout.height)}>
-          <RailAction
-            icon="paper-plane-outline"
-            iconSize={railIconSize}
-            label={vi.api.share}
-            count={counts.shares}
-            // Không làm mờ nút khi tim, lưu đang gửi; chỉ bỏ qua lần bấm lúc đó.
-            onPress={() => {
-              if (!mutation.isPending) mutation.mutate({ type: 'share' });
-            }}
-          />
-        </View>
+        <RailAction
+          icon="paper-plane-outline"
+          iconSize={railIconSize}
+          label={vi.api.share}
+          count={counts.shares}
+          // Không làm mờ nút khi tim, lưu đang gửi; chỉ bỏ qua lần bấm lúc đó.
+          onPress={() => {
+            if (!mutation.isPending) mutation.mutate({ type: 'share' });
+          }}
+        />
       </Animated.View>
       <Animated.View
         style={[styles.caption, { width: Math.round(screenWidth * 0.75) - spacing.md }, chromeStyle]}
