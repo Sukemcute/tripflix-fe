@@ -2150,7 +2150,12 @@ export function RightPanelCommentsSynchronized({
                 aria-label={vi.api.emojiPickerToggle}
                 aria-expanded={isEmojiOpen}
                 aria-haspopup="dialog"
-                onClick={() => setEmojiOpen((open) => !open)}
+                // Giữ focus ở ô nhập khi bấm nút, rồi đưa con trỏ vào ô nhập để gõ được ngay.
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  setEmojiOpen((open) => !open);
+                  composerInputRef.current?.focus();
+                }}
               >
                 <SocialIcon name="smile" size={20} />
               </button>

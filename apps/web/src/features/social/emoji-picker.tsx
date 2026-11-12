@@ -5,6 +5,11 @@ import { vi } from '@tripflix/i18n';
 import { COMMON_EMOJIS, pushRecentEmoji } from './emoji-picker-data';
 import styles from './emoji-picker.module.css';
 
+/** Bấm chuột vào emoji không lấy focus khỏi ô nhập, để con trỏ vẫn ở đó và gõ tiếp được ngay. */
+function keepInputFocus(event: React.MouseEvent) {
+  event.preventDefault();
+}
+
 const RECENT_EMOJI_STORAGE_KEY = 'tripflix:recent-emojis';
 
 function readRecentEmojis(): string[] {
@@ -75,6 +80,7 @@ export function EmojiPicker({ onSelect, onClose, keepOpenRef }: EmojiPickerProps
             type="button"
             className={styles.emojiBtn}
             aria-label={emoji}
+            onMouseDown={keepInputFocus}
             onClick={() => handleSelect(emoji)}
           >
             {emoji}
@@ -89,7 +95,8 @@ export function EmojiPicker({ onSelect, onClose, keepOpenRef }: EmojiPickerProps
               type="button"
               className={styles.emojiBtn}
               aria-label={emoji}
-              onClick={() => handleSelect(emoji)}
+              onMouseDown={keepInputFocus}
+            onClick={() => handleSelect(emoji)}
             >
               {emoji}
             </button>
