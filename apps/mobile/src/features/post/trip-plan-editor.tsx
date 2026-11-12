@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   EMPTY_TRIP_PLAN_DAY,
+  TRIP_PLAN_MAX_DAYS,
   type TripPlanDayDraft,
   type TripPlanDraft,
   type TripPlanMode,
@@ -15,7 +16,6 @@ import { Button, Chip, Field, IconButton, Row, Txt } from '@/components/mobile-u
 
 const copy = vi.mobile.tripPlan.editor;
 const MODES: readonly TripPlanMode[] = ['flight', 'bus', 'train', 'car', 'other'];
-const MAX_DAYS = 30;
 
 /** Soạn lộ trình theo ngày: hoạt động, phương tiện (máy bay chọn sân bay có tuyến thật), chỗ ở (khách sạn có bán). */
 export function TripPlanEditor({
@@ -37,6 +37,7 @@ export function TripPlanEditor({
         maxLength={100}
       />
       <HotelPicker hotel={draft.hotel} onChange={(hotel) => onChange({ ...draft, hotel })} />
+      <Txt variant="caption" style={styles.muted}>{copy.bookingHint}</Txt>
       {draft.days.map((day, index) => {
         const origins = routes.data?.map((route) => route.airport) ?? [];
         const destinations =
@@ -153,7 +154,7 @@ export function TripPlanEditor({
           </View>
         );
       })}
-      {draft.days.length < MAX_DAYS && (
+      {draft.days.length < TRIP_PLAN_MAX_DAYS && (
         <Button
           tone="secondary"
           icon="add"
