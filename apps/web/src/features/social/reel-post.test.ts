@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { FeedCardDto } from '@tripflix/api-client/core-api/model/index';
-import { pickReelAfterRemoval, toReelPost } from './reel-post';
+import {
+  getReelRenderMode,
+  pickReelAfterRemoval,
+  REEL_RENDER_WINDOW,
+  shouldShowReelBackdrop,
+  toReelPost,
+} from './reel-post';
 
 const card: FeedCardDto = {
   postId: 'post-1',
@@ -61,5 +67,39 @@ describe('pickReelAfterRemoval', () => {
   it('bỏ bài duy nhất hoặc bài không có trong danh sách thì không chọn bài nào', () => {
     expect(pickReelAfterRemoval(['a'], 'a')).toBeNull();
     expect(pickReelAfterRemoval(['a'], 'x')).toBeNull();
+  });
+});
+
+describe('getReelRenderMode', () => {
+  it('bài đang xem và bài kế tiếp có video, bài vừa xem qua chỉ còn poster', () => {
+    expect(getReelRenderMode(5, 5)).toBe('video');
+    expect(getReelRenderMode(6, 5)).toBe('video');
+    expect(getReelRenderMode(4, 5)).toBe('poster');
+  });
+
+  it('cách 2 bài vẫn render poster, xa hơn chỉ còn khung giữ chỗ', () => {
+    expect(getReelRenderMode(7, 5)).toBe('poster');
+    expect(getReelRenderMode(3, 5)).toBe('poster');
+    expect(getReelRenderMode(8, 5)).toBe('placeholder');
+    expect(getReelRenderMode(0, 5)).toBe('placeholder');
+  });
+
+  it('lướt 100 bài thì số bài render đầy đủ vẫn cố định', () => {
+    const rendered = Array.from({ length: 100 }, (_, index) => getReelRenderMode(index, 50)).filter(
+      (mode) => mode !== 'placeholder',
+    );
+    expect(rendered).toHaveLength(2 * REEL_RENDER_WINDOW + 1);
+  });
+});
+
+describe('shouldShowReelBackdrop', () => {
+  it('chỉ bài đang xem và hai bài sát cạnh có nền mờ', () => {
+    expect([3, 4, 5, 6, 7].map((index) => shouldShowReelBackdrop(index, 5))).toEqual([
+      false,
+      true,
+      true,
+      true,
+      false,
+    ]);
   });
 });

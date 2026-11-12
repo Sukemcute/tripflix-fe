@@ -49,3 +49,26 @@ export function pickReelAfterRemoval(postIds: readonly string[], removedId: stri
   if (index < 0) return null;
   return postIds[index + 1] ?? postIds[index - 1] ?? null;
 }
+
+/**
+ * Mức render của một Reel theo khoảng cách tới bài đang xem, để lướt lâu không nặng dần:
+ * - `video`: bài đang xem và bài kế tiếp (tải trước để lướt tới là phát ngay).
+ * - `poster`: cách 1–2 bài, kể cả bài vừa xem qua (chỉ ảnh, không tải segment).
+ * - `placeholder`: xa hơn, chỉ còn khung rỗng giữ chiều cao để cuộn và snap đúng vị trí.
+ */
+export type ReelRenderMode = 'video' | 'poster' | 'placeholder';
+
+/** Số bài mỗi phía của bài đang xem vẫn được render đầy đủ nội dung. */
+export const REEL_RENDER_WINDOW = 2;
+
+export function getReelRenderMode(index: number, activeIndex: number): ReelRenderMode {
+  const offset = index - activeIndex;
+  if (offset === 0 || offset === 1) return 'video';
+  if (Math.abs(offset) <= REEL_RENDER_WINDOW) return 'poster';
+  return 'placeholder';
+}
+
+/** Nền mờ (filter: blur) tốn GPU: chỉ bật cho bài đang xem và hai bài sát cạnh. */
+export function shouldShowReelBackdrop(index: number, activeIndex: number): boolean {
+  return Math.abs(index - activeIndex) <= 1;
+}
