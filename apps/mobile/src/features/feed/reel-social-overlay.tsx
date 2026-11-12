@@ -45,7 +45,6 @@ const copy = vi.mobile.reels;
 const number = (value: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value);
 const DETAIL_HEIGHT = 30;
 const CAPTION_LINES = 2;
-const CAPTION_MAX_HEIGHT = 180;
 const SHOW_MORE_SUFFIX = `… ${copy.showMore}`;
 // Measured by characters, so keep a little extra room for wide letters in the removed text.
 const SHOW_MORE_RESERVED_CHARS = SHOW_MORE_SUFFIX.length + 4;
@@ -61,6 +60,7 @@ const HEART_POP_SCALE = 1.25;
 const HEART_POP_LIFT = -6;
 const PRESSED_SCALE = 0.88;
 const RAIL_ACTION_SIZE = mobileLayout.touchTarget;
+const CAPTION_BOTTOM = spacing.md;
 // Tỉ lệ đo từ TikTok (ở chuẩn 390pt, nhân getReelScale): icon cột phải ~31, số 12; tác giả 16 đậm; caption 14.
 const RAIL_ICON_SIZE = 31;
 const AUTHOR_TYPE = { fontSize: 16, lineHeight: 21 };
@@ -148,7 +148,15 @@ export function ReelSocialOverlay({
 }) {
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
-  const { width } = useWindowDimensions();
+  const { width, height: windowHeight } = useWindowDimensions();
+  const screenWidth = Math.min(width, mobileLayout.contentWidth);
+  // Caption mở rộng tối đa 1/3 màn hình, dài hơn thì cuộn trong khung đó.
+  const captionMaxHeight = Math.round(windowHeight / 3);
+  // Đỉnh nút chia sẻ thẳng đỉnh dòng tác giả, chừa góc dưới phải cho tính năng sau.
+  const [captionBlockHeight, setCaptionBlockHeight] = useState(0);
+  const [authorRowY, setAuthorRowY] = useState(0);
+  const [shareHeight, setShareHeight] = useState(0);
+  const [isCaptionLong, setIsCaptionLong] = useState(false);
   const reelScale = getReelScale(Math.min(width, mobileLayout.contentWidth));
   const railIconSize = Math.round(RAIL_ICON_SIZE * reelScale);
   const tripiSize = Math.round(mobileIconSize.reelTripi * reelScale);
@@ -263,7 +271,7 @@ export function ReelSocialOverlay({
   const fullCaption = caption ? `${title} · ${caption}` : title;
   const visibleCaption =
     collapsedLength === null ? fullCaption : fullCaption.slice(0, collapsedLength).trimEnd();
-  const expandedHeight = Math.min(CAPTION_MAX_HEIGHT, Math.max(collapsedHeight, expandedContentHeight));
+  const expandedHeight = Math.min(captionMaxHeight, Math.max(collapsedHeight, expandedContentHeight));
   const toggleExpanded = (shouldExpand: boolean) => {
     setIsExpanded(shouldExpand);
     if (!shouldExpand) expandedScroll.current?.scrollTo({ y: 0, animated: true });
@@ -297,7 +305,12 @@ export function ReelSocialOverlay({
         <LinearGradient colors={[colors.transparent, colors.overlayHeavy]} style={StyleSheet.absoluteFill} />
       </Animated.View>
       <Animated.View
-        style={[styles.rail, chromeStyle]}
+        style={[
+          styles.rail,
+          captionBlockHeight > 0 &&
+            shareHeight > 0 && { bottom: CAPTION_BOTTOM + captionBlockHeight - authorRowY - shareHeight },
+          chromeStyle,
+        ]}
         pointerEvents={isHidden || hasComments ? 'none' : 'auto'}
         accessibilityElementsHidden={isHidden || hasComments}
         aria-hidden={isHidden || hasComments}
@@ -330,19 +343,24 @@ export function ReelSocialOverlay({
           selected={isSaved}
           onPress={() => interact('save')}
         />
-        <RailAction
-          icon="paper-plane-outline"
-          iconSize={railIconSize}
-          label={vi.api.share}
-          count={counts.shares}
-          // Không làm mờ nút khi tim, lưu đang gửi; chỉ bỏ qua lần bấm lúc đó.
-          onPress={() => {
-            if (!mutation.isPending) mutation.mutate({ type: 'share' });
-          }}
-        />
+        <View onLayout={({ nativeEvent }) => setShareHeight(nativeEvent.layout.height)}>
+          <RailAction
+            icon="paper-plane-outline"
+            iconSize={railIconSize}
+            label={vi.api.share}
+            count={counts.shares}
+            // Không làm mờ nút khi tim, lưu đang gửi; chỉ bỏ qua lần bấm lúc đó.
+            onPress={() => {
+              if (!mutation.isPending) mutation.mutate({ type: 'share' });
+            }}
+          />
+        </View>
       </Animated.View>
       <Animated.View
-        style={[styles.caption, { right: RAIL_ACTION_SIZE + spacing.lg }, chromeStyle]}
+        style={[styles.caption, { width: Math.round(screenWidth * 0.75) - spacing.md }, chromeStyle]}
+        onLayout={({ nativeEvent }) => {
+          if (!isExpanded) setCaptionBlockHeight(nativeEvent.layout.height);
+        }}
         pointerEvents={isHidden ? 'none' : 'box-none'}
         accessibilityElementsHidden={isHidden}
         aria-hidden={isHidden}
@@ -353,7 +371,13 @@ export function ReelSocialOverlay({
             {copy.sample}
           </Txt>
         )}
-        <View style={styles.authorRow}>
+        <View
+          style={styles.authorRow}
+          onLayout={({ nativeEvent }) => {
+            // Chỉ đo khi caption thu gọn, để cột icon không nhảy theo lúc mở rộng.
+            if (!isExpanded) setAuthorRowY(nativeEvent.layout.y);
+          }}
+        >
           {item.social?.author.avatarUrl ? (
             <Image source={item.social.author.avatarUrl} style={styles.avatar} />
           ) : (
@@ -374,6 +398,10 @@ export function ReelSocialOverlay({
         >
           <Txt
             style={styles.captionBody}
+            // Web không có onTextLayout: đo chiều cao để biết caption dài hơn 2 dòng.
+            onLayout={({ nativeEvent }) =>
+              setIsCaptionLong(nativeEvent.layout.height > CAPTION_LINES * CAPTION_TYPE.lineHeight + 1)
+            }
             onTextLayout={({ nativeEvent }) =>
               setCollapsedLength(
                 getCollapsedCaptionLength(
@@ -397,9 +425,9 @@ export function ReelSocialOverlay({
             onLayout={({ nativeEvent }) => setCollapsedHeight(nativeEvent.layout.height)}
           >
             <Pressable
-              accessibilityRole={collapsedLength === null ? undefined : 'button'}
-              accessibilityState={collapsedLength === null ? undefined : { expanded: false }}
-              disabled={collapsedLength === null}
+              accessibilityRole={isCaptionLong ? 'button' : undefined}
+              accessibilityState={isCaptionLong ? { expanded: false } : undefined}
+              disabled={!isCaptionLong}
               onPress={() => toggleExpanded(true)}
               style={({ pressed }) => pressed && styles.captionPressed}
             >
@@ -408,6 +436,7 @@ export function ReelSocialOverlay({
                 {visibleCaption.slice(title.length)}
                 {collapsedLength !== null && <Txt style={styles.captionTitle}>{SHOW_MORE_SUFFIX}</Txt>}
               </Txt>
+              {isCaptionLong && collapsedLength === null && <Txt style={styles.captionTitle}>{copy.showMore}</Txt>}
             </Pressable>
           </Animated.View>
           <Animated.View
@@ -419,7 +448,7 @@ export function ReelSocialOverlay({
             <ScrollView
               ref={expandedScroll}
               nestedScrollEnabled
-              scrollEnabled={expandedContentHeight > CAPTION_MAX_HEIGHT}
+              scrollEnabled={expandedContentHeight > captionMaxHeight}
               onContentSizeChange={(_width, contentHeight) => setExpandedContentHeight(contentHeight)}
             >
               <Pressable
@@ -536,7 +565,7 @@ const styles = StyleSheet.create({
   caption: {
     position: 'absolute',
     left: spacing.md,
-    bottom: spacing.md,
+    bottom: CAPTION_BOTTOM,
     gap: spacing.xs,
   },
   authorRow: { flexDirection: 'row', gap: spacing.xs, alignItems: 'center' },
