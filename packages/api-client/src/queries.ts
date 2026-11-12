@@ -8,12 +8,13 @@ export function useSocialPosts(
   keyword = '',
   // Chỉ còn vlog: Reels lấy qua useReelsFeed (/v1/feed).
   postType?: 'vlog',
+  options: { enabled?: boolean } = {},
 ) {
   const { user, isReady } = useApiSession();
   return useInfiniteQuery({
     queryKey: ['social', kind, user?.id, keyword, postType],
     initialPageParam: undefined as string | undefined,
-    enabled: isReady && (kind === 'public' || !!user),
+    enabled: (options.enabled ?? true) && isReady && (kind === 'public' || !!user),
     queryFn: ({ pageParam, signal }) =>
       kind === 'mine'
         ? socialApi.listMyPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal)
@@ -25,7 +26,10 @@ export function useSocialPosts(
               searchPublicPosts(keyword, pageParam, signal).then((page) =>
                 postType ? { ...page, items: page.items.filter((post) => post.postType === postType) } : page,
               )
-            : socialApi.listPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal),
+            : socialApi.listPosts(
+                { cursor: pageParam, ...(postType ? { post_type: postType } : {}) },
+                signal,
+              ),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
 }

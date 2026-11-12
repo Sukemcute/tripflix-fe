@@ -691,7 +691,7 @@
   background: var(--color-teal-soft);
 }
 
-/* Ảnh của mọi điểm đến luôn nằm sẵn trong DOM (đã tải xong), đổi điểm đến chỉ là mờ dần giữa hai ảnh. */
+/* Chỉ mount ảnh của điểm đến đang chọn để không tải cả bộ ảnh ngay khi mở trang. */
 .stayLandscape {
   object-fit: cover;
   opacity: 0;
