@@ -1976,7 +1976,8 @@ export function RightPanelCommentsSynchronized({
   const initialDraft = getCommentDraft(post.id);
   const [body, setBody] = useState(initialDraft?.body ?? '');
   const [isEmojiOpen, setEmojiOpen] = useState(false);
-  const emojiToggleRef = useRef<HTMLButtonElement | null>(null);
+  // Cả viên thuốc nhập (ô chữ và nút emoji) tính là bên trong bảng emoji: bấm vào để gõ không đóng bảng.
+  const composerFieldRef = useRef<HTMLDivElement | null>(null);
   const closeEmojiPicker = useCallback(() => setEmojiOpen(false), []);
   const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(
     initialDraft?.replyTarget ?? null,
@@ -2133,7 +2134,7 @@ export function RightPanelCommentsSynchronized({
                 </span>
               )}
             </div>
-            <div className={styles.panelComposerField}>
+            <div ref={composerFieldRef} className={styles.panelComposerField}>
               <input
                 ref={composerInputRef}
                 className={styles.panelComposerInput}
@@ -2144,7 +2145,6 @@ export function RightPanelCommentsSynchronized({
                 onChange={(event) => handleBodyChange(event.target.value)}
               />
               <button
-                ref={emojiToggleRef}
                 type="button"
                 className={`${styles.panelEmojiBtn} ${isEmojiOpen ? styles.panelEmojiBtnActive : ''}`}
                 aria-label={vi.api.emojiPickerToggle}
@@ -2155,7 +2155,7 @@ export function RightPanelCommentsSynchronized({
                 <SocialIcon name="smile" size={20} />
               </button>
               {isEmojiOpen && (
-                <EmojiPicker toggleRef={emojiToggleRef} onSelect={handleInsertEmoji} onClose={closeEmojiPicker} />
+                <EmojiPicker keepOpenRef={composerFieldRef} onSelect={handleInsertEmoji} onClose={closeEmojiPicker} />
               )}
             </div>
             <button

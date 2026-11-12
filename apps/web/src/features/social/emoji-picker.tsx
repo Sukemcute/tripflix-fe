@@ -29,12 +29,15 @@ function saveRecentEmojis(recent: string[]): void {
 export interface EmojiPickerProps {
   onSelect: (emoji: string) => void;
   onClose: () => void;
-  /** Nút mở bảng: bấm vào nút này không tính là bấm ra ngoài (nút tự đóng/mở). */
-  toggleRef?: React.RefObject<HTMLElement | null>;
+  /**
+   * Vùng vẫn tính là "bên trong" (ô nhập và nút mở bảng): bấm vào đó không đóng bảng,
+   * để người dùng vừa gõ chữ vừa chèn emoji.
+   */
+  keepOpenRef?: React.RefObject<HTMLElement | null>;
 }
 
-/** Bảng emoji bật lên phía trên ô nhập; chọn xong vẫn mở để chèn tiếp, Esc hoặc bấm ra ngoài thì đóng. */
-export function EmojiPicker({ onSelect, onClose, toggleRef }: EmojiPickerProps) {
+/** Bảng emoji bật lên phía trên ô nhập; vẫn gõ chữ được khi bảng mở, chọn xong vẫn mở để chèn tiếp, Esc hoặc bấm ra ngoài thì đóng. */
+export function EmojiPicker({ onSelect, onClose, keepOpenRef }: EmojiPickerProps) {
   const rootRef = useRef<HTMLDialogElement | null>(null);
   // Bảng chỉ hiện sau khi người dùng bấm (luôn ở client) nên đọc localStorage ngay khi khởi tạo được.
   const [recent, setRecent] = useState<string[]>(readRecentEmojis);
@@ -42,7 +45,7 @@ export function EmojiPicker({ onSelect, onClose, toggleRef }: EmojiPickerProps) 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as Node | null;
-      if (!target || rootRef.current?.contains(target) || toggleRef?.current?.contains(target)) return;
+      if (!target || rootRef.current?.contains(target) || keepOpenRef?.current?.contains(target)) return;
       onClose();
     }
     function handleKeyDown(event: KeyboardEvent) {
@@ -54,7 +57,7 @@ export function EmojiPicker({ onSelect, onClose, toggleRef }: EmojiPickerProps) 
       document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onClose, toggleRef]);
+  }, [onClose, keepOpenRef]);
 
   function handleSelect(emoji: string) {
     const nextRecent = pushRecentEmoji(recent, emoji);
