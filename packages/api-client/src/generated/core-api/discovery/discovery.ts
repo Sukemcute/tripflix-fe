@@ -527,6 +527,7 @@ export const getExploreControllerSearchPostsUrl = () => {
  * - `postType`: `all` (mặc định), `plan`, `video`, `post`. Video kèm lộ trình thuộc cả `plan` và `video`; với `all` chỉ trả một lần.
  * - Ngân sách trong câu là lọc cứng theo chi phí mỗi người của lộ trình. Bài bị ẩn hoặc xoá không trả về.
  * - Phân trang: gửi `nextCursor` của trang trước vào `cursor`. Không có kết quả thì `items: []`, `total: 0`.
+ * - Không bài nào khớp đủ câu nhưng hiểu được nơi hoặc ý muốn (vd "mùa thu hà nội"): `isFallback: true`, `items` là bài theo phần hiểu được, `dropped` là các từ không có trong dữ liệu.
  * @summary Tìm bài (lộ trình, video, bài viết) bằng câu tự nhiên, có phân trang
  */
 export const exploreControllerSearchPosts = async (

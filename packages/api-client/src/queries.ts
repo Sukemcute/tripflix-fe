@@ -5,7 +5,8 @@ import { socialApi } from './social';
 export function useSocialPosts(
   kind: 'public' | 'mine' | 'bookmarks' = 'public',
   keyword = '',
-  postType?: 'video' | 'vlog',
+  // Chỉ còn vlog: Reels lấy qua useReelsFeed (/v1/feed).
+  postType?: 'vlog',
 ) {
   const { user, isReady } = useApiSession();
   return useInfiniteQuery({
@@ -16,7 +17,7 @@ export function useSocialPosts(
       kind === 'mine'
         ? socialApi.listMyPosts({ cursor: pageParam }, signal)
         : kind === 'bookmarks'
-          ? socialApi.listBookmarks(pageParam, signal)
+          ? socialApi.listBookmarks(pageParam, signal, postType)
           : socialApi.listPosts(
               {
                 cursor: pageParam,

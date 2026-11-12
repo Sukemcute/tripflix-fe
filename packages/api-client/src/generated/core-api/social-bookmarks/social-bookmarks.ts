@@ -164,11 +164,22 @@ export type bookmarksControllerListMyBookmarksResponse200 = {
   status: 200;
 };
 
+export type bookmarksControllerListMyBookmarksResponse400 = {
+  data: void;
+  status: 400;
+};
+
 export type bookmarksControllerListMyBookmarksResponseSuccess =
   bookmarksControllerListMyBookmarksResponse200 & {
     headers: Headers;
   };
-export type bookmarksControllerListMyBookmarksResponse = bookmarksControllerListMyBookmarksResponseSuccess;
+export type bookmarksControllerListMyBookmarksResponseError =
+  bookmarksControllerListMyBookmarksResponse400 & {
+    headers: Headers;
+  };
+
+export type bookmarksControllerListMyBookmarksResponse =
+  bookmarksControllerListMyBookmarksResponseSuccess | bookmarksControllerListMyBookmarksResponseError;
 
 export const getBookmarksControllerListMyBookmarksUrl = (
   params?: BookmarksControllerListMyBookmarksParams,
@@ -207,7 +218,7 @@ export const getBookmarksControllerListMyBookmarksQueryKey = (
 
 export const getBookmarksControllerListMyBookmarksQueryOptions = <
   TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
-  TError = unknown,
+  TError = void,
 >(
   params?: BookmarksControllerListMyBookmarksParams,
   options?: {
@@ -235,11 +246,11 @@ export const getBookmarksControllerListMyBookmarksQueryOptions = <
 export type BookmarksControllerListMyBookmarksQueryResult = NonNullable<
   Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>
 >;
-export type BookmarksControllerListMyBookmarksQueryError = unknown;
+export type BookmarksControllerListMyBookmarksQueryError = void;
 
 export function useBookmarksControllerListMyBookmarks<
   TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
-  TError = unknown,
+  TError = void,
 >(
   params: undefined | BookmarksControllerListMyBookmarksParams,
   options: {
@@ -260,7 +271,7 @@ export function useBookmarksControllerListMyBookmarks<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useBookmarksControllerListMyBookmarks<
   TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
-  TError = unknown,
+  TError = void,
 >(
   params?: BookmarksControllerListMyBookmarksParams,
   options?: {
@@ -281,7 +292,7 @@ export function useBookmarksControllerListMyBookmarks<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useBookmarksControllerListMyBookmarks<
   TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
-  TError = unknown,
+  TError = void,
 >(
   params?: BookmarksControllerListMyBookmarksParams,
   options?: {
@@ -298,7 +309,7 @@ export function useBookmarksControllerListMyBookmarks<
 
 export function useBookmarksControllerListMyBookmarks<
   TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
-  TError = unknown,
+  TError = void,
 >(
   params?: BookmarksControllerListMyBookmarksParams,
   options?: {

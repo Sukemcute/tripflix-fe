@@ -9,6 +9,5 @@ export type PostsControllerListPublicPostsPostType =
   (typeof PostsControllerListPublicPostsPostType)[keyof typeof PostsControllerListPublicPostsPostType];
 
 export const PostsControllerListPublicPostsPostType = {
-  video: 'video',
   vlog: 'vlog',
 } as const;
