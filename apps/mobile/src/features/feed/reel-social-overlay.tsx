@@ -21,11 +21,20 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withSpring,
+  withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
-import { SHEET_CLOSE_SPRING, SHEET_OPEN_SPRING } from '@/components/motion';
+import {
+  HEART_POP_SETTLE,
+  HEART_POP_UP,
+  PRESS_DOWN,
+  SHEET_CLOSE_SPRING,
+  SHEET_OPEN_SPRING,
+  SNAP_SPRING,
+} from '@/components/motion';
 import { ReelCommentsPanel } from './reel-comments-panel';
 import type { ReelItem } from './reel-types';
 import { ReportButton } from './report-button';
@@ -46,12 +55,18 @@ const TEXT_SHADOW = {
   textShadowRadius: 2,
 };
 
+// Tim nảy lên một chút rồi rơi về, như nút thích trên màn chi tiết bài.
+const HEART_POP_SCALE = 1.25;
+const HEART_POP_LIFT = -6;
+const PRESSED_SCALE = 0.88;
+
 function RailAction({
   icon,
   label,
   count,
   selected = false,
   disabled = false,
+  shouldPop = false,
   onPress,
 }: {
   icon: IconName;
@@ -59,18 +74,39 @@ function RailAction({
   count?: number;
   selected?: boolean;
   disabled?: boolean;
+  /** Nảy khi chuyển sang trạng thái chọn (thả tim). */
+  shouldPop?: boolean;
   onPress: () => void;
 }) {
+  const scale = useSharedValue(1);
+  const lift = useSharedValue(0);
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: lift.get() }, { scale: scale.get() }],
+  }));
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected, disabled }}
       disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [styles.railAction, pressed && { opacity: 0.65 }, disabled && { opacity: 0.5 }]}
+      // Thu nhỏ ngay lúc chạm để biết đã bấm, không đợi thả tay.
+      onPressIn={() => scale.set(withTiming(PRESSED_SCALE, PRESS_DOWN))}
+      onPressOut={() => {
+        // Chỉ thả tim mới nảy; các nút khác trở về êm.
+        if (!(shouldPop && !selected)) scale.set(withSpring(1, SNAP_SPRING));
+      }}
+      onPress={() => {
+        if (shouldPop && !selected) {
+          scale.set(withSequence(withTiming(HEART_POP_SCALE, HEART_POP_UP), withSpring(1, HEART_POP_SETTLE)));
+          lift.set(withSequence(withTiming(HEART_POP_LIFT, HEART_POP_UP), withSpring(0, HEART_POP_SETTLE)));
+        }
+        onPress();
+      }}
+      style={[styles.railAction, disabled && { opacity: 0.5 }]}
     >
-      <Icon name={icon} size={34} color={selected ? colors.coral : colors.background} />
+      <Animated.View style={iconStyle}>
+        <Icon name={icon} size={34} color={selected ? colors.coral : colors.background} />
+      </Animated.View>
       {count !== undefined && (
         <Txt variant="caption" style={styles.railCount}>
           {number(count)}
@@ -245,13 +281,12 @@ export function ReelSocialOverlay({
         aria-hidden={isHidden}
         importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
       >
-        {!isSample && postId && <ReportButton targetType="post" targetId={postId} compact />}
         <RailAction
           icon={isLiked ? 'heart' : 'heart-outline'}
           label={isLiked ? vi.api.unlike : vi.api.like}
           count={counts.likes}
           selected={isLiked}
-          disabled={mutation.isPending}
+          shouldPop
           onPress={() => interact('like')}
         />
         <RailAction
@@ -267,16 +302,25 @@ export function ReelSocialOverlay({
           label={isSaved ? vi.api.unbookmark : vi.api.bookmark}
           count={counts.saves}
           selected={isSaved}
-          disabled={mutation.isPending}
           onPress={() => interact('save')}
         />
         <RailAction
           icon="paper-plane-outline"
           label={vi.api.share}
           count={counts.shares}
-          disabled={mutation.isPending}
-          onPress={() => mutation.mutate({ type: 'share' })}
+          // Không làm mờ nút khi tim, lưu đang gửi; chỉ bỏ qua lần bấm lúc đó.
+          onPress={() => {
+            if (!mutation.isPending) mutation.mutate({ type: 'share' });
+          }}
         />
+        {/* Cuối cột như TikTok: hành động ít dùng, không lẫn với tim, bình luận. */}
+        {!isSample && postId && (
+          <ReportButton
+            targetType="post"
+            targetId={postId}
+            trigger={(open) => <RailAction icon="flag-outline" label={vi.moderation.reportTitle} onPress={open} />}
+          />
+        )}
       </Animated.View>
       <Animated.View
         style={[styles.caption, chromeStyle]}
@@ -488,6 +532,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
+    // Màu cam chính của brand: đây là lời mời bấm vào xem bài, nổi bật trên video.
     backgroundColor: colors.coral,
     borderRadius: radius.md,
   },

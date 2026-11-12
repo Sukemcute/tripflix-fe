@@ -1,4 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { searchPublicPosts } from './explore-search';
 import { useApiSession } from './session';
 import { socialApi } from './social';
 
@@ -13,7 +14,9 @@ export function useSocialPosts(kind: 'public' | 'mine' | 'bookmarks' = 'public',
         ? socialApi.listMyPosts({ cursor: pageParam }, signal)
         : kind === 'bookmarks'
           ? socialApi.listBookmarks(pageParam, signal)
-          : socialApi.listPosts({ cursor: pageParam, ...(keyword ? { keyword } : {}) }, signal),
+          : keyword
+            ? searchPublicPosts(keyword, pageParam, signal) // có từ khoá: tìm bằng discovery thay cho ILIKE của content
+            : socialApi.listPosts({ cursor: pageParam }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
 }

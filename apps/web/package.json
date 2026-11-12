@@ -8,9 +8,11 @@
     "build": "next build",
     "start": "next start --port 3100",
     "lint": "oxlint -c ../../.oxlintrc.json src",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@rive-app/react-canvas": "4.35.0",
     "@tanstack/react-query": "catalog:",
     "@tripflix/api-client": "workspace:*",
     "@tripflix/app-core": "workspace:*",
@@ -30,6 +32,7 @@
     "@types/react-dom": "catalog:",
     "oxlint": "catalog:",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

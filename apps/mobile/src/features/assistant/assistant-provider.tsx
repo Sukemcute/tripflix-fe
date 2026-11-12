@@ -2,6 +2,9 @@ import type { AssistantCard } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { createContext, useContext, useEffect, useRef, useState, type PropsWithChildren } from 'react';
 
+/** Bong bóng Tripi: nhỏ để bớt che video, vẫn trên 44pt nên dễ bấm. Khung chat thu về đúng cỡ này khi đóng. */
+export const BUBBLE_SIZE = 52;
+export const BUBBLE_MASCOT_SIZE = 46;
 export type AssistantMessage = {
   id: string;
   role: 'user' | 'assistant';

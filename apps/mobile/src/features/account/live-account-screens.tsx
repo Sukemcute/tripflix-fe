@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useApiSession } from '@tripflix/api-client';
+import { changePassword, useApiSession } from '@tripflix/api-client';
 import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import type { UserDto } from '@tripflix/api-client/core-api/model/index';
 import { DISPLAY_NAME_MAX, NEW_PASSWORD_MAX } from '@tripflix/app-core';
@@ -168,7 +168,8 @@ function ProfileEditor({ user }: { user: UserDto }) {
         await auth.accountControllerUpdateProfile({ displayName: name.trim() });
         await session.reloadUser();
       } else if (action === 'password')
-        await auth.accountControllerChangePassword({ currentPassword, newPassword });
+        // Cả hai mật khẩu được mã hoá trước khi gửi (TF056).
+        await changePassword({ currentPassword, newPassword });
       else if (action === 'logout') await session.logout();
       else if (action === 'logoutAll') await session.logoutAll();
       else {

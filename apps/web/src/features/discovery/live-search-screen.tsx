@@ -4,9 +4,9 @@ import { t, vi } from '@tripflix/i18n';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { formatPrice } from './trip-card';
 import { StayThumbnail } from './stay-thumbnail';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './stay-search.module.css';
 import { StaySearchIcon } from './stay-search-icon';
 import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
@@ -17,6 +17,7 @@ import { SoftSelect } from '@/features/shared/soft-select';
 import {
   getStayDateIssue, getStayPriceIssue, getStayToday, isStayInteger, MAX_STAY_GUESTS, MAX_STAY_ROOMS,
 } from './stay-search-validation';
+import { parseFullSearchParams } from './search-params';
 import { SearchAdBanner } from './search-ad-banner';
 import { SoftStarIcon } from './soft-star-icon';
 import { PriceRangeSlider } from './price-range-slider';
@@ -58,8 +59,23 @@ export function LiveSearchScreen({
   const search = useStaySearch(initialQuery, initialFilters, {
     pageSize: isHomepage ? undefined : RESULTS_PAGE_SIZE,
   });
+  const { apply } = search;
   const pageCount = Math.ceil((search.stays.data?.total ?? 0) / RESULTS_PAGE_SIZE);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchParamsString = searchParams.toString();
+  const lastAppliedSearchRef = useRef(searchParamsString);
+
+  useEffect(() => {
+    if (isHomepage) return;
+    if (lastAppliedSearchRef.current === searchParamsString) {
+      return;
+    }
+    lastAppliedSearchRef.current = searchParamsString;
+    const next = parseFullSearchParams(searchParamsString);
+    apply(next.placeName, next.filters);
+  }, [isHomepage, searchParamsString, apply]);
+
   const [suggestionsOpen, setSuggestionsOpen] = useState(!initialFilters?.placeId);
   const [showValidation, setShowValidation] = useState(false);
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
@@ -76,7 +92,9 @@ export function LiveSearchScreen({
     search.setFilters((previous) => ({ ...previous, [key]: value }));
   const placeName = search.selection?.name ?? search.text;
   const hasFacets = !!(search.filters.minStars || search.filters.stars || search.filters.priceMin || search.filters.priceMax || search.filters.sort !== 'price');
-  const resultHref = search.submitted ? getSearchHref(search.submitted, initialQuery, childGuests) : '/search';
+  // Tên điểm đến của kết quả đang hiển thị (theo URL), không phải chữ đang gõ dở trong ô tìm kiếm.
+  const appliedPlaceName = isHomepage ? placeName : parseFullSearchParams(searchParamsString).placeName;
+  const resultHref = search.submitted ? getSearchHref(search.submitted, appliedPlaceName, childGuests) : '/search';
   const canSubmit = !!search.filters.placeId || search.selection?.type === 'hotel';
   const Container = isHomepage ? 'section' : 'div';
   return (
@@ -86,7 +104,7 @@ export function LiveSearchScreen({
     >
       <form
         id="stay-search-form"
-        className={`search-form ${styles.panel} ${isHomepage ? '' : listing.searchPanel}`}
+        className={`search-form ${styles.panel} ${isHomepage ? styles.homepagePanel : listing.searchPanel}`}
         aria-label={vi.api.findStays}
         noValidate
         onSubmit={(event) => {
@@ -115,8 +133,10 @@ export function LiveSearchScreen({
           if (!isHomepage && href === resultHref && search.submitted) {
             if (search.cursor) search.first();
             else void search.stays.refetch();
+          } else if (isHomepage) {
+            router.push(href, { scroll: true });
           } else {
-            router.push(href, { scroll: isHomepage });
+            window.history.pushState(null, '', href);
           }
         }}
       >
@@ -359,7 +379,14 @@ export function LiveSearchScreen({
                         sort: 'price',
                       } as const;
                       search.setFilters(cleared);
-                      if (cleared.placeId) router.push(getSearchHref(cleared, placeName, childGuests), { scroll: false });
+                      if (cleared.placeId) {
+                        const href = getSearchHref(cleared, placeName, childGuests);
+                        if (isHomepage) {
+                          router.push(href, { scroll: false });
+                        } else {
+                          window.history.pushState(null, '', href);
+                        }
+                      }
                     }}
                   >
                     {vi.ota.resetFilters}
@@ -452,28 +479,43 @@ export function LiveSearchScreen({
               <h2 id="stay-results-title">{vi.ota.resultTitle}</h2>
               {search.stays.data && (
                 <output>
-                  {initialQuery
-                    ? t('ota.hotelCountAt', { count: search.stays.data.total, place: initialQuery })
+                  {appliedPlaceName
+                    ? t('ota.hotelCountAt', { count: search.stays.data.total, place: appliedPlaceName })
                     : t('ota.hotelCount', { count: search.stays.data.total })}
                 </output>
               )}
             </div>
             <nav className={listing.quickPlaces} aria-label={vi.ota.findByPlace}>
-              {OTA_DESTINATIONS.map((destination) => (
-                <Link
-                  prefetch={false}
-                  key={destination.id}
-                  href={
-                    search.submitted
-                      ? getSearchHref({ ...search.submitted, placeId: destination.id }, destination.name, childGuests)
-                      : getDestinationHref(destination)
-                  }
-                  aria-current={destination.id === search.submitted?.placeId ? 'true' : undefined}
-                  scroll={false}
-                >
-                  {destination.name}
-                </Link>
-              ))}
+              {OTA_DESTINATIONS.map((destination) => {
+                const targetHref = search.submitted
+                  ? getSearchHref({ ...search.submitted, placeId: destination.id }, destination.name, childGuests)
+                  : getDestinationHref(destination);
+                return (
+                  <a
+                    key={destination.id}
+                    href={targetHref}
+                    aria-current={destination.id === search.submitted?.placeId ? 'true' : undefined}
+                    onClick={(event) => {
+                      if (
+                        event.button === 0 &&
+                        !event.altKey &&
+                        !event.ctrlKey &&
+                        !event.metaKey &&
+                        !event.shiftKey
+                      ) {
+                        event.preventDefault();
+                        if (isHomepage) {
+                          router.push(targetHref);
+                        } else {
+                          window.history.pushState(null, '', targetHref);
+                        }
+                      }
+                    }}
+                  >
+                    {destination.name}
+                  </a>
+                );
+              })}
             </nav>
             {!search.submitted && <p className={listing.state}>{vi.api.choosePlace}</p>}
             {search.stays.isFetching && <output className={listing.state}>{vi.api.loading}</output>}

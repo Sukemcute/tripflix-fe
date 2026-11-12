@@ -16,6 +16,7 @@ type ApiErrorKind =
   | 'conflict'
   | 'rateLimit'
   | 'invalid'
+  | 'unavailable'
   | 'error';
 const HTTP_ERROR_KINDS: Partial<Record<number, ApiErrorKind>> = {
   400: 'invalid',
@@ -25,6 +26,11 @@ const HTTP_ERROR_KINDS: Partial<Record<number, ApiErrorKind>> = {
   409: 'conflict',
   422: 'invalid',
   429: 'rateLimit',
+  // Máy chủ hoặc database tạm không phục vụ được (backend trả 503 kèm Retry-After): báo khách thử lại sau ít giây.
+  500: 'unavailable',
+  502: 'unavailable',
+  503: 'unavailable',
+  504: 'unavailable',
 };
 
 export function getApiErrorKind(error: unknown): ApiErrorKind {

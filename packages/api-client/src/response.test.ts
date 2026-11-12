@@ -7,6 +7,11 @@ describe('getApiErrorKind', () => {
     expect(getApiErrorKind(new HttpError(403, { code: 'email_unverified' }))).toBe('emailUnverified');
     expect(getApiErrorKind(new HttpError(403, { code: 'other' }))).toBe('forbidden');
   });
+
+  it('maps server and database outages to unavailable', () => {
+    for (const status of [500, 502, 503, 504]) expect(getApiErrorKind(new HttpError(status, {}))).toBe('unavailable');
+    expect(getApiErrorKind(new HttpError(418, {}))).toBe('error');
+  });
 });
 
 const fieldErrors = {

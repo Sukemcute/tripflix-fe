@@ -28,6 +28,7 @@ import type {
   JwksDto,
   LoginDto,
   MyProfileDto,
+  PasswordKeyDto,
   RefreshDto,
   RegisterDto,
   RegistrationCodeDto,
@@ -171,6 +172,135 @@ export const useAuthControllerRequestRegistrationCode = <TError = unknown, TCont
 > => {
   return useMutation(getAuthControllerRequestRegistrationCodeMutationOptions(options), queryClient);
 };
+export type authControllerPasswordKeyResponse200 = {
+  data: PasswordKeyDto;
+  status: 200;
+};
+
+export type authControllerPasswordKeyResponse503 = {
+  data: void;
+  status: 503;
+};
+
+export type authControllerPasswordKeyResponseSuccess = authControllerPasswordKeyResponse200 & {
+  headers: Headers;
+};
+export type authControllerPasswordKeyResponseError = authControllerPasswordKeyResponse503 & {
+  headers: Headers;
+};
+
+export type authControllerPasswordKeyResponse =
+  authControllerPasswordKeyResponseSuccess | authControllerPasswordKeyResponseError;
+
+export const getAuthControllerPasswordKeyUrl = () => {
+  return `/api/auth/password-key`;
+};
+
+export const authControllerPasswordKey = async (
+  options?: Parameters<typeof http>[1],
+): Promise<authControllerPasswordKeyResponse> => {
+  return http<authControllerPasswordKeyResponse>(getAuthControllerPasswordKeyUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAuthControllerPasswordKeyQueryKey = () => {
+  return [`/api/auth/password-key`] as const;
+};
+
+export const getAuthControllerPasswordKeyQueryOptions = <
+  TData = Awaited<ReturnType<typeof authControllerPasswordKey>>,
+  TError = void,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerPasswordKey>>, TError, TData>>;
+  request?: SecondParameter<typeof http>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAuthControllerPasswordKeyQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof authControllerPasswordKey>>> = ({ signal }) =>
+    authControllerPasswordKey({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof authControllerPasswordKey>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AuthControllerPasswordKeyQueryResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerPasswordKey>>
+>;
+export type AuthControllerPasswordKeyQueryError = void;
+
+export function useAuthControllerPasswordKey<
+  TData = Awaited<ReturnType<typeof authControllerPasswordKey>>,
+  TError = void,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerPasswordKey>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof authControllerPasswordKey>>,
+          TError,
+          Awaited<ReturnType<typeof authControllerPasswordKey>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAuthControllerPasswordKey<
+  TData = Awaited<ReturnType<typeof authControllerPasswordKey>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerPasswordKey>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof authControllerPasswordKey>>,
+          TError,
+          Awaited<ReturnType<typeof authControllerPasswordKey>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAuthControllerPasswordKey<
+  TData = Awaited<ReturnType<typeof authControllerPasswordKey>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerPasswordKey>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useAuthControllerPasswordKey<
+  TData = Awaited<ReturnType<typeof authControllerPasswordKey>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerPasswordKey>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAuthControllerPasswordKeyQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export type authControllerRegisterResponse201 = {
   data: UserDto;
   status: 201;
