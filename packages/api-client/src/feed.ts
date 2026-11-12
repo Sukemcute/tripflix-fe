@@ -8,6 +8,9 @@ export type ReelFeedTab = FeedControllerGetFeedTab;
 export const REEL_FEED_TABS = Object.values(FeedControllerGetFeedTab);
 
 export const feedApi = {
+  async listByAuthor(authorId: string, signal?: AbortSignal) {
+    return readPage((await feedControllerGetFeed({ author_id: authorId, limit: 20 }, { signal })).data);
+  },
   async list(
     cursor?: string,
     signal?: AbortSignal,

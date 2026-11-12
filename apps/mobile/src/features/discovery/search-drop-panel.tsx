@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { HttpError, socialApi, usePostSearch, useUserSearch } from '@tripflix/api-client';
+import { feedApi, HttpError, usePostSearch, useUserSearch } from '@tripflix/api-client';
 import type { ExploreItemDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
@@ -253,10 +253,9 @@ function UserResults({ query, onOpenReel }: { query: string; onOpenReel: (postId
   const search = useUserSearch(query);
   const [selected, setSelected] = useState<{ id: string; displayName: string } | null>(null);
   const videos = useQuery({
-    queryKey: ['social', 'posts', 'author', selected?.id, 'video'],
+    queryKey: ['feed', 'author', selected?.id],
     enabled: !!selected,
-    queryFn: ({ signal }) =>
-      socialApi.listPosts({ author_id: selected!.id, post_type: 'video', limit: 20 }, signal),
+    queryFn: ({ signal }) => feedApi.listByAuthor(selected!.id, signal),
   });
   if (selected) {
     const posts = videos.data?.items ?? [];
@@ -274,10 +273,10 @@ function UserResults({ query, onOpenReel }: { query: string; onOpenReel: (postId
         />
         {posts.map((post) => (
           <Pressable
-            key={post.id}
+            key={post.postId}
             accessibilityRole="button"
             style={styles.userRow}
-            onPress={() => onOpenReel(post.id)}
+            onPress={() => onOpenReel(post.postId)}
           >
             <Icon name="play-circle-outline" size={mobileIconSize.nav} color={colors.coral} />
             <View style={styles.planBody}>
@@ -285,7 +284,7 @@ function UserResults({ query, onOpenReel }: { query: string; onOpenReel: (postId
                 {post.title}
               </Txt>
               <Txt variant="caption" style={styles.muted}>
-                {`${post.reactionTotal} ♥`}
+                {`${post.counts.likes} ♥`}
               </Txt>
             </View>
           </Pressable>
