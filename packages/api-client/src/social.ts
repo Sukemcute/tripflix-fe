@@ -8,7 +8,6 @@ import type {
   UpdatePostDto,
   SetReactionDtoType,
   PostsControllerListPublicPostsParams,
-  BookmarksControllerListMyBookmarksPostType,
   PostsControllerListMyPostsParams,
   AdminPostsControllerListAdminPostsParams,
   CreateModerationActionDto,
@@ -22,11 +21,8 @@ export const socialApi = {
   async listMyPosts(query: PostsControllerListMyPostsParams = {}, signal?: AbortSignal) {
     return readPage((await posts.postsControllerListMyPosts(query, { signal })).data);
   },
-  async listBookmarks(cursor?: string, signal?: AbortSignal, postType?: BookmarksControllerListMyBookmarksPostType) {
-    return readPage(
-      (await bookmarks.bookmarksControllerListMyBookmarks({ cursor, ...(postType ? { post_type: postType } : {}) }, { signal }))
-        .data,
-    );
+  async listBookmarks(cursor?: string, signal?: AbortSignal) {
+    return readPage((await bookmarks.bookmarksControllerListMyBookmarks({ cursor }, { signal })).data);
   },
   async getPost(id: string, signal?: AbortSignal) {
     return readEntity((await posts.postsControllerGetPostDetail(encodeURIComponent(id), { signal })).data, [

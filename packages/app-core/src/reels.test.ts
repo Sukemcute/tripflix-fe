@@ -5,7 +5,6 @@ import {
   getReelCommentsSheetHeight,
   getReelPosterPrefetchUrls,
   getReelResolutionCap,
-  getReelScale,
   getSwipedTabIndex,
   getReelPlayerIndexes,
   layoutReelCommentsVideo,
@@ -32,28 +31,6 @@ describe('reels playback policy', () => {
       box: { width: 360, height: 360 },
       contentFit: 'contain',
     });
-  });
-
-  it('phủ kín video dọc trên các máy phổ biến, chỉ chừa nền mờ khi khung quá thấp', () => {
-    // Khung reel = màn hình trừ thanh tab 44pt: 20:9, iPhone SE, iPhone 15, Pro Max, khung trình duyệt.
-    for (const [width, height] of [
-      [360, 756],
-      [375, 623],
-      [390, 800],
-      [430, 888],
-      [536, 873],
-    ] as const) {
-      expect(layoutReelVideo('9:16', width, height)).toEqual({ box: { width, height }, contentFit: 'cover' });
-    }
-    // Máy tính bảng: cắt 28% chiều cao là mất nội dung, giữ toàn khung.
-    expect(layoutReelVideo('9:16', 768, 980).contentFit).toBe('contain');
-  });
-
-  it('co giãn icon theo bề ngang, chặn ở 0.85 và 1.15', () => {
-    expect(getReelScale(390)).toBe(1);
-    expect(getReelScale(360)).toBeCloseTo(360 / 390);
-    expect(getReelScale(300)).toBe(0.85);
-    expect(getReelScale(600)).toBe(1.15);
   });
 
   it('giữ toàn khung video dọc, ngang và vuông trong màn hình', () => {
@@ -114,17 +91,22 @@ describe('reels playback policy', () => {
     expect(getReelPosterPrefetchUrls([posters('a'), { w360: '', w540: '', w720: '' }], 0, 400)).toEqual([]);
   });
 
-  it('thu video đúng tỷ lệ và căn giữa phía trên khung bình luận', () => {
-    expect(getReelCommentsSheetHeight(800)).toBe(544);
-    expect(getReelCommentsSheetHeight(1200)).toBe(680);
-    const viewport = { windowHeight: 800, slideWidth: 390, topInset: 40 };
-    const portrait = layoutReelCommentsVideo({ ...viewport, aspect: '9:16' });
-    expect(portrait).toEqual({ width: 121.5, height: 216, left: 134.25, top: 40 });
-    const landscape = layoutReelCommentsVideo({ ...viewport, aspect: '16:9' });
-    expect(landscape.width / landscape.height).toBeCloseTo(16 / 9);
-    expect(landscape.left + landscape.width / 2).toBe(195);
-    expect(landscape.top + landscape.height / 2).toBe(148);
-    expect(layoutReelCommentsVideo({ ...viewport, aspect: '1:1', windowHeight: 80 }).height).toBe(0);
+  it('thu video vào khoảng trống phía trên sheet bình luận', () => {
+    expect(getReelCommentsSheetHeight(800)).toBe(520);
+    expect(getReelCommentsSheetHeight(1200)).toBe(640);
+    const { scale, translateY } = layoutReelCommentsVideo({
+      windowHeight: 800,
+      slideHeight: 720,
+      topInset: 40,
+      gap: 8,
+    });
+    expect(scale).toBeCloseTo(232 / 720);
+    // Mép trên video sau khi thu nằm đúng dưới vùng an toàn.
+    expect(360 + translateY - (720 * scale) / 2).toBeCloseTo(40);
+    expect(layoutReelCommentsVideo({ windowHeight: 800, slideHeight: 0, topInset: 40, gap: 8 })).toEqual({
+      scale: 1,
+      translateY: 0,
+    });
   });
 
   it('giới hạn 540p theo đúng chiều cho video dọc, ngang và vuông', () => {

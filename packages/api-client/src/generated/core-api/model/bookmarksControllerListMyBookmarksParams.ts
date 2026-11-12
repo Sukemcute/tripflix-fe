@@ -4,13 +4,10 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import type { BookmarksControllerListMyBookmarksPostType } from './bookmarksControllerListMyBookmarksPostType';
 
 export type BookmarksControllerListMyBookmarksParams = {
   /** Số lượng bài lấy mỗi trang */
   limit?: number;
   /** Keyset cursor */
   cursor?: string;
-  /** Lọc theo loại bài. Không truyền thì trả mọi loại. Reels đã lưu lấy qua /v1/feed?saved=true */
-  post_type?: BookmarksControllerListMyBookmarksPostType;
 };

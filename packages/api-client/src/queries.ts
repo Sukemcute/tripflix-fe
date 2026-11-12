@@ -3,29 +3,20 @@ import { searchPublicPosts } from './explore-search';
 import { useApiSession } from './session';
 import { socialApi } from './social';
 
-export function useSocialPosts(
-  kind: 'public' | 'mine' | 'bookmarks' = 'public',
-  keyword = '',
-  // Chỉ còn vlog: Reels lấy qua useReelsFeed (/v1/feed).
-  postType?: 'vlog',
-) {
+export function useSocialPosts(kind: 'public' | 'mine' | 'bookmarks' = 'public', keyword = '') {
   const { user, isReady } = useApiSession();
   return useInfiniteQuery({
-    queryKey: ['social', kind, user?.id, keyword, postType],
+    queryKey: ['social', kind, user?.id, keyword],
     initialPageParam: undefined as string | undefined,
     enabled: isReady && (kind === 'public' || !!user),
     queryFn: ({ pageParam, signal }) =>
       kind === 'mine'
-        ? socialApi.listMyPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal)
+        ? socialApi.listMyPosts({ cursor: pageParam }, signal)
         : kind === 'bookmarks'
-          ? socialApi.listBookmarks(pageParam, signal, postType)
+          ? socialApi.listBookmarks(pageParam, signal)
           : keyword
-            ? // Có từ khoá: tìm bằng discovery thay cho ILIKE của content. Discovery chưa có loại khớp đúng vlog
-              // (post bỏ sót bài có lộ trình) nên tạm lọc sau khi lấy chi tiết.
-              searchPublicPosts(keyword, pageParam, signal).then((page) =>
-                postType ? { ...page, items: page.items.filter((post) => post.postType === postType) } : page,
-              )
-            : socialApi.listPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal),
+            ? searchPublicPosts(keyword, pageParam, signal) // có từ khoá: tìm bằng discovery thay cho ILIKE của content
+            : socialApi.listPosts({ cursor: pageParam }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
 }

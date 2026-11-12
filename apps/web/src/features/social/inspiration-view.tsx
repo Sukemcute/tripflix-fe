@@ -1,23 +1,13 @@
 'use client';
 
 import React, { useCallback, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useApiSession } from '@tripflix/api-client';
+import { InspirationImmersiveViewer, ComposerModal } from './live-posts';
 import { InstagramLeftDock } from './feed/instagram-left-dock';
 import type { FeedNavFilter } from './feed/floating-nav-rail';
 import { SocialFeedView } from './feed/social-feed-view';
 import styles from './feed/social-feed.module.css';
-
-const InspirationImmersiveViewer = dynamic(
-  () => import('./live-posts').then((m) => m.InspirationImmersiveViewer),
-  { ssr: false },
-);
-
-const ComposerModal = dynamic(
-  () => import('./live-posts').then((m) => m.ComposerModal),
-  { ssr: false },
-);
 
 export interface InspirationViewProps {
   initialKeyword?: string;

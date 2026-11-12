@@ -1,6 +1,5 @@
 import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
-import { OPTIMIZED_IMAGE_HOSTS } from './src/lib/remote-images';
 
 const config: NextConfig = {
   // Image Docker prod chỉ chép thư mục standalone (apps/web/Dockerfile).
@@ -17,7 +16,12 @@ const config: NextConfig = {
     '@tripflix/utils',
   ],
   images: {
-    remotePatterns: OPTIMIZED_IMAGE_HOSTS.map((hostname) => ({ protocol: 'https' as const, hostname })),
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
   },
 };
 

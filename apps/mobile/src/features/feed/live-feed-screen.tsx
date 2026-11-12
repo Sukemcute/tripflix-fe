@@ -29,8 +29,7 @@ export function LivePostCard({ post }: { post: SocialPostDto }) {
 }
 export function LiveFeedScreen({ kind = 'public' }: { kind?: 'public' | 'mine' | 'bookmarks' }) {
   const { user, isReady } = useApiSession();
-  // Màn này là danh sách bài viết cho cả công khai, bài của tôi và đã lưu; Reels có màn riêng.
-  const query = useSocialPosts(kind, '', 'vlog');
+  const query = useSocialPosts(kind);
   if (!isReady || (kind === 'mine' && !user)) return <RequireAccount />;
   const posts = query.data?.pages.flatMap((page) => page.items);
   const isSaved = kind === 'bookmarks';

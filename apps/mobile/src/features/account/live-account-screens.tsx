@@ -23,7 +23,6 @@ import {
   ui,
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount, UnavailableScreen } from '@/components/api-state';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
 
 const profile = copy.profile;
 
@@ -64,7 +63,7 @@ export function LiveProfileScreen() {
     .toLocaleUpperCase('vi-VN');
 
   return (
-    <Screen compact header={null} padded={false}>
+    <Screen header={null} padded={false}>
       <View>
         <View style={styles.cover}>
           <Logo />
@@ -117,7 +116,7 @@ export function LiveProfileScreen() {
                 onPress={item.onPress}
                 style={[styles.stat, index < stats.length - 1 && styles.statDivider]}
               >
-                <Icon name={item.icon} />
+                <Icon name={item.icon} size={20} />
                 <Txt variant="caption" style={[ui.center, ui.muted]}>
                   {item.label}
                 </Txt>
@@ -127,12 +126,12 @@ export function LiveProfileScreen() {
           {links.map((item) => (
             <Pressable key={item.label} accessibilityRole="button" onPress={item.onPress} style={styles.menu}>
               <View style={styles.menuIcon}>
-                <Icon name={item.icon} color={c.tealInk} />
+                <Icon name={item.icon} color={c.tealInk} size={20} />
               </View>
               <Txt variant="small" style={ui.flex}>
                 {item.label}
               </Txt>
-              <Icon name="chevron-forward" size={mobileIconSize.inline} color={c.textMuted} />
+              <Icon name="chevron-forward" size={16} color={c.textMuted} />
             </Pressable>
           ))}
           <Txt variant="caption" style={[ui.center, ui.muted, styles.tagline]}>
@@ -296,8 +295,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { ...compactType.title, fontFamily: nativeFonts.bold },
-  profileName: { marginTop: s.md, marginBottom: s.xs },
+  avatarText: { fontSize: 24, lineHeight: 32, fontFamily: nativeFonts.bold },
+  profileName: { fontSize: 23, lineHeight: 32, marginTop: s.md, marginBottom: s.xs },
   signIn: { marginTop: s.lg },
   stats: { flexDirection: 'row', marginVertical: s.xl },
   stat: {

@@ -28,7 +28,6 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { IconButton, Txt, copy } from './mobile-ui';
-import { compactType, mobileIconSize } from './mobile-scale';
 import { SHEET_CLOSE_SPRING, SHEET_OPEN_SPRING } from './motion';
 
 const DISMISS_DISTANCE = 100;
@@ -44,7 +43,6 @@ export function BottomSheet({
   title,
   onClose,
   footer,
-  compact = false,
   isScrollEnabled = true,
   children,
 }: PropsWithChildren<{
@@ -52,7 +50,6 @@ export function BottomSheet({
   title: string;
   onClose: () => void;
   footer?: ReactNode;
-  compact?: boolean;
   /** Off when the content has its own drag, which a scrolling parent would otherwise take over. */
   isScrollEnabled?: boolean;
 }>) {
@@ -167,23 +164,18 @@ export function BottomSheet({
             }}
             style={[
               styles.sheet,
-              { maxHeight: windowHeight * 0.85, paddingBottom: Math.max(insets.bottom, compact ? spacing.sm : spacing.md) },
+              { maxHeight: windowHeight * 0.85, paddingBottom: Math.max(insets.bottom, spacing.md) },
               sheetStyle,
             ]}
           >
             <GestureDetector gesture={headerPan}>
               <View collapsable={false}>
-                <View style={[styles.handle, compact && styles.compactHandle]} />
-                <View style={[styles.heading, compact && styles.compactHeading]}>
-                  <Txt variant="label" numberOfLines={1} style={[styles.title, compact && styles.compactTitle]}>
+                <View style={styles.handle} />
+                <View style={styles.heading}>
+                  <Txt variant="label" numberOfLines={1} style={styles.title}>
                     {title}
                   </Txt>
-                  <IconButton
-                    name="close"
-                    size={compact ? mobileIconSize.control : undefined}
-                    label={copy.common.close}
-                    onPress={onClose}
-                  />
+                  <IconButton name="close" label={copy.common.close} onPress={onClose} />
                 </View>
               </View>
             </GestureDetector>
@@ -193,7 +185,7 @@ export function BottomSheet({
                   <Animated.ScrollView
                     style={styles.body}
                     keyboardShouldPersistTaps="handled"
-                    contentContainerStyle={[styles.bodyContent, compact && styles.compactBodyContent]}
+                    contentContainerStyle={styles.bodyContent}
                     bounces={false}
                     onScroll={onBodyScroll}
                     scrollEventThrottle={16}
@@ -204,7 +196,7 @@ export function BottomSheet({
                 </GestureDetector>
               </Animated.View>
             </GestureDetector>
-            {!!footer && <View style={[styles.footer, compact && styles.compactFooter]}>{footer}</View>}
+            {!!footer && <View style={styles.footer}>{footer}</View>}
           </Animated.View>
         </KeyboardAvoidingView>
       </GestureHandlerRootView>
@@ -249,9 +241,4 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
   },
-  compactHandle: { marginTop: spacing.sm },
-  compactHeading: { paddingLeft: spacing.lg, paddingVertical: 0 },
-  compactTitle: compactType.heading,
-  compactBodyContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
-  compactFooter: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
 });

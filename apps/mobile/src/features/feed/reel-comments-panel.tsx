@@ -1,5 +1,5 @@
 import { getReelCommentsSheetHeight } from '@tripflix/app-core';
-import { t, vi } from '@tripflix/i18n';
+import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,7 +35,6 @@ export function ReelCommentsPanel({
   visible,
   openProgress,
   postId,
-  commentCount,
   draft,
   onDraftChange,
   comments,
@@ -43,13 +42,11 @@ export function ReelCommentsPanel({
   onClose,
   hasBackdrop = false,
   loginReturnTo = '/(tabs)',
-  showSummary = false,
 }: {
   visible: boolean;
   /** 0 when closed, 1 when fully open; follows the finger so the video can move with the sheet. */
   openProgress: SharedValue<number>;
   postId?: string;
-  commentCount?: number;
   draft: string;
   onDraftChange: (value: string) => void;
   comments: readonly { id: number; body: string }[];
@@ -58,8 +55,6 @@ export function ReelCommentsPanel({
   /** Over a video the sheet needs no dimming; over a white page it would otherwise blend in. */
   hasBackdrop?: boolean;
   loginReturnTo?: string;
-  /** Chỉ reel bật; trang chi tiết bài dùng chung khung này nhưng không có AI summary. */
-  showSummary?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
@@ -151,10 +146,7 @@ export function ReelCommentsPanel({
   // Khung đứng yên; chỉ phần đáy dãn theo bàn phím từng khung hình, nên ô nhập nằm ngay trên bàn phím
   // còn danh sách bình luận thấp lại. Lúc bàn phím mở, nó đã che thanh Home nên không cần đệm cho thanh đó.
   const keyboard = useAnimatedKeyboard();
-  const restingPadding = Math.max(insets.bottom, spacing.sm);
-  const title = t('mobile.reelComments.title', {
-    count: new Intl.NumberFormat('vi-VN').format(commentCount ?? comments.length),
-  });
+  const restingPadding = Math.max(insets.bottom, spacing.md);
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.get() }],
     paddingBottom: Math.max(keyboard.height.get() + spacing.sm, restingPadding),
@@ -180,7 +172,6 @@ export function ReelCommentsPanel({
             testID="reel-comments-list"
             style={styles.list}
             bounces={false}
-            showsVerticalScrollIndicator={false}
             onScroll={onScroll}
             scrollEventThrottle={16}
             keyboardShouldPersistTaps="handled"
@@ -203,16 +194,16 @@ export function ReelCommentsPanel({
           <Animated.View
             style={[styles.sheet, { height: sheetHeight }, sheetStyle]}
             accessibilityViewIsModal
-            accessibilityLabel={title}
+            accessibilityLabel={vi.api.comments}
             onAccessibilityEscape={close}
           >
             <GestureDetector gesture={headerPan}>
-              <View testID="reel-comments-header" collapsable={false} style={styles.heading}>
-                <Txt accessibilityRole="header" variant="label" style={styles.title}>
-                  {title}
-                </Txt>
-                <View style={styles.close}>
-                  <IconButton name="close" size={17} label={vi.mobile.reelComments.close} onPress={close} />
+              <View testID="reel-comments-header" collapsable={false}>
+                <View style={styles.handle} />
+                <View style={styles.heading}>
+                  <View style={styles.headingSpacer} />
+                  <Txt variant="label">{vi.api.comments}</Txt>
+                  <IconButton name="close" label={vi.mobile.reelComments.close} onPress={close} />
                 </View>
               </View>
             </GestureDetector>
@@ -223,7 +214,6 @@ export function ReelCommentsPanel({
                 compact
                 renderContent={renderContent}
                 onRevealComment={revealComment}
-                showSummary={showSummary}
                 onLoginRequired={() => {
                   close();
                   router.push({ pathname: '/login', params: { returnTo: loginReturnTo } });
@@ -238,11 +228,11 @@ export function ReelCommentsPanel({
                     {comments.map((comment) => (
                       <View key={comment.id} style={styles.comment}>
                         <View style={styles.avatar}>
-                          <Txt variant="caption">{vi.mobile.reelComments.yourInitials}</Txt>
+                          <Txt variant="label">{vi.mobile.reelComments.yourInitials}</Txt>
                         </View>
                         <View style={styles.body}>
-                          <Txt variant="caption" style={styles.muted}>{vi.mobile.reels.sampleCommentAuthor}</Txt>
-                          <Txt variant="small" style={styles.message}>{comment.body}</Txt>
+                          <Txt variant="label">{vi.mobile.reels.sampleCommentAuthor}</Txt>
+                          <Txt>{comment.body}</Txt>
                           <Txt variant="caption" style={styles.muted}>
                             {vi.mobile.reelComments.justNow}
                           </Txt>
@@ -273,35 +263,44 @@ const styles = StyleSheet.create({
     maxHeight: '100%',
     alignSelf: 'center',
     backgroundColor: colors.background,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
+    borderTopLeftRadius: mobileLayout.sheetRadius,
+    borderTopRightRadius: mobileLayout.sheetRadius,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.border,
+    alignSelf: 'center',
+    marginTop: spacing.md,
   },
   heading: {
-    minHeight: mobileLayout.touchTarget,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: mobileLayout.touchTarget,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
-  title: { fontSize: 13, lineHeight: 18, textAlign: 'center' },
-  close: { position: 'absolute', right: spacing.xs, top: 0 },
+  headingSpacer: { width: mobileLayout.touchTarget },
   list: { flex: 1 },
   composer: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
   },
-  content: { paddingHorizontal: spacing.md, paddingTop: spacing.xs, paddingBottom: spacing.sm, gap: spacing.sm },
-  comment: { flexDirection: 'row', gap: spacing.sm },
+  content: { padding: spacing.lg, gap: spacing.lg },
+  comment: { flexDirection: 'row', gap: spacing.md },
   avatar: {
-    width: 30,
-    height: 30,
+    width: 36,
+    height: 36,
     borderRadius: radius.pill,
     backgroundColor: colors.seaMist,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  body: { flex: 1 },
-  message: { lineHeight: 17 },
+  body: { flex: 1, gap: spacing.xs },
   muted: { color: colors.textMuted },
 });

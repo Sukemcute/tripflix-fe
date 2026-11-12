@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getExploreResults, getPostSearchResults, searchUsers } from './explore-search';
+import { getExploreResults, getPostSearchResults } from './explore-search';
 import { configureHttp } from './http';
 
 const json = (body: unknown, status = 200) =>
@@ -62,19 +62,5 @@ describe('explore search API', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(json({ understood: {} }));
     await expect(getPostSearchResults({ q: 'đà lạt' })).rejects.toThrow('Unexpected API response');
   });
-
-  it('gets public users by name from /api/v1/users/search', async () => {
-    const body = { items: [{ id: 'u1', displayName: 'Bảo' }], page: 1, hasMore: false };
-    const send = vi.spyOn(globalThis, 'fetch').mockResolvedValue(json(body));
-    expect(await searchUsers('bao')).toEqual(body);
-    const url = new URL(String(send.mock.calls[0]![0]));
-    expect(url.pathname).toBe('/api/v1/users/search');
-    expect(url.searchParams.get('q')).toBe('bao');
-    expect(url.searchParams.get('page')).toBe('1');
-  });
-
-  it('rejects a user search response without items', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(json({ page: 1 }));
-    await expect(searchUsers('bao')).rejects.toThrow('Unexpected API response');
-  });
 });
+

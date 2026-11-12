@@ -27,8 +27,8 @@ export function InstagramLeftDock({
   onSearchKeywordChange,
   activeFilter,
   onSelectFilter,
-  isItineraryOpen: _isItineraryOpen,
-  onToggleItinerary: _onToggleItinerary,
+  isItineraryOpen,
+  onToggleItinerary,
   onOpenComposer,
 }: InstagramLeftDockProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -109,6 +109,18 @@ export function InstagramLeftDock({
           >
             <SocialIcon name="search" size={20} />
             {searchKeyword.trim() && <span className={styles.dockActiveDot} aria-hidden="true" />}
+          </button>
+
+          {/* Bat/Tat Sidebar Lich trinh chuyen di */}
+          <button
+            type="button"
+            className={`${styles.dockItemBtn} ${isItineraryOpen ? styles.dockItemBtnActive : ''}`}
+            data-tooltip={isItineraryOpen ? 'Đóng lịch trình' : 'Lịch trình chuyến đi'}
+            aria-label="Lịch trình chuyến đi"
+            onClick={onToggleItinerary}
+          >
+            <SocialIcon name="calendar" size={20} />
+            {isItineraryOpen && <span className={styles.dockActiveDot} aria-hidden="true" />}
           </button>
 
           {/* Nut Tao bai dang moi chung (Mo modal dang bai viet hoac reels) */}
