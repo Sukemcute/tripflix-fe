@@ -42,6 +42,7 @@ export function ReelCommentsPanel({
   onClose,
   hasBackdrop = false,
   loginReturnTo = '/(tabs)',
+  showSummary = false,
 }: {
   visible: boolean;
   /** 0 when closed, 1 when fully open; follows the finger so the video can move with the sheet. */
@@ -55,6 +56,8 @@ export function ReelCommentsPanel({
   /** Over a video the sheet needs no dimming; over a white page it would otherwise blend in. */
   hasBackdrop?: boolean;
   loginReturnTo?: string;
+  /** Chỉ reel bật; trang chi tiết bài dùng chung khung này nhưng không có AI summary. */
+  showSummary?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
@@ -214,6 +217,7 @@ export function ReelCommentsPanel({
                 compact
                 renderContent={renderContent}
                 onRevealComment={revealComment}
+                showSummary={showSummary}
                 onLoginRequired={() => {
                   close();
                   router.push({ pathname: '/login', params: { returnTo: loginReturnTo } });
