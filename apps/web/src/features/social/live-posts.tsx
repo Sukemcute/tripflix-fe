@@ -32,6 +32,7 @@ import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
+import { CommunitySummary } from './post-summary';
 import styles from './live-posts.module.css';
 
 // Trang chi tiết bài viết nằm ở post-detail.tsx; giữ export ở đây để app/trips/[slug]/page.tsx không phải đổi.
@@ -2063,6 +2064,7 @@ export function InspirationImmersiveViewer({
                 loginHref={loginReturnHref}
                 scrollContainerRef={rightScrollRef}
                 composerInputRef={commentInputRef}
+                showSummary
               />
             </aside>
           )}
@@ -2089,6 +2091,7 @@ export function RightPanelCommentsSynchronized({
   loginHref,
   scrollContainerRef,
   composerInputRef,
+  showSummary = false,
 }: {
   post: {
     id: string;
@@ -2099,6 +2102,8 @@ export function RightPanelCommentsSynchronized({
   loginHref: string;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   composerInputRef: React.RefObject<HTMLInputElement | null>;
+  /** AI summary chỉ đặt ở bình luận của reel; feed bài viết dùng chung panel này nhưng không bật. */
+  showSummary?: boolean;
 }) {
   const { user, isReady, session } = useApiSession();
   const client = useQueryClient();
@@ -2157,6 +2162,7 @@ export function RightPanelCommentsSynchronized({
         ref={scrollContainerRef}
         className={styles.rightScrollArea}
       >
+        {showSummary && <CommunitySummary postId={post.id} />}
         <ApiErrorNotice error={addMutation.error} />
         <ApiErrorNotice
           error={query.error}
