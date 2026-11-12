@@ -8,6 +8,8 @@
 export type CommentsControllerListCommentsParams = {
   /** Số lượng bình luận (mặc định tối đa 50, chế độ phẳng tối đa 200) */
   limit?: number;
+  /** Chỉ lấy bình luận chỉ định và bình luận cha nếu có */
+  focusCommentId?: string;
   /** Keyset cursor */
   cursor?: string;
   /** ID bình luận cha nếu muốn xem phản hồi con */

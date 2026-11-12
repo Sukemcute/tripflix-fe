@@ -1,8 +1,8 @@
 'use client';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { socialApi, useApiSession } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { CommunitySummary } from './post-summary';
@@ -13,19 +13,34 @@ import { CommentSkeletonList } from './comment-skeleton';
  * Bình luận của một bài (hoặc trả lời của một bình luận khi có parentCommentId).
  * Ô viết ở trên danh sách; sửa ngay tại bình luận; trả lời thụt vào một bậc.
  */
-export function LiveComments({ postId, parentCommentId }: { postId: string; parentCommentId?: string }) {
+export function LiveComments({ postId, parentCommentId, focusCommentId, focusedReply }: {
+  postId: string;
+  parentCommentId?: string;
+  focusCommentId?: string;
+  focusedReply?: Awaited<ReturnType<typeof socialApi.getCommentThread>>['items'][number];
+}) {
   const { user } = useApiSession();
   const client = useQueryClient();
   const [body, setBody] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
   const [editBody, setEditBody] = useState('');
-  const [replying, setReplying] = useState<string | undefined>();
+  const [replying, setReplying] = useState<string | null>();
   const query = useInfiniteQuery({
     queryKey: ['social', 'comments', postId, parentCommentId],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) => socialApi.listComments(postId, pageParam, parentCommentId, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
+  const focusedThread = useQuery({
+    queryKey: ['social', 'comment-thread', postId, focusCommentId, user?.id],
+    enabled: !parentCommentId && !!focusCommentId,
+    queryFn: ({ signal }) => socialApi.getCommentThread(postId, focusCommentId!, signal),
+  });
+  const target = focusedThread.data?.items.find((comment) => comment.id === focusCommentId);
+  const targetRoot = target?.parentCommentId
+    ? focusedThread.data?.items.find((comment) => comment.id === target.parentCommentId)
+    : target;
+  const expandedReply = replying === undefined ? target?.parentCommentId : replying;
   const mutation = useMutation({
     mutationFn: async (
       action: { type: 'add' } | { type: 'edit'; id: string } | { type: 'delete'; id: string },
@@ -42,6 +57,13 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
     },
   });
   const comments = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const focusedItem = parentCommentId ? focusedReply : targetRoot;
+  if (focusedItem && !comments.some((comment) => comment.id === focusedItem.id)) comments.unshift(focusedItem);
+  const hasFocus = !!focusCommentId && (parentCommentId ? focusedReply?.id : target?.id) === focusCommentId;
+  const canScrollToFocus = hasFocus && !query.isPending;
+  useEffect(() => {
+    if (canScrollToFocus) document.getElementById(`comment-${focusCommentId}`)?.scrollIntoView({ block: 'center' });
+  }, [canScrollToFocus, focusCommentId]);
   const writeLabel = parentCommentId ? vi.api.reply : vi.api.commentBody;
   const loginHref = `/login?returnTo=${encodeURIComponent(`/trips/${postId}`)}`;
 
@@ -88,7 +110,13 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
           void query.refetch();
         }}
       />
-      {query.isPending && <CommentSkeletonList count={8} />}
+      {!parentCommentId && focusCommentId && (
+        <>
+          <ApiErrorNotice error={focusedThread.error} retry={() => void focusedThread.refetch()} />
+          {focusedThread.isSuccess && !target && <p role="status">{vi.api.commentUnavailable}</p>}
+        </>
+      )}
+      {query.isPending && comments.length === 0 && <CommentSkeletonList count={8} />}
       {query.isSuccess && comments.length === 0 && !parentCommentId && (
         <p className="comment-empty">{vi.api.noComments}</p>
       )}
@@ -100,7 +128,7 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
             : comment.authorName?.trim() || vi.api.commentMember;
           return (
             <li key={comment.id}>
-              <article className="comment">
+              <article id={`comment-${comment.id}`} className={hasFocus && comment.id === focusCommentId ? 'comment is-focused' : 'comment'}>
                 <span className="post-avatar" aria-hidden="true">
                   {getInitial(name)}
                 </span>
@@ -144,10 +172,10 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
                         <button
                           type="button"
                           className="comment-link"
-                          aria-expanded={replying === comment.id}
-                          onClick={() => setReplying(replying === comment.id ? undefined : comment.id)}
+                          aria-expanded={expandedReply === comment.id}
+                          onClick={() => setReplying(expandedReply === comment.id ? null : comment.id)}
                         >
-                          {replying === comment.id ? vi.api.hideReplies : vi.api.replies}
+                          {expandedReply === comment.id ? vi.api.hideReplies : vi.api.replies}
                         </button>
                       )}
                       {isMine && (
@@ -175,7 +203,14 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
                       )}
                     </div>
                   )}
-                  {replying === comment.id && <LiveComments postId={postId} parentCommentId={comment.id} />}
+                  {expandedReply === comment.id && (
+                    <LiveComments
+                      postId={postId}
+                      parentCommentId={comment.id}
+                      focusedReply={target?.parentCommentId === comment.id ? target : undefined}
+                      focusCommentId={target?.parentCommentId === comment.id ? focusCommentId : undefined}
+                    />
+                  )}
                 </div>
               </article>
             </li>

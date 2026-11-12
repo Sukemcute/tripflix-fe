@@ -3026,6 +3026,11 @@ body:has([class*="feedPageWrapper"]) #content {
   border: 1px solid var(--color-border);
   background: var(--color-background);
 }
+.comment.is-focused {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
 .comment-body {
   flex: 1;
   min-width: 0;
