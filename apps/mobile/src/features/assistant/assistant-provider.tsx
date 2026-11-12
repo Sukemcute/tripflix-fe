@@ -1,6 +1,6 @@
 import type { AssistantCard } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
-import { createContext, useContext, useEffect, useRef, useState, type PropsWithChildren } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren } from 'react';
 
 /** Bong bóng Tripi: nhỏ để bớt che video, vẫn trên 44pt nên dễ bấm. Khung chat thu về đúng cỡ này khi đóng. */
 export const BUBBLE_SIZE = 52;
@@ -20,14 +20,9 @@ export type AssistantTransport = (
 ) => Promise<string | { text: string; cards: AssistantCard[] }>;
 
 function useAssistantState(transport?: AssistantTransport) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [origin, setOrigin] = useState<AssistantOrigin | null>(null);
-  function openFromBubble(bounds: AssistantOrigin) {
-    setOrigin(bounds);
-    setIsOpen(true);
-  }
-  // Ô trống đầu cột hành động của reel đang xem: Tripi đứng đó, to bằng nút tim, tới khi người dùng kéo đi.
-  const [bubbleHome, setBubbleHome] = useState<AssistantOrigin | null>(null);
+  const [dialog, setDialog] = useState<{ origin?: AssistantOrigin } | null>(null);
+  const openDialog = useCallback((origin?: AssistantOrigin) => setDialog({ origin }), []);
+  const closeDialog = useCallback(() => setDialog(null), []);
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [isPending, setIsPending] = useState(false);
@@ -70,12 +65,10 @@ function useAssistantState(transport?: AssistantTransport) {
     setIsPending(false);
   }
   return {
-    isOpen,
-    setIsOpen,
-    origin,
-    openFromBubble,
-    bubbleHome,
-    setBubbleHome,
+    isOpen: dialog !== null,
+    origin: dialog?.origin,
+    openDialog,
+    closeDialog,
     draft,
     setDraft,
     messages,

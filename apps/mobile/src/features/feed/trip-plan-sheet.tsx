@@ -95,7 +95,7 @@ export function TripPlanSheet({
   const askTripi = () => {
     onClose();
     assistant.setDraft(t('mobile.tripPlan.askTripiPrompt', { title: postTitle, date: startDate, adults }));
-    assistant.setIsOpen(true);
+    assistant.openDialog();
   };
 
   return (

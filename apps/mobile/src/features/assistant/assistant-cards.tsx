@@ -6,6 +6,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Icon, money, Txt } from '@/components/mobile-ui';
+import { compactType, mobileIconSize } from '@/components/mobile-scale';
 
 const copy = vi.assistant;
 type Reel = { poster: string };
@@ -61,10 +62,10 @@ function VideoCard({ card, reel, onPlay }: { card: AssistantCard; reel?: Reel; o
         <View style={[StyleSheet.absoluteFill, { backgroundColor: c.tealInk }]} />
       )}
       <View style={styles.play}>
-        <Icon name="play" size={18} color={c.background} />
+        <Icon name="play" size={mobileIconSize.control} color={c.background} />
       </View>
       <View style={styles.videoCaption}>
-        <Txt variant="caption" numberOfLines={3} style={{ color: c.background }}>
+        <Txt variant="caption" numberOfLines={3} style={styles.videoTitle}>
           {card.title}
         </Txt>
       </View>
@@ -98,13 +99,17 @@ export function AssistantCards({ cards, onOpen }: { cards: AssistantCard[]; onOp
           onPress={() => openCard(card, onOpen)}
           style={({ pressed }) => [styles.row, pressed && { opacity: 0.85 }]}
         >
-          <Icon name={card.kind === 'stay' ? 'bed-outline' : 'map-outline'} size={18} color={c.tealInk} />
+          <Icon
+            name={card.kind === 'stay' ? 'bed-outline' : 'map-outline'}
+            size={mobileIconSize.control}
+            color={c.tealInk}
+          />
           <View style={{ flex: 1 }}>
-            <Txt variant="label" numberOfLines={2}>
+            <Txt variant="label" numberOfLines={2} style={compactType.body}>
               {card.title}
             </Txt>
             {card.priceFrom !== null && (
-              <Txt variant="caption" style={{ color: c.coralInk }}>
+              <Txt variant="caption" style={styles.price}>
                 {copy.priceFrom} {money(card.priceFrom)}
               </Txt>
             )}
@@ -135,11 +140,13 @@ const styles = StyleSheet.create({
     backgroundColor: c.overlay,
   },
   videoCaption: { padding: s.sm, backgroundColor: c.overlayHeavy },
+  videoTitle: { ...compactType.meta, color: c.background },
+  price: { ...compactType.meta, color: c.coralInk },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: s.sm,
-    padding: s.md,
+    padding: s.sm,
     borderRadius: radius.md,
     backgroundColor: c.warmMist,
   },

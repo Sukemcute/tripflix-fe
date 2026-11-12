@@ -14,7 +14,6 @@ import { copy, Txt } from '@/components/mobile-ui';
 import { ReviewProvider } from '@/features/review/review-provider';
 import { CommerceProvider } from '@/features/booking/commerce-provider';
 import { AssistantProvider } from '@/features/assistant/assistant-provider';
-import { AssistantBubble } from '@/features/assistant/assistant-bubble';
 import { assistantTransport } from '@/features/assistant/assistant-transport';
 
 const tokenStorage =
@@ -89,7 +88,6 @@ export default function RootLayout() {
                     options={{ animation: 'default', fullScreenGestureEnabled: true }}
                   />
                 </Stack>
-                <AssistantBubble />
               </AppFrame>
             </AssistantProvider>
           </ReviewProvider>
