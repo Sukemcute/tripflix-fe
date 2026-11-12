@@ -91,10 +91,14 @@ export async function searchUsers(q: string, page = 1, signal?: AbortSignal): Pr
 
 export function useUserSearch(q: string) {
   const { isReady } = useApiSession();
-  const query = q.trim();
-  return useQuery({
+  const query = q.normalize('NFKC').replace(/\s+/gu, ' ').trim();
+  const folded = query.toLowerCase().normalize('NFD').replace(/[\p{M}\s]/gu, '');
+  const isSearchable = query.length <= 50 && folded.length >= 2 && !/\p{C}/u.test(query);
+  const result = useQuery({
     queryKey: ['discovery', 'users', query],
-    enabled: isReady && query.length > 0,
+    enabled: isReady && isSearchable,
+    retry: false,
     queryFn: ({ signal }) => searchUsers(query, 1, signal),
   });
+  return { ...result, isSearchable };
 }

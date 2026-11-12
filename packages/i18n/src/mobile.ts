@@ -92,6 +92,8 @@ export const mobile = {
   },
   searchPanel: {
     placeholder: 'Tìm người dùng, video, lộ trình...',
+    userQueryLength: 'Nhập tên từ 2 đến 50 ký tự hợp lệ.',
+    userSearchRateLimited: 'Bạn tìm kiếm quá nhanh. Vui lòng thử lại sau ít phút.',
     close: 'Đóng tìm kiếm',
     clear: 'Xoá từ khoá',
     users: 'Người dùng',

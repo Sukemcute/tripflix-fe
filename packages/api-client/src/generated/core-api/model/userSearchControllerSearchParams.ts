@@ -6,7 +6,8 @@
  */
 
 export type UserSearchControllerSearchParams = {
+  /** 1–5 */
   page?: number;
-  /** 1–50 ký tự */
+  /** 2–50 ký tự sau khi bỏ khoảng trắng thừa */
   q: string;
 };

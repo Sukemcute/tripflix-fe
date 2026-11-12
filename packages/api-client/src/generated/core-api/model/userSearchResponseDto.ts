@@ -9,5 +9,6 @@ import type { UserSearchItemDto } from './userSearchItemDto';
 export interface UserSearchResponseDto {
   items: UserSearchItemDto[];
   page: number;
+  /** false ở trang 5 dù còn người khớp */
   hasMore: boolean;
 }

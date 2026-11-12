@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { socialApi, usePostSearch, useUserSearch } from '@tripflix/api-client';
+import { HttpError, socialApi, usePostSearch, useUserSearch } from '@tripflix/api-client';
 import type { ExploreItemDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
@@ -292,6 +292,10 @@ function UserResults({ query, onOpenReel }: { query: string; onOpenReel: (postId
         ))}
       </>
     );
+  }
+  if (!search.isSearchable) return <Txt style={styles.muted}>{copy.userQueryLength}</Txt>;
+  if (search.error instanceof HttpError && search.error.status === 429) {
+    return <Txt style={styles.error}>{copy.userSearchRateLimited}</Txt>;
   }
   const users = search.data?.items ?? [];
   return (

@@ -43,10 +43,20 @@ export type userSearchControllerSearchResponse200 = {
   status: 200;
 };
 
+export type userSearchControllerSearchResponse429 = {
+  data: void;
+  status: 429;
+};
+
 export type userSearchControllerSearchResponseSuccess = userSearchControllerSearchResponse200 & {
   headers: Headers;
 };
-export type userSearchControllerSearchResponse = userSearchControllerSearchResponseSuccess;
+export type userSearchControllerSearchResponseError = userSearchControllerSearchResponse429 & {
+  headers: Headers;
+};
+
+export type userSearchControllerSearchResponse =
+  userSearchControllerSearchResponseSuccess | userSearchControllerSearchResponseError;
 
 export const getUserSearchControllerSearchUrl = (params: UserSearchControllerSearchParams) => {
   const normalizedParams = new URLSearchParams();
@@ -78,7 +88,7 @@ export const getUserSearchControllerSearchQueryKey = (params?: UserSearchControl
 
 export const getUserSearchControllerSearchQueryOptions = <
   TData = Awaited<ReturnType<typeof userSearchControllerSearch>>,
-  TError = unknown,
+  TError = void,
 >(
   params: UserSearchControllerSearchParams,
   options?: {
@@ -103,11 +113,11 @@ export const getUserSearchControllerSearchQueryOptions = <
 export type UserSearchControllerSearchQueryResult = NonNullable<
   Awaited<ReturnType<typeof userSearchControllerSearch>>
 >;
-export type UserSearchControllerSearchQueryError = unknown;
+export type UserSearchControllerSearchQueryError = void;
 
 export function useUserSearchControllerSearch<
   TData = Awaited<ReturnType<typeof userSearchControllerSearch>>,
-  TError = unknown,
+  TError = void,
 >(
   params: UserSearchControllerSearchParams,
   options: {
@@ -126,7 +136,7 @@ export function useUserSearchControllerSearch<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useUserSearchControllerSearch<
   TData = Awaited<ReturnType<typeof userSearchControllerSearch>>,
-  TError = unknown,
+  TError = void,
 >(
   params: UserSearchControllerSearchParams,
   options?: {
@@ -145,7 +155,7 @@ export function useUserSearchControllerSearch<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useUserSearchControllerSearch<
   TData = Awaited<ReturnType<typeof userSearchControllerSearch>>,
-  TError = unknown,
+  TError = void,
 >(
   params: UserSearchControllerSearchParams,
   options?: {
@@ -157,7 +167,7 @@ export function useUserSearchControllerSearch<
 
 export function useUserSearchControllerSearch<
   TData = Awaited<ReturnType<typeof userSearchControllerSearch>>,
-  TError = unknown,
+  TError = void,
 >(
   params: UserSearchControllerSearchParams,
   options?: {
