@@ -863,7 +863,6 @@ export function InspirationImmersiveViewer({
   const [videoProgress, setVideoProgress] = useState(0);
   const [mediaErrorPostId, setMediaErrorPostId] = useState<string | null>(null);
   const [captionExpandedPostId, setCaptionExpandedPostId] = useState<string | null>(null);
-  const [galleryState, setGalleryState] = useState<{ postId: string; index: number } | null>(null);
 
   // Optimistic states per postId
   const [optimisticLikes, setOptimisticLikes] = useState<Record<string, boolean>>({});
@@ -962,10 +961,6 @@ export function InspirationImmersiveViewer({
       })
     : [];
   const coverImage = postImages[0]?.src;
-  const activeGalleryIndex =
-    galleryState && activePost && galleryState.postId === activePost.id
-      ? Math.min(galleryState.index, Math.max(0, postImages.length - 1))
-      : null;
 
   // Lấy viewerContext thực tế của bài đang active (myReaction, isBookmarked)
   const postDetailQuery = useQuery({
@@ -1095,8 +1090,6 @@ export function InspirationImmersiveViewer({
       const container = trackScrollRef.current;
       if (!container) return;
 
-      if (galleryState) setGalleryState(null);
-
       targetIndexRef.current = clamped;
 
       const targetEl = mediaItemRefs.current[clamped];
@@ -1133,7 +1126,7 @@ export function InspirationImmersiveViewer({
         void postsQuery.fetchNextPage();
       }
     },
-    [posts, galleryState, postsQuery, commitSettledPost],
+    [posts, postsQuery, commitSettledPost],
   );
 
   // Dieu huong buoc (Step Navigation): dung chung logic luot tu dinh va bo dem debounce 450ms
@@ -1306,32 +1299,6 @@ export function InspirationImmersiveViewer({
       ) {
         return;
       }
-      if (
-        galleryState &&
-        activePost &&
-        galleryState.postId === activePost.id &&
-        postImages.length > 0
-      ) {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          setGalleryState(null);
-          return;
-        }
-        if (event.key === 'ArrowLeft') {
-          event.preventDefault();
-          setGalleryState((prev) =>
-            prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null,
-          );
-          return;
-        }
-        if (event.key === 'ArrowRight') {
-          event.preventDefault();
-          setGalleryState((prev) =>
-            prev ? { ...prev, index: Math.min(postImages.length - 1, prev.index + 1) } : null,
-          );
-          return;
-        }
-      }
       if (event.key === 'ArrowDown') {
         event.preventDefault();
         navigateStep(1);
@@ -1342,7 +1309,7 @@ export function InspirationImmersiveViewer({
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [galleryState, activePost, postImages.length, navigateStep]);
+  }, [navigateStep]);
 
   // Optimistic mutation cho Like / Save / Share với rollback khi lỗi
   const engagementMutation = useMutation({
@@ -1585,143 +1552,70 @@ export function InspirationImmersiveViewer({
                   className={styles.mediaStageFrame}
                 >
                   {/* Top-Left Volume + Slider & Top-Right Hover Controls (More / Fullscreen) */}
-                  {activeGalleryIndex === null && (
-                    <>
-                      {reelCard?.video && activePost.postType === 'video' && !isMediaError && (
-                        <div className={styles.stageTopLeftControls}>
-                          <div className={styles.volumeControlPill}>
-                            <button
-                              type="button"
-                              className={styles.volumeToggleBtn}
-                              aria-label={
-                                isMuted ? vi.api.immersiveUnmuteVideo : vi.api.immersiveMuteVideo
+                  <>
+                    {reelCard?.video && activePost.postType === 'video' && !isMediaError && (
+                      <div className={styles.stageTopLeftControls}>
+                        <div className={styles.volumeControlPill}>
+                          <button
+                            type="button"
+                            className={styles.volumeToggleBtn}
+                            aria-label={
+                              isMuted ? vi.api.immersiveUnmuteVideo : vi.api.immersiveMuteVideo
+                            }
+                            onClick={() => {
+                              const nextMuted = !isMuted;
+                              setMuted(nextMuted);
+                              if (!nextMuted && volume === 0) {
+                                setVolume(0.8);
+                                if (videoRef.current) videoRef.current.volume = 0.8;
                               }
-                              onClick={() => {
-                                const nextMuted = !isMuted;
+                              if (videoRef.current) {
+                                videoRef.current.muted = nextMuted;
+                              }
+                            }}
+                          >
+                            <SocialIcon
+                              name={isMuted || volume === 0 ? 'volumeOff' : 'volumeOn'}
+                              size={18}
+                            />
+                          </button>
+                          <div className={styles.volumeSliderWrap}>
+                            <input
+                              type="range"
+                              min={0}
+                              max={1}
+                              step={0.05}
+                              value={isMuted ? 0 : volume}
+                              aria-label={vi.api.immersiveMuteVideo}
+                              className={styles.volumeRangeInput}
+                              onChange={(event) => {
+                                const nextVol = Number(event.target.value);
+                                setVolume(nextVol);
+                                const nextMuted = nextVol === 0;
                                 setMuted(nextMuted);
-                                if (!nextMuted && volume === 0) {
-                                  setVolume(0.8);
-                                  if (videoRef.current) videoRef.current.volume = 0.8;
-                                }
                                 if (videoRef.current) {
+                                  videoRef.current.volume = nextVol;
                                   videoRef.current.muted = nextMuted;
                                 }
                               }}
-                            >
-                              <SocialIcon
-                                name={isMuted || volume === 0 ? 'volumeOff' : 'volumeOn'}
-                                size={18}
-                              />
-                            </button>
-                            <div className={styles.volumeSliderWrap}>
-                              <input
-                                type="range"
-                                min={0}
-                                max={1}
-                                step={0.05}
-                                value={isMuted ? 0 : volume}
-                                aria-label={vi.api.immersiveMuteVideo}
-                                className={styles.volumeRangeInput}
-                                onChange={(event) => {
-                                  const nextVol = Number(event.target.value);
-                                  setVolume(nextVol);
-                                  const nextMuted = nextVol === 0;
-                                  setMuted(nextMuted);
-                                  if (videoRef.current) {
-                                    videoRef.current.volume = nextVol;
-                                    videoRef.current.muted = nextMuted;
-                                  }
-                                }}
-                              />
-                            </div>
+                            />
                           </div>
                         </div>
-                      )}
-
-                      <div className={styles.stageTopControls}>
-                        <Link
-                          prefetch={false}
-                          href={`/trips/${activePost.id}`}
-                          className={styles.stageCircleBtn}
-                          aria-label={vi.api.postMoreOptions}
-                          title={vi.api.detail}
-                        >
-                          <SocialIcon name="more" size={18} />
-                        </Link>
                       </div>
-                    </>
-                  )}
+                    )}
 
-                  {/* In-Stage Image Gallery (object-fit: contain, 1/N indicator, prev/next slide, close) */}
-                  {activeGalleryIndex !== null && postImages[activeGalleryIndex] && (
-                    <section
-                      className={styles.galleryStageOverlay}
-                      aria-label={activePost.title}
-                    >
-                      <div className={styles.galleryTopBar}>
-                        <span className={styles.galleryCountPill}>
-                          {activeGalleryIndex + 1} / {postImages.length}
-                        </span>
-                        <button
-                          type="button"
-                          className={styles.galleryCloseBtn}
-                          aria-label={vi.api.immersiveCloseGallery}
-                          title={vi.api.immersiveCloseGallery}
-                          onClick={() => setGalleryState(null)}
-                        >
-                          <SocialIcon name="close" size={18} />
-                        </button>
-                      </div>
-
-                      <div className={styles.galleryContainFrame}>
-                        <Image
-                          key={postImages[activeGalleryIndex].src}
-                          src={postImages[activeGalleryIndex].src}
-                          alt={activePost.title}
-                          fill
-                          className={styles.galleryContainImg}
-                          sizes="(max-width: 1024px) 100vw, 540px"
-                          priority
-                          unoptimized={postImages[activeGalleryIndex].src.startsWith('http')}
-                        />
-                      </div>
-
-                      {postImages.length > 1 && (
-                        <>
-                          <button
-                            type="button"
-                            className={`${styles.gallerySlideNavBtn} ${styles.gallerySlidePrev}`}
-                            disabled={activeGalleryIndex <= 0}
-                            aria-label={vi.api.immersivePrevSlide}
-                            title={vi.api.immersivePrevSlide}
-                            onClick={() =>
-                              setGalleryState({
-                                postId: activePost.id,
-                                index: Math.max(0, activeGalleryIndex - 1),
-                              })
-                            }
-                          >
-                            <SocialIcon name="chevronLeft" size={20} />
-                          </button>
-                          <button
-                            type="button"
-                            className={`${styles.gallerySlideNavBtn} ${styles.gallerySlideNext}`}
-                            disabled={activeGalleryIndex >= postImages.length - 1}
-                            aria-label={vi.api.immersiveNextSlide}
-                            title={vi.api.immersiveNextSlide}
-                            onClick={() =>
-                              setGalleryState({
-                                postId: activePost.id,
-                                index: Math.min(postImages.length - 1, activeGalleryIndex + 1),
-                              })
-                            }
-                          >
-                            <SocialIcon name="chevronRight" size={20} />
-                          </button>
-                        </>
-                      )}
-                    </section>
-                  )}
+                    <div className={styles.stageTopControls}>
+                      <Link
+                        prefetch={false}
+                        href={`/trips/${activePost.id}`}
+                        className={styles.stageCircleBtn}
+                        aria-label={vi.api.postMoreOptions}
+                        title={vi.api.detail}
+                      >
+                        <SocialIcon name="more" size={18} />
+                      </Link>
+                    </div>
+                  </>
 
                   {/* Media Track: Vung cuon momentum doc voi proximity snap ben trong Viewport 9:16 co dinh */}
                   <div
