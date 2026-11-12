@@ -1,5 +1,11 @@
-/** Phương tiện của một ngày trong lộ trình người đăng chia sẻ (lưu dạng chữ trong lịch từng ngày). */
+/** Phương tiện của một ngày trong lộ trình người đăng chia sẻ. */
 export type TripPlanMode = 'flight' | 'bus' | 'train' | 'car' | 'other';
+
+interface TripPlanTransport {
+  mode: TripPlanMode;
+  fromAirport?: string;
+  toAirport?: string;
+}
 
 /** Một ngày trong trình soạn lộ trình lúc đăng bài. */
 export interface TripPlanDayDraft {
@@ -17,24 +23,33 @@ export const EMPTY_TRIP_PLAN_DAY: TripPlanDayDraft = {
   activities: [{ title: '', location: '' }],
   transport: { mode: null, fromCode: '', toCode: '', note: '' },
 };
+export const TRIP_PLAN_MAX_DAYS = 30;
 
 /**
- * Bản nháp → trip_attachment gửi core: phương tiện thành mục đầu ngày (vd "Máy bay SGN → DLI"), bỏ dòng trống,
- * giữ đúng số ngày. Không còn gì thì trả null để đăng như bài thường.
- * shortcut: core chưa có trường phương tiện, sân bay có cấu trúc nên vé bay chưa đặt kèm được; thêm khi core có.
+ * Gửi phương tiện như một mục hiển thị trong ngày kèm dữ liệu tuyến để tra vé qua OTA.
  */
 export function buildTripAttachment(
   draft: TripPlanDraft,
   modeLabels: Readonly<Record<TripPlanMode, string>>,
 ) {
-  const items = draft.days.flatMap((day, index) => {
+  const items = draft.days.flatMap((day, index): {
+    day: number;
+    title: string;
+    location?: string;
+    notes?: string;
+    transport?: TripPlanTransport;
+  }[] => {
     const { mode, fromCode, toCode, note } = day.transport;
     const transport = mode
       ? [
           {
             day: index + 1,
-            title: fromCode && toCode ? `${modeLabels[mode]} ${fromCode} → ${toCode}` : modeLabels[mode],
+            title: mode === 'flight' && fromCode && toCode ? `${modeLabels[mode]} ${fromCode} → ${toCode}` : modeLabels[mode],
             ...(note.trim() ? { notes: note.trim() } : {}),
+            transport: {
+              mode,
+              ...(mode === 'flight' && fromCode && toCode ? { fromAirport: fromCode, toAirport: toCode } : {}),
+            },
           },
         ]
       : [];
@@ -54,6 +69,35 @@ export function buildTripAttachment(
     ...(draft.hotel ? { hotelId: draft.hotel.hotelId, hotelName: draft.hotel.hotelName } : {}),
     items,
   };
+}
+
+interface TripPlanFlight {
+  day: number;
+  from: string;
+  to: string;
+}
+
+/** Mỗi phương tiện đã chọn phải có tuyến bán được qua OTA để đặt cả lộ trình trong một đơn. */
+export function getBookableTripPlan(trip: {
+  hotelId?: string;
+  items?: readonly { day: number; transport?: TripPlanTransport }[];
+}): { hotelId: string; flights: TripPlanFlight[] } | null {
+  if (!trip.hotelId) return null;
+  const airportCode = /^[A-Z]{3}$/;
+  const flights: TripPlanFlight[] = [];
+  for (const { day, transport } of trip.items ?? []) {
+    if (!transport) continue;
+    const { mode, fromAirport, toAirport } = transport;
+    if (
+      mode !== 'flight' || !Number.isInteger(day) || day < 1 || day > TRIP_PLAN_MAX_DAYS ||
+      typeof fromAirport !== 'string' || typeof toAirport !== 'string' ||
+      !airportCode.test(fromAirport) || !airportCode.test(toAirport) ||
+      fromAirport === toAirport
+    ) return null;
+    flights.push({ day, from: fromAirport, to: toAirport });
+  }
+  if (flights.length === 0 || flights.length >= TRIP_PLAN_MAX_ITEMS) return null;
+  return { hotelId: trip.hotelId, flights: flights.sort((a, b) => a.day - b.day) };
 }
 
 /** Bài có lộ trình để xem (có lịch từng ngày hoặc chỗ ở) thì mới hiện nút "Xem lộ trình". */

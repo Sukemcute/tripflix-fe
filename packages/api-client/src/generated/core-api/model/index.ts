@@ -247,6 +247,8 @@ export * from './tripDto';
 export * from './tripDtoStatus';
 export * from './tripItineraryItemDto';
 export * from './tripPageDto';
+export * from './tripTransportDto';
+export * from './tripTransportDtoMode';
 export * from './updateCalendarResultDto';
 export * from './updateCommentDto';
 export * from './updatedBookmarkDto';

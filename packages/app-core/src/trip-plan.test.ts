@@ -3,6 +3,7 @@ import {
   buildTripAttachment,
   buildTripPlanCheckout,
   EMPTY_TRIP_PLAN_DAY,
+  getBookableTripPlan,
   getTripDayDate,
   getTripNights,
   hasTripPlan,
@@ -45,14 +46,27 @@ describe('trip plan', () => {
       hotelId: 'h1',
       hotelName: 'Ana Mandara',
       items: [
-        { day: 1, title: 'Máy bay SGN → DLI' },
+        { day: 1, title: 'Máy bay SGN → DLI', transport: { mode: 'flight', fromAirport: 'SGN', toAirport: 'DLI' } },
         { day: 1, title: 'Hồ Xuân Hương', location: 'Trung tâm' },
-        { day: 2, title: 'Xe khách', notes: 'Nhà xe Phương Trang' },
+        { day: 2, title: 'Xe khách', notes: 'Nhà xe Phương Trang', transport: { mode: 'bus' } },
       ],
     });
     expect(
       buildTripAttachment({ destinationName: '', hotel: null, days: [EMPTY_TRIP_PLAN_DAY] }, labels),
     ).toBeNull();
+  });
+
+  it('chỉ cho đặt combo có chỗ ở và đủ tuyến bay cho các chặng phương tiện đã chọn', () => {
+    const flight = { day: 1, transport: { mode: 'flight', fromAirport: 'SGN', toAirport: 'DLI' } } as const;
+    const hotelId = 'hotel-01';
+    expect(getBookableTripPlan({ hotelId, items: [{ day: 1 }] })).toBeNull();
+    expect(getBookableTripPlan({ items: [flight] })).toBeNull();
+    expect(getBookableTripPlan({ hotelId, items: [{ day: 1, transport: { mode: 'flight' } }] })).toBeNull();
+    expect(getBookableTripPlan({ hotelId, items: [flight, { day: 2, transport: { mode: 'bus' } }] })).toBeNull();
+    expect(getBookableTripPlan({ hotelId, items: [flight, { day: 2 }] })).toEqual({
+      hotelId,
+      flights: [{ day: 1, from: 'SGN', to: 'DLI' }],
+    });
   });
 
   it('ở tới sáng ngày cuối, ít nhất một đêm', () => {
