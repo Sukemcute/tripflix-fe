@@ -154,6 +154,8 @@ export function ReelSocialOverlay({
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
   const railActionSize = useRailActionSize();
+  // Đo lại chỗ của Tripi khi màn hình đổi cỡ (xoay máy, chia đôi màn hình).
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const { setBubbleHome } = useAssistant();
   const isFocused = useIsFocused();
   const tripiSlot = useRef<ComponentRef<typeof View>>(null);
@@ -171,7 +173,7 @@ export function ReelSocialOverlay({
       cancelAnimationFrame(frame);
       setBubbleHome(null);
     };
-  }, [shouldAnchorTripi, railActionSize, anchorTripi, setBubbleHome]);
+  }, [shouldAnchorTripi, windowWidth, windowHeight, anchorTripi, setBubbleHome]);
   const [hasComments, setHasComments] = useState(false);
   const [isTripPlanOpen, setIsTripPlanOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
