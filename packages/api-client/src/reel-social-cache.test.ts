@@ -1,6 +1,6 @@
 import { QueryClient, type InfiniteData } from '@tanstack/react-query';
 import { expect, it } from 'vitest';
-import { findCachedFeedCard, updateReelSocialCache } from './reel-social-cache';
+import { findCachedFeedCard, removeReelFromSavedFeedCache, updateReelSocialCache } from './reel-social-cache';
 import type { FeedCardDto } from './generated/core-api/model/feedCardDto';
 import type { FeedPageDto } from './generated/core-api/model/feedPageDto';
 import type { SocialPostDetailDto } from './generated/core-api/model/socialPostDetailDto';
@@ -166,4 +166,18 @@ it('finds a post in any cached feed tab and returns nothing for an unknown post'
   });
   expect(findCachedFeedCard(client, 'hot-post')?.postId).toBe('hot-post');
   expect(findCachedFeedCard(client, 'missing')).toBeUndefined();
+});
+
+it('removes an unsaved reel from the saved list only, keeping cursors and other tabs', () => {
+  const { client, feed, read } = setup();
+  const savedKey = ['feed', 'saved', 'viewer'];
+  client.setQueryData(savedKey, feed);
+
+  removeReelFromSavedFeedCache(client, 'viewer', 'one');
+
+  const saved = client.getQueryData<InfiniteData<FeedPageDto>>(savedKey)!;
+  expect(saved.pages.flatMap((page) => page.items.map((item) => item.postId))).toEqual(['two']);
+  expect(saved.pages[0]!.nextCursor).toBe('cursor');
+  expect(read().pages[0]!.items[0]!.postId).toBe('one');
+  expect(client.getQueryData(['feed', 'saved', 'other-viewer'])).toBeUndefined();
 });

@@ -126,3 +126,21 @@ export function updateReelSocialCache(
       );
   };
 }
+
+/**
+ * Bỏ lưu thành công thì Reel đó không còn thuộc danh sách "Đã lưu": xoá khỏi cache thay vì chỉ đổi saved=false.
+ * Chỉ gọi sau khi server xác nhận, nên lỗi mạng không làm Reel biến mất rồi hiện lại.
+ */
+export function removeReelFromSavedFeedCache(client: QueryClient, userId: string, postId: string) {
+  client.setQueryData<InfiniteData<FeedPageDto>>(
+    ['feed', 'saved', userId],
+    (data) =>
+      data && {
+        ...data,
+        pages: data.pages.map((page) => ({
+          ...page,
+          items: page.items.filter((card) => card.postId !== postId),
+        })),
+      },
+  );
+}

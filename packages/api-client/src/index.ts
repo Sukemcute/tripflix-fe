@@ -44,7 +44,7 @@ export {
   type SummaryFilter,
 } from './post-summary';
 export { feedApi, REEL_FEED_TABS, useReelsFeed, type ReelFeedTab } from './feed';
-export { findCachedFeedCard, updateReelSocialCache } from './reel-social-cache';
+export { findCachedFeedCard, removeReelFromSavedFeedCache, updateReelSocialCache } from './reel-social-cache';
 export { updateCommentLikeCache } from './comment-like-cache';
 export { evictPostFromCache, isPostNotFoundError } from './post-cache';
 export { useStaySearch, getAvailableStays, getFutureDate, type StayFilters } from './stay-search';
