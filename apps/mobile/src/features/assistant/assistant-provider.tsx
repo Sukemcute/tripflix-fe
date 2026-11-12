@@ -26,6 +26,8 @@ function useAssistantState(transport?: AssistantTransport) {
     setOrigin(bounds);
     setIsOpen(true);
   }
+  // Ô trống đầu cột hành động của reel đang xem: Tripi đứng đó, to bằng nút tim, tới khi người dùng kéo đi.
+  const [bubbleHome, setBubbleHome] = useState<AssistantOrigin | null>(null);
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [isPending, setIsPending] = useState(false);
@@ -72,6 +74,8 @@ function useAssistantState(transport?: AssistantTransport) {
     setIsOpen,
     origin,
     openFromBubble,
+    bubbleHome,
+    setBubbleHome,
     draft,
     setDraft,
     messages,

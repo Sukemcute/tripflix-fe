@@ -145,7 +145,6 @@ export function ReelSlide({
     windowHeight,
     slideHeight: height,
     topInset: insets.top,
-    gap: spacing.sm,
   });
   const stageStyle = useAnimatedStyle(() => ({
     transform: [

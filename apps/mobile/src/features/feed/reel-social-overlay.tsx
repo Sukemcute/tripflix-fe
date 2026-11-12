@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getCollapsedCaptionLength } from '@tripflix/app-core';
+import { getCollapsedCaptionLength, getReelScale } from '@tripflix/app-core';
 import {
   HttpError,
   REEL_FEED_TABS,
@@ -13,9 +13,9 @@ import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/to
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
-import { router } from 'expo-router';
-import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { router, useIsFocused } from 'expo-router';
+import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
+import { Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -27,6 +27,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
+import { useAssistant } from '@/features/assistant/assistant-provider';
 import {
   HEART_POP_SETTLE,
   HEART_POP_UP,
@@ -59,6 +60,15 @@ const TEXT_SHADOW = {
 const HEART_POP_SCALE = 1.25;
 const HEART_POP_LIFT = -6;
 const PRESSED_SCALE = 0.88;
+// Ô của cột hành động ở chuẩn 390pt; co giãn theo getReelScale để tỉ lệ icon/video giữ như nhau trên mọi máy.
+const RAIL_ICON_SIZE = 32;
+const RAIL_ACTION_SIZE = 48;
+
+/** Bề rộng một ô cột hành động trên máy hiện tại (Tripi đặt ở đầu cột cũng dùng cỡ này). */
+export function useRailActionSize(): number {
+  const { width } = useWindowDimensions();
+  return Math.round(RAIL_ACTION_SIZE * getReelScale(width));
+}
 
 function RailAction({
   icon,
@@ -78,6 +88,7 @@ function RailAction({
   shouldPop?: boolean;
   onPress: () => void;
 }) {
+  const actionSize = useRailActionSize();
   const scale = useSharedValue(1);
   const lift = useSharedValue(0);
   const iconStyle = useAnimatedStyle(() => ({
@@ -102,10 +113,18 @@ function RailAction({
         }
         onPress();
       }}
-      style={[styles.railAction, disabled && { opacity: 0.5 }]}
+      style={[
+        styles.railAction,
+        { minWidth: actionSize, minHeight: actionSize },
+        disabled && { opacity: 0.5 },
+      ]}
     >
       <Animated.View style={iconStyle}>
-        <Icon name={icon} size={34} color={selected ? colors.coral : colors.background} />
+        <Icon
+          name={icon}
+          size={Math.round((RAIL_ICON_SIZE * actionSize) / RAIL_ACTION_SIZE)}
+          color={selected ? colors.coral : colors.background}
+        />
       </Animated.View>
       {count !== undefined && (
         <Txt variant="caption" style={styles.railCount}>
@@ -133,6 +152,25 @@ export function ReelSocialOverlay({
 }) {
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
+  const railActionSize = useRailActionSize();
+  const { setBubbleHome } = useAssistant();
+  const isFocused = useIsFocused();
+  const tripiSlot = useRef<ComponentRef<typeof View>>(null);
+  const shouldAnchorTripi = isActive && isFocused;
+  const anchorTripi = useCallback(() => {
+    if (!shouldAnchorTripi) return;
+    tripiSlot.current?.measureInWindow((x, y, width, height) => {
+      if (width > 0 && height > 0) setBubbleHome({ x, y, width, height });
+    });
+  }, [shouldAnchorTripi, setBubbleHome]);
+  useEffect(() => {
+    if (!shouldAnchorTripi) return;
+    const frame = requestAnimationFrame(anchorTripi);
+    return () => {
+      cancelAnimationFrame(frame);
+      setBubbleHome(null);
+    };
+  }, [shouldAnchorTripi, railActionSize, anchorTripi, setBubbleHome]);
   const [hasComments, setHasComments] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [collapsedLength, setCollapsedLength] = useState<number | null>(null);
@@ -281,6 +319,14 @@ export function ReelSocialOverlay({
         aria-hidden={isHidden}
         importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
       >
+        {/* Chỗ của Tripi (bubble trợ lý nổi) ngay trên nút tim, cùng cỡ nút. */}
+        <View
+          ref={tripiSlot}
+          collapsable={false}
+          pointerEvents="none"
+          style={{ width: railActionSize, height: railActionSize }}
+          onLayout={anchorTripi}
+        />
         <RailAction
           icon={isLiked ? 'heart' : 'heart-outline'}
           label={isLiked ? vi.api.unlike : vi.api.like}
@@ -323,7 +369,7 @@ export function ReelSocialOverlay({
         )}
       </Animated.View>
       <Animated.View
-        style={[styles.caption, chromeStyle]}
+        style={[styles.caption, { right: railActionSize + spacing.lg }, chromeStyle]}
         pointerEvents={isHidden ? 'none' : 'box-none'}
         accessibilityElementsHidden={isHidden}
         aria-hidden={isHidden}
@@ -492,8 +538,6 @@ const styles = StyleSheet.create({
   },
   railCount: { color: colors.background, fontFamily: nativeFonts.semibold, ...TEXT_SHADOW },
   railAction: {
-    minWidth: 52,
-    minHeight: 52,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
@@ -501,7 +545,6 @@ const styles = StyleSheet.create({
   caption: {
     position: 'absolute',
     left: spacing.lg,
-    right: 72,
     bottom: spacing.md,
     gap: spacing.xs,
   },

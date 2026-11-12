@@ -26,15 +26,19 @@ export function AssistantBubble() {
   const insets = useSafeAreaInsets();
   const dimensions = useWindowDimensions();
   const width = Math.min(dimensions.width, mobileLayout.contentWidth);
-  const maxX = Math.max(MARGIN, width - SIZE - MARGIN);
+  const home = chat.bubbleHome;
+  const size = home?.width ?? SIZE;
+  const maxX = Math.max(MARGIN, width - size - MARGIN);
   const minY = insets.top + MARGIN;
-  const maxY = Math.max(minY, dimensions.height - insets.bottom - 104 - SIZE);
+  const maxY = Math.max(minY, dimensions.height - insets.bottom - 104 - size);
   const x = useSharedValue(maxX);
   const y = useSharedValue(maxY);
   const startX = useSharedValue(0);
   const startY = useSharedValue(0);
   const isDragging = useSharedValue(false);
   const hasDragged = useSharedValue(false);
+  // Đã kéo đi một lần thì Tripi ở yên chỗ người dùng đặt, không quay về đầu cột reel nữa.
+  const hasMoved = useSharedValue(false);
   const bubble = useRef<ComponentRef<typeof View>>(null);
   function openChat() {
     cancelAnimation(x);
@@ -44,9 +48,15 @@ export function AssistantBubble() {
     });
   }
   useEffect(() => {
+    if (home && !hasMoved.get()) {
+      // measureInWindow tính theo cửa sổ, còn khung bubble được căn giữa khi màn rộng hơn contentWidth.
+      x.set(home.x - (dimensions.width - width) / 2);
+      y.set(home.y);
+      return;
+    }
     x.set((value) => (value < width / 2 ? MARGIN : maxX));
     y.set((value) => Math.max(minY, Math.min(maxY, value)));
-  }, [width, maxX, minY, maxY, x, y]);
+  }, [home, dimensions.width, width, maxX, minY, maxY, x, y, hasMoved]);
   const gesture = usePanGesture({
     minDistance: 8,
     onTouchesDown: () => hasDragged.set(false),
@@ -57,6 +67,7 @@ export function AssistantBubble() {
       startY.set(y.get());
       isDragging.set(true);
       hasDragged.set(true);
+      hasMoved.set(true);
     },
     onUpdate: (event) => {
       x.set(Math.max(MARGIN, Math.min(maxX, startX.get() + event.translationX)));
@@ -89,7 +100,11 @@ export function AssistantBubble() {
         <GestureHandlerRootView pointerEvents="box-none" style={StyleSheet.absoluteFill}>
           <View pointerEvents="box-none" style={styles.bounds}>
             <GestureDetector gesture={gesture}>
-              <Animated.View ref={bubble} collapsable={false} style={[styles.bubble, position]}>
+              <Animated.View
+                ref={bubble}
+                collapsable={false}
+                style={[styles.bubble, { width: size, height: size, borderRadius: size / 2 }, position]}
+              >
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={vi.assistant.open}
@@ -108,7 +123,7 @@ export function AssistantBubble() {
                   style={styles.touch}
                 >
                   <View pointerEvents="none">
-                    <Mascot size={BUBBLE_MASCOT_SIZE} />
+                    <Mascot size={Math.round((size * BUBBLE_MASCOT_SIZE) / SIZE)} />
                   </View>
                   <View style={styles.badge}>
                     <Icon name="sparkles" size={10} color={colors.background} />
@@ -128,9 +143,6 @@ const styles = StyleSheet.create({
   bounds: { flex: 1, width: '100%', maxWidth: mobileLayout.contentWidth, alignSelf: 'center' },
   bubble: {
     position: 'absolute',
-    width: SIZE,
-    height: SIZE,
-    borderRadius: SIZE / 2,
     backgroundColor: colors.warmMist,
     borderWidth: 2,
     borderColor: colors.background,
