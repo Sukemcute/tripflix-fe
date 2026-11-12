@@ -32,6 +32,7 @@ import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
+import { CommentSkeletonList } from './comment-skeleton';
 import styles from './live-posts.module.css';
 
 // Trang chi tiết bài viết nằm ở post-detail.tsx; giữ export ở đây để app/trips/[slug]/page.tsx không phải đổi.
@@ -984,7 +985,7 @@ export function InspirationImmersiveViewer({
 
   const effectiveSearch = (searchKeyword !== undefined ? searchKeyword : searchInput).trim();
   const queryKind = filterMode === 'saved' ? 'bookmarks' : 'public';
-  const postsQuery = useSocialPosts(queryKind, filterMode === 'saved' ? '' : effectiveSearch);
+  const postsQuery = useSocialPosts(queryKind, filterMode === 'saved' ? '' : effectiveSearch, 'video');
   const reelsQuery = useReelsFeed({ enabled: isReady });
 
   const reelMap = useMemo(() => {
@@ -1000,9 +1001,15 @@ export function InspirationImmersiveViewer({
     return map;
   }, [reelsQuery.data]);
 
+  // Reels chi lay cac bai viet dang video hoac co reel video dinh kem (loai bo hoan toan bai viet thuong / vlog)
   const rawPosts = useMemo(
-    () => postsQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [postsQuery.data],
+    () =>
+      (postsQuery.data?.pages.flatMap((page) => page.items) ?? []).filter(
+        (post) =>
+          post.postType !== 'vlog' &&
+          (post.postType === 'video' || Boolean(reelMap.get(post.id)?.video)),
+      ),
+    [postsQuery.data, reelMap],
   );
 
   const posts = useMemo(() => {
@@ -2080,6 +2087,41 @@ export function InspirationImmersiveViewer({
   );
 }
 
+interface CommentDraft {
+  body: string;
+  replyTarget: { id: string; authorName: string } | null;
+}
+
+const COMMENT_DRAFTS_STORAGE_KEY = 'tripflix.comment_drafts';
+
+function getCommentDraft(postId: string): CommentDraft | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const raw = sessionStorage.getItem(COMMENT_DRAFTS_STORAGE_KEY);
+    if (!raw) return undefined;
+    const map = JSON.parse(raw) as Record<string, CommentDraft>;
+    return map[postId];
+  } catch {
+    return undefined;
+  }
+}
+
+function saveCommentDraft(postId: string, draft: CommentDraft | null) {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = sessionStorage.getItem(COMMENT_DRAFTS_STORAGE_KEY);
+    const map = (raw ? JSON.parse(raw) : {}) as Record<string, CommentDraft>;
+    if (draft && (draft.body.trim() || draft.replyTarget)) {
+      map[postId] = draft;
+    } else {
+      delete map[postId];
+    }
+    sessionStorage.setItem(COMMENT_DRAFTS_STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 /**
  * Luồng bình luận cha–con đồng bộ theo postId ở Right Panel,
  * đi kèm Sticky Comment Composer cố định ở đáy Right Panel.
@@ -2102,8 +2144,24 @@ export function RightPanelCommentsSynchronized({
 }) {
   const { user, isReady, session } = useApiSession();
   const client = useQueryClient();
-  const [body, setBody] = useState('');
-  const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(null);
+  const initialDraft = getCommentDraft(post.id);
+  const [body, setBody] = useState(initialDraft?.body ?? '');
+  const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(
+    initialDraft?.replyTarget ?? null,
+  );
+
+  const handleBodyChange = (value: string) => {
+    setBody(value);
+    saveCommentDraft(post.id, { body: value, replyTarget });
+  };
+
+  const handleReplySelect = (target: { id: string; authorName: string } | null) => {
+    setReplyTarget(target);
+    saveCommentDraft(post.id, { body, replyTarget: target });
+    if (target) {
+      composerInputRef.current?.focus();
+    }
+  };
 
   const query = useInfiniteQuery({
     queryKey: ['social', 'comments', post.id, undefined, user?.id],
@@ -2140,6 +2198,7 @@ export function RightPanelCommentsSynchronized({
       }
     },
     onSuccess: async () => {
+      saveCommentDraft(post.id, null);
       setBody('');
       setReplyTarget(null);
       await Promise.all([
@@ -2164,7 +2223,7 @@ export function RightPanelCommentsSynchronized({
             void query.refetch();
           }}
         />
-        {query.isPending && <output className="small muted">{vi.api.loading}</output>}
+        {query.isPending && <CommentSkeletonList count={8} />}
         {query.isSuccess && comments.length === 0 && (
           <p className="small muted">{vi.api.noComments}</p>
         )}
@@ -2178,10 +2237,7 @@ export function RightPanelCommentsSynchronized({
               postIsVerified={post.isVerified}
               comment={comment}
               loginHref={loginHref}
-              onReplySelect={(target) => {
-                setReplyTarget(target);
-                composerInputRef.current?.focus();
-              }}
+              onReplySelect={(target) => handleReplySelect(target)}
             />
           ))}
         </ol>
@@ -2209,7 +2265,7 @@ export function RightPanelCommentsSynchronized({
               type="button"
               className={styles.panelCommentActionBtn}
               aria-label={vi.api.immersiveCancelReply}
-              onClick={() => setReplyTarget(null)}
+              onClick={() => handleReplySelect(null)}
             >
               {vi.api.cancel}
             </button>
@@ -2241,7 +2297,7 @@ export function RightPanelCommentsSynchronized({
               placeholder={vi.api.commentInputPlaceholder}
               value={body}
               maxLength={10000}
-              onChange={(event) => setBody(event.target.value)}
+              onChange={(event) => handleBodyChange(event.target.value)}
             />
             <button
               type="submit"
@@ -2294,7 +2350,7 @@ function CommentNode({
 }) {
   const { user } = useApiSession();
   const client = useQueryClient();
-  const [showReplies, setShowReplies] = useState(true);
+  const [showReplies, setShowReplies] = useState(false);
   const [isEditing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState(comment.body);
   const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
@@ -2313,7 +2369,7 @@ function CommentNode({
   const repliesQuery = useInfiniteQuery({
     queryKey: ['social', 'comments', postId, comment.id, user?.id],
     initialPageParam: undefined as string | undefined,
-    enabled: !isReply,
+    enabled: !isReply && showReplies,
     queryFn: ({ pageParam, signal }) => socialApi.listComments(postId, pageParam, comment.id, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
@@ -2354,7 +2410,7 @@ function CommentNode({
   });
 
   const replies = repliesQuery.data?.pages.flatMap((page) => page.items) ?? [];
-  const totalReplies = repliesQuery.data?.pages[0]?.total ?? replies.length;
+  const totalReplies = (comment as { replyCount?: number }).replyCount ?? repliesQuery.data?.pages[0]?.total ?? replies.length;
 
   return (
     <li className={styles.panelCommentItem}>
@@ -2673,7 +2729,7 @@ export function ComposerModal({
     setTitle('');
     setBody('');
     setHashtagsText('');
-    setPostType('video');
+    setPostType(initialPostType);
     setVisibility('public');
     setExistingMediaId(null);
     setVideoFile(null);
@@ -2936,7 +2992,7 @@ export function ComposerModal({
         await socialApi.updatePost(currentId, patchPayload);
       } else {
         const draftPayload = {
-          post_type: videoFile || existingMediaId ? 'video' : postType,
+          post_type: postType,
           title: title.trim() || 'Bản nháp',
           body: body.trim(),
           hashtags: parsedTags,

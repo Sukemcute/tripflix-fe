@@ -1470,6 +1470,20 @@ body:has(.auth-fullscreen) {
   /* clip (không phải hidden): chặn cả cuộn bằng code, như khi bộ chọn ngày mở popup rồi scrollIntoView. */
   overflow: clip;
 }
+
+/* Trang Cảm hứng (Inspiration Feed & Reels): toàn màn hình cố định, không cuộn khung ngoài */
+html:has([class*="feedPageWrapper"]),
+body:has([class*="feedPageWrapper"]) {
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden !important;
+}
+
+body:has([class*="feedPageWrapper"]) #content {
+  height: calc(100dvh - 81px);
+  max-height: calc(100dvh - 81px);
+  overflow: hidden;
+}
 .auth-fullscreen {
   height: 100dvh;
 }
