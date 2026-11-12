@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { OtaHomeRecommendations } from './ota-home-recommendations';
 import { HomeStayPreview, HomeStoryPreview } from './ota-home-previews';
+import { WashiTape, TravelPostmarkStamp } from './torn-paper';
 import styles from './ota-home.module.css';
 
 export function OtaHomeSections() {
@@ -30,12 +31,14 @@ export function OtaHomeSections() {
               <circle cx="82" cy="223" r="5" />
             </svg>
             <div className={`${styles.tripiPostcard} ${styles.tripiBeach}`}>
+              <WashiTape color="gold" angle={-8} className={styles.tripiTapeBeach} />
               <div className={styles.tripiPrint}>
                 <Image src="/brand/home-shore.jpg" alt="" fill sizes="(max-width: 760px) 42vw, 240px" />
               </div>
               <span>{vi.api.otaActivities.beach}</span>
             </div>
             <div className={`${styles.tripiPostcard} ${styles.tripiTown}`}>
+              <WashiTape color="teal" angle={6} className={styles.tripiTapeTown} />
               <div className={styles.tripiPrint}>
                 <Image
                   src="/brand/home-hoi-an-lanterns.jpg"
@@ -46,6 +49,8 @@ export function OtaHomeSections() {
               </div>
               <span>{vi.ota.destinations['hoi-an'].name}</span>
             </div>
+            {/* Con dấu bưu chính du lịch đóng đè phong cách Scrapbook */}
+            <TravelPostmarkStamp city="HỘI AN" year="2026" className={styles.tripiPostmark} />
             <Image
               className={styles.tripiMascot}
               src="/brand/tripi-curious.png"

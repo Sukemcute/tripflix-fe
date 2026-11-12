@@ -1,187 +1,195 @@
-/* ==========================================================================
-   LAYERED 2D BRIGHT ENVIRONMENTAL CANVAS
-   Bầu trời ban mai -> Sóng biển ngọc bích -> Đồi núi cao nguyên -> Bờ cát vàng ấm
-   Khớp 100% Brand Tokens: Teal #00B2A3, Coral #FF5A3C, Sun #FFC531, Sea Mist #E7F7F4
-   ========================================================================== */
 .layeredCanvas {
+  --water-ink: #102f36;
+  --water-muted: #29454a;
+  --water-accent: #8c360b;
+  --water-panel: rgb(250 255 251 / 75%);
+  --water-heading-glow: rgb(223 248 237 / 44%);
+  --water-shadow: 0 10px 30px rgb(10 44 49 / 14%);
+  --water-glass: rgb(250 255 251 / 78%);
   position: relative;
+  color: var(--water-ink);
+}
+
+.layeredCanvas[data-water-visible] {
+  touch-action: manipulation;
+}
+
+.layeredCanvas[data-water-act='1'] {
+  --water-panel: rgb(242 252 247 / 78%);
+}
+
+.layeredCanvas[data-water-act='2'] {
+  --water-panel: rgb(255 250 235 / 78%);
+}
+
+.layeredCanvas[data-water-act='3'] {
+  --water-panel: rgb(248 255 240 / 75%);
+}
+
+.layeredCanvas[data-water-act='4'] {
+  --water-ink: #f5fffb;
+  --water-muted: #e1f1ec;
+  --water-accent: #ffd0a6;
+  --water-panel: rgb(8 31 39 / 62%);
+  --water-heading-glow: rgb(8 31 39 / 54%);
+}
+
+.layeredCanvas::before,
+.water {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.layeredCanvas::before {
+  content: '';
+  background: radial-gradient(ellipse at 20% 10%, #c2e5d8, #2c7a7b);
+}
+
+.water {
   width: 100%;
-  min-height: 100vh;
-  /* Dải cảnh quan tươi sáng, thoáng đãng chuyển tiếp mượt mà từ đỉnh xuống chân trang */
-  background:
-    radial-gradient(circle at 12% 16%, rgba(0, 178, 163, 0.08) 0%, transparent 48%),
-    radial-gradient(circle at 88% 36%, rgba(255, 90, 60, 0.06) 0%, transparent 42%),
-    radial-gradient(circle at 18% 68%, rgba(255, 197, 49, 0.07) 0%, transparent 50%),
-    linear-gradient(
-      180deg,
-      #E7F7F4 0%,      /* Sea Mist đón liền mạch từ đáy Hero */
-      #F0FDF4 16%,     /* Thung lũng xanh ngọc thanh mát */
-      #FFF7F2 40%,     /* Warm Mist sương ấm cho Stays */
-      #FFFBEB 64%,     /* Nắng vàng ươm dịu nhẹ */
-      #F8FAFC 84%,     /* Trắng ngà thanh lịch */
-      #FFFFFF 100%     /* Chân trang tinh khôi */
-    );
-  color: #141B3D;
+  height: 100%;
+}
+
+.waterContent {
+  position: relative;
+  z-index: 1;
   overflow-x: clip;
 }
 
-/* ==========================================================================
-   CÁC LAYER CẢNH QUAN 2D XẾP LỚP HẬU CẢNH (LAYERED 2D BACKDROP)
-   ========================================================================== */
-.landscapeBackdropLayer {
+.waterContent > :global(.ota-home) {
+  z-index: 6;
+}
+
+.waterContent > :global(.ota-home)::before {
+  content: '';
   position: absolute;
-  inset: 0;
+  z-index: -1;
+  inset: 46px calc((100% - 100vw) / 2) -96px;
+  background: linear-gradient(var(--color-sea-mist), #f5faf8 26px, #f5faf8 calc(100% - 96px), transparent);
   pointer-events: none;
-  user-select: none;
+}
+
+@media (min-width: 901px) {
+  .layeredCanvas:has([data-home-hero]) .waterContent > :global(.ota-home)::before {
+    top: 210px;
+  }
+}
+
+.layeredCanvas:not([data-water-visible]) :is(.water, .caption, .waterControls, .waterReadout) {
+  visibility: hidden;
+}
+
+.caption,
+.waterControls,
+.waterReadout {
+  position: fixed;
+  z-index: 12;
+  color: var(--water-ink);
+  background: var(--water-panel);
+  box-shadow: var(--water-shadow);
+  backdrop-filter: blur(14px);
+}
+
+.caption {
+  inset: auto max(8px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) auto;
+  padding: 7px 4px;
+  border-radius: 9px;
+  writing-mode: vertical-rl;
+  font: italic 12px Georgia, serif;
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.waterControls {
+  inset: auto auto max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid rgb(255 255 255 / 38%);
+  border-radius: 999px;
+  font: italic 12px Georgia, serif;
+  pointer-events: none;
+}
+
+.waterControls:focus-visible {
+  outline: 2px solid var(--water-ink);
+  outline-offset: -3px;
+}
+
+.rippleHint,
+.foodHint {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  transition: opacity 400ms ease;
+}
+
+.rippleHint::before,
+.foodHint::before {
+  content: '';
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+.foodHint::before {
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+  box-shadow: 0 0 0 2px var(--water-panel), 0 0 0 3px currentColor;
+  margin-inline: 2px;
+}
+
+.waterControls:not([data-ripple-used], [data-food-used]) .foodHint {
+  border-inline-start: 1px solid currentColor;
+  padding-inline-start: 8px;
+}
+
+.waterControls[data-ripple-used] .rippleHint,
+.waterControls[data-food-used] .foodHint {
+  opacity: 0;
+  width: 0;
   overflow: hidden;
-  z-index: 0;
+  white-space: nowrap;
 }
 
-/* 1. Vệt nắng ban mai vàng mật ong nhẹ nhàng xuyên qua bầu trời (Morning Sunshine Glow) */
-.morningSunbeams {
-  position: absolute;
-  top: 520px;
-  right: -5%;
-  width: 620px;
-  height: 720px;
-  background: conic-gradient(
-    from 210deg at 80% 0%,
-    transparent 0deg,
-    rgba(255, 255, 255, 0.4) 14deg,
-    transparent 28deg,
-    rgba(254, 240, 138, 0.3) 42deg,
-    transparent 58deg,
-    rgba(217, 244, 241, 0.25) 75deg,
-    transparent 95deg
-  );
-  filter: blur(32px);
-  opacity: 0.8;
-  animation: morningLightPulse 9s ease-in-out infinite alternate;
-}
-
-@keyframes morningLightPulse {
-  0% {
-    opacity: 0.6;
-    transform: scaleX(0.96);
-  }
-  100% {
-    opacity: 0.9;
-    transform: scaleX(1.04);
-  }
-}
-
-/* 2. Dải sóng biển ngọc bích 2D chuyển tiếp sau Hero */
-.shoreWaveTransition {
-  position: absolute;
-  top: 580px;
-  left: 0;
-  width: 100%;
-  height: 180px;
-}
-.shoreWaveTransition svg {
-  width: 100%;
-  height: 100%;
-}
-
-/* 3. Dãy đồi núi xanh 2D xếp tầng (Layered Highland Hills & Forest) - Chuyển tiếp sang Stays */
-.highlandHillsWrapper {
-  position: absolute;
-  top: 1600px;
-  left: 0;
-  width: 100%;
-  height: 320px;
-  opacity: 0.95;
-}
-
-.highlandHillsSvg {
-  width: 100%;
-  height: 100%;
-}
-
-/* 4. Dải sóng cát bờ biển vàng ấm chuyển sang Cozy Stays & Tripi */
-.sandDunesWrapper {
-  position: absolute;
-  top: 2550px;
-  left: 0;
-  width: 100%;
-  height: 220px;
-  opacity: 0.9;
-}
-.sandDunesWrapper svg {
-  width: 100%;
-  height: 100%;
-}
-
-/* 5. Cánh chim hải âu chao lượn trên cao nguyên */
-.highlandBird {
-  position: absolute;
-  fill: #00B2A3;
-  opacity: 0.45;
-  filter: drop-shadow(0 1px 3px rgba(0, 108, 99, 0.15));
+.waterControls[data-ripple-used][data-food-used]:not(:focus-visible) {
+  opacity: 0;
   pointer-events: none;
 }
-.hb1 {
-  top: 1640px;
-  left: 22%;
-  width: 22px;
-  transform: rotate(-8deg);
-  animation: birdDrift1 18s ease-in-out infinite alternate;
-}
-.hb2 {
-  top: 1700px;
-  right: 18%;
-  width: 28px;
-  transform: rotate(14deg);
-  animation: birdDrift2 22s ease-in-out infinite alternate-reverse;
+
+.waterControls:focus-visible :is(.rippleHint, .foodHint) {
+  width: auto;
+  opacity: 1;
 }
 
-@keyframes birdDrift1 {
-  0% {
-    transform: translate(0, 0) rotate(-8deg);
-  }
-  100% {
-    transform: translate(60px, -24px) rotate(4deg);
-  }
+.waterReadout {
+  inset: 0 auto auto 0;
+  max-width: calc(100vw - 16px);
+  border-radius: 9px;
+  padding: 4px 8px;
+  font: italic 12px Georgia, serif;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
-@keyframes birdDrift2 {
-  0% {
-    transform: translate(0, 0) rotate(14deg);
-  }
-  100% {
-    transform: translate(-50px, 20px) rotate(2deg);
-  }
-}
-
-/* ==========================================================================
-   RESPONSIVE & ACCESSIBILITY
-   ========================================================================== */
-@media (max-width: 900px) {
-  .highlandHillsWrapper {
-    top: 1650px;
-    height: 260px;
-  }
-  .sandDunesWrapper {
-    top: 2850px;
-  }
+:global([data-water-cursor]) {
+  cursor: none;
 }
 
 @media (max-width: 640px) {
-  .highlandHillsWrapper {
-    top: 1950px;
-    height: 200px;
+  .waterContent > :global(.ota-home)::before {
+    top: 16px;
   }
-  .sandDunesWrapper {
-    top: 3450px;
-  }
-  .morningSunbeams {
-    display: none;
-  }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .morningSunbeams,
-  .highlandBird {
-    animation: none;
+  .caption {
+    font-size: 11px;
+    right: 3px;
+    padding-inline: 3px;
   }
 }

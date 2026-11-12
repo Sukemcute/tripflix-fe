@@ -4,14 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { vi } from '@tripflix/i18n';
-import { TripiMascot } from '@/features/mascot/tripi-mascot';
+import { TornPaperDivider } from './torn-paper';
 import styles from './ota-hero.module.css';
-
-const ACTIVITIES = [
-  ['home-shore.jpg', vi.api.otaActivities.beach],
-  ['home-surf.jpg', vi.api.otaActivities.surf],
-  ['home-kayaking.jpg', vi.api.otaActivities.kayak],
-] as const;
 
 /**
  * 8 Điểm tương tác trên chữ cái TRIPFLIX (Figma Hotspot System):
@@ -119,29 +113,35 @@ export function OtaHero() {
   const current = HERO_SCENES[activeScene]!;
 
   return (
-    <header className={styles.hero} data-home-banner>
+    <header className={styles.hero} data-home-banner data-home-hero>
       <div className={styles.backdropImageWrapper} data-hero-layer="scenery" aria-hidden="true">
-        <Image
-          src="/brand/hero-layered-v1/ha-long-clean.webp"
-          alt=""
-          fill
-          preload
-          unoptimized
-          sizes="100vw"
-          className={styles.backdropImg}
-        />
+        <picture>
+          <source media="(max-width: 640px)" srcSet="/brand/hero-layered-v1/ha-long-960.webp" />
+          <Image
+            src="/brand/hero-layered-v1/ha-long-1600.webp"
+            alt=""
+            fill
+            fetchPriority="high"
+            loading="eager"
+            unoptimized
+            className={styles.backdropImg}
+          />
+        </picture>
       </div>
 
       <div className={styles.typographyLayer} data-hero-layer="typography">
-        <Image
-          src="/brand/hero-layered-v1/tripflix-logo-crystal.svg"
-          alt="Tripflix — tám miền di sản Việt Nam"
-          width={2400}
-          height={660}
-          preload
-          unoptimized
-          className={styles.typographyImage}
-        />
+        <picture>
+          <source media="(max-width: 640px)" srcSet="/brand/hero-layered-v1/tripflix-logo-crystal-760.webp" />
+          <Image
+            src="/brand/hero-layered-v1/tripflix-logo-crystal-1600.webp"
+            alt="Tripflix, tám miền di sản Việt Nam"
+            width={1600}
+            height={440}
+            loading="eager"
+            unoptimized
+            className={styles.typographyImage}
+          />
+        </picture>
         <nav className={styles.letterHotspotsArea} aria-label="Khám phá danh thắng qua từng chữ cái">
           <div className={styles.letterHotspots}>
             {TRIPFLIX_BRAND_LETTERS.map((item, idx) => (
@@ -150,8 +150,8 @@ export function OtaHero() {
                 href={`/search?q=${encodeURIComponent(item.query)}`}
                 className={styles.letterHotspot}
                 key={`${item.char}-${idx}`}
-                aria-label={`${item.char} — ${item.destination}`}
-                title={`${item.char} — ${item.destination}`}
+                aria-label={`${item.char} - ${item.destination}`}
+                title={`${item.char} - ${item.destination}`}
               >
                 <span className={styles.letterBadge}>
                   <span className={styles.badgeTag}>{item.tag}</span>
@@ -163,25 +163,21 @@ export function OtaHero() {
         </nav>
       </div>
 
-      <div className={styles.boatLayer} data-hero-layer="boat" aria-hidden="true">
+      <div className={styles.rowerLayer} data-hero-layer="rower" aria-hidden="true">
         <Image
-          src="/brand/hero-layered-v1/boat-wake.webp"
+          src="/brand/hero-layered-v1/tripi-rowing.webp"
           alt=""
-          width={1774}
-          height={887}
+          width={560}
+          height={565}
           unoptimized
           loading="eager"
-          sizes="(max-width: 640px) 70vw, 46vw"
-          className={styles.boatImage}
+          fetchPriority="low"
+          className={styles.rowerImage}
         />
       </div>
 
       <div className={styles.vectorLayer} data-hero-layer="vectors" aria-hidden="true">
-        <Image src="/brand/hero-layered-v1/seagulls-ribbon.svg" alt="" fill unoptimized loading="eager" />
-      </div>
-
-      <div className={styles.mascotLayer} aria-hidden="true">
-        <TripiMascot pose="hero-welcome" size={256} alt="" className={styles.mascotImage} />
+        <Image src="/brand/hero-layered-v1/seagulls-ribbon.svg?v=2" alt="" fill unoptimized loading="eager" />
       </div>
 
       <div className={`ota-container ${styles.inner}`} data-hero-layer="ui">
@@ -195,26 +191,6 @@ export function OtaHero() {
 
             <p className={styles.description}>{vi.ota.heroIntro}</p>
 
-            <div className={styles.actions}>
-              <a href="#ota-search" className={styles.primaryCta}>
-                <span>{vi.ota.heroStartExploring}</span>
-                <span className={styles.ctaArrow} aria-hidden="true">→</span>
-              </a>
-
-              <nav className={styles.activities} aria-label={vi.api.otaActivityLabel}>
-                {ACTIVITIES.map(([image, name]) => (
-                  <Link
-                    prefetch={false}
-                    key={image}
-                    href={{ pathname: '/inspiration', query: { q: name } }}
-                    className={styles.activityPill}
-                  >
-                    <Image src={`/brand/${image}`} alt="" width={24} height={24} />
-                    <span>{name}</span>
-                  </Link>
-                ))}
-              </nav>
-            </div>
           </div>
 
           <aside className={styles.sceneContainer}>
@@ -272,6 +248,9 @@ export function OtaHero() {
           </aside>
         </div>
       </div>
+
+      {/* Mép xé giấy đại dương chuyển tiếp mượt mà xuống thanh tìm kiếm và thân trang */}
+      <TornPaperDivider variant="hero-to-canvas" />
     </header>
   );
 }

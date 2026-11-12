@@ -28,13 +28,23 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <ButtonRipple />
           <header className="ota-header" id="top">
             <div className="ota-container header-content">
-              <Link prefetch={false} href="/" aria-label={vi.demo.common.logo}>
+              <Link prefetch={false} href="/" aria-label={vi.demo.common.logo} className="header-brand">
                 <Image
                   src="/brand/tripflix-logo.svg"
                   alt={vi.demo.common.logo}
                   width={142}
                   height={42}
                   priority
+                  className="header-logo-dark"
+                />
+                <Image
+                  src="/brand/tripflix-logo-white.svg"
+                  alt=""
+                  aria-hidden="true"
+                  width={142}
+                  height={42}
+                  priority
+                  className="header-logo-light"
                 />
               </Link>
               <OtaNavigation />
