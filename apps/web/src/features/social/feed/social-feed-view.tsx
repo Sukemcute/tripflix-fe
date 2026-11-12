@@ -12,6 +12,7 @@ import {
 } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { SocialIcon, ComposerModal, RightPanelCommentsSynchronized } from '../live-posts';
+import { usePresence } from '../use-presence';
 import { useIsWideScreen } from '../use-wide-screen';
 import { nextScrollTarget, stepScrollTowards, wheelDeltaToPixels } from './smooth-wheel-scroll';
 import reelsStyles from '../live-posts.module.css';
@@ -616,6 +617,9 @@ export function SocialFeedView({
   // Layout container class selection
   const isLeftVisible = isItineraryOpen;
   const isRightVisible = isRightOpen;
+  // Giữ sidebar thêm một nhịp khi đóng để chạy hiệu ứng thoát, song song với cột lưới co lại.
+  const leftPresence = usePresence(isLeftVisible);
+  const rightPresence = usePresence(isRightVisible);
 
   const containerClassName =
     isLeftVisible && isRightVisible
@@ -629,14 +633,14 @@ export function SocialFeedView({
   return (
     <div className={containerClassName}>
       {/* 1. Left Column: Itinerary Sidebar Panel (Nằm ngay bên phải của Dock, cố định vững vàng) */}
-      {isLeftVisible && (
+      {leftPresence.isRendered && (
         <ItinerarySidebarPanel
-          className={styles.itineraryInFeed}
+          className={`${styles.itineraryInFeed} ${leftPresence.isClosing ? styles.sidebarClosingLeft : ''}`}
           trip={activeItineraryPost?.tripAttachment}
           postTitle={activeItineraryPost?.title}
           hashtags={activeItineraryPost?.hashtags}
           coverImage={activeItineraryCover}
-          isOpen={isLeftVisible}
+          isOpen={leftPresence.isRendered}
           onClose={handleCloseItinerary}
         />
       )}
@@ -825,9 +829,11 @@ export function SocialFeedView({
       </main>
 
       {/* 3. Right Column: Comment Sidebar (Dùng chung 1 style đồng bộ chuẩn Reels) */}
-      {isRightOpen && (
+      {rightPresence.isRendered && (
         <aside
-          className={`${reelsStyles.rightPanel} ${styles.rightPanelInFeed}`}
+          className={`${reelsStyles.rightPanel} ${styles.rightPanelInFeed} ${
+            rightPresence.isClosing ? styles.sidebarClosingRight : ''
+          }`}
           aria-label={vi.api.commentPanelAria}
         >
           <div className={reelsStyles.panelHeaderBar}>
