@@ -3,6 +3,7 @@ import {
   fitReelVideo,
   getCollapsedCaptionLength,
   getReelCommentsSheetHeight,
+  getReelPlaybackSources,
   getReelPosterPrefetchUrls,
   getReelResolutionCap,
   getReelScale,
@@ -75,15 +76,35 @@ describe('reels playback policy', () => {
   });
 
   it('giữ đúng bài trước, hiện tại và sau khi vuốt xuôi, ngược hoặc nhảy xa', () => {
-    for (const active of [0, 1, 2, 6, 5, 2, 9]) {
+    expect(getReelPlayerIndexes(10, 0)).toEqual([0, 1, 2]);
+    for (const active of [1, 2, 6, 5, 2, 9]) {
       const indexes = getReelPlayerIndexes(10, active).filter((index) => index !== null);
       expect(new Set(indexes).size).toBe(indexes.length);
       expect(indexes).toContain(active);
       expect(indexes.every((index) => Math.abs(index - active) <= 1)).toBe(true);
-      expect(indexes).toHaveLength(active === 0 || active === 9 ? 2 : 3);
+      expect(indexes).toHaveLength(active === 9 ? 2 : 3);
     }
     expect(getReelPlayerIndexes(0, 0)).toEqual([null, null, null]);
     expect(getReelPlayerIndexes(1, 0)).toEqual([0, null, null]);
+  });
+
+  it('chọn các bản video từ mức cao nhất hiện có và giữ master làm dự phòng', () => {
+    const prefix = 'https://video.example/reel/';
+    const hlsUrl = `${prefix}master.m3u8`;
+    const playback = { hlsUrl, levels: [360, 720, 540, 720, 0, 420.5] };
+    expect(getReelPlaybackSources(playback)).toEqual([
+      `${prefix}720p/index.m3u8`,
+      `${prefix}540p/index.m3u8`,
+      `${prefix}360p/index.m3u8`,
+      hlsUrl,
+    ]);
+    expect(getReelPlaybackSources(playback, 540)[0]).toBe(`${prefix}540p/index.m3u8`);
+    expect(getReelPlaybackSources({ hlsUrl, levels: [360, 540] })[0]).toBe(`${prefix}540p/index.m3u8`);
+    expect(getReelPlaybackSources({ hlsUrl, levels: [] })).toEqual([hlsUrl]);
+    const signedUrl = `${hlsUrl}?token=abc`;
+    expect(getReelPlaybackSources({ ...playback, hlsUrl: signedUrl })).toEqual([signedUrl]);
+    const otherUrl = `${prefix}playlist.m3u8`;
+    expect(getReelPlaybackSources({ ...playback, hlsUrl: otherUrl })).toEqual([otherUrl]);
   });
 
   it('chỉ cắt caption dài hơn số dòng cho phép và chừa chỗ cho chữ nối', () => {
