@@ -1,134 +1,195 @@
-/* ==========================================================================
-   LAYERED ENVIRONMENTAL CANVAS (SEAMLESS TRAVEL JOURNAL CANVAS)
-   Chuyển tiếp tự nhiên từ sắc biển Sea Mist -> Thung lũng ngọc -> Đồi cát vàng -> Trắng thanh nhã
-   ========================================================================== */
 .layeredCanvas {
+  --water-ink: #102f36;
+  --water-muted: #29454a;
+  --water-accent: #8c360b;
+  --water-panel: rgb(250 255 251 / 75%);
+  --water-heading-glow: rgb(223 248 237 / 44%);
+  --water-shadow: 0 10px 30px rgb(10 44 49 / 14%);
+  --water-glass: rgb(250 255 251 / 78%);
   position: relative;
+  color: var(--water-ink);
+}
+
+.layeredCanvas[data-water-visible] {
+  touch-action: manipulation;
+}
+
+.layeredCanvas[data-water-act='1'] {
+  --water-panel: rgb(242 252 247 / 78%);
+}
+
+.layeredCanvas[data-water-act='2'] {
+  --water-panel: rgb(255 250 235 / 78%);
+}
+
+.layeredCanvas[data-water-act='3'] {
+  --water-panel: rgb(248 255 240 / 75%);
+}
+
+.layeredCanvas[data-water-act='4'] {
+  --water-ink: #f5fffb;
+  --water-muted: #e1f1ec;
+  --water-accent: #ffd0a6;
+  --water-panel: rgb(8 31 39 / 62%);
+  --water-heading-glow: rgb(8 31 39 / 54%);
+}
+
+.layeredCanvas::before,
+.water {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.layeredCanvas::before {
+  content: '';
+  background: radial-gradient(ellipse at 20% 10%, #c2e5d8, #2c7a7b);
+}
+
+.water {
   width: 100%;
-  min-height: 100vh;
-  background: #f5faf8;
-  color: #141B3D;
+  height: 100%;
+}
+
+.waterContent {
+  position: relative;
+  z-index: 1;
   overflow-x: clip;
 }
 
-/* ==========================================================================
-   LỚP HẬU CẢNH ĐỊA HÌNH & ÁNH SÁNG AMBIENT
-   ========================================================================== */
-.landscapeBackdropLayer {
-  display: none;
+.waterContent > :global(.ota-home) {
+  z-index: 6;
+}
+
+.waterContent > :global(.ota-home)::before {
+  content: '';
   position: absolute;
-  inset: 0;
+  z-index: -1;
+  inset: 46px calc((100% - 100vw) / 2) -96px;
+  background: linear-gradient(var(--color-sea-mist), #f5faf8 26px, #f5faf8 calc(100% - 96px), transparent);
   pointer-events: none;
-  user-select: none;
+}
+
+@media (min-width: 901px) {
+  .layeredCanvas:has([data-home-hero]) .waterContent > :global(.ota-home)::before {
+    top: 210px;
+  }
+}
+
+.layeredCanvas:not([data-water-visible]) :is(.water, .caption, .waterControls, .waterReadout) {
+  visibility: hidden;
+}
+
+.caption,
+.waterControls,
+.waterReadout {
+  position: fixed;
+  z-index: 12;
+  color: var(--water-ink);
+  background: var(--water-panel);
+  box-shadow: var(--water-shadow);
+  backdrop-filter: blur(14px);
+}
+
+.caption {
+  inset: auto max(8px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) auto;
+  padding: 7px 4px;
+  border-radius: 9px;
+  writing-mode: vertical-rl;
+  font: italic 12px Georgia, serif;
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.waterControls {
+  inset: auto auto max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid rgb(255 255 255 / 38%);
+  border-radius: 999px;
+  font: italic 12px Georgia, serif;
+  pointer-events: none;
+}
+
+.waterControls:focus-visible {
+  outline: 2px solid var(--water-ink);
+  outline-offset: -3px;
+}
+
+.rippleHint,
+.foodHint {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  transition: opacity 400ms ease;
+}
+
+.rippleHint::before,
+.foodHint::before {
+  content: '';
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+.foodHint::before {
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+  box-shadow: 0 0 0 2px var(--water-panel), 0 0 0 3px currentColor;
+  margin-inline: 2px;
+}
+
+.waterControls:not([data-ripple-used], [data-food-used]) .foodHint {
+  border-inline-start: 1px solid currentColor;
+  padding-inline-start: 8px;
+}
+
+.waterControls[data-ripple-used] .rippleHint,
+.waterControls[data-food-used] .foodHint {
+  opacity: 0;
+  width: 0;
   overflow: hidden;
-  z-index: 0;
+  white-space: nowrap;
 }
 
-/* 1. Quầng sáng nắng mai (Morning Warm Glow) */
-.morningAmbientGlow {
-  position: absolute;
-  top: 120px;
-  right: -10%;
-  width: clamp(380px, 45vw, 720px);
-  height: clamp(480px, 50vw, 820px);
-  background: radial-gradient(
-    circle at 60% 40%,
-    rgba(255, 230, 150, 0.22) 0%,
-    rgba(255, 197, 49, 0.08) 45%,
-    transparent 75%
-  );
-  filter: blur(54px);
-  opacity: 0.85;
-  animation: morningPulse 10s ease-in-out infinite alternate;
-}
-
-@keyframes morningPulse {
-  0% {
-    opacity: 0.65;
-    transform: scale(0.96) translate(0, 0);
-  }
-  100% {
-    opacity: 0.95;
-    transform: scale(1.05) translate(-20px, 15px);
-  }
-}
-
-/* 2. Quầng sáng biển ngọc bích (Teal Sea Glow) */
-.tealSeaGlow {
-  position: absolute;
-  top: 600px;
-  left: -8%;
-  width: clamp(340px, 40vw, 640px);
-  height: clamp(440px, 45vw, 740px);
-  background: radial-gradient(
-    circle at 40% 50%,
-    rgba(0, 178, 163, 0.16) 0%,
-    rgba(217, 244, 241, 0.1) 50%,
-    transparent 80%
-  );
-  filter: blur(60px);
-  opacity: 0.75;
-}
-
-/* 3. Cánh chim hải âu chao liệng nhẹ nhàng */
-.highlandBird {
-  position: absolute;
-  fill: #00B2A3;
-  opacity: 0.4;
-  filter: drop-shadow(0 1px 3px rgba(0, 108, 99, 0.15));
+.waterControls[data-ripple-used][data-food-used]:not(:focus-visible) {
+  opacity: 0;
   pointer-events: none;
 }
 
-.hb1 {
-  top: 260px;
-  left: 18%;
-  width: 22px;
-  transform: rotate(-8deg);
-  animation: birdDrift1 20s ease-in-out infinite alternate;
+.waterControls:focus-visible :is(.rippleHint, .foodHint) {
+  width: auto;
+  opacity: 1;
 }
 
-.hb2 {
-  top: 340px;
-  right: 15%;
-  width: 26px;
-  transform: rotate(12deg);
-  animation: birdDrift2 24s ease-in-out infinite alternate-reverse;
+.waterReadout {
+  inset: 0 auto auto 0;
+  max-width: calc(100vw - 16px);
+  border-radius: 9px;
+  padding: 4px 8px;
+  font: italic 12px Georgia, serif;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
-@keyframes birdDrift1 {
-  0% {
-    transform: translate(0, 0) rotate(-8deg);
-  }
-  100% {
-    transform: translate(45px, -18px) rotate(4deg);
-  }
+:global([data-water-cursor]) {
+  cursor: none;
 }
 
-@keyframes birdDrift2 {
-  0% {
-    transform: translate(0, 0) rotate(12deg);
-  }
-  100% {
-    transform: translate(-40px, 16px) rotate(2deg);
-  }
-}
-
-/* ==========================================================================
-   RESPONSIVE & ACCESSIBILITY
-   ========================================================================== */
 @media (max-width: 640px) {
-  .morningAmbientGlow,
-  .tealSeaGlow {
-    opacity: 0.5;
+  .waterContent > :global(.ota-home)::before {
+    top: 16px;
   }
-  .highlandBird {
-    display: none;
-  }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .morningAmbientGlow,
-  .highlandBird {
-    animation: none;
+  .caption {
+    font-size: 11px;
+    right: 3px;
+    padding-inline: 3px;
   }
 }

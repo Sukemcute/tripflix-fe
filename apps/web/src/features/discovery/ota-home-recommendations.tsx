@@ -276,7 +276,7 @@ export function OtaHomeRecommendations() {
       aria-labelledby="recommendations-title"
       data-home-reveal
     >
-      <div className={styles.sectionHead}>
+      <div className={`${styles.sectionHead} ${styles.recommendationHead}`}>
         <div>
           <h2 id="recommendations-title">{vi.ota.recommendationTitle}</h2>
           <p>{vi.ota.recommendationIntro}</p>
@@ -353,7 +353,6 @@ export function OtaHomeRecommendations() {
           </div>
         </Link>
       </div>
-      {activeCombo.experience.image?.endsWith('/da-lat-cafe.webp') && <p className={styles.photoCredit}>Ảnh quán: Fanpage Cheo Veooo, qua <a href="https://dalatdiary.com/en/image-credits/" target="_blank" rel="noreferrer">Dalat Diary</a>. Ảnh cảnh quan minh họa khu vực Đà Lạt.</p>}
     </section>
   );
 }

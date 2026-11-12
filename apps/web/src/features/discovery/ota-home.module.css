@@ -481,35 +481,6 @@
   border-radius: 0;
   border-inline: none;
   border-block: none;
-  background:
-    radial-gradient(ellipse 70% 50% at 50% 30%, rgba(255, 230, 215, 0.45) 0%, transparent 70%),
-    linear-gradient(180deg, #FFF7F2 0%, #FFF1E8 50%, #FFF7F2 100%);
-  box-shadow: none;
-}
-
-/* Ảnh phong cảnh mờ là lớp dưới cùng; độ trong suốt pha với nền Warm Mist sáng sủa */
-.stayBackdrop {
-  z-index: -2;
-  object-fit: cover;
-  opacity: 0.26;
-  filter: blur(24px) saturate(1.15);
-  scale: 1.15;
-  transition:
-    scale 900ms cubic-bezier(0.2, 0.7, 0.25, 1),
-    filter 900ms cubic-bezier(0.2, 0.7, 0.25, 1);
-}
-
-.stayEdgeTop,
-.stayEdgeBottom {
-  display: none;
-}
-
-/* Rê chuột vào dải: ảnh nền phản hồi chiều sâu mượt mà */
-@media (hover: hover) and (pointer: fine) {
-  .stayBand:hover .stayBackdrop {
-    scale: 1.22;
-    filter: blur(20px) saturate(1.2);
-  }
 }
 
 .stayContent {
@@ -536,7 +507,8 @@
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   align-items: stretch;
   border-radius: 22px;
-  background: var(--color-sea-mist);
+  background: var(--water-glass);
+  backdrop-filter: blur(14px);
   overflow: hidden;
 
   /* TRUE CSS MASK - Khoét lỗ trực tiếp trên layer background của vé */
@@ -679,11 +651,12 @@
 }
 
 .stayDestinationText {
+  font-family: var(--font-home-handwriting, cursive);
   font-size: clamp(26px, 2.6vw, 36px);
   font-weight: 400;
   font-style: normal;
   line-height: 1.2;
-  color: var(--color-coral, #ff725e);
+  color: #c34612;
   display: inline-block;
   white-space: nowrap;
   letter-spacing: 0.01em;
@@ -694,7 +667,7 @@
 }
 
 .stayDestinationBadge:hover .stayDestinationText {
-  color: #ff5a3c;
+  color: #a8380c;
   transform: translateY(-1px) scale(1.05);
 }
 
@@ -1072,22 +1045,15 @@
   transition:
     transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1),
     box-shadow 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
-  background: var(--color-warm-mist);
-  color: var(--color-ink);
+  background: var(--water-glass);
+  backdrop-filter: blur(14px);
+  color: #102f36;
 }
 
 .tripiBanner:hover {
   transform: translateY(-4px);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 5%, transparent),
     0 30px 52px -28px var(--color-overlay-heavy);
-}
-
-.tripiBanner::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background: linear-gradient(112deg, var(--color-warm-mist) 26%, var(--color-sea-mist) 72%);
 }
 
 /* Dấu chìm bản đồ tròn, rất mờ, nằm sau ảnh và Tripi. */
@@ -1131,7 +1097,7 @@
   margin-top: 15px;
   padding: 8px 24px;
   border-radius: 999px;
-  background: var(--color-coral);
+  background: #ae3914;
   color: #ffffff;
   font-size: 0.88rem;
   font-weight: 700;
@@ -1140,7 +1106,7 @@
 }
 
 .tripiAction:hover {
-  background: var(--color-coral-soft);
+  background: #91300f;
   color: #ffffff;
   transform: translateY(-2px);
   box-shadow: 0 12px 24px -4px rgba(255, 90, 60, 0.5);
@@ -1186,8 +1152,9 @@
   width: 43%;
   padding: clamp(4px, 1vw, 11px);
   border-radius: 4px;
-  background: var(--color-warm-mist);
-  color: var(--color-ink);
+  background: var(--water-glass);
+  backdrop-filter: blur(14px);
+  color: #102f36;
   box-shadow: 0 8px 18px color-mix(in srgb, var(--color-teal-ink) 24%, transparent);
 }
 
@@ -1297,6 +1264,7 @@
 
 .stories {
   padding-top: 4px;
+  overflow-x: clip;
 }
 
 .story {
@@ -1835,4 +1803,130 @@
   bottom: 8px;
   right: 16px;
   z-index: 5;
+}
+.sectionHead > .textLink,
+.state,
+.stayContent > :global(.empty-state),
+.stories > :global(.empty-state),
+.story {
+  color: var(--water-ink);
+  background: var(--water-panel);
+  border-radius: 22px;
+  backdrop-filter: blur(14px);
+  box-shadow: var(--water-shadow);
+}
+
+.stories :is(.story, .state, .textLink, :global(.empty-state)) {
+  --water-ink: #102f36;
+  --water-muted: #29454a;
+  --water-accent: #8c360b;
+  --water-panel: rgb(243 251 246 / 88%);
+}
+
+.sectionHead > .textLink {
+  padding: 10px 16px;
+  color: var(--water-ink);
+}
+
+.sectionHead p,
+.story .excerpt,
+.storyStats,
+.stayContent > :global(.empty-state) p,
+.stories > :global(.empty-state) p,
+.state {
+  color: var(--water-muted);
+}
+
+:is(.recommendationHead, .stories .sectionHead) > div {
+  position: relative;
+  isolation: isolate;
+}
+
+:is(.recommendationHead, .stories .sectionHead) > div::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -28px -46px;
+  background: radial-gradient(ellipse closest-side, var(--water-heading-glow) 30%, transparent);
+  pointer-events: none;
+}
+
+.recommendationHead p {
+  color: var(--water-ink);
+}
+
+.story:has(a:is(:hover, :focus-visible)) h3 {
+  color: var(--water-accent);
+}
+
+.story:has(h3 a:focus-visible) {
+  outline-color: var(--water-ink);
+}
+
+.state,
+.stayContent > :global(.empty-state),
+.stories > :global(.empty-state) {
+  width: fit-content;
+  max-width: 100%;
+  padding: 12px 18px;
+  margin-block: 12px;
+}
+
+.stayGrid:empty,
+.previewGrid:empty {
+  display: none;
+}
+
+.hotelCard,
+.story {
+  border-radius: 24px;
+}
+
+.hotelInfo {
+  background: var(--water-glass);
+  backdrop-filter: blur(14px);
+}
+
+.loadingState::after {
+  content: '';
+  display: block;
+  width: min(210px, 56vw);
+  height: 8px;
+  margin-top: 9px;
+  border-radius: 99px;
+  background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 62%) 49%, transparent 67%)
+    100% 0 / 240% 100% rgb(57 139 130 / 24%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .loadingState::after {
+    animation: water-skeleton 1.5s ease-in-out infinite;
+  }
+
+  @keyframes water-skeleton {
+    to { background-position: -70% 0; }
+  }
+}
+
+.stayBand::before,
+.stories::before {
+  content: '';
+  display: block;
+  width: min(82%, 980px);
+  height: 24px;
+  margin-inline: auto;
+  background: rgb(238 255 248 / 35%);
+  mask-image: radial-gradient(ellipse 56% 130% at 50% 118%, transparent 72%, black 74%, transparent 78%);
+  pointer-events: none;
+}
+
+.stories::before {
+  margin-bottom: 18px;
+}
+
+@media (max-width: 640px) {
+  .sectionHead > .textLink {
+    display: inline-flex;
+    margin-top: 8px;
+  }
 }

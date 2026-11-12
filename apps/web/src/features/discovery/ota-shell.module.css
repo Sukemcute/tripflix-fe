@@ -18,12 +18,14 @@
     animation: none;
   }
 }
-/* Mục đang mở: viên nền cam đậm, chữ và icon trắng (TF06P; kiểu viên chung ở .header-content nav, globals.css). */
+/* Mục đang mở dùng gạch chân teal, không thêm một viên nền lồng vào thanh menu. */
 .nav a[aria-current='page'],
 .nav a[aria-current='page']:hover {
-  background: var(--color-sea-mist);
+  background: transparent;
   color: var(--color-teal-ink);
   font-weight: 700;
+  border-radius: 0;
+  box-shadow: inset 0 -2px 0 var(--color-teal-ink);
 }
 :global(body:has([class*='immersiveRoot'])) .footer {
   display: none;
@@ -258,4 +260,47 @@
   .footerPostcard {
     grid-template-columns: minmax(0, 1fr) 72px;
   }
+}
+
+.footer[data-water-footer] {
+  position: relative;
+  z-index: 1;
+  color: #f5fffb;
+  background: linear-gradient(transparent, rgb(8 30 39 / 78%) 36px, rgb(8 30 39 / 86%));
+  border: 0;
+  padding-top: 24px;
+  touch-action: manipulation;
+}
+
+.footer[data-water-footer]::before {
+  content: '';
+  position: absolute;
+  inset: 0 4% auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(173 223 214 / 54%) 20%, rgb(245 223 169 / 76%) 50%, rgb(173 223 214 / 54%) 80%, transparent);
+  pointer-events: none;
+}
+
+.footer[data-water-footer] .footerLegal {
+  display: block;
+  width: fit-content;
+}
+
+.footer[data-water-footer] .footerIdentity strong,
+.footer[data-water-footer] .footerLegal,
+.footer[data-water-footer] .footerGrid nav a:is(:hover, :focus-visible) {
+  color: #ebf9f5;
+}
+
+.footer[data-water-footer] .footerBrand {
+  padding: 5px 9px;
+  border-radius: 12px;
+  background: rgb(250 255 251 / 84%);
+}
+
+.footer[data-water-footer] .footerPostcard {
+  color: #102f36;
+  background: rgb(250 255 251 / 78%);
+  border-radius: 22px;
+  backdrop-filter: blur(14px);
 }

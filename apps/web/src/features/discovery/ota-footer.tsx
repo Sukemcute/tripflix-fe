@@ -16,7 +16,7 @@ export function OtaFooter() {
   }
 
   return (
-    <footer className={styles.footer}>
+    <footer className={styles.footer} data-water-footer={pathname === '/' || undefined}>
       <div className={`ota-container ${styles.footerGrid}`}>
         <div className={styles.footerIdentity}>
           <Link prefetch={false} className={styles.footerBrand} href="/">
@@ -50,7 +50,7 @@ export function OtaFooter() {
             </Link>
           ))}
         </nav>
-        <div className={styles.footerPostcard}>
+        <div className={styles.footerPostcard} data-water-card>
           <div>
             <span className={styles.footerTag}>{vi.ota.footerTag}</span>
             <h2>{vi.ota.footerTitle}</h2>
