@@ -4,6 +4,7 @@ import {
   evictPostFromCache,
   HttpError,
   isPostNotFoundError,
+  removeReelFromSavedFeedCache,
   socialApi,
   updateReelSocialCache,
   uploadChunkToPresignedUrl,
@@ -23,7 +24,7 @@ import type {
   UpdatePostDto,
 } from '@tripflix/api-client/core-api/model/index';
 import { commentsControllerSetCommentReaction } from '@tripflix/api-client/core-api/social-comments/social-comments';
-import { selectReelPoster } from '@tripflix/app-core';
+import { getReelPosterPrefetchUrls, selectReelPoster } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -32,7 +33,7 @@ import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { isReelPost } from './post-type-filter';
-import { toReelPost, type ReelPost } from './reel-post';
+import { pickReelAfterRemoval, toReelPost, type ReelPost } from './reel-post';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import styles from './live-posts.module.css';
 
@@ -527,6 +528,8 @@ interface MediaTrackItemProps {
  * Tung phan tu noi dung media ben trong Media Track.
  * Chi co Media Track truot doc ben trong khung 9:16 co dinh (chuan TikTok).
  */
+const NO_REEL_POSTERS = { w360: '', w540: '', w720: '' };
+
 function MediaTrackItem({
   itemRef,
   index,
@@ -578,6 +581,11 @@ function MediaTrackItem({
   );
 
   const coverImage = postImages[0]?.src;
+  // Giống Reels mobile: khi chưa tới lượt phát chỉ hiện poster thật của video, không dùng ảnh minh hoạ
+  // theo điểm đến (trông như ảnh bài viết rồi mới "biến" thành video khi lướt nhanh bằng touchpad).
+  const reelPoster = reelCard ? selectReelPoster(reelCard.video.posters, 720) : undefined;
+  const isReel = post.postType === 'video';
+  const backdropImage = isReel ? reelPoster : coverImage;
   const isMediaError = mediaErrorPostId === post.id;
   const isCaptionExpanded = captionExpandedPostId === post.id;
   const authorInfo = formatAuthorDisplay(
@@ -603,15 +611,23 @@ function MediaTrackItem({
       data-post-id={post.id}
       aria-hidden={!isActive}
     >
-      {coverImage && (
+      {backdropImage && (
         <div
           className={styles.mediaBackdropBlur}
-          style={{ backgroundImage: `url(${coverImage})` }}
+          style={{ backgroundImage: `url(${backdropImage})` }}
         />
       )}
 
-      {/* Media Content: Video -> Adaptive Image Grid -> Text-Only */}
-      {reelCard?.video && post.postType === 'video' && !isMediaError ? (
+      {/* Media Content: Reels luôn là video (hoặc khung chờ); lưới ảnh/chữ chỉ cho bài không phải video */}
+      {isReel && (!reelCard?.video || isMediaError) ? (
+        <output className={styles.reelPendingStage}>
+          {isMediaError ? (
+            <span className={styles.reelPendingText}>{vi.api.immersiveMediaError}</span>
+          ) : (
+            <span className={styles.reelPendingSpinner} aria-label={vi.api.loading} />
+          )}
+        </output>
+      ) : reelCard?.video && isReel ? (
         <>
           {isNearActive ? (
             <video
@@ -641,12 +657,12 @@ function MediaTrackItem({
             </video>
           ) : (
             <Image
-              src={coverImage ?? POST_COVER_MASCOT}
+              src={reelPoster ?? POST_COVER_MASCOT}
               alt=""
               fill
               sizes="(max-width: 768px) 100vw, 480px"
               className={styles.mediaImageElement}
-              unoptimized={Boolean(coverImage?.startsWith('http'))}
+              unoptimized={Boolean(reelPoster?.startsWith('http'))}
             />
           )}
 
@@ -1041,6 +1057,17 @@ export function InspirationImmersiveViewer({
     const found = posts.findIndex((item) => item.id === activePostId);
     return found >= 0 ? found : 0;
   }, [posts, activePostId]);
+
+  // Giống Reels mobile: tải trước poster của 3 Reel kế tiếp để lướt tới là có hình ngay.
+  useEffect(() => {
+    if (activeIndex < 0) return;
+    // Giữ đúng vị trí trong posts; bài chưa có thẻ feed dùng bộ poster rỗng, helper tự bỏ URL rỗng.
+    const posterSets = posts.map((item) => reelMap.get(item.id)?.video.posters ?? NO_REEL_POSTERS);
+    for (const url of getReelPosterPrefetchUrls(posterSets, activeIndex, 720)) {
+      const preload = new window.Image();
+      preload.src = url;
+    }
+  }, [posts, reelMap, activeIndex]);
 
   const activePost = activeIndex >= 0 ? posts[activeIndex] ?? null : null;
   const isMediaError = Boolean(activePost && mediaErrorPostId === activePost.id);
@@ -1509,6 +1536,22 @@ export function InspirationImmersiveViewer({
           else next[payload.postId] = context.previous;
           return next;
         });
+      }
+    },
+    onSuccess: (_, payload) => {
+      // Bỏ lưu xong thì Reel không còn thuộc "Đã lưu".
+      if (payload.type === 'save' && payload.nextSelected === false && user) {
+        if (isSavedMode && payload.postId === activePost?.id) {
+          // Bài kế tiếp trượt lên đúng chỗ đang xem; đánh dấu đã commit để không cuộn lại.
+          const nextPostId = pickReelAfterRemoval(
+            posts.map((item) => item.id),
+            payload.postId,
+          );
+          lastCommittedPostIdRef.current = nextPostId;
+          activePostIdRef.current = nextPostId;
+          setActivePostId(nextPostId);
+        }
+        removeReelFromSavedFeedCache(client, user.id, payload.postId);
       }
     },
     onSettled: async (_, __, payload) => {

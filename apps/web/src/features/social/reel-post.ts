@@ -39,3 +39,13 @@ export function toReelPost(card: FeedCardDto): ReelPost {
     shareCount: card.counts.shares,
   };
 }
+
+/**
+ * Bài đang xem bị bỏ khỏi danh sách (bỏ lưu trong "Đã lưu"): xem tiếp bài kế, hết thì bài trước,
+ * để màn hình đứng yên tại chỗ thay vì nhảy về bài đầu.
+ */
+export function pickReelAfterRemoval(postIds: readonly string[], removedId: string): string | null {
+  const index = postIds.indexOf(removedId);
+  if (index < 0) return null;
+  return postIds[index + 1] ?? postIds[index - 1] ?? null;
+}

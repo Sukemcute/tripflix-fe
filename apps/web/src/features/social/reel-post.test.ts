@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FeedCardDto } from '@tripflix/api-client/core-api/model/index';
-import { toReelPost } from './reel-post';
+import { pickReelAfterRemoval, toReelPost } from './reel-post';
 
 const card: FeedCardDto = {
   postId: 'post-1',
@@ -46,5 +46,20 @@ describe('toReelPost', () => {
   it('thẻ chưa có tripAttachment thì trả null để bộ lọc có lộ trình bỏ qua', () => {
     const { tripAttachment: _omitted, ...withoutTrip } = card;
     expect(toReelPost(withoutTrip).tripAttachment).toBeNull();
+  });
+});
+
+describe('pickReelAfterRemoval', () => {
+  it('bỏ bài đang xem thì xem tiếp bài kế', () => {
+    expect(pickReelAfterRemoval(['a', 'b', 'c'], 'b')).toBe('c');
+  });
+
+  it('bỏ bài cuối thì lùi về bài trước', () => {
+    expect(pickReelAfterRemoval(['a', 'b'], 'b')).toBe('a');
+  });
+
+  it('bỏ bài duy nhất hoặc bài không có trong danh sách thì không chọn bài nào', () => {
+    expect(pickReelAfterRemoval(['a'], 'a')).toBeNull();
+    expect(pickReelAfterRemoval(['a'], 'x')).toBeNull();
   });
 });
