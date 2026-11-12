@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getCollapsedCaptionLength, getReelScale, hasTripPlan } from '@tripflix/app-core';
+import { getCollapsedCaptionLength, getPostCaption, getReelScale, hasTripPlan } from '@tripflix/app-core';
 import {
   HttpError,
   REEL_FEED_TABS,
@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -44,7 +44,7 @@ import { TripPlanSheet } from './trip-plan-sheet';
 const copy = vi.mobile.reels;
 const number = (value: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value);
 const DETAIL_HEIGHT = 30;
-const CAPTION_LINES = 2;
+const CAPTION_LINES = 3;
 const SHOW_MORE_SUFFIX = `… ${copy.showMore}`;
 // Measured by characters, so keep a little extra room for wide letters in the removed text.
 const SHOW_MORE_RESERVED_CHARS = SHOW_MORE_SUFFIX.length + 4;
@@ -61,8 +61,8 @@ const HEART_POP_LIFT = -6;
 const PRESSED_SCALE = 0.88;
 const RAIL_ACTION_SIZE = mobileLayout.touchTarget;
 const CAPTION_BOTTOM = spacing.md;
-// Tỉ lệ đo từ TikTok (ở chuẩn 390pt, nhân getReelScale): icon cột phải ~31, số 12; tác giả 16 đậm; caption 14.
-const RAIL_ICON_SIZE = 31;
+// Tỉ lệ đo từ TikTok (ở chuẩn 390pt, nhân getReelScale): icon cột phải 28, số 12; tác giả 16 đậm; caption 14.
+const RAIL_ICON_SIZE = 28;
 const AUTHOR_TYPE = { fontSize: 16, lineHeight: 21 };
 const CAPTION_TYPE = { fontSize: 14, lineHeight: 19 };
 const RAIL_COUNT_TYPE = { fontSize: 12, lineHeight: 15 };
@@ -268,7 +268,8 @@ export function ReelSocialOverlay({
   const tripAttachment = detail.data?.post.tripAttachment;
   const tripPlan = !isSample && tripAttachment && hasTripPlan(tripAttachment) ? tripAttachment : null;
   const caption = isSample ? copy.sampleCaption : item.body;
-  const fullCaption = caption ? `${title} · ${caption}` : title;
+  // Bài chỉ có caption: không tách tiêu đề in đậm.
+  const fullCaption = isSample ? `${title} · ${caption}` : getPostCaption(item.title, caption);
   const visibleCaption =
     collapsedLength === null ? fullCaption : fullCaption.slice(0, collapsedLength).trimEnd();
   const expandedHeight = Math.min(captionMaxHeight, Math.max(collapsedHeight, expandedContentHeight));
@@ -399,9 +400,17 @@ export function ReelSocialOverlay({
           <Txt
             style={styles.captionBody}
             // Web không có onTextLayout: đo chiều cao để biết caption dài hơn 2 dòng.
-            onLayout={({ nativeEvent }) =>
-              setIsCaptionLong(nativeEvent.layout.height > CAPTION_LINES * CAPTION_TYPE.lineHeight + 1)
-            }
+            onLayout={({ nativeEvent }) => {
+              const lines = Math.round(nativeEvent.layout.height / CAPTION_TYPE.lineHeight);
+              setIsCaptionLong(lines > CAPTION_LINES);
+              // shortcut: web ước lượng chỗ cắt theo số ký tự mỗi dòng; native đo đúng bằng onTextLayout.
+              if (Platform.OS === 'web')
+                setCollapsedLength(
+                  lines > CAPTION_LINES
+                    ? Math.max(0, Math.floor((fullCaption.length * CAPTION_LINES) / lines) - SHOW_MORE_RESERVED_CHARS)
+                    : null,
+                );
+            }}
             onTextLayout={({ nativeEvent }) =>
               setCollapsedLength(
                 getCollapsedCaptionLength(
@@ -412,8 +421,7 @@ export function ReelSocialOverlay({
               )
             }
           >
-            <Txt style={styles.captionTitle}>{title}</Txt>
-            {fullCaption.slice(title.length)}
+            {fullCaption}
           </Txt>
         </View>
         <Animated.View style={[styles.captionText, captionTextStyle]}>
@@ -432,11 +440,9 @@ export function ReelSocialOverlay({
               style={({ pressed }) => pressed && styles.captionPressed}
             >
               <Txt style={styles.captionBody} numberOfLines={CAPTION_LINES}>
-                <Txt style={styles.captionTitle}>{visibleCaption.slice(0, title.length)}</Txt>
-                {visibleCaption.slice(title.length)}
+                {visibleCaption}
                 {collapsedLength !== null && <Txt style={styles.captionTitle}>{SHOW_MORE_SUFFIX}</Txt>}
               </Txt>
-              {isCaptionLong && collapsedLength === null && <Txt style={styles.captionTitle}>{copy.showMore}</Txt>}
             </Pressable>
           </Animated.View>
           <Animated.View
@@ -458,8 +464,7 @@ export function ReelSocialOverlay({
                 style={({ pressed }) => pressed && styles.captionPressed}
               >
                 <Txt style={styles.captionBody}>
-                  <Txt style={styles.captionTitle}>{title}</Txt>
-                  {`${fullCaption.slice(title.length)} `}
+                  {`${fullCaption} `}
                   <Txt style={styles.captionTitle}>{copy.showLess}</Txt>
                 </Txt>
               </Pressable>

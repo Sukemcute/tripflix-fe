@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   buildTripAttachment,
   EMPTY_TRIP_PLAN_DAY,
+  getPostCaption,
+  getPostTitleFromCaption,
   POST_MEDIA_LIMITS,
   type TripPlanDraft,
 } from '@tripflix/app-core';
@@ -57,8 +59,8 @@ export function LiveCreateScreen() {
 function DraftEditor({ post }: { post?: SocialPostDto }) {
   const client = useQueryClient();
   const [id, setId] = useState(post?.id);
-  const [title, setTitle] = useState(post?.title ?? '');
-  const [body, setBody] = useState(post?.body ?? '');
+  // Chỉ có caption; tiêu đề core bắt buộc được lấy từ dòng đầu caption khi lưu.
+  const [body, setBody] = useState(post ? getPostCaption(post.title, post.body) : '');
   const [hashtags, setHashtags] = useState(post?.hashtags.join(', ') ?? '');
   const [visibility, setVisibility] = useState<'public' | 'private'>(
     post?.visibility === 'private' ? 'private' : 'public',
@@ -159,8 +161,8 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
       const assetId = await uploadSelectedVideo();
       const tripAttachment = hasTripPlan ? buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) : null;
       const draft = {
-        title: title.trim(),
-        body,
+        title: getPostTitleFromCaption(body),
+        body: body.trim(),
         hashtags: hashtags
           .split(',')
           .map((tag) => tag.trim())
@@ -203,7 +205,7 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
           <Button
             tone="secondary"
             style={styles.draft}
-            disabled={mutation.isPending || !title.trim()}
+            disabled={mutation.isPending || !body.trim()}
             onPress={() => mutation.mutate('save')}
           >
             {mutation.isPending && mutation.variables === 'save'
@@ -215,7 +217,7 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
           <Button
             icon="paper-plane-outline"
             style={styles.publish}
-            disabled={mutation.isPending || !title.trim() || !body.trim()}
+            disabled={mutation.isPending || !body.trim()}
             onPress={() => mutation.mutate('publish')}
           >
             {vi.api.publish}
@@ -260,7 +262,6 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
           )}
         </Pressable>
         {pickerError && <Notice tone="error">{pickerError}</Notice>}
-        <Field label={vi.api.title} value={title} onChangeText={setTitle} maxLength={255} />
         <Field
           label={copy.create.story}
           placeholder={copy.create.placeholder}
