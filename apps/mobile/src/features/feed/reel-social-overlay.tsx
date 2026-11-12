@@ -27,7 +27,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { mobileIconSize } from '@/components/mobile-scale';
 import { AssistantTrigger } from '@/features/assistant/assistant-bubble';
 import {
   HEART_POP_SETTLE,
@@ -39,12 +39,11 @@ import {
 } from '@/components/motion';
 import { ReelCommentsPanel } from './reel-comments-panel';
 import type { ReelItem } from './reel-types';
-import { ReportButton } from './report-button';
 import { TripPlanSheet } from './trip-plan-sheet';
 
 const copy = vi.mobile.reels;
 const number = (value: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value);
-const DETAIL_HEIGHT = 24;
+const DETAIL_HEIGHT = 30;
 const CAPTION_LINES = 2;
 const CAPTION_MAX_HEIGHT = 180;
 const SHOW_MORE_SUFFIX = `… ${copy.showMore}`;
@@ -62,6 +61,13 @@ const HEART_POP_SCALE = 1.25;
 const HEART_POP_LIFT = -6;
 const PRESSED_SCALE = 0.88;
 const RAIL_ACTION_SIZE = mobileLayout.touchTarget;
+// Tỉ lệ đo từ TikTok (ở chuẩn 390pt, nhân getReelScale): icon cột phải ~31, số 12; tác giả 16 đậm; caption 14.
+const RAIL_ICON_SIZE = 31;
+const AUTHOR_TYPE = { fontSize: 16, lineHeight: 21 };
+const CAPTION_TYPE = { fontSize: 14, lineHeight: 19 };
+const RAIL_COUNT_TYPE = { fontSize: 12, lineHeight: 15 };
+const DETAIL_TYPE = { fontSize: 13, lineHeight: 17 };
+const AVATAR_SIZE = 26;
 
 function RailAction({
   icon,
@@ -144,13 +150,13 @@ export function ReelSocialOverlay({
   const client = useQueryClient();
   const { width } = useWindowDimensions();
   const reelScale = getReelScale(Math.min(width, mobileLayout.contentWidth));
-  const railIconSize = Math.round(mobileIconSize.reel * reelScale);
+  const railIconSize = Math.round(RAIL_ICON_SIZE * reelScale);
   const tripiSize = Math.round(mobileIconSize.reelTripi * reelScale);
   const [hasComments, setHasComments] = useState(false);
   const [isTripPlanOpen, setIsTripPlanOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [collapsedLength, setCollapsedLength] = useState<number | null>(null);
-  const [collapsedHeight, setCollapsedHeight] = useState(CAPTION_LINES * compactType.body.lineHeight);
+  const [collapsedHeight, setCollapsedHeight] = useState(CAPTION_LINES * CAPTION_TYPE.lineHeight);
   const [expandedContentHeight, setExpandedContentHeight] = useState(0);
   const expandedScroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const expansion = useSharedValue(0);
@@ -334,21 +340,6 @@ export function ReelSocialOverlay({
             if (!mutation.isPending) mutation.mutate({ type: 'share' });
           }}
         />
-        {/* Cuối cột như TikTok: hành động ít dùng, không lẫn với tim, bình luận. */}
-        {!isSample && postId && (
-          <ReportButton
-            targetType="post"
-            targetId={postId}
-            trigger={(open) => (
-              <RailAction
-                icon="flag-outline"
-                iconSize={mobileIconSize.control}
-                label={vi.moderation.reportTitle}
-                onPress={open}
-              />
-            )}
-          />
-        )}
       </Animated.View>
       <Animated.View
         style={[styles.caption, { right: RAIL_ACTION_SIZE + spacing.lg }, chromeStyle]}
@@ -367,7 +358,7 @@ export function ReelSocialOverlay({
             <Image source={item.social.author.avatarUrl} style={styles.avatar} />
           ) : (
             <View style={styles.avatar}>
-              <Icon name="person-outline" color={colors.background} size={mobileIconSize.inline} />
+              <Icon name="person-outline" color={colors.background} size={14} />
             </View>
           )}
           <Txt variant="label" style={styles.author} numberOfLines={1}>
@@ -454,7 +445,7 @@ export function ReelSocialOverlay({
             hitSlop={{ top: DETAIL_HIT_SLOP, bottom: DETAIL_HIT_SLOP }}
             onPress={() => setIsTripPlanOpen(true)}
           >
-            <Icon name="location-outline" size={mobileIconSize.inline} color={colors.coralInk} />
+            <Icon name="location-outline" size={15} color={colors.coralInk} />
             <Txt variant="label" style={styles.detailText}>
               {vi.mobile.tripPlan.view}
             </Txt>
@@ -514,10 +505,10 @@ const styles = StyleSheet.create({
   captionTitle: {
     color: colors.background,
     fontFamily: nativeFonts.semibold,
-    ...compactType.body,
+    ...CAPTION_TYPE,
     ...TEXT_SHADOW,
   },
-  captionBody: { color: colors.background, ...compactType.body, ...TEXT_SHADOW },
+  captionBody: { color: colors.background, ...CAPTION_TYPE, ...TEXT_SHADOW },
   captionText: { overflow: 'hidden' },
   collapsedLayer: { position: 'absolute', top: 0, left: 0, right: 0 },
   captionPressed: { opacity: 0.7 },
@@ -531,7 +522,7 @@ const styles = StyleSheet.create({
   },
   railCount: {
     color: colors.background,
-    ...compactType.label,
+    ...RAIL_COUNT_TYPE,
     fontFamily: nativeFonts.semibold,
     ...TEXT_SHADOW,
   },
@@ -549,10 +540,16 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   authorRow: { flexDirection: 'row', gap: spacing.xs, alignItems: 'center' },
-  author: { flex: 1, color: colors.background, ...compactType.body, ...TEXT_SHADOW },
+  author: {
+    flex: 1,
+    color: colors.background,
+    fontFamily: nativeFonts.semibold,
+    ...AUTHOR_TYPE,
+    ...TEXT_SHADOW,
+  },
   avatar: {
-    width: 22,
-    height: 22,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.background,
@@ -574,9 +571,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
     backgroundColor: colors.warmMist,
     borderRadius: radius.pill,
   },
-  detailText: { color: colors.ink, flexShrink: 1, ...compactType.label },
+  detailText: { color: colors.ink, flexShrink: 1, fontFamily: nativeFonts.semibold, ...DETAIL_TYPE },
 });
