@@ -36,7 +36,6 @@ import { getAvatarTone } from './avatar-tone';
 import { EmojiPicker } from './emoji-picker';
 import { insertAtSelection } from './emoji-picker-data';
 import { isReelPost } from './post-type-filter';
-import { ReelLoader } from './reel-loader';
 import {
   getReelRenderMode,
   pickReelAfterRemoval,
@@ -715,8 +714,6 @@ function MediaTrackItem({
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const progressFillRef = useRef<HTMLDivElement | null>(null);
-  // Video đang chờ dữ liệu (mới gán src hoặc hết bộ đệm giữa chừng) thì hiện loader thay cho khung đen.
-  const [isBuffering, setIsBuffering] = useState(true);
 
   useEffect(() => {
     if (!isActive && localVideoRef.current) {
@@ -775,7 +772,7 @@ function MediaTrackItem({
           {isMediaError ? (
             <span className={styles.reelPendingText}>{vi.api.immersiveMediaError}</span>
           ) : (
-            <ReelLoader />
+            <span className={styles.reelPendingSpinner} aria-label={vi.api.loading} />
           )}
         </output>
       ) : (
@@ -798,10 +795,6 @@ function MediaTrackItem({
               src={reelCard.video.hlsUrl}
               poster={selectReelPoster(reelCard.video.posters, 720)}
               preload="auto"
-              onLoadStart={() => setIsBuffering(true)}
-              onWaiting={() => setIsBuffering(true)}
-              onCanPlay={() => setIsBuffering(false)}
-              onPlaying={() => setIsBuffering(false)}
               playsInline
               loop
               muted={isMuted}
@@ -819,12 +812,6 @@ function MediaTrackItem({
               className={styles.mediaImageElement}
               unoptimized={Boolean(reelPoster?.startsWith('http'))}
             />
-          )}
-
-          {hasVideo && isActive && isBuffering && (
-            <div className={styles.reelLoadingOverlay}>
-              <ReelLoader />
-            </div>
           )}
 
           {isActive && (

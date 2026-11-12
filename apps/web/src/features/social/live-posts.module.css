@@ -843,20 +843,31 @@
   background: var(--color-overlay-heavy);
 }
 
-/* Loader đè giữa video khi Reel đang xem còn chờ dữ liệu; không chặn bấm (bấm để tạm dừng vẫn được). */
-.reelLoadingOverlay {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
+.reelPendingSpinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid var(--color-overlay);
+  border-top-color: var(--color-background);
+  animation: reelPendingSpin 0.9s linear infinite;
 }
 
 .reelPendingText {
   margin: 0;
   color: var(--color-background);
   text-align: center;
+}
+
+@keyframes reelPendingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reelPendingSpinner {
+    animation: none;
+  }
 }
 
 .mediaImageElement {
