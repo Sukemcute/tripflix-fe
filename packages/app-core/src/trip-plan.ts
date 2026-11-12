@@ -187,3 +187,20 @@ export function buildTripPlanCheckout(input: TripPlanCheckoutInput) {
     items,
   };
 }
+
+/**
+ * Người xem bay từ nơi khác: thay sân bay nhà của người đăng (điểm đi của chặng đầu) ở cả chiều đi lẫn chiều về.
+ * Đổi khách sạn thì thay hotelId. Không đổi gì thì trả lại đúng lộ trình gốc.
+ */
+export function applyTripPlanChoices(
+  plan: { hotelId: string; flights: readonly TripPlanFlight[] },
+  choices: { homeAirport?: string; hotelId?: string },
+): { hotelId: string; flights: TripPlanFlight[] } {
+  const originalHome = plan.flights[0]?.from;
+  const home = choices.homeAirport;
+  const swap = (code: string) => (home && code === originalHome ? home : code);
+  return {
+    hotelId: choices.hotelId || plan.hotelId,
+    flights: plan.flights.map((leg) => ({ ...leg, from: swap(leg.from), to: swap(leg.to) })),
+  };
+}

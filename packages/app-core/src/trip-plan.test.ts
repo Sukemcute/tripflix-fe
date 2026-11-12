@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applyTripPlanChoices,
   buildTripAttachment,
   buildTripPlanCheckout,
   EMPTY_TRIP_PLAN_DAY,
@@ -127,4 +128,23 @@ describe('trip plan', () => {
       buildTripPlanCheckout({ adults: 1, sourcePostId: 'post', flights: [], rooms: [] }),
     ).toThrow();
   });
+
+  it('đổi sân bay nhà ở cả chiều đi lẫn chiều về và đổi khách sạn', () => {
+    const plan = {
+      hotelId: 'h1',
+      flights: [
+        { day: 1, from: 'SGN', to: 'CXR' },
+        { day: 4, from: 'CXR', to: 'SGN' },
+      ],
+    };
+    expect(applyTripPlanChoices(plan, { homeAirport: 'HAN', hotelId: 'h2' })).toEqual({
+      hotelId: 'h2',
+      flights: [
+        { day: 1, from: 'HAN', to: 'CXR' },
+        { day: 4, from: 'CXR', to: 'HAN' },
+      ],
+    });
+    expect(applyTripPlanChoices(plan, {})).toEqual(plan);
+  });
 });
+
