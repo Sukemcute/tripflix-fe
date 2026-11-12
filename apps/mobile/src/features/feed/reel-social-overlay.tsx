@@ -26,6 +26,7 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
 import { mobileIconSize } from '@/components/mobile-scale';
 import { AssistantTrigger } from '@/features/assistant/assistant-bubble';
@@ -273,10 +274,20 @@ export function ReelSocialOverlay({
   const visibleCaption =
     collapsedLength === null ? fullCaption : fullCaption.slice(0, collapsedLength).trimEnd();
   const expandedHeight = Math.min(captionMaxHeight, Math.max(collapsedHeight, expandedContentHeight));
+  // Cột icon đặt theo khối caption lúc thu gọn: chỉ đo lại khi caption đã co xong, không đo lúc đang mở hay đang co.
+  const isCaptionSettled = useRef(true);
+  const settleCaption = () => {
+    isCaptionSettled.current = true;
+  };
   const toggleExpanded = (shouldExpand: boolean) => {
+    isCaptionSettled.current = false;
     setIsExpanded(shouldExpand);
     if (!shouldExpand) expandedScroll.current?.scrollTo({ y: 0, animated: true });
-    expansion.set(withSpring(shouldExpand ? 1 : 0, shouldExpand ? SHEET_OPEN_SPRING : SHEET_CLOSE_SPRING));
+    expansion.set(
+      withSpring(shouldExpand ? 1 : 0, shouldExpand ? SHEET_OPEN_SPRING : SHEET_CLOSE_SPRING, (finished) => {
+        if (finished && !shouldExpand) scheduleOnRN(settleCaption);
+      }),
+    );
   };
   const captionTextStyle = useAnimatedStyle(() => ({
     height: interpolate(expansion.get(), [0, 1], [collapsedHeight, expandedHeight]),
@@ -360,7 +371,7 @@ export function ReelSocialOverlay({
       <Animated.View
         style={[styles.caption, { width: Math.round(screenWidth * 0.75) - spacing.md }, chromeStyle]}
         onLayout={({ nativeEvent }) => {
-          if (!isExpanded) setCaptionBlockHeight(nativeEvent.layout.height);
+          if (isCaptionSettled.current) setCaptionBlockHeight(nativeEvent.layout.height);
         }}
         pointerEvents={isHidden ? 'none' : 'box-none'}
         accessibilityElementsHidden={isHidden}
@@ -376,7 +387,7 @@ export function ReelSocialOverlay({
           style={styles.authorRow}
           onLayout={({ nativeEvent }) => {
             // Chỉ đo khi caption thu gọn, để cột icon không nhảy theo lúc mở rộng.
-            if (!isExpanded) setAuthorRowY(nativeEvent.layout.y);
+            if (isCaptionSettled.current) setAuthorRowY(nativeEvent.layout.y);
           }}
         >
           {item.social?.author.avatarUrl ? (
