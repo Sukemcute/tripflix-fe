@@ -28,7 +28,6 @@ export function CommerceTripsScreen() {
   const [tab, setTab] = useState(0);
   return (
     <Screen
-      compact
       back={false}
       scroll={!user}
       right={

@@ -2,7 +2,6 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { vi } from '@tripflix/i18n';
-import { isOptimizedImageUrl } from '../../lib/remote-images';
 import styles from './hotel.module.css';
 
 const galleryIconPaths = {
@@ -31,15 +30,7 @@ export function HotelPhoto({ url, alt }: { url: string; alt: string }) {
     return alt ? <span className={styles.missingPhoto}>{vi.hotel.imageUnavailable}</span> : null;
   }
   return (
-    <Image
-      src={url}
-      alt={alt}
-      width={1000}
-      height={700}
-      sizes="(max-width: 768px) 100vw, 60vw"
-      unoptimized={!isOptimizedImageUrl(url)}
-      onError={() => setFailedUrl(url)}
-    />
+    <Image src={url} alt={alt} width={1000} height={700} unoptimized onError={() => setFailedUrl(url)} />
   );
 }
 

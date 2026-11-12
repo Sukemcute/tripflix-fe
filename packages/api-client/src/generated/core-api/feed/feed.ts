@@ -48,17 +48,10 @@ export type feedControllerGetFeedResponse400 = {
   status: 400;
 };
 
-export type feedControllerGetFeedResponse401 = {
-  data: void;
-  status: 401;
-};
-
 export type feedControllerGetFeedResponseSuccess = feedControllerGetFeedResponse200 & {
   headers: Headers;
 };
-export type feedControllerGetFeedResponseError = (
-  feedControllerGetFeedResponse400 | feedControllerGetFeedResponse401
-) & {
+export type feedControllerGetFeedResponseError = feedControllerGetFeedResponse400 & {
   headers: Headers;
 };
 
@@ -80,7 +73,7 @@ export const getFeedControllerGetFeedUrl = (params?: FeedControllerGetFeedParams
 };
 
 /**
- * @summary Bảng tin Reels: chỉ gồm bài dạng video phát được. for_you xếp mới nhất trước, hot xếp theo tổng tương tác có trọng số. Khách cũng xem được.
+ * @summary Bảng tin video: chỉ gồm bài phát được. for_you xếp mới nhất trước, hot xếp theo tổng tương tác có trọng số. Khách cũng xem được.
  */
 export const feedControllerGetFeed = async (
   params?: FeedControllerGetFeedParams,
@@ -173,7 +166,7 @@ export function useFeedControllerGetFeed<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Bảng tin Reels: chỉ gồm bài dạng video phát được. for_you xếp mới nhất trước, hot xếp theo tổng tương tác có trọng số. Khách cũng xem được.
+ * @summary Bảng tin video: chỉ gồm bài phát được. for_you xếp mới nhất trước, hot xếp theo tổng tương tác có trọng số. Khách cũng xem được.
  */
 
 export function useFeedControllerGetFeed<

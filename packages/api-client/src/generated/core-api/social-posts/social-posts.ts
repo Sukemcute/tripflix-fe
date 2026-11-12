@@ -329,20 +329,10 @@ export type postsControllerListMyPostsResponse200 = {
   status: 200;
 };
 
-export type postsControllerListMyPostsResponse400 = {
-  data: void;
-  status: 400;
-};
-
 export type postsControllerListMyPostsResponseSuccess = postsControllerListMyPostsResponse200 & {
   headers: Headers;
 };
-export type postsControllerListMyPostsResponseError = postsControllerListMyPostsResponse400 & {
-  headers: Headers;
-};
-
-export type postsControllerListMyPostsResponse =
-  postsControllerListMyPostsResponseSuccess | postsControllerListMyPostsResponseError;
+export type postsControllerListMyPostsResponse = postsControllerListMyPostsResponseSuccess;
 
 export const getPostsControllerListMyPostsUrl = (params?: PostsControllerListMyPostsParams) => {
   const normalizedParams = new URLSearchParams();
@@ -377,7 +367,7 @@ export const getPostsControllerListMyPostsQueryKey = (params?: PostsControllerLi
 
 export const getPostsControllerListMyPostsQueryOptions = <
   TData = Awaited<ReturnType<typeof postsControllerListMyPosts>>,
-  TError = void,
+  TError = unknown,
 >(
   params?: PostsControllerListMyPostsParams,
   options?: {
@@ -402,11 +392,11 @@ export const getPostsControllerListMyPostsQueryOptions = <
 export type PostsControllerListMyPostsQueryResult = NonNullable<
   Awaited<ReturnType<typeof postsControllerListMyPosts>>
 >;
-export type PostsControllerListMyPostsQueryError = void;
+export type PostsControllerListMyPostsQueryError = unknown;
 
 export function usePostsControllerListMyPosts<
   TData = Awaited<ReturnType<typeof postsControllerListMyPosts>>,
-  TError = void,
+  TError = unknown,
 >(
   params: undefined | PostsControllerListMyPostsParams,
   options: {
@@ -425,7 +415,7 @@ export function usePostsControllerListMyPosts<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function usePostsControllerListMyPosts<
   TData = Awaited<ReturnType<typeof postsControllerListMyPosts>>,
-  TError = void,
+  TError = unknown,
 >(
   params?: PostsControllerListMyPostsParams,
   options?: {
@@ -444,7 +434,7 @@ export function usePostsControllerListMyPosts<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function usePostsControllerListMyPosts<
   TData = Awaited<ReturnType<typeof postsControllerListMyPosts>>,
-  TError = void,
+  TError = unknown,
 >(
   params?: PostsControllerListMyPostsParams,
   options?: {
@@ -459,7 +449,7 @@ export function usePostsControllerListMyPosts<
 
 export function usePostsControllerListMyPosts<
   TData = Awaited<ReturnType<typeof postsControllerListMyPosts>>,
-  TError = void,
+  TError = unknown,
 >(
   params?: PostsControllerListMyPostsParams,
   options?: {

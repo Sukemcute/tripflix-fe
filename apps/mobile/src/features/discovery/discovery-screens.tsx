@@ -27,6 +27,26 @@ import {
 import { TripCard } from './trip-card';
 import { useReview } from '@/features/review/review-provider';
 
+export function AssistantEntry() {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={copy.explore.assistantTitle}
+      onPress={() => router.push('/assistant')}
+      style={[ui.notice, { alignItems: 'center', backgroundColor: c.seaMist }]}
+    >
+      <Mascot size={64} />
+      <View style={ui.flex}>
+        <Txt variant="label">{copy.explore.assistantTitle}</Txt>
+        <Txt variant="caption" style={{ color: c.tealInk }}>
+          {copy.explore.assistantBody}
+        </Txt>
+      </View>
+      <Icon name="arrow-up-outline" color={c.tealInk} />
+    </Pressable>
+  );
+}
+
 export function ExploreScreen() {
   const review = useReview();
   const [category, setCategory] = useState(0);
@@ -115,6 +135,7 @@ export function ExploreScreen() {
           </View>
         </View>
       </Pressable>
+      <AssistantEntry />
       <Row style={{ justifyContent: 'space-between' }}>
         <Txt variant="heading" style={ui.flex}>
           {copy.explore.curated}
@@ -217,6 +238,7 @@ export function SearchScreen() {
               </Txt>
             </View>
           </Pressable>
+          <AssistantEntry />
         </>
       )}
       <Sheet title={copy.explore.filterTitle} visible={hasFilters} onClose={() => setFilters(false)}>

@@ -335,7 +335,6 @@ export function LivePostDetailScreen() {
               visible={hasComments}
               openProgress={commentsProgress}
               postId={slug}
-              commentCount={post?.commentCount}
               draft=""
               onDraftChange={ignoreDraft}
               comments={NO_COMMENTS}

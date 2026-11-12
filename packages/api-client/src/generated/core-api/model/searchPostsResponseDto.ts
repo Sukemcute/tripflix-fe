@@ -19,8 +19,4 @@ export interface SearchPostsResponseDto {
    * @nullable
    */
   nextCursor: string | null;
-  /** Từ trong câu mà dữ liệu không có. Chỉ có giá trị khi `isFallback = true`, rỗng nếu không */
-  dropped: string[];
-  /** true: không bài nào khớp đủ câu nên `items` là gợi ý theo phần câu hiểu được (nơi, ý muốn, ngân sách; ngân sách vẫn lọc cứng). FE nên báo "không thấy <dropped>, gợi ý theo ..." */
-  isFallback: boolean;
 }

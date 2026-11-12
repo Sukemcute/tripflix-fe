@@ -1,12 +1,10 @@
 import type { ReelFeedTab } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, spacing } from '@tripflix/tokens';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconButton, Txt } from '@/components/mobile-ui';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { CHROME_FADE } from '@/components/motion';
 
 export type ReelTab = ReelFeedTab | 'following';
@@ -49,11 +47,6 @@ export function ReelsTabBar({
       accessibilityElementsHidden={isHidden}
       importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
     >
-      <LinearGradient
-        colors={[colors.overlay, colors.transparent]}
-        pointerEvents="none"
-        style={[styles.scrim, { top: -insets.top - spacing.sm }]}
-      />
       {TABS.map((tab) => {
         const isSelected = tab.id === selected;
         return (
@@ -82,7 +75,6 @@ export function ReelsTabBar({
         <IconButton
           name="search-outline"
           label={vi.api.search}
-          size={mobileIconSize.nav}
           color={colors.background}
           onPress={onSearch}
         />
@@ -96,12 +88,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: spacing.lg,
     right: spacing.lg,
-    paddingRight: mobileLayout.touchTarget,
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: spacing.md,
+    gap: spacing.lg,
   },
-  scrim: { position: 'absolute', left: -spacing.lg, right: -spacing.lg, bottom: -spacing.lg },
   tab: {
     flexShrink: 1,
     height: TAB_HEIGHT,
@@ -120,7 +110,8 @@ const styles = StyleSheet.create({
   // Video frames can be bright, so the labels need their own contrast.
   label: {
     color: colors.background,
-    ...compactType.body,
+    fontSize: 15,
+    lineHeight: 20,
     textShadowColor: colors.overlayHeavy,
     textShadowRadius: 4,
   },

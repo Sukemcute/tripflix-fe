@@ -61,7 +61,6 @@ export function AdaptivePostMedia({
             src={videoUrl}
             poster={videoPoster ?? undefined}
             className={styles.inlineVideoEl}
-            preload="none"
             playsInline
             loop
             muted={isMuted}
@@ -214,9 +213,9 @@ export function AdaptivePostMedia({
     );
   }
 
-  // Truong hop 5: 4 anh hoac 5+ anh (Grid 4 o, o thu 4 co overlay +N, vi du 5 anh hien thi 3 o thuong va o thu 4 co +2)
+  // Truong hop 5: 4 anh hoac 5+ anh (Grid 4 o, o thu 4 co overlay +N)
   const displayImages = images.slice(0, 4);
-  const remainingCount = total > 4 ? total - 3 : 0;
+  const remainingCount = total > 4 ? total - 4 : 0;
 
   return (
     <div className={styles.mediaGridWrap}>

@@ -19,8 +19,7 @@
     "@noble/ciphers": "catalog:",
     "@noble/curves": "catalog:",
     "@noble/hashes": "catalog:",
-    "@tanstack/react-query": "catalog:",
-    "socket.io-client": "catalog:"
+    "@tanstack/react-query": "catalog:"
   },
   "peerDependencies": {
     "react": "catalog:"

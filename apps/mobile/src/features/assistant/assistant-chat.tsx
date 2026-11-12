@@ -1,6 +1,6 @@
 import { vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, nativeFonts as f, spacing as s } from '@tripflix/tokens';
-import { useCallback, useRef, useState, type ComponentRef, type ReactElement, type ReactNode } from 'react';
+import { useRef, useState, type ComponentRef, type ReactElement, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -22,7 +22,7 @@ import {
   type PanGestureActiveEvent,
 } from 'react-native-gesture-handler';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, useFocusEffect, useIsFocused } from 'expo-router';
+import { router } from 'expo-router';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -36,13 +36,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Icon, IconButton, Mascot, Txt, type IconName } from '@/components/mobile-ui';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { SHEET_CLOSE_SPRING } from '@/components/motion';
 import { BUBBLE_MASCOT_SIZE, BUBBLE_SIZE, useAssistant } from './assistant-provider';
 import { AssistantCards } from './assistant-cards';
 
 const copy = vi.assistant;
-const COMPOSER_INPUT_PADDING = (mobileLayout.touchTarget - compactType.body.lineHeight) / 2;
 
 export function AssistantChat({
   onMinimize,
@@ -81,30 +79,29 @@ export function AssistantChat({
       {wrapHeader(
         <View style={styles.header}>
           <View style={styles.avatar}>
-            <Mascot size={34} />
+            <Mascot size={48} />
           </View>
           <View style={{ flex: 1 }}>
-            <Txt variant="heading" style={compactType.heading}>{copy.name}</Txt>
-            <Txt variant="caption" style={styles.subtitle}>
+            <Txt variant="heading">{copy.name}</Txt>
+            <Txt variant="caption" style={{ color: c.tealInk }}>
               {copy.subtitle}
             </Txt>
           </View>
           <IconButton
             name="create-outline"
-            size={mobileIconSize.control}
             label={copy.reset}
             onPress={() => {
               if (chat.messages.length || chat.draft.trim()) setIsConfirming(true);
               else input.current?.focus();
             }}
           />
-          <IconButton name="remove-outline" size={mobileIconSize.control} label={copy.minimize} onPress={close} />
+          <IconButton name="remove-outline" label={copy.minimize} onPress={close} />
         </View>,
       )}
       {chat.isPreview && (
         <View style={styles.preview}>
-          <Icon name="flask-outline" size={mobileIconSize.inline} color={c.coralInk} />
-          <Txt variant="caption" style={styles.previewText}>
+          <Icon name="flask-outline" size={14} color={c.coralInk} />
+          <Txt variant="caption" style={{ color: c.coralInk }}>
             {copy.preview}
           </Txt>
         </View>
@@ -131,7 +128,7 @@ export function AssistantChat({
           {!chat.messages.length ? (
             <View style={styles.welcome}>
               <View style={styles.hero}>
-                <Mascot pose="welcome" size={76} />
+                <Mascot pose="welcome" size={100} />
               </View>
               <Txt variant="caption" style={styles.eyebrow}>
                 {copy.eyebrow}
@@ -153,15 +150,15 @@ export function AssistantChat({
                     style={({ pressed }) => [styles.prompt, pressed && { backgroundColor: c.warmMist }]}
                   >
                     <View style={styles.promptIcon}>
-                      <Icon name={prompt.icon as IconName} color={c.coralInk} size={mobileIconSize.control} />
+                      <Icon name={prompt.icon as IconName} color={c.coralInk} size={21} />
                     </View>
-                    <View style={styles.promptText}>
-                      <Txt variant="label" style={compactType.body}>{prompt.label}</Txt>
-                      <Txt variant="caption" style={styles.promptCaption}>
+                    <View style={{ flex: 1, gap: s.xs }}>
+                      <Txt variant="label">{prompt.label}</Txt>
+                      <Txt variant="small" style={{ color: c.textMuted }}>
                         {prompt.caption}
                       </Txt>
                     </View>
-                    <Icon name="arrow-up-outline" size={mobileIconSize.control} color={c.textMuted} />
+                    <Icon name="arrow-up-outline" size={18} color={c.textMuted} />
                   </Pressable>
                 ))}
               </View>
@@ -188,10 +185,7 @@ export function AssistantChat({
                       {copy.name}
                     </Txt>
                   )}
-                  <Txt
-                    selectable
-                    style={[compactType.body, message.role === 'user' && styles.userText]}
-                  >
+                  <Txt selectable style={{ color: message.role === 'user' ? c.background : c.ink }}>
                     {message.text}
                   </Txt>
                   {!!message.cards?.length && <AssistantCards cards={message.cards} onOpen={close} />}
@@ -202,19 +196,19 @@ export function AssistantChat({
           {chat.isPending && (
             <View accessibilityLiveRegion="polite" style={styles.pending}>
               <ActivityIndicator size="small" color={c.tealInk} />
-              <Txt style={compactType.body}>{copy.thinking}</Txt>
+              <Txt variant="small">{copy.thinking}</Txt>
             </View>
           )}
           {chat.hasError && (
             <View accessibilityRole="alert" style={styles.error}>
-              <Txt style={compactType.body}>{copy.error}</Txt>
+              <Txt variant="small">{copy.error}</Txt>
               <Pressable
                 accessibilityRole="button"
                 onPress={() => void chat.send(chat.messages.at(-1)?.text, true)}
                 style={styles.retry}
               >
-                <Icon name="refresh" size={mobileIconSize.control} color={c.coralInk} />
-                <Txt variant="label" style={styles.actionText}>
+                <Icon name="refresh" size={18} color={c.coralInk} />
+                <Txt variant="label" style={{ color: c.coralInk }}>
                   {copy.retry}
                 </Txt>
               </Pressable>
@@ -243,7 +237,7 @@ export function AssistantChat({
             onPress={() => void chat.send()}
             style={[styles.send, isDisabled && { backgroundColor: c.surfaceMuted }]}
           >
-            <Icon name="arrow-up" size={mobileIconSize.control} color={isDisabled ? c.textMuted : c.background} />
+            <Icon name="arrow-up" color={isDisabled ? c.textMuted : c.background} />
           </Pressable>
         </View>
         <Txt variant="caption" style={styles.footnote}>
@@ -253,8 +247,8 @@ export function AssistantChat({
       {isConfirming && (
         <View style={styles.confirmBackdrop} accessibilityViewIsModal>
           <View style={styles.confirm}>
-            <Txt variant="heading" style={compactType.heading}>{copy.resetTitle}</Txt>
-            <Txt style={styles.mutedBody}>{copy.resetBody}</Txt>
+            <Txt variant="heading">{copy.resetTitle}</Txt>
+            <Txt style={{ color: c.textMuted }}>{copy.resetBody}</Txt>
             <Pressable
               accessibilityRole="button"
               onPress={() => {
@@ -263,7 +257,7 @@ export function AssistantChat({
               }}
               style={styles.confirmAction}
             >
-              <Txt variant="label" style={styles.actionText}>
+              <Txt variant="label" style={{ color: c.coralInk }}>
                 {copy.confirm}
               </Txt>
             </Pressable>
@@ -272,7 +266,7 @@ export function AssistantChat({
               onPress={() => setIsConfirming(false)}
               style={styles.confirmAction}
             >
-              <Txt variant="label" style={compactType.label}>{copy.cancel}</Txt>
+              <Txt variant="label">{copy.cancel}</Txt>
             </Pressable>
           </View>
         </View>
@@ -282,10 +276,9 @@ export function AssistantChat({
 }
 
 export function AssistantDialog() {
-  const { isOpen, closeDialog } = useAssistant();
-  const isFocused = useIsFocused();
-  useFocusEffect(useCallback(() => closeDialog, [closeDialog]));
-  return isFocused && isOpen ? <AssistantModal /> : null;
+  const chat = useAssistant();
+  // Initialize the animated frame from the latest measured bubble, never a previous opening.
+  return chat.isOpen ? <AssistantModal /> : null;
 }
 
 function AssistantModal() {
@@ -336,7 +329,7 @@ function AssistantModal() {
     opacity: reducedMotion ? 0 : Math.max(0, 1 - progress.get() / 0.22),
   }));
   function finishClose() {
-    chat.closeDialog();
+    chat.setIsOpen(false);
   }
   function open() {
     closing.set(false);
@@ -537,20 +530,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: s.sm,
-    paddingHorizontal: s.md,
-    paddingVertical: s.xs,
+    padding: s.md,
     borderBottomWidth: 1,
     borderBottomColor: c.border,
   },
   avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: c.warmMist,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  subtitle: { ...compactType.meta, color: c.tealInk },
   preview: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -558,51 +549,46 @@ const styles = StyleSheet.create({
     padding: s.sm,
     backgroundColor: c.warmMist,
   },
-  previewText: { ...compactType.meta, color: c.coralInk },
-  messages: { padding: s.md, gap: s.md, flexGrow: 1 },
+  messages: { padding: s.lg, gap: s.lg, flexGrow: 1 },
   welcome: { alignItems: 'center', gap: s.sm },
   hero: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
     backgroundColor: c.warmMist,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  eyebrow: { ...compactType.meta, color: c.coralInk, fontFamily: f.semibold, letterSpacing: 1 },
-  title: { ...compactType.title, textAlign: 'center', letterSpacing: 0 },
-  description: { ...compactType.body, textAlign: 'center', color: c.textMuted, maxWidth: 280 },
-  prompts: { width: '100%', gap: s.sm, paddingTop: s.xs },
+  eyebrow: { color: c.coralInk, fontFamily: f.semibold, letterSpacing: 1.5, marginTop: s.sm },
+  title: { textAlign: 'center', fontSize: 24, lineHeight: 32 },
+  description: { textAlign: 'center', color: c.textMuted, maxWidth: 310, fontSize: 13, lineHeight: 21 },
+  prompts: { width: '100%', gap: s.sm, paddingTop: s.md },
   prompt: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: s.sm,
-    padding: s.sm,
+    gap: s.md,
+    padding: s.md,
     borderWidth: 1,
     borderColor: c.border,
     borderRadius: 16,
   },
   promptIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     backgroundColor: c.warmMist,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  promptText: { flex: 1, gap: 2 },
-  promptCaption: { ...compactType.label, color: c.textMuted },
   messageRow: { flexDirection: 'row', alignItems: 'flex-end', gap: s.sm },
   messageAvatar: { width: 32, height: 32, backgroundColor: c.warmMist, borderRadius: 16 },
-  message: { maxWidth: '85%', padding: s.sm, borderRadius: 14, gap: s.xs },
+  message: { maxWidth: '85%', padding: s.md, borderRadius: 18, gap: s.xs },
   userMessage: { backgroundColor: c.navy, borderBottomRightRadius: 4 },
   assistantMessage: { flexShrink: 1, backgroundColor: c.surface, borderBottomLeftRadius: 4 },
-  userText: { color: c.background },
-  author: { ...compactType.meta, color: c.tealInk, fontFamily: f.semibold },
+  author: { color: c.tealInk, fontFamily: f.semibold },
   pending: { flexDirection: 'row', alignItems: 'center', gap: s.sm, padding: s.md },
   error: { backgroundColor: c.coralTint, padding: s.md, borderRadius: 16, gap: s.sm },
-  retry: { flexDirection: 'row', alignItems: 'center', gap: s.sm, minHeight: mobileLayout.touchTarget },
-  actionText: { ...compactType.label, color: c.coralInk },
+  retry: { flexDirection: 'row', alignItems: 'center', gap: s.sm, minHeight: 48 },
   composerArea: { borderTopWidth: 1, borderTopColor: c.border, padding: s.md, gap: s.sm },
   composer: {
     flexDirection: 'row',
@@ -615,26 +601,27 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    minHeight: mobileLayout.touchTarget,
+    minHeight: 48,
     maxHeight: 120,
-    // Ô nhiều dòng trên iOS cần đặt riêng đệm trên và dưới để căn giữa dòng đầu.
+    // Ô nhiều dòng trên iOS bỏ qua cạnh trên của `padding` gộp, nên ghi riêng từng cạnh: (48 - 22) / 2 = 13 để một dòng nằm giữa.
     paddingHorizontal: s.md,
-    paddingTop: COMPOSER_INPUT_PADDING,
-    paddingBottom: COMPOSER_INPUT_PADDING,
+    paddingTop: 13,
+    paddingBottom: 13,
     textAlignVertical: 'center',
     fontFamily: f.regular,
     color: c.ink,
-    ...compactType.body,
+    fontSize: 14,
+    lineHeight: 22,
   },
   send: {
-    width: mobileLayout.touchTarget,
-    height: mobileLayout.touchTarget,
-    borderRadius: mobileLayout.touchTarget / 2,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: c.coral,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  footnote: { ...compactType.meta, textAlign: 'center', color: c.textMuted },
+  footnote: { textAlign: 'center', color: c.textMuted, fontSize: 10 },
   confirmBackdrop: {
     ...StyleSheet.absoluteFill,
     backgroundColor: c.overlay,
@@ -643,7 +630,6 @@ const styles = StyleSheet.create({
     padding: s.xl,
   },
   confirm: { backgroundColor: c.background, borderRadius: 24, padding: s.xl, gap: s.md, maxWidth: 340 },
-  mutedBody: { ...compactType.body, color: c.textMuted },
   confirmAction: {
     minHeight: 48,
     alignItems: 'center',

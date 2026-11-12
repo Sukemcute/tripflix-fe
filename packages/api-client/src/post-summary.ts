@@ -117,14 +117,13 @@ export async function getPostSummary(postId: string, signal?: AbortSignal): Prom
   }
 }
 
-export function usePostSummary(postId: string, { autoLoad = false }: { autoLoad?: boolean } = {}) {
-  const { isReady } = useApiSession();
+export function usePostSummary(postId: string) {
   return useQuery({
     queryKey: ['social', 'summary', postId],
     queryFn: ({ signal }) => getPostSummary(postId, signal),
-    // Mặc định chỉ đọc khi người dùng bấm; autoLoad (bình luận reel trên mobile) đọc ngay khi mở bình luận.
-    enabled: autoLoad && isReady,
-    staleTime: autoLoad ? 0 : Infinity,
+    // Summary reads are explicit; opening comments, focus and invalidation do not fetch.
+    enabled: false,
+    staleTime: Infinity,
     retry: false,
   });
 }

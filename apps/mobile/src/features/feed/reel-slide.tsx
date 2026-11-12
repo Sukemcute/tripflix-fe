@@ -7,7 +7,7 @@ import { VideoView, type VideoPlayer } from 'expo-video';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
-import Animated, { Extrapolation, interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { Button, Icon, Txt } from '@/components/mobile-ui';
 import { ReelSocialOverlay } from './reel-social-overlay';
 import type { ReelItem } from './reel-types';
@@ -16,16 +16,18 @@ const copy = vi.mobile.reels;
 
 function PlayerSurface({
   player,
-  poster,
-  contentFit,
+  item,
+  width,
+  height,
   isPaused,
   onRetry,
   onAttach,
   isHidden,
 }: {
   player: VideoPlayer;
-  poster: string;
-  contentFit: 'cover' | 'contain';
+  item: ReelItem;
+  width: number;
+  height: number;
   isPaused: boolean;
   onRetry: () => void;
   onAttach?: () => void;
@@ -36,30 +38,34 @@ function PlayerSurface({
   const { status } = useEvent(player, 'statusChange', { status: player.status });
   const { videoTrack } = useEvent(player, 'videoTrackChange', { videoTrack: player.videoTrack });
   const level = videoTrack ? Math.min(videoTrack.size.width, videoTrack.size.height) : null;
+  const poster = selectReelPoster(item.playback.posters, width);
+  const { box, contentFit } = layoutReelVideo(item.playback.aspect, width, height);
   // Reapply playback intent after the VideoView attaches, including cached/reused sources.
   useEffect(() => {
     onAttach?.();
   }, [onAttach]);
   return (
     <>
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <VideoView
-          player={player}
-          style={styles.video}
-          contentFit={contentFit}
-          surfaceType="textureView"
-          nativeControls={false}
-          playsInline
-          onFirstFrameRender={() => setHasFrame(true)}
-        />
-        {!hasFrame && poster ? (
-          <Image
-            source={poster}
-            cachePolicy="memory-disk"
-            style={StyleSheet.absoluteFill}
+      <View style={styles.videoLayer} pointerEvents="none">
+        <View style={box}>
+          <VideoView
+            player={player}
+            style={styles.video}
             contentFit={contentFit}
+            surfaceType="textureView"
+            nativeControls={false}
+            playsInline
+            onFirstFrameRender={() => setHasFrame(true)}
           />
-        ) : null}
+          {!hasFrame && poster ? (
+            <Image
+              source={poster}
+              cachePolicy="memory-disk"
+              style={StyleSheet.absoluteFill}
+              contentFit={contentFit}
+            />
+          ) : null}
+        </View>
       </View>
       {status === 'loading' && (
         <View pointerEvents="none" style={styles.center}>
@@ -136,35 +142,34 @@ export function ReelSlide({
   const { height: windowHeight } = useWindowDimensions();
   const commentsProgress = useSharedValue(0);
   const commentsVideo = layoutReelCommentsVideo({
-    aspect: item.playback.aspect,
-    slideWidth: width,
     windowHeight,
-    topInset: insets.top + spacing.sm,
+    slideHeight: height,
+    topInset: insets.top,
+    gap: spacing.sm,
   });
-  const stageStyle = useAnimatedStyle(() => {
-    const progress = commentsProgress.get();
-    return {
-      width: interpolate(progress, [0, 1], [videoBox.width, commentsVideo.width], Extrapolation.CLAMP),
-      height: interpolate(progress, [0, 1], [videoBox.height, commentsVideo.height], Extrapolation.CLAMP),
-      left: interpolate(progress, [0, 1], [(width - videoBox.width) / 2, commentsVideo.left], Extrapolation.CLAMP),
-      top: interpolate(progress, [0, 1], [(height - videoBox.height) / 2, commentsVideo.top], Extrapolation.CLAMP),
-    };
-  });
-  const blackBackdropStyle = useAnimatedStyle(() => ({
-    opacity: Math.max(0, Math.min(1, commentsProgress.get())),
+  const stageStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(commentsProgress.get(), [0, 1], [0, commentsVideo.translateY]) },
+      { scale: interpolate(commentsProgress.get(), [0, 1], [1, commentsVideo.scale]) },
+    ],
   }));
   return (
     <View
       testID={`reel-${item.id}`}
       style={[styles.slide, { width, height }]}
       accessibilityElementsHidden={!isActive}
-      aria-hidden={!isActive}
       importantForAccessibility={isActive ? 'auto' : 'no-hide-descendants'}
     >
-      {!!poster && (videoBox.width < width || videoBox.height < height) && (
-        <Image source={poster} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={25} />
-      )}
-      <Animated.View style={[styles.blackBackdrop, blackBackdropStyle]} pointerEvents="none" />
+      <Animated.View style={[StyleSheet.absoluteFill, stageStyle]} pointerEvents="none">
+        {!!poster && (videoBox.width < width || videoBox.height < height) && (
+          <Image source={poster} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={25} />
+        )}
+        {!isLoaded && poster ? (
+          <View style={styles.videoLayer}>
+            <Image source={poster} cachePolicy="memory-disk" style={videoBox} contentFit={contentFit} />
+          </View>
+        ) : null}
+      </Animated.View>
       <Pressable
         style={StyleSheet.absoluteFill}
         accessibilityRole="button"
@@ -185,24 +190,21 @@ export function ReelSlide({
           if (!held.current) onToggle();
         }}
       />
-      <Animated.View style={[styles.stage, stageStyle]} pointerEvents="box-none">
-        {player && isLoaded ? (
+      {player && isLoaded && (
+        <Animated.View style={[StyleSheet.absoluteFill, stageStyle]} pointerEvents="box-none">
           <PlayerSurface
             key={`${item.id}:${item.playback.hlsUrl}`}
             player={player}
-            poster={poster}
-            contentFit={contentFit}
+            item={item}
+            width={width}
+            height={height}
             isPaused={isPaused}
             onRetry={onRetry}
             onAttach={onAttach}
             isHidden={isActive && isHidden}
           />
-        ) : poster ? (
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            <Image source={poster} cachePolicy="memory-disk" style={StyleSheet.absoluteFill} contentFit={contentFit} />
-          </View>
-        ) : null}
-      </Animated.View>
+        </Animated.View>
+      )}
       {blockedReason ? (
         <VideoNotice text={blockedReason} />
       ) : hasError ? (
@@ -226,8 +228,7 @@ export function ReelSlide({
 
 const styles = StyleSheet.create({
   video: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
-  stage: { position: 'absolute' },
-  blackBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: '#000' },
+  videoLayer: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   quality: {
     position: 'absolute',
     top: spacing.xl,

@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { socialApi, useApiSession } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { colors, radius, spacing } from '@tripflix/tokens';
 import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Button, Card, Field, Icon, Notice, Txt } from '@/components/mobile-ui';
@@ -12,8 +12,8 @@ import { ReelCommentComposer } from './reel-comment-composer';
 import { CommunitySummary } from './post-summary';
 import { ReportButton } from './report-button';
 
+// Vùng bấm quanh icon cờ 14pt đủ 44pt mà không làm dòng cao thêm.
 const REPORT_HIT_SLOP = { top: 6, bottom: 6, left: 15, right: 15 };
-const COMPACT_REPORT_HIT_SLOP = { top: 6, bottom: 6, left: 4, right: 4 };
 
 function CommentAction({
   compact,
@@ -39,7 +39,7 @@ function CommentAction({
       onPress={onPress}
       style={styles.action}
     >
-      <Txt variant="caption" style={styles.actionLabel}>
+      <Txt variant="caption" style={styles.muted}>
         {children}
       </Txt>
     </Pressable>
@@ -54,12 +54,9 @@ export function LiveComments({
   renderContent,
   onLoginRequired,
   onRevealComment,
-  showSummary = false,
 }: {
   postId: string;
   parentCommentId?: string;
-  /** AI summary chỉ đặt ở bình luận của reel (web và mobile giống nhau). */
-  showSummary?: boolean;
   showHeading?: boolean;
   compact?: boolean;
   renderContent?: (content: ReactNode) => ReactNode;
@@ -123,7 +120,7 @@ export function LiveComments({
   });
   const content = (
     <>
-      {showSummary && !parentCommentId && <CommunitySummary key={postId} postId={postId} />}
+      {!parentCommentId && <CommunitySummary key={postId} postId={postId} />}
       <ApiErrorNotice
         error={query.error}
         retry={() => {
@@ -147,7 +144,7 @@ export function LiveComments({
               likeCount={comment.likeCount}
               authorName={authorName}
               queryKey={queryKey}
-              compact={compact}
+              isStacked={compact}
               onLoginRequired={goToLogin}
             />
           );
@@ -158,23 +155,17 @@ export function LiveComments({
               onLayout={(event) => commentOffsets.current.set(comment.id, event.nativeEvent.layout.y)}
             >
               {compact && (
-                <View style={[styles.avatar, !!parentCommentId && styles.replyAvatar]}>
-                  <Icon name="person-outline" size={parentCommentId ? 12 : 14} color={colors.textMuted} />
+                <View style={styles.avatar}>
+                  <Icon name="person-outline" size={18} color={colors.tealInk} />
                 </View>
               )}
               <Card style={compact ? styles.commentBody : undefined}>
-                <Txt variant="caption" style={compact && styles.author}>
-                  {authorName}
-                  {!compact && ` · ${new Date(comment.createdAt).toLocaleDateString('vi-VN')}`}
+                <Txt variant="caption">
+                  {authorName} · {new Date(comment.createdAt).toLocaleDateString('vi-VN')}
                 </Txt>
-                <Txt style={compact && styles.message}>{comment.body}</Txt>
+                <Txt>{comment.body}</Txt>
                 {!compact && likeButton}
                 <View style={compact ? styles.actions : undefined}>
-                  {compact && (
-                    <Txt variant="caption" style={styles.date}>
-                      {new Date(comment.createdAt).toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' })}
-                    </Txt>
-                  )}
                   {comment.authorId === user?.id && (
                     <>
                       <CommentAction
@@ -210,7 +201,7 @@ export function LiveComments({
                     </CommentAction>
                   )}
                   {/* Chỉ mời xem khi có trả lời; đang mở thì cho ẩn. */}
-                  {!parentCommentId && !compact && (
+                  {!parentCommentId && (!compact || !!comment.replyCount || replying === comment.id) && (
                     <CommentAction
                       compact={compact}
                       onPress={() => setReplying(replying === comment.id ? undefined : comment.id)}
@@ -231,49 +222,27 @@ export function LiveComments({
                         <Pressable
                           accessibilityRole="button"
                           accessibilityLabel={vi.moderation.reportTitle}
-                          hitSlop={compact ? COMPACT_REPORT_HIT_SLOP : REPORT_HIT_SLOP}
+                          hitSlop={REPORT_HIT_SLOP}
                           onPress={open}
                           style={({ pressed }) => [styles.action, pressed && styles.pressed]}
                         >
-                          <Icon name="flag-outline" size={compact ? 12 : 14} color={colors.textMuted} />
+                          <Icon name="flag-outline" size={14} color={colors.textMuted} />
                         </Pressable>
                       )}
                     />
                   )}
-                  {compact && likeButton}
                 </View>
                 {!parentCommentId && replying === comment.id && (
-                  <View style={compact && styles.replyThread}>
-                    <LiveComments
-                      postId={postId}
-                      parentCommentId={comment.id}
-                      showHeading={!compact}
-                      compact={compact}
-                      onLoginRequired={onLoginRequired}
-                    />
-                  </View>
-                )}
-                {compact && !parentCommentId && (!!comment.replyCount || replying === comment.id) && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded: replying === comment.id }}
-                    onPress={() => setReplying(replying === comment.id ? undefined : comment.id)}
-                    style={styles.replies}
-                  >
-                    <View style={styles.replyLine} />
-                    <Txt variant="caption" style={styles.actionLabel}>
-                      {replying === comment.id
-                        ? vi.api.hideReplies
-                        : t('mobile.reelComments.showReplies', { count: comment.replyCount ?? 0 })}
-                    </Txt>
-                    <Icon
-                      name={replying === comment.id ? 'chevron-up' : 'chevron-down'}
-                      size={11}
-                      color={colors.textMuted}
-                    />
-                  </Pressable>
+                  <LiveComments
+                    postId={postId}
+                    parentCommentId={comment.id}
+                    showHeading={!compact}
+                    compact={compact}
+                    onLoginRequired={onLoginRequired}
+                  />
                 )}
               </Card>
+              {compact && likeButton}
             </View>
           );
         })}
@@ -334,7 +303,6 @@ export function LiveComments({
                     onSend={() => mutation.mutate('save')}
                     isPending={mutation.isPending}
                     focusRequest={focusRequest}
-                    authorName={user.displayName}
                   />
                 </>
               ) : (
@@ -366,18 +334,6 @@ export function LiveComments({
                 </Button>
               )}
             </>
-          ) : compact ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={goToLogin}
-              style={({ pressed }) => [styles.guestComposer, pressed && styles.pressed]}
-            >
-              <View style={styles.avatar}>
-                <Icon name="person-outline" size={14} color={colors.textMuted} />
-              </View>
-              <Txt variant="small" style={styles.guestPlaceholder}>{vi.mobile.reelComments.placeholder}</Txt>
-              <Txt variant="caption" style={styles.guestLogin}>{vi.api.login}</Txt>
-            </Pressable>
           ) : (
             <Button onPress={goToLogin}>{vi.api.login}</Button>
           )}
@@ -390,43 +346,24 @@ export function LiveComments({
 const styles = StyleSheet.create({
   inlineComposer: { gap: spacing.lg },
   composer: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
   },
-  comment: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  comment: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   avatar: {
-    width: 30,
-    height: 30,
+    width: 36,
+    height: 36,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.seaMist,
   },
-  replyAvatar: { width: 22, height: 22 },
-  commentBody: { flex: 1, minWidth: 0, borderWidth: 0, backgroundColor: colors.transparent, padding: 0, gap: 1 },
-  author: { color: colors.textMuted, fontFamily: nativeFonts.semibold, lineHeight: 15 },
-  message: { fontSize: 13, lineHeight: 17 },
-  actions: { flexDirection: 'row', alignItems: 'center', columnGap: spacing.sm, flexWrap: 'wrap' },
-  date: { color: colors.textMuted, fontSize: 10, lineHeight: 15 },
+  commentBody: { flex: 1, borderWidth: 0, backgroundColor: colors.transparent, padding: 0, gap: spacing.xs },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, flexWrap: 'wrap' },
   pressed: { opacity: 0.5 },
-  action: { minHeight: 26, justifyContent: 'center' },
-  actionLabel: { color: colors.textMuted, fontFamily: nativeFonts.semibold, fontSize: 11, lineHeight: 15 },
-  replies: { minHeight: 26, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  replyLine: { width: 18, height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
-  replyThread: { marginTop: spacing.xs, gap: spacing.xs },
-  guestComposer: {
-    minHeight: 44,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceMuted,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.sm,
-  },
-  guestPlaceholder: { color: colors.textMuted, flex: 1, fontSize: 12, lineHeight: 17 },
-  guestLogin: { color: colors.tealInk, fontFamily: nativeFonts.semibold },
+  action: { minHeight: 32, justifyContent: 'center' },
   muted: { color: colors.textMuted },
   replyingBar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.xs },
   replyingText: { flex: 1 },

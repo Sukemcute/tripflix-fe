@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getCollapsedCaptionLength, getReelScale, hasTripPlan } from '@tripflix/app-core';
+import { getCollapsedCaptionLength } from '@tripflix/app-core';
 import {
   HttpError,
   REEL_FEED_TABS,
@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -27,8 +27,6 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
-import { AssistantTrigger } from '@/features/assistant/assistant-bubble';
 import {
   HEART_POP_SETTLE,
   HEART_POP_UP,
@@ -40,12 +38,12 @@ import {
 import { ReelCommentsPanel } from './reel-comments-panel';
 import type { ReelItem } from './reel-types';
 import { ReportButton } from './report-button';
-import { TripPlanSheet } from './trip-plan-sheet';
 
 const copy = vi.mobile.reels;
 const number = (value: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value);
-const DETAIL_HEIGHT = 24;
+const DETAIL_HEIGHT = 32;
 const CAPTION_LINES = 2;
+const CAPTION_LINE_HEIGHT = 20;
 const CAPTION_MAX_HEIGHT = 180;
 const SHOW_MORE_SUFFIX = `… ${copy.showMore}`;
 // Measured by characters, so keep a little extra room for wide letters in the removed text.
@@ -61,13 +59,11 @@ const TEXT_SHADOW = {
 const HEART_POP_SCALE = 1.25;
 const HEART_POP_LIFT = -6;
 const PRESSED_SCALE = 0.88;
-const RAIL_ACTION_SIZE = mobileLayout.touchTarget;
 
 function RailAction({
   icon,
   label,
   count,
-  iconSize,
   selected = false,
   disabled = false,
   shouldPop = false,
@@ -76,7 +72,6 @@ function RailAction({
   icon: IconName;
   label: string;
   count?: number;
-  iconSize: number;
   selected?: boolean;
   disabled?: boolean;
   /** Nảy khi chuyển sang trạng thái chọn (thả tim). */
@@ -110,11 +105,7 @@ function RailAction({
       style={[styles.railAction, disabled && { opacity: 0.5 }]}
     >
       <Animated.View style={iconStyle}>
-        <Icon
-          name={icon}
-          size={iconSize}
-          color={selected ? colors.coral : colors.background}
-        />
+        <Icon name={icon} size={34} color={selected ? colors.coral : colors.background} />
       </Animated.View>
       {count !== undefined && (
         <Txt variant="caption" style={styles.railCount}>
@@ -142,15 +133,10 @@ export function ReelSocialOverlay({
 }) {
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
-  const { width } = useWindowDimensions();
-  const reelScale = getReelScale(Math.min(width, mobileLayout.contentWidth));
-  const railIconSize = Math.round(mobileIconSize.reel * reelScale);
-  const tripiSize = Math.round(mobileIconSize.reelTripi * reelScale);
   const [hasComments, setHasComments] = useState(false);
-  const [isTripPlanOpen, setIsTripPlanOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [collapsedLength, setCollapsedLength] = useState<number | null>(null);
-  const [collapsedHeight, setCollapsedHeight] = useState(CAPTION_LINES * compactType.body.lineHeight);
+  const [collapsedHeight, setCollapsedHeight] = useState(CAPTION_LINES * CAPTION_LINE_HEIGHT);
   const [expandedContentHeight, setExpandedContentHeight] = useState(0);
   const expandedScroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const expansion = useSharedValue(0);
@@ -251,8 +237,6 @@ export function ReelSocialOverlay({
   }, [hasComments, onCommentsVisibilityChange]);
   const author = isSample ? copy.sampleAuthor : item.social?.author.name || vi.api.author;
   const title = isSample ? copy.sample : item.title;
-  const tripAttachment = detail.data?.post.tripAttachment;
-  const tripPlan = !isSample && tripAttachment && hasTripPlan(tripAttachment) ? tripAttachment : null;
   const caption = isSample ? copy.sampleCaption : item.body;
   const fullCaption = caption ? `${title} · ${caption}` : title;
   const visibleCaption =
@@ -292,15 +276,13 @@ export function ReelSocialOverlay({
       </Animated.View>
       <Animated.View
         style={[styles.rail, chromeStyle]}
-        pointerEvents={isHidden || hasComments ? 'none' : 'auto'}
-        accessibilityElementsHidden={isHidden || hasComments}
-        aria-hidden={isHidden || hasComments}
-        importantForAccessibility={isHidden || hasComments ? 'no-hide-descendants' : 'auto'}
+        pointerEvents={isHidden ? 'none' : 'auto'}
+        accessibilityElementsHidden={isHidden}
+        aria-hidden={isHidden}
+        importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
       >
-        <AssistantTrigger size={tripiSize} />
         <RailAction
           icon={isLiked ? 'heart' : 'heart-outline'}
-          iconSize={railIconSize}
           label={isLiked ? vi.api.unlike : vi.api.like}
           count={counts.likes}
           selected={isLiked}
@@ -309,7 +291,6 @@ export function ReelSocialOverlay({
         />
         <RailAction
           icon="chatbubble-ellipses-outline"
-          iconSize={railIconSize}
           label={vi.api.comments}
           count={counts.comments}
           onPress={() => {
@@ -318,7 +299,6 @@ export function ReelSocialOverlay({
         />
         <RailAction
           icon={isSaved ? 'bookmark' : 'bookmark-outline'}
-          iconSize={railIconSize}
           label={isSaved ? vi.api.unbookmark : vi.api.bookmark}
           count={counts.saves}
           selected={isSaved}
@@ -326,7 +306,6 @@ export function ReelSocialOverlay({
         />
         <RailAction
           icon="paper-plane-outline"
-          iconSize={railIconSize}
           label={vi.api.share}
           count={counts.shares}
           // Không làm mờ nút khi tim, lưu đang gửi; chỉ bỏ qua lần bấm lúc đó.
@@ -339,19 +318,12 @@ export function ReelSocialOverlay({
           <ReportButton
             targetType="post"
             targetId={postId}
-            trigger={(open) => (
-              <RailAction
-                icon="flag-outline"
-                iconSize={mobileIconSize.control}
-                label={vi.moderation.reportTitle}
-                onPress={open}
-              />
-            )}
+            trigger={(open) => <RailAction icon="flag-outline" label={vi.moderation.reportTitle} onPress={open} />}
           />
         )}
       </Animated.View>
       <Animated.View
-        style={[styles.caption, { right: RAIL_ACTION_SIZE + spacing.lg }, chromeStyle]}
+        style={[styles.caption, chromeStyle]}
         pointerEvents={isHidden ? 'none' : 'box-none'}
         accessibilityElementsHidden={isHidden}
         aria-hidden={isHidden}
@@ -367,7 +339,7 @@ export function ReelSocialOverlay({
             <Image source={item.social.author.avatarUrl} style={styles.avatar} />
           ) : (
             <View style={styles.avatar}>
-              <Icon name="person-outline" color={colors.background} size={mobileIconSize.inline} />
+              <Icon name="person-outline" color={colors.background} size={18} />
             </View>
           )}
           <Txt variant="label" style={styles.author} numberOfLines={1}>
@@ -446,18 +418,17 @@ export function ReelSocialOverlay({
             </ScrollView>
           </Animated.View>
         </Animated.View>
-        {/* Chỉ bài người đăng có chia sẻ lộ trình mới có nút: mở lộ trình để đặt y chang. */}
-        {postId && tripPlan && (
+        {postId && (
           <Pressable
             style={styles.detail}
             accessibilityRole="button"
             hitSlop={{ top: DETAIL_HIT_SLOP, bottom: DETAIL_HIT_SLOP }}
-            onPress={() => setIsTripPlanOpen(true)}
+            onPress={() => router.push({ pathname: '/trip/[slug]', params: { slug: postId } })}
           >
-            <Icon name="location-outline" size={mobileIconSize.inline} color={colors.coralInk} />
             <Txt variant="label" style={styles.detailText}>
-              {vi.mobile.tripPlan.view}
+              {copy.detail}
             </Txt>
+            <Icon name="arrow-forward" size={16} color={colors.background} />
           </Pressable>
         )}
         {!!mutation.error && (
@@ -476,22 +447,10 @@ export function ReelSocialOverlay({
           </Pressable>
         )}
       </Animated.View>
-      {postId && tripPlan && (
-        <TripPlanSheet
-          visible={isTripPlanOpen}
-          onClose={() => setIsTripPlanOpen(false)}
-          postId={postId}
-          postTitle={title}
-          authorName={author}
-          trip={tripPlan}
-        />
-      )}
       <ReelCommentsPanel
         visible={hasComments}
         openProgress={commentsProgress}
         postId={postId}
-        commentCount={counts.comments}
-        showSummary
         draft={draft}
         onDraftChange={setDraft}
         comments={sampleComments}
@@ -514,10 +473,11 @@ const styles = StyleSheet.create({
   captionTitle: {
     color: colors.background,
     fontFamily: nativeFonts.semibold,
-    ...compactType.body,
+    fontSize: 14,
+    lineHeight: CAPTION_LINE_HEIGHT,
     ...TEXT_SHADOW,
   },
-  captionBody: { color: colors.background, ...compactType.body, ...TEXT_SHADOW },
+  captionBody: { color: colors.background, fontSize: 14, lineHeight: CAPTION_LINE_HEIGHT, ...TEXT_SHADOW },
   captionText: { overflow: 'hidden' },
   collapsedLayer: { position: 'absolute', top: 0, left: 0, right: 0 },
   captionPressed: { opacity: 0.7 },
@@ -527,32 +487,28 @@ const styles = StyleSheet.create({
     right: spacing.sm,
     bottom: spacing.md,
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
   },
-  railCount: {
-    color: colors.background,
-    ...compactType.label,
-    fontFamily: nativeFonts.semibold,
-    ...TEXT_SHADOW,
-  },
+  railCount: { color: colors.background, fontFamily: nativeFonts.semibold, ...TEXT_SHADOW },
   railAction: {
-    minWidth: RAIL_ACTION_SIZE,
-    minHeight: RAIL_ACTION_SIZE,
+    minWidth: 52,
+    minHeight: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
+    gap: spacing.xs,
   },
   caption: {
     position: 'absolute',
-    left: spacing.md,
+    left: spacing.lg,
+    right: 72,
     bottom: spacing.md,
     gap: spacing.xs,
   },
-  authorRow: { flexDirection: 'row', gap: spacing.xs, alignItems: 'center' },
-  author: { flex: 1, color: colors.background, ...compactType.body, ...TEXT_SHADOW },
+  authorRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
+  author: { flex: 1, color: colors.background, ...TEXT_SHADOW },
   avatar: {
-    width: 22,
-    height: 22,
+    width: 32,
+    height: 32,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.background,
@@ -570,13 +526,15 @@ const styles = StyleSheet.create({
   },
   detail: {
     alignSelf: 'flex-start',
-    minHeight: DETAIL_HEIGHT,
+    height: DETAIL_HEIGHT,
+    marginTop: spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    backgroundColor: colors.warmMist,
-    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    // Màu cam chính của brand: đây là lời mời bấm vào xem bài, nổi bật trên video.
+    backgroundColor: colors.coral,
+    borderRadius: radius.md,
   },
-  detailText: { color: colors.ink, flexShrink: 1, ...compactType.label },
+  detailText: { color: colors.background, flexShrink: 1 },
 });

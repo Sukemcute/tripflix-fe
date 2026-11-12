@@ -8,33 +8,21 @@ export type ReelFeedTab = FeedControllerGetFeedTab;
 export const REEL_FEED_TABS = Object.values(FeedControllerGetFeedTab);
 
 export const feedApi = {
-  async listByAuthor(authorId: string, signal?: AbortSignal) {
-    return readPage((await feedControllerGetFeed({ author_id: authorId, limit: 20 }, { signal })).data);
-  },
-  async list(
-    cursor?: string,
-    signal?: AbortSignal,
-    tab: ReelFeedTab = 'for_you',
-    { isSavedOnly = false }: { isSavedOnly?: boolean } = {},
-  ) {
-    // BE chỉ nhận saved cùng tab for_you (đi với hot thì trả 400).
-    const query = isSavedOnly ? { cursor, limit: 10, tab: 'for_you' as const, saved: 'true' as const } : { cursor, limit: 10, tab };
-    return readPage((await feedControllerGetFeed(query, { signal })).data);
+  async list(cursor?: string, signal?: AbortSignal, tab: ReelFeedTab = 'for_you') {
+    return readPage((await feedControllerGetFeed({ cursor, limit: 10, tab }, { signal })).data);
   },
 };
 
 export function useReelsFeed({
   enabled = true,
   tab = 'for_you',
-  isSavedOnly = false,
-}: { enabled?: boolean; tab?: ReelFeedTab; isSavedOnly?: boolean } = {}) {
+}: { enabled?: boolean; tab?: ReelFeedTab } = {}) {
   const { user, isReady } = useApiSession();
   return useInfiniteQuery({
-    queryKey: isSavedOnly ? ['feed', 'saved', user?.id] : ['feed', tab, user?.id],
-    // Reels đã lưu cần đăng nhập; khách gọi sẽ nhận 401.
-    enabled: isReady && enabled && (!isSavedOnly || Boolean(user)),
+    queryKey: ['feed', tab, user?.id],
+    enabled: isReady && enabled,
     initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam, signal }) => feedApi.list(pageParam, signal, tab, { isSavedOnly }),
+    queryFn: ({ pageParam, signal }) => feedApi.list(pageParam, signal, tab),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
 }
