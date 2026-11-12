@@ -1759,17 +1759,16 @@
 .panelCommentItem {
   display: grid;
   gap: 8px;
-  animation: commentEnter 240ms ease both;
+  /* Chỉ hiện dần khi tải xong, không trượt. */
+  animation: commentFadeIn 200ms ease-out both;
 }
 
-@keyframes commentEnter {
+@keyframes commentFadeIn {
   from {
     opacity: 0;
-    transform: translateY(4px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
