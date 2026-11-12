@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { TripTransportDto } from './tripTransportDto';
 
 export interface TripItineraryItemDto {
   /** Số ngày trong lộ trình */
@@ -14,4 +15,6 @@ export interface TripItineraryItemDto {
   location?: string;
   /** Ghi chú */
   notes?: string;
+  /** Phương tiện được chọn khi soạn lộ trình */
+  transport?: TripTransportDto;
 }

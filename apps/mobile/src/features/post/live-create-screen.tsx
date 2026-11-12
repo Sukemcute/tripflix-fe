@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { POST_MEDIA_LIMITS } from '@tripflix/app-core';
+import {
+  buildTripAttachment,
+  EMPTY_TRIP_PLAN_DAY,
+  POST_MEDIA_LIMITS,
+  type TripPlanDraft,
+} from '@tripflix/app-core';
 import { socialApi, uploadVideo, useApiSession } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
@@ -7,7 +12,8 @@ import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { TripPlanEditor } from './trip-plan-editor';
 import { startVideoCompression, type VideoCompression } from './video-compress';
 import { toPickedVideo, type PickedVideo } from './video-source';
 import {
@@ -66,6 +72,13 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
   const [compressPercent, setCompressPercent] = useState<number | null>(null);
   const [pickerError, setPickerError] = useState<string | null>(null);
   const [isPicking, setPicking] = useState(false);
+  // Đăng kèm lộ trình là tuỳ chọn; tắt thì đăng như bài thường.
+  const [hasTripPlan, setHasTripPlan] = useState(false);
+  const [tripDraft, setTripDraft] = useState<TripPlanDraft>({
+    destinationName: '',
+    hotel: null,
+    days: [EMPTY_TRIP_PLAN_DAY],
+  });
   const uploadAbort = useRef<AbortController | null>(null);
   useEffect(
     () => () => {
@@ -144,6 +157,7 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
   const mutation = useMutation({
     mutationFn: async (action: 'save' | 'publish') => {
       const assetId = await uploadSelectedVideo();
+      const tripAttachment = hasTripPlan ? buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) : null;
       const draft = {
         title: title.trim(),
         body,
@@ -153,6 +167,7 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
           .filter(Boolean),
         visibility,
         ...(assetId ? { media_ids: [assetId] } : {}),
+        ...(tripAttachment ? { trip_attachment: tripAttachment } : {}),
       };
       const savedPost = await (id
         ? socialApi.updatePost(id, draft)
@@ -261,6 +276,21 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
           onChangeText={setHashtags}
           autoCapitalize="none"
         />
+        <View style={styles.tripToggle}>
+          <View style={styles.mediaText}>
+            <Txt variant="label">{vi.mobile.tripPlan.editor.toggle}</Txt>
+            <Txt variant="caption" style={ui.muted}>
+              {vi.mobile.tripPlan.editor.toggleHint}
+            </Txt>
+          </View>
+          <Switch
+            accessibilityLabel={vi.mobile.tripPlan.editor.toggle}
+            value={hasTripPlan}
+            onValueChange={setHasTripPlan}
+            trackColor={{ true: colors.tealInk, false: colors.border }}
+          />
+        </View>
+        {hasTripPlan && <TripPlanEditor draft={tripDraft} onChange={setTripDraft} />}
         <View style={styles.visibility}>
           <Txt variant="label">{copy.create.visibility}</Txt>
           <Row style={styles.chips}>
@@ -331,6 +361,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   chips: { gap: spacing.sm },
+  tripToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   actions: { flexDirection: 'row', gap: spacing.sm },
   draft: { flex: 1 },
   publish: { flex: 2 },

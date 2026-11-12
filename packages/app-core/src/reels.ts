@@ -32,12 +32,25 @@ export function fitReelVideo(aspect: ReelPlayback['aspect'], width: number, heig
   return { width: Math.min(width, height * ratio), height: Math.min(height, width / ratio) };
 }
 
-/** Video dọc phủ kín màn hình cao để không dư hai dải trên dưới, chỉ mất một phần nhỏ hai bên. Trường hợp khác giữ toàn khung. */
+/** Phần trên dưới được phép cắt khi khung thấp hơn 9:16; quá mức này mới giữ toàn khung và nền mờ hai bên. */
+export const REEL_MAX_CROP = 0.15;
+
+/**
+ * Video dọc phủ kín khung như TikTok: khung cao hơn 9:16 thì cắt nhẹ hai bên, khung thấp hơn (máy 16:9, khung trình duyệt)
+ * thì cắt trên dưới khi không quá REEL_MAX_CROP. Video ngang, vuông hay khung quá thấp (máy tính bảng) giữ toàn khung.
+ */
 export function layoutReelVideo(aspect: ReelPlayback['aspect'], width: number, height: number) {
-  if (aspect === '9:16' && height / width >= 16 / 9) {
+  const isTallBox = height / width >= 16 / 9;
+  const verticalCrop = 1 - height / ((width * 16) / 9);
+  if (aspect === '9:16' && (isTallBox || verticalCrop <= REEL_MAX_CROP)) {
     return { box: { width, height }, contentFit: 'cover' as const };
   }
   return { box: fitReelVideo(aspect, width, height), contentFit: 'contain' as const };
+}
+
+/** Hệ số co giãn icon, chữ trên reel theo bề ngang máy, lấy 390pt (iPhone 12–16) làm chuẩn. */
+export function getReelScale(width: number): number {
+  return Math.min(1.15, Math.max(0.85, width / 390));
 }
 
 /** Số ký tự giữ lại khi caption dài hơn `maxLines`, chừa chỗ cho chữ nối ở cuối dòng. Trả về `null` nếu caption vừa đủ. */
@@ -87,27 +100,31 @@ export function getSwipedTabIndex({
   return Math.max(0, Math.min(tabCount - 1, nextIndex));
 }
 
-/** Sheet bình luận chừa phần trên màn hình để video thu nhỏ vẫn xem được. */
+/** Phần còn lại phía trên khung bình luận dành cho video. */
 export function getReelCommentsSheetHeight(windowHeight: number): number {
-  return Math.min(640, windowHeight * 0.65);
+  return Math.min(680, Math.round(windowHeight * 0.68));
 }
 
-/** Thu video vào khoảng trống phía trên sheet bình luận, giữ tỉ lệ và căn dưới vùng an toàn. */
+/** Căn giữa toàn bộ khung video trong khoảng trống phía trên bình luận. */
 export function layoutReelCommentsVideo({
+  aspect,
+  slideWidth,
   windowHeight,
-  slideHeight,
   topInset,
-  gap,
 }: {
+  aspect: ReelPlayback['aspect'];
+  slideWidth: number;
   windowHeight: number;
-  slideHeight: number;
   topInset: number;
-  gap: number;
-}): { scale: number; translateY: number } {
-  if (slideHeight <= 0) return { scale: 1, translateY: 0 };
-  const availableHeight = windowHeight - getReelCommentsSheetHeight(windowHeight) - topInset - gap;
-  const scale = Math.max(0, Math.min(1, availableHeight / slideHeight));
-  return { scale, translateY: topInset + (slideHeight * scale) / 2 - slideHeight / 2 };
+}) {
+  const visibleBottom = windowHeight - getReelCommentsSheetHeight(windowHeight);
+  const visibleHeight = Math.max(0, visibleBottom - topInset);
+  const box = fitReelVideo(aspect, slideWidth, visibleHeight);
+  return {
+    ...box,
+    left: (slideWidth - box.width) / 2,
+    top: topInset + (visibleHeight - box.height) / 2,
+  };
 }
 
 /** Mỗi vị trí trong cửa sổ dùng một slot khác nhau, kể cả khi vuốt ngược. */

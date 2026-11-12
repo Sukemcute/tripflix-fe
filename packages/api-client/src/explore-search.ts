@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { exploreControllerSearch, exploreControllerSearchPosts } from './generated/core-api/discovery/discovery';
+import { userSearchControllerSearch } from './generated/core-api/users/users';
 import type {
   ExploreResponseDto,
   SearchPostsRequestDto,
   SearchPostsResponseDto,
+  UserSearchResponseDto,
 } from './generated/core-api/model';
 import { readEntity } from './response';
 import { useApiSession } from './session';
@@ -81,3 +83,22 @@ export function usePostSearch(params: {
   });
 }
 
+/** Tìm người dùng công khai theo tên hiển thị, gõ không dấu vẫn ra (GET /api/v1/users/search). */
+export async function searchUsers(q: string, page = 1, signal?: AbortSignal): Promise<UserSearchResponseDto> {
+  const response = await userSearchControllerSearch({ q, page }, { signal });
+  return readEntity(response.data, ['items', 'page', 'hasMore']) as UserSearchResponseDto;
+}
+
+export function useUserSearch(q: string) {
+  const { isReady } = useApiSession();
+  const query = q.normalize('NFKC').replace(/\s+/gu, ' ').trim();
+  const folded = query.toLowerCase().normalize('NFD').replace(/[\p{M}\s]/gu, '');
+  const isSearchable = query.length <= 50 && folded.length >= 2 && !/\p{C}/u.test(query);
+  const result = useQuery({
+    queryKey: ['discovery', 'users', query],
+    enabled: isReady && isSearchable,
+    retry: false,
+    queryFn: ({ signal }) => searchUsers(query, 1, signal),
+  });
+  return { ...result, isSearchable };
+}

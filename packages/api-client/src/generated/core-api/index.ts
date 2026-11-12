@@ -19,3 +19,4 @@ export * from './social-bookmarks/social-bookmarks';
 export * from './social-comments/social-comments';
 export * from './social-posts/social-posts';
 export * from './social-reactions-stats/social-reactions-stats';
+export * from './users/users';
