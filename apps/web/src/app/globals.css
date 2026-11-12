@@ -78,8 +78,10 @@ h3 {
   min-height: 80px;
   display: flex;
   align-items: center;
-  gap: 48px;
+  gap: 24px;
+  justify-content: space-between;
 }
+.header-content > a { flex-shrink: 0; }
 .header-content img {
   width: 142px;
   height: auto;
@@ -1360,6 +1362,12 @@ h3 {
   }
   .detail-price {
     font-size: 30px;
+  }
+}
+@media (max-width: 380px) {
+  .header-content nav a {
+    padding-inline: 5px;
+    font-size: 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

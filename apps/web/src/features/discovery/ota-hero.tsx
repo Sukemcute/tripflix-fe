@@ -4,14 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { vi } from '@tripflix/i18n';
-import { TripiMascot } from '@/features/mascot/tripi-mascot';
+import { TripiLive } from '@/features/mascot/tripi-live';
+import { TornPaperDivider } from './torn-paper';
 import styles from './ota-hero.module.css';
-
-const ACTIVITIES = [
-  ['home-shore.jpg', vi.api.otaActivities.beach],
-  ['home-surf.jpg', vi.api.otaActivities.surf],
-  ['home-kayaking.jpg', vi.api.otaActivities.kayak],
-] as const;
 
 /**
  * 8 Điểm tương tác trên chữ cái TRIPFLIX (Figma Hotspot System):
@@ -135,7 +130,7 @@ export function OtaHero() {
       <div className={styles.typographyLayer} data-hero-layer="typography">
         <Image
           src="/brand/hero-layered-v1/tripflix-logo-crystal.svg"
-          alt="Tripflix — tám miền di sản Việt Nam"
+          alt="Tripflix, tám miền di sản Việt Nam"
           width={2400}
           height={660}
           preload
@@ -150,8 +145,8 @@ export function OtaHero() {
                 href={`/search?q=${encodeURIComponent(item.query)}`}
                 className={styles.letterHotspot}
                 key={`${item.char}-${idx}`}
-                aria-label={`${item.char} — ${item.destination}`}
-                title={`${item.char} — ${item.destination}`}
+                aria-label={`${item.char} - ${item.destination}`}
+                title={`${item.char} - ${item.destination}`}
               >
                 <span className={styles.letterBadge}>
                   <span className={styles.badgeTag}>{item.tag}</span>
@@ -177,11 +172,11 @@ export function OtaHero() {
       </div>
 
       <div className={styles.vectorLayer} data-hero-layer="vectors" aria-hidden="true">
-        <Image src="/brand/hero-layered-v1/seagulls-ribbon.svg" alt="" fill unoptimized loading="eager" />
+        <Image src="/brand/hero-layered-v1/seagulls-ribbon.svg?v=2" alt="" fill unoptimized loading="eager" />
       </div>
 
       <div className={styles.mascotLayer} aria-hidden="true">
-        <TripiMascot pose="hero-welcome" size={256} alt="" className={styles.mascotImage} />
+        <TripiLive className={styles.mascotImage} interactive={false} />
       </div>
 
       <div className={`ota-container ${styles.inner}`} data-hero-layer="ui">
@@ -195,26 +190,6 @@ export function OtaHero() {
 
             <p className={styles.description}>{vi.ota.heroIntro}</p>
 
-            <div className={styles.actions}>
-              <a href="#ota-search" className={styles.primaryCta}>
-                <span>{vi.ota.heroStartExploring}</span>
-                <span className={styles.ctaArrow} aria-hidden="true">→</span>
-              </a>
-
-              <nav className={styles.activities} aria-label={vi.api.otaActivityLabel}>
-                {ACTIVITIES.map(([image, name]) => (
-                  <Link
-                    prefetch={false}
-                    key={image}
-                    href={{ pathname: '/inspiration', query: { q: name } }}
-                    className={styles.activityPill}
-                  >
-                    <Image src={`/brand/${image}`} alt="" width={24} height={24} />
-                    <span>{name}</span>
-                  </Link>
-                ))}
-              </nav>
-            </div>
           </div>
 
           <aside className={styles.sceneContainer}>
@@ -272,6 +247,9 @@ export function OtaHero() {
           </aside>
         </div>
       </div>
+
+      {/* Mép xé giấy đại dương chuyển tiếp mượt mà xuống thanh tìm kiếm và thân trang */}
+      <TornPaperDivider variant="hero-to-canvas" />
     </header>
   );
 }

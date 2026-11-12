@@ -1,121 +1,37 @@
 .section {
   padding-block: clamp(52px, 7vw, 100px);
 }
+.photoCredit { margin: 12px 0 0; font-size: 12px; color: #435c59; }
+.photoCredit a { text-decoration: underline; }
+.previewSkeleton {
+  height: 260px;
+  border-radius: 20px;
+  background: #dcebe7;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .previewSkeleton { animation: previewPulse 1.6s ease-in-out infinite alternate; }
+}
+@keyframes previewPulse { to { opacity: 0.45; } }
 .sectionHead {
   display: flex;
   justify-content: space-between;
-  align-items: end;
+  align-items: start;
+  flex-wrap: wrap;
   gap: 24px;
   margin-bottom: 32px;
 }
 .sectionHead h2 {
   margin: 0;
-  font-size: clamp(1.75rem, 4.25vw, 4rem);
+  font-size: clamp(1.75rem, 3vw, 2.75rem);
   line-height: 1.08;
   letter-spacing: -0.065em;
 }
 .sectionHead p {
   margin: 12px 0 0;
   max-width: 62ch;
-  color: var(--color-text-muted);
-  font-size: 14px;
+  color: #435c59;
+  font-size: 16px;
   line-height: 1.7;
-}
-.headActions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-}
-.comboTimeline {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-right: 4px;
-}
-.timelinePill {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 32px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: var(--color-background);
-  color: var(--color-text-muted);
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-  overflow: hidden;
-  transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
-}
-.timelinePill:hover {
-  border-color: var(--color-teal);
-  color: var(--color-teal-ink);
-  transform: translateY(-1px);
-}
-.timelinePillActive {
-  border-color: var(--color-teal-ink);
-  color: var(--color-teal-ink);
-  background: var(--color-sea-mist);
-  font-weight: 700;
-  padding-right: 14px;
-}
-.timelineIndex {
-  font-size: 9.5px;
-  font-family: var(--font-mono);
-  opacity: 0.7;
-}
-.timelineLabel {
-  white-space: nowrap;
-}
-.timelineFill {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 2.5px;
-  background: var(--color-teal);
-  animation: timelineFillProgress linear forwards;
-}
-@keyframes timelineFillProgress {
-  from {
-    width: 0%;
-  }
-  to {
-    width: 100%;
-  }
-}
-@media (max-width: 900px) {
-  .comboTimeline {
-    display: none;
-  }
-}
-.navArrows {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.arrowBtn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-ink);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.25, 1);
-}
-.arrowBtn:hover {
-  background: var(--color-surface);
-  border-color: var(--color-teal);
-  color: var(--color-teal-ink);
-}
-.arrowBtn:active {
-  transform: scale(0.95);
 }
 .textLink {
   display: inline-flex;
@@ -207,11 +123,11 @@
 .destination p {
   margin: 0;
   padding-right: 12px;
-  font-size: 11.5px;
+  font-size: 14px;
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.85);
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -228,9 +144,7 @@
 }
 .cardLayerActive,
 .cardLayerOutgoing,
-.cardLayerIncoming,
-.cardLayerIncomingNext,
-.cardLayerIncomingPrev {
+.cardLayerIncoming {
   position: absolute;
   inset: 0;
   display: flex;
@@ -246,41 +160,11 @@
 }
 .cardLayerIncoming {
   z-index: 2;
-  animation: cardCrossfadeIn 950ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.cardLayerIncomingNext {
-  z-index: 2;
-  animation: cardSlideInNext 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.cardLayerIncomingPrev {
-  z-index: 2;
-  animation: cardSlideInPrev 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-@keyframes cardSlideInNext {
-  from {
-    opacity: 0;
-    transform: translateY(22px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-@keyframes cardSlideInPrev {
-  from {
-    opacity: 0;
-    transform: translateY(-22px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  animation: cardCrossfadeIn 1200ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 .cardLayerActive::before,
 .cardLayerOutgoing::before,
-.cardLayerIncoming::before,
-.cardLayerIncomingNext::before,
-.cardLayerIncomingPrev::before {
+.cardLayerIncoming::before {
   content: '';
   position: absolute;
   z-index: 0;
@@ -289,7 +173,7 @@
     0deg,
     rgba(8, 16, 26, 0.92) 0%,
     rgba(8, 16, 26, 0.6) 30%,
-    rgba(8, 16, 26, 0.12) 55%,
+    rgba(8, 16, 26, 0.4) 55%,
     transparent 72%
   );
   pointer-events: none;
@@ -306,7 +190,7 @@
   width: 100%;
   position: relative;
   z-index: 1;
-  animation: cardContentOut 400ms ease-out forwards;
+  animation: cardContentOut 500ms ease-out forwards;
 }
 @keyframes cardContentOut {
   from {
@@ -326,17 +210,6 @@
   width: 100%;
   position: relative;
   z-index: 1;
-  animation: contentStaggerIn 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-@keyframes contentStaggerIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 .comboBadge {
   position: relative;
@@ -417,26 +290,26 @@
   color: #ffffff;
 }
 .stayBand {
-  --edge-height: 0px;
   position: relative;
   isolation: isolate;
-  overflow: clip;
-  background: rgba(255, 247, 242, 0.94);
-  border: 1px solid rgba(0, 178, 163, 0.22);
-  border-radius: 32px;
-  max-width: 1240px;
-  margin-inline: auto;
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  backdrop-filter: blur(20px) saturate(1.2);
-  box-shadow: 0 20px 50px -10px rgba(0, 108, 99, 0.08);
+  overflow: visible;
+  width: 100%;
+  margin-inline: 0;
+  max-width: 100%;
+  border-radius: 0;
+  border-inline: none;
+  border-block: none;
+  background: #edf6f3;
+  box-shadow: none;
 }
 /* Ảnh phong cảnh mờ là lớp dưới cùng; độ trong suốt pha với nền Warm Mist sáng sủa */
 .stayBackdrop {
+  display: none;
   z-index: -2;
   object-fit: cover;
-  opacity: 0.22;
-  filter: blur(20px) saturate(1.1);
-  scale: 1.2;
+  opacity: 0.26;
+  filter: blur(24px) saturate(1.15);
+  scale: 1.15;
   transition:
     scale 900ms cubic-bezier(0.2, 0.7, 0.25, 1),
     filter 900ms cubic-bezier(0.2, 0.7, 0.25, 1);
@@ -445,22 +318,15 @@
 .stayEdgeBottom {
   display: none;
 }
-/* Rê chuột vào dải: bóng mép giấy sâu hơn, ảnh nền lùi xuống như một lớp nằm dưới. */
+/* Rê chuột vào dải: ảnh nền phản hồi chiều sâu mượt mà */
 @media (hover: hover) and (pointer: fine) {
-  /* Chỉ đổi bóng, không dịch mép giấy: dịch lớp có filter để lại một vệt sáng ở mép dưới lớp. */
-  .stayBand:hover .stayEdgeTop {
-    filter: drop-shadow(0 10px 9px color-mix(in srgb, var(--color-ink) 24%, transparent));
-  }
-  .stayBand:hover .stayEdgeBottom {
-    filter: drop-shadow(0 -10px 9px color-mix(in srgb, var(--color-ink) 18%, transparent));
-  }
   .stayBand:hover .stayBackdrop {
-    scale: 1.26;
-    filter: blur(18px) saturate(1.15);
+    scale: 1.22;
+    filter: blur(20px) saturate(1.2);
   }
 }
 .stayContent {
-  padding-block: calc(var(--edge-height) + clamp(20px, 3vw, 44px));
+  padding-block: clamp(24px, 4vw, 52px);
 }
 .stayHeader {
   position: relative;
@@ -817,7 +683,7 @@
 .story {
   min-width: 0;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 20px;
   background: var(--color-background);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 6%, transparent),
     0 12px 28px -20px var(--color-overlay-heavy);
@@ -839,7 +705,7 @@
 }
 .hotelCard a {
   display: grid;
-  grid-template-rows: clamp(126px, 16vw, 220px) 1fr;
+  grid-template-rows: clamp(180px, 19vw, 276px) 1fr;
   height: 100%;
 }
 .hotelCard a:focus-visible {
@@ -867,7 +733,7 @@
 }
 .hotelInfo,
 .story {
-  padding: 18px;
+  padding: 22px;
 }
 .hotelInfo {
   grid-area: 2 / 1;
@@ -883,7 +749,7 @@
 .stayLocation {
   padding-right: 46px;
   color: var(--color-teal-ink);
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 /* Hạng sao là thẻ ghim vàng (.pin-tag ở globals.css), ghim ở góc phải thông tin khách sạn. */
@@ -923,16 +789,16 @@
 .story h3 {
   margin: 0 0 8px;
   line-height: 1.45;
-  font-size: 17px;
+  font-size: clamp(17px, 1.35vw, 21px);
 }
 .hotelInfo .stayPriceRow {
   margin-top: auto;
-  padding-top: 9px;
+  padding-top: 12px;
   border-top: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent);
 }
 .hotelInfo strong {
   color: var(--color-coral-ink);
-  font-size: 17px;
+  font-size: 20px;
 }
 .hotelInfo small,
 .story small {
@@ -966,7 +832,7 @@
   position: absolute;
   z-index: -1;
   inset: 0;
-  background: linear-gradient(112deg, var(--color-warm-mist) 26%, var(--color-sea-mist) 72%);
+  background: linear-gradient(112deg, #e3f3ec 26%, #d9eeea 72%);
 }
 /* Dấu chìm bản đồ tròn, rất mờ, nằm sau ảnh và Tripi. */
 .tripiBanner::after {
@@ -995,19 +861,20 @@
 .tripiIntro {
   max-width: 49ch;
   margin-top: 10px;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  color: #365b56;
   line-height: 1.7;
 }
 .tripiAction {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
+  min-height: 50px;
   margin-top: 15px;
   padding: 8px 24px;
   border-radius: 999px;
   background: var(--color-coral);
   color: #ffffff;
-  font-size: 0.88rem;
+  font-size: 1rem;
   font-weight: 700;
   box-shadow: 0 8px 20px -4px rgba(255, 90, 60, 0.4);
   transition: all 250ms ease;
@@ -1389,14 +1256,11 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .cardLayerIncoming,
-  .cardLayerIncomingNext,
-  .cardLayerIncomingPrev,
   .cardContentOut,
   .cardContent,
   .chips,
   .stayGrid > .hotelCard,
   .badgeShimmerGlow,
-  .timelineFill,
   .tripiBeach,
   .tripiTown,
   .tripiStamp,
@@ -1575,4 +1439,31 @@
     opacity: 0;
     scale: 2.4 1.4;
   }
+}
+
+/* ==========================================================================
+   BĂNG KEO WASHI & CON DẤU BƯU ĐIỆN VÉ & TRIPI SCRAPBOOK
+   ========================================================================== */
+.ticketTape {
+  top: -8px;
+  left: 28px;
+  z-index: 10;
+}
+
+.tripiTapeBeach {
+  top: -8px;
+  left: 14px;
+  z-index: 4;
+}
+
+.tripiTapeTown {
+  top: -8px;
+  right: 14px;
+  z-index: 4;
+}
+
+.tripiPostmark {
+  bottom: 8px;
+  right: 16px;
+  z-index: 5;
 }

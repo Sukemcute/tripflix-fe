@@ -468,7 +468,7 @@
 .homepagePanel {
   position: relative;
   z-index: 10;
-  margin-top: -48px;
+  margin-top: -76px;
   padding: 0 !important;
   border: none !important;
   border-radius: 0 !important;
@@ -663,7 +663,7 @@
 
 @media (max-width: 640px) {
   .homepagePanel {
-    margin-top: -20px;
+    margin-top: -44px;
   }
   .homepagePanel .heading {
     padding-inline: 4px;
