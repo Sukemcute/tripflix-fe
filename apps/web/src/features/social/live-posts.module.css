@@ -740,7 +740,7 @@
 
 .mediaStageFrame {
   /* Chỗ dành cho cột tương tác ở góc dưới phải; cụm lên/xuống tính theo giá trị này để không chồng lên. */
-  --iv-action-dock-height: 300px;
+  --iv-action-dock-height: 250px;
   --iv-action-dock-bottom: 48px;
   position: relative;
   width: 100%;
@@ -1323,9 +1323,13 @@
 }
 
 .progressBarFill {
+  width: 100%;
   height: 100%;
   background: var(--iv-accent);
-  transition: width 120ms linear;
+  /* Cập nhật mỗi khung hình bằng requestAnimationFrame nên không cần transition. */
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
 }
 
 /* --- Vertical Action Bar & Post Navigation (Right of Media Stage) --- */
@@ -1391,7 +1395,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
 .actionAvatarBadgeWrap {
@@ -1434,7 +1438,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 0;
   border: 0;
   background: var(--color-transparent);
   color: var(--iv-text);
@@ -1447,9 +1451,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* Rộng 44px để dễ bấm; thấp 34px để số đếm sát icon như TikTok (cả nút vẫn cao hơn 44px tính cả số). */
   width: 44px;
-  height: 44px;
-  /* Không nền tròn nhưng giữ vùng bấm 44px; bóng đổ để icon trắng vẫn rõ trên video sáng. */
+  height: 34px;
+  /* Không nền tròn; bóng đổ để icon trắng vẫn rõ trên video sáng. */
   border: 0;
   background: var(--color-transparent);
   color: var(--color-background);
