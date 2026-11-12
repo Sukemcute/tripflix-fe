@@ -12,6 +12,8 @@ import {
 } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { SocialIcon, ComposerModal, RightPanelCommentsSynchronized } from '../live-posts';
+import { useHasUserInteracted } from '../use-has-user-interacted';
+import { useSettledFlag } from '../use-settled-flag';
 import { usePresence } from '../use-presence';
 import { useIsWideScreen } from '../use-wide-screen';
 import { nextScrollTarget, stepScrollTowards, wheelDeltaToPixels } from './smooth-wheel-scroll';
@@ -23,6 +25,8 @@ import { getPostImages } from '../post-cover';
 import styles from './social-feed.module.css';
 
 export interface SocialFeedViewProps {
+  /** Tab đang hiện. Tab được giữ mounted khi ẩn, nên hiện lại cũng là bố cục ban đầu: không chạy hiệu ứng. */
+  isVisible?: boolean;
   initialKeyword?: string;
   searchKeyword?: string;
   isItineraryOpen?: boolean;
@@ -35,6 +39,7 @@ export interface SocialFeedViewProps {
 }
 
 export function SocialFeedView({
+  isVisible = true,
   initialKeyword = '',
   searchKeyword,
   isItineraryOpen: propIsItineraryOpen,
@@ -618,8 +623,13 @@ export function SocialFeedView({
   const isLeftVisible = isItineraryOpen;
   const isRightVisible = isRightOpen;
   // Giữ sidebar thêm một nhịp khi đóng để chạy hiệu ứng thoát, song song với cột lưới co lại.
-  const leftPresence = usePresence(isLeftVisible);
-  const rightPresence = usePresence(isRightVisible);
+  // Chưa thao tác thì bố cục mặc định hiện ngay, không chạy hiệu ứng trượt/co giãn.
+  const hasUserInteracted = useHasUserInteracted();
+  const isLayoutSettled = useSettledFlag(isVisible);
+  const isLayoutAnimated = hasUserInteracted && isLayoutSettled;
+  // Chỉ những lần mở sau khi người dùng đã thao tác mới có hiệu ứng trượt vào.
+  const leftPresence = usePresence(isLeftVisible, { shouldAnimateEnter: isLayoutAnimated });
+  const rightPresence = usePresence(isRightVisible, { shouldAnimateEnter: isLayoutAnimated });
 
   const containerClassName =
     isLeftVisible && isRightVisible
@@ -631,11 +641,13 @@ export function SocialFeedView({
       : `${styles.splitViewContainer} ${styles.splitViewCenterOnly}`;
 
   return (
-    <div className={containerClassName}>
+    <div className={`${containerClassName} ${isLayoutAnimated ? '' : styles.layoutStatic}`}>
       {/* 1. Left Column: Itinerary Sidebar Panel (Nằm ngay bên phải của Dock, cố định vững vàng) */}
       {leftPresence.isRendered && (
         <ItinerarySidebarPanel
-          className={`${styles.itineraryInFeed} ${leftPresence.isClosing ? styles.sidebarClosingLeft : ''}`}
+          className={`${styles.itineraryInFeed} ${leftPresence.isEnterAnimated ? styles.sidebarEnterLeft : ''} ${
+            leftPresence.isClosing ? styles.sidebarClosingLeft : ''
+          }`}
           trip={activeItineraryPost?.tripAttachment}
           postTitle={activeItineraryPost?.title}
           hashtags={activeItineraryPost?.hashtags}
@@ -832,8 +844,8 @@ export function SocialFeedView({
       {rightPresence.isRendered && (
         <aside
           className={`${reelsStyles.rightPanel} ${styles.rightPanelInFeed} ${
-            rightPresence.isClosing ? styles.sidebarClosingRight : ''
-          }`}
+            rightPresence.isEnterAnimated ? styles.sidebarEnterRight : ''
+          } ${rightPresence.isClosing ? styles.sidebarClosingRight : ''}`}
           aria-label={vi.api.commentPanelAria}
         >
           <div className={reelsStyles.panelHeaderBar}>

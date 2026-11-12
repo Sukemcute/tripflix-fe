@@ -36,6 +36,8 @@ import { getAvatarTone } from './avatar-tone';
 import { EmojiPicker } from './emoji-picker';
 import { insertAtSelection } from './emoji-picker-data';
 import { isReelPost } from './post-type-filter';
+import { useHasUserInteracted } from './use-has-user-interacted';
+import { useSettledFlag } from './use-settled-flag';
 import {
   getReelRenderMode,
   pickReelAfterRemoval,
@@ -44,6 +46,7 @@ import {
   type ReelPost,
 } from './reel-post';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
+import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
 import styles from './live-posts.module.css';
 
@@ -1581,6 +1584,11 @@ export function InspirationImmersiveViewer({
   const showLeftPanel = Boolean(activePost) && isLeftOpen;
   const showRightPanel = Boolean(activePost) && isRightOpen;
 
+  // Chưa thao tác thì đổi bố cục ngay (biết màn rộng, tải xong bài), chỉ chạy hiệu ứng khi người dùng bấm đóng/mở.
+  const hasUserInteracted = useHasUserInteracted();
+  // Reels mount mới mỗi lần chuyển tab: panel bình luận hiện khi bài tải xong cũng là bố cục ban đầu.
+  const isLayoutSettled = useSettledFlag(Boolean(activePost));
+  const isLayoutAnimated = hasUserInteracted && isLayoutSettled;
   const gridLayoutClass =
     showLeftPanel && showRightPanel
       ? styles.gridThreeCols
@@ -1678,7 +1686,9 @@ export function InspirationImmersiveViewer({
   return (
     <div className={styles.immersiveRoot}>
       {/* Nội dung chính: 3 Panel Đồng bộ theo activePost */}
-      <div className={`${styles.viewerGrid} ${gridLayoutClass}`}>
+      <div
+        className={`${styles.viewerGrid} ${gridLayoutClass} ${isLayoutAnimated ? '' : styles.layoutStatic}`}
+      >
         {/* ================================================================
             1. LEFT PANEL — ATTACHED ITINERARY (Dùng chung ItinerarySidebarPanel chuẩn 1 style)
             ================================================================ */}
@@ -1944,6 +1954,7 @@ export function InspirationImmersiveViewer({
                 loginHref={loginReturnHref}
                 scrollContainerRef={rightScrollRef}
                 composerInputRef={commentInputRef}
+                showSummary
               />
             </aside>
           )}
@@ -2005,6 +2016,7 @@ export function RightPanelCommentsSynchronized({
   loginHref,
   scrollContainerRef,
   composerInputRef,
+  showSummary = false,
 }: {
   post: {
     id: string;
@@ -2015,6 +2027,8 @@ export function RightPanelCommentsSynchronized({
   loginHref: string;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   composerInputRef: React.RefObject<HTMLInputElement | null>;
+  /** Tóm tắt AI ở đầu bình luận: chỉ màn Reels bật (giống mobile); tab Bài viết dùng chung panel nhưng không bật. */
+  showSummary?: boolean;
 }) {
   const { user, isReady, session } = useApiSession();
   const client = useQueryClient();
@@ -2105,6 +2119,7 @@ export function RightPanelCommentsSynchronized({
         ref={scrollContainerRef}
         className={styles.rightScrollArea}
       >
+        {showSummary && <ReelCommentSummary key={post.id} postId={post.id} />}
         <ApiErrorNotice error={addMutation.error} />
         <ApiErrorNotice
           error={query.error}

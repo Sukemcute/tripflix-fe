@@ -155,3 +155,67 @@
     padding: 12px;
   }
 }
+
+/* Bản gọn ở đầu panel bình luận Reels (ReelCommentSummary): panel hẹp nên nhỏ gọn hơn bản trang chi tiết. */
+.reelCompact {
+  max-width: none;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+  border-radius: 16px;
+  animation: reelSummaryFadeIn 200ms ease-out both;
+}
+
+.reelCompact .header {
+  gap: 10px;
+}
+
+.root.reelCompact .heading h2 {
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.root.reelCompact .heading p {
+  margin-top: 2px;
+}
+
+.reelCompact .safety {
+  margin: 0;
+}
+
+.reelText {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-ink);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.reelTextClamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.reelCompact .textAction {
+  min-height: 0;
+  padding: 0;
+}
+
+@keyframes reelSummaryFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reelCompact {
+    animation: none;
+  }
+}

@@ -8,9 +8,11 @@ import type { AdminModerationControllerQueueReasonCode } from './adminModeration
 import type { AdminModerationControllerQueueSource } from './adminModerationControllerQueueSource';
 import type { AdminModerationControllerQueueStatus } from './adminModerationControllerQueueStatus';
 import type { AdminModerationControllerQueueTargetType } from './adminModerationControllerQueueTargetType';
+import type { AdminModerationControllerQueueView } from './adminModerationControllerQueueView';
 
 export type AdminModerationControllerQueueParams = {
   status?: AdminModerationControllerQueueStatus;
+  view?: AdminModerationControllerQueueView;
   targetType?: AdminModerationControllerQueueTargetType;
   source?: AdminModerationControllerQueueSource;
   reasonCode?: AdminModerationControllerQueueReasonCode;

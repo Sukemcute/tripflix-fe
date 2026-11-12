@@ -1,8 +1,9 @@
 'use client';
 
-import { useSummaryExperience } from '@tripflix/api-client';
+import { usePostSummary, useSummaryExperience } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
+import { useEffect, useRef, useState } from 'react';
 import styles from './post-summary.module.css';
 
 const copy = vi.summary;
@@ -86,6 +87,65 @@ export function CommunitySummary({ postId }: { postId: string }) {
             </div>
           )}
         </div>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Tóm tắt bình luận ở đầu panel bình luận Reels, cùng hành vi với mobile (TF44): tự tải, chỉ hiện khi đã có
+ * bản tóm tắt; đang tải, chưa đủ bình luận hay lỗi thì không hiện gì. Panel web hẹp nên nội dung gọn 4 dòng,
+ * bấm "Xem thêm" để đọc hết.
+ */
+export function ReelCommentSummary({ postId }: { postId: string }) {
+  const { data: summary } = usePostSummary(postId, { autoLoad: true });
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const textRef = useRef<HTMLParagraphElement | null>(null);
+  const text = summary?.status === 'ready' ? summary.summary : null;
+
+  // Chỉ hiện "Xem thêm" khi nội dung thật sự dài hơn 4 dòng (đo lại khi panel đổi bề ngang).
+  useEffect(() => {
+    const element = textRef.current;
+    if (!element || isExpanded) return;
+    const observer = new ResizeObserver(() => {
+      setIsOverflowing(element.scrollHeight > element.clientHeight + 1);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [text, isExpanded]);
+
+  if (!summary || !text) return null;
+  return (
+    <section className={`${styles.root} ${styles.reelCompact}`} aria-label={copy.resultTitle}>
+      <div className={styles.header}>
+        <Image src="/brand/tripi-welcome.png" width={32} height={32} alt={vi.mobile.common.mascot} />
+        <div className={styles.heading}>
+          <h2>
+            <span>{copy.resultTitle}</span>
+            <span className={styles.ai}>{copy.badge}</span>
+          </h2>
+          <p>{t('summary.basedOn', { count: summary.commentCount })}</p>
+        </div>
+      </div>
+      {summary.hasSafetyWarnings && (
+        <div role="note" className={styles.safety}>
+          <h3>{copy.safetyTitle}</h3>
+          <p>{copy.safety}</p>
+        </div>
+      )}
+      <p ref={textRef} className={`${styles.reelText} ${isExpanded ? '' : styles.reelTextClamped}`}>
+        {text}
+      </p>
+      {(isOverflowing || isExpanded) && (
+        <button
+          type="button"
+          className={styles.textAction}
+          aria-expanded={isExpanded}
+          onClick={() => setIsExpanded((expanded) => !expanded)}
+        >
+          {isExpanded ? vi.api.postShowLess : vi.api.postReadMore}
+        </button>
       )}
     </section>
   );

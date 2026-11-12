@@ -10,6 +10,7 @@ import { t, vi } from '@tripflix/i18n';
 import Link from 'next/link';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { useHeaderPopover } from '@/features/shared/use-header-popover';
+import { resolveNotificationHref } from './notification-href';
 
 /**
  * Nút chuông trên header (chỉ khi đã đăng nhập), bấm thả xuống bảng thông báo.
@@ -104,13 +105,7 @@ export function HeaderNotifications() {
                 const handleRead = () => {
                   if (!item.readAt) markRead.mutate(item.id);
                 };
-                // Only web URLs can be destinations supplied by inbox content.
-                const href =
-                  item.link &&
-                  ((item.link.startsWith('/') && !item.link.startsWith('//')) ||
-                    /^https?:\/\//i.test(item.link))
-                    ? item.link
-                    : null;
+                const href = resolveNotificationHref(item);
                 return (
                   <li key={item.id}>
                     {href ? (

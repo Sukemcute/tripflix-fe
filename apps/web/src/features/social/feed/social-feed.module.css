@@ -962,9 +962,18 @@
 }
 
 /* Sidebar luôn ở cột cố định: sidebar đang đóng (đã gỡ khỏi DOM) không làm các phần khác nhảy cột. */
+/* Trước lần thao tác đầu tiên lưới không co giãn. Hiệu ứng trượt vào của sidebar do JS quyết định lúc mở
+   (class sidebarEnter*), không bật/tắt ở đây để khỏi chạy lại hiệu ứng trên sidebar đang mở sẵn. */
+.splitViewContainer.layoutStatic {
+  transition: none;
+}
+
 .splitViewContainer > .itineraryInFeed {
   grid-column: 1;
   grid-row: 1;
+}
+
+.splitViewContainer > .sidebarEnterLeft {
   animation: sidebarEnterLeft 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -976,6 +985,9 @@
 .splitViewContainer > .rightPanelInFeed {
   grid-column: 5;
   grid-row: 1;
+}
+
+.splitViewContainer > .sidebarEnterRight {
   animation: sidebarEnterRight 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -2099,8 +2111,8 @@
     grid-column: auto;
   }
 
-  .splitViewContainer > .itineraryInFeed,
-  .splitViewContainer > .rightPanelInFeed {
+  .splitViewContainer > .sidebarEnterLeft,
+  .splitViewContainer > .sidebarEnterRight {
     animation: sheetEnter 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
@@ -2191,8 +2203,8 @@
     transition: none;
   }
 
-  .splitViewContainer > .itineraryInFeed,
-  .splitViewContainer > .rightPanelInFeed {
+  .splitViewContainer > .sidebarEnterLeft,
+  .splitViewContainer > .sidebarEnterRight {
     animation: none;
   }
 }
