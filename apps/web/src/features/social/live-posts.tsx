@@ -32,6 +32,7 @@ import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { isReelPost } from './post-type-filter';
+import { toReelPost, type ReelPost } from './reel-post';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import styles from './live-posts.module.css';
 
@@ -499,7 +500,7 @@ function AccountPostGrid({
 interface MediaTrackItemProps {
   itemRef?: (el: HTMLDivElement | null) => void;
   index: number;
-  post: SocialPostDto;
+  post: ReelPost;
   isActive: boolean;
   isNearActive: boolean;
   reelCard?: FeedCardDto;
@@ -984,10 +985,19 @@ export function InspirationImmersiveViewer({
   const rightScrollRef = useRef<HTMLDivElement | null>(null);
 
   const effectiveSearch = (searchKeyword !== undefined ? searchKeyword : searchInput).trim();
-  const queryKind = filterMode === 'saved' ? 'bookmarks' : 'public';
-  // /v1/posts không còn lọc video; tạm lọc ở client đến khi /v1/feed có tripAttachment và saved (TF25).
-  const postsQuery = useSocialPosts(queryKind, filterMode === 'saved' ? '' : effectiveSearch);
-  const reelsQuery = useReelsFeed({ enabled: isReady });
+  const isSavedMode = filterMode === 'saved';
+  // /v1/feed chưa tìm theo từ khoá nên chỉ khi tìm mới đọc /v1/posts rồi lọc bài video.
+  const isSearching = !isSavedMode && effectiveSearch.length > 0;
+  const reelsQuery = useReelsFeed({ enabled: isReady, isSavedOnly: isSavedMode });
+  const searchQuery = useInfiniteQuery({
+    queryKey: ['social', 'reels-search', effectiveSearch, user?.id],
+    enabled: isReady && isSearching,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }) => socialApi.listPosts({ cursor: pageParam, keyword: effectiveSearch }, signal),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+  });
+  // Cùng một giao diện phân trang cho hai nguồn, để phần cuộn và tải thêm không cần biết đang ở nguồn nào.
+  const postsQuery = isSearching ? searchQuery : reelsQuery;
 
   const reelMap = useMemo(() => {
     const map = new Map<
@@ -1003,9 +1013,12 @@ export function InspirationImmersiveViewer({
   }, [reelsQuery.data]);
 
   // Reels chỉ gồm bài dạng video; bài viết (vlog) không bao giờ hiện ở đây.
-  const rawPosts = useMemo(
-    () => (postsQuery.data?.pages.flatMap((page) => page.items) ?? []).filter(isReelPost),
-    [postsQuery.data],
+  const rawPosts = useMemo<ReelPost[]>(
+    () =>
+      isSearching
+        ? (searchQuery.data?.pages.flatMap((page) => page.items) ?? []).filter(isReelPost)
+        : (reelsQuery.data?.pages.flatMap((page) => page.items) ?? []).map(toReelPost),
+    [isSearching, searchQuery.data, reelsQuery.data],
   );
 
   const posts = useMemo(() => {
