@@ -13,6 +13,8 @@ import { StaffManagement } from '../staff/staff-management';
 import { ModerationWorkspace } from '../moderation/moderation-workspace';
 import { InventoryCalendar } from '../inventory/inventory-calendar';
 import { AdminOverview } from '../overview/admin-overview';
+import { SearchMonitoring } from '../search-monitoring/search-monitoring';
+import searchStyles from '../search-monitoring/search-monitoring.module.css';
 import {
   IconOverview,
   IconShield,
@@ -31,7 +33,7 @@ import {
 } from './admin-icons';
 
 /** Mục menu moderator được thấy; superadmin thấy tất cả. */
-const MODERATOR_PAGES: readonly MessageKey[] = ['admin.overview', 'admin.moderation', 'admin.alerts', 'admin.audit'];
+const MODERATOR_PAGES: readonly MessageKey[] = ['admin.overview', 'admin.moderation', 'admin.searchMonitoring', 'admin.alerts', 'admin.audit'];
 
 function renderNavIcon(icon: AdminNavItem['icon']) {
   switch (icon) {
@@ -110,7 +112,7 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
     );
 
   return (
-    <div className="admin-shell">
+    <div className={`admin-shell ${label === 'admin.searchMonitoring' ? searchStyles.shell : ''}`}>
       {/* Dark Navy Sidebar */}
       <aside className="admin-sidebar">
         <Link href="/" className="admin-logo" aria-label="Tripflix Admin Dashboard">
@@ -182,6 +184,7 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
 
           <div className="admin-topbar-right">
             {/* Bộ chọn thời gian */}
+            {label !== 'admin.searchMonitoring' && <>
             <div className="admin-date-picker">
               <IconCalendar />
               <select
@@ -207,6 +210,7 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
             >
               <IconRefresh />
             </button>
+            </>}
 
             {/* Chuông thông báo & cảnh báo */}
             <Link href="/alerts" className="admin-bell-btn" title="Cảnh báo hệ thống" aria-label="12 cảnh báo">
@@ -263,6 +267,8 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
             ) : (
               profile.data && <ModerationWorkspace />
             )
+          ) : label === 'admin.searchMonitoring' ? (
+            profile.isPending ? <output>{vi.api.loading}</output> : profile.data && <SearchMonitoring />
           ) : label === 'admin.users' || label === 'admin.staff' ? (
             profile.isPending ? (
               <output>{vi.api.loading}</output>

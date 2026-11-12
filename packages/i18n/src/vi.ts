@@ -10,9 +10,11 @@ import { flights } from './flights';
 import { privacy } from './privacy';
 import { terms } from './terms';
 import { moderation } from './moderation';
+import { searchMonitoring } from './search-monitoring';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
+  searchMonitoring,
   assistant,
   moderation,
   flights,
@@ -27,7 +29,7 @@ export const vi = {
   demo,
   app: {
     name: 'Tripflix',
-    slogan: 'Chạm cảm hứng, trọn hành trình',
+    slogan: 'Thấy là thích, nhích là đi',
   },
   tabs: {
     feed: 'Lướt',
@@ -45,6 +47,7 @@ export const vi = {
     overview: 'Tổng quan',
     moderation: 'Kiểm duyệt',
     analytics: 'Xu hướng & Gian lận',
+    searchMonitoring: 'Theo dõi tìm kiếm',
     inventory: 'Lịch trống & giá',
     orders: 'Đơn hàng & Thanh toán',
     users: 'Người dùng',

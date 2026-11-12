@@ -1,10 +1,15 @@
 export const api = {
   hotels: 'Khách sạn',
   inspiration: 'Cảm hứng',
-  // Chuông thông báo trên header web (TF06P); dữ liệu thật chờ API thông báo trong app (TF46).
+  // Hộp thư thông báo trên header web (TF46).
   notificationsTitle: 'Thông báo',
+  notificationsMarkAllRead: 'Đánh dấu đã đọc hết',
+  notificationsLoading: 'Đang tải thông báo…',
+  notificationsUnreadCount: '{count} thông báo chưa đọc',
+  notificationsUnread: 'Chưa đọc',
   notificationsEmpty: 'Chưa có thông báo nào',
-  notificationsEmptyHint: 'Khi có người thích, bình luận bài viết hoặc đơn đặt chỗ của bạn thay đổi, thông báo sẽ hiện ở đây.',
+  notificationsEmptyHint:
+    'Khi có người thích, bình luận bài viết hoặc đơn đặt chỗ của bạn thay đổi, thông báo sẽ hiện ở đây.',
   otaKicker: 'Biển xanh  |  Phố cổ  |  Thiên nhiên',
   otaTitle: 'Chạm cảm hứng.\nChọn một nơi ở.\nBắt đầu hành trình.',
   otaIntro: 'Từ một nơi muốn đến, tìm một chốn muốn ở. Khách sạn, trải nghiệm và hành trình đúng gu bạn.',
@@ -22,6 +27,7 @@ export const api = {
   noPosts: 'Chưa có bài đăng nào. Hãy quay lại sau hoặc tạo bản nháp đầu tiên của bạn.',
   error: 'Không tải được dữ liệu. Vui lòng thử lại.',
   network: 'Không kết nối được máy chủ. Kiểm tra kết nối rồi thử lại.',
+  unavailable: 'Hệ thống đang bận hoặc đang bảo trì. Vui lòng thử lại sau ít giây.',
   expired: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
   forbidden: 'Bạn không có quyền thực hiện thao tác này.',
   emailUnverified: 'Hãy xác thực email trước khi đăng bài hoặc bình luận.',
