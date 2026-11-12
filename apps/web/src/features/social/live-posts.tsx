@@ -519,9 +519,6 @@ interface MediaTrackItemProps {
   onToggleCaption: (postId: string) => void;
   onOpenTag: (tag: string) => void;
   onOpenItinerary: (postId: string) => void;
-  onOpenGallery: (postId: string, imageIndex: number) => void;
-  imageOrientations: Record<string, 'portrait' | 'landscape' | 'square'>;
-  onOrientationDetected: (src: string, orientation: 'portrait' | 'landscape' | 'square') => void;
 }
 
 /**
@@ -551,9 +548,6 @@ function MediaTrackItem({
   onToggleCaption,
   onOpenTag,
   onOpenItinerary,
-  onOpenGallery,
-  imageOrientations,
-  onOrientationDetected,
 }: MediaTrackItemProps) {
   const trip = post.tripAttachment ?? null;
   const hasItinerary = Boolean(
@@ -584,8 +578,6 @@ function MediaTrackItem({
   // Giống Reels mobile: khi chưa tới lượt phát chỉ hiện poster thật của video, không dùng ảnh minh hoạ
   // theo điểm đến (trông như ảnh bài viết rồi mới "biến" thành video khi lướt nhanh bằng touchpad).
   const reelPoster = reelCard ? selectReelPoster(reelCard.video.posters, 720) : undefined;
-  const isReel = post.postType === 'video';
-  const backdropImage = isReel ? reelPoster : coverImage;
   const isMediaError = mediaErrorPostId === post.id;
   const isCaptionExpanded = captionExpandedPostId === post.id;
   const authorInfo = formatAuthorDisplay(
@@ -611,15 +603,15 @@ function MediaTrackItem({
       data-post-id={post.id}
       aria-hidden={!isActive}
     >
-      {backdropImage && (
+      {reelPoster && (
         <div
           className={styles.mediaBackdropBlur}
-          style={{ backgroundImage: `url(${backdropImage})` }}
+          style={{ backgroundImage: `url(${reelPoster})` }}
         />
       )}
 
-      {/* Media Content: Reels luôn là video (hoặc khung chờ); lưới ảnh/chữ chỉ cho bài không phải video */}
-      {isReel && (!reelCard?.video || isMediaError) ? (
+      {/* Media Content: Reels luôn là video; chưa có link phát hoặc phát lỗi thì hiện khung chờ như Reels mobile */}
+      {!reelCard?.video || isMediaError ? (
         <output className={styles.reelPendingStage}>
           {isMediaError ? (
             <span className={styles.reelPendingText}>{vi.api.immersiveMediaError}</span>
@@ -627,7 +619,7 @@ function MediaTrackItem({
             <span className={styles.reelPendingSpinner} aria-label={vi.api.loading} />
           )}
         </output>
-      ) : reelCard?.video && isReel ? (
+      ) : (
         <>
           {isNearActive ? (
             <video
@@ -688,120 +680,6 @@ function MediaTrackItem({
             </>
           )}
         </>
-      ) : postImages.length > 0 ? (
-        (() => {
-          const totalCount = postImages.length;
-          const leadOrientation =
-            (coverImage ? imageOrientations[coverImage] : undefined) ?? 'portrait';
-          const isLeadLandscape = leadOrientation === 'landscape';
-          const visibleCount = totalCount >= 5 ? 5 : totalCount;
-          const visibleList = postImages.slice(0, visibleCount);
-
-          const gridVariantClass =
-            totalCount === 1
-              ? styles.gridSingle
-              : totalCount === 2
-                ? isLeadLandscape
-                  ? styles.gridTwoRows
-                  : styles.gridTwoCols
-                : totalCount === 3
-                  ? isLeadLandscape
-                    ? styles.gridThreeLandscape
-                    : styles.gridThreePortrait
-                  : totalCount === 4
-                    ? isLeadLandscape
-                      ? styles.gridFourLandscape
-                      : styles.gridFour
-                    : styles.gridFiveCollage;
-
-          const fiveTileClasses = [
-            styles.collageLeftTop,
-            styles.collageLeftBottom,
-            styles.collageRightTop,
-            styles.collageRightMiddle,
-            styles.collageRightBottom,
-          ];
-
-          return (
-            <div className={`${styles.adaptiveImageGrid} ${gridVariantClass}`}>
-              {visibleList.map((img, i) => {
-                const imgOrientation = imageOrientations[img.src];
-                const isSingleLandscape = totalCount === 1 && isLeadLandscape;
-
-                let cellSpanClass = '';
-                if (totalCount === 1 && isSingleLandscape) {
-                  cellSpanClass = styles.gridCellSingleBackdrop ?? '';
-                } else if (totalCount === 3 && i === 0) {
-                  cellSpanClass = isLeadLandscape
-                    ? (styles.gridCellSpanTwoCols ?? '')
-                    : (styles.gridCellSpanTwoRows ?? '');
-                } else if (totalCount === 4 && isLeadLandscape && i === 0) {
-                  cellSpanClass = styles.gridCellSpanThreeCols ?? '';
-                } else if (totalCount >= 5) {
-                  cellSpanClass = fiveTileClasses[i] ?? '';
-                }
-
-                const extraCount = totalCount > 5 && i === 4 ? totalCount - 4 : 0;
-                const resolvedObjectPosition =
-                  imgOrientation === 'portrait'
-                    ? 'center 25%'
-                    : imgOrientation === 'landscape'
-                      ? 'center center'
-                      : img.focalPoint;
-
-                return (
-                  <button
-                    key={img.src}
-                    type="button"
-                    className={`${styles.gridCellBtn} ${cellSpanClass}`}
-                    aria-label={t('api.immersiveOpenImageAria', {
-                      index: i + 1,
-                      total: totalCount,
-                    })}
-                    onClick={() => onOpenGallery(post.id, i)}
-                  >
-                    <Image
-                      src={img.src}
-                      alt={post.title}
-                      fill
-                      className={
-                        isSingleLandscape ? styles.gridCellImgContain : styles.gridCellImg
-                      }
-                      style={
-                        isSingleLandscape ? undefined : { objectPosition: resolvedObjectPosition }
-                      }
-                      sizes="(max-width: 1024px) 100vw, 480px"
-                      priority={i === 0 && isActive}
-                      unoptimized={img.src.startsWith('http')}
-                      onLoad={(event) => {
-                        const el = event.currentTarget;
-                        if (!el.naturalWidth || !el.naturalHeight) return;
-                        const ratio = el.naturalWidth / el.naturalHeight;
-                        const nextOrientation: 'portrait' | 'landscape' | 'square' =
-                          ratio > 1.15
-                            ? 'landscape'
-                            : ratio < 0.9
-                              ? 'portrait'
-                              : 'square';
-                        onOrientationDetected(img.src, nextOrientation);
-                      }}
-                    />
-                    {extraCount > 0 && (
-                      <span className={styles.gridCellMoreOverlay} aria-hidden="true">
-                        +{extraCount}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })()
-      ) : (
-        <div className={styles.textOnlyStage}>
-          <h2 className={styles.textOnlyTitle}>{post.title}</h2>
-          <p className={styles.textOnlyBody}>{post.body}</p>
-        </div>
       )}
 
       {/* Bottom Post Overlay */}
@@ -986,9 +864,6 @@ export function InspirationImmersiveViewer({
   const [mediaErrorPostId, setMediaErrorPostId] = useState<string | null>(null);
   const [captionExpandedPostId, setCaptionExpandedPostId] = useState<string | null>(null);
   const [galleryState, setGalleryState] = useState<{ postId: string; index: number } | null>(null);
-  const [imageOrientations, setImageOrientations] = useState<
-    Record<string, 'portrait' | 'landscape' | 'square'>
-  >({});
 
   // Optimistic states per postId
   const [optimisticLikes, setOptimisticLikes] = useState<Record<string, boolean>>({});
@@ -1894,15 +1769,6 @@ export function InspirationImmersiveViewer({
                         onOpenItinerary={(pId) => {
                           if (activePostId !== pId) setActivePostId(pId);
                           setLeftOpen(true);
-                        }}
-                        onOpenGallery={(pId, imgIdx) =>
-                          setGalleryState({ postId: pId, index: imgIdx })
-                        }
-                        imageOrientations={imageOrientations}
-                        onOrientationDetected={(src, orientation) => {
-                          setImageOrientations((prev) =>
-                            prev[src] === orientation ? prev : { ...prev, [src]: orientation },
-                          );
                         }}
                       />
                     ))}
