@@ -36,11 +36,12 @@ export function InspirationView({ initialKeyword = '' }: InspirationViewProps) {
   const isReels = activeView === 'reels';
 
   // Cac trang thai chung dieu phoi qua Instagram Left Dock
-  // Màn rộng mở sẵn Lịch trình; màn hẹp để đóng vì ở đó Lịch trình là bottom sheet che bảng tin.
-  // Người dùng đóng/mở thì giữ lựa chọn đó.
+  // Mặc định: tab Bài viết mở sẵn Lịch trình trên màn rộng (thông tin chính đi kèm bài đọc); Reels để đóng
+  // cho khung video rộng như TikTok; màn hẹp luôn đóng vì Lịch trình là bottom sheet che nội dung.
+  // Người dùng đóng/mở thì giữ lựa chọn đó khi chuyển qua lại giữa hai tab.
   const isWideScreen = useIsWideScreen();
   const [itineraryChoice, setIsItineraryOpen] = useState<boolean | null>(null);
-  const isItineraryOpen = itineraryChoice ?? isWideScreen;
+  const isItineraryOpen = itineraryChoice ?? (isWideScreen && !isReels);
   const [filterMode, setFilterMode] = useState<FeedNavFilter>('all');
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerPostType, setComposerPostType] = useState<'video' | 'vlog'>('vlog');
