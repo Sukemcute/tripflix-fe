@@ -86,7 +86,7 @@ export function SocialFeedView({
   const effectiveKeyword = (searchKeyword !== undefined ? searchKeyword : initialKeyword).trim();
   const queryKind: 'public' | 'bookmarks' = activeFilter === 'saved' ? 'bookmarks' : 'public';
   // Tab Bài viết chỉ lấy vlog; Reels có luồng riêng (/v1/feed).
-  const postsQuery = useSocialPosts(queryKind, activeFilter === 'saved' ? '' : effectiveKeyword, 'vlog');
+  const postsQuery = useSocialPosts(queryKind, activeFilter === 'saved' ? '' : effectiveKeyword, 'vlog', 'recommended');
 
   const allPosts = useMemo(() => {
     return postsQuery.data?.pages.flatMap((page) => page.items) ?? [];
@@ -550,7 +550,8 @@ export function SocialFeedView({
           return next;
         });
       }
-      void client.invalidateQueries({ queryKey: ['social'] });
+      // Feed gợi ý đã cập nhật lượt thích tại chỗ; tải lại sẽ bỏ bài vừa thích và xô các bài bên dưới.
+      void client.invalidateQueries({ queryKey: ['social'], predicate: (q) => q.queryKey[5] !== 'recommended' });
     },
   });
 
