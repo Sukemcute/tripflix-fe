@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   getAvailableStays,
   getFutureDate,
@@ -11,13 +11,14 @@ import {
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ApiErrorNotice } from '@/features/shared/api-state';
 import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
 import { formatPrice } from './trip-card';
 import { StayThumbnail } from './stay-thumbnail';
 import { SoftStarIcon } from './soft-star-icon';
 import { StaySearchIcon } from './stay-search-icon';
 import { Pacifico } from 'next/font/google';
-import { WashiTape } from './torn-paper';
+import { TornPaperDivider, WashiTape } from './torn-paper';
 import styles from './ota-home.module.css';
 
 const handwritingFont = Pacifico({
@@ -25,12 +26,6 @@ const handwritingFont = Pacifico({
   weight: ['400'],
   display: 'swap',
 });
-
-function PreviewSkeleton() {
-  return <div className={styles.previewGrid} role="status" aria-label="Đang tải gợi ý">
-    {[0, 1, 2].map((key) => <div key={key} className={styles.previewSkeleton} aria-hidden="true" />)}
-  </div>;
-}
 
 export function HomeStayPreview() {
   const { isReady } = useApiSession();
@@ -50,10 +45,13 @@ export function HomeStayPreview() {
     queryKey: ['discovery', 'home-stays', filters],
     enabled: isReady,
     queryFn: ({ signal }) => getAvailableStays(filters, { signal, limit: 3 }),
+    // Giữ 3 thẻ cũ trong lúc tải điểm đến mới để dải không sụp chiều cao.
+    placeholderData: keepPreviousData,
   });
   return (
     <section className={styles.stayBand} aria-labelledby="home-stays-title">
       {/* Mép xé giấy đón vào dải vé du lịch Tripflix Ticket */}
+      <TornPaperDivider variant="stay-top" />
       <Image className={styles.stayBackdrop} src="/brand/home-stays-ninh-binh.jpg" alt="" fill sizes="100vw" />
       <div className={`ota-container ${styles.stayContent}`}>
         <div className={styles.stayHeader} data-home-banner>
@@ -67,8 +65,8 @@ export function HomeStayPreview() {
                   <span>TRIPFLIX TICKET</span>
                   <span className={styles.stayTicketStar}>★</span>
                 </div>
-                <h2 id="home-stays-title">{query.data?.items.length ? vi.ota.staysTitle : 'Tìm nơi ở cho chuyến đi sắp tới'}</h2>
-                <p>{query.data?.items.length ? vi.ota.staysIntro : 'Chọn điểm đến và ngày lưu trú để kiểm tra phòng.'}</p>
+                <h2 id="home-stays-title">{vi.ota.staysTitle}</h2>
+                <p>{vi.ota.staysIntro}</p>
                 <div className={styles.stayActionRow}>
                   <Link
                     prefetch={false}
@@ -104,6 +102,11 @@ export function HomeStayPreview() {
                   sizes="(max-width: 640px) 90vw, 38vw"
                 />
               ))}
+              <div className={styles.stayRedStamp} aria-hidden="true">
+                <span className={styles.stampOrg}>★ TRIPFLIX ★</span>
+                <span className={styles.stampAction}>VERIFIED</span>
+                <span className={styles.stampDate}>2026 • PASS</span>
+              </div>
             </div>
           </div>
           <Image
@@ -128,27 +131,19 @@ export function HomeStayPreview() {
             </button>
           ))}
         </fieldset>
-        {query.isPending && !query.data && <PreviewSkeleton />}
-        <div key={destination.id} className={styles.stayGrid} aria-busy={query.isFetching}>
-          {!query.isPending && !query.data?.items.length && [
-            destination,
-            ...OTA_DESTINATIONS.filter((place) => place.id !== destination.id),
-          ].map((place) => (
-            <article className={styles.hotelCard} key={place.id}>
-              <Link prefetch={false} href={getDestinationHref(place)}>
-                <div className={styles.hotelPhoto}>
-                  <div className="trip-card-photo">
-                    <Image src={place.image} alt="" width={640} height={400} />
-                  </div>
-                </div>
-                <div className={styles.hotelInfo}>
-                  <p className={styles.stayLocation}>{place.name}</p>
-                  <h3>Tìm nơi ở tại {place.name}</h3>
-                  <p className={styles.stayPriceRow}><strong>Xem giá theo ngày</strong></p>
-                </div>
-              </Link>
-            </article>
-          ))}
+        <ApiErrorNotice
+          error={query.error}
+          retry={() => {
+            void query.refetch();
+          }}
+        />
+        {query.isPending && <output className={styles.state}>{vi.api.loading}</output>}
+        {query.data?.items.length === 0 && (
+          <p className={styles.state}>
+            {vi.ota.noMatchingStays}. {vi.ota.noStaysHint}
+          </p>
+        )}
+        <div key={destination.id} className={styles.stayGrid} aria-busy={query.isPlaceholderData}>
           {query.data?.items.map((stay) => (
             <article className={styles.hotelCard} key={stay.hotelId}>
               <Link
@@ -181,28 +176,8 @@ export function HomeStayPreview() {
         </div>
       </div>
       {/* Mép xé giấy chuyển tiếp từ dải vé sang vùng phiêu lưu Tripi */}
+      <TornPaperDivider variant="stay-bottom" />
     </section>
-  );
-}
-
-function StoryStats({ likes, comments }: { likes?: number; comments?: number }) {
-  return (
-    <p className={styles.storyStats}>
-      <span className={styles.heartReaction}>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" />
-        </svg>
-        <span className="sr-only">{vi.api.like}: </span>
-        {likes ?? <><span aria-hidden="true">—</span><span className="sr-only">Chưa có số liệu</span></>}
-      </span>
-      <span>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M5 18.5V6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H9.5L5 18.5Z" />
-        </svg>
-        <span className="sr-only">{vi.api.comments}: </span>
-        {comments ?? <><span aria-hidden="true">—</span><span className="sr-only">Chưa có số liệu</span></>}
-      </span>
-    </p>
   );
 }
 
@@ -224,20 +199,15 @@ export function HomeStoryPreview() {
           {vi.ota.allStories}
         </Link>
       </div>
-      {query.isPending && !posts && <PreviewSkeleton />}
+      <ApiErrorNotice
+        error={query.error}
+        retry={() => {
+          void query.refetch();
+        }}
+      />
+      {query.isPending && <output className={styles.state}>{vi.api.loading}</output>}
+      {posts?.length === 0 && <p className={styles.state}>{vi.api.noPosts}</p>}
       <div className={styles.previewGrid}>
-        {!query.isPending && !posts?.length && OTA_DESTINATIONS.map((place) => (
-          <article className={styles.story} key={place.id}>
-            <p className="pin-tag">Gợi ý hành trình</p>
-            <h3>
-              <Link prefetch={false} href={`/inspiration?q=${encodeURIComponent(place.name)}`}>
-                Một hành trình ở {place.name}
-              </Link>
-            </h3>
-            <p className={styles.excerpt}>Khám phá chia sẻ từ cộng đồng Tripflix.</p>
-            <StoryStats />
-          </article>
-        ))}
         {posts?.map((post) => (
           <article className={styles.story} key={post.id}>
             <p className="pin-tag">{post.tripAttachment?.destinationName ?? vi.ota.story}</p>
@@ -245,11 +215,27 @@ export function HomeStoryPreview() {
               <Link prefetch={false} href={`/trips/${encodeURIComponent(post.id)}`}>{post.title}</Link>
             </h3>
             <p className={styles.excerpt}>{post.body}</p>
-            <StoryStats likes={post.reactionTotal} comments={post.commentCount} />
+            <p className={styles.storyStats}>
+              <span className={styles.heartReaction}>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" />
+                </svg>
+                {post.reactionTotal}
+                <span className="sr-only"> {vi.api.like}</span>
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 18.5V6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H9.5L5 18.5Z" />
+                </svg>
+                {post.commentCount}
+                <span className="sr-only"> {vi.api.comments}</span>
+              </span>
+            </p>
           </article>
         ))}
       </div>
       {/* Mép xé giấy chuyển tiếp êm dịu từ câu chuyện du lịch vào chân trang Footer */}
+      <TornPaperDivider variant="stories-bottom" />
     </section>
   );
 }
