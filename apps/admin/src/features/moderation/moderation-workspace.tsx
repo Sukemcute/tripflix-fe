@@ -2,12 +2,12 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { moderationApi } from '@tripflix/api-client';
+import { moderationApi, socialApi } from '@tripflix/api-client';
 import type {
   AdminModerationControllerActionsParams,
   AdminModerationControllerQueueParams,
-  AdminModerationControllerQueueTargetType,
   DecisionDto,
+  ModerationCaseDto,
   ModerationLogDto,
 } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
@@ -18,6 +18,27 @@ const text = vi.moderation;
 const reasonKeys = Object.keys(text.reasons) as (keyof typeof text.reasons)[];
 const date = (value: string) => new Date(value).toLocaleString('vi-VN');
 const refreshInterval = 5_000;
+type QueueView = NonNullable<AdminModerationControllerQueueParams['view']>;
+const queueTabs = { pending: 'Chờ duyệt', reviewed: 'Đã duyệt', hidden: 'Đã ẩn', removed: 'Đã gỡ' };
+const destination: Record<DecisionDto['action'], QueueView> = {
+  hide: 'hidden', restore: 'reviewed', remove: 'removed', dismiss: 'reviewed',
+};
+
+async function applyDecision(item: ModerationCaseDto, body: DecisionDto): Promise<void> {
+  if (item.status === 'pending') {
+    await moderationApi.decide(item.id, body);
+  } else if (item.targetType === 'comment') {
+    await moderationApi.commentAction(item.targetId, body);
+  } else if (body.action !== 'dismiss') {
+    await socialApi.moderatePost(item.targetId, {
+      action: body.action,
+      reason_code: body.reasonCode,
+      reason_detail: body.reasonDetail,
+    });
+  } else {
+    throw new Error('Hồ sơ đã được duyệt');
+  }
+}
 
 function getRiskBadgeClass(score: number) {
   if (score >= 90) return 'mod-risk-badge high-90';
@@ -27,12 +48,12 @@ function getRiskBadgeClass(score: number) {
 }
 
 export function ModerationWorkspace() {
-  const [tab, setTab] = useState<'queue' | 'investigating' | 'resolved' | 'log' | 'posts'>('queue');
+  const [tab, setTab] = useState<QueueView | 'log' | 'posts'>('pending');
 
   // Truy vấn số liệu giám sát thời gian thực
   const pendingStats = useQuery({
     queryKey: ['moderation', 'stats', 'pending'],
-    queryFn: ({ signal }) => moderationApi.queue({ status: 'pending', limit: 100 }, signal),
+    queryFn: ({ signal }) => moderationApi.queue({ view: 'pending', limit: 100 }, signal),
     refetchInterval: refreshInterval,
   });
   const logStats = useQuery({
@@ -93,27 +114,17 @@ export function ModerationWorkspace() {
       {/* Header Hàng tab chính theo Mockup Screen 2 */}
       <div className="mod-header-row">
         <div className="mod-tabs-main">
-          <button
-            type="button"
-            className={`mod-tab-btn ${tab === 'queue' ? 'is-active' : ''}`}
-            onClick={() => setTab('queue')}
-          >
-            Hàng đợi ({pendingTotal})
-          </button>
-          <button
-            type="button"
-            className={`mod-tab-btn ${tab === 'investigating' ? 'is-active' : ''}`}
-            onClick={() => setTab('investigating')}
-          >
-            Đang điều tra (48)
-          </button>
-          <button
-            type="button"
-            className={`mod-tab-btn ${tab === 'resolved' ? 'is-active' : ''}`}
-            onClick={() => setTab('resolved')}
-          >
-            Đã xử lý
-          </button>
+          {(Object.keys(queueTabs) as QueueView[]).map((view) => (
+            <button
+              key={view}
+              type="button"
+              aria-pressed={tab === view}
+              className={`mod-tab-btn ${tab === view ? 'is-active' : ''}`}
+              onClick={() => setTab(view)}
+            >
+              {queueTabs[view]}{view === 'pending' && ` (${pendingTotal})`}
+            </button>
+          ))}
           <button
             type="button"
             className={`mod-tab-btn ${tab === 'log' ? 'is-active' : ''}`}
@@ -136,49 +147,88 @@ export function ModerationWorkspace() {
       ) : tab === 'posts' ? (
         <PostModeration />
       ) : (
-        <ModerationQueue statusTab={tab === 'resolved' ? 'resolved' : 'pending'} />
+        <ModerationQueue key={tab} view={tab} onDecision={(action) =>
+          setTab((current) => current === tab ? destination[action] : current)
+        } />
       )}
     </div>
   );
 }
 
-function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
-  const [filters, setFilters] = useState<AdminModerationControllerQueueParams>({ status: statusTab });
-  const [subCategory, setSubCategory] = useState<'all' | 'video' | 'vlog' | 'post' | 'comment' | 'report'>('all');
+function ModerationQueue({ view, onDecision }: { view: QueueView; onDecision: (action: DecisionDto['action']) => void }) {
+  const client = useQueryClient();
+  const [subCategory, setSubCategory] = useState<'all' | 'post' | 'comment' | 'report'>('all');
+  const filters: AdminModerationControllerQueueParams = {
+    view,
+    targetType: subCategory === 'comment' || subCategory === 'post' ? subCategory : undefined,
+    source: subCategory === 'report' ? 'report' : undefined,
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeDossierId, setActiveDossierId] = useState<string | null>(null);
+  const [bulkReason, setBulkReason] = useState<DecisionDto['reasonCode'] | ''>('');
+  const [bulkResult, setBulkResult] = useState<{ succeeded: number; failed: { id: string; error: unknown }[] }>();
 
   const query = useInfiniteQuery({
-    queryKey: ['moderation', 'queue', statusTab, filters],
+    queryKey: ['moderation', 'queue', filters],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) => moderationApi.queue({ ...filters, cursor: pageParam }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     refetchInterval: refreshInterval,
   });
 
-  const rawItems = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const rawItems = [...new Map(query.data?.pages.flatMap((page) =>
+    page.items.map((item) => [item.id, item] as const),
+  )).values()];
 
   // Lọc theo subcategory và ô tìm kiếm
   const filteredItems = rawItems.filter((item) => {
-    if (subCategory === 'video' && item.targetType !== 'post') return false;
-    if (subCategory === 'comment' && item.targetType !== 'comment') return false;
-    if (subCategory === 'post' && item.targetType !== 'post') return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const matchId = item.id.toLowerCase().includes(q) || item.targetId.toLowerCase().includes(q);
       const matchAuthor = (item.authorId ?? '').toLowerCase().includes(q);
-      if (!matchId && !matchAuthor) return false;
+      if (!matchId && !matchAuthor && !item.targetPreview?.toLowerCase().includes(q)) return false;
     }
     return true;
   });
+  const selectedItems = filteredItems.filter((item) => selectedIds.includes(item.id));
+  const bulk = useMutation({
+    mutationFn: async ({ items, body }: { items: ModerationCaseDto[]; body: DecisionDto }) => {
+      const failed: { id: string; error: unknown }[] = [];
+      for (const item of items) {
+        try {
+          await applyDecision(item, body);
+        } catch (error) {
+          failed.push({ id: item.id, error });
+        }
+      }
+      return { succeeded: items.length - failed.length, failed };
+    },
+    onSuccess: async (result, { body }) => {
+      setBulkResult(result);
+      setSelectedIds(result.failed.map(({ id }) => id));
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['moderation'] }),
+        client.invalidateQueries({ queryKey: ['social'] }),
+      ]);
+      if (!result.failed.length) onDecision(body.action);
+    },
+  });
+  const runBulk = (action: DecisionDto['action']) => {
+    if (!bulkReason || !selectedItems.length || bulk.isPending) return;
+    if (action === 'remove' && !window.confirm(
+      `Gỡ ${selectedItems.length} mục khỏi giao diện người dùng? Gỡ bình luận gốc cũng gỡ các phản hồi của nó.`,
+    )) return;
+    setBulkResult(undefined);
+    bulk.mutate({ items: selectedItems, body: { action, reasonCode: bulkReason } });
+  };
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === filteredItems.length) {
+    if (selectedItems.length === filteredItems.length) {
       setSelectedIds([]);
     } else {
       setSelectedIds(filteredItems.map((i) => i.id));
@@ -189,67 +239,18 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
     <>
       {/* Thanh Bộ lọc & Tìm kiếm (Filter Bar) */}
       <div className="mod-filter-bar">
-        <div className="mod-filter-group">
-          <span className="mod-filter-label">Loại nội dung</span>
-          <select
-            className="mod-filter-select"
-            value={filters.targetType ?? ''}
-            onChange={(e) =>
-              setFilters((f) => ({
-                ...f,
-                targetType: (e.target.value as AdminModerationControllerQueueTargetType) || undefined,
-              }))
-            }
-          >
-            <option value="">Tất cả</option>
-            <option value="post">Reel / Video / Bài viết</option>
-            <option value="comment">Bình luận</option>
-          </select>
-        </div>
-
-        <div className="mod-filter-group">
-          <span className="mod-filter-label">Mức độ rủi ro</span>
-          <select
-            className="mod-filter-select"
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === 'high') setFilters((f) => ({ ...f, reasonCode: undefined }));
-            }}
-          >
-            <option value="">Tất cả</option>
-            <option value="high">Rủi ro cao (≥80)</option>
-            <option value="med">Rủi ro trung bình (50-79)</option>
-            <option value="low">Rủi ro thấp (&lt;50)</option>
-          </select>
-        </div>
-
-        <div className="mod-filter-group">
-          <span className="mod-filter-label">Số báo cáo</span>
-          <select className="mod-filter-select">
-            <option value="">Tất cả</option>
-            <option value="10">&gt; 10 báo cáo</option>
-            <option value="5">&gt; 5 báo cáo</option>
-            <option value="1">&gt; 0 báo cáo</option>
-          </select>
-        </div>
-
-        <div className="mod-filter-group">
-          <span className="mod-filter-label">Khoảng thời gian</span>
-          <select className="mod-filter-select">
-            <option value="7">7 ngày qua</option>
-            <option value="1">Hôm nay</option>
-            <option value="30">30 ngày qua</option>
-          </select>
-        </div>
-
         <div className="mod-filter-group" style={{ flex: 1, minWidth: 200 }}>
           <span className="mod-filter-label">Tìm kiếm</span>
           <input
             type="text"
             className="mod-search-input"
-            placeholder="🔍 Tìm theo tiêu đề, người đăng, ID..."
+            placeholder="Tìm trên các hồ sơ đã tải"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            disabled={bulk.isPending}
+            onChange={(e) => {
+              setSelectedIds([]);
+              setSearchQuery(e.target.value);
+            }}
           />
         </div>
       </div>
@@ -258,54 +259,22 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
       <div className="mod-split-layout">
         {/* Subnav Trái */}
         <aside className="mod-subnav-card" aria-label="Phân loại nội dung kiểm duyệt">
-          <button
-            type="button"
-            className={`mod-subnav-btn ${subCategory === 'all' ? 'is-active' : ''}`}
-            onClick={() => setSubCategory('all')}
-          >
-            <span>Tất cả nội dung</span>
-            <span className="mod-subnav-count">312</span>
-          </button>
-          <button
-            type="button"
-            className={`mod-subnav-btn ${subCategory === 'video' ? 'is-active' : ''}`}
-            onClick={() => setSubCategory('video')}
-          >
-            <span>Reel / Video</span>
-            <span className="mod-subnav-count">178</span>
-          </button>
-          <button
-            type="button"
-            className={`mod-subnav-btn ${subCategory === 'vlog' ? 'is-active' : ''}`}
-            onClick={() => setSubCategory('vlog')}
-          >
-            <span>Vlog</span>
-            <span className="mod-subnav-count">46</span>
-          </button>
-          <button
-            type="button"
-            className={`mod-subnav-btn ${subCategory === 'post' ? 'is-active' : ''}`}
-            onClick={() => setSubCategory('post')}
-          >
-            <span>Bài viết</span>
-            <span className="mod-subnav-count">48</span>
-          </button>
-          <button
-            type="button"
-            className={`mod-subnav-btn ${subCategory === 'comment' ? 'is-active' : ''}`}
-            onClick={() => setSubCategory('comment')}
-          >
-            <span>Bình luận</span>
-            <span className="mod-subnav-count">24</span>
-          </button>
-          <button
-            type="button"
-            className={`mod-subnav-btn ${subCategory === 'report' ? 'is-active' : ''}`}
-            onClick={() => setSubCategory('report')}
-          >
-            <span>Báo cáo vi phạm</span>
-            <span className="mod-subnav-count">37</span>
-          </button>
+          {([
+            ['all', 'Tất cả nội dung'],
+            ['post', 'Bài viết, vlog và reel'],
+            ['comment', 'Bình luận'],
+            ['report', 'Báo cáo vi phạm'],
+          ] as const).map(([key, label]) => (
+            <button key={key} type="button" disabled={bulk.isPending}
+              aria-pressed={subCategory === key}
+              className={`mod-subnav-btn ${subCategory === key ? 'is-active' : ''}`}
+              onClick={() => {
+                setSelectedIds([]);
+                setSubCategory(key);
+              }}>
+              <span>{label}</span>
+            </button>
+          ))}
         </aside>
 
         {/* Khung Bảng Danh Sách */}
@@ -314,20 +283,31 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
           <div className="mod-bulk-toolbar">
             <div className="mod-bulk-left">
               <span style={{ fontWeight: 600, color: '#0F172A' }}>
-                Đã chọn {selectedIds.length} nội dung
+                Đã chọn {selectedItems.length} nội dung
               </span>
-              <button type="button" className="mod-bulk-btn hide" disabled={selectedIds.length === 0}>
-                Ẩn (Tạm thời)
-              </button>
-              <button type="button" className="mod-bulk-btn restore" disabled={selectedIds.length === 0}>
-                Khôi phục
-              </button>
-              <button type="button" className="mod-bulk-btn delete" disabled={selectedIds.length === 0}>
-                Xóa
-              </button>
-              <button type="button" className="mod-bulk-btn reflag" disabled={selectedIds.length === 0}>
-                Gắn cờ lại
-              </button>
+              {view !== 'removed' && (
+                <>
+                  <select aria-label="Lý do xử lý hàng loạt" className="mod-filter-select" value={bulkReason}
+                    disabled={bulk.isPending}
+                    onChange={(e) => setBulkReason(e.target.value as typeof bulkReason)}>
+                    <option value="">Chọn lý do</option>
+                    {reasonKeys.map((key) => <option key={key} value={key}>{text.reasons[key]}</option>)}
+                  </select>
+                  {view !== 'hidden' && <button type="button" className="mod-bulk-btn hide"
+                    disabled={!selectedItems.length || !bulkReason || bulk.isPending} onClick={() => runBulk('hide')}>
+                    Ẩn (tạm thời)
+                  </button>}
+                  {view === 'hidden' && <button type="button" className="mod-bulk-btn restore"
+                    disabled={!selectedItems.length || !bulkReason || bulk.isPending} onClick={() => runBulk('restore')}>
+                    Khôi phục
+                  </button>}
+                  <button type="button" className="mod-bulk-btn delete"
+                    disabled={!selectedItems.length || !bulkReason || bulk.isPending} onClick={() => runBulk('remove')}>
+                    Gỡ
+                  </button>
+                </>
+              )}
+              {bulk.isPending && <output>Đang xử lý các mục đã chọn…</output>}
             </div>
             <div>
               <span style={{ fontSize: 11, color: '#64748B' }}>
@@ -335,6 +315,17 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
               </span>
             </div>
           </div>
+          {bulkResult && (
+            <div style={{ padding: 12 }}>
+              <output>Đã xử lý {bulkResult.succeeded} mục. Có {bulkResult.failed.length} mục chưa xử lý được.</output>
+              {bulkResult.failed.map(({ id, error }) => (
+                <div key={id}>
+                  <button type="button" onClick={() => setActiveDossierId(id)}>Hồ sơ {id.slice(0, 8)}</button>
+                  <AdminApiError error={error} />
+                </div>
+              ))}
+            </div>
+          )}
 
           <AdminApiError
             error={query.error}
@@ -365,7 +356,8 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
                     <th style={{ width: 36 }}>
                       <input
                         type="checkbox"
-                        checked={selectedIds.length === filteredItems.length && filteredItems.length > 0}
+                        checked={selectedItems.length === filteredItems.length && filteredItems.length > 0}
+                        disabled={bulk.isPending || view === 'removed'}
                         onChange={toggleSelectAll}
                         aria-label="Chọn tất cả"
                       />
@@ -388,6 +380,7 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
                           <input
                             type="checkbox"
                             checked={isSelected}
+                            disabled={bulk.isPending || view === 'removed'}
                             onChange={() => toggleSelect(item.id)}
                             aria-label={`Chọn hồ sơ ${item.id}`}
                           />
@@ -422,6 +415,7 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
                           <button
                             type="button"
                             className="mod-btn-detail"
+                            disabled={bulk.isPending}
                             onClick={() => setActiveDossierId(item.id)}
                           >
                             Chi tiết
@@ -437,17 +431,13 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
 
           {/* Pagination bar */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderTop: '1px solid #F1F5F9', fontSize: 12, color: '#64748B' }}>
-            <span>Hiển thị 1-{filteredItems.length} / 312</span>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <button type="button" className="mod-mini-tab" disabled>‹</button>
-              <button type="button" className="mod-mini-tab is-active">1</button>
-              <button type="button" className="mod-mini-tab">2</button>
-              <button type="button" className="mod-mini-tab">3</button>
-              <span>...</span>
-              <button type="button" className="mod-mini-tab">32</button>
-              <button type="button" className="mod-mini-tab">›</button>
-            </div>
-            <span>10 / trang</span>
+            <span>Hiển thị {filteredItems.length} / {query.data?.pages[0]?.total ?? 0} hồ sơ</span>
+            {query.hasNextPage && (
+              <button type="button" className="mod-mini-tab" disabled={query.isFetching || bulk.isPending}
+                onClick={() => void query.fetchNextPage()}>
+                Tải thêm
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -457,6 +447,7 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
         <CaseDetailModal
           id={activeDossierId}
           onClose={() => setActiveDossierId(null)}
+          onDecision={onDecision}
         />
       )}
     </>
@@ -464,7 +455,7 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
 }
 
 /** Modal Chi Tiết Hồ Sơ Kiểm Duyệt (Screen 3 trong Image 2) */
-function CaseDetailModal({ id, onClose }: { id: string; onClose: () => void }) {
+function CaseDetailModal({ id, onClose, onDecision }: { id: string; onClose: () => void; onDecision: (action: DecisionDto['action']) => void }) {
   const client = useQueryClient();
   const [modalTab, setModalTab] = useState<'info' | 'reports' | 'history'>('info');
   const [reasonCode, setReasonCode] = useState<DecisionDto['reasonCode'] | ''>('SPAM_OR_COMMERCIAL');
@@ -477,18 +468,16 @@ function CaseDetailModal({ id, onClose }: { id: string; onClose: () => void }) {
 
   const decision = useMutation({
     mutationFn: (action: DecisionDto['action']) => {
-      if (!reasonCode) throw new Error(text.chooseReason);
-      const body = { action, reasonCode, reasonDetail: notes.trim() || undefined };
-      return detail.data?.status === 'resolved' && detail.data.targetType === 'comment'
-        ? moderationApi.commentAction(detail.data.targetId, body)
-        : moderationApi.decide(id, body);
+      if (!reasonCode || !detail.data) throw new Error(text.chooseReason);
+      return applyDecision(detail.data, { action, reasonCode, reasonDetail: notes.trim() || undefined });
     },
-    onSuccess: async () => {
+    onSuccess: async (_, action) => {
       await Promise.all([
         client.invalidateQueries({ queryKey: ['moderation'] }),
         client.invalidateQueries({ queryKey: ['social'] }),
       ]);
       onClose();
+      if (action !== 'dismiss' || detail.data?.target?.status !== 'hidden') onDecision(action);
     },
   });
 
@@ -674,38 +663,40 @@ function CaseDetailModal({ id, onClose }: { id: string; onClose: () => void }) {
           <button type="button" className="btn-decision close" onClick={onClose}>
             Đóng
           </button>
-          <button
+          {item?.status === 'pending' && <button
             type="button"
             className="btn-decision investigate"
-            disabled={decision.isPending}
+            disabled={decision.isPending || !reasonCode}
             onClick={() => decision.mutate('dismiss')}
           >
-            Đang điều tra
-          </button>
-          <button
+            Đóng hồ sơ
+          </button>}
+          {item?.target && ['visible', 'published'].includes(item.target.status) && <button
             type="button"
             className="btn-decision hide"
             disabled={decision.isPending || !reasonCode}
             onClick={() => decision.mutate('hide')}
           >
             Ẩn (Tạm thời)
-          </button>
-          <button
+          </button>}
+          {item?.target?.status === 'hidden' && <button
             type="button"
             className="btn-decision restore"
             disabled={decision.isPending || !reasonCode}
             onClick={() => decision.mutate('restore')}
           >
             Khôi phục
-          </button>
-          <button
+          </button>}
+          {item?.target && ['visible', 'published', 'hidden'].includes(item.target.status) && <button
             type="button"
             className="btn-decision remove"
             disabled={decision.isPending || !reasonCode}
-            onClick={() => decision.mutate('remove')}
+            onClick={() => {
+              if (window.confirm('Gỡ nội dung này khỏi giao diện người dùng?')) decision.mutate('remove');
+            }}
           >
-            Xóa
-          </button>
+            Gỡ
+          </button>}
         </div>
       </dialog>
     </div>

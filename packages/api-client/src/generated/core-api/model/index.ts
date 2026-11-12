@@ -15,6 +15,7 @@ export * from './adminModerationControllerQueueReasonCode';
 export * from './adminModerationControllerQueueSource';
 export * from './adminModerationControllerQueueStatus';
 export * from './adminModerationControllerQueueTargetType';
+export * from './adminModerationControllerQueueView';
 export * from './adminPostsControllerListAdminPostsParams';
 export * from './adminPostsControllerListAdminPostsStatus';
 export * from './adminRoomDayDto';
