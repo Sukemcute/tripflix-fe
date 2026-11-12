@@ -46,6 +46,7 @@ import {
   type ReelPost,
 } from './reel-post';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
+import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
 import styles from './live-posts.module.css';
 
@@ -1953,6 +1954,7 @@ export function InspirationImmersiveViewer({
                 loginHref={loginReturnHref}
                 scrollContainerRef={rightScrollRef}
                 composerInputRef={commentInputRef}
+                showSummary
               />
             </aside>
           )}
@@ -2014,6 +2016,7 @@ export function RightPanelCommentsSynchronized({
   loginHref,
   scrollContainerRef,
   composerInputRef,
+  showSummary = false,
 }: {
   post: {
     id: string;
@@ -2024,6 +2027,8 @@ export function RightPanelCommentsSynchronized({
   loginHref: string;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   composerInputRef: React.RefObject<HTMLInputElement | null>;
+  /** Tóm tắt AI ở đầu bình luận: chỉ màn Reels bật (giống mobile); tab Bài viết dùng chung panel nhưng không bật. */
+  showSummary?: boolean;
 }) {
   const { user, isReady, session } = useApiSession();
   const client = useQueryClient();
@@ -2114,6 +2119,7 @@ export function RightPanelCommentsSynchronized({
         ref={scrollContainerRef}
         className={styles.rightScrollArea}
       >
+        {showSummary && <ReelCommentSummary key={post.id} postId={post.id} />}
         <ApiErrorNotice error={addMutation.error} />
         <ApiErrorNotice
           error={query.error}
