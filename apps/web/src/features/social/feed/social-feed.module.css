@@ -49,7 +49,8 @@
 }
 
 /* --------------------------------------------------------------------------
-   Instagram-style Left Navigation Dock (Fixed to Left Edge - 64px)
+   Dock điều hướng bên trái (64px): mục đang chọn là viên coral nhạt + icon coral-ink
+   như menu OTA; nút Tạo bài màu trơn, không gradient, không bóng.
    -------------------------------------------------------------------------- */
 .instagramDock {
   position: fixed;
@@ -57,22 +58,21 @@
   left: 0;
   bottom: 0;
   width: 64px;
-  background: #FFFFFF;
-  border-right: 1px solid #E2E8F0;
+  background: var(--color-background);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 16px 0;
   z-index: 55;
-  box-shadow: 1px 0 10px rgba(15, 23, 42, 0.03);
 }
 
 .dockCenterGroup {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -83,56 +83,49 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: none;
-  background: transparent;
-  color: #64748B;
+  background: var(--color-transparent);
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: all 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: background 180ms ease, color 180ms ease;
 }
 
 .dockItemBtn:hover {
-  background: #F1F5F9;
-  color: #141B3D;
-  transform: scale(1.04);
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
 }
 
-.dockItemBtnActive {
-  background: rgba(255, 106, 0, 0.1) !important;
-  color: #FF6A00 !important;
+.dockItemBtn:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
 }
 
-.dockItemBtnActive::after {
-  content: '';
-  position: absolute;
-  right: -10px;
-  width: 3px;
-  height: 20px;
-  border-radius: 3px;
-  background: #FF6A00;
+.dockItemBtnActive,
+.dockItemBtnActive:hover {
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
 }
 
 .dockActiveDot {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 9px;
+  right: 9px;
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #FF6A00;
-  box-shadow: 0 0 0 2px #FFFFFF;
+  background: var(--color-coral);
+  box-shadow: 0 0 0 2px var(--color-background);
 }
 
 .dockCreateBtn {
-  background: #FF6A00 !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 2px 10px rgba(255, 106, 0, 0.35);
+  background: var(--color-teal-ink);
+  color: var(--color-background);
 }
 
 .dockCreateBtn:hover {
-  background: #E85F00 !important;
-  color: #FFFFFF !important;
-  transform: scale(1.08);
+  background: color-mix(in srgb, var(--color-teal-ink) 88%, var(--color-ink));
+  color: var(--color-background);
 }
 
 /* Tooltip on hover */
@@ -141,18 +134,17 @@
   position: absolute;
   left: 56px;
   padding: 6px 12px;
-  background: #141B3D;
-  color: #FFFFFF;
+  background: var(--color-ink);
+  color: var(--color-background);
   font-size: 12px;
-  font-weight: 500;
-  border-radius: 8px;
+  font-weight: 600;
+  border-radius: 999px;
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
   transform: translateX(-4px);
   transition: opacity 160ms ease, transform 160ms ease;
   z-index: 60;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
 }
 
 .dockItemBtn:hover[data-tooltip]::before {
@@ -161,7 +153,8 @@
 }
 
 /* --------------------------------------------------------------------------
-   Search Flyout Drawer (Slides out from Instagram Dock)
+   Drawer tìm kiếm kiểu TikTok: ô tìm dạng viên trơn, danh sách "Tìm gần đây"
+   và "Có thể bạn thích" dạng dòng, không khối màu, không đường phân cách.
    -------------------------------------------------------------------------- */
 .dockSearchDrawer {
   position: fixed;
@@ -169,9 +162,8 @@
   top: 80px;
   bottom: 0;
   width: 320px;
-  background: #FFFFFF;
-  border-right: 1px solid #E2E8F0;
-  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.08);
+  background: var(--color-background);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   z-index: 52;
@@ -193,15 +185,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid #F1F5F9;
+  padding: 20px 16px 12px 20px;
 }
 
 .searchDrawerTitle {
-  font-size: 18px;
-  font-weight: 700;
-  color: #141B3D;
   margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-ink);
   letter-spacing: -0.02em;
 }
 
@@ -209,148 +200,231 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: #94A3B8;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-ink);
   cursor: pointer;
-  transition: all 160ms ease;
+  transition: background 160ms ease;
 }
 
 .searchDrawerCloseBtn:hover {
-  background: #F1F5F9;
-  color: #141B3D;
+  background: var(--color-surface-muted);
 }
 
 .searchDrawerBody {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 20px;
+  padding: 4px 16px 24px 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
 }
 
 .searchDrawerInputWrap {
-  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  color: #64748B;
-  transition: all 160ms ease;
+  gap: 8px;
+  padding: 0 10px 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  transition: border-color 180ms ease, background 180ms ease;
 }
 
 .searchDrawerInputWrap:focus-within {
-  background: #FFFFFF;
-  border-color: #FF6A00;
-  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.12);
-  color: #141B3D;
+  border-color: var(--color-text-subtle);
+  background: var(--color-background);
 }
 
 .searchDrawerInput {
   flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 0;
   border: none;
-  background: transparent;
-  color: #141B3D;
-  font-size: 14px;
+  background: var(--color-transparent);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 15px;
   outline: none;
+  caret-color: var(--color-coral);
+}
+
+/* Viên ngoài đã đổi viền khi focus và có nút xoá riêng: tắt viền focus chung (globals.css) và nút xoá có sẵn của input search. */
+.searchDrawerInput:focus,
+.searchDrawerInput:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.searchDrawerInput::-webkit-search-cancel-button {
+  appearance: none;
 }
 
 .searchDrawerInput::placeholder {
-  color: #94A3B8;
+  color: var(--color-text-subtle);
 }
 
 .searchClearBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
   border-radius: 50%;
   border: none;
-  background: #E2E8F0;
-  color: #64748B;
+  background: var(--color-text-subtle);
+  color: var(--color-background);
   cursor: pointer;
-  transition: all 140ms ease;
 }
 
 .searchClearBtn:hover {
-  background: #CBD5E1;
-  color: #141B3D;
+  background: var(--color-text-muted);
 }
 
-.searchDrawerTagsSection {
+.searchDrawerError {
+  margin: -14px 16px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-danger);
+}
+
+.searchDrawerSection {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 2px;
 }
 
-.searchDrawerTagsLabel {
-  font-size: 12px;
+.searchDrawerSectionTitle {
+  margin-bottom: 4px;
+  font-size: 14px;
   font-weight: 600;
-  color: #94A3B8;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
 }
 
-.searchDrawerTagsList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.searchTagChip {
-  padding: 6px 12px;
-  border-radius: 20px;
-  border: 1px solid #E2E8F0;
-  background: #F8FAFC;
-  color: #475569;
-  font-size: 12.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.searchTagChip:hover {
-  border-color: #FF6A00;
-  color: #FF6A00;
-  background: #FFFBF8;
-}
-
-.searchTagChipActive {
-  background: #FF6A00 !important;
-  color: #FFFFFF !important;
-  border-color: #FF6A00 !important;
-}
-
-.searchActiveNotice {
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: rgba(255, 106, 0, 0.08);
-  border: 1px solid rgba(255, 106, 0, 0.2);
+.searchDrawerList {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 12.5px;
-  color: #141B3D;
-}
-
-.searchActiveResetBtn {
-  align-self: flex-start;
-  border: none;
-  background: transparent;
-  color: #FF6A00;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
+  margin: 0 -8px;
   padding: 0;
-  text-decoration: underline;
+  list-style: none;
+}
+
+.searchDrawerListItem {
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+  transition: background 140ms ease;
+}
+
+.searchDrawerListItem:hover {
+  background: var(--color-surface);
+}
+
+.searchDrawerItemBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  padding: 9px 8px;
+  border: none;
+  background: var(--color-transparent);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.searchDrawerItemIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  color: var(--color-text-muted);
+}
+
+.searchDrawerItemIconHot {
+  color: var(--color-coral);
+}
+
+.searchDrawerItemDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-text-subtle);
+}
+
+.searchDrawerItemText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.searchRecentRemove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-transparent);
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  transition: color 140ms ease, background 140ms ease;
+}
+
+.searchRecentRemove:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+}
+
+.searchDrawerMoreBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  align-self: center;
+  margin-top: 4px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-transparent);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.searchDrawerMoreBtn:hover {
+  color: var(--color-ink);
+}
+
+.searchDrawerMoreBtn > span {
+  display: inline-flex;
+  transition: transform 180ms ease;
+}
+
+.searchDrawerMoreIconOpen {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dockSearchDrawer {
+    animation: none;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -1192,6 +1266,49 @@
   display: none;
   width: 0;
   height: 0;
+}
+
+/* Thanh quay lại grid kết quả, thay chỗ ô đăng bài khi đang xem bài mở từ tìm kiếm. */
+.searchBackBar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 4px;
+  background: var(--color-surface);
+}
+
+.searchBackButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 6px 12px 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.searchBackButton:hover {
+  border-color: var(--color-text-subtle);
+}
+
+.searchBackKeyword {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--color-text-muted);
 }
 
 /* Quick Post Composer Bar */
@@ -2166,7 +2283,7 @@
     justify-content: space-around;
   }
 
-  .dockItemBtnActive::after {
+  .dockItemBtn[data-tooltip]::before {
     display: none;
   }
 

@@ -1,12 +1,25 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useApiSession } from '@tripflix/api-client';
+import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
+import { validateInspirationKeyword } from '@/features/discovery/inspiration-keyword';
 import { InstagramLeftDock } from './feed/instagram-left-dock';
 import type { FeedNavFilter } from './feed/floating-nav-rail';
 import { SocialFeedView } from './feed/social-feed-view';
+import { SearchResultsGrid } from './search-results-grid';
+import { pushRecentSearch, readRecentSearches, writeRecentSearches } from './recent-searches';
+import {
+  buildInspirationHref,
+  parseSearchResultType,
+  SEARCH_OPEN_PARAM,
+  SEARCH_QUERY_PARAM,
+  SEARCH_TYPE_PARAM,
+  type InspirationUrlChanges,
+  type SearchResultType,
+} from './search-url';
 import { useIsWideScreen } from './use-wide-screen';
 import styles from './feed/social-feed.module.css';
 
@@ -20,11 +33,7 @@ const ComposerModal = dynamic(
   { ssr: false },
 );
 
-export interface InspirationViewProps {
-  initialKeyword?: string;
-}
-
-export function InspirationView({ initialKeyword = '' }: InspirationViewProps) {
+export function InspirationView() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -33,7 +42,18 @@ export function InspirationView({ initialKeyword = '' }: InspirationViewProps) {
   // Tinh toan che do xem truc tiep tu URL query param (?view=posts hoac ?view=reels)
   const viewParam = searchParams.get('view');
   const activeView: 'posts' | 'reels' = viewParam === 'reels' ? 'reels' : 'posts';
-  const isReels = activeView === 'reels';
+
+  // Tìm kiếm theo URL (?q= từ khoá đã chốt, ?open= bài mở từ grid) để F5 và nút Back giữ đúng chỗ.
+  const rawKeyword = searchParams.get(SEARCH_QUERY_PARAM) ?? '';
+  const searchKeyword = rawKeyword ? validateInspirationKeyword(rawKeyword).keyword : '';
+  const isSearching = searchKeyword.length > 0;
+  const openPostId = isSearching ? searchParams.get(SEARCH_OPEN_PARAM) : null;
+  const searchResultType = parseSearchResultType(searchParams.get(SEARCH_TYPE_PARAM));
+  const isSearchGrid = isSearching && !openPostId;
+  // Đang tìm thì Reels tạm ẩn: kết quả hiện ở grid, bài viết mở ở tab Bài viết.
+  const isReels = activeView === 'reels' && !isSearching;
+  const isPostsVisible = !isReels && !isSearchGrid;
+  const hasOpenedFromGridRef = useRef(false);
 
   // Cac trang thai chung dieu phoi qua Instagram Left Dock
   // Mặc định: tab Bài viết mở sẵn Lịch trình trên màn rộng (thông tin chính đi kèm bài đọc); Reels để đóng
@@ -45,22 +65,67 @@ export function InspirationView({ initialKeyword = '' }: InspirationViewProps) {
   const [filterMode, setFilterMode] = useState<FeedNavFilter>('all');
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerPostType, setComposerPostType] = useState<'video' | 'vlog'>('vlog');
-  const [searchKeyword, setSearchKeyword] = useState<string>(initialKeyword);
 
-  const handleSelectView = useCallback(
-    (nextView: 'posts' | 'reels') => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (nextView === 'reels') {
-        params.set('view', 'reels');
-      } else {
-        params.delete('view');
-      }
-      const newQuery = params.toString();
-      const newUrl = newQuery ? `${pathname}?${newQuery}` : pathname;
-      router.replace(newUrl, { scroll: false });
+  const navigate = useCallback(
+    (changes: InspirationUrlChanges, mode: 'push' | 'replace') => {
+      const href = buildInspirationHref(pathname, searchParams, changes);
+      if (mode === 'push') router.push(href, { scroll: false });
+      else router.replace(href, { scroll: false });
     },
     [router, pathname, searchParams]
   );
+
+  // Chọn tab trên dock thì thoát tìm kiếm.
+  const handleSelectView = useCallback(
+    (nextView: 'posts' | 'reels') => {
+      navigate({ view: nextView, keyword: null }, isSearching ? 'push' : 'replace');
+    },
+    [navigate, isSearching]
+  );
+
+  const handleSelectFilter = useCallback(
+    (nextFilter: FeedNavFilter) => {
+      setFilterMode(nextFilter);
+      // Ở Reels thì handleSelectView đã thoát tìm kiếm; replace để hai lần gọi liền nhau chỉ thêm một mục lịch sử.
+      if (isSearching && activeView === 'posts') navigate({ keyword: null }, 'replace');
+    },
+    [navigate, isSearching, activeView]
+  );
+
+  const handleSubmitSearch = useCallback(
+    (keyword: string) => {
+      setFilterMode('all');
+      hasOpenedFromGridRef.current = false;
+      // Mọi đường tìm (Enter, chip, hashtag trên Reels) đều đi qua đây nên ghi "Tìm gần đây" một chỗ.
+      if (keyword.trim()) writeRecentSearches(pushRecentSearch(readRecentSearches(), keyword));
+      navigate({ keyword }, 'push');
+    },
+    [navigate]
+  );
+
+  // Đổi tab kết quả: replace để Back không phải đi qua từng tab đã bấm.
+  const handleChangeResultType = useCallback(
+    (resultType: SearchResultType) => navigate({ resultType }, 'replace'),
+    [navigate]
+  );
+
+  const handleOpenResult = useCallback(
+    (post: SocialPostDto) => {
+      hasOpenedFromGridRef.current = true;
+      navigate({ openPostId: post.id }, 'push');
+    },
+    [navigate]
+  );
+
+  // Mở từ grid thì Back của trình duyệt đưa về đúng grid (giữ vị trí cuộn); vào thẳng link thì thay URL.
+  const handleBackToResults = useCallback(() => {
+    if (hasOpenedFromGridRef.current) {
+      hasOpenedFromGridRef.current = false;
+      router.back();
+      return;
+    }
+    navigate({ openPostId: null }, 'replace');
+  }, [navigate, router]);
 
   const handleOpenComposer = useCallback(
     (type?: 'video' | 'vlog') => {
@@ -77,9 +142,9 @@ export function InspirationView({ initialKeyword = '' }: InspirationViewProps) {
         activeView={activeView}
         onSelectView={handleSelectView}
         searchKeyword={searchKeyword}
-        onSearchKeywordChange={setSearchKeyword}
+        onSearchSubmit={handleSubmitSearch}
         activeFilter={filterMode}
-        onSelectFilter={setFilterMode}
+        onSelectFilter={handleSelectFilter}
         isItineraryOpen={isItineraryOpen}
         onToggleItinerary={() => setIsItineraryOpen(!isItineraryOpen)}
         onOpenComposer={handleOpenComposer}
@@ -87,13 +152,14 @@ export function InspirationView({ initialKeyword = '' }: InspirationViewProps) {
 
       {/* 2. Vung noi dung chinh: Giu Feed mounted de duy tri vi tri cuon khi chuyen doi che do */}
       <div
-        className={`${styles.feedViewSlot} ${activeView === 'posts' ? styles.feedViewSlotActive : ''}`}
-        style={{ display: activeView === 'posts' ? 'flex' : 'none' }}
+        className={`${styles.feedViewSlot} ${isPostsVisible ? styles.feedViewSlotActive : ''}`}
+        style={{ display: isPostsVisible ? 'flex' : 'none' }}
       >
         <SocialFeedView
-          isVisible={activeView === 'posts'}
-          initialKeyword={initialKeyword}
+          isVisible={isPostsVisible}
           searchKeyword={searchKeyword}
+          focusPostId={openPostId}
+          onBackToResults={isSearching ? handleBackToResults : undefined}
           isItineraryOpen={isItineraryOpen}
           onOpenItinerary={() => setIsItineraryOpen(true)}
           onCloseItinerary={() => setIsItineraryOpen(false)}
@@ -104,11 +170,25 @@ export function InspirationView({ initialKeyword = '' }: InspirationViewProps) {
         />
       </div>
 
-      {activeView === 'reels' && (
+      {/* Grid giữ mounted khi mở bài để quay lại vẫn đúng vị trí cuộn. */}
+      {isSearching && (
+        <div
+          className={`${styles.feedViewSlot} ${isSearchGrid ? styles.feedViewSlotActive : ''}`}
+          style={{ display: isSearchGrid ? 'flex' : 'none' }}
+        >
+          <SearchResultsGrid
+            keyword={searchKeyword}
+            resultType={searchResultType}
+            onChangeResultType={handleChangeResultType}
+            onOpenPost={handleOpenResult}
+            onClearSearch={() => handleSubmitSearch('')}
+          />
+        </div>
+      )}
+
+      {isReels && (
         <InspirationImmersiveViewer
-          initialKeyword={initialKeyword}
-          searchKeyword={searchKeyword}
-          onSearchKeywordChange={setSearchKeyword}
+          onSearchKeywordChange={handleSubmitSearch}
           isItineraryOpen={isItineraryOpen}
           onToggleItinerary={() => setIsItineraryOpen(!isItineraryOpen)}
           onOpenComposer={handleOpenComposer}

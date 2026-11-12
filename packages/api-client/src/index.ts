@@ -35,6 +35,14 @@ export { moderationApi } from './moderation';
 export { removeUnavailablePost } from './remove-unavailable-post';
 export { useSocialPosts } from './queries';
 export {
+  POST_SEARCH_FEED_PAGE_SIZE,
+  getPostSearchFeedQueryKey,
+  searchPostFeedPage,
+  usePostSearchFeed,
+  type PostSearchFeedOptions,
+  type PostSearchFeedPage,
+} from './post-search-feed';
+export {
   usePostSummary,
   useSummaryExperience,
   useSummaryEvidence,
