@@ -91,7 +91,7 @@ export function LiveSearchScreen({
     >
       <form
         id="stay-search-form"
-        className={`search-form ${styles.panel} ${isHomepage ? '' : listing.searchPanel}`}
+        className={`search-form ${styles.panel} ${isHomepage ? styles.homepagePanel : listing.searchPanel}`}
         aria-label={vi.api.findStays}
         noValidate
         onSubmit={(event) => {

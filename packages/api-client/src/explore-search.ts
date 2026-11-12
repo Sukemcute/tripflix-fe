@@ -7,6 +7,7 @@ import type {
 } from './generated/core-api/model';
 import { readEntity } from './response';
 import { useApiSession } from './session';
+import { socialApi } from './social';
 
 /** Tìm khám phá bằng câu tự nhiên (POST /api/search): kết quả chia vùng Ở đâu, Lộ trình, Bài viết, Video. */
 export async function getExploreResults(q: string, signal?: AbortSignal): Promise<ExploreResponseDto> {
@@ -32,6 +33,27 @@ export async function getPostSearchResults(
 ): Promise<SearchPostsResponseDto> {
   const response = await exploreControllerSearchPosts(params, { signal });
   return readEntity(response.data, ['understood', 'items', 'total', 'nextCursor']) as SearchPostsResponseDto;
+}
+
+/** Số bài mỗi trang khi tìm theo từ khoá: mỗi bài cần thêm một lần lấy chi tiết nên giữ nhỏ. */
+export const KEYWORD_SEARCH_PAGE_SIZE = 10;
+
+/**
+ * Tìm bài công khai bằng engine của discovery (hiểu câu, bỏ dấu, sửa gõ, ghép/tách chữ), rồi lấy chi tiết từng bài
+ * theo đúng thứ tự xếp hạng. Trả cùng dạng trang với socialApi.listPosts nên viewer dùng lại được.
+ * Bài đã ẩn/xoá giữa hai lần gọi (chi tiết lỗi) thì bỏ qua thay vì làm hỏng cả trang.
+ */
+export async function searchPublicPosts(keyword: string, cursor?: string, signal?: AbortSignal) {
+  const found = await getPostSearchResults({ q: keyword, cursor, limit: KEYWORD_SEARCH_PAGE_SIZE }, signal);
+  const details = await Promise.all(
+    found.items.map((item) =>
+      socialApi.getPost(item.refId, signal).then(
+        (detail) => detail.post,
+        () => null,
+      ),
+    ),
+  );
+  return { items: details.filter((post) => post !== null), nextCursor: found.nextCursor };
 }
 
 /** Hook tìm bài trên app: dùng useQuery cache theo params */

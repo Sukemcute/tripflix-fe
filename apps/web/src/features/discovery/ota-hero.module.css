@@ -1,210 +1,664 @@
 .hero {
-  background: var(--color-sea-mist);
+  position: relative;
+  background: #036779;
+  isolation: isolate;
+  min-height: clamp(580px, 46vw, 680px);
   overflow: clip;
 }
-.inner {
-  display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-  align-items: center;
-  gap: clamp(32px, 5vw, 80px);
-  padding-block: 28px 80px;
-}
-.copy {
-  position: relative;
+
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   z-index: 1;
-  padding-block-start: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgb(0 48 67 / 82%) 0%, rgb(0 65 82 / 58%) 32%, transparent 62%),
+    linear-gradient(180deg, transparent 34%, rgb(0 75 96 / 22%) 54%, #00566edb 100%);
 }
-.heroMascot {
-  position: relative;
+
+/* ==========================================================================
+   LỚP ẢNH NỀN 3D BACKDROP 2K
+   ========================================================================== */
+.backdropImageWrapper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.backdropImg {
+  object-fit: cover;
+  object-position: center bottom;
+}
+
+.typographyLayer {
+  position: absolute;
+  z-index: 2;
+  top: 76px;
+  left: 32%;
+  width: 80%;
+  transform: translate(calc(var(--pointer-x, 0) * 6px), calc(var(--pointer-y, 0) * 3px));
+}
+.typographyImage {
   display: block;
-  width: clamp(92px, 8vw, 124px);
+  width: 100%;
   height: auto;
-  margin-bottom: 4px;
+  pointer-events: none;
+  user-select: none;
 }
-.copy h1 {
-  margin-block: 8px 16px;
-  color: var(--color-teal-ink);
-  font-size: clamp(2.6rem, 5.05vw, 6rem);
-  line-height: 1.08;
-  letter-spacing: -0.075em;
-  white-space: pre-line;
+.boatLayer {
+  position: absolute;
+  z-index: 3;
+  top: clamp(190px, 18vw, 270px);
+  right: 14%;
+  width: 46%;
+  pointer-events: none;
 }
-.copy h1::first-line {
-  color: var(--color-ink);
+.boatImage {
+  width: 100%;
+  height: auto;
+  display: block;
 }
-/* Dòng 1 luôn trên một hàng; cỡ chữ co theo bề rộng cột (cqi) để dòng 1 không tràn. */
+.vectorLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.vectorLayer img { object-fit: fill; }
+
+.mascotLayer {
+  position: absolute;
+  z-index: 3;
+  top: 210px;
+  left: 41%;
+  width: clamp(190px, 16vw, 240px);
+  pointer-events: none;
+  user-select: none;
+}
+.mascotImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 12px 16px rgb(0 51 63 / 24%));
+}
+.mascotLayer::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 20%;
+  bottom: 6%;
+  width: 64%;
+  height: 10px;
+  border: 1px solid rgb(207 255 246 / 35%);
+  border-radius: 50%;
+  background: rgb(185 255 242 / 12%);
+}
+
+.inner {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: clamp(580px, 46vw, 680px);
+  padding-block: 88px 64px;
+  pointer-events: none;
+}
+.inner a, .inner button { pointer-events: auto; }
+
+/* ==========================================================================
+   LỚP TƯƠNG TÁC TỪNG CHỮ CÁI (FIGMA HOTSPOT SYSTEM)
+   Overlay trong suốt khớp hoàn hảo vị trí 8 chữ cái TRIPFLIX trên nền 3D
+   ========================================================================== */
+.letterHotspotsArea {
+  position: absolute;
+  top: 6%;
+  left: 20%;
+  width: 60%;
+  height: 64%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.letterHotspots {
+  display: grid;
+  grid-template-columns: 53.2fr 37.9fr 24.3fr 54.3fr 39.5fr 21.3fr 21.1fr 53.5fr;
+  width: 100%;
+  height: 100%;
+}
+
+.letterHotspot {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 12px;
+  pointer-events: auto;
+  transition: background 200ms ease;
+}
+
+.letterHotspot:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.letterHotspot:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 4px;
+}
+
+.letterBadge {
+  position: absolute;
+  top: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(2, 44, 67, 0.92);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: translateY(6px) scale(0.95);
+  transition: all 220ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 25;
+}
+
+.badgeTag {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badgeName {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.letterHotspot:hover .letterBadge,
+.letterHotspot:focus-visible .letterBadge {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* ==========================================================================
+   BỐ CỤC 2 CỘT NỬA DƯỚI MẶT BIỂN
+   ========================================================================== */
+.bottomSection {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: start;
+  flex: 1;
+  gap: clamp(24px, 3.5vw, 56px);
+  width: 100%;
+  pointer-events: auto;
+}
+
 .copy {
+  position: relative;
+  z-index: 2;
   container-type: inline-size;
+  max-width: 540px;
 }
+
+/* Tiêu đề H1: Playfair Display sang trọng trên nền đại dương */
 .copy h1 {
-  font-size: min(clamp(2.6rem, 4.1vw, 4.5rem), 12.8cqi);
+  margin-block: 0 16px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: min(clamp(3.2rem, 5.25vw, 5rem), 14cqi);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  white-space: pre-line;
 }
 .titleFirst {
   display: block;
-  color: var(--color-ink);
+  color: #ffffff;
+  font-style: normal;
   white-space: nowrap;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
 }
+.titleSecond {
+  position: relative;
+  display: inline-block;
+  font-style: italic;
+  font-weight: 700;
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #e0f7f5 35%,
+    #4ee3d2 60%,
+    #38bdf8 100%
+  );
+  background-size: 100% 180%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 14px rgba(0, 166, 153, 0.45));
+}
+
 .description {
-  max-width: 41ch;
-  font-size: clamp(0.88rem, 1.18vw, 1.04rem);
-  line-height: 1.75;
+  max-width: 44ch;
+  font-size: clamp(0.86rem, 1vw, 0.98rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  margin-block: 0 14px;
 }
+
 .actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 20px;
-  margin-top: 28px;
+  gap: clamp(10px, 1.2vw, 14px);
+  margin-top: 14px;
+  flex-direction: column;
+  align-items: flex-start;
 }
-.searchAction,
-.scrollAction {
+
+/* Nút CTA chính viên nang trắng */
+.primaryCta {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-height: 46px;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-.searchAction {
-  min-height: 52px;
-  padding: 12px 30px;
+  gap: 10px;
+  padding: 11px 26px;
   border-radius: 999px;
-  font-size: 0.92rem;
-  background: var(--color-ink);
-  color: var(--color-background);
+  background: #ffffff;
+  color: #03344d;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.35);
+  transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
-/* Nút đen loang Teal; chữ chuyển Ink cho đủ tương phản trên Teal. */
-.searchAction {
-  --ripple-color: var(--color-teal);
-  transition: color 480ms;
+.primaryCta:hover {
+  background: #e6faf7;
+  color: #007c6e;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.45);
 }
-.searchAction:is(:hover, :focus-visible) {
-  color: var(--color-ink);
+.ctaArrow {
+  font-size: 1rem;
+  transition: transform 250ms ease;
 }
-.scrollAction {
-  color: var(--color-teal-ink);
+.primaryCta:hover .ctaArrow {
+  transform: translateX(4px);
 }
-.scrollAction:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
+
+/* Các pill hoạt động viên nang kính mờ */
 .activities {
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
-  gap: clamp(6px, 1.2vw, 14px);
+  gap: clamp(8px, 1.2vw, 12px);
   overflow-x: auto;
-  margin-top: 20px;
-  padding-top: 14px;
-  border-top: 1px solid color-mix(in srgb, var(--color-teal-ink) 25%, transparent);
+  scrollbar-width: none;
 }
-.activities a {
-  display: flex;
+.activities::-webkit-scrollbar {
+  display: none;
+}
+.activityPill {
+  display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  font-size: 0.75rem;
+  gap: 8px;
+  min-height: 38px;
+  padding: 4px 14px 4px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+  font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
-.activities a:hover {
-  color: var(--color-teal-ink);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.activityPill:hover {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.65);
+  color: #ffffff;
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
-.activities img {
-  width: 30px;
-  height: 30px;
+.activityPill img {
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   object-fit: cover;
+  transition: transform 300ms ease;
 }
-.art {
-  position: relative;
-  margin: 0;
+.activityPill:hover img {
+  transform: rotate(6deg) scale(1.08);
 }
-.frame {
+
+/* ==========================================================================
+   CỤM BÊN PHẢI: THẺ KÍNH MỜ DÁNG NGANG & ĐIỀU HƯỚNG CHẤM
+   ========================================================================== */
+.sceneContainer {
   position: relative;
-  height: clamp(260px, 25vw, 360px);
-  min-height: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  width: 100%;
+  align-self: end;
+}
+
+/* Thẻ kính mờ danh lam thắng cảnh dáng ngang (như mẫu Phố cổ Hội An) */
+.panoramicDestinationCard {
+  width: min(100%, 480px);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   overflow: hidden;
-  isolation: isolate;
-  border-radius: 44% 44% 20px 20px / 17% 17% 20px 20px;
-  background: var(--color-teal-ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px 12px 20px;
+  border-radius: 24px;
+  background: rgba(3, 38, 56, 0.76);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.45);
+  transition:
+    transform 300ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    border-color 300ms ease,
+    box-shadow 300ms ease;
 }
-.photo {
+.panoramicDestinationCard:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: rgba(78, 227, 210, 0.6);
+  box-shadow: 0 26px 56px -8px rgba(0, 0, 0, 0.55);
+}
+
+.destinationCardInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.destinationCardHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.destinationBadge {
+  display: inline-block;
+  padding: 2.5px 8px;
+  border-radius: 999px;
+  background: #ea580c;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.destinationRating {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #facc15;
+}
+
+.destinationTitle {
+  font-size: clamp(1.05rem, 1.35vw, 1.25rem);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.destinationSubtitle {
+  margin: 0;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+.destinationAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #38bdf8;
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+.destinationAction:hover {
+  color: #7dd3fc;
+}
+.actionArrow {
+  transition: transform 200ms ease;
+}
+.panoramicDestinationCard:hover .actionArrow {
+  transform: translateX(4px);
+}
+
+/* Khung ảnh thumbnail thực tế bên phải thẻ */
+.destinationCardThumb {
+  position: relative;
+  width: clamp(140px, 15vw, 190px);
+  height: 110px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+.cardThumbImg {
   object-fit: cover;
-  object-position: 50% 63%;
+  transition: transform 500ms ease;
 }
-.route {
+.panoramicDestinationCard:hover .cardThumbImg {
+  transform: scale(1.06);
+}
+
+/* Thanh điều hướng chấm scene */
+.sceneControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 14px;
+}
+
+.sceneDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: all 300ms ease;
+  position: relative;
+  overflow: hidden;
+}
+.sceneDotActive {
+  width: 28px;
+  background: rgba(255, 255, 255, 0.25);
+}
+.sceneProgressFill {
   position: absolute;
-  bottom: 14%;
-  left: 5%;
-  width: 24%;
-  height: 60%;
-  color: var(--color-sun-soft);
+  inset: 0;
+  background: #ffffff;
+  border-radius: 999px;
+  animation: sceneProgress linear forwards;
 }
-@media (max-width: 760px) {
-  .inner {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-    padding-block: 20px 40px;
+@keyframes sceneProgress {
+  from {
+    width: 0%;
   }
-  .heroMascot {
-    width: 78px;
+  to {
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE LAYOUT
+   ========================================================================== */
+@media (max-width: 900px) {
+  .inner {
+    padding-block: 64px;
+  }
+  .copy {
+    max-width: 44%;
+  }
+  .mascotLayer {
+    top: 210px;
+    left: 60%;
+    width: 160px;
+  }
+  .bottomSection {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  .sceneContainer {
+    align-items: stretch;
+    width: min(100%, 480px);
     margin-left: auto;
-    margin-bottom: -8px;
+  }
+  .panoramicDestinationCard {
+    width: 100%;
+  }
+  .sceneControls {
+    justify-content: center;
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    min-height: auto;
+  }
+  .hero::after {
+    background: linear-gradient(180deg, rgb(0 66 85 / 86%) 0%, rgb(0 73 94 / 80%) 34%, rgb(0 86 110 / 40%) 56%, #00566e 80%);
+  }
+  .backdropImg {
+    object-position: 48% top;
+  }
+  .typographyLayer {
+    top: 390px;
+    left: 14%;
+    width: 96%;
+  }
+  .boatLayer {
+    top: 430px;
+    right: -3%;
+    width: 70%;
+  }
+  .vectorLayer {
+    top: 330px;
+  }
+  .mascotLayer {
+    top: 380px;
+    left: -1%;
+    width: 160px;
+  }
+  .inner {
+    padding-block: 32px 64px;
+    gap: 16px;
+  }
+  .copy {
+    max-width: 100%;
+    padding-bottom: 210px;
+  }
+  .sceneContainer {
+    width: 100%;
+  }
+  .letterHotspotsArea {
+    display: block;
+  }
+  .letterBadge {
+    white-space: normal;
+    width: 130px;
+    border-radius: 12px;
+    text-align: center;
+  }
+  .letterHotspot:first-child .letterBadge { left: 0; }
+  .letterHotspot:last-child .letterBadge { right: 0; }
+  .letterHotspot {
+    min-height: 44px;
+    min-width: 24px;
   }
   .copy h1 {
-    margin-block: 0 10px;
-    font-size: min(clamp(2.1rem, 10vw, 4.75rem), 12.8cqi);
+    font-size: min(clamp(2.4rem, 11vw, 3rem), 13cqi);
   }
-  .actions {
-    margin-top: 16px;
+  .panoramicDestinationCard {
+    width: 100%;
+    max-width: 100%;
+    padding: 8px 10px;
+    gap: 8px;
+    border-radius: 16px;
+    box-sizing: border-box;
   }
-  .art,
-  .activities {
+  .destinationBadge {
+    padding: 2px 6px;
+    font-size: 0.62rem;
+  }
+  .destinationRating {
+    font-size: 0.72rem;
+  }
+  .destinationTitle {
+    font-size: 0.95rem;
+  }
+  .destinationSubtitle {
     display: none;
   }
-  .description {
-    margin-bottom: 0;
-    font-size: 13px;
-    line-height: 1.6;
+  .destinationCardThumb {
+    width: 92px;
+    height: 68px;
+    border-radius: 10px;
+    flex-shrink: 0;
   }
-  .frame {
-    min-height: 0;
-    aspect-ratio: 1.4;
-  }
-  .route {
-    height: 48%;
+  .activities {
+    gap: 8px;
   }
 }
-@media (max-width: 480px) {
-  .activities img {
-    width: 24px;
-    height: 24px;
-  }
-}
+
 @media (prefers-reduced-motion: no-preference) {
+  .typographyLayer { transition: transform 250ms ease-out; }
+  .boatImage { animation: boatFloat 5s ease-in-out infinite; }
   .copy,
-  .art {
-    animation: arrive 1216ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
+  .sceneContainer {
+    animation: arrive 1000ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
   }
-  .art {
-    animation-delay: 144ms;
+  .sceneContainer {
+    animation-delay: 150ms;
   }
 }
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .photo,
-  .route {
-    transition: transform 672ms cubic-bezier(0.2, 0.7, 0.25, 1);
-  }
-  .photo {
-    transform: translate(calc(var(--pointer-x, 0) * -34px), calc(var(--pointer-y, 0) * -24px)) scale(1.09);
-  }
-  .route {
-    transform: translate(calc(var(--pointer-x, 0) * 20px), calc(var(--pointer-y, 0) * 14px));
-  }
+@keyframes boatFloat {
+  0%, 100% { transform: translateY(0) rotate(-0.4deg); }
+  50% { transform: translateY(-5px) rotate(0.4deg); }
 }
 @keyframes arrive {
   from {
@@ -215,4 +669,12 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .copy,
+  .sceneContainer {
+    animation: none;
+  }
+  .typographyLayer { transform: none; }
+  .sceneProgressFill { animation: none; }
 }

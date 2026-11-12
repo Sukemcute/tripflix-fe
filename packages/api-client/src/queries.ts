@@ -1,4 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { searchPublicPosts } from './explore-search';
 import { useApiSession } from './session';
 import { socialApi } from './social';
 
@@ -18,14 +19,13 @@ export function useSocialPosts(
         ? socialApi.listMyPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal)
         : kind === 'bookmarks'
           ? socialApi.listBookmarks(pageParam, signal, postType)
-          : socialApi.listPosts(
-              {
-                cursor: pageParam,
-                ...(keyword ? { keyword } : {}),
-                ...(postType ? { post_type: postType } : {}),
-              },
-              signal,
-            ),
+          : keyword
+            ? // Có từ khoá: tìm bằng discovery thay cho ILIKE của content. Discovery chưa có loại khớp đúng vlog
+              // (post bỏ sót bài có lộ trình) nên tạm lọc sau khi lấy chi tiết.
+              searchPublicPosts(keyword, pageParam, signal).then((page) =>
+                postType ? { ...page, items: page.items.filter((post) => post.postType === postType) } : page,
+              )
+            : socialApi.listPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
 }

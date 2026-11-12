@@ -54,7 +54,8 @@ export function HoldTimer({ expiresAt }: { expiresAt: string }) {
   );
 }
 export function CommerceError({ error, retry }: { error: unknown; retry?: () => void }) {
-  if (error instanceof HttpError && error.body && typeof error.body === 'object' && 'message' in error.body) {
+  // 4xx và 503 có câu tiếng Việt từ backend; 500 mặc định của Nest là tiếng Anh nên dùng thông báo chung.
+  if (error instanceof HttpError && (error.status < 500 || error.status === 503) && error.body && typeof error.body === 'object' && 'message' in error.body) {
     const body = error.body as { message?: unknown; errors?: { field: string; message: string }[] };
     if (typeof body.message === 'string')
       return (

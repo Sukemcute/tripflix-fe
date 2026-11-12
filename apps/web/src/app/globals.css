@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&display=swap');
 @import '@tripflix/ui-web/styles.css';
 
 /* Cho Tailwind quét class trong code của app. */
@@ -519,9 +520,9 @@ h3 {
 }
 .ota-home.results-page {
   padding-top: 0;
-  padding-bottom: 0;
+  padding-bottom: 32px;
   position: relative;
-  margin-top: -52px;
+  margin-top: -46px;
   scroll-margin-top: 24px;
 }
 .ota-home > .result-grid:empty {

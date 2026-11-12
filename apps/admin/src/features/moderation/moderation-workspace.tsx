@@ -17,6 +17,7 @@ import { PostModeration } from './post-moderation';
 const text = vi.moderation;
 const reasonKeys = Object.keys(text.reasons) as (keyof typeof text.reasons)[];
 const date = (value: string) => new Date(value).toLocaleString('vi-VN');
+const refreshInterval = 5_000;
 
 function getRiskBadgeClass(score: number) {
   if (score >= 90) return 'mod-risk-badge high-90';
@@ -32,10 +33,12 @@ export function ModerationWorkspace() {
   const pendingStats = useQuery({
     queryKey: ['moderation', 'stats', 'pending'],
     queryFn: ({ signal }) => moderationApi.queue({ status: 'pending', limit: 100 }, signal),
+    refetchInterval: refreshInterval,
   });
   const logStats = useQuery({
     queryKey: ['moderation', 'stats', 'logs'],
     queryFn: ({ signal }) => moderationApi.log({ limit: 100 }, signal),
+    refetchInterval: refreshInterval,
   });
 
   const pendingItems = pendingStats.data?.items ?? [];
@@ -95,7 +98,7 @@ export function ModerationWorkspace() {
             className={`mod-tab-btn ${tab === 'queue' ? 'is-active' : ''}`}
             onClick={() => setTab('queue')}
           >
-            Hàng đợi ({pendingTotal > 0 ? pendingTotal : 312})
+            Hàng đợi ({pendingTotal})
           </button>
           <button
             type="button"
@@ -151,6 +154,7 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) => moderationApi.queue({ ...filters, cursor: pageParam }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
+    refetchInterval: refreshInterval,
   });
 
   const rawItems = query.data?.pages.flatMap((page) => page.items) ?? [];
@@ -374,11 +378,9 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredItems.map((item, idx) => {
+                  {filteredItems.map((item) => {
                     const isSelected = selectedIds.includes(item.id);
-                    // Chọn thumbnail mẫu dựa theo index
-                    const thumbClass = idx % 3 === 0 ? 'phuquoc' : idx % 3 === 1 ? 'hagiang' : 'dalat';
-                    const categoryLabel = item.targetType === 'comment' ? 'Bình luận' : idx % 2 === 0 ? 'Reel / Video' : 'Vlog';
+                    const categoryLabel = item.targetType === 'comment' ? 'Bình luận' : 'Bài viết';
 
                     return (
                       <tr key={item.id} className="mod-row-case">
@@ -392,14 +394,9 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
                         </td>
                         <td aria-label="Nội dung kiểm duyệt">
                           <div className="mod-content-cell">
-                            <div className={`mod-row-thumb ${thumbClass}`} />
                             <div className="mod-content-meta">
                               <span className="mod-content-title">
-                                {idx === 0
-                                  ? 'Review bãi biển mới ở Phú Quốc...'
-                                  : idx === 1
-                                  ? 'Trải nghiệm dù lượn Đà Lạt | Vlog'
-                                  : 'Top 10 món ngon Nha Trang'}
+                                {item.targetPreview || `${categoryLabel} #${item.targetId.slice(0, 8)}`}
                               </span>
                               <div className="mod-content-sub">
                                 <span>@{item.authorId ? item.authorId.slice(0, 8) : 'user_4587'}</span>
@@ -413,7 +410,7 @@ function ModerationQueue({ statusTab }: { statusTab: 'pending' | 'resolved' }) {
                         </td>
                         <td>
                           <strong style={{ color: item.reportCount > 0 ? '#DC2626' : '#64748B' }}>
-                            {item.reportCount > 0 ? item.reportCount : '1'}
+                            {item.reportCount}
                           </strong>
                         </td>
                         <td>
@@ -528,7 +525,7 @@ function CaseDetailModal({ id, onClose }: { id: string; onClose: () => void }) {
             className={`mod-modal-tab ${modalTab === 'reports' ? 'is-active' : ''}`}
             onClick={() => setModalTab('reports')}
           >
-            Báo cáo ({item?.reports.length ?? 24})
+            Báo cáo{item && ` (${item.reports.length})`}
           </button>
           <button
             type="button"
@@ -570,7 +567,7 @@ function CaseDetailModal({ id, onClose }: { id: string; onClose: () => void }) {
               {/* Thông tin bài viết dưới Video */}
               <div className="mod-post-info-box">
                 <h3 className="mod-post-title">
-                  {item.target?.text || 'Review bãi biển mới ở Phú Quốc – Nước siêu trong! 🏖️'}
+                  {item.target?.text || 'Không có nội dung văn bản'}
                 </h3>
                 <div className="mod-post-author-row">
                   <span>@{item.authorId ? item.authorId.slice(0, 8) : 'user_4587'}</span>
@@ -605,7 +602,7 @@ function CaseDetailModal({ id, onClose }: { id: string; onClose: () => void }) {
                 </div>
                 <div className="mod-meta-item">
                   <span className="mod-meta-label">Báo cáo</span>
-                  <strong className="mod-meta-val">{item.reports.length || 24}</strong>
+                  <strong className="mod-meta-val">{item.reports.length}</strong>
                 </div>
                 <div className="mod-meta-item">
                   <span className="mod-meta-label">Lý do gắn cờ</span>
