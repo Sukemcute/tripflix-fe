@@ -800,13 +800,20 @@
 }
 
 .mediaBackdropBlur {
+  /* Vẽ ở 1/4 kích thước rồi phóng to 4 lần: nhìn như blur(28px) trên cả khung nhưng GPU chỉ làm mờ
+     ít hơn 16 lần số điểm ảnh. Lớp riêng (will-change) để khi cuộn chỉ dịch chuyển, không vẽ lại. */
   position: absolute;
-  inset: -24px;
+  top: 50%;
+  left: 50%;
+  width: calc(25% + 12px);
+  height: calc(25% + 12px);
+  transform: translate(-50%, -50%) scale(4);
   background-size: cover;
   background-position: center;
-  filter: blur(28px) brightness(0.45);
+  filter: blur(7px) brightness(0.45);
   opacity: 0.75;
   pointer-events: none;
+  will-change: transform;
 }
 
 .mediaVideoElement {
@@ -1006,7 +1013,6 @@
   padding: 0 6px;
   border-radius: 999px;
   background: rgba(15, 17, 22, 0.62);
-  backdrop-filter: blur(8px);
   color: rgb(255 255 255);
   transition: background-color 160ms ease;
 }
@@ -1087,7 +1093,6 @@
   border-radius: 999px;
   border: 0;
   background: rgba(15, 17, 22, 0.62);
-  backdrop-filter: blur(8px);
   color: rgb(255 255 255);
   text-decoration: none;
   cursor: pointer;
@@ -1111,7 +1116,6 @@
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   background: rgba(15, 17, 22, 0.56);
-  backdrop-filter: blur(8px);
   color: rgb(255 255 255);
   cursor: pointer;
   opacity: 1;
@@ -1235,8 +1239,8 @@
 .overlayTagPill {
   padding: 3px 9px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(6px);
+  /* Không làm mờ nền phía sau (tốn GPU trên video đang phát); nền đậm hơn chút để chữ vẫn rõ. */
+  background: rgba(255, 255, 255, 0.2);
   border: 0;
   color: rgb(255 255 255);
   font: inherit;
@@ -1257,7 +1261,6 @@
   padding: 9px 12px;
   border-radius: 14px;
   background: rgba(25, 27, 32, 0.84);
-  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: rgb(247 247 248);
   text-decoration: none;
@@ -1372,7 +1375,6 @@
   border: 0;
   background: color-mix(in srgb, var(--color-ink) 55%, transparent);
   color: var(--color-background);
-  backdrop-filter: blur(6px);
   cursor: pointer;
   transition:
     transform 160ms ease,
@@ -1500,7 +1502,6 @@
 .rightPanel {
   min-width: 0;
   background: color-mix(in srgb, var(--color-background) 88%, transparent);
-  backdrop-filter: blur(18px) saturate(1.15);
   border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
   border-radius: 22px;
   box-shadow: 0 18px 48px -26px color-mix(in srgb, var(--color-ink) 40%, transparent);

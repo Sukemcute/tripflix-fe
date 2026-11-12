@@ -28,30 +28,26 @@
 /* --------------------------------------------------------------------------
    1. Sóng sáng Shimmer-Sweep 200% quét lướt qua lại liên tục
    -------------------------------------------------------------------------- */
-@keyframes shimmer-sweep {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: -100% 0;
-  }
+/* Thanh xám tĩnh; một vệt sáng duy nhất trượt qua cả khung bằng transform (GPU tự xử lý),
+   thay cho mỗi thanh tự chạy background-position (vẽ lại từng khung hình). */
+.shimmerSweep {
+  background: var(--color-surface-muted);
 }
 
-.shimmerSweep {
-  background: linear-gradient(
-    90deg,
-    var(--color-surface-muted) 0%,
-    color-mix(in srgb, var(--color-background) 95%, transparent) 50%,
-    var(--color-surface-muted) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer-sweep 1.8s ease-in-out infinite alternate;
+@keyframes shimmer-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
 }
 
 /* --------------------------------------------------------------------------
    2. Danh sách hàng Placeholder dàn đều 100% từ trên xuống đáy
    -------------------------------------------------------------------------- */
 .skeletonRowsWrapper {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -110,8 +106,25 @@
   border-radius: 4px;
 }
 
+.skeletonRowsWrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    var(--color-transparent) 0%,
+    color-mix(in srgb, var(--color-background) 70%, transparent) 50%,
+    var(--color-transparent) 100%
+  );
+  transform: translateX(-100%);
+  animation: shimmer-slide 1.6s ease-in-out infinite;
+  pointer-events: none;
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .shimmerSweep {
+  .skeletonRowsWrapper::after {
     animation: none;
+    display: none;
   }
 }

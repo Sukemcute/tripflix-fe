@@ -36,7 +36,13 @@ import { getAvatarTone } from './avatar-tone';
 import { EmojiPicker } from './emoji-picker';
 import { insertAtSelection } from './emoji-picker-data';
 import { isReelPost } from './post-type-filter';
-import { pickReelAfterRemoval, toReelPost, type ReelPost } from './reel-post';
+import {
+  getReelRenderMode,
+  pickReelAfterRemoval,
+  shouldShowReelBackdrop,
+  toReelPost,
+  type ReelPost,
+} from './reel-post';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import { CommentSkeletonList } from './comment-skeleton';
 import styles from './live-posts.module.css';
@@ -519,7 +525,10 @@ interface MediaTrackItemProps {
   index: number;
   post: ReelPost;
   isActive: boolean;
-  isNearActive: boolean;
+  /** Có thẻ <video> (bài đang xem và bài kế tiếp); bài khác chỉ hiện poster để không tải segment. */
+  hasVideo: boolean;
+  /** Có lớp nền mờ (tốn GPU) – chỉ bài đang xem và hai bài sát cạnh. */
+  hasBackdrop: boolean;
   reelCard?: FeedCardDto;
   user: { id: string; displayName: string } | null;
   videoRef?: React.RefObject<HTMLVideoElement | null>;
@@ -649,7 +658,8 @@ function MediaTrackItem({
   index,
   post,
   isActive,
-  isNearActive,
+  hasVideo,
+  hasBackdrop,
   reelCard,
   user,
   videoRef,
@@ -711,6 +721,18 @@ function MediaTrackItem({
     }
   }, [isActive]);
 
+  // Khi thẻ video bị gỡ (lướt ra xa) chỉ pause() hoặc gỡ khỏi DOM thì trình duyệt vẫn có thể tải tiếp
+  // segment, giữ bộ đệm và bộ giải mã tới lúc dọn rác. Xoá src rồi load() để ngắt tải và trả tài nguyên ngay.
+  useEffect(() => {
+    const video = localVideoRef.current;
+    if (!hasVideo || !video) return;
+    return () => {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+    };
+  }, [hasVideo, reelCard?.video.hlsUrl]);
+
   // timeupdate chỉ bắn ~4 lần/giây nên thanh tiến độ nhảy bậc; đọc currentTime mỗi khung hình và
   // cập nhật thẳng transform qua ref (không setState) để mượt và không render lại cả viewer.
   useEffect(() => {
@@ -736,10 +758,11 @@ function MediaTrackItem({
       data-post-id={post.id}
       aria-hidden={!isActive}
     >
-      {reelPoster && (
+      {hasBackdrop && reelCard && (
         <div
           className={styles.mediaBackdropBlur}
-          style={{ backgroundImage: `url(${reelPoster})` }}
+          // Ảnh đằng nào cũng bị làm mờ nên dùng poster nhỏ nhất: giải mã nhanh, tốn ít bộ nhớ hơn.
+          style={{ backgroundImage: `url(${selectReelPoster(reelCard.video.posters, 360)})` }}
         />
       )}
 
@@ -754,7 +777,7 @@ function MediaTrackItem({
         </output>
       ) : (
         <>
-          {isNearActive ? (
+          {hasVideo ? (
             <video
               ref={(el) => {
                 localVideoRef.current = el;
@@ -771,6 +794,7 @@ function MediaTrackItem({
               }`}
               src={reelCard.video.hlsUrl}
               poster={selectReelPoster(reelCard.video.posters, 720)}
+              preload="auto"
               playsInline
               loop
               muted={isMuted}
@@ -1552,7 +1576,9 @@ export function InspirationImmersiveViewer({
         trip.estimatedCostPerPerson ||
         (trip.items && trip.items.length > 0)),
   );
-  const showLeftPanel = hasItinerary && isLeftOpen;
+  // Sidebar Lịch trình đi theo lựa chọn đóng/mở của người dùng, không theo từng bài: bài không có lịch trình
+  // thì hiện trạng thái trống, để khung video không tự co giãn mỗi khi lướt qua bài thiếu lịch trình.
+  const showLeftPanel = Boolean(activePost) && isLeftOpen;
   const showRightPanel = Boolean(activePost) && isRightOpen;
 
   const gridLayoutClass =
@@ -1659,7 +1685,7 @@ export function InspirationImmersiveViewer({
         {showLeftPanel && (
           <ItinerarySidebarPanel
             className={styles.itineraryInReels}
-            trip={trip}
+            trip={hasItinerary ? trip : null}
             postTitle={activePost?.title}
             hashtags={activePost?.hashtags}
             coverImage={coverImage}
@@ -1781,40 +1807,59 @@ export function InspirationImmersiveViewer({
                     onScroll={handleTrackScroll}
                     tabIndex={-1}
                   >
-                    {posts.map((post, idx) => (
-                      <MediaTrackItem
-                        key={post.id}
-                        itemRef={(el) => {
-                          mediaItemRefs.current[idx] = el;
-                        }}
-                        index={idx}
-                        post={post}
-                        isActive={idx === activeIndex}
-                        isNearActive={Math.abs(idx - activeIndex) <= 1}
-                        actions={renderReelActions(post, idx === activeIndex)}
-                        reelCard={reelMap.get(post.id)}
-                        user={user}
-                        videoRef={idx === activeIndex ? videoRef : undefined}
-                        isMuted={isMuted}
-                        isPlaying={isPlaying}
-                        showPlayFlash={showPlayFlash}
-                        mediaErrorPostId={mediaErrorPostId}
-                        onMediaError={(pId) => setMediaErrorPostId(pId)}
-                        onTogglePlay={togglePlayPause}
-                        captionExpandedPostId={captionExpandedPostId}
-                        onToggleCaption={(pId) =>
-                          setCaptionExpandedPostId((prev) => (prev === pId ? null : pId))
-                        }
-                        onOpenTag={(tag) => {
-                          setSearchInput(tag);
-                          onSearchKeywordChange?.(tag);
-                        }}
-                        onOpenItinerary={(pId) => {
-                          if (activePostId !== pId) setActivePostId(pId);
-                          setLeftOpen(true);
-                        }}
-                      />
-                    ))}
+                    {posts.map((post, idx) => {
+                      const renderMode = getReelRenderMode(idx, activeIndex);
+                      if (renderMode === 'placeholder') {
+                        // Khung rỗng cùng kích thước để vị trí cuộn và snap theo chỉ số vẫn đúng.
+                        return (
+                          <div
+                            key={post.id}
+                            ref={(el) => {
+                              mediaItemRefs.current[idx] = el;
+                            }}
+                            className={styles.mediaItem}
+                            data-index={idx}
+                            data-post-id={post.id}
+                            aria-hidden="true"
+                          />
+                        );
+                      }
+                      return (
+                        <MediaTrackItem
+                          key={post.id}
+                          itemRef={(el) => {
+                            mediaItemRefs.current[idx] = el;
+                          }}
+                          index={idx}
+                          post={post}
+                          isActive={idx === activeIndex}
+                          hasVideo={renderMode === 'video'}
+                          hasBackdrop={shouldShowReelBackdrop(idx, activeIndex)}
+                          actions={renderReelActions(post, idx === activeIndex)}
+                          reelCard={reelMap.get(post.id)}
+                          user={user}
+                          videoRef={idx === activeIndex ? videoRef : undefined}
+                          isMuted={isMuted}
+                          isPlaying={isPlaying}
+                          showPlayFlash={showPlayFlash}
+                          mediaErrorPostId={mediaErrorPostId}
+                          onMediaError={(pId) => setMediaErrorPostId(pId)}
+                          onTogglePlay={togglePlayPause}
+                          captionExpandedPostId={captionExpandedPostId}
+                          onToggleCaption={(pId) =>
+                            setCaptionExpandedPostId((prev) => (prev === pId ? null : pId))
+                          }
+                          onOpenTag={(tag) => {
+                            setSearchInput(tag);
+                            onSearchKeywordChange?.(tag);
+                          }}
+                          onOpenItinerary={(pId) => {
+                            if (activePostId !== pId) setActivePostId(pId);
+                            setLeftOpen(true);
+                          }}
+                        />
+                      );
+                    })}
                   </div>
                   {isPostNotFound && (
                     <div className={styles.postUnavailableOverlay} role="alert">
