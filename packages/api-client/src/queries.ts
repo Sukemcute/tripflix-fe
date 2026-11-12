@@ -15,7 +15,7 @@ export function useSocialPosts(
     enabled: isReady && (kind === 'public' || !!user),
     queryFn: ({ pageParam, signal }) =>
       kind === 'mine'
-        ? socialApi.listMyPosts({ cursor: pageParam }, signal)
+        ? socialApi.listMyPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal)
         : kind === 'bookmarks'
           ? socialApi.listBookmarks(pageParam, signal, postType)
           : socialApi.listPosts(

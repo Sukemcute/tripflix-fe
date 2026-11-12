@@ -68,6 +68,22 @@ it('keeps the same post in sync across feed tabs, including rollback', () => {
   expect(readHot().pages[0]!.items[0]!.viewerState?.liked).toBe(false);
 });
 
+it('keeps the saved Reels list in sync with the other tabs, including rollback', () => {
+  const { client, feed, read } = setup();
+  const savedKey = ['feed', 'saved', 'viewer'];
+  client.setQueryData(savedKey, feed);
+  const readSaved = () => client.getQueryData<InfiniteData<FeedPageDto>>(savedKey)!;
+
+  const rollback = updateReelSocialCache(client, 'viewer', 'one', 'save', true);
+  expect(read().pages[0]!.items[0]!.counts.saves).toBe(4);
+  expect(readSaved().pages[0]!.items[0]!.counts.saves).toBe(4);
+  expect(readSaved().pages[0]!.items[0]!.viewerState?.saved).toBe(true);
+
+  rollback();
+  expect(readSaved().pages[0]!.items[0]!.counts.saves).toBe(3);
+  expect(readSaved().pages[0]!.items[0]!.viewerState?.saved).toBe(false);
+});
+
 it('rolls back just the failed action without discarding successful saves, comments or another reel', () => {
   const { client, read } = setup();
   const rollback = updateReelSocialCache(client, 'viewer', 'one', 'like', true);
