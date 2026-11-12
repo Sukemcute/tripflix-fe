@@ -1994,14 +1994,27 @@
 }
 
 @media (max-width: 1023px) {
-  .splitViewContainer {
+  .splitViewContainer,
+  .splitViewNoLeft,
+  .splitViewNoRight {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .itinerarySidebar,
-  .contextColumn,
-  .rightPanelInFeed {
+  .contextColumn {
     display: none;
+  }
+
+  /* Màn hẹp không đủ chỗ cho 3 cột: Lịch trình và Bình luận mở thành bottom sheet đè lên bảng tin,
+     đóng bằng nút trên header của từng panel (trước đây bị ẩn nên bấm không có gì xảy ra). */
+  .itineraryInFeed,
+  .rightPanelInFeed {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    width: 100% !important;
+    height: 78dvh !important;
+    max-height: 78dvh !important;
+    border-radius: 22px 22px 0 0 !important;
+    z-index: 70;
   }
 }
 

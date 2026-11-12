@@ -7,6 +7,7 @@ import { useApiSession } from '@tripflix/api-client';
 import { InstagramLeftDock } from './feed/instagram-left-dock';
 import type { FeedNavFilter } from './feed/floating-nav-rail';
 import { SocialFeedView } from './feed/social-feed-view';
+import { useIsWideScreen } from './use-wide-screen';
 import styles from './feed/social-feed.module.css';
 
 const InspirationImmersiveViewer = dynamic(
@@ -35,7 +36,11 @@ export function InspirationView({ initialKeyword = '' }: InspirationViewProps) {
   const isReels = activeView === 'reels';
 
   // Cac trang thai chung dieu phoi qua Instagram Left Dock
-  const [isItineraryOpen, setIsItineraryOpen] = useState(true);
+  // Màn rộng mở sẵn Lịch trình; màn hẹp để đóng vì ở đó Lịch trình là bottom sheet che bảng tin.
+  // Người dùng đóng/mở thì giữ lựa chọn đó.
+  const isWideScreen = useIsWideScreen();
+  const [itineraryChoice, setIsItineraryOpen] = useState<boolean | null>(null);
+  const isItineraryOpen = itineraryChoice ?? isWideScreen;
   const [filterMode, setFilterMode] = useState<FeedNavFilter>('all');
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerPostType, setComposerPostType] = useState<'video' | 'vlog'>('vlog');
@@ -75,7 +80,7 @@ export function InspirationView({ initialKeyword = '' }: InspirationViewProps) {
         activeFilter={filterMode}
         onSelectFilter={setFilterMode}
         isItineraryOpen={isItineraryOpen}
-        onToggleItinerary={() => setIsItineraryOpen((prev) => !prev)}
+        onToggleItinerary={() => setIsItineraryOpen(!isItineraryOpen)}
         onOpenComposer={handleOpenComposer}
       />
 
@@ -103,7 +108,7 @@ export function InspirationView({ initialKeyword = '' }: InspirationViewProps) {
           searchKeyword={searchKeyword}
           onSearchKeywordChange={setSearchKeyword}
           isItineraryOpen={isItineraryOpen}
-          onToggleItinerary={() => setIsItineraryOpen((prev) => !prev)}
+          onToggleItinerary={() => setIsItineraryOpen(!isItineraryOpen)}
           onOpenComposer={handleOpenComposer}
         />
       )}
