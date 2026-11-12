@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { mobileIconSize } from './mobile-scale';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 const ICONS: Record<string, IconName> = {
@@ -15,7 +16,6 @@ const ICONS: Record<string, IconName> = {
 };
 // Thấp hơn thanh tab iOS (49pt) như TikTok: icon nhỏ, chừa thêm chỗ cho video.
 const BAR_HEIGHT = 44;
-const ICON_SIZE = 21;
 const COMPOSE_SIZE = 32;
 const COMPOSE_RADIUS = 9;
 // The design's 24-unit SVG shown at 20px: a 14-unit line with 3.6-unit stroke and round caps.
@@ -65,7 +65,7 @@ export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, ins
               <ComposeIcon />
             ) : (
               <>
-                <Ionicons name={ICONS[route.name]!} size={ICON_SIZE} color={tint} />
+                <Ionicons name={ICONS[route.name]!} size={mobileIconSize.nav} color={tint} />
                 <Text
                   aria-hidden
                   numberOfLines={1}

@@ -11,6 +11,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Chip, Icon, IconButton, money, Txt } from '@/components/mobile-ui';
+import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { SHEET_CLOSE_SPRING, SHEET_OPEN_SPRING } from '@/components/motion';
 
 const copy = vi.mobile.searchPanel;
@@ -71,7 +72,7 @@ export function SearchDropPanel({ visible, onClose }: { visible: boolean; onClos
       >
         <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
           <View style={styles.inputBox}>
-            <Icon name="search-outline" size={18} color={colors.textMuted} />
+            <Icon name="search-outline" size={mobileIconSize.control} color={colors.textMuted} />
             <TextInput
               ref={input}
               value={text}
@@ -89,11 +90,11 @@ export function SearchDropPanel({ visible, onClose }: { visible: boolean; onClos
                 accessibilityLabel={copy.clear}
                 onPress={() => setText('')}
               >
-                <Icon name="close-circle" size={18} color={colors.textMuted} />
+                <Icon name="close-circle" size={mobileIconSize.control} color={colors.textMuted} />
               </Pressable>
             )}
           </View>
-          <IconButton name="close" label={copy.close} onPress={close} />
+          <IconButton name="close" size={mobileIconSize.control} label={copy.close} onPress={close} />
         </View>
         <View style={styles.tabs}>
           {TABS.map((item) => (
@@ -189,7 +190,7 @@ function PostResults({
                 {item.thumbnail ? (
                   <Image source={item.thumbnail} style={StyleSheet.absoluteFill} contentFit="cover" />
                 ) : (
-                  <Icon name="play-circle-outline" size={32} color={colors.background} />
+                  <Icon name="play-circle-outline" size={mobileIconSize.reel} color={colors.background} />
                 )}
                 <Txt variant="caption" numberOfLines={1} style={styles.tileReason}>
                   {item.reason}
@@ -219,7 +220,7 @@ function PostResults({
             {item.thumbnail ? (
               <Image source={item.thumbnail} style={StyleSheet.absoluteFill} contentFit="cover" />
             ) : (
-              <Icon name="map-outline" size={24} color={colors.textMuted} />
+              <Icon name="map-outline" size={mobileIconSize.nav} color={colors.textMuted} />
             )}
           </View>
           <View style={styles.planBody}>
@@ -262,7 +263,7 @@ function UserResults({ query, onOpenReel }: { query: string; onOpenReel: (postId
     return (
       <>
         <Pressable accessibilityRole="button" style={styles.backRow} onPress={() => setSelected(null)}>
-          <Icon name="chevron-back" size={18} />
+          <Icon name="chevron-back" size={mobileIconSize.control} />
           <Txt variant="label">{t('mobile.searchPanel.userVideos', { name: selected.displayName })}</Txt>
         </Pressable>
         <StateText
@@ -278,7 +279,7 @@ function UserResults({ query, onOpenReel }: { query: string; onOpenReel: (postId
             style={styles.userRow}
             onPress={() => onOpenReel(post.id)}
           >
-            <Icon name="play-circle-outline" size={28} color={colors.coral} />
+            <Icon name="play-circle-outline" size={mobileIconSize.nav} color={colors.coral} />
             <View style={styles.planBody}>
               <Txt variant="label" numberOfLines={2}>
                 {post.title}
@@ -316,7 +317,7 @@ function UserResults({ query, onOpenReel }: { query: string; onOpenReel: (postId
           <Txt variant="label" style={styles.planBody} numberOfLines={1}>
             {user.displayName}
           </Txt>
-          <Icon name="chevron-forward" size={18} color={colors.textMuted} />
+          <Icon name="chevron-forward" size={mobileIconSize.inline} color={colors.textMuted} />
         </Pressable>
       ))}
     </>
@@ -345,7 +346,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.warmMist,
   },
-  input: { flex: 1, color: colors.ink, fontSize: 15 },
+  input: { flex: 1, color: colors.ink, ...compactType.body },
   tabs: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   results: { flex: 1 },
   resultsContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md },

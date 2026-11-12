@@ -36,6 +36,7 @@ import { HotelSearchResults } from './hotel-search-results';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SearchDropPanel } from './search-drop-panel';
+import { compactType, mobileIconSize } from '@/components/mobile-scale';
 
 const RECOMMENDATION_LIMIT = 3;
 
@@ -252,6 +253,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
 
   return (
     <Screen
+      compact
       title={back ? vi.api.search : undefined}
       back={back}
       right={
@@ -271,14 +273,14 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
           style={styles.searchBar}
           onPress={() => setIsSearchOpen(true)}
         >
-          <Icon name="search-outline" color={colors.textMuted} size={20} />
+          <Icon name="search-outline" color={colors.textMuted} size={mobileIconSize.control} />
           <Txt style={[styles.searchInput, { color: colors.textMuted }]}>
             {vi.mobile.searchPanel.placeholder}
           </Txt>
         </Pressable>
       ) : (
         <View style={styles.searchBar}>
-          <Icon name="search-outline" color={colors.textMuted} size={20} />
+          <Icon name="search-outline" color={colors.textMuted} size={mobileIconSize.control} />
           <TextInput
             ref={input}
             accessibilityLabel={vi.api.search}
@@ -489,7 +491,7 @@ function ExploreHighlights({ category }: { category: 'all' | 'sea' | 'weekend' }
               {copy.explore.liveHeroBody}
             </Txt>
             <View style={styles.heroArrow}>
-              <Icon name="arrow-forward" color={colors.background} size={18} />
+              <Icon name="arrow-forward" color={colors.background} size={mobileIconSize.control} />
             </View>
           </Row>
         </View>
@@ -521,20 +523,6 @@ function ExploreHighlights({ category }: { category: 'all' | 'sea' | 'weekend' }
           ))}
         </View>
       </View>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push('/assistant')}
-        style={styles.assistant}
-      >
-        <Mascot size={60} />
-        <View style={ui.flex}>
-          <Txt variant="label">{copy.explore.assistantTitle}</Txt>
-          <Txt variant="caption" style={ui.muted}>
-            {copy.explore.assistantBody}
-          </Txt>
-        </View>
-        <Icon name="arrow-forward" size={18} color={colors.tealInk} />
-      </Pressable>
     </>
   );
 }
@@ -709,7 +697,7 @@ const styles = StyleSheet.create({
     minHeight: mobileLayout.touchTarget,
     fontFamily: nativeFonts.regular,
     color: colors.ink,
-    fontSize: 14,
+    ...compactType.body,
   },
   result: { alignItems: 'flex-start' },
   resultPhoto: { width: 90, height: 112, borderRadius: radius.md, backgroundColor: colors.seaMist },
@@ -724,7 +712,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.ink,
   },
   heroShade: { ...StyleSheet.absoluteFill, backgroundColor: colors.overlay },
-  heroTitle: { fontSize: 30, lineHeight: 37, color: colors.background },
+  heroTitle: { ...compactType.title, color: colors.background },
   heroBody: { flex: 1, color: colors.background, fontFamily: nativeFonts.semibold },
   heroArrow: {
     width: 40,
