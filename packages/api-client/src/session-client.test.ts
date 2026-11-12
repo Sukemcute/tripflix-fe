@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionClient } from './session-client';
+
+vi.mock('./browser-session-proof', () => ({
+  BROWSER_PROOF_HEADER: 'X-Tripflix-Session-Proof',
+  signBrowserProof: async () => 'signed-proof',
+}));
 import { http, HttpError, type HttpResponse } from './http';
 import { getApiErrorKind, getAuthErrorKind } from './response';
 import { primePasswordKeyCache } from './password-encryption';
