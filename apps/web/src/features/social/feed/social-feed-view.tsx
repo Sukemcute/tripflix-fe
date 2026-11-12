@@ -581,8 +581,7 @@ export function SocialFeedView({
           return next;
         });
       }
-      // Feed gợi ý đã cập nhật lượt thích tại chỗ; tải lại sẽ bỏ bài vừa thích và xô các bài bên dưới.
-      void client.invalidateQueries({ queryKey: ['social'], predicate: (q) => q.queryKey[5] !== 'recommended' });
+      void client.invalidateQueries({ queryKey: ['social'] });
     },
   });
 
