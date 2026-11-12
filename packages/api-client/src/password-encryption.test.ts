@@ -11,6 +11,11 @@ import {
 } from './password-encryption';
 import { SessionClient } from './session-client';
 
+vi.mock('./browser-session-proof', () => ({
+  BROWSER_PROOF_HEADER: 'X-Tripflix-Session-Proof',
+  signBrowserProof: async () => 'signed-proof',
+}));
+
 /** Server giả: giải mã bằng node:crypto đúng như core-api (x25519-password-keyring.ts), độc lập với @noble. */
 function createServerKey(keyId = 'k1') {
   const { privateKey } = generateKeyPairSync('x25519');
