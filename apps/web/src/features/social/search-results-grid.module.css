@@ -1,0 +1,349 @@
+.resultsScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px 28px 40px;
+  box-sizing: border-box;
+}
+
+.resultsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1280px;
+  margin: 0 auto 12px;
+}
+
+.resultsTitle {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.clearButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+
+.clearButton:hover {
+  color: var(--color-coral-ink);
+  border-color: var(--color-coral-soft);
+}
+
+/* Tab gạch chân kiểu TikTok: chữ đậm và vạch coral-ink ở tab đang chọn. */
+.tabs {
+  display: flex;
+  gap: 4px;
+  max-width: 1280px;
+  margin: 0 auto 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+  position: relative;
+  min-width: 96px;
+  padding: 10px 18px 12px;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.tab:hover {
+  color: var(--color-ink);
+}
+
+.tab[aria-selected='true'] {
+  color: var(--color-ink);
+  font-weight: 800;
+}
+
+.tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--color-coral-ink);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
+.notice {
+  display: block;
+  max-width: 1280px;
+  margin: 0 auto 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--color-sun-soft);
+  color: var(--color-navy);
+  font-size: 0.85rem;
+  animation: fadeIn 180ms ease;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  gap: 24px 16px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--color-transparent);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card[aria-disabled='true'] {
+  cursor: default;
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+.thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-surface-muted);
+}
+
+.thumb[data-kind='reel'] {
+  background: var(--color-ink);
+}
+
+.thumbImage {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 260ms ease;
+}
+
+.card:not([aria-disabled='true']):hover .thumbImage {
+  transform: scale(1.04);
+}
+
+/* Lớp tối dưới đáy để số tim luôn đọc được trên ảnh sáng. */
+.thumb::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 40%;
+  background: linear-gradient(var(--color-transparent), var(--color-overlay));
+  pointer-events: none;
+}
+
+.reelBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  display: inline-flex;
+  color: var(--color-background);
+}
+
+.likes {
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-background);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.caption {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.tag {
+  color: var(--color-teal-ink);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.avatar[data-tone='teal'] {
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+
+.avatar[data-tone='sun'] {
+  background: var(--color-sun-soft);
+  color: var(--color-navy);
+}
+
+.avatar[data-tone='navy'] {
+  background: var(--color-surface-muted);
+  color: var(--color-navy);
+}
+
+.authorName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+
+.date {
+  flex-shrink: 0;
+  color: var(--color-text-subtle);
+}
+
+.skeletonCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonThumb,
+.skeletonLine,
+.skeletonLineShort {
+  border-radius: 10px;
+  background: var(--color-surface-muted);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.skeletonThumb {
+  aspect-ratio: 3 / 4;
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: 6px;
+}
+
+.skeletonLineShort {
+  width: 60%;
+  height: 12px;
+  border-radius: 6px;
+}
+
+.stateBox {
+  max-width: 520px;
+  margin: 48px auto;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.sentinel {
+  height: 1px;
+}
+
+.loadingMore {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .resultsScroll {
+    padding: 16px 14px 32px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumbImage,
+  .skeletonThumb,
+  .skeletonLine,
+  .skeletonLineShort,
+  .notice {
+    animation: none;
+    transition: none;
+  }
+}

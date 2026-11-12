@@ -35,7 +35,6 @@ import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { getAvatarTone } from './avatar-tone';
 import { EmojiPicker } from './emoji-picker';
 import { insertAtSelection } from './emoji-picker-data';
-import { isReelPost } from './post-type-filter';
 import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
 import {
@@ -70,6 +69,8 @@ export type SocialIconName =
   | 'arrowUp'
   | 'arrowDown'
   | 'arrowUpRight'
+  | 'trendingUp'
+  | 'chevronDown'
   | 'calendar'
   | 'clock'
   | 'wallet'
@@ -211,6 +212,19 @@ export function SocialIcon({ name, size = 18 }: { name: SocialIconName; size?: n
         <svg {...common}>
           <path d="M7 17 17 7" />
           <path d="M8 7h9v9" />
+        </svg>
+      );
+    case 'trendingUp':
+      return (
+        <svg {...common}>
+          <path d="m22 7-8.5 8.5-5-5L2 17" />
+          <path d="M16 7h6v6" />
+        </svg>
+      );
+    case 'chevronDown':
+      return (
+        <svg {...common}>
+          <path d="m6 9 6 6 6-6" />
         </svg>
       );
     case 'calendar':
@@ -432,7 +446,7 @@ export function PublicPosts({
   if (kind !== 'public') {
     return <AccountPostGrid kind={kind} keyword={keyword} />;
   }
-  return <InspirationImmersiveViewer initialKeyword={keyword} />;
+  return <InspirationImmersiveViewer />;
 }
 
 /** Giữ nguyên hiển thị dạng lưới cho trang Tài khoản (/account: bài của tôi & bài đã lưu). */
@@ -959,8 +973,7 @@ function isPhysicalMouseWheel(event: WheelEvent): boolean {
 
 
 export interface InspirationImmersiveViewerProps {
-  initialKeyword?: string;
-  searchKeyword?: string;
+  /** Bấm hashtag trên Reel: chốt tìm kiếm theo tag (hiện grid kết quả). */
   onSearchKeywordChange?: (keyword: string) => void;
   isItineraryOpen?: boolean;
   onToggleItinerary?: () => void;
@@ -968,8 +981,6 @@ export interface InspirationImmersiveViewerProps {
 }
 
 export function InspirationImmersiveViewer({
-  initialKeyword = '',
-  searchKeyword,
   onSearchKeywordChange,
   isItineraryOpen: propIsItineraryOpen,
   onToggleItinerary,
@@ -979,7 +990,6 @@ export function InspirationImmersiveViewer({
   const client = useQueryClient();
 
   const [filterMode] = useState<FeedFilterMode>('all');
-  const [searchInput, setSearchInput] = useState<string>(initialKeyword);
   const [activePostId, setActivePostId] = useState<string | null>(null);
 
   const [internalIsLeftOpen, setInternalIsLeftOpen] = useState(true);
@@ -1031,20 +1041,10 @@ export function InspirationImmersiveViewer({
   const commentInputRef = useRef<HTMLInputElement | null>(null);
   const rightScrollRef = useRef<HTMLDivElement | null>(null);
 
-  const effectiveSearch = (searchKeyword !== undefined ? searchKeyword : searchInput).trim();
   const isSavedMode = filterMode === 'saved';
-  // /v1/feed chưa tìm theo từ khoá nên chỉ khi tìm mới đọc /v1/posts rồi lọc bài video.
-  const isSearching = !isSavedMode && effectiveSearch.length > 0;
+  // Tìm kiếm không chạy ở đây: nhấn Enter thì trang Cảm hứng hiện grid kết quả (search của discovery).
   const reelsQuery = useReelsFeed({ enabled: isReady, isSavedOnly: isSavedMode });
-  const searchQuery = useInfiniteQuery({
-    queryKey: ['social', 'reels-search', effectiveSearch, user?.id],
-    enabled: isReady && isSearching,
-    initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam, signal }) => socialApi.listPosts({ cursor: pageParam, keyword: effectiveSearch }, signal),
-    getNextPageParam: (page) => page.nextCursor ?? undefined,
-  });
-  // Cùng một giao diện phân trang cho hai nguồn, để phần cuộn và tải thêm không cần biết đang ở nguồn nào.
-  const postsQuery = isSearching ? searchQuery : reelsQuery;
+  const postsQuery = reelsQuery;
 
   const reelMap = useMemo(() => {
     const map = new Map<
@@ -1061,11 +1061,8 @@ export function InspirationImmersiveViewer({
 
   // Reels chỉ gồm bài dạng video; bài viết (vlog) không bao giờ hiện ở đây.
   const rawPosts = useMemo<ReelPost[]>(
-    () =>
-      isSearching
-        ? (searchQuery.data?.pages.flatMap((page) => page.items) ?? []).filter(isReelPost)
-        : (reelsQuery.data?.pages.flatMap((page) => page.items) ?? []).map(toReelPost),
-    [isSearching, searchQuery.data, reelsQuery.data],
+    () => (reelsQuery.data?.pages.flatMap((page) => page.items) ?? []).map(toReelPost),
+    [reelsQuery.data],
   );
 
   const posts = useMemo(() => {
@@ -1732,11 +1729,7 @@ export function InspirationImmersiveViewer({
               </div>
             ) : !activePost ? (
               <p className="empty-state">
-                {filterMode === 'saved'
-                  ? vi.api.noBookmarks
-                  : searchInput.trim()
-                    ? t('api.noPostsForKeyword', { query: searchInput.trim() })
-                    : vi.api.noPosts}
+                {filterMode === 'saved' ? vi.api.noBookmarks : vi.api.noPosts}
               </p>
             ) : (
               <>
@@ -1859,10 +1852,7 @@ export function InspirationImmersiveViewer({
                           onToggleCaption={(pId) =>
                             setCaptionExpandedPostId((prev) => (prev === pId ? null : pId))
                           }
-                          onOpenTag={(tag) => {
-                            setSearchInput(tag);
-                            onSearchKeywordChange?.(tag);
-                          }}
+                          onOpenTag={(tag) => onSearchKeywordChange?.(tag)}
                           onOpenItinerary={(pId) => {
                             if (activePostId !== pId) setActivePostId(pId);
                             setLeftOpen(true);

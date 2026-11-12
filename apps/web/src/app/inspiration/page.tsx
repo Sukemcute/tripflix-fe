@@ -9,5 +9,5 @@ export default async function InspirationPage({
 }) {
   const { q } = await searchParams;
   const result = q === undefined ? null : validateInspirationKeyword(q);
-  return <HomeScreen query={result?.keyword} queryError={result?.error ? vi.api[result.error] : undefined} />;
+  return <HomeScreen queryError={result?.error ? vi.api[result.error] : undefined} />;
 }
