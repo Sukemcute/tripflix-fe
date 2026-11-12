@@ -14,6 +14,8 @@ import { vi } from '@tripflix/i18n';
 import { AdminApiError } from '../shell/api-state';
 import { IconTrending } from '../shell/admin-icons';
 import { SearchTrends, type SearchObservation } from './search-trends';
+import { IndexWorkerHealth } from './index-worker-health';
+import { RecommendationMonitoring } from './recommendation-monitoring';
 import styles from './search-monitoring.module.css';
 
 const copy = vi.searchMonitoring;
@@ -247,6 +249,9 @@ export function SearchMonitoring() {
           onGoQuery={() => setTab('query')}
         />
       )}
+
+      {tab === 'workers' && <IndexWorkerHealth />}
+      {tab === 'recommendations' && <RecommendationMonitoring />}
 
       {tab === 'query' && (
         <>

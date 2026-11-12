@@ -83,6 +83,308 @@
 .panel > p {
   margin-bottom: 16px;
 }
+.workerMeta {
+  display: block;
+  margin-top: 12px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+.workerName {
+  overflow-wrap: anywhere;
+}
+.monitor {
+  display: grid;
+  gap: 20px;
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+.monitorMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background);
+  overflow: hidden;
+}
+.monitorMetrics > div {
+  padding: 20px 24px;
+  border-right: 1px solid var(--color-border);
+}
+.monitorMetrics > div:last-child {
+  border-right: 0;
+}
+.monitorMetrics span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.monitorMetrics strong {
+  display: block;
+  margin-top: 12px;
+  font-size: 36px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.monitorMetrics i,
+.outcomeLegend i {
+  width: 8px;
+  min-height: 8px;
+  flex-shrink: 0;
+}
+.monitorCharts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.monitorChartHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.monitorToggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 10px;
+}
+.monitorToggle button {
+  padding: 6px 8px;
+  border-radius: 5px;
+  color: var(--color-text-muted);
+}
+.monitorToggle button[aria-pressed='true'] {
+  color: var(--color-teal-ink);
+  background: color-mix(in srgb, var(--color-teal-ink) 9%, var(--color-background));
+}
+.monitorSvg {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  overflow: visible;
+}
+.monitorSvg text {
+  fill: var(--color-text-muted);
+  font-size: 11px;
+  font-family: inherit;
+}
+.monitorSvg rect {
+  fill: var(--health-color);
+}
+.monitorSvg rect[data-status='unknown'] {
+  fill: var(--color-border);
+}
+.runSeries {
+  --series-color: var(--color-teal-ink);
+}
+.runSeries[data-job='suggest'] {
+  --series-color: #ad6b18;
+}
+.runSeries path {
+  fill: none;
+  stroke: var(--series-color);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.runSeries circle {
+  fill: var(--series-color);
+  stroke: var(--color-background);
+  stroke-width: 1.5;
+}
+.runSeries circle[data-outcome='failed'] {
+  fill: var(--color-coral-ink);
+}
+.exploreSwatch {
+  background: var(--color-teal-ink);
+}
+.suggestSwatch {
+  background: #ad6b18;
+}
+.monitorBottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 20px;
+}
+.monitorMatrix {
+  overflow-x: auto;
+  margin-block: 20px 10px;
+}
+.monitorMatrixRow {
+  display: grid;
+  grid-template-columns: 130px minmax(240px, 1fr) 110px;
+  min-width: 510px;
+  align-items: center;
+  gap: 12px;
+  margin-block: 12px;
+}
+.monitorMatrixRow > a {
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.monitorMatrixRow small {
+  display: block;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+.monitorMatrixRow > div {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 3px;
+}
+.monitorMatrixRow button {
+  min-height: 26px;
+  border: 2px solid transparent;
+  transition: opacity 160ms;
+}
+.monitorMatrixRow button:hover {
+  opacity: 0.7;
+}
+.monitorMatrixRow button[aria-pressed='true'] {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 1px;
+}
+.monitorSelection,
+.root .monitorFootnote {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+.root .monitorFootnote {
+  margin-top: 12px;
+}
+.outcomeRing {
+  width: 154px;
+  aspect-ratio: 1;
+  padding: 13px;
+  border-radius: 50%;
+  margin: 20px auto;
+}
+.outcomeRing > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--color-background);
+}
+.outcomeRing strong {
+  font-size: 30px;
+  letter-spacing: -0.04em;
+}
+.outcomeRing span {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+.outcomeLegend {
+  margin: 0;
+  font-size: 12px;
+}
+.outcomeLegend > div,
+.outcomeLegend dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.outcomeLegend > div {
+  justify-content: space-between;
+  padding-block: 6px;
+}
+.outcomeLegend dd {
+  font-weight: 700;
+}
+@media (max-width: 1100px) {
+  .monitorCharts,
+  .monitorBottom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .monitorMetrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .monitorMetrics > div {
+    padding: 16px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .monitorMetrics > div:nth-child(even) {
+    border-right: 0;
+  }
+  .monitorMetrics > div:nth-child(n + 3) {
+    border-bottom: 0;
+  }
+  .monitorMetrics strong {
+    font-size: 30px;
+  }
+}
+.jobLogs {
+  min-width: 260px;
+  max-width: 440px;
+  padding-left: 20px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.jobLogs li {
+  margin-block: 12px;
+}
+.jobLogs time {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.healthHistory {
+  margin: 16px 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.healthTimeline {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 3px;
+  margin: 6px 0;
+  padding: 0;
+  list-style: none;
+}
+.healthAxis {
+  display: flex;
+  justify-content: space-between;
+}
+.healthPoint,
+.healthBadge {
+  --health-color: var(--color-text-muted);
+}
+.healthPoint {
+  display: block;
+  min-height: 12px;
+  border-radius: 3px;
+  background: var(--health-color);
+}
+.healthPoint[data-status='unknown'] {
+  background: var(--color-border);
+}
+.healthBadge {
+  display: inline-block;
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: var(--health-color);
+  background: color-mix(in srgb, var(--health-color) 10%, var(--color-background));
+  font-size: 12px;
+  font-weight: 700;
+}
+.healthBadge:is([data-status='healthy'], [data-status='succeeded']),
+.healthPoint[data-status='healthy'] {
+  --health-color: var(--color-teal-ink);
+}
+.healthBadge:is([data-status='attention'], [data-status='pending'], [data-status='overdue']),
+.healthPoint[data-status='attention'] {
+  --health-color: #925309;
+}
+.healthBadge:is([data-status='offline'], [data-status='failed'], [data-status='stuck']),
+.healthPoint[data-status='offline'] {
+  --health-color: var(--color-coral-ink);
+}
 .root label {
   display: grid;
   gap: 8px;
