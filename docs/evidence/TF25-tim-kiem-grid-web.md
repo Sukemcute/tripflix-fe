@@ -27,7 +27,7 @@
 | Dock/drawer đồng bộ token OTA | Có | `social-feed.module.css` (dock, drawer không còn mã màu ghi cứng) |
 
 ## Kết quả kiểm tra
-- `pnpm turbo run lint typecheck test --filter=@tripflix/web --filter=@tripflix/api-client --filter=@tripflix/app-core --filter=@tripflix/mobile --filter=@tripflix/i18n` — 14/14 task; web 59, api-client 186, app-core 89, i18n 2 test pass; lint 0 lỗi, không có warning ở file đã sửa.
+- Sau khi merge `origin/develop` (2026-11-12): `pnpm turbo run lint typecheck test --filter=@tripflix/web --filter=@tripflix/api-client --filter=@tripflix/app-core --filter=@tripflix/mobile --filter=@tripflix/i18n --filter=@tripflix/admin` — 16/16 task; web 59, api-client 187, app-core 91, i18n 2 test pass; lint 0 lỗi, không có warning ở file đã sửa.
 - Anh Thành đã kiểm giao diện trên localhost.
 
 ## Cách kiểm lại
