@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { shouldCompressVideo, validatePostMedia } from './post-media';
+import {
+  getPostCaption,
+  getPostTitleFromCaption,
+  POST_TITLE_MAX_LENGTH,
+  shouldCompressVideo,
+  validatePostMedia,
+} from './post-media';
 
 const image = { type: 'image', width: 600, height: 400 };
 const video = { type: 'video', width: 600, height: 400, durationMs: 300_000 };
@@ -51,5 +57,27 @@ describe('shouldCompressVideo', () => {
     expect(shouldCompressVideo({ width: 0, height: 0, sizeBytes: 10 * MB, durationMs: 30_000 })).toBe(true);
     expect(shouldCompressVideo({ width: 1080, height: 1920, sizeBytes: 0, durationMs: 30_000 })).toBe(true);
     expect(shouldCompressVideo({ width: 1080, height: 1920, sizeBytes: 10 * MB, durationMs: 0 })).toBe(true);
+  });
+});
+
+describe('post caption', () => {
+  it('lấy tiêu đề từ dòng đầu caption, cắt theo từ khi quá dài', () => {
+    expect(getPostTitleFromCaption('  Đà Lạt 3N2Đ\nNgày 1 đi chợ đêm ')).toBe('Đà Lạt 3N2Đ');
+    const long = 'Chuyến đi '.repeat(15).trim();
+    const title = getPostTitleFromCaption(long);
+    expect(title.length).toBeLessThanOrEqual(POST_TITLE_MAX_LENGTH);
+    expect(title.endsWith('…')).toBe(true);
+    expect(long.startsWith(title.slice(0, -1))).toBe(true);
+  });
+
+  it('chỉ hiện caption với bài mới, ghép tiêu đề với bài cũ', () => {
+    expect(getPostCaption('Đà Lạt 3N2Đ', 'Đà Lạt 3N2Đ\nNgày 1 đi chợ đêm')).toBe(
+      'Đà Lạt 3N2Đ\nNgày 1 đi chợ đêm',
+    );
+    expect(getPostCaption('Chuyến đi …', 'Chuyến đi rất dài')).toBe('Chuyến đi rất dài');
+    expect(getPostCaption('Cáp treo Hòn Tre', 'Ngồi cáp treo vượt biển')).toBe(
+      'Cáp treo Hòn Tre · Ngồi cáp treo vượt biển',
+    );
+    expect(getPostCaption('Chỉ có tiêu đề', '')).toBe('Chỉ có tiêu đề');
   });
 });

@@ -62,3 +62,22 @@ export function shouldCompressVideo(video: VideoCompressionInput): boolean {
   const bitrate = (video.sizeBytes * 8) / seconds;
   return longEdge > VIDEO_COMPRESSION.maxLongEdge || bitrate > VIDEO_COMPRESSION.skipBelowBitrate;
 }
+
+/** Tiêu đề core bắt buộc (tối đa 255 ký tự) lấy từ dòng đầu của caption, vì app chỉ cho nhập caption. */
+export const POST_TITLE_MAX_LENGTH = 100;
+
+export function getPostTitleFromCaption(caption: string): string {
+  const firstLine = caption.trim().split(/\r?\n/, 1)[0]!.trim();
+  if (firstLine.length <= POST_TITLE_MAX_LENGTH) return firstLine;
+  const cut = firstLine.slice(0, POST_TITLE_MAX_LENGTH - 1);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > POST_TITLE_MAX_LENGTH / 2 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
+
+/** Chữ hiện dưới reel: bài mới có tiêu đề là đầu caption nên chỉ hiện caption; bài cũ ghép tiêu đề và nội dung. */
+export function getPostCaption(title: string, body: string | null | undefined): string {
+  const text = body?.trim() ?? '';
+  if (!text) return title.trim();
+  const titleStem = title.trim().replace(/…$/, '');
+  return text.startsWith(titleStem) ? text : `${title.trim()} · ${text}`;
+}
