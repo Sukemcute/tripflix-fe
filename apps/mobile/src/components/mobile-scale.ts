@@ -12,5 +12,5 @@ export const mobileIconSize = {
   control: 16,
   nav: 21,
   reel: 28,
-  reelTripi: 38,
+  reelTripi: 46,
 } as const;
