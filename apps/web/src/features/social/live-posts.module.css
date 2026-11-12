@@ -1927,6 +1927,8 @@
 /* Sticky Comment Composer at bottom of Right Panel */
 
 .stickyComposerBox {
+  /* Mốc định vị cho bảng emoji: bảng rộng theo cả khung nhập, không tràn ra ngoài panel. */
+  position: relative;
   border-top: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
   background: var(--color-transparent);
   padding: 12px 14px 14px;
@@ -1955,7 +1957,6 @@
 
 /* Kiểu TikTok: avatar và nút gửi nằm ngoài; viên thuốc chứa ô nhập và nút emoji, viền mảnh, nền sáng nhẹ. */
 .panelComposerField {
-  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
@@ -1991,7 +1992,10 @@
 
 .panelComposerInput:focus,
 .panelComposerInput:focus-visible {
+  /* globals.css tô viền teal (box-shadow inset) cho mọi input đang focus; ở đây khung viên thuốc
+     bên ngoài đã báo trạng thái focus nên tắt để không lộ khung chữ nhật bên trong. */
   outline: none;
+  box-shadow: none;
 }
 
 .panelEmojiBtn {
