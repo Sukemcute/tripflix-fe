@@ -1917,9 +1917,9 @@
 }
 
 .panelReplyWrapper {
-  margin-left: 16px;
+  margin-left: 14px;
   padding-left: 14px;
-  border-left: 2px solid color-mix(in srgb, var(--color-coral) 25%, var(--color-border));
+  border-left: 1.5px solid var(--iv-border);
   display: grid;
   gap: 12px;
   margin-top: 6px;
