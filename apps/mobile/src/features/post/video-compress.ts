@@ -1,7 +1,7 @@
 import { shouldCompressVideo, VIDEO_COMPRESSION } from '@tripflix/app-core';
+import { isRunningInExpoGo } from 'expo';
 import { File } from 'expo-file-system';
 import { Platform } from 'react-native';
-import { Video } from 'react-native-compressor';
 import { fileVideoSource, type PickedVideo } from './video-source';
 
 export interface VideoCompression {
@@ -21,10 +21,10 @@ export function startVideoCompression(
   video: PickedVideo,
   onProgress: (percent: number) => void,
 ): VideoCompression {
-  if (Platform.OS === 'web' || !shouldCompressVideo(video)) {
+  if (Platform.OS === 'web' || isRunningInExpoGo() || !shouldCompressVideo(video)) {
     return { compressing: false, result: Promise.resolve(video), dispose: () => {} };
   }
-  let cancellationId: string | undefined;
+  let cancelCompression: (() => void) | undefined;
   let outputUri: string | undefined;
   let disposed = false;
   const deleteOutput = () => {
@@ -34,46 +34,58 @@ export function startVideoCompression(
     } catch {
       // File tạm nằm trong cache của app, hệ điều hành sẽ dọn nếu xoá lỗi.
     }
+    outputUri = undefined;
   };
 
-  const result = Video.compress(
-    video.uri,
-    {
-      compressionMethod: 'manual',
-      bitrate: VIDEO_COMPRESSION.targetBitrate,
-      maxSize: VIDEO_COMPRESSION.maxLongEdge,
-      preserveMetadata: false,
-      progressDivider: 5,
-      getCancellationId: (id) => {
-        cancellationId = id;
+  const result = (async () => {
+    // Chỉ nạp NitroModules khi cần nén để màn tạo bài mở được trong Expo Go.
+    const { Video } = await import('react-native-compressor');
+    if (disposed) return video;
+
+    const uri = await Video.compress(
+      video.uri,
+      {
+        compressionMethod: 'manual',
+        bitrate: VIDEO_COMPRESSION.targetBitrate,
+        maxSize: VIDEO_COMPRESSION.maxLongEdge,
+        preserveMetadata: false,
+        progressDivider: 5,
+        getCancellationId: (id) => {
+          cancelCompression = () => Video.cancelCompression(id);
+        },
       },
-    },
-    (progress) => {
-      if (!disposed) onProgress(Math.min(100, Math.floor(progress <= 1 ? progress * 100 : progress)));
-    },
-  ).then(
-    (uri) => {
-      outputUri = uri;
-      if (disposed) {
-        deleteOutput();
-        return video;
-      }
-      const compressed = fileVideoSource({
-        uri,
-        durationMs: video.durationMs,
-        width: 0,
-        height: 0,
-        mimeType: 'video/mp4',
-      });
-      if (!compressed || compressed.sizeBytes >= video.sizeBytes) {
-        deleteOutput();
-        return video;
-      }
-      return compressed;
-    },
-    // Nén lỗi (máy không hỗ trợ, thiếu bộ nhớ...) thì vẫn đăng được bằng file gốc.
-    () => video,
-  );
+      (progress) => {
+        if (!disposed) onProgress(Math.min(100, Math.floor(progress <= 1 ? progress * 100 : progress)));
+      },
+    );
+
+    if (uri === video.uri) return video;
+    outputUri = uri;
+    if (disposed) {
+      deleteOutput();
+      return video;
+    }
+    const compressed = fileVideoSource({
+      uri,
+      durationMs: video.durationMs,
+      width: 0,
+      height: 0,
+      mimeType: 'video/mp4',
+    });
+    if (!compressed || compressed.sizeBytes >= video.sizeBytes) {
+      deleteOutput();
+      return video;
+    }
+    return compressed;
+  })()
+    .catch(() => {
+      // Nếu không nạp được module hoặc nén lỗi, vẫn tải lên được bằng file gốc.
+      deleteOutput();
+      return video;
+    })
+    .finally(() => {
+      cancelCompression = undefined;
+    });
 
   return {
     compressing: true,
@@ -81,7 +93,7 @@ export function startVideoCompression(
     dispose: () => {
       if (disposed) return;
       disposed = true;
-      if (cancellationId && !outputUri) Video.cancelCompression(cancellationId);
+      cancelCompression?.();
       deleteOutput();
     },
   };
