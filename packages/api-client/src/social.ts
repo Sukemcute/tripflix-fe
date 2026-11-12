@@ -73,6 +73,11 @@ export const socialApi = {
       ).data,
     );
   },
+  async getCommentThread(postId: string, focusCommentId: string, signal?: AbortSignal) {
+    return readPage(
+      (await comments.commentsControllerListComments(encodeURIComponent(postId), { focusCommentId }, { signal })).data,
+    );
+  },
   async addComment(id: string, body: string, parentCommentId?: string) {
     return (
       await comments.commentsControllerCreateComment(encodeURIComponent(id), {

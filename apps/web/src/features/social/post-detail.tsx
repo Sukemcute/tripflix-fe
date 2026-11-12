@@ -20,7 +20,7 @@ function formatDate(value: string): string {
 }
 
 /** Trang chi tiết bài viết: cột chính (bài, nút tương tác, bình luận) và cột phụ (chuyến đi gắn kèm, tương tác). */
-export function LivePostDetail({ id }: { id: string }) {
+export function LivePostDetail({ id, focusCommentId }: { id: string; focusCommentId?: string }) {
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
   const router = useRouter();
@@ -324,7 +324,7 @@ export function LivePostDetail({ id }: { id: string }) {
           </aside>
           <section className="post-comments" aria-labelledby="post-comments-title">
             <h2 id="post-comments-title">{t('api.commentsWithCount', { count: post.commentCount })}</h2>
-            <LiveComments postId={id} />
+            <LiveComments key={focusCommentId} postId={id} focusCommentId={focusCommentId} />
           </section>
         </div>
       )}
