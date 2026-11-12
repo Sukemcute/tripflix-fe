@@ -12,6 +12,7 @@ import {
 } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { SocialIcon, ComposerModal, RightPanelCommentsSynchronized } from '../live-posts';
+import { useHasUserInteracted } from '../use-has-user-interacted';
 import { usePresence } from '../use-presence';
 import { useIsWideScreen } from '../use-wide-screen';
 import { nextScrollTarget, stepScrollTowards, wheelDeltaToPixels } from './smooth-wheel-scroll';
@@ -618,6 +619,8 @@ export function SocialFeedView({
   const isLeftVisible = isItineraryOpen;
   const isRightVisible = isRightOpen;
   // Giữ sidebar thêm một nhịp khi đóng để chạy hiệu ứng thoát, song song với cột lưới co lại.
+  // Chưa thao tác thì bố cục mặc định hiện ngay, không chạy hiệu ứng trượt/co giãn.
+  const hasUserInteracted = useHasUserInteracted();
   const leftPresence = usePresence(isLeftVisible);
   const rightPresence = usePresence(isRightVisible);
 
@@ -631,7 +634,7 @@ export function SocialFeedView({
       : `${styles.splitViewContainer} ${styles.splitViewCenterOnly}`;
 
   return (
-    <div className={containerClassName}>
+    <div className={`${containerClassName} ${hasUserInteracted ? '' : styles.layoutStatic}`}>
       {/* 1. Left Column: Itinerary Sidebar Panel (Nằm ngay bên phải của Dock, cố định vững vàng) */}
       {leftPresence.isRendered && (
         <ItinerarySidebarPanel

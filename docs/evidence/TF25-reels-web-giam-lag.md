@@ -14,6 +14,7 @@ Lướt Reels web một lúc thì giật: DevTools cho thấy segment `seg_xxx.t
   - Khung tải bình luận: một vệt sáng trượt bằng `transform` thay cho 24 thanh chạy `background-position`.
 - **Sidebar Lịch trình không tự ẩn**: theo lựa chọn đóng/mở của người dùng; bài không có lịch trình hiện trạng thái "Chưa có lịch trình", khung video không còn co giãn khi lướt.
 - **Mặc định đóng sidebar Lịch trình ở Reels** cho khung video rộng; tab Bài viết vẫn mở sẵn trên màn rộng. Lựa chọn đóng/mở của người dùng giữ khi chuyển tab.
+- **Bố cục mặc định hiện ngay, không co giãn lúc mới vào** (Reels và tab Bài viết): hiệu ứng đóng/mở sidebar chỉ chạy sau lần thao tác đầu tiên của người dùng (`useHasUserInteracted`); thay đổi tự động như biết màn rộng sau hydrate hay tải xong bài thì đặt thẳng vị trí.
 - Loader hai chấm khi tải video đã thử rồi hoàn tác (chưa ưng ý giao diện).
 
 ## Đối chiếu "Xong khi"

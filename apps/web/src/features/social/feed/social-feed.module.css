@@ -962,6 +962,16 @@
 }
 
 /* Sidebar luôn ở cột cố định: sidebar đang đóng (đã gỡ khỏi DOM) không làm các phần khác nhảy cột. */
+/* Trước lần thao tác đầu tiên: sidebar mặc định hiện ngay, không trượt vào, lưới không co giãn. */
+.splitViewContainer.layoutStatic {
+  transition: none;
+}
+
+.splitViewContainer.layoutStatic > .itineraryInFeed,
+.splitViewContainer.layoutStatic > .rightPanelInFeed {
+  animation: none;
+}
+
 .splitViewContainer > .itineraryInFeed {
   grid-column: 1;
   grid-row: 1;

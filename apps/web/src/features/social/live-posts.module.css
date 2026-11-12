@@ -352,6 +352,11 @@
 }
 
 /* Luôn đủ 5 cột: trình duyệt chỉ chuyển mượt grid-template-columns khi số cột không đổi. */
+/* Trước lần thao tác đầu tiên: bố cục mặc định hiện ngay, không co giãn (xem useHasUserInteracted). */
+.viewerGrid.layoutStatic {
+  transition: none;
+}
+
 .gridThreeCols {
   grid-template-columns: 340px 20px minmax(0, 1fr) 20px 380px;
 }

@@ -36,6 +36,7 @@ import { getAvatarTone } from './avatar-tone';
 import { EmojiPicker } from './emoji-picker';
 import { insertAtSelection } from './emoji-picker-data';
 import { isReelPost } from './post-type-filter';
+import { useHasUserInteracted } from './use-has-user-interacted';
 import {
   getReelRenderMode,
   pickReelAfterRemoval,
@@ -1581,6 +1582,8 @@ export function InspirationImmersiveViewer({
   const showLeftPanel = Boolean(activePost) && isLeftOpen;
   const showRightPanel = Boolean(activePost) && isRightOpen;
 
+  // Chưa thao tác thì đổi bố cục ngay (biết màn rộng, tải xong bài), chỉ chạy hiệu ứng khi người dùng bấm đóng/mở.
+  const hasUserInteracted = useHasUserInteracted();
   const gridLayoutClass =
     showLeftPanel && showRightPanel
       ? styles.gridThreeCols
@@ -1678,7 +1681,9 @@ export function InspirationImmersiveViewer({
   return (
     <div className={styles.immersiveRoot}>
       {/* Nội dung chính: 3 Panel Đồng bộ theo activePost */}
-      <div className={`${styles.viewerGrid} ${gridLayoutClass}`}>
+      <div
+        className={`${styles.viewerGrid} ${gridLayoutClass} ${hasUserInteracted ? '' : styles.layoutStatic}`}
+      >
         {/* ================================================================
             1. LEFT PANEL — ATTACHED ITINERARY (Dùng chung ItinerarySidebarPanel chuẩn 1 style)
             ================================================================ */}
