@@ -2,6 +2,7 @@ import {
   getReelPosterPrefetchUrls,
   getSwipedTabIndex,
   layoutReelVideo,
+  REEL_LOOKAHEAD_COUNT,
   selectReelPoster,
 } from '@tripflix/app-core';
 import { useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
@@ -17,6 +18,7 @@ import {
   AppState,
   ActivityIndicator,
   FlatList,
+  Platform,
   StyleSheet,
   View,
   useWindowDimensions,
@@ -37,6 +39,7 @@ import { SHEET_CLOSE_SPRING } from '@/components/motion';
 import { SearchDropPanel } from '@/features/discovery/search-drop-panel';
 import { ReelSlide } from './reel-slide';
 import type { ReelItem } from './reel-types';
+import { useReelsLaunch } from './reels-launch';
 import { REEL_TABS, REELS_TAB_BAR_HEIGHT, ReelsTabBar, type ReelTab } from './reels-tab-bar';
 import { usePlayerPool } from './use-player-pool';
 
@@ -365,10 +368,10 @@ function ReelsTabFeed({
     void feed.fetchNextPage({ cancelRefetch: false });
   }, [isTargetLoaded, feed]);
 
-  const loadMore = () => {
-    if (feed.hasNextPage && !feed.isFetching && !feed.isError)
-      void feed.fetchNextPage({ cancelRefetch: false });
-  };
+  const { hasNextPage, isFetching, isError, fetchNextPage } = feed;
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetching && !isError) void fetchNextPage({ cancelRefetch: false });
+  }, [hasNextPage, isFetching, isError, fetchNextPage]);
   const retryFeed = () => {
     if (feed.isFetching) return;
     if (feed.isFetchNextPageError) {
@@ -462,6 +465,7 @@ export function ReelsFeed({
 }) {
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
+  const { isLaunching, onFirstFrame } = useReelsLaunch();
   const network = useNetworkState();
   const [isForeground, setIsForeground] = useState(AppState.currentState === 'active');
   // Known size means the list draws on its first frame, with no dark frame before onLayout.
@@ -477,19 +481,23 @@ export function ReelsFeed({
   const visibleIndex = Math.min(focusedIndex, Math.max(0, items.length - 1));
   const hideHeader = heldId !== null && heldId === items[visibleIndex]?.id;
   const isOffline = network.isConnected === false || network.isInternetReachable === false;
-  // 5G cũng phát bản nét nhất, giống TikTok/Reels. Chỉ nên giới hạn khi người dùng bật "Tiết kiệm dữ liệu" (iOS Low Data
-  // Mode, Android Data Saver); expo-network chưa đọc được các cờ này nên tạm không giới hạn. Khi có module thì gán ở đây.
+  const isPlaybackEnabled = isFocused && isForeground && !isOffline;
+  // expo-network does not expose system Data Saver / Low Data Mode flags.
   const isDataLimited = false;
   const slots = usePlayerPool({
     items,
     activeIndex: currentIndex,
     focusedIndex: visibleIndex,
-    isEnabled: isFocused && isForeground && !isOffline,
-    isPaused: pausedId === items[visibleIndex]?.id,
+    isEnabled: isPlaybackEnabled,
+    isPaused: isLaunching || pausedId === items[visibleIndex]?.id,
     isMuted: false,
     isDataLimited,
     retry,
   });
+
+  useEffect(() => {
+    if (isPlaybackEnabled && currentIndex + REEL_LOOKAHEAD_COUNT >= items.length - 1) onLoadMore?.();
+  }, [currentIndex, isPlaybackEnabled, items.length, onLoadMore]);
 
   useEffect(() => {
     if (layout.width === 0) return;
@@ -570,11 +578,10 @@ export function ReelsFeed({
           onScroll={onScroll}
           scrollEventThrottle={16}
           onMomentumScrollEnd={(event) => settle(indexAt(event.nativeEvent.contentOffset.y))}
-          windowSize={3}
+          // Web needs a mounted VideoView for each player that is buffering.
+          windowSize={Platform.OS === 'web' ? REEL_LOOKAHEAD_COUNT * 2 + 1 : 3}
           initialNumToRender={3}
-          maxToRenderPerBatch={3}
-          onEndReached={onLoadMore}
-          onEndReachedThreshold={1}
+          maxToRenderPerBatch={Platform.OS === 'web' ? REEL_LOOKAHEAD_COUNT + 2 : 3}
           onRefresh={onRefresh}
           refreshing={isRefreshing}
           ListFooterComponent={
@@ -596,7 +603,14 @@ export function ReelsFeed({
                 player={slot?.player}
                 isLoaded={slot?.isLoaded ?? false}
                 hasError={slot?.hasError ?? false}
+                shouldPlay={slot?.shouldPlay ?? false}
+                isMuted={slot?.isMuted ?? false}
                 onAttach={slot?.onAttach}
+                onFirstFrame={
+                  isLaunching && isFocused && visibleIndex === index && (targetId ? item.postId === targetId : index === 0)
+                    ? onFirstFrame
+                    : undefined
+                }
                 width={layout.width}
                 height={layout.height}
                 isActive={visibleIndex === index}

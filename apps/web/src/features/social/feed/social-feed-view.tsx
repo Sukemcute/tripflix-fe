@@ -8,6 +8,7 @@ import {
   socialApi,
   useApiSession,
   useSocialPosts,
+  usePostSearchFeed,
   updateReelSocialCache,
 } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
@@ -28,7 +29,11 @@ export interface SocialFeedViewProps {
   /** Tab đang hiện. Tab được giữ mounted khi ẩn, nên hiện lại cũng là bố cục ban đầu: không chạy hiệu ứng. */
   isVisible?: boolean;
   initialKeyword?: string;
+  /** Từ khoá đã chốt: tab chỉ hiện các bài viết trong kết quả tìm kiếm (dùng chung query với grid). */
   searchKeyword?: string;
+  /** Bài vừa bấm từ grid kết quả: cuộn sẵn tới bài đó. */
+  focusPostId?: string | null;
+  onBackToResults?: () => void;
   isItineraryOpen?: boolean;
   onOpenItinerary?: () => void;
   onCloseItinerary?: () => void;
@@ -42,6 +47,8 @@ export function SocialFeedView({
   isVisible = true,
   initialKeyword = '',
   searchKeyword,
+  focusPostId = null,
+  onBackToResults,
   isItineraryOpen: propIsItineraryOpen,
   onOpenItinerary,
   onCloseItinerary,
@@ -85,12 +92,18 @@ export function SocialFeedView({
   // Query posts: useSocialPosts accepts 'public' | 'mine' | 'bookmarks'
   const effectiveKeyword = (searchKeyword !== undefined ? searchKeyword : initialKeyword).trim();
   const queryKind: 'public' | 'bookmarks' = activeFilter === 'saved' ? 'bookmarks' : 'public';
+  const isSearchMode = activeFilter !== 'saved' && effectiveKeyword.length > 0;
   // Tab Bài viết chỉ lấy vlog; Reels có luồng riêng (/v1/feed).
-  const postsQuery = useSocialPosts(queryKind, activeFilter === 'saved' ? '' : effectiveKeyword, 'vlog', 'recommended');
+  const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended');
+  // Tìm kiếm: cùng query với grid kết quả (search của discovery) nên mở bài từ grid không gọi lại API.
+  const searchQuery = usePostSearchFeed(isSearchMode ? effectiveKeyword : '');
+  const postsQuery = isSearchMode ? searchQuery : feedQuery;
 
   const allPosts = useMemo(() => {
-    return postsQuery.data?.pages.flatMap((page) => page.items) ?? [];
-  }, [postsQuery.data]);
+    const items: SocialPostDto[] = postsQuery.data?.pages.flatMap((page) => page.items) ?? [];
+    // Kết quả tìm kiếm gộp cả Reels: tab này chỉ giữ bài viết.
+    return isSearchMode ? items.filter((post) => post.postType === 'vlog') : items;
+  }, [postsQuery.data, isSearchMode]);
 
   const posts = useMemo(() => {
     if (activeFilter === 'withTrip') {
@@ -214,6 +227,22 @@ export function SocialFeedView({
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Mở bài từ grid kết quả: cuộn tới bài đó một lần khi tab đang hiện và bài đã có trong danh sách.
+  const scrolledFocusIdRef = useRef<string | null>(null);
+  const isFocusPostLoaded = Boolean(focusPostId) && posts.some((post) => post.id === focusPostId);
+  useEffect(() => {
+    if (!focusPostId) {
+      scrolledFocusIdRef.current = null;
+      return;
+    }
+    if (!isVisible || !isFocusPostLoaded || scrolledFocusIdRef.current === focusPostId) return;
+    const container = mainFeedRef.current;
+    const target = container?.querySelector<HTMLElement>(`[data-feed-post-id="${CSS.escape(focusPostId)}"]`);
+    if (!container || !target) return;
+    scrolledFocusIdRef.current = focusPostId;
+    container.scrollTop += target.getBoundingClientRect().top - container.getBoundingClientRect().top - 12;
+  }, [focusPostId, isVisible, isFocusPostLoaded]);
 
   // Viewport tracking for active comment post & itinerary post when scrolling feed
   useEffect(() => {
@@ -660,8 +689,18 @@ export function SocialFeedView({
 
       {/* 2. Center Column: Main Social Feed (Cuộn mượt độc lập) */}
       <main ref={mainFeedRef} className={styles.mainFeedColumn} aria-label="Bảng tin du lịch">
+        {isSearchMode && onBackToResults && (
+          <div className={styles.searchBackBar}>
+            <button type="button" className={styles.searchBackButton} onClick={onBackToResults}>
+              <SocialIcon name="chevronLeft" size={16} />
+              {vi.api.searchResultsBack}
+            </button>
+            <span className={styles.searchBackKeyword}>“{effectiveKeyword}”</span>
+          </div>
+        )}
+
         {/* Quick Post Composer Card (FB/LinkedIn 2-Row Style) */}
-        <div className={styles.composerCard}>
+        <div className={styles.composerCard} style={isSearchMode ? { display: 'none' } : undefined}>
           {/* Row 1: User Avatar + Pill Input */}
           <div className={styles.composerTopRow}>
             <div className={styles.composerAvatar}>

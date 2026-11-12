@@ -57,15 +57,15 @@ export const DESTINATION_ASSET_REGISTRY: Record<string, DestinationAssetEntry> =
   },
   'da-lat': {
     spotlight: '/brand/destinations/da-lat-spotlight.jpg',
-    experience: '/brand/destinations/da-lat-experience.jpg',
+    experience: '/brand/destinations/da-lat-cafe.webp',
     view: '/brand/destinations/da-lat-view.jpg',
-    stayFallback: '/brand/hotel.jpg',
+    stayFallback: '/brand/destinations/da-lat-view.jpg',
   },
   'lam-dong': {
     spotlight: '/brand/destinations/da-lat-spotlight.jpg',
-    experience: '/brand/destinations/da-lat-experience.jpg',
+    experience: '/brand/destinations/da-lat-cafe.webp',
     view: '/brand/destinations/da-lat-view.jpg',
-    stayFallback: '/brand/hotel.jpg',
+    stayFallback: '/brand/destinations/da-lat-view.jpg',
   },
   'nha-trang': {
     spotlight: '/brand/destinations/nha-trang-spotlight.jpg',

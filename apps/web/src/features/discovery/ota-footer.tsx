@@ -16,7 +16,7 @@ export function OtaFooter() {
   }
 
   return (
-    <footer className={styles.footer}>
+    <footer className={styles.footer} data-water-footer={pathname === '/' || undefined}>
       <div className={`ota-container ${styles.footerGrid}`}>
         <div className={styles.footerIdentity}>
           <Link prefetch={false} className={styles.footerBrand} href="/">
@@ -27,12 +27,16 @@ export function OtaFooter() {
           <Link prefetch={false} className={styles.footerLegal} href="/chinh-sach-bao-mat">
             {vi.privacy.footerLink}
           </Link>
+          <a className={styles.footerLegal} href="mailto:tripflixandgo@gmail.com">Liên hệ: tripflixandgo@gmail.com</a>
+          <Link prefetch={false} className={styles.footerLegal} href="/dieu-khoan-su-dung">
+            {vi.terms.footerLink}
+          </Link>
         </div>
         <nav aria-label={vi.ota.footerExplore}>
           <strong>{vi.ota.footerExplore}</strong>
           <Link prefetch={false} href="/search">{vi.api.hotels}</Link>
           <Link prefetch={false} href="/flights">{vi.flights.title}</Link>
-          <Link prefetch={false} href="/#home-destinations">{vi.ota.discover}</Link>
+          <Link prefetch={false} href="/#home-recommendations">{vi.ota.discover}</Link>
           <Link prefetch={false} href="/inspiration">{vi.api.inspiration}</Link>
         </nav>
         <nav aria-label={vi.ota.footerDestinations}>
@@ -46,7 +50,7 @@ export function OtaFooter() {
             </Link>
           ))}
         </nav>
-        <div className={styles.footerPostcard}>
+        <div className={styles.footerPostcard} data-water-card>
           <div>
             <span className={styles.footerTag}>{vi.ota.footerTag}</span>
             <h2>{vi.ota.footerTitle}</h2>

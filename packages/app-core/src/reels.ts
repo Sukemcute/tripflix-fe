@@ -6,6 +6,20 @@ export interface ReelPlayback {
   levels: readonly number[];
 }
 
+/** The Tripflix worker publishes each rendition beside the unsigned master playlist. */
+export function getReelPlaybackSources(
+  { hlsUrl, levels }: Pick<ReelPlayback, 'hlsUrl' | 'levels'>,
+  maxLevel = Infinity,
+): string[] {
+  const prefix = /^(https?:\/\/[^?#]+\/)master\.m3u8$/i.exec(hlsUrl)?.[1];
+  if (!prefix) return [hlsUrl];
+
+  const available = [...new Set(levels)]
+    .filter((level) => Number.isInteger(level) && level > 0 && level <= maxLevel)
+    .sort((first, second) => second - first);
+  return [...available.map((level) => `${prefix}${level}p/index.m3u8`), hlsUrl];
+}
+
 export function selectReelPoster(posters: ReelPlayback['posters'], width: number): string {
   if (width <= 360) return posters.w360;
   if (width <= 540) return posters.w540;
@@ -127,11 +141,15 @@ export function layoutReelCommentsVideo({
   };
 }
 
-/** Mỗi vị trí trong cửa sổ dùng một slot khác nhau, kể cả khi vuốt ngược. */
+export const REEL_LOOKAHEAD_COUNT = 3;
+
+/** Keep the first load to three videos, then retain one behind and preload three ahead. */
 export function getReelPlayerIndexes(count: number, activeIndex: number): (number | null)[] {
-  const slots: (number | null)[] = [null, null, null];
-  for (let index = Math.max(0, activeIndex - 1); index <= Math.min(count - 1, activeIndex + 1); index++) {
-    slots[index % 3] = index;
+  const slots = Array<number | null>(REEL_LOOKAHEAD_COUNT + 2).fill(null);
+  const first = Math.max(0, activeIndex - 1);
+  const last = activeIndex === 0 ? 2 : activeIndex + REEL_LOOKAHEAD_COUNT;
+  for (let index = first; index <= Math.min(count - 1, last); index++) {
+    slots[index % slots.length] = index;
   }
   return slots;
 }

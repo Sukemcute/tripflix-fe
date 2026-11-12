@@ -6,7 +6,7 @@ import { Image } from 'expo-image';
 import { VideoView, type VideoPlayer } from 'expo-video';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { Extrapolation, interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { Button, Icon, Txt } from '@/components/mobile-ui';
 import { ReelSocialOverlay } from './reel-social-overlay';
@@ -19,19 +19,24 @@ function PlayerSurface({
   poster,
   contentFit,
   isPaused,
-  onRetry,
+  shouldPlay,
+  isMuted,
   onAttach,
+  onFirstFrame,
   isHidden,
 }: {
   player: VideoPlayer;
   poster: string;
   contentFit: 'cover' | 'contain';
   isPaused: boolean;
-  onRetry: () => void;
+  shouldPlay: boolean;
+  isMuted: boolean;
   onAttach?: () => void;
+  onFirstFrame?: () => void;
   isHidden: boolean;
 }) {
   const insets = useSafeAreaInsets();
+  const videoView = useRef<VideoView>(null);
   const [hasFrame, setHasFrame] = useState(false);
   const { status } = useEvent(player, 'statusChange', { status: player.status });
   const { videoTrack } = useEvent(player, 'videoTrackChange', { videoTrack: player.videoTrack });
@@ -40,10 +45,32 @@ function PlayerSurface({
   useEffect(() => {
     onAttach?.();
   }, [onAttach]);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !shouldPlay) return;
+    const video: HTMLVideoElement | null | undefined = videoView.current?.nativeRef.current;
+    if (!video) return;
+    let isActive = true;
+    // expo-video's web player.play() does not expose the browser's autoplay rejection.
+    player.muted = isMuted || navigator.userActivation?.hasBeenActive === false;
+    void video.play().catch((error: DOMException) => {
+      if (!isActive || video.muted || error.name !== 'NotAllowedError') return;
+      player.muted = true;
+      void video.play().catch(() => {});
+    });
+    return () => {
+      isActive = false;
+      player.muted = true;
+      video.pause();
+    };
+  }, [player, shouldPlay, isMuted]);
+  useEffect(() => {
+    if (hasFrame) onFirstFrame?.();
+  }, [hasFrame, onFirstFrame]);
   return (
     <>
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <VideoView
+          ref={videoView}
           player={player}
           style={styles.video}
           contentFit={contentFit}
@@ -71,7 +98,6 @@ function PlayerSurface({
           <Icon name="play" color={colors.background} size={48} />
         </View>
       )}
-      {status === 'error' && <VideoNotice text={copy.failed} onRetry={onRetry} />}
       {__DEV__ && level !== null && !isHidden && (
         <View style={[styles.quality, { top: insets.top + 80 }]} pointerEvents="none">
           <Txt variant="caption" style={styles.light}>
@@ -102,6 +128,8 @@ export function ReelSlide({
   isLoaded,
   hasError,
   isPaused,
+  shouldPlay,
+  isMuted,
   isHidden,
   isActive,
   blockedReason,
@@ -110,6 +138,7 @@ export function ReelSlide({
   onHoldChange,
   onRetry,
   onAttach,
+  onFirstFrame,
   onCommentsVisibilityChange,
 }: {
   item: ReelItem;
@@ -119,6 +148,8 @@ export function ReelSlide({
   isLoaded: boolean;
   hasError: boolean;
   isPaused: boolean;
+  shouldPlay: boolean;
+  isMuted: boolean;
   isHidden: boolean;
   isActive: boolean;
   blockedReason?: string;
@@ -127,6 +158,7 @@ export function ReelSlide({
   onHoldChange: (isHeld: boolean) => void;
   onRetry: () => void;
   onAttach?: () => void;
+  onFirstFrame?: () => void;
   onCommentsVisibilityChange: (visible: boolean) => void;
 }) {
   const poster = selectReelPoster(item.playback.posters, width);
@@ -193,8 +225,10 @@ export function ReelSlide({
             poster={poster}
             contentFit={contentFit}
             isPaused={isPaused}
-            onRetry={onRetry}
+            shouldPlay={shouldPlay}
+            isMuted={isMuted}
             onAttach={onAttach}
+            onFirstFrame={onFirstFrame}
             isHidden={isActive && isHidden}
           />
         ) : poster ? (

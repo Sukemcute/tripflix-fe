@@ -65,33 +65,52 @@ h3 {
   width: min(1600px, calc(100% - clamp(48px, 8vw, 160px)));
   margin-inline: auto;
 }
-/* Header kính (TF06P): đứng yên đầu trang, nền trắng trong mờ, viền xám mảnh mép dưới. */
+/* Header giữ viền viên thuốc, nền trong suốt để ảnh/nền trang vẫn liền mạch. */
 .ota-header {
   position: relative;
   z-index: 40;
-  border-bottom: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-background) 88%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(1.6);
-  backdrop-filter: blur(16px) saturate(1.6);
+  width: min(1600px, calc(100% - clamp(32px, 5vw, 80px)));
+  margin: 12px auto;
+  border: 1px solid rgb(0 124 110 / 24%);
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
 }
 .header-content {
   min-height: 80px;
   display: flex;
   align-items: center;
-  gap: 48px;
+  gap: 24px;
+  justify-content: space-between;
 }
+.header-content > a { flex-shrink: 0; }
+.header-brand {
+  position: relative;
+  display: block;
+  width: 142px;
+  height: 43px;
+  flex: 0 0 142px;
+}
+.header-brand img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.header-logo-light { display: none; }
 .header-content img {
   width: 142px;
   height: auto;
 }
-/* Menu header dạng viên trong một viên xám nhạt: mỗi mục có icon, rê chuột nền trắng, mục đang mở nền cam nhạt (TF06P). */
+/* Menu header phẳng, không lồng thêm nền viên thuốc vào khung header. */
 .header-content nav {
   display: flex;
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-surface-muted) 60%, transparent);
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   font-size: 14px;
 }
 .header-content nav a {
@@ -117,7 +136,8 @@ h3 {
   stroke-linejoin: round;
 }
 .header-content nav a:hover {
-  background: var(--color-background);
+  background: transparent;
+  color: var(--color-teal-ink);
 }
 .header-content nav a:active {
   transform: scale(0.95);
@@ -146,16 +166,16 @@ h3 {
   background: var(--color-background);
   color: var(--color-coral-ink);
 }
-/* Cụm bên phải (giỏ hàng, chuông, avatar): một viên cùng kiểu với viên menu, mọi nút tròn 40px. */
+/* Các nút bên phải đứng riêng, không đặt thêm một viên bao quanh cả cụm. */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   margin-left: auto;
-  padding: 4px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-surface-muted) 60%, transparent);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 /* Bỏ các khoảng kéo sát cũ (giỏ + tài khoản trong cart.module.css): trong viên đã có gap. */
 .ota-header .header-content .header-actions > * {
@@ -180,7 +200,7 @@ h3 {
   background: none;
 }
 .header-actions > a:not(.header-login):hover {
-  background: var(--color-background);
+  background: rgb(255 255 255 / 48%);
   color: var(--color-coral-ink);
 }
 .header-notifications {
@@ -462,6 +482,37 @@ h3 {
 .header-login {
   margin-left: auto;
 }
+
+body:has([data-home-hero]) .ota-header {
+  border-color: rgb(255 255 255 / 48%);
+}
+@media (min-width: 641px) {
+  body:has([data-home-hero]) .ota-header {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    margin: 0;
+    transform: translateX(-50%);
+    z-index: 50;
+  }
+}
+body:has([data-home-hero]) .header-logo-dark { display: none; }
+body:has([data-home-hero]) .header-logo-light { display: block; }
+body:has([data-home-hero]) .header-brand { filter: drop-shadow(0 2px 5px rgb(0 35 45 / 46%)); }
+body:has([data-home-hero]) .header-content nav a,
+body:has([data-home-hero]) .header-icon-button,
+body:has([data-home-hero]) .header-actions > a:not(.header-login) {
+  color: #fff;
+  text-shadow: 0 1px 5px rgb(0 35 45 / 58%);
+}
+body:has([data-home-hero]) .header-content nav a[aria-current='page'] {
+  box-shadow: inset 0 -2px 0 rgb(255 255 255 / 88%);
+}
+body:has([data-home-hero]) .header-content nav a:hover,
+body:has([data-home-hero]) .header-actions > a:not(.header-login):hover {
+  color: #fff;
+  background: rgb(255 255 255 / 14%);
+}
 .header-account {
   position: relative;
 }
@@ -606,9 +657,9 @@ h3 {
 }
 .ota-home.results-page {
   padding-top: 0;
-  padding-bottom: 32px;
+  padding-bottom: 16px;
   position: relative;
-  margin-top: -46px;
+  margin-top: 0;
   scroll-margin-top: 24px;
 }
 .ota-home > .result-grid:empty {
@@ -644,7 +695,7 @@ h3 {
 }
 @media (max-width: 640px) {
   .ota-home.results-page {
-    margin-top: -16px;
+    margin-top: -12px;
   }
 }
 .search-form > input,
@@ -1282,6 +1333,18 @@ h3 {
     font-size: 25px;
   }
 }
+@media (max-width: 850px) and (min-width: 641px) {
+  .header-content {
+    flex-wrap: wrap;
+    row-gap: 4px;
+    padding-block: 10px;
+  }
+  .header-content nav {
+    order: 3;
+    flex: 0 0 100%;
+    justify-content: center;
+  }
+}
 @media (max-width: 640px) {
   .ota-container {
     width: calc(100% - 32px);
@@ -1446,6 +1509,15 @@ h3 {
   }
   .detail-price {
     font-size: 30px;
+  }
+}
+@media (max-width: 380px) {
+  .header-content nav {
+    gap: 0;
+  }
+  .header-content nav a {
+    padding-inline: 3px;
+    font-size: 11px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
