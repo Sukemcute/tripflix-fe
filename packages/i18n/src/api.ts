@@ -203,6 +203,8 @@ export const api = {
   commentLogin: 'Đăng nhập để bình luận',
   commentMember: 'Thành viên',
   commentEdited: 'đã sửa',
+  followAuthor: 'Theo dõi',
+  unfollowAuthor: 'Bỏ theo dõi',
   hideReplies: 'Ẩn trả lời',
   // Thanh tìm kiếm trang Cảm hứng (TF06K)
   searchWhere: 'Đi đâu, ở đâu, chơi gì',

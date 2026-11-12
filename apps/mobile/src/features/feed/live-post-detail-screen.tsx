@@ -6,6 +6,7 @@ import {
   socialApi,
   updateReelSocialCache,
   useApiSession,
+  useFollowAuthor,
 } from '@tripflix/api-client';
 import type { TripAttachmentDto } from '@tripflix/api-client/core-api/model/index';
 import { isBackSwipeComplete } from '@tripflix/app-core';
@@ -234,6 +235,8 @@ export function LivePostDetailScreen() {
     ]);
   };
   const trip = post?.tripAttachment;
+  const canShowFollow = isReady && !!post && post.status === 'published' && post.authorId !== user?.id;
+  const follow = useFollowAuthor(canShowFollow ? post.authorId : undefined);
   const authorName =
     post?.authorId === user?.id ? user?.displayName : post?.authorName || cachedCard?.author.name;
   const tripFacts = [
@@ -297,6 +300,23 @@ export function LivePostDetailScreen() {
                   <Txt variant="small" style={styles.muted}>
                     {authorName}
                   </Txt>
+                )}
+                {canShowFollow && (
+                  <>
+                    <Button
+                      tone="secondary"
+                      compact
+                      disabled={!!user && !follow.canToggle}
+                      onPress={() => {
+                        if (user) follow.toggle();
+                        else router.push({ pathname: '/login', params: { returnTo: `/trip/${slug}` } });
+                      }}
+                    >
+                      {follow.isLoading || follow.isUpdating ? vi.api.loading
+                        : follow.isFollowing ? vi.api.unfollowAuthor : vi.api.followAuthor}
+                    </Button>
+                    <ApiErrorNotice error={follow.error} retry={() => void follow.retry()} />
+                  </>
                 )}
                 {tripFacts.length > 0 && <Txt variant="small">{tripFacts.join(' · ')}</Txt>}
                 {!!trip?.estimatedCostPerPerson && !!trip.priceDisclaimer && (
