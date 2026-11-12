@@ -6,7 +6,8 @@ import { socialApi } from './social';
 export function useSocialPosts(
   kind: 'public' | 'mine' | 'bookmarks' = 'public',
   keyword = '',
-  postType?: 'video' | 'vlog',
+  // Chỉ còn vlog: Reels lấy qua useReelsFeed (/v1/feed).
+  postType?: 'vlog',
 ) {
   const { user, isReady } = useApiSession();
   return useInfiniteQuery({
@@ -15,11 +16,12 @@ export function useSocialPosts(
     enabled: isReady && (kind === 'public' || !!user),
     queryFn: ({ pageParam, signal }) =>
       kind === 'mine'
-        ? socialApi.listMyPosts({ cursor: pageParam }, signal)
+        ? socialApi.listMyPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal)
         : kind === 'bookmarks'
-          ? socialApi.listBookmarks(pageParam, signal)
+          ? socialApi.listBookmarks(pageParam, signal, postType)
           : keyword
-            ? // Có từ khoá: tìm bằng discovery thay cho ILIKE của content; lọc loại bài sau khi lấy chi tiết.
+            ? // Có từ khoá: tìm bằng discovery thay cho ILIKE của content. Discovery chưa có loại khớp đúng vlog
+              // (post bỏ sót bài có lộ trình) nên tạm lọc sau khi lấy chi tiết.
               searchPublicPosts(keyword, pageParam, signal).then((page) =>
                 postType ? { ...page, items: page.items.filter((post) => post.postType === postType) } : page,
               )

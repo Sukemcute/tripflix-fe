@@ -4,12 +4,12 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { PostViewerContextDto } from './postViewerContextDto';
 import type { SocialPostDtoPostType } from './socialPostDtoPostType';
 import type { SocialPostDtoReactionCounts } from './socialPostDtoReactionCounts';
 import type { SocialPostDtoStatus } from './socialPostDtoStatus';
 import type { SocialPostDtoVisibility } from './socialPostDtoVisibility';
 import type { TripAttachmentDto } from './tripAttachmentDto';
-import type { PostViewerContextDto } from './postViewerContextDto';
 
 export interface SocialPostDto {
   id: string;

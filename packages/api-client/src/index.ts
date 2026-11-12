@@ -54,7 +54,7 @@ export {
   type NotificationReadResult,
 } from './notifications';
 export { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime } from './notifications-realtime';
-export { findCachedFeedCard, updateReelSocialCache } from './reel-social-cache';
+export { findCachedFeedCard, removeReelFromSavedFeedCache, updateReelSocialCache } from './reel-social-cache';
 export { updateCommentLikeCache } from './comment-like-cache';
 export { evictPostFromCache, isPostNotFoundError } from './post-cache';
 export { useStaySearch, getAvailableStays, getFutureDate, type StayFilters } from './stay-search';

@@ -13,7 +13,7 @@ export type PostsControllerListPublicPostsParams = {
   cursor?: string;
   /** Lọc theo tác giả */
   author_id?: string;
-  /** Lọc theo loại bài */
+  /** Lọc theo loại bài. Không truyền thì trả mọi loại (AI service đang dùng). Reels lấy qua /v1/feed; giá trị video vẫn được chấp nhận để client cũ không lỗi nhưng không còn trong hợp đồng */
   post_type?: PostsControllerListPublicPostsPostType;
   /** Lọc theo hashtag */
   hashtag?: string;

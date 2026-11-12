@@ -184,11 +184,10 @@ export function PostCard({
         </div>
       )}
 
-      {/* 3. Adaptive Media (Images / Inline Video) */}
+      {/* 3. Adaptive Media (ảnh); bài viết không kèm video */}
       <AdaptivePostMedia
         postTitle={post.title}
         images={postImages}
-        videoUrl={post.postType === 'video' ? undefined : undefined}
         onOpenGallery={(idx) => onOpenGallery?.(post.id, idx)}
       />
 

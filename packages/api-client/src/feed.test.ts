@@ -49,3 +49,14 @@ it('retains HTTP failures for retry and rejects malformed feed pages', async () 
   await expect(feedApi.list()).rejects.toBeInstanceOf(HttpError);
   await expect(feedApi.list()).rejects.toThrow('Unexpected API page');
 });
+
+it('requests only the viewer saved Reels on the for_you tab', async () => {
+  configureHttp({ baseUrl: 'http://api', getAccessToken: async () => 'test-session' });
+  const fetchMock = vi
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValue(json(200, { items: [], nextCursor: null }));
+  await feedApi.list(undefined, undefined, 'hot', { isSavedOnly: true });
+  const params = new URL(String(fetchMock.mock.calls[0]![0])).searchParams;
+  expect(params.get('saved')).toBe('true');
+  expect(params.get('tab')).toBe('for_you');
+});
