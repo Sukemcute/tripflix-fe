@@ -1,7 +1,7 @@
 import type { ExpoConfig } from 'expo/config';
 
 // Màu ở đây phải là chuỗi cố định (Expo đọc lúc build), giữ khớp với @tripflix/tokens.
-const CORAL = '#FF5A3C';
+const BLACK = '#000000';
 const WHITE = '#FFFFFF';
 
 const config: ExpoConfig = {
@@ -39,9 +39,9 @@ const config: ExpoConfig = {
     [
       'expo-splash-screen',
       {
-        backgroundColor: CORAL,
-        image: './assets/images/splash-icon.png',
-        imageWidth: 76,
+        backgroundColor: BLACK,
+        image: './assets/brand/tripflix-launch-mark.png',
+        imageWidth: 96,
       },
     ],
   ],

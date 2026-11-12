@@ -73,16 +73,19 @@ function readServerFieldErrors(error: unknown): Record<string, string> {
 }
 
 export function CheckoutScreen({ id }: { id: string }) {
+  const router = useRouter();
   const { user, isReady } = useApiSession();
-  if (isReady && !user)
+
+  useEffect(() => {
+    if (isReady && !user) {
+      router.replace(`/login?returnTo=${encodeURIComponent(`/checkout/${id}`)}`);
+    }
+  }, [isReady, user, router, id]);
+
+  if (!isReady || !user)
     return (
       <main className={`ota-container ${styles.page}`}>
-        <div className={styles.card}>
-          <p>{copy.loginToViewPayment}</p>
-          <Link prefetch={false} className="primary-button" href={`/login?returnTo=${encodeURIComponent(`/checkout/${id}`)}`}>
-            {vi.commerce.login}
-          </Link>
-        </div>
+        <p className="empty-state">{vi.api.loading}</p>
       </main>
     );
   return <CheckoutForm key={`${user?.id}:${id}`} id={id} isEnabled={isReady && !!user} />;

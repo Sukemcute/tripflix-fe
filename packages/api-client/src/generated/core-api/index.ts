@@ -1,5 +1,6 @@
 export * from './admin/admin';
 export * from './admin-commerce/admin-commerce';
+export * from './admin-index-health/admin-index-health';
 export * from './auth/auth';
 export * from './checkout/checkout';
 export * from './discovery/discovery';

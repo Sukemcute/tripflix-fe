@@ -1,8 +1,10 @@
 'use client';
+import { useEffect } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { commerceApi, useApiSession } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { CheckoutError } from './checkout-error';
 import styles from './checkout.module.css';
@@ -12,18 +14,26 @@ const formatDate = (date: string) => date.split('-').reverse().join('/');
 
 /** Chuyến đi của tôi: mọi đơn của người đang đăng nhập, mới đặt trước. */
 export function BookingsScreen() {
+  const router = useRouter();
   const { user, isReady } = useApiSession();
+
+  useEffect(() => {
+    if (isReady && !user) {
+      router.replace('/login?returnTo=%2Fbookings');
+    }
+  }, [isReady, user, router]);
+
+  if (!isReady || !user) {
+    return (
+      <main className={`ota-container ${styles.page}`}>
+        <p className="empty-state">{vi.api.loading}</p>
+      </main>
+    );
+  }
+
   return (
     <main className={`ota-container ${styles.page}`}>
       <h1 className={styles.title}>{copy.booked}</h1>
-      {isReady && !user && (
-        <div className={styles.card}>
-          <p>{copy.loginToViewPayment}</p>
-          <Link prefetch={false} className="primary-button" href="/login?returnTo=%2Fbookings">
-            {copy.login}
-          </Link>
-        </div>
-      )}
       <BookingsList />
     </main>
   );

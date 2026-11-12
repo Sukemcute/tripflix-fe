@@ -17,14 +17,8 @@ import { formatPrice } from './trip-card';
 import { StayThumbnail } from './stay-thumbnail';
 import { SoftStarIcon } from './soft-star-icon';
 import { StaySearchIcon } from './stay-search-icon';
-import { Pacifico } from 'next/font/google';
+import { WashiTape } from './torn-paper';
 import styles from './ota-home.module.css';
-
-const handwritingFont = Pacifico({
-  subsets: ['vietnamese', 'latin'],
-  weight: ['400'],
-  display: 'swap',
-});
 
 export function HomeStayPreview() {
   const { isReady } = useApiSession();
@@ -49,12 +43,11 @@ export function HomeStayPreview() {
   });
   return (
     <section className={styles.stayBand} aria-labelledby="home-stays-title">
-      <Image className={styles.stayBackdrop} src="/brand/home-stays-ninh-binh.jpg" alt="" fill sizes="100vw" />
-      <span className={styles.stayEdgeTop} aria-hidden="true" />
-      <span className={styles.stayEdgeBottom} aria-hidden="true" />
       <div className={`ota-container ${styles.stayContent}`}>
         <div className={styles.stayHeader} data-home-banner>
           <div className={styles.stayTicket}>
+            {/* Miếng dán washi tape cố định vé trên trang sổ tay */}
+            <WashiTape color="coral" angle={-4} className={styles.ticketTape} />
             <div className={styles.stayCopy}>
               <div className={styles.stayInnerFrame}>
                 <div className={styles.stayTicketBadge}>
@@ -80,7 +73,7 @@ export function HomeStayPreview() {
                     href={getDestinationHref(destination)}
                     aria-label={`Điểm đến ${destination.name}`}
                   >
-                    <span key={destination.id} className={`${handwritingFont.className} ${styles.stayDestinationText}`}>
+                    <span key={destination.id} className={styles.stayDestinationText}>
                       {destination.name}
                     </span>
                   </Link>
@@ -134,7 +127,7 @@ export function HomeStayPreview() {
             void query.refetch();
           }}
         />
-        {query.isPending && <output className={styles.state}>{vi.api.loading}</output>}
+        {query.isPending && <output className={`${styles.state} ${styles.loadingState}`}>{vi.api.loading}</output>}
         {query.data?.items.length === 0 && (
           <p className={styles.state}>
             {vi.ota.noMatchingStays}. {vi.ota.noStaysHint}
@@ -183,6 +176,7 @@ export function HomeStoryPreview() {
     <section
       className={`ota-container ${styles.section} ${styles.stories}`}
       aria-labelledby="home-stories-title"
+      data-water-stories
       data-home-reveal
     >
       <div className={styles.sectionHead}>
@@ -200,7 +194,7 @@ export function HomeStoryPreview() {
           void query.refetch();
         }}
       />
-      {query.isPending && <output className={styles.state}>{vi.api.loading}</output>}
+      {query.isPending && <output className={`${styles.state} ${styles.loadingState}`}>{vi.api.loading}</output>}
       {posts?.length === 0 && <p className={styles.state}>{vi.api.noPosts}</p>}
       <div className={styles.previewGrid}>
         {posts?.map((post) => (
