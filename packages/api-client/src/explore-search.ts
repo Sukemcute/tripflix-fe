@@ -1,8 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { exploreControllerSearch, exploreControllerSearchPosts } from './generated/core-api/discovery/discovery';
+import {
+  exploreControllerSearch,
+  exploreControllerSearchPosts,
+  postRecommendationsControllerRecommendPosts,
+} from './generated/core-api/discovery/discovery';
 import { userSearchControllerSearch } from './generated/core-api/users/users';
 import type {
   ExploreResponseDto,
+  PostRecommendationsDto,
   SearchPostsRequestDto,
   SearchPostsResponseDto,
   UserSearchResponseDto,
@@ -56,6 +61,27 @@ export async function searchPublicPosts(keyword: string, cursor?: string, signal
     ),
   );
   return { items: details.filter((post) => post !== null), nextCursor: found.nextCursor };
+}
+
+/**
+ * Bài gợi ý theo gu (GET /api/recommendations/posts; khách nhận "đang thịnh hành"), rồi lấy chi tiết từng bài
+ * như searchPublicPosts để trả cùng dạng trang với socialApi.listPosts.
+ */
+export async function recommendPublicPosts(cursor?: string, signal?: AbortSignal, postType?: 'vlog') {
+  const response = await postRecommendationsControllerRecommendPosts(
+    { mode: 'for_you', limit: KEYWORD_SEARCH_PAGE_SIZE, ...(cursor ? { cursor } : {}), ...(postType ? { postType } : {}) },
+    { signal },
+  );
+  const page = readEntity(response.data, ['items', 'algo', 'nextCursor']) as PostRecommendationsDto;
+  const details = await Promise.all(
+    page.items.map((item) =>
+      socialApi.getPost(item.post.id, signal).then(
+        (detail) => detail.post,
+        () => null,
+      ),
+    ),
+  );
+  return { items: details.filter((post) => post !== null), nextCursor: page.nextCursor };
 }
 
 /** Hook tìm bài trên app: dùng useQuery cache theo params */
