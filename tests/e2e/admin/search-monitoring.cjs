@@ -73,6 +73,7 @@ async function mockApi(context, role = 'moderator') {
   const calls = [];
   let failures = 0;
   let trendCalls = 0;
+  let healthCalls = 0;
   await context.route('**/api/**', async (route) => {
     const req = route.request();
     const path = new URL(req.url()).pathname;
@@ -96,7 +97,38 @@ async function mockApi(context, role = 'moderator') {
         emailVerified: true,
         createdAt: '2026-11-11T05:00:00Z',
       };
-    else if (path === '/api/search' || path === '/api/search/posts') {
+    else if (path === '/api/v1/admin/search/index-health') {
+      calls.push({ path });
+      healthCalls++;
+      const checkedAt = Date.UTC(2026, 10, 12, 5) + healthCalls * 300_000;
+      const offline = healthCalls === 2;
+      status = healthCalls === 3 ? 503 : 200;
+      body = healthCalls === 3 ? { message: 'Unavailable' } : {
+        checkedAt,
+        workers: healthCalls >= 4 ? [] : [{
+          id: '12345678-1111-4111-8111-111111111111',
+          name: 'discovery-worker',
+          lastSeenAt: offline ? checkedAt - 600_000 : checkedAt,
+          status: offline ? 'offline' : 'healthy',
+          jobs: [{
+            job: 'explore',
+            status: offline ? 'unknown' : 'succeeded',
+            startedAt: checkedAt - 600_000,
+            finishedAt: checkedAt - 599_200,
+            lastSuccessAt: checkedAt - 599_200,
+            count: 214,
+            logs: [
+              { at: checkedAt - 599_200, message: 'Dựng chỉ mục thành công', outcome: 'succeeded', durationMs: 800, count: 214 },
+              { at: checkedAt - 1_200_000, message: 'Danh mục tạm lỗi', outcome: 'failed', durationMs: 1500, count: null },
+            ],
+          }],
+          history: Array.from({ length: 24 }, (_, i) => ({
+            at: checkedAt - (23 - i) * 300_000,
+            status: i < 20 ? 'unknown' : i === 23 && offline ? 'offline' : 'healthy',
+          })),
+        }],
+      };
+    } else if (path === '/api/search' || path === '/api/search/posts') {
       const payload = req.postDataJSON();
       calls.push({ path, payload });
       if (payload.q === 'biểu đồ' && path === '/api/search') {
@@ -477,6 +509,48 @@ async function verifyTrends(browser, viewport) {
   }
 }
 
+async function verifyWorkers(browser, viewport) {
+  const context = await browser.newContext({ viewport });
+  try {
+    const calls = await mockApi(context);
+    const page = await context.newPage();
+    await page.clock.install();
+    const ui = new SearchMonitorPage(page);
+    await ui.open();
+    assert.equal(calls.length, 0);
+    await page.getByRole('button', { name: 'Worker chỉ mục', exact: true }).click();
+    const worker = page.getByRole('region', { name: 'Worker discovery-worker', exact: true });
+    await worker.getByText('Thành công', { exact: true }).waitFor();
+    const history = worker.getByRole('list', { name: 'Lịch sử trạng thái trong 2 giờ qua', exact: true });
+    assert.equal(await history.getByRole('listitem').count(), 24);
+    await page.getByText('50%', { exact: true }).waitFor();
+    const map = page.getByRole('region', { name: 'Bản đồ trạng thái worker', exact: true });
+    const firstPoint = map.getByRole('button').first();
+    await firstPoint.click();
+    assert.equal(await firstPoint.getAttribute('aria-pressed'), 'true');
+    await page.getByRole('button', { name: 'Số mục đã dựng', exact: true }).click();
+    const documentChart = page.getByRole('region', { name: 'Số mục đã dựng', exact: true });
+    assert.equal(await documentChart.locator('circle').count(), 1, 'Không vẽ số mục cho lượt lỗi');
+    await ui.snapshot(`search-${viewport.width}-workers.png`);
+    await page.clock.fastForward(295_000);
+    assert.equal(calls.length, 1);
+    await page.clock.fastForward(5_001);
+    await worker.getByText('Mất tín hiệu', { exact: true }).waitFor();
+    assert.equal(calls.length, 2);
+
+    const refresh = page.getByRole('button', { name: 'Kiểm tra ngay', exact: true });
+    await refresh.click();
+    await page.getByRole('region', { name: 'Sức khỏe worker chỉ mục', exact: true }).getByRole('alert').waitFor();
+    await worker.waitFor({ state: 'hidden' });
+    await refresh.click();
+    await page.getByText('Chưa nhận được tín hiệu từ worker chỉ mục trong 2 giờ qua.', { exact: true }).waitFor();
+    assert.equal(calls.length, 4);
+    process.stdout.write(`Worker health checks passed at ${viewport.width}px.\n`);
+  } finally {
+    await context.close();
+  }
+}
+
 (async () => {
   await mkdir(output, { recursive: true });
   const browser = await chromium.launch({
@@ -488,6 +562,8 @@ async function verifyTrends(browser, viewport) {
     await verify(browser, { width: 390, height: 844 });
     await verifyTrends(browser, { width: 1440, height: 1000 });
     await verifyTrends(browser, { width: 390, height: 844 });
+    await verifyWorkers(browser, { width: 1440, height: 1000 });
+    await verifyWorkers(browser, { width: 390, height: 844 });
     for (const role of ['superadmin', 'member']) {
       const context = await browser.newContext();
       try {
