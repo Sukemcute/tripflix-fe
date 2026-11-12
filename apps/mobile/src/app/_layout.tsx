@@ -25,7 +25,8 @@ const tokenStorage =
         write: (token: string) => SecureStore.setItemAsync('tripflix.refresh', token),
         clear: () => SecureStore.deleteItemAsync('tripflix.refresh'),
       };
-export const unstable_settings = { anchor: 'index' };
+// Mở app là vào thẳng tab Reels như TikTok; trang chào vẫn ở /onboarding.
+export const unstable_settings = { anchor: '(tabs)' };
 
 export default function RootLayout() {
   const [queryClient] = useState(
@@ -82,7 +83,6 @@ export default function RootLayout() {
                     animation: 'none',
                   }}
                 >
-                  <Stack.Screen name="index" />
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen
                     name="trip/[slug]"

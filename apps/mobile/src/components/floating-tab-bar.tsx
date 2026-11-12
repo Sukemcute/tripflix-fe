@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { colors, nativeFonts, spacing } from '@tripflix/tokens';
+import { colors, nativeFonts } from '@tripflix/tokens';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import type { ComponentProps } from 'react';
@@ -13,13 +13,13 @@ const ICONS: Record<string, IconName> = {
   trips: 'bag-handle-outline',
   me: 'person-outline',
 };
-// Compact like the iOS tab bar (49pt): smaller icons and a lower bar leave more room for the video.
-const BAR_HEIGHT = 50;
-const ICON_SIZE = 23;
-const COMPOSE_SIZE = 38;
-const COMPOSE_RADIUS = 11;
-// The design's 24-unit SVG shown at 24px: a 14-unit line with 3.6-unit stroke and round caps.
-const PLUS_SCALE = 24 / 24;
+// Thấp hơn thanh tab iOS (49pt) như TikTok: icon nhỏ, chừa thêm chỗ cho video.
+const BAR_HEIGHT = 44;
+const ICON_SIZE = 21;
+const COMPOSE_SIZE = 32;
+const COMPOSE_RADIUS = 9;
+// The design's 24-unit SVG shown at 20px: a 14-unit line with 3.6-unit stroke and round caps.
+const PLUS_SCALE = 20 / 24;
 const PLUS_THICKNESS = 3.6 * PLUS_SCALE;
 const PLUS_LENGTH = (14 + 3.6) * PLUS_SCALE;
 
@@ -34,7 +34,7 @@ export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, ins
       style={[
         styles.bar,
         {
-          paddingBottom: Math.max(insets.bottom, spacing.sm),
+          paddingBottom: insets.bottom,
           paddingLeft: insets.left,
           paddingRight: insets.right,
         },
@@ -106,7 +106,6 @@ function ComposeIcon() {
 const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
-    paddingTop: spacing.xs,
     backgroundColor: colors.tabBar,
   },
   tab: { flex: 1, height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'center', gap: 2 },
@@ -128,5 +127,5 @@ const styles = StyleSheet.create({
   plusShadow: { boxShadow: [{ offsetX: 0, offsetY: 1.5, blurRadius: 2, color: colors.composeIconShadow }] },
   plusHorizontal: { width: PLUS_LENGTH, height: PLUS_THICKNESS },
   plusVertical: { width: PLUS_THICKNESS, height: PLUS_LENGTH },
-  label: { fontFamily: nativeFonts.semibold, fontSize: 10, lineHeight: 13, textAlign: 'center' },
+  label: { fontFamily: nativeFonts.semibold, fontSize: 9, lineHeight: 12, textAlign: 'center' },
 });
