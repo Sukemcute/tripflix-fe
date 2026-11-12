@@ -1576,7 +1576,9 @@ export function InspirationImmersiveViewer({
         trip.estimatedCostPerPerson ||
         (trip.items && trip.items.length > 0)),
   );
-  const showLeftPanel = hasItinerary && isLeftOpen;
+  // Sidebar Lịch trình đi theo lựa chọn đóng/mở của người dùng, không theo từng bài: bài không có lịch trình
+  // thì hiện trạng thái trống, để khung video không tự co giãn mỗi khi lướt qua bài thiếu lịch trình.
+  const showLeftPanel = Boolean(activePost) && isLeftOpen;
   const showRightPanel = Boolean(activePost) && isRightOpen;
 
   const gridLayoutClass =
@@ -1683,7 +1685,7 @@ export function InspirationImmersiveViewer({
         {showLeftPanel && (
           <ItinerarySidebarPanel
             className={styles.itineraryInReels}
-            trip={trip}
+            trip={hasItinerary ? trip : null}
             postTitle={activePost?.title}
             hashtags={activePost?.hashtags}
             coverImage={coverImage}
