@@ -20,6 +20,8 @@ concurrency:
 env:
   # Next gắn địa chỉ này vào bundle lúc build. Hiện chỉ có một server là staging.
   STAGING_API_URL: https://api.tripflix.io.vn
+  STAGING_WEB_URL: https://tripflix.io.vn
+  STAGING_ADMIN_URL: https://admin.tripflix.io.vn
 
 jobs:
   # Tag mobile-v* chỉ build APK, không chạy lại CI và không build image web, admin.
@@ -81,24 +83,38 @@ jobs:
           push: true
           # Không đẩy attestation: mỗi lần build chỉ còn một phiên bản trong GHCR thay vì ba.
           provenance: false
-          # Mỗi dòng một biến; dòng trống (bản admin) bị bỏ qua. GOOGLE_CLIENT_ID là biến (Variables) của repo,
-          # không phải secret: Client ID công khai. Chưa đặt thì web không hiện nút Google.
+          # Mỗi dòng một biến; dòng trống (biến không dành cho app này) bị bỏ qua. GOOGLE_CLIENT_ID là biến
+          # (Variables) của repo, không phải secret: Client ID công khai. Chưa đặt thì web không hiện nút Google.
           build-args: |
-            ${{ matrix.app == 'web' && format('NEXT_PUBLIC_API_URL={0}', env.STAGING_API_URL) || '' }}
+            NEXT_PUBLIC_API_URL=${{ env.STAGING_API_URL }}
             ${{ matrix.app == 'web' && format('NEXT_PUBLIC_GOOGLE_CLIENT_ID={0}', vars.GOOGLE_CLIENT_ID) || '' }}
+            ${{ matrix.app == 'web' && format('NEXT_PUBLIC_ADMIN_URL={0}', env.STAGING_ADMIN_URL) || '' }}
+            ${{ matrix.app == 'admin' && format('NEXT_PUBLIC_WEB_URL={0}', env.STAGING_WEB_URL) || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # Mỗi app một scope cache, để web và admin không ghi đè cache của nhau.
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,scope=${{ matrix.app }},mode=max
 
-  # Server chạy image web đúng commit (sha-xxxxxxx), nên chỉ deploy khi lần này có build web.
-  # Chỉ admin đổi thì web trên server giữ nguyên bản đang chạy.
+  # Server chạy image đúng commit (sha-xxxxxxx), nên chỉ deploy app có build lần này.
+  # App không đổi thì trên server giữ nguyên bản đang chạy.
   deploy-web:
     needs: [web, changes]
     if: github.ref == 'refs/heads/develop' && contains(fromJSON(needs.changes.outputs.apps), 'web')
     uses: ./.github/workflows/deploy-web.yml
     with:
+      app: web
+      commit: ${{ github.sha }}
+    secrets:
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+
+  # Back Office ở https://admin.tripflix.io.vn. Hai job dùng chung concurrency nên chạy lần lượt.
+  deploy-admin:
+    needs: [web, changes]
+    if: github.ref == 'refs/heads/develop' && contains(fromJSON(needs.changes.outputs.apps), 'admin')
+    uses: ./.github/workflows/deploy-web.yml
+    with:
+      app: admin
       commit: ${{ github.sha }}
     secrets:
       DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}

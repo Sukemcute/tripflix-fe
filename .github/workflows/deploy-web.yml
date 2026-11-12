@@ -3,8 +3,13 @@ name: deploy-web
 on:
   workflow_call:
     inputs:
+      app:
+        description: web hoặc admin
+        required: false
+        default: web
+        type: string
       commit:
-        description: Commit đã có image web trên GHCR
+        description: Commit đã có image trên GHCR
         required: true
         type: string
     secrets:
@@ -12,8 +17,14 @@ on:
         required: true
   workflow_dispatch:
     inputs:
+      app:
+        description: App cần deploy
+        required: true
+        default: web
+        type: choice
+        options: [web, admin]
       commit:
-        description: Commit đã có image web trên GHCR, ít nhất 7 ký tự đầu
+        description: Commit đã có image trên GHCR, ít nhất 7 ký tự đầu
         required: true
         type: string
 
@@ -35,10 +46,17 @@ jobs:
     steps:
       - name: Chạy script deploy trên server
         env:
+          APP: ${{ inputs.app }}
           COMMIT: ${{ inputs.commit }}
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           [[ "$COMMIT" =~ ^[0-9a-f]{7,40}$ ]] || { echo "Commit không hợp lệ" >&2; exit 2; }
+          # Script trên server hiểu "sha-xxxxxxx" (web) và "admin sha-xxxxxxx".
+          case "$APP" in
+            web) command="sha-${COMMIT:0:7}" ;;
+            admin) command="admin sha-${COMMIT:0:7}" ;;
+            *) echo "App không hợp lệ" >&2; exit 2 ;;
+          esac
           umask 077
           key_file="$(mktemp)"
           known_hosts_file="$(mktemp)"
@@ -51,4 +69,4 @@ jobs:
             -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile="$known_hosts_file" \
             -o ConnectTimeout=20 \
-            "deploy@$DEPLOY_HOST" "sha-${COMMIT:0:7}"
+            "deploy@$DEPLOY_HOST" "$command"

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { CommunitySummary } from './post-summary';
 import { getInitial } from '@/features/auth/account-helpers';
+import { CommentSkeletonList } from './comment-skeleton';
 
 /**
  * Bình luận của một bài (hoặc trả lời của một bình luận khi có parentCommentId).
@@ -87,7 +88,7 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
           void query.refetch();
         }}
       />
-      {query.isPending && <output className="comment-empty">{vi.api.loading}</output>}
+      {query.isPending && <CommentSkeletonList count={8} />}
       {query.isSuccess && comments.length === 0 && !parentCommentId && (
         <p className="comment-empty">{vi.api.noComments}</p>
       )}
