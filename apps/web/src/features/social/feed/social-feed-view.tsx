@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useCallback, useSyncExternalStore } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { useQueryClient, useMutation, type InfiniteData } from '@tanstack/react-query';
 import { vi, t } from '@tripflix/i18n';
@@ -12,6 +12,8 @@ import {
 } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { SocialIcon, ComposerModal, RightPanelCommentsSynchronized } from '../live-posts';
+import { useIsWideScreen } from '../use-wide-screen';
+import { nextScrollTarget, stepScrollTowards, wheelDeltaToPixels } from './smooth-wheel-scroll';
 import reelsStyles from '../live-posts.module.css';
 import { type FeedNavFilter } from './floating-nav-rail';
 import { ItinerarySidebarPanel } from './itinerary-sidebar-panel';
@@ -29,18 +31,6 @@ export interface SocialFeedViewProps {
   isComposerOpen?: boolean;
   onOpenComposer?: (type?: 'video' | 'vlog') => void;
   onCloseComposer?: () => void;
-}
-
-const WIDE_SCREEN_QUERY = '(min-width: 1024px)';
-
-function subscribeWideScreen(onChange: () => void): () => void {
-  const media = window.matchMedia(WIDE_SCREEN_QUERY);
-  media.addEventListener('change', onChange);
-  return () => media.removeEventListener('change', onChange);
-}
-
-function readWideScreen(): boolean {
-  return window.matchMedia(WIDE_SCREEN_QUERY).matches;
 }
 
 export function SocialFeedView({
@@ -71,7 +61,7 @@ export function SocialFeedView({
 
   // Layout states
   // Màn rộng mở sẵn panel bình luận; người dùng đóng/mở thì giữ lựa chọn đó. Server render coi như đóng để không lệch hydration.
-  const isWideScreen = useSyncExternalStore(subscribeWideScreen, readWideScreen, () => false);
+  const isWideScreen = useIsWideScreen();
   const [rightOpenChoice, setIsRightOpen] = useState<boolean | null>(null);
   const isRightOpen = rightOpenChoice ?? isWideScreen;
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
@@ -296,6 +286,30 @@ export function SocialFeedView({
 
   // Cho phep cuon danh sach bai viet ngay ca khi con tro chuot nam o vung trong ngoai the bai viet ("khuc ngoai")
   useEffect(() => {
+    // Cuộn gốc của trình duyệt có hiệu ứng trượt; cộng thẳng scrollTop thì mỗi nấc chuột nhảy cóc.
+    // Nên tự trượt về đích bằng requestAnimationFrame, lăn liên tục thì cộng dồn vào đích.
+    const smooth = { target: null as number | null, frameId: 0 };
+    const stopSmoothScroll = () => {
+      if (smooth.frameId) window.cancelAnimationFrame(smooth.frameId);
+      smooth.frameId = 0;
+      smooth.target = null;
+    };
+    const runSmoothScroll = () => {
+      const feedContainer = mainFeedRef.current;
+      if (!feedContainer || smooth.target === null) {
+        stopSmoothScroll();
+        return;
+      }
+      const next = stepScrollTowards(feedContainer.scrollTop, smooth.target);
+      if (next === null) {
+        feedContainer.scrollTop = smooth.target;
+        stopSmoothScroll();
+        return;
+      }
+      feedContainer.scrollTop = next;
+      smooth.frameId = window.requestAnimationFrame(runSmoothScroll);
+    };
+
     const handleOuterWheel = (event: WheelEvent) => {
       const feedContainer = mainFeedRef.current;
       // Chi hoat dong khi feedContainer dang hien thi (khong bi an boi Reels)
@@ -307,7 +321,7 @@ export function SocialFeedView({
 
       // 1. Neu dang thao tac tren popup modal, dialog hoac o nhap van ban -> Giu nguyen mac dinh
       if (
-        target?.closest('[role="dialog"]') ||
+        target?.closest('dialog, [role="dialog"]') ||
         target?.closest('input, textarea, select, [contenteditable="true"]')
       ) {
         return;
@@ -331,6 +345,8 @@ export function SocialFeedView({
       // 3. Neu con tro chuot da nam truc tiep ben trong mainFeedColumn:
       // Trinh duyet tu dong cuon tu nhien
       if (feedContainer.contains(target)) {
+        // Người dùng cuộn trực tiếp trong bảng tin: bỏ đích trượt cũ để không giằng co với cuộn gốc.
+        stopSmoothScroll();
         return;
       }
 
@@ -338,16 +354,19 @@ export function SocialFeedView({
       // Chuyen huong cuon vao mainFeedColumn tuong tu nhu ben Reels
       event.preventDefault();
 
-      let delta = event.deltaY;
-      if (event.deltaMode === 1) delta *= 40;
-      if (event.deltaMode === 2) delta *= 600;
-
-      feedContainer.scrollTop += delta;
+      smooth.target = nextScrollTarget({
+        pendingTarget: smooth.target,
+        scrollTop: feedContainer.scrollTop,
+        delta: wheelDeltaToPixels(event.deltaY, event.deltaMode, feedContainer.clientHeight),
+        maxScroll: feedContainer.scrollHeight - feedContainer.clientHeight,
+      });
+      if (!smooth.frameId) smooth.frameId = window.requestAnimationFrame(runSmoothScroll);
     };
 
     window.addEventListener('wheel', handleOuterWheel, { passive: false });
     return () => {
       window.removeEventListener('wheel', handleOuterWheel);
+      stopSmoothScroll();
     };
   }, []);
 
