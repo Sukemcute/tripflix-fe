@@ -50,6 +50,9 @@ export default async function SearchPage({
     initialFilters.priceMin = validMin;
     initialFilters.priceMax = validMax;
   }
+  // Trẻ em, em bé chỉ để mang sang trang khách sạn; tổng khách tối đa 9 như ô chọn khách.
+  const readCount = (key: string) => (isStayInteger(read(key), 0, MAX_STAY_GUESTS) ? Number(read(key)) : 0);
+  const initialGuests = { children: readCount('children'), infants: readCount('infants') };
   const sort = read('sort');
   if (sort === 'stars' || sort === 'price_desc') initialFilters.sort = sort;
   return (
@@ -76,7 +79,8 @@ export default async function SearchPage({
         </div>
       </header>
       <LiveSearchScreen
-        key={JSON.stringify([placeName, initialFilters])}
+        key={JSON.stringify([placeName, initialFilters, initialGuests])}
+        initialGuests={initialGuests}
         initialQuery={placeName}
         initialFilters={initialFilters}
       />

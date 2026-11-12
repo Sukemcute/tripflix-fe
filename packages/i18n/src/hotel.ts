@@ -48,6 +48,8 @@ export const hotel = {
   showLess: 'Thu gọn',
   moreReviews: 'Xem thêm đánh giá',
   changeStay: 'Đổi',
+  nightsLabel: 'Số đêm',
+  changeStayDetails: 'Đổi ngày, số khách',
   invalidStay: 'Chọn ngày nhận phòng từ hôm nay, ngày trả phòng sau ngày nhận và từ 1 đến 9 khách.',
   roomDetails: 'Thông tin phòng',
   remaining: 'Số phòng còn lại',

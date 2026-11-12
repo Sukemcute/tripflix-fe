@@ -20,28 +20,41 @@ import {
 import { SearchAdBanner } from './search-ad-banner';
 import { SoftStarIcon } from './soft-star-icon';
 import { PriceRangeSlider } from './price-range-slider';
+import { GuestPicker } from '@/features/hotels/guest-picker';
 
 // Vừa chiều cao cột lọc + banner, để trang không bị kéo dài khi nhiều kết quả.
 const RESULTS_PAGE_SIZE = 5;
 const STAR_OPTIONS = ['', '1', '2', '3', '4', '5'];
 
-function getSearchHref(filters: StayFilters, placeName: string) {
+type ChildGuests = { children: number; infants: number };
+
+/** Trẻ em, em bé không gửi lên API tìm (API chỉ lọc theo người lớn) nhưng giữ trên URL để mang sang trang khách sạn. */
+const childParams = ({ children, infants }: ChildGuests) => ({
+  ...(children > 0 ? { children: String(children) } : {}),
+  ...(infants > 0 ? { infants: String(infants) } : {}),
+});
+
+function getSearchHref(filters: StayFilters, placeName: string, guests: ChildGuests) {
   const query = new URLSearchParams({ q: placeName });
   for (const [key, value] of Object.entries(filters)) {
     if (value) query.set(key, value);
   }
+  for (const [key, value] of Object.entries(childParams(guests))) query.set(key, value);
   return `/search?${query}`;
 }
 
 export function LiveSearchScreen({
   initialQuery = '',
   initialFilters,
+  initialGuests = { children: 0, infants: 0 },
   isHomepage = false,
 }: {
   initialQuery?: string;
   initialFilters?: Partial<StayFilters>;
+  initialGuests?: ChildGuests;
   isHomepage?: boolean;
 }) {
+  const [childGuests, setChildGuests] = useState<ChildGuests>(initialGuests);
   const search = useStaySearch(initialQuery, initialFilters, {
     pageSize: isHomepage ? undefined : RESULTS_PAGE_SIZE,
   });
@@ -63,7 +76,7 @@ export function LiveSearchScreen({
     search.setFilters((previous) => ({ ...previous, [key]: value }));
   const placeName = search.selection?.name ?? search.text;
   const hasFacets = !!(search.filters.minStars || search.filters.stars || search.filters.priceMin || search.filters.priceMax || search.filters.sort !== 'price');
-  const resultHref = search.submitted ? getSearchHref(search.submitted, initialQuery) : '/search';
+  const resultHref = search.submitted ? getSearchHref(search.submitted, initialQuery, childGuests) : '/search';
   const canSubmit = !!search.filters.placeId || search.selection?.type === 'hotel';
   const Container = isHomepage ? 'section' : 'div';
   return (
@@ -94,11 +107,11 @@ export function LiveSearchScreen({
           setSuggestionsOpen(false);
           if (search.selection?.type === 'hotel') {
             router.push(
-              `/hotels/${encodeURIComponent(search.selection.refId)}?${new URLSearchParams({ checkIn: search.filters.checkIn, checkOut: search.filters.checkOut, adults: search.filters.adults })}`,
+              `/hotels/${encodeURIComponent(search.selection.refId)}?${new URLSearchParams({ checkIn: search.filters.checkIn, checkOut: search.filters.checkOut, adults: search.filters.adults, ...childParams(childGuests) })}`,
             );
             return;
           }
-          const href = getSearchHref(search.filters, placeName);
+          const href = getSearchHref(search.filters, placeName, childGuests);
           if (!isHomepage && href === resultHref && search.submitted) {
             if (search.cursor) search.first();
             else void search.stays.refetch();
@@ -275,22 +288,21 @@ export function LiveSearchScreen({
               />
             </span>
           </label>
-          <label className={styles.field}>
+          <div className={styles.field}>
             <StaySearchIcon name="guests" />
             <span className={styles.fieldContent}>
-              <span>{vi.api.adults}</span>
-              <input
-                type="number"
-                min={1}
-                max={MAX_STAY_GUESTS}
-                required
-                value={adults}
-                aria-invalid={showValidation && tripIssue === 'invalidGuests' || undefined}
-                aria-describedby={tripError && tripIssue === 'invalidGuests' ? 'stay-trip-error' : undefined}
-                onChange={(event) => update('adults', event.target.value)}
+              {/* Chọn người lớn, trẻ em, em bé ngay ở trang tìm như trang khách sạn trước đây. */}
+              <GuestPicker
+                adults={Number(adults) || 1}
+                numChildren={childGuests.children}
+                numInfants={childGuests.infants}
+                onChange={(guests) => {
+                  update('adults', String(guests.adults));
+                  setChildGuests({ children: guests.children, infants: guests.infants });
+                }}
               />
             </span>
-          </label>
+          </div>
           <label className={styles.field}>
             <StaySearchIcon name="rooms" />
             <span className={styles.fieldContent}>
@@ -347,7 +359,7 @@ export function LiveSearchScreen({
                         sort: 'price',
                       } as const;
                       search.setFilters(cleared);
-                      if (cleared.placeId) router.push(getSearchHref(cleared, placeName), { scroll: false });
+                      if (cleared.placeId) router.push(getSearchHref(cleared, placeName, childGuests), { scroll: false });
                     }}
                   >
                     {vi.ota.resetFilters}
@@ -453,7 +465,7 @@ export function LiveSearchScreen({
                   key={destination.id}
                   href={
                     search.submitted
-                      ? getSearchHref({ ...search.submitted, placeId: destination.id }, destination.name)
+                      ? getSearchHref({ ...search.submitted, placeId: destination.id }, destination.name, childGuests)
                       : getDestinationHref(destination)
                   }
                   aria-current={destination.id === search.submitted?.placeId ? 'true' : undefined}
@@ -485,6 +497,7 @@ export function LiveSearchScreen({
                     checkIn: search.submitted?.checkIn,
                     checkOut: search.submitted?.checkOut,
                     adults: search.submitted?.adults,
+                    ...childParams(childGuests),
                     from: resultHref,
                   },
                 };

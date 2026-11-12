@@ -31,7 +31,7 @@
 .searchRow {
   display: grid;
   grid-template-columns:
-    minmax(210px, 1.8fr) repeat(2, minmax(155px, 1fr)) repeat(2, minmax(85px, 0.55fr))
+    minmax(200px, 1.4fr) repeat(2, minmax(150px, 1fr)) minmax(190px, 1.2fr) minmax(85px, 0.5fr)
     auto;
   align-items: center;
   padding: 8px;
@@ -66,6 +66,24 @@
   color: var(--color-text-muted);
   font-size: 11px;
   font-weight: 400;
+}
+.panel .fieldContent > div > button {
+  /* Ô chọn khách dùng chung với trang khách sạn; ở thanh tìm bỏ viền cho giống các ô khác. */
+  min-height: 28px;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.panel .fieldContent > div {
+  gap: 0;
+  font-size: 11px;
 }
 .panel .fieldContent label {
   margin: 0;
@@ -330,7 +348,7 @@
   }
   .searchRow {
     grid-template-columns:
-      minmax(180px, 1.5fr) repeat(2, minmax(130px, 1fr)) repeat(2, minmax(65px, 0.5fr))
+      minmax(170px, 1.3fr) repeat(2, minmax(125px, 1fr)) minmax(150px, 1fr) minmax(65px, 0.45fr)
       auto;
   }
   .panel .field {

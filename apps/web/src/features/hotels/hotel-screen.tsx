@@ -6,12 +6,10 @@ import { isValidTripDate, shiftTripDate } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import Link from 'next/link';
 import { BOOKING_CART_MAX_ROOMS, calculateChildStayDiscount, countRoomsForGuests } from '@tripflix/app-core';
-import { saveBookingSelection, useBookingSelection } from '@/features/checkout/cart-store';
-import { GuestPicker } from './guest-picker';
+
 import { BookRateButton } from '@/features/checkout/book-rate-button';
 import { CartBar } from '@/features/checkout/cart-bar';
 import { ApiErrorNotice } from '@/features/shared/api-state';
-import { SoftDatePicker } from '@/features/shared/soft-date-picker';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { HotelGallery } from './hotel-gallery';
 import { HotelIcon } from './hotel-icon';
@@ -21,6 +19,9 @@ import styles from './hotel.module.css';
 const copy = vi.hotel;
 const hasValue = (value: unknown) => value !== null && value !== undefined && value !== '';
 const getLabel = (labels: Record<string, string>, key: string) => labels[key] ?? key;
+const WEEKDAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+const formatStayDay = (iso: string) =>
+  `${WEEKDAYS[new Date(`${iso}T00:00:00`).getDay()]}, ${iso.split('-').reverse().join('/')}`;
 type Stay = { checkIn: string; checkOut: string; adults: number; children: number; infants: number };
 function isValidStay(stay: Stay): boolean {
   return (
@@ -89,12 +90,19 @@ export function HotelScreen({
     children: numChildren === undefined ? 0 : Number(numChildren),
     infants: numInfants === undefined ? 0 : Number(numInfants),
   };
-  const [stay, setStay] = useState<Stay>(
+  const [stay] = useState<Stay>(
     isValidStay(initial) ? initial : { checkIn: getFutureDate(1), checkOut: getFutureDate(3), adults: 2, children: 0, infants: 0 },
   );
-  const [draft, setDraft] = useState(stay);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-  const selection = useBookingSelection();
+  // Đổi ngày, số khách thì quay về trang tìm, giữ sẵn lựa chọn hiện tại.
+  const changeStayHref =
+    resultsHref ??
+    `/search?${new URLSearchParams({
+      checkIn: stay.checkIn,
+      checkOut: stay.checkOut,
+      adults: String(stay.adults),
+      ...(stay.children > 0 ? { children: String(stay.children) } : {}),
+      ...(stay.infants > 0 ? { infants: String(stay.infants) } : {}),
+    })}`;
   const roomCount = (room: { maxGuests: number }) => countRoomsForGuests({ ...stay, maxGuests: room.maxGuests });
   const nights = Math.max(1, Math.round((Date.parse(stay.checkOut) - Date.parse(stay.checkIn)) / 86_400_000));
   // Giá mỗi phòng mỗi đêm hiển thị phải trừ phần giảm cho trẻ em của đoàn đang chọn.
@@ -279,57 +287,32 @@ export function HotelScreen({
           </div>
           <section id="rooms" className={styles.section}>
             <h2>{copy.rooms}</h2>
-            <form
-              className={styles.stayForm}
-              onSubmit={(event) => {
-                event.preventDefault();
-                setHasSubmitted(true);
-                if (!isValidStay(draft)) return;
-                setStay({ ...draft });
-                // Phòng đang chọn theo số khách mới để tổng tiền và kiểm tra đủ chỗ không lệch với trang.
-                if (selection.items.length) saveBookingSelection({ ...selection, adults: draft.adults, children: draft.children, infants: draft.infants });
-                // Chỉ đổi URL: router.replace sẽ hiện màn loading của route và mất vị trí cuộn.
-                window.history.replaceState(
-                  null,
-                  '',
-                  `/hotels/${encodeURIComponent(id)}?${new URLSearchParams({ checkIn: draft.checkIn, checkOut: draft.checkOut, adults: String(draft.adults), ...(draft.children > 0 ? { children: String(draft.children) } : {}), ...(draft.infants > 0 ? { infants: String(draft.infants) } : {}), ...(resultsHref ? { from: resultsHref } : {}) })}`,
-                );
-                if (JSON.stringify(draft) === JSON.stringify(stay)) void query.refetch();
-              }}
-            >
-              <label>
-                {copy.checkIn}
-                <SoftDatePicker
-                  required
-                  min={getFutureDate(0)}
-                  value={draft.checkIn}
-                  onChange={(checkIn) => setDraft({ ...draft, checkIn })}
-                />
-              </label>
-              <label>
-                {copy.checkOut}
-                <SoftDatePicker
-                  required
-                  min={shiftTripDate(draft.checkIn || getFutureDate(0), 1)}
-                  value={draft.checkOut}
-                  onChange={(checkOut) => setDraft({ ...draft, checkOut })}
-                />
-              </label>
-              <GuestPicker
-                adults={draft.adults}
-                numChildren={draft.children}
-                numInfants={draft.infants}
-                onChange={(guests) => setDraft({ ...draft, ...guests })}
-              />
-              <button className="primary-button" disabled={query.isFetching}>
-                {query.isFetching ? vi.common.loading : copy.update}
-              </button>
-            </form>
-            {hasSubmitted && !isValidStay(draft) && (
-              <p role="alert" className={styles.formError}>
-                {copy.invalidStay}
-              </p>
-            )}
+            {/* Ngày và số khách chọn ở trang tìm; ở đây chỉ nhắc lại để khách biết đang xem giá cho kỳ nào. */}
+            <div className={styles.staySummary}>
+              <div>
+                <span>{copy.checkIn}</span>
+                <strong>{formatStayDay(stay.checkIn)}</strong>
+              </div>
+              <div>
+                <span>{copy.checkOut}</span>
+                <strong>{formatStayDay(stay.checkOut)}</strong>
+              </div>
+              <div>
+                <span>{copy.adults}</span>
+                <strong>
+                  {stay.adults} {copy.adultsLabel.toLowerCase()}
+                  {stay.children > 0 && ` · ${stay.children} ${copy.childrenLabel.toLowerCase()}`}
+                  {stay.infants > 0 && ` · ${stay.infants} ${copy.infantsLabel.toLowerCase()}`}
+                </strong>
+              </div>
+              <div>
+                <span>{copy.nightsLabel}</span>
+                <strong>{nights}</strong>
+              </div>
+              <Link prefetch={false} className="secondary-button" href={changeStayHref}>
+                {copy.changeStayDetails}
+              </Link>
+            </div>
             {query.isFetching && <output>{vi.common.loading}</output>}
             {!hotel.isAvailable && <p className={styles.notice}>{copy.unavailable}</p>}
             {!hotel.rooms.length && <p className="empty-state">{copy.noRooms}</p>}
