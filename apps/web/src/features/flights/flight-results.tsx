@@ -99,6 +99,7 @@ function AirlineLogo({ code, airline }: { code: string | null; airline: string |
   if (logo) {
     return (
       <span className={styles.airlineLogo} aria-hidden="true">
+        {/* Logo SVG cục bộ: Next không tối ưu SVG nên giữ unoptimized. */}
         <Image src={logo} alt="" width={120} height={32} unoptimized />
       </span>
     );

@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { isOptimizedImageUrl } from '../../lib/remote-images';
 import { StaySearchIcon } from './stay-search-icon';
 
 export function StayThumbnail({ url, name }: { url: string | null; name: string }) {
@@ -18,7 +19,15 @@ export function StayThumbnail({ url, name }: { url: string | null; name: string 
 
   return (
     <div className="trip-card-photo">
-      <Image src={url} alt={name} width={640} height={360} unoptimized onError={() => setFailedUrl(url)} />
+      <Image
+        src={url}
+        alt={name}
+        width={640}
+        height={360}
+        sizes="(max-width: 768px) 100vw, 320px"
+        unoptimized={!isOptimizedImageUrl(url)}
+        onError={() => setFailedUrl(url)}
+      />
     </div>
   );
 }
