@@ -72,7 +72,8 @@ export function SocialFeedView({
   // Query posts: useSocialPosts accepts 'public' | 'mine' | 'bookmarks'
   const effectiveKeyword = (searchKeyword !== undefined ? searchKeyword : initialKeyword).trim();
   const queryKind: 'public' | 'bookmarks' = activeFilter === 'saved' ? 'bookmarks' : 'public';
-  const postsQuery = useSocialPosts(queryKind, activeFilter === 'saved' ? '' : effectiveKeyword);
+  // Tab Bài viết chỉ lấy vlog; Reels có luồng riêng (/v1/feed).
+  const postsQuery = useSocialPosts(queryKind, activeFilter === 'saved' ? '' : effectiveKeyword, 'vlog');
 
   const allPosts = useMemo(() => {
     return postsQuery.data?.pages.flatMap((page) => page.items) ?? [];

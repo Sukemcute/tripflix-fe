@@ -31,6 +31,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
+import { isReelPost } from './post-type-filter';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import styles from './live-posts.module.css';
 
@@ -984,7 +985,8 @@ export function InspirationImmersiveViewer({
 
   const effectiveSearch = (searchKeyword !== undefined ? searchKeyword : searchInput).trim();
   const queryKind = filterMode === 'saved' ? 'bookmarks' : 'public';
-  const postsQuery = useSocialPosts(queryKind, filterMode === 'saved' ? '' : effectiveSearch, 'video');
+  // /v1/posts không còn lọc video; tạm lọc ở client đến khi /v1/feed có tripAttachment và saved (TF25).
+  const postsQuery = useSocialPosts(queryKind, filterMode === 'saved' ? '' : effectiveSearch);
   const reelsQuery = useReelsFeed({ enabled: isReady });
 
   const reelMap = useMemo(() => {
@@ -1000,15 +1002,10 @@ export function InspirationImmersiveViewer({
     return map;
   }, [reelsQuery.data]);
 
-  // Reels chi lay cac bai viet dang video hoac co reel video dinh kem (loai bo hoan toan bai viet thuong / vlog)
+  // Reels chỉ gồm bài dạng video; bài viết (vlog) không bao giờ hiện ở đây.
   const rawPosts = useMemo(
-    () =>
-      (postsQuery.data?.pages.flatMap((page) => page.items) ?? []).filter(
-        (post) =>
-          post.postType !== 'vlog' &&
-          (post.postType === 'video' || Boolean(reelMap.get(post.id)?.video)),
-      ),
-    [postsQuery.data, reelMap],
+    () => (postsQuery.data?.pages.flatMap((page) => page.items) ?? []).filter(isReelPost),
+    [postsQuery.data],
   );
 
   const posts = useMemo(() => {
@@ -1071,11 +1068,10 @@ export function InspirationImmersiveViewer({
     }
   }, [activePost, postDetailQuery.error, client]);
 
-  // Tự động tải trang bài viết tiếp theo khi người dùng lướt gần tới cuối danh sách
+  // Tự động tải trang tiếp theo khi lướt gần cuối, hoặc khi các trang đã tải chưa có Reels nào sau khi lọc.
   useEffect(() => {
     if (
-      activeIndex >= 0 &&
-      activeIndex >= posts.length - 2 &&
+      (posts.length === 0 || activeIndex >= posts.length - 2) &&
       postsQuery.hasNextPage &&
       !postsQuery.isFetchingNextPage
     ) {
@@ -3200,7 +3196,11 @@ export function ComposerModal({
           <button
             type="button"
             className={`${styles.composerTypeBtn} ${postType === 'vlog' ? styles.composerTypeBtnActive : ''}`}
-            onClick={() => setPostType('vlog')}
+            onClick={() => {
+              // Bài viết không được kèm video: bỏ video đã chọn khi chuyển loại.
+              if (videoFile || existingMediaId) handleRemoveVideo();
+              setPostType('vlog');
+            }}
             disabled={isFormBusy}
           >
             <SocialIcon name="compass" size={16} />
@@ -3269,22 +3269,21 @@ export function ComposerModal({
           </div>
         </div>
 
-        {/* 3. Tải lên phương tiện đính kèm (Ảnh hoặc Video) */}
+        {/* 3. Video Reels: bài viết (vlog) không được kèm video nên chỉ hiện khi chọn Reels */}
+        {postType === 'video' && (
         <div className={styles.composerSection}>
           <div className={styles.composerSectionHeader}>
             <h4 className={styles.composerSectionTitle}>
-              <SocialIcon name={postType === 'video' ? 'video' : 'upload'} size={16} />
-              <span>{postType === 'video' ? 'Video Reels' : 'Hình ảnh / Phương tiện'}</span>
+              <SocialIcon name="video" size={16} />
+              <span>Video Reels</span>
             </h4>
-            <span className={styles.composerSectionBadge}>
-              {postType === 'video' ? 'Bắt buộc với Reels' : 'Tùy chọn'}
-            </span>
+            <span className={styles.composerSectionBadge}>Bắt buộc với Reels</span>
           </div>
 
           <input
             ref={fileInputRef}
             type="file"
-            accept={postType === 'video' ? 'video/mp4,video/quicktime,video/webm' : 'image/*,video/*'}
+            accept="video/mp4,video/quicktime"
             style={{ display: 'none' }}
             disabled={isFormBusy}
             onChange={(event) => {
@@ -3302,16 +3301,8 @@ export function ComposerModal({
               <div className={styles.composerDropzoneIcon}>
                 <SocialIcon name="upload" size={22} />
               </div>
-              <p className={styles.composerDropzoneText}>
-                {postType === 'video'
-                  ? 'Kéo thả hoặc nhấn để chọn video Reels'
-                  : 'Kéo thả hoặc nhấn để chọn ảnh cho bài viết'}
-              </p>
-              <p className={styles.composerDropzoneHint}>
-                {postType === 'video'
-                  ? 'Hỗ trợ MP4, MOV, WEBM (Tối đa 5 phút, 1 GB)'
-                  : 'Hỗ trợ JPG, PNG, WEBP (Tùy chọn tải ảnh hoặc đăng bài chỉ có chữ)'}
-              </p>
+              <p className={styles.composerDropzoneText}>Kéo thả hoặc nhấn để chọn video Reels</p>
+              <p className={styles.composerDropzoneHint}>Hỗ trợ MP4, MOV (Tối đa 5 phút, 1 GB)</p>
             </button>
           ) : (
             <div className={styles.composerVideoPreviewCard}>
@@ -3371,6 +3362,7 @@ export function ComposerModal({
             </div>
           )}
         </div>
+        )}
 
         {/* 4. Lộ trình chuyến đi (Trip Attachment) */}
         <div className={styles.composerSection}>

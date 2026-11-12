@@ -154,12 +154,8 @@ export function PostCard({
         </div>
       )}
 
-      {/* 3. Adaptive Media (Images / Inline Video) */}
-      <AdaptivePostMedia
-        postTitle={post.title}
-        images={postImages}
-        videoUrl={post.postType === 'video' ? undefined : undefined}
-      />
+      {/* 3. Adaptive Media (ảnh); bài viết không kèm video */}
+      <AdaptivePostMedia postTitle={post.title} images={postImages} />
 
       {/* 4. Attached Trip Card (neu co) */}
       {hasItinerary && trip && (
