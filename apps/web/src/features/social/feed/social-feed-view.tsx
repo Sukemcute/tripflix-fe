@@ -621,8 +621,9 @@ export function SocialFeedView({
   // Giữ sidebar thêm một nhịp khi đóng để chạy hiệu ứng thoát, song song với cột lưới co lại.
   // Chưa thao tác thì bố cục mặc định hiện ngay, không chạy hiệu ứng trượt/co giãn.
   const hasUserInteracted = useHasUserInteracted();
-  const leftPresence = usePresence(isLeftVisible);
-  const rightPresence = usePresence(isRightVisible);
+  // Chỉ những lần mở sau khi người dùng đã thao tác mới có hiệu ứng trượt vào.
+  const leftPresence = usePresence(isLeftVisible, { shouldAnimateEnter: hasUserInteracted });
+  const rightPresence = usePresence(isRightVisible, { shouldAnimateEnter: hasUserInteracted });
 
   const containerClassName =
     isLeftVisible && isRightVisible
@@ -638,7 +639,9 @@ export function SocialFeedView({
       {/* 1. Left Column: Itinerary Sidebar Panel (Nằm ngay bên phải của Dock, cố định vững vàng) */}
       {leftPresence.isRendered && (
         <ItinerarySidebarPanel
-          className={`${styles.itineraryInFeed} ${leftPresence.isClosing ? styles.sidebarClosingLeft : ''}`}
+          className={`${styles.itineraryInFeed} ${leftPresence.isEnterAnimated ? styles.sidebarEnterLeft : ''} ${
+            leftPresence.isClosing ? styles.sidebarClosingLeft : ''
+          }`}
           trip={activeItineraryPost?.tripAttachment}
           postTitle={activeItineraryPost?.title}
           hashtags={activeItineraryPost?.hashtags}
@@ -835,8 +838,8 @@ export function SocialFeedView({
       {rightPresence.isRendered && (
         <aside
           className={`${reelsStyles.rightPanel} ${styles.rightPanelInFeed} ${
-            rightPresence.isClosing ? styles.sidebarClosingRight : ''
-          }`}
+            rightPresence.isEnterAnimated ? styles.sidebarEnterRight : ''
+          } ${rightPresence.isClosing ? styles.sidebarClosingRight : ''}`}
           aria-label={vi.api.commentPanelAria}
         >
           <div className={reelsStyles.panelHeaderBar}>
