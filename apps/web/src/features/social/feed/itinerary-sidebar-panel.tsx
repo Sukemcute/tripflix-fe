@@ -105,17 +105,17 @@ export function ItinerarySidebarPanel({
         <div className={styles.itineraryContent}>
           {/* Card tong quan chuyen di */}
           <div className={styles.itineraryTripCard}>
-            <div className={styles.itineraryTripTop}>
-              <div className={styles.itineraryTripThumb}>
-                <Image
-                  src={coverImage ?? POST_COVER_MASCOT}
-                  alt=""
-                  fill
-                  sizes="72px"
-                  unoptimized={Boolean(coverImage?.startsWith('http'))}
-                />
-              </div>
-              <div className={styles.itineraryTripMeta}>
+            {/* Ảnh hero tràn viền, tên và thông tin chuyến đi đè lên trên lớp gradient */}
+            <div className={styles.itineraryHero}>
+              <Image
+                src={coverImage ?? POST_COVER_MASCOT}
+                alt=""
+                fill
+                sizes="(max-width: 1439px) 310px, 340px"
+                className={styles.itineraryHeroImage}
+                unoptimized={Boolean(coverImage?.startsWith('http'))}
+              />
+              <div className={styles.itineraryHeroOverlay}>
                 <h3 className={styles.itineraryTripTitle}>
                   {trip.hotelName ?? trip.destinationName ?? postTitle}
                 </h3>
@@ -210,7 +210,9 @@ export function ItinerarySidebarPanel({
                     {groupedDays.map(([dayNumber, dayItems]) => (
                       <div key={dayNumber} className={styles.itineraryDayBlock}>
                         <div className={styles.itineraryDayHeader}>
-                          <span className={styles.itineraryDayDot} aria-hidden="true" />
+                          <span className={styles.itineraryDayDot} aria-hidden="true">
+                            {dayNumber}
+                          </span>
                           <h4 className={styles.itineraryDayTitle}>
                             {t('api.immersiveDayHeading', { day: dayNumber })}
                           </h4>

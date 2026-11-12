@@ -32,6 +32,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
+import { getAvatarTone } from './avatar-tone';
 import { isReelPost } from './post-type-filter';
 import { pickReelAfterRemoval, toReelPost, type ReelPost } from './reel-post';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
@@ -2097,7 +2098,7 @@ export function RightPanelCommentsSynchronized({
             }}
           >
             <div className={styles.avatarSmallWrap}>
-              <span className={styles.avatarSmall} aria-hidden="true">
+              <span className={styles.avatarSmall} data-tone={getAvatarTone(user.displayName)} aria-hidden="true">
                 {getInitial(user.displayName)}
               </span>
               {user.emailVerified && (
@@ -2231,7 +2232,7 @@ function CommentNode({
   return (
     <li className={styles.panelCommentItem}>
       <div className={styles.panelCommentRow}>
-        <span className={styles.avatarSmall} aria-hidden="true">
+        <span className={styles.avatarSmall} data-tone={getAvatarTone(authorDisplay.name)} aria-hidden="true">
           {getInitial(authorDisplay.name)}
         </span>
         <div className={styles.panelCommentContent}>

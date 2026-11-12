@@ -363,10 +363,11 @@
   height: 100%;
   max-height: none;
   min-height: 0;
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+  background: color-mix(in srgb, var(--color-background) 88%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+  border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
+  border-radius: 22px;
+  box-shadow: 0 18px 48px -26px color-mix(in srgb, var(--color-ink) 40%, transparent);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -374,33 +375,20 @@
   z-index: 10;
 }
 
-.itineraryInFeed {
+.itineraryInFeed,
+.itineraryInReels {
   position: relative !important;
   top: auto !important;
   width: 100% !important;
   height: 100% !important;
   min-height: 0 !important;
-  border-radius: 20px !important;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
-}
-
-.itineraryInReels {
-  position: relative !important;
-  top: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  max-height: 100% !important;
-  border-radius: 20px !important;
-  border: 1px solid #E2E8F0 !important;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
 }
 
 .itineraryHeaderBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 18px 14px;
-  border-bottom: 1px solid #F1F5F9;
+  padding: 14px 14px 12px 16px;
 }
 
 .itineraryHeaderTitleGroup {
@@ -413,13 +401,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FF6A00;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--color-coral-tint);
+  color: var(--color-coral);
 }
 
 .itineraryHeaderTitle {
-  font-size: 16px;
-  font-weight: 700;
-  color: #141B3D;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-navy);
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -428,19 +420,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   border: none;
-  background: transparent;
-  color: #94A3B8;
+  background: var(--color-transparent);
+  color: var(--color-text-subtle);
   cursor: pointer;
   transition: all 160ms ease;
 }
 
 .itineraryCollapseBtn:hover {
-  background: #F1F5F9;
-  color: #141B3D;
+  background: var(--color-surface-muted);
+  color: var(--color-navy);
 }
 
 .itineraryContent {
@@ -451,55 +443,62 @@
   overflow: hidden;
 }
 
-/* Trip Overview Card */
+/* Thẻ tổng quan: ảnh hero + nút xem chi tiết */
 .itineraryTripCard {
-  padding: 14px 16px;
-  border-bottom: 1px solid #F1F5F9;
-  background: #FAFCFE;
+  padding: 0 14px 12px;
+  display: grid;
+  gap: 10px;
 }
 
-.itineraryTripTop {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.itineraryTripThumb {
+.itineraryHero {
   position: relative;
-  width: 72px;
-  height: 72px;
-  border-radius: 12px;
+  height: 172px;
+  border-radius: 18px;
   overflow: hidden;
-  flex-shrink: 0;
-  background: #E2E8F0;
+  background: var(--color-surface-muted);
+  box-shadow: 0 12px 28px -18px color-mix(in srgb, var(--color-ink) 55%, transparent);
 }
 
-.itineraryTripThumb img {
+.itineraryHeroImage {
   object-fit: cover;
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.itineraryTripMeta {
+.itineraryHero:hover .itineraryHeroImage {
+  transform: scale(1.04);
+}
+
+.itineraryHeroOverlay {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   gap: 4px;
-  min-width: 0;
-  flex: 1;
+  padding: 14px;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-ink) 88%, transparent) 0%,
+    color-mix(in srgb, var(--color-ink) 40%, transparent) 55%,
+    var(--color-transparent) 100%
+  );
 }
 
 .itineraryTripTitle {
-  font-size: 14.5px;
-  font-weight: 700;
-  color: #141B3D;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-background);
   margin: 0;
-  line-height: 1.35;
-  white-space: nowrap;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .itineraryTripTags {
   font-size: 12px;
-  color: #64748B;
+  color: color-mix(in srgb, var(--color-background) 80%, transparent);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -509,9 +508,9 @@
 .itineraryTripFacts {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
-  margin-top: 2px;
+  margin-top: 6px;
 }
 
 .itineraryFactBadge {
@@ -519,11 +518,13 @@
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  font-weight: 600;
-  color: #0E7490;
-  background: rgba(14, 116, 144, 0.08);
-  padding: 2px 7px;
-  border-radius: 6px;
+  font-weight: 700;
+  color: var(--color-background);
+  background: color-mix(in srgb, var(--color-background) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-background) 28%, transparent);
+  backdrop-filter: blur(8px);
+  padding: 3px 8px;
+  border-radius: 999px;
 }
 
 .itineraryViewDetailBtn {
@@ -532,103 +533,136 @@
   justify-content: center;
   gap: 6px;
   width: 100%;
-  margin-top: 12px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: #006655;
-  color: #FFFFFF !important;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--color-coral) 0%, var(--color-coral-soft) 100%);
+  color: var(--color-background) !important;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
-  transition: all 160ms ease;
+  box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--color-coral) 80%, transparent);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .itineraryViewDetailBtn:hover {
-  background: #004d40;
-  box-shadow: 0 2px 8px rgba(0, 102, 85, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px -10px color-mix(in srgb, var(--color-coral) 90%, transparent);
 }
 
-/* Tabs */
+/* Tabs dạng viên thuốc */
 .itineraryTabsRow {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #E2E8F0;
-  background: #FFFFFF;
+  gap: 4px;
+  margin: 0 14px 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
 }
 
 .itineraryTabItem {
   flex: 1;
-  padding: 10px 4px;
+  padding: 7px 4px;
   border: none;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: #64748B;
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: 999px;
+  background: var(--color-transparent);
+  color: var(--color-text-muted);
+  font-size: 12.5px;
+  font-weight: 700;
   cursor: pointer;
   text-align: center;
-  transition: all 160ms ease;
+  transition: all 180ms ease;
   white-space: nowrap;
 }
 
 .itineraryTabItem:hover {
-  color: #141B3D;
+  color: var(--color-navy);
 }
 
 .itineraryTabItemActive {
-  color: #006655 !important;
-  border-bottom-color: #006655 !important;
+  background: var(--color-background) !important;
+  color: var(--color-navy) !important;
+  box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--color-ink) 25%, transparent);
 }
 
-/* Scroll Body */
+/* Vùng cuộn */
 .itineraryScrollBody {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 16px;
+  padding: 14px 16px 18px;
   overscroll-behavior: contain;
 }
 
 .itineraryEmptyText {
   font-size: 13px;
-  color: #94A3B8;
+  color: var(--color-text-subtle);
   text-align: center;
   padding: 24px 8px;
   line-height: 1.6;
 }
 
-/* Timeline */
+/* Timeline: số ngày trong vòng tròn coral, nối các ngày bằng đường kẻ */
 .itineraryTimeline {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .itineraryDayBlock {
   position: relative;
-  padding-left: 18px;
-  border-left: 2px solid #E2E8F0;
+  padding-left: 40px;
+}
+
+.itineraryDayBlock::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 30px;
+  bottom: -18px;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-coral) 45%, transparent),
+    var(--color-border)
+  );
+}
+
+.itineraryDayBlock:last-child::before {
+  bottom: 0;
 }
 
 .itineraryDayHeader {
   position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 28px;
   margin-bottom: 10px;
 }
 
 .itineraryDayDot {
   position: absolute;
-  left: -24px;
-  top: 4px;
-  width: 10px;
-  height: 10px;
+  left: -40px;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: #006655;
-  box-shadow: 0 0 0 3px rgba(0, 102, 85, 0.15);
+  background: linear-gradient(135deg, var(--color-coral) 0%, var(--color-coral-soft) 100%);
+  color: var(--color-background);
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 0 0 4px var(--color-coral-tint);
 }
 
 .itineraryDayTitle {
   font-size: 13.5px;
-  font-weight: 700;
-  color: #141B3D;
+  font-weight: 800;
+  color: var(--color-navy);
   margin: 0;
 }
 
@@ -646,21 +680,27 @@
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  border-radius: 10px;
-  background: #F8FAFC;
-  border: 1px solid #F1F5F9;
-  transition: background 150ms ease;
+  border-radius: 14px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 12px -10px color-mix(in srgb, var(--color-ink) 40%, transparent);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .itineraryStopCard:hover {
-  background: #F1F5F9;
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--color-coral) 40%, transparent);
+  box-shadow: 0 10px 20px -14px color-mix(in srgb, var(--color-coral) 70%, transparent);
 }
 
 .itineraryStopThumb {
   position: relative;
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -670,7 +710,7 @@
 }
 
 .itineraryStopPin {
-  color: #FF6A00;
+  color: var(--color-coral);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -686,22 +726,22 @@
 
 .itineraryStopName {
   font-size: 13px;
-  font-weight: 600;
-  color: #141B3D;
+  font-weight: 700;
+  color: var(--color-navy);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .itineraryStopMeta {
-  font-size: 11px;
-  color: #64748B;
+  font-size: 11.5px;
+  color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* POI List */
+/* Danh sách điểm đến */
 .itineraryPoiList {
   list-style: none;
   margin: 0;
@@ -715,61 +755,61 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  color: #141B3D;
+  padding: 11px 12px;
+  border-radius: 14px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  color: var(--color-navy);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   transition: all 160ms ease;
 }
 
 .itineraryPoiLink:hover {
-  background: #FFFFFF;
-  border-color: #006655;
-  color: #006655;
+  border-color: color-mix(in srgb, var(--color-coral) 45%, transparent);
+  color: var(--color-coral-ink);
   transform: translateX(2px);
 }
 
 .itineraryPoiSub {
   font-size: 11.5px;
-  font-weight: 400;
-  color: #64748B;
+  font-weight: 500;
+  color: var(--color-text-muted);
 }
 
-/* Cost */
+/* Chi phí */
 .itineraryCostContainer {
   padding: 8px 0;
 }
 
 .itineraryCostCard {
-  padding: 16px;
-  border-radius: 12px;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  padding: 18px 16px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, var(--color-warm-mist) 0%, var(--color-background) 100%);
+  border: 1px solid var(--color-coral-tint);
   text-align: center;
 }
 
 .itineraryCostLabel {
   display: block;
   font-size: 12px;
-  color: #64748B;
+  font-weight: 600;
+  color: var(--color-text-muted);
   margin-bottom: 6px;
 }
 
 .itineraryCostValue {
   display: block;
-  font-size: 20px;
-  font-weight: 700;
-  color: #006655;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-coral-ink);
   margin-bottom: 8px;
 }
 
 .itineraryCostNote {
   font-size: 11.5px;
-  color: #94A3B8;
+  color: var(--color-text-subtle);
   margin: 0;
   line-height: 1.5;
 }
@@ -1890,10 +1930,7 @@
   width: 100% !important;
   height: 100% !important;
   min-height: 0 !important;
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 20px !important;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
+  /* Nền, viền, bo góc, bóng lấy từ .rightPanel (kính mờ) để đồng bộ với màn Reels. */
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
