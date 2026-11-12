@@ -1,0 +1,1578 @@
+.section {
+  padding-block: clamp(52px, 7vw, 100px);
+}
+.sectionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.sectionHead h2 {
+  margin: 0;
+  font-size: clamp(1.75rem, 4.25vw, 4rem);
+  line-height: 1.08;
+  letter-spacing: -0.065em;
+}
+.sectionHead p {
+  margin: 12px 0 0;
+  max-width: 62ch;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.headActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.comboTimeline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 4px;
+}
+.timelinePill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.timelinePill:hover {
+  border-color: var(--color-teal);
+  color: var(--color-teal-ink);
+  transform: translateY(-1px);
+}
+.timelinePillActive {
+  border-color: var(--color-teal-ink);
+  color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+  font-weight: 700;
+  padding-right: 14px;
+}
+.timelineIndex {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  opacity: 0.7;
+}
+.timelineLabel {
+  white-space: nowrap;
+}
+.timelineFill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2.5px;
+  background: var(--color-teal);
+  animation: timelineFillProgress linear forwards;
+}
+@keyframes timelineFillProgress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+@media (max-width: 900px) {
+  .comboTimeline {
+    display: none;
+  }
+}
+.navArrows {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.arrowBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.arrowBtn:hover {
+  background: var(--color-surface);
+  border-color: var(--color-teal);
+  color: var(--color-teal-ink);
+}
+.arrowBtn:active {
+  transform: scale(0.95);
+}
+.textLink {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--color-teal-ink);
+  font-size: 13px;
+  font-weight: 700;
+  padding-block: 10px;
+}
+.textLink:hover {
+  text-decoration: underline;
+}
+.destinations {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(200px, 1fr));
+  gap: 16px;
+}
+.destination {
+  position: relative;
+  display: flex;
+  align-items: end;
+  isolation: isolate;
+  min-height: clamp(190px, 18vw, 260px);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--color-ink);
+  color: var(--color-background);
+  padding: clamp(14px, 1.8vw, 22px);
+  box-shadow: 0 16px 36px -26px var(--color-overlay-heavy);
+  transform: perspective(1000px)
+    rotateX(calc(var(--card-tilt-y, 0) * -6deg))
+    rotateY(calc(var(--card-tilt-x, 0) * 6deg))
+    translateY(0);
+  transition:
+    transform 320ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 320ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.destination:is(:hover, :focus-within) {
+  transform: perspective(1000px)
+    rotateX(calc(var(--card-tilt-y, 0) * -6deg))
+    rotateY(calc(var(--card-tilt-x, 0) * 6deg))
+    translateY(-6px);
+  box-shadow: 0 32px 58px -24px color-mix(in srgb, var(--color-teal-ink) 45%, transparent);
+}
+.cardSpecularGlare {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(
+    circle 320px at var(--mouse-x, -500px) var(--mouse-y, -500px),
+    rgba(255, 255, 255, 0.22) 0%,
+    transparent 65%
+  );
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+.destination:hover .cardSpecularGlare {
+  opacity: 1;
+}
+.destination:first-child {
+  grid-row: span 2;
+  border-top-left-radius: clamp(22px, 5vw, 76px);
+}
+.destination h3 {
+  margin: 3px 0 4px;
+  color: inherit;
+  font-size: clamp(17px, 1.5vw, 22px);
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.destination:first-child h3 {
+  font-size: clamp(22px, 2.2vw, 32px);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  -webkit-line-clamp: 2;
+  margin: 4px 0 6px;
+}
+.destination div > span {
+  color: var(--color-teal-soft);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.destination p {
+  margin: 0;
+  padding-right: 12px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.85);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.destinationReason {
+  font-size: clamp(12px, 0.95vw, 13.5px) !important;
+  line-height: 1.5 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  margin-top: 4px !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-right: 16px !important;
+}
+.cardLayerActive,
+.cardLayerOutgoing,
+.cardLayerIncoming,
+.cardLayerIncomingNext,
+.cardLayerIncomingPrev {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: end;
+  padding: inherit;
+}
+.cardLayerActive {
+  z-index: 1;
+}
+.cardLayerOutgoing {
+  z-index: 1;
+  pointer-events: none;
+}
+.cardLayerIncoming {
+  z-index: 2;
+  animation: cardCrossfadeIn 950ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.cardLayerIncomingNext {
+  z-index: 2;
+  animation: cardSlideInNext 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.cardLayerIncomingPrev {
+  z-index: 2;
+  animation: cardSlideInPrev 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes cardSlideInNext {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes cardSlideInPrev {
+  from {
+    opacity: 0;
+    transform: translateY(-22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.cardLayerActive::before,
+.cardLayerOutgoing::before,
+.cardLayerIncoming::before,
+.cardLayerIncomingNext::before,
+.cardLayerIncomingPrev::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(
+    0deg,
+    rgba(8, 16, 26, 0.92) 0%,
+    rgba(8, 16, 26, 0.6) 30%,
+    rgba(8, 16, 26, 0.12) 55%,
+    transparent 72%
+  );
+  pointer-events: none;
+}
+@keyframes cardCrossfadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.cardContentOut {
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  animation: cardContentOut 400ms ease-out forwards;
+}
+@keyframes cardContentOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.destination img {
+  object-fit: cover;
+  z-index: -1;
+  transform: translate(calc(var(--card-tilt-x, 0) * -8px), calc(var(--card-tilt-y, 0) * -6px)) scale(1.05);
+  transition: transform 400ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.cardContent {
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  animation: contentStaggerIn 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes contentStaggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.comboBadge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2.5px 8px;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  background: var(--color-overlay-heavy);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+.badgeShimmerGlow {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: shimmerSweep 3.5s infinite;
+  pointer-events: none;
+}
+@keyframes shimmerSweep {
+  0%,
+  65% {
+    left: -100%;
+  }
+  100% {
+    left: 160%;
+  }
+}
+.badgeTrending {
+  background: var(--color-coral);
+  border-color: transparent;
+}
+.badgeDeal {
+  background: var(--color-teal);
+  border-color: transparent;
+}
+.comboMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 11.5px;
+}
+.comboMeta strong {
+  color: #fff;
+  font-weight: 700;
+  font-size: 12.5px;
+}
+.actionPrompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--color-teal-soft, #a7f3d0);
+  font-weight: 600;
+  font-size: 11.5px;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+.arrowBounce {
+  display: inline-block;
+  transition: transform 200ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.destination:hover .arrowBounce {
+  transform: translateX(4px);
+}
+.destination:hover .actionPrompt {
+  color: #ffffff;
+}
+.stayBand {
+  --edge-height: 0px;
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background: rgba(255, 247, 242, 0.94);
+  border: 1px solid rgba(0, 178, 163, 0.22);
+  border-radius: 32px;
+  max-width: 1240px;
+  margin-inline: auto;
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 20px 50px -10px rgba(0, 108, 99, 0.08);
+}
+/* Ảnh phong cảnh mờ là lớp dưới cùng; độ trong suốt pha với nền Warm Mist sáng sủa */
+.stayBackdrop {
+  z-index: -2;
+  object-fit: cover;
+  opacity: 0.22;
+  filter: blur(20px) saturate(1.1);
+  scale: 1.2;
+  transition:
+    scale 900ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    filter 900ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.stayEdgeTop,
+.stayEdgeBottom {
+  display: none;
+}
+/* Rê chuột vào dải: bóng mép giấy sâu hơn, ảnh nền lùi xuống như một lớp nằm dưới. */
+@media (hover: hover) and (pointer: fine) {
+  /* Chỉ đổi bóng, không dịch mép giấy: dịch lớp có filter để lại một vệt sáng ở mép dưới lớp. */
+  .stayBand:hover .stayEdgeTop {
+    filter: drop-shadow(0 10px 9px color-mix(in srgb, var(--color-ink) 24%, transparent));
+  }
+  .stayBand:hover .stayEdgeBottom {
+    filter: drop-shadow(0 -10px 9px color-mix(in srgb, var(--color-ink) 18%, transparent));
+  }
+  .stayBand:hover .stayBackdrop {
+    scale: 1.26;
+    filter: blur(18px) saturate(1.15);
+  }
+}
+.stayContent {
+  padding-block: calc(var(--edge-height) + clamp(20px, 3vw, 44px));
+}
+.stayHeader {
+  position: relative;
+  isolation: isolate;
+  filter: drop-shadow(0 14px 28px rgba(0, 108, 99, 0.1));
+  transition:
+    transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    filter 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.stayHeader:hover {
+  transform: translateY(-4px);
+  filter: drop-shadow(0 24px 36px rgba(0, 108, 99, 0.18));
+}
+.stayTicket {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: stretch;
+  border-radius: 22px;
+  background: var(--color-sea-mist);
+  overflow: hidden;
+
+  /* TRUE CSS MASK - Khoét lỗ trực tiếp trên layer background của vé */
+  --seam-x: 55.555%;
+  -webkit-mask-image:
+    radial-gradient(circle 14px at var(--seam-x) 0, transparent 13.5px, #000 14px),
+    radial-gradient(circle 14px at var(--seam-x) 100%, transparent 13.5px, #000 14px),
+    radial-gradient(circle 4.5px at var(--seam-x) 8px, transparent 4px, #000 4.5px);
+  -webkit-mask-size:
+    100% 100%,
+    100% 100%,
+    100% 16px;
+  -webkit-mask-repeat:
+    no-repeat,
+    no-repeat,
+    repeat-y;
+  -webkit-mask-composite: destination-in;
+
+  mask-image:
+    radial-gradient(circle 14px at var(--seam-x) 0, transparent 13.5px, #000 14px),
+    radial-gradient(circle 14px at var(--seam-x) 100%, transparent 13.5px, #000 14px),
+    radial-gradient(circle 4.5px at var(--seam-x) 8px, transparent 4px, #000 4.5px);
+  mask-size:
+    100% 100%,
+    100% 100%,
+    100% 16px;
+  mask-repeat:
+    no-repeat,
+    no-repeat,
+    repeat-y;
+  mask-composite: intersect;
+}
+.stayCopy {
+  align-self: center;
+  padding: clamp(14px, 2.2vw, 24px);
+  z-index: 1;
+}
+.stayInnerFrame {
+  border: 2px dashed rgba(0, 108, 99, 0.38);
+  border-radius: 14px;
+  padding: clamp(16px, 2vw, 24px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.stayTicketBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-teal-ink);
+  margin-bottom: 8px;
+}
+.stayTicketStar {
+  color: var(--color-coral);
+  font-size: 12px;
+}
+.stayCopy h2 {
+  max-width: 24ch;
+  margin-bottom: 8px;
+  font-size: clamp(1.45rem, 3.1vw, 2.8rem);
+  line-height: 1.15;
+  letter-spacing: -0.05em;
+}
+.stayCopy p {
+  max-width: 50ch;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+  margin: 0 0 16px;
+}
+.stayActionRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+}
+.stayAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 18px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--color-teal-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  border: 1.5px solid rgba(0, 108, 99, 0.22);
+  box-shadow: 0 2px 8px rgba(0, 108, 99, 0.06), 0 1px 2px rgba(0, 0, 0, 0.02);
+  flex-shrink: 0;
+  --ripple-color: var(--color-coral);
+  transition:
+    color 300ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    border-color 300ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 250ms ease,
+    transform 250ms ease;
+}
+.stayAction svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--color-coral);
+  stroke-width: 2.2;
+  flex-shrink: 0;
+  transition: stroke 300ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.stayAction:is(:hover, :focus-visible) {
+  border-color: var(--color-coral);
+  color: #ffffff;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 14px rgba(255, 114, 94, 0.32);
+}
+.stayAction:is(:hover, :focus-visible) svg {
+  stroke: #ffffff;
+}
+.stayDestinationBadge {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  min-height: 44px;
+}
+.stayDestinationText {
+  font-size: clamp(26px, 2.6vw, 36px);
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.2;
+  color: var(--color-coral, #ff725e);
+  display: inline-block;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  padding-inline: 4px;
+  text-shadow: 0 1px 3px rgba(255, 114, 94, 0.18);
+  animation: handwrittenCityIn 950ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.stayDestinationBadge:hover .stayDestinationText {
+  color: #ff5a3c;
+  transform: translateY(-1px) scale(1.05);
+}
+@keyframes handwrittenCityIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.stayScene {
+  position: relative;
+  min-height: 150px;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--color-teal-soft);
+}
+/* Ảnh của mọi điểm đến luôn nằm sẵn trong DOM (đã tải xong), đổi điểm đến chỉ là mờ dần giữa hai ảnh. */
+.stayLandscape {
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+.stayLandscape[data-active] {
+  opacity: 1;
+}
+.stayRedStamp {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  z-index: 4;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 2px solid #d32f2f;
+  color: #d32f2f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  font-weight: 800;
+  transform: rotate(-13deg);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 0 0 1.5px rgba(211, 47, 47, 0.35);
+  user-select: none;
+  pointer-events: none;
+  transition:
+    transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 350ms ease;
+}
+.stayHeader:hover .stayRedStamp {
+  transform: rotate(-8deg) scale(1.12);
+  box-shadow:
+    0 8px 20px rgba(211, 47, 47, 0.32),
+    inset 0 0 0 1.5px rgba(211, 47, 47, 0.5);
+}
+.stampOrg {
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  opacity: 0.95;
+}
+.stampAction {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  margin-block: 2.5px;
+  border-block: 1px dashed #d32f2f;
+  padding-block: 1.5px;
+  width: 82%;
+  text-align: center;
+  color: #b71c1c;
+}
+.stampDate {
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  opacity: 0.9;
+}
+.stayMascot {
+  position: absolute;
+  bottom: 0;
+  left: calc(58% - 75px);
+  width: min(36%, 150px);
+  height: auto;
+  z-index: 6;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.18));
+  pointer-events: none;
+  transition: transform 450ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.stayHeader:hover .stayMascot {
+  transform: translateY(-6px) scale(1.04);
+}
+/* Thiết lập bố cục vé du lịch trên desktop */
+@media (min-width: 641px) {
+  .stayTicket {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  }
+  .stayMascot {
+    left: calc(55.555% - 95px);
+    width: min(42%, 200px);
+    bottom: 0;
+  }
+}
+.chips {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 24px 20px;
+  border: none;
+  padding: 0;
+}
+.chips button {
+  min-height: 42px;
+  padding: 8px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.chips button:hover {
+  border-color: var(--color-teal-ink);
+  color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 108, 99, 0.1);
+}
+.chips button[aria-pressed='true'] {
+  border-color: var(--color-teal-ink);
+  background: var(--color-teal-ink);
+  color: var(--color-background);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 108, 99, 0.2);
+}
+.chips button:active {
+  transform: scale(0.97);
+}
+.stayGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  transition: opacity 250ms ease;
+}
+.stayGrid > .hotelCard {
+  animation: stayCardIn 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stayGrid > .hotelCard:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stayGrid > .hotelCard:nth-child(2) {
+  animation-delay: 80ms;
+}
+.stayGrid > .hotelCard:nth-child(3) {
+  animation-delay: 160ms;
+}
+@keyframes stayCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.stayGrid[aria-busy='true'] {
+  opacity: 0.6;
+}
+.previewGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.hotelCard,
+.story {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--color-background);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 6%, transparent),
+    0 12px 28px -20px var(--color-overlay-heavy);
+}
+/* Ảnh thẻ trải dưới cả phần chữ; phần chữ là kính trắng mờ nhẹ nên ánh màu theo chính ảnh của thẻ. */
+.hotelCard {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-background) 70%, transparent),
+    0 24px 48px -28px var(--color-overlay-heavy);
+  transition:
+    transform 400ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 400ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.hotelCard:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-background) 70%, transparent),
+    0 32px 56px -28px color-mix(in srgb, var(--color-teal-ink) 35%, transparent);
+}
+.hotelCard a {
+  display: grid;
+  grid-template-rows: clamp(126px, 16vw, 220px) 1fr;
+  height: 100%;
+}
+.hotelCard a:focus-visible {
+  outline-offset: -3px;
+}
+.hotelPhoto {
+  grid-area: 1 / 1 / -1 / -1;
+  overflow: hidden;
+  background: var(--color-sea-mist);
+}
+.hotelPhoto :global(.trip-card-photo) {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+}
+.hotelPhoto :global(.trip-card-photo) img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 600ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.hotelCard a:hover img {
+  transform: scale(1.07);
+}
+.hotelInfo,
+.story {
+  padding: 18px;
+}
+.hotelInfo {
+  grid-area: 2 / 1;
+  position: relative;
+  background: color-mix(in srgb, var(--color-background) 86%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-background) 90%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stayLocation {
+  padding-right: 46px;
+  color: var(--color-teal-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+/* Hạng sao là thẻ ghim vàng (.pin-tag ở globals.css), ghim ở góc phải thông tin khách sạn. */
+.hotelInfo .stayRating {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  font-size: 13px;
+}
+.hotelInfo .stayRating {
+  gap: 3px;
+  padding-block: 4px;
+  background: var(--color-coral);
+  color: var(--color-background);
+  font-size: 14px;
+  font-weight: 800;
+  text-shadow: 0 1px 1px color-mix(in srgb, var(--color-coral-ink) 80%, transparent);
+}
+.hotelInfo .stayRating::before {
+  background: var(--color-background);
+  box-shadow: inset -1px -1px 0 var(--color-border);
+}
+.stayRating svg {
+  width: 17px;
+  height: 17px;
+  filter: drop-shadow(0 0 0.6px var(--color-background))
+    drop-shadow(0 1px 1.5px color-mix(in srgb, var(--color-coral-ink) 70%, transparent));
+}
+.hotelInfo p,
+.story p {
+  margin: 0;
+}
+.hotelInfo h3,
+.story h3 {
+  margin: 0 0 8px;
+  line-height: 1.45;
+  font-size: 17px;
+}
+.hotelInfo .stayPriceRow {
+  margin-top: auto;
+  padding-top: 9px;
+  border-top: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent);
+}
+.hotelInfo strong {
+  color: var(--color-coral-ink);
+  font-size: 17px;
+}
+.hotelInfo small,
+.story small {
+  color: var(--color-text-muted);
+}
+.tripiBanner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 40px);
+  padding: clamp(22px, 2.4vw, 38px) clamp(22px, 4vw, 64px);
+  overflow: hidden;
+  border-radius: 24px;
+  isolation: isolate;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 5%, transparent),
+    0 18px 40px -28px var(--color-overlay-heavy);
+  transition:
+    transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  background: var(--color-warm-mist);
+  color: var(--color-ink);
+}
+.tripiBanner:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 5%, transparent),
+    0 30px 52px -28px var(--color-overlay-heavy);
+}
+.tripiBanner::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(112deg, var(--color-warm-mist) 26%, var(--color-sea-mist) 72%);
+}
+/* Dấu chìm bản đồ tròn, rất mờ, nằm sau ảnh và Tripi. */
+.tripiBanner::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: -6%;
+  width: 66%;
+  aspect-ratio: 1400 / 1340;
+  translate: 0 -50%;
+  background: url('/brand/home-world.svg') center / contain no-repeat;
+  opacity: 0.07;
+  pointer-events: none;
+}
+.tripiCopy {
+  position: relative;
+  z-index: 1;
+}
+.tripiBanner h2 {
+  max-width: 23ch;
+  font-size: clamp(1.55rem, 3.15vw, 3.25rem);
+  line-height: 1.1;
+  letter-spacing: -0.055em;
+}
+.tripiIntro {
+  max-width: 49ch;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+.tripiAction {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 15px;
+  padding: 8px 24px;
+  border-radius: 999px;
+  background: var(--color-coral);
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  box-shadow: 0 8px 20px -4px rgba(255, 90, 60, 0.4);
+  transition: all 250ms ease;
+}
+.tripiAction:hover {
+  background: var(--color-coral-soft);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -4px rgba(255, 90, 60, 0.5);
+}
+.tripiAction {
+  --ripple-color: rgba(255, 255, 255, 0.5);
+}
+.tripiAction:focus-visible {
+  outline-color: var(--color-coral);
+}
+.tripiCollage {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  margin-inline: auto;
+  aspect-ratio: 1.47;
+}
+.tripiRoute {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: var(--color-teal-ink);
+}
+.tripiRoute path {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 7;
+}
+.tripiRoute circle {
+  fill: var(--color-coral-ink);
+}
+.tripiPostcard {
+  position: absolute;
+  width: 43%;
+  padding: clamp(4px, 1vw, 11px);
+  border-radius: 4px;
+  background: var(--color-warm-mist);
+  color: var(--color-ink);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--color-teal-ink) 24%, transparent);
+}
+.tripiPostcard span {
+  display: block;
+  padding: 6px 0 1px;
+  font: 700 clamp(0.6rem, 1vw, 0.75rem) var(--font-mono);
+}
+.tripiPrint {
+  position: relative;
+  aspect-ratio: 1.2;
+  overflow: hidden;
+  background: var(--color-teal-ink);
+}
+.tripiPrint img {
+  object-fit: cover;
+}
+.tripiRoute path {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 7;
+  animation: tripiMarchDash 12s linear infinite;
+}
+@keyframes tripiMarchDash {
+  to {
+    stroke-dashoffset: -110;
+  }
+}
+.tripiBeach {
+  top: 12%;
+  left: 8%;
+  rotate: -13deg;
+  animation: floatGentle1 6s ease-in-out infinite;
+}
+.tripiTown {
+  top: 27%;
+  right: 7%;
+  rotate: 12deg;
+  text-align: right;
+  animation: floatGentle2 7s ease-in-out infinite;
+}
+@keyframes floatGentle1 {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-13deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(-11deg);
+  }
+}
+@keyframes floatGentle2 {
+  0%,
+  100% {
+    transform: translateY(0) rotate(12deg);
+  }
+  50% {
+    transform: translateY(8px) rotate(14deg);
+  }
+}
+.tripiMascot {
+  position: absolute;
+  bottom: -2%;
+  left: 23%;
+  width: 55%;
+  height: auto;
+  filter: drop-shadow(0 8px 12px color-mix(in srgb, var(--color-teal-ink) 28%, transparent));
+}
+.tripiStamp {
+  position: absolute;
+  top: 8%;
+  right: 13%;
+  display: grid;
+  place-items: center;
+  width: clamp(27px, 3.5vw, 44px);
+  aspect-ratio: 1;
+  border: 1px dashed var(--color-coral-ink);
+  border-radius: 50%;
+  background: var(--color-sun-soft);
+  color: var(--color-coral-ink);
+  font-size: clamp(1rem, 2.5vw, 2rem);
+  animation: stampSpinSlow 18s linear infinite;
+}
+@keyframes stampSpinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.stories {
+  padding-top: 4px;
+}
+.story {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* Cả thẻ bấm được: link tiêu đề phủ toàn thẻ bằng ::after (vẫn chỉ một link cho trình đọc màn hình). */
+.story {
+  position: relative;
+  transition:
+    translate 450ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+.story h3 a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.story:has(a:is(:hover, :focus-visible)) {
+  translate: 0 -5px;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 6%, transparent),
+    0 24px 40px -22px var(--color-overlay-heavy);
+}
+.story:has(a:is(:hover, :focus-visible)) h3 {
+  color: var(--color-teal-ink);
+}
+.story h3 a:focus-visible {
+  outline: none;
+}
+.story:has(h3 a:focus-visible) {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 3px;
+}
+.storyStats {
+  display: flex;
+  gap: 14px;
+  margin-top: auto;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.storyStats > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.heartReaction svg {
+  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.story:hover .heartReaction svg {
+  animation: heartPulse 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes heartPulse {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.4) rotate(-10deg);
+  }
+  70% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  100% {
+    transform: scale(1.2);
+  }
+}
+.storyStats svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linejoin: round;
+}
+.storyStats > span:first-child svg {
+  color: var(--color-coral);
+  fill: var(--color-coral);
+}
+.storyStats > span:last-child svg {
+  color: var(--color-sun);
+  fill: var(--color-sun);
+}
+.story .excerpt {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.65;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.story small {
+  margin-top: auto;
+}
+.state {
+  display: block;
+  padding: 16px 0;
+  color: var(--color-text-muted);
+}
+@media (max-width: 640px) {
+  .sectionHead {
+    display: block;
+    margin-bottom: 16px;
+  }
+  .sectionHead p {
+    margin-top: 8px;
+  }
+  .destinations {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    gap: 12px;
+  }
+  .destination {
+    min-height: 188px;
+    padding: 12px;
+  }
+  .destination:first-child {
+    grid-row: auto;
+    min-height: 230px;
+  }
+  .destination h3 {
+    font-size: 19px;
+  }
+  .destination p {
+    font-size: 11px;
+    padding-right: 14px;
+  }
+  .previewGrid,
+  .stayGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .stayTicket {
+    grid-template-columns: minmax(0, 1fr);
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .stayScene {
+    min-height: 116px;
+  }
+  .stayRedStamp {
+    top: 10px;
+    right: 12px;
+    transform: rotate(-13deg) scale(0.8);
+    transform-origin: top right;
+  }
+  .stayMascot {
+    width: 102px;
+    left: 10px;
+  }
+  .hotelCard a {
+    grid-template-rows: clamp(145px, 46vw, 210px) 1fr;
+  }
+  .stories {
+    padding-top: 0;
+  }
+}
+@media (max-width: 760px) {
+  .tripiBanner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .tripiCollage {
+    max-width: 268px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :global(html:has([data-home-banner])) {
+    scroll-behavior: smooth;
+  }
+  :global([data-home-entered]) {
+    animation: section-arrive 1152ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  }
+  :global([data-home-entered]) .tripiPostcard,
+  :global([data-home-entered]) .tripiMascot,
+  :global([data-home-entered]) .tripiStamp {
+    animation: tripi-arrive 1280ms cubic-bezier(0.2, 0.75, 0.25, 1.2) backwards;
+  }
+  :global([data-home-entered]) .tripiTown {
+    animation-delay: 144ms;
+  }
+  :global([data-home-entered]) .tripiMascot,
+  :global([data-home-entered]) .tripiStamp {
+    animation-delay: 272ms;
+  }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .stayLandscape {
+    scale: 1.1;
+    translate: calc(var(--pointer-x, 0) * -28px) calc(var(--pointer-y, 0) * -12px);
+    transition:
+      translate 672ms cubic-bezier(0.2, 0.7, 0.25, 1),
+      opacity 700ms ease;
+  }
+  .stayMascot {
+    translate: calc(var(--pointer-x, 0) * 22px) calc(var(--pointer-y, 0) * 10px);
+    transition: translate 672ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  }
+  .destination img {
+    transition: transform 672ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  }
+  .destination:is(:hover, :focus-visible) img {
+    transform: translate(calc(var(--pointer-x, 0) * -14px), calc(var(--pointer-y, 0) * -12px)) scale(1.08);
+  }
+  .tripiPostcard,
+  .tripiMascot,
+  .tripiStamp {
+    transition: translate 720ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  }
+  .tripiBeach,
+  .tripiStamp {
+    translate: calc(var(--pointer-x, 0) * -30px) calc(var(--pointer-y, 0) * -22px);
+  }
+  .tripiTown {
+    translate: calc(var(--pointer-x, 0) * -16px) calc(var(--pointer-y, 0) * -12px);
+  }
+  .tripiMascot {
+    translate: calc(var(--pointer-x, 0) * 44px) calc(var(--pointer-y, 0) * 32px);
+  }
+}
+@keyframes tripi-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes section-arrive {
+  from {
+    opacity: 0.48;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cardLayerIncoming,
+  .cardLayerIncomingNext,
+  .cardLayerIncomingPrev,
+  .cardContentOut,
+  .cardContent,
+  .chips,
+  .stayGrid > .hotelCard,
+  .badgeShimmerGlow,
+  .timelineFill,
+  .tripiBeach,
+  .tripiTown,
+  .tripiStamp,
+  .tripiRoute path,
+  .heartReaction svg {
+    animation: none !important;
+  }
+  .destination {
+    transform: none !important;
+  }
+  .cardSpecularGlare {
+    display: none !important;
+  }
+  .hotelCard img {
+    transition: none;
+  }
+}
+@keyframes chips-scroll-in {
+  from {
+    opacity: 0.25;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 3 thẻ khách sạn xoè ra như quạt tay khi cuộn tới: bắt đầu nhỏ, chồng ở giữa, nghiêng quanh điểm dưới thẻ,
+   rồi phóng to và bung về chỗ theo nhịp cuộn (scroll-driven; trình duyệt chưa hỗ trợ thì thẻ hiện bình thường). */
+/* Desktop: 3 thẻ bằng nhau khi đã xoè hết. */
+@media (min-width: 641px) {
+  .stayGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .chips {
+      animation: chips-scroll-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+    .stayGrid > .hotelCard {
+      transform-origin: 50% 140%;
+      animation: stay-fan-out linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 45%;
+    }
+    .stayGrid > .hotelCard:nth-child(1) {
+      --fan-x: calc(100% + 16px);
+      --fan-y: 36px;
+      --fan-rotate: -9deg;
+      --fan-scale: 0.6;
+    }
+    /* Thẻ giữa trồi lên từ dưới, nằm trên hai thẻ bên. */
+    .stayGrid > .hotelCard:nth-child(2) {
+      --fan-x: 0px;
+      --fan-y: 90px;
+      --fan-rotate: 0deg;
+      --fan-scale: 0.9;
+      z-index: 1;
+    }
+    .stayGrid > .hotelCard:nth-child(3) {
+      --fan-x: calc(-100% - 16px);
+      --fan-y: 36px;
+      --fan-rotate: 9deg;
+      --fan-scale: 0.6;
+    }
+  }
+}
+@keyframes stay-fan-out {
+  /* Phóng từ nhỏ ra lớn, hiện dần. */
+  from {
+    opacity: 0.35;
+    translate: var(--fan-x, 0px) var(--fan-y, 36px);
+    rotate: var(--fan-rotate, 0deg);
+    /* Lúc bung: hai thẻ bên nhỏ hơn thẻ giữa; xoè hết thì cả ba về 1. */
+    scale: var(--fan-scale, 0.6);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+}
+
+/* Thẻ bài viết chạy nối đuôi từ phải sang trái như đoàn tàu, cuộn tới đâu chạy tới đó (scroll-driven).
+   Mốc là tiến độ cuộn của hàng thẻ (--story-row), tính bằng px nên thẻ cuối luôn tới nơi kể cả khi mục
+   nằm gần cuối trang. Quán tính: lúc chạy ngửa ra sau,
+   lúc phanh chúi về trước, trượt quá rồi lùi về; mỗi thẻ kéo vệt khói mờ.
+   Màn hẹp, giảm chuyển động hoặc trình duyệt chưa hỗ trợ: thẻ hiện bình thường. */
+@media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .stories .previewGrid {
+      view-timeline: --story-row block;
+    }
+    /* Cắt ngang ở body (không ở hàng thẻ) để toa còn ngoài mép phải không tạo thanh cuộn ngang,
+       mà thẻ đầu vẫn trượt quá và chúi về trước được mà không bị cắt. */
+    :global(body):has(.stories) {
+      overflow-x: clip;
+    }
+    .stories .story {
+      overflow: visible;
+      transform-origin: 50% 100%;
+      animation: story-train-in linear both;
+      animation-timeline: --story-row;
+    }
+    /* Mốc là chính hàng thẻ, khoảng cuộn tính bằng px (cover 0 = mép trên hàng thẻ chạm đáy màn hình):
+       toa 1 chỉ bắt đầu khi hàng thẻ đã ló lên 80px; mỗi toa chạy ~360px cuộn, nối đuôi nhau.
+       Toa cuối xong ở 580px; dưới hàng thẻ còn hơn 1000px để cuộn nên luôn tới nơi. */
+    .stories .story:nth-child(1) {
+      animation-range: cover 80px cover 420px;
+    }
+    .stories .story:nth-child(2) {
+      animation-range: cover 150px cover 500px;
+    }
+    .stories .story:nth-child(3) {
+      animation-range: cover 220px cover 580px;
+    }
+    .stories .story::before {
+      content: '';
+      position: absolute;
+      top: 18%;
+      bottom: 18%;
+      left: calc(100% - 12px);
+      z-index: -1;
+      width: 160px;
+      border-radius: 50%;
+      background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--color-teal-soft) 90%, transparent),
+        color-mix(in srgb, var(--color-warm-mist) 70%, transparent) 55%,
+        transparent
+      );
+      filter: blur(10px);
+      transform-origin: left center;
+      animation: story-train-smoke linear both;
+      animation-timeline: --story-row;
+      animation-range: inherit;
+      pointer-events: none;
+    }
+  }
+}
+/* transform (không dùng translate) để không đè hiệu ứng nhích lên khi rê chuột. Nghiêng quanh mép dưới thẻ. */
+@keyframes story-train-in {
+  0% {
+    opacity: 0;
+    transform: translateX(70vw) skewX(-9deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  62% {
+    transform: translateX(-16px) skewX(7deg);
+  }
+  82% {
+    transform: translateX(5px) skewX(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes story-train-smoke {
+  0% {
+    opacity: 0.9;
+    scale: 1 1;
+  }
+  60% {
+    opacity: 0.4;
+    scale: 1.9 1.25;
+  }
+  100% {
+    opacity: 0;
+    scale: 2.4 1.4;
+  }
+}

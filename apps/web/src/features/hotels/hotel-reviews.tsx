@@ -1,0 +1,229 @@
+'use client';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getHotelReviews, useApiSession, type HotelReviewFilters } from '@tripflix/api-client';
+import { t, vi } from '@tripflix/i18n';
+import { ApiErrorNotice } from '@/features/shared/api-state';
+import { SoftSelect } from '@/features/shared/soft-select';
+import { HotelGallery } from './hotel-gallery';
+import styles from './hotel.module.css';
+
+const copy = vi.hotel;
+const formatDate = (date: string, monthOnly = false) =>
+  new Intl.DateTimeFormat(
+    'vi-VN',
+    monthOnly
+      ? { month: '2-digit', year: 'numeric', timeZone: 'UTC' }
+      : { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' },
+  ).format(new Date(date));
+
+const AVATAR_TONES = ['teal', 'coral', 'sun'] as const;
+/** Màu avatar cố định theo tên để cùng một người luôn cùng màu. */
+const pickAvatarTone = (name: string) =>
+  AVATAR_TONES[[...name].reduce((sum, char) => sum + char.charCodeAt(0), 0) % AVATAR_TONES.length];
+
+export function HotelReviews({ id }: { id: string }) {
+  const { isReady } = useApiSession();
+  const [filters, setFilters] = useState<HotelReviewFilters>({ sort: 'newest', page: 1, limit: 5 });
+  const query = useQuery({
+    queryKey: ['hotels', id, 'reviews', filters],
+    enabled: isReady,
+    queryFn: ({ signal }) => getHotelReviews(id, filters, signal),
+  });
+  const updateFilters = (next: Partial<HotelReviewFilters>) =>
+    setFilters((previous) => ({ ...previous, ...next, page: 1 }));
+  const summary = query.data?.summary;
+  const pageCount = query.data ? Math.max(1, Math.ceil(query.data.total / query.data.limit)) : 1;
+  return (
+    <section id="reviews" className={styles.section}>
+      <div className={styles.sectionHeading}>
+        <h2>{copy.reviews}</h2>
+        {summary && (
+          <span>
+            {t('hotel.reviewCount', { count: summary.count })} · {copy.tripflix}
+          </span>
+        )}
+      </div>
+      {summary && summary.count > 0 && (
+        <div className={styles.reviewOverview}>
+          <div className={styles.reviewScore}>
+            <strong>{summary.average?.toLocaleString('vi-VN')}</strong>
+            <span>{copy.outOfFive}</span>
+            <p>{t('hotel.reviewCount', { count: summary.count })}</p>
+          </div>
+          <div className={styles.distribution}>
+            {summary.distribution.map((level) => (
+              <div key={level.rating}>
+                <span>{level.rating} ★</span>
+                <meter
+                  value={level.count}
+                  max={summary.count}
+                  aria-label={`${level.rating} ★: ${level.count}`}
+                />
+                <span>{level.count}</span>
+              </div>
+            ))}
+          </div>
+          {summary.aiSummary && (
+            <div className={styles.reviewSummary}>
+              <h3>{copy.reviewSummary}</h3>
+              <p>{summary.aiSummary}</p>
+              <small>{copy.reviewSummaryHint}</small>
+            </div>
+          )}
+        </div>
+      )}
+      <div className={styles.reviewFilters}>
+        <label>
+          {copy.sort}
+          <SoftSelect
+            aria-label={copy.sort}
+            value={filters.sort}
+            onChange={(value) => updateFilters({ sort: value as HotelReviewFilters['sort'] })}
+            options={(['newest', 'highest', 'lowest', 'helpful'] as const).map((key) => ({ value: key, label: copy[key] }))}
+          />
+        </label>
+        <label>
+          {copy.rating}
+          <SoftSelect
+            aria-label={copy.rating}
+            value={filters.rating ? String(filters.rating) : ''}
+            onChange={(value) => updateFilters({ rating: value ? Number(value) : undefined })}
+            options={[
+              { value: '', label: copy.allRatings },
+              ...[5, 4, 3, 2, 1].map((rating) => ({ value: String(rating), label: `${rating} ★` })),
+            ]}
+          />
+        </label>
+        <label>
+          {copy.traveler}
+          <SoftSelect
+            aria-label={copy.traveler}
+            value={filters.travelerType ?? ''}
+            onChange={(value) =>
+              updateFilters({ travelerType: (value || undefined) as HotelReviewFilters['travelerType'] })
+            }
+            options={[
+              { value: '', label: copy.allTravelers },
+              ...Object.entries(copy.travelerTypes).map(([key, label]) => ({ value: key, label })),
+            ]}
+          />
+        </label>
+      </div>
+      {summary && summary.tags.length > 0 && (
+        <div className={styles.chips} aria-label={copy.allTags}>
+          <button
+            className="secondary-button"
+            aria-pressed={!filters.tag}
+            onClick={() => updateFilters({ tag: undefined })}
+          >
+            {copy.allTags}
+          </button>
+          {summary.tags.map(({ tag, count }) => (
+            <button
+              className="secondary-button"
+              key={tag}
+              aria-pressed={filters.tag === tag}
+              onClick={() => updateFilters({ tag: filters.tag === tag ? undefined : tag })}
+            >
+              {tag} <span>{count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <ApiErrorNotice
+        error={query.error}
+        retry={() => {
+          void query.refetch();
+        }}
+      />
+      {query.isFetching && <output>{copy.loadingReviews}</output>}
+      {query.data?.items.length === 0 && (
+        <div className="empty-state">
+          <p>{summary?.count ? copy.noMatchingReviews : copy.noReviews}</p>
+          {(filters.rating || filters.tag || filters.travelerType) && (
+            <button
+              className="secondary-button"
+              onClick={() => setFilters({ sort: 'newest', page: 1, limit: 5 })}
+            >
+              {copy.clearFilters}
+            </button>
+          )}
+        </div>
+      )}
+      <div className={styles.reviewList} aria-busy={query.isFetching}>
+        {query.data?.items.map((review) => (
+          <article key={review.id} className={styles.review}>
+            <div className={styles.reviewAuthor}>
+              <span className={styles.avatar} data-tone={pickAvatarTone(review.authorName)} aria-hidden="true">
+                {review.authorName
+                  .trim()
+                  .split(/\s+/)
+                  .slice(-2)
+                  .map((part) => part[0])
+                  .join('')}
+              </span>
+              <div>
+                <strong>{review.authorName}</strong>
+                <p>
+                  {review.travelerType &&
+                    (copy.travelerTypes[review.travelerType as keyof typeof copy.travelerTypes] ??
+                      review.travelerType)}
+                </p>
+                {review.stayMonth && (
+                  <small>
+                    {copy.stayed}: {formatDate(review.stayMonth, true)}
+                  </small>
+                )}
+                {review.room && <p className="small muted">{review.room.name}</p>}
+              </div>
+            </div>
+            <div className={styles.reviewBody}>
+              <div className={styles.reviewTop}>
+                <span className={styles.reviewStars} aria-label={`${review.rating} / 5`}>
+                  {'★'.repeat(review.rating)}
+                  <span>{'★'.repeat(5 - review.rating)}</span>
+                </span>
+                <time dateTime={review.createdAt}>
+                  {copy.written}: {formatDate(review.createdAt)}
+                </time>
+              </div>
+              {review.title && <h3>{review.title}</h3>}
+              <p>{review.body}</p>
+              {review.tags.length > 0 && (
+                <div className={styles.reviewTags}>
+                  {review.tags.map((tag) => (
+                    <span key={tag}>{tag}</span>
+                  ))}
+                </div>
+              )}
+              <HotelGallery images={review.images} name={review.title ?? review.authorName} layout="compact" />
+              {review.helpfulCount > 0 && (
+                <p className={styles.helpful}>{t('hotel.helpfulCount', { count: review.helpfulCount })}</p>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+      {query.data && query.data.total > 0 && (
+        <nav className={styles.pagination} aria-label={copy.reviews}>
+          <button
+            className="secondary-button"
+            disabled={query.isFetching || (filters.page ?? 1) <= 1}
+            onClick={() => setFilters((previous) => ({ ...previous, page: (previous.page ?? 1) - 1 }))}
+          >
+            {copy.previous}
+          </button>
+          <span aria-live="polite">{t('hotel.page', { page: query.data.page, pages: pageCount })}</span>
+          <button
+            className="secondary-button"
+            disabled={query.isFetching || (filters.page ?? 1) >= pageCount}
+            onClick={() => setFilters((previous) => ({ ...previous, page: (previous.page ?? 1) + 1 }))}
+          >
+            {copy.next}
+          </button>
+        </nav>
+      )}
+    </section>
+  );
+}

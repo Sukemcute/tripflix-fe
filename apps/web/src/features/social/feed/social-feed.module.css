@@ -1,0 +1,1970 @@
+/* --------------------------------------------------------------------------
+   Tripflix Social Feed Design System Tokens — LIGHT THEME
+   Brand Orange: #FF6A00 / #FF5A3C
+   Page Background: #F8FAFC
+   Card / Surface: #FFFFFF
+   Sub-surface / Pill: #F1F5F9
+   Border: #E2E8F0
+   Text Primary (Ink): #141B3D
+   Text Secondary (Muted): #64748B
+   Text Subtle: #94A3B8
+   -------------------------------------------------------------------------- */
+
+.feedPageWrapper {
+  height: calc(100dvh - 80px);
+  min-height: calc(100vh - 80px);
+  background: #F8FAFC;
+  color: #141B3D;
+  font-family: inherit;
+  position: relative;
+  padding-left: 64px; /* Space for the 64px fixed left Instagram dock */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.feedViewSlot {
+  display: none;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.feedViewSlotActive {
+  display: flex;
+}
+
+.feedPageWrapperReels {
+  height: calc(100dvh - 80px);
+  overflow: hidden;
+  padding-left: 64px;
+}
+
+/* --------------------------------------------------------------------------
+   Instagram-style Left Navigation Dock (Fixed to Left Edge - 64px)
+   -------------------------------------------------------------------------- */
+.instagramDock {
+  position: fixed;
+  top: 80px;
+  left: 0;
+  bottom: 0;
+  width: 64px;
+  background: #FFFFFF;
+  border-right: 1px solid #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 0;
+  z-index: 55;
+  box-shadow: 1px 0 10px rgba(15, 23, 42, 0.03);
+}
+
+.dockCenterGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.dockItemBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dockItemBtn:hover {
+  background: #F1F5F9;
+  color: #141B3D;
+  transform: scale(1.04);
+}
+
+.dockItemBtnActive {
+  background: rgba(255, 106, 0, 0.1) !important;
+  color: #FF6A00 !important;
+}
+
+.dockItemBtnActive::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  width: 3px;
+  height: 20px;
+  border-radius: 3px;
+  background: #FF6A00;
+}
+
+.dockActiveDot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #FF6A00;
+  box-shadow: 0 0 0 2px #FFFFFF;
+}
+
+.dockCreateBtn {
+  background: #FF6A00 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 10px rgba(255, 106, 0, 0.35);
+}
+
+.dockCreateBtn:hover {
+  background: #E85F00 !important;
+  color: #FFFFFF !important;
+  transform: scale(1.08);
+}
+
+/* Tooltip on hover */
+.dockItemBtn[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 56px;
+  padding: 6px 12px;
+  background: #141B3D;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 160ms ease, transform 160ms ease;
+  z-index: 60;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.dockItemBtn:hover[data-tooltip]::before {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* --------------------------------------------------------------------------
+   Search Flyout Drawer (Slides out from Instagram Dock)
+   -------------------------------------------------------------------------- */
+.dockSearchDrawer {
+  position: fixed;
+  left: 64px;
+  top: 80px;
+  bottom: 0;
+  width: 320px;
+  background: #FFFFFF;
+  border-right: 1px solid #E2E8F0;
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  z-index: 52;
+  animation: slideDrawer 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes slideDrawer {
+  from {
+    transform: translateX(-16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.searchDrawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.searchDrawerTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #141B3D;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.searchDrawerCloseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #94A3B8;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.searchDrawerCloseBtn:hover {
+  background: #F1F5F9;
+  color: #141B3D;
+}
+
+.searchDrawerBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.searchDrawerInputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  color: #64748B;
+  transition: all 160ms ease;
+}
+
+.searchDrawerInputWrap:focus-within {
+  background: #FFFFFF;
+  border-color: #FF6A00;
+  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.12);
+  color: #141B3D;
+}
+
+.searchDrawerInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #141B3D;
+  font-size: 14px;
+  outline: none;
+}
+
+.searchDrawerInput::placeholder {
+  color: #94A3B8;
+}
+
+.searchClearBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: #E2E8F0;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.searchClearBtn:hover {
+  background: #CBD5E1;
+  color: #141B3D;
+}
+
+.searchDrawerTagsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.searchDrawerTagsLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.searchDrawerTagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.searchTagChip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.searchTagChip:hover {
+  border-color: #FF6A00;
+  color: #FF6A00;
+  background: #FFFBF8;
+}
+
+.searchTagChipActive {
+  background: #FF6A00 !important;
+  color: #FFFFFF !important;
+  border-color: #FF6A00 !important;
+}
+
+.searchActiveNotice {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 106, 0, 0.08);
+  border: 1px solid rgba(255, 106, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  color: #141B3D;
+}
+
+.searchActiveResetBtn {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: #FF6A00;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Itinerary Sidebar Panel (Attached to Left of Feed)
+   -------------------------------------------------------------------------- */
+.itinerarySidebar {
+  position: relative;
+  top: auto;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  min-height: 0;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 10;
+}
+
+.itineraryInFeed {
+  position: relative !important;
+  top: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
+}
+
+.itineraryInReels {
+  position: relative !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  border-radius: 20px !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
+}
+
+.itineraryHeaderBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.itineraryHeaderTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.itineraryHeaderIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FF6A00;
+}
+
+.itineraryHeaderTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #141B3D;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.itineraryCollapseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #94A3B8;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.itineraryCollapseBtn:hover {
+  background: #F1F5F9;
+  color: #141B3D;
+}
+
+.itineraryContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Trip Overview Card */
+.itineraryTripCard {
+  padding: 14px 16px;
+  border-bottom: 1px solid #F1F5F9;
+  background: #FAFCFE;
+}
+
+.itineraryTripTop {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.itineraryTripThumb {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #E2E8F0;
+}
+
+.itineraryTripThumb img {
+  object-fit: cover;
+}
+
+.itineraryTripMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.itineraryTripTitle {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #141B3D;
+  margin: 0;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itineraryTripTags {
+  font-size: 12px;
+  color: #64748B;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itineraryTripFacts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.itineraryFactBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0E7490;
+  background: rgba(14, 116, 144, 0.08);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.itineraryViewDetailBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: #006655;
+  color: #FFFFFF !important;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 160ms ease;
+}
+
+.itineraryViewDetailBtn:hover {
+  background: #004d40;
+  box-shadow: 0 2px 8px rgba(0, 102, 85, 0.25);
+}
+
+/* Tabs */
+.itineraryTabsRow {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #E2E8F0;
+  background: #FFFFFF;
+}
+
+.itineraryTabItem {
+  flex: 1;
+  padding: 10px 4px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 160ms ease;
+  white-space: nowrap;
+}
+
+.itineraryTabItem:hover {
+  color: #141B3D;
+}
+
+.itineraryTabItemActive {
+  color: #006655 !important;
+  border-bottom-color: #006655 !important;
+}
+
+/* Scroll Body */
+.itineraryScrollBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  overscroll-behavior: contain;
+}
+
+.itineraryEmptyText {
+  font-size: 13px;
+  color: #94A3B8;
+  text-align: center;
+  padding: 24px 8px;
+  line-height: 1.6;
+}
+
+/* Timeline */
+.itineraryTimeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.itineraryDayBlock {
+  position: relative;
+  padding-left: 18px;
+  border-left: 2px solid #E2E8F0;
+}
+
+.itineraryDayHeader {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.itineraryDayDot {
+  position: absolute;
+  left: -24px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #006655;
+  box-shadow: 0 0 0 3px rgba(0, 102, 85, 0.15);
+}
+
+.itineraryDayTitle {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #141B3D;
+  margin: 0;
+}
+
+.itineraryStopsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.itineraryStopCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #F8FAFC;
+  border: 1px solid #F1F5F9;
+  transition: background 150ms ease;
+}
+
+.itineraryStopCard:hover {
+  background: #F1F5F9;
+}
+
+.itineraryStopThumb {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.itineraryStopThumb img {
+  object-fit: cover;
+}
+
+.itineraryStopPin {
+  color: #FF6A00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.itineraryStopInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.itineraryStopName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #141B3D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itineraryStopMeta {
+  font-size: 11px;
+  color: #64748B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* POI List */
+.itineraryPoiList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.itineraryPoiLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  color: #141B3D;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 160ms ease;
+}
+
+.itineraryPoiLink:hover {
+  background: #FFFFFF;
+  border-color: #006655;
+  color: #006655;
+  transform: translateX(2px);
+}
+
+.itineraryPoiSub {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: #64748B;
+}
+
+/* Cost */
+.itineraryCostContainer {
+  padding: 8px 0;
+}
+
+.itineraryCostCard {
+  padding: 16px;
+  border-radius: 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  text-align: center;
+}
+
+.itineraryCostLabel {
+  display: block;
+  font-size: 12px;
+  color: #64748B;
+  margin-bottom: 6px;
+}
+
+.itineraryCostValue {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #006655;
+  margin-bottom: 8px;
+}
+
+.itineraryCostNote {
+  font-size: 11.5px;
+  color: #94A3B8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* No Trip Attached State */
+.itineraryNoTripContainer {
+  padding: 24px 16px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.itineraryNoTripCard {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.itineraryNoTripIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 106, 0, 0.08);
+  color: #FF6A00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.itineraryNoTripTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #141B3D;
+  margin: 0 0 6px;
+}
+
+.itineraryNoTripDesc {
+  font-size: 12.5px;
+  color: #64748B;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.itinerarySuggestedBox {
+  width: 100%;
+  text-align: left;
+  border-top: 1px solid #F1F5F9;
+  padding-top: 14px;
+}
+
+.itinerarySuggestedHeading {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #94A3B8;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.itinerarySuggestedCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  cursor: pointer;
+  text-align: left;
+  transition: all 160ms ease;
+}
+
+.itinerarySuggestedCard:hover {
+  border-color: #FF6A00;
+  background: #FFFBF8;
+}
+
+.itinerarySuggestedThumb {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.itinerarySuggestedThumb img {
+  object-fit: cover;
+}
+
+.itinerarySuggestedMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.itinerarySuggestedTitle {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #141B3D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itinerarySuggestedAction {
+  font-size: 11px;
+  font-weight: 600;
+  color: #FF6A00;
+}
+
+/* --------------------------------------------------------------------------
+   Adaptive Split View Layout Grid
+   Desktop: Itinerary (320px) | Center Feed (minmax 0, 1fr) | Right Panel (320px)
+   -------------------------------------------------------------------------- */
+.splitViewContainer {
+  position: relative;
+  width: 100%;
+  max-width: 1760px;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  margin: 0 auto;
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr) 380px;
+  gap: 20px;
+  align-items: stretch;
+  overflow: hidden;
+  transition: grid-template-columns 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.splitViewNoLeft {
+  grid-template-columns: minmax(0, 1fr) 380px;
+}
+
+.splitViewNoRight {
+  grid-template-columns: 340px minmax(0, 1fr);
+}
+
+.splitViewCenterOnly {
+  grid-template-columns: minmax(0, 840px);
+  justify-content: center;
+}
+
+
+
+/* --------------------------------------------------------------------------
+   Floating Navigation Rail (Left Column - 56px)
+   -------------------------------------------------------------------------- */
+.railColumn {
+  position: sticky;
+  top: 84px;
+  width: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 30;
+}
+
+.floatingRail {
+  width: 52px;
+  padding: 10px 0;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+}
+
+.railItemBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.railItemBtn:hover {
+  background: #F1F5F9;
+  color: #141B3D;
+  transform: translateY(-1px);
+}
+
+.railItemBtnActive {
+  background: rgba(255, 106, 0, 0.1) !important;
+  color: #FF6A00 !important;
+}
+
+.railItemBtnActive::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  width: 3px;
+  height: 18px;
+  border-radius: 3px;
+  background: #FF6A00;
+}
+
+.railCreateBtn {
+  background: #FF6A00;
+  color: #FFFFFF;
+  margin-top: 6px;
+  box-shadow: 0 2px 10px rgba(255, 106, 0, 0.35);
+}
+
+.railCreateBtn:hover {
+  background: #ff7d1a;
+  color: #FFFFFF;
+  transform: scale(1.06);
+}
+
+/* Tooltip on hover */
+.railItemBtn[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 60px;
+  padding: 5px 10px;
+  background: #141B3D;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 160ms ease, transform 160ms ease;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 50;
+}
+
+.railItemBtn:hover[data-tooltip]::before {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* --------------------------------------------------------------------------
+   Center Main Social Feed (740-840px)
+   -------------------------------------------------------------------------- */
+.mainFeedColumn {
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  padding-bottom: 60px;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mainFeedColumn::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mainFeedColumn::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 999px;
+}
+
+/* Quick Post Composer Bar */
+/* Quick Post Composer Card (FB/LinkedIn 2-Row Style) */
+.composerCard,
+.composerBar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 18px 12px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.composerTopRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.composerAvatarImg {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #E2E8F0;
+}
+
+.composerAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #FFF0EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #FF6A00;
+  font-size: 15px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 106, 0, 0.15);
+}
+
+.composerInputPill,
+.composerTrigger {
+  flex: 1;
+  text-align: left;
+  padding: 11px 18px;
+  background: #F1F5F9;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  color: #64748B;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: all 160ms ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.composerInputPill:hover,
+.composerTrigger:hover {
+  background: #E8EEF5;
+  color: #141B3D;
+  border-color: #CBD5E1;
+}
+
+.composerBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-top: 4px;
+}
+
+.composerActionGroup {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.composerTagBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.composerTagBtn:hover {
+  background: #F8FAFC;
+  color: #141B3D;
+}
+
+.composerTagIconMedia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #16A34A; /* Xanh la cho Anh/Video */
+}
+
+.composerTagIconTrip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7C3AED; /* Tim cho Gan chuyen di */
+}
+
+.composerTagIconHash {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6366F1; /* Cham cho Hashtag */
+}
+
+.composerSubmitBtn,
+.composerActionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 22px;
+  border-radius: 9999px;
+  border: none;
+  background: #FF6A00;
+  color: #FFFFFF;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255, 106, 0, 0.28);
+  transition: all 160ms ease;
+  white-space: nowrap;
+}
+
+.composerSubmitBtn:hover,
+.composerActionBtn:hover {
+  background: #E85F00;
+  box-shadow: 0 4px 12px rgba(255, 106, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   Post Card Component
+   -------------------------------------------------------------------------- */
+.postCard {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 22px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.postCard:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.postCardActiveComment {
+  border-color: rgba(255, 106, 0, 0.5);
+  box-shadow: 0 4px 18px rgba(255, 106, 0, 0.1);
+}
+
+/* Post Header */
+.postHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.authorLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.authorAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #FFF0EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #FF6A00;
+  font-size: 16px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 106, 0, 0.15);
+}
+
+.authorMeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.authorNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.authorName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #141B3D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.authorVerified {
+  color: #FF6A00;
+  display: flex;
+  align-items: center;
+}
+
+.authorSubRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748B;
+}
+
+.headerMenuBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.headerMenuBtn:hover {
+  background: #F1F5F9;
+  color: #141B3D;
+}
+
+/* Post Body */
+.postTitle {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #141B3D;
+  margin: 0 0 8px 0;
+}
+
+.postContent {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+  margin: 0;
+  word-break: break-word;
+}
+
+.postContentClamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.postReadMoreBtn {
+  background: none;
+  border: none;
+  color: #FF6A00;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 4px;
+}
+
+.postTagsWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.postTagPill {
+  padding: 4px 10px;
+  background: #F1F5F9;
+  border-radius: 12px;
+  color: #FF6A00;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.postTagPill:hover {
+  background: rgba(255, 106, 0, 0.12);
+}
+
+/* Attached Trip Card in Post */
+.postAttachedTrip {
+  margin-top: 14px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 180ms ease;
+  text-decoration: none;
+}
+
+.postAttachedTrip:hover {
+  background: #F1F5F9;
+  border-color: rgba(255, 106, 0, 0.4);
+}
+
+.tripCardLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.tripCardThumb {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #E2E8F0;
+}
+
+.tripCardMeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tripCardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #141B3D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tripCardSub {
+  font-size: 12px;
+  color: #64748B;
+}
+
+/* Action Bar */
+.postActionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  margin-top: 14px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.actionGroupLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.actionBtn:hover {
+  background: #F1F5F9;
+  color: #141B3D;
+}
+
+.actionBtnLiked {
+  color: #FF3B30 !important;
+}
+
+.actionBtnLiked svg {
+  fill: #FF3B30;
+}
+
+.actionBtnSaved {
+  color: #FF6A00 !important;
+}
+
+.actionBtnSaved svg {
+  fill: #FF6A00;
+}
+
+.actionBtnActive {
+  background: rgba(255, 106, 0, 0.1) !important;
+  color: #FF6A00 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Adaptive Post Media (1, 2, 3, 4, 5+ images, Video inline)
+   -------------------------------------------------------------------------- */
+.mediaGridWrap {
+  position: relative;
+  width: 100%;
+  margin-top: 14px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #F1F5F9;
+}
+
+.mediaSingleImg {
+  position: relative;
+  width: 100%;
+  height: 440px;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  display: block;
+  background: #F8FAFC;
+}
+
+.mediaTwoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  height: 380px;
+}
+
+.mediaThreeGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 4px;
+  height: 420px;
+}
+
+.mediaThreeRightStack {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 4px;
+  height: 100%;
+}
+
+.mediaFourGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 4px;
+  height: 420px;
+}
+
+.mediaCell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  background: #F8FAFC;
+  border: none;
+  padding: 0;
+  display: block;
+}
+
+.mediaImg {
+  object-fit: cover;
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mediaCell:hover .mediaImg {
+  transform: scale(1.02);
+}
+
+.mediaOverlayMore {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 27, 61, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 24px;
+  font-weight: 700;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+.mediaVideoWrap {
+  position: relative;
+  width: 100%;
+  height: 440px;
+  background: #000000;
+}
+
+.inlineVideoEl {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.videoControlsOverlay {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+}
+
+.videoOverlayBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.videoOverlayBtn:hover {
+  background: #FF6A00;
+}
+
+/* --------------------------------------------------------------------------
+   Contextual Discovery & Comment Panel (Right Column - 320px)
+   -------------------------------------------------------------------------- */
+.contextColumn {
+  position: sticky;
+  top: 84px;
+  width: 320px;
+  height: calc(100vh - 100px);
+  max-height: calc(100vh - 100px);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+  z-index: 30;
+}
+
+.contextHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #F1F5F9;
+  flex-shrink: 0;
+}
+
+.contextHeaderTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #141B3D;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contextCloseBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.contextCloseBtn:hover {
+  background: #F1F5F9;
+  color: #141B3D;
+}
+
+.contextBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Discovery Widgets */
+.widgetCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.widgetTitle {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748B;
+}
+
+.destinationItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  text-decoration: none;
+  transition: all 160ms ease;
+}
+
+.destinationItem:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  transform: translateX(2px);
+}
+
+.destThumb {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #E2E8F0;
+}
+
+.destText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.destName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #141B3D;
+}
+
+.destCount {
+  font-size: 12px;
+  color: #64748B;
+}
+
+.postHashtag {
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  color: #FF6A00;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 160ms ease;
+}
+
+.postHashtag:hover {
+  background: rgba(255, 106, 0, 0.12) !important;
+}
+
+/* Comment Thread Wrapper in Contextual Panel */
+.commentsPanelInner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Empty feed state */
+.emptyFeed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #64748B;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.emptyFeedTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #141B3D;
+  margin-top: 14px;
+}
+
+.emptyFeedDesc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748B;
+  max-width: 400px;
+  margin: 8px auto 16px auto;
+}
+
+.emptyFeedAction {
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: none;
+  background: #FF6A00;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.emptyFeedAction:hover {
+  background: #ff7d1a;
+}
+
+.reopenContextBtn {
+  position: fixed;
+  right: 24px;
+  bottom: 28px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: #FF6A00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.12);
+  z-index: 40;
+  transition: all 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.reopenContextBtn:hover {
+  transform: translateY(-2px) scale(1.05);
+  background: #F8FAFC;
+  border-color: #FF6A00;
+}
+
+.rightPanelInFeed {
+  position: relative !important;
+  top: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  /* Explicit light theme tokens for comment thread */
+  --iv-panel-bg: #FFFFFF;
+  --iv-elevated-bg: #F8FAFC;
+  --iv-hover-bg: #F1F5F9;
+  --iv-text: #141B3D;
+  --iv-text-muted: #64748B;
+  --iv-border: #E2E8F0;
+  --iv-accent: #FF6A00;
+  --iv-accent-ink: #FFFFFF;
+  --iv-accent-soft: rgba(255, 106, 0, 0.12);
+}
+
+.emptyCommentsNotice {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+  gap: 12px;
+  color: #64748B;
+}
+
+.emptyCommentsIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #F1F5F9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94A3B8;
+}
+
+.emptyCommentsText {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #64748B;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 1439px) {
+  .splitViewContainer {
+    grid-template-columns: 310px minmax(0, 1fr) 340px;
+  }
+
+  .splitViewNoLeft {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+
+  .splitViewNoRight {
+    grid-template-columns: 310px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1023px) {
+  .splitViewContainer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .itinerarySidebar,
+  .contextColumn,
+  .rightPanelInFeed {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .feedPageWrapper,
+  .feedPageWrapperReels {
+    padding-left: 0;
+    padding-bottom: 56px;
+  }
+
+  .instagramDock {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 56px;
+    flex-direction: row;
+    padding: 0 16px;
+    border-right: none;
+    border-top: 1px solid #E2E8F0;
+  }
+
+  .dockCenterGroup {
+    flex-direction: row;
+    gap: 8px;
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .dockItemBtnActive::after {
+    display: none;
+  }
+
+  .splitViewContainer {
+    grid-template-columns: 1fr;
+    padding: 16px 10px 14px;
+    gap: 14px;
+  }
+
+  .railColumn {
+    display: none;
+  }
+
+  .postCard {
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .mediaSingleImg,
+  .mediaVideoWrap {
+    height: 320px;
+  }
+
+  .mediaTwoGrid,
+  .mediaThreeGrid,
+  .mediaFourGrid {
+    height: 280px;
+  }
+}

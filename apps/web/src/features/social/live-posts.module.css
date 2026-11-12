@@ -1,0 +1,2730 @@
+.withCover {
+  padding-top: 196px;
+}
+
+.cover {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 176px;
+  overflow: hidden;
+  background: var(--color-surface-muted);
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mascotCover {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 70% 25%, var(--color-sun-soft), var(--color-transparent) 58%),
+    linear-gradient(135deg, var(--color-warm-mist), var(--color-sea-mist));
+}
+
+.mascotCover img {
+  width: 132px;
+  height: 132px;
+  object-fit: contain;
+}
+
+.postBodyClamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   TRIPFLIX — INSPIRATION IMMERSIVE 3-PANEL VIEWER (Light Default + Dark Switch)
+   ========================================================================== */
+
+.immersiveRoot {
+  --iv-page-bg: var(--color-surface);
+  --iv-panel-bg: var(--color-background);
+  --iv-elevated-bg: var(--color-surface);
+  --iv-hover-bg: var(--color-surface-muted);
+  --iv-text: var(--color-ink);
+  --iv-text-muted: var(--color-text-muted);
+  --iv-border: var(--color-border);
+  --iv-accent: var(--color-coral);
+  --iv-accent-ink: var(--color-coral-ink);
+  --iv-accent-soft: var(--color-coral-tint);
+  --iv-stage-bg: rgb(14 16 21);
+  --iv-control-bg: var(--color-background);
+  --iv-shadow: 0 8px 28px -12px rgba(24, 36, 43, 0.12);
+
+  background: var(--iv-page-bg);
+  color: var(--iv-text);
+  flex: 1;
+  width: 100%;
+  height: calc(100dvh - 80px);
+  min-height: 620px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  overscroll-behavior: none;
+  position: relative;
+  transition:
+    background-color 220ms ease,
+    color 220ms ease;
+}
+
+.themeDark {
+  --iv-page-bg: rgb(11 12 15);
+  --iv-panel-bg: rgb(25 27 32);
+  --iv-elevated-bg: rgb(36 38 44);
+  --iv-hover-bg: rgb(46 49 58);
+  --iv-text: rgb(247 247 248);
+  --iv-text-muted: rgb(166 168 177);
+  --iv-border: rgba(255, 255, 255, 0.1);
+  --iv-accent: var(--color-coral);
+  --iv-accent-ink: var(--color-coral-soft);
+  --iv-accent-soft: rgba(255, 90, 60, 0.16);
+  --iv-stage-bg: rgb(7 8 11);
+  --iv-control-bg: rgb(36 38 44);
+  --iv-shadow: 0 16px 40px -14px rgba(0, 0, 0, 0.55);
+}
+
+/* --- Floating Left Utility Dock along the Itinerary Sidebar (Phương án 1) --- */
+
+.centerFloatingTopLeft {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.floatingTopRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.floatingIconBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--iv-panel-bg);
+  color: var(--iv-text);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.floatingIconBtn:hover {
+  transform: scale(1.05);
+  background: var(--iv-hover-bg);
+}
+
+.floatingIconBtnActive {
+  background: var(--iv-hover-bg);
+  color: var(--iv-accent);
+  border: 0;
+}
+
+.floatingCircleAccentBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--iv-accent);
+  color: rgb(255 255 255);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    opacity 160ms ease;
+}
+
+.floatingCircleAccentBtn:hover {
+  transform: scale(1.05);
+  opacity: 0.94;
+}
+
+.floatingActiveDot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--iv-accent);
+}
+
+.floatingSearchPopover {
+  position: absolute;
+  top: 0;
+  left: 48px;
+  width: min(360px, calc(100vw - 80px));
+  padding: 12px;
+  border-radius: 18px;
+  border: 0;
+  background: var(--iv-panel-bg);
+  box-shadow:
+    0 16px 38px -6px rgba(0, 0, 0, 0.22),
+    0 3px 10px rgba(0, 0, 0, 0.08);
+  display: grid;
+  gap: 10px;
+}
+
+.searchPill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--iv-elevated-bg);
+  color: var(--iv-text-muted);
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.searchPill:focus-within {
+  background: var(--iv-hover-bg);
+  color: var(--iv-text);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--iv-text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.searchInput:focus {
+  outline: none;
+}
+
+.searchClearBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--iv-hover-bg);
+  color: var(--iv-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.searchClearBtn:hover {
+  color: var(--iv-text);
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filterPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--iv-elevated-bg);
+  color: var(--iv-text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.filterPill:hover {
+  color: var(--iv-text);
+  background: var(--iv-hover-bg);
+}
+
+.filterPillActive {
+  background: var(--iv-text);
+  color: var(--iv-panel-bg);
+  border: 0;
+}
+
+.utilityBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--iv-panel-bg);
+  color: var(--iv-text);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.utilityBtn:hover {
+  background: var(--iv-hover-bg);
+}
+
+.createPostBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--iv-accent);
+  color: var(--color-background);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+}
+
+.createPostBtn:hover {
+  opacity: 0.92;
+}
+
+.centerEmptyBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+/* --- 3-Column Immersive Grid --- */
+
+.viewerGrid {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 1760px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  display: grid;
+  gap: 20px;
+  align-items: stretch;
+  transition: grid-template-columns 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gridThreeCols {
+  grid-template-columns: 340px minmax(0, 1fr) 380px;
+}
+
+.gridNoLeft {
+  grid-template-columns: minmax(0, 1fr) 380px;
+}
+
+.gridNoRight {
+  grid-template-columns: 340px minmax(0, 1fr);
+}
+
+.gridCenterOnly {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Itinerary Panel wrapper inside Reels view */
+.itineraryInReels {
+  position: relative !important;
+  top: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+/* ==========================================================================
+   1. LEFT PANEL — ATTACHED ITINERARY
+   ========================================================================== */
+
+.leftPanel {
+  background: var(--iv-panel-bg);
+  border: 1px solid var(--iv-border);
+  border-radius: 20px;
+  box-shadow: 0 18px 60px -20px rgba(0, 76, 68, 0.18);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panelHeaderBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--iv-border);
+  flex-shrink: 0;
+}
+
+.panelHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--iv-text);
+}
+
+.panelHeaderIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-teal-ink);
+}
+
+.iconGhostBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--iv-text-muted);
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.iconGhostBtn:hover {
+  background: var(--iv-hover-bg);
+  color: var(--iv-text);
+}
+
+/* Trip Overview Card */
+
+.tripOverviewCard {
+  padding: 16px;
+  border-bottom: 1px solid var(--iv-border);
+  display: grid;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.tripOverviewTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.tripOverviewThumb {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  border-radius: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--iv-elevated-bg);
+}
+
+.tripOverviewThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tripOverviewMeta {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tripOverviewTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--iv-text);
+  line-height: 1.3;
+}
+
+.tripOverviewTags {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--iv-text-muted);
+}
+
+.tripOverviewFacts {
+  display: grid;
+  gap: 3px;
+  margin-top: 2px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--iv-text);
+}
+
+.tripFactLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tripOverviewCta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--color-teal-ink);
+  color: rgb(255 255 255);
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    opacity 160ms ease;
+}
+
+.tripOverviewCta:hover {
+  background: #00564f;
+  opacity: 1;
+}
+
+/* Left Panel Tabs */
+
+.panelTabsRow {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--iv-border);
+  flex-shrink: 0;
+}
+
+.panelTabItem {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 8px;
+  border: 0;
+  border-bottom: 2px solid var(--color-transparent);
+  background: var(--color-transparent);
+  color: var(--iv-text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.panelTabItem:hover {
+  color: var(--color-teal-ink);
+}
+
+.panelTabItemActive {
+  color: var(--color-teal-ink);
+  border-bottom-color: var(--color-teal-ink);
+}
+
+.leftScrollBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Vertical Itinerary Timeline */
+
+.timelineContainer {
+  display: grid;
+  gap: 20px;
+  position: relative;
+}
+
+.timelineDayBlock {
+  position: relative;
+  padding-left: 20px;
+  border-left: 2px solid var(--iv-border);
+  display: grid;
+  gap: 12px;
+}
+
+.timelineDayDot {
+  position: absolute;
+  left: -6px;
+  top: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--iv-accent);
+  box-shadow: 0 0 0 3px var(--iv-panel-bg);
+}
+
+.timelineDayTitle {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--iv-text);
+}
+
+.timelineStopsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.timelineStopCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--iv-elevated-bg);
+  border: 1px solid var(--iv-border);
+}
+
+.timelineStopThumb {
+  position: relative;
+  width: 48px;
+  height: 36px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--iv-hover-bg);
+}
+
+.timelineStopThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.timelineStopIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--iv-hover-bg);
+  color: var(--iv-text-muted);
+  flex-shrink: 0;
+}
+
+.timelineStopInfo {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.timelineStopName {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--iv-text);
+}
+
+.timelineStopMeta {
+  font-size: 0.74rem;
+  color: var(--iv-text-muted);
+}
+
+.poiList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.poiCardLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--iv-elevated-bg);
+  border: 1px solid var(--iv-border);
+  color: var(--iv-text);
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 700;
+  transition: border-color 160ms ease;
+}
+
+.poiCardLink:hover {
+  border-color: var(--iv-accent);
+}
+
+.costBox {
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--iv-elevated-bg);
+  border: 1px solid var(--iv-border);
+  display: grid;
+  gap: 8px;
+}
+
+.costAmount {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--iv-accent);
+}
+
+/* ==========================================================================
+   2. CENTER PANEL — IMMERSIVE MEDIA VIEWER
+   ========================================================================== */
+
+.centerPanel {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  outline: none;
+  overscroll-behavior: none;
+}
+
+.mediaStageFrame {
+  position: relative;
+  height: 100%;
+  max-height: calc(100dvh - 116px);
+  aspect-ratio: 9 / 16;
+  max-width: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--iv-stage-bg);
+  box-shadow: var(--iv-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  overscroll-behavior: none;
+}
+
+.mediaTrack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  scroll-snap-stop: normal;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  scrollbar-width: none;
+}
+
+.mediaTrack::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.mediaItem {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 0 0 100%;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.mediaBackdropBlur {
+  position: absolute;
+  inset: -24px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(28px) brightness(0.45);
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.mediaVideoElement {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mediaVideoLandscape {
+  object-fit: contain;
+}
+
+.mediaImageElement {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Adaptive Image Collage inside Fixed Media Stage Frame */
+
+.adaptiveImageGrid {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: 3px;
+  background: rgb(20 22 27);
+}
+
+.gridSingle {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  background: transparent;
+}
+
+.gridTwoCols {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+
+.gridTwoRows {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.gridThreePortrait {
+  grid-template-columns: 1.12fr 0.88fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.gridThreeLandscape {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1.15fr 0.85fr;
+}
+
+.gridFour {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.gridFourLandscape {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1.2fr 0.8fr;
+}
+
+/* Bố cục 5 ô bất đối xứng (Cột trái 2 ảnh lớn 50% + Cột phải 3 ảnh 33.33%) chuẩn ảnh mẫu */
+
+.gridFiveCollage {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(6, 1fr);
+}
+
+.gridCellBtn {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+  background: rgb(18 20 26);
+  cursor: pointer;
+  display: block;
+}
+
+.gridCellSingleBackdrop {
+  background: transparent;
+}
+
+.gridCellSpanTwoRows {
+  grid-row: 1 / span 2;
+}
+
+.gridCellSpanTwoCols {
+  grid-column: 1 / span 2;
+}
+
+.gridCellSpanThreeCols {
+  grid-column: 1 / span 3;
+}
+
+.collageLeftTop {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+}
+
+.collageLeftBottom {
+  grid-column: 1;
+  grid-row: 4 / span 3;
+}
+
+.collageRightTop {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.collageRightMiddle {
+  grid-column: 2;
+  grid-row: 3 / span 2;
+}
+
+.collageRightBottom {
+  grid-column: 2;
+  grid-row: 5 / span 2;
+}
+
+.gridCellImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms ease;
+}
+
+.gridCellImgContain {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 220ms ease;
+}
+
+.gridCellBtn:hover .gridCellImg,
+.gridCellBtn:focus-visible .gridCellImg,
+.gridCellBtn:hover .gridCellImgContain,
+.gridCellBtn:focus-visible .gridCellImgContain {
+  transform: scale(1.03);
+}
+
+.gridCellMoreOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 9, 12, 0.48);
+  color: rgb(255 255 255);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+/* In-Stage Image Gallery Overlay (object-fit: contain) */
+
+.galleryStageOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: rgb(11 12 15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.galleryTopBar {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.galleryCountPill {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(15, 17, 22, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  color: rgb(255 255 255);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.galleryCloseBtn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(15, 17, 22, 0.75);
+  backdrop-filter: blur(8px);
+  color: rgb(255 255 255);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.galleryCloseBtn:hover {
+  background: rgba(255, 90, 60, 0.85);
+}
+
+.galleryContainFrame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.galleryContainImg {
+  object-fit: contain;
+}
+
+.gallerySlideNavBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(15, 17, 22, 0.68);
+  backdrop-filter: blur(8px);
+  color: rgb(255 255 255);
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    opacity 160ms ease;
+}
+
+.gallerySlideNavBtn:hover:not(:disabled) {
+  background: rgba(15, 17, 22, 0.92);
+}
+
+.gallerySlideNavBtn:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+
+.gallerySlidePrev {
+  left: 12px;
+}
+
+.gallerySlideNext {
+  right: 12px;
+}
+
+/* Text-Only Post View inside Center Stage */
+
+.textOnlyStage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: 36px 28px 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 90, 60, 0.22), transparent 60%),
+    linear-gradient(160deg, rgb(24 28 36), rgb(14 16 22));
+  color: rgb(247 247 248);
+  overflow-y: auto;
+}
+
+.textOnlyTitle {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.textOnlyBody {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.68;
+  color: rgba(247, 247, 248, 0.88);
+  white-space: pre-line;
+}
+
+/* Top-Left Volume Control + Slider & Top-Right Hover Controls (More / Fullscreen) */
+
+.stageTopLeftControls {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.mediaStageFrame:hover .stageTopLeftControls,
+.mediaStageFrame:focus-within .stageTopLeftControls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.volumeControlPill {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(15, 17, 22, 0.62);
+  backdrop-filter: blur(8px);
+  color: rgb(255 255 255);
+  transition: background-color 160ms ease;
+}
+
+.volumeControlPill:hover {
+  background: rgba(15, 17, 22, 0.84);
+}
+
+.volumeToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgb(255 255 255);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.volumeSliderWrap {
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  transition:
+    width 180ms ease,
+    opacity 180ms ease,
+    margin-left 180ms ease,
+    padding-right 180ms ease;
+}
+
+.volumeControlPill:hover .volumeSliderWrap,
+.volumeControlPill:focus-within .volumeSliderWrap {
+  width: 72px;
+  opacity: 1;
+  margin-left: 6px;
+  padding-right: 6px;
+}
+
+.volumeRangeInput {
+  width: 66px;
+  height: 4px;
+  margin: 0;
+  accent-color: rgb(255 255 255);
+  cursor: pointer;
+}
+
+.stageTopControls {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.mediaStageFrame:hover .stageTopControls,
+.mediaStageFrame:focus-within .stageTopControls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.stageCircleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(15, 17, 22, 0.62);
+  backdrop-filter: blur(8px);
+  color: rgb(255 255 255);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.stageCircleBtn:hover {
+  background: rgba(15, 17, 22, 0.85);
+}
+
+/* Center Play Button Overlay */
+
+.centerPlayOverlayBtn {
+  position: absolute;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(15, 17, 22, 0.56);
+  backdrop-filter: blur(8px);
+  color: rgb(255 255 255);
+  cursor: pointer;
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    background-color 160ms ease;
+}
+
+.centerPlayOverlayBtn:hover {
+  transform: scale(1.06);
+  background: rgba(15, 17, 22, 0.78);
+}
+
+.centerPlayOverlayHidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.85);
+}
+
+/* Bottom Post Overlay inside Media Stage */
+
+.stageBottomOverlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 3;
+  padding: 48px 16px 16px;
+  background: linear-gradient(
+    to top,
+    rgba(8, 9, 12, 0.92) 0%,
+    rgba(8, 9, 12, 0.62) 55%,
+    rgba(8, 9, 12, 0) 100%
+  );
+  color: rgb(247 247 248);
+  display: grid;
+  gap: 10px;
+}
+
+.overlayAuthorRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.overlayAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+  color: rgb(255 255 255);
+  font-size: 0.86rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.overlayAuthorMeta {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.overlayAuthorNameRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.overlayAuthorHandle {
+  font-size: 0.76rem;
+  color: rgba(247, 247, 248, 0.72);
+}
+
+.overlayCaptionBox {
+  display: grid;
+  gap: 4px;
+}
+
+.overlayCaptionText {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.48;
+  color: rgba(247, 247, 248, 0.94);
+}
+
+.overlayCaptionClamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.overlayExpandBtn {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: var(--color-transparent);
+  color: rgb(255 255 255);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.overlayTagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.overlayTagPill {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(6px);
+  border: 0;
+  color: rgb(255 255 255);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.overlayTagPill:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.overlayAttachedTripCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  background: rgba(25, 27, 32, 0.84);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgb(247 247 248);
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.overlayAttachedTripCard:hover {
+  border-color: var(--iv-accent);
+}
+
+.overlayTripLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.overlayTripThumb {
+  position: relative;
+  width: 44px;
+  height: 34px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.overlayTripThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.overlayTripText {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  text-align: left;
+}
+
+.overlayTripTitle {
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.overlayTripSub {
+  font-size: 0.72rem;
+  color: rgba(247, 247, 248, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Video Progress Bar */
+
+.progressBarTrack {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.22);
+  z-index: 5;
+  cursor: pointer;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: var(--iv-accent);
+  transition: width 120ms linear;
+}
+
+/* --- Vertical Action Bar & Post Navigation (Right of Media Stage) --- */
+
+.stageSideDock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  max-height: calc(100dvh - 180px);
+  padding: 12px 0 16px;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.navArrowsCluster {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.navArrowBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--iv-control-bg);
+  color: var(--iv-text);
+  box-shadow: var(--iv-shadow);
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease;
+}
+
+.navArrowBtn:hover:not(:disabled) {
+  background: var(--iv-hover-bg);
+  transform: translateY(-1px);
+}
+
+.navArrowBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.postCounterBadge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--iv-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.verticalActionsCluster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.actionAvatarBadgeWrap {
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.actionAvatarCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--iv-elevated-bg);
+  border: 2px solid var(--iv-accent);
+  color: var(--iv-text);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.actionAvatarPlus {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--iv-accent);
+  color: rgb(255 255 255);
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.verticalActionItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--iv-text);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.verticalActionCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--iv-control-bg);
+  color: var(--iv-text);
+  box-shadow: var(--iv-shadow);
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.verticalActionItem:hover .verticalActionCircle {
+  background: var(--iv-hover-bg);
+  transform: scale(1.05);
+}
+
+.verticalActionLiked .verticalActionCircle {
+  color: var(--color-danger);
+}
+
+.verticalActionActive .verticalActionCircle {
+  color: var(--iv-accent);
+}
+
+.verticalActionSaved .verticalActionCircle {
+  color: var(--iv-accent);
+}
+
+.verticalActionCount {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--iv-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   3. RIGHT PANEL — POST DETAILS & COMMENTS
+   ========================================================================== */
+
+.rightPanel {
+  background: var(--iv-panel-bg);
+  border: 1px solid var(--iv-border);
+  border-radius: 20px;
+  box-shadow: var(--iv-shadow);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rightHeaderBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px 0;
+  border-bottom: 1px solid var(--iv-border);
+  flex-shrink: 0;
+}
+
+.rightTabsGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rightScrollArea {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+/* Post Details Summary inside Right Panel */
+
+.postSummaryCard {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--iv-border);
+  display: grid;
+  gap: 10px;
+}
+
+.postSummaryAuthorRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.postSummaryAuthorLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.avatarCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--iv-hover-bg);
+  border: 0;
+  color: var(--iv-text);
+  font-weight: 800;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+
+.postAuthorMeta {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.postAuthorTopRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.postAuthorName {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--iv-text);
+}
+
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.postAuthorSubRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 0.76rem;
+  color: var(--iv-text-muted);
+}
+
+.locationInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--iv-accent);
+  font-weight: 600;
+}
+
+.postSummaryTitle {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.36;
+  color: var(--iv-text);
+}
+
+.postSummaryTitle a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.postSummaryTitle a:hover {
+  color: var(--iv-accent);
+}
+
+.postSummaryBody {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.56;
+  color: var(--iv-text);
+  white-space: pre-line;
+}
+
+.readMoreBtn {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--iv-accent);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hashtagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hashtagBtn {
+  padding: 0;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--color-teal);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hashtagBtn:hover {
+  text-decoration: underline;
+}
+
+.postSummaryStatsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--iv-text-muted);
+}
+
+.statItemInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--iv-text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.statActionBtn:hover {
+  background: var(--iv-hover-bg);
+  color: var(--iv-text);
+}
+
+.statActionBtnLiked {
+  color: var(--color-danger);
+}
+
+.statActionBtnSaved {
+  color: var(--iv-accent);
+}
+
+/* Comment Thread inside Right Panel */
+
+.commentSectionHeading {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--iv-text);
+}
+
+.panelCommentList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.panelCommentItem {
+  display: grid;
+  gap: 8px;
+}
+
+.panelCommentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.avatarSmall {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--iv-hover-bg);
+  border: 0;
+  color: var(--iv-text);
+  font-size: 0.76rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.avatarSmallWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.composerVerifiedBadge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  color: #FF6A00;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.composerLoadingPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  width: 100%;
+  color: var(--iv-text-muted);
+}
+
+.panelCommentContent {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.panelCommentMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: var(--iv-text-muted);
+}
+
+.panelCommentAuthor {
+  font-weight: 800;
+  color: var(--iv-text);
+}
+
+.commentVerifiedIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #FF6A00;
+}
+
+.authorRoleTag {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--iv-accent-soft);
+  color: var(--iv-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.panelCommentText {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--iv-text);
+  word-break: break-word;
+}
+
+.panelCommentActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 2px;
+}
+
+.panelCommentActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--iv-text-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.panelCommentActionBtn:hover {
+  color: var(--iv-accent);
+}
+
+.panelCommentActionLiked {
+  color: var(--color-danger);
+}
+
+.panelReplyWrapper {
+  margin-left: 14px;
+  padding-left: 14px;
+  border-left: 1.5px solid var(--iv-border);
+  display: grid;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+/* Sticky Comment Composer at bottom of Right Panel */
+
+.stickyComposerBox {
+  border-top: 1px solid var(--iv-border);
+  background: var(--iv-panel-bg);
+  padding: 10px 14px;
+  display: grid;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.replyingBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--iv-elevated-bg);
+  font-size: 0.76rem;
+  color: var(--iv-text-muted);
+}
+
+.panelComposerForm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panelComposerInput {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--iv-border);
+  background: var(--iv-elevated-bg);
+  color: var(--iv-text);
+  font: inherit;
+  font-size: 0.84rem;
+}
+
+.panelComposerInput:focus {
+  outline: 1.5px solid var(--iv-accent);
+}
+
+.panelSendBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--iv-accent);
+  color: rgb(255 255 255);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.panelSendBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* --- Composer Modal for "+ Đăng bài" --- */
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  z-index: 70;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  /* Light Theme tokens explicitly defined for root modal */
+  --iv-panel-bg: #FFFFFF;
+  --iv-elevated-bg: #F8FAFC;
+  --iv-hover-bg: #F1F5F9;
+  --iv-text: #141B3D;
+  --iv-text-muted: #64748B;
+  --iv-border: #E2E8F0;
+  --iv-accent: #FF6A00;
+  --iv-accent-ink: #FFFFFF;
+  --iv-accent-soft: rgba(255, 106, 0, 0.12);
+  --iv-shadow: 0 20px 48px -8px rgba(15, 23, 42, 0.22), 0 4px 16px rgba(15, 23, 42, 0.08);
+}
+
+.composerModalCard {
+  width: min(680px, 100%);
+  max-height: 88vh;
+  overflow-y: auto;
+  background: #FFFFFF !important;
+  color: #141B3D !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25), 0 4px 16px rgba(15, 23, 42, 0.08) !important;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.composerModalCard::-webkit-scrollbar {
+  width: 6px;
+}
+
+.composerModalCard::-webkit-scrollbar-thumb {
+  background: var(--iv-border);
+  border-radius: 999px;
+}
+
+.composerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.composerSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.composerSectionTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--iv-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.composerSectionBadge {
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--iv-elevated-bg);
+  color: var(--iv-text-muted);
+}
+
+.composerTypeToggle {
+  display: flex;
+  gap: 6px;
+  background: var(--iv-elevated-bg);
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.composerTypeBtn {
+  flex: 1;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 180ms ease;
+  background: transparent;
+  color: var(--iv-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.composerTypeBtnActive {
+  background: var(--iv-panel-bg);
+  color: var(--iv-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+}
+
+.composerDropzone {
+  border: 1.5px dashed var(--iv-border);
+  border-radius: 14px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+  background: var(--iv-elevated-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.composerDropzone:hover {
+  background: var(--iv-hover-bg);
+  border-color: var(--iv-accent);
+}
+
+.composerDropzoneIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--iv-panel-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--iv-accent);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.composerDropzoneText {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--iv-text);
+  margin: 0;
+}
+
+.composerDropzoneHint {
+  font-size: 0.78rem;
+  color: var(--iv-text-muted);
+  margin: 0;
+}
+
+.composerVideoPreviewCard {
+  background: var(--iv-elevated-bg);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--iv-border);
+}
+
+.composerVideoElement {
+  width: 100%;
+  max-height: 220px;
+  border-radius: 10px;
+  background: #000;
+  object-fit: contain;
+}
+
+.composerVideoMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--iv-text-muted);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.composerUploadProgressBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  background: var(--iv-panel-bg);
+  border-radius: 8px;
+}
+
+.composerProgressBarBg {
+  width: 100%;
+  height: 6px;
+  background: var(--iv-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.composerProgressBarFill {
+  height: 100%;
+  background: var(--iv-accent);
+  transition: width 200ms ease;
+  border-radius: 999px;
+}
+
+.composerProgressText {
+  font-size: 0.78rem;
+  color: var(--iv-accent-ink, var(--iv-accent));
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+}
+
+.composerItineraryToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--iv-elevated-bg);
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.composerItineraryToggleInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.composerItineraryToggleTitle {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--iv-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.composerItineraryToggleSubtitle {
+  font-size: 0.76rem;
+  color: var(--iv-text-muted);
+}
+
+.composerItineraryContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--iv-elevated-bg);
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid var(--iv-border);
+}
+
+.itineraryItemCard {
+  background: var(--iv-panel-bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--iv-border);
+}
+
+.itineraryItemHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.itineraryDaySelect {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--iv-border);
+  background: var(--iv-elevated-bg);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--iv-text);
+}
+
+.addItemBtn {
+  padding: 8px 14px;
+  border: 1px dashed var(--iv-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--iv-text);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 180ms ease;
+}
+
+.addItemBtn:hover {
+  background: var(--iv-panel-bg);
+  border-color: var(--iv-accent);
+  color: var(--iv-accent);
+}
+
+.removeItineraryItemBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  color: var(--iv-text-muted);
+  cursor: pointer;
+  transition: all 150ms ease;
+  margin-left: auto;
+}
+
+.removeItineraryItemBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.uploadErrorBanner {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  font-size: 0.82rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.switchInput {
+  width: 38px;
+  height: 20px;
+  accent-color: var(--iv-accent);
+  cursor: pointer;
+}
+
+.composerInput,
+.composerTextarea {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--iv-border);
+  background: var(--iv-elevated-bg);
+  color: var(--iv-text);
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.composerMetaRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.composerModalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.composerHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.composerHeaderDraftsBtn {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--iv-border);
+  background: var(--iv-elevated-bg);
+  color: var(--iv-text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 180ms ease;
+}
+
+.composerHeaderDraftsBtn:hover {
+  background: var(--iv-hover-bg);
+  border-color: var(--iv-accent);
+  color: var(--iv-accent);
+}
+
+.editingDraftBadge {
+  font-size: 0.74rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.saveSuccessBanner {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.1);
+  color: rgb(22, 101, 52);
+  font-size: 0.84rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.draftsListContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 56vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.draftCard {
+  background: var(--iv-elevated-bg);
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid var(--iv-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 180ms ease;
+}
+
+.draftCard:hover {
+  border-color: var(--iv-border);
+}
+
+.draftCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.draftTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--iv-text);
+  margin: 0;
+}
+
+.draftSnippet {
+  font-size: 0.84rem;
+  color: var(--iv-text-muted);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.draftMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--iv-text-muted);
+  flex-wrap: wrap;
+}
+
+.draftBadge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--iv-panel-bg);
+  font-weight: 500;
+  border: 1px solid var(--iv-border);
+}
+
+.draftActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.draftResumeBtn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 0;
+  background: var(--iv-accent);
+  color: rgb(255 255 255);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 180ms ease;
+}
+
+.draftResumeBtn:hover {
+  opacity: 0.9;
+}
+
+.draftDeleteBtn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--iv-border);
+  background: transparent;
+  color: var(--iv-text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.draftDeleteBtn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.draftEmptyState {
+  padding: 36px 16px;
+  text-align: center;
+  color: var(--iv-text-muted);
+  font-size: 0.88rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.drawerBackdrop {
+  display: none;
+}
+
+/* --- Responsive Laptop (1024px - 1439px) --- */
+
+.postUnavailableOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(12px);
+  color: #ffffff;
+  text-align: center;
+  z-index: 30;
+  border-radius: inherit;
+}
+
+.postUnavailableIcon {
+  font-size: 44px;
+  margin-bottom: 14px;
+  line-height: 1;
+}
+
+.postUnavailableTitle {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #ffffff;
+}
+
+.postUnavailableDesc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.78);
+  max-width: 320px;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.postUnavailableNextBtn {
+  padding: 8px 22px;
+  background-color: var(--color-coral, #ff4d4f);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(255, 77, 79, 0.35);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.postUnavailableNextBtn:hover {
+  opacity: 0.92;
+  transform: scale(1.03);
+}
+
+@media (max-width: 1439px) {
+  .gridThreeCols {
+    grid-template-columns: 310px minmax(0, 1fr) 340px;
+  }
+
+  .gridNoLeft {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+
+  .gridNoRight {
+    grid-template-columns: 310px minmax(0, 1fr);
+  }
+}
+
+/* --- Responsive Tablet & Mobile (< 1024px) --- */
+
+@media (max-width: 1023px) {
+  .immersiveRoot {
+    height: calc(100dvh - 72px);
+  }
+
+  .viewerGrid,
+  .gridThreeCols,
+  .gridNoLeft,
+  .gridNoRight,
+  .gridCenterOnly {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 10px 12px;
+  }
+
+  .drawerBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 9, 12, 0.6);
+    z-index: 50;
+  }
+
+  .leftPanel,
+  .rightPanel {
+    position: fixed;
+    inset: auto 0 0 0;
+    height: 78dvh;
+    border-radius: 22px 22px 0 0;
+    z-index: 60;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .immersiveRoot,
+  .viewerGrid,
+  .mediaTrack,
+  .navArrowBtn,
+  .verticalActionCircle,
+  .floatingIconBtn,
+  .floatingCircleAccentBtn {
+    transition: none !important;
+    animation: none;
+  }
+}

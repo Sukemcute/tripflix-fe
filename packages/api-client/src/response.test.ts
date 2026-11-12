@@ -1,0 +1,66 @@
+import { describe, expect, it } from 'vitest';
+import { HttpError } from './http';
+import { getApiErrorKind, getAuthErrorKind, getRetryAfterSeconds } from './response';
+
+describe('getApiErrorKind', () => {
+  it('distinguishes unverified email from other forbidden responses', () => {
+    expect(getApiErrorKind(new HttpError(403, { code: 'email_unverified' }))).toBe('emailUnverified');
+    expect(getApiErrorKind(new HttpError(403, { code: 'other' }))).toBe('forbidden');
+  });
+
+  it('maps server and database outages to unavailable', () => {
+    for (const status of [500, 502, 503, 504]) expect(getApiErrorKind(new HttpError(status, {}))).toBe('unavailable');
+    expect(getApiErrorKind(new HttpError(418, {}))).toBe('error');
+  });
+});
+
+const fieldErrors = {
+  message: 'Dữ liệu gửi lên không hợp lệ',
+  errors: [{ field: 'newPassword', message: 'ngắn' }],
+};
+
+describe('getAuthErrorKind', () => {
+  it('maps the same status to the meaning of each auth screen', () => {
+    expect(getAuthErrorKind(new HttpError(401, {}), 'login')).toBe('wrongCredentials');
+    expect(getAuthErrorKind(new HttpError(409, { message: 'trùng' }), 'register')).toBe('accountExists');
+    expect(getAuthErrorKind(new HttpError(401, {}), 'google')).toBe('googleFailed');
+    expect(getAuthErrorKind(new HttpError(503, {}), 'google')).toBe('googleUnavailable');
+    expect(getAuthErrorKind(new HttpError(400, { message: 'hết hạn' }), 'resetPassword')).toBe(
+      'resetLinkInvalid',
+    );
+    expect(getAuthErrorKind(new HttpError(400, { message: 'sai' }), 'changePassword')).toBe(
+      'wrongCurrentPassword',
+    );
+  });
+
+  it('429 is always "too many attempts", on every screen', () => {
+    for (const action of [
+      'login',
+      'register',
+      'google',
+      'forgotPassword',
+      'resetPassword',
+      'changePassword',
+    ] as const)
+      expect(getAuthErrorKind(new HttpError(429, {}), action)).toBe('tooManyAttempts');
+  });
+
+  it('field validation 400 and unrelated errors fall back to the generic notice', () => {
+    expect(getAuthErrorKind(new HttpError(400, fieldErrors), 'resetPassword')).toBeNull();
+    expect(getAuthErrorKind(new HttpError(400, fieldErrors), 'changePassword')).toBeNull();
+    expect(getAuthErrorKind(new HttpError(409, {}), 'login')).toBeNull();
+    expect(getAuthErrorKind(new HttpError(500, {}), 'register')).toBeNull();
+    expect(getAuthErrorKind(new TypeError('offline'), 'login')).toBeNull();
+    expect(getAuthErrorKind(new HttpError(202, {}), 'forgotPassword')).toBeNull();
+  });
+});
+
+describe('getRetryAfterSeconds', () => {
+  it('reads the wait from a 429 body only', () => {
+    expect(getRetryAfterSeconds(new HttpError(429, { retryAfterSeconds: 42 }))).toBe(42);
+    expect(getRetryAfterSeconds(new HttpError(429, { retryAfterSeconds: 1.2 }))).toBe(2);
+    expect(getRetryAfterSeconds(new HttpError(429, { message: 'chậm lại' }))).toBeUndefined();
+    expect(getRetryAfterSeconds(new HttpError(400, { retryAfterSeconds: 42 }))).toBeUndefined();
+    expect(getRetryAfterSeconds(new Error('x'))).toBeUndefined();
+  });
+});

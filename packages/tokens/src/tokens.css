@@ -17,6 +17,20 @@
   --color-success: #00B2A3;
   --color-warning: #FFC531;
   --color-danger: #E5484D;
+  --color-ink: #18242B;
+  --color-warm-mist: #FFF7F2;
+  --color-sea-mist: #E7F7F4;
+  --color-teal-ink: #006C63;
+  --color-coral-ink: #BC331E;
+  --color-sun-soft: #FFF6D8;
+  --color-coral-tint: #FFF0EB;
+  --color-overlay: #18242B80;
+  --color-overlay-heavy: #18242BCC;
+  --color-tab-bar: #000000;
+  --color-compose-start: #FFAA38;
+  --color-compose-end: #EA432D;
+  --color-compose-icon-shadow: #60180E47;
+  --color-transparent: transparent;
   --font-sans: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }

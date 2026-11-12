@@ -3,21 +3,63 @@ name: publish
 on:
   push:
     branches: [develop, main]
-    tags: ["v*", "web-v*", "admin-v*"]
+    tags: ["v*", "web-v*", "admin-v*", "mobile-v*"]
 
 permissions:
   contents: read
   packages: write
+  # changes đọc lần publish thành công gần nhất.
+  actions: read
+
+# Merge mới vào develop, main thì huỷ lần publish cũ đang chạy: changes của lần mới so với lần thành công
+# gần nhất nên vẫn build đủ phần thay đổi của lần bị huỷ. Tag không huỷ.
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/heads/') }}
+
+env:
+  # Next gắn địa chỉ này vào bundle lúc build. Hiện chỉ có một server là staging.
+  STAGING_API_URL: https://api.tripflix.io.vn
 
 jobs:
+  # Tag mobile-v* chỉ build APK, không chạy lại CI và không build image web, admin.
+  check:
+    if: ${{ !startsWith(github.ref, 'refs/tags/mobile-v') }}
+    uses: ./.github/workflows/ci.yml
+
+  # Chỉ build image của app có thay đổi; đổi packages/ hay file gốc thì build lại cả hai.
+  # Mỗi image tốn khoảng 2 phút Actions và một bản trong GHCR.
+  changes:
+    if: ${{ !startsWith(github.ref, 'refs/tags/mobile-v') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      apps: ${{ steps.pick.outputs.apps }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          bash .github/scripts/changed-images.sh
+          "web admin"
+          '^(packages/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|turbo\.json$|\.nvmrc$|\.dockerignore$|\.github/workflows/publish\.yml$|\.github/scripts/)'
+
   web:
+    needs: [check, changes]
+    if: needs.changes.outputs.apps != '[]'
     strategy:
       fail-fast: false
       matrix:
-        app: [web, admin]
+        app: ${{ fromJSON(needs.changes.outputs.apps) }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      # Builder buildx cần cho cache type=gha (driver docker mặc định không ghi được cache này).
+      - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -37,12 +79,34 @@ jobs:
           file: apps/${{ matrix.app }}/Dockerfile
           target: prod
           push: true
+          # Không đẩy attestation: mỗi lần build chỉ còn một phiên bản trong GHCR thay vì ba.
+          provenance: false
+          # Mỗi dòng một biến; dòng trống (bản admin) bị bỏ qua. GOOGLE_CLIENT_ID là biến (Variables) của repo,
+          # không phải secret: Client ID công khai. Chưa đặt thì web không hiện nút Google.
+          build-args: |
+            ${{ matrix.app == 'web' && format('NEXT_PUBLIC_API_URL={0}', env.STAGING_API_URL) || '' }}
+            ${{ matrix.app == 'web' && format('NEXT_PUBLIC_GOOGLE_CLIENT_ID={0}', vars.GOOGLE_CLIENT_ID) || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Mỗi app một scope cache, để web và admin không ghi đè cache của nhau.
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,scope=${{ matrix.app }},mode=max
+
+  # Server chạy image web đúng commit (sha-xxxxxxx), nên chỉ deploy khi lần này có build web.
+  # Chỉ admin đổi thì web trên server giữ nguyên bản đang chạy.
+  deploy-web:
+    needs: [web, changes]
+    if: github.ref == 'refs/heads/develop' && contains(fromJSON(needs.changes.outputs.apps), 'web')
+    uses: ./.github/workflows/deploy-web.yml
+    with:
+      commit: ${{ github.sha }}
+    secrets:
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
 
   mobile:
     if: startsWith(github.ref, 'refs/tags/mobile-v')
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

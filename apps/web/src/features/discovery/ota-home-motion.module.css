@@ -1,0 +1,187 @@
+/* ==========================================================================
+   LAYERED 2D BRIGHT ENVIRONMENTAL CANVAS
+   Bầu trời ban mai -> Sóng biển ngọc bích -> Đồi núi cao nguyên -> Bờ cát vàng ấm
+   Khớp 100% Brand Tokens: Teal #00B2A3, Coral #FF5A3C, Sun #FFC531, Sea Mist #E7F7F4
+   ========================================================================== */
+.layeredCanvas {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  /* Dải cảnh quan tươi sáng, thoáng đãng chuyển tiếp mượt mà từ đỉnh xuống chân trang */
+  background:
+    radial-gradient(circle at 12% 16%, rgba(0, 178, 163, 0.08) 0%, transparent 48%),
+    radial-gradient(circle at 88% 36%, rgba(255, 90, 60, 0.06) 0%, transparent 42%),
+    radial-gradient(circle at 18% 68%, rgba(255, 197, 49, 0.07) 0%, transparent 50%),
+    linear-gradient(
+      180deg,
+      #E7F7F4 0%,      /* Sea Mist đón liền mạch từ đáy Hero */
+      #F0FDF4 16%,     /* Thung lũng xanh ngọc thanh mát */
+      #FFF7F2 40%,     /* Warm Mist sương ấm cho Stays */
+      #FFFBEB 64%,     /* Nắng vàng ươm dịu nhẹ */
+      #F8FAFC 84%,     /* Trắng ngà thanh lịch */
+      #FFFFFF 100%     /* Chân trang tinh khôi */
+    );
+  color: #141B3D;
+  overflow-x: clip;
+}
+
+/* ==========================================================================
+   CÁC LAYER CẢNH QUAN 2D XẾP LỚP HẬU CẢNH (LAYERED 2D BACKDROP)
+   ========================================================================== */
+.landscapeBackdropLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* 1. Vệt nắng ban mai vàng mật ong nhẹ nhàng xuyên qua bầu trời (Morning Sunshine Glow) */
+.morningSunbeams {
+  position: absolute;
+  top: 520px;
+  right: -5%;
+  width: 620px;
+  height: 720px;
+  background: conic-gradient(
+    from 210deg at 80% 0%,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.4) 14deg,
+    transparent 28deg,
+    rgba(254, 240, 138, 0.3) 42deg,
+    transparent 58deg,
+    rgba(217, 244, 241, 0.25) 75deg,
+    transparent 95deg
+  );
+  filter: blur(32px);
+  opacity: 0.8;
+  animation: morningLightPulse 9s ease-in-out infinite alternate;
+}
+
+@keyframes morningLightPulse {
+  0% {
+    opacity: 0.6;
+    transform: scaleX(0.96);
+  }
+  100% {
+    opacity: 0.9;
+    transform: scaleX(1.04);
+  }
+}
+
+/* 2. Dải sóng biển ngọc bích 2D chuyển tiếp sau Hero */
+.shoreWaveTransition {
+  position: absolute;
+  top: 580px;
+  left: 0;
+  width: 100%;
+  height: 180px;
+}
+.shoreWaveTransition svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 3. Dãy đồi núi xanh 2D xếp tầng (Layered Highland Hills & Forest) - Chuyển tiếp sang Stays */
+.highlandHillsWrapper {
+  position: absolute;
+  top: 1600px;
+  left: 0;
+  width: 100%;
+  height: 320px;
+  opacity: 0.95;
+}
+
+.highlandHillsSvg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 4. Dải sóng cát bờ biển vàng ấm chuyển sang Cozy Stays & Tripi */
+.sandDunesWrapper {
+  position: absolute;
+  top: 2550px;
+  left: 0;
+  width: 100%;
+  height: 220px;
+  opacity: 0.9;
+}
+.sandDunesWrapper svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 5. Cánh chim hải âu chao lượn trên cao nguyên */
+.highlandBird {
+  position: absolute;
+  fill: #00B2A3;
+  opacity: 0.45;
+  filter: drop-shadow(0 1px 3px rgba(0, 108, 99, 0.15));
+  pointer-events: none;
+}
+.hb1 {
+  top: 1640px;
+  left: 22%;
+  width: 22px;
+  transform: rotate(-8deg);
+  animation: birdDrift1 18s ease-in-out infinite alternate;
+}
+.hb2 {
+  top: 1700px;
+  right: 18%;
+  width: 28px;
+  transform: rotate(14deg);
+  animation: birdDrift2 22s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes birdDrift1 {
+  0% {
+    transform: translate(0, 0) rotate(-8deg);
+  }
+  100% {
+    transform: translate(60px, -24px) rotate(4deg);
+  }
+}
+
+@keyframes birdDrift2 {
+  0% {
+    transform: translate(0, 0) rotate(14deg);
+  }
+  100% {
+    transform: translate(-50px, 20px) rotate(2deg);
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE & ACCESSIBILITY
+   ========================================================================== */
+@media (max-width: 900px) {
+  .highlandHillsWrapper {
+    top: 1650px;
+    height: 260px;
+  }
+  .sandDunesWrapper {
+    top: 2850px;
+  }
+}
+
+@media (max-width: 640px) {
+  .highlandHillsWrapper {
+    top: 1950px;
+    height: 200px;
+  }
+  .sandDunesWrapper {
+    top: 3450px;
+  }
+  .morningSunbeams {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .morningSunbeams,
+  .highlandBird {
+    animation: none;
+  }
+}

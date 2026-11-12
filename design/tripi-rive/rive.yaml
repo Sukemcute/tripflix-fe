@@ -1,0 +1,4 @@
+name: tripi
+main: Tripi
+output:
+  dir: build

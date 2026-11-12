@@ -22,6 +22,20 @@ export const colors = {
   success: '#00B2A3',
   warning: '#FFC531',
   danger: '#E5484D',
+  ink: '#18242B',
+  warmMist: '#FFF7F2',
+  seaMist: '#E7F7F4',
+  tealInk: '#006C63',
+  coralInk: '#BC331E',
+  sunSoft: '#FFF6D8',
+  coralTint: '#FFF0EB',
+  overlay: '#18242B80',
+  overlayHeavy: '#18242BCC',
+  tabBar: '#000000',
+  composeStart: '#FFAA38',
+  composeEnd: '#EA432D',
+  composeIconShadow: '#60180E47',
+  transparent: 'transparent',
 } as const;
 
 export const fonts = {
@@ -44,6 +58,25 @@ export const radius = {
   md: 10,
   lg: 16,
   pill: 999,
+} as const;
+
+/** Native family names registered by Expo Font; keep web families unchanged. */
+export const nativeFonts = {
+  regular: 'BeVietnamPro-Regular',
+  medium: 'BeVietnamPro-Medium',
+  semibold: 'BeVietnamPro-Semibold',
+  bold: 'BeVietnamPro-Bold',
+  extraBold: 'BeVietnamPro-ExtraBold',
+} as const;
+
+export const mobileLayout = {
+  gutter: 20,
+  buttonHeight: 50,
+  touchTarget: 44,
+  inputRadius: 12,
+  cardRadius: 20,
+  sheetRadius: 24,
+  contentWidth: 430,
 } as const;
 
 export type ColorToken = keyof typeof colors;

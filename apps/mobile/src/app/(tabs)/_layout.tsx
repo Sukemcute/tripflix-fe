@@ -1,46 +1,48 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { t, type MessageKey } from '@tripflix/i18n';
-import { colors } from '@tripflix/tokens';
-import { Tabs } from 'expo-router';
-import type { ComponentProps } from 'react';
+import { Tabs, router } from 'expo-router';
+import { useApiSession } from '@tripflix/api-client';
+import { FloatingTabBar } from '@/components/floating-tab-bar';
 
-type IconName = ComponentProps<typeof Ionicons>['name'];
-
-// 5 tab theo docs/11 §4: feed, explore, trips, inbox, me.
-const TABS: readonly { name: string; label: MessageKey; icon: IconName }[] = [
-  { name: 'index', label: 'tabs.feed', icon: 'play-circle' },
-  { name: 'explore', label: 'tabs.explore', icon: 'compass' },
-  { name: 'trips', label: 'tabs.trips', icon: 'map' },
-  { name: 'inbox', label: 'tabs.inbox', icon: 'chatbubbles' },
-  { name: 'me', label: 'tabs.me', icon: 'person-circle' },
+// Mobile V1 design: creation is an action; notifications live behind the bell.
+const TABS: readonly { name: string; label: MessageKey }[] = [
+  { name: 'index', label: 'mobile.tabs.reels' },
+  { name: 'explore', label: 'mobile.tabs.explore' },
+  { name: 'compose', label: 'mobile.tabs.create' },
+  { name: 'trips', label: 'mobile.tabs.trips' },
+  { name: 'me', label: 'mobile.tabs.profile' },
 ];
 
 export default function TabsLayout() {
+  const { user, isReady } = useApiSession();
   return (
     <Tabs
+      tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.coral,
-        tabBarInactiveTintColor: colors.textSubtle,
-        tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.border },
+        animation: 'none',
       }}
     >
       {TABS.map((tab) => (
         <Tabs.Screen
           key={tab.name}
           name={tab.name}
+          listeners={
+            tab.name === 'compose'
+              ? {
+                  tabPress: (event) => {
+                    event.preventDefault();
+                    if (!isReady) return;
+                    router.push(user ? '/create' : { pathname: '/login', params: { returnTo: '/create' } });
+                  },
+                }
+              : undefined
+          }
           options={{
             title: t(tab.label),
-            tabBarIcon: ({ focused, size }) => (
-              <Ionicons
-                name={tab.icon}
-                color={focused ? colors.coral : colors.textSubtle}
-                size={size}
-              />
-            ),
           }}
         />
       ))}
+      <Tabs.Screen name="inbox" options={{ href: null }} />
     </Tabs>
   );
 }

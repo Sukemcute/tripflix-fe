@@ -1,0 +1,939 @@
+.page {
+  padding-block: clamp(20px, 3vw, 44px) clamp(32px, 5vw, 64px);
+}
+.banner {
+  display: grid;
+  inline-size: 100%;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  min-height: 224px;
+  margin-bottom: 18px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  background: linear-gradient(112deg, var(--color-surface), var(--color-sea-mist));
+}
+.bannerCopy {
+  padding: clamp(24px, 3.3vw, 48px);
+}
+.banner h1 {
+  margin: 8px 0;
+  font-size: clamp(32px, 4.7vw, 58px);
+  line-height: 1.15;
+  letter-spacing: -0.05em;
+}
+.bannerCopy > p:last-child {
+  max-width: 48ch;
+  margin-bottom: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+.heroArt {
+  position: relative;
+  align-self: stretch;
+}
+.heroPhoto {
+  position: absolute;
+  inset: 0 0 0 12%;
+  border-start-start-radius: 112px;
+  border-end-start-radius: 24px;
+  overflow: hidden;
+  background: var(--color-teal-soft);
+}
+.heroPhoto img {
+  object-fit: cover;
+  object-position: center 62%;
+}
+.tripiSpot {
+  position: absolute;
+  left: 0;
+  bottom: 12px;
+  display: grid;
+  place-items: center;
+  width: clamp(116px, 14vw, 196px);
+  aspect-ratio: 1;
+  isolation: isolate;
+}
+.tripiSpot::before {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  z-index: -1;
+  border: 1px dashed var(--color-teal-ink);
+  border-radius: 50%;
+  background: var(--color-sea-mist);
+}
+.tripiSpot img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 9px 12px var(--color-overlay));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .heroPhoto img {
+    animation: stay-photo-settle 2880ms ease-out;
+  }
+  .tripiSpot img {
+    animation: tripi-greet 2640ms ease-in-out 240ms;
+  }
+}
+@keyframes stay-photo-settle {
+  from {
+    transform: scale(1.045);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes tripi-greet {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  30% {
+    transform: translateY(-10px) rotate(-6deg);
+  }
+  65% {
+    transform: translateY(-3px) rotate(4deg);
+  }
+}
+@media (max-width: 640px) {
+  .banner {
+    grid-template-columns: 1fr;
+    border-radius: 18px;
+  }
+  .bannerCopy {
+    padding: 22px 20px 14px;
+  }
+  .heroArt {
+    min-height: 116px;
+  }
+  .heroPhoto {
+    inset-inline-start: 20%;
+    border-start-start-radius: 72px;
+    border-end-start-radius: 16px;
+  }
+  .tripiSpot {
+    left: 8px;
+    bottom: 0;
+  }
+}
+.page .searchPanel {
+  border-color: var(--color-border);
+  border-radius: 16px;
+  box-shadow: none;
+}
+.layout {
+  display: grid;
+  grid-template-columns: minmax(185px, 240px) minmax(0, 1fr);
+  gap: clamp(16px, 3vw, 36px);
+  margin-top: 32px;
+}
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+/* Khung lọc dạng thẻ (bản TF11), tách class riêng để không đụng .filters của bộ lọc TF10.
+   Theo mẫu chip/segmented của các trang đặt phòng; "Đặt lại" nằm ở đầu khung để không đẩy banner. */
+.filterPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+}
+.panelHead h2 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+  font-size: 15px;
+}
+.panelHead h2 svg {
+  color: var(--color-teal-ink);
+}
+.panelReset {
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--color-teal-ink);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 256ms;
+}
+.panelReset:hover {
+  background: var(--color-sea-mist);
+}
+.panelGroup {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.panelGroup > legend,
+.panelGroup > span:first-child {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.panelGroup > span:first-child {
+  margin-bottom: 0;
+}
+/* Nhóm sao chìm xuống giống phần sắp xếp; mức đang chọn nổi lên nền trắng. */
+.starChips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--color-surface-muted);
+}
+.starChips .chip {
+  border-color: var(--color-transparent);
+  border-radius: 9px;
+  background: var(--color-transparent);
+  color: var(--color-text-muted);
+}
+.starChips .chip:hover {
+  border-color: var(--color-transparent);
+  background: color-mix(in srgb, var(--color-background) 55%, transparent);
+}
+.starChips .chip:has(input:checked) {
+  border-color: var(--color-transparent);
+  background: var(--color-background);
+  color: var(--color-ink);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-ink) 14%, transparent);
+}
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--color-surface-muted);
+}
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 256ms,
+    background 256ms,
+    color 256ms;
+}
+.chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.chip svg {
+  flex-shrink: 0;
+  filter: drop-shadow(1px 2px 1.5px color-mix(in srgb, var(--color-ink) 22%, transparent));
+}
+.chip:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.chip:hover {
+  border-color: var(--color-teal);
+}
+.chip:has(input:checked) {
+  border-color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+.chip:has(input:focus-visible) {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
+}
+.segmented .chip svg {
+  filter: none;
+}
+.segmented .chip {
+  min-height: 40px;
+  line-height: 1.25;
+  text-align: center;
+  border-color: var(--color-transparent);
+  border-radius: 9px;
+  background: var(--color-transparent);
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.segmented .chip:has(input:checked) {
+  border-color: var(--color-transparent);
+  background: var(--color-background);
+  color: var(--color-ink);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-ink) 14%, transparent);
+}
+.priceRange {
+  display: grid;
+  gap: 12px;
+}
+.priceRangeValue {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.priceRangeBox {
+  padding: 7px 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+/* Sóng giá phía trên; phần trong khoảng đã chọn tô đậm hơn. Hai input range chồng nhau,
+   vạch coral giữa hai nút lấy vị trí từ --range-start/--range-end. */
+.priceRangeChart svg {
+  display: block;
+  width: 100%;
+  height: 44px;
+}
+.priceRangeArea {
+  fill: var(--color-coral-tint);
+}
+.priceRangeAreaActive {
+  fill: color-mix(in srgb, var(--color-coral) 22%, var(--color-background));
+}
+.priceRangeTrack {
+  position: relative;
+  height: 20px;
+  margin-top: -10px;
+}
+.priceRangeTrack::before {
+  content: '';
+  position: absolute;
+  inset: 9px 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--color-border) var(--range-start),
+    var(--color-coral) var(--range-start),
+    var(--color-coral) var(--range-end),
+    var(--color-border) var(--range-end)
+  );
+}
+.priceRangeTrack input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  background: none;
+  pointer-events: none;
+  appearance: none;
+}
+.priceRangeTrack input::-webkit-slider-runnable-track {
+  height: 20px;
+  background: none;
+}
+.priceRangeTrack input::-moz-range-track {
+  background: none;
+}
+.priceRangeTrack input::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 2px solid var(--color-coral);
+  border-radius: 50%;
+  background: var(--color-background);
+  cursor: grab;
+  pointer-events: auto;
+  appearance: none;
+}
+.priceRangeTrack input::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--color-coral);
+  border-radius: 50%;
+  background: var(--color-background);
+  cursor: grab;
+  pointer-events: auto;
+}
+.priceRangeTrack input:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+.priceRangeTrack input:focus-visible {
+  outline: none;
+}
+.priceRangeTrack input:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--color-coral-ink);
+  outline-offset: 2px;
+}
+.priceRangeTrack input:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--color-coral-ink);
+  outline-offset: 2px;
+}
+.filterPanel .filterError {
+  margin: -10px 0 0;
+}
+@media (max-width: 840px) {
+  .filterPanel {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .panelHead {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 560px) {
+  .filterPanel {
+    grid-template-columns: 1fr;
+  }
+}
+.filters {
+  align-self: start;
+  padding-inline-end: 18px;
+  border-inline-end: 1px solid var(--color-border);
+}
+.filterHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-block: 4px 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+.filterIcon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+.filterHeader h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.filterHeader small {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-teal-ink);
+  font-size: 11px;
+}
+.filterToggle {
+  display: none;
+}
+.filterGroup {
+  min-inline-size: 0;
+  margin: 0;
+  padding-block: 0 16px;
+  border: 0;
+}
+.filterGroup legend {
+  padding: 16px 0 9px;
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+.filterGroup:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+}
+.budgetInputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.budgetInputs label {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+.budgetInputs label:focus-within {
+  border-color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+}
+.budgetInputs input {
+  width: 100%;
+  min-width: 0;
+  min-height: 23px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.budgetInputs input:focus {
+  box-shadow: none;
+}
+.budgetInputs label:has([aria-invalid='true']) {
+  border-color: var(--color-coral-ink);
+}
+.filterChoices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.filterChoices button {
+  min-height: 36px;
+  padding: 5px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.filterChoices button:is(:hover, [aria-pressed='true']) {
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+.filterChoices button[aria-pressed='true'] {
+  border-color: var(--color-teal-ink);
+}
+.ratingChoices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.sortChoices {
+  display: grid;
+}
+.sortChoices button {
+  padding-inline-start: 12px;
+  text-align: start;
+}
+.sortChoices button[aria-pressed='true'] {
+  box-shadow: inset 3px 0 var(--color-teal-ink);
+}
+.filterActions {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-block: 12px 16px;
+  border-top: 1px solid var(--color-border);
+}
+.applyFilters {
+  flex: 1 0 auto;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--color-teal-ink);
+  color: var(--color-background);
+  font-size: 12px;
+  font-weight: 700;
+}
+.applyFilters:hover:not(:disabled) {
+  background: var(--color-ink);
+}
+.applyFilters:disabled {
+  opacity: 0.55;
+}
+.clearFilters {
+  min-height: 44px;
+  padding-inline: 4px;
+  color: var(--color-teal-ink);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.results {
+  min-width: 0;
+}
+.resultsHead {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+.resultsHead h2 {
+  margin: 0;
+  font-size: 25px;
+  letter-spacing: -0.025em;
+}
+.resultsHead output {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+.quickPlaces {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.quickPlaces a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 12px;
+}
+.quickPlaces a:hover,
+.quickPlaces a[aria-current='true'] {
+  color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+  border-color: var(--color-teal-ink);
+}
+.cards {
+  display: grid;
+  gap: 12px;
+}
+.card {
+  display: grid;
+  grid-template-columns: minmax(125px, 1fr) minmax(0, 1.7fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  min-height: 155px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-background);
+  color: inherit;
+  transition:
+    border-color 240ms ease,
+    box-shadow 240ms ease;
+}
+.card:hover {
+  border-color: var(--color-teal-ink);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--color-ink) 8%, transparent);
+}
+.card:hover h3 {
+  color: var(--color-teal-ink);
+}
+.card:focus-visible {
+  outline-offset: -3px;
+}
+.photo img {
+  transition: transform 480ms ease;
+}
+.card:hover .photo img {
+  transform: scale(1.035);
+}
+.photo {
+  position: relative;
+  align-self: stretch;
+  min-height: 130px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--color-sea-mist);
+}
+.photo :global(.trip-card-photo) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+}
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cardInfo h3 {
+  margin: 6px 0 0;
+  line-height: 1.4;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.price {
+  padding-inline-end: 6px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.price strong {
+  display: block;
+  color: var(--color-coral-ink);
+  font-size: 19px;
+}
+.price span,
+.price p {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+.price p {
+  margin-block: 5px 8px;
+}
+/* Nút chỉ để nhìn: cả card đã là link, nên không lồng thêm link hay button bên trong. */
+.price span:global(.primary-button) {
+  min-height: 38px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--color-background);
+}
+.card:hover .price span:global(.primary-button) {
+  background: var(--color-ink);
+}
+.state {
+  display: block;
+  padding: 16px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+.state p {
+  margin: 6px 0 0;
+}
+.paging {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.paging output {
+  min-width: 88px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.adBanner {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--color-sea-mist);
+  isolation: isolate;
+  container-type: size;
+}
+.adPhoto {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+.adPhoto img {
+  object-fit: cover;
+  object-position: center 70%;
+}
+/* Kính mờ kiểu macOS: nền trắng trong suốt + làm mờ ảnh phía sau. */
+.adContent {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 44px 18px 18px;
+  border-top: 1px solid color-mix(in srgb, var(--color-background) 65%, transparent);
+  background: color-mix(in srgb, var(--color-background) 62%, transparent);
+  box-shadow:
+    0 10px 30px color-mix(in srgb, var(--color-ink) 16%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-background) 80%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: blur(20px) saturate(170%);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .adContent {
+    background: color-mix(in srgb, var(--color-background) 90%, transparent);
+  }
+}
+.adContent .adTripi {
+  position: absolute;
+  top: -48px;
+  left: 10px;
+  width: 84px;
+  height: auto;
+  filter: drop-shadow(0 6px 10px var(--color-overlay));
+}
+.adEyebrow {
+  margin: 0;
+  color: var(--color-coral-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+}
+.adContent h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 19px;
+  line-height: 1.3;
+}
+.adContent > p:not(.adEyebrow) {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.adHighlights {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.adHighlights li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-background) 70%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-background) 45%, transparent);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+/* Cột lọc cao thì banner thấp lại: bỏ danh sách điểm nổi bật để còn chỗ cho ảnh và Tripi. */
+@container (max-height: 520px) {
+  .adHighlights {
+    display: none;
+  }
+}
+.adHighlights li::before {
+  content: '';
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-teal);
+}
+.adContent a {
+  margin-top: 8px;
+  min-height: 42px;
+  justify-content: center;
+  font-size: 12px;
+}
+@media (min-width: 841px) {
+  /* Thẻ cao cố định và danh sách luôn giữ chỗ cho 5 thẻ, để banner dừng đúng ở thẻ cuối dù trang ít kết quả. */
+  .card {
+    height: 165px;
+    min-height: 0;
+  }
+  .cards {
+    align-content: start;
+    min-height: calc(5 * 165px + 4 * 12px);
+  }
+  .layout > .paging {
+    grid-column: 2;
+    margin-top: 0;
+  }
+}
+.filterError {
+  margin: 8px 0;
+  color: var(--color-coral-ink);
+  font-size: 12px;
+}
+@media (max-width: 840px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  /* Màn hẹp xếp một cột, banner sẽ đẩy kết quả xuống nên ẩn đi. */
+  .adBanner {
+    display: none;
+  }
+  .filters {
+    padding-inline-end: 0;
+    border-inline-end: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .filterGroups {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .filterGroup:not(:last-child) {
+    border-bottom: 0;
+  }
+  .applyFilters {
+    flex-grow: 0;
+  }
+}
+@media (max-width: 640px) {
+  .filterHeader {
+    padding-block: 6px;
+  }
+  .filters:has(.filterToggle[aria-expanded='false']) .filterHeader {
+    border-bottom: 0;
+  }
+  .filterToggle {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    margin-inline-start: auto;
+    place-items: center;
+    border-radius: 8px;
+    color: var(--color-teal-ink);
+  }
+  .filterToggle::after {
+    position: absolute;
+    inset: 0;
+    content: '';
+  }
+  .filterToggle[aria-expanded='true'] svg {
+    transform: rotate(180deg);
+  }
+  .filterBody[data-expanded='false'] {
+    display: none;
+  }
+  .filterGroups {
+    display: block;
+  }
+  .filterGroup:not(:last-child) {
+    border-bottom: 1px solid var(--color-border);
+  }
+  .filterChoices button {
+    min-height: 44px;
+  }
+}
+@media (max-width: 560px) {
+  .card {
+    grid-template-columns: minmax(96px, 35%) minmax(0, 1fr);
+    gap: 8px 12px;
+  }
+  .photo {
+    grid-row: span 2;
+    min-height: 135px;
+  }
+  .price {
+    text-align: left;
+  }
+  .price strong {
+    font-size: 17px;
+  }
+  .cardInfo h3 {
+    font-size: 14px;
+  }
+  .resultsHead h2 {
+    font-size: 21px;
+  }
+}
