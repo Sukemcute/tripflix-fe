@@ -32,6 +32,9 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-secure-store',
+    'expo-font',
+    'expo-status-bar',
+    'expo-video',
     ['expo-image-picker', { photosPermission: false, cameraPermission: false, microphonePermission: false }],
     [
       'expo-splash-screen',
