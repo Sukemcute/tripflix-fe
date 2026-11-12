@@ -5,7 +5,7 @@ import { vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { BookingsList } from '@/features/checkout/bookings-screen';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { PublicPosts } from '@/features/social/live-posts';
@@ -24,31 +24,26 @@ export { LiveLogin } from './login-form';
  * ?tab= mở sẵn một mục (xem account-tabs.ts).
  */
 export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTab }) {
-  const { user, isReady, session, error } = useApiSession();
+  const { user, isReady, session } = useApiSession();
   const router = useRouter();
   const [tab, setTab] = useState<AccountTab>(initialTab);
   const logout = useMutation({
     mutationFn: () => session.logout(),
     onSuccess: () => router.push('/'),
   });
-  if (!isReady)
+
+  useEffect(() => {
+    if (isReady && !user) {
+      router.replace('/login?returnTo=%2Faccount');
+    }
+  }, [isReady, user, router]);
+
+  if (!isReady || !user)
     return (
       <main id="content" className="ota-container results-page account-page">
         <section className="account-guest is-loading" aria-busy="true">
           <output>{vi.api.loading}</output>
         </section>
-      </main>
-    );
-  if (!user)
-    return (
-      <main id="content" className="ota-container results-page account-page">
-        <ApiErrorNotice
-          error={error}
-          retry={() => {
-            void session.initialize();
-          }}
-        />
-        <AccountGuest />
       </main>
     );
   return (
@@ -210,7 +205,7 @@ function NavIcon({ name }: { name: keyof typeof NAV_ICONS }) {
 }
 
 /** Trang tài khoản khi chưa đăng nhập: giải thích trang này để làm gì, nút Đăng nhập và Tạo tài khoản. */
-function AccountGuest() {
+export function AccountGuest() {
   return (
     <section className="account-guest" aria-labelledby="account-guest-title">
       <div className="account-guest-body">

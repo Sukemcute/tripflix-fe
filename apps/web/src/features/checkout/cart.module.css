@@ -85,6 +85,30 @@
   cursor: pointer;
 }
 
+.emptyCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  border: 1px dashed var(--color-border);
+  border-radius: 16px;
+  background: var(--color-background);
+}
+
+.emptyIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-warm-mist);
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
+}
+
 .summary {
   position: sticky;
   top: 96px;
