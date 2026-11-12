@@ -94,7 +94,7 @@ export function SocialFeedView({
   const queryKind: 'public' | 'bookmarks' = activeFilter === 'saved' ? 'bookmarks' : 'public';
   const isSearchMode = activeFilter !== 'saved' && effectiveKeyword.length > 0;
   // Tab Bài viết chỉ lấy vlog; Reels có luồng riêng (/v1/feed).
-  const feedQuery = useSocialPosts(queryKind, '', 'vlog');
+  const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended');
   // Tìm kiếm: cùng query với grid kết quả (search của discovery) nên mở bài từ grid không gọi lại API.
   const searchQuery = usePostSearchFeed(isSearchMode ? effectiveKeyword : '');
   const postsQuery = isSearchMode ? searchQuery : feedQuery;
@@ -216,8 +216,7 @@ export function SocialFeedView({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const first = entries[0];
-        if (first && first.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        if (entries.some((entry) => entry.isIntersecting) && hasNextPage && !isFetchingNextPage) {
           void fetchNextPage();
         }
       },
@@ -225,8 +224,11 @@ export function SocialFeedView({
     );
 
     observer.observe(sentinel);
+    // Bài dài ngắn khác nhau nên đếm theo bài: còn 2 bài chưa xem thì tải tiếp (trang 7 bài → gọi ở bài 5–6).
+    const prefetchAt = mainFeedRef.current?.querySelectorAll('[data-feed-post-id]')[posts.length - 2];
+    if (prefetchAt) observer.observe(prefetchAt);
     return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, posts.length]);
 
   // Mở bài từ grid kết quả: cuộn tới bài đó một lần khi tab đang hiện và bài đã có trong danh sách.
   const scrolledFocusIdRef = useRef<string | null>(null);

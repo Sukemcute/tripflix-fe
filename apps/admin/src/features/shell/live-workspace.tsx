@@ -14,6 +14,7 @@ import { ModerationWorkspace } from '../moderation/moderation-workspace';
 import { InventoryCalendar } from '../inventory/inventory-calendar';
 import { AdminOverview } from '../overview/admin-overview';
 import { SearchMonitoring } from '../search-monitoring/search-monitoring';
+import { DiscoveryJobs } from '../discovery-jobs/discovery-jobs';
 import searchStyles from '../search-monitoring/search-monitoring.module.css';
 import {
   IconOverview,
@@ -33,7 +34,7 @@ import {
 } from './admin-icons';
 
 /** Mục menu moderator được thấy; superadmin thấy tất cả. */
-const MODERATOR_PAGES: readonly MessageKey[] = ['admin.overview', 'admin.moderation', 'admin.searchMonitoring', 'admin.alerts', 'admin.audit'];
+const MODERATOR_PAGES: readonly MessageKey[] = ['admin.overview', 'admin.moderation', 'admin.searchMonitoring', 'admin.searchJobs', 'admin.recommendJobs', 'admin.alerts', 'admin.audit'];
 
 function renderNavIcon(icon: AdminNavItem['icon']) {
   switch (icon) {
@@ -269,6 +270,12 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
             )
           ) : label === 'admin.searchMonitoring' ? (
             profile.isPending ? <output>{vi.api.loading}</output> : profile.data && <SearchMonitoring />
+          ) : label === 'admin.searchJobs' || label === 'admin.recommendJobs' ? (
+            profile.isPending ? (
+              <output>{vi.api.loading}</output>
+            ) : (
+              profile.data && <DiscoveryJobs key={label} group={label === 'admin.searchJobs' ? 'search' : 'recommend'} />
+            )
           ) : label === 'admin.users' || label === 'admin.staff' ? (
             profile.isPending ? (
               <output>{vi.api.loading}</output>
