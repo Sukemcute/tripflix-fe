@@ -1953,29 +1953,68 @@
   gap: 10px;
 }
 
-/* Kiểu TikTok: avatar và nút gửi nằm ngoài; chỉ ô nhập là viên thuốc, viền mảnh, nền sáng nhẹ. */
-.panelComposerInput {
+/* Kiểu TikTok: avatar và nút gửi nằm ngoài; viên thuốc chứa ô nhập và nút emoji, viền mảnh, nền sáng nhẹ. */
+.panelComposerField {
+  position: relative;
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
   min-height: 40px;
-  padding: 8px 16px;
+  padding: 0 4px 0 16px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent);
   background: var(--color-surface);
-  color: var(--color-ink);
-  font: inherit;
-  font-size: 0.86rem;
   transition:
     border-color 160ms ease,
     background-color 160ms ease;
 }
 
-.panelComposerInput:focus,
-.panelComposerInput:focus-visible {
-  /* Không vòng sáng hay viền focus mặc định; viền đậm hơn và nền sáng lên là đủ báo đang nhập. */
-  outline: none;
+/* Không vòng sáng hay viền focus mặc định; viền đậm hơn và nền sáng lên là đủ báo đang nhập. */
+.panelComposerField:focus-within {
   border-color: color-mix(in srgb, var(--color-text-subtle) 70%, transparent);
   background: var(--color-background);
+}
+
+.panelComposerInput {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.86rem;
+}
+
+.panelComposerInput:focus,
+.panelComposerInput:focus-visible {
+  outline: none;
+}
+
+.panelEmojiBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-transparent);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.panelEmojiBtn:hover,
+.panelEmojiBtnActive {
+  background: var(--color-surface-muted);
+  color: var(--color-navy);
 }
 
 .panelSendBtn {

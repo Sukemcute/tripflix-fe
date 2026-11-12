@@ -33,6 +33,8 @@ import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { getAvatarTone } from './avatar-tone';
+import { EmojiPicker } from './emoji-picker';
+import { insertAtSelection } from './emoji-picker-data';
 import { isReelPost } from './post-type-filter';
 import { pickReelAfterRemoval, toReelPost, type ReelPost } from './reel-post';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
@@ -81,7 +83,8 @@ export type SocialIconName =
   | 'plus'
   | 'upload'
   | 'trash'
-  | 'video';
+  | 'video'
+  | 'smile';
 
 /** Bộ icon vector đồng nhất nét 1.85px theo chuẩn Instagram / Threads / Lucide. */
 export function SocialIcon({ name, size = 18 }: { name: SocialIconName; size?: number }) {
@@ -247,6 +250,15 @@ export function SocialIcon({ name, size = 18 }: { name: SocialIconName; size?: n
       return (
         <svg {...common}>
           <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      );
+    case 'smile':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M8.5 14.5s1.3 1.8 3.5 1.8 3.5-1.8 3.5-1.8" />
+          <path d="M9 9.5h.01" />
+          <path d="M15 9.5h.01" />
         </svg>
       );
     case 'send':
@@ -1963,6 +1975,9 @@ export function RightPanelCommentsSynchronized({
   const client = useQueryClient();
   const initialDraft = getCommentDraft(post.id);
   const [body, setBody] = useState(initialDraft?.body ?? '');
+  const [isEmojiOpen, setEmojiOpen] = useState(false);
+  const emojiToggleRef = useRef<HTMLButtonElement | null>(null);
+  const closeEmojiPicker = useCallback(() => setEmojiOpen(false), []);
   const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(
     initialDraft?.replyTarget ?? null,
   );
@@ -1970,6 +1985,17 @@ export function RightPanelCommentsSynchronized({
   const handleBodyChange = (value: string) => {
     setBody(value);
     saveCommentDraft(post.id, { body: value, replyTarget });
+  };
+
+  /** Chèn emoji đúng chỗ con trỏ rồi trả focus về ô nhập để gõ tiếp. */
+  const handleInsertEmoji = (emoji: string) => {
+    const input = composerInputRef.current;
+    const next = insertAtSelection(body, input?.selectionStart ?? null, input?.selectionEnd ?? null, emoji);
+    handleBodyChange(next.value);
+    window.requestAnimationFrame(() => {
+      input?.focus();
+      input?.setSelectionRange(next.caret, next.caret);
+    });
   };
 
   const handleReplySelect = (target: { id: string; authorName: string } | null) => {
@@ -2107,15 +2133,31 @@ export function RightPanelCommentsSynchronized({
                 </span>
               )}
             </div>
-            <input
-              ref={composerInputRef}
-              className={styles.panelComposerInput}
-              aria-label={vi.api.commentInputPlaceholder}
-              placeholder={vi.api.commentInputPlaceholder}
-              value={body}
-              maxLength={10000}
-              onChange={(event) => handleBodyChange(event.target.value)}
-            />
+            <div className={styles.panelComposerField}>
+              <input
+                ref={composerInputRef}
+                className={styles.panelComposerInput}
+                aria-label={vi.api.commentInputPlaceholder}
+                placeholder={vi.api.commentInputPlaceholder}
+                value={body}
+                maxLength={10000}
+                onChange={(event) => handleBodyChange(event.target.value)}
+              />
+              <button
+                ref={emojiToggleRef}
+                type="button"
+                className={`${styles.panelEmojiBtn} ${isEmojiOpen ? styles.panelEmojiBtnActive : ''}`}
+                aria-label={vi.api.emojiPickerToggle}
+                aria-expanded={isEmojiOpen}
+                aria-haspopup="dialog"
+                onClick={() => setEmojiOpen((open) => !open)}
+              >
+                <SocialIcon name="smile" size={20} />
+              </button>
+              {isEmojiOpen && (
+                <EmojiPicker toggleRef={emojiToggleRef} onSelect={handleInsertEmoji} onClose={closeEmojiPicker} />
+              )}
+            </div>
             <button
               type="submit"
               className={styles.panelSendBtn}
