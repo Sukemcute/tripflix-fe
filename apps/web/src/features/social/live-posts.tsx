@@ -1456,14 +1456,6 @@ export function InspirationImmersiveViewer({
   const displayComments = activePostDetail?.post.commentCount ?? activePost?.commentCount ?? 0;
   const displayShares = activePostDetail?.post.shareCount ?? activePost?.shareCount ?? 0;
 
-  const authorInfo = activePost
-    ? formatAuthorDisplay(
-        activePost.authorId,
-        activePost.authorName ?? reelCard?.author.name,
-        user?.id,
-        user?.displayName,
-      )
-    : { name: '', handle: '' };
 
 
 
@@ -1690,162 +1682,150 @@ export function InspirationImmersiveViewer({
                       )}
                     </div>
                   )}
+
+                  {/* Cột tương tác (Like, Comment, Save, Share) ở góc dưới phải, bên trong khung */}
+                  <div className={styles.stageSideDock}>
+                    <div className={styles.verticalActionsCluster}>
+                      {user ? (
+                        <button
+                          type="button"
+                          className={`${styles.verticalActionItem} ${
+                            isLiked ? styles.verticalActionLiked : ''
+                          }`}
+                          aria-pressed={isLiked}
+                          aria-label={vi.api.like}
+                          onClick={() =>
+                            engagementMutation.mutate({
+                              postId: activePost.id,
+                              type: 'like',
+                              nextSelected: !isLiked,
+                            })
+                          }
+                        >
+                          <span className={styles.verticalActionCircle}>
+                            <SocialIcon name={isLiked ? 'heartFilled' : 'heart'} size={26} />
+                          </span>
+                          <span className={styles.verticalActionCount}>
+                            {formatCompactCount(displayLikes)}
+                          </span>
+                        </button>
+                      ) : (
+                        <Link
+                          prefetch={false}
+                          href={loginReturnHref}
+                          className={styles.verticalActionItem}
+                          aria-label={vi.api.like}
+                        >
+                          <span className={styles.verticalActionCircle}>
+                            <SocialIcon name="heart" size={26} />
+                          </span>
+                          <span className={styles.verticalActionCount}>
+                            {formatCompactCount(displayLikes)}
+                          </span>
+                        </Link>
+                      )}
+
+                      <button
+                        type="button"
+                        className={`${styles.verticalActionItem} ${
+                          isRightOpen ? styles.verticalActionActive : ''
+                        }`}
+                        aria-expanded={isRightOpen}
+                        aria-label={t('api.commentsWithCount', { count: displayComments })}
+                        onClick={handleCommentButtonClick}
+                      >
+                        <span className={styles.verticalActionCircle}>
+                          <SocialIcon name="comment" size={26} />
+                        </span>
+                        <span className={styles.verticalActionCount}>
+                          {formatCompactCount(displayComments)}
+                        </span>
+                      </button>
+
+                      {user ? (
+                        <button
+                          type="button"
+                          className={`${styles.verticalActionItem} ${
+                            isSaved ? styles.verticalActionSaved : ''
+                          }`}
+                          aria-pressed={isSaved}
+                          aria-label={isSaved ? vi.api.unbookmark : vi.api.bookmark}
+                          onClick={() =>
+                            engagementMutation.mutate({
+                              postId: activePost.id,
+                              type: 'save',
+                              nextSelected: !isSaved,
+                            })
+                          }
+                        >
+                          <span className={styles.verticalActionCircle}>
+                            <SocialIcon name={isSaved ? 'bookmarkFilled' : 'bookmark'} size={26} />
+                          </span>
+                          <span className={styles.verticalActionCount}>
+                            {formatCompactCount(displaySaves)}
+                          </span>
+                        </button>
+                      ) : (
+                        <Link
+                          prefetch={false}
+                          href={loginReturnHref}
+                          className={styles.verticalActionItem}
+                          aria-label={vi.api.bookmark}
+                        >
+                          <span className={styles.verticalActionCircle}>
+                            <SocialIcon name="bookmark" size={26} />
+                          </span>
+                          <span className={styles.verticalActionCount}>
+                            {formatCompactCount(displaySaves)}
+                          </span>
+                        </Link>
+                      )}
+
+                      <button
+                        type="button"
+                        className={styles.verticalActionItem}
+                        aria-label={vi.api.share}
+                        onClick={() =>
+                          engagementMutation.mutate({
+                            postId: activePost.id,
+                            type: 'share',
+                          })
+                        }
+                      >
+                        <span className={styles.verticalActionCircle}>
+                          <SocialIcon name="share" size={26} />
+                        </span>
+                        <span className={styles.verticalActionCount}>
+                          {formatCompactCount(displayShares)}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Cụm chuyển bài (Lên / Xuống): canh giữa theo chiều cao khung, độc lập với cột tương tác */}
+                  <div className={styles.navArrowsCluster}>
+                    <button
+                      type="button"
+                      className={styles.navArrowBtn}
+                      aria-label={vi.api.immersivePrevPost}
+                      title={vi.api.immersivePrevPost}
+                      disabled={activeIndex <= 0}
+                      onClick={() => navigateStep(-1)}
+                    >
+                      <SocialIcon name="arrowUp" size={20} />
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.navArrowBtn}
+                      aria-label={vi.api.immersiveNextPost}
+                      title={vi.api.immersiveNextPost}
+                      disabled={activeIndex >= posts.length - 1 && !postsQuery.hasNextPage}
+                      onClick={() => navigateStep(1)}
+                    >
+                      <SocialIcon name="arrowDown" size={20} />
+                    </button>
+                  </div>
                 </div>
-
-            {/* Cột phải sát cạnh Media Stage: Vertical Action Bar (Avatar +, Like, Comment, Save, Share) */}
-            <div className={styles.stageSideDock}>
-              <div className={styles.verticalActionsCluster}>
-                <Link
-                  prefetch={false}
-                  href={`/trips/${activePost.id}`}
-                  className={styles.actionAvatarBadgeWrap}
-                  aria-label={authorInfo.name}
-                >
-                  <span className={styles.actionAvatarCircle}>{getInitial(authorInfo.name)}</span>
-                  <span className={styles.actionAvatarPlus} aria-hidden="true">
-                    +
-                  </span>
-                </Link>
-
-                {user ? (
-                  <button
-                    type="button"
-                    className={`${styles.verticalActionItem} ${
-                      isLiked ? styles.verticalActionLiked : ''
-                    }`}
-                    aria-pressed={isLiked}
-                    aria-label={vi.api.like}
-                    onClick={() =>
-                      engagementMutation.mutate({
-                        postId: activePost.id,
-                        type: 'like',
-                        nextSelected: !isLiked,
-                      })
-                    }
-                  >
-                    <span className={styles.verticalActionCircle}>
-                      <SocialIcon name={isLiked ? 'heartFilled' : 'heart'} size={20} />
-                    </span>
-                    <span className={styles.verticalActionCount}>
-                      {formatCompactCount(displayLikes)}
-                    </span>
-                  </button>
-                ) : (
-                  <Link
-                    prefetch={false}
-                    href={loginReturnHref}
-                    className={styles.verticalActionItem}
-                    aria-label={vi.api.like}
-                  >
-                    <span className={styles.verticalActionCircle}>
-                      <SocialIcon name="heart" size={20} />
-                    </span>
-                    <span className={styles.verticalActionCount}>
-                      {formatCompactCount(displayLikes)}
-                    </span>
-                  </Link>
-                )}
-
-                <button
-                  type="button"
-                  className={`${styles.verticalActionItem} ${
-                    isRightOpen ? styles.verticalActionActive : ''
-                  }`}
-                  aria-expanded={isRightOpen}
-                  aria-label={t('api.commentsWithCount', { count: displayComments })}
-                  onClick={handleCommentButtonClick}
-                >
-                  <span className={styles.verticalActionCircle}>
-                    <SocialIcon name="comment" size={20} />
-                  </span>
-                  <span className={styles.verticalActionCount}>
-                    {formatCompactCount(displayComments)}
-                  </span>
-                </button>
-
-                {user ? (
-                  <button
-                    type="button"
-                    className={`${styles.verticalActionItem} ${
-                      isSaved ? styles.verticalActionSaved : ''
-                    }`}
-                    aria-pressed={isSaved}
-                    aria-label={isSaved ? vi.api.unbookmark : vi.api.bookmark}
-                    onClick={() =>
-                      engagementMutation.mutate({
-                        postId: activePost.id,
-                        type: 'save',
-                        nextSelected: !isSaved,
-                      })
-                    }
-                  >
-                    <span className={styles.verticalActionCircle}>
-                      <SocialIcon name={isSaved ? 'bookmarkFilled' : 'bookmark'} size={20} />
-                    </span>
-                    <span className={styles.verticalActionCount}>
-                      {formatCompactCount(displaySaves)}
-                    </span>
-                  </button>
-                ) : (
-                  <Link
-                    prefetch={false}
-                    href={loginReturnHref}
-                    className={styles.verticalActionItem}
-                    aria-label={vi.api.bookmark}
-                  >
-                    <span className={styles.verticalActionCircle}>
-                      <SocialIcon name="bookmark" size={20} />
-                    </span>
-                    <span className={styles.verticalActionCount}>
-                      {formatCompactCount(displaySaves)}
-                    </span>
-                  </Link>
-                )}
-
-                <button
-                  type="button"
-                  className={styles.verticalActionItem}
-                  aria-label={vi.api.share}
-                  onClick={() =>
-                    engagementMutation.mutate({
-                      postId: activePost.id,
-                      type: 'share',
-                    })
-                  }
-                >
-                  <span className={styles.verticalActionCircle}>
-                    <SocialIcon name="share" size={20} />
-                  </span>
-                  <span className={styles.verticalActionCount}>
-                    {formatCompactCount(displayShares)}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {/* Cum nut Chuyen bai (Len / Xuong) nam giua chieu cao, sat mep phai cua Center Panel */}
-            <div className={styles.navArrowsCluster}>
-              <button
-                type="button"
-                className={styles.navArrowBtn}
-                aria-label={vi.api.immersivePrevPost}
-                title={vi.api.immersivePrevPost}
-                disabled={activeIndex <= 0}
-                onClick={() => navigateStep(-1)}
-              >
-                <SocialIcon name="arrowUp" size={20} />
-              </button>
-              <button
-                type="button"
-                className={styles.navArrowBtn}
-                aria-label={vi.api.immersiveNextPost}
-                title={vi.api.immersiveNextPost}
-                disabled={activeIndex >= posts.length - 1 && !postsQuery.hasNextPage}
-                onClick={() => navigateStep(1)}
-              >
-                <SocialIcon name="arrowDown" size={20} />
-              </button>
-            </div>
               </>
             )}
           </section>

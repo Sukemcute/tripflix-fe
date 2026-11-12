@@ -345,29 +345,34 @@
   margin: 0 auto;
   padding: 16px 20px;
   display: grid;
-  gap: 20px;
+  /* Khoảng cách nằm trong cột riêng (cột 2 và 4) để cùng co về 0 khi sidebar đóng. */
+  gap: 0;
   align-items: stretch;
   transition: grid-template-columns 240ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Luôn đủ 5 cột: trình duyệt chỉ chuyển mượt grid-template-columns khi số cột không đổi. */
 .gridThreeCols {
-  grid-template-columns: 340px minmax(0, 1fr) 380px;
+  grid-template-columns: 340px 20px minmax(0, 1fr) 20px 380px;
 }
 
 .gridNoLeft {
-  grid-template-columns: minmax(0, 1fr) 380px;
+  grid-template-columns: 0px 0px minmax(0, 1fr) 20px 380px;
 }
 
 .gridNoRight {
-  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-columns: 340px 20px minmax(0, 1fr) 0px 0px;
 }
 
 .gridCenterOnly {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: 0px 0px minmax(0, 1fr) 0px 0px;
 }
 
 /* Itinerary Panel wrapper inside Reels view */
 .itineraryInReels {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
   position: relative !important;
   top: auto !important;
   width: 100% !important;
@@ -720,6 +725,8 @@
    ========================================================================== */
 
 .centerPanel {
+  grid-column: 3;
+  grid-row: 1;
   position: relative;
   min-height: 0;
   min-width: 0;
@@ -732,10 +739,13 @@
 }
 
 .mediaStageFrame {
+  /* Chỗ dành cho cột tương tác ở góc dưới phải; cụm lên/xuống tính theo giá trị này để không chồng lên. */
+  --iv-action-dock-height: 300px;
+  --iv-action-dock-bottom: 48px;
   position: relative;
+  width: 100%;
   height: 100%;
   max-height: calc(100dvh - 116px);
-  aspect-ratio: 9 / 16;
   max-width: 100%;
   border-radius: 24px;
   overflow: hidden;
@@ -799,7 +809,9 @@
   z-index: 1;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* Giữ nguyên tỷ lệ gốc: dọc thì chừa hai bên, ngang thì chừa trên dưới; phần trống là nền mờ từ poster. */
+  object-fit: contain;
+  border-radius: 0;
 }
 
 .mediaVideoLandscape {
@@ -851,7 +863,9 @@
   z-index: 1;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* Poster chờ phát phải khớp đúng khung video để không nhảy hình khi video bắt đầu. */
+  object-fit: contain;
+  border-radius: 0;
 }
 
 /* In-Stage Image Gallery Overlay (object-fit: contain) */
@@ -1120,7 +1134,7 @@
   position: absolute;
   inset: auto 0 0 0;
   z-index: 3;
-  padding: 48px 16px 16px;
+  padding: 48px 104px 32px 24px;
   background: linear-gradient(
     to top,
     rgba(8, 9, 12, 0.92) 0%,
@@ -1170,6 +1184,10 @@
 .overlayAuthorHandle {
   font-size: 0.76rem;
   color: rgba(247, 247, 248, 0.72);
+}
+
+.stageBottomOverlay > * {
+  max-width: 600px;
 }
 
 .overlayCaptionBox {
@@ -1295,8 +1313,10 @@
 
 .progressBarTrack {
   position: absolute;
-  inset: auto 0 0 0;
+  inset: auto 24px 14px 24px;
   height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
   background: rgba(255, 255, 255, 0.22);
   z-index: 5;
   cursor: pointer;
@@ -1311,21 +1331,20 @@
 /* --- Vertical Action Bar & Post Navigation (Right of Media Stage) --- */
 
 .stageSideDock {
+  position: absolute;
+  right: 16px;
+  bottom: var(--iv-action-dock-bottom);
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  max-height: calc(100dvh - 180px);
-  padding: 12px 0 16px;
-  gap: 16px;
-  flex-shrink: 0;
 }
 
 .navArrowsCluster {
   position: absolute;
-  top: 50%;
-  right: 8px;
+  /* 48px là nửa chiều cao cụm (2 nút 44px + khoảng 8px), 16px là khoảng hở với cột tương tác. */
+  top: min(50%, calc(100% - var(--iv-action-dock-bottom) - var(--iv-action-dock-height) - 16px - 48px));
+  right: 16px;
   transform: translateY(-50%);
   z-index: 4;
   display: flex;
@@ -1342,9 +1361,9 @@
   height: 44px;
   border-radius: 999px;
   border: 0;
-  background: var(--iv-control-bg);
-  color: var(--iv-text);
-  box-shadow: var(--iv-shadow);
+  background: color-mix(in srgb, var(--color-ink) 55%, transparent);
+  color: var(--color-background);
+  backdrop-filter: blur(6px);
   cursor: pointer;
   transition:
     transform 160ms ease,
@@ -1352,7 +1371,7 @@
 }
 
 .navArrowBtn:hover:not(:disabled) {
-  background: var(--iv-hover-bg);
+  background: color-mix(in srgb, var(--color-ink) 75%, transparent);
   transform: translateY(-1px);
 }
 
@@ -1372,7 +1391,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .actionAvatarBadgeWrap {
@@ -1430,20 +1449,18 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: 999px;
+  /* Không nền tròn nhưng giữ vùng bấm 44px; bóng đổ để icon trắng vẫn rõ trên video sáng. */
   border: 0;
-  background: var(--iv-control-bg);
-  color: var(--iv-text);
-  box-shadow: var(--iv-shadow);
+  background: var(--color-transparent);
+  color: var(--color-background);
+  filter: drop-shadow(0 1px 3px color-mix(in srgb, var(--color-ink) 70%, transparent));
   transition:
     transform 160ms ease,
-    background-color 160ms ease,
     color 160ms ease;
 }
 
 .verticalActionItem:hover .verticalActionCircle {
-  background: var(--iv-hover-bg);
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 
 .verticalActionLiked .verticalActionCircle {
@@ -1461,7 +1478,8 @@
 .verticalActionCount {
   font-size: 0.76rem;
   font-weight: 700;
-  color: var(--iv-text);
+  color: var(--color-background);
+  text-shadow: 0 1px 3px color-mix(in srgb, var(--color-ink) 70%, transparent);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1470,6 +1488,9 @@
    ========================================================================== */
 
 .rightPanel {
+  grid-column: 5;
+  grid-row: 1;
+  min-width: 0;
   background: var(--iv-panel-bg);
   border: 1px solid var(--iv-border);
   border-radius: 20px;
@@ -2537,15 +2558,22 @@
 
 @media (max-width: 1439px) {
   .gridThreeCols {
-    grid-template-columns: 310px minmax(0, 1fr) 340px;
+    grid-template-columns: 310px 20px minmax(0, 1fr) 20px 340px;
   }
 
   .gridNoLeft {
-    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-columns: 0px 0px minmax(0, 1fr) 20px 340px;
   }
 
   .gridNoRight {
-    grid-template-columns: 310px minmax(0, 1fr);
+    grid-template-columns: 310px 20px minmax(0, 1fr) 0px 0px;
+  }
+}
+
+/* Khung quá thấp để vừa cả hai cụm nút: bỏ cụm lên/xuống, vẫn chuyển bài bằng cuộn và phím mũi tên. */
+@media (max-height: 599px) {
+  .navArrowsCluster {
+    display: none;
   }
 }
 
@@ -2563,6 +2591,17 @@
   .gridCenterOnly {
     grid-template-columns: minmax(0, 1fr);
     padding: 10px 12px;
+  }
+
+  .itineraryInReels,
+  .centerPanel,
+  .rightPanel {
+    grid-column: auto;
+  }
+
+  .mediaStageFrame {
+    width: auto;
+    aspect-ratio: 9 / 16;
   }
 
   .drawerBackdrop {
