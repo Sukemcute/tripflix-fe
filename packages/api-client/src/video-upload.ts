@@ -80,7 +80,14 @@ export async function uploadVideo(
   const urls = new Map(created.parts.map((part: SignedPartDto) => [part.partNumber, part.url]));
   const uploaded: UploadedPartDto[] = [];
   let uploadedBytes = 0;
-  onProgress?.(0, source.sizeBytes);
+  // Thử lại một phần thì số byte đang gửi về 0; chỉ báo khi tăng để thanh tiến độ không lùi.
+  let reportedBytes = -1;
+  const reportProgress = (bytes: number) => {
+    if (bytes <= reportedBytes) return;
+    reportedBytes = bytes;
+    onProgress?.(bytes, source.sizeBytes);
+  };
+  reportProgress(0);
 
   for (const partNumber of [...urls.keys()].sort((a, b) => a - b)) {
     const start = (partNumber - 1) * partSizeBytes;
@@ -89,7 +96,12 @@ export async function uploadVideo(
     for (let attempt = 1; ; attempt += 1) {
       signal?.throwIfAborted();
       try {
-        const { etag } = await uploadChunkToPresignedUrl(urls.get(partNumber)!, chunk, signal);
+        const { etag } = await uploadChunkToPresignedUrl(
+          urls.get(partNumber)!,
+          chunk,
+          signal,
+          onProgress && ((sent) => reportProgress(uploadedBytes + Math.min(sent, end - start))),
+        );
         if (!etag) throw new Error(`S3 không trả ETag cho phần ${partNumber}`);
         uploaded.push({ partNumber, etag });
         break;
@@ -118,7 +130,7 @@ export async function uploadVideo(
       }
     }
     uploadedBytes += end - start;
-    onProgress?.(uploadedBytes, source.sizeBytes);
+    reportProgress(uploadedBytes);
   }
 
   await media.mediaUploadControllerCompleteUpload(assetId, { parts: uploaded }, { signal });
