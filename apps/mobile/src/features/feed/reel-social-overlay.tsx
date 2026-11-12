@@ -451,6 +451,7 @@ export function ReelSocialOverlay({
         visible={hasComments}
         openProgress={commentsProgress}
         postId={postId}
+        showSummary
         draft={draft}
         onDraftChange={setDraft}
         comments={sampleComments}

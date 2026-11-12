@@ -54,9 +54,12 @@ export function LiveComments({
   renderContent,
   onLoginRequired,
   onRevealComment,
+  showSummary = false,
 }: {
   postId: string;
   parentCommentId?: string;
+  /** AI summary chỉ đặt ở bình luận của reel (web và mobile giống nhau). */
+  showSummary?: boolean;
   showHeading?: boolean;
   compact?: boolean;
   renderContent?: (content: ReactNode) => ReactNode;
@@ -120,7 +123,7 @@ export function LiveComments({
   });
   const content = (
     <>
-      {!parentCommentId && <CommunitySummary key={postId} postId={postId} />}
+      {showSummary && !parentCommentId && <CommunitySummary key={postId} postId={postId} />}
       <ApiErrorNotice
         error={query.error}
         retry={() => {
