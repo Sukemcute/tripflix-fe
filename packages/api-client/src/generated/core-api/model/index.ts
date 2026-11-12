@@ -236,6 +236,7 @@ export * from './startVnpayResultDto';
 export * from './stayDto';
 export * from './stayPageDto';
 export * from './stayProvinceDto';
+export * from './stayRatingDto';
 export * from './staysControllerListStaysParams';
 export * from './staysControllerListStaysSort';
 export * from './suggestControllerSuggestParams';
