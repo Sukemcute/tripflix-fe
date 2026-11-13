@@ -173,7 +173,7 @@ export function HomeStayPreview() {
 
 export function HomeStoryPreview() {
   const { ref, isNear } = useNearViewport();
-  const query = useSocialPosts('public', '', undefined, 'latest', { enabled: isNear });
+  const query = useSocialPosts('public', '', 'vlog', 'latest', { enabled: isNear });
   const posts = query.data?.pages[0]?.items.slice(0, 3);
   return (
     <section
@@ -207,7 +207,7 @@ export function HomeStoryPreview() {
           <article className={styles.story} key={post.id}>
             <p className="pin-tag">{post.tripAttachment?.destinationName ?? vi.ota.story}</p>
             <h3>
-              <Link prefetch={false} href={`/trips/${encodeURIComponent(post.id)}`}>
+              <Link prefetch={false} href={`/inspiration?view=posts&open=${encodeURIComponent(post.id)}`}>
                 {post.title}
               </Link>
             </h3>

@@ -41,13 +41,13 @@ export function InspirationView() {
 
   // Tinh toan che do xem truc tiep tu URL query param (?view=posts hoac ?view=reels)
   const viewParam = searchParams.get('view');
-  const activeView: 'posts' | 'reels' = viewParam === 'reels' ? 'reels' : 'posts';
+  const openPostId = searchParams.get(SEARCH_OPEN_PARAM) || null;
+  const activeView: 'posts' | 'reels' = viewParam === 'reels' && !openPostId ? 'reels' : 'posts';
 
   // Tìm kiếm theo URL (?q= từ khoá đã chốt, ?open= bài mở từ grid) để F5 và nút Back giữ đúng chỗ.
   const rawKeyword = searchParams.get(SEARCH_QUERY_PARAM) ?? '';
   const searchKeyword = rawKeyword ? validateInspirationKeyword(rawKeyword).keyword : '';
   const isSearching = searchKeyword.length > 0;
-  const openPostId = isSearching ? searchParams.get(SEARCH_OPEN_PARAM) : null;
   const searchResultType = parseSearchResultType(searchParams.get(SEARCH_TYPE_PARAM));
   const isSearchGrid = isSearching && !openPostId;
   // Đang tìm thì Reels tạm ẩn: kết quả hiện ở grid, bài viết mở ở tab Bài viết.
@@ -87,9 +87,9 @@ export function InspirationView() {
     (nextFilter: FeedNavFilter) => {
       setFilterMode(nextFilter);
       // Ở Reels thì handleSelectView đã thoát tìm kiếm; replace để hai lần gọi liền nhau chỉ thêm một mục lịch sử.
-      if (isSearching && activeView === 'posts') navigate({ keyword: null }, 'replace');
+      if ((isSearching || openPostId) && activeView === 'posts') navigate({ keyword: null }, 'replace');
     },
-    [navigate, isSearching, activeView]
+    [navigate, isSearching, openPostId, activeView]
   );
 
   const handleSubmitSearch = useCallback(
