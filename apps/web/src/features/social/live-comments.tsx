@@ -1,7 +1,7 @@
 'use client';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { socialApi, useApiSession } from '@tripflix/api-client';
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ApiErrorNotice } from '@/features/shared/api-state';
@@ -24,6 +24,7 @@ export function LiveComments({ postId, parentCommentId, focusCommentId, focusedR
   const [body, setBody] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
   const [editBody, setEditBody] = useState('');
+  const [replyTarget, setReplyTarget] = useState<{ id: string; name: string }>();
   const [replying, setReplying] = useState<string | null>();
   const query = useInfiniteQuery({
     queryKey: ['social', 'comments', postId, parentCommentId],
@@ -49,9 +50,12 @@ export function LiveComments({ postId, parentCommentId, focusCommentId, focusedR
         ? socialApi.deleteComment(action.id)
         : action.type === 'edit'
           ? socialApi.editComment(action.id, editBody.trim())
-          : socialApi.addComment(postId, body.trim(), parentCommentId),
+          : socialApi.addComment(postId, body.trim(), replyTarget?.id ?? parentCommentId),
     onSuccess: async (_, action) => {
-      if (action.type === 'add') setBody('');
+      if (action.type === 'add') {
+        setBody('');
+        setReplyTarget(undefined);
+      }
       if (action.type === 'edit') setEditing(null);
       await client.invalidateQueries({ queryKey: ['social'] });
     },
@@ -71,6 +75,14 @@ export function LiveComments({ postId, parentCommentId, focusCommentId, focusedR
     <div className={parentCommentId ? 'comment-thread is-reply' : 'comment-thread'}>
       {!parentCommentId && <CommunitySummary key={postId} postId={postId} />}
       {/* Đang sửa một bình luận thì ẩn ô viết mới, để trên trang chỉ có một nút "Gửi". */}
+      {replyTarget && (
+        <p>
+          {t('api.replyingTo', { name: replyTarget.name })}{' '}
+          <button type="button" className="comment-link" onClick={() => setReplyTarget(undefined)}>
+            {vi.api.cancel}
+          </button>
+        </p>
+      )}
       {user && editing ? null : user ? (
         <form
           className="comment-form"
@@ -135,6 +147,7 @@ export function LiveComments({ postId, parentCommentId, focusCommentId, focusedR
                 <div className="comment-body">
                   <p className="comment-meta">
                     <strong>{name}</strong>
+                    {comment.replyToName && <span>↳ {comment.replyToName}</span>}
                     {!isMine && !comment.authorName && <span>{comment.authorId.slice(0, 8)}</span>}
                     <span>{new Date(comment.createdAt).toLocaleDateString('vi-VN')}</span>
                     {comment.isEdited && <span>{vi.api.commentEdited}</span>}
@@ -168,6 +181,11 @@ export function LiveComments({ postId, parentCommentId, focusCommentId, focusedR
                   )}
                   {editing !== comment.id && (
                     <div className="comment-actions">
+                      {parentCommentId && user && (
+                        <button type="button" className="comment-link" onClick={() => setReplyTarget({ id: comment.id, name })}>
+                          {vi.api.reply}
+                        </button>
+                      )}
                       {!parentCommentId && (
                         <button
                           type="button"

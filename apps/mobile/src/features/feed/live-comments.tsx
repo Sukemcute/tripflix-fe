@@ -110,7 +110,7 @@ export function LiveComments({
         setBody('');
         setEditing(null);
         // Mở sẵn chuỗi trả lời để người gửi thấy trả lời của mình.
-        if (replyTarget) setReplying(replyTarget.id);
+        if (replyTarget && !parentCommentId) setReplying(replyTarget.id);
         setReplyTarget(undefined);
       }
       await Promise.all([
@@ -164,7 +164,7 @@ export function LiveComments({
               )}
               <Card style={compact ? styles.commentBody : undefined}>
                 <Txt variant="caption" style={compact && styles.author}>
-                  {authorName}
+                  {authorName}{comment.replyToName && ` ↳ ${comment.replyToName}`}
                   {!compact && ` · ${new Date(comment.createdAt).toLocaleDateString('vi-VN')}`}
                 </Txt>
                 <Txt style={compact && styles.message}>{comment.body}</Txt>
@@ -196,7 +196,7 @@ export function LiveComments({
                       </CommentAction>
                     </>
                   )}
-                  {!parentCommentId && compact && (
+                  {(parentCommentId || compact) && (
                     <CommentAction
                       compact={compact}
                       onPress={() => {
