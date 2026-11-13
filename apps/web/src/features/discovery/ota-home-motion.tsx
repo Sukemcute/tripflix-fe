@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type PointerEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, type PointerEvent, type ReactNode } from 'react';
 import { Pacifico } from 'next/font/google';
 import { LivingBackground } from './LivingBackground';
 import styles from './ota-home-motion.module.css';
@@ -12,27 +12,42 @@ const handwritingFont = Pacifico({
   variable: '--font-home-handwriting',
 });
 
-function trackBannerPointer(event: PointerEvent<HTMLElement>): void {
-  if (event.pointerType !== 'mouse' || !(event.target instanceof Element)) return;
-  const banner = event.target.closest<HTMLElement>('[data-home-banner]');
-  if (!banner) return;
-
-  const bounds = banner.getBoundingClientRect();
-  banner.style.setProperty('--pointer-x', String((event.clientX - bounds.left) / bounds.width - 0.5));
-  banner.style.setProperty('--pointer-y', String((event.clientY - bounds.top) / bounds.height - 0.5));
-}
-
-function resetBannerPointer(event: PointerEvent<HTMLElement>): void {
-  if (!(event.target instanceof Element)) return;
-  const banner = event.target.closest<HTMLElement>('[data-home-banner]');
-  if (!banner || (event.relatedTarget instanceof Node && banner.contains(event.relatedTarget))) return;
-
-  banner.style.removeProperty('--pointer-x');
-  banner.style.removeProperty('--pointer-y');
-}
-
 export function OtaHomeMotion({ children }: { children: ReactNode }) {
   const homeRef = useRef<HTMLElement>(null);
+  const pointerFrameRef = useRef(0);
+  const pointerUpdateRef = useRef<{ banner: HTMLElement; x: number; y: number } | undefined>(undefined);
+
+  const trackBannerPointer = useCallback((event: PointerEvent<HTMLElement>) => {
+    if (event.pointerType !== 'mouse' || !(event.target instanceof Element)) return;
+    const banner = event.target.closest<HTMLElement>('[data-home-banner]');
+    if (!banner) return;
+    pointerUpdateRef.current = { banner, x: event.clientX, y: event.clientY };
+    if (pointerFrameRef.current) return;
+    pointerFrameRef.current = requestAnimationFrame(() => {
+      pointerFrameRef.current = 0;
+      const update = pointerUpdateRef.current;
+      if (!update) return;
+      const bounds = update.banner.getBoundingClientRect();
+      const x = (update.x - bounds.left) / bounds.width;
+      const y = (update.y - bounds.top) / bounds.height;
+      update.banner.style.setProperty('--pointer-x', String(x - 0.5));
+      update.banner.style.setProperty('--pointer-y', String(y - 0.5));
+      update.banner.style.setProperty('--card-tilt-x', String((x - 0.5) * 2));
+      update.banner.style.setProperty('--card-tilt-y', String((y - 0.5) * 2));
+      update.banner.style.setProperty('--mouse-x', `${x * 100}%`);
+      update.banner.style.setProperty('--mouse-y', `${y * 100}%`);
+    });
+  }, []);
+
+  const resetBannerPointer = useCallback((event: PointerEvent<HTMLElement>) => {
+    if (!(event.target instanceof Element)) return;
+    const banner = event.target.closest<HTMLElement>('[data-home-banner]');
+    if (!banner || (event.relatedTarget instanceof Node && banner.contains(event.relatedTarget))) return;
+    pointerUpdateRef.current = undefined;
+    for (const property of ['--pointer-x', '--pointer-y', '--card-tilt-x', '--card-tilt-y', '--mouse-x', '--mouse-y']) {
+      banner.style.removeProperty(property);
+    }
+  }, []);
 
   useEffect(() => {
     const home = homeRef.current;
@@ -50,7 +65,10 @@ export function OtaHomeMotion({ children }: { children: ReactNode }) {
     );
 
     home.querySelectorAll('[data-home-reveal]').forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(pointerFrameRef.current);
+    };
   }, []);
 
   return (

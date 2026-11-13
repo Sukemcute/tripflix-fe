@@ -10,12 +10,11 @@ export function changePassword(input: { currentPassword: string; newPassword: st
   return sendWithPasswords(
     [
       {
-        plain: 'currentPassword',
         encrypted: 'encCurrentPassword',
         value: input.currentPassword,
         purpose: 'change_current',
       },
-      { plain: 'newPassword', encrypted: 'encNewPassword', value: input.newPassword, purpose: 'change_new' },
+      { encrypted: 'encNewPassword', value: input.newPassword, purpose: 'change_new' },
     ],
     undefined,
     async (fields) => {
@@ -26,7 +25,7 @@ export function changePassword(input: { currentPassword: string; newPassword: st
 
 export function resetPassword(input: { token: string; newPassword: string }): Promise<void> {
   return sendWithPasswords(
-    [{ plain: 'newPassword', encrypted: 'encNewPassword', value: input.newPassword, purpose: 'reset' }],
+    [{ encrypted: 'encNewPassword', value: input.newPassword, purpose: 'reset' }],
     undefined,
     async (fields) => {
       await passwordResetControllerReset({ token: input.token, ...fields });

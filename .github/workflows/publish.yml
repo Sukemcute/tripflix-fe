@@ -88,7 +88,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=${{ env.STAGING_API_URL }}
             ${{ matrix.app == 'web' && format('NEXT_PUBLIC_GOOGLE_CLIENT_ID={0}', vars.GOOGLE_CLIENT_ID) || '' }}
-            ${{ matrix.app == 'web' && format('NEXT_PUBLIC_ADMIN_URL={0}', env.STAGING_ADMIN_URL) || '' }}
+            NEXT_PUBLIC_ADMIN_URL=${{ env.STAGING_ADMIN_URL }}
             ${{ matrix.app == 'admin' && format('NEXT_PUBLIC_WEB_URL={0}', env.STAGING_WEB_URL) || '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
