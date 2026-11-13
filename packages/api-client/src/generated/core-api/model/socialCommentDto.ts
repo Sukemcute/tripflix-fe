@@ -16,6 +16,11 @@ export interface SocialCommentDto {
   authorName?: string | null;
   /** @nullable */
   parentCommentId: string | null;
+  /**
+   * Tên hiển thị của người được trả lời
+   * @nullable
+   */
+  replyToName?: string | null;
   body: string;
   isEdited: boolean;
   /** Số lượt thích bình luận */
