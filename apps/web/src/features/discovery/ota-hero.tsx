@@ -139,7 +139,6 @@ export function OtaHero() {
               <span className={styles.titleSecond}>{SLOGAN_SECOND}</span>
             </h1>
 
-            <p className={styles.description}>{vi.ota.heroIntro}</p>
           </div>
         </div>
       </div>
