@@ -40,6 +40,7 @@ import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
 import {
+  attachReelVideoSource,
   getReelRenderMode,
   pickReelAfterRemoval,
   shouldShowReelBackdrop,
@@ -740,17 +741,14 @@ function MediaTrackItem({
     }
   }, [isActive]);
 
-  // Khi thẻ video bị gỡ (lướt ra xa) chỉ pause() hoặc gỡ khỏi DOM thì trình duyệt vẫn có thể tải tiếp
-  // segment, giữ bộ đệm và bộ giải mã tới lúc dọn rác. Xoá src rồi load() để ngắt tải và trả tài nguyên ngay.
+  // Gắn nguồn ở đây (không qua prop src) để lần dọn của Strict Mode không làm video mất nguồn; lướt ra xa thì
+  // nhả nguồn để ngắt tải segment ngay (xem attachReelVideoSource).
+  const hlsUrl = reelCard?.video.hlsUrl;
   useEffect(() => {
     const video = localVideoRef.current;
-    if (!hasVideo || !video) return;
-    return () => {
-      video.pause();
-      video.removeAttribute('src');
-      video.load();
-    };
-  }, [hasVideo, reelCard?.video.hlsUrl]);
+    if (!hasVideo || !video || !hlsUrl) return;
+    return attachReelVideoSource(video, hlsUrl);
+  }, [hasVideo, hlsUrl]);
 
   // timeupdate chỉ bắn ~4 lần/giây nên thanh tiến độ nhảy bậc; đọc currentTime mỗi khung hình và
   // cập nhật thẳng transform qua ref (không setState) để mượt và không render lại cả viewer.
@@ -811,7 +809,6 @@ function MediaTrackItem({
               className={`${styles.mediaVideoElement} ${
                 reelCard.video.aspect === '16:9' ? styles.mediaVideoLandscape : ''
               }`}
-              src={reelCard.video.hlsUrl}
               poster={selectReelPoster(reelCard.video.posters, 720)}
               preload="auto"
               playsInline
