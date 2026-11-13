@@ -180,6 +180,8 @@ export * from './jwksDto';
 export * from './jwksDtoKeysItem';
 export * from './locationDto';
 export * from './loginDto';
+export * from './markPostSummaryCheckedDto';
+export * from './markPostSummaryCheckedResponseDto';
 export * from './mediaErrorDto';
 export * from './moderationCaseDto';
 export * from './moderationCaseDtoFlags';
