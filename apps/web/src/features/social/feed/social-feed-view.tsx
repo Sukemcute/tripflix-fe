@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Image from 'next/image';
-import { useQueryClient, useMutation, type InfiniteData } from '@tanstack/react-query';
+import { useQueryClient, useMutation, useQuery, type InfiniteData } from '@tanstack/react-query';
 import { vi, t } from '@tripflix/i18n';
 import {
   socialApi,
@@ -23,6 +23,8 @@ import { type FeedNavFilter } from './floating-nav-rail';
 import { ItinerarySidebarPanel } from './itinerary-sidebar-panel';
 import { PostCard } from './post-card';
 import { getPostImages } from '../post-cover';
+import { ApiErrorNotice } from '@/features/shared/api-state';
+import { getFocusedFeedPosts } from './focused-post';
 import styles from './social-feed.module.css';
 
 export interface SocialFeedViewProps {
@@ -31,7 +33,7 @@ export interface SocialFeedViewProps {
   initialKeyword?: string;
   /** Từ khoá đã chốt: tab chỉ hiện các bài viết trong kết quả tìm kiếm (dùng chung query với grid). */
   searchKeyword?: string;
-  /** Bài vừa bấm từ grid kết quả: cuộn sẵn tới bài đó. */
+  /** Bài mở từ trang chủ hoặc grid kết quả: cuộn sẵn tới bài đó. */
   focusPostId?: string | null;
   onBackToResults?: () => void;
   isItineraryOpen?: boolean;
@@ -57,7 +59,7 @@ export function SocialFeedView({
   onOpenComposer,
   onCloseComposer,
 }: SocialFeedViewProps) {
-  const { user } = useApiSession();
+  const { user, isReady } = useApiSession();
   const client = useQueryClient();
 
   // Controlled or uncontrolled fallbacks
@@ -98,12 +100,32 @@ export function SocialFeedView({
   // Tìm kiếm: cùng query với grid kết quả (search của discovery) nên mở bài từ grid không gọi lại API.
   const searchQuery = usePostSearchFeed(isSearchMode ? effectiveKeyword : '');
   const postsQuery = isSearchMode ? searchQuery : feedQuery;
+  const isDirectFocus = Boolean(focusPostId) && !isSearchMode;
+  // Grid tìm kiếm đã giữ dữ liệu trong cache; chỉ link mở thẳng mới cần lấy bài theo ID.
+  const focusedPostQuery = useQuery({
+    queryKey: ['social', 'post', focusPostId, user?.id],
+    enabled: isReady && isVisible && isDirectFocus,
+    queryFn: ({ signal }) => socialApi.getPost(focusPostId!, signal),
+    retry: false,
+  });
+  const isFocusUnavailable = isDirectFocus && (
+    focusedPostQuery.isError || (focusedPostQuery.isSuccess && (
+      focusedPostQuery.data.post.id !== focusPostId || focusedPostQuery.data.post.postType !== 'vlog'
+    ))
+  );
+  const isFocusPending = isDirectFocus && focusedPostQuery.isPending;
 
   const allPosts = useMemo(() => {
     const items: SocialPostDto[] = postsQuery.data?.pages.flatMap((page) => page.items) ?? [];
     // Kết quả tìm kiếm gộp cả Reels: tab này chỉ giữ bài viết.
-    return isSearchMode ? items.filter((post) => post.postType === 'vlog') : items;
-  }, [postsQuery.data, isSearchMode]);
+    if (isSearchMode) return items.filter((post) => post.postType === 'vlog');
+    return getFocusedFeedPosts({
+      posts: items,
+      focusPostId,
+      detail: focusedPostQuery.data,
+      hasError: focusedPostQuery.isError,
+    });
+  }, [postsQuery.data, isSearchMode, focusPostId, focusedPostQuery.data, focusedPostQuery.isError]);
 
   const posts = useMemo(() => {
     if (activeFilter === 'withTrip') {
@@ -209,10 +231,11 @@ export function SocialFeedView({
   // Infinite scroll sentinel observer
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = postsQuery;
+  const canLoadMorePosts = isVisible && !isFocusPending && !isFocusUnavailable;
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
-    if (!sentinel) return;
+    if (!sentinel || !canLoadMorePosts) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -228,9 +251,9 @@ export function SocialFeedView({
     const prefetchAt = mainFeedRef.current?.querySelectorAll('[data-feed-post-id]')[posts.length - 2];
     if (prefetchAt) observer.observe(prefetchAt);
     return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, posts.length]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, posts.length, canLoadMorePosts]);
 
-  // Mở bài từ grid kết quả: cuộn tới bài đó một lần khi tab đang hiện và bài đã có trong danh sách.
+  // Cuộn tới bài mở từ URL một lần; tải thêm feed không kéo người dùng về bài được ghim.
   const scrolledFocusIdRef = useRef<string | null>(null);
   const isFocusPostLoaded = Boolean(focusPostId) && posts.some((post) => post.id === focusPostId);
   useEffect(() => {
@@ -813,14 +836,14 @@ export function SocialFeedView({
         </div>
 
         {/* Loading state */}
-        {postsQuery.isPending && (
+        {!isFocusUnavailable && (postsQuery.isPending || isFocusPending) && (
           <div className={styles.emptyFeed}>
             <span className="small muted">Đang tải bảng tin cảm hứng...</span>
           </div>
         )}
 
         {/* Error state */}
-        {postsQuery.isError && (
+        {!isFocusUnavailable && postsQuery.isError && (
           <div className={styles.emptyFeed}>
             <div className={styles.emptyFeedTitle}>Không thể tải bài viết</div>
             <p className={styles.emptyFeedDesc}>Đã xảy ra lỗi khi kết nối đến máy chủ.</p>
@@ -834,8 +857,15 @@ export function SocialFeedView({
           </div>
         )}
 
+        {isDirectFocus && (
+          <ApiErrorNotice error={focusedPostQuery.error} retry={() => void focusedPostQuery.refetch()} />
+        )}
+        {isFocusUnavailable && !focusedPostQuery.isError && (
+          <div className={styles.emptyFeed} role="alert">{vi.api.missing}</div>
+        )}
+
         {/* Empty state */}
-        {!postsQuery.isPending && !postsQuery.isError && posts.length === 0 && (
+        {!isDirectFocus && !postsQuery.isPending && !postsQuery.isError && posts.length === 0 && (
           <div className={styles.emptyFeed}>
             <div className={styles.emptyFeedTitle}>Chưa có bài viết nào</div>
             <p className={styles.emptyFeedDesc}>

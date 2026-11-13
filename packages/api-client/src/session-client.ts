@@ -8,6 +8,7 @@ import type {
   RegistrationCodeResultDto,
   TokenPairDto,
 } from './generated/core-api/model';
+import { BROWSER_PROOF_HEADER, signBrowserProof, type BrowserProofPurpose } from './browser-session-proof';
 import { configureHttp, HttpError, type HttpRequestOptions } from './http';
 import { sendWithPasswords } from './password-encryption';
 import { readEntity, SessionSetupError } from './response';
@@ -117,6 +118,13 @@ export class SessionClient {
     return true;
   }
 
+  private async proofOptions(purpose: BrowserProofPurpose): Promise<HttpRequestOptions> {
+    if (this.options.client !== 'web') return this.authOptions;
+    const headers = new Headers(this.authOptions.headers);
+    headers.set(BROWSER_PROOF_HEADER, await signBrowserProof(purpose));
+    return { ...this.authOptions, headers };
+  }
+
   refresh(): Promise<boolean> {
     if (this.refreshPromise) return this.refreshPromise;
     const version = this.version;
@@ -125,7 +133,7 @@ export class SessionClient {
       try {
         const response = await auth.authControllerRefresh(
           this.options.client === 'native' ? { refreshToken: this.refreshToken! } : {},
-          this.authOptions,
+          await this.proofOptions('refresh'),
         );
         return await this.acceptTokens(
           readEntity(response.data, ['accessToken', 'tokenType', 'expiresIn']),
@@ -151,14 +159,16 @@ export class SessionClient {
     const response = await sendWithPasswords(
       [{ plain: 'password', encrypted: 'encPassword', value: password, purpose: 'login' }],
       email,
-      (fields) => auth.authControllerLogin({ email, ...(deviceName ? { deviceName } : {}), ...fields } as LoginDto, this.authOptions),
+      async (fields) => auth.authControllerLogin(
+        { email, ...(deviceName ? { deviceName } : {}), ...fields } as LoginDto, await this.proofOptions('login'),
+      ),
     );
     await this.completeLogin(response.data, version);
   }
   /** Google ID token from Google Identity Services; tokens are kept exactly like a password login. */
   async loginWithGoogle(input: GoogleLoginDto): Promise<void> {
     const version = ++this.version;
-    const response = await auth.authControllerLoginWithGoogle(input, this.authOptions);
+    const response = await auth.authControllerLoginWithGoogle(input, await this.proofOptions('google'));
     await this.completeLogin(response.data, version);
   }
   private async completeLogin(data: TokenPairDto | void, version: number): Promise<void> {

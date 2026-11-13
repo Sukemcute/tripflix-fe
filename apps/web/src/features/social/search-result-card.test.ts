@@ -38,6 +38,15 @@ describe('getSearchCardCaption', () => {
 });
 
 describe('buildInspirationHref', () => {
+  it('mở bài từ trang chủ không cần từ khoá, chọn tab khác thì bỏ bài đang mở', () => {
+    expect(buildInspirationHref('/inspiration', '', { view: 'posts', openPostId: 'home-post' })).toBe(
+      '/inspiration?open=home-post',
+    );
+    expect(buildInspirationHref('/inspiration', 'view=posts&open=home-post', { view: 'reels', keyword: null })).toBe(
+      '/inspiration?view=reels',
+    );
+  });
+
   it('chốt từ khoá mới thì bỏ bài đang mở, giữ tham số khác', () => {
     expect(buildInspirationHref('/inspiration', 'view=reels&q=cu&open=p1', { keyword: ' đà lạt ' })).toBe(
       '/inspiration?view=reels&q=%C4%91%C3%A0+l%E1%BA%A1t',
