@@ -24,6 +24,14 @@ describe('resolveNotificationHref', () => {
       .toBe('/trips/p?comment=c');
   });
 
+  it('mở lượt trả lời mới dù link cũ trỏ vào bình luận gốc', () => {
+    expect(resolveNotificationHref({
+      type: 'comment.replied',
+      link: '/trips/p?comment=root',
+      data: { postId: 'p', commentId: 'new-reply', parentCommentId: 'root' },
+    })).toBe('/trips/p?comment=new-reply');
+  });
+
   it.each(['//evil.example', 'javascript:alert(1)', null])('bỏ link không an toàn hoặc trống: %s', (link) => {
     expect(resolveNotificationHref({ type: 'account', link, data: { orderId: 42 } })).toBeNull();
   });

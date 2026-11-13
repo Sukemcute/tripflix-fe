@@ -2257,6 +2257,7 @@ function CommentNode({
     likeCount: number;
     isLiked: boolean;
     authorName?: string | null;
+    replyToName?: string | null;
   };
   isReply?: boolean;
   loginHref: string;
@@ -2334,7 +2335,9 @@ function CommentNode({
         </span>
         <div className={styles.panelCommentContent}>
           <div className={styles.panelCommentMeta}>
-            <span className={styles.panelCommentAuthor}>{authorDisplay.name}</span>
+            <span className={styles.panelCommentAuthor}>
+              {authorDisplay.name}{comment.replyToName && ` ↳ ${comment.replyToName}`}
+            </span>
             {isAuthorVerified && (
               <span className={styles.commentVerifiedIcon} title="Tài khoản đã xác minh">
                 <SocialIcon name="verified" size={13} />
@@ -2414,19 +2417,18 @@ function CommentNode({
                 </Link>
               )}
 
-              {!isReply && (
-                <>
+              <>
                   <button
                     type="button"
                     className={styles.panelCommentActionBtn}
                     onClick={() => {
-                      setShowReplies(true);
+                      if (!isReply) setShowReplies(true);
                       onReplySelect({ id: comment.id, authorName: authorDisplay.name });
                     }}
                   >
                     {vi.api.commentReplyAction}
                   </button>
-                  {totalReplies > 0 && (
+                  {!isReply && totalReplies > 0 && (
                     <button
                       type="button"
                       className={styles.panelCommentActionBtn}
@@ -2438,8 +2440,7 @@ function CommentNode({
                         : `${vi.api.commentViewReplies} (${totalReplies})`}
                     </button>
                   )}
-                </>
-              )}
+              </>
 
               {isMine && (
                 <>
