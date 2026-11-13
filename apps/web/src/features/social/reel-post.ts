@@ -96,3 +96,13 @@ export function releaseReelVideoSource(video: ReelVideoSource): void {
   video.removeAttribute('src');
   video.load();
 }
+
+/**
+ * Mở Reel từ link chia sẻ: Reel đó lên đầu, lướt tiếp là bảng tin Reels như thường (bỏ bản trùng nếu bảng tin
+ * cũng có Reel đó).
+ */
+export function prependPinnedReelCards<T extends { postId: string }>(pinnedCards: readonly T[], feedCards: readonly T[]): T[] {
+  if (pinnedCards.length === 0) return [...feedCards];
+  const pinnedIds = new Set(pinnedCards.map((card) => card.postId));
+  return [...pinnedCards, ...feedCards.filter((card) => !pinnedIds.has(card.postId))];
+}
