@@ -126,6 +126,16 @@ export {
 } from './commerce';
 export { PresignedUploadError, uploadChunkToPresignedUrl } from './media-upload';
 export {
+  IMAGE_MIME_TYPES,
+  MAX_POST_IMAGES,
+  MAX_POST_IMAGE_BYTES,
+  resolveImageMimeType,
+  uploadImage,
+  type ImageMimeType,
+  type ImageUploadOptions,
+  type ImageUploadSource,
+} from './image-upload';
+export {
   resolveVideoMimeType,
   uploadVideo,
   type VideoMimeType,
