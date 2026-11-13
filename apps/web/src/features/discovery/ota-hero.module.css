@@ -33,6 +33,7 @@
   object-fit: cover;
   object-position: center bottom;
 }
+
 .backdropImageWrapper picture {
   position: absolute;
   inset: 0;
@@ -46,6 +47,7 @@
   width: 62%;
   transform: translate(calc(var(--pointer-x, 0) * 6px), calc(var(--pointer-y, 0) * 3px));
 }
+
 .typographyImage {
   display: block;
   width: 100%;
@@ -53,6 +55,7 @@
   pointer-events: none;
   user-select: none;
 }
+
 .rowerLayer {
   position: absolute;
   z-index: 3;
@@ -63,12 +66,14 @@
   pointer-events: none;
   user-select: none;
 }
+
 .rowerImage {
   display: block;
   width: 100%;
   height: auto;
   filter: drop-shadow(0 5px 6px rgb(0 38 46 / 32%));
 }
+
 .rowerLayer::before {
   content: '';
   position: absolute;
@@ -82,13 +87,17 @@
   transform: rotate(-12deg);
   opacity: 0.28;
 }
+
 .vectorLayer {
   position: absolute;
   inset: 0;
   z-index: 3;
   pointer-events: none;
 }
-.vectorLayer img { object-fit: fill; }
+
+.vectorLayer img {
+  object-fit: fill;
+}
 
 .inner {
   position: relative;
@@ -100,29 +109,41 @@
   padding-block: 112px 48px;
   pointer-events: none;
 }
-.inner a, .inner button { pointer-events: auto; }
+
+.inner a,
+.inner button {
+  pointer-events: auto;
+}
 
 @media (min-width: 901px) {
+
   .hero,
   .inner {
     min-height: clamp(750px, calc(48vw + 110px), 830px);
   }
+
   .inner {
     padding-top: 112px;
   }
+
   .typographyLayer {
     top: calc(19% + 88px);
   }
+
   .copy {
-    margin-top: 44px;
+    /* Căn tâm slogan theo chiều dọc với wordmark Tripflix ở nửa phải. */
+    margin-top: clamp(100px, calc(18px + 7vw), 152px);
   }
+
   .rowerLayer {
     top: 420px;
   }
+
   .bottomSection {
     grid-template-rows: 1fr;
     align-items: stretch;
   }
+
   .copy {
     grid-column: 1;
     grid-row: 1;
@@ -166,6 +187,7 @@
 .letterHotspot:hover {
   background: rgba(255, 255, 255, 0.08);
 }
+
 .letterHotspot:focus-visible {
   outline: 2px solid white;
   outline-offset: 4px;
@@ -247,6 +269,7 @@
   letter-spacing: -0.052em;
   white-space: pre-line;
 }
+
 .titleFirst {
   display: block;
   color: #ffffff;
@@ -254,6 +277,7 @@
   white-space: nowrap;
   text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
 }
+
 .titleSecond {
   position: relative;
   display: inline-block;
@@ -265,12 +289,10 @@
   line-height: 1.24;
   letter-spacing: 0;
   white-space: nowrap;
-  background: linear-gradient(
-    180deg,
-    #fffbed 22%,
-    #ffe5a9 68%,
-    #f3c776 100%
-  );
+  background: linear-gradient(180deg,
+      #fffbed 22%,
+      #ffe5a9 68%,
+      #f3c776 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -301,9 +323,11 @@
   overflow-x: auto;
   scrollbar-width: none;
 }
+
 .activities::-webkit-scrollbar {
   display: none;
 }
+
 .activityPill {
   display: inline-flex;
   flex-shrink: 0;
@@ -324,6 +348,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 250ms cubic-bezier(0.2, 0.7, 0.25, 1);
 }
+
 .activityPill:hover {
   background: rgba(255, 255, 255, 0.28);
   border-color: rgba(255, 255, 255, 0.65);
@@ -331,6 +356,7 @@
   transform: translateY(-3px) scale(1.03);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
+
 .activityPill img {
   width: 26px;
   height: 26px;
@@ -338,6 +364,7 @@
   object-fit: cover;
   transition: transform 300ms ease;
 }
+
 .activityPill:hover img {
   transform: rotate(6deg) scale(1.08);
 }
@@ -349,12 +376,15 @@
   .rowerLayer {
     top: 400px;
   }
+
   .inner {
     padding-block: 64px;
   }
+
   .copy {
     max-width: 100%;
   }
+
   .bottomSection {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
@@ -363,12 +393,18 @@
 }
 
 @media (max-width: 900px) and (min-width: 641px) {
+
   .hero,
   .inner {
     min-height: clamp(620px, 75vw, 700px);
   }
+
   .inner {
     padding-top: 144px;
+  }
+
+  .copy {
+    margin-top: 17px;
   }
 }
 
@@ -382,51 +418,69 @@
   .hero {
     min-height: auto;
   }
+
   .hero::after {
     background: linear-gradient(180deg, rgb(0 66 85 / 86%) 0%, rgb(0 73 94 / 80%) 34%, rgb(0 86 110 / 40%) 56%, #00566e 80%);
   }
+
   .backdropImg {
     object-position: 48% top;
   }
+
   .typographyLayer {
     top: 300px;
     left: 14%;
     width: 96%;
   }
+
   .rowerLayer {
     top: clamp(225px, 62vw, 275px);
     width: clamp(110px, 32vw, 145px);
   }
+
   .vectorLayer {
     top: 215px;
   }
+
   .inner {
     min-height: calc(342px + 18vw);
     padding-block: 24px 40px;
     gap: 16px;
   }
+
   .copy {
     max-width: 100%;
     padding-bottom: 50px;
   }
+
   .letterHotspotsArea {
     display: block;
   }
+
   .letterBadge {
     white-space: normal;
     width: 130px;
     border-radius: 12px;
     text-align: center;
   }
-  .letterHotspot:first-child .letterBadge { left: 0; }
-  .letterHotspot:last-child .letterBadge { right: 0; }
+
+  .letterHotspot:first-child .letterBadge {
+    left: 0;
+  }
+
+  .letterHotspot:last-child .letterBadge {
+    right: 0;
+  }
+
   .letterHotspot {
     min-height: 44px;
     min-width: 24px;
   }
+
   .copy h1 {
     font-size: min(clamp(2.65rem, 12.5vw, 3.45rem), 15cqi);
   }
+
   .activities {
     gap: 8px;
   }
@@ -436,48 +490,93 @@
   .rowerLayer {
     animation: rowerVoyage 48s linear infinite;
   }
+
   .rowerImage {
     animation: rowerBob 4.8s ease-in-out infinite;
   }
+
   .rowerLayer::before {
     animation: paddleRipple 4.8s ease-out infinite;
   }
-  .typographyLayer { transition: transform 250ms ease-out; }
+
+  .typographyLayer {
+    transition: transform 250ms ease-out;
+  }
+
   .copy {
     animation: arrive 1000ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
   }
 }
+
 /* Travel across the water; turn at each bank before rowing back. */
 @keyframes rowerVoyage {
-  0%, 100% { transform: translateX(0) scaleX(1); }
-  49% { transform: translateX(calc(100vw - 100% - 32px)) scaleX(1); }
-  50% { transform: translateX(calc(100vw - 100% - 32px)) scaleX(-1); }
-  99% { transform: translateX(0) scaleX(-1); }
+
+  0%,
+  100% {
+    transform: translateX(0) scaleX(1);
+  }
+
+  49% {
+    transform: translateX(calc(100vw - 100% - 32px)) scaleX(1);
+  }
+
+  50% {
+    transform: translateX(calc(100vw - 100% - 32px)) scaleX(-1);
+  }
+
+  99% {
+    transform: translateX(0) scaleX(-1);
+  }
 }
+
 @keyframes rowerBob {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  50% { transform: translateY(-6px) rotate(2deg); }
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+
+  50% {
+    transform: translateY(-6px) rotate(2deg);
+  }
 }
+
 @keyframes paddleRipple {
-  from { transform: rotate(-12deg) scale(0.35); opacity: 0.62; }
-  to { transform: rotate(-12deg) scale(1.4); opacity: 0; }
+  from {
+    transform: rotate(-12deg) scale(0.35);
+    opacity: 0.62;
+  }
+
+  to {
+    transform: rotate(-12deg) scale(1.4);
+    opacity: 0;
+  }
 }
+
 @keyframes arrive {
   from {
     opacity: 0;
     transform: translateY(18px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
 @media (prefers-reduced-motion: reduce) {
   .rowerLayer {
     animation: none;
     opacity: 1;
     rotate: 0deg;
   }
-  .copy { animation: none; }
-  .typographyLayer { transform: none; }
+
+  .copy {
+    animation: none;
+  }
+
+  .typographyLayer {
+    transform: none;
+  }
 }
