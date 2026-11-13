@@ -1005,6 +1005,42 @@
   transition: opacity 180ms ease;
 }
 
+/* Reels mở từ kết quả tìm kiếm: nút âm lượng nằm dưới nút quay lại. */
+.stageTopLeftControlsBelowBack {
+  top: 60px;
+}
+
+/* Luôn hiện (không chờ hover) để người xem biết đường về grid kết quả. */
+.searchBackPill {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 17, 22, 0.62);
+  color: rgb(255 255 255);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.searchBackPill:hover {
+  background: rgba(15, 17, 22, 0.84);
+}
+
+.searchBackPill:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+}
+
 .mediaStageFrame:hover .stageTopLeftControls,
 .mediaStageFrame:focus-within .stageTopLeftControls {
   opacity: 1;

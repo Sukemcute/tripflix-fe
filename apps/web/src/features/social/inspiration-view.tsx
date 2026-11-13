@@ -14,6 +14,7 @@ import { pushRecentSearch, readRecentSearches, writeRecentSearches } from './rec
 import {
   buildInspirationHref,
   parseSearchResultType,
+  SEARCH_OPEN_KIND_PARAM,
   SEARCH_OPEN_PARAM,
   SEARCH_QUERY_PARAM,
   SEARCH_TYPE_PARAM,
@@ -64,7 +65,8 @@ export function InspirationView() {
   // Tinh toan che do xem truc tiep tu URL query param (?view=posts hoac ?view=reels)
   const viewParam = searchParams.get('view');
   const openPostId = searchParams.get(SEARCH_OPEN_PARAM) || null;
-  const activeView: 'posts' | 'reels' = viewParam === 'reels' && !openPostId ? 'reels' : 'posts';
+  const isOpenReel = searchParams.get(SEARCH_OPEN_KIND_PARAM) === 'reel';
+  const activeView: 'posts' | 'reels' = (viewParam === 'reels' && !openPostId) || (openPostId && isOpenReel) ? 'reels' : 'posts';
 
   // Tìm kiếm theo URL (?q= từ khoá đã chốt, ?open= bài mở từ grid) để F5 và nút Back giữ đúng chỗ.
   const rawKeyword = searchParams.get(SEARCH_QUERY_PARAM) ?? '';
@@ -72,10 +74,15 @@ export function InspirationView() {
   const isSearching = searchKeyword.length > 0;
   const searchResultType = parseSearchResultType(searchParams.get(SEARCH_TYPE_PARAM));
   const isSearchGrid = isSearching && !openPostId;
-  // Đang tìm thì Reels tạm ẩn: kết quả hiện ở grid, bài viết mở ở tab Bài viết.
-  const isReels = activeView === 'reels' && !isSearching;
+  // Reel mở từ grid (?kind=reel) xem trong trình xem Reels, lướt trong các Reel của kết quả.
+  const isSearchReelOpen = isSearching && Boolean(openPostId) && isOpenReel;
+  // Đang tìm thì bảng tin Reels tạm ẩn: kết quả hiện ở grid, bài viết mở ở tab Bài viết.
+  const isReels = (activeView === 'reels' && !isSearching) || isSearchReelOpen;
   const isPostsVisible = !isReels && !isSearchGrid;
   const hasOpenedFromGridRef = useRef(false);
+  // Danh sách Reel của grid lúc bấm; vào thẳng link (F5) thì chưa có, chỉ xem đúng Reel trong URL.
+  const [gridReelIds, setGridReelIds] = useState<string[] | null>(null);
+  const searchReelIds = isSearchReelOpen && openPostId ? (gridReelIds ?? [openPostId]) : undefined;
 
   // Cac trang thai chung dieu phoi qua Instagram Left Dock
   // Mặc định: tab Bài viết mở sẵn Lịch trình trên màn rộng (thông tin chính đi kèm bài đọc); Reels để đóng
@@ -135,6 +142,15 @@ export function InspirationView() {
     (post: SocialPostDto) => {
       hasOpenedFromGridRef.current = true;
       navigate({ openPostId: post.id }, 'push');
+    },
+    [navigate]
+  );
+
+  const handleOpenReelResult = useCallback(
+    (postId: string, reelIds: string[]) => {
+      hasOpenedFromGridRef.current = true;
+      setGridReelIds(reelIds.includes(postId) ? reelIds : [postId]);
+      navigate({ openPostId: postId, isOpenReel: true }, 'push');
     },
     [navigate]
   );
@@ -203,6 +219,7 @@ export function InspirationView() {
             resultType={searchResultType}
             onChangeResultType={handleChangeResultType}
             onOpenPost={handleOpenResult}
+            onOpenReel={handleOpenReelResult}
             onClearSearch={() => handleSubmitSearch('')}
           />
         </div>
@@ -210,6 +227,11 @@ export function InspirationView() {
 
       {isReels && (
         <InspirationImmersiveViewer
+          // Đổi giữa bảng tin Reels và Reels của kết quả thì dựng lại từ đầu (bài đang xem, vị trí cuộn).
+          key={searchReelIds ? `search:${openPostId}` : 'feed'}
+          searchReelIds={searchReelIds}
+          initialPostId={isSearchReelOpen ? openPostId : null}
+          onBackToResults={isSearchReelOpen ? handleBackToResults : undefined}
           onSearchKeywordChange={handleSubmitSearch}
           isItineraryOpen={isItineraryOpen}
           onToggleItinerary={() => setIsItineraryOpen(!isItineraryOpen)}

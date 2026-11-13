@@ -98,18 +98,6 @@
   border-radius: 8px;
 }
 
-.notice {
-  display: block;
-  max-width: 1280px;
-  margin: 0 auto 16px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: var(--color-sun-soft);
-  color: var(--color-navy);
-  font-size: 0.85rem;
-  animation: fadeIn 180ms ease;
-}
-
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
@@ -132,10 +120,6 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
-}
-
-.card[aria-disabled='true'] {
-  cursor: default;
 }
 
 .card:focus-visible {
@@ -165,7 +149,7 @@
   transition: transform 260ms ease;
 }
 
-.card:not([aria-disabled='true']):hover .thumbImage {
+.card:hover .thumbImage {
   transform: scale(1.04);
 }
 
@@ -320,12 +304,6 @@
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-}
-
 @media (max-width: 640px) {
   .resultsScroll {
     padding: 16px 14px 32px;
@@ -341,8 +319,7 @@
   .thumbImage,
   .skeletonThumb,
   .skeletonLine,
-  .skeletonLineShort,
-  .notice {
+  .skeletonLineShort {
     animation: none;
     transition: none;
   }
