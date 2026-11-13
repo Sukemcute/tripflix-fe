@@ -1569,9 +1569,10 @@ body:has([class*="feedPageWrapper"]) {
   overflow: hidden !important;
 }
 
+/* Cùng số đo với khung trang Cảm hứng (inspiration-view.tsx đặt --feed-header-height ở thẻ gốc). */
 body:has([class*="feedPageWrapper"]) #content {
-  height: calc(100dvh - 81px);
-  max-height: calc(100dvh - 81px);
+  height: calc(100dvh - var(--feed-header-height, 106px));
+  max-height: calc(100dvh - var(--feed-header-height, 106px));
   overflow: hidden;
 }
 .auth-fullscreen {
