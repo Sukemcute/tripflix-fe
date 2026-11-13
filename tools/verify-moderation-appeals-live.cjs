@@ -117,7 +117,7 @@ async function main() {
     await uiLogin(reviewer, admin, 'superadmin@tripflix.local', '/moderation');
     await reviewer.getByRole('button', { name: 'Khiếu nại', exact: true }).click();
     const appealArticle = reviewer.getByRole('article').filter({ hasText: marker });
-    await appealArticle.getByText('Bằng chứng lúc quyết định:', { exact: false }).waitFor();
+    await appealArticle.getByRole('heading', { name: 'Bằng chứng lúc quyết định', exact: true }).waitFor();
     reviewer.once('dialog', (dialog) => dialog.accept());
     await appealArticle.getByRole('button', { name: 'Chấp nhận khiếu nại', exact: true }).click();
     await appealArticle.waitFor({ state: 'detached' });

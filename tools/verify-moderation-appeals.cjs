@@ -118,6 +118,7 @@ async function main() {
     const context = await browser.newContext({ viewport: { width: 1440, height: 950 } });
     const page = await context.newPage();
     let resolved = false;
+    let sameReviewer = true;
     await context.route('**/*', async (route) => {
       const request = route.request();
       const url = new URL(request.url());
@@ -156,7 +157,7 @@ async function main() {
                     commentId: id,
                     action: 'hide',
                     reasonCode: 'HARASSMENT',
-                    moderatorId: 'other',
+                    moderatorId: sameReviewer ? id : 'other',
                     actorType: 'staff',
                     contentVersion: createdAt,
                   },
@@ -181,7 +182,21 @@ async function main() {
     });
     await page.goto(`${process.env.MODERATION_ADMIN_URL || 'http://localhost:3200'}/moderation`);
     await page.getByRole('button', { name: 'Khiếu nại', exact: true }).click();
+    await page
+      .getByText('Bạn đã ra quyết định gốc. Cần một kiểm duyệt viên khác xét khiếu nại này.', { exact: true })
+      .waitFor();
+    assert.ok(await page.getByRole('button', { name: 'Giữ quyết định', exact: true }).isDisabled());
+    assert.ok(await page.getByRole('button', { name: 'Chấp nhận khiếu nại', exact: true }).isDisabled());
+    sameReviewer = false;
+    await page.reload();
+    await page.getByRole('button', { name: 'Khiếu nại', exact: true }).click();
     await page.getByText('Dịch vụ chưa tốt', { exact: false }).waitFor();
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.getByRole('region', { name: 'Hàng chờ khiếu nại' }).scrollIntoViewIfNeeded();
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth <= 2));
+      await page.screenshot({ path: path.join(output, `admin-appeals-${width}.png`) });
+    }
     page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Chấp nhận khiếu nại', exact: true }).click();
     await page.getByText('Không có khiếu nại đang chờ.', { exact: true }).waitFor();

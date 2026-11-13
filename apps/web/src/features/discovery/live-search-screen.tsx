@@ -13,7 +13,7 @@ import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
 import listing from './hotel-listing.module.css';
 import { StayPriceInput } from './stay-price-input';
 import { SoftDatePicker } from '@/features/shared/soft-date-picker';
-import { SoftSelect } from '@/features/shared/soft-select';
+import { placeBelow, SoftSelect, useCloseOnScroll } from '@/features/shared/soft-select';
 import {
   getStayDateIssue, getStayPriceIssue, getStayToday, isStayInteger, MAX_STAY_GUESTS, MAX_STAY_ROOMS,
 } from './stay-search-validation';
@@ -77,6 +77,26 @@ export function LiveSearchScreen({
   }, [isHomepage, searchParamsString, apply]);
 
   const [suggestionsOpen, setSuggestionsOpen] = useState(!initialFilters?.placeId);
+  const placeFieldRef = useRef<HTMLDivElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const showSuggestions = suggestionsOpen && !search.selection && !search.filters.placeId && search.text.trim().length >= 2;
+  useCloseOnScroll(showSuggestions, suggestionsRef);
+
+  useEffect(() => {
+    const field = placeFieldRef.current;
+    const popup = suggestionsRef.current;
+    if (!field || !popup) return;
+    if (!showSuggestions) {
+      popup.hidePopover();
+      return;
+    }
+    const rect = field.getBoundingClientRect();
+    popup.style.width = `${Math.min(Math.max(rect.width, 320), window.innerWidth - 32)}px`;
+    placeBelow(field, popup);
+    const available = popup.dataset.side === 'top' ? rect.top : window.innerHeight - rect.bottom;
+    popup.style.maxHeight = `${Math.min(340, Math.max(0, available - 22))}px`;
+    popup.showPopover();
+  }, [showSuggestions]);
   const [showValidation, setShowValidation] = useState(false);
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
   const today = getStayToday();
@@ -196,6 +216,7 @@ export function LiveSearchScreen({
         )}
         <div className={styles.searchRow}>
           <div
+            ref={placeFieldRef}
             className={`ota-place-field ${styles.placeField} ${styles.field}`}
             onBlur={(event) => {
               if (!event.currentTarget.contains(event.relatedTarget)) setSuggestionsOpen(false);
@@ -226,12 +247,11 @@ export function LiveSearchScreen({
             </div>
             <div
               id="place-suggestions"
-              hidden={
-                !suggestionsOpen ||
-                !!search.selection ||
-                !!search.filters.placeId ||
-                search.text.trim().length < 2
-              }
+              ref={suggestionsRef}
+              popover="auto"
+              onToggle={(event) => {
+                if (event.newState === 'closed') setSuggestionsOpen(false);
+              }}
               className={styles.suggestions}
             >
               <ApiErrorNotice

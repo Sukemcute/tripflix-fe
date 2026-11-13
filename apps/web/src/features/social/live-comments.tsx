@@ -8,6 +8,7 @@ import { ApiErrorNotice } from '@/features/shared/api-state';
 import { CommunitySummary } from './post-summary';
 import { getInitial } from '@/features/auth/account-helpers';
 import { CommentSkeletonList } from './comment-skeleton';
+import { CommentVisibility } from './comment-visibility';
 
 /**
  * Bình luận của một bài (hoặc trả lời của một bình luận khi có parentCommentId).
@@ -101,82 +102,87 @@ export function LiveComments({ postId, parentCommentId }: { postId: string; pare
           return (
             <li key={comment.id}>
               <article className="comment">
-                <span className="post-avatar" aria-hidden="true">
-                  {getInitial(name)}
-                </span>
-                <div className="comment-body">
-                  <p className="comment-meta">
-                    <strong>{name}</strong>
-                    {!isMine && !comment.authorName && <span>{comment.authorId.slice(0, 8)}</span>}
-                    <span>{new Date(comment.createdAt).toLocaleDateString('vi-VN')}</span>
-                    {comment.isEdited && <span>{vi.api.commentEdited}</span>}
-                  </p>
-                  {editing === comment.id ? (
-                    <form
-                      className="comment-edit"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        mutation.mutate({ type: 'edit', id: comment.id });
-                      }}
-                    >
-                      <textarea
-                        aria-label={vi.api.edit}
-                        rows={3}
-                        value={editBody}
-                        maxLength={10000}
-                        onChange={(event) => setEditBody(event.target.value)}
-                      />
+                <CommentVisibility commentId={comment.id} isMine={isMine} loginHref={loginHref}>
+                  <span className="post-avatar" aria-hidden="true">
+                    {getInitial(name)}
+                  </span>
+                  <div className="comment-body">
+                    <p className="comment-meta">
+                      <strong>{name}</strong>
+                      {!isMine && !comment.authorName && <span>{comment.authorId.slice(0, 8)}</span>}
+                      <span>{new Date(comment.createdAt).toLocaleDateString('vi-VN')}</span>
+                      {comment.isEdited && <span>{vi.api.commentEdited}</span>}
+                    </p>
+                    {editing === comment.id ? (
+                      <form
+                        className="comment-edit"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          mutation.mutate({ type: 'edit', id: comment.id });
+                        }}
+                      >
+                        <textarea
+                          aria-label={vi.api.edit}
+                          rows={3}
+                          value={editBody}
+                          maxLength={10000}
+                          onChange={(event) => setEditBody(event.target.value)}
+                        />
+                        <div className="comment-actions">
+                          <button
+                            className="primary-button"
+                            disabled={mutation.isPending || !editBody.trim()}
+                          >
+                            {vi.api.send}
+                          </button>
+                          <button type="button" className="comment-link" onClick={() => setEditing(null)}>
+                            {vi.api.cancel}
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <p className="comment-text">{comment.body}</p>
+                    )}
+                    {editing !== comment.id && (
                       <div className="comment-actions">
-                        <button className="primary-button" disabled={mutation.isPending || !editBody.trim()}>
-                          {vi.api.send}
-                        </button>
-                        <button type="button" className="comment-link" onClick={() => setEditing(null)}>
-                          {vi.api.cancel}
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    <p className="comment-text">{comment.body}</p>
-                  )}
-                  {editing !== comment.id && (
-                    <div className="comment-actions">
-                      {!parentCommentId && (
-                        <button
-                          type="button"
-                          className="comment-link"
-                          aria-expanded={replying === comment.id}
-                          onClick={() => setReplying(replying === comment.id ? undefined : comment.id)}
-                        >
-                          {replying === comment.id ? vi.api.hideReplies : vi.api.replies}
-                        </button>
-                      )}
-                      {isMine && (
-                        <>
+                        {!parentCommentId && (
                           <button
                             type="button"
                             className="comment-link"
-                            disabled={mutation.isPending}
-                            onClick={() => {
-                              setEditing(comment.id);
-                              setEditBody(comment.body);
-                            }}
+                            aria-expanded={replying === comment.id}
+                            onClick={() => setReplying(replying === comment.id ? undefined : comment.id)}
                           >
-                            {vi.api.edit}
+                            {replying === comment.id ? vi.api.hideReplies : vi.api.replies}
                           </button>
-                          <button
-                            type="button"
-                            className="comment-link is-danger"
-                            disabled={mutation.isPending}
-                            onClick={() => mutation.mutate({ type: 'delete', id: comment.id })}
-                          >
-                            {vi.api.remove}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                  {replying === comment.id && <LiveComments postId={postId} parentCommentId={comment.id} />}
-                </div>
+                        )}
+                        {isMine && (
+                          <>
+                            <button
+                              type="button"
+                              className="comment-link"
+                              disabled={mutation.isPending}
+                              onClick={() => {
+                                setEditing(comment.id);
+                                setEditBody(comment.body);
+                              }}
+                            >
+                              {vi.api.edit}
+                            </button>
+                            <button
+                              type="button"
+                              className="comment-link is-danger"
+                              disabled={mutation.isPending}
+                              onClick={() => mutation.mutate({ type: 'delete', id: comment.id })}
+                            >
+                              {vi.api.remove}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                    {replying === comment.id && <LiveComments postId={postId} parentCommentId={comment.id} />}
+                  </div>
+                </CommentVisibility>
               </article>
             </li>
           );
