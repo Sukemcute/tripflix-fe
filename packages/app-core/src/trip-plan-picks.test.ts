@@ -14,7 +14,7 @@ describe('lựa chọn giá cho lộ trình', () => {
     expect(resolveTripPlanOffer(offers, picks, 'other-date-party', 'hotel')).toBe(cheapest);
   });
   it('đổi khách sạn thay kế hoạch và bỏ gói phòng của chỗ ở trước', () => {
-    const basePlan = getBookableTripPlan({ hotelId: 'hotel-a', daysCount: 3 })!;
+    const basePlan = getBookableTripPlan({ hotelId: 'hotel-a' })!;
     const nextPlan = applyTripPlanChoices(basePlan, { hotelId: 'hotel-b' });
     const previousKey = JSON.stringify(['post-1', basePlan, '2026-12-01', '2026-12-03', { adults: 2 }]);
     const nextKey = JSON.stringify(['post-1', nextPlan, '2026-12-01', '2026-12-03', { adults: 2 }]);
