@@ -40,13 +40,20 @@ export function InspirationView() {
     const header = document.querySelector('.ota-header');
     const page = pageRef.current;
     if (!header || !page) return;
+    // Đặt ở thẻ gốc để #content (globals.css) và khung trang dùng chung một số đo; lệch nhau là trang dài lố,
+    // đáy trang lộ một dải nền và panel bị cắt ngang. Đo mép dưới header cộng lề dưới, đúng với mọi kiểu header.
+    const root = document.documentElement;
     const updateHeight = () => {
-      page.style.setProperty('--feed-header-height', `${header.getBoundingClientRect().height + 24}px`);
+      const marginBottom = Number.parseFloat(getComputedStyle(header).marginBottom) || 0;
+      root.style.setProperty('--feed-header-height', `${Math.ceil(header.getBoundingClientRect().bottom + marginBottom)}px`);
     };
     updateHeight();
     const observer = new ResizeObserver(updateHeight);
     observer.observe(header);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty('--feed-header-height');
+    };
   }, []);
 
   const router = useRouter();

@@ -1569,9 +1569,18 @@ body:has([class*="feedPageWrapper"]) {
   overflow: hidden !important;
 }
 
+/* Trang Cảm hứng: nền ngoài viên header cùng màu nền trang, chỉ trong viên header là trắng. */
+html:has([class*="feedPageWrapper"]),
+body:has([class*="feedPageWrapper"]) {
+  background: var(--color-surface);
+}
+body:has([class*="feedPageWrapper"]) .ota-header {
+  background: var(--color-background);
+}
+/* Cùng số đo với khung trang Cảm hứng (inspiration-view.tsx đặt --feed-header-height ở thẻ gốc). */
 body:has([class*="feedPageWrapper"]) #content {
-  height: calc(100dvh - 81px);
-  max-height: calc(100dvh - 81px);
+  height: calc(100dvh - var(--feed-header-height, 106px));
+  max-height: calc(100dvh - var(--feed-header-height, 106px));
   overflow: hidden;
 }
 .auth-fullscreen {
