@@ -1,11 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { changePassword, useApiSession } from '@tripflix/api-client';
+import {
+  changePassword,
+  useApiSession,
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from '@tripflix/api-client';
 import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import type { UserDto } from '@tripflix/api-client/core-api/model/index';
 import { DISPLAY_NAME_MAX, NEW_PASSWORD_MAX } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, nativeFonts, spacing as s } from '@tripflix/tokens';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import {
@@ -34,6 +40,11 @@ export function LiveProfileScreen() {
   const links = [
     { label: profile.myTrips, icon: 'bag-handle-outline', onPress: () => router.navigate('/(tabs)/trips') },
     { label: profile.savedTrips, icon: 'bookmark-outline', onPress: () => router.push('/saved') },
+    {
+      label: 'Trạng thái kiểm duyệt',
+      icon: 'shield-checkmark-outline',
+      onPress: () => router.push('/moderation-status' as Href),
+    },
     {
       label: profile.create,
       icon: 'create-outline',
@@ -254,20 +265,62 @@ function ProfileEditor({ user }: { user: UserDto }) {
   );
 }
 export function LiveNotificationsScreen() {
+  const { user, isReady } = useApiSession();
+  const notifications = useNotifications();
+  const markRead = useMarkNotificationRead();
+  const markAll = useMarkAllNotificationsRead();
+  if (!isReady || !user) return <RequireAccount />;
+  const items = notifications.data?.pages.flatMap((page) => page.items) ?? [];
+  const unread = notifications.data?.pages[0]?.unreadCount ?? 0;
   return (
     <Screen title={copy.notifications.title}>
       <View style={{ gap: s.sm }}>
         <Txt variant="title">{copy.notifications.headline}</Txt>
-        <View style={styles.notification}>
-          <View style={styles.menuIcon}>
-            <Icon name="notifications-outline" color={c.tealInk} size={20} />
-          </View>
-          <View style={ui.flex}>
-            <Txt variant="small" style={ui.muted}>
-              {vi.api.notificationUnavailable}
-            </Txt>
-          </View>
-        </View>
+        {unread > 0 && items[0] && (
+          <Button tone="text" disabled={markAll.isPending} onPress={() => markAll.mutate(items[0]!.id)}>
+            Đánh dấu tất cả đã đọc
+          </Button>
+        )}
+        {notifications.isPending && <Txt>Đang tải…</Txt>}
+        <ApiErrorNotice error={notifications.error} retry={() => void notifications.refetch()} />
+        <ApiErrorNotice error={markRead.error ?? markAll.error} />
+        {!notifications.isPending && !notifications.error && !items.length && <Txt>Chưa có thông báo.</Txt>}
+        {items.map((item) => (
+          <Pressable
+            key={item.id}
+            accessibilityRole="button"
+            onPress={() => {
+              if (!item.readAt) markRead.mutate(item.id);
+              if (item.type.startsWith('moderation.')) router.push('/moderation-status' as Href);
+            }}
+            style={styles.notification}
+          >
+            <View style={styles.menuIcon}>
+              <Icon name="notifications-outline" color={c.tealInk} size={20} />
+            </View>
+            <View style={ui.flex}>
+              <Txt>
+                {item.title}
+                {!item.readAt ? ' · Mới' : ''}
+              </Txt>
+              <Txt variant="small" style={ui.muted}>
+                {item.body}
+              </Txt>
+              <Txt variant="small" style={ui.muted}>
+                {new Date(item.createdAt).toLocaleString('vi-VN')}
+              </Txt>
+            </View>
+          </Pressable>
+        ))}
+        {notifications.hasNextPage && (
+          <Button
+            tone="text"
+            disabled={notifications.isFetchingNextPage}
+            onPress={() => void notifications.fetchNextPage()}
+          >
+            Xem thêm
+          </Button>
+        )}
       </View>
     </Screen>
   );

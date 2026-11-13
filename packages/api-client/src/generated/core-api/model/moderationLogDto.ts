@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { ModerationLogDtoEvidenceSnapshot } from './moderationLogDtoEvidenceSnapshot';
 
 export interface ModerationLogDto {
   id: string;
@@ -19,4 +20,10 @@ export interface ModerationLogDto {
   /** @nullable */
   reasonDetail: string | null;
   createdAt: string;
+  /** @nullable */
+  contentVersion: string | null;
+  /** @nullable */
+  policyVersion: string | null;
+  /** @nullable */
+  evidenceSnapshot: ModerationLogDtoEvidenceSnapshot;
 }

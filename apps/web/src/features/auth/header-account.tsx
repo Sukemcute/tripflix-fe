@@ -109,6 +109,12 @@ export function HeaderAccount() {
               </Link>
             </li>
             <li>
+              <Link prefetch={false} href="/account/moderation" onClick={closeMenu}>
+                <MenuIcon name="posts" />
+                Trạng thái kiểm duyệt
+              </Link>
+            </li>
+            <li>
               <Link prefetch={false} href="/account?tab=bookings" onClick={closeMenu}>
                 <MenuIcon name="bookings" />
                 {vi.commerce.booked}
