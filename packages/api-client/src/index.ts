@@ -52,7 +52,7 @@ export {
   type SummaryPoint,
   type SummaryFilter,
 } from './post-summary';
-export { feedApi, REEL_FEED_TABS, useReelsFeed, type ReelFeedTab } from './feed';
+export { feedApi, REEL_FEED_TABS, reloadReelsFeed, useReelsFeed, type ReelFeedTab } from './feed';
 export {
   notificationsApi,
   useNotifications,
