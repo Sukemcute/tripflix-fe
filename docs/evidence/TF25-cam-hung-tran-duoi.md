@@ -9,12 +9,14 @@ Sau khi header đổi sang viên bo tròn (PR #146), đáy trang Cảm hứng l�
 - `inspiration-view.tsx` đặt `--feed-header-height` ở thẻ gốc (`<html>`) thay vì ở khung trang, để `#content` và khung trang dùng chung một số đo; gỡ biến khi rời trang.
 - Đo bằng mép dưới header cộng lề dưới, thay cho chiều cao cộng cứng 24px.
 - `globals.css`: `#content` của trang Cảm hứng dùng `calc(100dvh − var(--feed-header-height, 106px))`, bỏ số cứng 81px.
+- Nền quanh viên header ở trang Cảm hứng đổi sang màu nền trang (`--color-surface`), chỉ trong viên header là trắng (`--color-background`), bỏ dải trắng thừa. Các trang khác không đổi.
 - Giữ nguyên header của Trang và dock hiện tại.
 
 ## Đối chiếu "Xong khi"
 | Tiêu chí | Đạt | Bằng chứng |
 |---|---|---|
 | Trang không dài lố khung nhìn, không còn thanh ngang ở đáy | Có | Đo qua CDP trên web dev: chiều cao `body` = khung nhìn ở 1700×900, 1700×760 (Reels), 820×900, 390×800 |
+| Chỉ trong viên header là trắng ở trang Cảm hứng | Có | Chụp `/inspiration` và `/search` ở 1700px trên web dev |
 | `<main>` và khung trang kết thúc cùng chỗ | Có | Như trên: `main` và khung trang cùng mép dưới ở cả 4 kích thước |
 
 ## Kết quả kiểm tra
