@@ -41,7 +41,7 @@
 .typographyLayer {
   position: absolute;
   z-index: 2;
-  top: 19%;
+  top: calc(19% + 40px);
   left: 44%;
   width: 62%;
   transform: translate(calc(var(--pointer-x, 0) * 6px), calc(var(--pointer-y, 0) * 3px));
@@ -57,10 +57,9 @@
   position: absolute;
   z-index: 3;
   top: clamp(218px, 18.5vw, 280px);
-  left: 45%;
-  translate: -50% 0;
-  width: clamp(150px, 16vw, 220px);
-  transform-origin: 56% 76%;
+  left: 16px;
+  width: clamp(130px, 14vw, 160px);
+  transform-origin: center;
   pointer-events: none;
   user-select: none;
 }
@@ -112,15 +111,13 @@
     padding-top: 112px;
   }
   .typographyLayer {
-    top: calc(19% + 44px);
+    top: calc(19% + 88px);
   }
   .copy {
     margin-top: 44px;
   }
   .rowerLayer {
-    top: clamp(292px, calc(18.5vw + 74px), 354px);
-    left: 44%;
-    width: clamp(175px, 16vw, 240px);
+    top: 420px;
   }
   .bottomSection {
     grid-template-rows: 1fr;
@@ -130,10 +127,6 @@
     grid-column: 1;
     grid-row: 1;
     align-self: start;
-  }
-  .sceneContainer {
-    grid-column: 2;
-    grid-row: 1;
   }
 }
 
@@ -350,214 +343,11 @@
 }
 
 /* ==========================================================================
-   CỤM BÊN PHẢI: THẺ KÍNH MỜ DÁNG NGANG & ĐIỀU HƯỚNG CHẤM
-   ========================================================================== */
-.sceneContainer {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  grid-column: 2;
-  grid-row: 1;
-  align-items: flex-end;
-  gap: 12px;
-  width: min(100%, 520px);
-  align-self: end;
-  justify-self: end;
-  margin: 0 0 32px auto;
-}
-
-@media (min-width: 901px) {
-  .bottomSection {
-    grid-template-rows: 1fr;
-    align-items: stretch;
-  }
-  .rowerLayer {
-    top: clamp(292px, calc(18.5vw + 74px), 354px);
-  }
-  .sceneContainer {
-    margin-bottom: 170px;
-  }
-}
-
-@media (min-width: 1200px) {
-  .rowerLayer {
-    top: clamp(231px, calc(18.5vw + 13px), 293px);
-    left: 53%;
-    width: clamp(175px, 14.6vw, 210px);
-  }
-  .typographyLayer {
-    top: calc(19% + 44px);
-  }
-}
-
-/* Thẻ kính mờ danh lam thắng cảnh dáng ngang (như mẫu Phố cổ Hội An) */
-.panoramicDestinationCard {
-  width: min(100%, 480px);
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 12px 14px 12px 20px;
-  border-radius: 24px;
-  background: rgba(3, 38, 56, 0.76);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.45);
-  transition:
-    transform 300ms cubic-bezier(0.2, 0.7, 0.25, 1),
-    border-color 300ms ease,
-    box-shadow 300ms ease;
-}
-.panoramicDestinationCard:hover {
-  transform: translateY(-4px) scale(1.02);
-  border-color: rgba(78, 227, 210, 0.6);
-  box-shadow: 0 26px 56px -8px rgba(0, 0, 0, 0.55);
-}
-
-.destinationCardInfo {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.destinationCardHead {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 2px;
-}
-
-.destinationBadge {
-  display: inline-block;
-  padding: 2.5px 8px;
-  border-radius: 999px;
-  background: #ea580c;
-  color: #ffffff;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.destinationRating {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #facc15;
-}
-
-.destinationTitle {
-  font-size: clamp(1.05rem, 1.35vw, 1.25rem);
-  font-weight: 800;
-  color: #ffffff;
-  line-height: 1.25;
-  letter-spacing: -0.015em;
-}
-
-.destinationSubtitle {
-  margin: 0;
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.82);
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
-  overflow: hidden;
-}
-
-.destinationAction {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 4px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #38bdf8;
-  text-decoration: none;
-  transition: color 200ms ease;
-}
-.destinationAction:hover {
-  color: #7dd3fc;
-}
-.actionArrow {
-  transition: transform 200ms ease;
-}
-.panoramicDestinationCard:hover .actionArrow {
-  transform: translateX(4px);
-}
-
-/* Khung ảnh thumbnail thực tế bên phải thẻ */
-.destinationCardThumb {
-  position: relative;
-  width: clamp(140px, 15vw, 190px);
-  height: 110px;
-  flex-shrink: 0;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-}
-.cardThumbImg {
-  object-fit: cover;
-  transition: transform 500ms ease;
-}
-.panoramicDestinationCard:hover .cardThumbImg {
-  transform: scale(1.06);
-}
-
-/* Thanh điều hướng chấm scene */
-.sceneControls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-right: 14px;
-}
-
-.sceneDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  border: none;
-  padding: 0;
-  background: rgba(255, 255, 255, 0.35);
-  cursor: pointer;
-  transition: all 300ms ease;
-  position: relative;
-  overflow: hidden;
-}
-.sceneDotActive {
-  width: 28px;
-  background: rgba(255, 255, 255, 0.25);
-}
-.sceneProgressFill {
-  position: absolute;
-  inset: 0;
-  background: #ffffff;
-  border-radius: 999px;
-  animation: sceneProgress linear forwards;
-}
-@keyframes sceneProgress {
-  from {
-    width: 0%;
-  }
-  to {
-    width: 100%;
-  }
-}
-
-/* ==========================================================================
    RESPONSIVE LAYOUT
    ========================================================================== */
 @media (max-width: 900px) {
   .rowerLayer {
-    top: 260px;
-    left: 49%;
+    top: 400px;
   }
   .inner {
     padding-block: 64px;
@@ -569,20 +359,6 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
     gap: 28px;
-  }
-  .sceneContainer {
-    grid-column: 1;
-    grid-row: 2;
-    align-items: flex-end;
-    width: min(100%, 480px);
-    margin-left: auto;
-  }
-  .panoramicDestinationCard {
-    width: 100%;
-  }
-  .sceneControls {
-    justify-content: flex-end;
-    padding-right: 0;
   }
 }
 
@@ -598,7 +374,7 @@
 
 @media (max-width: 900px) and (min-width: 641px) {
   .typographyLayer {
-    top: 20%;
+    top: calc(20% + 32px);
   }
 }
 
@@ -613,13 +389,12 @@
     object-position: 48% top;
   }
   .typographyLayer {
-    top: 280px;
+    top: 300px;
     left: 14%;
     width: 96%;
   }
   .rowerLayer {
     top: clamp(225px, 62vw, 275px);
-    left: 17%;
     width: clamp(110px, 32vw, 145px);
   }
   .vectorLayer {
@@ -633,9 +408,6 @@
   .copy {
     max-width: 100%;
     padding-bottom: 50px;
-  }
-  .sceneContainer {
-    display: none;
   }
   .letterHotspotsArea {
     display: block;
@@ -655,33 +427,6 @@
   .copy h1 {
     font-size: min(clamp(2.65rem, 12.5vw, 3.45rem), 15cqi);
   }
-  .panoramicDestinationCard {
-    width: 100%;
-    max-width: 100%;
-    padding: 8px 10px;
-    gap: 8px;
-    border-radius: 16px;
-    box-sizing: border-box;
-  }
-  .destinationBadge {
-    padding: 2px 6px;
-    font-size: 0.62rem;
-  }
-  .destinationRating {
-    font-size: 0.72rem;
-  }
-  .destinationTitle {
-    font-size: 0.95rem;
-  }
-  .destinationSubtitle {
-    display: none;
-  }
-  .destinationCardThumb {
-    width: 92px;
-    height: 68px;
-    border-radius: 10px;
-    flex-shrink: 0;
-  }
   .activities {
     gap: 8px;
   }
@@ -689,44 +434,29 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .rowerLayer {
-    animation:
-      rowerSwimIn 1.7s cubic-bezier(0.18, 0.72, 0.24, 1) both,
-      rowerDrift 5.8s ease-in-out 1.7s infinite;
+    animation: rowerVoyage 48s linear infinite;
+  }
+  .rowerImage {
+    animation: rowerBob 4.8s ease-in-out infinite;
   }
   .rowerLayer::before {
-    animation: paddleRipple 3s ease-out infinite;
+    animation: paddleRipple 4.8s ease-out infinite;
   }
   .typographyLayer { transition: transform 250ms ease-out; }
-  .copy,
-  .sceneContainer {
+  .copy {
     animation: arrive 1000ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
   }
-  .sceneContainer {
-    animation-delay: 150ms;
-  }
 }
-@keyframes rowerSwimIn {
-  0% {
-    opacity: 0;
-    translate: calc(-50% - 150px) 34px;
-    rotate: -9deg;
-  }
-  68% {
-    opacity: 1;
-    translate: calc(-50% + 12px) -6px;
-    rotate: 2deg;
-  }
-  100% {
-    opacity: 1;
-    translate: -50% 0;
-    rotate: 0deg;
-  }
+/* Travel across the water; turn at each bank before rowing back. */
+@keyframes rowerVoyage {
+  0%, 100% { transform: translateX(0) scaleX(1); }
+  49% { transform: translateX(calc(100vw - 100% - 32px)) scaleX(1); }
+  50% { transform: translateX(calc(100vw - 100% - 32px)) scaleX(-1); }
+  99% { transform: translateX(0) scaleX(-1); }
 }
-@keyframes rowerDrift {
-  0%, 100% { transform: translate(0, 0) rotate(-2deg); }
-  30% { transform: translate(9%, -4%) rotate(2deg); }
-  55% { transform: translate(15%, -6%) rotate(-1deg); }
-  78% { transform: translate(7%, -2%) rotate(2deg); }
+@keyframes rowerBob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-6px) rotate(2deg); }
 }
 @keyframes paddleRipple {
   from { transform: rotate(-12deg) scale(0.35); opacity: 0.62; }
@@ -746,13 +476,8 @@
   .rowerLayer {
     animation: none;
     opacity: 1;
-    translate: -50% 0;
     rotate: 0deg;
   }
-  .copy,
-  .sceneContainer {
-    animation: none;
-  }
+  .copy { animation: none; }
   .typographyLayer { transform: none; }
-  .sceneProgressFill { animation: none; }
 }

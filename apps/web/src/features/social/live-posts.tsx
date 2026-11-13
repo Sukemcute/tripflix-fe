@@ -34,6 +34,7 @@ import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { getAvatarTone } from './avatar-tone';
 import { EmojiPicker } from './emoji-picker';
+import { CommentVisibility } from './comment-visibility';
 import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
@@ -2329,7 +2330,7 @@ function CommentNode({
 
   return (
     <li className={styles.panelCommentItem}>
-      <div className={styles.panelCommentRow}>
+      <CommentVisibility commentId={comment.id} isMine={isMine} loginHref={loginHref} className={styles.panelCommentRow}>
         <span className={styles.avatarSmall} data-tone={getAvatarTone(authorDisplay.name)} aria-hidden="true">
           {getInitial(authorDisplay.name)}
         </span>
@@ -2499,7 +2500,7 @@ function CommentNode({
             </div>
           )}
         </div>
-      </div>
+      </CommentVisibility>
     </li>
   );
 }

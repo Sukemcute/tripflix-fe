@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useApiSession } from '@tripflix/api-client';
@@ -34,6 +34,21 @@ const ComposerModal = dynamic(
 );
 
 export function InspirationView() {
+  const pageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const header = document.querySelector('.ota-header');
+    const page = pageRef.current;
+    if (!header || !page) return;
+    const updateHeight = () => {
+      page.style.setProperty('--feed-header-height', `${header.getBoundingClientRect().height + 24}px`);
+    };
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -136,7 +151,7 @@ export function InspirationView() {
   );
 
   return (
-    <div className={`${styles.feedPageWrapper} ${isReels ? styles.feedPageWrapperReels : ''}`}>
+    <div ref={pageRef} className={`${styles.feedPageWrapper} ${isReels ? styles.feedPageWrapperReels : ''}`}>
       {/* 1. Thanh Dock icon sát mép trái chuẩn Instagram (64px) */}
       <InstagramLeftDock
         activeView={activeView}
