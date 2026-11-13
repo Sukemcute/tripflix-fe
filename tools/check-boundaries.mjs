@@ -1,7 +1,7 @@
 // Kiểm luật FE trong RULES.md mục 10. Chạy trong `pnpm lint`.
 // 1. packages/app-core không import react, react-native, react-dom.
 // 2. App không import code của app khác; package không import code trong apps/.
-// 3. Không tự gọi fetch tới backend ngoài packages/api-client (dùng hook sinh bằng `pnpm gen:api`).
+// 3. App dùng API client. Route BFF Admin chuyển tiếp HTTP thô ở phía server.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,8 +27,10 @@ for (const file of [...walk(join(root, 'apps')), ...walk(join(root, 'packages'))
   const [area, owner] = rel.split('/');
   const source = readFileSync(file, 'utf8');
   const isTest = /\.test\.tsx?$/.test(rel);
+  // BFF cần đọc Set-Cookie từ Core API trước khi trả response riêng cho trình duyệt.
+  const isAdminBffRoute = rel === 'apps/admin/src/app/bff/api/[...path]/route.ts';
 
-  if (!isTest && !rel.startsWith('packages/api-client/') && /\bfetch\s*\(/.test(source)) {
+  if (!isTest && !isAdminBffRoute && !rel.startsWith('packages/api-client/') && /\bfetch\s*\(/.test(source)) {
     errors.push(`${rel}: không tự gọi fetch, dùng hook trong @tripflix/api-client`);
   }
 
