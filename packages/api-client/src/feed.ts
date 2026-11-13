@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, type InfiniteData, type QueryClient } from '@tanstack/react-query';
 import { feedControllerGetFeed } from './generated/core-api/feed/feed';
 import { FeedControllerGetFeedTab } from './generated/core-api/model/feedControllerGetFeedTab';
 import { readPage } from './response';
@@ -36,5 +36,22 @@ export function useReelsFeed({
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) => feedApi.list(pageParam, signal, tab, { isSavedOnly }),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
+    // Hai tab Reels có thứ tự ngẫu nhiên theo từng lần tải: tự tải lại ngầm (mở lại app, vào lại màn) sẽ xáo
+    // video ngay dưới tay người xem. Chỉ tải lại khi người xem yêu cầu, qua reloadReelsFeed.
+    ...(isSavedOnly
+      ? {}
+      : { staleTime: Infinity, refetchOnMount: false, refetchOnWindowFocus: false, refetchOnReconnect: false }),
   });
+}
+
+/**
+ * Tải lại một tab Reels từ đầu: bỏ các trang sau trước khi tải, để chỉ đọc lại trang đầu (thứ tự mới)
+ * thay vì đọc lại lần lượt mọi trang đã cuộn qua. Danh sách cũ vẫn hiện tới khi trang mới về.
+ */
+export async function reloadReelsFeed(queryClient: QueryClient, tab: ReelFeedTab) {
+  type FeedData = InfiniteData<Awaited<ReturnType<typeof feedApi.list>>, string | undefined>;
+  queryClient.setQueriesData<FeedData>({ queryKey: ['feed', tab] }, (data) =>
+    data ? { pages: data.pages.slice(0, 1), pageParams: data.pageParams.slice(0, 1) } : data,
+  );
+  await queryClient.refetchQueries({ queryKey: ['feed', tab], type: 'active' });
 }
