@@ -10,7 +10,7 @@ export function Providers({ children }: { children: ReactNode }) {
   );
   return (
     <QueryClientProvider client={queryClient}>
-      <ApiSessionProvider baseUrl={process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'} client="web">
+      <ApiSessionProvider baseUrl="/bff" client="web" serverSession>
         {children}
       </ApiSessionProvider>
     </QueryClientProvider>

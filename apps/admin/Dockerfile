@@ -21,7 +21,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 FROM deps AS dev
 ARG APP
-ENV APP=${APP} NODE_ENV=development
+ENV APP=${APP} NODE_ENV=development ADMIN_CORE_API_URL=http://core-api:3000
 COPY --from=prune /repo/out/full/ .
 EXPOSE 3200
 CMD pnpm --filter=${APP} dev
@@ -31,8 +31,9 @@ ARG APP
 ENV NODE_ENV=production
 # Next gắn NEXT_PUBLIC_* vào bundle lúc build. Không truyền thì giữ mặc định như khi chưa có arg.
 ARG NEXT_PUBLIC_API_URL=http://localhost:8080
+ARG NEXT_PUBLIC_ADMIN_URL=http://localhost:3200
 ARG NEXT_PUBLIC_WEB_URL=http://localhost:3100
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} NEXT_PUBLIC_WEB_URL=${NEXT_PUBLIC_WEB_URL}
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} NEXT_PUBLIC_ADMIN_URL=${NEXT_PUBLIC_ADMIN_URL} NEXT_PUBLIC_WEB_URL=${NEXT_PUBLIC_WEB_URL}
 RUN pnpm turbo run build --filter=${APP}
 
 FROM node:24-slim AS prod
