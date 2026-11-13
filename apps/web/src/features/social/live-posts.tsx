@@ -51,6 +51,8 @@ import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
 import styles from './live-posts.module.css';
+import { PostImagePicker } from './composer/post-image-picker';
+import { usePostImages } from './composer/use-post-images';
 
 // Trang chi tiết bài viết nằm ở post-detail.tsx; giữ export ở đây để app/trips/[slug]/page.tsx không phải đổi.
 export { LivePostDetail } from './post-detail';
@@ -2594,6 +2596,9 @@ export function ComposerModal({
   const [uploadStepText, setUploadStepText] = useState<string>('');
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  // Ảnh của bài viết (vlog): chọn là tải lên ngay, lúc lưu chỉ gửi danh sách id theo thứ tự.
+  const postImages = usePostImages();
+  const { reset: resetPostImages } = postImages;
 
   // Lịch trình chuyến đi (Trip Attachment)
   const [enableItinerary, setEnableItinerary] = useState(false);
@@ -2614,7 +2619,9 @@ export function ComposerModal({
     setPostType(draft.postType === 'video' ? 'video' : 'vlog');
     setHashtagsText((draft.hashtags || []).join(', '));
     setVisibility((draft.visibility as 'public' | 'private') || 'public');
-    setExistingMediaId(draft.mediaIds?.[0] || null);
+    // mediaIds của bài viết là ảnh, của Reels là video.
+    setExistingMediaId(draft.postType === 'video' ? draft.mediaIds?.[0] || null : null);
+    resetPostImages(draft.postType === 'vlog' ? (draft.images ?? []) : []);
     setVideoFile(null);
     setVideoPreviewUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);
@@ -2659,7 +2666,7 @@ export function ComposerModal({
     }
 
     setViewMode('compose');
-  }, []);
+  }, [resetPostImages]);
 
   const handleNewPost = () => {
     setEditingDraftId(null);
@@ -2669,6 +2676,7 @@ export function ComposerModal({
     setPostType(initialPostType);
     setVisibility('public');
     setExistingMediaId(null);
+    resetPostImages();
     setVideoFile(null);
     if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
     setVideoPreviewUrl(null);
@@ -2880,8 +2888,23 @@ export function ComposerModal({
         }
       }
 
-      let uploadedAssetId: string | undefined = existingMediaId || undefined;
-      if (videoFile && videoDuration) {
+      if (postType === 'vlog' && postImages.isUploading) {
+        throw new Error(vi.api.composerImageWaitUpload);
+      }
+      if (postType === 'vlog' && postImages.hasFailed) {
+        throw new Error(vi.api.composerImageFixFailed);
+      }
+      // Bài viết luôn gửi đủ danh sách ảnh (kể cả rỗng) để xoá hết ảnh cũng lưu được.
+      const imageMedia =
+        postType === 'vlog'
+          ? {
+              media_ids: postImages.imageIds,
+              ...(postImages.imageIds[0] ? { cover_media_id: postImages.imageIds[0] } : {}),
+            }
+          : {};
+
+      let uploadedAssetId: string | undefined = postType === 'video' ? existingMediaId || undefined : undefined;
+      if (postType === 'video' && videoFile && videoDuration) {
         uploadedAssetId = await uploadVideoMultipart(videoFile, videoDuration);
         setExistingMediaId(uploadedAssetId);
       }
@@ -2924,6 +2947,7 @@ export function ComposerModal({
           hashtags: parsedTags,
           visibility,
           ...(uploadedAssetId ? { media_ids: [uploadedAssetId], cover_media_id: uploadedAssetId } : {}),
+          ...imageMedia,
           ...(tripAttachment ? { trip_attachment: tripAttachment } : {}),
         };
         await socialApi.updatePost(currentId, patchPayload);
@@ -2935,6 +2959,7 @@ export function ComposerModal({
           hashtags: parsedTags,
           visibility,
           ...(uploadedAssetId ? { media_ids: [uploadedAssetId], cover_media_id: uploadedAssetId } : {}),
+          ...imageMedia,
           ...(tripAttachment ? { trip_attachment: tripAttachment } : {}),
         };
         const draft = await socialApi.createDraft(draftPayload);
@@ -3210,6 +3235,19 @@ export function ComposerModal({
             </select>
           </div>
         </div>
+
+        {/* 3a. Ảnh: chỉ bài viết (vlog) kèm ảnh; Reels kèm video ở khu bên dưới */}
+        {postType === 'vlog' && (
+          <div className={styles.composerSection}>
+            <div className={styles.composerSectionHeader}>
+              <h4 className={styles.composerSectionTitle}>
+                <SocialIcon name="upload" size={16} />
+                <span>{vi.api.composerImagesTitle}</span>
+              </h4>
+            </div>
+            <PostImagePicker images={postImages} isDisabled={isFormBusy} />
+          </div>
+        )}
 
         {/* 3. Video Reels: bài viết (vlog) không được kèm video nên chỉ hiện khi chọn Reels */}
         {postType === 'video' && (

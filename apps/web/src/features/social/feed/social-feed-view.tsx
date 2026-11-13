@@ -150,6 +150,7 @@ export function SocialFeedView({
   const activeItineraryCover = useMemo(() => {
     if (!activeItineraryPost) return undefined;
     return getPostImages({
+      uploadedImageUrls: activeItineraryPost.images?.map((image) => image.url),
       mediaIds: activeItineraryPost.mediaIds,
       destinationName: activeItineraryPost.tripAttachment?.destinationName,
       hotelName: activeItineraryPost.tripAttachment?.hotelName,
@@ -169,6 +170,7 @@ export function SocialFeedView({
   const activeGalleryImages = useMemo(() => {
     if (!activeGalleryPost) return [];
     return getPostImages({
+      uploadedImageUrls: activeGalleryPost.images?.map((image) => image.url),
       mediaIds: activeGalleryPost.mediaIds,
       destinationName: activeGalleryPost.tripAttachment?.destinationName,
       hotelName: activeGalleryPost.tripAttachment?.hotelName,

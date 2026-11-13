@@ -190,9 +190,10 @@ export function SearchResultsGrid({
   );
 }
 
-/** Bài viết chưa có ảnh bìa từ discovery: dùng ảnh minh hoạ như thẻ ở tab Bài viết. */
+/** Bài viết chưa có ảnh bìa từ discovery: ảnh đầu tiên tác giả tải lên, không có thì ảnh minh hoạ như tab Bài viết. */
 function getVlogCover(post: SocialPostDto): string | undefined {
   return getPostImages({
+    uploadedImageUrls: post.images?.map((image) => image.url),
     mediaIds: post.mediaIds,
     destinationName: post.tripAttachment?.destinationName,
     hotelName: post.tripAttachment?.hotelName,
