@@ -1,5 +1,5 @@
 'use client';
-import { evictPostFromCache, isPostNotFoundError, socialApi, useApiSession } from '@tripflix/api-client';
+import { evictPostFromCache, isPostNotFoundError, socialApi, useApiSession, useFollowAuthor } from '@tripflix/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
@@ -66,6 +66,8 @@ export function LivePostDetail({ id, focusCommentId }: { id: string; focusCommen
   const login = `/login?returnTo=${encodeURIComponent(`/trips/${id}`)}`;
   const trip = post?.tripAttachment;
   const isAuthor = !!post && post.authorId === user?.id;
+  const canShowFollow = isReady && !!post && post.status === 'published' && !isAuthor;
+  const follow = useFollowAuthor(canShowFollow ? post.authorId : undefined);
   const authorName = isAuthor
     ? (user?.displayName ?? vi.api.postYou)
     : post?.authorName?.trim() || vi.api.postAuthorFallback;
@@ -129,6 +131,14 @@ export function LivePostDetail({ id, focusCommentId }: { id: string; focusCommen
                   {getInitial(authorName)}
                 </span>
                 <span>{authorName}</span>
+                {canShowFollow && (user ? (
+                  <button type="button" className="secondary-button" onClick={follow.toggle} disabled={!follow.canToggle}>
+                    {follow.isLoading || follow.isUpdating ? vi.api.loading
+                      : follow.isFollowing ? vi.api.unfollowAuthor : vi.api.followAuthor}
+                  </button>
+                ) : (
+                  <Link className="secondary-button" href={login}>{vi.api.followAuthor}</Link>
+                ))}
                 {post.hashtags.length > 0 && (
                   <ul className="post-tags" aria-label={vi.api.hashtags}>
                     {post.hashtags.map((tag) => (
@@ -137,6 +147,7 @@ export function LivePostDetail({ id, focusCommentId }: { id: string; focusCommen
                   </ul>
                 )}
               </div>
+              {canShowFollow && <ApiErrorNotice error={follow.error} retry={() => void follow.retry()} />}
             </header>
 
             {post.mediaIds.length > 0 && (
