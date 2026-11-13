@@ -7,4 +7,5 @@
 
 export type FollowsControllerListPostRecipientsParams = {
   cursor?: string;
+  sharedThreshold?: number;
 };

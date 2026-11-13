@@ -9,6 +9,7 @@ import {
   updateReelSocialCache,
   uploadChunkToPresignedUrl,
   useApiSession,
+  useReelsByIds,
   useReelsFeed,
   useSocialPosts,
 } from '@tripflix/api-client';
@@ -39,6 +40,7 @@ import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
 import {
+  attachReelVideoSource,
   getReelRenderMode,
   pickReelAfterRemoval,
   shouldShowReelBackdrop,
@@ -739,17 +741,14 @@ function MediaTrackItem({
     }
   }, [isActive]);
 
-  // Khi thẻ video bị gỡ (lướt ra xa) chỉ pause() hoặc gỡ khỏi DOM thì trình duyệt vẫn có thể tải tiếp
-  // segment, giữ bộ đệm và bộ giải mã tới lúc dọn rác. Xoá src rồi load() để ngắt tải và trả tài nguyên ngay.
+  // Gắn nguồn ở đây (không qua prop src) để lần dọn của Strict Mode không làm video mất nguồn; lướt ra xa thì
+  // nhả nguồn để ngắt tải segment ngay (xem attachReelVideoSource).
+  const hlsUrl = reelCard?.video.hlsUrl;
   useEffect(() => {
     const video = localVideoRef.current;
-    if (!hasVideo || !video) return;
-    return () => {
-      video.pause();
-      video.removeAttribute('src');
-      video.load();
-    };
-  }, [hasVideo, reelCard?.video.hlsUrl]);
+    if (!hasVideo || !video || !hlsUrl) return;
+    return attachReelVideoSource(video, hlsUrl);
+  }, [hasVideo, hlsUrl]);
 
   // timeupdate chỉ bắn ~4 lần/giây nên thanh tiến độ nhảy bậc; đọc currentTime mỗi khung hình và
   // cập nhật thẳng transform qua ref (không setState) để mượt và không render lại cả viewer.
@@ -810,7 +809,6 @@ function MediaTrackItem({
               className={`${styles.mediaVideoElement} ${
                 reelCard.video.aspect === '16:9' ? styles.mediaVideoLandscape : ''
               }`}
-              src={reelCard.video.hlsUrl}
               poster={selectReelPoster(reelCard.video.posters, 720)}
               preload="auto"
               playsInline
@@ -979,6 +977,14 @@ export interface InspirationImmersiveViewerProps {
   isItineraryOpen?: boolean;
   onToggleItinerary?: () => void;
   onOpenComposer?: (type?: 'video' | 'vlog') => void;
+  /**
+   * Mở từ grid kết quả tìm kiếm: chỉ lướt trong các Reel này (theo thứ tự grid) thay vì bảng tin Reels,
+   * bắt đầu ở initialPostId.
+   */
+  searchReelIds?: string[];
+  initialPostId?: string | null;
+  /** Có thì hiện nút quay lại grid kết quả. */
+  onBackToResults?: () => void;
 }
 
 export function InspirationImmersiveViewer({
@@ -986,12 +992,15 @@ export function InspirationImmersiveViewer({
   isItineraryOpen: propIsItineraryOpen,
   onToggleItinerary,
   onOpenComposer,
+  searchReelIds,
+  initialPostId = null,
+  onBackToResults,
 }: InspirationImmersiveViewerProps) {
   const { isReady, user } = useApiSession();
   const client = useQueryClient();
 
   const [filterMode] = useState<FeedFilterMode>('all');
-  const [activePostId, setActivePostId] = useState<string | null>(null);
+  const [activePostId, setActivePostId] = useState<string | null>(initialPostId);
 
   const [internalIsLeftOpen, setInternalIsLeftOpen] = useState(true);
   const isLeftOpen = propIsItineraryOpen !== undefined ? propIsItineraryOpen : internalIsLeftOpen;
@@ -1018,7 +1027,8 @@ export function InspirationImmersiveViewer({
   const trackScrollRef = useRef<HTMLDivElement | null>(null);
   const mediaItemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const activePostIdRef = useRef<string | null>(activePostId);
-  const lastCommittedPostIdRef = useRef<string | null>(activePostId);
+  // Bắt đầu null để bài mở sẵn (initialPostId) vẫn được cuộn tới khi danh sách tải xong.
+  const lastCommittedPostIdRef = useRef<string | null>(null);
   const targetIndexRef = useRef<number>(0);
   const isProgrammaticNavRef = useRef<boolean>(false);
   const navCooldownRef = useRef<number>(0);
@@ -1044,7 +1054,10 @@ export function InspirationImmersiveViewer({
 
   const isSavedMode = filterMode === 'saved';
   // Tìm kiếm không chạy ở đây: nhấn Enter thì trang Cảm hứng hiện grid kết quả (search của discovery).
-  const reelsQuery = useReelsFeed({ enabled: isReady, isSavedOnly: isSavedMode });
+  const isSearchReels = searchReelIds !== undefined;
+  const feedQuery = useReelsFeed({ enabled: isReady && !isSearchReels, isSavedOnly: isSavedMode });
+  const searchReelsQuery = useReelsByIds(searchReelIds ?? [], { enabled: isSearchReels });
+  const reelsQuery = isSearchReels ? searchReelsQuery : feedQuery;
   const postsQuery = reelsQuery;
 
   const reelMap = useMemo(() => {
@@ -1710,6 +1723,12 @@ export function InspirationImmersiveViewer({
           className={styles.centerPanel}
           aria-label={activePost ? activePost.title : vi.api.feedNavAria}
         >
+            {onBackToResults && (
+              <button type="button" className={styles.searchBackPill} onClick={onBackToResults}>
+                <SocialIcon name="chevronLeft" size={16} />
+                {vi.api.searchResultsBack}
+              </button>
+            )}
             {filterMode === 'saved' && !user ? (
               <div className={`empty-state ${styles.centerEmptyBox}`}>
                 <p>{vi.api.loginRequired}</p>
@@ -1741,7 +1760,9 @@ export function InspirationImmersiveViewer({
                   {/* Top-Left Volume + Slider & Top-Right Hover Controls (More / Fullscreen) */}
                   <>
                     {reelCard?.video && activePost.postType === 'video' && !isMediaError && (
-                      <div className={styles.stageTopLeftControls}>
+                      <div
+                        className={`${styles.stageTopLeftControls} ${onBackToResults ? styles.stageTopLeftControlsBelowBack : ''}`}
+                      >
                         <div className={styles.volumeControlPill}>
                           <button
                             type="button"

@@ -433,7 +433,6 @@ export const api = {
   searchResultsBack: 'Quay lại kết quả',
   searchResultReelBadge: 'Reels',
   searchResultLikes: '{count} lượt thích',
-  searchResultReelUnavailable: 'Chưa mở được Reels từ kết quả tìm kiếm, tính năng này sẽ có sớm.',
   timeJustNow: 'Vừa xong',
   timeMinutesAgo: '{count} phút trước',
   timeHoursAgo: '{count} giờ trước',
