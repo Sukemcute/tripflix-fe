@@ -217,6 +217,7 @@ export * from './payResultDtoOutcome';
 export * from './policiesDto';
 export * from './postCommentStatsResponseDto';
 export * from './postFollowerPageDto';
+export * from './postImageDto';
 export * from './postReactionDto';
 export * from './postRecommendationItemDto';
 export * from './postRecommendationItemDtoSource';

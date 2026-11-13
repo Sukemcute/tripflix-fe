@@ -289,6 +289,11 @@ export type mediaUploadControllerCompleteUploadResponse410 = {
   status: 410;
 };
 
+export type mediaUploadControllerCompleteUploadResponse422 = {
+  data: MediaErrorDto;
+  status: 422;
+};
+
 export type mediaUploadControllerCompleteUploadResponseSuccess =
   mediaUploadControllerCompleteUploadResponse202 & {
     headers: Headers;
@@ -297,6 +302,7 @@ export type mediaUploadControllerCompleteUploadResponseError = (
   | mediaUploadControllerCompleteUploadResponse404
   | mediaUploadControllerCompleteUploadResponse409
   | mediaUploadControllerCompleteUploadResponse410
+  | mediaUploadControllerCompleteUploadResponse422
 ) & {
   headers: Headers;
 };

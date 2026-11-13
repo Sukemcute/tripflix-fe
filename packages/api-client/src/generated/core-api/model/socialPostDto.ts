@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { PostImageDto } from './postImageDto';
 import type { PostViewerContextDto } from './postViewerContextDto';
 import type { SocialPostDtoPostType } from './socialPostDtoPostType';
 import type { SocialPostDtoReactionCounts } from './socialPostDtoReactionCounts';
@@ -29,6 +30,8 @@ export interface SocialPostDto {
   mediaIds: string[];
   /** @nullable */
   coverMediaId: string | null;
+  /** Ảnh của bài viết (vlog) theo đúng thứ tự mediaIds; Reels luôn rỗng */
+  images?: PostImageDto[];
   /** @nullable */
   tripAttachment: TripAttachmentDto | null;
   reactionCounts: SocialPostDtoReactionCounts;
