@@ -205,6 +205,7 @@ export const api = {
   commentEdited: 'đã sửa',
   followAuthor: 'Theo dõi',
   unfollowAuthor: 'Bỏ theo dõi',
+  commentUnavailable: 'Bình luận này không còn hiển thị.',
   hideReplies: 'Ẩn trả lời',
   // Thanh tìm kiếm trang Cảm hứng (TF06K)
   searchWhere: 'Đi đâu, ở đâu, chơi gì',
