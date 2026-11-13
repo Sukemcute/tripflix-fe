@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useHomeRecommendations } from '@tripflix/api-client';
@@ -140,30 +140,6 @@ function ExperienceBody({ combo, isOutgoing }: { combo: RecommendationCombo; isO
   );
 }
 
-function handleCardMouseMove(e: MouseEvent<HTMLAnchorElement>) {
-  const card = e.currentTarget;
-  const rect = card.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  const xPercent = (x / rect.width) * 100;
-  const yPercent = (y / rect.height) * 100;
-  const tiltX = (x / rect.width - 0.5) * 2;
-  const tiltY = (y / rect.height - 0.5) * 2;
-
-  card.style.setProperty('--card-tilt-x', String(tiltX));
-  card.style.setProperty('--card-tilt-y', String(tiltY));
-  card.style.setProperty('--mouse-x', `${xPercent}%`);
-  card.style.setProperty('--mouse-y', `${yPercent}%`);
-}
-
-function handleCardMouseLeave(e: MouseEvent<HTMLAnchorElement>) {
-  const card = e.currentTarget;
-  card.style.removeProperty('--card-tilt-x');
-  card.style.removeProperty('--card-tilt-y');
-  card.style.removeProperty('--mouse-x');
-  card.style.removeProperty('--mouse-y');
-}
-
 export function OtaHomeRecommendations() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [prevIndex, setPrevIndex] = useState<number | null>(null);
@@ -279,8 +255,6 @@ export function OtaHomeRecommendations() {
           className={styles.destination}
           aria-label={`Khám phá điểm đến ${activeCombo.destination.name}`}
           data-home-banner
-          onMouseMove={handleCardMouseMove}
-          onMouseLeave={handleCardMouseLeave}
         >
           <div className={styles.cardSpecularGlare} aria-hidden="true" />
           {prevCombo ? (
@@ -301,8 +275,6 @@ export function OtaHomeRecommendations() {
           className={styles.destination}
           aria-label={`Tìm nơi ở tại ${activeCombo.destination.name}`}
           data-home-banner
-          onMouseMove={handleCardMouseMove}
-          onMouseLeave={handleCardMouseLeave}
         >
           <div className={styles.cardSpecularGlare} aria-hidden="true" />
           {prevCombo ? (
@@ -323,8 +295,6 @@ export function OtaHomeRecommendations() {
           className={styles.destination}
           aria-label={`Khám phá ${activeCombo.experience.name}`}
           data-home-banner
-          onMouseMove={handleCardMouseMove}
-          onMouseLeave={handleCardMouseLeave}
         >
           <div className={styles.cardSpecularGlare} aria-hidden="true" />
           {prevCombo ? (

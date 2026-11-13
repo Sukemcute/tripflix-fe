@@ -401,11 +401,12 @@
 .badgeShimmerGlow {
   position: absolute;
   top: 0;
-  left: -100%;
+  left: 0;
   width: 60%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
   animation: shimmerSweep 3.5s infinite;
+  will-change: transform;
   pointer-events: none;
 }
 
@@ -413,11 +414,11 @@
 
   0%,
   65% {
-    left: -100%;
+    transform: translateX(-170%);
   }
 
   100% {
-    left: 160%;
+    transform: translateX(270%);
   }
 }
 
