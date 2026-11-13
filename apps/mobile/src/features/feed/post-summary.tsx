@@ -1,12 +1,13 @@
 import { usePostSummary } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, nativeFonts, radius, spacing as s } from '@tripflix/tokens';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
   FadeIn,
   ReduceMotion,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withSpring,
   withTiming,
@@ -20,6 +21,11 @@ const TOGGLE_HIT_SLOP = (mobileLayout.touchTarget - TOGGLE_HEIGHT) / 2;
 const SUMMARY_FADE_IN = FadeIn.duration(CHROME_FADE.duration).reduceMotion(ReduceMotion.System);
 /** Nhãn mục mà tripflix-ai ghép vào một chuỗi: "Khen: …. Chê: …. Khác video: …." */
 const SECTION_START = /(?:^|\s)(Khen|Chê|Khác video):\s*/g;
+
+/** Chữ hiện dần từng từ như Tripi đang viết; đoạn dài vẫn xong trong STREAM_MAX_MS. */
+const STREAM_TICK_MS = 40;
+const STREAM_MS_PER_WORD = 35;
+const STREAM_MAX_MS = 2200;
 
 export type SummarySection = { label: string | null; text: string };
 
@@ -38,11 +44,45 @@ export function splitSummarySections(summary: string): SummarySection[] {
   return sections;
 }
 
+/** Vị trí ngay sau mỗi từ, đếm nối tiếp qua các mục, để hiện dần theo từ thay vì cắt giữa chữ. */
+export function findWordEnds(sections: SummarySection[]): number[] {
+  const ends: number[] = [];
+  let offset = 0;
+  for (const section of sections) {
+    for (const word of section.text.matchAll(/\S+/g)) ends.push(offset + word.index + word[0].length);
+    offset += section.text.length;
+  }
+  return ends;
+}
+
+/** Số ký tự đang hiện (null là hiện hết). start() chạy lại từ đầu, trừ khi người dùng bật Reduce Motion. */
+function useWordStream(wordEnds: number[]) {
+  const isReduceMotion = useReducedMotion();
+  const [shownWords, setShownWords] = useState<number | null>(null);
+  const wordCount = wordEnds.length;
+  useEffect(() => {
+    if (shownWords === null || shownWords >= wordCount) return;
+    const ticks = Math.max(1, Math.round(Math.min(wordCount * STREAM_MS_PER_WORD, STREAM_MAX_MS) / STREAM_TICK_MS));
+    const wordsPerTick = Math.ceil(wordCount / ticks);
+    const timer = setTimeout(
+      () => setShownWords((shown) => (shown === null ? null : Math.min(wordCount, shown + wordsPerTick))),
+      STREAM_TICK_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [shownWords, wordCount]);
+  const start = () => {
+    if (!isReduceMotion && wordCount > 1) setShownWords(0);
+  };
+  const visibleChars = shownWords === null || shownWords >= wordCount ? null : (wordEnds[shownWords - 1] ?? 0);
+  return { visibleChars, start };
+}
+
 /**
  * Tóm tắt bình luận ở đầu bình luận reel. Tải sẵn; bài chưa có tóm tắt (đang tải,
  * chưa đủ bình luận, lỗi) thì không hiện gì. Nút "Tóm tắt" đỏ ẩn hoặc hiện phần nội dung.
  * Khung nội dung đổi chiều cao thật từng khung hình, nên bình luận bên dưới trượt theo
- * thay vì nhảy chỗ rồi bị khối tóm tắt đè lên.
+ * thay vì nhảy chỗ rồi bị khối tóm tắt đè lên. Lần mở đầu tiên chữ hiện dần từng từ,
+ * khung cao dần theo chữ; mở lại thì hiện đủ ngay.
  */
 export function CommunitySummary({ postId }: { postId: string }) {
   const { data: summary } = usePostSummary(postId, { autoLoad: true });
@@ -50,6 +90,10 @@ export function CommunitySummary({ postId }: { postId: string }) {
   const bodyHeight = useSharedValue(0);
   const bodyOpacity = useSharedValue(0);
   const measuredHeight = useRef(0);
+  const hasStreamed = useRef(false);
+  const sections = useMemo(() => (summary?.summary ? splitSummarySections(summary.summary) : []), [summary?.summary]);
+  const wordEnds = useMemo(() => findWordEnds(sections), [sections]);
+  const { visibleChars, start: startStream } = useWordStream(wordEnds);
   useEffect(() => {
     bodyOpacity.set(withTiming(isOpen ? 1 : 0, CHROME_FADE));
     bodyHeight.set(
@@ -62,6 +106,15 @@ export function CommunitySummary({ postId }: { postId: string }) {
     measuredHeight.current = height;
     // Nội dung đổi (bản tóm tắt mới) khi đang mở thì khung theo kịp ngay.
     if (isOpen) bodyHeight.set(withSpring(height, SHEET_OPEN_SPRING));
+  };
+  const toggle = () => {
+    if (!isOpen && !hasStreamed.current) {
+      hasStreamed.current = true;
+      // Khung mở từ chiều cao của phần chữ đầu tiên rồi cao dần theo chữ, không bung hết rồi mới hiện chữ.
+      measuredHeight.current = 0;
+      startStream();
+    }
+    setOpen((open) => !open);
   };
   const frameStyle = useAnimatedStyle(() => ({ height: bodyHeight.get() }));
   const contentStyle = useAnimatedStyle(() => ({ opacity: bodyOpacity.get() }));
@@ -84,7 +137,7 @@ export function CommunitySummary({ postId }: { postId: string }) {
           accessibilityLabel={isOpen ? copy.dismiss : copy.open}
           accessibilityState={{ expanded: isOpen }}
           hitSlop={TOGGLE_HIT_SLOP}
-          onPress={() => setOpen((open) => !open)}
+          onPress={toggle}
           style={({ pressed }) => [styles.toggle, pressed && styles.pressed]}
           testID="community-summary-toggle"
         >
@@ -110,16 +163,26 @@ export function CommunitySummary({ postId }: { postId: string }) {
               </Notice>
             </View>
           )}
-          {splitSummarySections(summary.summary).map((section, i) => (
-            <Txt key={i} variant="small" style={styles.body} selectable>
-              {section.label && <Txt variant="small" style={[styles.body, styles.label]}>{section.label}: </Txt>}
-              {section.text}
-            </Txt>
-          ))}
+          {sections.map((section, i) => {
+            const sectionStart = findSectionStart(sections, i);
+            const shown = visibleChars === null ? section.text : section.text.slice(0, Math.max(0, visibleChars - sectionStart));
+            if (!shown) return null;
+            return (
+              <Txt key={i} variant="small" style={styles.body} selectable>
+                {section.label && <Txt variant="small" style={[styles.body, styles.label]}>{section.label}: </Txt>}
+                {shown}
+              </Txt>
+            );
+          })}
         </Animated.View>
       </Animated.View>
     </Animated.View>
   );
+}
+
+/** Vị trí ký tự đầu của mục thứ `index` khi nối các mục lại, cùng cách đếm với findWordEnds. */
+function findSectionStart(sections: SummarySection[], index: number): number {
+  return sections.slice(0, index).reduce((sum, section) => sum + section.text.length, 0);
 }
 
 const styles = StyleSheet.create({
