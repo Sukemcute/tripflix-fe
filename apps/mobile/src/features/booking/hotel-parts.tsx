@@ -13,7 +13,7 @@ import { t, vi } from '@tripflix/i18n';
 import { colors, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { Pressable, ScrollView, View } from 'react-native';
-import { Icon, money, Notice, Row, Txt, ui } from '@/components/mobile-ui';
+import { Button, Icon, money, Notice, Row, Txt, ui } from '@/components/mobile-ui';
 import { saveBookingSelection, useBookingSelection } from './cart-store';
 
 const text = vi.commerce;
@@ -223,6 +223,8 @@ function RateRow({
   stay,
   rooms,
   isDisabled,
+  onPick,
+  pickedRatePlanCode,
 }: {
   hotel: CommerceHotel;
   room: Room;
@@ -230,16 +232,18 @@ function RateRow({
   stay: Guests;
   rooms: number;
   isDisabled: boolean;
+  onPick?: (ratePlanCode: string) => void;
+  pickedRatePlanCode?: string;
 }) {
   const selection = useBookingSelection();
-  const isSelected = selection.items.some(
-    (item) => item.productId === room.productId && item.ratePlanCode === rate.code,
-  );
-  const fitsParty = rooms <= stay.adults;
+  const isSelected = onPick
+    ? pickedRatePlanCode === rate.code
+    : selection.items.some((item) => item.productId === room.productId && item.ratePlanCode === rate.code);
+  const fitsParty = !!onPick || rooms <= stay.adults;
   const pricePerRoom = rate.totalPrice === null ? null : Math.round(rate.totalPrice / room.roomsNeeded);
   const stayTotal = pricePerRoom === null ? null : rooms * pricePerRoom;
   const discount =
-    stayTotal === null || !fitsParty
+    onPick || stayTotal === null || !fitsParty
       ? 0
       : calculateChildStayDiscount({ stayTotal, capacity: rooms * room.maxGuests, children: stay.children });
   const nights = nightsBetween(hotel.stay.checkIn, hotel.stay.checkOut);
@@ -317,23 +321,29 @@ function RateRow({
       )}
       {room.isAvailable && pricePerRoom !== null && (
         <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.md }}>
-          <RateQty
-            booking={{
-              productId: room.productId,
-              ratePlanCode: rate.code,
-              checkIn: hotel.stay.checkIn,
-              checkOut: hotel.stay.checkOut,
-              propertyId: hotel.id,
-              propertyName: hotel.name,
-              roomName: room.name,
-              ratePlanName: rate.name,
-              maxGuests: room.maxGuests,
-              stayPricePerRoom: pricePerRoom,
-              maxQty: Math.min(room.remaining ?? BOOKING_CART_MAX_ROOMS, BOOKING_CART_MAX_ROOMS),
-            }}
-            guests={stay}
-            isDisabled={isDisabled}
-          />
+          {onPick ? (
+            <Button disabled={isDisabled} onPress={() => onPick(rate.code)}>
+              {isSelected ? vi.mobile.tripPlan.picked : hotelText.pickRate}
+            </Button>
+          ) : (
+            <RateQty
+              booking={{
+                productId: room.productId,
+                ratePlanCode: rate.code,
+                checkIn: hotel.stay.checkIn,
+                checkOut: hotel.stay.checkOut,
+                propertyId: hotel.id,
+                propertyName: hotel.name,
+                roomName: room.name,
+                ratePlanName: rate.name,
+                maxGuests: room.maxGuests,
+                stayPricePerRoom: pricePerRoom,
+                maxQty: Math.min(room.remaining ?? BOOKING_CART_MAX_ROOMS, BOOKING_CART_MAX_ROOMS),
+              }}
+              guests={stay}
+              isDisabled={isDisabled}
+            />
+          )}
         </View>
       )}
     </View>
@@ -358,12 +368,16 @@ export function RoomCard({
   stay,
   rooms,
   isDisabled,
+  onPick,
+  pickedRatePlanCode,
 }: {
   hotel: CommerceHotel;
   room: Room;
   stay: Guests;
   rooms: number;
   isDisabled: boolean;
+  onPick?: (ratePlanCode: string) => void;
+  pickedRatePlanCode?: string;
 }) {
   const [isAmenityOpen, setAmenityOpen] = useState(false);
   const amenities = isAmenityOpen ? room.amenities : room.amenities.slice(0, AMENITY_PREVIEW);
@@ -438,6 +452,8 @@ export function RoomCard({
             rate={rate}
             stay={stay}
             rooms={rooms}
+            onPick={onPick}
+            pickedRatePlanCode={pickedRatePlanCode}
             isDisabled={isDisabled}
           />
         ))}

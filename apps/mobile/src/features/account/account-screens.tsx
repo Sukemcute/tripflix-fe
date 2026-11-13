@@ -93,7 +93,7 @@ export function TripsScreen() {
             <Button
               tone="teal"
               icon="create-outline"
-              onPress={() => review.requireAccount('create', '/(tabs)/trips')}
+              onPress={() => review.requireAccount('create', '/my-trips')}
             >
               {copy.trips.tellStory}
             </Button>
@@ -129,7 +129,7 @@ export function ProfileScreen() {
   const review = useReview();
   const [sheet, setSheet] = useState<'help' | 'settings' | null>(null);
   const menus: { label: string; icon: IconName; action: () => void }[] = [
-    { label: copy.profile.myTrips, icon: 'bag-handle-outline', action: () => router.push('/(tabs)/trips') },
+    { label: copy.profile.myTrips, icon: 'bag-handle-outline', action: () => router.push('/my-trips') },
     { label: copy.profile.savedTrips, icon: 'bookmark-outline', action: () => router.push('/saved') },
     {
       label: copy.profile.create,
@@ -275,7 +275,7 @@ export function NotificationsScreen() {
       {hasOrders && (
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push('/(tabs)/trips')}
+          onPress={() => router.push('/my-trips')}
           style={[ui.card, ui.row]}
         >
           <Icon name="checkmark-circle-outline" color={c.tealInk} size={32} />

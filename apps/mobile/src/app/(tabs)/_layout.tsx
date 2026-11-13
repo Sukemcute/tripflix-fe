@@ -8,7 +8,7 @@ const TABS: readonly { name: string; label: MessageKey }[] = [
   { name: 'index', label: 'mobile.tabs.reels' },
   { name: 'explore', label: 'mobile.tabs.explore' },
   { name: 'compose', label: 'mobile.tabs.create' },
-  { name: 'trips', label: 'mobile.tabs.trips' },
+  { name: 'book', label: 'mobile.tabs.book' },
   { name: 'me', label: 'mobile.tabs.profile' },
 ];
 

@@ -32,7 +32,7 @@ import {
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, UnavailableScreen } from '@/components/api-state';
 import { LiveFeedScreen } from '@/features/feed/live-feed-screen';
-import { HotelSearchResults } from './hotel-search-results';
+import { HotelSearchResults, TripHotelSearchScreen } from './hotel-search-results';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SearchDropPanel } from './search-drop-panel';
@@ -179,11 +179,7 @@ function PostSearchResultCard({ item }: { item: ExploreItemDto }) {
           {item.reason}
         </Txt>
       ) : null}
-      {item.priceFrom != null && (
-        <Txt variant="label">
-          Chi phí: ~{money(item.priceFrom)} / người
-        </Txt>
-      )}
+      {item.priceFrom != null && <Txt variant="label">Chi phí: ~{money(item.priceFrom)} / người</Txt>}
       <Button tone="secondary" icon="arrow-forward" onPress={openPost}>
         Xem bài viết
       </Button>
@@ -295,9 +291,9 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
           />
           {text.length > 0 && (
             <IconButton name="close-circle-outline" label="Xoá tìm kiếm" onPress={clearSearch} />
-        )}
-        <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={() => submitSearch()} />
-      </View>
+          )}
+          <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={() => submitSearch()} />
+        </View>
       )}
 
       {isBrowsing && (
@@ -560,7 +556,10 @@ function StayRecommendations() {
         const bestStay = dest.hotels[0];
         if (!bestStay) return null;
         return (
-          <Card key={dest.province.slug || bestStay.hotelId} style={{ padding: 0, overflow: 'hidden', gap: 0 }}>
+          <Card
+            key={dest.province.slug || bestStay.hotelId}
+            style={{ padding: 0, overflow: 'hidden', gap: 0 }}
+          >
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={bestStay.name}
@@ -653,7 +652,19 @@ function StayRecommendations() {
 }
 
 export function LiveSearchEntry() {
-  const { view } = useLocalSearchParams<{ view?: string }>();
+  const { view, pick, pickId, pickKey, q, checkIn, checkOut, adults } = useLocalSearchParams<{
+    view?: string;
+    pick?: string;
+    pickId?: string;
+    pickKey?: string;
+    q?: string;
+    checkIn?: string;
+    checkOut?: string;
+    adults?: string;
+  }>();
+  if (pick === 'trip' && pickId === 'hotelProperty' && pickKey && checkIn && checkOut && adults) {
+    return <TripHotelSearchScreen q={q ?? ''} pick={{ key: pickKey, checkIn, checkOut, adults }} />;
+  }
   return view === 'mine' ? <LiveFeedScreen kind="mine" /> : <LiveSearchScreen back />;
 }
 export function LiveAssistantScreen() {

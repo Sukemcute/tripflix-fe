@@ -9,6 +9,10 @@ import {
   getTripNights,
   hasTripPlan,
   pickCheapestOffer,
+  listTripPlanOffers,
+  getTripPlanTotal,
+  isValidTripPlanPassengers,
+  TRIP_PLAN_MAX_ITEMS,
 } from './trip-plan';
 
 describe('trip plan', () => {
@@ -47,7 +51,11 @@ describe('trip plan', () => {
       hotelId: 'h1',
       hotelName: 'Ana Mandara',
       items: [
-        { day: 1, title: 'Máy bay SGN → DLI', transport: { mode: 'flight', fromAirport: 'SGN', toAirport: 'DLI' } },
+        {
+          day: 1,
+          title: 'Máy bay SGN → DLI',
+          transport: { mode: 'flight', fromAirport: 'SGN', toAirport: 'DLI' },
+        },
         { day: 1, title: 'Hồ Xuân Hương', location: 'Trung tâm' },
         { day: 2, title: 'Xe khách', notes: 'Nhà xe Phương Trang', transport: { mode: 'bus' } },
       ],
@@ -57,16 +65,146 @@ describe('trip plan', () => {
     ).toBeNull();
   });
 
-  it('chỉ cho đặt combo có chỗ ở và đủ tuyến bay cho các chặng phương tiện đã chọn', () => {
+  it('cho đặt riêng vé hoặc phòng và giữ các chặng tự túc', () => {
     const flight = { day: 1, transport: { mode: 'flight', fromAirport: 'SGN', toAirport: 'DLI' } } as const;
-    const hotelId = 'hotel-01';
-    expect(getBookableTripPlan({ hotelId, items: [{ day: 1 }] })).toBeNull();
-    expect(getBookableTripPlan({ items: [flight] })).toBeNull();
-    expect(getBookableTripPlan({ hotelId, items: [{ day: 1, transport: { mode: 'flight' } }] })).toBeNull();
-    expect(getBookableTripPlan({ hotelId, items: [flight, { day: 2, transport: { mode: 'bus' } }] })).toBeNull();
-    expect(getBookableTripPlan({ hotelId, items: [flight, { day: 2 }] })).toEqual({
-      hotelId,
+    expect(getBookableTripPlan({})).toBeNull();
+    expect(getBookableTripPlan({ items: [{ day: 1, transport: { mode: 'bus' } }] })).toBeNull();
+    expect(getBookableTripPlan({ hotelId: 'h', items: [{ day: 1 }] })).toEqual({
+      hotelId: 'h',
+      flights: [],
+      selfArranged: [],
+    });
+    expect(getBookableTripPlan({ items: [flight] })).toEqual({
+      hotelId: null,
       flights: [{ day: 1, from: 'SGN', to: 'DLI' }],
+      selfArranged: [],
+    });
+    expect(
+      getBookableTripPlan({
+        hotelId: 'h',
+        items: [
+          flight,
+          { day: 2, title: 'Xe đến biển', transport: { mode: 'bus' } },
+          { day: 3, title: 'Bay tự đặt', transport: { mode: 'flight' } },
+        ],
+      }),
+    ).toEqual({
+      hotelId: 'h',
+      flights: [{ day: 1, from: 'SGN', to: 'DLI' }],
+      selfArranged: [
+        { day: 2, title: 'Xe đến biển', mode: 'bus' },
+        { day: 3, title: 'Bay tự đặt', mode: 'flight' },
+      ],
+    });
+  });
+
+  it('không tra vé có mã sân bay hoặc ngày không hợp lệ', () => {
+    for (const transport of [
+      { mode: 'flight' as const, fromAirport: 'sgn', toAirport: 'DLI' },
+      { mode: 'flight' as const, fromAirport: 'SGN', toAirport: 'SGN' },
+      { mode: 'flight' as const, fromAirport: 'SGN', toAirport: 'XX' },
+      { mode: 'train' as const },
+      { mode: 'car' as const },
+      { mode: 'other' as const },
+    ]) {
+      expect(getBookableTripPlan({ hotelId: 'h', items: [{ day: 1, transport }] })).toEqual({
+        hotelId: 'h',
+        flights: [],
+        selfArranged: [{ day: 1, mode: transport.mode }],
+      });
+    }
+    for (const day of [0, 31, 1.5]) {
+      expect(
+        getBookableTripPlan({
+          items: [{ day, transport: { mode: 'flight', fromAirport: 'SGN', toAirport: 'DLI' } }],
+        }),
+      ).toBeNull();
+    }
+  });
+
+  it('sắp chặng theo ngày và giữ giới hạn số mục', () => {
+    const leg = (day: number) => ({
+      day,
+      transport: { mode: 'flight' as const, fromAirport: 'SGN', toAirport: 'DLI' },
+    });
+    expect(getBookableTripPlan({ items: [leg(3), leg(1)] })?.flights.map((flight) => flight.day)).toEqual([
+      1, 3,
+    ]);
+    expect(
+      getBookableTripPlan({
+        items: Array.from({ length: TRIP_PLAN_MAX_ITEMS }, (_, index) => leg(index + 1)),
+      }),
+    ).toBeNull();
+    expect(
+      getBookableTripPlan({
+        hotelId: 'h',
+        items: Array.from({ length: TRIP_PLAN_MAX_ITEMS - 1 }, (_, index) => leg(index + 1)),
+      }),
+    ).not.toBeNull();
+  });
+
+  it('liệt kê mọi giá vé và phòng còn bán theo giá tăng dần', () => {
+    const offers = [
+      { productId: 'sold', isAvailable: false, plans: [{ code: 'X', totalPrice: 1 }] },
+      {
+        productId: 'a',
+        isAvailable: true,
+        plans: [
+          { code: 'BB', totalPrice: 400 },
+          { code: 'RO', totalPrice: 200 },
+        ],
+      },
+      {
+        productId: 'b',
+        isAvailable: true,
+        plans: [
+          { code: 'Y', totalPrice: 300 },
+          { code: 'N', totalPrice: null },
+          { code: 'bad', totalPrice: NaN },
+          { code: 'negative', totalPrice: -1 },
+        ],
+      },
+    ];
+    expect(listTripPlanOffers(offers)).toEqual([
+      { productId: 'a', ratePlanCode: 'RO', totalPrice: 200 },
+      { productId: 'b', ratePlanCode: 'Y', totalPrice: 300 },
+      { productId: 'a', ratePlanCode: 'BB', totalPrice: 400 },
+    ]);
+    expect(offers[1]!.plans[0]!.totalPrice).toBe(400);
+    expect(listTripPlanOffers([])).toEqual([]);
+  });
+
+  it('chỉ cộng các mục được chọn và có giá, kể cả giá bằng không', () => {
+    const offer = { productId: 'a', ratePlanCode: 'RO', totalPrice: 200 };
+    expect(
+      getTripPlanTotal([
+        { isSelected: true, offer },
+        { isSelected: false, offer },
+        { isSelected: true, offer: null },
+      ]),
+    ).toBe(200);
+    expect(getTripPlanTotal([])).toBe(0);
+    expect(getTripPlanTotal([{ isSelected: true, offer: { ...offer, totalPrice: 0 } }])).toBe(0);
+  });
+
+  it('kiểm tra người lớn, trẻ em chiếm ghế và em bé ngồi lòng', () => {
+    expect(isValidTripPlanPassengers({ adults: 1, children: 8, infants: 1 }, 9)).toBe(true);
+    for (const passengers of [
+      { adults: 0, children: 1, infants: 0 },
+      { adults: 2, children: 8, infants: 0 },
+      { adults: 1, children: 0, infants: 2 },
+      { adults: 1.5, children: 0, infants: 0 },
+      { adults: 1, children: -1, infants: 0 },
+      { adults: 1, children: 0, infants: NaN },
+    ])
+      expect(isValidTripPlanPassengers(passengers, 9)).toBe(false);
+  });
+
+  it('cho chọn khách sạn khi lộ trình chỉ có vé bay', () => {
+    expect(applyTripPlanChoices({ hotelId: null, flights: [] }, {})).toEqual({ hotelId: null, flights: [] });
+    expect(applyTripPlanChoices({ hotelId: null, flights: [] }, { hotelId: 'h2' })).toEqual({
+      hotelId: 'h2',
+      flights: [],
     });
   });
 
@@ -112,9 +250,12 @@ describe('trip plan', () => {
   it('ghép vé bay và phòng vào một đơn, chỉ gửi trẻ em khi có vé bay', () => {
     const rooms = [{ productId: 'P1', ratePlanCode: 'BB', checkIn: '2026-12-01', checkOut: '2026-12-03' }];
     const flights = [{ productId: 'F1', ratePlanCode: 'ECO', date: '2026-12-01' }];
-    expect(buildTripPlanCheckout({ adults: 2, children: 1, sourcePostId: 'post', flights, rooms })).toEqual({
+    expect(
+      buildTripPlanCheckout({ adults: 2, children: 1, infants: 1, sourcePostId: 'post', flights, rooms }),
+    ).toEqual({
       adults: 2,
       children: 1,
+      infants: 1,
       sourcePostId: 'post',
       items: [
         { productId: 'F1', checkIn: '2026-12-01', ratePlanCode: 'ECO' },
@@ -124,6 +265,12 @@ describe('trip plan', () => {
     expect(
       buildTripPlanCheckout({ adults: 2, children: 1, sourcePostId: 'post', flights: [], rooms }),
     ).not.toHaveProperty('children');
+    expect(
+      buildTripPlanCheckout({ adults: 2, infants: 1, sourcePostId: 'post', flights: [], rooms }),
+    ).not.toHaveProperty('infants');
+    expect(
+      buildTripPlanCheckout({ adults: 2, infants: 1, sourcePostId: 'post', flights, rooms: [] }),
+    ).toMatchObject({ infants: 1, items: [{ productId: 'F1' }] });
     expect(() =>
       buildTripPlanCheckout({ adults: 1, sourcePostId: 'post', flights: [], rooms: [] }),
     ).toThrow();
@@ -147,4 +294,3 @@ describe('trip plan', () => {
     expect(applyTripPlanChoices(plan, {})).toEqual(plan);
   });
 });
-
