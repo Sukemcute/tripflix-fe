@@ -417,13 +417,13 @@ export function CheckoutScreen() {
 
 export function SuccessScreen() {
   const { order } = useReview();
-  if (!order) return <Redirect href="/(tabs)/trips" />;
+  if (!order) return <Redirect href="/my-trips" />;
   return (
     <Screen
       back={false}
       footer={
         <>
-          <Button icon="arrow-forward" onPress={() => router.replace('/(tabs)/trips')}>
+          <Button icon="arrow-forward" onPress={() => router.replace('/my-trips')}>
             {copy.booking.viewTrips}
           </Button>
           <Button tone="text" onPress={() => router.replace('/(tabs)/explore')}>

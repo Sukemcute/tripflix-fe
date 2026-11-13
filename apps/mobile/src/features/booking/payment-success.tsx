@@ -59,7 +59,7 @@ export function PaymentSuccessScreen({ order }: { order: CheckoutDto }) {
         {order.confirmationCode && <PriceRow label={text.confirmation} amount={order.confirmationCode} />}
         <PriceRow total label={text.paidAmount} amount={money(order.total)} />
       </Card>
-      <Button icon="arrow-forward" onPress={() => router.replace('/(tabs)/trips')}>
+      <Button icon="arrow-forward" onPress={() => router.replace('/my-trips')}>
         {text.viewTrips}
       </Button>
       <Button

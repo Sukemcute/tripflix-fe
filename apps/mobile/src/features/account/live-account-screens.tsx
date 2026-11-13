@@ -32,7 +32,7 @@ export function LiveProfileScreen() {
   const [help, setHelp] = useState(false);
   const login = () => router.push({ pathname: '/login', params: { returnTo: '/(tabs)/me' } });
   const links = [
-    { label: profile.myTrips, icon: 'bag-handle-outline', onPress: () => router.navigate('/(tabs)/trips') },
+    { label: profile.myTrips, icon: 'bag-handle-outline', onPress: () => router.navigate('/my-trips') },
     { label: profile.savedTrips, icon: 'bookmark-outline', onPress: () => router.push('/saved') },
     {
       label: profile.create,
