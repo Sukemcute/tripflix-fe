@@ -34,6 +34,7 @@ import type {
   ModerationDetailDto,
   ModerationLogPageDto,
   ModerationQueuePageDto,
+  ModerationStatsDto,
   ScanRetryDto,
 } from '../model';
 
@@ -55,6 +56,139 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export type adminModerationControllerStatsResponse200 = {
+  data: ModerationStatsDto;
+  status: 200;
+};
+
+export type adminModerationControllerStatsResponseSuccess = adminModerationControllerStatsResponse200 & {
+  headers: Headers;
+};
+export type adminModerationControllerStatsResponse = adminModerationControllerStatsResponseSuccess;
+
+export const getAdminModerationControllerStatsUrl = () => {
+  return `/api/v1/admin/moderation/stats`;
+};
+
+/**
+ * @summary Số liệu tổng của hàng chờ, khiếu nại và scan, tính ở server
+ */
+export const adminModerationControllerStats = async (
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationControllerStatsResponse> => {
+  return http<adminModerationControllerStatsResponse>(getAdminModerationControllerStatsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAdminModerationControllerStatsQueryKey = () => {
+  return [`/api/v1/admin/moderation/stats`] as const;
+};
+
+export const getAdminModerationControllerStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminModerationControllerStats>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerStats>>, TError, TData>>;
+  request?: SecondParameter<typeof http>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminModerationControllerStatsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminModerationControllerStats>>> = ({ signal }) =>
+    adminModerationControllerStats({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminModerationControllerStats>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminModerationControllerStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationControllerStats>>
+>;
+export type AdminModerationControllerStatsQueryError = unknown;
+
+export function useAdminModerationControllerStats<
+  TData = Awaited<ReturnType<typeof adminModerationControllerStats>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerStats>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerStats>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerStats>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerStats<
+  TData = Awaited<ReturnType<typeof adminModerationControllerStats>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerStats>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerStats>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerStats>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerStats<
+  TData = Awaited<ReturnType<typeof adminModerationControllerStats>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerStats>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Số liệu tổng của hàng chờ, khiếu nại và scan, tính ở server
+ */
+
+export function useAdminModerationControllerStats<
+  TData = Awaited<ReturnType<typeof adminModerationControllerStats>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerStats>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminModerationControllerStatsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 export type adminModerationControllerFailedScansResponse200 = {
   data: FailedScanPageDto;

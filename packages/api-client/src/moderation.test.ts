@@ -34,3 +34,26 @@ it('giữ lỗi conflict của BE để giao diện không giả định đã x�
   vi.spyOn(globalThis, 'fetch').mockResolvedValue(json({ message: 'Đã xử lý' }, 409));
   await expect(moderationApi.decideAppeal('appeal', 'overturned')).rejects.toBeInstanceOf(HttpError);
 });
+
+it('đọc số liệu kiểm duyệt tính ở server', async () => {
+  const stats = {
+    pendingTotal: 122,
+    pendingUrgent: 32,
+    pendingPosts: 100,
+    pendingComments: 22,
+    oldestPendingAt: null,
+    autoHidden24h: 5,
+    reports24h: 7,
+    pendingAppeals: 1,
+    failedScans: 0,
+    deferredScans: 0,
+    urgentSeverity: 80,
+    generatedAt: '2026-11-14T00:00:00.000Z',
+  };
+  const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(json(stats));
+  const abort = new AbortController();
+  await expect(moderationApi.stats(abort.signal)).resolves.toEqual(stats);
+  const [url, init] = fetch.mock.calls[0]!;
+  expect(String(url)).toContain('/api/v1/admin/moderation/stats');
+  expect(init?.signal).toBe(abort.signal);
+});

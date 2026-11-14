@@ -15,5 +15,6 @@ export const AdminModerationControllerFailedScansReasonCode = {
   SEXUAL: 'SEXUAL',
   VIOLENCE: 'VIOLENCE',
   MISINFORMATION: 'MISINFORMATION',
+  EXTREMISM: 'EXTREMISM',
   OTHER: 'OTHER',
 } as const;

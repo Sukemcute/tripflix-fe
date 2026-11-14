@@ -14,5 +14,6 @@ export const DecisionDtoReasonCode = {
   SEXUAL: 'SEXUAL',
   VIOLENCE: 'VIOLENCE',
   MISINFORMATION: 'MISINFORMATION',
+  EXTREMISM: 'EXTREMISM',
   OTHER: 'OTHER',
 } as const;
