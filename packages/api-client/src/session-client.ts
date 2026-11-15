@@ -183,7 +183,7 @@ export class SessionClient {
   async sendLoginCode(input: { email: string; password: string }): Promise<LoginCodeResultDto> {
     const { email, password } = input;
     const response = await sendWithPasswords(
-      [{ plain: 'password', encrypted: 'encPassword', value: password, purpose: 'login' }],
+      [{ encrypted: 'encPassword', value: password, purpose: 'login' }],
       email,
       (fields) => auth.authControllerRequestLoginCode({ email, ...fields } as LoginCodeDto, this.authOptions),
     );
