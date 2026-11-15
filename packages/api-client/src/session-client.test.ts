@@ -266,3 +266,32 @@ describe('sendRegistrationCode', () => {
     expect(await session.requestRegistrationCode(input)).toBe('reg-3');
   });
 });
+
+describe('sendLoginCode and 2-step login', () => {
+  it('requests a login verification code and sends loginChallengeId + code on login', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(202, { loginChallengeId: 'chal-1', resendAfterSeconds: 60 }))
+      .mockResolvedValueOnce(json(200, { ...pair, refreshToken: undefined }))
+      .mockResolvedValueOnce(json(200, user));
+    const session = new SessionClient({ baseUrl: 'http://api', client: 'web' });
+    const challenge = await session.sendLoginCode({ email: user.email, password: 'example-password' });
+    expect(challenge).toEqual({ loginChallengeId: 'chal-1', resendAfterSeconds: 60 });
+
+    await session.login({
+      email: user.email,
+      password: 'example-password',
+      deviceName: 'Chrome',
+      loginChallengeId: challenge.loginChallengeId,
+      code: '12345678',
+    });
+    expect(session.getSnapshot().user?.id).toBe(user.id);
+    const [, loginInit] = fetchMock.mock.calls[1]!;
+    expect(JSON.parse(String(loginInit!.body))).toMatchObject({
+      email: user.email,
+      loginChallengeId: 'chal-1',
+      code: '12345678',
+      deviceName: 'Chrome',
+    });
+  });
+});

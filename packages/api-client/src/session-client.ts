@@ -1,6 +1,8 @@
 import * as auth from './generated/core-api/auth/auth';
 import type {
   GoogleLoginDto,
+  LoginCodeDto,
+  LoginCodeResultDto,
   LoginDto,
   MyProfileDto,
   RegisterDto,
@@ -18,6 +20,8 @@ export interface PasswordCredentials {
   email: string;
   password: string;
   deviceName?: string;
+  loginChallengeId?: string;
+  code?: string;
 }
 export type RegisterInput = Omit<RegisterDto, 'password' | 'encPassword'> & { password: string };
 
@@ -155,15 +159,37 @@ export class SessionClient {
   /** Mật khẩu được mã hoá trước khi gửi (TF056); server chưa bật mã hoá thì gửi như cũ. */
   async login(credentials: PasswordCredentials): Promise<void> {
     const version = ++this.version;
-    const { email, password, deviceName } = credentials;
+    const { email, password, deviceName, loginChallengeId, code } = credentials;
     const response = await sendWithPasswords(
       [{ plain: 'password', encrypted: 'encPassword', value: password, purpose: 'login' }],
       email,
-      async (fields) => auth.authControllerLogin(
-        { email, ...(deviceName ? { deviceName } : {}), ...fields } as LoginDto, await this.proofOptions('login'),
-      ),
+      async (fields) =>
+        auth.authControllerLogin(
+          {
+            email,
+            ...(deviceName ? { deviceName } : {}),
+            ...(loginChallengeId ? { loginChallengeId } : {}),
+            ...(code ? { code } : {}),
+            ...fields,
+          } as LoginDto,
+          await this.proofOptions('login'),
+        ),
     );
     await this.completeLogin(response.data, version);
+  }
+  /** Bước 1 đăng nhập bằng mật khẩu: kiểm tra email + mật khẩu và gửi mã xác thực 8 chữ số về email. */
+  async sendLoginCode(input: { email: string; password: string }): Promise<LoginCodeResultDto> {
+    const { email, password } = input;
+    const response = await sendWithPasswords(
+      [{ plain: 'password', encrypted: 'encPassword', value: password, purpose: 'login' }],
+      email,
+      (fields) => auth.authControllerRequestLoginCode({ email, ...fields } as LoginCodeDto, this.authOptions),
+    );
+    const { loginChallengeId, resendAfterSeconds } = readEntity(response.data, ['loginChallengeId']);
+    return {
+      loginChallengeId,
+      resendAfterSeconds: typeof resendAfterSeconds === 'number' ? resendAfterSeconds : 0,
+    };
   }
   /** Google ID token from Google Identity Services; tokens are kept exactly like a password login. */
   async loginWithGoogle(input: GoogleLoginDto): Promise<void> {
