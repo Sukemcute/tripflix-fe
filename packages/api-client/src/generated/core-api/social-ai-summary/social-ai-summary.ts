@@ -20,7 +20,12 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { PostSummaryResponseDto, SavePostSummaryDto } from '../model';
+import type {
+  MarkPostSummaryCheckedDto,
+  MarkPostSummaryCheckedResponseDto,
+  PostSummaryResponseDto,
+  SavePostSummaryDto,
+} from '../model';
 
 import { http } from '../../../http';
 
@@ -349,3 +354,152 @@ export function usePostSummaryControllerGetSummary<
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+export type postSummaryControllerMarkCheckedResponse200 = {
+  data: MarkPostSummaryCheckedResponseDto;
+  status: 200;
+};
+
+export type postSummaryControllerMarkCheckedResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type postSummaryControllerMarkCheckedResponse401 = {
+  data: void;
+  status: 401;
+};
+
+export type postSummaryControllerMarkCheckedResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type postSummaryControllerMarkCheckedResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type postSummaryControllerMarkCheckedResponseSuccess = postSummaryControllerMarkCheckedResponse200 & {
+  headers: Headers;
+};
+export type postSummaryControllerMarkCheckedResponseError = (
+  | postSummaryControllerMarkCheckedResponse400
+  | postSummaryControllerMarkCheckedResponse401
+  | postSummaryControllerMarkCheckedResponse403
+  | postSummaryControllerMarkCheckedResponse404
+) & {
+  headers: Headers;
+};
+
+export type postSummaryControllerMarkCheckedResponse =
+  postSummaryControllerMarkCheckedResponseSuccess | postSummaryControllerMarkCheckedResponseError;
+
+export const getPostSummaryControllerMarkCheckedUrl = (postId: string) => {
+  return `/api/v1/posts/${postId}/ai-summary/checked`;
+};
+
+/**
+ * Worker chạy lại nhưng inputHash trùng bản đang lưu nên không gọi LLM, không lưu bản mới. Core ghi checkedAt và số bình luận hiện tại để isStale không bị kẹt. Chỉ cập nhật khi inputHash khớp và checkedAt mới hơn generatedAt lẫn checkedAt đang có; gửi lại nhiều lần không sao.
+ * @summary AI báo đã kiểm lại, đầu vào không đổi (Nội bộ)
+ */
+export const postSummaryControllerMarkChecked = async (
+  postId: string,
+  markPostSummaryCheckedDto: MarkPostSummaryCheckedDto,
+  options?: Parameters<typeof http>[1],
+): Promise<postSummaryControllerMarkCheckedResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<postSummaryControllerMarkCheckedResponse>(getPostSummaryControllerMarkCheckedUrl(postId), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(markPostSummaryCheckedDto),
+  });
+};
+
+export const getPostSummaryControllerMarkCheckedMutationKey = () =>
+  ['postSummaryControllerMarkChecked'] as const;
+
+export const getPostSummaryControllerMarkCheckedMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof postSummaryControllerMarkChecked>>,
+    TError,
+    PostSummaryControllerMarkCheckedMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof postSummaryControllerMarkChecked>>,
+  TError,
+  PostSummaryControllerMarkCheckedMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPostSummaryControllerMarkCheckedMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof postSummaryControllerMarkChecked>>,
+    PostSummaryControllerMarkCheckedMutationVariables
+  > = (props) => {
+    const { postId, data } = props ?? {};
+
+    return postSummaryControllerMarkChecked(postId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PostSummaryControllerMarkCheckedMutationResult = NonNullable<
+  Awaited<ReturnType<typeof postSummaryControllerMarkChecked>>
+>;
+export type PostSummaryControllerMarkCheckedMutationBody = MarkPostSummaryCheckedDto;
+export type PostSummaryControllerMarkCheckedMutationError = void;
+export type PostSummaryControllerMarkCheckedMutationVariables = {
+  postId: string;
+  data: MarkPostSummaryCheckedDto;
+};
+
+/**
+ * @summary AI báo đã kiểm lại, đầu vào không đổi (Nội bộ)
+ */
+export const usePostSummaryControllerMarkChecked = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof postSummaryControllerMarkChecked>>,
+      TError,
+      PostSummaryControllerMarkCheckedMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof postSummaryControllerMarkChecked>>,
+  TError,
+  PostSummaryControllerMarkCheckedMutationVariables,
+  TContext
+> => {
+  return useMutation(getPostSummaryControllerMarkCheckedMutationOptions(options), queryClient);
+};

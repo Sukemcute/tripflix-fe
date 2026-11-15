@@ -7,6 +7,7 @@
 
 export interface PostFollowerPageDto {
   isEligible: boolean;
+  sharedPublishedAt?: string;
   recipients: string[];
   /** @nullable */
   nextCursor: string | null;

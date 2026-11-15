@@ -9,6 +9,7 @@ import {
   updateReelSocialCache,
   uploadChunkToPresignedUrl,
   useApiSession,
+  useReelsByIds,
   useReelsFeed,
   useSocialPosts,
 } from '@tripflix/api-client';
@@ -34,12 +35,15 @@ import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { getAvatarTone } from './avatar-tone';
 import { EmojiPicker } from './emoji-picker';
+import { CommentVisibility } from './comment-visibility';
 import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
 import {
+  attachReelVideoSource,
   getReelRenderMode,
   pickReelAfterRemoval,
+  prependPinnedReelCards,
   shouldShowReelBackdrop,
   toReelPost,
   type ReelPost,
@@ -48,6 +52,7 @@ import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
 import styles from './live-posts.module.css';
+import { ShareMenu, type ShareMenuHandle } from './share-menu';
 
 // Trang chi tiết bài viết nằm ở post-detail.tsx; giữ export ở đây để app/trips/[slug]/page.tsx không phải đổi.
 export { LivePostDetail } from './post-detail';
@@ -583,7 +588,8 @@ interface ReelActionRailProps {
   isCommentOpen: boolean;
   onToggleLike: () => void;
   onToggleSave: () => void;
-  onShare: () => void;
+  /** Nhận nút vừa bấm để menu chia sẻ mở cạnh nút. */
+  onShare: (anchor: HTMLElement) => void;
   onToggleComments: () => void;
 }
 
@@ -658,7 +664,12 @@ function ReelActionRail({
           </Link>
         )}
 
-        <button type="button" className={styles.verticalActionItem} aria-label={vi.api.share} onClick={onShare}>
+        <button
+          type="button"
+          className={styles.verticalActionItem}
+          aria-label={vi.api.share}
+          onClick={(event) => onShare(event.currentTarget)}
+        >
           <span className={styles.verticalActionCircle}>
             <SocialIcon name="share" size={26} />
           </span>
@@ -738,17 +749,14 @@ function MediaTrackItem({
     }
   }, [isActive]);
 
-  // Khi thẻ video bị gỡ (lướt ra xa) chỉ pause() hoặc gỡ khỏi DOM thì trình duyệt vẫn có thể tải tiếp
-  // segment, giữ bộ đệm và bộ giải mã tới lúc dọn rác. Xoá src rồi load() để ngắt tải và trả tài nguyên ngay.
+  // Gắn nguồn ở đây (không qua prop src) để lần dọn của Strict Mode không làm video mất nguồn; lướt ra xa thì
+  // nhả nguồn để ngắt tải segment ngay (xem attachReelVideoSource).
+  const hlsUrl = reelCard?.video.hlsUrl;
   useEffect(() => {
     const video = localVideoRef.current;
-    if (!hasVideo || !video) return;
-    return () => {
-      video.pause();
-      video.removeAttribute('src');
-      video.load();
-    };
-  }, [hasVideo, reelCard?.video.hlsUrl]);
+    if (!hasVideo || !video || !hlsUrl) return;
+    return attachReelVideoSource(video, hlsUrl);
+  }, [hasVideo, hlsUrl]);
 
   // timeupdate chỉ bắn ~4 lần/giây nên thanh tiến độ nhảy bậc; đọc currentTime mỗi khung hình và
   // cập nhật thẳng transform qua ref (không setState) để mượt và không render lại cả viewer.
@@ -809,7 +817,6 @@ function MediaTrackItem({
               className={`${styles.mediaVideoElement} ${
                 reelCard.video.aspect === '16:9' ? styles.mediaVideoLandscape : ''
               }`}
-              src={reelCard.video.hlsUrl}
               poster={selectReelPoster(reelCard.video.posters, 720)}
               preload="auto"
               playsInline
@@ -978,6 +985,16 @@ export interface InspirationImmersiveViewerProps {
   isItineraryOpen?: boolean;
   onToggleItinerary?: () => void;
   onOpenComposer?: (type?: 'video' | 'vlog') => void;
+  /**
+   * Mở từ grid kết quả tìm kiếm: chỉ lướt trong các Reel này (theo thứ tự grid) thay vì bảng tin Reels,
+   * bắt đầu ở initialPostId.
+   */
+  searchReelIds?: string[];
+  initialPostId?: string | null;
+  /** Có thì hiện nút quay lại grid kết quả. */
+  onBackToResults?: () => void;
+  /** Mở từ link chia sẻ: Reel này hiện đầu tiên, lướt tiếp là bảng tin Reels. Dùng cùng initialPostId. */
+  pinnedPostId?: string | null;
 }
 
 export function InspirationImmersiveViewer({
@@ -985,12 +1002,16 @@ export function InspirationImmersiveViewer({
   isItineraryOpen: propIsItineraryOpen,
   onToggleItinerary,
   onOpenComposer,
+  searchReelIds,
+  initialPostId = null,
+  onBackToResults,
+  pinnedPostId = null,
 }: InspirationImmersiveViewerProps) {
   const { isReady, user } = useApiSession();
   const client = useQueryClient();
 
   const [filterMode] = useState<FeedFilterMode>('all');
-  const [activePostId, setActivePostId] = useState<string | null>(null);
+  const [activePostId, setActivePostId] = useState<string | null>(initialPostId);
 
   const [internalIsLeftOpen, setInternalIsLeftOpen] = useState(true);
   const isLeftOpen = propIsItineraryOpen !== undefined ? propIsItineraryOpen : internalIsLeftOpen;
@@ -1017,7 +1038,8 @@ export function InspirationImmersiveViewer({
   const trackScrollRef = useRef<HTMLDivElement | null>(null);
   const mediaItemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const activePostIdRef = useRef<string | null>(activePostId);
-  const lastCommittedPostIdRef = useRef<string | null>(activePostId);
+  // Bắt đầu null để bài mở sẵn (initialPostId) vẫn được cuộn tới khi danh sách tải xong.
+  const lastCommittedPostIdRef = useRef<string | null>(null);
   const targetIndexRef = useRef<number>(0);
   const isProgrammaticNavRef = useRef<boolean>(false);
   const navCooldownRef = useRef<number>(0);
@@ -1043,26 +1065,34 @@ export function InspirationImmersiveViewer({
 
   const isSavedMode = filterMode === 'saved';
   // Tìm kiếm không chạy ở đây: nhấn Enter thì trang Cảm hứng hiện grid kết quả (search của discovery).
-  const reelsQuery = useReelsFeed({ enabled: isReady, isSavedOnly: isSavedMode });
+  const isSearchReels = searchReelIds !== undefined;
+  const feedQuery = useReelsFeed({ enabled: isReady && !isSearchReels, isSavedOnly: isSavedMode });
+  const searchReelsQuery = useReelsByIds(searchReelIds ?? [], { enabled: isSearchReels });
+  const reelsQuery = isSearchReels ? searchReelsQuery : feedQuery;
   const postsQuery = reelsQuery;
+  const pinnedPostIds = useMemo(
+    () => (pinnedPostId && !isSearchReels ? [pinnedPostId] : []),
+    [pinnedPostId, isSearchReels],
+  );
+  const pinnedQuery = useReelsByIds(pinnedPostIds, { enabled: pinnedPostIds.length > 0 });
+  // Chờ cả Reel ghim để không hiện bảng tin trước rồi mới chèn Reel ghim lên đầu.
+  const isReelListPending = postsQuery.isPending || (pinnedPostIds.length > 0 && pinnedQuery.isPending);
 
-  const reelMap = useMemo(() => {
-    const map = new Map<
-      string,
-      NonNullable<typeof reelsQuery.data>['pages'][number]['items'][number]
-    >();
-    for (const page of reelsQuery.data?.pages ?? []) {
-      for (const item of page.items) {
-        map.set(item.postId, item);
-      }
-    }
-    return map;
-  }, [reelsQuery.data]);
+  const reelCards = useMemo(
+    () =>
+      prependPinnedReelCards(
+        pinnedQuery.data?.pages.flatMap((page) => page.items) ?? [],
+        reelsQuery.data?.pages.flatMap((page) => page.items) ?? [],
+      ),
+    [pinnedQuery.data, reelsQuery.data],
+  );
+
+  const reelMap = useMemo(() => new Map(reelCards.map((card) => [card.postId, card])), [reelCards]);
 
   // Reels chỉ gồm bài dạng video; bài viết (vlog) không bao giờ hiện ở đây.
   const rawPosts = useMemo<ReelPost[]>(
-    () => (reelsQuery.data?.pages.flatMap((page) => page.items) ?? []).map(toReelPost),
-    [reelsQuery.data],
+    () => reelCards.map(toReelPost),
+    [reelCards],
   );
 
   const posts = useMemo(() => {
@@ -1478,22 +1508,7 @@ export function InspirationImmersiveViewer({
       if (payload.type === 'save') {
         return socialApi.setBookmark(payload.postId, Boolean(payload.nextSelected));
       }
-      const shareUrl =
-        (postDetailQuery.data?.post.id === payload.postId
-          ? postDetailQuery.data?.shareUrl
-          : undefined) || `${window.location.origin}/trips/${payload.postId}`;
-      try {
-        if (navigator.share) {
-          await navigator.share({
-            title: activePost?.title,
-            url: shareUrl,
-          });
-        } else if (navigator.clipboard) {
-          await navigator.clipboard.writeText(shareUrl);
-        }
-      } catch {
-        // Bỏ qua nếu người dùng đóng hộp thoại chia sẻ hoặc trình duyệt chặn clipboard
-      }
+      // Menu chia sẻ đã lo link và kênh; tới đây là người dùng đã chia sẻ thật, chỉ ghi nhận lượt.
       return socialApi.sharePost(payload.postId);
     },
     onMutate: async (payload) => {
@@ -1642,6 +1657,8 @@ export function InspirationImmersiveViewer({
     setRightOpen(false);
   }
 
+  const shareMenuRef = useRef<ShareMenuHandle | null>(null);
+
   function renderReelActions(post: ReelPost, isActiveItem: boolean) {
     const engagement = getReelEngagement(post);
     return (
@@ -1656,7 +1673,9 @@ export function InspirationImmersiveViewer({
         onToggleSave={() =>
           engagementMutation.mutate({ postId: post.id, type: 'save', nextSelected: !engagement.isSaved })
         }
-        onShare={() => engagementMutation.mutate({ postId: post.id, type: 'share' })}
+        onShare={(anchor) =>
+          shareMenuRef.current?.toggle(anchor, { postId: post.id, postType: post.postType, title: post.title })
+        }
         onToggleComments={() => {
           if (!isActiveItem) setActivePostId(post.id);
           handleCommentButtonClick();
@@ -1709,6 +1728,12 @@ export function InspirationImmersiveViewer({
           className={styles.centerPanel}
           aria-label={activePost ? activePost.title : vi.api.feedNavAria}
         >
+            {onBackToResults && (
+              <button type="button" className={styles.searchBackPill} onClick={onBackToResults}>
+                <SocialIcon name="chevronLeft" size={16} />
+                {vi.api.searchResultsBack}
+              </button>
+            )}
             {filterMode === 'saved' && !user ? (
               <div className={`empty-state ${styles.centerEmptyBox}`}>
                 <p>{vi.api.loginRequired}</p>
@@ -1716,7 +1741,7 @@ export function InspirationImmersiveViewer({
                   {vi.api.login}
                 </Link>
               </div>
-            ) : postsQuery.isPending ? (
+            ) : isReelListPending ? (
               <output className="empty-state">{vi.api.loading}</output>
             ) : postsQuery.error ? (
               <div className={styles.centerEmptyBox}>
@@ -1740,7 +1765,9 @@ export function InspirationImmersiveViewer({
                   {/* Top-Left Volume + Slider & Top-Right Hover Controls (More / Fullscreen) */}
                   <>
                     {reelCard?.video && activePost.postType === 'video' && !isMediaError && (
-                      <div className={styles.stageTopLeftControls}>
+                      <div
+                        className={`${styles.stageTopLeftControls} ${onBackToResults ? styles.stageTopLeftControlsBelowBack : ''}`}
+                      >
                         <div className={styles.volumeControlPill}>
                           <button
                             type="button"
@@ -1958,6 +1985,12 @@ export function InspirationImmersiveViewer({
           onClose={() => setComposerModalOpen(false)}
         />
       )}
+
+      <ShareMenu
+        ref={shareMenuRef}
+        side="left"
+        onShared={(postId) => engagementMutation.mutate({ postId, type: 'share' })}
+      />
     </div>
   );
 }
@@ -2329,7 +2362,7 @@ function CommentNode({
 
   return (
     <li className={styles.panelCommentItem}>
-      <div className={styles.panelCommentRow}>
+      <CommentVisibility commentId={comment.id} isMine={isMine} loginHref={loginHref} className={styles.panelCommentRow}>
         <span className={styles.avatarSmall} data-tone={getAvatarTone(authorDisplay.name)} aria-hidden="true">
           {getInitial(authorDisplay.name)}
         </span>
@@ -2499,7 +2532,7 @@ function CommentNode({
             </div>
           )}
         </div>
-      </div>
+      </CommentVisibility>
     </li>
   );
 }

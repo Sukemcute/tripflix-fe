@@ -11,14 +11,14 @@
    -------------------------------------------------------------------------- */
 
 .feedPageWrapper {
-  height: calc(100dvh - 81px);
-  max-height: calc(100dvh - 81px);
+  height: calc(100dvh - var(--feed-header-height, 106px));
+  max-height: calc(100dvh - var(--feed-header-height, 106px));
   min-height: 0;
   background: #F8FAFC;
   color: #141B3D;
   font-family: inherit;
   position: relative;
-  padding-left: 64px; /* Space for the 64px fixed left Instagram dock */
+  padding-left: 88px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -41,10 +41,10 @@
 }
 
 .feedPageWrapperReels {
-  height: calc(100dvh - 81px);
-  max-height: calc(100dvh - 81px);
+  height: calc(100dvh - var(--feed-header-height, 106px));
+  max-height: calc(100dvh - var(--feed-header-height, 106px));
   overflow: hidden;
-  padding-left: 64px;
+  padding-left: 88px;
   box-sizing: border-box;
 }
 
@@ -53,13 +53,14 @@
    như menu OTA; nút Tạo bài màu trơn, không gradient, không bóng.
    -------------------------------------------------------------------------- */
 .instagramDock {
-  position: fixed;
-  top: 80px;
-  left: 0;
-  bottom: 0;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  bottom: 12px;
   width: 64px;
   background: var(--color-background);
-  border-right: 1px solid var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -157,13 +158,14 @@
    và "Có thể bạn thích" dạng dòng, không khối màu, không đường phân cách.
    -------------------------------------------------------------------------- */
 .dockSearchDrawer {
-  position: fixed;
-  left: 64px;
-  top: 80px;
-  bottom: 0;
+  position: absolute;
+  left: 88px;
+  top: 12px;
+  bottom: 12px;
   width: 320px;
   background: var(--color-background);
-  border-right: 1px solid var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
   display: flex;
   flex-direction: column;
   z-index: 52;
@@ -2257,6 +2259,15 @@
 }
 
 @media (max-width: 767px) {
+  .dockSearchDrawer {
+    position: fixed;
+    top: calc(var(--feed-header-height, 151px) + 12px);
+    left: 12px;
+    right: 12px;
+    bottom: 68px;
+    width: auto;
+  }
+
   .feedPageWrapper,
   .feedPageWrapperReels {
     padding-left: 0;
@@ -2264,12 +2275,14 @@
   }
 
   .instagramDock {
+    position: fixed;
     top: auto;
     bottom: 0;
     left: 0;
     right: 0;
     width: 100%;
     height: 56px;
+    border-radius: 20px 20px 0 0;
     flex-direction: row;
     padding: 0 16px;
     border-right: none;

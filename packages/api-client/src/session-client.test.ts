@@ -9,9 +9,11 @@ import { http, HttpError, type HttpResponse } from './http';
 import { getApiErrorKind, getAuthErrorKind } from './response';
 import { primePasswordKeyCache } from './password-encryption';
 
-// Các test ở đây kiểm token và phiên; giả như server chưa bật mã hoá mật khẩu để không có request lấy khoá.
-// Mã hoá mật khẩu kiểm riêng ở password-encryption.test.ts.
-beforeEach(() => primePasswordKeyCache(null));
+// Nạp khoá công khai thử nghiệm để các test tập trung vào quản lý phiên.
+beforeEach(() => {
+  const publicKey = Buffer.from([9, ...new Uint8Array(31)]).toString('base64url');
+  primePasswordKeyCache({ keyId: 'test', publicKey });
+});
 
 const user = {
   id: 'member-1',
@@ -26,6 +28,34 @@ const json = (status: number, body: unknown) =>
 afterEach(() => vi.restoreAllMocks());
 
 describe('session integration', () => {
+
+  it('restores and signs in through the Admin BFF without receiving a token pair', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (url) =>
+        String(url).endsWith('/auth/me') ? json(200, user) : new Response(null, { status: 204 }),
+      );
+    const session = new SessionClient({ baseUrl: '/bff', client: 'web', serverSession: true });
+
+    await session.initialize();
+    expect(session.getSnapshot().user).toEqual(user);
+    await session.login({ email: user.email, password: 'example-password' });
+    await session.logout();
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/bff/api/auth/refresh',
+      '/bff/api/auth/me',
+      '/bff/api/auth/login',
+      '/bff/api/auth/me',
+      '/bff/api/auth/logout',
+    ]);
+    for (const [, request] of fetchMock.mock.calls) {
+      expect(new Headers(request?.headers).has('authorization')).toBe(false);
+      expect(request?.credentials).toBe('include');
+    }
+    expect(session.getSnapshot().user).toBeNull();
+  });
+
   it('reports a profile 401 after successful login as a session error', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) =>
       String(url).endsWith('/auth/login') ? json(200, pair) : json(401, {}),

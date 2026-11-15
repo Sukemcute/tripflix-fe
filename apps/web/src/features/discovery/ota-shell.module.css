@@ -18,14 +18,14 @@
     animation: none;
   }
 }
-/* Mục đang mở dùng gạch chân teal, không thêm một viên nền lồng vào thanh menu. */
+/* Mục đang mở dùng cùng dáng viên thuốc với trạng thái hover. */
 .nav a[aria-current='page'],
 .nav a[aria-current='page']:hover {
-  background: transparent;
+  background: var(--color-sea-mist);
   color: var(--color-teal-ink);
   font-weight: 700;
-  border-radius: 0;
-  box-shadow: inset 0 -2px 0 var(--color-teal-ink);
+  border-radius: 999px;
+  box-shadow: none;
 }
 :global(body:has([class*='immersiveRoot'])) .footer {
   display: none;

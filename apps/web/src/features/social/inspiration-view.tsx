@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useApiSession } from '@tripflix/api-client';
@@ -14,6 +14,7 @@ import { pushRecentSearch, readRecentSearches, writeRecentSearches } from './rec
 import {
   buildInspirationHref,
   parseSearchResultType,
+  SEARCH_OPEN_KIND_PARAM,
   SEARCH_OPEN_PARAM,
   SEARCH_QUERY_PARAM,
   SEARCH_TYPE_PARAM,
@@ -34,6 +35,28 @@ const ComposerModal = dynamic(
 );
 
 export function InspirationView() {
+  const pageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const header = document.querySelector('.ota-header');
+    const page = pageRef.current;
+    if (!header || !page) return;
+    // Đặt ở thẻ gốc để #content (globals.css) và khung trang dùng chung một số đo; lệch nhau là trang dài lố,
+    // đáy trang lộ một dải nền và panel bị cắt ngang. Đo mép dưới header cộng lề dưới, đúng với mọi kiểu header.
+    const root = document.documentElement;
+    const updateHeight = () => {
+      const marginBottom = Number.parseFloat(getComputedStyle(header).marginBottom) || 0;
+      root.style.setProperty('--feed-header-height', `${Math.ceil(header.getBoundingClientRect().bottom + marginBottom)}px`);
+    };
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty('--feed-header-height');
+    };
+  }, []);
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -42,7 +65,8 @@ export function InspirationView() {
   // Tinh toan che do xem truc tiep tu URL query param (?view=posts hoac ?view=reels)
   const viewParam = searchParams.get('view');
   const openPostId = searchParams.get(SEARCH_OPEN_PARAM) || null;
-  const activeView: 'posts' | 'reels' = viewParam === 'reels' && !openPostId ? 'reels' : 'posts';
+  const isOpenReel = searchParams.get(SEARCH_OPEN_KIND_PARAM) === 'reel';
+  const activeView: 'posts' | 'reels' = (viewParam === 'reels' && !openPostId) || (openPostId && isOpenReel) ? 'reels' : 'posts';
 
   // Tìm kiếm theo URL (?q= từ khoá đã chốt, ?open= bài mở từ grid) để F5 và nút Back giữ đúng chỗ.
   const rawKeyword = searchParams.get(SEARCH_QUERY_PARAM) ?? '';
@@ -50,10 +74,17 @@ export function InspirationView() {
   const isSearching = searchKeyword.length > 0;
   const searchResultType = parseSearchResultType(searchParams.get(SEARCH_TYPE_PARAM));
   const isSearchGrid = isSearching && !openPostId;
-  // Đang tìm thì Reels tạm ẩn: kết quả hiện ở grid, bài viết mở ở tab Bài viết.
-  const isReels = activeView === 'reels' && !isSearching;
+  // Reel mở từ grid (?kind=reel) xem trong trình xem Reels, lướt trong các Reel của kết quả.
+  const isSearchReelOpen = isSearching && Boolean(openPostId) && isOpenReel;
+  // Đang tìm thì bảng tin Reels tạm ẩn: kết quả hiện ở grid, bài viết mở ở tab Bài viết.
+  const isReels = (activeView === 'reels' && !isSearching) || isSearchReelOpen;
   const isPostsVisible = !isReels && !isSearchGrid;
   const hasOpenedFromGridRef = useRef(false);
+  // Danh sách Reel của grid lúc bấm; vào thẳng link (F5) thì chưa có, chỉ xem đúng Reel trong URL.
+  const [gridReelIds, setGridReelIds] = useState<string[] | null>(null);
+  const searchReelIds = isSearchReelOpen && openPostId ? (gridReelIds ?? [openPostId]) : undefined;
+  // Link chia sẻ Reel (?open=<id>&kind=reel, không có từ khoá): Reel đó lên đầu bảng tin Reels.
+  const sharedReelId = !isSearching && openPostId && isOpenReel ? openPostId : null;
 
   // Cac trang thai chung dieu phoi qua Instagram Left Dock
   // Mặc định: tab Bài viết mở sẵn Lịch trình trên màn rộng (thông tin chính đi kèm bài đọc); Reels để đóng
@@ -117,6 +148,15 @@ export function InspirationView() {
     [navigate]
   );
 
+  const handleOpenReelResult = useCallback(
+    (postId: string, reelIds: string[]) => {
+      hasOpenedFromGridRef.current = true;
+      setGridReelIds(reelIds.includes(postId) ? reelIds : [postId]);
+      navigate({ openPostId: postId, isOpenReel: true }, 'push');
+    },
+    [navigate]
+  );
+
   // Mở từ grid thì Back của trình duyệt đưa về đúng grid (giữ vị trí cuộn); vào thẳng link thì thay URL.
   const handleBackToResults = useCallback(() => {
     if (hasOpenedFromGridRef.current) {
@@ -136,7 +176,7 @@ export function InspirationView() {
   );
 
   return (
-    <div className={`${styles.feedPageWrapper} ${isReels ? styles.feedPageWrapperReels : ''}`}>
+    <div ref={pageRef} className={`${styles.feedPageWrapper} ${isReels ? styles.feedPageWrapperReels : ''}`}>
       {/* 1. Thanh Dock icon sát mép trái chuẩn Instagram (64px) */}
       <InstagramLeftDock
         activeView={activeView}
@@ -181,6 +221,7 @@ export function InspirationView() {
             resultType={searchResultType}
             onChangeResultType={handleChangeResultType}
             onOpenPost={handleOpenResult}
+            onOpenReel={handleOpenReelResult}
             onClearSearch={() => handleSubmitSearch('')}
           />
         </div>
@@ -188,6 +229,12 @@ export function InspirationView() {
 
       {isReels && (
         <InspirationImmersiveViewer
+          // Đổi giữa bảng tin Reels và Reels của kết quả thì dựng lại từ đầu (bài đang xem, vị trí cuộn).
+          key={searchReelIds ? `search:${openPostId}` : sharedReelId ? `shared:${sharedReelId}` : 'feed'}
+          searchReelIds={searchReelIds}
+          pinnedPostId={sharedReelId}
+          initialPostId={isSearchReelOpen || sharedReelId ? openPostId : null}
+          onBackToResults={isSearchReelOpen ? handleBackToResults : undefined}
           onSearchKeywordChange={handleSubmitSearch}
           isItineraryOpen={isItineraryOpen}
           onToggleItinerary={() => setIsItineraryOpen(!isItineraryOpen)}

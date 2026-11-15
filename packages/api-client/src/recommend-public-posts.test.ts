@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { recommendPublicPosts } from './explore-search';
+import { withoutRepeatedPosts } from './queries';
 import { configureHttp } from './http';
 
 const json = (body: unknown, status = 200) =>
@@ -55,5 +56,17 @@ describe('recommendedPage (giữ trang gợi ý đã tải khi bị làm mới)'
     expect(fetchPage).toHaveBeenCalledTimes(2);
     expect(ids).toEqual(['p1-1', 'p2-2']);
     unsubscribe();
+  });
+});
+
+describe('withoutRepeatedPosts', () => {
+  it('bài cuối trang trước lặp ở đầu trang sau (gợi ý xếp lại mỗi trang): giữ lần đầu, không trùng key', () => {
+    const page = (ids: string[], nextCursor: string | null) => ({ items: ids.map((id) => ({ id })), nextCursor });
+    const data = { pages: [page(['a', 'b', 'c'], 'c2'), page(['c', 'd', 'e'], 'c3'), page(['e', 'f'], null)], pageParams: [undefined, 'c2', 'c3'] };
+    const out = withoutRepeatedPosts(data);
+    expect(out.pages.map((p) => p.items.map((x) => x.id))).toEqual([['a', 'b', 'c'], ['d', 'e'], ['f']]);
+    expect(out.pageParams).toEqual(data.pageParams);
+    expect(out.pages[2]!.nextCursor).toBeNull();
+    expect(data.pages[1]!.items).toHaveLength(3); // không sửa cache gốc
   });
 });

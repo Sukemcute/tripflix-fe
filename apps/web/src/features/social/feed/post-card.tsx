@@ -23,7 +23,8 @@ export interface PostCardProps {
   onToggleLike: (postId: string, next: boolean) => void;
   onToggleSave: (postId: string, next: boolean) => void;
   onToggleComment: (postId: string) => void;
-  onShare: (postId: string) => void;
+  /** Nhận nút vừa bấm để menu chia sẻ mở cạnh nút. */
+  onShare: (postId: string, anchor: HTMLElement) => void;
   onOpenTag?: (tag: string) => void;
   onViewItinerary?: (postId: string) => void;
   onOpenGallery?: (postId: string, imageIndex: number) => void;
@@ -268,7 +269,7 @@ export function PostCard({
             type="button"
             className={styles.actionBtn}
             aria-label={vi.api.share}
-            onClick={() => onShare(post.id)}
+            onClick={(event) => onShare(post.id, event.currentTarget)}
           >
             <SocialIcon name="share" size={18} />
             <span>{formatCompactCount(post.shareCount)}</span>

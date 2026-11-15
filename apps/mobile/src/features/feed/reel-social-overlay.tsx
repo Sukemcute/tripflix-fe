@@ -120,11 +120,7 @@ function RailAction({
       style={[styles.railAction, disabled && { opacity: 0.5 }]}
     >
       <Animated.View style={iconStyle}>
-        <Icon
-          name={icon}
-          size={iconSize}
-          color={selected ? colors.coral : colors.background}
-        />
+        <Icon name={icon} size={iconSize} color={selected ? colors.coral : colors.background} />
       </Animated.View>
       {count !== undefined && (
         <Txt variant="caption" style={styles.railCount}>
@@ -394,7 +390,10 @@ export function ReelSocialOverlay({
               if (Platform.OS === 'web')
                 setCollapsedLength(
                   lines > CAPTION_LINES
-                    ? Math.max(0, Math.floor((fullCaption.length * CAPTION_LINES) / lines) - SHOW_MORE_RESERVED_CHARS)
+                    ? Math.max(
+                        0,
+                        Math.floor((fullCaption.length * CAPTION_LINES) / lines) - SHOW_MORE_RESERVED_CHARS,
+                      )
                     : null,
                 );
             }}
@@ -495,6 +494,7 @@ export function ReelSocialOverlay({
           postId={postId}
           postTitle={title}
           authorName={author}
+          coverUrl={item.playback.posters.w540 || item.playback.posters.w360 || item.playback.posters.w720}
           trip={tripPlan}
         />
       )}

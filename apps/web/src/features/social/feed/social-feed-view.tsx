@@ -22,6 +22,7 @@ import reelsStyles from '../live-posts.module.css';
 import { type FeedNavFilter } from './floating-nav-rail';
 import { ItinerarySidebarPanel } from './itinerary-sidebar-panel';
 import { PostCard } from './post-card';
+import { ShareMenu, type ShareMenuHandle } from '../share-menu';
 import { getPostImages } from '../post-cover';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getFocusedFeedPosts } from './focused-post';
@@ -632,26 +633,23 @@ export function SocialFeedView({
     });
   }, [user, loginReturnHref, engagementMutation]);
 
-  const handleShare = useCallback(async (postId: string) => {
-    const post = posts.find((p) => p.id === postId);
-    const shareUrl = `${window.location.origin}/trips/${postId}`;
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: post?.title ?? 'Tripflix Inspiration',
-          url: shareUrl,
-        });
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareUrl);
-      }
-    } catch {
-      // Bo qua neu nguoi dung dong hop thoai chia se
-    }
-    engagementMutation.mutate({
-      postId,
-      type: 'share',
-    });
-  }, [posts, engagementMutation]);
+  // Menu chia sẻ chung với Reels: link về trang Cảm hứng mở sẵn bài, chỉ ghi nhận lượt khi chia sẻ thật.
+  const shareMenuRef = useRef<ShareMenuHandle | null>(null);
+  const handleShare = useCallback(
+    (postId: string, anchor: HTMLElement) => {
+      const post = posts.find((p) => p.id === postId);
+      shareMenuRef.current?.toggle(anchor, {
+        postId,
+        postType: post?.postType ?? 'vlog',
+        title: post?.title ?? vi.api.share,
+      });
+    },
+    [posts],
+  );
+  const handleShared = useCallback(
+    (postId: string) => engagementMutation.mutate({ postId, type: 'share' }),
+    [engagementMutation],
+  );
 
   const handleToggleComment = useCallback(
     (postId: string) => {
@@ -1063,6 +1061,8 @@ export function SocialFeedView({
           </dialog>
         );
       })()}
+
+      <ShareMenu ref={shareMenuRef} side="above" onShared={handleShared} />
     </div>
   );
 }

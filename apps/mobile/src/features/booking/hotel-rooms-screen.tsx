@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { commerceApi, getFutureDate, useApiSession } from '@tripflix/api-client';
-import { countBookingCartGuests, countRoomsForGuests, isValidTripDate } from '@tripflix/app-core';
+import {
+  countBookingCartGuests,
+  countRoomsForGuests,
+  isValidTripDate,
+  isValidTripPlanPassengers,
+} from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { colors, spacing } from '@tripflix/tokens';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { DateRangeField } from '@/components/date-sheet';
 import { Button, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
@@ -12,6 +17,7 @@ import { CommerceError } from './commerce-state';
 import { CartLink, SelectionBar, Stepper } from './cart-ui';
 import { saveBookingSelection, useBookingSelection } from './cart-store';
 import { RoomCard, type Guests } from './hotel-parts';
+import { saveTripPick } from './trip-booking-store';
 
 const text = vi.commerce;
 const hotelText = vi.hotel;
@@ -21,16 +27,26 @@ const MAX_GUESTS = 9;
 export function HotelRoomsScreen() {
   const params = useLocalSearchParams<{
     id?: string;
+    pick?: string;
+    pickId?: string;
+    pickKey?: string;
+    productId?: string;
+    ratePlanCode?: string;
     checkIn?: string;
     checkOut?: string;
     adults?: string;
     children?: string;
     infants?: string;
   }>();
+  const isTripPick = params.pick === 'trip';
   const { isReady } = useApiSession();
   const today = getFutureDate(0);
   const [dates, setDates] = useState({
-    checkIn: params.checkIn && params.checkIn >= today ? params.checkIn : getFutureDate(1),
+    checkIn: isTripPick
+      ? (params.checkIn ?? '')
+      : params.checkIn && params.checkIn >= today
+        ? params.checkIn
+        : getFutureDate(1),
     checkOut: params.checkOut ?? getFutureDate(3),
   });
   const [guests, setGuests] = useState<Guests>({
@@ -44,8 +60,9 @@ export function HotelRoomsScreen() {
   const valid =
     isValidTripDate(dates.checkIn, today) &&
     dates.checkOut > dates.checkIn &&
-    guests.adults >= 1 &&
-    countBookingCartGuests(guests) <= MAX_GUESTS;
+    (isTripPick
+      ? isValidTripPlanPassengers(guests, MAX_GUESTS)
+      : guests.adults >= 1 && countBookingCartGuests(guests) <= MAX_GUESTS);
   const isUnchanged =
     dates.checkIn === stay.checkIn &&
     dates.checkOut === stay.checkOut &&
@@ -90,11 +107,18 @@ export function HotelRoomsScreen() {
     <Screen
       background={colors.surface}
       title={hotel?.name ?? hotelText.rooms}
-      right={<CartLink />}
+      right={isTripPick ? undefined : <CartLink />}
       footer={
-        selection.items.length ? <SelectionBar returnTo={`/hotel-rooms?id=${params.id ?? ''}`} /> : undefined
+        !isTripPick && selection.items.length ? (
+          <SelectionBar returnTo={`/hotel-rooms?id=${params.id ?? ''}`} />
+        ) : undefined
       }
     >
+      {isTripPick && (
+        <Notice>
+          {vi.mobile.tripPlan.pickRoomTitle} · {vi.mobile.tripPlan.pickNotice}
+        </Notice>
+      )}
       {/* Tóm tắt kỳ ở, bấm Đổi mới mở phần chỉnh để màn chọn phòng gọn. */}
       <View
         style={{
@@ -115,11 +139,13 @@ export function HotelRoomsScreen() {
               {stay.infants ? ` · ${stay.infants} ${hotelText.infantsLabel.toLowerCase()}` : ''}
             </Txt>
           </View>
-          <Button tone="text" onPress={() => setEditing((value) => !value)}>
-            {isEditing ? hotelText.showLess : hotelText.changeStay}
-          </Button>
+          {!isTripPick && (
+            <Button tone="text" onPress={() => setEditing((value) => !value)}>
+              {isEditing ? hotelText.showLess : hotelText.changeStay}
+            </Button>
+          )}
         </Row>
-        {isEditing && (
+        {!isTripPick && isEditing && (
           <>
             <DateRangeField
               startLabel={vi.api.checkIn}
@@ -163,7 +189,38 @@ export function HotelRoomsScreen() {
           room={room}
           stay={stay}
           rooms={countRoomsForGuests({ ...stay, maxGuests: room.maxGuests })}
-          isDisabled={query.isFetching}
+          isDisabled={
+            query.isFetching ||
+            (isTripPick && (!params.pickKey || !params.pickId || !valid || !hotel.isAvailable))
+          }
+          pickedRatePlanCode={
+            isTripPick && params.productId === room.productId ? params.ratePlanCode : undefined
+          }
+          onPick={
+            isTripPick
+              ? (ratePlanCode) => {
+                  const rate = room.ratePlans.find((option) => option.code === ratePlanCode);
+                  if (
+                    !params.pickKey ||
+                    !params.pickId ||
+                    !hotel.isAvailable ||
+                    !room.isAvailable ||
+                    rate?.totalPrice == null ||
+                    query.isFetching ||
+                    !valid
+                  )
+                    return;
+                  saveTripPick(params.pickKey, params.pickId, {
+                    productId: room.productId,
+                    ratePlanCode,
+                    totalPrice: rate.totalPrice,
+                    roomName: room.name,
+                    rateName: rate.name,
+                  });
+                  router.back();
+                }
+              : undefined
+          }
         />
       ))}
     </Screen>

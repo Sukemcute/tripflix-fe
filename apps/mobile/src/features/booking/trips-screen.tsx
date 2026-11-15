@@ -29,7 +29,7 @@ export function CommerceTripsScreen() {
   return (
     <Screen
       compact
-      back={false}
+      title={copy.profile.myTrips}
       scroll={!user}
       right={
         <IconButton
@@ -67,7 +67,7 @@ export function CommerceTripsScreen() {
             body={copy.profile.body}
             compact
             action={copy.profile.login}
-            onAction={() => router.push({ pathname: '/login', params: { returnTo: '/(tabs)/trips' } })}
+            onAction={() => router.push({ pathname: '/login', params: { returnTo: '/my-trips' } })}
           />
         </View>
       )}

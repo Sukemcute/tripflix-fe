@@ -36,6 +36,7 @@ import {
   money,
   ui,
 } from '@/components/mobile-ui';
+import { saveTripPick, type TripBookingOffer } from '@/features/booking/trip-booking-store';
 import { CommerceError } from '@/features/booking/commerce-state';
 
 const copy = vi.flights;
@@ -73,7 +74,13 @@ const readDraftMix = (draft: {
 });
 
 type Picker = 'from' | 'to' | 'passengers';
-type HoldSelection = { search: FlightSearch; flightKey: string; productId: string; fareCode: string };
+type HoldSelection = {
+  search: FlightSearch;
+  flightKey: string;
+  productId: string;
+  fareCode: string;
+  offer?: TripBookingOffer;
+};
 
 export function FlightSearchScreen() {
   const params = useLocalSearchParams();
@@ -81,6 +88,8 @@ export function FlightSearchScreen() {
     const value = params[key];
     return typeof value === 'string' ? value : '';
   };
+  const isTripPick = read('pick') === 'trip';
+  const tripCopy = vi.mobile.tripPlan;
   const initial = {
     from: read('from'),
     to: read('to'),
@@ -157,6 +166,12 @@ export function FlightSearchScreen() {
 
   function chooseFlight(selection: HoldSelection) {
     if (!isReady || isLocked) return;
+    if (isTripPick) {
+      if (!read('pickKey') || !read('pickId') || !selection.offer) return;
+      saveTripPick(read('pickKey'), read('pickId'), selection.offer);
+      router.back();
+      return;
+    }
     if (!user) {
       const { children, infants, ...adultSearch } = selection.search;
       const query = new URLSearchParams({
@@ -174,9 +189,9 @@ export function FlightSearchScreen() {
   }
 
   return (
-    <Screen title={copy.title}>
-      <Txt variant="title">{copy.title}</Txt>
-      <Txt style={ui.muted}>{copy.intro}</Txt>
+    <Screen title={isTripPick ? tripCopy.pickFlightTitle : copy.title}>
+      <Txt variant="title">{isTripPick ? tripCopy.pickFlightTitle : copy.title}</Txt>
+      <Txt style={ui.muted}>{isTripPick ? tripCopy.pickNotice : copy.intro}</Txt>
       <Card>
         {(['from', 'to'] as const).map((key) => {
           const { label, options } = choices[key];
@@ -187,10 +202,11 @@ export function FlightSearchScreen() {
               <Button
                 tone="secondary"
                 icon="chevron-down"
-                disabled={isLocked || !options.length}
+                disabled={isTripPick || isLocked || !options.length}
                 onPress={() => setPicker(key)}
               >
                 {selection?.label ??
+                  (isTripPick ? draft[key] : undefined) ??
                   (key === 'to' && !draft.from ? copy.selectOriginFirst : copy.selectAirport)}
               </Button>
             </View>
@@ -200,7 +216,7 @@ export function FlightSearchScreen() {
           label={copy.date}
           value={draft.date}
           min={getFlightToday()}
-          isDisabled={isLocked}
+          isDisabled={isTripPick || isLocked}
           onChange={(date) => setDraft((previous) => ({ ...previous, date }))}
         />
         <View style={{ gap: spacing.xs }}>
@@ -208,7 +224,7 @@ export function FlightSearchScreen() {
           <Button
             tone="secondary"
             icon="chevron-down"
-            disabled={isLocked}
+            disabled={isTripPick || isLocked}
             onPress={() => setPicker('passengers')}
           >
             {formatPassengerMix(draftMix)}
@@ -216,7 +232,7 @@ export function FlightSearchScreen() {
         </View>
         <Button
           icon="search-outline"
-          disabled={isLocked || !destinations.some(({ value }) => value === draft.to)}
+          disabled={isTripPick || isLocked || !destinations.some(({ value }) => value === draft.to)}
           onPress={submit}
         >
           {copy.search}
@@ -293,8 +309,9 @@ export function FlightSearchScreen() {
           search={search}
           initialProductId={read('productId')}
           initialFareCode={read('ratePlanCode')}
-          isLocked={!isReady || isLocked}
+          isLocked={!isReady || isLocked || (isTripPick && (!read('pickKey') || !read('pickId')))}
           isSignedIn={!!user}
+          isTripPick={isTripPick}
           onChoose={chooseFlight}
           holdKey={hold.variables?.flightKey}
           holdError={hold.error}
@@ -309,6 +326,7 @@ function FlightResults({
   search,
   initialProductId,
   initialFareCode,
+  isTripPick = false,
   isLocked,
   isSignedIn,
   onChoose,
@@ -319,6 +337,7 @@ function FlightResults({
   search: FlightSearch;
   initialProductId: string;
   initialFareCode: string;
+  isTripPick?: boolean;
   isLocked: boolean;
   isSignedIn: boolean;
   onChoose: (selection: HoldSelection) => void;
@@ -347,14 +366,35 @@ function FlightResults({
               cabins={[first, ...otherCabins]}
               initialProductId={initialProductId}
               initialFareCode={initialFareCode}
+              isTripPick={isTripPick}
               isLocked={isLocked}
               isHolding={isHolding && holdKey === first.flightKey}
               isSignedIn={isSignedIn}
               passengerMix={getFlightPassengerMix(search)}
               error={holdKey === first.flightKey ? holdError : null}
-              onChoose={(productId, fareCode) =>
-                onChoose({ search, productId, fareCode, flightKey: first.flightKey })
-              }
+              onChoose={(productId, fareCode) => {
+                const cabin = [first, ...otherCabins].find((offer) => offer.productId === productId);
+                const fare = cabin?.fares.find((option) => option.code === fareCode);
+                onChoose({
+                  search,
+                  productId,
+                  fareCode,
+                  flightKey: first.flightKey,
+                  offer:
+                    cabin && fare?.totalPrice != null
+                      ? {
+                          productId,
+                          ratePlanCode: fareCode,
+                          totalPrice: fare.totalPrice,
+                          date: search.date,
+                          flightNumber: cabin.flightNumber,
+                          departTime: cabin.departTime,
+                          cabinName: cabin.cabinName,
+                          fareName: fare.name,
+                        }
+                      : undefined,
+                });
+              }}
             />
           ),
       )}
@@ -367,6 +407,7 @@ function FlightCard({
   cabins,
   initialProductId,
   initialFareCode,
+  isTripPick = false,
   isLocked,
   isHolding,
   isSignedIn,
@@ -379,6 +420,7 @@ function FlightCard({
   cabins: FlightOfferDto[];
   initialProductId: string;
   initialFareCode: string;
+  isTripPick?: boolean;
   isLocked: boolean;
   isHolding: boolean;
   isSignedIn: boolean;
@@ -395,8 +437,14 @@ function FlightCard({
   const canBook = cabin.isAvailable && fare !== undefined && totalPrice != null && unitPrice != null;
   const timeLabel = (airport: string, time: string | null) =>
     time ? airport + ' · ' + time.slice(0, 5) : airport;
+  const isPicked = isTripPick && cabin.productId === initialProductId && fare?.code === initialFareCode;
   return (
-    <Card>
+    <Card style={isPicked ? { borderColor: colors.teal, borderWidth: 2 } : undefined}>
+      {isPicked && (
+        <Txt variant="label" style={{ color: colors.tealInk }}>
+          {vi.mobile.tripPlan.picked}
+        </Txt>
+      )}
       <Txt variant="small" style={ui.muted}>
         {flight.airline ? flight.airline + ' · ' + flight.flightKey : flight.flightKey}
       </Txt>
@@ -453,6 +501,16 @@ function FlightCard({
               ? ' · ' + copy.passengerTypes.infant.label + ' ' + money(fare.infantPrice)
               : ''}
           </Txt>
+          {isTripPick && (fare.carryOnKg != null || fare.checkedKg != null) && (
+            <Txt variant="small" style={ui.muted}>
+              {[
+                fare.carryOnKg != null ? t('mobile.tripPlan.carryOn', { kg: fare.carryOnKg }) : '',
+                fare.checkedKg != null ? t('mobile.tripPlan.checkedBaggage', { kg: fare.checkedKg }) : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </Txt>
+          )}
           {cabin.remaining != null && (
             <Txt variant="small">{t('flights.remaining', { count: cabin.remaining })}</Txt>
           )}
@@ -468,7 +526,13 @@ function FlightCard({
         <Notice tone="warning">{getReason(cabin)}</Notice>
       )}
       <Button disabled={!canBook || isLocked} onPress={() => fare && onChoose(cabin.productId, fare.code)}>
-        {isHolding ? vi.api.loading : canBook && !isSignedIn ? vi.commerce.login : copy.choose}
+        {isHolding
+          ? vi.api.loading
+          : isTripPick
+            ? vi.mobile.tripPlan.pickFlight
+            : canBook && !isSignedIn
+              ? vi.commerce.login
+              : copy.choose}
       </Button>
       <CommerceError error={error} />
     </Card>

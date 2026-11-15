@@ -10,7 +10,7 @@ const ICONS: Record<string, IconName> = {
   index: 'play-circle-outline',
   explore: 'compass-outline',
   compose: 'add',
-  trips: 'bag-handle-outline',
+  book: 'bag-handle-outline',
   me: 'person-outline',
 };
 // Tỉ lệ thanh tab TikTok (~49pt): icon 24 cách mép trên 6, chữ 10; nút tạo là ô ngang 44×30.

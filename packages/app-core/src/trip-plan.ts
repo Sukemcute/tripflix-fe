@@ -32,36 +32,46 @@ export function buildTripAttachment(
   draft: TripPlanDraft,
   modeLabels: Readonly<Record<TripPlanMode, string>>,
 ) {
-  const items = draft.days.flatMap((day, index): {
-    day: number;
-    title: string;
-    location?: string;
-    notes?: string;
-    transport?: TripPlanTransport;
-  }[] => {
-    const { mode, fromCode, toCode, note } = day.transport;
-    const transport = mode
-      ? [
-          {
-            day: index + 1,
-            title: mode === 'flight' && fromCode && toCode ? `${modeLabels[mode]} ${fromCode} → ${toCode}` : modeLabels[mode],
-            ...(note.trim() ? { notes: note.trim() } : {}),
-            transport: {
-              mode,
-              ...(mode === 'flight' && fromCode && toCode ? { fromAirport: fromCode, toAirport: toCode } : {}),
+  const items = draft.days.flatMap(
+    (
+      day,
+      index,
+    ): {
+      day: number;
+      title: string;
+      location?: string;
+      notes?: string;
+      transport?: TripPlanTransport;
+    }[] => {
+      const { mode, fromCode, toCode, note } = day.transport;
+      const transport = mode
+        ? [
+            {
+              day: index + 1,
+              title:
+                mode === 'flight' && fromCode && toCode
+                  ? `${modeLabels[mode]} ${fromCode} → ${toCode}`
+                  : modeLabels[mode],
+              ...(note.trim() ? { notes: note.trim() } : {}),
+              transport: {
+                mode,
+                ...(mode === 'flight' && fromCode && toCode
+                  ? { fromAirport: fromCode, toAirport: toCode }
+                  : {}),
+              },
             },
-          },
-        ]
-      : [];
-    const activities = day.activities
-      .filter((activity) => activity.title.trim())
-      .map((activity) => ({
-        day: index + 1,
-        title: activity.title.trim(),
-        ...(activity.location.trim() ? { location: activity.location.trim() } : {}),
-      }));
-    return [...transport, ...activities];
-  });
+          ]
+        : [];
+      const activities = day.activities
+        .filter((activity) => activity.title.trim())
+        .map((activity) => ({
+          day: index + 1,
+          title: activity.title.trim(),
+          ...(activity.location.trim() ? { location: activity.location.trim() } : {}),
+        }));
+      return [...transport, ...activities];
+    },
+  );
   if (items.length === 0 && !draft.hotel) return null;
   return {
     daysCount: draft.days.length,
@@ -77,27 +87,39 @@ interface TripPlanFlight {
   to: string;
 }
 
-/** Mỗi phương tiện đã chọn phải có tuyến bán được qua OTA để đặt cả lộ trình trong một đơn. */
+/** Tách dịch vụ bán được và các chặng người xem tự thu xếp. */
 export function getBookableTripPlan(trip: {
   hotelId?: string;
-  items?: readonly { day: number; transport?: TripPlanTransport }[];
-}): { hotelId: string; flights: TripPlanFlight[] } | null {
-  if (!trip.hotelId) return null;
+  items?: readonly { day: number; title?: string; transport?: TripPlanTransport }[];
+}): {
+  hotelId: string | null;
+  flights: TripPlanFlight[];
+  selfArranged: { day: number; title?: string; mode: TripPlanMode }[];
+} | null {
   const airportCode = /^[A-Z]{3}$/;
   const flights: TripPlanFlight[] = [];
-  for (const { day, transport } of trip.items ?? []) {
+  const selfArranged: { day: number; title?: string; mode: TripPlanMode }[] = [];
+  for (const { day, title, transport } of trip.items ?? []) {
     if (!transport) continue;
     const { mode, fromAirport, toAirport } = transport;
     if (
-      mode !== 'flight' || !Number.isInteger(day) || day < 1 || day > TRIP_PLAN_MAX_DAYS ||
-      typeof fromAirport !== 'string' || typeof toAirport !== 'string' ||
-      !airportCode.test(fromAirport) || !airportCode.test(toAirport) ||
+      mode !== 'flight' ||
+      !Number.isInteger(day) ||
+      day < 1 ||
+      day > TRIP_PLAN_MAX_DAYS ||
+      typeof fromAirport !== 'string' ||
+      typeof toAirport !== 'string' ||
+      !airportCode.test(fromAirport) ||
+      !airportCode.test(toAirport) ||
       fromAirport === toAirport
-    ) return null;
-    flights.push({ day, from: fromAirport, to: toAirport });
+    ) {
+      selfArranged.push({ day, ...(title !== undefined ? { title } : {}), mode });
+    } else {
+      flights.push({ day, from: fromAirport, to: toAirport });
+    }
   }
-  if (flights.length === 0 || flights.length >= TRIP_PLAN_MAX_ITEMS) return null;
-  return { hotelId: trip.hotelId, flights: flights.sort((a, b) => a.day - b.day) };
+  if ((!trip.hotelId && flights.length === 0) || flights.length >= TRIP_PLAN_MAX_ITEMS) return null;
+  return { hotelId: trip.hotelId || null, flights: flights.sort((a, b) => a.day - b.day), selfArranged };
 }
 
 /** Bài có lộ trình để xem (có lịch từng ngày hoặc chỗ ở) thì mới hiện nút "Xem lộ trình". */
@@ -136,16 +158,49 @@ export function pickCheapestOffer(
     plans: readonly { code: string; totalPrice: number | null }[];
   }[],
 ): TripPlanOffer | null {
-  let best: TripPlanOffer | null = null;
-  for (const offer of offers) {
-    if (!offer.isAvailable) continue;
-    for (const plan of offer.plans) {
-      if (plan.totalPrice === null) continue;
-      if (!best || plan.totalPrice < best.totalPrice)
-        best = { productId: offer.productId, ratePlanCode: plan.code, totalPrice: plan.totalPrice };
-    }
-  }
-  return best;
+  return listTripPlanOffers(offers)[0] ?? null;
+}
+
+/** Liệt kê giá còn bán theo thứ tự tăng dần, giữ nguyên dữ liệu máy chủ. */
+export function listTripPlanOffers(
+  offers: readonly {
+    productId: string;
+    isAvailable: boolean;
+    plans: readonly { code: string; totalPrice: number | null }[];
+  }[],
+): TripPlanOffer[] {
+  return offers
+    .flatMap((offer) =>
+      offer.isAvailable
+        ? offer.plans.flatMap((plan) =>
+            plan.totalPrice !== null && Number.isFinite(plan.totalPrice) && plan.totalPrice >= 0
+              ? [{ productId: offer.productId, ratePlanCode: plan.code, totalPrice: plan.totalPrice }]
+              : [],
+          )
+        : [],
+    )
+    .sort((a, b) => a.totalPrice - b.totalPrice);
+}
+
+/** Chỉ cộng giá các mục được chọn và còn báo giá. */
+export function getTripPlanTotal(
+  items: readonly { isSelected: boolean; offer: TripPlanOffer | null }[],
+): number {
+  return items.reduce((sum, item) => sum + (item.isSelected ? (item.offer?.totalPrice ?? 0) : 0), 0);
+}
+
+/** Giới hạn ghế do bên gọi truyền vào để dùng chung quy tắc vé bay. */
+export function isValidTripPlanPassengers(
+  passengers: { adults: number; children: number; infants: number },
+  maxSeats: number,
+): boolean {
+  const { adults, children, infants } = passengers;
+  return (
+    [adults, children, infants].every((count) => Number.isInteger(count) && count >= 0) &&
+    adults >= 1 &&
+    adults + children <= maxSeats &&
+    infants <= adults
+  );
 }
 
 export interface TripPlanCheckoutInput {
@@ -193,9 +248,9 @@ export function buildTripPlanCheckout(input: TripPlanCheckoutInput) {
  * Đổi khách sạn thì thay hotelId. Không đổi gì thì trả lại đúng lộ trình gốc.
  */
 export function applyTripPlanChoices(
-  plan: { hotelId: string; flights: readonly TripPlanFlight[] },
+  plan: { hotelId: string | null; flights: readonly TripPlanFlight[] },
   choices: { homeAirport?: string; hotelId?: string },
-): { hotelId: string; flights: TripPlanFlight[] } {
+): { hotelId: string | null; flights: TripPlanFlight[] } {
   const originalHome = plan.flights[0]?.from;
   const home = choices.homeAirport;
   const swap = (code: string) => (home && code === originalHome ? home : code);
@@ -203,4 +258,21 @@ export function applyTripPlanChoices(
     hotelId: choices.hotelId || plan.hotelId,
     flights: plan.flights.map((leg) => ({ ...leg, from: swap(leg.from), to: swap(leg.to) })),
   };
+}
+
+/** Chỉ giữ mã giá của đúng bộ lọc; luôn lấy giá và mô tả mới từ báo giá hiện tại đã xếp tăng dần. */
+export function resolveTripPlanOffer<T extends TripPlanOffer>(
+  offers: readonly T[],
+  picks: { key: string; values: Readonly<Record<string, TripPlanOffer>> },
+  selectionKey: string,
+  id: string,
+): T | null {
+  const saved = picks.key === selectionKey ? picks.values[id] : undefined;
+  return (
+    offers.find(
+      (offer) => offer.productId === saved?.productId && offer.ratePlanCode === saved.ratePlanCode,
+    ) ??
+    offers[0] ??
+    null
+  );
 }

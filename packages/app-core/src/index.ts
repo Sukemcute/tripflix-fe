@@ -10,3 +10,4 @@ export * from './trip-plan';
 export * from './device-name';
 export * from './registration';
 export * from './checkout-guests';
+export * from './trip-plan-selection';

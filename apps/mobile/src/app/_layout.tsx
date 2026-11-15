@@ -38,50 +38,52 @@ export default function RootLayout() {
     'BeVietnamPro-Bold': require('../../assets/brand/be-vietnam-pro-3.ttf'),
     'BeVietnamPro-ExtraBold': require('../../assets/brand/be-vietnam-pro-4.ttf'),
   });
-  const content = !hasFonts && !fontError ? (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: colors.background,
-      }}
-    >
-      <ActivityIndicator color={colors.coral} accessibilityLabel={copy.common.loading} />
-    </View>
-  ) : (
-    <QueryClientProvider client={queryClient}>
-      <ApiSessionProvider
-        baseUrl={
-          process.env.EXPO_PUBLIC_API_URL ??
-          (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080')
-        }
-        client={Platform.OS === 'web' ? 'web' : 'native'}
-        storage={tokenStorage}
+  const content =
+    !hasFonts && !fontError ? (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.background,
+        }}
       >
-        <CommerceProvider>
-          <ReviewProvider>
-            <AssistantProvider transport={assistantTransport}>
-              {fontError && <Txt variant="caption">{copy.common.fontError}</Txt>}
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: colors.background },
-                  animation: 'none',
-                }}
-              >
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen
-                  name="trip/[slug]"
-                  options={{ animation: 'default', fullScreenGestureEnabled: true }}
-                />
-              </Stack>
-            </AssistantProvider>
-          </ReviewProvider>
-        </CommerceProvider>
-      </ApiSessionProvider>
-    </QueryClientProvider>
-  );
+        <ActivityIndicator color={colors.coral} accessibilityLabel={copy.common.loading} />
+      </View>
+    ) : (
+      <QueryClientProvider client={queryClient}>
+        <ApiSessionProvider
+          baseUrl={
+            process.env.EXPO_PUBLIC_API_URL ??
+            (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080')
+          }
+          client={Platform.OS === 'web' ? 'web' : 'native'}
+          storage={tokenStorage}
+        >
+          <CommerceProvider>
+            <ReviewProvider>
+              <AssistantProvider transport={assistantTransport}>
+                {fontError && <Txt variant="caption">{copy.common.fontError}</Txt>}
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: colors.background },
+                    animation: 'none',
+                  }}
+                >
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="my-trips" />
+                  <Stack.Screen
+                    name="trip/[slug]"
+                    options={{ animation: 'default', fullScreenGestureEnabled: true }}
+                  />
+                </Stack>
+              </AssistantProvider>
+            </ReviewProvider>
+          </CommerceProvider>
+        </ApiSessionProvider>
+      </QueryClientProvider>
+    );
 
   return (
     <AppFrame

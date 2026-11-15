@@ -6,7 +6,18 @@ import { vi } from '@tripflix/i18n';
 import { colors, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { View } from 'react-native';
-import { Button, Card, formatDate, Icon, money, Notice, PriceRow, Screen, Txt, ui } from '@/components/mobile-ui';
+import {
+  Button,
+  Card,
+  formatDate,
+  Icon,
+  money,
+  Notice,
+  PriceRow,
+  Screen,
+  Txt,
+  ui,
+} from '@/components/mobile-ui';
 import { CommerceError } from './commerce-state';
 
 const text = vi.commerce;
@@ -78,7 +89,9 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
     <Screen title={text.cancelledTitle} back={false}>
       <View style={{ alignItems: 'center', gap: spacing.sm, paddingTop: spacing.md }}>
         {/* Vòng xám nhiều lớp như web để khác hẳn dấu tích xanh của đơn đã thanh toán. */}
-        <View style={{ padding: spacing.sm, borderRadius: radius.pill, backgroundColor: colors.surfaceMuted }}>
+        <View
+          style={{ padding: spacing.sm, borderRadius: radius.pill, backgroundColor: colors.surfaceMuted }}
+        >
           <View style={{ padding: spacing.sm, borderRadius: radius.pill, backgroundColor: colors.border }}>
             <View
               style={{
@@ -150,7 +163,11 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
                       paddingTop: spacing.sm,
                       borderTopWidth: 4,
                       borderTopColor:
-                        state === 'done' ? colors.teal : state === 'current' ? colors.coralInk : colors.border,
+                        state === 'done'
+                          ? colors.teal
+                          : state === 'current'
+                            ? colors.coralInk
+                            : colors.border,
                     }}
                   >
                     <Txt
@@ -215,7 +232,7 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
           <PriceRow label={text.total} amount={money(order.total)} />
         </View>
       </Card>
-      <Button icon="arrow-forward" onPress={() => router.replace('/(tabs)/trips')}>
+      <Button icon="arrow-forward" onPress={() => router.replace('/my-trips')}>
         {text.viewTrips}
       </Button>
       <Button tone="secondary" onPress={() => router.replace('/search')}>

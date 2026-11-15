@@ -801,7 +801,7 @@ export function CommerceOrderScreen() {
           {query.data.status === 'paid' && <CancelOrder orderId={query.data.orderId} />}
         </>
       )}
-      <Button onPress={() => router.replace('/(tabs)/trips')}>{text.viewTrips}</Button>
+      <Button onPress={() => router.replace('/my-trips')}>{text.viewTrips}</Button>
     </Screen>
   );
 }

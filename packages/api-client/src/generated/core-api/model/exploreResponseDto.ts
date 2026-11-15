@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { ExploreFallbackDto } from './exploreFallbackDto';
 import type { ExploreSectionDto } from './exploreSectionDto';
 import type { ExploreSuggestItemDto } from './exploreSuggestItemDto';
 import type { ExploreUnderstoodDto } from './exploreUnderstoodDto';
@@ -15,8 +16,19 @@ export interface ExploreResponseDto {
   nearUser: boolean;
   /** Vùng câu nhắm tới đứng đầu, vùng rỗng xuống cuối */
   sections: ExploreSectionDto[];
-  /** Các gợi ý khác khi vùng muốn tìm không có kết quả phù hợp */
+  /**
+   * Kết quả thay thế: vùng câu muốn không có mục nào khớp đủ câu (đúng nơi, không vượt ngân sách, khớp từ) nên nới điều kiện. null nếu có kết quả chính hoặc không có gì liên quan
+   * @nullable
+   */
+  fallback: ExploreFallbackDto | null;
+  /**
+   * Đã thay bằng `fallback.items` (cùng mục, không có `relaxed`)
+   * @deprecated
+   */
   suggest: ExploreSuggestItemDto[];
-  /** Từ đã bỏ qua để ra gợi ý khác */
+  /**
+   * Đã thay bằng `fallback.dropped`
+   * @deprecated
+   */
   dropped: string[];
 }

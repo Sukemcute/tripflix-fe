@@ -1,8 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { FeedCardDto } from '@tripflix/api-client/core-api/model/index';
 import {
+  attachReelVideoSource,
   getReelRenderMode,
   pickReelAfterRemoval,
+  prependPinnedReelCards,
   REEL_RENDER_WINDOW,
   shouldShowReelBackdrop,
   toReelPost,
@@ -101,5 +103,52 @@ describe('shouldShowReelBackdrop', () => {
       true,
       false,
     ]);
+  });
+});
+
+describe('attachReelVideoSource', () => {
+  function createFakeVideo() {
+    const video = {
+      src: '',
+      pause: vi.fn(),
+      load: vi.fn(),
+      removeAttribute: vi.fn((name: string) => {
+        if (name === 'src') video.src = '';
+      }),
+    };
+    return video;
+  }
+
+  it('Strict Mode chạy gắn -> dọn -> gắn lại: video vẫn còn nguồn phát (lỗi cũ: mất src, đứng hình)', () => {
+    const video = createFakeVideo();
+    const release = attachReelVideoSource(video, 'https://cdn/reel/master.m3u8');
+    release();
+    attachReelVideoSource(video, 'https://cdn/reel/master.m3u8');
+    expect(video.src).toBe('https://cdn/reel/master.m3u8');
+  });
+
+  it('dọn khi lướt ra xa: dừng, xoá nguồn và load() để ngắt tải segment', () => {
+    const video = createFakeVideo();
+    attachReelVideoSource(video, 'https://cdn/reel/master.m3u8')();
+    expect(video.pause).toHaveBeenCalled();
+    expect(video.removeAttribute).toHaveBeenCalledWith('src');
+    expect(video.load).toHaveBeenCalled();
+    expect(video.src).toBe('');
+  });
+});
+
+describe('prependPinnedReelCards', () => {
+  const card = (postId: string) => ({ postId });
+
+  it('Reel từ link chia sẻ lên đầu, bỏ bản trùng trong bảng tin, giữ thứ tự còn lại', () => {
+    expect(prependPinnedReelCards([card('b')], [card('a'), card('b'), card('c')]).map((c) => c.postId)).toEqual([
+      'b',
+      'a',
+      'c',
+    ]);
+  });
+
+  it('không có Reel ghim (link hỏng, bài bị ẩn) thì là bảng tin như thường', () => {
+    expect(prependPinnedReelCards([], [card('a'), card('c')]).map((c) => c.postId)).toEqual(['a', 'c']);
   });
 });
