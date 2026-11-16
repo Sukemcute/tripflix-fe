@@ -11,6 +11,7 @@ export type AdminPostsControllerListAdminPostsStatus =
 export const AdminPostsControllerListAdminPostsStatus = {
   draft: 'draft',
   published: 'published',
+  held: 'held',
   hidden: 'hidden',
   removed: 'removed',
   deleted: 'deleted',

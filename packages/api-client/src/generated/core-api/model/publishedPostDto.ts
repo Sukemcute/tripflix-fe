@@ -10,6 +10,7 @@ export interface PublishedPostDto {
   id: string;
   status: PublishedPostDtoStatus;
   isVerified: boolean;
-  publishedAt: string;
+  /** @nullable */
+  publishedAt: string | null;
   shareUrl: string;
 }

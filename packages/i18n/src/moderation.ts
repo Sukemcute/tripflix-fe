@@ -45,6 +45,7 @@ export const moderation = {
   published: 'Đã đăng',
   deleted: 'Đã xoá',
   draft: 'Bản nháp',
+  held: 'Đang kiểm tra',
   selected: 'Chọn hồ sơ để xem nội dung và xử lý.',
   saved: 'Đã lưu quyết định kiểm duyệt.',
   cascadeNotice:

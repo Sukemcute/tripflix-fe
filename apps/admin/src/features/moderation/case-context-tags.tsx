@@ -1,3 +1,4 @@
+import { vi } from '@tripflix/i18n';
 import type { ModerationCaseDto } from '@tripflix/api-client/core-api/model/index';
 import styles from './risk-level.module.css';
 
@@ -46,6 +47,7 @@ export function CaseContextTags({ item, visibility }: { item: ModerationCaseDto;
           Chờ xác minh
         </li>
       )}
+      {visibility === 'held' && <li className={`${styles.tag} ${styles.pending}`}>{vi.api.moderationHeld}</li>}
       {removed ? (
         <li className={`${styles.tag} ${styles.critical}`}>Đã gỡ</li>
       ) : hidden ? (
