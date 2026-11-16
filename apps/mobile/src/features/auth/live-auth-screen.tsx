@@ -16,6 +16,7 @@ import {
   NEW_PASSWORD_MAX,
   parseDayMonthYear,
   REGISTRATION_CODE_PATTERN,
+  resolveMobileLoginReturn,
   SIGNUP_GENDERS,
   type SignupGender,
 } from '@tripflix/app-core';
@@ -128,13 +129,7 @@ export function LiveLoginScreen() {
     },
   });
   function leaveAfterLogin() {
-    const path =
-      typeof returnTo === 'string' &&
-      (/^\/(?:\(tabs\)|trip\/[^/?#]+|saved|create|cart|account-settings)(?:$|\/)/.test(returnTo) ||
-        /^\/(?:flights|payments\/vnpay\/return)(?:\?|$)/.test(returnTo))
-        ? returnTo
-        : '/(tabs)/me';
-    router.dismissTo(path as Href);
+    router.dismissTo(resolveMobileLoginReturn(returnTo) as Href);
   }
   const isBusy = mutation.isPending || requestCode.isPending;
   const registrationError = (error: unknown) => {

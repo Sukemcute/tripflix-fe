@@ -50,6 +50,7 @@ export const assistant = {
     'Bạn đã dùng hết lượt chat thử hôm nay. Đăng nhập để chat tiếp, Tripi vẫn nhớ cuộc trò chuyện này nha!',
   login: 'Đăng nhập',
   turnInProgress: 'Tripi đang trả lời câu trước, bạn đợi chút rồi gửi lại nha.',
+  storageError: 'Tripi chưa thể đồng bộ lịch sử chat trên thiết bị này.',
   rateLimited: 'Bạn nhắn hơi nhanh, đợi một lát rồi gửi tiếp nha.',
   busy: 'Tripi đang hơi đông, bạn thử lại sau ít phút nha.',
   source: 'Nguồn',

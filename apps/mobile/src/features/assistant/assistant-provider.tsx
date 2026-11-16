@@ -1,8 +1,8 @@
 import { useApiSession, type AssistantCard, type AssistantTrip } from '@tripflix/api-client';
-import { parseAssistantChat, serializeAssistantChat, type AssistantChatMessage } from '@tripflix/app-core';
+import { completeAssistantTurn, parseAssistantChat, serializeAssistantChat, type AssistantChatMessage } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren } from 'react';
-import { readStoredChat, writeStoredChat } from './assistant-store';
+import { ASSISTANT_STORAGE_MAX_BYTES, readStoredChat, writeStoredChat } from './assistant-store';
 
 /** Bong bóng Tripi: nhỏ để bớt che video, vẫn trên 44pt nên dễ bấm. Khung chat thu về đúng cỡ này khi đóng. */
 export const BUBBLE_SIZE = 52;
@@ -39,11 +39,18 @@ function useAssistantState(transport?: AssistantTransport) {
   const [trip, setTrip] = useState<AssistantTrip | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [hasStorageError, setHasStorageError] = useState(false);
   const request = useRef<AbortController | null>(null);
   const sequence = useRef(0);
   const userId = useApiSession().user?.id ?? null;
-  const previousUserId = useRef(userId);
+  const previousUserId = useRef<string | null>(null);
   useEffect(() => () => request.current?.abort(), []);
+  const saveChat = useCallback((raw: string | null) => {
+    void writeStoredChat(raw).then(
+      () => setHasStorageError(false),
+      () => setHasStorageError(true),
+    );
+  }, []);
 
   const clear = useCallback(() => {
     request.current?.abort();
@@ -55,30 +62,39 @@ function useAssistantState(transport?: AssistantTransport) {
     setIsPending(false);
   }, []);
 
+  useEffect(() => {
+    // Chạy trước effect đổi tài khoản để tránh ghi tin của người cũ dưới ID mới.
+    if (previousUserId.current && previousUserId.current !== userId) return;
+    if (!userId || !messages.length || isPending || hasError) return;
+    const raw = serializeAssistantChat(userId, messages, trip, Date.now(), ASSISTANT_STORAGE_MAX_BYTES);
+    saveChat(raw);
+  }, [userId, messages, trip, isPending, hasError, saveChat]);
+
   // Đổi người hoặc đăng xuất: xoá phiên. Khách vừa đăng nhập: giữ phiên đang dở và bắt đầu lưu.
   useEffect(() => {
     const previous = previousUserId.current;
     previousUserId.current = userId;
     if (previous && previous !== userId) {
       clear();
-      writeStoredChat(null).catch(() => undefined);
+      saveChat(null);
     }
-    if (!userId || previous === userId) return;
+    if (!userId) return;
+    const restore = new AbortController();
     readStoredChat()
       .then((raw) => {
-        const saved = parseAssistantChat<AssistantMessage>(raw, userId, Date.now());
-        // Người dùng đã đổi trong lúc đọc: bỏ kết quả cũ.
-        if (previousUserId.current !== userId || !saved) return;
+        const saved = parseAssistantChat(raw, userId, Date.now());
+        if (restore.signal.aborted || !saved) return;
+        for (const message of saved.messages) {
+          sequence.current = Math.max(sequence.current, Number(message.id) || 0);
+        }
         setMessages((current) => (current.length ? current : saved.messages));
         setTrip((current) => current ?? (saved.trip as AssistantTrip | null));
       })
-      .catch(() => undefined);
-  }, [userId, clear]);
-
-  useEffect(() => {
-    if (!userId || !messages.length) return;
-    writeStoredChat(serializeAssistantChat(userId, messages, trip, Date.now())).catch(() => undefined);
-  }, [userId, messages, trip]);
+      .catch(() => {
+        if (!restore.signal.aborted) setHasStorageError(true);
+      });
+    return () => restore.abort();
+  }, [userId, clear, saveChat]);
 
   async function send(text = draft, retry = false) {
     if (!text.trim() || request.current) return;
@@ -98,7 +114,7 @@ function useAssistantState(transport?: AssistantTransport) {
       const { trip: nextTrip, ...answer } = typeof reply === 'string' ? { text: reply } : reply;
       if (!answer.text.trim()) throw new Error('Empty assistant response');
       if (controller.signal.aborted) return;
-      setMessages([...next, { id: String(++sequence.current), role: 'assistant', ...answer }]);
+      setMessages(completeAssistantTurn(next, { id: String(++sequence.current), role: 'assistant', ...answer }));
       if (nextTrip) setTrip(nextTrip);
     } catch {
       if (!controller.signal.aborted) setHasError(true);
@@ -111,7 +127,7 @@ function useAssistantState(transport?: AssistantTransport) {
   }
   function reset() {
     clear();
-    if (userId) writeStoredChat(null).catch(() => undefined);
+    if (userId) saveChat(null);
   }
   return {
     isOpen: dialog !== null,
@@ -123,6 +139,7 @@ function useAssistantState(transport?: AssistantTransport) {
     messages,
     isPending,
     hasError,
+    hasStorageError: Boolean(userId && hasStorageError),
     send,
     reset,
     isPreview: !transport,

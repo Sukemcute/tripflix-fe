@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ASSISTANT_CHAT_DAYS,
   buildAssistantHistory,
+  completeAssistantTurn,
   parseAssistantChat,
   serializeAssistantChat,
   type AssistantChatMessage,
@@ -38,6 +39,37 @@ describe('assistant chat persistence', () => {
     expect(restored?.messages).toHaveLength(20);
     expect(restored?.messages[0]?.text).toBe('m10');
   });
+
+  it('stores text and kind without cards or suggestions and reads existing sessions', () => {
+    const extended = [
+      { ...messages[1]!, cards: [{ id: 'reel-1', details: 'x'.repeat(3000) }], suggestions: ['Xem reel'] },
+    ];
+    const trip = { v: 1, place: 'Đà Lạt' };
+    const raw = serializeAssistantChat('u1', extended, trip, NOW);
+    const expected = { messages: [messages[1]], trip };
+    expect(JSON.parse(raw)).toMatchObject(expected);
+    expect(raw).not.toContain('cards');
+    expect(raw).not.toContain('suggestions');
+    const legacy = JSON.stringify({ userId: 'u1', savedAt: NOW, messages: extended, trip });
+    expect(parseAssistantChat(legacy, 'u1', NOW)).toEqual(expected);
+  });
+
+  it('fits long Vietnamese conversations into SecureStore and keeps the newest full turn and trip', () => {
+    const long = Array.from({ length: 20 }, (_, i) => ({
+      id: String(i),
+      role: i % 2 === 0 ? ('user' as const) : ('assistant' as const),
+      text: 'Đà Lạt 🧥 '.repeat(30),
+    }));
+    const trip = { v: 1, place: 'Đà Lạt' };
+    const raw = serializeAssistantChat('u1', long, trip, NOW, 2048);
+    expect(encodeURI(raw).match(/%[0-9A-F]{2}|./g)?.length).toBeLessThanOrEqual(2048);
+    expect(parseAssistantChat(raw, 'u1', NOW)).toEqual({ messages: long.slice(-2), trip });
+  });
+
+  it('keeps recent messages when the trip alone exceeds SecureStore capacity', () => {
+    const raw = serializeAssistantChat('u1', messages, { detail: 'Đà Lạt'.repeat(3000) }, NOW, 2048);
+    expect(parseAssistantChat(raw, 'u1', NOW)).toEqual({ messages: messages.slice(0, 2), trip: null });
+  });
 });
 
 describe('buildAssistantHistory', () => {
@@ -46,5 +78,18 @@ describe('buildAssistantHistory', () => {
       { role: 'user', text: 'ks vung tau t7' },
       { role: 'assistant', text: 'Bạn trả phòng ngày nào?', kind: 'clarify' },
     ]);
+  });
+
+  it('displays a denied question but leaves it out of the next request and stored session', () => {
+    const prior = messages.slice(0, 2);
+    const denied: AssistantChatMessage = { id: '4', role: 'user', text: 'Câu hỏi vượt hạn mức' };
+    const afterDenial = completeAssistantTurn([...prior, denied], messages[2]!);
+    expect(afterDenial.map((message) => message.text)).toContain(denied.text);
+    const accepted: AssistantChatMessage = { id: '5', role: 'user', text: 'Xem dự báo Đà Lạt' };
+    const nextReply: AssistantChatMessage = { id: '6', role: 'assistant', text: 'Có mưa', kind: 'answer' };
+    const settled = completeAssistantTurn([...afterDenial, accepted], nextReply);
+    expect(buildAssistantHistory(settled)).toEqual(buildAssistantHistory([...prior, accepted, nextReply]));
+    const raw = serializeAssistantChat('u1', settled, null, NOW);
+    expect(parseAssistantChat(raw, 'u1', NOW)?.messages).toEqual([...prior, accepted, nextReply]);
   });
 });
