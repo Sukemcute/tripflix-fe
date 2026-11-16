@@ -167,7 +167,10 @@ export function BottomSheet({
             }}
             style={[
               styles.sheet,
-              { maxHeight: windowHeight * 0.85, paddingBottom: Math.max(insets.bottom, compact ? spacing.sm : spacing.md) },
+              {
+                maxHeight: windowHeight * 0.85,
+                paddingBottom: Math.max(insets.bottom, compact ? spacing.sm : spacing.md),
+              },
               sheetStyle,
             ]}
           >
@@ -175,7 +178,11 @@ export function BottomSheet({
               <View collapsable={false}>
                 <View style={[styles.handle, compact && styles.compactHandle]} />
                 <View style={[styles.heading, compact && styles.compactHeading]}>
-                  <Txt variant="label" numberOfLines={1} style={[styles.title, compact && styles.compactTitle]}>
+                  <Txt
+                    variant="label"
+                    numberOfLines={1}
+                    style={[styles.title, compact && styles.compactTitle]}
+                  >
                     {title}
                   </Txt>
                   <IconButton
@@ -195,6 +202,7 @@ export function BottomSheet({
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={[styles.bodyContent, compact && styles.compactBodyContent]}
                     bounces={false}
+                    showsVerticalScrollIndicator={false}
                     onScroll={onBodyScroll}
                     scrollEventThrottle={16}
                     scrollEnabled={isScrollEnabled}

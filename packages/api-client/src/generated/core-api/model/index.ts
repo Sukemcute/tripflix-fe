@@ -63,6 +63,8 @@ export * from './cancelQuoteDtoReason';
 export * from './cancelQuoteLineDto';
 export * from './cancelQuoteLineDtoRule';
 export * from './cancelQuoteResultDto';
+export * from './cancelVnpayResultDto';
+export * from './cancelVnpayResultDtoStatus';
 export * from './changePasswordDto';
 export * from './checkoutDto';
 export * from './checkoutDtoPassengerTypesItem';

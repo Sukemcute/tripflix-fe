@@ -122,6 +122,8 @@ export {
   createCancelPaidOperation,
   createOtpOperation,
   createVnpayOperation,
+  createCancelVnpayOperation,
+  createCancelHoldOperation,
   type CommerceHotel,
 } from './commerce';
 export { PresignedUploadError, uploadChunkToPresignedUrl } from './media-upload';
