@@ -18,11 +18,12 @@ const COVER_MASCOT = '/brand/tripi-welcome.png';
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3100';
 
 const ACTIONS: readonly CreateModerationActionDtoAction[] = ['hide', 'remove', 'restore'];
-/** Hành động không đổi được gì ở trạng thái hiện tại thì khóa nút. */
-const NO_OP_STATUS: Record<CreateModerationActionDtoAction, string> = {
-  hide: 'hidden',
-  remove: 'removed',
-  restore: 'published',
+const ALLOWED_ACTIONS: Record<string, readonly CreateModerationActionDtoAction[]> = {
+  draft: [],
+  deleted: [],
+  published: ['hide', 'remove'],
+  hidden: ['restore', 'remove'],
+  removed: ['restore'],
 };
 const HISTORY_LABEL: Record<string, string> = {
   hide: vi.api.moderationDidHide,
@@ -149,15 +150,31 @@ export function ModerationPostDetail({
         <section className="admin-post-card">
           <p className="admin-eyebrow">{vi.api.moderationActions}</p>
           <p className="admin-post-muted">{vi.api.moderationActionsHint}</p>
+          {status === 'deleted' && (
+            <p className="admin-post-muted">
+              Bài đã được tác giả xóa, không thể khôi phục hoặc kiểm duyệt lại.
+            </p>
+          )}
+          {status === 'draft' && (
+            <p className="admin-post-muted">
+              Bài đang là bản nháp. Chỉ xử lý kiểm duyệt sau khi bài được đăng.
+            </p>
+          )}
           <label className="admin-post-reason">
             {vi.api.reason}
-            <input
+            <select
               required
-              maxLength={200}
-              placeholder={vi.api.moderationReasonPlaceholder}
               value={reason}
               onChange={(event) => onReasonChange(event.target.value)}
-            />
+              disabled={isPending || status === 'deleted' || status === 'draft'}
+            >
+              <option value="">Chọn lý do kiểm duyệt</option>
+              {Object.entries(vi.moderation.reasons).map(([code, label]) => (
+                <option key={code} value={code}>
+                  {label}
+                </option>
+              ))}
+            </select>
           </label>
           {notice}
           <div className="admin-post-actions">
@@ -166,7 +183,7 @@ export function ModerationPostDetail({
                 key={action}
                 type="button"
                 className={action === 'remove' ? 'admin-secondary is-danger' : 'admin-secondary'}
-                disabled={isPending || !reason.trim() || NO_OP_STATUS[action] === status}
+                disabled={isPending || !reason.trim() || !ALLOWED_ACTIONS[status]?.includes(action)}
                 onClick={() => onAction(action)}
               >
                 {vi.api[action]}

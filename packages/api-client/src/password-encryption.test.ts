@@ -186,24 +186,27 @@ describe('SessionClient + mã hoá mật khẩu', () => {
     expect(loginCalls).toBe(1);
   });
 
-  it('server chưa bật mã hoá (503): gửi password như cũ, và nhớ trạng thái này (không gọi lại API khoá)', async () => {
-    let keyCalls = 0;
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
-      const path = String(url);
-      if (path.endsWith('/auth/password-key')) {
-        keyCalls++;
-        return json(503, { message: 'Máy chủ chưa bật mã hoá mật khẩu' });
-      }
-      if (path.endsWith('/auth/login')) return json(401, {});
-      return json(200, {});
-    });
+  it.each([404, 503])('không gửi login nếu API khoá trả %i và có thể thử lại', async (status) => {
+    const server = createServerKey();
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(status, {}))
+      .mockResolvedValueOnce(json(200, { ...server.key, serverTime: Date.now() / 1000 }))
+      .mockResolvedValueOnce(json(401, {}));
     const session = new SessionClient({ baseUrl: '', client: 'web' });
-    await expect(session.login({ email: 'a@b.c', password: 'pw' })).rejects.toBeTruthy();
-    await expect(session.login({ email: 'a@b.c', password: 'pw' })).rejects.toBeTruthy();
-    const loginBody = bodyOf(fetchMock.mock.calls.find(([url]) => String(url).endsWith('/auth/login'))![1]);
-    expect(loginBody).toMatchObject({ email: 'a@b.c', password: 'pw' });
-    expect(loginBody).not.toHaveProperty('encPassword');
-    expect(keyCalls).toBe(1);
+    const credentials = { email: 'a@b.c', password: 'pw' };
+
+    await expect(session.login(credentials)).rejects.toMatchObject({ status });
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(['/api/auth/password-key']);
+
+    await expect(session.login(credentials)).rejects.toMatchObject({ status: 401 });
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/api/auth/password-key',
+      '/api/auth/password-key',
+      '/api/auth/login',
+    ]);
+    expect(bodyOf(fetchMock.mock.calls[2]![1])).toMatchObject({ encPassword: expect.any(String) });
+    expect(bodyOf(fetchMock.mock.calls[2]![1])).not.toHaveProperty('password');
   });
 
   it('xin mã đăng ký chỉ gửi email; đăng ký gửi encPassword rồi đăng nhập bằng encPassword', async () => {

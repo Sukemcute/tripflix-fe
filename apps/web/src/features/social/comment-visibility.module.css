@@ -1,0 +1,82 @@
+.row {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 12px;
+}
+.trigger {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.trigger:hover {
+  background: var(--color-border);
+  color: var(--color-ink);
+}
+.trigger:focus-visible,
+.menu button:focus-visible,
+.menu a:focus-visible,
+.hidden button:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
+}
+.menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: min(240px, calc(100vw - 16px));
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background, white);
+  color: var(--color-ink);
+  box-shadow: 0 8px 28px rgb(15 23 42 / 0.14);
+}
+.menu button,
+.menu a {
+  display: block;
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 7px;
+  text-align: left;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.menu button:hover,
+.menu a:hover {
+  background: var(--color-surface);
+}
+.menu button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.menu p {
+  padding: 8px 12px 4px;
+  margin: 4px 0 0;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.hidden {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+.hidden button {
+  color: var(--color-teal-ink);
+  font-weight: 600;
+  cursor: pointer;
+}

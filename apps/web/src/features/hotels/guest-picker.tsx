@@ -1,7 +1,8 @@
 'use client';
 import { vi } from '@tripflix/i18n';
-import { useEffect, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import styles from './hotel.module.css';
+import { placeBelow, useCloseOnScroll } from '@/features/shared/soft-select';
 
 const copy = vi.hotel;
 const MAX_GUESTS = 9;
@@ -69,24 +70,26 @@ export function GuestPicker({
   onChange: (guests: Guests) => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const popupId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const canAdd = adults + numChildren + numInfants < MAX_GUESTS;
+  const description = `${adults} ${copy.adultsLabel.toLowerCase()} · ${numChildren} ${copy.childrenLabel.toLowerCase()} · ${numInfants} ${copy.infantsLabel.toLowerCase()}`;
+  useCloseOnScroll(isOpen, popupRef);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const closeOnOutside = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setIsOpen(false);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsOpen(false);
-    };
-    document.addEventListener('pointerdown', closeOnOutside);
-    document.addEventListener('keydown', closeOnEscape);
-    return () => {
-      document.removeEventListener('pointerdown', closeOnOutside);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
-  }, [isOpen]);
+  const positionPopup = () => {
+    const trigger = rootRef.current;
+    const popup = popupRef.current;
+    if (!trigger || !popup) return;
+    placeBelow(trigger, popup);
+    const rect = trigger.getBoundingClientRect();
+    const width = Math.min(320, window.innerWidth - 32);
+    popup.style.width = `${width}px`;
+    popup.style.minWidth = '0';
+    popup.style.left = `${Math.max(16, Math.min(rect.left, window.innerWidth - width - 16))}px`;
+    const available = popup.dataset.side === 'top' ? rect.top : window.innerHeight - rect.bottom;
+    popup.style.maxHeight = `${Math.max(0, available - 22)}px`;
+  };
 
   return (
     <div ref={rootRef} className={styles.guestPicker}>
@@ -95,13 +98,20 @@ export function GuestPicker({
         type="button"
         className={styles.guestTrigger}
         aria-expanded={isOpen}
-        onClick={() => setIsOpen((open) => !open)}
+        aria-label={description}
+        title={description}
+        popoverTarget={popupId}
+        onClick={positionPopup}
       >
-        {adults} {copy.adultsLabel.toLowerCase()} · {numChildren} {copy.childrenLabel.toLowerCase()}
-        {numInfants > 0 && ` · ${numInfants} ${copy.infantsLabel.toLowerCase()}`}
+        {adults + numChildren + numInfants} {copy.guests}
       </button>
-      {isOpen && (
-        <div className={styles.guestPopover}>
+      <div
+        ref={popupRef}
+        id={popupId}
+        popover="auto"
+        className={styles.guestPopover}
+        onToggle={(event) => setIsOpen(event.newState === 'open')}
+      >
           <CountRow
             label={copy.adultsLabel}
             value={adults}
@@ -125,11 +135,10 @@ export function GuestPicker({
             canIncrease={canAdd}
             onChange={(value) => onChange({ adults, children: numChildren, infants: value })}
           />
-          <button type="button" className="secondary-button" onClick={() => setIsOpen(false)}>
+          <button type="button" className="secondary-button" onClick={() => popupRef.current?.hidePopover()}>
             {copy.guestsDone}
           </button>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

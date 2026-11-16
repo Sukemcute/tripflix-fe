@@ -302,6 +302,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: { flex: 1 },
-  message: { lineHeight: 17 },
+  message: { fontSize: 15, lineHeight: 21 },
   muted: { color: colors.textMuted },
 });

@@ -29,6 +29,7 @@ export interface TokenStorage {
 export interface SessionOptions {
   baseUrl: string;
   client: 'web' | 'native';
+  serverSession?: boolean;
   storage?: TokenStorage;
 }
 export interface SessionState {
@@ -135,6 +136,7 @@ export class SessionClient {
           this.options.client === 'native' ? { refreshToken: this.refreshToken! } : {},
           await this.proofOptions('refresh'),
         );
+        if (this.options.serverSession) return version === this.version;
         return await this.acceptTokens(
           readEntity(response.data, ['accessToken', 'tokenType', 'expiresIn']),
           version,
@@ -152,12 +154,12 @@ export class SessionClient {
     return this.refreshPromise;
   }
 
-  /** Mật khẩu được mã hoá trước khi gửi (TF056); server chưa bật mã hoá thì gửi như cũ. */
+  /** Mật khẩu được mã hoá trước khi gửi (TF056). */
   async login(credentials: PasswordCredentials): Promise<void> {
     const version = ++this.version;
     const { email, password, deviceName } = credentials;
     const response = await sendWithPasswords(
-      [{ plain: 'password', encrypted: 'encPassword', value: password, purpose: 'login' }],
+      [{ encrypted: 'encPassword', value: password, purpose: 'login' }],
       email,
       async (fields) => auth.authControllerLogin(
         { email, ...(deviceName ? { deviceName } : {}), ...fields } as LoginDto, await this.proofOptions('login'),
@@ -172,7 +174,9 @@ export class SessionClient {
     await this.completeLogin(response.data, version);
   }
   private async completeLogin(data: TokenPairDto | void, version: number): Promise<void> {
-    if (!(await this.acceptTokens(readEntity(data, ['accessToken', 'tokenType', 'expiresIn']), version))) return;
+    if (version !== this.version) return;
+    if (!this.options.serverSession &&
+        !(await this.acceptTokens(readEntity(data, ['accessToken', 'tokenType', 'expiresIn']), version))) return;
     try {
       await this.reloadUser();
     } catch (error) {
@@ -182,7 +186,7 @@ export class SessionClient {
   async register(credentials: RegisterInput): Promise<void> {
     const { password, ...rest } = credentials;
     await sendWithPasswords(
-      [{ plain: 'password', encrypted: 'encPassword', value: password, purpose: 'register' }],
+      [{ encrypted: 'encPassword', value: password, purpose: 'register' }],
       rest.email,
       (fields) => auth.authControllerRegister({ ...rest, ...fields }, this.authOptions),
     );
@@ -214,9 +218,10 @@ export class SessionClient {
     if (await this.refresh()) await this.reloadUser();
   }
   async logout(): Promise<void> {
+    const options = this.options.serverSession ? await this.proofOptions('refresh') : this.authOptions;
     await auth.authControllerLogout({
-      ...this.authOptions,
-      skipAuthRefresh: false,
+      ...options,
+      skipAuthRefresh: this.options.serverSession ?? false,
       skipAuthorization: false,
     });
     await this.clear();

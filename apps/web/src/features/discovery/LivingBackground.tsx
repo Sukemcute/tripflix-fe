@@ -386,9 +386,10 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
     width = window.innerWidth;
     height = window.innerHeight;
     small = width < 700;
-    const pixelBudget = small ? 230_000 : 650_000;
-    dpr = Math.min(window.devicePixelRatio || 1, small ? 1 : 1.25, Math.sqrt(pixelBudget / (width * height)));
-    caustics.width = small ? 56 : 96;
+    // The water is atmospheric background art. A smaller backing store keeps it smooth on integrated GPUs.
+    const pixelBudget = small ? 150_000 : 360_000;
+    dpr = Math.min(window.devicePixelRatio || 1, 1, Math.sqrt(pixelBudget / (width * height)));
+    caustics.width = small ? 44 : 72;
     caustics.height = Math.max(28, Math.round(caustics.width * height / width));
     floorPixels = floor?.createImageData(caustics.width, caustics.height);
     floorTick = -1;
@@ -407,7 +408,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
 
   function drawFloor(light: number) {
     if (!floor || !floorPixels) return;
-    const rate = small ? 6 : 8;
+    const rate = small ? 4 : 5;
     const tick = reducedMotion.matches ? 0 : Math.floor(time * rate);
     if (floorTick !== tick) {
       floorTick = tick;
@@ -575,7 +576,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
   }
 
   function updateFish(dt: number, koi: number, tropical: number) {
-    const members = fish.slice(0, small ? 6 : 12);
+    const members = fish.slice(0, small ? 4 : 8);
     const active = members.filter((member) => Math.max(tropical, member.seed === 11 ? 0 : koi) > 0.02);
     if (!active.length) return;
     const brush = ctx!;
@@ -700,7 +701,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
   function draw(now: number) {
     frame = 0;
     if (!active || document.hidden) return;
-    if (previous && now - previous < 1000 / (small ? 24 : 30) - 1) {
+    if (previous && now - previous < 1000 / 20 - 1) {
       requestFrame();
       return;
     }
@@ -745,7 +746,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
       glow(brush, width * 0.88, height * 0.68, width * 0.48, teal);
       brush.globalAlpha = 1;
     }
-    for (let i = 0; i < (small ? 28 : 66); i++) {
+    for (let i = 0; i < (small ? 18 : 36); i++) {
       const size = 0.8 + noise(i + 270) * 3.3;
       ellipse(brush, width * noise(i + 290), waterPosition(i + 320, 1), size, size * 0.54, i % 3 ? '#103e431a' : '#fbf1c633', -0.55);
     }
@@ -825,7 +826,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
       brush.fillStyle = accent;
       brush.fill();
     }
-    const nearest = fish.slice(0, small ? 6 : current === 2 ? 11 : 12).find(
+    const nearest = fish.slice(0, small ? 4 : 8).find(
       (member) => Math.hypot(member.x - pointer!.x, member.y - pointer!.y) < 27,
     );
     let name = ACTS[current]!.name;

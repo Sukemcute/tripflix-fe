@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { configureHttp, HttpError } from './http';
-import { feedApi } from './feed';
+import { feedApi, REELS_BY_IDS_PAGE_SIZE, sliceReelIdsPage } from './feed';
 
 afterEach(() => vi.restoreAllMocks());
 const json = (status: number, body: unknown) =>
@@ -59,4 +59,26 @@ it('requests only the viewer saved Reels on the for_you tab', async () => {
   const params = new URL(String(fetchMock.mock.calls[0]![0])).searchParams;
   expect(params.get('saved')).toBe('true');
   expect(params.get('tab')).toBe('for_you');
+});
+
+it('requests Reels cards for exact post ids as one comma-separated post_ids parameter', async () => {
+  configureHttp({ baseUrl: 'http://api', getAccessToken: async () => null });
+  const fetchMock = vi
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValue(json(200, { items: [], nextCursor: null }));
+  await feedApi.listByIds(['p2', 'p1']);
+  const url = new URL(String(fetchMock.mock.calls[0]![0]));
+  expect(Object.fromEntries(url.searchParams)).toEqual({ post_ids: 'p2,p1' });
+});
+
+it('splits post ids into pages no larger than the backend limit, keeping order', () => {
+  const ids = Array.from({ length: REELS_BY_IDS_PAGE_SIZE + 3 }, (_, index) => `p${index}`);
+  const first = sliceReelIdsPage(ids, 0);
+  expect(first.ids).toHaveLength(REELS_BY_IDS_PAGE_SIZE);
+  expect(first.ids[0]).toBe('p0');
+  expect(first.nextOffset).toBe(REELS_BY_IDS_PAGE_SIZE);
+  const second = sliceReelIdsPage(ids, first.nextOffset!);
+  expect(second.ids).toEqual([`p${REELS_BY_IDS_PAGE_SIZE}`, `p${REELS_BY_IDS_PAGE_SIZE + 1}`, `p${REELS_BY_IDS_PAGE_SIZE + 2}`]);
+  expect(second.nextOffset).toBeNull();
+  expect(sliceReelIdsPage(ids.slice(0, REELS_BY_IDS_PAGE_SIZE), 0).nextOffset).toBeNull();
 });

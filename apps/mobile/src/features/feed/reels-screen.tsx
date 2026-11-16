@@ -5,12 +5,13 @@ import {
   REEL_LOOKAHEAD_COUNT,
   selectReelPoster,
 } from '@tripflix/app-core';
-import { useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
+import { reloadReelsFeed, useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
+import { useQueryClient } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { useNetworkState } from 'expo-network';
-import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,6 +20,7 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
+  RefreshControl,
   StyleSheet,
   View,
   useWindowDimensions,
@@ -86,6 +88,16 @@ export function ReelsScreen() {
   /** Reel cần mở ngay (ví dụ bấm thẻ video trong khung chat Tripi). */
   const { reel: targetId } = useLocalSearchParams<{ reel?: string }>();
   const clearTarget = useCallback(() => router.setParams({ reel: undefined }), []);
+  // Nhấn icon Reels khi đang ở Reels thì về video đầu và tải lại (như TikTok); từ tab khác quay về thì giữ chỗ đang xem.
+  const navigation = useNavigation();
+  const [reloadCount, setReloadCount] = useState(0);
+  useEffect(
+    () =>
+      navigation.addListener('tabPress' as never, () => {
+        if (navigation.isFocused()) setReloadCount((count) => count + 1);
+      }),
+    [navigation],
+  );
   const { width } = useWindowDimensions();
   // The bar follows `tab` at once; the list only changes after the old one has left the screen.
   const [contentTab, setContentTab] = useState<ReelTab>('for_you');
@@ -235,6 +247,7 @@ export function ReelsScreen() {
               initialLayout={contentSize}
               targetId={contentTab === 'for_you' ? targetId : undefined}
               onTargetShown={clearTarget}
+              reloadCount={reloadCount}
               onHiddenChange={setIsChromeHidden}
               onOpenSample={() => setIsSample(true)}
             />
@@ -317,6 +330,7 @@ function ReelsTabFeed({
   initialLayout,
   targetId,
   onTargetShown,
+  reloadCount,
   onHiddenChange,
   onOpenSample,
 }: {
@@ -324,24 +338,36 @@ function ReelsTabFeed({
   initialLayout: { width: number; height: number };
   targetId?: string;
   onTargetShown: () => void;
+  /** Tăng lên mỗi lần người xem nhấn lại icon Reels. */
+  reloadCount: number;
   onHiddenChange: (isHidden: boolean) => void;
   onOpenSample: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const feed = useReelsFeed({ tab });
+  const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [scrollToTopCount, setScrollToTopCount] = useState(0);
   const refreshInFlight = useRef(false);
-  const refreshFeed = async () => {
+  // Trang đầu mới có thứ tự mới (BE chọn seed ngẫu nhiên mỗi lần), nên chỉ tải lại trang đầu.
+  const refreshFeed = useCallback(async () => {
     if (refreshInFlight.current) return;
     refreshInFlight.current = true;
     setIsRefreshing(true);
     try {
-      await feed.refetch();
+      await reloadReelsFeed(queryClient, tab);
     } finally {
       refreshInFlight.current = false;
       setIsRefreshing(false);
     }
-  };
+  }, [queryClient, tab]);
+  const lastReloadCount = useRef(reloadCount);
+  useEffect(() => {
+    if (reloadCount === lastReloadCount.current) return;
+    lastReloadCount.current = reloadCount;
+    setScrollToTopCount((count) => count + 1);
+    void refreshFeed();
+  }, [reloadCount, refreshFeed]);
   const items = useMemo(() => {
     // A hot post can move between pages when its score changes while the viewer scrolls.
     const seenPostIds = new Set<string>();
@@ -400,6 +426,7 @@ function ReelsTabFeed({
             void refreshFeed();
           }}
           isRefreshing={isRefreshing}
+          scrollToTopCount={scrollToTopCount}
         />
       </View>
     );
@@ -450,6 +477,7 @@ export function ReelsFeed({
   isFetchingMore = false,
   onRefresh,
   isRefreshing = false,
+  scrollToTopCount = 0,
 }: {
   items: readonly ReelItem[];
   initialLayout?: { width: number; height: number };
@@ -462,6 +490,8 @@ export function ReelsFeed({
   isFetchingMore?: boolean;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  /** Tăng lên thì về ngay video đầu. */
+  scrollToTopCount?: number;
 }) {
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
@@ -541,6 +571,12 @@ export function ReelsFeed({
     return () => cancelAnimationFrame(frame);
   }, [targetIndex, layout.height, onTargetShown]);
 
+  useEffect(() => {
+    if (scrollToTopCount === 0) return;
+    list.current?.scrollToOffset({ offset: 0, animated: false });
+    settle(0);
+  }, [scrollToTopCount, settle]);
+
   const indexAt = (offset: number) =>
     Math.max(0, Math.min(items.length - 1, Math.round(offset / layout.height)));
 
@@ -582,8 +618,19 @@ export function ReelsFeed({
           windowSize={Platform.OS === 'web' ? REEL_LOOKAHEAD_COUNT * 2 + 1 : 3}
           initialNumToRender={3}
           maxToRenderPerBatch={Platform.OS === 'web' ? REEL_LOOKAHEAD_COUNT + 2 : 3}
-          onRefresh={onRefresh}
-          refreshing={isRefreshing}
+          // Vuốt xuống ở video đầu để tải lại. Vòng xoay màu trắng trên nền tối và nằm dưới thanh tab trên cùng,
+          // không thì nó bị thanh tab che và người xem tưởng không có gì xảy ra.
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.background}
+                colors={[colors.ink]}
+                progressViewOffset={insets.top + REELS_TAB_BAR_HEIGHT}
+              />
+            ) : undefined
+          }
           ListFooterComponent={
             isFetchingMore ? (
               <ActivityIndicator

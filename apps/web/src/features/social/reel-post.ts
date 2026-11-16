@@ -72,3 +72,37 @@ export function getReelRenderMode(index: number, activeIndex: number): ReelRende
 export function shouldShowReelBackdrop(index: number, activeIndex: number): boolean {
   return Math.abs(index - activeIndex) <= 1;
 }
+
+/** Phần của thẻ <video> mà việc gắn/nhả nguồn phát cần (để test được không cần DOM). */
+export type ReelVideoSource = Pick<HTMLVideoElement, 'src' | 'pause' | 'removeAttribute' | 'load'>;
+
+/**
+ * Gắn nguồn phát trong effect thay vì qua prop `src`: effect dọn (releaseReelVideoSource) xoá `src`, mà
+ * React không gắn lại prop không đổi. React dev (Strict Mode) chạy effect -> dọn -> chạy lại ngay khi
+ * thẻ mới hiện, nên để `src` ở prop thì video đang xem và video kế tiếp mất nguồn, đứng hình.
+ * Trả về hàm dọn cho useEffect.
+ */
+export function attachReelVideoSource(video: ReelVideoSource, url: string): () => void {
+  video.src = url;
+  return () => releaseReelVideoSource(video);
+}
+
+/**
+ * Chỉ pause() hoặc gỡ khỏi DOM thì trình duyệt vẫn có thể tải tiếp segment, giữ bộ đệm và bộ giải mã tới lúc
+ * dọn rác. Xoá src rồi load() để ngắt tải và trả tài nguyên ngay.
+ */
+export function releaseReelVideoSource(video: ReelVideoSource): void {
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+}
+
+/**
+ * Mở Reel từ link chia sẻ: Reel đó lên đầu, lướt tiếp là bảng tin Reels như thường (bỏ bản trùng nếu bảng tin
+ * cũng có Reel đó).
+ */
+export function prependPinnedReelCards<T extends { postId: string }>(pinnedCards: readonly T[], feedCards: readonly T[]): T[] {
+  if (pinnedCards.length === 0) return [...feedCards];
+  const pinnedIds = new Set(pinnedCards.map((card) => card.postId));
+  return [...pinnedCards, ...feedCards.filter((card) => !pinnedIds.has(card.postId))];
+}

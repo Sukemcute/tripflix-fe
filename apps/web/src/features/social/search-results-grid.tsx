@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { t, vi } from '@tripflix/i18n';
 import { useApiSession, usePostSearchFeed } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
@@ -15,7 +15,6 @@ import styles from './search-results-grid.module.css';
 
 /** Số thẻ khung xám khi đang tải trang đầu: vừa 2 hàng trên màn rộng. */
 const SKELETON_CARD_COUNT = 12;
-const NOTICE_VISIBLE_MS = 4000;
 
 const RESULT_TYPE_LABELS: Record<SearchResultType, string> = {
   all: vi.api.searchResultsTabAll,
@@ -28,6 +27,8 @@ export interface SearchResultsGridProps {
   resultType: SearchResultType;
   onChangeResultType: (resultType: SearchResultType) => void;
   onOpenPost: (post: SocialPostDto) => void;
+  /** Bấm một Reel: mở trình xem Reels, lướt trong các Reel đang có ở grid (theo thứ tự grid). */
+  onOpenReel: (postId: string, reelIds: string[]) => void;
   onClearSearch: () => void;
 }
 
@@ -37,6 +38,7 @@ export function SearchResultsGrid({
   resultType,
   onChangeResultType,
   onOpenPost,
+  onOpenReel,
   onClearSearch,
 }: SearchResultsGridProps) {
   const { user } = useApiSession();
@@ -46,7 +48,6 @@ export function SearchResultsGrid({
   const { hasNextPage, isFetchingNextPage, isPending, fetchNextPage } = searchQuery;
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const [isNoticeVisible, setIsNoticeVisible] = useState(false);
 
   const posts = useMemo(() => {
     const items = searchQuery.data?.pages.flatMap((page) => page.items) ?? [];
@@ -77,21 +78,14 @@ export function SearchResultsGrid({
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  useEffect(() => {
-    if (!isNoticeVisible) return;
-    const timer = window.setTimeout(() => setIsNoticeVisible(false), NOTICE_VISIBLE_MS);
-    return () => window.clearTimeout(timer);
-  }, [isNoticeVisible]);
-
   // Từ khoá hoặc tab mới thì cuộn về đầu grid.
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
   }, [keyword, resultType]);
 
   const handleOpen = (post: SocialPostDto) => {
-    // Reels cần thẻ /v1/feed (link phát HLS) mà chưa lấy được theo id bài: tạm báo thay vì mở khung trống.
     if (isReelPost(post)) {
-      setIsNoticeVisible(true);
+      onOpenReel(post.id, posts.filter(isReelPost).map((reel) => reel.id));
       return;
     }
     onOpenPost(post);
@@ -122,8 +116,6 @@ export function SearchResultsGrid({
         ))}
       </div>
 
-      {isNoticeVisible && <output className={styles.notice}>{vi.api.searchResultReelUnavailable}</output>}
-
       {searchQuery.isError ? (
         <div className={styles.stateBox}>
           <ApiErrorNotice error={searchQuery.error} retry={() => void searchQuery.refetch()} />
@@ -153,7 +145,6 @@ export function SearchResultsGrid({
                 <button
                   type="button"
                   className={styles.card}
-                  aria-disabled={isReel || undefined}
                   onClick={() => handleOpen(post)}
                 >
                   <span className={styles.thumb} data-kind={isReel ? 'reel' : 'post'}>

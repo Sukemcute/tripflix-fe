@@ -9,6 +9,7 @@ import { vi } from '@tripflix/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { AdminApiError } from '../shell/api-state';
 import { ModerationPostDetail } from './moderation-post-detail';
+import styles from './post-moderation.module.css';
 
 export function PostModeration() {
   const client = useQueryClient();
@@ -45,9 +46,17 @@ export function PostModeration() {
       ]);
     },
   });
+  const posts = query.data?.pages.flatMap((page) => page.items) ?? [];
   return (
-    <>
-      <div className="admin-filters">
+    <section className={`admin-data ${styles.root}`} aria-label="Quản lý bài viết">
+      <header className={styles.heading}>
+        <div>
+          <h2>Quản lý bài viết</h2>
+          <p>Xem nội dung, kiểm tra lý do và xử lý bài viết trong cùng một nơi.</p>
+        </div>
+        <span className={styles.count}>{posts.length} bài đã tải</span>
+      </header>
+      <div className={`admin-filters ${styles.filters}`}>
         <label>
           {vi.api.status}
           <select
@@ -68,11 +77,13 @@ export function PostModeration() {
         </label>
         <button
           className="admin-secondary"
+          type="button"
+          disabled={query.isFetching}
           onClick={() => {
             void query.refetch();
           }}
         >
-          {vi.api.refresh}
+          {query.isRefetching ? 'Đang làm mới…' : vi.api.refresh}
         </button>
       </div>
       <AdminApiError
@@ -81,56 +92,101 @@ export function PostModeration() {
           void query.refetch();
         }}
       />
-      {query.isPending && <output>{vi.api.loading}</output>}
-      {query.data?.pages[0]?.items.length === 0 && <p className="admin-empty">{vi.api.empty}</p>}
-      <div className="admin-table-scroll">
-        <table>
+      {query.isPending && <output className={styles.loading}>{vi.api.loading}</output>}
+      <section className="admin-table-scroll" aria-label="Danh sách bài viết">
+        <table className={styles.table} aria-busy={query.isPending}>
+          <caption className={styles.srOnly}>Danh sách bài viết theo trạng thái đã chọn</caption>
+          <colgroup>
+            <col className={styles.titleColumn} />
+            <col className={styles.authorColumn} />
+            <col className={styles.statusColumn} />
+            <col className={styles.actionColumn} />
+          </colgroup>
           <thead>
             <tr>
-              <th>{vi.api.title}</th>
-              <th>{vi.api.author}</th>
-              <th>{vi.api.status}</th>
-              <th>{vi.api.detail}</th>
+              <th scope="col">{vi.api.title}</th>
+              <th scope="col">{vi.api.author}</th>
+              <th scope="col">{vi.api.status}</th>
+              <th scope="col">Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            {query.data?.pages
-              .flatMap((page) => page.items)
-              .map((post) => (
-                <tr key={post.id}>
-                  <td>{post.title}</td>
-                  <td>{post.author.display_name}</td>
-                  <td>{vi.api[post.status as AdminPostsControllerListAdminPostsStatus] ?? post.status}</td>
-                  <td>
-                    <button
-                      className="admin-text-button"
-                      onClick={() => {
-                        setSelected(post.id);
-                        setReason('');
-                        mutation.reset();
-                      }}
-                    >
-                      {vi.api.detail}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+            {!query.isPending && !query.error && !posts.length && (
+              <tr>
+                <td colSpan={4} className={styles.empty}>
+                  <strong>Không có bài viết ở trạng thái này</strong>
+                  <p>Thử chọn trạng thái khác hoặc làm mới danh sách.</p>
+                </td>
+              </tr>
+            )}
+            {posts.map((post) => (
+              <tr key={post.id} data-selected={selected === post.id}>
+                <td>
+                  <span className={styles.postTitle}>{post.title}</span>
+                  <span className={styles.metadata}>
+                    {post.post_type === 'video' ? 'Video / Reel' : 'Vlog'}
+                    <span aria-hidden="true"> · </span>
+                    {new Date(post.created_at).toLocaleDateString('vi-VN')}
+                  </span>
+                </td>
+                <td aria-label={post.author.display_name}>
+                  <div className={styles.author}>
+                    <span className={styles.avatar} aria-hidden="true">
+                      {Array.from(post.author.display_name.trim())[0]?.toUpperCase() || 'T'}
+                    </span>
+                    <span>{post.author.display_name}</span>
+                  </div>
+                </td>
+                <td>
+                  <span className={styles.status} data-status={post.status}>
+                    <span className={styles.dot} aria-hidden="true" />
+                    {vi.api[post.status as AdminPostsControllerListAdminPostsStatus] ?? post.status}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    className={styles.detailButton}
+                    aria-expanded={selected === post.id}
+                    aria-controls={selected === post.id ? 'moderation-selected-post' : undefined}
+                    onClick={() => {
+                      setSelected(post.id);
+                      setReason('');
+                      mutation.reset();
+                    }}
+                  >
+                    {vi.api.detail}
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
-      </div>
-      {query.hasNextPage && (
-        <button
-          className="admin-secondary"
-          disabled={query.isFetchingNextPage}
-          onClick={() => {
-            void query.fetchNextPage();
-          }}
-        >
-          {vi.api.next}
-        </button>
-      )}
+      </section>
+      <footer className={styles.footer}>
+        <span>
+          Đã tải {posts.length} bài viết{query.hasNextPage ? ' · Còn bài viết khác' : ''}
+        </span>
+        {query.hasNextPage && (
+          <button
+            type="button"
+            className="admin-secondary"
+            disabled={query.isFetchingNextPage}
+            onClick={() => {
+              void query.fetchNextPage();
+            }}
+          >
+            {query.isFetchingNextPage ? 'Đang tải…' : 'Tải thêm bài viết'}
+          </button>
+        )}
+      </footer>
       {selected && (
-        <section ref={detailRef} className="admin-post-review" aria-label={vi.api.moderationPostLabel}>
+        <section
+          id="moderation-selected-post"
+          ref={detailRef}
+          className="admin-post-review"
+          aria-label={vi.api.moderationPostLabel}
+        >
           <div className="admin-post-review-bar">
             <p className="admin-eyebrow">{vi.api.moderationPostLabel}</p>
             <button type="button" className="admin-secondary" onClick={() => setSelected('')}>
@@ -161,6 +217,6 @@ export function PostModeration() {
           )}
         </section>
       )}
-    </>
+    </section>
   );
 }

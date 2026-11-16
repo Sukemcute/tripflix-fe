@@ -63,6 +63,16 @@ describe('buildInspirationHref', () => {
     expect(buildInspirationHref('/inspiration', 'q=dalat&open=p1', { openPostId: null })).toBe('/inspiration?q=dalat');
     expect(buildInspirationHref('/inspiration', 'view=reels', { keyword: null, view: 'posts' })).toBe('/inspiration');
   });
+
+  it('mở Reel từ grid ghi kind=reel; quay lại grid, mở bài viết hay đổi từ khoá thì bỏ kind', () => {
+    const opened = buildInspirationHref('/inspiration', 'q=dalat', { openPostId: 'r1', isOpenReel: true });
+    expect(opened).toBe('/inspiration?q=dalat&open=r1&kind=reel');
+    expect(buildInspirationHref('/inspiration', 'q=dalat&open=r1&kind=reel', { openPostId: null })).toBe('/inspiration?q=dalat');
+    expect(buildInspirationHref('/inspiration', 'q=dalat&open=r1&kind=reel', { openPostId: 'p2' })).toBe(
+      '/inspiration?q=dalat&open=p2',
+    );
+    expect(buildInspirationHref('/inspiration', 'q=dalat&open=r1&kind=reel', { keyword: 'sapa' })).toBe('/inspiration?q=sapa');
+  });
 });
 
 describe('tab kết quả trên URL', () => {
