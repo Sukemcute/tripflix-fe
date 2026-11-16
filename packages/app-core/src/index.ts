@@ -2,6 +2,7 @@
 // Không import react, react-native hay react-dom (tools/check-boundaries.mjs chặn).
 export * from './booking';
 export * from './booking-cart';
+export * from './booking-cart-check';
 export * from './mobile-review';
 export * from './post-media';
 export * from './demo-catalog';
