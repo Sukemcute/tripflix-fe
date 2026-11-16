@@ -248,6 +248,7 @@ export * from './postSummaryResponseDtoStatus';
 export * from './postViewerContextDto';
 export * from './postViewerContextDtoMyReaction';
 export * from './provinceDto';
+export * from './publicProfileDto';
 export * from './publishedPostDto';
 export * from './publishedPostDtoStatus';
 export * from './ratingCountDto';

@@ -5,6 +5,7 @@ export * from './booking-cart';
 export * from './booking-cart-check';
 export * from './mobile-review';
 export * from './post-media';
+export * from './public-profile';
 export * from './demo-catalog';
 export * from './reels';
 export * from './sheet-list-drag';
