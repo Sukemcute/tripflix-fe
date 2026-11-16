@@ -304,3 +304,9 @@
   border-radius: 22px;
   backdrop-filter: blur(14px);
 }
+
+@media (min-width: 901px) {
+  :global(body:has([data-living-home][data-home-scrolling])) .footer[data-water-footer] .footerPostcard {
+    backdrop-filter: none;
+  }
+}

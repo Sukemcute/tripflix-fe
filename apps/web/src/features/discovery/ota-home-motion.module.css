@@ -14,6 +14,17 @@
   touch-action: manipulation;
 }
 
+.layeredCanvas [data-home-paused] {
+  --home-animation-state: paused;
+}
+
+@media (min-width: 901px) {
+  .layeredCanvas[data-home-scrolling] {
+    /* Keep the translucent panels, but avoid resampling moving water during a scroll. */
+    --home-backdrop: none;
+  }
+}
+
 .layeredCanvas[data-water-act='1'] {
   --water-panel: rgb(242 252 247 / 78%);
 }
@@ -47,9 +58,17 @@
   background: radial-gradient(ellipse at 20% 10%, #c2e5d8, #2c7a7b);
 }
 
+.layeredCanvas[data-water-visible]::before {
+  /* The opaque water canvas already covers this fallback. */
+  visibility: hidden;
+}
+
 .water {
   width: 100%;
   height: 100%;
+  contain: strict;
+  /* Keep water updates on their own compositing layer while the content scrolls. */
+  will-change: transform;
 }
 
 .waterContent {
@@ -89,7 +108,7 @@
   color: var(--water-ink);
   background: var(--water-panel);
   box-shadow: var(--water-shadow);
-  backdrop-filter: blur(14px);
+  backdrop-filter: var(--home-backdrop, blur(14px));
 }
 
 .caption {

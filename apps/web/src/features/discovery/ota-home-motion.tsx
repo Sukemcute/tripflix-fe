@@ -15,6 +15,7 @@ const handwritingFont = Pacifico({
 export function OtaHomeMotion({ children }: { children: ReactNode }) {
   const homeRef = useRef<HTMLElement>(null);
   const pointerFrameRef = useRef(0);
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pointerUpdateRef = useRef<{ banner: HTMLElement; x: number; y: number } | undefined>(undefined);
 
   const trackBannerPointer = useCallback((event: PointerEvent<HTMLElement>) => {
@@ -65,8 +66,23 @@ export function OtaHomeMotion({ children }: { children: ReactNode }) {
     );
 
     home.querySelectorAll('[data-home-reveal]').forEach((section) => observer.observe(section));
+    const animationObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) entry.target.toggleAttribute('data-home-paused', !entry.isIntersecting);
+    }, { rootMargin: '100px' });
+    home.querySelectorAll('[data-home-reveal], [data-home-banner]').forEach((section) => animationObserver.observe(section));
+    const finishScroll = () => home.removeAttribute('data-home-scrolling');
+    const trackScroll = () => {
+      if (!home.hasAttribute('data-home-scrolling')) home.setAttribute('data-home-scrolling', '');
+      clearTimeout(scrollTimerRef.current);
+      scrollTimerRef.current = setTimeout(finishScroll, 180);
+    };
+    window.addEventListener('scroll', trackScroll, { passive: true });
     return () => {
       observer.disconnect();
+      animationObserver.disconnect();
+      window.removeEventListener('scroll', trackScroll);
+      clearTimeout(scrollTimerRef.current);
+      finishScroll();
       cancelAnimationFrame(pointerFrameRef.current);
     };
   }, []);
