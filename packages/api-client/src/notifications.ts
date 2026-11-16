@@ -46,6 +46,33 @@ function isNotification(value: unknown): value is InboxNotification {
   );
 }
 
+/** Thông báo nằm trong payload `notification.created` của socket; payload lạ thì trả null. */
+export function readCreatedNotification(payload: unknown): InboxNotification | null {
+  return isRecord(payload) && isNotification(payload.item) ? payload.item : null;
+}
+
+export interface NotificationPostTarget {
+  postId: string;
+  commentId?: string;
+  /** Bình luận gốc của luồng, để mở luồng trả lời trước khi tìm bình luận. */
+  threadId?: string;
+}
+
+function readId(value: unknown): string | undefined {
+  return typeof value === 'string' && value ? value : undefined;
+}
+
+/** Bài (và bình luận) cần mở khi bấm thông báo; thông báo kiểm duyệt có trang riêng nên trả null. */
+export function getNotificationPostTarget(
+  notification: Pick<InboxNotification, 'type' | 'data'>,
+): NotificationPostTarget | null {
+  const postId = readId(notification.data.postId);
+  if (!postId || notification.type.startsWith('moderation.')) return null;
+  const commentId = readId(notification.data.commentId);
+  const threadId = commentId && readId(notification.data.parentCommentId);
+  return { postId, ...(commentId && { commentId }), ...(threadId && { threadId }) };
+}
+
 function isReadResult(value: unknown): value is NotificationReadResult {
   return isRecord(value) && Number.isInteger(value.unreadCount) && Number(value.unreadCount) >= 0;
 }

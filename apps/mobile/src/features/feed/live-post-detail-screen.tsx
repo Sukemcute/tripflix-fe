@@ -105,10 +105,11 @@ function TripPlan({ trip }: { trip: TripAttachmentDto }) {
 }
 
 export function LivePostDetailScreen() {
-  const { slug = '' } = useLocalSearchParams<{ slug: string }>();
+  // comment/thread đến từ thông báo: mở sẵn khung bình luận và nhảy tới bình luận đó.
+  const { slug = '', comment, thread } = useLocalSearchParams<{ slug: string; comment?: string; thread?: string }>();
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
-  const [hasComments, setHasComments] = useState(false);
+  const [hasComments, setHasComments] = useState(!!comment);
   const commentsProgress = useSharedValue(0);
   const navigation = useNavigation();
   const swipeX = useSharedValue(0);
@@ -363,6 +364,8 @@ export function LivePostDetailScreen() {
               onClose={() => setHasComments(false)}
               hasBackdrop
               loginReturnTo={`/trip/${slug}`}
+              focusCommentId={comment}
+              focusThreadId={thread}
             />
           </Screen>
         </Animated.View>

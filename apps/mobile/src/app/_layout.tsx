@@ -15,6 +15,7 @@ import { CommerceProvider } from '@/features/booking/commerce-provider';
 import { AssistantProvider } from '@/features/assistant/assistant-provider';
 import { assistantTransport } from '@/features/assistant/assistant-transport';
 import { ReelsLaunchProvider } from '@/features/feed/reels-launch';
+import { NotificationBanner } from '@/features/account/notification-banner';
 
 const tokenStorage =
   Platform.OS === 'web'
@@ -78,6 +79,7 @@ export default function RootLayout() {
                     options={{ animation: 'default', fullScreenGestureEnabled: true }}
                   />
                 </Stack>
+                <NotificationBanner />
               </AssistantProvider>
             </ReviewProvider>
           </CommerceProvider>

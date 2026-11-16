@@ -30,6 +30,7 @@ import {
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount, UnavailableScreen } from '@/components/api-state';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { getNotificationExcerpt, openNotification } from './notification-banner';
 
 const profile = copy.profile;
 
@@ -289,10 +290,7 @@ export function LiveNotificationsScreen() {
           <Pressable
             key={item.id}
             accessibilityRole="button"
-            onPress={() => {
-              if (!item.readAt) markRead.mutate(item.id);
-              if (item.type.startsWith('moderation.')) router.push('/moderation-status' as Href);
-            }}
+            onPress={() => openNotification(item, markRead.mutate)}
             style={styles.notification}
           >
             <View style={styles.menuIcon}>
@@ -306,6 +304,7 @@ export function LiveNotificationsScreen() {
               <Txt variant="small" style={ui.muted}>
                 {item.body}
               </Txt>
+              {!!getNotificationExcerpt(item) && <Txt variant="small">“{getNotificationExcerpt(item)}”</Txt>}
               <Txt variant="small" style={ui.muted}>
                 {new Date(item.createdAt).toLocaleString('vi-VN')}
               </Txt>

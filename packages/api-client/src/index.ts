@@ -63,13 +63,16 @@ export {
   type ReelFeedTab,
 } from './feed';
 export {
+  getNotificationPostTarget,
   notificationsApi,
+  readCreatedNotification,
   useNotifications,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
   type InboxNotification,
   type NotificationsPage,
   type NotificationReadResult,
+  type NotificationPostTarget,
 } from './notifications';
 export { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime } from './notifications-realtime';
 export { findCachedFeedCard, removeReelFromSavedFeedCache, updateReelSocialCache } from './reel-social-cache';
