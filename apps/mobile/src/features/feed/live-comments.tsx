@@ -178,7 +178,12 @@ export function LiveComments({
                 </View>
               )}
               <Card style={[compact && styles.commentBody, comment.id === focusCommentId && styles.focused]}>
-                <Txt variant="caption" style={compact && styles.author}>
+                <Txt
+                  variant="caption"
+                  style={compact && styles.author}
+                  accessibilityRole="link"
+                  onPress={() => router.push({ pathname: '/user/[id]', params: { id: comment.authorId } })}
+                >
                   {authorName}{comment.replyToName && ` ↳ ${comment.replyToName}`}
                   {!compact && ` · ${new Date(comment.createdAt).toLocaleDateString('vi-VN')}`}
                 </Txt>

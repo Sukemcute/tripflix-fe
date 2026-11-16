@@ -298,7 +298,12 @@ export function LivePostDetailScreen() {
               <View style={styles.intro}>
                 {!!title && <Txt variant="heading">{title}</Txt>}
                 {!!authorName && (
-                  <Txt variant="small" style={styles.muted}>
+                  <Txt
+                    variant="small"
+                    style={styles.muted}
+                    accessibilityRole="link"
+                    onPress={post ? () => router.push({ pathname: '/user/[id]', params: { id: post.authorId } }) : undefined}
+                  >
                     {authorName}
                   </Txt>
                 )}

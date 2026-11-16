@@ -78,6 +78,10 @@ export default function RootLayout() {
                     name="trip/[slug]"
                     options={{ animation: 'default', fullScreenGestureEnabled: true }}
                   />
+                  <Stack.Screen
+                    name="user/[id]"
+                    options={{ animation: 'default', fullScreenGestureEnabled: true }}
+                  />
                 </Stack>
                 <NotificationBanner />
               </AssistantProvider>
