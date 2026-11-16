@@ -555,4 +555,15 @@ export const api = {
   immersiveFeaturedComments: 'Bình luận nổi bật',
   immersiveReplyingTo: 'Đang trả lời {name}',
   immersiveCancelReply: 'Hủy trả lời',
+  // Trang cá nhân công khai (TF47)
+  profileFollowers: 'Người theo dõi',
+  profileFollowing: 'Đang theo dõi',
+  profileLikes: 'Lượt thích',
+  profileVideos: 'Video',
+  profilePosts: 'Bài viết',
+  profileNoVideos: 'Chưa đăng video nào.',
+  profileNoPosts: 'Chưa đăng bài viết nào.',
+  profileNotFound: 'Không tìm thấy người dùng này.',
+  profileOpen: 'Xem trang của {name}',
+  profileLoadMore: 'Xem thêm',
 } as const;

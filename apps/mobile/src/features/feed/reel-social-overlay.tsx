@@ -8,7 +8,7 @@ import {
   updateReelSocialCache,
   useApiSession,
 } from '@tripflix/api-client';
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -371,7 +371,13 @@ export function ReelSocialOverlay({
             {copy.sample}
           </Txt>
         )}
-        <View style={styles.authorRow}>
+        <Pressable
+          style={styles.authorRow}
+          disabled={isSample || !item.social}
+          accessibilityRole="link"
+          accessibilityLabel={t('api.profileOpen', { name: author })}
+          onPress={() => item.social && router.push({ pathname: '/user/[id]', params: { id: item.social.author.id } })}
+        >
           {item.social?.author.avatarUrl ? (
             <Image source={item.social.author.avatarUrl} style={styles.avatar} />
           ) : (
@@ -382,7 +388,7 @@ export function ReelSocialOverlay({
           <Txt variant="label" style={styles.author} numberOfLines={1}>
             {author}
           </Txt>
-        </View>
+        </Pressable>
         {/* Lays out the full text unseen: RN cannot place inline text after its own truncation. */}
         <View
           style={styles.captionMeasure}

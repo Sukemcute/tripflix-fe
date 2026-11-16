@@ -24,6 +24,7 @@ import type {
   FollowStatusDto,
   FollowsControllerListPostRecipientsParams,
   PostFollowerPageDto,
+  PublicProfileDto,
 } from '../model';
 
 import { http } from '../../../http';
@@ -44,6 +45,146 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export type followsControllerGetProfileResponse200 = {
+  data: PublicProfileDto;
+  status: 200;
+};
+
+export type followsControllerGetProfileResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type followsControllerGetProfileResponseSuccess = followsControllerGetProfileResponse200 & {
+  headers: Headers;
+};
+export type followsControllerGetProfileResponseError = followsControllerGetProfileResponse404 & {
+  headers: Headers;
+};
+
+export type followsControllerGetProfileResponse =
+  followsControllerGetProfileResponseSuccess | followsControllerGetProfileResponseError;
+
+export const getFollowsControllerGetProfileUrl = (userId: string) => {
+  return `/api/v1/users/${userId}/profile`;
+};
+
+export const followsControllerGetProfile = async (
+  userId: string,
+  options?: Parameters<typeof http>[1],
+): Promise<followsControllerGetProfileResponse> => {
+  return http<followsControllerGetProfileResponse>(getFollowsControllerGetProfileUrl(userId), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getFollowsControllerGetProfileQueryKey = (userId: string) => {
+  return [`/api/v1/users/${userId}/profile`] as const;
+};
+
+export const getFollowsControllerGetProfileQueryOptions = <
+  TData = Awaited<ReturnType<typeof followsControllerGetProfile>>,
+  TError = void,
+>(
+  userId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getFollowsControllerGetProfileQueryKey(userId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof followsControllerGetProfile>>> = ({ signal }) =>
+    followsControllerGetProfile(userId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: userId !== null && userId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type FollowsControllerGetProfileQueryResult = NonNullable<
+  Awaited<ReturnType<typeof followsControllerGetProfile>>
+>;
+export type FollowsControllerGetProfileQueryError = void;
+
+export function useFollowsControllerGetProfile<
+  TData = Awaited<ReturnType<typeof followsControllerGetProfile>>,
+  TError = void,
+>(
+  userId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof followsControllerGetProfile>>,
+          TError,
+          Awaited<ReturnType<typeof followsControllerGetProfile>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useFollowsControllerGetProfile<
+  TData = Awaited<ReturnType<typeof followsControllerGetProfile>>,
+  TError = void,
+>(
+  userId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof followsControllerGetProfile>>,
+          TError,
+          Awaited<ReturnType<typeof followsControllerGetProfile>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useFollowsControllerGetProfile<
+  TData = Awaited<ReturnType<typeof followsControllerGetProfile>>,
+  TError = void,
+>(
+  userId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useFollowsControllerGetProfile<
+  TData = Awaited<ReturnType<typeof followsControllerGetProfile>>,
+  TError = void,
+>(
+  userId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getFollowsControllerGetProfileQueryOptions(userId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 export type followsControllerGetStatusResponse200 = {
   data: FollowStatusDto;
