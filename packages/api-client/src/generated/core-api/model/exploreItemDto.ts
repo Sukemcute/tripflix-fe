@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { ExploreAuthorDto } from './exploreAuthorDto';
 import type { ExploreLocationDto } from './exploreLocationDto';
 
 export interface ExploreItemDto {
@@ -35,4 +36,24 @@ export interface ExploreItemDto {
   days: number | null;
   /** @nullable */
   location: ExploreLocationDto | null;
+  /**
+   * plan/post/video: lượt thích · mục khác: null
+   * @nullable
+   */
+  likes: number | null;
+  /**
+   * plan/post/video: số bình luận · mục khác: null
+   * @nullable
+   */
+  comments: number | null;
+  /**
+   * plan/post/video: ngày đăng. null với mục khác, hoặc tới lượt dựng lại chỉ mục kế tiếp (≤10 phút) sau khi deploy
+   * @nullable
+   */
+  createdAt: string | null;
+  /**
+   * plan/post/video: tác giả · mục khác: null
+   * @nullable
+   */
+  author: ExploreAuthorDto | null;
 }

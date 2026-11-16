@@ -26,7 +26,9 @@ import type {
   HomeRecommendationsControllerRecommendForHomeParams,
   HomeRecommendationsDto,
   PostRecommendationsControllerRecommendPostsParams,
+  PostRecommendationsControllerRecommendReelsParams,
   PostRecommendationsDto,
+  ReelRecommendationsDto,
   SearchPostsRequestDto,
   SearchPostsResponseDto,
   StayPageDto,
@@ -527,7 +529,8 @@ export const getExploreControllerSearchPostsUrl = () => {
 /**
  * Cho tab tìm bài trên app và web Cảm hứng. Công khai. Cùng bộ hiểu câu và chỉ mục với `POST /api/search`.
  *
- * - `postType`: `all` (mặc định), `plan`, `video`, `post`. Video kèm lộ trình thuộc cả `plan` và `video`; với `all` chỉ trả một lần.
+ * - `postType`: `all` (mặc định), `plan`, `video`, `post`, `article`. Video kèm lộ trình thuộc cả `plan` và `video`; với `all` chỉ trả một lần. `article` = `plan` + `post` nhưng bỏ mọi video, lọc ở server nên trang luôn đủ `limit`.
+ * - Mỗi bài có `likes`, `comments`, `createdAt`, `author` để hiện thẻ. Không có trạng thái đã thích/đã lưu của người xem.
  * - Kết quả chính không bao giờ vượt ngân sách trong câu (chi phí mỗi người của lộ trình). Bài bị ẩn hoặc xoá không trả về.
  * - Phân trang: gửi `nextCursor` của trang trước vào `cursor`. Không có kết quả thì `items: []`, `total: 0`.
  * - Không bài nào khớp đủ câu (vd "mùa thu hà nội", lộ trình vượt ngân sách): `isFallback: true`, `items` là kết quả thay thế, `fallbackRelaxed` là điều kiện đã nới, `dropped` là các từ bị bỏ.
@@ -1002,6 +1005,183 @@ export function usePostRecommendationsControllerRecommendPosts<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getPostRecommendationsControllerRecommendPostsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type postRecommendationsControllerRecommendReelsResponse200 = {
+  data: ReelRecommendationsDto;
+  status: 200;
+};
+
+export type postRecommendationsControllerRecommendReelsResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type postRecommendationsControllerRecommendReelsResponseSuccess =
+  postRecommendationsControllerRecommendReelsResponse200 & {
+    headers: Headers;
+  };
+export type postRecommendationsControllerRecommendReelsResponseError =
+  postRecommendationsControllerRecommendReelsResponse400 & {
+    headers: Headers;
+  };
+
+export type postRecommendationsControllerRecommendReelsResponse =
+  | postRecommendationsControllerRecommendReelsResponseSuccess
+  | postRecommendationsControllerRecommendReelsResponseError;
+
+export const getPostRecommendationsControllerRecommendReelsUrl = (
+  params?: PostRecommendationsControllerRecommendReelsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recommendations/reels?${stringifiedParams}`
+    : `/api/recommendations/reels`;
+};
+
+/**
+ * Xếp hạng video bằng discovery (gồm điểm xu hướng và chống lặp cho người đăng nhập) rồi lấy thẻ phát được từ content/feed trong một request.
+ * @summary Gợi ý Reels phát được (trending hoặc for_you)
+ */
+export const postRecommendationsControllerRecommendReels = async (
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<postRecommendationsControllerRecommendReelsResponse> => {
+  return http<postRecommendationsControllerRecommendReelsResponse>(
+    getPostRecommendationsControllerRecommendReelsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getPostRecommendationsControllerRecommendReelsQueryKey = (
+  params?: PostRecommendationsControllerRecommendReelsParams,
+) => {
+  return [`/api/recommendations/reels`, ...(params ? [params] : [])] as const;
+};
+
+export const getPostRecommendationsControllerRecommendReelsQueryOptions = <
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPostRecommendationsControllerRecommendReelsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>> = ({
+    signal,
+  }) => postRecommendationsControllerRecommendReels(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PostRecommendationsControllerRecommendReelsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>
+>;
+export type PostRecommendationsControllerRecommendReelsQueryError = void;
+
+export function usePostRecommendationsControllerRecommendReels<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params: undefined | PostRecommendationsControllerRecommendReelsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+          TError,
+          Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePostRecommendationsControllerRecommendReels<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+          TError,
+          Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePostRecommendationsControllerRecommendReels<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Gợi ý Reels phát được (trending hoặc for_you)
+ */
+
+export function usePostRecommendationsControllerRecommendReels<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getPostRecommendationsControllerRecommendReelsQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
