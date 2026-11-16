@@ -83,6 +83,8 @@ export function InspirationView() {
   // Danh sách Reel của grid lúc bấm; vào thẳng link (F5) thì chưa có, chỉ xem đúng Reel trong URL.
   const [gridReelIds, setGridReelIds] = useState<string[] | null>(null);
   const searchReelIds = isSearchReelOpen && openPostId ? (gridReelIds ?? [openPostId]) : undefined;
+  // Link chia sẻ Reel (?open=<id>&kind=reel, không có từ khoá): Reel đó lên đầu bảng tin Reels.
+  const sharedReelId = !isSearching && openPostId && isOpenReel ? openPostId : null;
 
   // Cac trang thai chung dieu phoi qua Instagram Left Dock
   // Mặc định: tab Bài viết mở sẵn Lịch trình trên màn rộng (thông tin chính đi kèm bài đọc); Reels để đóng
@@ -228,9 +230,10 @@ export function InspirationView() {
       {isReels && (
         <InspirationImmersiveViewer
           // Đổi giữa bảng tin Reels và Reels của kết quả thì dựng lại từ đầu (bài đang xem, vị trí cuộn).
-          key={searchReelIds ? `search:${openPostId}` : 'feed'}
+          key={searchReelIds ? `search:${openPostId}` : sharedReelId ? `shared:${sharedReelId}` : 'feed'}
           searchReelIds={searchReelIds}
-          initialPostId={isSearchReelOpen ? openPostId : null}
+          pinnedPostId={sharedReelId}
+          initialPostId={isSearchReelOpen || sharedReelId ? openPostId : null}
           onBackToResults={isSearchReelOpen ? handleBackToResults : undefined}
           onSearchKeywordChange={handleSubmitSearch}
           isItineraryOpen={isItineraryOpen}

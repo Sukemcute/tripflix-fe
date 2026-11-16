@@ -35,7 +35,18 @@ export function useSocialPosts(
               ? recommendedPage(client, queryKey, pageParam) ?? recommendPublicPosts(pageParam, signal, postType)
               : socialApi.listPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
+    select: withoutRepeatedPosts,
   });
+}
+
+/**
+ * Gợi ý phân trang bằng offset nhưng mỗi trang xếp hạng lại (job hot chạy lại, bài mới vào): danh sách nở thêm một bài
+ * trước offset thì bài cuối trang trước lặp ở đầu trang sau. Giữ lần xuất hiện đầu để feed không trùng key.
+ */
+export function withoutRepeatedPosts<P extends { items: Array<{ id: string }> }, K>(data: InfiniteData<P, K>): InfiniteData<P, K> {
+  const seen = new Set<string>();
+  const isNew = (id: string) => !seen.has(id) && Boolean(seen.add(id));
+  return { ...data, pages: data.pages.map((page) => ({ ...page, items: page.items.filter((post) => isNew(post.id)) })) };
 }
 
 type RecommendedPage = Awaited<ReturnType<typeof recommendPublicPosts>>;

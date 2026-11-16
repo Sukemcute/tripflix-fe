@@ -8,6 +8,7 @@ import {
   adminModerationControllerAppealDecision,
   adminModerationControllerFailedScans,
   adminModerationControllerRetryScan,
+  adminModerationControllerStats,
 } from './generated/core-api/moderation-admin/moderation-admin';
 import {
   reportsControllerReportPost,
@@ -25,6 +26,15 @@ import type {
 import { readEntity } from './response';
 
 export const moderationApi = {
+  async stats(signal?: AbortSignal) {
+    return readEntity((await adminModerationControllerStats({ signal })).data, [
+      'pendingTotal',
+      'pendingUrgent',
+      'autoHidden24h',
+      'reports24h',
+      'generatedAt',
+    ]);
+  },
   async failedScans(cursor = 0, signal?: AbortSignal) {
     const response = await adminModerationControllerFailedScans(
       { limit: 20, cursor: String(cursor) },

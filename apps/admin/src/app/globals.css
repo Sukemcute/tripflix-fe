@@ -1817,8 +1817,11 @@ h3 {
 }
 .mod-monitor-card.card-pending { border-left: 4px solid var(--color-teal); }
 .mod-monitor-card.card-urgent { border-left: 4px solid var(--color-coral); }
-.mod-monitor-card.card-engine { border-left: 4px solid #8B5CF6; }
-.mod-monitor-card.card-sla { border-left: 4px solid #10B981; }
+.mod-monitor-card.card-engine { border-left: 4px solid var(--color-navy); }
+.mod-monitor-card.card-sla { border-left: 4px solid var(--color-success); }
+.mod-monitor-value.is-urgent,
+.mod-monitor-sub.is-urgent { color: var(--color-coral-ink); }
+.mod-monitor-value.is-good { color: var(--color-success); }
 
 .mod-monitor-label {
   font-size: 12px;

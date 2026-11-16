@@ -91,48 +91,38 @@ function RiskTags({ item }: { item: ModerationCaseDto }) {
 export function ModerationWorkspace() {
   const [tab, setTab] = useState<QueueView | 'log' | 'posts' | 'appeals' | 'scans'>('pending');
 
-  // Truy vấn số liệu giám sát thời gian thực
-  const pendingStats = useQuery({
-    queryKey: ['moderation', 'stats', 'pending'],
-    queryFn: ({ signal }) => moderationApi.queue({ view: 'pending', limit: 100 }, signal),
+  // Số liệu đếm ở server (TF89): không cắt theo 100 dòng đầu như khi đếm ở FE.
+  const stats = useQuery({
+    queryKey: ['moderation', 'stats'],
+    queryFn: ({ signal }) => moderationApi.stats(signal),
     refetchInterval: refreshInterval,
   });
-  const logStats = useQuery({
-    queryKey: ['moderation', 'stats', 'logs'],
-    queryFn: ({ signal }) => moderationApi.log({ limit: 100 }, signal),
-    refetchInterval: refreshInterval,
-  });
-
-  const pendingItems = pendingStats.data?.items ?? [];
-  const pendingTotal = pendingStats.data?.total ?? pendingItems.length;
-  const urgentCount = pendingItems.filter((item) => item.severity >= 80).length;
-  const logItems = logStats.data?.items ?? [];
-  const autoHiddenCount = logItems.filter((item) => item.action === 'auto_hide').length;
-  const reportsCount = pendingItems.reduce((acc, curr) => acc + (curr.reportCount || 0), 0);
+  const summary = stats.data;
+  const show = (value: number | undefined) => (summary ? value : stats.isError ? '—' : '…');
+  const pendingTotal = summary?.pendingTotal;
+  const urgentCount = summary?.pendingUrgent ?? 0;
+  const autoHiddenCount = summary?.autoHidden24h ?? 0;
 
   return (
     <div className="mod-workspace-container">
       {/* 4 Thẻ KPI Giám sát Vận hành Thời gian thực */}
-      <section className="admin-mod-monitoring-header" aria-label={text.monitoringTitle}>
+      <section className="admin-mod-monitoring-header" aria-label={text.monitoringTitle} aria-busy={stats.isPending}>
         <div className="mod-monitor-card card-pending">
           <span className="mod-monitor-label">📋 {text.kpiPending}</span>
-          <strong className="mod-monitor-value">{pendingStats.isPending ? '…' : pendingTotal}</strong>
-          <span
-            className="mod-monitor-sub"
-            style={{ color: urgentCount > 0 ? 'var(--color-coral-ink)' : 'inherit' }}
-          >
-            {urgentCount > 0
-              ? `🚨 ${urgentCount} ${text.kpiUrgent.toLowerCase()}`
-              : `✓ ${text.cleanEvidence}`}
+          <strong className="mod-monitor-value">{show(summary?.pendingTotal)}</strong>
+          <span className={`mod-monitor-sub ${urgentCount > 0 ? 'is-urgent' : ''}`}>
+            {urgentCount > 0 ? `🚨 ${urgentCount} ${text.kpiUrgentCount}` : `✓ ${text.cleanEvidence}`}
           </span>
         </div>
 
         <div className="mod-monitor-card card-urgent">
           <span className="mod-monitor-label">🚨 {text.kpiUrgent}</span>
-          <strong className="mod-monitor-value" style={{ color: 'var(--color-coral-ink)' }}>
-            {pendingStats.isPending ? '…' : urgentCount}
-          </strong>
-          <span className="mod-monitor-sub">Cần ưu tiên xử lý trong ca</span>
+          <strong className="mod-monitor-value is-urgent">{show(summary?.pendingUrgent)}</strong>
+          <span className="mod-monitor-sub">
+            {summary?.oldestPendingAt
+              ? `${text.kpiOldestPending} ${date(summary.oldestPendingAt)}`
+              : text.kpiUrgentHint}
+          </span>
         </div>
 
         <div className="mod-monitor-card card-engine">
@@ -142,20 +132,19 @@ export function ModerationWorkspace() {
             <strong style={{ fontSize: 16, fontWeight: 700 }}>{text.engineStatus}</strong>
           </div>
           <span className="mod-monitor-sub">
-            {autoHiddenCount > 0
-              ? `Đã tự động ngăn chặn ${autoHiddenCount} ca`
-              : 'Lọc tự động theo luật & AI'}
+            {autoHiddenCount > 0 ? `${text.kpiAutoHidden24h} ${autoHiddenCount}` : text.kpiAutoHiddenNone}
           </span>
         </div>
 
         <div className="mod-monitor-card card-sla">
           <span className="mod-monitor-label">👥 {text.communityReports}</span>
-          <strong className="mod-monitor-value" style={{ color: '#10B981' }}>
-            {pendingStats.isPending ? '…' : reportsCount}
-          </strong>
-          <span className="mod-monitor-sub">{text.slaTarget}</span>
+          <strong className="mod-monitor-value is-good">{show(summary?.reports24h)}</strong>
+          <span className="mod-monitor-sub">
+            {summary ? `${text.kpiReports24h} · ${text.kpiUpdatedAt} ${date(summary.generatedAt)}` : text.kpiReports24h}
+          </span>
         </div>
       </section>
+      <AdminApiError error={stats.error} retry={() => void stats.refetch()} />
 
       {/* Header Hàng tab chính theo Mockup Screen 2 */}
       <div className="mod-header-row">
@@ -169,7 +158,7 @@ export function ModerationWorkspace() {
               onClick={() => setTab(view)}
             >
               {queueTabs[view]}
-              {view === 'pending' && ` (${pendingTotal})`}
+              {view === 'pending' && pendingTotal !== undefined && ` (${pendingTotal})`}
             </button>
           ))}
           <button

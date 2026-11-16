@@ -4,6 +4,7 @@ import {
   attachReelVideoSource,
   getReelRenderMode,
   pickReelAfterRemoval,
+  prependPinnedReelCards,
   REEL_RENDER_WINDOW,
   shouldShowReelBackdrop,
   toReelPost,
@@ -133,5 +134,21 @@ describe('attachReelVideoSource', () => {
     expect(video.removeAttribute).toHaveBeenCalledWith('src');
     expect(video.load).toHaveBeenCalled();
     expect(video.src).toBe('');
+  });
+});
+
+describe('prependPinnedReelCards', () => {
+  const card = (postId: string) => ({ postId });
+
+  it('Reel từ link chia sẻ lên đầu, bỏ bản trùng trong bảng tin, giữ thứ tự còn lại', () => {
+    expect(prependPinnedReelCards([card('b')], [card('a'), card('b'), card('c')]).map((c) => c.postId)).toEqual([
+      'b',
+      'a',
+      'c',
+    ]);
+  });
+
+  it('không có Reel ghim (link hỏng, bài bị ẩn) thì là bảng tin như thường', () => {
+    expect(prependPinnedReelCards([], [card('a'), card('c')]).map((c) => c.postId)).toEqual(['a', 'c']);
   });
 });

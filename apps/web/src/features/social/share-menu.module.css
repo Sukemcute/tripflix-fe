@@ -1,0 +1,94 @@
+/* Menu chia sẻ kiểu TikTok: nền trắng, viền mỏng, không bóng đổ hay gradient. Ở top layer nên toạ độ theo khung nhìn. */
+.menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: min(240px, calc(100vw - 16px));
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-background);
+  color: var(--color-ink);
+}
+
+.title {
+  margin: 0;
+  padding: 6px 10px 8px;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-transparent);
+  color: inherit;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.item:hover {
+  background: var(--color-surface);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: -2px;
+}
+
+.iconCircle {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.iconCircle[data-state='done'] {
+  background: var(--color-teal-soft);
+  color: var(--color-teal-ink);
+}
+
+.manualCopy {
+  padding: 2px 10px 8px 56px;
+}
+
+.manualCopy p {
+  margin: 0 0 6px;
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+}
+
+.manualCopy input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item,
+  .iconCircle {
+    transition: none;
+  }
+}
