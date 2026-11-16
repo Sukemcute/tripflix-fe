@@ -1,61 +1,97 @@
 import { getAuthErrorKind, HttpError, useApiSession } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { useMutation } from '@tanstack/react-query';
-import Constants, { ExecutionEnvironment } from 'expo-constants';
-import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import * as Crypto from 'expo-crypto';
+import * as Linking from 'expo-linking';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Notice, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 
 /** Client web của Google: ID token mang aud này, nên BE (GOOGLE_CLIENT_IDS) nhận như token từ web. */
 const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-// Expo Go không có module native Google Sign-In; iOS chưa có client iOS. Khi đó ẩn nút.
-const isAvailable =
-  Platform.OS === 'android' &&
-  !!WEB_CLIENT_ID &&
-  Constants.executionEnvironment !== ExecutionEnvironment.StoreClient;
+const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL?.replace(/\/$/, '');
 
-/** Trả ID token Google, hoặc null khi người dùng đóng bảng chọn tài khoản. */
-async function requestGoogleIdToken(): Promise<string | null> {
-  // Nạp lúc bấm: import tĩnh sẽ làm app crash ngay khi mở trong Expo Go.
-  const { GoogleSignin, isSuccessResponse } = await import('@react-native-google-signin/google-signin');
-  GoogleSignin.configure({ webClientId: WEB_CLIENT_ID });
-  await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-  // Mỗi lần bấm đều cho chọn lại tài khoản, không tự lấy tài khoản lần trước.
-  await GoogleSignin.signOut();
-  const response = await GoogleSignin.signIn();
-  return isSuccessResponse(response) ? response.data.idToken : null;
+/**
+ * Mở Google trong trình duyệt; Google gửi token về trang web /auth/google/mobile, trang đó mở lại app kèm token
+ * sau `#`. Chạy được cả Expo Go (iPhone, Android) vì không cần module native.
+ */
+function openGoogleSignIn(requestId: string) {
+  const query = new URLSearchParams({
+    client_id: WEB_CLIENT_ID ?? '',
+    redirect_uri: `${WEB_URL}/auth/google/mobile`,
+    response_type: 'id_token',
+    response_mode: 'form_post',
+    scope: 'openid email profile',
+    prompt: 'select_account',
+    nonce: Crypto.randomUUID(),
+    state: new URLSearchParams({ s: requestId, r: Linking.createURL('login') }).toString(),
+  });
+  void Linking.openURL(`https://accounts.google.com/o/oauth2/v2/auth?${query.toString()}`);
+}
+
+/** Đọc token từ địa chỉ mở lại app; chỉ nhận khi state khớp lần bấm của chính app này. */
+function readGoogleCallback(url: string, requestId: string): { idToken: string } | { error: string } | null {
+  const hash = url.split('#')[1];
+  if (!hash) return null;
+  const params = new URLSearchParams(hash);
+  if (params.get('state') !== requestId) return null;
+  const idToken = params.get('id_token');
+  return idToken ? { idToken } : { error: params.get('error') ?? 'unknown' };
 }
 
 /** "hoặc tiếp tục với" + nút Google. Đăng nhập xong gọi onLoggedIn (giống đăng nhập mật khẩu). */
 export function GoogleLoginButton({ disabled, onLoggedIn }: { disabled: boolean; onLoggedIn: () => void }) {
   const { session, isReady } = useApiSession();
+  const pendingRequestId = useRef<string | null>(null);
+  const [isGoogleError, setGoogleError] = useState(false);
   const google = useMutation({
-    mutationFn: async () => {
-      const idToken = await requestGoogleIdToken();
-      if (!idToken) return false;
-      await session.loginWithGoogle({ idToken, deviceName: Constants.deviceName ?? undefined });
-      return true;
-    },
-    onSuccess: (isLoggedIn) => {
-      if (isLoggedIn) onLoggedIn();
-    },
+    mutationFn: (idToken: string) =>
+      session.loginWithGoogle({ idToken, deviceName: Constants.deviceName ?? undefined }),
+    onSuccess: onLoggedIn,
   });
-  if (!isAvailable) return null;
+  const { mutate } = google;
+
+  useEffect(() => {
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      const requestId = pendingRequestId.current;
+      const callback = requestId ? readGoogleCallback(url, requestId) : null;
+      if (!callback) return;
+      pendingRequestId.current = null;
+      // Người dùng bấm Huỷ ở Google thì không báo lỗi.
+      if ('idToken' in callback) mutate(callback.idToken);
+      else setGoogleError(callback.error !== 'access_denied');
+    });
+    return () => subscription.remove();
+  }, [mutate]);
+
+  if (!WEB_CLIENT_ID || !WEB_URL) return null;
   const kind = getAuthErrorKind(google.error, 'google');
   return (
     <>
       <Txt variant="small" style={[ui.muted, { textAlign: 'center' }]}>
         {vi.api.orContinueWith}
       </Txt>
-      <Button tone="secondary" icon="logo-google" disabled={!isReady || disabled || google.isPending} onPress={() => google.mutate()}>
-        {google.isPending ? vi.api.googleLoading : 'Google'}
+      <Button
+        tone="secondary"
+        icon="logo-google"
+        disabled={!isReady || disabled || google.isPending}
+        onPress={() => {
+          const requestId = Crypto.randomUUID();
+          pendingRequestId.current = requestId;
+          setGoogleError(false);
+          google.reset();
+          openGoogleSignIn(requestId);
+        }}
+      >
+        {google.isPending ? vi.api.loggingIn : 'Google'}
       </Button>
       {kind ? (
         <Notice tone="error">{vi.api[kind]}</Notice>
       ) : google.error instanceof HttpError ? (
         <ApiErrorNotice error={google.error} />
       ) : (
-        google.error && <Notice tone="error">{vi.api.googleFailed}</Notice>
+        (isGoogleError || google.error) && <Notice tone="error">{vi.api.googleFailed}</Notice>
       )}
     </>
   );
