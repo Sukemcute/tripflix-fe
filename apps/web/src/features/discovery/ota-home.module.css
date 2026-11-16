@@ -492,15 +492,28 @@
 .stayHeader {
   position: relative;
   isolation: isolate;
-  filter: drop-shadow(0 14px 28px rgba(0, 108, 99, 0.1));
-  transition:
-    transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1),
-    filter 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  transition: transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+
+/* A separate shadow avoids filtering the masked ticket and its moving image every frame. */
+.stayHeader::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 22px;
+  box-shadow: 0 18px 56px rgb(0 108 99 / 16%);
+  opacity: 0.65;
+  transition: opacity 450ms ease;
+  pointer-events: none;
 }
 
 .stayHeader:hover {
   transform: translateY(-4px);
-  filter: drop-shadow(0 24px 36px rgba(0, 108, 99, 0.18));
+}
+
+.stayHeader:hover::before {
+  opacity: 1;
 }
 
 .stayTicket {
@@ -509,8 +522,9 @@
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   align-items: stretch;
   border-radius: 22px;
-  background: var(--water-glass);
-  backdrop-filter: var(--home-backdrop, blur(8px));
+  /* A milky fill retains the glass tint without repeatedly sampling the animated water. */
+  background: color-mix(in srgb, var(--water-glass) 75%, #fafffb);
+  color: #102f36;
   overflow: hidden;
 
   /* TRUE CSS MASK - Khoét lỗ trực tiếp trên layer background của vé */
