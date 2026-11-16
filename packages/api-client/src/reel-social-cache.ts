@@ -24,7 +24,16 @@ export function updateReelSocialCache(
   selected: boolean,
 ) {
   // A post can sit in several tabs (and in the saved Reels list), so every cached card has to change together.
-  const feedKeys = [...REEL_FEED_TABS.map((tab) => ['feed', tab, userId]), ['feed', 'saved', userId]];
+  // Reels opened from search results or a shared link live under ['feed', 'byIds', ids, userId] (useReelsByIds).
+  const byIdsKeys = client
+    .getQueriesData<InfiniteData<FeedPageDto>>({ queryKey: ['feed', 'byIds'] })
+    .map(([queryKey]) => queryKey)
+    .filter((queryKey) => queryKey[3] === userId);
+  const feedKeys = [
+    ...REEL_FEED_TABS.map((tab) => ['feed', tab, userId]),
+    ['feed', 'saved', userId],
+    ...byIdsKeys,
+  ];
   const previousFeeds = feedKeys.map((feedKey) => client.getQueryData<InfiniteData<FeedPageDto>>(feedKey));
   const detailKey = ['social', 'post', postId, userId];
   const previousDetail = client.getQueryData<PostDetail>(detailKey);
