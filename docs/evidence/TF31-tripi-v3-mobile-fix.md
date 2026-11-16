@@ -11,6 +11,10 @@
 | Chip cao tối thiểu 44 | Chip gợi ý và nút đăng nhập của Tripi dùng `mobileLayout.touchTarget` | Đo trên Expo Web, `height = 44` và `min-height = 44px` |
 | Câu hỏi bị từ chối không vào lịch sử | Vẫn hiển thị trên màn hình. Bỏ cả câu hỏi bị từ chối và thông báo khỏi history gửi về AI và phiên lưu | `assistant-chat.test.ts` kiểm tra lượt tiếp theo và nội dung lưu |
 
+## Lưu phiên chat
+
+Phiên chat được lưu 7 ngày khi còn đăng nhập, tính từ lần lưu gần nhất. Khi đăng xuất, app xoá phiên đang mở và bản lưu trên thiết bị. Phiên của khách chỉ nằm trong bộ nhớ app.
+
 ## Kết quả kiểm tra
 
 - `pnpm turbo run lint typecheck test build --affected` pass **15/15** tác vụ.
@@ -24,6 +28,7 @@
 1. Mở Tripi khi chưa đăng nhập, dùng hết lượt thử, bấm «Đăng nhập». Khi đăng nhập thành công, kiểm tra app quay về `/assistant` và phiên chat vẫn hiển thị.
 2. Gửi một câu mới sau đăng nhập. So sánh payload `history` với màn hình, câu hỏi bị từ chối và thông báo hết lượt chỉ còn trên màn hình.
 3. Với tài khoản đã đăng nhập, chat đủ dài, đóng và mở lại ứng dụng. Kiểm tra tin gần nhất và ngữ cảnh chuyến đi còn, thẻ và chip cũ không hiện sau khi mở lại phiên.
+4. Đăng xuất rồi đăng nhập lại cùng tài khoản. Kiểm tra lịch sử của phiên trước đã được xoá.
 
 ## Ảnh / video
 
