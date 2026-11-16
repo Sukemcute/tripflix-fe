@@ -76,17 +76,18 @@ describe('reels playback policy', () => {
   });
 
   it('nạp ba bài khi mở và thêm bài thứ tư, thứ năm khi lướt tới bài thứ hai', () => {
-    expect(getReelPlayerIndexes(10, 0)).toEqual([0, 1, 2, null, null]);
-    expect(getReelPlayerIndexes(10, 1)).toEqual([0, 1, 2, 3, 4]);
-    expect(getReelPlayerIndexes(4, 1)).toEqual([0, 1, 2, 3, null]);
-    expect(getReelPlayerIndexes(0, 0)).toEqual([null, null, null, null, null]);
-    expect(getReelPlayerIndexes(1, 0)).toEqual([0, null, null, null, null]);
+    expect(getReelPlayerIndexes(10, 0)).toEqual([0, 1, 2, null, null, null]);
+    expect(getReelPlayerIndexes(10, 1)).toEqual([0, 1, 2, 3, 4, null]);
+    expect(getReelPlayerIndexes(4, 1)).toEqual([0, 1, 2, 3, null, null]);
+    expect(getReelPlayerIndexes(0, 0)).toEqual([null, null, null, null, null, null]);
+    expect(getReelPlayerIndexes(1, 0)).toEqual([0, null, null, null, null, null]);
   });
 
-  it('chỉ thay slot của bài đã rời cửa sổ khi lướt tới hoặc lướt ngược', () => {
-    expect(getReelPlayerIndexes(10, 2)).toEqual([5, 1, 2, 3, 4]);
-    expect(getReelPlayerIndexes(10, 3)).toEqual([5, 6, 2, 3, 4]);
-    expect(getReelPlayerIndexes(10, 9)).toEqual([null, null, null, 8, 9]);
+  it('giữ hai bài phía sau; chỉ thay slot của bài đã rời cửa sổ khi lướt tới hoặc lướt ngược', () => {
+    expect(getReelPlayerIndexes(10, 2)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(getReelPlayerIndexes(10, 3)).toEqual([6, 1, 2, 3, 4, 5]);
+    expect(getReelPlayerIndexes(10, 4)).toEqual([6, 7, 2, 3, 4, 5]);
+    expect(getReelPlayerIndexes(10, 9)).toEqual([null, 7, 8, 9, null, null]);
   });
 
   it('chọn các bản video từ mức cao nhất hiện có và giữ master làm dự phòng', () => {
