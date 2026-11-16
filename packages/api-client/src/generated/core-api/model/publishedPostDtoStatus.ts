@@ -9,4 +9,5 @@ export type PublishedPostDtoStatus = (typeof PublishedPostDtoStatus)[keyof typeo
 
 export const PublishedPostDtoStatus = {
   published: 'published',
+  held: 'held',
 } as const;

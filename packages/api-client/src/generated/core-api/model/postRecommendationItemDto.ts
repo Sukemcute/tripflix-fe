@@ -10,7 +10,7 @@ import type { RecommendReasonDto } from './recommendReasonDto';
 
 export interface PostRecommendationItemDto {
   post: RecommendedPostDto;
-  /** Nguồn ứng viên: hot (điểm nóng), fresh (đăng trong 48 giờ), explore (~5% ngẫu nhiên để đo) */
+  /** Nguồn ứng viên: hot (điểm nóng), fresh (đăng trong 48 giờ), explore (~5% ngẫu nhiên để đo), own (bài người xem vừa đăng) */
   source: PostRecommendationItemDtoSource;
   reason: RecommendReasonDto;
 }

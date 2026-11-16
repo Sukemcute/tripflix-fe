@@ -45,6 +45,8 @@ const config: ExpoConfig = {
       },
     ],
   ],
+  // Project EAS để build APK trên cloud; mỗi người dùng project của tài khoản Expo mình (TF05H).
+  ...(process.env.EAS_PROJECT_ID && { extra: { eas: { projectId: process.env.EAS_PROJECT_ID } } }),
   experiments: {
     typedRoutes: true,
     reactCompiler: true,

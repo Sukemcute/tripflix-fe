@@ -320,6 +320,7 @@ export * from './signedPartDto';
 export * from './signedPartsDto';
 export * from './socialAuthorDto';
 export * from './socialCommentDto';
+export * from './socialCommentDtoStatus';
 export * from './socialCommentPageDto';
 export * from './socialModerationHistoryDto';
 export * from './socialModerationResultDto';

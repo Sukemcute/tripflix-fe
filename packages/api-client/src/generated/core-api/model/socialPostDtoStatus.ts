@@ -10,6 +10,7 @@ export type SocialPostDtoStatus = (typeof SocialPostDtoStatus)[keyof typeof Soci
 export const SocialPostDtoStatus = {
   draft: 'draft',
   published: 'published',
+  held: 'held',
   hidden: 'hidden',
   removed: 'removed',
   deleted: 'deleted',

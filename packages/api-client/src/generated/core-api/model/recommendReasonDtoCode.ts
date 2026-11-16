@@ -12,4 +12,5 @@ export const RecommendReasonDtoCode = {
   matches_interest: 'matches_interest',
   trending: 'trending',
   explore: 'explore',
+  own_post: 'own_post',
 } as const;

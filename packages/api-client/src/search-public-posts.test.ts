@@ -41,6 +41,18 @@ describe('searchPublicPosts', () => {
     expect(page.nextCursor).toBeNull();
   });
 
+  it('gắn viewerContext (ở ngoài post trong chi tiết) vào từng bài để kết quả tìm hiện đúng tim đã thả', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = new URL(String(input));
+      if (url.pathname === '/api/search/posts') {
+        return json({ understood: {}, items: [hit('liked')], total: 1, nextCursor: null });
+      }
+      return json({ post: { id: 'liked' }, viewerContext: { myReaction: 'like', isBookmarked: false }, shareUrl: 'x' });
+    });
+    const page = await searchPublicPosts('đà lạt');
+    expect(page.items[0]?.viewerContext).toEqual({ myReaction: 'like', isBookmarked: false });
+  });
+
   it('không có kết quả thì trả trang rỗng, không gọi chi tiết', async () => {
     const send = vi
       .spyOn(globalThis, 'fetch')

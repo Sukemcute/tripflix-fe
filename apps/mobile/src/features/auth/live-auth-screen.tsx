@@ -44,6 +44,7 @@ import {
   ui,
 } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
+import { GoogleLoginButton } from '@/features/auth/google-login-button';
 
 const regionNames =
   typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['vi'], { type: 'region' }) : null;
@@ -124,9 +125,12 @@ export function LiveLoginScreen() {
     },
     onSuccess: () => {
       setPassword('');
-      router.dismissTo(resolveMobileLoginReturn(returnTo) as Href);
+      leaveAfterLogin();
     },
   });
+  function leaveAfterLogin() {
+    router.dismissTo(resolveMobileLoginReturn(returnTo) as Href);
+  }
   const isBusy = mutation.isPending || requestCode.isPending;
   const registrationError = (error: unknown) => {
     const fieldError = getRegistrationFieldError(error);
@@ -325,6 +329,7 @@ export function LiveLoginScreen() {
         >
           {isRegistering ? vi.api.haveAccount : vi.api.noAccount}
         </Button>
+        {!isRegistering && <GoogleLoginButton disabled={isBusy} onLoggedIn={leaveAfterLogin} />}
       </View>
       <Sheet
         title={vi.api.nationalityPick}
