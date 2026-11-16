@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Icon, money, Txt } from '@/components/mobile-ui';
+import { Icon, money, Txt, type IconName } from '@/components/mobile-ui';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 
 const copy = vi.assistant;
@@ -48,6 +48,53 @@ function openCard(card: AssistantCard, onOpen: () => void) {
   else router.push({ pathname: '/trip/[slug]', params: { slug: card.id } });
 }
 
+const INFO_KINDS = new Set(['weather', 'checklist', 'itinerary', 'summary']);
+const INFO_ICONS: Record<string, IconName> = {
+  weather: 'partly-sunny-outline',
+  checklist: 'checkbox-outline',
+  itinerary: 'map-outline',
+  summary: 'chatbubbles-outline',
+};
+
+/** Thẻ không có giá: các dòng do code dựng từ dữ liệu thật (dự báo, luật checklist, lộ trình của reel). */
+function InfoCard({ card, reel, onOpen }: { card: AssistantCard; reel?: Reel; onOpen: () => void }) {
+  return (
+    <View style={styles.info}>
+      <View style={styles.infoHeader}>
+        <Icon name={INFO_ICONS[card.kind] ?? 'information-circle-outline'} size={mobileIconSize.control} color={c.tealInk} />
+        <Txt variant="label" numberOfLines={2} style={[compactType.body, { flex: 1 }]}>
+          {card.title}
+        </Txt>
+      </View>
+      {card.lines?.map((line, index) => (
+        <Txt key={`${card.ref}-${index}`} style={compactType.meta}>
+          <Txt variant="label" style={compactType.meta}>
+            {line.label}
+          </Txt>
+          {line.detail ? ` · ${line.detail}` : ''}
+        </Txt>
+      ))}
+      {!!card.source && (
+        <Txt variant="caption" style={styles.source}>
+          {copy.source}: {card.source}
+        </Txt>
+      )}
+      {card.kind === 'itinerary' && (
+        <View style={styles.actions}>
+          {reel && (
+            <Pressable accessibilityRole="button" onPress={() => openReel(card, true, onOpen)} style={styles.action}>
+              <Txt variant="label" style={styles.actionText}>{copy.watchReel}</Txt>
+            </Pressable>
+          )}
+          <Pressable accessibilityRole="button" onPress={() => openCard(card, onOpen)} style={styles.action}>
+            <Txt variant="label" style={styles.actionText}>{copy.bookTrip}</Txt>
+          </Pressable>
+        </View>
+      )}
+    </View>
+  );
+}
+
 function VideoCard({ card, reel, onPlay }: { card: AssistantCard; reel?: Reel; onPlay: () => void }) {
   return (
     <Pressable
@@ -76,8 +123,11 @@ function VideoCard({ card, reel, onPlay }: { card: AssistantCard; reel?: Reel; o
 /** Thẻ Tripi tìm được: video thành hàng thẻ dọc như Reels (bấm để mở ở Reels), bài viết và nơi ở thành dòng bấm được. */
 export function AssistantCards({ cards, onOpen }: { cards: AssistantCard[]; onOpen: () => void }) {
   const videos = cards.filter((card) => card.kind === 'video');
-  const others = cards.filter((card) => card.kind !== 'video');
-  const reels = useFeedReels(videos.map((card) => card.id)).data ?? {};
+  const infos = cards.filter((card) => INFO_KINDS.has(card.kind));
+  // Thẻ lạ (app cũ chưa biết) thì bỏ qua thay vì hiện dòng bấm vào trang sai.
+  const others = cards.filter((card) => card.kind === 'stay' || card.kind === 'post' || card.kind === 'plan');
+  const reelIds = [...videos, ...infos.filter((card) => card.kind === 'itinerary')].map((card) => card.id);
+  const reels = useFeedReels(reelIds).data ?? {};
   return (
     <View style={{ gap: s.sm }}>
       {videos.length > 0 && (
@@ -92,6 +142,9 @@ export function AssistantCards({ cards, onOpen }: { cards: AssistantCard[]; onOp
           ))}
         </ScrollView>
       )}
+      {infos.map((card) => (
+        <InfoCard key={card.ref} card={card} reel={reels[card.id]} onOpen={onOpen} />
+      ))}
       {others.map((card) => (
         <Pressable
           key={card.ref}
@@ -142,6 +195,18 @@ const styles = StyleSheet.create({
   videoCaption: { padding: s.sm, backgroundColor: c.overlayHeavy },
   videoTitle: { ...compactType.meta, color: c.background },
   price: { ...compactType.meta, color: c.coralInk },
+  info: { gap: s.xs, padding: s.sm, borderRadius: radius.md, backgroundColor: c.warmMist },
+  infoHeader: { flexDirection: 'row', alignItems: 'center', gap: s.sm },
+  source: { ...compactType.meta, color: c.textMuted },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: s.sm, paddingTop: s.xs },
+  action: {
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: s.md,
+    borderRadius: radius.pill,
+    backgroundColor: c.background,
+  },
+  actionText: { ...compactType.label, color: c.tealInk },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

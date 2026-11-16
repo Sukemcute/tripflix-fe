@@ -1,5 +1,5 @@
 import { vi } from '@tripflix/i18n';
-import { colors as c, mobileLayout, nativeFonts as f, spacing as s } from '@tripflix/tokens';
+import { colors as c, mobileLayout, nativeFonts as f, radius, spacing as s } from '@tripflix/tokens';
 import { useCallback, useRef, useState, type ComponentRef, type ReactElement, type ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -66,7 +66,8 @@ export function AssistantChat({
   const list = useRef<ComponentRef<typeof Animated.ScrollView>>(null);
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const [isConfirming, setIsConfirming] = useState(false);
-  const isDisabled = !chat.draft.trim() || chat.isPending || chat.hasError;
+  // Lỗi không khoá ô nhập: người dùng sửa câu rồi gửi lại, hoặc bấm "Thử gửi lại".
+  const isDisabled = !chat.draft.trim() || chat.isPending;
   function close() {
     Keyboard.dismiss();
     onMinimize();
@@ -195,6 +196,37 @@ export function AssistantChat({
                     {message.text}
                   </Txt>
                   {!!message.cards?.length && <AssistantCards cards={message.cards} onOpen={close} />}
+                  {message.action === 'login' && (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => {
+                        close();
+                        // Phiên chat nằm ở provider gốc nên vẫn còn khi đăng nhập xong quay lại.
+                        router.push({ pathname: '/login', params: { returnTo: '/assistant' } });
+                      }}
+                      style={styles.chip}
+                    >
+                      <Txt variant="label" style={styles.chipText}>
+                        {copy.login}
+                      </Txt>
+                    </Pressable>
+                  )}
+                  {message.id === chat.messages.at(-1)?.id && !chat.isPending && !!message.suggestions?.length && (
+                    <View style={styles.chips}>
+                      {message.suggestions.map((suggestion) => (
+                        <Pressable
+                          key={suggestion}
+                          accessibilityRole="button"
+                          onPress={() => void chat.send(suggestion)}
+                          style={styles.chip}
+                        >
+                          <Txt variant="label" style={styles.chipText}>
+                            {suggestion}
+                          </Txt>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
                 </View>
               </View>
             ))
@@ -603,6 +635,16 @@ const styles = StyleSheet.create({
   error: { backgroundColor: c.coralTint, padding: s.md, borderRadius: 16, gap: s.sm },
   retry: { flexDirection: 'row', alignItems: 'center', gap: s.sm, minHeight: mobileLayout.touchTarget },
   actionText: { ...compactType.label, color: c.coralInk },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: s.xs },
+  chip: {
+    minHeight: 36,
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: s.md,
+    borderRadius: radius.pill,
+    backgroundColor: c.warmMist,
+  },
+  chipText: { ...compactType.label, color: c.tealInk },
   composerArea: { borderTopWidth: 1, borderTopColor: c.border, padding: s.md, gap: s.sm },
   composer: {
     flexDirection: 'row',
