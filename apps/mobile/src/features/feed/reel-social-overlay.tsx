@@ -309,7 +309,7 @@ export function ReelSocialOverlay({
         importantForAccessibility={isHidden || hasComments ? 'no-hide-descendants' : 'auto'}
       >
         <View style={styles.tripi}>
-          <AssistantTrigger size={tripiSize} />
+          <AssistantTrigger size={tripiSize} postId={postId} />
         </View>
         <RailAction
           icon="heart"

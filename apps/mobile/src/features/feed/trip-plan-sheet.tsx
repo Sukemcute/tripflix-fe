@@ -38,7 +38,7 @@ export function TripPlanSheet({
   const askTripi = () => {
     onClose();
     assistant.setDraft(t('mobile.tripPlan.askTripiViewPrompt', { title: postTitle }));
-    assistant.openDialog();
+    assistant.openDialog(undefined, postId);
   };
   const book = () => {
     saveTripBooking({ postId, postTitle, authorName, coverUrl, trip });
