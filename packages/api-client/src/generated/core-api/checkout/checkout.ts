@@ -24,6 +24,7 @@ import type {
   CancelHoldResultDto,
   CancelPaidResultDto,
   CancelQuoteResultDto,
+  CancelVnpayResultDto,
   CheckoutDto,
   CheckoutRequestDto,
   ConfirmThreeDsRequestDto,
@@ -1150,4 +1151,92 @@ export const useVnpayCheckoutControllerStart = <TError = unknown, TContext = unk
   TContext
 > => {
   return useMutation(getVnpayCheckoutControllerStartMutationOptions(options), queryClient);
+};
+export type vnpayCheckoutControllerCancelResponse200 = {
+  data: CancelVnpayResultDto;
+  status: 200;
+};
+
+export type vnpayCheckoutControllerCancelResponseSuccess = vnpayCheckoutControllerCancelResponse200 & {
+  headers: Headers;
+};
+export type vnpayCheckoutControllerCancelResponse = vnpayCheckoutControllerCancelResponseSuccess;
+
+export const getVnpayCheckoutControllerCancelUrl = (id: string) => {
+  return `/api/checkout/${id}/vnpay-cancel`;
+};
+
+export const vnpayCheckoutControllerCancel = async (
+  id: string,
+  options?: Parameters<typeof http>[1],
+): Promise<vnpayCheckoutControllerCancelResponse> => {
+  return http<vnpayCheckoutControllerCancelResponse>(getVnpayCheckoutControllerCancelUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getVnpayCheckoutControllerCancelMutationKey = () => ['vnpayCheckoutControllerCancel'] as const;
+
+export const getVnpayCheckoutControllerCancelMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>,
+    TError,
+    VnpayCheckoutControllerCancelMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>,
+  TError,
+  VnpayCheckoutControllerCancelMutationVariables,
+  TContext
+> => {
+  const mutationKey = getVnpayCheckoutControllerCancelMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>,
+    VnpayCheckoutControllerCancelMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return vnpayCheckoutControllerCancel(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type VnpayCheckoutControllerCancelMutationResult = NonNullable<
+  Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>
+>;
+
+export type VnpayCheckoutControllerCancelMutationError = unknown;
+export type VnpayCheckoutControllerCancelMutationVariables = { id: string };
+
+export const useVnpayCheckoutControllerCancel = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>,
+      TError,
+      VnpayCheckoutControllerCancelMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>,
+  TError,
+  VnpayCheckoutControllerCancelMutationVariables,
+  TContext
+> => {
+  return useMutation(getVnpayCheckoutControllerCancelMutationOptions(options), queryClient);
 };
