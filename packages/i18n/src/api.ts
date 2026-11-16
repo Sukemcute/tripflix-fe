@@ -302,7 +302,6 @@ export const api = {
   saveDraft: 'Lưu bản nháp',
   draftSaved: 'Bản nháp đã được lưu vào tài khoản của bạn.',
   publish: 'Đăng bài',
-  mediaUnavailable: 'Đăng ảnh và video đang được hoàn thiện. Bạn có thể đăng bài chữ hoặc lưu bản nháp.',
   noPreview: 'Bài đăng này chưa có ảnh hoặc video để phát.',
   mediaIds: 'Mã tệp đã tải lên',
   search: 'Tìm kiếm',

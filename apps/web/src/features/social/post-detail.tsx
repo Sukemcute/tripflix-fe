@@ -347,7 +347,6 @@ export function LivePostDetail({ id, focusCommentId }: { id: string; focusCommen
                     </button>
                   )}
                 </div>
-                <p className="post-card-note">{vi.api.mediaUnavailable}</p>
               </section>
             )}
           </aside>
