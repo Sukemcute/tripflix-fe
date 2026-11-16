@@ -44,6 +44,8 @@ export function ReelCommentsPanel({
   hasBackdrop = false,
   loginReturnTo = '/(tabs)',
   showSummary = false,
+  focusCommentId,
+  focusThreadId,
 }: {
   visible: boolean;
   /** 0 when closed, 1 when fully open; follows the finger so the video can move with the sheet. */
@@ -60,6 +62,9 @@ export function ReelCommentsPanel({
   loginReturnTo?: string;
   /** Chỉ reel bật; trang chi tiết bài dùng chung khung này nhưng không có AI summary. */
   showSummary?: boolean;
+  /** Bình luận cần nhảy tới khi mở từ thông báo, và bình luận gốc của luồng nếu đó là trả lời. */
+  focusCommentId?: string;
+  focusThreadId?: string;
 }) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
@@ -224,6 +229,8 @@ export function ReelCommentsPanel({
                 renderContent={renderContent}
                 onRevealComment={revealComment}
                 showSummary={showSummary}
+                focusCommentId={focusCommentId}
+                focusThreadId={focusThreadId}
                 onLoginRequired={() => {
                   close();
                   router.push({ pathname: '/login', params: { returnTo: loginReturnTo } });

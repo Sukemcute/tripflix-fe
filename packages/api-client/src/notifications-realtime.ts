@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { getHttpConfig } from './http';
 import { useApiSession } from './session';
@@ -24,11 +24,17 @@ export function isNotificationsSocketConnected(userId: string | undefined): bool
  * Mở kết nối WebSocket /ws khi đã đăng nhập, có thông báo mới thì tải lại danh sách ngay (không chờ lượt 30 giây).
  * Socket chỉ báo "có mới"; dữ liệu vẫn lấy qua GET /notifications, nên kết nối lại xong cũng tải lại để bù phần lỡ.
  * Token hết hạn hoặc bị từ chối lúc bắt tay thì làm mới token rồi nối lại; mất mạng thì socket.io tự nối lại.
+ * `onNotificationCreated` nhận nguyên payload `notification.created` (đọc bằng `readCreatedNotification`), ví dụ để mobile hiện banner.
  */
-export function useNotificationsRealtime(): void {
+export function useNotificationsRealtime(onNotificationCreated?: (payload: unknown) => void): void {
   const { user, isReady } = useApiSession();
   const queryClient = useQueryClient();
   const userId = user?.id;
+  // Giữ hàm mới nhất trong ref để đổi callback không làm đóng mở lại socket.
+  const onCreatedRef = useRef(onNotificationCreated);
+  useEffect(() => {
+    onCreatedRef.current = onNotificationCreated;
+  });
 
   useEffect(() => {
     const { baseUrl } = getHttpConfig();
@@ -66,7 +72,10 @@ export function useNotificationsRealtime(): void {
       // Tải lại để polling 30 giây bật lại trong lúc chờ socket nối lại.
       if (!isClosed) reload();
     });
-    socket.on(NOTIFICATION_CREATED_EVENT, reload);
+    socket.on(NOTIFICATION_CREATED_EVENT, (payload: unknown) => {
+      reload();
+      onCreatedRef.current?.(payload);
+    });
     socket.on(NOTIFICATION_READ_EVENT, reload);
     socket.on(AUTH_EXPIRED_EVENT, () => void refreshAndReconnect());
     socket.on('connect_error', (error: HandshakeError) => {
