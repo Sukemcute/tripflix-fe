@@ -20,6 +20,7 @@ const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3100';
 const ACTIONS: readonly CreateModerationActionDtoAction[] = ['hide', 'remove', 'restore'];
 const ALLOWED_ACTIONS: Record<string, readonly CreateModerationActionDtoAction[]> = {
   draft: [],
+  held: ['restore', 'hide', 'remove'],
   deleted: [],
   published: ['hide', 'remove'],
   hidden: ['restore', 'remove'],
@@ -30,7 +31,7 @@ const HISTORY_LABEL: Record<string, string> = {
   remove: vi.api.moderationDidRemove,
   restore: vi.api.moderationDidRestore,
 };
-type PostStatus = 'draft' | 'published' | 'hidden' | 'removed' | 'deleted';
+type PostStatus = 'held' | 'draft' | 'published' | 'hidden' | 'removed' | 'deleted';
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('vi-VN');
@@ -68,7 +69,7 @@ export function ModerationPostDetail({
           <p className="admin-post-kicker">
             {trip?.destinationName && <span>{trip.destinationName}</span>}
             <span>{t('api.postPublishedOn', { date: formatDate(post.created_at) })}</span>
-            <span className={`admin-post-status is-${status}`}>{vi.api[status] ?? post.status}</span>
+            <span className={`admin-post-status is-${status}`}>{status === 'held' ? vi.api.moderationHeld : vi.api[status] ?? post.status}</span>
           </p>
           <h2>{post.title}</h2>
           <div className="admin-post-byline">
@@ -186,7 +187,7 @@ export function ModerationPostDetail({
                 disabled={isPending || !reason.trim() || !ALLOWED_ACTIONS[status]?.includes(action)}
                 onClick={() => onAction(action)}
               >
-                {vi.api[action]}
+                {status === 'held' && action === 'restore' ? vi.api.moderationReleaseHeld : vi.api[action]}
               </button>
             ))}
           </div>

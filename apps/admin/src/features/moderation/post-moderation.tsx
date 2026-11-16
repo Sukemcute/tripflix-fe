@@ -68,9 +68,9 @@ export function PostModeration() {
             }}
           >
             <option value="">{vi.api.all}</option>
-            {(['draft', 'published', 'hidden', 'removed', 'deleted'] as const).map((value) => (
+            {(['draft', 'published', 'held', 'hidden', 'removed', 'deleted'] as const).map((value) => (
               <option key={value} value={value}>
-                {vi.api[value]}
+                {value === 'held' ? vi.api.moderationHeld : vi.api[value]}
               </option>
             ))}
           </select>
@@ -140,7 +140,7 @@ export function PostModeration() {
                 <td>
                   <span className={styles.status} data-status={post.status}>
                     <span className={styles.dot} aria-hidden="true" />
-                    {vi.api[post.status as AdminPostsControllerListAdminPostsStatus] ?? post.status}
+                    {post.status === 'held' ? vi.api.moderationHeld : vi.api[post.status as AdminPostsControllerListAdminPostsStatus] ?? post.status}
                   </span>
                 </td>
                 <td>

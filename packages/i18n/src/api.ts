@@ -392,6 +392,8 @@ export const api = {
   minLos: 'Số đêm tối thiểu',
   maxLos: 'Số đêm tối đa',
   draft: 'Bản nháp',
+  moderationHeld: 'Đang kiểm tra',
+  moderationReleaseHeld: 'Cho hiển thị',
   published: 'Đã đăng',
   hidden: 'Đã ẩn',
   removed: 'Đã gỡ',
