@@ -38,6 +38,7 @@ import {
   SNAP_SPRING,
 } from '@/components/motion';
 import { ReelCommentsPanel } from './reel-comments-panel';
+import { SEEK_BAR_ZONE } from './reel-seek-bar';
 import type { ReelItem } from './reel-types';
 import { TripPlanSheet } from './trip-plan-sheet';
 
@@ -137,6 +138,7 @@ export function ReelSocialOverlay({
   isSample,
   isHidden = false,
   commentsProgress,
+  likeRequest = 0,
   onCommentsVisibilityChange,
 }: {
   item: ReelItem;
@@ -144,6 +146,8 @@ export function ReelSocialOverlay({
   isSample: boolean;
   isHidden?: boolean;
   commentsProgress: SharedValue<number>;
+  /** Tăng lên mỗi lần nhấn đúp video: thả tim nếu chưa thả, đã thả thì giữ nguyên. */
+  likeRequest?: number;
   onCommentsVisibilityChange: (visible: boolean) => void;
 }) {
   const { user, isReady } = useApiSession();
@@ -250,6 +254,12 @@ export function ReelSocialOverlay({
     if (mutation.isPending) return;
     mutation.mutate({ type: action, selected: action === 'like' ? !isLiked : !isSaved });
   };
+  const handledLikeRequest = useRef(likeRequest);
+  useEffect(() => {
+    if (likeRequest === handledLikeRequest.current) return;
+    handledLikeRequest.current = likeRequest;
+    if (!isLiked) interact('like');
+  });
   const closeComments = () => {
     setHasComments(false);
   };
@@ -558,7 +568,8 @@ const styles = StyleSheet.create({
   caption: {
     position: 'absolute',
     left: spacing.md,
-    bottom: spacing.md,
+    // Chừa vùng thanh tua ở đáy reel.
+    bottom: spacing.md + SEEK_BAR_ZONE,
     gap: spacing.xs,
   },
   authorRow: { flexDirection: 'row', gap: spacing.xs, alignItems: 'center' },

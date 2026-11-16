@@ -1,18 +1,45 @@
 import { layoutReelCommentsVideo, layoutReelVideo, selectReelPoster } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, spacing } from '@tripflix/tokens';
+import { colors, radius, spacing } from '@tripflix/tokens';
 import { useEvent } from 'expo';
 import { Image } from 'expo-image';
 import { VideoView, type VideoPlayer } from 'expo-video';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
-import Animated, { Extrapolation, interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
+import {
+  GestureDetector,
+  useCompetingGestures,
+  useExclusiveGestures,
+  useLongPressGesture,
+  useTapGesture,
+} from 'react-native-gesture-handler';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { Button, Icon, Txt } from '@/components/mobile-ui';
+import { ReelHeartBurst, type HeartBurstItem } from './reel-heart-burst';
+import { ReelSeekBar } from './reel-seek-bar';
 import { ReelSocialOverlay } from './reel-social-overlay';
 import type { ReelItem } from './reel-types';
 
 const copy = vi.mobile.reels;
+/** Nhấn giữ thì xem nhanh gấp đôi, thả tay về tốc độ thường. */
+const FAST_FORWARD_RATE = 2;
+const HOLD_MS = 350;
+/** Chạm đơn phải đợi chừng này để biết có chạm lần hai không, nên giữ ngắn. */
+const DOUBLE_TAP_MS = 250;
+const HEART_TILT_DEG = 15;
+
+function setPlaybackRate(player: VideoPlayer, rate: number) {
+  if (player.playbackRate === rate) return;
+  const wasPlaying = player.playing;
+  player.playbackRate = rate;
+  if (!wasPlaying) player.pause();
+}
 
 function PlayerSurface({
   player,
@@ -164,6 +191,10 @@ export function ReelSlide({
   const poster = selectReelPoster(item.playback.posters, width);
   const { box: videoBox, contentFit } = layoutReelVideo(item.playback.aspect, width, height);
   const held = useRef(false);
+  const [isFastForward, setFastForward] = useState(false);
+  const [hearts, setHearts] = useState<HeartBurstItem[]>([]);
+  const nextHeart = useRef(0);
+  const [likeRequest, setLikeRequest] = useState(0);
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const commentsProgress = useSharedValue(0);
@@ -178,13 +209,66 @@ export function ReelSlide({
     return {
       width: interpolate(progress, [0, 1], [videoBox.width, commentsVideo.width], Extrapolation.CLAMP),
       height: interpolate(progress, [0, 1], [videoBox.height, commentsVideo.height], Extrapolation.CLAMP),
-      left: interpolate(progress, [0, 1], [(width - videoBox.width) / 2, commentsVideo.left], Extrapolation.CLAMP),
-      top: interpolate(progress, [0, 1], [(height - videoBox.height) / 2, commentsVideo.top], Extrapolation.CLAMP),
+      left: interpolate(
+        progress,
+        [0, 1],
+        [(width - videoBox.width) / 2, commentsVideo.left],
+        Extrapolation.CLAMP,
+      ),
+      top: interpolate(
+        progress,
+        [0, 1],
+        [(height - videoBox.height) / 2, commentsVideo.top],
+        Extrapolation.CLAMP,
+      ),
     };
   });
   const blackBackdropStyle = useAnimatedStyle(() => ({
     opacity: Math.max(0, Math.min(1, commentsProgress.get())),
   }));
+  // Chỉ chạm vào tốc độ khi nó thật sự đổi: trên iOS, gán playbackRate là đặt rate của AVPlayer,
+  // nên player đang dừng (video tải sẵn trên dưới) sẽ tự phát ngầm và làm lướt bị giật.
+  const isFast = !!player && isFastForward && isActive;
+  useEffect(() => {
+    if (!player || !isFast) return;
+    setPlaybackRate(player, FAST_FORWARD_RATE);
+    // Thả tay, rời reel hay đổi player đều trả về tốc độ thường.
+    return () => setPlaybackRate(player, 1);
+  }, [player, isFast]);
+  const likeAt = (x: number, y: number) => {
+    const id = nextHeart.current++;
+    const tilt = (Math.random() * 2 - 1) * HEART_TILT_DEG;
+    setHearts((list) => [...list, { id, x, y, tilt }]);
+    setLikeRequest((count) => count + 1);
+  };
+  const removeHeart = useCallback(
+    (id: number) => setHearts((list) => list.filter((heart) => heart.id !== id)),
+    [],
+  );
+  const doubleTap = useTapGesture({
+    numberOfTaps: 2,
+    maxDelay: DOUBLE_TAP_MS,
+    runOnJS: true,
+    onActivate: (event) => likeAt(event.x, event.y),
+  });
+  const singleTap = useTapGesture({ runOnJS: true, onActivate: () => onToggle() });
+  const hold = useLongPressGesture({
+    minDuration: HOLD_MS,
+    runOnJS: true,
+    onActivate: () => {
+      held.current = true;
+      setFastForward(true);
+      onHoldChange(true);
+    },
+    onFinalize: () => {
+      if (!held.current) return;
+      held.current = false;
+      setFastForward(false);
+      onHoldChange(false);
+    },
+  });
+  // Chạm đúp thắng chạm đơn; nhấn giữ đủ lâu thì thắng cả hai.
+  const surfaceGesture = useCompetingGestures(hold, useExclusiveGestures(doubleTap, singleTap));
   return (
     <View
       testID={`reel-${item.id}`}
@@ -197,26 +281,20 @@ export function ReelSlide({
         <Image source={poster} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={25} />
       )}
       <Animated.View style={[styles.blackBackdrop, blackBackdropStyle]} pointerEvents="none" />
-      <Pressable
-        style={StyleSheet.absoluteFill}
-        accessibilityRole="button"
-        accessibilityLabel={isPaused ? copy.play : copy.pause}
-        accessibilityHint={copy.holdToHide}
-        delayLongPress={350}
-        onPressIn={() => {
-          held.current = false;
-        }}
-        onLongPress={() => {
-          held.current = true;
-          onHoldChange(true);
-        }}
-        onPressOut={() => {
-          if (held.current) onHoldChange(false);
-        }}
-        onPress={() => {
-          if (!held.current) onToggle();
-        }}
-      />
+      <GestureDetector gesture={surfaceGesture}>
+        <View
+          style={StyleSheet.absoluteFill}
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel={isPaused ? copy.play : copy.pause}
+          accessibilityHint={copy.holdToHide}
+          accessibilityActions={[{ name: 'activate' }, { name: 'like', label: copy.doubleTapLike }]}
+          onAccessibilityAction={({ nativeEvent }) => {
+            if (nativeEvent.actionName === 'like') setLikeRequest((count) => count + 1);
+            else onToggle();
+          }}
+        />
+      </GestureDetector>
       <Animated.View style={[styles.stage, stageStyle]} pointerEvents="box-none">
         {player && isLoaded ? (
           <PlayerSurface
@@ -233,7 +311,12 @@ export function ReelSlide({
           />
         ) : poster ? (
           <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            <Image source={poster} cachePolicy="memory-disk" style={StyleSheet.absoluteFill} contentFit={contentFit} />
+            <Image
+              source={poster}
+              cachePolicy="memory-disk"
+              style={StyleSheet.absoluteFill}
+              contentFit={contentFit}
+            />
           </View>
         ) : null}
       </Animated.View>
@@ -252,8 +335,28 @@ export function ReelSlide({
         isSample={isSample}
         isHidden={isActive && isHidden}
         commentsProgress={commentsProgress}
+        likeRequest={likeRequest}
         onCommentsVisibilityChange={onCommentsVisibilityChange}
       />
+      {player && isLoaded && isActive && !blockedReason && !hasError && (
+        <ReelSeekBar
+          player={player}
+          width={width}
+          commentsProgress={commentsProgress}
+          onScrubChange={onHoldChange}
+        />
+      )}
+      {isFastForward && isActive && (
+        <View style={[styles.fastForward, { top: insets.top + spacing.lg }]} pointerEvents="none">
+          <Icon name="play-forward" size={16} color={colors.background} />
+          <Txt variant="label" style={styles.light}>
+            {copy.fastForward}
+          </Txt>
+        </View>
+      )}
+      {hearts.map((heart) => (
+        <ReelHeartBurst key={heart.id} burst={heart} onDone={removeHeart} />
+      ))}
     </View>
   );
 }
@@ -279,4 +382,15 @@ const styles = StyleSheet.create({
   },
   notice: { padding: spacing.xl, gap: spacing.lg, backgroundColor: colors.overlayHeavy },
   light: { color: colors.background },
+  fastForward: {
+    position: 'absolute',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    backgroundColor: colors.overlay,
+  },
 });
