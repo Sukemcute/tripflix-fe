@@ -43,6 +43,7 @@ import {
   ui,
 } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
+import { GoogleLoginButton } from '@/features/auth/google-login-button';
 
 const regionNames =
   typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['vi'], { type: 'region' }) : null;
@@ -123,15 +124,18 @@ export function LiveLoginScreen() {
     },
     onSuccess: () => {
       setPassword('');
-      const path =
-        typeof returnTo === 'string' &&
-        (/^\/(?:\(tabs\)|trip\/[^/?#]+|saved|create|cart|account-settings)(?:$|\/)/.test(returnTo) ||
-          /^\/(?:flights|payments\/vnpay\/return)(?:\?|$)/.test(returnTo))
-          ? returnTo
-          : '/(tabs)/me';
-      router.dismissTo(path as Href);
+      leaveAfterLogin();
     },
   });
+  function leaveAfterLogin() {
+    const path =
+      typeof returnTo === 'string' &&
+      (/^\/(?:\(tabs\)|trip\/[^/?#]+|saved|create|cart|account-settings)(?:$|\/)/.test(returnTo) ||
+        /^\/(?:flights|payments\/vnpay\/return)(?:\?|$)/.test(returnTo))
+        ? returnTo
+        : '/(tabs)/me';
+    router.dismissTo(path as Href);
+  }
   const isBusy = mutation.isPending || requestCode.isPending;
   const registrationError = (error: unknown) => {
     const fieldError = getRegistrationFieldError(error);
@@ -330,6 +334,7 @@ export function LiveLoginScreen() {
         >
           {isRegistering ? vi.api.haveAccount : vi.api.noAccount}
         </Button>
+        {!isRegistering && <GoogleLoginButton disabled={isBusy} onLoggedIn={leaveAfterLogin} />}
       </View>
       <Sheet
         title={vi.api.nationalityPick}
