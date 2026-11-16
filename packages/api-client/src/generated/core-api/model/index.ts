@@ -185,6 +185,8 @@ export * from './jobSummaryDto';
 export * from './jwksDto';
 export * from './jwksDtoKeysItem';
 export * from './locationDto';
+export * from './loginCodeDto';
+export * from './loginCodeResultDto';
 export * from './loginDto';
 export * from './markPostSummaryCheckedDto';
 export * from './markPostSummaryCheckedResponseDto';

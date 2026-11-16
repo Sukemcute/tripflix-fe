@@ -69,7 +69,8 @@ export function getAuthErrorKind(error: unknown, action: AuthAction): AuthErrorK
   if (error.status === 429) return 'tooManyAttempts';
   switch (action) {
     case 'login':
-      return error.status === 401 ? 'wrongCredentials' : null;
+      if (error.status === 401) return 'wrongCredentials';
+      return error.status === 400 && !hasFieldErrors(error) ? 'registrationCodeInvalid' : null;
     case 'register':
       if (error.status === 409) return 'accountExists';
       return error.status === 400 && !hasFieldErrors(error) ? 'registrationCodeInvalid' : null;

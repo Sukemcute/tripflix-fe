@@ -12,4 +12,11 @@ export interface LoginDto {
   /** Cách cũ, gửi mật khẩu gốc. Bị từ chối khi server bật AUTH_PASSWORD_ENCRYPTION_REQUIRED. */
   password?: string;
   deviceName?: string;
+  /** ID thử thách mã xác thực đăng nhập từ POST /auth/login-code */
+  loginChallengeId?: string;
+  /**
+   * Mã xác thực 8 chữ số gửi qua email
+   * @pattern ^[0-9]{8}$
+   */
+  code?: string;
 }
