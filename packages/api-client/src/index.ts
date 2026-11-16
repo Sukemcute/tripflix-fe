@@ -145,9 +145,12 @@ export {
   type VideoUploadSource,
 } from './video-upload';
 export {
+  AssistantError,
   parseSseEvents,
   sendAssistantMessage,
   type AssistantAnswer,
   type AssistantAnswerKind,
   type AssistantCard,
+  type AssistantCardLine,
+  type AssistantTrip,
 } from './assistant';

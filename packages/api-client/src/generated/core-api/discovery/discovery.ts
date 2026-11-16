@@ -872,7 +872,8 @@ export const getPostRecommendationsControllerRecommendPostsUrl = (
  * Đăng nhập tuỳ chọn. Gu người dùng tính lại mỗi 10 phút từ cảm xúc, bình luận, chia sẻ, đơn, lượt tìm.
  *
  * - `for_you`: theo gu; khách (không token) nhận `trending`, xem trường `algo`.
- * - Không trả bài đã tương tác. Người đăng nhập: bài đã gợi ý ở phiên trước (hơn 30 phút, trong 48 giờ, tối đa 100 bài) bị đẩy xuống cuối, không bị bỏ; gọi lại cùng cursor ra cùng trang.
+ * - Không bỏ bài nào vì lịch sử người xem, chỉ hạ điểm: bài đã tương tác, bài đã gợi ý ở phiên trước (hơn 30 phút, trong 48 giờ, tối đa 100 bài), bài thứ 3 trở đi của cùng tác giả. Gọi lại cùng cursor ra cùng trang.
+ * - Người đăng nhập: bài tự đăng trong 1 giờ lên đầu feed của chính họ (`reason.code: own_post`, `source: own`); người khác thấy bài đó như bài thường.
  * - Phân trang: gửi `nextCursor` của trang trước vào `cursor`; trang sau dùng cùng thuật toán với trang đầu.
  * - Khoảng 5% vị trí là bài ngẫu nhiên (`source: explore`) để đo chất lượng gợi ý.
  * @summary Gợi ý bài viết cho bạn hoặc đang thịnh hành

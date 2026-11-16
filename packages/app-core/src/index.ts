@@ -12,3 +12,4 @@ export * from './device-name';
 export * from './registration';
 export * from './checkout-guests';
 export * from './trip-plan-selection';
+export * from './assistant-chat';

@@ -856,7 +856,8 @@ h3 {
   letter-spacing: 0;
   text-transform: none;
 }
-.admin-post-status.is-draft {
+.admin-post-status.is-draft,
+.admin-post-status.is-held {
   background: var(--color-sun-soft);
   color: var(--color-ink);
 }
