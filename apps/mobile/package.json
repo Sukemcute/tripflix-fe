@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
+    "@react-native-google-signin/google-signin": "17.0.0",
     "@tanstack/react-query": "catalog:",
     "@tripflix/api-client": "workspace:*",
     "@tripflix/app-core": "workspace:*",
