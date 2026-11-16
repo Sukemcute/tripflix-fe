@@ -19,7 +19,21 @@ import { vi } from '@tripflix/i18n';
 import { colors, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
-import { Badge, Button, Card, formatDate, Icon, money, Notice, PriceRow, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import {
+  Badge,
+  Button,
+  Card,
+  formatDate,
+  Icon,
+  money,
+  Notice,
+  PriceRow,
+  Row,
+  Screen,
+  Txt,
+  ui,
+} from '@/components/mobile-ui';
+import { CartLineIssue, useBookingCartCheck } from './cart-check';
 import { CommerceError } from './commerce-state';
 import { saveBookingCart, saveBookingSelection, useBookingCart, useBookingSelection } from './cart-store';
 
@@ -250,6 +264,7 @@ export function CartScreen() {
   const cart = useBookingCart();
   const { user, isReady } = useApiSession();
   const hold = useHoldCart(cart, saveBookingCart);
+  const check = useBookingCartCheck(cart, hold.error);
   if (!cart.items.length)
     return (
       <Screen title={text.cartTitle}>
@@ -259,7 +274,8 @@ export function CartScreen() {
     );
   const discount = calculateBookingCartChildDiscount(cart);
   const lineTotals = listBookingCartLineTotals(cart);
-  const isBlocked = findUnderCapacityStays(cart).length > 0;
+  const hasIssues = check.issues.size > 0;
+  const isBlocked = findUnderCapacityStays(cart).length > 0 || hasIssues;
   return (
     <Screen
       title={text.cartTitle}
@@ -267,8 +283,6 @@ export function CartScreen() {
         <>
           {discount > 0 && <PriceRow label={text.cartChildSurcharge} amount={money(discount)} />}
           <PriceRow total label={text.cartSubtotal} amount={money(calculateBookingCartTotal(cart))} />
-          <CartWarnings cart={cart} />
-          <CommerceError error={hold.error} />
           {isReady && !user ? (
             <Button
               icon="arrow-forward"
@@ -291,11 +305,17 @@ export function CartScreen() {
       <Txt variant="small" style={ui.muted}>
         {countBookingCartGuests(cart)} {text.guests} · {text.cartNoHold}
       </Txt>
+      {check.isChecking && (
+        <Txt variant="small" style={ui.muted}>
+          {text.cartChecking}
+        </Txt>
+      )}
       {cart.items.map((line, lineIndex) => {
         const key = getBookingCartItemKey(line);
         const setQty = (qty: number) => saveBookingCart(setBookingCartItemQty(cart, key, qty));
+        const issue = check.issues.get(key);
         return (
-          <Card key={key}>
+          <Card key={key} style={issue ? { borderColor: colors.coral, borderWidth: 1 } : undefined}>
             <Badge icon="bed-outline">{line.propertyName}</Badge>
             <Txt variant="heading">{line.roomName}</Txt>
             <Txt variant="small" style={ui.muted}>
@@ -312,12 +332,24 @@ export function CartScreen() {
               />
               <Txt variant="heading">{money(lineTotals[lineIndex] ?? 0)}</Txt>
             </Row>
-            <Button tone="text" onPress={() => setQty(0)}>
-              {text.cartRemove}
-            </Button>
+            {issue ? (
+              <CartLineIssue
+                cart={cart}
+                line={line}
+                issue={issue}
+                provinceSlug={check.provinceByProperty.get(line.propertyId)}
+              />
+            ) : (
+              <Button tone="text" onPress={() => setQty(0)}>
+                {text.cartRemove}
+              </Button>
+            )}
           </Card>
         );
       })}
+      {/* Cảnh báo và lỗi nằm trong phần cuộn để thanh đáy chỉ còn tổng tiền và nút đặt, không che nửa màn hình. */}
+      <CartWarnings cart={cart} />
+      {hasIssues ? <Notice tone="error">{text.cartFixIssues}</Notice> : <CommerceError error={hold.error} />}
     </Screen>
   );
 }

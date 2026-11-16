@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { commerceApi, createCancelPaidOperation } from '@tripflix/api-client';
+import { commerceApi, createCancelHoldOperation, createCancelPaidOperation } from '@tripflix/api-client';
 import type { CheckoutDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
 import { colors, radius, spacing } from '@tripflix/tokens';
@@ -21,6 +21,42 @@ import {
 import { CommerceError } from './commerce-state';
 
 const text = vi.commerce;
+
+/** Huỷ giỏ đang giữ chỗ trước khi hết 30 phút: hỏi lại rồi trả chỗ về kho ngay, chưa trừ tiền nên không có phí. */
+export function CancelHold({ orderId }: { orderId: string }) {
+  const client = useQueryClient();
+  const [isOpen, setIsOpen] = useState(false);
+  const [cancelHold] = useState(createCancelHoldOperation);
+  const cancel = useMutation({
+    retry: false,
+    mutationFn: () => cancelHold(orderId),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['commerce', 'order'] });
+      void client.invalidateQueries({ queryKey: ['commerce', 'trips'] });
+    },
+  });
+  if (!isOpen)
+    return (
+      <Button tone="text" onPress={() => setIsOpen(true)}>
+        {text.cancelHold}
+      </Button>
+    );
+  return (
+    <Card>
+      <Txt variant="heading">{text.cancelHoldTitle}</Txt>
+      <Txt variant="small" style={ui.muted}>
+        {text.cancelHoldNote}
+      </Txt>
+      <CommerceError error={cancel.error} />
+      <Button onPress={() => cancel.mutate()} disabled={cancel.isPending}>
+        {cancel.isPending ? vi.api.loading : text.cancelHoldConfirm}
+      </Button>
+      <Button tone="secondary" onPress={() => setIsOpen(false)} disabled={cancel.isPending}>
+        {text.cancelHoldKeep}
+      </Button>
+    </Card>
+  );
+}
 
 /** Huỷ đơn đã thanh toán: xem trước phí và số tiền hoàn, xác nhận rồi mới huỷ (giống web). */
 export function CancelOrder({ orderId }: { orderId: string }) {

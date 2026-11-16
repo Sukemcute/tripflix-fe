@@ -9,12 +9,14 @@ import {
   resolveTripPlanOffer,
   getTripPlanTotal,
   isValidTripPlanPassengers,
+  readSoldOutConflict,
   type TripPlanOffer,
 } from '@tripflix/app-core';
 import {
   commerceApi,
   createCheckoutOperation,
   getFutureDate,
+  HttpError,
   MAX_FLIGHT_SEATS,
   useApiSession,
   useFlightRoutes,
@@ -31,6 +33,10 @@ import { ApiErrorNotice } from '@/components/api-state';
 import { DateSingleField } from '@/components/date-sheet';
 import { mobileIconSize } from '@/components/mobile-scale';
 import { Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { CommerceError } from './commerce-state';
+
+const soldOutOf = (error: unknown) =>
+  error instanceof HttpError && error.status === 409 ? readSoldOutConflict(error.body) : null;
 import { ChoiceChip, ProductCard, formatDay, styles } from './trip-plan-parts';
 import {
   saveTripBooking,
@@ -186,7 +192,14 @@ function SelectedTripScreen({
     onSuccess: ({ orderId }) => {
       router.push({ pathname: '/checkout', params: { id: orderId } });
     },
+    // Hết chỗ lúc giữ: xem lại giá và chỗ để khách thấy ngay món nào đã hết.
+    onError: (error) => {
+      if (!soldOutOf(error)) return;
+      void hotelQuote.refetch();
+      for (const query of flightQueries) void query.refetch();
+    },
   });
+  const soldOutProductId = soldOutOf(booking.error)?.productId;
   const book = () => {
     if (!canBook || booking.isPending) return;
     if (!user) {
@@ -206,7 +219,11 @@ function SelectedTripScreen({
         .join(' · ')}
       price={hotelQuote.isFetching ? '…' : room ? money(room.totalPrice) : undefined}
       status={
-        hotelQuote.isError ? copy.quoteFailed : hotelQuote.isSuccess && !room ? copy.soldOutItem : undefined
+        hotelQuote.isError
+          ? copy.quoteFailed
+          : (hotelQuote.isSuccess && !room) || (!!room && room.productId === soldOutProductId)
+            ? copy.soldOutItem
+            : undefined
       }
       isSelected={!!room && !current.excluded.includes('hotel')}
       isDisabled={!room || booking.isPending}
@@ -402,7 +419,7 @@ function SelectedTripScreen({
                   {quoteStatus}
                 </Txt>
               )}
-              <ApiErrorNotice error={booking.error} />
+              <CommerceError error={booking.error} />
             </View>
           )}
 
@@ -457,7 +474,8 @@ function SelectedTripScreen({
                           status={
                             query.isError
                               ? copy.quoteFailed
-                              : query.isSuccess && !flight
+                              : (query.isSuccess && !flight) ||
+                                  (!!flight && flight.productId === soldOutProductId)
                                 ? copy.soldOutItem
                                 : undefined
                           }

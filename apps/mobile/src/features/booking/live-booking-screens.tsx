@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { commerceApi, HttpError, useApiSession } from '@tripflix/api-client';
+import { commerceApi, createCancelVnpayOperation, HttpError, useApiSession } from '@tripflix/api-client';
 import type { PayResultDto } from '@tripflix/api-client/core-api/model/index';
 import {
   findCheckoutFieldErrors,
@@ -13,7 +13,7 @@ import { t, vi, type MessageKey } from '@tripflix/i18n';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { colors, radius, spacing } from '@tripflix/tokens';
-import { Pressable, View } from 'react-native';
+import { AppState, Pressable, View } from 'react-native';
 import { RequireAccount } from '@/components/api-state';
 import { DateSingleField } from '@/components/date-sheet';
 import {
@@ -36,7 +36,7 @@ import {
 } from '@/components/mobile-ui';
 import { CommerceError, HoldTimer, useCommerceOrder } from './commerce-state';
 import { useCommerce } from './commerce-provider';
-import { CancelOrder, OrderCancelledScreen } from './order-cancel';
+import { CancelHold, CancelOrder, OrderCancelledScreen } from './order-cancel';
 import { PaymentSuccessScreen } from './payment-success';
 
 const text = vi.commerce;
@@ -173,10 +173,48 @@ function CheckoutForm() {
   const retryPayment = useRef<
     (() => Promise<PayResultDto | { paymentUrl: string; expiresAt: string }>) | null
   >(operations.retries.get(id) ?? null);
+  // Đơn đang chờ VNPay (không phải thẻ chờ OTP): form đã gửi, chỉ còn chờ kết quả hoặc tạo lần trả mới.
+  const isPayingVnpay = order?.status === 'paying' && !challenge;
   const isExpired =
     order &&
     (['expired', 'cancelled'].includes(order.status) ||
       (order.status === 'pending' && holdCountdown(order.holdExpiresAt).expired));
+
+  // Quay lại app khi lần trả VNPay chưa có kết quả (đóng tab, bấm back, chuyển app) thì coi như huỷ lần đó:
+  // đơn về pending để trả lại hoặc huỷ giỏ. Trả xong thì VNPay chuyển về trang kết quả, không về đây.
+  const [cancelVnpay] = useState(createCancelVnpayOperation);
+  const hasCheckedOnOpen = useRef(false);
+  const cancelPendingVnpay = useRef(async () => {});
+  // Gán trong effect (không trong lúc render) để luôn đọc trạng thái đơn mới nhất khi app active lại.
+  useEffect(() => {
+    cancelPendingVnpay.current = async () => {
+      if (order?.status !== 'paying' || challenge) return;
+      try {
+        const result = await cancelVnpay({ id, attempt: Date.now() });
+        if (result.status !== 'pending') return;
+        operations.paymentUrls.delete(id);
+        operations.uncertain.delete(id);
+        operations.retries.delete(id);
+        setPaymentUrl('');
+        setUnknown(false);
+        setMessage(text.vnpayCancelled);
+        await query.refetch();
+      } catch {
+        // Không huỷ được thì vẫn còn nút tạo lần VNPay mới; job hết hạn sẽ nhả đơn.
+      }
+    };
+  });
+  useEffect(() => {
+    if (!order || hasCheckedOnOpen.current) return;
+    hasCheckedOnOpen.current = true;
+    void cancelPendingVnpay.current();
+  }, [order]);
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void cancelPendingVnpay.current();
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     if (order?.status === 'paid') {
@@ -205,7 +243,7 @@ function CheckoutForm() {
         return retryPayment.current();
       }
       if (action === 'vnpayNew') {
-        if (!paymentUrl || !['pending', 'paying'].includes(order.status)) return null;
+        if (!['pending', 'paying'].includes(order.status)) return null;
         const input = {
           id,
           body: { expectedTotal: acceptedTotal ?? order.total, acceptedPolicyVersion: order.policyVersion },
@@ -385,10 +423,10 @@ function CheckoutForm() {
           <CheckoutSummary order={order} total={payTotal} />
           {isExpired ? (
             <>
-              <Notice tone="error">{text.expired}</Notice>
+              <Notice tone="error">{order.status === 'cancelled' ? text.holdCancelled : text.expired}</Notice>
               <Button onPress={() => router.push('/search')}>{text.findHotel}</Button>
             </>
-          ) : (
+          ) : isPayingVnpay ? null : (
             <>
               <FormCard title={text.contact} icon="person-outline">
                 <Field
@@ -583,16 +621,18 @@ function CheckoutForm() {
           )}
           {(order.status === 'paying' || operations.uncertain.has(id)) && <Notice>{text.waiting}</Notice>}
           {!!message && <Notice>{message}</Notice>}
-          {paymentUrl && (
+          {(!!paymentUrl || isPayingVnpay) && (
             <>
-              <Button
-                tone="secondary"
-                onPress={() => {
-                  void Linking.openURL(paymentUrl).catch(() => setMessage(text.reopenGateway));
-                }}
-              >
-                {text.reopenGateway}
-              </Button>
+              {!!paymentUrl && (
+                <Button
+                  tone="secondary"
+                  onPress={() => {
+                    void Linking.openURL(paymentUrl).catch(() => setMessage(text.reopenGateway));
+                  }}
+                >
+                  {text.reopenGateway}
+                </Button>
+              )}
               {['pending', 'paying'].includes(order.status) && (
                 <Button
                   tone="secondary"
@@ -611,6 +651,7 @@ function CheckoutForm() {
           )}
           <CommerceError error={payment.error} />
           {validation && <Notice tone="error">{validation}</Notice>}
+          {order.status === 'pending' && !isExpired && !payment.isPending && <CancelHold orderId={id} />}
           {order.status !== 'pending' && (
             <Button
               tone="text"
