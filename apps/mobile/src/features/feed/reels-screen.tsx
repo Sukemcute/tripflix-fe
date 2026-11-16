@@ -215,7 +215,11 @@ export function ReelsScreen() {
   }, [targetId, isSwitching, translateX]);
 
   if (isSample && DEMO_REELS.length > 0)
-    return <ReelsFeed items={DEMO_REELS} isSample onExitSample={() => setIsSample(false)} />;
+    return (
+      <GestureHandlerRootView style={styles.screen}>
+        <ReelsFeed items={DEMO_REELS} isSample onExitSample={() => setIsSample(false)} />
+      </GestureHandlerRootView>
+    );
   return (
     <GestureHandlerRootView style={styles.screen}>
       <GestureDetector gesture={tabSwipe}>
@@ -654,7 +658,10 @@ export function ReelsFeed({
                 isMuted={slot?.isMuted ?? false}
                 onAttach={slot?.onAttach}
                 onFirstFrame={
-                  isLaunching && isFocused && visibleIndex === index && (targetId ? item.postId === targetId : index === 0)
+                  isLaunching &&
+                  isFocused &&
+                  visibleIndex === index &&
+                  (targetId ? item.postId === targetId : index === 0)
                     ? onFirstFrame
                     : undefined
                 }
