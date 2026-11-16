@@ -255,6 +255,11 @@ export function AssistantChat({
         </Animated.ScrollView>,
       )}
       <View style={[styles.composerArea, { paddingBottom: composerBottom }]}>
+        {chat.hasStorageError && (
+          <Txt variant="caption" accessibilityRole="alert" style={styles.footnote}>
+            {copy.storageError}
+          </Txt>
+        )}
         <View style={styles.composer}>
           <TextInput
             ref={input}
@@ -637,7 +642,7 @@ const styles = StyleSheet.create({
   actionText: { ...compactType.label, color: c.coralInk },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: s.xs },
   chip: {
-    minHeight: 36,
+    minHeight: mobileLayout.touchTarget,
     justifyContent: 'center',
     alignSelf: 'flex-start',
     paddingHorizontal: s.md,

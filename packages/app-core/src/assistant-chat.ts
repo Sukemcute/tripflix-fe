@@ -18,33 +18,51 @@ export type AssistantChatMessage = {
   isLocal?: boolean;
 };
 
-type SavedChat<M> = { userId: string; savedAt: number; messages: M[]; trip: unknown };
+type SavedChat = { userId: string; savedAt: number; messages: AssistantChatMessage[]; trip: unknown };
 
-export function serializeAssistantChat<M extends AssistantChatMessage>(
+function storedMessage({ id, role, text, kind }: AssistantChatMessage): AssistantChatMessage {
+  return { id, role, text, ...(kind === undefined ? {} : { kind }) };
+}
+
+export function serializeAssistantChat(
   userId: string,
-  messages: readonly M[],
+  messages: readonly AssistantChatMessage[],
   trip: unknown,
   now: number,
+  maxBytes?: number,
 ): string {
-  const saved: SavedChat<M> = {
+  const recent = messages.filter((message) => !message.isLocal).slice(-ASSISTANT_SAVED_MESSAGES).map(storedMessage);
+  const saved: SavedChat = {
     userId,
     savedAt: now,
-    messages: messages.filter((message) => !message.isLocal).slice(-ASSISTANT_SAVED_MESSAGES),
+    messages: recent,
     trip: trip ?? null,
   };
-  return JSON.stringify(saved);
+  if (maxBytes === undefined) return JSON.stringify(saved);
+
+  // SecureStore counts UTF-8 bytes, including multi-byte Vietnamese text and emoji.
+  const fits = (value: string) => encodeURIComponent(value).replace(/%[0-9A-F]{2}/g, 'x').length <= maxBytes;
+  if (!fits(JSON.stringify({ ...saved, messages: [] }))) saved.trip = null;
+  let value = JSON.stringify(saved);
+  let start = 0;
+  while (!fits(value) && start < recent.length) {
+    const oldestIsPair = recent[start]?.role === 'user' && recent[start + 1]?.role === 'assistant';
+    start += oldestIsPair ? 2 : 1;
+    value = JSON.stringify({ ...saved, messages: recent.slice(start) });
+  }
+  return value;
 }
 
 /** Phiên đã lưu của đúng người này và chưa quá 7 ngày; còn lại coi như không có. */
-export function parseAssistantChat<M extends AssistantChatMessage>(
+export function parseAssistantChat(
   raw: string | null,
   userId: string,
   now: number,
-): { messages: M[]; trip: unknown } | null {
+): { messages: AssistantChatMessage[]; trip: unknown } | null {
   if (!raw) return null;
-  let saved: Partial<SavedChat<M>>;
+  let saved: Partial<SavedChat>;
   try {
-    saved = JSON.parse(raw) as Partial<SavedChat<M>>;
+    saved = JSON.parse(raw) as Partial<SavedChat>;
   } catch {
     return null;
   }
@@ -52,9 +70,21 @@ export function parseAssistantChat<M extends AssistantChatMessage>(
   if (now - saved.savedAt > ASSISTANT_CHAT_DAYS * DAY_MS || !Array.isArray(saved.messages)) return null;
   const messages = saved.messages.filter(
     (message) =>
-      (message?.role === 'user' || message?.role === 'assistant') && typeof message.text === 'string',
+      (message?.role === 'user' || message?.role === 'assistant') &&
+      typeof message.id === 'string' &&
+      typeof message.text === 'string' &&
+      !message.isLocal,
   );
-  return { messages: messages.slice(-ASSISTANT_SAVED_MESSAGES), trip: saved.trip ?? null };
+  return { messages: messages.slice(-ASSISTANT_SAVED_MESSAGES).map(storedMessage), trip: saved.trip ?? null };
+}
+
+/** Giữ lượt bị từ chối trên màn hình và bỏ cả câu hỏi lẫn thông báo khỏi lịch sử gửi/lưu. */
+export function completeAssistantTurn<M extends AssistantChatMessage>(messages: readonly M[], reply: M): M[] {
+  const question = messages.at(-1);
+  if (reply.isLocal && question?.role === 'user') {
+    return [...messages.slice(0, -1), { ...question, isLocal: true }, reply];
+  }
+  return [...messages, reply];
 }
 
 /** Lịch sử gửi lên /chat: bỏ tin của app, giữ kind của Tripi, cắt độ dài như server cho phép. */
