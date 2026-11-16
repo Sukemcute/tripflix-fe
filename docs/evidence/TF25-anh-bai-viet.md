@@ -26,6 +26,8 @@
   - Bài viết gửi đủ `media_ids` theo thứ tự (kể cả rỗng, để xoá hết ảnh cũng lưu được), `cover_media_id` là ảnh đầu.
   - Ảnh còn đang tải hoặc bị lỗi thì báo, chưa lưu.
   - Mở lại bản nháp thì nạp lại ảnh đã có.
+- **Trang tài khoản, mục "Chia sẻ trải nghiệm" (`post-composer.tsx`):** có khu "Ảnh" giống form ở trang Cảm hứng, lưu nháp gửi `media_ids` và ảnh bìa. Bỏ dòng "Đăng ảnh và video đang được hoàn thiện" ở form này.
+- **Trang chi tiết bài (`/trips/<id>`):** bài có ảnh thì hiện lưới ảnh thật (ảnh bìa rộng cả hàng), thay cho khối "Video, xem trên app". Bài video giữ như cũ.
 - **Sửa lỗi:** nạp bản nháp từng lấy `mediaIds[0]` làm "video cũ" cho mọi loại bài; giờ chỉ áp dụng với Reels.
 - **Hiển thị:** `getPostImages` nhận `uploadedImageUrls`. Bài có ảnh thật thì chỉ dùng ảnh thật, không trộn ảnh minh hoạ. Áp dụng cho thẻ bài, xem ảnh lớn, ảnh bìa ở panel lịch trình và grid kết quả tìm kiếm. Bài chưa có ảnh vẫn dùng ảnh minh hoạ như cũ.
 
@@ -48,12 +50,13 @@
 1. Chạy BE nhánh `thanh/TF25-anh-bai-viet` đã migrate, chạy web.
 2. Ở trang Cảm hứng, bấm tạo bài, chọn Bài viết, kéo 3 ảnh vào khu "Ảnh". Thanh tiến độ chạy, ảnh đầu có nhãn "Ảnh bìa". Đổi thứ tự, xoá 1 ảnh.
 3. Lưu nháp, đóng rồi mở lại bản nháp: ảnh còn đúng thứ tự. Đăng bài: thẻ bài ở tab Bài viết hiện đúng ảnh, bấm ảnh xem lớn lướt đúng thứ tự.
-4. Chọn file GIF hoặc ảnh trên 10 MB: báo lý do, không thêm.
+4. Ở trang tài khoản, mục "Chia sẻ trải nghiệm": thêm ảnh, lưu bản nháp, bấm "Xem chi tiết": trang bài hiện đúng ảnh.
+5. Chọn file GIF hoặc ảnh trên 10 MB: báo lý do, không thêm.
 
 ## Ảnh / video
 - Không đính kèm (theo yêu cầu).
 
 ## Ảnh hưởng tới phần của người khác
 - Không: chỉ sửa code của Thành (`apps/web` social, `packages/api-client`, i18n `api`). Không sửa `video-upload.ts` (anh Phong).
-- Form đăng bài ở trang tài khoản (`post-composer.tsx`) chưa có ảnh; app mobile chưa làm (theo yêu cầu, làm web trước).
+- App mobile chưa làm (theo yêu cầu, làm web trước).
 - Có thể đụng chỗ với PR chia sẻ #154 (cùng sửa `live-posts.tsx`); merge PR nào sau thì giải xung đột ở PR đó.
