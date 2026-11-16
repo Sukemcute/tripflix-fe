@@ -10,6 +10,7 @@ import type {
   PostRecommendationsDto,
   SearchPostsRequestDto,
   SearchPostsResponseDto,
+  SocialPostDto,
   UserSearchResponseDto,
 } from './generated/core-api/model';
 import { readEntity } from './response';
@@ -42,6 +43,13 @@ export async function getPostSearchResults(
   return readEntity(response.data, ['understood', 'items', 'total', 'nextCursor']) as SearchPostsResponseDto;
 }
 
+type PostDetail = Awaited<ReturnType<typeof socialApi.getPost>>;
+
+/** Chi tiết trả viewerContext ở ngoài bài: gắn vào để trạng thái thích/lưu đúng như ở luồng /v1/posts. */
+function withViewerContext(detail: PostDetail): SocialPostDto {
+  return { ...detail.post, viewerContext: detail.viewerContext ?? detail.post.viewerContext ?? null };
+}
+
 /** Số bài mỗi trang khi tìm theo từ khoá: mỗi bài cần thêm một lần lấy chi tiết nên giữ nhỏ. */
 export const KEYWORD_SEARCH_PAGE_SIZE = 10;
 
@@ -58,7 +66,7 @@ export async function searchPublicPosts(keyword: string, cursor?: string, signal
   const details = await Promise.all(
     found.items.map((item) =>
       socialApi.getPost(item.refId, signal).then(
-        (detail) => detail.post,
+        withViewerContext,
         () => null,
       ),
     ),
@@ -79,7 +87,7 @@ export async function recommendPublicPosts(cursor?: string, signal?: AbortSignal
   const details = await Promise.all(
     page.items.map((item) =>
       socialApi.getPost(item.post.id, signal).then(
-        (detail) => detail.post,
+        withViewerContext,
         () => null,
       ),
     ),

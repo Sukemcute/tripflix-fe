@@ -26,6 +26,18 @@ describe('recommendPublicPosts', () => {
     const url = new URL(String(send.mock.calls[0]![0]));
     expect(Object.fromEntries(url.searchParams)).toEqual({ mode: 'for_you', limit: '7', cursor: 'c1', postType: 'vlog' });
   });
+
+  it('gắn viewerContext (ở ngoài post trong chi tiết) vào từng bài để F5 vẫn hiện tim đã thả', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = new URL(String(input));
+      if (url.pathname === '/api/recommendations/posts') {
+        return json({ items: [item('liked')], algo: 'for_you', nextCursor: null });
+      }
+      return json({ post: { id: 'liked' }, viewerContext: { myReaction: 'like', isBookmarked: true }, shareUrl: 'x' });
+    });
+    const page = await recommendPublicPosts();
+    expect(page.items[0]?.viewerContext).toEqual({ myReaction: 'like', isBookmarked: true });
+  });
 });
 
 describe('recommendedPage (giữ trang gợi ý đã tải khi bị làm mới)', () => {
