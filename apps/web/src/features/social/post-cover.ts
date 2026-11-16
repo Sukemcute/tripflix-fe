@@ -109,8 +109,11 @@ export function getPostCover(destinationName?: string, title?: string, hashtags?
 /**
  * Tổng hợp danh sách ảnh hợp lệ (không trùng lặp) của một bài đăng dựa trên dữ liệu thực tế:
  * mediaIds (nếu là URL), poster từ feed, điểm đến, khách sạn, hashtag và các điểm dừng lịch trình.
+ * Bài viết có ảnh do tác giả tải lên thì chỉ dùng đúng các ảnh đó, không trộn ảnh minh hoạ.
  */
 export function getPostImages(options: {
+  /** Link ảnh tác giả tải lên (post.images), theo thứ tự tác giả xếp. */
+  uploadedImageUrls?: readonly string[];
   mediaIds?: readonly string[];
   posterUrl?: string;
   destinationName?: string;
@@ -129,6 +132,10 @@ export function getPostImages(options: {
     seen.add(clean);
     result.push({ src: clean, focalPoint });
   };
+
+  // 0. Ảnh thật của tác giả: ảnh minh hoạ theo điểm đến có thể sai chỗ, nên có ảnh thật thì không trộn.
+  for (const url of options.uploadedImageUrls ?? []) pushUnique(url, 'center');
+  if (result.length > 0) return result;
 
   // 1. Nếu mediaIds chứa đường dẫn ảnh trực tiếp (URL hoặc path nội bộ)
   for (const mediaId of options.mediaIds ?? []) {

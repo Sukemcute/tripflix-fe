@@ -10,4 +10,7 @@ export type CreateUploadDtoMimeType = (typeof CreateUploadDtoMimeType)[keyof typ
 export const CreateUploadDtoMimeType = {
   'video/mp4': 'video/mp4',
   'video/quicktime': 'video/quicktime',
+  'image/jpeg': 'image/jpeg',
+  'image/png': 'image/png',
+  'image/webp': 'image/webp',
 } as const;
