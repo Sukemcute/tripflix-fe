@@ -199,6 +199,7 @@ export const api = {
   composerCount: '{count}/{max}',
   // Trang chi tiết bài viết (TF06J)
   postVideoBadge: 'Video',
+  postImageAlt: 'Ảnh {index}/{total} của bài viết',
   postWatchOnApp: 'Xem video trên app Tripflix',
   postPublishedOn: 'Đăng {date}',
   postAuthorFallback: 'Tác giả Tripflix',
