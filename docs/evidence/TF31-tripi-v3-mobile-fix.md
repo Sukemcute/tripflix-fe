@@ -6,7 +6,7 @@
 
 | Yêu cầu | Kết quả | Bằng chứng |
 |---|---|---|
-| Đăng nhập xong quay lại Tripi | Thêm `/assistant` vào tập đích hợp lệ. Giữ các đích quay lại hiện có | `mobile-login-return.test.ts`. Expo Web mở đúng `/login?returnTo=%2Fassistant` khi khách hết lượt |
+| Đăng nhập xong quay lại Tripi | Thêm `/assistant` vào tập đích hợp lệ. Giữ các đích quay lại hiện có | `mobile-login-return.test.ts` và đăng nhập thành công bằng tài khoản seed trên Expo Web |
 | Bớt dữ liệu lưu trong SecureStore | Giữ text, kind, trip và trường tối thiểu để dựng tin. Trên native, bỏ lượt cũ khi JSON vượt 2.048 byte UTF-8. Hiện thông báo nếu lưu hoặc đọc gặp lỗi | `assistant-chat.test.ts` kiểm tra cả phiên cũ có thẻ, phiên dài chứa tiếng Việt và emoji, và trip vượt dung lượng |
 | Chip cao tối thiểu 44 | Chip gợi ý và nút đăng nhập của Tripi dùng `mobileLayout.touchTarget` | Đo trên Expo Web, `height = 44` và `min-height = 44px` |
 | Câu hỏi bị từ chối không vào lịch sử | Vẫn hiển thị trên màn hình. Bỏ cả câu hỏi bị từ chối và thông báo khỏi history gửi về AI và phiên lưu | `assistant-chat.test.ts` kiểm tra lượt tiếp theo và nội dung lưu |
@@ -16,7 +16,8 @@
 - `pnpm turbo run lint typecheck test build --affected` pass **15/15** tác vụ.
 - `pnpm --filter @tripflix/app-core test` pass **159** test.
 - `pnpm --filter @tripflix/mobile exec expo export --platform android` xuất thành công bundle Hermes.
-- Expo Web local với seed Đà Lạt đã thấy Reel, chip gợi ý, trạng thái hết lượt khách và nút Đăng nhập.
+- Expo Web local với seed Đà Lạt đã thấy Reel, chip gợi ý và trạng thái hết lượt khách. Bấm «Đăng nhập» mở `/login?returnTo=%2Fassistant`. Đăng nhập thành công quay lại `/assistant`, giữ cuộc chat đang mở và gửi tiếp được `Hii`.
+- Tải lại `/assistant` sau đó vẫn thấy câu chào. Câu hỏi bị từ chối vì hết lượt và thông báo hết lượt đã được loại khỏi phiên khôi phục. Test tự động kiểm cả payload history gửi cho AI.
 
 ## Cách kiểm lại
 
@@ -26,7 +27,7 @@
 
 ## Ảnh / video
 
-Đã chụp Expo Web với thẻ Reel và khi hiện nút đăng nhập do hết lượt. Còn thiếu ảnh chạy trên thiết bị hoặc emulator Android.
+Ảnh chụp Expo Web trong phiên kiểm thử gồm `tf31-expo-web-chip.jpg`, `tf31-expo-web-het-luot.jpg` và `tf31-expo-web-quay-lai-tripi.jpg`. Còn thiếu ảnh chạy trên thiết bị hoặc emulator Android.
 
 ## Ảnh hưởng
 
