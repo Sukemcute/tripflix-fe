@@ -15,3 +15,4 @@ export * from './checkout-guests';
 export * from './trip-plan-selection';
 export * from './assistant-chat';
 export * from './mobile-login-return';
+export * from './notification-display';

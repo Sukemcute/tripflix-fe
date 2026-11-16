@@ -2,9 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   changePassword,
   useApiSession,
-  useNotifications,
-  useMarkNotificationRead,
-  useMarkAllNotificationsRead,
 } from '@tripflix/api-client';
 import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import type { UserDto } from '@tripflix/api-client/core-api/model/index';
@@ -30,7 +27,6 @@ import {
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount, UnavailableScreen } from '@/components/api-state';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
-import { getNotificationExcerpt, openNotification } from './notification-banner';
 
 const profile = copy.profile;
 
@@ -265,65 +261,7 @@ function ProfileEditor({ user }: { user: UserDto }) {
     </Screen>
   );
 }
-export function LiveNotificationsScreen() {
-  const { user, isReady } = useApiSession();
-  const notifications = useNotifications();
-  const markRead = useMarkNotificationRead();
-  const markAll = useMarkAllNotificationsRead();
-  if (!isReady || !user) return <RequireAccount />;
-  const items = notifications.data?.pages.flatMap((page) => page.items) ?? [];
-  const unread = notifications.data?.pages[0]?.unreadCount ?? 0;
-  return (
-    <Screen title={copy.notifications.title}>
-      <View style={{ gap: s.sm }}>
-        <Txt variant="title">{copy.notifications.headline}</Txt>
-        {unread > 0 && items[0] && (
-          <Button tone="text" disabled={markAll.isPending} onPress={() => markAll.mutate(items[0]!.id)}>
-            Đánh dấu tất cả đã đọc
-          </Button>
-        )}
-        {notifications.isPending && <Txt>Đang tải…</Txt>}
-        <ApiErrorNotice error={notifications.error} retry={() => void notifications.refetch()} />
-        <ApiErrorNotice error={markRead.error ?? markAll.error} />
-        {!notifications.isPending && !notifications.error && !items.length && <Txt>Chưa có thông báo.</Txt>}
-        {items.map((item) => (
-          <Pressable
-            key={item.id}
-            accessibilityRole="button"
-            onPress={() => openNotification(item, markRead.mutate)}
-            style={styles.notification}
-          >
-            <View style={styles.menuIcon}>
-              <Icon name="notifications-outline" color={c.tealInk} size={20} />
-            </View>
-            <View style={ui.flex}>
-              <Txt>
-                {item.title}
-                {!item.readAt ? ' · Mới' : ''}
-              </Txt>
-              <Txt variant="small" style={ui.muted}>
-                {item.body}
-              </Txt>
-              {!!getNotificationExcerpt(item) && <Txt variant="small">“{getNotificationExcerpt(item)}”</Txt>}
-              <Txt variant="small" style={ui.muted}>
-                {new Date(item.createdAt).toLocaleString('vi-VN')}
-              </Txt>
-            </View>
-          </Pressable>
-        ))}
-        {notifications.hasNextPage && (
-          <Button
-            tone="text"
-            disabled={notifications.isFetchingNextPage}
-            onPress={() => void notifications.fetchNextPage()}
-          >
-            Xem thêm
-          </Button>
-        )}
-      </View>
-    </Screen>
-  );
-}
+export { LiveNotificationsScreen } from './notifications-screen';
 export function LiveTripsScreen() {
   return <UnavailableScreen />;
 }
@@ -372,13 +310,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.seaMist,
-  },
-  notification: {
-    flexDirection: 'row',
-    gap: s.md,
-    paddingVertical: s.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: c.border,
   },
   tagline: { marginTop: s.xl },
 });
