@@ -131,7 +131,9 @@ export function LivePostDetail({ id, focusCommentId }: { id: string; focusCommen
                 <span className="post-avatar" aria-hidden="true">
                   {getInitial(authorName)}
                 </span>
-                <span>{authorName}</span>
+                <Link prefetch={false} className="profile-link" href={`/u/${post.authorId}`}>
+                  {authorName}
+                </Link>
                 {canShowFollow && (user ? (
                   <button type="button" className="secondary-button" onClick={follow.toggle} disabled={!follow.canToggle}>
                     {follow.isLoading || follow.isUpdating ? vi.api.loading

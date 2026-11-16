@@ -158,7 +158,11 @@ export function LiveComments({
                   </span>
                   <div className="comment-body">
                     <p className="comment-meta">
-                      <strong>{name}</strong>
+                      <strong>
+                        <Link prefetch={false} className="profile-link" href={`/u/${comment.authorId}`}>
+                          {name}
+                        </Link>
+                      </strong>
                       {comment.replyToName && <span>↳ {comment.replyToName}</span>}
                       {!isMine && !comment.authorName && <span>{comment.authorId.slice(0, 8)}</span>}
                       <span>{new Date(comment.createdAt).toLocaleDateString('vi-VN')}</span>
