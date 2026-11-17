@@ -243,6 +243,8 @@ export * from './payResultDto';
 export * from './payResultDtoOutcome';
 export * from './placesControllerPlacesParams';
 export * from './placesResponseDto';
+export * from './playbackSessionDto';
+export * from './playbackSessionDtoCookies';
 export * from './pointOfInterestDto';
 export * from './pointOfInterestDtoKind';
 export * from './policiesDto';
