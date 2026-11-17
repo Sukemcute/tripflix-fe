@@ -4,6 +4,7 @@ import { colors, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiErrorNotice } from '@/components/api-state';
 import { LoadingDots } from '@/components/loading-dots';
@@ -38,14 +39,20 @@ export function AuthorReelsScreen() {
     if (hasNextPage && !isFetching && !isError) void fetchNextPage({ cancelRefetch: false });
   }, [hasNextPage, isFetching, isError, fetchNextPage]);
   return (
-    <View style={styles.root}>
+    // Trình phát Reels dùng cử chỉ (tua, nhấn giữ) nên cần gốc của gesture-handler như tab Reels.
+    <GestureHandlerRootView style={styles.root}>
       {items.length > 0 ? (
-        <ReelsFeed
-          items={items}
-          targetId={reel}
-          onLoadMore={loadMore}
-          isFetchingMore={feed.isFetchingNextPage}
-        />
+        // Khung đúng 9:16 giữa màn (viền đen trên dưới khi máy dài hơn): video dọc hiện trọn, không bị phóng to cắt hai bên.
+        <View style={[styles.stage, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+          <View style={styles.feed}>
+            <ReelsFeed
+              items={items}
+              targetId={reel}
+              onLoadMore={loadMore}
+              isFetchingMore={feed.isFetchingNextPage}
+            />
+          </View>
+        </View>
       ) : (
         <View style={styles.center}>
           {feed.isPending ? (
@@ -63,12 +70,14 @@ export function AuthorReelsScreen() {
       >
         <Icon name="chevron-back" size={26} color={colors.background} />
       </Pressable>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.text },
+  stage: { flex: 1, justifyContent: 'center' },
+  feed: { width: '100%', aspectRatio: 9 / 16, maxHeight: '100%', alignSelf: 'center', overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   back: {
     position: 'absolute',

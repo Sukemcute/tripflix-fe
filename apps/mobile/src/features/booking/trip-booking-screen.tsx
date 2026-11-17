@@ -24,14 +24,14 @@ import {
 } from '@tripflix/api-client';
 import { flightsControllerSearch } from '@tripflix/api-client/core-api/flights/flights';
 import { t, vi } from '@tripflix/i18n';
-import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
+import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { ApiErrorNotice } from '@/components/api-state';
 import { DateSingleField } from '@/components/date-sheet';
-import { mobileIconSize } from '@/components/mobile-scale';
+import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { CartLink } from './cart-ui';
 import { CommerceError } from './commerce-state';
@@ -645,6 +645,10 @@ export function TripBookingScreen() {
   const selected = useTripBooking();
   const feed = useReelsFeed();
   const [destination, setDestination] = useState<string | null>(null);
+  // Ô tính bằng điểm ảnh theo bề ngang lưới đo được: trên điện thoại ô 48,5% kèm aspectRatio bị co về 0 nên lưới trắng.
+  const [gridWidth, setGridWidth] = useState(0);
+  const tileWidth = Math.floor((gridWidth - spacing.sm) / 2);
+  const tileSize = gridWidth > 0 ? { width: tileWidth, height: Math.round((tileWidth * 4.2) / 3) } : null;
   const posts = [
     ...new Map(
       (feed.data?.pages.flatMap((page) => page.items) ?? []).map((post) => [post.postId, post]),
@@ -686,7 +690,7 @@ export function TripBookingScreen() {
       {!feed.isPending && !feed.isError && posts.length === 0 && (
         <Txt style={styles.muted}>{copy.featuredEmpty}</Txt>
       )}
-      <View style={layout.grid}>
+      <View style={layout.grid} onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}>
         {shownPosts.map((post) => {
           const trip = post.tripAttachment!;
           const plan = getBookableTripPlan(trip)!;
@@ -709,7 +713,7 @@ export function TripBookingScreen() {
                   trip,
                 })
               }
-              style={({ pressed }) => [layout.reel, pressed && styles.pressed]}
+              style={({ pressed }) => [layout.reel, tileSize, pressed && styles.pressed]}
             >
               {poster ? (
                 <Image source={poster} contentFit="cover" style={StyleSheet.absoluteFill} />
@@ -802,7 +806,8 @@ const layout = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.seaMist,
   },
-  reelBadgeText: { fontSize: 11, color: colors.tealInk },
+  // Chữ dùng bộ cỡ và phông của app (compactType, nativeFonts) như các thẻ chuyến bay, khách sạn bên dưới.
+  reelBadgeText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.tealInk },
   reelText: {
     position: 'absolute',
     left: 0,
@@ -812,8 +817,8 @@ const layout = StyleSheet.create({
     padding: spacing.sm,
     backgroundColor: colors.overlayHeavy,
   },
-  reelTitle: { color: colors.background, fontSize: 13, fontWeight: '600', lineHeight: 17 },
-  reelMeta: { color: colors.background, fontSize: 11, flexShrink: 1 },
+  reelTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.background },
+  reelMeta: { ...compactType.label, fontFamily: nativeFonts.medium, color: colors.background, flexShrink: 1 },
   // Ảnh bìa tràn hết bề ngang, giữ phần trên của poster (chữ trên ảnh bìa thường nằm ở đó).
   cover: {
     height: 220,
@@ -834,8 +839,8 @@ const layout = StyleSheet.create({
     backgroundColor: colors.overlayHeavy,
   },
   coverText: { gap: 2, paddingTop: spacing.xs },
-  coverTitle: { color: colors.ink, fontSize: 19, fontWeight: '700', lineHeight: 25 },
-  coverMeta: { color: colors.textMuted, fontSize: 13 },
+  coverTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.ink },
+  coverMeta: { ...compactType.body, fontFamily: nativeFonts.regular, color: colors.textMuted },
   panel: { backgroundColor: 'transparent', borderWidth: 0, padding: 0 },
   pills: { gap: spacing.sm, flexWrap: 'wrap' },
   pill: {
@@ -850,5 +855,5 @@ const layout = StyleSheet.create({
     backgroundColor: colors.background,
   },
   pillActive: { borderColor: colors.teal, backgroundColor: colors.seaMist },
-  pillText: { fontSize: 13, color: colors.ink },
+  pillText: { ...compactType.body, fontFamily: nativeFonts.medium, color: colors.ink },
 });

@@ -59,6 +59,13 @@ export {
   type SummaryFilter,
 } from './post-summary';
 export {
+  FeedEventQueue,
+  ReelViewClock,
+  sendFeedEvents,
+  type FeedEvent,
+  type NewFeedEvent,
+} from './feed-events';
+export {
   feedApi,
   REEL_FEED_TABS,
   REELS_BY_IDS_PAGE_SIZE,

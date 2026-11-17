@@ -278,7 +278,7 @@ export function WorkerMonitorCharts({ data }: { data: IndexHealthDto }) {
             className={styles.outcomeRing}
             style={{
               background: runs.length
-                ? `conic-gradient(var(--color-teal-ink) 0 ${(succeeded / runs.length) * 100}%, var(--color-coral-ink) 0 ${((succeeded + failed) / runs.length) * 100}%, #c7d2df 0)`
+                ? `conic-gradient(var(--color-teal-ink) 0 ${(succeeded / runs.length) * 100}%, var(--color-coral-ink) 0 ${((succeeded + failed) / runs.length) * 100}%, var(--color-border) 0)`
                 : 'var(--color-border)',
             }}
           >

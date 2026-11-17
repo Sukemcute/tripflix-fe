@@ -352,6 +352,12 @@ export function Header({ title, back = true, right }: { title?: string; back?: b
     </Row>
   );
 }
+/**
+ * true khi màn nằm trong thanh tab dưới: thanh tab đã chừa vùng vuốt về nhà của máy, nên màn không chừa thêm
+ * lần nữa (chừa hai lần thì máy có vùng vuốt như iPhone bị hở một dải trống trên thanh tab).
+ */
+export const InsideTabBarContext = createContext(false);
+
 export function Screen({
   children,
   title,
@@ -374,10 +380,11 @@ export function Screen({
   background?: string;
   compact?: boolean;
 }>) {
+  const isInsideTabBar = useContext(InsideTabBarContext);
   return (
     <CompactScreenContext.Provider value={compact}>
       <SafeAreaView
-        edges={['top', 'left', 'right', 'bottom']}
+        edges={isInsideTabBar ? ['top', 'left', 'right'] : ['top', 'left', 'right', 'bottom']}
         style={[ui.screen, { backgroundColor: background }]}
       >
         <KeyboardAvoidingView style={ui.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
