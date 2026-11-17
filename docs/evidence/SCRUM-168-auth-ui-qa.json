@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "checks": [
+    "Layout 375px: visible booking CTA, show/hide password, errors retain input, grouped signup, picker, no underlines or horizontal overflow",
+    "Reduced viewport keeps focused field reachable; this does not replace native keyboard testing",
+    "Layout 390px: visible booking CTA, show/hide password, errors retain input, grouped signup, picker, no underlines or horizontal overflow",
+    "Layout 430px: visible booking CTA, show/hide password, errors retain input, grouped signup, picker, no underlines or horizontal overflow",
+    "Layout 320px: visible booking CTA, show/hide password, errors retain input, grouped signup, picker, no underlines or horizontal overflow"
+  ],
+  "pageErrors": [],
+  "authApiFixtures": true,
+  "nativeKeyboardTested": false,
+  "liveGoogleTested": false
+}
