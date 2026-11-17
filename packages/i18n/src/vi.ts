@@ -12,9 +12,11 @@ import { terms } from './terms';
 import { moderation } from './moderation';
 import { searchMonitoring } from './search-monitoring';
 import { discoveryJobs } from './discovery-jobs';
+import { adminConsole } from './admin-console';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
+  adminConsole,
   searchMonitoring,
   discoveryJobs,
   assistant,
