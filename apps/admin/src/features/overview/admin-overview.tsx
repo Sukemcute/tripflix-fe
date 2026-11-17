@@ -8,7 +8,6 @@ import { cn } from '@tripflix/ui-web';
 import Link from 'next/link';
 import { AlertRow } from '../live/ops-alerts-page';
 import { useDiscoveryJobs, useIndexHealth, useOpsAlerts } from '../live/ops-alerts';
-import { LiveIndicator } from '../live/live-indicator';
 import { useStaffLive } from '../live/staff-live';
 import { getRiskLevel } from '../moderation/risk-level';
 import { AdminApiError } from '../shell/api-state';
@@ -83,7 +82,6 @@ export function AdminOverview() {
       <PageHeader
         title={user ? t('adminConsole.overview.greeting', { name: user.displayName }) : text.title}
         subtitle={text.subtitle}
-        actions={<LiveIndicator />}
       />
       <AdminApiError error={stats.error} retry={() => void stats.refetch()} />
 

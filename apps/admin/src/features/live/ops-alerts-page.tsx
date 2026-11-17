@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { AdminApiError } from '../shell/api-state';
 import { Icon } from '../ui/icon';
 import { Badge, Card, EmptyState, PageHeader, Skeleton, type Tone } from '../ui/primitives';
-import { LiveIndicator } from './live-indicator';
 import { useOpsAlerts, type AlertSeverity, type OpsAlert } from './ops-alerts';
 
 const text = vi.adminConsole.alerts;
@@ -57,7 +56,7 @@ export function OpsAlertsPage() {
   };
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={text.title} subtitle={text.subtitle} actions={<LiveIndicator />} />
+      <PageHeader title={text.title} subtitle={text.subtitle} />
       <div className="grid gap-3 sm:grid-cols-3">
         {(['critical', 'warning', 'info'] as const).map((severity) => (
           <Card key={severity} className="flex items-center justify-between px-5 py-4">

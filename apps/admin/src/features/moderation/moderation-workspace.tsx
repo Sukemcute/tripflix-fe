@@ -10,7 +10,6 @@ import { t, vi } from '@tripflix/i18n';
 import { cn } from '@tripflix/ui-web';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { LiveIndicator } from '../live/live-indicator';
 import { useStaffLive } from '../live/staff-live';
 import { AdminApiError } from '../shell/api-state';
 import { formatNumber, formatRelative, shortId } from '../ui/format';
@@ -76,7 +75,7 @@ export function ModerationWorkspace() {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader title={copy.title} subtitle={copy.subtitle} actions={<LiveIndicator />} />
+      <PageHeader title={copy.title} subtitle={copy.subtitle} />
 
       <section
         aria-label={text.monitoringTitle}

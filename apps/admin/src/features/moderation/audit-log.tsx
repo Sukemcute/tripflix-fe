@@ -1,6 +1,5 @@
 'use client';
 import { vi } from '@tripflix/i18n';
-import { LiveIndicator } from '../live/live-indicator';
 import { PageHeader } from '../ui/primitives';
 import { ModerationLog } from './moderation-log';
 
@@ -9,7 +8,7 @@ export function AuditLogPage() {
   const text = vi.adminConsole.audit;
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={text.title} subtitle={text.subtitle} actions={<LiveIndicator />} />
+      <PageHeader title={text.title} subtitle={text.subtitle} />
       <ModerationLog />
     </div>
   );

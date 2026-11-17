@@ -115,7 +115,7 @@ function ConsoleLayout({
   }
 
   return (
-    <div className="min-h-dvh bg-surface lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
+    <div className="min-h-dvh bg-surface lg:grid lg:grid-cols-[248px_minmax(0,1fr)] lg:bg-[linear-gradient(to_right,var(--color-navy)_248px,var(--color-surface)_248px)]">
       <a
         href="#admin-content"
         className="sr-only z-50 rounded-lg bg-navy px-3 py-2 text-background focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
@@ -140,7 +140,7 @@ function ConsoleLayout({
       >
         <Link href="/" className="flex items-center gap-2.5 px-5 pt-5 pb-4" aria-label={vi.admin.title}>
           <span className="grid size-9 place-items-center rounded-xl bg-background">
-            <Image src="/brand/tripflix-logo.svg" alt="" width={22} height={22} />
+            <Image src="/icon.svg" alt="" width={24} height={25} />
           </span>
           <span className="leading-tight">
             <span className="block text-sm font-bold">Tripflix</span>

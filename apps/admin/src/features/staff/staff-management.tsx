@@ -296,7 +296,7 @@ export function StaffManagement() {
                           ) : member.role === 'superadmin' ? (
                             <span className="text-xs text-text-muted">Superadmin</span>
                           ) : (
-                            <span className="inline-flex flex-wrap justify-end gap-2">
+                            <span className="inline-flex flex-nowrap justify-end gap-2 whitespace-nowrap">
                               {member.role === 'moderator' ? (
                                 <Button
                                   size="sm"

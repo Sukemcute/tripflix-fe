@@ -23,10 +23,10 @@ export function AdminLogin({ returnTo }: { returnTo: string }) {
   });
   return (
     <main className="grid min-h-dvh bg-surface lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-      <section className="relative hidden flex-col justify-between overflow-hidden bg-navy p-12 text-background lg:flex">
+      <section className="hidden flex-col justify-between overflow-hidden bg-navy p-12 text-background lg:flex">
         <div className="flex items-center gap-3">
           <span className="grid size-11 place-items-center rounded-xl bg-background">
-            <Image src="/brand/tripflix-logo.svg" alt={vi.app.name} width={26} height={26} priority />
+            <Image src="/icon.svg" alt={vi.app.name} width={26} height={27} priority />
           </span>
           <span className="leading-tight">
             <strong className="block text-lg">Tripflix</strong>
@@ -34,11 +34,12 @@ export function AdminLogin({ returnTo }: { returnTo: string }) {
           </span>
         </div>
         <div className="max-w-md">
+          <Image src="/brand/tripi-welcome.png" alt={vi.mobile.common.mascot} width={140} height={140} priority className="mb-6" />
           <h1 className="text-4xl leading-tight font-bold tracking-tight">{vi.admin.title}</h1>
           <p className="mt-4 text-base text-background/70">{vi.api.staffOnly}</p>
           <ul className="mt-8 flex flex-col gap-3 text-sm text-background/80">
             {([
-              ['shield', vi.adminConsole.overview.priority],
+              ['shield', vi.adminConsole.moderation.subtitle],
               ['pulse', vi.adminConsole.live.liveHint],
               ['bell', vi.adminConsole.alerts.subtitle],
             ] as const).map(([icon, label]) => (
@@ -51,19 +52,12 @@ export function AdminLogin({ returnTo }: { returnTo: string }) {
             ))}
           </ul>
         </div>
-        <Image
-          src="/brand/tripi-welcome.png"
-          alt={vi.mobile.common.mascot}
-          width={180}
-          height={180}
-          priority
-          className="absolute right-10 bottom-8 opacity-90"
-        />
+        <span aria-hidden="true" />
       </section>
 
       <section className="flex items-center justify-center p-6 md:p-12">
         <div className="w-full max-w-sm rounded-2xl border border-border bg-background p-8 shadow-sm">
-          <Image src="/brand/tripflix-logo.svg" alt={vi.app.name} width={36} height={36} className="mb-6 lg:hidden" />
+          <Image src="/icon.svg" alt={vi.app.name} width={36} height={38} className="mb-6 lg:hidden" />
           <h2 className="text-2xl font-bold tracking-tight">{vi.api.login}</h2>
           <p className="mt-1 mb-6 text-sm text-text-muted">{vi.admin.title}</p>
           <AdminApiError error={error} retry={() => void session.initialize()} />
