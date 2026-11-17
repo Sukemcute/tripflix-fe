@@ -215,6 +215,10 @@ export function ReelCommentsPanel({
                   close();
                   router.push({ pathname: '/login', params: { returnTo: loginReturnTo } });
                 }}
+                onModerationDetails={() => {
+                  close();
+                  router.push('/moderation-status');
+                }}
               />
             ) : (
               <>
