@@ -29,6 +29,7 @@ const card: FeedCardDto = {
   counts: { likes: 5, comments: 4, saves: 3, shares: 2 },
   viewerState: null,
   reason: null,
+  isVerified: false,
 };
 
 describe('toReelPost', () => {

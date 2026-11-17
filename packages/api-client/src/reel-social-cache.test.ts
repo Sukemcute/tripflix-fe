@@ -22,6 +22,7 @@ const card = (postId: string): FeedCardDto => ({
   region: null,
   tags: [],
   linkedProductIds: [],
+  isVerified: false,
   reason: null,
   counts: { likes: 5, saves: 3, comments: 2, shares: 1 },
   viewerState: { liked: false, saved: false },
