@@ -1,5 +1,5 @@
 import { nativeFonts as fonts, colors } from '@tripflix/tokens';
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import { resolveMobileLoginReturn } from '@tripflix/app-core';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
@@ -25,11 +25,31 @@ const ACCENT = colors.coralInk;
 const BACKGROUND = '#FFFDFA';
 const INK = colors.navy;
 const enter = FadeInDown.duration(280).reduceMotion(ReduceMotion.System);
-const interests: { id: Interest; title: string; detail: string; image: typeof assets.sea }[] = [
-  { id: 'coast', title: 'Biển & nắng', detail: 'Một chút mặn mòi', image: assets.sea },
-  { id: 'nature', title: 'Thiên nhiên', detail: 'Ra ngoài, hít thở', image: assets.vietnam },
-  { id: 'culture', title: 'Phố & văn hoá', detail: 'Đi để thấy điều mới', image: assets.hoiAn },
-  { id: 'stays', title: 'Nghỉ dưỡng', detail: 'Ở đâu cũng phải thích', image: assets.hotel },
+type InterestOption = {
+  id: Interest;
+  title: string;
+  detail: string;
+  /** Chưa có ảnh phù hợp cho mục nào thì dùng icon, không mượn ảnh của mục khác. */
+  image?: typeof assets.sea;
+  icon: IconName;
+};
+const interestOption = (
+  id: Interest,
+  art: { image: typeof assets.sea } | { icon: IconName },
+): InterestOption => ({
+  id,
+  title: vi.api.travelInterestOptions[id],
+  detail: vi.api.onboardingInterestDetails[id],
+  icon: 'icon' in art ? art.icon : 'image-outline',
+  image: 'image' in art ? art.image : undefined,
+});
+const interests: InterestOption[] = [
+  interestOption('coast', { image: assets.sea }),
+  interestOption('nature', { image: assets.vietnam }),
+  interestOption('culture', { image: assets.hoiAn }),
+  interestOption('food', { icon: 'restaurant-outline' }),
+  interestOption('city', { icon: 'moon-outline' }),
+  interestOption('stays', { image: assets.hotel }),
 ];
 const paces: { id: Pace; title: string; detail: string; icon: IconName }[] = [
   {
@@ -51,6 +71,16 @@ const paces: { id: Pace; title: string; detail: string; icon: IconName }[] = [
     icon: 'footsteps-outline',
   },
 ];
+
+function InterestArt({ item }: { item: InterestOption }) {
+  if (item.image)
+    return <Image source={item.image} contentFit="cover" style={StyleSheet.absoluteFill} transition={200} />;
+  return (
+    <View style={[StyleSheet.absoluteFill, styles.iconArt]}>
+      <Icon name={item.icon} size={44} color={INK} />
+    </View>
+  );
+}
 
 function Action({
   label,
@@ -330,12 +360,7 @@ function OnboardingFlow() {
                           selected && styles.selectedPhoto,
                         ]}
                       >
-                        <Image
-                          source={item.image}
-                          contentFit="cover"
-                          style={StyleSheet.absoluteFill}
-                          transition={200}
-                        />
+                        <InterestArt item={item} />
                         <View style={[styles.check, selected && styles.checked]}>
                           {selected && <Icon name="checkmark" size={18} color={colors.background} />}
                         </View>
@@ -348,8 +373,8 @@ function OnboardingFlow() {
               </View>
               <Txt accessibilityLiveRegion="polite" style={styles.selectionCount}>
                 {chosen.length
-                  ? `Đã chọn ${chosen.length} trải nghiệm`
-                  : 'Chọn ít nhất 1 trải nghiệm để tiếp tục.'}
+                  ? t('api.onboardingSelectedCount', { count: chosen.length })
+                  : vi.api.onboardingSelectAtLeastOne}
               </Txt>
             </>
           ) : step === 'pace' ? (
@@ -425,7 +450,7 @@ function OnboardingFlow() {
                       { transform: [{ rotate: `${(index - 1) * 5}deg` }], zIndex: 3 - index },
                     ]}
                   >
-                    <Image source={item.image} contentFit="cover" style={StyleSheet.absoluteFill} />
+                    <InterestArt item={item} />
                   </View>
                 ))}
               </View>
@@ -630,6 +655,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   selectedPhoto: { borderColor: ACCENT },
+  iconArt: { backgroundColor: '#FFF0EB', alignItems: 'center', justifyContent: 'center' },
   check: {
     position: 'absolute',
     right: 7,

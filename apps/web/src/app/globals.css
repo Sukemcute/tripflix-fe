@@ -3837,3 +3837,10 @@ body:has([class*="feedPageWrapper"]) #content {
 .profile-link:hover {
   text-decoration: underline;
 }
+
+/* Khảo sát sở thích (SCRUM-160) là trang đứng riêng: ẩn header, footer và skip-link chung của site. */
+body:has(> [data-onboarding-page]) > .ota-header,
+body:has(> [data-onboarding-page]) > footer,
+body:has(> [data-onboarding-page]) > .skip-link {
+  display: none;
+}

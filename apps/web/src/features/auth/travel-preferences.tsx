@@ -3,7 +3,9 @@ import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import type { MyProfileDto, TravelPreferencesDto } from '@tripflix/api-client/core-api/model/index';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
+import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
+import { surveyHref } from '@/features/onboarding/post-auth';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { useMyProfile } from './account-profile';
 
@@ -119,6 +121,9 @@ export function TravelPreferencesCard({ userId }: { userId: string }) {
           <h2 id="travel-title">{vi.api.travelTitle}</h2>
           <p className="auth-hint">{vi.api.travelHint}</p>
         </div>
+        <Link prefetch={false} className="secondary-button" href={surveyHref('/account', 'edit')}>
+          {vi.api.onboardingRedo}
+        </Link>
       </header>
       <form
         className="travel-form"
