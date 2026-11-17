@@ -659,6 +659,14 @@ function PointRow({
 }
 
 /** Điểm đến chọn từ ô tìm kiếm của discovery (/api/suggest, loại place); gõ tay vẫn giữ tên để tham khảo. */
+const normalizeName = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/gi, 'd')
+    .toLowerCase()
+    .trim();
+
 export function DestinationPicker({
   name,
   placeId,
@@ -681,6 +689,13 @@ export function DestinationPicker({
       readPage((await suggestControllerSuggest({ q: query, types: 'place' }, { signal })).data),
   });
   const options = (places.data?.items ?? []).filter((item) => item.type === 'place').slice(0, 6);
+  // Gõ đúng tên một nơi trong danh sách (hà nội) thì coi như đã chọn nơi đó, khỏi phải bấm thêm.
+  const exactPlace = !placeId
+    ? options.find((option) => normalizeName(option.name) === normalizeName(name))
+    : undefined;
+  useEffect(() => {
+    if (exactPlace) onChange({ destinationName: exactPlace.name, destinationPlaceId: exactPlace.refId });
+  }, [exactPlace, onChange]);
   return (
     <View style={styles.section}>
       <Field

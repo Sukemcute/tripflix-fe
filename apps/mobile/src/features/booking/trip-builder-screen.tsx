@@ -1,10 +1,26 @@
 import { useMutation } from '@tanstack/react-query';
-import { buildTripPlanCheckout, getTripDayDate, readSoldOutConflict } from '@tripflix/app-core';
-import { createCheckoutOperation, getFutureDate, HttpError, useApiSession } from '@tripflix/api-client';
+import {
+  buildTripPlanCheckout,
+  findPlaceAirport,
+  getTripDayDate,
+  planNextTripFlight,
+  readSoldOutConflict,
+} from '@tripflix/app-core';
+import {
+  createCheckoutOperation,
+  getFutureDate,
+  HttpError,
+  useApiSession,
+  useFlightRoutes,
+  useTripFlightSuggestions,
+  useTripStaySuggestions,
+  type TripFlightSuggestion,
+  type TripStaySuggestion,
+} from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router, type Href } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { DateSingleField } from '@/components/date-sheet';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
@@ -13,7 +29,7 @@ import { clearPostHotelPick, usePostHotelPick } from '@/features/post/post-hotel
 import { DestinationPicker } from '@/features/post/trip-plan-editor';
 import { CommerceError } from './commerce-state';
 import { useTripPicks } from './trip-booking-store';
-import { ProductCard } from './trip-plan-parts';
+import { ChoiceChip, ProductCard } from './trip-plan-parts';
 
 const copy = vi.mobile.tripBuilder;
 const MAX_ADULTS = 9;
@@ -51,6 +67,10 @@ interface FlightItem {
 
 type TripItem = HotelItem | FlightItem;
 type HotelDraft = { key: string; checkIn: string; nights: number };
+/** Chuyến bay sắp thêm: chiều đi tới nơi đến, hoặc chiều về từ nơi đến về nhà. */
+type FlightDraft = { key: string; leg: 'outbound' | 'inbound'; from: string; to: string; date: string };
+/** Số gợi ý hiện trong mỗi khung; muốn xem thêm thì sang màn tìm đầy đủ. */
+const SUGGESTION_LIMIT = 3;
 
 let keySeq = 0;
 const nextKey = (prefix: string) => `${prefix}${Date.now().toString(36)}-${(keySeq += 1)}`;
@@ -67,6 +87,12 @@ export function TripBuilderScreen() {
   // Khách sạn sắp thêm hoặc đang đổi: chọn ngày nhận và số đêm trước khi sang màn tìm khách sạn.
   const [hotelDraft, setHotelDraft] = useState<HotelDraft | null>(null);
   const [pendingFlightKey, setPendingFlightKey] = useState<string | null>(null);
+  const [flightDraft, setFlightDraft] = useState<FlightDraft | null>(null);
+  const routes = useFlightRoutes();
+  const place = destination.destinationPlaceId;
+  // Nơi đến chọn trong danh sách (Hà Nội) thì chuyến bay đi tới, về từ sân bay ở đó (HAN).
+  // Chưa chọn trong danh sách vẫn tìm sân bay theo tên gõ; gợi ý thì cần nơi chọn trong danh sách.
+  const placeAirport = findPlaceAirport(routes.data ?? [], destination.destinationName);
 
   // Loại phòng chọn xong ở màn chọn phòng: thêm hoặc thay thẻ đúng khoá.
   const hotelPick = usePostHotelPick();
@@ -117,6 +143,86 @@ export function TripBuilderScreen() {
   const sorted = [...items].sort((a, b) => itemDate(a).localeCompare(itemDate(b)));
   const lastHotel = sorted.filter((item): item is HotelItem => item.kind === 'hotel').at(-1);
   const total = items.reduce((sum, item) => sum + item.totalPrice, 0);
+  const flights = sorted.filter((item): item is FlightItem => item.kind === 'flight');
+
+  // Gợi ý từ discovery (GET /api/trip-builder/*): chỗ Duy thay cách xếp, app hiện theo thứ tự trả về.
+  const staySuggestions = useTripStaySuggestions(
+    hotelDraft && place
+      ? {
+          place,
+          checkIn: hotelDraft.checkIn,
+          checkOut: getTripDayDate(hotelDraft.checkIn, hotelDraft.nights + 1),
+          adults,
+          sort: 'best_price',
+          limit: SUGGESTION_LIMIT,
+        }
+      : null,
+  );
+  // Gợi ý vé tính theo sân bay nhà: chiều đi bay từ nhà, chiều về bay về nhà.
+  const home = flightDraft ? (flightDraft.leg === 'outbound' ? flightDraft.from : flightDraft.to) : '';
+  const flightSuggestions = useTripFlightSuggestions(
+    flightDraft && place && placeAirport && home
+      ? {
+          place,
+          from: home,
+          departDate: flightDraft.date,
+          ...(flightDraft.leg === 'inbound' ? { returnDate: flightDraft.date } : {}),
+          adults,
+          sort: 'cheapest',
+          limit: SUGGESTION_LIMIT,
+        }
+      : null,
+  );
+  const flightOptions = flightDraft ? (flightSuggestions.data?.[flightDraft.leg] ?? []) : [];
+
+  const startFlight = () =>
+    setFlightDraft({
+      key: nextKey('flight:'),
+      ...planNextTripFlight({
+        flights,
+        hotels: sorted.filter((item): item is HotelItem => item.kind === 'hotel'),
+        placeAirport,
+        defaultHome: 'SGN',
+        defaultDate: getFutureDate(14),
+      }),
+    });
+  const addSuggestedFlight = (draft: FlightDraft, flight: TripFlightSuggestion) => {
+    setItems((current) => [
+      ...current,
+      {
+        kind: 'flight',
+        key: draft.key,
+        date: draft.date,
+        from: flight.fromAirport,
+        to: flight.toAirport,
+        productId: flight.productId,
+        ratePlanCode: flight.ratePlanCode,
+        flightNumber: flight.name,
+        departTime: flight.departTime,
+        fareName: flight.airline ?? '',
+        totalPrice: flight.totalPrice,
+      },
+    ]);
+    setFlightDraft(null);
+  };
+  const addSuggestedStay = (draft: HotelDraft, stay: TripStaySuggestion) => {
+    setItems((current) => [
+      ...current.filter((item) => item.key !== draft.key),
+      {
+        kind: 'hotel',
+        key: draft.key,
+        checkIn: draft.checkIn,
+        nights: draft.nights,
+        hotelName: stay.name,
+        productId: stay.roomProductId,
+        ratePlanCode: stay.ratePlanCode,
+        roomName: '',
+        rateName: stay.reason?.text ?? '',
+        totalPrice: stay.totalPrice,
+      },
+    ]);
+    setHotelDraft(null);
+  };
 
   const searchHotel = (draft: HotelDraft) =>
     router.push({
@@ -130,9 +236,10 @@ export function TripBuilderScreen() {
         adults: String(adults),
       },
     });
-  const searchFlight = (item?: FlightItem) => {
+  const searchFlight = (item?: { key: string; from: string; to: string; date: string }) => {
     const key = item?.key ?? nextKey('flight:');
     setPendingFlightKey(key);
+    setFlightDraft(null);
     router.push({
       pathname: '/flights',
       params: {
@@ -142,7 +249,11 @@ export function TripBuilderScreen() {
         pickId: key,
         passengers: String(adults),
         ...(item
-          ? { from: item.from, to: item.to, date: item.date }
+          ? {
+              ...(item.from ? { from: item.from } : {}),
+              ...(item.to ? { to: item.to } : {}),
+              date: item.date,
+            }
           : { date: sorted[0] ? itemDate(sorted[0]) : getFutureDate(14) }),
       },
     });
@@ -281,12 +392,95 @@ export function TripBuilderScreen() {
             max={30}
             onChange={(nights) => setHotelDraft({ ...hotelDraft, nights })}
           />
+          {!!place && (
+            <Suggestions
+              isLoading={staySuggestions.isFetching && !staySuggestions.data}
+              isEmpty={(staySuggestions.data ?? []).length === 0}
+            >
+              {(staySuggestions.data ?? []).map((stay) => (
+                <SuggestionRow
+                  key={stay.hotelId}
+                  tone="hotel"
+                  title={stay.name}
+                  detail={[
+                    stay.stars ? `${stay.stars}★` : null,
+                    stay.rating ? `${stay.rating.average}/5` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  reason={stay.reason?.text}
+                  price={money(stay.totalPrice)}
+                  onPress={() => addSuggestedStay(hotelDraft, stay)}
+                />
+              ))}
+            </Suggestions>
+          )}
           <Row style={styles.draftActions}>
             <Button tone="text" onPress={() => setHotelDraft(null)}>
               {copy.cancel}
             </Button>
             <Button compact icon="search" onPress={() => searchHotel(hotelDraft)}>
-              {copy.findHotel}
+              {place ? copy.findOtherHotel : copy.findHotel}
+            </Button>
+          </Row>
+        </View>
+      )}
+
+      {flightDraft && (
+        <View style={[styles.draft, styles.flightDraft]}>
+          <Txt style={[styles.draftTitle, { color: colors.tealInk }]}>
+            {flightDraft.leg === 'outbound'
+              ? t('mobile.tripBuilder.outboundTitle', { place: destination.destinationName || '…' })
+              : t('mobile.tripBuilder.inboundTitle', { home: flightDraft.to })}
+          </Txt>
+          {flightDraft.leg === 'outbound' && (
+            <Row style={styles.originRow}>
+              <Txt style={styles.muted}>{copy.flyFrom}</Txt>
+              {/* Sân bay đang chọn đứng đầu để luôn thấy. */}
+              {[flightDraft.from, ...(routes.data ?? []).map((route) => route.airport)]
+                .filter((code, index, all) => !!code && code !== placeAirport && all.indexOf(code) === index)
+                .slice(0, 6)
+                .map((code) => (
+                  <ChoiceChip
+                    key={code}
+                    label={code}
+                    isSelected={code === flightDraft.from}
+                    onPress={() => setFlightDraft({ ...flightDraft, from: code })}
+                  />
+                ))}
+            </Row>
+          )}
+          <Txt style={styles.legRoute}>{`${flightDraft.from || '…'} → ${flightDraft.to || '…'}`}</Txt>
+          <DateSingleField
+            label={copy.flightDate}
+            value={flightDraft.date}
+            min={getFutureDate(0)}
+            onChange={(date) => setFlightDraft({ ...flightDraft, date })}
+          />
+          {!!place && !!placeAirport && (
+            <Suggestions
+              isLoading={flightSuggestions.isFetching && !flightSuggestions.data}
+              isEmpty={flightOptions.length === 0}
+            >
+              {flightOptions.map((flight) => (
+                <SuggestionRow
+                  key={flight.flightId}
+                  tone="flight"
+                  title={`${flight.departTime ?? '--:--'} → ${flight.arriveTime ?? '--:--'} · ${flight.fromAirport} → ${flight.toAirport}`}
+                  detail={flight.airline ?? ''}
+                  reason={flight.reason?.text}
+                  price={money(flight.totalPrice)}
+                  onPress={() => addSuggestedFlight(flightDraft, flight)}
+                />
+              ))}
+            </Suggestions>
+          )}
+          <Row style={styles.draftActions}>
+            <Button tone="text" onPress={() => setFlightDraft(null)}>
+              {copy.cancel}
+            </Button>
+            <Button compact icon="search" onPress={() => searchFlight(flightDraft)}>
+              {copy.findOtherFlight}
             </Button>
           </Row>
         </View>
@@ -309,7 +503,13 @@ export function TripBuilderScreen() {
             })
           }
         />
-        <AddButton icon="airplane" label={copy.addFlight} tone="flight" onPress={() => searchFlight()} />
+        <AddButton
+          icon="airplane"
+          label={copy.addFlight}
+          tone="flight"
+          isDisabled={!!flightDraft}
+          onPress={startFlight}
+        />
       </Row>
       <CommerceError error={booking.error} />
     </Screen>
@@ -382,6 +582,66 @@ function Stepper({
   );
 }
 
+function Suggestions({
+  isLoading,
+  isEmpty,
+  children,
+}: {
+  isLoading: boolean;
+  isEmpty: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <View style={styles.suggestions}>
+      <Txt style={styles.suggestionsTitle}>{copy.suggestionsTitle}</Txt>
+      {isLoading ? (
+        <Txt style={styles.muted}>{vi.api.loading}</Txt>
+      ) : isEmpty ? (
+        <Txt style={styles.muted}>{copy.noSuggestions}</Txt>
+      ) : (
+        children
+      )}
+    </View>
+  );
+}
+
+function SuggestionRow({
+  tone,
+  title,
+  detail,
+  reason,
+  price,
+  onPress,
+}: {
+  tone: 'hotel' | 'flight';
+  title: string;
+  detail?: string;
+  reason?: string;
+  price: string;
+  onPress: () => void;
+}) {
+  const ink = tone === 'hotel' ? colors.coralInk : colors.tealInk;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.suggestion, pressed && styles.pressed]}
+    >
+      <View style={ui.flex}>
+        <Txt style={styles.suggestionTitle} numberOfLines={2}>
+          {title}
+        </Txt>
+        {!!detail && <Txt style={styles.muted}>{detail}</Txt>}
+        {!!reason && <Txt style={[styles.reason, { color: ink }]}>{reason}</Txt>}
+      </View>
+      <View style={styles.suggestionSide}>
+        <Txt style={styles.suggestionPrice}>{price}</Txt>
+        <Icon name="add-circle" size={22} color={ink} />
+      </View>
+    </Pressable>
+  );
+}
+
 function AddButton({
   icon,
   label,
@@ -441,6 +701,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.coralTint,
   },
   draftTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.coralInk },
+  flightDraft: { borderColor: colors.tealInk, backgroundColor: colors.seaMist },
+  originRow: { alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
+  legRoute: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.ink },
+  suggestions: { gap: spacing.sm },
+  suggestionsTitle: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.textMuted },
+  suggestion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    backgroundColor: colors.background,
+  },
+  suggestionTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.ink },
+  reason: { ...compactType.label, fontFamily: nativeFonts.semibold },
+  suggestionSide: { alignItems: 'flex-end', gap: 2 },
+  suggestionPrice: { ...compactType.heading, fontFamily: nativeFonts.bold, color: colors.ink },
   draftActions: { justifyContent: 'flex-end', alignItems: 'center', gap: spacing.sm },
   addRow: { gap: spacing.sm },
   add: {
