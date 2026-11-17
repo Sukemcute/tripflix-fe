@@ -707,6 +707,7 @@ export function SocialFeedView({
             leftPresence.isClosing ? styles.sidebarClosingLeft : ''
           }`}
           trip={activeItineraryPost?.tripAttachment}
+          postId={activeItineraryPost?.id}
           postTitle={activeItineraryPost?.title}
           hashtags={activeItineraryPost?.hashtags}
           coverImage={activeItineraryCover}

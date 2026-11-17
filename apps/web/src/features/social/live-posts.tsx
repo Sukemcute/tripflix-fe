@@ -1756,6 +1756,7 @@ export function InspirationImmersiveViewer({
           <ItinerarySidebarPanel
             className={styles.itineraryInReels}
             trip={hasItinerary ? trip : null}
+            postId={activePost?.id}
             postTitle={activePost?.title}
             hashtags={activePost?.hashtags}
             coverImage={coverImage}
