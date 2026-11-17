@@ -1,8 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  changePassword,
-  useApiSession,
-} from '@tripflix/api-client';
+import { changePassword, useApiSession } from '@tripflix/api-client';
 import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import type { UserDto } from '@tripflix/api-client/core-api/model/index';
 import { DISPLAY_NAME_MAX, NEW_PASSWORD_MAX } from '@tripflix/app-core';
@@ -62,11 +59,6 @@ export function LiveProfileScreen() {
     { label: profile.help, icon: 'help-buoy-outline', onPress: () => setHelp(true) },
   ] as const;
   const stats = [
-    {
-      label: profile.posts,
-      icon: 'albums-outline',
-      onPress: () => router.push({ pathname: '/search', params: { view: 'mine' } }),
-    },
     { label: copy.tabs.trips, icon: 'bag-handle-outline', onPress: links[0].onPress },
     { label: profile.saved, icon: 'bookmark-outline', onPress: links[1].onPress },
   ] as const;
