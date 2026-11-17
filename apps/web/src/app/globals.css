@@ -3422,6 +3422,90 @@ body:has([class*="feedPageWrapper"]) #content {
   flex-direction: column;
   gap: 24px;
 }
+/* Sở thích du lịch (TF106): mỗi trường một ô dropdown chọn nhiều, dựng bằng <details> gốc. */
+.travel-form {
+  display: grid;
+  gap: 20px;
+}
+.travel-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.travel-field {
+  display: grid;
+  gap: 8px;
+}
+.travel-field-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+.travel-select {
+  position: relative;
+}
+.travel-select summary {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 40px 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-background);
+  cursor: pointer;
+  list-style: none;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.travel-select summary::-webkit-details-marker {
+  display: none;
+}
+.travel-select summary::after {
+  content: '';
+  position: absolute;
+  right: 18px;
+  top: 20px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+.travel-select[open] summary {
+  border-color: var(--color-teal-ink);
+}
+.travel-select fieldset {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  display: grid;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-background);
+  box-shadow: 0 24px 48px -24px var(--color-overlay);
+}
+.travel-select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.travel-select-option:hover,
+.travel-select-option:has(input:checked) {
+  background: var(--color-sea-mist);
+}
+@media (max-width: 640px) {
+  .travel-fields {
+    grid-template-columns: 1fr;
+  }
+}
 /* Mục "Bảo mật & thiết bị" dùng khung profile-card; khoảng cách giữa các phần đã có gap của account-panel. */
 .account-panel > .profile-card-header {
   margin-bottom: 0;

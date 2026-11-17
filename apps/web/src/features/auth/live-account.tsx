@@ -11,6 +11,7 @@ import { ApiErrorNotice } from '@/features/shared/api-state';
 import { PublicPosts } from '@/features/social/live-posts';
 import { PostComposer } from '@/features/social/post-composer';
 import { ProfileInfoCard } from './account-profile';
+import { TravelPreferencesCard } from './travel-preferences';
 import { AccountSecurity } from './account-security';
 import { EmailVerificationNotice } from './email-verification-notice';
 import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
@@ -90,7 +91,10 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
         <div className="profile-main">
           {user.emailVerified === false && <EmailVerificationNotice key={`verify-${user.id}`} />}
           {tab === 'profile' ? (
-            <ProfileInfoCard key={user.id} userId={user.id} />
+            <div className="profile-stack">
+              <ProfileInfoCard key={user.id} userId={user.id} />
+              <TravelPreferencesCard key={`travel-${user.id}`} userId={user.id} />
+            </div>
           ) : tab === 'security' ? (
             <AccountSecurity key={user.id} userId={user.id} />
           ) : tab === 'create' ? (
