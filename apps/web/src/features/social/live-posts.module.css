@@ -1226,11 +1226,6 @@
   font-weight: 800;
 }
 
-.overlayAuthorHandle {
-  font-size: 0.76rem;
-  color: rgba(247, 247, 248, 0.72);
-}
-
 .stageBottomOverlay > * {
   max-width: 600px;
 }

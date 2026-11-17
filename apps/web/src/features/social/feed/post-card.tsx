@@ -140,8 +140,6 @@ export function PostCard({
               )}
             </div>
             <div className={styles.authorSubRow}>
-              <span className={styles.authorHandle}>{authorInfo.handle}</span>
-              <span className={styles.authorDot}>·</span>
               <time dateTime={post.createdAt}>{formatDateVi(post.createdAt)}</time>
               {trip?.destinationName && (
                 <>

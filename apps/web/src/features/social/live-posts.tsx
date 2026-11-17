@@ -918,7 +918,6 @@ function MediaTrackItem({
                 <SocialIcon name="verified" size={16} />
               )}
             </div>
-            <span className={styles.overlayAuthorHandle}>{authorInfo.handle}</span>
           </div>
         </div>
 

@@ -1542,10 +1542,6 @@ a.authorAvatar {
   flex-wrap: wrap;
 }
 
-.authorHandle {
-  color: var(--color-text-muted);
-}
-
 .authorDot {
   color: var(--color-text-subtle);
   margin: 0 1px;
