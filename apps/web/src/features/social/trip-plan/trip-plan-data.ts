@@ -59,3 +59,34 @@ export function formatTransportRoute(transport: TripItineraryItemDto['transport'
   if (!transport?.fromAirport || !transport.toAirport) return null;
   return `${transport.fromAirport} → ${transport.toAirport}`;
 }
+
+/** Chặng bay đầu tiên của chuyến ("HAN → CXR") cho ô "Di chuyển"; không có chặng bay thì null. */
+export function findFirstFlightRoute(trip: Pick<TripAttachmentDto, 'items'> | null | undefined): string | null {
+  for (const item of trip?.items ?? []) {
+    if (item.transport?.mode !== 'flight') continue;
+    const route = formatTransportRoute(item.transport);
+    if (route) return route;
+  }
+  return null;
+}
+
+/** Số điểm dừng không kể chặng di chuyển (đi lại không phải nơi để đến). */
+export function countTripStops(trip: Pick<TripAttachmentDto, 'items'> | null | undefined): number {
+  return (trip?.items ?? []).filter((item) => !item.transport).length;
+}
+
+/** Chuyến tương tự: bài khác có lịch trình, giữ thứ tự xếp hạng của discovery, tối đa `limit`. */
+export function pickSimilarTrips<P extends { id: string; tripAttachment?: TripAttachmentDto | null }>(
+  posts: readonly P[],
+  currentPostId: string,
+  limit = 3,
+): P[] {
+  return posts.filter((post) => post.id !== currentPostId && (post.tripAttachment?.items?.length ?? 0) > 0).slice(0, limit);
+}
+
+/** "Hoàng Nam Travel" → "Nam" cho dòng "Mẹo của Nam": lấy chữ cuối có nghĩa của tên, bỏ các chữ chung như Travel. */
+export function getAuthorShortName(name: string | null | undefined): string | null {
+  const words = (name ?? '').trim().split(/\s+/).filter(Boolean);
+  const meaningful = words.filter((word) => !/^(travel|review|official|tour|blog|vlog|channel)$/i.test(word));
+  return meaningful.at(-1) ?? words.at(-1) ?? null;
+}

@@ -1,6 +1,15 @@
 import type { TripItineraryItemDto } from '@tripflix/api-client/core-api/model/index';
 import { describe, expect, it } from 'vitest';
-import { buildPlaceMapUrl, formatTransportRoute, getTripDayCount, groupTripDays } from './trip-plan-data';
+import {
+  buildPlaceMapUrl,
+  countTripStops,
+  findFirstFlightRoute,
+  formatTransportRoute,
+  getAuthorShortName,
+  getTripDayCount,
+  groupTripDays,
+  pickSimilarTrips,
+} from './trip-plan-data';
 
 const item = (day: number, title: string, time?: string): TripItineraryItemDto => ({ day, title, ...(time ? { time } : {}) });
 
@@ -55,5 +64,33 @@ describe('chặng di chuyển', () => {
     expect(formatTransportRoute({ mode: 'flight', fromAirport: 'HAN', toAirport: 'CXR' })).toBe('HAN → CXR');
     expect(formatTransportRoute({ mode: 'bus' })).toBeNull();
     expect(formatTransportRoute(undefined)).toBeNull();
+  });
+});
+
+describe('số liệu nhanh của chuyến', () => {
+  it('chặng bay đầu tiên và số điểm dừng không kể chặng di chuyển', () => {
+    const trip = {
+      items: [
+        { day: 1, title: 'Bay vào', transport: { mode: 'flight' as const, fromAirport: 'HAN', toAirport: 'CXR' } },
+        { day: 1, title: 'Check-in' },
+        { day: 2, title: 'Tour đảo' },
+      ],
+    };
+    expect(findFirstFlightRoute(trip)).toBe('HAN → CXR');
+    expect(countTripStops(trip)).toBe(2);
+    expect(findFirstFlightRoute({ items: [{ day: 1, title: 'Xe', transport: { mode: 'bus' as const } }] })).toBeNull();
+  });
+
+  it('chuyến tương tự: bỏ bài đang xem và bài không có lịch trình, giữ thứ tự, tối đa 3', () => {
+    const withTrip = (id: string) => ({ id, tripAttachment: { items: [{ day: 1, title: 'x' }] } });
+    const posts = [withTrip('a'), { id: 'b', tripAttachment: null }, withTrip('cur'), withTrip('c'), withTrip('d'), withTrip('e')];
+    expect(pickSimilarTrips(posts, 'cur').map((post) => post.id)).toEqual(['a', 'c', 'd']);
+  });
+
+  it('tên ngắn của tác giả cho dòng mẹo', () => {
+    expect(getAuthorShortName('Hoàng Nam Travel')).toBe('Nam');
+    expect(getAuthorShortName('Bảo Ngọc')).toBe('Ngọc');
+    expect(getAuthorShortName('Travel')).toBe('Travel');
+    expect(getAuthorShortName(null)).toBeNull();
   });
 });
