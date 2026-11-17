@@ -35,6 +35,11 @@
   - Chữ mô tả trong pop-up (gợi ý ô ảnh, ô video, phần lịch trình) cùng cỡ 0.8rem màu xám.
   - Ô xổ xuống trong pop-up (quyền riêng tư, ngày của lịch trình) đổi từ `<select>` gốc sang `SoftSelect` dùng chung (`features/shared`, giống ô chọn ở trang tài khoản). Danh sách xổ của `<select>` do hệ điều hành vẽ (nền xám, chữ hệ thống), không chỉnh kiểu được. Không sửa file `SoftSelect`.
   - Menu chia sẻ: bo 12px, bóng xám nhẹ, chữ mục 0.88rem.
+- **Màn bản nháp:** trước có ba nút cùng một việc. Giờ đầu màn có mũi tên quay lại và số đếm chữ xám; màn trống chỉ còn một nút "Viết bài mới" viền mảnh; thẻ bản nháp ghi loại bài, nơi đến, ngày sửa bằng chữ xám. Nút cam bỏ bóng ở mọi chỗ.
+- **Chú thích khi rê chuột:**
+  - `feed/tooltip-layer.tsx` thay `title` của trình duyệt (24 chỗ trong tab): nền tối, bo 8px, hiện sau 350 ms, hiện ngay khi focus bằng bàn phím.
+  - Gần mép trên thì hiện phía dưới; không bị panel `overflow: hidden` cắt.
+  - Nút chỉ có icon giữ `aria-label`; huy hiệu xác minh có chữ ẩn cho trình đọc màn hình.
 - **Trang tài khoản:** bỏ mục "Chia sẻ trải nghiệm"; đăng bài chỉ còn ở tab Cảm hứng. `?tab=create` cũ mở tab Tài khoản.
 
 ## Đối chiếu "Xong khi"
@@ -46,11 +51,12 @@
 | Thanh tiến độ mượt | Đạt | `composer-inputs.test.ts` › "chạy liên tục theo byte đã gửi" |
 | Kéo thả video | Đạt | `composer-inputs.test.ts` › "thả video vào ô chọn"; chụp trạng thái đang kéo |
 | Đăng xong có thông báo, bài hiện ngay trên feed | Đạt | `published-post.test.ts` (4 test); chạy thật: đăng bài "Hai ngày ở Đà Lạt", bài nằm đầu feed, thông báo hiện |
+| Chú thích khi rê chuột đồng bộ kiểu | Đạt | `tooltip-layer.test.ts` (3 test vị trí); chạy thật: rê chuột lên "Ảnh/Video" và nút "…" ở góc thẻ bài |
 | Ô nhập thẻ | Đạt | `composer-inputs.test.ts` › "thẻ (hashtag)"; chạy thật: gõ "dalat⏎ caphe⏎ cho dem " ra 4 thẻ |
 
 ## Kết quả kiểm tra
 - `pnpm turbo run lint typecheck test --affected --continue`: 16/17.
-  - Test: web 25 file pass (gồm `composer-inputs.test.ts` 13/13, `published-post.test.ts` 4/4), api-client 31, app-core 18, admin 7, i18n 1.
+  - Test: web 26 file pass (gồm `composer-inputs.test.ts` 13/13, `published-post.test.ts` 4/4), api-client 31, app-core 18, admin 7, i18n 1.
   - Lint web 0 lỗi; 15 cảnh báo đều có sẵn từ trước, không có trong file của task này.
 - `@tripflix/mobile#typecheck` fail ở máy local vì file sinh `.expo/types/router.d.ts` (gitignore, tạo ngày 12/11) chưa có route `/my-trips`. Lỗi này có sẵn từ trước, không do thay đổi này; mobile chỉ bị kéo vào vì `packages/i18n` đổi.
 - e2e `tests/e2e/api-integration.cjs` chưa chạy được ở máy local (thiếu `playwright-core` và API ở cổng 8080).
