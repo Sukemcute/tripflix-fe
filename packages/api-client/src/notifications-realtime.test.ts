@@ -42,6 +42,38 @@ beforeEach(() => {
 afterEach(() => cleanup?.());
 
 describe('useNotificationsRealtime', () => {
+  it('bỏ tín hiệu của chính người xem trước khi gom; giữ đủ hai luồng khác nhau', () => {
+    vi.useFakeTimers();
+    configureHttp({ baseUrl: 'https://gateway.example' });
+    useNotificationsRealtime();
+    const onChange = vi.fn();
+    const stop = watchPostComments('p1', onChange);
+    fire('post.comments.changed', { postId: 'p1', kind: 'created', actorId: 'u1' });
+    vi.advanceTimersByTime(1000);
+    expect(onChange).not.toHaveBeenCalled();
+    fire('post.comments.changed', { postId: 'p1', kind: 'created', parentCommentId: 'a', actorId: 'u2' });
+    fire('post.comments.changed', { postId: 'p1', kind: 'created', parentCommentId: 'b', actorId: 'u3' });
+    vi.advanceTimersByTime(1000);
+    expect(onChange).toHaveBeenCalledExactlyOnceWith([
+      expect.objectContaining({ parentCommentId: 'a', actorId: 'u2' }),
+      expect.objectContaining({ parentCommentId: 'b', actorId: 'u3' }),
+    ]);
+    stop();
+    vi.useRealTimers();
+  });
+
+  it('không bỏ cả nhóm coalesced chỉ vì actor cuối là chính mình', () => {
+    vi.useFakeTimers();
+    configureHttp({ baseUrl: 'https://gateway.example' });
+    useNotificationsRealtime();
+    const onChange = vi.fn();
+    const stop = watchPostComments('p1', onChange);
+    fire('post.comments.changed', { postId: 'p1', kind: 'created', actorId: 'u1', changeCount: 3 });
+    vi.advanceTimersByTime(1000);
+    expect(onChange).toHaveBeenCalledWith([expect.objectContaining({ kind: 'resync' })]);
+    stop();
+    vi.useRealTimers();
+  });
   it('vào phòng, lọc đúng bài, gom thay đổi mỗi giây và rời phòng khi đóng', () => {
     vi.useFakeTimers();
     configureHttp({ baseUrl: 'https://gateway.example' });

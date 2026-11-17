@@ -310,6 +310,7 @@ export const api = {
   comments: 'Bình luận',
   commentModerationHidden: 'Bình luận này vi phạm Tiêu chuẩn cộng đồng',
   commentModerationLearnMore: 'Tìm hiểu thêm',
+  newComments: '{count} bình luận mới',
   commentBody: 'Viết bình luận',
   send: 'Gửi',
   edit: 'Sửa',

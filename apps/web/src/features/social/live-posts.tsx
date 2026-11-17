@@ -14,6 +14,7 @@ import {
   useReelsFeed,
   useSocialPosts,
   watchPostComments,
+  type PostCommentsChange,
 } from '@tripflix/api-client';
 import {
   mediaUploadControllerCreateUpload,
@@ -46,6 +47,7 @@ import {
   replaceCommentInCache,
   setCommentReactionInCache,
   reloadPostComments,
+  shiftPostCommentCount,
 } from './comment-cache';
 import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
@@ -2094,9 +2096,18 @@ export function RightPanelCommentsSynchronized({
   const { user, isReady, session } = useApiSession();
   const client = useQueryClient();
   const initialDraft = getCommentDraft(post.id);
-  useEffect(() => watchPostComments(post.id, () => {
-    void reloadPostComments(client, post.id);
-  }), [client, post.id, user?.id]);
+  const [pendingComments, setPendingComments] = useState<readonly PostCommentsChange[]>([]);
+  useEffect(() => watchPostComments(post.id, (changes) => {
+    const pending = changes.filter((change) => change.kind === 'created' && !change.parentCommentId &&
+      (scrollContainerRef.current?.scrollTop ?? 0) > 48);
+    if (pending.length) {
+      shiftPostCommentCount(client, post.id, pending.length);
+      setPendingComments((current) => [...current.filter((change) => change.postId === post.id), ...pending]);
+    }
+    const immediate = changes.filter((change) => !pending.includes(change));
+    if (immediate.length) void reloadPostComments(client, post.id, immediate);
+  }), [client, post.id, user?.id, scrollContainerRef]);
+  const pendingForPost = pendingComments.filter((change) => change.postId === post.id);
   const [body, setBody] = useState(initialDraft?.body ?? '');
   const [isEmojiOpen, setEmojiOpen] = useState(false);
   // Cả viên thuốc nhập (ô chữ và nút emoji) tính là bên trong bảng emoji: bấm vào để gõ không đóng bảng.
@@ -2194,6 +2205,17 @@ export function RightPanelCommentsSynchronized({
         ref={scrollContainerRef}
         className={styles.rightScrollArea}
       >
+        {pendingForPost.length > 0 && (
+          <button type="button" aria-live="polite" className={styles.utilityBtn}
+            style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--color-surface)' }} onClick={() => {
+            const changes = pendingForPost;
+            setPendingComments([]);
+            scrollContainerRef.current?.scrollTo({ top: 0 });
+            void reloadPostComments(client, post.id, changes.map((change) => ({ ...change, kind: 'updated' })));
+          }}>
+            {t('api.newComments', { count: pendingForPost.length })}
+          </button>
+        )}
         {showSummary && <ReelCommentSummary key={post.id} postId={post.id} />}
         <ApiErrorNotice error={addMutation.error} />
         <ApiErrorNotice

@@ -1,5 +1,5 @@
 import type { InfiniteData, QueryClient, QueryKey } from '@tanstack/react-query';
-import { socialApi } from '@tripflix/api-client';
+import { socialApi, type PostCommentsChange } from '@tripflix/api-client';
 import type {
   FeedPageDto,
   SocialCommentDto,
@@ -15,11 +15,40 @@ import type {
 type CommentPages = InfiniteData<SocialCommentPageDto>;
 type CommentUpdate = (comment: SocialCommentDto) => SocialCommentDto | null;
 
-/** Tín hiệu chỉ mang postId: đọc lại bình luận và số đếm chuẩn của bài từ server. */
-export async function reloadPostComments(client: QueryClient, postId: string): Promise<void> {
+/** Chỉ tải trang đầu của danh sách liên quan, không tải lại các trang đã cuộn. */
+export async function reloadPostComments(client: QueryClient, postId: string,
+  changes: readonly PostCommentsChange[] = [{ postId, kind: 'resync' }],
+): Promise<void> {
+  const parents = new Set<string | undefined>();
+  let needsPostCount = false;
+  for (const change of changes) {
+    const cached = change.commentId ? findCachedComment(client, postId, change.commentId) : undefined;
+    parents.add(change.parentCommentId ?? cached?.parentCommentId ?? undefined);
+    if (change.kind === 'created') {
+      shiftPostCommentCount(client, postId, 1);
+      if (change.parentCommentId) updateCachedComments(client, postId, (entry) =>
+        entry.id === change.parentCommentId ? { ...entry, replyCount: (entry.replyCount ?? 0) + 1 } : entry);
+    } else if (change.kind === 'hidden' || change.kind === 'deleted' || change.kind === 'restored' || change.kind === 'resync') {
+      needsPostCount = true;
+    }
+  }
+  const lists = client.getQueryCache().findAll({ queryKey: ['social', 'comments', postId] })
+    .filter((query) => changes.some((change) => change.kind === 'resync') || parents.has(query.queryKey[3] as string | undefined));
+  await Promise.all(lists.map(async (query) => {
+    await client.cancelQueries({ queryKey: query.queryKey, exact: true });
+    client.setQueryData<CommentPages>(query.queryKey, (data) => hasPages(data) ? {
+      pages: data.pages.slice(0, 1), pageParams: data.pageParams.slice(0, 1),
+    } : data);
+    await client.invalidateQueries({ queryKey: query.queryKey, exact: true });
+  }));
+  for (const [queryKey, data] of client.getQueriesData<SocialCommentPageDto>({ queryKey: ['social', 'comment-thread', postId] })) {
+    if (changes.some((change) => change.kind === 'resync' || data?.items?.some((item) => item.id === change.commentId))) {
+      await client.invalidateQueries({ queryKey, exact: true });
+    }
+  }
+  // Xóa/kiểm duyệt có thể cascade nhiều trả lời, cần số đếm chuẩn; created/updated không gọi getPost.
+  if (!needsPostCount) return;
   await Promise.all([
-    client.invalidateQueries({ queryKey: ['social', 'comments', postId] }),
-    client.invalidateQueries({ queryKey: ['social', 'comment-thread', postId] }),
     socialApi.getPost(postId).then((detail) => {
       client.setQueriesData<SocialPostDetailDto>({ queryKey: ['social', 'post', postId] }, detail);
       client.setQueriesData<InfiniteData<{ items: SocialPostDetailDto['post'][] }>>(
@@ -110,7 +139,7 @@ function isCountedComment(comment: Pick<SocialCommentDto, 'status'>): boolean {
 }
 
 /** Đổi số bình luận của bài ở chi tiết bài, danh sách bài (social) và thẻ Reels (feed). */
-function shiftPostCommentCount(client: QueryClient, postId: string, delta: number) {
+export function shiftPostCommentCount(client: QueryClient, postId: string, delta: number) {
   if (delta === 0) return;
   const shift = (count: number) => Math.max(0, count + delta);
 
