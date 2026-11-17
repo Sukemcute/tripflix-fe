@@ -12,10 +12,8 @@ import {
   HttpError,
   useApiSession,
   useFlightRoutes,
-  useTripFlightSuggestions,
-  useTripStaySuggestions,
-  type TripFlightSuggestion,
-  type TripStaySuggestion,
+  type TripAddonRequest,
+  type TripAddonStay,
 } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
@@ -25,10 +23,11 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { DateSingleField } from '@/components/date-sheet';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
-import { clearPostHotelPick, usePostHotelPick } from '@/features/post/post-hotel-pick-store';
+import { clearPostHotelPick, savePostHotel, usePostHotelPick } from '@/features/post/post-hotel-pick-store';
 import { DestinationPicker } from '@/features/post/trip-plan-editor';
 import { CommerceError } from './commerce-state';
 import { useTripPicks } from './trip-booking-store';
+import { NO_ADDON_PICKS, TripAddonsSection, type TripAddonPicks } from './trip-addons-section';
 import { ChoiceChip, ProductCard } from './trip-plan-parts';
 
 const copy = vi.mobile.tripBuilder;
@@ -43,6 +42,7 @@ interface HotelItem {
   key: string;
   checkIn: string;
   nights: number;
+  hotelId: string;
   hotelName: string;
   productId: string;
   ratePlanCode: string;
@@ -69,8 +69,6 @@ type TripItem = HotelItem | FlightItem;
 type HotelDraft = { key: string; checkIn: string; nights: number };
 /** Chuyến bay sắp thêm: chiều đi tới nơi đến, hoặc chiều về từ nơi đến về nhà. */
 type FlightDraft = { key: string; leg: 'outbound' | 'inbound'; from: string; to: string; date: string };
-/** Số gợi ý hiện trong mỗi khung; muốn xem thêm thì sang màn tìm đầy đủ. */
-const SUGGESTION_LIMIT = 3;
 
 /**
  * Lộ trình đang soạn nằm ngoài màn hình: sang màn đăng nhập (bấm Giữ chỗ khi chưa đăng nhập) rồi quay lại,
@@ -145,6 +143,7 @@ export function TripBuilderScreen() {
       key: hotelPick.key,
       checkIn: hotelDraft.checkIn,
       nights: hotelDraft.nights,
+      hotelId: hotelPick.hotelId,
       hotelName: hotelPick.hotelName,
       productId: hotelPick.productId,
       ratePlanCode: hotelPick.ratePlanCode ?? '',
@@ -185,35 +184,56 @@ export function TripBuilderScreen() {
   const total = items.reduce((sum, item) => sum + item.totalPrice, 0);
   const flights = sorted.filter((item): item is FlightItem => item.kind === 'flight');
 
-  // Gợi ý từ discovery (GET /api/trip-builder/*): chỗ Duy thay cách xếp, app hiện theo thứ tự trả về.
-  const staySuggestions = useTripStaySuggestions(
-    hotelDraft && place
-      ? {
-          place,
-          checkIn: hotelDraft.checkIn,
-          checkOut: getTripDayDate(hotelDraft.checkIn, hotelDraft.nights + 1),
-          adults,
-          sort: 'best_price',
-          limit: SUGGESTION_LIMIT,
-        }
-      : null,
-  );
-  // Gợi ý vé tính theo sân bay nhà: chiều đi bay từ nhà, chiều về bay về nhà.
-  const home = flightDraft ? (flightDraft.leg === 'outbound' ? flightDraft.from : flightDraft.to) : '';
-  const flightSuggestions = useTripFlightSuggestions(
-    flightDraft && place && placeAirport && home
-      ? {
-          place,
-          from: home,
-          departDate: flightDraft.date,
-          ...(flightDraft.leg === 'inbound' ? { returnDate: flightDraft.date } : {}),
-          adults,
-          sort: 'cheapest',
-          limit: SUGGESTION_LIMIT,
-        }
-      : null,
-  );
-  const flightOptions = flightDraft ? (flightSuggestions.data?.[flightDraft.leg] ?? []) : [];
+  const [addonFrom, setAddonFrom] = useState<string | null>(null);
+  const addonRequest: TripAddonRequest | null = items.length
+    ? {
+        // Thẻ lưu từ bản cũ (chưa có hotelId) thì bỏ qua, tránh gửi mục thiếu mã.
+        items: sorted
+          .filter((item) => item.kind === 'flight' || !!item.hotelId)
+          .map((item) =>
+            item.kind === 'hotel'
+              ? {
+                  type: 'hotel' as const,
+                  hotelId: item.hotelId,
+                  checkIn: item.checkIn,
+                  checkOut: getTripDayDate(item.checkIn, item.nights + 1),
+                }
+              : { type: 'flight' as const, fromAirport: item.from, toAirport: item.to, date: item.date },
+          ),
+        adults,
+        ...(addonFrom ? { fromAirport: addonFrom } : {}),
+      }
+    : null;
+  // Thẻ đổi thì gợi ý cũ không còn hợp: bỏ vé đã chọn từ gợi ý.
+  const addonKey = JSON.stringify(addonRequest);
+  const [addonPicks, setAddonPicks] = useState<{ key: string; picks: TripAddonPicks }>({
+    key: addonKey,
+    picks: NO_ADDON_PICKS,
+  });
+  const addonSelection = addonPicks.key === addonKey ? addonPicks.picks : NO_ADDON_PICKS;
+  const pickedFlights = [addonSelection.outbound, addonSelection.inbound].flatMap((flight) => (flight ? [flight] : []));
+  const addonTotal = pickedFlights.reduce((sum, flight) => sum + flight.totalPrice, 0);
+  // Khách sạn gợi ý chưa có loại phòng: mở màn chọn phòng, chọn xong quay về thành thẻ.
+  const pickAddonStay = (stay: TripAddonStay, dates: { checkIn: string; checkOut: string }) => {
+    const key = nextKey(HOTEL_KEY_PREFIX);
+    const nights = Math.max(
+      1,
+      Math.round((Date.parse(dates.checkOut) - Date.parse(dates.checkIn)) / 86_400_000),
+    );
+    setHotelDraft({ key, checkIn: dates.checkIn, nights });
+    savePostHotel(key, { hotelId: stay.hotelId, hotelName: stay.name });
+    router.push({
+      pathname: '/hotel-rooms',
+      params: {
+        id: stay.hotelId,
+        pick: 'post',
+        pickKey: key,
+        checkIn: dates.checkIn,
+        checkOut: dates.checkOut,
+        adults: String(adults),
+      },
+    });
+  };
 
   const startFlight = () =>
     setFlightDraft({
@@ -226,44 +246,6 @@ export function TripBuilderScreen() {
         defaultDate: getFutureDate(14),
       }),
     });
-  const addSuggestedFlight = (draft: FlightDraft, flight: TripFlightSuggestion) => {
-    setItems((current) => [
-      ...current,
-      {
-        kind: 'flight',
-        key: draft.key,
-        date: draft.date,
-        from: flight.fromAirport,
-        to: flight.toAirport,
-        productId: flight.productId,
-        ratePlanCode: flight.ratePlanCode,
-        flightNumber: flight.name,
-        departTime: flight.departTime,
-        fareName: flight.airline ?? '',
-        totalPrice: flight.totalPrice,
-      },
-    ]);
-    setFlightDraft(null);
-  };
-  const addSuggestedStay = (draft: HotelDraft, stay: TripStaySuggestion) => {
-    setItems((current) => [
-      ...current.filter((item) => item.key !== draft.key),
-      {
-        kind: 'hotel',
-        key: draft.key,
-        checkIn: draft.checkIn,
-        nights: draft.nights,
-        hotelName: stay.name,
-        productId: stay.roomProductId,
-        ratePlanCode: stay.ratePlanCode,
-        roomName: '',
-        rateName: stay.reason?.text ?? '',
-        totalPrice: stay.totalPrice,
-      },
-    ]);
-    setHotelDraft(null);
-  };
-
   const searchHotel = (draft: HotelDraft) =>
     router.push({
       pathname: '/search',
@@ -312,11 +294,18 @@ export function TripBuilderScreen() {
       createCheckout(
         buildTripPlanCheckout({
           adults,
-          flights: items.flatMap((item) =>
-            item.kind === 'flight'
-              ? [{ productId: item.productId, ratePlanCode: item.ratePlanCode, date: item.date }]
-              : [],
-          ),
+          flights: [
+            ...items.flatMap((item) =>
+              item.kind === 'flight'
+                ? [{ productId: item.productId, ratePlanCode: item.ratePlanCode, date: item.date }]
+                : [],
+            ),
+            ...pickedFlights.map((flight) => ({
+              productId: flight.productId,
+              ratePlanCode: flight.ratePlanCode,
+              date: flight.date,
+            })),
+          ],
           rooms: items.flatMap((item) =>
             item.kind === 'hotel'
               ? [
@@ -355,8 +344,10 @@ export function TripBuilderScreen() {
       footer={
         <View style={styles.footer}>
           <View style={ui.flex}>
-            <Txt style={styles.muted}>{t('mobile.tripBuilder.pickedCount', { count: items.length })}</Txt>
-            <Txt style={styles.total}>{money(total)}</Txt>
+            <Txt style={styles.muted}>
+              {t('mobile.tripBuilder.pickedCount', { count: items.length + pickedFlights.length })}
+            </Txt>
+            <Txt style={styles.total}>{money(total + addonTotal)}</Txt>
           </View>
           <Button compact icon="flash" disabled={!items.length || booking.isPending} onPress={book}>
             {booking.isPending ? copy.booking : copy.book}
@@ -436,35 +427,12 @@ export function TripBuilderScreen() {
             max={30}
             onChange={(nights) => setHotelDraft({ ...hotelDraft, nights })}
           />
-          {!!place && (
-            <Suggestions
-              isLoading={staySuggestions.isFetching && !staySuggestions.data}
-              isEmpty={(staySuggestions.data ?? []).length === 0}
-            >
-              {(staySuggestions.data ?? []).map((stay) => (
-                <SuggestionRow
-                  key={stay.hotelId}
-                  tone="hotel"
-                  title={stay.name}
-                  detail={[
-                    stay.stars ? `${stay.stars}★` : null,
-                    stay.rating ? `${stay.rating.average}/5` : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                  reason={stay.reason?.text}
-                  price={money(stay.totalPrice)}
-                  onPress={() => addSuggestedStay(hotelDraft, stay)}
-                />
-              ))}
-            </Suggestions>
-          )}
           <Row style={styles.draftActions}>
             <Button tone="text" onPress={() => setHotelDraft(null)}>
               {copy.cancel}
             </Button>
             <Button compact icon="search" onPress={() => searchHotel(hotelDraft)}>
-              {place ? copy.findOtherHotel : copy.findHotel}
+              {copy.findHotel}
             </Button>
           </Row>
         </View>
@@ -501,24 +469,6 @@ export function TripBuilderScreen() {
             min={getFutureDate(0)}
             onChange={(date) => setFlightDraft({ ...flightDraft, date })}
           />
-          {!!place && !!placeAirport && (
-            <Suggestions
-              isLoading={flightSuggestions.isFetching && !flightSuggestions.data}
-              isEmpty={flightOptions.length === 0}
-            >
-              {flightOptions.map((flight) => (
-                <SuggestionRow
-                  key={flight.flightId}
-                  tone="flight"
-                  title={`${flight.departTime ?? '--:--'} → ${flight.arriveTime ?? '--:--'} · ${flight.fromAirport} → ${flight.toAirport}`}
-                  detail={flight.airline ?? ''}
-                  reason={flight.reason?.text}
-                  price={money(flight.totalPrice)}
-                  onPress={() => addSuggestedFlight(flightDraft, flight)}
-                />
-              ))}
-            </Suggestions>
-          )}
           <Row style={styles.draftActions}>
             <Button tone="text" onPress={() => setFlightDraft(null)}>
               {copy.cancel}
@@ -528,6 +478,16 @@ export function TripBuilderScreen() {
             </Button>
           </Row>
         </View>
+      )}
+
+      {!hotelDraft && !flightDraft && (
+        <TripAddonsSection
+          request={addonRequest}
+          picks={addonSelection}
+          onChangePicks={(next) => setAddonPicks({ key: addonKey, picks: next })}
+          onChangeFrom={setAddonFrom}
+          onPickStay={pickAddonStay}
+        />
       )}
 
       <Row style={styles.addRow}>
@@ -626,66 +586,6 @@ function Stepper({
   );
 }
 
-function Suggestions({
-  isLoading,
-  isEmpty,
-  children,
-}: {
-  isLoading: boolean;
-  isEmpty: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <View style={styles.suggestions}>
-      <Txt style={styles.suggestionsTitle}>{copy.suggestionsTitle}</Txt>
-      {isLoading ? (
-        <Txt style={styles.muted}>{vi.api.loading}</Txt>
-      ) : isEmpty ? (
-        <Txt style={styles.muted}>{copy.noSuggestions}</Txt>
-      ) : (
-        children
-      )}
-    </View>
-  );
-}
-
-function SuggestionRow({
-  tone,
-  title,
-  detail,
-  reason,
-  price,
-  onPress,
-}: {
-  tone: 'hotel' | 'flight';
-  title: string;
-  detail?: string;
-  reason?: string;
-  price: string;
-  onPress: () => void;
-}) {
-  const ink = tone === 'hotel' ? colors.coralInk : colors.tealInk;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [styles.suggestion, pressed && styles.pressed]}
-    >
-      <View style={ui.flex}>
-        <Txt style={styles.suggestionTitle} numberOfLines={2}>
-          {title}
-        </Txt>
-        {!!detail && <Txt style={styles.muted}>{detail}</Txt>}
-        {!!reason && <Txt style={[styles.reason, { color: ink }]}>{reason}</Txt>}
-      </View>
-      <View style={styles.suggestionSide}>
-        <Txt style={styles.suggestionPrice}>{price}</Txt>
-        <Icon name="add-circle" size={22} color={ink} />
-      </View>
-    </Pressable>
-  );
-}
-
 function AddButton({
   icon,
   label,
@@ -748,20 +648,6 @@ const styles = StyleSheet.create({
   flightDraft: { borderColor: colors.tealInk, backgroundColor: colors.seaMist },
   originRow: { alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
   legRoute: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.ink },
-  suggestions: { gap: spacing.sm },
-  suggestionsTitle: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.textMuted },
-  suggestion: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.sm,
-    borderRadius: radius.md,
-    backgroundColor: colors.background,
-  },
-  suggestionTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.ink },
-  reason: { ...compactType.label, fontFamily: nativeFonts.semibold },
-  suggestionSide: { alignItems: 'flex-end', gap: 2 },
-  suggestionPrice: { ...compactType.heading, fontFamily: nativeFonts.bold, color: colors.ink },
   draftActions: { justifyContent: 'flex-end', alignItems: 'center', gap: spacing.sm },
   addRow: { gap: spacing.sm },
   add: {
