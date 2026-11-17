@@ -5,7 +5,7 @@
 
 ## Đã làm
 - Thẻ "Sở thích du lịch" ở tab Hồ sơ (`apps/web/src/features/auth/travel-preferences.tsx`), ngay dưới "Thông tin cá nhân". Cùng dữ liệu với khảo sát onboarding mobile; trên web chỉ sửa, chưa có trang onboarding.
-- 3 trường, mỗi trường một dropdown chọn nhiều (`<details>` gốc + checkbox), có thể bỏ trống:
+- 3 trường, chọn nhiều, có thể bỏ trống. "Bạn thích" kiểu đính tag: một khung riêng cả hàng, mỗi lựa chọn một pill có nút ×, nút + mở danh sách còn lại, nhiều pill thì xuống dòng trong khung. Hai trường còn lại là dropdown checkbox (`<details>` gốc) bên dưới, chữ dài thì cắt "…" (trước đây chữ dài đẩy khung lấn sang ô bên cạnh):
   - "Bạn thích" `interests`: Biển & đảo, Núi & thiên nhiên, Phố cổ & văn hoá, Ăn uống, Thành phố & về đêm, Nghỉ dưỡng.
   - "Vùng muốn đi" `regions`: Miền Bắc, Miền Trung, Tây Nguyên, Miền Nam.
   - "Mức chi phí" `budgetLevels`: Tiết kiệm, Vừa phải, Cao cấp.
@@ -19,6 +19,7 @@
 |---|---|---|
 | Chọn sở thích, lưu, tải lại trang vẫn còn | Có | Kiểm thật trên web local với core-api Docker (ảnh trong PR) |
 | Đặt lại xoá sở thích | Có | Như trên (PATCH `null` → 200) |
+| Chọn nhiều không làm khung tràn sang ô bên cạnh | Có | 6 pill xuống 2 dòng trong khung; khổ 375px một cột, trang không tràn ngang |
 | Dropdown không che nút Lưu khi đã chọn xong | Có | Bấm ra ngoài / Esc đóng danh sách; mở ô này thì ô kia đóng |
 | Gọi API qua client sinh ra, chữ trong i18n, màu từ token | Có | Xem diff |
 
@@ -28,7 +29,7 @@ Chạy ngày 2026-11-17:
 ```
 pnpm turbo run lint typecheck test --affected --filter='!@tripflix/mobile'
   → 20/20 task pass, lint 0 lỗi (cảnh báo còn lại ở file không thuộc TF106)
-  web 104, api-client 220, app-core 174, admin 8, i18n 2, tokens 1 test pass
+  sau khi merge origin/develop: web 121, api-client 227, app-core 174, admin 12, i18n 2, tokens 1 test pass
 ```
 
 - Không lọc mobile thì `@tripflix/mobile:typecheck` lỗi kiểu route của expo-router (`/my-trips`, `/user/[id]`…) ở file TF106 không đụng tới: do `apps/mobile/.expo/types/router.d.ts` sinh cục bộ đã cũ (09/11, gitignore). Nhánh không đổi file nào trong `apps/mobile`.
