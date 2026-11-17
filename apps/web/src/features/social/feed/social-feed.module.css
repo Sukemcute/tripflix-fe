@@ -1331,7 +1331,6 @@
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  border: 1px solid #E2E8F0;
 }
 
 .composerAvatar {
@@ -1346,7 +1345,6 @@
   color: var(--color-coral);
   font-size: 15px;
   flex-shrink: 0;
-  border: 1px solid color-mix(in srgb, var(--color-coral) 15%, transparent);
 }
 
 .composerInputPill,
@@ -1501,7 +1499,6 @@
   color: var(--color-coral);
   font-size: 15px;
   flex-shrink: 0;
-  border: 1px solid color-mix(in srgb, var(--color-coral) 15%, transparent);
 }
 
 .authorMeta {
@@ -1528,8 +1525,7 @@
 }
 
 .authorName:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: var(--color-coral-ink);
 }
 
 a.authorAvatar {
@@ -1656,8 +1652,6 @@ a.authorAvatar {
 
 .postTagPill:hover {
   color: var(--color-text);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 .postTagMore {

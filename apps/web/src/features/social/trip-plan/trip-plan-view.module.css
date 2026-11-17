@@ -153,10 +153,12 @@
   text-decoration: none;
 }
 
-.authorName:hover,
+.authorName:hover {
+  color: var(--color-coral-ink);
+}
+
 .subtleLink:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: var(--color-text);
 }
 
 .subtleLink {
@@ -393,8 +395,7 @@
 }
 
 .inlineLink:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: var(--color-navy);
 }
 
 /* Khoảnh khắc: lưới ảnh, ô đầu to gấp đôi */
