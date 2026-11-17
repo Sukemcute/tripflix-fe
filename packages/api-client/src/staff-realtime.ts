@@ -4,19 +4,20 @@ import { io, type Socket } from 'socket.io-client';
 import { httpRaw } from './http';
 import { useApiSession } from './session';
 
-/** notification-service phát vào phòng staff khi hàng chờ kiểm duyệt đổi (TF104). */
-export const STAFF_MODERATION_CHANGED_EVENT = 'admin.moderation.changed';
+/**
+ * notification-service phát vào phòng staff khi hàng chờ kiểm duyệt đổi (TF100 admin realtime, BE).
+ * Tín hiệu không mang dữ liệu (payload rỗng); admin nhận xong thì gọi lại API.
+ */
+export const STAFF_MODERATION_CHANGED_EVENT = 'moderation.changed';
 /** BFF admin cấp access token ngắn hạn cho socket; token không đi qua JS ở chỗ khác. */
 export const STAFF_REALTIME_TOKEN_PATH = '/api/admin/realtime-token';
 const AUTH_EXPIRED_EVENT = 'auth.expired';
 const MAX_TOKEN_RETRIES = 3;
 
-export type StaffModerationChangeKind = 'case' | 'decision' | 'report' | 'appeal' | 'scan';
 export type StaffRealtimeStatus = 'idle' | 'connecting' | 'live' | 'offline';
 
+/** Lúc client nhận tín hiệu; server không gửi kèm thời điểm. */
 export interface StaffModerationSignal {
-  kinds: StaffModerationChangeKind[];
-  changeCount: number;
   at: string;
 }
 
@@ -27,22 +28,11 @@ export interface StaffRealtimeOptions {
   getToken: () => Promise<string | null>;
   onStatus: (status: StaffRealtimeStatus) => void;
   onSignal: (signal: StaffModerationSignal) => void;
+  now?: () => Date;
   /** Gọi khi vừa nối lại, để tải lại phần đã lỡ lúc mất kết nối. */
   onReconnect: () => void;
 }
 
-/** Đọc tín hiệu từ socket: dữ liệu ngoài hệ thống nên kiểm hình dạng trước khi dùng. */
-export function readStaffSignal(value: unknown): StaffModerationSignal | null {
-  if (!value || typeof value !== 'object') return null;
-  const { kinds, changeCount, at } = value as Record<string, unknown>;
-  if (!Array.isArray(kinds) || typeof changeCount !== 'number' || typeof at !== 'string') return null;
-  const allowed = new Set<StaffModerationChangeKind>(['case', 'decision', 'report', 'appeal', 'scan']);
-  return {
-    kinds: kinds.filter((kind): kind is StaffModerationChangeKind => allowed.has(kind as StaffModerationChangeKind)),
-    changeCount,
-    at,
-  };
-}
 
 /**
  * Kết nối /ws của staff. Lấy token từ BFF mỗi lần bắt tay; token hết hạn thì lấy lại và nối lại
@@ -79,9 +69,9 @@ export class StaffRealtimeConnection {
     socket.on('disconnect', () => {
       if (!this.isClosed) onStatus('offline');
     });
-    socket.on(STAFF_MODERATION_CHANGED_EVENT, (payload: unknown) => {
-      const signal = readStaffSignal(payload);
-      if (signal) onSignal(signal);
+    // Payload không chứa gì để đọc, nên không tin bất kỳ dữ liệu nào đi kèm.
+    socket.on(STAFF_MODERATION_CHANGED_EVENT, () => {
+      onSignal({ at: (this.options.now?.() ?? new Date()).toISOString() });
     });
     socket.on(AUTH_EXPIRED_EVENT, () => this.reconnectWithNewToken());
     socket.on('connect_error', (error: HandshakeError) => {

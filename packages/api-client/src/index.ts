@@ -91,7 +91,6 @@ export { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime } from './notifica
 export {
   STAFF_MODERATION_CHANGED_EVENT,
   useStaffRealtime,
-  type StaffModerationChangeKind,
   type StaffModerationSignal,
   type StaffRealtimeState,
   type StaffRealtimeStatus,

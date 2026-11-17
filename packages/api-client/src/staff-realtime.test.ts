@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { configureHttp } from './http';
 import {
-  readStaffSignal,
   STAFF_MODERATION_CHANGED_EVENT,
   STAFF_REALTIME_TOKEN_PATH,
   StaffRealtimeConnection,
@@ -69,12 +68,11 @@ describe('StaffRealtimeConnection (TF104)', () => {
     expect(options.onReconnect).toHaveBeenCalledTimes(1);
   });
 
-  it('chuyển tín hiệu hợp lệ, bỏ dữ liệu sai hình dạng', () => {
-    const { options } = connect();
-    fire(STAFF_MODERATION_CHANGED_EVENT, { kinds: ['case', 'hack'], changeCount: 2, at: '2026-11-17T02:00:00Z' });
-    fire(STAFF_MODERATION_CHANGED_EVENT, { kinds: 'case' });
-    expect(options.onSignal).toHaveBeenCalledTimes(1);
-    expect(options.onSignal).toHaveBeenCalledWith({ kinds: ['case'], changeCount: 2, at: '2026-11-17T02:00:00Z' });
+  it('nghe moderation.changed của phòng staff, bỏ qua dữ liệu đi kèm và gắn giờ nhận', () => {
+    const { options } = connect({ now: () => new Date('2026-11-17T02:00:00Z') });
+    expect(STAFF_MODERATION_CHANGED_EVENT).toBe('moderation.changed');
+    fire(STAFF_MODERATION_CHANGED_EVENT, { injected: '<script>' });
+    expect(options.onSignal).toHaveBeenCalledWith({ at: '2026-11-17T02:00:00.000Z' });
   });
 
   it('token hết hạn hoặc bị từ chối thì nối lại tối đa 3 lần liên tiếp', () => {
@@ -94,13 +92,6 @@ describe('StaffRealtimeConnection (TF104)', () => {
     fire('disconnect');
     expect(socket.disconnect).toHaveBeenCalled();
     expect(options.onStatus).not.toHaveBeenCalledWith('offline');
-  });
-});
-
-describe('readStaffSignal', () => {
-  it('trả null với dữ liệu không phải object', () => {
-    expect(readStaffSignal(null)).toBeNull();
-    expect(readStaffSignal('x')).toBeNull();
   });
 });
 

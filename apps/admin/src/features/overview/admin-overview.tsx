@@ -246,7 +246,7 @@ export function AdminOverview() {
               {feed.slice(0, 4).map((entry) => (
                 <li key={entry.id}>
                   <Badge tone="teal" hasDot>
-                    {entry.kinds.map((kind) => vi.adminConsole.signalKinds[kind]).join(', ')} · {formatRelative(entry.at, now)}
+                    {vi.adminConsole.live.changed} · {formatRelative(entry.at, now)}
                   </Badge>
                 </li>
               ))}

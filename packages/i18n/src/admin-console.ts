@@ -27,14 +27,8 @@ export const adminConsole = {
     idle: 'Tự cập nhật mỗi 5 giây',
     liveHint: 'Hàng chờ và số liệu cập nhật ngay khi có thay đổi.',
     lastChange: 'Thay đổi gần nhất {time}',
+    changed: 'Hàng chờ vừa thay đổi',
     updatedAt: 'Cập nhật {time}',
-  },
-  signalKinds: {
-    case: 'Hồ sơ mới cần xem',
-    decision: 'Có quyết định kiểm duyệt',
-    report: 'Có báo cáo mới',
-    appeal: 'Khiếu nại thay đổi',
-    scan: 'Scan cần phục hồi',
   },
   time: {
     justNow: 'vừa xong',
