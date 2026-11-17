@@ -45,6 +45,7 @@ import {
 } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 import { GoogleLoginButton } from '@/features/auth/google-login-button';
+import { useOnboarding } from '@/features/onboarding/onboarding-provider';
 
 const regionNames =
   typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['vi'], { type: 'region' }) : null;
@@ -74,6 +75,7 @@ function WebLinkText({ path, children }: { path: string; children: string }) {
 
 export function LiveLoginScreen() {
   const { session, isReady } = useApiSession();
+  const { startAfterSignup, ready: onboardingReady } = useOnboarding();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const [isRegistering, setRegistering] = useState(false);
   const [email, setEmail] = useState('');
@@ -108,7 +110,7 @@ export function LiveLoginScreen() {
   const canRegister = canSendCode && !!registrationId && REGISTRATION_CODE_PATTERN.test(code);
   const mutation = useMutation({
     mutationFn: async () => {
-      if (isRegistering)
+      if (isRegistering) {
         await session.register({
           email: email.trim(),
           password,
@@ -121,11 +123,20 @@ export function LiveLoginScreen() {
           nationality,
           acceptTerms: true,
         });
-      else await session.login({ email: email.trim(), password });
+        return 'registered' as const;
+      }
+      await session.login({ email: email.trim(), password });
+      return 'logged-in' as const;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       setPassword('');
-      leaveAfterLogin();
+      if (result === 'registered') {
+        startAfterSignup();
+        router.replace({
+          pathname: '/onboarding',
+          params: { source: 'signup', returnTo: resolveMobileLoginReturn(returnTo) },
+        });
+      } else leaveAfterLogin();
     },
   });
   function leaveAfterLogin() {
@@ -309,7 +320,7 @@ export function LiveLoginScreen() {
             isBusy ||
             !email.trim() ||
             !password ||
-            (isRegistering && (!displayName.trim() || !canRegister))
+            (isRegistering && (!onboardingReady || !displayName.trim() || !canRegister))
           }
           onPress={() => mutation.mutate()}
         >

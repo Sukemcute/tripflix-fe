@@ -27,6 +27,7 @@ type OnboardingContextValue = {
   ready: boolean;
   record: OnboardingRecord;
   storageError: boolean;
+  startAfterSignup: () => void;
   updateDraft: (changes: Partial<Pick<OnboardingRecord, 'interests' | 'pace' | 'step'>>) => void;
   finish: (status: 'skipped' | 'completed') => Promise<boolean>;
   continueOnce: () => void;
@@ -98,6 +99,13 @@ export function OnboardingProvider({ children }: PropsWithChildren) {
     [persist],
   );
 
+  const startAfterSignup = useCallback(() => {
+    const next: OnboardingRecord = { ...emptyOnboarding(), status: 'draft', step: 'interests' };
+    current.current = next;
+    setRecord(next);
+    void persist(next);
+  }, [persist]);
+
   const continueOnce = useCallback(() => {
     // Explicit escape when device storage is unavailable; no saved-success claim.
     current.current = { ...current.current, status: 'skipped' };
@@ -105,7 +113,9 @@ export function OnboardingProvider({ children }: PropsWithChildren) {
   }, []);
 
   return (
-    <OnboardingContext.Provider value={{ ready, record, storageError, updateDraft, finish, continueOnce }}>
+    <OnboardingContext.Provider
+      value={{ ready, record, storageError, updateDraft, finish, continueOnce, startAfterSignup }}
+    >
       {children}
     </OnboardingContext.Provider>
   );

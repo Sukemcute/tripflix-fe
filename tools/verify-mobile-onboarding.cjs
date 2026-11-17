@@ -127,7 +127,8 @@ class OnboardingPage {
     await page.getByRole('tab', { name: 'Dành cho bạn', exact: true }).waitFor();
     assert.equal(new URL(page.url()).pathname, '/');
     checks.push('Fresh launch, choose, back, reload draft, edit review, save, returning visitor');
-    await page.getByRole('tab', { name: 'Tôi', exact: true }).click();
+    // develop moved the menu out of the profile tab into /settings (TF47B).
+    await ui.goto('/settings');
     await ui.click('Gu du lịch');
     await ui.click('Chọn gu của tôi');
     await ui.choice('Thiên nhiên').click();
@@ -138,7 +139,7 @@ class OnboardingPage {
     assert.equal((await ui.stored()).status, 'completed');
     await ui.goto('/');
     await page.getByRole('tab', { name: 'Dành cho bạn', exact: true }).waitFor();
-    checks.push('Profile opens editor; editing does not re-trigger first-run gate or reset completion');
+    checks.push('Settings opens editor; editing does not re-trigger first-run gate or reset completion');
     await context.close();
 
     for (const [width, height] of [

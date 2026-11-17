@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "checks": [
+    "Signup → authenticated survey despite completed device record → save → create; profile/settings reopens taste editor",
+    "Previously skipped device still shows signup survey; skipping resumes saved task",
+    "Existing password login keeps normal return path and does not restart onboarding",
+    "Rejected registration stays on form and does not erase existing device preferences",
+    "Storage failure escape preserves the original post-signup destination"
+  ],
+  "pageErrors": [],
+  "authApiFixtures": true,
+  "realEmailOrNativeTested": false
+}
