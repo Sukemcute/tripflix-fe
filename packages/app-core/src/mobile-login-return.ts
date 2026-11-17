@@ -3,7 +3,7 @@ export function resolveMobileLoginReturn(returnTo: unknown): string {
   if (
     typeof returnTo === 'string' &&
     (returnTo === '/assistant' ||
-      /^\/(?:\(tabs\)|trip\/[^/?#]+|saved|create|cart|account-settings)(?:$|\/)/.test(returnTo) ||
+      /^\/(?:\(tabs\)|trip\/[^/?#]+|trip-builder|saved|create|cart|account-settings)(?:$|\/)/.test(returnTo) ||
       /^\/(?:flights|payments\/vnpay\/return)(?:\?|$)/.test(returnTo))
   ) {
     return returnTo;
