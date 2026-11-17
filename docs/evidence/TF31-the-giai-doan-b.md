@@ -28,7 +28,7 @@
 | Chip "Hoàn tác" | Đạt (code) | Nút Hoàn tác trên thẻ `plan:` |
 | api-client có `action` | Đạt | `packages/api-client/src/assistant.ts` |
 | Lưu draft v2 ≤ 2.048 byte | Đạt một phần | `serializeAssistantChat` (app-core) bỏ tin cũ trước. **Giới hạn:** riêng `trip` đã quá 2.048 byte thì không lưu `trip`; trong phiên vẫn còn, mở lại app thì mất kế hoạch. Đo ở AI: kế hoạch 2 ngày 815 byte (`test_the_plan_stays_small_enough_for_the_app_to_keep` chặn < 1.800). Với id và tên OSM thật ước khoảng 130 byte mỗi điểm, nên kế hoạch **từ khoảng 4 ngày** sẽ không được lưu [ƯỚC TÍNH] |
-| Ảnh trên Android | **Chưa** | Xem mục Ảnh / video |
+| Ảnh trên Android | Bỏ | Bảo bỏ việc chụp ảnh (2026-11-17) |
 
 ## Kết quả kiểm tra
 - `pnpm turbo run lint typecheck test --affected`: **16/16** task thành công (2026-11-17).
@@ -46,7 +46,7 @@
 4. Bấm **Hoàn tác** → quay về nơi ở cũ.
 
 ## Ảnh / video
-- **Chưa có.** Docker trên máy tắt nên không chạy được core; chưa có máy ảo Android. Bảo chụp trên điện thoại theo "Cách kiểm lại" rồi dán vào PR.
+- Không chụp: Bảo bỏ việc chụp ảnh Android cho task này (2026-11-17).
 
 ## Ảnh hưởng tới phần của người khác
 - Có: `apps/mobile` (chủ: chị Trang). Chỉ sửa trong `features/assistant`. Cần chị Trang duyệt trước khi merge.
