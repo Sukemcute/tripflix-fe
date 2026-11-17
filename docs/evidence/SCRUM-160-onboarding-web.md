@@ -23,7 +23,7 @@
 | Gợi ý chọn 2–5, không ép, vẫn có bỏ qua | Có | QA web: "gợi ý 2–5", "Khám phá trước → trang chủ, ghi skipped" |
 | Nhịp đi chọn một, có thể bỏ qua | Có | Nút "Bỏ qua câu này"; pace chỉ lưu local |
 | Lưu qua PATCH `/api/auth/me`, `status` completed/skipped, `updatedAt` lúc bấm hoàn tất | Có | QA web tài khoản: body `{status, interests, regions, budgetLevels, updatedAt}`; `buildTravelPreferences` test |
-| Khách chỉ lưu local, đăng nhập thì PATCH một lần, đăng xuất xoá local | Có (đồng bộ + xoá: unit/logic; chưa chạy đăng nhập thật) | `post-auth.test.ts`, `use-after-auth.ts`, `survey-logout-cleanup.tsx` |
+| Khách chỉ lưu local, đăng nhập thì PATCH một lần, đăng xuất xoá local | Có | QA web "đăng nhập: khách … PATCH một lần với updatedAt gốc", "đăng xuất: xoá bản …"; `post-auth.test.ts` |
 | Back giữ lựa chọn | Có | QA web "Back giữ các lựa chọn" |
 | Lỗi/mất mạng: giữ lựa chọn, có Thử lại, chỉ báo đã lưu khi thành công | Có | QA web "PATCH lỗi → giữ lựa chọn…", "thử lại thành công…" |
 | Mục đã chọn có tick/chữ, không chỉ đổi màu | Có | "✓ Đã chọn" trên web; mobile giữ dấu tick sẵn có |
@@ -33,12 +33,14 @@
 - `pnpm turbo run lint typecheck test --affected`: **22/22 task thành công**; lint chỉ còn cảnh báo có sẵn ở file khác, không có cảnh báo ở file mới.
 - app-core: 200 test pass (7 test mới cho `travel-survey`). web: 168 test pass (gồm `post-auth.test.ts` mới). api-client: 243 pass. admin: 29 pass.
 - `node tools/verify-mobile-onboarding-profile.cjs`: pass (cập nhật theo 6 mã; kiểm giữ mã lạ `legacy-code`).
-- `node tools/verify-web-onboarding.cjs` (Chrome thật, web dev `:3100`): **10 nhóm pass** — khách (6 sở thích, ✓ + chữ, Back, tải lại còn nháp, hoàn tất chỉ lưu local không PATCH, Khám phá trước, 390px không tràn ngang) và tài khoản với API giả lập (PATCH lỗi giữ lựa chọn, Thử lại thành công, không gửi `pace`, về `/account`).
+- `node tools/verify-web-onboarding.cjs` (Chrome thật, web dev `:3100`): **14 nhóm pass** — khách (6 sở thích, ✓ + chữ, Back, tải lại còn nháp, hoàn tất chỉ lưu local không PATCH, Khám phá trước, 390px không tràn ngang); tài khoản (PATCH lỗi giữ lựa chọn, Thử lại thành công, không gửi `pace`, về `/account`); đăng nhập 2 bước (khách đã làm khảo sát → đúng 1 PATCH với `updatedAt` gốc; hồ sơ chưa làm → mở `/onboarding`; hồ sơ `completed` → vào thẳng, không gửi); đăng xuất xoá bản local.
+- `node tools/verify-mobile-onboarding.cjs` (preview `:8082`, Edge): **pass** 9 nhóm, gồm layout 320/375/430px với 6 thẻ.
+- `node tools/verify-mobile-signup-onboarding.cjs` (`MOBILE_PREVIEW_URL=http://localhost:8082`): **pass** 9 nhóm, không có lỗi trang. Lưu ý: URL mặc định của script là `:8083`, không phải bản đang chạy của nhánh.
 
 ## Giới hạn kiểm thử
-- Chưa chạy đăng nhập/đăng ký thật tới BE: phần "khách → đăng nhập → PATCH một lần" và "đăng xuất xoá local" kiểm bằng logic + unit test, không có QA trình duyệt đầu cuối. Phần tài khoản dùng API giả lập (route chặn `/api/auth/*`).
-- Chưa chạy lại `verify-mobile-onboarding.cjs` / `verify-mobile-signup-onboarding.cjs` (cần mobile preview `:8082`); chỉ đổi nhãn trong script cho khớp tên mới.
-- Chưa chụp trên Android cho mobile (RULES mục 10); thẻ icon của `food`/`city` mới chỉ qua typecheck.
+- Chưa chạy với backend thật: máy chỉ có core-api build sẵn ở :3300 (không rõ bản) và không có Postgres/hạ tầng chạy, nên toàn bộ phần đăng nhập/tài khoản dùng API giả lập (route chặn `/api/auth/*`). Cần chạy lại trên staging sau khi merge.
+- Chưa quay màn hình trên thiết bị Android thật (RULES mục 10); mobile được kiểm bằng bản web của Expo trên Edge, ảnh chụp ở thư mục QA.
+- Chưa thử OAuth Google thật; Google đi cùng goBack với mật khẩu nên dùng chung useAfterAuth.
 
 ## Cách kiểm lại
 1. `pnpm turbo run lint typecheck test --affected`.
