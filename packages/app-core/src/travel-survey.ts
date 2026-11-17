@@ -19,7 +19,57 @@ export interface TravelPreferencesSnapshot {
   updatedAt: string;
 }
 
-export const isInterest = (id: unknown): id is Interest => INTEREST_IDS.includes(id as Interest);
+/** Bản nháp/kết quả khảo sát lưu trên máy (khách, hoặc bản sao đang làm dở của tài khoản). */
+export const ONBOARDING_KEY = 'tripflix.onboarding.v1';
+export type OnboardingStep = 'welcome' | 'interests' | 'pace' | 'review';
+const ONBOARDING_STEPS: readonly OnboardingStep[] = ['welcome', 'interests', 'pace', 'review'];
+const ONBOARDING_STATUSES = ['unseen', 'draft', 'skipped', 'completed'] as const;
+export type OnboardingRecord = {
+  version: 1;
+  status: (typeof ONBOARDING_STATUSES)[number];
+  interests: Interest[];
+  pace: Pace | null;
+  /** Chỉ để app tự dùng, không gửi lên API. */
+  step: OnboardingStep;
+  /** ISO, lúc khách bấm hoàn tất trên máy; gửi làm updatedAt khi đăng nhập rồi mới lưu vào hồ sơ. */
+  completedAt?: string;
+};
+
+export function emptyOnboarding(): OnboardingRecord {
+  return { version: 1, status: 'unseen', interests: [], pace: null, step: 'welcome' };
+}
+
+export function parseOnboarding(raw: string | null): OnboardingRecord {
+  if (!raw) return emptyOnboarding();
+  try {
+    const value = JSON.parse(raw);
+    if (
+      value?.version !== 1 ||
+      !ONBOARDING_STATUSES.includes(value.status) ||
+      !ONBOARDING_STEPS.includes(value.step) ||
+      !Array.isArray(value.interests) ||
+      !value.interests.every(isInterest) ||
+      (value.pace !== null && !isPace(value.pace))
+    )
+      return emptyOnboarding();
+    const completedAt =
+      typeof value.completedAt === 'string' && !Number.isNaN(Date.parse(value.completedAt))
+        ? value.completedAt
+        : undefined;
+    return {
+      version: 1,
+      status: value.status,
+      step: value.step,
+      interests: normalizeInterests(value.interests),
+      pace: value.pace,
+      ...(completedAt && { completedAt }),
+    };
+  } catch {
+    return emptyOnboarding();
+  }
+}
+
+export const isInterest =(id: unknown): id is Interest => INTEREST_IDS.includes(id as Interest);
 export const isPace = (id: unknown): id is Pace => PACE_IDS.includes(id as Pace);
 
 /** Bỏ mã lạ và mã trùng, giữ thứ tự chuẩn của INTEREST_IDS. */

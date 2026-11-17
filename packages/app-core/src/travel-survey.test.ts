@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildTravelPreferences,
+  emptyOnboarding,
   INTEREST_IDS,
   needsSurvey,
   normalizeInterests,
+  parseOnboarding,
   type TravelPreferencesSnapshot,
 } from './travel-survey';
 
@@ -23,6 +25,29 @@ describe('travel survey', () => {
 
   it('normalizeInterests bỏ mã lạ, mã trùng và giữ thứ tự chuẩn', () => {
     expect(normalizeInterests(['stays', 'food', 'food', 'x', 'coast'])).toEqual(['coast', 'food', 'stays']);
+  });
+
+  it('parseOnboarding đọc bản hợp lệ, giữ completedAt, bỏ bản sai về rỗng', () => {
+    const raw = JSON.stringify({
+      version: 1,
+      status: 'completed',
+      interests: ['stays', 'food', 'food'],
+      pace: 'slow',
+      step: 'review',
+      completedAt: '2026-11-17T10:00:00.000Z',
+    });
+    expect(parseOnboarding(raw)).toEqual({
+      version: 1,
+      status: 'completed',
+      interests: ['food', 'stays'],
+      pace: 'slow',
+      step: 'review',
+      completedAt: '2026-11-17T10:00:00.000Z',
+    });
+    expect(parseOnboarding(raw.replace('"food"', '"karaoke"'))).toEqual(emptyOnboarding());
+    expect(parseOnboarding('{not json')).toEqual(emptyOnboarding());
+    expect(parseOnboarding(null)).toEqual(emptyOnboarding());
+    expect(parseOnboarding(raw.replace('2026-11-17T10:00:00.000Z', 'hôm qua')).completedAt).toBeUndefined();
   });
 
   it('needsSurvey: chỉ completed mới khỏi mời', () => {

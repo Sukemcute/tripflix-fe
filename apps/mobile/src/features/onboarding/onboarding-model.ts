@@ -1,52 +1,21 @@
 import type { MyProfileDto, TravelPreferencesDto } from '@tripflix/api-client/core-api/model/index';
 import {
   buildTravelPreferences,
+  emptyOnboarding,
   INTEREST_IDS,
   needsSurvey,
+  ONBOARDING_KEY,
   PACE_IDS,
+  parseOnboarding,
   type Interest,
+  type OnboardingRecord,
+  type OnboardingStep,
   type Pace,
 } from '@tripflix/app-core';
 
-export { INTEREST_IDS, PACE_IDS, type Interest, type Pace };
-export const ONBOARDING_KEY = 'tripflix.onboarding.v1';
-export type OnboardingStep = 'welcome' | 'interests' | 'pace' | 'review';
-export type OnboardingRecord = {
-  version: 1;
-  status: 'unseen' | 'draft' | 'skipped' | 'completed';
-  interests: Interest[];
-  pace: Pace | null;
-  step: OnboardingStep;
-};
-
-export function emptyOnboarding(): OnboardingRecord {
-  return { version: 1, status: 'unseen', interests: [], pace: null, step: 'welcome' };
-}
-
-export function parseOnboarding(raw: string | null): OnboardingRecord {
-  if (!raw) return emptyOnboarding();
-  try {
-    const value = JSON.parse(raw);
-    if (
-      value?.version !== 1 ||
-      !['unseen', 'draft', 'skipped', 'completed'].includes(value.status) ||
-      !['welcome', 'interests', 'pace', 'review'].includes(value.step) ||
-      !Array.isArray(value.interests) ||
-      !value.interests.every((id: unknown) => INTEREST_IDS.includes(id as Interest)) ||
-      (value.pace !== null && !PACE_IDS.includes(value.pace))
-    )
-      return emptyOnboarding();
-    return {
-      version: 1,
-      status: value.status,
-      step: value.step,
-      interests: [...new Set<Interest>(value.interests)],
-      pace: value.pace,
-    };
-  } catch {
-    return emptyOnboarding();
-  }
-}
+// Bộ mã và định dạng bản nháp dùng chung với web nằm ở app-core (travel-survey.ts).
+export { emptyOnboarding, INTEREST_IDS, ONBOARDING_KEY, PACE_IDS, parseOnboarding };
+export type { Interest, OnboardingRecord, OnboardingStep, Pace };
 
 /** Only interrupt a plain first launch. Links with a destination keep their route. */
 export function shouldOfferOnboarding(record: OnboardingRecord, pathname: string, hasParams: boolean) {
