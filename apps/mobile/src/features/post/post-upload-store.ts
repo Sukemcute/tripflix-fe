@@ -1,4 +1,4 @@
-import { socialApi, uploadVideo } from '@tripflix/api-client';
+import { HttpError, socialApi, uploadVideo, type VideoUploadState } from '@tripflix/api-client';
 import type { QueryClient } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
 import type { VideoCompression } from './video-compress';
@@ -26,11 +26,15 @@ interface JobInput {
   compression: VideoCompression | null;
   uploadedAssetId: string | null;
   client: QueryClient;
+  /** Lượt tải dở lần trước: Thử lại thì gửi tiếp các phần còn thiếu thay vì tải lại từ đầu. */
+  uploadState?: VideoUploadState;
 }
 
 let current: PostUploadJob | null = null;
 let input: JobInput | null = null;
 let seq = 0;
+/** Huỷ lượt tải đang chạy khi bắt đầu bài mới, để video cũ không tiếp tục chiếm mạng và để lại file rác. */
+let abortRun: AbortController | null = null;
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((listener) => listener());
 function subscribe(listener: () => void) {
@@ -48,6 +52,11 @@ function update(patch: Partial<PostUploadJob>) {
 async function run(id: number) {
   const job = input!;
   const isCurrent = () => current?.id === id;
+  abortRun?.abort();
+  const controller = new AbortController();
+  abortRun = controller;
+  const resume = job.uploadState;
+  let hasNewPart = false;
   try {
     let assetId = job.uploadedAssetId ?? undefined;
     if (job.video && !assetId) {
@@ -60,11 +69,18 @@ async function run(id: number) {
       update({ phase: 'uploading', percent: 10 });
       // Tải video chiếm phần lớn thanh tiến độ (10% → 90%).
       assetId = await uploadVideo(source, {
+        signal: controller.signal,
+        resume,
+        onState: (state) => {
+          hasNewPart ||= state.uploaded.length > (resume?.uploaded.length ?? 0);
+          job.uploadState = state;
+        },
         onProgress: (done, total) => {
           if (isCurrent()) update({ percent: 10 + Math.floor((done / total) * 80) });
         },
       });
       job.uploadedAssetId = assetId;
+      job.uploadState = undefined;
       job.compression?.dispose();
     }
     if (!isCurrent()) return;
@@ -82,8 +98,13 @@ async function run(id: number) {
       job.client.invalidateQueries({ queryKey: ['social'] }),
       job.client.invalidateQueries({ queryKey: ['feed', 'authorPages'] }),
     ]);
-  } catch {
+  } catch (error) {
+    // Server không nhận lượt tải cũ nữa (hết hạn, đã huỷ) thì lần sau tải lại từ đầu; lỗi mạng thì vẫn tải tiếp.
+    if (resume && !hasNewPart && error instanceof HttpError && error.status >= 400 && error.status < 500)
+      job.uploadState = undefined;
     if (isCurrent()) update({ phase: 'failed' });
+  } finally {
+    if (abortRun === controller) abortRun = null;
   }
 }
 
