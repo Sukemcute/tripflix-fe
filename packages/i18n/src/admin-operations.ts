@@ -8,6 +8,9 @@ export const adminOperations = {
   platform: 'Nền tảng',
   management: 'Quản trị',
   refresh: 'Làm mới dữ liệu',
+  // TF104: hồ sơ vừa vào hàng chờ sau khi realtime làm mới.
+  freshCase: 'Mới',
+  freshCases: '{count} hồ sơ mới vào hàng chờ',
   moderator: 'Kiểm duyệt viên',
   superadmin: 'Quản trị hệ thống',
   live: 'Kiểm duyệt: cập nhật trực tiếp',
