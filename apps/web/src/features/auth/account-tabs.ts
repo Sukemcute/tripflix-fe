@@ -1,5 +1,6 @@
 /** Các tab của /account. File thường (không 'use client') để trang server đọc được ?tab=. */
-export const ACCOUNT_TABS = ['profile', 'security', 'bookings', 'mine', 'bookmarks', 'create'] as const;
+// Đăng bài chỉ còn ở tab Cảm hứng (TF25): ?tab=create cũ mở tab Tài khoản.
+export const ACCOUNT_TABS = ['profile', 'security', 'bookings', 'mine', 'bookmarks'] as const;
 export type AccountTab = (typeof ACCOUNT_TABS)[number];
 
 /** Đọc ?tab= của /account (ví dụ từ mục "Bài đăng của tôi" trên menu tài khoản); giá trị lạ thì mở tab Tài khoản. */

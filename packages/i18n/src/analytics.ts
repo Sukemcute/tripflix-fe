@@ -64,6 +64,8 @@ export const analytics = {
   traceIntro: 'Lần theo request',
   traceHelp: 'Tìm request chậm hoặc lỗi và mở timeline các span. Danh sách tối đa 50 trace khớp bộ lọc.',
   errorsOnly: 'Chỉ trace có lỗi',
+  includeSuccessfulPreflights: 'Hiện preflight CORS thành công',
+  preflightHelp: 'Preflight lỗi và trace cũ chưa phân loại vẫn hiển thị mặc định.',
   minDuration: 'Độ trễ tối thiểu',
   anyDuration: 'Mọi độ trễ',
   traceId: 'Trace ID',

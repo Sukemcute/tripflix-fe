@@ -120,24 +120,33 @@ function dateAfter(days) {
       );
     });
     await check('Lưu bản nháp và đăng bài chữ vào database', async () => {
-      await web.click('Chia sẻ trải nghiệm');
-      await web.fill('Tiêu đề', title);
-      await web.fill('Nội dung', 'Nội dung kiểm thử tích hợp FE và BE, dùng dữ liệu local.');
-      await web.click('Lưu bản nháp');
-      await web.visible('Bản nháp đã được lưu vào tài khoản của bạn.');
-      const href = await web.page
-        .getByRole('link', { name: 'Xem chi tiết', exact: true })
-        .getAttribute('href');
-      postId = href.split('/').pop();
-      await web.visit(href);
-      await web.page.getByRole('heading', { name: title, exact: true }).waitFor();
+      // Đăng bài chỉ còn ở tab Cảm hứng (TF25): mở pop-up đăng bài, lưu nháp rồi đăng ngay trong pop-up.
+      await web.visit('/inspiration');
       await web.click('Đăng bài');
+      const composer = web.page.getByRole('dialog', { name: 'Đăng bài' });
+      await composer.getByLabel('Tiêu đề', { exact: true }).fill(title);
+      await composer.getByLabel('Nội dung', { exact: true }).fill('Nội dung kiểm thử tích hợp FE và BE, dùng dữ liệu local.');
+      await composer.getByLabel('Hashtag', { exact: true }).fill('kiemthu');
+      await composer.getByLabel('Hashtag', { exact: true }).press('Enter');
+      await composer.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
+      await composer.getByText('Đã lưu bản nháp thành công.', { exact: true }).waitFor();
+      await eventually(async () => {
+        const draft = (await api('/api/v1/me/posts?status=draft&limit=30', 'GET', undefined, memberToken)).items.find(
+          (post) => post.title === title,
+        );
+        assert.ok(draft);
+        assert.deepEqual(draft.hashtags, ['kiemthu']);
+        postId = draft.id;
+      });
+      await composer.getByRole('button', { name: 'Đăng bài', exact: true }).click();
       await eventually(async () =>
         assert.equal(
           (await api(`/api/v1/posts/${postId}`, 'GET', undefined, memberToken)).post.status,
           'published',
         ),
       );
+      await web.visit(`/inspiration?open=${postId}`);
+      await web.page.getByRole('heading', { name: title, exact: true }).waitFor();
     });
     await check('Thích và lưu bài được giữ sau khi tải lại', async () => {
       await web.click('Thích');

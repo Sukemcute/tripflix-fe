@@ -54,7 +54,8 @@
 
 .dropzoneHint,
 .footer {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
   color: var(--iv-text-muted, var(--color-text-muted));
 }
 

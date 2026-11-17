@@ -12,6 +12,8 @@ import styles from './social-feed.module.css';
 export interface ItinerarySidebarPanelProps {
   className?: string;
   trip?: TripAttachmentDto | null;
+  /** Bài đang xem: nút "Xem chi tiết chuyến đi" mở /trip-plans/{postId}. */
+  postId?: string;
   postTitle?: string;
   hashtags?: string[];
   coverImage?: string | null;
@@ -30,6 +32,7 @@ type ItineraryTab = 'schedule' | 'destinations' | 'cost';
 export function ItinerarySidebarPanel({
   className = '',
   trip,
+  postId,
   postTitle = 'Chuyến đi gợi ý',
   hashtags = [],
   coverImage,
@@ -93,7 +96,7 @@ export function ItinerarySidebarPanel({
           type="button"
           className={styles.itineraryCollapseBtn}
           aria-label={vi.api.immersiveItineraryCollapse}
-          title={vi.api.immersiveItineraryCollapse}
+          data-tooltip={vi.api.immersiveItineraryCollapse}
           onClick={onClose}
         >
           <SocialIcon name="chevronLeft" size={18} />
@@ -149,7 +152,9 @@ export function ItinerarySidebarPanel({
             <Link
               prefetch={false}
               href={
-                trip.hotelId
+                postId
+                  ? `/trip-plans/${encodeURIComponent(postId)}`
+                  : trip.hotelId
                   ? `/hotels/${encodeURIComponent(trip.hotelId)}`
                   : `/search?q=${encodeURIComponent(
                       trip.hotelName ?? trip.destinationName ?? postTitle

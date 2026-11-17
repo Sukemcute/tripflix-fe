@@ -1,0 +1,40 @@
+/* Chú thích: nền mực đậm, chữ trắng nhỏ, bo 8px, hiện mờ dần và trượt nhẹ; không bóng màu. */
+.tip {
+  position: fixed;
+  z-index: 100;
+  max-width: 260px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--color-ink);
+  color: var(--color-background);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: tooltip-in 120ms ease-out;
+}
+
+.tip[data-side='bottom'] {
+  animation-name: tooltip-in-below;
+}
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+@keyframes tooltip-in-below {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tip {
+    animation: none;
+  }
+}

@@ -15,6 +15,9 @@ import { PostOwnerMenu } from '../post-owner-menu';
 import { AdaptivePostMedia } from './adaptive-post-media';
 import styles from './social-feed.module.css';
 
+/** Hiện tối đa 3 hashtag trên thẻ bài, phần còn lại gộp thành "+N" (rê chuột xem đủ). */
+const VISIBLE_HASHTAGS = 3;
+
 export interface PostCardProps {
   post: SocialPostDto;
   currentUser: { id: string; displayName: string } | null;
@@ -107,6 +110,7 @@ export function PostCard({
     <article
       className={`${styles.postCard} ${isCommentActive ? styles.postCardActiveComment : ''}`}
       aria-label={post.title}
+      data-post-id={post.id}
     >
       {/* 1. Post Header: Avatar, Name, Handle, Date, Location, Menu */}
       <header className={styles.postHeader}>
@@ -118,7 +122,7 @@ export function PostCard({
             <div className={styles.authorNameRow}>
               <span className={styles.authorName}>{authorInfo.name}</span>
               {post.isVerified && (
-                <span className={styles.authorVerified} title={vi.api.postVerifiedAccountTitle} aria-label={vi.api.postVerifiedBadge}>
+                <span className={styles.authorVerified} data-tooltip={vi.api.postVerifiedAccountTitle} aria-label={vi.api.postVerifiedBadge}>
                   <SocialIcon name="verified" size={15} />
                 </span>
               )}
@@ -146,7 +150,7 @@ export function PostCard({
           <button
             type="button"
             className={styles.headerMenuBtn}
-            title="Tùy chọn bài viết"
+            data-tooltip="Tùy chọn bài viết"
             aria-label="Tùy chọn bài viết"
           >
             <SocialIcon name="more" size={18} />
@@ -178,7 +182,7 @@ export function PostCard({
 
       {post.hashtags && post.hashtags.length > 0 && (
         <div className={styles.postTagsWrap}>
-          {post.hashtags.map((tag) => (
+          {post.hashtags.slice(0, VISIBLE_HASHTAGS).map((tag) => (
             <button
               key={tag}
               type="button"
@@ -188,6 +192,14 @@ export function PostCard({
               #{tag}
             </button>
           ))}
+          {post.hashtags.length > VISIBLE_HASHTAGS && (
+            <span
+              className={styles.postTagMore}
+              data-tooltip={post.hashtags.slice(VISIBLE_HASHTAGS).map((tag) => `#${tag}`).join(' ')}
+            >
+              +{post.hashtags.length - VISIBLE_HASHTAGS}
+            </span>
+          )}
         </div>
       )}
 
@@ -204,7 +216,7 @@ export function PostCard({
           type="button"
           className={styles.postAttachedTrip}
           onClick={() => onViewItinerary?.(post.id)}
-          title={vi.api.postViewItineraryTitle}
+          data-tooltip={vi.api.postViewItineraryTitle}
           aria-label={t('api.postViewItineraryAria', { name: trip.hotelName ?? trip.destinationName ?? post.title })}
         >
           <div className={styles.tripCardLeft}>
