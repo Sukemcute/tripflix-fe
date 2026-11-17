@@ -1,8 +1,11 @@
-import { LivePostDetail } from '@/features/social/live-posts';
-export default async function PostPage({ params, searchParams }: {
+import { redirect } from 'next/navigation';
+import { buildPostHref } from '@/features/social/search-url';
+
+/** Trang chi tiết bài cũ đã bỏ: link cũ (thông báo, link đã gửi) chuyển sang bài đó ở trang Cảm hứng. */
+export default async function LegacyPostPage({ params, searchParams }: {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ comment?: string | string[] }>;
 }) {
   const [{ slug }, { comment }] = await Promise.all([params, searchParams]);
-  return <LivePostDetail id={slug} focusCommentId={typeof comment === 'string' ? comment : undefined} />;
+  redirect(buildPostHref(slug, { commentId: typeof comment === 'string' ? comment : undefined }));
 }

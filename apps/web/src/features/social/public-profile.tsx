@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { SocialIcon } from './live-posts';
-import { buildInspirationHref } from './search-url';
+import { buildInspirationHref, buildPostHref } from './search-url';
 import grid from './search-results-grid.module.css';
 import styles from './public-profile.module.css';
 
@@ -127,7 +127,7 @@ function VlogGrid({ userId }: { userId: string }) {
       {items.map((post) => (
         <Tile
           key={post.id}
-          href={`/trips/${post.id}`}
+          href={buildPostHref(post.id)}
           image={post.images?.[0]?.url}
           likes={post.reactionTotal}
           title={post.title}
