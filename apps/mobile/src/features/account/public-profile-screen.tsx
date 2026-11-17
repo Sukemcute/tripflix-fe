@@ -90,7 +90,6 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
           {isReady && !isMine && (
             <Button
               tone={follow.isFollowing ? 'secondary' : 'primary'}
-              icon={follow.isFollowing ? 'checkmark' : 'person-add-outline'}
               style={styles.follow}
               disabled={!!user && !follow.canToggle}
               onPress={() => {
