@@ -27,7 +27,7 @@ const postWatchers = new Map<string, Set<(changes: readonly PostCommentsChange[]
 const postTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const pendingPostChanges = new Map<string, PostCommentsChange[]>();
 
-function reloadPostComments(change: PostCommentsChange): void {
+function schedulePostCommentsReload(change: PostCommentsChange): void {
   const postId = change.postId;
   pendingPostChanges.set(postId, [...(pendingPostChanges.get(postId) ?? []), change]);
   if (postTimers.has(postId)) return;
@@ -106,7 +106,7 @@ export function useNotificationsRealtime(onNotificationCreated?: (payload: unkno
         if (raw.actorId === userId && changeCount === 1) return;
         const kind = ['created', 'updated', 'deleted', 'hidden', 'restored'].includes(String(raw.kind))
           ? raw.kind as PostCommentsChange['kind'] : 'resync';
-        reloadPostComments({
+        schedulePostCommentsReload({
           postId: payload.postId, kind: changeCount > 1 ? 'resync' : kind, changeCount,
           parentCommentId: typeof raw.parentCommentId === 'string' ? raw.parentCommentId : null,
           commentId: typeof raw.commentId === 'string' ? raw.commentId : undefined,
@@ -128,7 +128,7 @@ export function useNotificationsRealtime(onNotificationCreated?: (payload: unkno
       connectedUserId = userId;
       postWatchers.forEach((_, postId) => {
         socket.emit('post.watch', { postId });
-        reloadPostComments({ postId, kind: 'resync' });
+        schedulePostCommentsReload({ postId, kind: 'resync' });
       });
       // Tải lại để bù phần lỡ; lượt tải này cũng tính lại refetchInterval nên polling tắt.
       reload();

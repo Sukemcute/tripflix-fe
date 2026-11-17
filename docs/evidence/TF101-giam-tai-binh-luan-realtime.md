@@ -21,12 +21,13 @@
 - Test dùng InfiniteQueryObserver thật với 10 trang đã cache: created gốc/reply và updated chỉ có 1 request bình luận, getPost 0; hidden/deleted 1 request bình luận và 1 getPost. Danh sách không liên quan vẫn giữ 10 trang.
 - Socket: bỏ tín hiệu đơn của mình, giữ metadata hai luồng khác nhau và không bỏ mất nhóm coalesced có actor cuối trùng mình.
 - `tools/verify-tf101-web.cjs`: Web thật, API/socket mô phỏng; hidden placeholder vẫn đúng, đang cuộn có nút mới nhưng chưa phát request, bấm chỉ thêm 1 request, own event không làm tăng số.
+- `tools/verify-tf101-live.cjs`: Hai phiên Playwright riêng, Core API và notification-service local thật. Hai QA account đăng nhập qua API thật; token ngắn hạn được đưa vào bootstrap refresh của trình duyệt do giới hạn OTP email theo IP. API bình luận và Socket.IO không mock: người xem kia nhận comment mới, người gửi không refetch; Core tự ẩn thì tác giả thấy khung xám, người khác không thấy dòng, API chỉ trả placeholder `hidden` đã redact và inbox không có `moderation.comment.hide`.
 
 ## Cách kiểm lại / ảnh
 1. `pnpm turbo run lint typecheck test --affected`
 2. Chạy Web :3100 rồi `node tools/verify-tf101-web.cjs` (PLAYWRIGHT_PACKAGE trỏ package đã cài nếu cần).
 - Ảnh local: `D:/Sukem/VinUni/VSF/outputs/tf101-web/new-comments-pending.png`. Không commit ảnh.
-- Ca trình duyệt dùng fixture, chưa đo lại tải với nhiều người trên backend thật.
+- Ảnh live local: `D:/Sukem/VinUni/VSF/outputs/tf101-live/author-hidden.png`, `other-viewer.png`; kết quả và metadata socket: `result.json`. Không commit ảnh/kết quả QA.
 
 ## Ảnh hưởng
 - API client socket dùng chung và Web của Thành. Callback được thêm metadata; callback cũ bỏ qua tham số vẫn dùng được.
