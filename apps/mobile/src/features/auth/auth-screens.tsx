@@ -1,71 +1,11 @@
 import { colors as c, spacing as s } from '@tripflix/tokens';
-import { vi } from '@tripflix/i18n';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import {
-  assets,
-  Badge,
-  Button,
-  copy,
-  Field,
-  Logo,
-  Mascot,
-  Notice,
-  Screen,
-  Txt,
-  ui,
-} from '@/components/mobile-ui';
+import { assets, Button, copy, Field, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
 import { useReview } from '@/features/review/review-provider';
 
-export function OnboardingScreen() {
-  return (
-    <Screen
-      back={false}
-      footer={
-        <>
-          <Button icon="arrow-forward" onPress={() => router.replace('/(tabs)')}>
-            {copy.onboarding.start}
-          </Button>
-          <Button tone="text" onPress={() => router.push('/login')}>
-            {copy.onboarding.login}
-          </Button>
-        </>
-      }
-    >
-      <View
-        style={{
-          backgroundColor: c.seaMist,
-          borderRadius: 32,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: s.lg,
-          minHeight: 310,
-        }}
-      >
-        <Image
-          source={assets.sea}
-          style={{ position: 'absolute', width: '100%', height: '100%', opacity: 0.2, borderRadius: 32 }}
-        />
-        <Mascot pose="welcome" size={250} />
-        <Badge tone="sun">{copy.onboarding.badge}</Badge>
-      </View>
-      <View style={{ alignItems: 'center', gap: s.xl }}>
-        <Logo />
-        <Txt variant="title" style={ui.center}>
-          {copy.onboarding.title}
-        </Txt>
-        <Txt variant="small" style={[ui.muted, ui.center]}>
-          {copy.onboarding.body}
-        </Txt>
-      </View>
-      <Txt variant="caption" style={[ui.muted, ui.center]}>
-        {vi.api.loginBody}
-      </Txt>
-    </Screen>
-  );
-}
+export { OnboardingScreen } from '@/features/onboarding/onboarding-screen';
 
 export function LoginScreen({ afterSignIn }: { afterSignIn?: () => void } = {}) {
   const review = useReview();

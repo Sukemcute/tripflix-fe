@@ -4,11 +4,12 @@ import { vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, nativeFonts, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { Button, Icon, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
-import { ApiErrorNotice } from '@/components/api-state';
+import { Button, copy, Icon, IconButton, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
+import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { LoadingDots } from '@/components/loading-dots';
 
 const GRID_COLUMNS = 3;
 const GRID_GAP = 2;
@@ -16,6 +17,25 @@ const GRID_GAP = 2;
 /** Trang cá nhân công khai (TF47): mở khi bấm tên hoặc avatar một người. */
 export function PublicProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  return <ProfileView id={id} />;
+}
+
+/** Tab Tôi (TF47B): trang cá nhân của chính mình, bánh răng mở menu cài đặt; chưa đăng nhập thì bắt đăng nhập. */
+export function MyProfileScreen() {
+  const { user, isReady } = useApiSession();
+  if (!isReady || !user) return <RequireAccount />;
+  return (
+    <ProfileView
+      id={user.id}
+      back={false}
+      right={
+        <IconButton name="settings-outline" label={copy.profile.menu} onPress={() => router.push('/settings')} />
+      }
+    />
+  );
+}
+
+function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: ReactNode }) {
   const { user, isReady } = useApiSession();
   const profile = usePublicProfile(id);
   const isMine = !!user && user.id === id;
@@ -32,7 +52,7 @@ export function PublicProfileScreen() {
     : [];
 
   return (
-    <Screen title={name || vi.api.loading}>
+    <Screen title={name || vi.api.loading} back={back} right={right}>
       {isMissing ? (
         <Notice>{vi.api.profileNotFound}</Notice>
       ) : (
@@ -160,7 +180,7 @@ function GridState({
   emptyText: string;
   children: React.ReactNode;
 }) {
-  if (query.isPending) return <Txt style={[ui.center, ui.muted, styles.state]}>{vi.api.loading}</Txt>;
+  if (query.isPending) return <LoadingDots />;
   if (query.error) return <ApiErrorNotice error={query.error} retry={() => void query.refetch()} />;
   if (isEmpty) return <Txt style={[ui.center, ui.muted, styles.state]}>{emptyText}</Txt>;
   return (

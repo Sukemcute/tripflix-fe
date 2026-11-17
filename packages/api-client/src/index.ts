@@ -69,6 +69,13 @@ export {
   type ReelFeedTab,
 } from './feed';
 export {
+  buildPlaybackCookieHeader,
+  getPlaybackSessionRefreshDelayMs,
+  playbackSessionApi,
+  usePlaybackSession,
+  type PlaybackSession,
+} from './playback-session';
+export {
   getNotificationPostTarget,
   notificationsApi,
   readCreatedNotification,
@@ -168,6 +175,7 @@ export {
   type AssistantAnswer,
   type AssistantAnswerKind,
   type AssistantCard,
+  type AssistantAction,
   type AssistantCardLine,
   type AssistantTrip,
 } from './assistant';

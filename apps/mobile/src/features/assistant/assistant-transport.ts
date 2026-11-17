@@ -47,6 +47,7 @@ export const assistantTransport: AssistantTransport = async (messages, signal, c
         // kind chỉ là các giá trị server đã trả về ở lượt trước.
         history: buildAssistantHistory(history) as Turn[],
         contextPostId: context.contextPostId ?? null,
+        action: context.action ?? null,
         trip: context.trip,
       },
       { baseUrl: AI_BASE_URL, signal },

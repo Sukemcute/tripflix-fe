@@ -25,6 +25,8 @@ import type {
   ExploreResponseDto,
   HomeRecommendationsControllerRecommendForHomeParams,
   HomeRecommendationsDto,
+  PlacesControllerPlacesParams,
+  PlacesResponseDto,
   PostRecommendationsControllerRecommendPostsParams,
   PostRecommendationsControllerRecommendReelsParams,
   PostRecommendationsDto,
@@ -208,6 +210,164 @@ export function useSuggestControllerSuggest<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getSuggestControllerSuggestQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type placesControllerPlacesResponse200 = {
+  data: PlacesResponseDto;
+  status: 200;
+};
+
+export type placesControllerPlacesResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type placesControllerPlacesResponseSuccess = placesControllerPlacesResponse200 & {
+  headers: Headers;
+};
+export type placesControllerPlacesResponseError = placesControllerPlacesResponse400 & {
+  headers: Headers;
+};
+
+export type placesControllerPlacesResponse =
+  placesControllerPlacesResponseSuccess | placesControllerPlacesResponseError;
+
+export const getPlacesControllerPlacesUrl = (params?: PlacesControllerPlacesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/places?${stringifiedParams}` : `/api/places`;
+};
+
+/**
+ * Dữ liệu © OpenStreetMap contributors (ODbL), nạp sẵn cho các thành phố demo. App phải hiện `attribution` kèm danh sách.
+ *
+ * - Cần `city` (tên có dấu hay không đều được, hoặc id như `vung-tau`) hoặc `near=lat,lng`.
+ * - `lodging` là chỗ ở ngoài Tripflix: chỉ để tham khảo, không có giá, không đặt được.
+ * - Không khớp thành phố thì `items: []` (không phải lỗi).
+ * @summary Điểm tham quan, ăn uống, chỗ ở có toạ độ quanh một thành phố hoặc một toạ độ
+ */
+export const placesControllerPlaces = async (
+  params?: PlacesControllerPlacesParams,
+  options?: Parameters<typeof http>[1],
+): Promise<placesControllerPlacesResponse> => {
+  return http<placesControllerPlacesResponse>(getPlacesControllerPlacesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getPlacesControllerPlacesQueryKey = (params?: PlacesControllerPlacesParams) => {
+  return [`/api/places`, ...(params ? [params] : [])] as const;
+};
+
+export const getPlacesControllerPlacesQueryOptions = <
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params?: PlacesControllerPlacesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPlacesControllerPlacesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof placesControllerPlaces>>> = ({ signal }) =>
+    placesControllerPlaces(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof placesControllerPlaces>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PlacesControllerPlacesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof placesControllerPlaces>>
+>;
+export type PlacesControllerPlacesQueryError = void;
+
+export function usePlacesControllerPlaces<
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params: undefined | PlacesControllerPlacesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof placesControllerPlaces>>,
+          TError,
+          Awaited<ReturnType<typeof placesControllerPlaces>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePlacesControllerPlaces<
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params?: PlacesControllerPlacesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof placesControllerPlaces>>,
+          TError,
+          Awaited<ReturnType<typeof placesControllerPlaces>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePlacesControllerPlaces<
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params?: PlacesControllerPlacesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Điểm tham quan, ăn uống, chỗ ở có toạ độ quanh một thành phố hoặc một toạ độ
+ */
+
+export function usePlacesControllerPlaces<
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params?: PlacesControllerPlacesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getPlacesControllerPlacesQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

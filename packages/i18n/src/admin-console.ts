@@ -146,10 +146,6 @@ export const adminConsole = {
     loaded: '{count} bản ghi đã tải',
   },
   unavailable: {
-    analytics: {
-      title: 'Xu hướng & gian lận',
-      body: 'Module phân tích chưa có API. Khi backend analytics sẵn sàng, số liệu sẽ hiện ở đây.',
-    },
     orders: {
       title: 'Đơn hàng & thanh toán',
       body: 'Chưa có API quản trị đơn hàng. Trang này sẽ hiện đơn và thanh toán khi commerce mở endpoint.',

@@ -137,7 +137,7 @@ export function ModerationPostDetail({
         {status === 'published' && (
           <a
             className="inline-flex w-fit items-center gap-1 text-sm font-semibold text-teal-ink hover:underline"
-            href={`${WEB_URL}/trips/${encodeURIComponent(post.id)}`}
+            href={`${WEB_URL}/inspiration?open=${encodeURIComponent(post.id)}`}
             target="_blank"
             rel="noreferrer"
           >

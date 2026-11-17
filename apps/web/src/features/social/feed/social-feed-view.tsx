@@ -13,6 +13,7 @@ import {
 } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { SocialIcon, ComposerModal, RightPanelCommentsSynchronized } from '../live-posts';
+import { refreshCommentsIfStale } from '../comment-cache';
 import { useHasUserInteracted } from '../use-has-user-interacted';
 import { useSettledFlag } from '../use-settled-flag';
 import { usePresence } from '../use-presence';
@@ -36,6 +37,8 @@ export interface SocialFeedViewProps {
   searchKeyword?: string;
   /** Bài mở từ trang chủ hoặc grid kết quả: cuộn sẵn tới bài đó. */
   focusPostId?: string | null;
+  /** Bình luận cần nhảy tới trong bài focusPostId (link từ thông báo): mở sẵn panel bình luận. */
+  focusCommentId?: string;
   onBackToResults?: () => void;
   isItineraryOpen?: boolean;
   onOpenItinerary?: () => void;
@@ -51,6 +54,7 @@ export function SocialFeedView({
   initialKeyword = '',
   searchKeyword,
   focusPostId = null,
+  focusCommentId,
   onBackToResults,
   isItineraryOpen: propIsItineraryOpen,
   onOpenItinerary,
@@ -78,7 +82,7 @@ export function SocialFeedView({
   // Layout states
   // Màn rộng mở sẵn panel bình luận; người dùng đóng/mở thì giữ lựa chọn đó. Server render coi như đóng để không lệch hydration.
   const isWideScreen = useIsWideScreen();
-  const [rightOpenChoice, setIsRightOpen] = useState<boolean | null>(null);
+  const [rightOpenChoice, setIsRightOpen] = useState<boolean | null>(focusCommentId ? true : null);
   const isRightOpen = rightOpenChoice ?? isWideScreen;
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [activeFocusedPostId, setActiveFocusedPostId] = useState<string | null>(null);
@@ -665,7 +669,7 @@ export function SocialFeedView({
       // Neu dang dong hoac dang mo bai khac -> Mo panel va tai moi binh luan
       setActiveCommentPostId(postId);
       setIsRightOpen(true);
-      void client.invalidateQueries({ queryKey: ['social', 'comments', postId] });
+      refreshCommentsIfStale(client, postId);
       setTimeout(() => {
         commentInputRef.current?.focus();
       }, 80);
@@ -951,6 +955,7 @@ export function SocialFeedView({
               loginHref={loginReturnHref}
               scrollContainerRef={rightScrollRef}
               composerInputRef={commentInputRef}
+              focusCommentId={activeCommentPost.id === focusPostId ? focusCommentId : undefined}
             />
           ) : (
             <div className={styles.emptyCommentsNotice}>

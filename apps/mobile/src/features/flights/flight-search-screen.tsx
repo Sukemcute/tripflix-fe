@@ -38,6 +38,7 @@ import {
 } from '@/components/mobile-ui';
 import { saveTripPick, type TripBookingOffer } from '@/features/booking/trip-booking-store';
 import { CommerceError } from '@/features/booking/commerce-state';
+import { LoadingDots } from '@/components/loading-dots';
 
 const copy = vi.flights;
 const airportNames: Readonly<Record<string, string>> = copy.airports;
@@ -238,7 +239,7 @@ export function FlightSearchScreen() {
           {copy.search}
         </Button>
         {hasInvalidSearch && <Notice tone="error">{copy.invalidSearch}</Notice>}
-        {routes.isPending && <Txt>{vi.api.loading}</Txt>}
+        {routes.isPending && <LoadingDots />}
         <ApiErrorNotice error={routes.error} retry={() => void routes.refetch()} />
         {routes.data?.length === 0 && <Notice>{copy.noRoutes}</Notice>}
       </Card>
@@ -354,7 +355,7 @@ function FlightResults({
           {formatDate(search.date)} · {formatPassengerMix(getFlightPassengerMix(search))}
         </Txt>
       </View>
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      {query.isPending && <LoadingDots />}
       <ApiErrorNotice error={query.error} retry={() => void query.refetch()} />
       {query.data?.length === 0 && <Notice>{copy.empty}</Notice>}
       {query.data?.map(

@@ -42,6 +42,7 @@ export const adminNavGroups: readonly AdminNavGroup[] = [
       { href: '/inventory', label: 'admin.inventory', icon: 'calendar', access: 'superadmin' },
       { href: '/orders', label: 'admin.orders', icon: 'receipt', access: 'superadmin' },
       { href: '/analytics', label: 'admin.analytics', icon: 'trend', access: 'superadmin' },
+      { href: '/ai-usage', label: 'admin.aiUsage', icon: 'pulse', access: 'superadmin' },
       { href: '/reports', label: 'admin.reports', icon: 'report', access: 'superadmin' },
     ],
   },

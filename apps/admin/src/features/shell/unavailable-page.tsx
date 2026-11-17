@@ -2,7 +2,7 @@ import { vi } from '@tripflix/i18n';
 import Link from 'next/link';
 import { Card, EmptyState, PageHeader } from '../ui/primitives';
 
-const ICONS = { orders: 'receipt', analytics: 'trend', reports: 'report' } as const;
+const ICONS = { orders: 'receipt', reports: 'report' } as const;
 
 /** Trang chưa có API phía backend: nói rõ là chưa có dữ liệu, không hiện số giả. */
 export function UnavailablePage({ kind }: { kind: keyof typeof ICONS }) {

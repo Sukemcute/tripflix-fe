@@ -36,6 +36,9 @@ catalogs:
     clsx:
       specifier: ^2.1.1
       version: 2.1.1
+    hls.js:
+      specifier: 1.7.4
+      version: 1.7.4
     next:
       specifier: ^16.4.5
       version: 16.4.5
@@ -295,6 +298,9 @@ importers:
       '@tripflix/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      hls.js:
+        specifier: 'catalog:'
+        version: 1.7.4
       next:
         specifier: 'catalog:'
         version: 16.4.5(@types/node@24.19.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -3268,6 +3274,9 @@ packages:
 
   hermes-parser@0.36.1:
     resolution: {integrity: sha512-GApNk4zLHi2UWoWZZkx7LNCOSzLSc5lB55pZ/PhK7ycFeg7u5LcF88p/WbpIi1XUDtE0MpHE3uRR3u3KB7TjSQ==}
+
+  hls.js@1.7.4:
+    resolution: {integrity: sha512-3GlxGdPvT2YHvQYOt+yOzT/DEior/qJVNIylHA77kgeoBTdQQqi70GwefNEUmHQeNGyjC8U62+bruqW/Tpm+tg==}
 
   hosted-git-info@7.0.2:
     resolution: {integrity: sha512-puUZAUKT5m8Zzvs72XWy3HtvVbTWljRE66cP60bxJzAqf2DgICo7lYTY2IHUmLnNpjYvw5bvmoHvPc0QO2a62w==}
@@ -7507,6 +7516,8 @@ snapshots:
   hermes-parser@0.36.1:
     dependencies:
       hermes-estree: 0.36.1
+
+  hls.js@1.7.4: {}
 
   hosted-git-info@7.0.2:
     dependencies:

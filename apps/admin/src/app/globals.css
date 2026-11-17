@@ -134,6 +134,9 @@
   .admin-status.waiting {
     @apply bg-sun-soft text-ink;
   }
+  .admin-main {
+    @apply grid min-h-dvh place-items-center bg-surface p-6;
+  }
   .admin-text-button {
     @apply text-sm font-semibold text-teal-ink hover:underline;
   }

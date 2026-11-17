@@ -3,7 +3,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { useApiSession } from '@tripflix/api-client';
+import { socialApi, useApiSession } from '@tripflix/api-client';
+import { useQuery } from '@tanstack/react-query';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { validateInspirationKeyword } from '@/features/discovery/inspiration-keyword';
 import { InstagramLeftDock } from './feed/instagram-left-dock';
@@ -15,6 +16,7 @@ import {
   buildInspirationHref,
   parseSearchResultType,
   SEARCH_OPEN_KIND_PARAM,
+  SEARCH_COMMENT_PARAM,
   SEARCH_OPEN_PARAM,
   SEARCH_QUERY_PARAM,
   SEARCH_TYPE_PARAM,
@@ -60,12 +62,13 @@ export function InspirationView() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user } = useApiSession();
+  const { user, isReady } = useApiSession();
 
   // Tinh toan che do xem truc tiep tu URL query param (?view=posts hoac ?view=reels)
   const viewParam = searchParams.get('view');
   const openPostId = searchParams.get(SEARCH_OPEN_PARAM) || null;
   const isOpenReel = searchParams.get(SEARCH_OPEN_KIND_PARAM) === 'reel';
+  const focusCommentId = searchParams.get(SEARCH_COMMENT_PARAM) || undefined;
   const activeView: 'posts' | 'reels' = (viewParam === 'reels' && !openPostId) || (openPostId && isOpenReel) ? 'reels' : 'posts';
 
   // Tìm kiếm theo URL (?q= từ khoá đã chốt, ?open= bài mở từ grid) để F5 và nút Back giữ đúng chỗ.
@@ -96,6 +99,7 @@ export function InspirationView() {
   const [filterMode, setFilterMode] = useState<FeedNavFilter>('all');
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerPostType, setComposerPostType] = useState<'video' | 'vlog'>('vlog');
+  const [composerDraftId, setComposerDraftId] = useState<string | null>(null);
 
   const navigate = useCallback(
     (changes: InspirationUrlChanges, mode: 'push' | 'replace') => {
@@ -105,6 +109,28 @@ export function InspirationView() {
     },
     [router, pathname, searchParams]
   );
+
+  // Link mở thẳng một bài (/trips/<id> cũ, thông báo, admin) không biết loại bài: cùng cache với bảng tin.
+  const isDirectOpen = Boolean(openPostId) && !isSearching;
+  const directPostQuery = useQuery({
+    queryKey: ['social', 'post', openPostId, user?.id],
+    enabled: isReady && isDirectOpen,
+    queryFn: ({ signal }) => socialApi.getPost(openPostId!, signal),
+    retry: false,
+  });
+  const directPost = isDirectOpen && directPostQuery.data?.post.id === openPostId ? directPostQuery.data.post : null;
+  useEffect(() => {
+    if (!directPost) return;
+    if (directPost.status === 'draft' && directPost.authorId === user?.id) {
+      // Nháp không hiện ở bảng tin: mở khung soạn bài để sửa, đăng hoặc xoá.
+      setComposerDraftId(directPost.id);
+      setComposerPostType(directPost.postType === 'video' ? 'video' : 'vlog');
+      setIsComposerOpen(true);
+      navigate({ openPostId: null }, 'replace');
+    } else if (directPost.postType === 'video' && !isOpenReel) {
+      navigate({ openPostId: directPost.id, isOpenReel: true }, 'replace');
+    }
+  }, [directPost, user?.id, isOpenReel, navigate]);
 
   // Chọn tab trên dock thì thoát tìm kiếm.
   const handleSelectView = useCallback(
@@ -170,6 +196,7 @@ export function InspirationView() {
   const handleOpenComposer = useCallback(
     (type?: 'video' | 'vlog') => {
       setComposerPostType(type ?? (activeView === 'reels' ? 'video' : 'vlog'));
+      setComposerDraftId(null);
       setIsComposerOpen(true);
     },
     [activeView]
@@ -199,6 +226,7 @@ export function InspirationView() {
           isVisible={isPostsVisible}
           searchKeyword={searchKeyword}
           focusPostId={openPostId}
+          focusCommentId={focusCommentId}
           onBackToResults={isSearching ? handleBackToResults : undefined}
           isItineraryOpen={isItineraryOpen}
           onOpenItinerary={() => setIsItineraryOpen(true)}
@@ -234,6 +262,7 @@ export function InspirationView() {
           searchReelIds={searchReelIds}
           pinnedPostId={sharedReelId}
           initialPostId={isSearchReelOpen || sharedReelId ? openPostId : null}
+          focusCommentId={focusCommentId}
           onBackToResults={isSearchReelOpen ? handleBackToResults : undefined}
           onSearchKeywordChange={handleSubmitSearch}
           isItineraryOpen={isItineraryOpen}
@@ -247,6 +276,7 @@ export function InspirationView() {
         <ComposerModal
           initialView="compose"
           initialPostType={composerPostType}
+          initialDraftId={composerDraftId}
           onClose={() => setIsComposerOpen(false)}
         />
       )}
