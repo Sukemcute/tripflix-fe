@@ -1,10 +1,15 @@
 import type { MyProfileDto, TravelPreferencesDto } from '@tripflix/api-client/core-api/model/index';
+import {
+  buildTravelPreferences,
+  INTEREST_IDS,
+  needsSurvey,
+  PACE_IDS,
+  type Interest,
+  type Pace,
+} from '@tripflix/app-core';
 
+export { INTEREST_IDS, PACE_IDS, type Interest, type Pace };
 export const ONBOARDING_KEY = 'tripflix.onboarding.v1';
-export const INTEREST_IDS = ['coast', 'nature', 'culture', 'stays'] as const;
-export const PACE_IDS = ['slow', 'balanced', 'active'] as const;
-export type Interest = (typeof INTEREST_IDS)[number];
-export type Pace = (typeof PACE_IDS)[number];
 export type OnboardingStep = 'welcome' | 'interests' | 'pace' | 'review';
 export type OnboardingRecord = {
   version: 1;
@@ -48,7 +53,7 @@ export function shouldOfferOnboarding(record: OnboardingRecord, pathname: string
   return pathname === '/' && !hasParams && (record.status === 'unseen' || record.status === 'draft');
 }
 export function needsAccountOnboarding(profile: MyProfileDto) {
-  return profile.travelPreferences?.status !== 'completed';
+  return needsSurvey(profile);
 }
 
 export function recordFromProfile(
@@ -73,19 +78,5 @@ export function profilePreferences(
   status: 'completed' | 'skipped',
   previous: TravelPreferencesDto | null,
 ): TravelPreferencesDto {
-  return {
-    status,
-    interests:
-      status === 'skipped'
-        ? (previous?.interests ?? [])
-        : [
-            ...new Set([
-              ...record.interests,
-              ...(previous?.interests ?? []).filter((id) => !INTEREST_IDS.includes(id as Interest)),
-            ]),
-          ],
-    regions: previous?.regions ?? [],
-    budgetLevels: previous?.budgetLevels ?? [],
-    updatedAt: new Date().toISOString(),
-  };
+  return buildTravelPreferences(record, status, previous);
 }
