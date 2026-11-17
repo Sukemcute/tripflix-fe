@@ -1731,6 +1731,12 @@
   text-decoration: none;
 }
 
+/* Riêng tên tác giả trên video Reels: gạch chân khi rê chuột (anh Thành muốn giữ ở Reels). */
+.overlayAuthorNameRow .profileLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* Avatar trong Reels và bình luận là link tới trang cá nhân: giữ nguyên kiểu, không gạch chân. */
 a.overlayAvatar,
 a.avatarSmall {
