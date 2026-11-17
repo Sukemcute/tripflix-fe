@@ -30,6 +30,7 @@
 - `--affected` còn kéo theo mobile vì i18n và api-client thay đổi. Mobile **typecheck lỗi trên máy em** ở `live-comments.tsx`, `live-post-detail-screen.tsx`, `reel-social-overlay.tsx` (route `/user/[id]`).
   - Nguyên nhân: file kiểu route sinh tự động `apps/mobile/.expo/types/router.d.ts` (bị gitignore) đã cũ, chưa có route `/user/[id]` mới của develop.
   - Nhánh này không sửa file nào trong `apps/mobile`. CI không có file đó nên không bị. Chạy `pnpm --filter @tripflix/mobile start` một lần để Expo sinh lại thì hết.
+  - Tạm để file đó sang chỗ khác rồi chạy lại `--affected`: **17/17** task thành công, kể cả typecheck mobile.
 - Phải chạy `pnpm install --frozen-lockfile` trước, vì máy chưa cài `vitest` của admin (develop đã khai báo). Không thêm thư viện mới.
 
 ## Cách kiểm lại
