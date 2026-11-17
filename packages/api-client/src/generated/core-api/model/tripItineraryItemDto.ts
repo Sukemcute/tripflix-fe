@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { TripItemHotelDto } from './tripItemHotelDto';
 import type { TripTransportDto } from './tripTransportDto';
 
 export interface TripItineraryItemDto {
@@ -15,6 +16,13 @@ export interface TripItineraryItemDto {
   location?: string;
   /** Ghi chú */
   notes?: string;
+  /**
+   * Giờ trong ngày (HH:mm)
+   * @pattern ^([01]\d|2[0-3]):[0-5]\d$
+   */
+  time?: string;
+  /** Khách sạn của điểm này (một chuyến có thể nhiều khách sạn) */
+  hotel?: TripItemHotelDto;
   /** Phương tiện được chọn khi soạn lộ trình */
   transport?: TripTransportDto;
 }

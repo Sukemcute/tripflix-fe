@@ -23,6 +23,7 @@ export function PostModeration() {
     queryFn: ({ pageParam, signal }) =>
       socialApi.listAdminPosts({ cursor: pageParam, status: status || undefined }, signal),
     getNextPageParam: (page) => page.next_cursor ?? undefined,
+    refetchInterval: 30_000,
   });
   const detail = useQuery({
     queryKey: ['admin-posts', 'detail', selected],
@@ -43,6 +44,7 @@ export function PostModeration() {
       await Promise.all([
         client.invalidateQueries({ queryKey: ['admin-posts'] }),
         client.invalidateQueries({ queryKey: ['social'] }),
+        client.invalidateQueries({ queryKey: ['moderation'] }),
       ]);
     },
   });
@@ -140,7 +142,9 @@ export function PostModeration() {
                 <td>
                   <span className={styles.status} data-status={post.status}>
                     <span className={styles.dot} aria-hidden="true" />
-                    {post.status === 'held' ? vi.api.moderationHeld : vi.api[post.status as AdminPostsControllerListAdminPostsStatus] ?? post.status}
+                    {post.status === 'held'
+                      ? vi.api.moderationHeld
+                      : (vi.api[post.status as AdminPostsControllerListAdminPostsStatus] ?? post.status)}
                   </span>
                 </td>
                 <td>

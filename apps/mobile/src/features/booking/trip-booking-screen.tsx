@@ -24,15 +24,16 @@ import {
 } from '@tripflix/api-client';
 import { flightsControllerSearch } from '@tripflix/api-client/core-api/flights/flights';
 import { t, vi } from '@tripflix/i18n';
-import { colors, spacing } from '@tripflix/tokens';
+import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { ApiErrorNotice } from '@/components/api-state';
 import { DateSingleField } from '@/components/date-sheet';
-import { mobileIconSize } from '@/components/mobile-scale';
+import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { CartLink } from './cart-ui';
 import { CommerceError } from './commerce-state';
 
 const soldOutOf = (error: unknown) =>
@@ -42,7 +43,7 @@ import {
   saveTripBooking,
   useTripBooking,
   useTripPicks,
-  useTripHotel,
+  useTripHotels,
   type SelectedTripBooking,
 } from './trip-booking-store';
 import { LoadingDots } from '@/components/loading-dots';
@@ -65,13 +66,13 @@ function SelectedTripScreen({
   const [children, setChildren] = useState(0);
   const [infants, setInfants] = useState(0);
   const [homeAirport, setHomeAirport] = useState<string>();
-  const hotel = useTripHotel(postId);
+  const swappedHotels = useTripHotels(postId);
   const [openChooser, setOpenChooser] = useState<'origin' | null>(null);
   const items = trip.items ?? [];
   const days = Math.max(trip.daysCount ?? 0, ...items.map((item) => item.day), 1);
   const nights = getTripNights(days);
   const basePlan = getBookableTripPlan(trip);
-  const plan = basePlan && applyTripPlanChoices(basePlan, { homeAirport, hotelId: hotel?.id });
+  const plan = basePlan && applyTripPlanChoices(basePlan, { homeAirport, hotels: swappedHotels });
   const isDateValid = startDate >= getFutureDate(0);
   const checkIn = isDateValid ? startDate : '';
   const checkOut = isDateValid ? getTripDayDate(startDate, nights + 1) : '';
@@ -102,8 +103,11 @@ function SelectedTripScreen({
         : [...current.excluded, id],
     });
   const picks = useTripPicks();
-  const choose = <T extends TripPlanOffer>(id: string, offers: T[]): T | null =>
-    resolveTripPlanOffer(offers, picks, selectionKey, id);
+  const choose = <T extends TripPlanOffer>(
+    id: string,
+    offers: T[],
+    preferred?: { productId?: string; ratePlanCode?: string },
+  ): T | null => resolveTripPlanOffer(offers, picks, selectionKey, id, preferred);
   const flightQueries = useQueries({
     queries: (plan?.flights ?? []).map((leg) => {
       const date = isDateValid ? getTripDayDate(startDate, leg.day) : '';
@@ -135,33 +139,56 @@ function SelectedTripScreen({
       };
     }),
   });
-  const hotelQuote = useQuery({
-    queryKey: ['commerce', 'trip-plan-hotel', plan?.hotelId, checkIn, checkOut, adults],
-    enabled: isReady && !!plan?.hotelId && isDateValid && isPassengerValid,
-    staleTime: 0,
-    retry: false,
-    queryFn: async ({ signal }) => {
-      const stay = await commerceApi.getHotel(plan!.hotelId!, { checkIn, checkOut, adults }, signal);
-      const offers = listTripPlanOffers(stay.rooms.map((room) => ({ ...room, plans: room.ratePlans }))).map(
-        (offer) => {
-          const room = stay.rooms.find((candidate) => candidate.productId === offer.productId)!;
+  // Mỗi chặng ở báo giá riêng theo ngày nhận và trả phòng của chặng đó (TF105: một chuyến nhiều khách sạn).
+  const stays = (plan?.hotels ?? []).map((stay) => ({
+    ...stay,
+    checkIn: isDateValid ? getTripDayDate(startDate, stay.day) : '',
+    checkOut: isDateValid ? getTripDayDate(startDate, stay.day + stay.nights) : '',
+  }));
+  const hotelQueries = useQueries({
+    queries: stays.map((stay) => ({
+      queryKey: ['commerce', 'trip-plan-hotel', stay.hotelId, stay.checkIn, stay.checkOut, adults],
+      enabled: isReady && isDateValid && isPassengerValid,
+      staleTime: 0,
+      retry: false,
+      queryFn: async ({ signal }: { signal: AbortSignal }) => {
+        const { checkIn: stayIn, checkOut: stayOut } = stay;
+        const detail = await commerceApi.getHotel(
+          stay.hotelId,
+          { checkIn: stayIn, checkOut: stayOut, adults },
+          signal,
+        );
+        const offers = listTripPlanOffers(
+          detail.rooms.map((room) => ({ ...room, plans: room.ratePlans })),
+        ).map((offer) => {
+          const room = detail.rooms.find((candidate) => candidate.productId === offer.productId)!;
           const rate = room.ratePlans.find((candidate) => candidate.code === offer.ratePlanCode)!;
-          return { ...offer, checkIn, checkOut, roomName: room.name, rateName: rate.name };
-        },
-      );
-      return { hotelName: stay.name, city: stay.city ?? stay.province.name, offers };
-    },
+          return { ...offer, checkIn: stayIn, checkOut: stayOut, roomName: room.name, rateName: rate.name };
+        });
+        return { hotelName: detail.name, city: detail.city ?? detail.province.name, offers };
+      },
+    })),
   });
   const flightQuotes = flightQueries.map((query, index) =>
     !query.isFetching && !query.isError ? choose('f' + index, query.data ?? []) : null,
   );
-  const room =
-    !hotelQuote.isFetching && !hotelQuote.isError ? choose('hotel', hotelQuote.data?.offers ?? []) : null;
+  // Loại phòng người đăng chọn khi soạn lộ trình (TF105); hết phòng thì về phòng rẻ nhất.
+  const stayRooms = stays.map((stay, index) => {
+    const query = hotelQueries[index]!;
+    return !query.isFetching && !query.isError
+      ? choose(stay.id, query.data?.offers ?? [], {
+          productId: stay.productId,
+          ratePlanCode: stay.ratePlanCode,
+        })
+      : null;
+  });
   const selectedFlights = flightQuotes.flatMap((flight, index) =>
     flight && !current.excluded.includes('f' + index) ? [flight] : [],
   );
-  const selectedRooms = room && !current.excluded.includes('hotel') ? [room] : [];
-  const isChecking = flightQueries.some((query) => query.isFetching) || hotelQuote.isFetching;
+  const selectedRooms = stayRooms.flatMap((room, index) =>
+    room && !current.excluded.includes(stays[index]!.id) ? [room] : [],
+  );
+  const isChecking = [...flightQueries, ...hotelQueries].some((query) => query.isFetching);
   const canBook =
     isReady &&
     isDateValid &&
@@ -170,7 +197,7 @@ function SelectedTripScreen({
     selectedFlights.length + selectedRooms.length > 0;
   const total = getTripPlanTotal([
     ...flightQuotes.map((offer, index) => ({ offer, isSelected: !current.excluded.includes('f' + index) })),
-    { offer: room, isSelected: !current.excluded.includes('hotel') },
+    ...stayRooms.map((offer, index) => ({ offer, isSelected: !current.excluded.includes(stays[index]!.id) })),
   ]);
   const quoteStatus = !isDateValid ? copy.invalidDate : isChecking ? copy.checking : '';
 
@@ -196,8 +223,7 @@ function SelectedTripScreen({
     // Hết chỗ lúc giữ: xem lại giá và chỗ để khách thấy ngay món nào đã hết.
     onError: (error) => {
       if (!soldOutOf(error)) return;
-      void hotelQuote.refetch();
-      for (const query of flightQueries) void query.refetch();
+      for (const query of [...flightQueries, ...hotelQueries]) void query.refetch();
     },
   });
   const soldOutProductId = soldOutOf(booking.error)?.productId;
@@ -209,72 +235,80 @@ function SelectedTripScreen({
     }
     booking.mutate();
   };
-  const hotelName = hotel?.name ?? hotelQuote.data?.hotelName ?? trip.hotelName ?? copy.stayTitle;
-  const hotelCard = plan?.hotelId && (
-    <ProductCard
-      tone="hotel"
-      icon="bed"
-      title={hotelName}
-      detail={[t('mobile.tripPlan.hotelTitle', { nights }), room?.roomName, room?.rateName]
-        .filter(Boolean)
-        .join(' · ')}
-      price={hotelQuote.isFetching ? '…' : room ? money(room.totalPrice) : undefined}
-      status={
-        hotelQuote.isError
-          ? copy.quoteFailed
-          : (hotelQuote.isSuccess && !room) || (!!room && room.productId === soldOutProductId)
-            ? copy.soldOutItem
+  const hotelCard = (index: number) => {
+    const stay = stays[index]!;
+    const query = hotelQueries[index]!;
+    const room = stayRooms[index] ?? null;
+    const hotelName = stay.hotelName ?? query.data?.hotelName ?? trip.hotelName ?? copy.stayTitle;
+    const canChange = !booking.isPending && isDateValid && isPassengerValid;
+    return (
+      <ProductCard
+        key={stay.id}
+        tone="hotel"
+        icon="bed"
+        title={hotelName}
+        detail={[t('mobile.tripPlan.hotelTitle', { nights: stay.nights }), room?.roomName, room?.rateName]
+          .filter(Boolean)
+          .join(' · ')}
+        price={query.isFetching ? '…' : room ? money(room.totalPrice) : undefined}
+        status={
+          query.isError
+            ? copy.quoteFailed
+            : (query.isSuccess && !room) || (!!room && room.productId === soldOutProductId)
+              ? copy.soldOutItem
+              : undefined
+        }
+        isSelected={!!room && !current.excluded.includes(stay.id)}
+        isDisabled={!room || booking.isPending}
+        onToggle={() => toggle(stay.id)}
+        onExpand={
+          canChange
+            ? () =>
+                router.push({
+                  pathname: '/hotel-rooms',
+                  params: {
+                    id: stay.hotelId,
+                    checkIn: stay.checkIn,
+                    checkOut: stay.checkOut,
+                    adults: String(adults),
+                    children: String(children),
+                    infants: String(infants),
+                    pick: 'trip',
+                    pickId: stay.id,
+                    pickKey: selectionKey,
+                    productId: room?.productId,
+                    ratePlanCode: room?.ratePlanCode,
+                  },
+                })
             : undefined
-      }
-      isSelected={!!room && !current.excluded.includes('hotel')}
-      isDisabled={!room || booking.isPending}
-      onToggle={() => toggle('hotel')}
-      onExpand={
-        booking.isPending || !isDateValid || !isPassengerValid
-          ? undefined
-          : () =>
-              router.push({
-                pathname: '/hotel-rooms',
-                params: {
-                  id: plan.hotelId!,
-                  checkIn,
-                  checkOut,
-                  adults: String(adults),
-                  children: String(children),
-                  infants: String(infants),
-                  pick: 'trip',
-                  pickId: 'hotel',
-                  pickKey: selectionKey,
-                  productId: room?.productId,
-                  ratePlanCode: room?.ratePlanCode,
-                },
-              })
-      }
-      actionLabel={copy.changeHotel}
-      onAction={
-        booking.isPending || !isDateValid || !isPassengerValid
-          ? undefined
-          : () =>
-              router.push({
-                pathname: '/search',
-                params: {
-                  pick: 'trip',
-                  pickId: 'hotelProperty',
-                  pickKey: postId,
-                  q: trip.destinationName || hotelQuote.data?.city || hotelName,
-                  checkIn,
-                  checkOut,
-                  adults: String(adults),
-                },
-              })
-      }
-    />
-  );
+        }
+        actionLabel={copy.changeHotel}
+        onAction={
+          canChange
+            ? () =>
+                router.push({
+                  pathname: '/search',
+                  params: {
+                    pick: 'trip',
+                    pickId: 'hotelProperty:' + stay.id,
+                    pickKey: postId,
+                    q: trip.destinationName || query.data?.city || hotelName,
+                    checkIn: stay.checkIn,
+                    checkOut: stay.checkOut,
+                    adults: String(adults),
+                  },
+                })
+            : undefined
+        }
+      />
+    );
+  };
 
   return (
     <Screen
       title={copy.bookingTitle}
       back={false}
+      header={null}
       compact
       background={colors.surface}
       scroll={false}
@@ -282,9 +316,20 @@ function SelectedTripScreen({
       footer={
         <View style={styles.totalRow}>
           <View style={{ flex: 1 }}>
-            <Txt style={styles.muted}>{copy.comboTotal}</Txt>
+            <Txt style={styles.muted}>
+              {t('mobile.tripPlan.pickedCount', {
+                picked: selectedFlights.length + selectedRooms.length,
+                total: (plan?.flights.length ?? 0) + stays.length,
+              }) +
+                ' · ' +
+                t('mobile.tripPlan.passengerSummary', passengers)}
+            </Txt>
             <Txt style={styles.total}>{money(total)}</Txt>
-            <Txt style={styles.muted}>{t('mobile.tripPlan.passengerSummary', passengers)}</Txt>
+            {adults + children > 0 && total > 0 && (
+              <Txt style={styles.muted}>
+                {t('mobile.tripPlan.perGuest', { amount: money(Math.round(total / (adults + children))) })}
+              </Txt>
+            )}
           </View>
           <Button compact icon="flash" disabled={!canBook || booking.isPending} onPress={book}>
             {booking.isPending ? copy.booking : copy.bookNow}
@@ -292,57 +337,76 @@ function SelectedTripScreen({
         </View>
       }
     >
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[ui.content, ui.pad]}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[ui.content, ui.pad]}
+      >
         <View style={{ gap: spacing.sm }}>
-          <View style={styles.tripHero}>
+          <View style={layout.cover}>
             {selected.coverUrl ? (
-              <Image source={selected.coverUrl} contentFit="cover" style={styles.heroCover} />
+              <Image
+                source={selected.coverUrl}
+                contentFit="cover"
+                contentPosition="top"
+                style={StyleSheet.absoluteFill}
+              />
             ) : (
-              <View style={[styles.heroCover, styles.heroFallback]}>
-                <Icon name="map-outline" size={mobileIconSize.control} color={colors.tealInk} />
-              </View>
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tealInk }]} />
             )}
-            <View style={styles.heroContent}>
-              <Txt style={styles.cardTitle} numberOfLines={2}>
-                {postTitle}
-              </Txt>
-              <Txt style={styles.muted} numberOfLines={2}>
-                {[trip.destinationName, t('mobile.tripPlan.daysNights', { days, nights })]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </Txt>
-              <Txt style={styles.muted} numberOfLines={1}>
-                {t('mobile.tripPlan.bookingBy', { name: authorName })}
-              </Txt>
-              <Pressable
-                accessibilityRole="button"
-                hitSlop={spacing.sm}
-                accessibilityState={{ disabled: booking.isPending }}
-                disabled={booking.isPending}
-                onPress={() => saveTripBooking(null)}
-                style={({ pressed }) => [styles.changeTrip, pressed && styles.pressed]}
-              >
-                <Icon name="swap-horizontal" size={14} color={colors.tealInk} />
-                <Txt style={styles.heroChipText}>{copy.changeTrip}</Txt>
-              </Pressable>
-            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy.changeTrip}
+              disabled={booking.isPending}
+              onPress={() => saveTripBooking(null)}
+              style={({ pressed }) => [layout.coverBack, pressed && styles.pressed]}
+            >
+              <Icon name="arrow-back" size={20} color={colors.background} />
+            </Pressable>
+          </View>
+          <View style={layout.coverText}>
+            <Txt style={layout.coverTitle} numberOfLines={2}>
+              {postTitle}
+            </Txt>
+            <Txt style={layout.coverMeta} numberOfLines={1}>
+              {[
+                trip.destinationName,
+                t('mobile.tripPlan.daysNights', { days, nights }),
+                t('mobile.tripPlan.bookingBy', { name: authorName }),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </Txt>
           </View>
           {plan && (
-            <View style={[styles.bookPanel, { backgroundColor: colors.seaMist }]}>
-              <Row style={styles.totalRow}>
-                <View style={{ flex: 1 }}>
-                  <Txt style={styles.label}>
-                    {formatDay(startDate)} · {t('mobile.tripPlan.daysNights', { days, nights })}
-                  </Txt>
-                  <Txt style={styles.muted}>{t('mobile.tripPlan.passengerSummary', passengers)}</Txt>
-                </View>
-                <Button
-                  tone="text"
-                  disabled={booking.isPending}
-                  onPress={() => setEditing((value) => !value)}
-                >
-                  {isEditing ? copy.collapse : copy.change}
-                </Button>
+            <View style={[styles.bookPanel, layout.panel]}>
+              <Row style={layout.pills}>
+                {[
+                  {
+                    icon: 'calendar-outline' as const,
+                    label: formatDay(startDate) + ' · ' + t('mobile.tripPlan.daysNights', { days, nights }),
+                  },
+                  {
+                    icon: 'people-outline' as const,
+                    label: t('mobile.tripPlan.passengerSummary', passengers),
+                  },
+                ].map((pill) => (
+                  <Pressable
+                    key={pill.icon}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: isEditing, disabled: booking.isPending }}
+                    disabled={booking.isPending}
+                    onPress={() => setEditing((value) => !value)}
+                    style={({ pressed }) => [
+                      layout.pill,
+                      isEditing && layout.pillActive,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Icon name={pill.icon} size={16} color={colors.tealInk} />
+                    <Txt style={layout.pillText}>{pill.label}</Txt>
+                  </Pressable>
+                ))}
               </Row>
               {isEditing && (
                 <>
@@ -414,7 +478,6 @@ function SelectedTripScreen({
                   </View>
                 </>
               )}
-              <Txt style={styles.muted}>{copy.bookHint}</Txt>
               {!!quoteStatus && (
                 <Txt style={styles.status} accessibilityLiveRegion="polite">
                   {quoteStatus}
@@ -429,7 +492,7 @@ function SelectedTripScreen({
               const flightLegs = (plan?.flights ?? [])
                 .map((leg, legIndex) => ({ leg, legIndex }))
                 .filter(({ leg }) => leg.day === day);
-              const community = items.filter((item) => item.day === day && !item.transport);
+              const community = items.filter((item) => item.day === day && !item.transport && !item.hotel);
               const selfArranged =
                 basePlan?.selfArranged.filter((leg) => leg.day === day) ??
                 items
@@ -532,7 +595,7 @@ function SelectedTripScreen({
                         </ProductCard>
                       );
                     })}
-                    {day === 1 && hotelCard}
+                    {stays.map((stay, index) => (stay.day === day ? hotelCard(index) : null))}
                     {selfArranged.map((leg, index) => (
                       <View key={'self' + index} style={styles.stop}>
                         <Icon name="bus-outline" size={14} color={colors.textMuted} />
@@ -552,7 +615,9 @@ function SelectedTripScreen({
                               color={colors.textMuted}
                             />
                             <View style={styles.stopText}>
-                              <Txt style={styles.description}>{item.title}</Txt>
+                              <Txt style={styles.description}>
+                                {item.time ? `${item.time} · ${item.title}` : item.title}
+                              </Txt>
                               {!!(item.location || item.notes) && (
                                 <Txt style={styles.muted}>
                                   {[item.location, item.notes].filter(Boolean).join(' · ')}
@@ -579,6 +644,11 @@ function SelectedTripScreen({
 export function TripBookingScreen() {
   const selected = useTripBooking();
   const feed = useReelsFeed();
+  const [destination, setDestination] = useState<string | null>(null);
+  // Ô tính bằng điểm ảnh theo bề ngang lưới đo được: trên điện thoại ô 48,5% kèm aspectRatio bị co về 0 nên lưới trắng.
+  const [gridWidth, setGridWidth] = useState(0);
+  const tileWidth = Math.floor((gridWidth - spacing.sm) / 2);
+  const tileSize = gridWidth > 0 ? { width: tileWidth, height: Math.round((tileWidth * 4.2) / 3) } : null;
   const posts = [
     ...new Map(
       (feed.data?.pages.flatMap((page) => page.items) ?? []).map((post) => [post.postId, post]),
@@ -587,9 +657,29 @@ export function TripBookingScreen() {
     (post) =>
       post.postId !== selected?.postId && post.tripAttachment && getBookableTripPlan(post.tripAttachment),
   );
+  const destinations = [
+    ...new Set(
+      posts.map((post) => post.tripAttachment!.destinationName).filter((name): name is string => !!name),
+    ),
+  ];
+  const shownPosts = destination
+    ? posts.filter((post) => post.tripAttachment!.destinationName === destination)
+    : posts;
   const featured = (isDisabled: boolean) => (
     <View style={{ gap: spacing.md }}>
       <Txt variant="heading">{copy.featured}</Txt>
+      {destinations.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={layout.filters}>
+          {[null, ...destinations].map((name) => (
+            <ChoiceChip
+              key={name ?? 'all'}
+              label={name ?? copy.allDestinations}
+              isSelected={destination === name}
+              onPress={() => setDestination(name)}
+            />
+          ))}
+        </ScrollView>
+      )}
       <ApiErrorNotice
         error={feed.error}
         retry={() => {
@@ -600,54 +690,59 @@ export function TripBookingScreen() {
       {!feed.isPending && !feed.isError && posts.length === 0 && (
         <Txt style={styles.muted}>{copy.featuredEmpty}</Txt>
       )}
-      {posts.map((post) => {
-        const trip = post.tripAttachment!;
-        const plan = getBookableTripPlan(trip)!;
-        const days = Math.max(trip.daysCount ?? 0, ...(trip.items ?? []).map((item) => item.day), 1);
-        const poster = post.video.posters.w360 || post.video.posters.w540 || post.video.posters.w720;
-        return (
-          <Pressable
-            key={post.postId}
-            accessibilityRole="button"
-            accessibilityLabel={post.title}
-            disabled={isDisabled}
-            onPress={() =>
-              saveTripBooking({
-                postId: post.postId,
-                postTitle: post.title,
-                authorName: post.author.name ?? copy.communityAuthor,
-                coverUrl: poster,
-                trip,
-              })
-            }
-            style={({ pressed }) => [styles.featuredCard, pressed && styles.pressed]}
-          >
-            {poster && <Image source={poster} contentFit="cover" style={styles.poster} />}
-            <View style={styles.dayContent}>
-              <Txt style={styles.cardTitle}>{post.title}</Txt>
-              <Txt style={styles.muted}>
-                {[trip.destinationName, t('mobile.tripPlan.dayCount', { days })].filter(Boolean).join(' · ')}
-              </Txt>
-              <Row style={styles.choices}>
-                {plan.flights.length > 0 && (
-                  <Row style={{ gap: spacing.xs }}>
-                    <Icon name="airplane-outline" size={14} color={colors.tealInk} />
-                    <Txt style={styles.muted}>
-                      {t('mobile.tripPlan.flightCount', { count: plan.flights.length })}
+      <View style={layout.grid} onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}>
+        {shownPosts.map((post) => {
+          const trip = post.tripAttachment!;
+          const plan = getBookableTripPlan(trip)!;
+          const days = Math.max(trip.daysCount ?? 0, ...(trip.items ?? []).map((item) => item.day), 1);
+          // Poster riêng của lộ trình (TF105) trước, không có thì ảnh bìa video.
+          const poster =
+            trip.posterUrl || post.video.posters.w540 || post.video.posters.w360 || post.video.posters.w720;
+          return (
+            <Pressable
+              key={post.postId}
+              accessibilityRole="button"
+              accessibilityLabel={post.title}
+              disabled={isDisabled}
+              onPress={() =>
+                saveTripBooking({
+                  postId: post.postId,
+                  postTitle: post.title,
+                  authorName: post.author.name ?? copy.communityAuthor,
+                  coverUrl: poster,
+                  trip,
+                })
+              }
+              style={({ pressed }) => [layout.reel, tileSize, pressed && styles.pressed]}
+            >
+              {poster ? (
+                <Image source={poster} contentFit="cover" style={StyleSheet.absoluteFill} />
+              ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tealInk }]} />
+              )}
+              <View style={layout.reelBadge}>
+                <Txt style={layout.reelBadgeText}>{t('mobile.tripPlan.dayCount', { days })}</Txt>
+              </View>
+              <View style={layout.reelText}>
+                <Txt style={layout.reelTitle} numberOfLines={2}>
+                  {post.title}
+                </Txt>
+                <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
+                  {!!trip.destinationName && (
+                    <Txt style={layout.reelMeta} numberOfLines={1}>
+                      {trip.destinationName}
                     </Txt>
-                  </Row>
-                )}
-                {plan.hotelId && (
-                  <Row style={{ gap: spacing.xs }}>
-                    <Icon name="bed-outline" size={14} color={colors.coralInk} />
-                    <Txt style={styles.muted}>{copy.hotelBadge}</Txt>
-                  </Row>
-                )}
-              </Row>
-            </View>
-          </Pressable>
-        );
-      })}
+                  )}
+                  {plan.flights.length > 0 && (
+                    <Icon name="airplane-outline" size={13} color={colors.background} />
+                  )}
+                  {plan.hotels.length > 0 && <Icon name="bed-outline" size={13} color={colors.background} />}
+                </Row>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
       {feed.hasNextPage && (
         <Button
           tone="text"
@@ -663,9 +758,102 @@ export function TripBookingScreen() {
   );
   if (selected) return <SelectedTripScreen key={selected.postId} selected={selected} featured={featured} />;
   return (
-    <Screen title={copy.bookingTitle} back={false} compact background={colors.surface}>
-      <Txt style={styles.muted}>{copy.chooseHint}</Txt>
+    <Screen
+      title={copy.bookingTitle}
+      back={false}
+      header={<BookingHeader />}
+      compact
+      background={colors.surface}
+    >
       {featured(false)}
     </Screen>
   );
 }
+
+/** Đầu trang tab Đặt: tiêu đề lớn và lối vào giỏ, thay cho logo để chừa chỗ cho nội dung. */
+function BookingHeader() {
+  return (
+    <Row style={layout.header}>
+      <Txt variant="title">{copy.bookingTitle}</Txt>
+      <CartLink />
+    </Row>
+  );
+}
+
+const layout = StyleSheet.create({
+  header: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  filters: { gap: spacing.sm },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  reel: {
+    width: '48.5%',
+    aspectRatio: 3 / 4.2,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceMuted,
+  },
+  reelBadge: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.seaMist,
+  },
+  // Chữ dùng bộ cỡ và phông của app (compactType, nativeFonts) như các thẻ chuyến bay, khách sạn bên dưới.
+  reelBadgeText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.tealInk },
+  reelText: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    gap: 2,
+    padding: spacing.sm,
+    backgroundColor: colors.overlayHeavy,
+  },
+  reelTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.background },
+  reelMeta: { ...compactType.label, fontFamily: nativeFonts.medium, color: colors.background, flexShrink: 1 },
+  // Ảnh bìa tràn hết bề ngang, giữ phần trên của poster (chữ trên ảnh bìa thường nằm ở đó).
+  cover: {
+    height: 220,
+    marginHorizontal: -mobileLayout.gutter,
+    marginTop: -spacing.md,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceMuted,
+  },
+  coverBack: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.overlayHeavy,
+  },
+  coverText: { gap: 2, paddingTop: spacing.xs },
+  coverTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.ink },
+  coverMeta: { ...compactType.body, fontFamily: nativeFonts.regular, color: colors.textMuted },
+  panel: { backgroundColor: 'transparent', borderWidth: 0, padding: 0 },
+  pills: { gap: spacing.sm, flexWrap: 'wrap' },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  pillActive: { borderColor: colors.teal, backgroundColor: colors.seaMist },
+  pillText: { ...compactType.body, fontFamily: nativeFonts.medium, color: colors.ink },
+});

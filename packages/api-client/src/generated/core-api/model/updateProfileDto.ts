@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { TravelPreferencesDto } from './travelPreferencesDto';
 import type { UpdateProfileDtoGender } from './updateProfileDtoGender';
 
 export interface UpdateProfileDto {
@@ -26,4 +27,9 @@ export interface UpdateProfileDto {
    * @nullable
    */
   nationality?: string | null;
+  /**
+   * null để xoá (làm lại khảo sát)
+   * @nullable
+   */
+  travelPreferences?: TravelPreferencesDto | null;
 }

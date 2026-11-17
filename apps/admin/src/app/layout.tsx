@@ -2,6 +2,8 @@ import { t } from '@tripflix/i18n';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
+import '../features/shell/legacy-features.css';
+import '../features/shell/operations.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {

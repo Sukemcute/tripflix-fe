@@ -4,6 +4,7 @@ import {
   layoutReelVideo,
   REEL_LOOKAHEAD_COUNT,
   selectReelPoster,
+  shouldRefreshPlaybackForReel,
 } from '@tripflix/app-core';
 import { reloadReelsFeed, usePlaybackSession, useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -39,6 +40,7 @@ import { Button, Icon, IconButton, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 import { SHEET_CLOSE_SPRING } from '@/components/motion';
 import { SearchDropPanel } from '@/features/discovery/search-drop-panel';
+import { useReelViewTracking } from './feed-events';
 import { ReelSlide } from './reel-slide';
 import type { ReelItem } from './reel-types';
 import { useReelsLaunch } from './reels-launch';
@@ -534,6 +536,35 @@ export function ReelsFeed({
     playbackCookieHeader: playbackSession.cookieHeader,
     isPlaybackSessionSettled: playbackSession.isSettled,
   });
+  // TF82: Reel đang xem lỗi (có thể do cookie hết hạn khi app nằm nền lâu) thì xin cookie mới rồi tải lại một lần.
+  // Nguồn mới đọc cookie lúc gắn (use-player-pool), nên chỉ cần tăng retry sau khi refresh xong.
+  const refreshedReelIds = useRef(new Set<string>());
+  const visibleReelId = items[visibleIndex]?.id;
+  const hasVisibleError = slots.find((slot) => slot.index === visibleIndex)?.hasError ?? false;
+  const { refresh: refreshPlaybackSession } = playbackSession;
+  useEffect(() => {
+    const reelId = visibleReelId;
+    if (
+      !reelId ||
+      !shouldRefreshPlaybackForReel({
+        reelId,
+        hasError: hasVisibleError,
+        refreshedReelIds: refreshedReelIds.current,
+      })
+    ) {
+      return;
+    }
+    refreshedReelIds.current.add(reelId);
+    void refreshPlaybackSession().then(() =>
+      setRetry((value) => ({ id: reelId, attempt: (value?.attempt ?? 0) + 1 })),
+    );
+  }, [visibleReelId, hasVisibleError, refreshPlaybackSession]);
+  // Chỉ đếm Reels thật đang phát cho người xem thấy; Reels mẫu không gửi (TF23).
+  const watchedItem = isSample ? undefined : items[visibleIndex];
+  useReelViewTracking(
+    watchedItem?.postId ?? null,
+    isPlaybackEnabled && !isLaunching && pausedId !== watchedItem?.id,
+  );
 
   useEffect(() => {
     if (isPlaybackEnabled && currentIndex + REEL_LOOKAHEAD_COUNT >= items.length - 1) onLoadMore?.();

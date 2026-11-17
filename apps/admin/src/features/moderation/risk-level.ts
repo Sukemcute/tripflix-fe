@@ -12,6 +12,8 @@ export function getContentWarning(flags: Record<string, unknown>) {
       ? [rule.code] : [],
   ));
   if (codes.has('SCAM_PATTERN')) return { label: 'Dấu hiệu lừa đảo', tone: 'critical' } as const;
+  // Dụ chuyển khoản/đặt cọc ngoài app chưa kèm số tài khoản (TF100): không tự ẩn, chờ người xét.
+  if (codes.has('OFF_PLATFORM_PAYMENT')) return { label: 'Nghi dụ chuyển tiền ngoài app', tone: 'high' } as const;
   if (codes.has('THREAT')) return { label: 'Ngôn từ đe dọa', tone: 'high' } as const;
   if (codes.has('PROFANITY')) return { label: 'Ngôn từ xúc phạm', tone: 'high' } as const;
   if (codes.size) return { label: 'Bộ lọc phát hiện dấu hiệu', tone: 'medium' } as const;

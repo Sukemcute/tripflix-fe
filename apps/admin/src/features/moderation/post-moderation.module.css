@@ -150,16 +150,16 @@
   color: var(--color-teal-ink);
 }
 .status[data-status='hidden'] {
-  background: #fff4df;
-  color: #8b5c0b;
+  background: var(--color-sun-soft);
+  color: var(--color-coral-ink);
 }
 .status[data-status='removed'] {
-  background: #fff0ee;
-  color: #b33a2a;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
 }
 .status[data-status='deleted'] {
-  background: #f1f3f6;
-  color: #697487;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
 }
 .detailButton {
   display: inline-flex;

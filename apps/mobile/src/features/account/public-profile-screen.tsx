@@ -1,18 +1,26 @@
-import { HttpError, useApiSession, useAuthorReels, useAuthorVlogs, useFollowAuthor, usePublicProfile } from '@tripflix/api-client';
+import {
+  HttpError,
+  useApiSession,
+  useAuthorReels,
+  useAuthorVlogs,
+  useFollowAuthor,
+  usePublicProfile,
+} from '@tripflix/api-client';
+import { PostUploadCard } from '@/features/post/post-upload-card';
 import { formatProfileCount, getNameInitials } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, nativeFonts, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import { Button, copy, Icon, IconButton, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { LoadingDots } from '@/components/loading-dots';
 
 const GRID_COLUMNS = 3;
-const GRID_GAP = 2;
+const GRID_GAP = 1;
 
 /** Trang cá nhân công khai (TF47): mở khi bấm tên hoặc avatar một người. */
 export function PublicProfileScreen() {
@@ -29,7 +37,11 @@ export function MyProfileScreen() {
       id={user.id}
       back={false}
       right={
-        <IconButton name="settings-outline" label={copy.profile.menu} onPress={() => router.push('/settings')} />
+        <IconButton
+          name="settings-outline"
+          label={copy.profile.menu}
+          onPress={() => router.push('/settings')}
+        />
       }
     />
   );
@@ -96,6 +108,8 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
           <ApiErrorNotice error={follow.error} retry={() => void follow.retry()} />
         </View>
       )}
+      {/* Bài đang đăng nền hiện ngay trên lưới bài của chính mình, giống TikTok (TF105). */}
+      {isMine && <PostUploadCard />}
       {profile.data && (
         <>
           <View style={styles.tabs} accessibilityRole="tablist">
@@ -120,18 +134,26 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
   );
 }
 
+/**
+ * Cạnh ô theo bề ngang thật của lưới (đo bằng onLayout), không theo cửa sổ: trên web app nằm trong khung hẹp
+ * giữa màn hình nên tính theo cửa sổ làm mỗi ô to bằng cả khung.
+ */
 function useTileSize() {
   const { width } = useWindowDimensions();
-  return Math.floor((width - mobileLayout.gutter * 2 - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS);
+  const [gridWidth, setGridWidth] = useState(0);
+  const available = gridWidth || width;
+  const size = Math.floor((available - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS);
+  const onLayout = (event: LayoutChangeEvent) => setGridWidth(event.nativeEvent.layout.width);
+  return { size, onLayout };
 }
 
 function ReelGrid({ userId }: { userId: string }) {
   const reels = useAuthorReels(userId);
-  const size = useTileSize();
+  const { size, onLayout } = useTileSize();
   const items = reels.data?.pages.flatMap((page) => page.items) ?? [];
   return (
     <GridState query={reels} isEmpty={items.length === 0} emptyText={vi.api.profileNoVideos}>
-      <View style={styles.grid}>
+      <View style={styles.grid} onLayout={onLayout}>
         {items.map((reel) => (
           <Tile
             key={reel.postId}
@@ -139,7 +161,7 @@ function ReelGrid({ userId }: { userId: string }) {
             image={reel.video.posters.w360}
             likes={reel.counts.likes}
             label={reel.title}
-            onPress={() => router.navigate({ pathname: '/(tabs)', params: { reel: reel.postId } })}
+            onPress={() => router.push({ pathname: '/user-reels', params: { userId, reel: reel.postId } })}
           />
         ))}
       </View>
@@ -149,11 +171,11 @@ function ReelGrid({ userId }: { userId: string }) {
 
 function VlogGrid({ userId }: { userId: string }) {
   const vlogs = useAuthorVlogs(userId);
-  const size = useTileSize();
+  const { size, onLayout } = useTileSize();
   const items = vlogs.data?.pages.flatMap((page) => page.items) ?? [];
   return (
     <GridState query={vlogs} isEmpty={items.length === 0} emptyText={vi.api.profileNoPosts}>
-      <View style={styles.grid}>
+      <View style={styles.grid} onLayout={onLayout}>
         {items.map((post) => (
           <Tile
             key={post.id}
@@ -175,7 +197,14 @@ function GridState({
   emptyText,
   children,
 }: {
-  query: { isPending: boolean; error: unknown; refetch: () => unknown; hasNextPage: boolean; isFetchingNextPage: boolean; fetchNextPage: () => unknown };
+  query: {
+    isPending: boolean;
+    error: unknown;
+    refetch: () => unknown;
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+    fetchNextPage: () => unknown;
+  };
   isEmpty: boolean;
   emptyText: string;
   children: React.ReactNode;
@@ -187,7 +216,12 @@ function GridState({
     <>
       {children}
       {query.hasNextPage && (
-        <Button tone="text" compact disabled={query.isFetchingNextPage} onPress={() => void query.fetchNextPage()}>
+        <Button
+          tone="text"
+          compact
+          disabled={query.isFetchingNextPage}
+          onPress={() => void query.fetchNextPage()}
+        >
           {query.isFetchingNextPage ? vi.api.loading : vi.api.profileLoadMore}
         </Button>
       )}
@@ -216,7 +250,13 @@ function Tile({
       style={[styles.tile, { width: size, height: Math.round(size * 1.33) }]}
     >
       {image ? (
-        <Image source={image} cachePolicy="memory-disk" contentFit="cover" style={StyleSheet.absoluteFill} accessible={false} />
+        <Image
+          source={image}
+          cachePolicy="memory-disk"
+          contentFit="cover"
+          style={StyleSheet.absoluteFill}
+          accessible={false}
+        />
       ) : (
         <Txt variant="caption" numberOfLines={4} style={styles.tileTitle}>
           {label}
@@ -245,7 +285,12 @@ const styles = StyleSheet.create({
   avatarText: { ...compactType.title, fontFamily: nativeFonts.bold },
   stats: { flexDirection: 'row', alignSelf: 'stretch', marginVertical: s.sm },
   stat: { flex: 1, alignItems: 'center', gap: s.xs },
-  tabs: { flexDirection: 'row', borderBottomColor: c.border, borderBottomWidth: StyleSheet.hairlineWidth },
+  tabs: {
+    flexDirection: 'row',
+    marginHorizontal: -mobileLayout.gutter,
+    borderBottomColor: c.border,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
   tab: {
     flex: 1,
     alignItems: 'center',
@@ -255,10 +300,32 @@ const styles = StyleSheet.create({
     borderBottomColor: c.transparent,
   },
   tabActive: { borderBottomColor: c.text },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, marginTop: GRID_GAP },
+  // Lưới tràn hết bề ngang như TikTok: bù lại lề hai bên của màn, ô sát nhau chỉ cách 1px.
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: GRID_GAP,
+    // Màn xếp các khối cách nhau s.xl; kéo lưới lên sát gạch chân tab, chỉ chừa 1px như TikTok.
+    marginTop: GRID_GAP - s.xl,
+    marginHorizontal: -mobileLayout.gutter,
+  },
   tile: { backgroundColor: c.seaMist, overflow: 'hidden', justifyContent: 'center' },
   tileTitle: { padding: s.sm },
-  likes: { position: 'absolute', left: s.xs, bottom: s.xs, flexDirection: 'row', alignItems: 'center', gap: 2 },
-  likesText: { color: c.background, fontFamily: nativeFonts.bold },
+  likes: {
+    position: 'absolute',
+    left: s.xs,
+    bottom: s.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  // Bóng chữ để số vẫn đọc được trên ảnh bìa sáng.
+  likesText: {
+    color: c.background,
+    fontFamily: nativeFonts.bold,
+    textShadowColor: c.overlayHeavy,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
   state: { paddingVertical: s.xl },
 });

@@ -13,6 +13,7 @@ import {
   layoutReelVideo,
   selectReelPoster,
   isBackSwipeComplete,
+  shouldRefreshPlaybackForReel,
 } from './reels';
 
 describe('reels playback policy', () => {
@@ -174,5 +175,31 @@ describe('isBackSwipeComplete', () => {
 
   it('stays when the finger flicks back the other way', () => {
     expect(isBackSwipeComplete({ translationX: -60, velocityX: 900 })).toBe(false);
+  });
+});
+
+describe('shouldRefreshPlaybackForReel', () => {
+  it('Reel đang xem lỗi lần đầu: xin cookie mới', () => {
+    expect(shouldRefreshPlaybackForReel({ reelId: 'a', hasError: true, refreshedReelIds: new Set() })).toBe(
+      true,
+    );
+  });
+
+  it('đã xin cho Reel này rồi mà vẫn lỗi: không xin lại, để người dùng bấm thử lại', () => {
+    expect(
+      shouldRefreshPlaybackForReel({ reelId: 'a', hasError: true, refreshedReelIds: new Set(['a']) }),
+    ).toBe(false);
+    expect(
+      shouldRefreshPlaybackForReel({ reelId: 'b', hasError: true, refreshedReelIds: new Set(['a']) }),
+    ).toBe(true);
+  });
+
+  it('không lỗi hoặc chưa có Reel: không xin', () => {
+    expect(shouldRefreshPlaybackForReel({ reelId: 'a', hasError: false, refreshedReelIds: new Set() })).toBe(
+      false,
+    );
+    expect(
+      shouldRefreshPlaybackForReel({ reelId: undefined, hasError: true, refreshedReelIds: new Set() }),
+    ).toBe(false);
   });
 });
