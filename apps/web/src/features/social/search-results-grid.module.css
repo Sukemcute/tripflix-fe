@@ -324,3 +324,102 @@
     transition: none;
   }
 }
+
+/* Tab Tất cả: các vùng kết quả tìm khám phá, tab khách sạn, địa điểm, quán. */
+.understood {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: 1280px;
+  margin: 0 auto 20px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+
+.exploreSection {
+  max-width: 1280px;
+  margin: 0 auto 32px;
+}
+
+.exploreSectionHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.exploreSectionHeader h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.exploreTotal {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.seeAll,
+.loadMore {
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--color-teal-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.loadMore {
+  display: block;
+  margin: 24px auto 0;
+}
+
+.loadMore:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.fallbackNote {
+  max-width: 1280px;
+  margin: 0 auto 16px;
+  color: var(--color-text-muted);
+}
+
+.thumbIcon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-teal-ink);
+}
+
+.cardMeta {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mapHint {
+  color: var(--color-teal-ink);
+}
+
+.attribution {
+  max-width: 1280px;
+  margin: 16px auto 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+a.card {
+  text-decoration: none;
+}

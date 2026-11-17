@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInspirationHref, buildPostHref } from './search-url';
+import { buildInspirationHref, buildPostHref, getPlaceKind, getSectionResultType, parseSearchResultType } from './search-url';
 
 describe('buildPostHref', () => {
   it('bài viết mở ở trang Cảm hứng, Reel thêm kind=reel', () => {
@@ -24,5 +24,33 @@ describe('buildInspirationHref với bình luận', () => {
     expect(buildInspirationHref('/inspiration', current, { openPostId: null })).toBe('/inspiration');
     expect(buildInspirationHref('/inspiration', current, { openPostId: 'p2' })).toBe('/inspiration?open=p2');
     expect(buildInspirationHref('/inspiration', current, { keyword: 'đà lạt' })).toBe('/inspiration?q=%C4%91%C3%A0+l%E1%BA%A1t');
+  });
+});
+
+describe('tab kết quả tìm kiếm', () => {
+  it('đọc tab từ URL, giá trị lạ về Tất cả', () => {
+    expect(parseSearchResultType('cafe')).toBe('cafe');
+    expect(parseSearchResultType('hotels')).toBe('hotels');
+    expect(parseSearchResultType('bar')).toBe('all');
+    expect(parseSearchResultType(null)).toBe('all');
+  });
+
+  it('tab chỗ, điểm gọi đúng loại của discovery; tab bài không gọi', () => {
+    expect(getPlaceKind('hotels')).toBe('stay');
+    expect(getPlaceKind('places')).toBe('see');
+    expect(getPlaceKind('posts')).toBeNull();
+    expect(getPlaceKind('all')).toBeNull();
+  });
+
+  it('"Xem tất cả" của từng vùng mở đúng tab', () => {
+    expect(getSectionResultType('stay')).toBe('hotels');
+    expect(getSectionResultType('plan')).toBe('posts');
+    expect(getSectionResultType('video')).toBe('reels');
+    expect(getSectionResultType('lạ')).toBeNull();
+  });
+
+  it('giữ tab khi dựng URL, Tất cả thì bỏ tham số', () => {
+    expect(buildInspirationHref('/inspiration', 'q=cafe', { resultType: 'cafe' })).toBe('/inspiration?q=cafe&type=cafe');
+    expect(buildInspirationHref('/inspiration', 'q=cafe&type=cafe', { resultType: 'all' })).toBe('/inspiration?q=cafe');
   });
 });

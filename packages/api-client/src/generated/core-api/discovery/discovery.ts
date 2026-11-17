@@ -31,6 +31,8 @@ import type {
   PostRecommendationsControllerRecommendReelsParams,
   PostRecommendationsDto,
   ReelRecommendationsDto,
+  SearchPlacesRequestDto,
+  SearchPlacesResponseDto,
   SearchPostsRequestDto,
   SearchPostsResponseDto,
   StayPageDto,
@@ -255,7 +257,7 @@ export const getPlacesControllerPlacesUrl = (params?: PlacesControllerPlacesPara
 /**
  * Dữ liệu © OpenStreetMap contributors (ODbL), nạp sẵn cho các thành phố demo. App phải hiện `attribution` kèm danh sách.
  *
- * - Cần `city` (tên có dấu hay không đều được, hoặc id như `vung-tau`) hoặc `near=lat,lng`.
+ * - Cần `city` (tên có dấu hay không đều được, hoặc id như `vung-tau`) hoặc `near=lat,lng`. Tỉnh gồm cả điểm đến con ("Lâm Đồng" ra điểm của Đà Lạt) và không lọc bán kính.
  * - `lodging` là chỗ ở ngoài Tripflix: chỉ để tham khảo, không có giá, không đặt được.
  * - Không khớp thành phố thì `items: []` (không phải lỗi).
  * @summary Điểm tham quan, ăn uống, chỗ ở có toạ độ quanh một thành phố hoặc một toạ độ
@@ -787,6 +789,130 @@ export const useExploreControllerSearchPosts = <TError = void, TContext = unknow
   TContext
 > => {
   return useMutation(getExploreControllerSearchPostsMutationOptions(options), queryClient);
+};
+export type exploreControllerSearchPlacesResponse200 = {
+  data: SearchPlacesResponseDto;
+  status: 200;
+};
+
+export type exploreControllerSearchPlacesResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type exploreControllerSearchPlacesResponseSuccess = exploreControllerSearchPlacesResponse200 & {
+  headers: Headers;
+};
+export type exploreControllerSearchPlacesResponseError = exploreControllerSearchPlacesResponse400 & {
+  headers: Headers;
+};
+
+export type exploreControllerSearchPlacesResponse =
+  exploreControllerSearchPlacesResponseSuccess | exploreControllerSearchPlacesResponseError;
+
+export const getExploreControllerSearchPlacesUrl = () => {
+  return `/api/search/places`;
+};
+
+/**
+ * Cho các tab riêng của trang tìm web Cảm hứng. Công khai. Cùng bộ hiểu câu và chỉ mục với `POST /api/search`.
+ *
+ * - `kind`: `stay` (khách sạn đặt được, `refId` là mã khách sạn), `see`, `food`, `cafe` (địa điểm ngoài Tripflix từ OpenStreetMap, không đặt được, có `location`).
+ * - Có điểm OpenStreetMap thì `attribution` khác null và phải hiện kèm danh sách.
+ * - Phân trang, `isFallback`, `dropped`, `fallbackRelaxed` như `POST /api/search/posts`.
+ * @summary Tìm một loại chỗ, điểm (khách sạn, điểm tham quan, quán ăn, quán nước) bằng câu tự nhiên, có phân trang
+ */
+export const exploreControllerSearchPlaces = async (
+  searchPlacesRequestDto: SearchPlacesRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<exploreControllerSearchPlacesResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<exploreControllerSearchPlacesResponse>(getExploreControllerSearchPlacesUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(searchPlacesRequestDto),
+  });
+};
+
+export const getExploreControllerSearchPlacesMutationKey = () => ['exploreControllerSearchPlaces'] as const;
+
+export const getExploreControllerSearchPlacesMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof exploreControllerSearchPlaces>>,
+    TError,
+    ExploreControllerSearchPlacesMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof exploreControllerSearchPlaces>>,
+  TError,
+  ExploreControllerSearchPlacesMutationVariables,
+  TContext
+> => {
+  const mutationKey = getExploreControllerSearchPlacesMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof exploreControllerSearchPlaces>>,
+    ExploreControllerSearchPlacesMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return exploreControllerSearchPlaces(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ExploreControllerSearchPlacesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof exploreControllerSearchPlaces>>
+>;
+export type ExploreControllerSearchPlacesMutationBody = SearchPlacesRequestDto;
+export type ExploreControllerSearchPlacesMutationError = void;
+export type ExploreControllerSearchPlacesMutationVariables = { data: SearchPlacesRequestDto };
+
+/**
+ * @summary Tìm một loại chỗ, điểm (khách sạn, điểm tham quan, quán ăn, quán nước) bằng câu tự nhiên, có phân trang
+ */
+export const useExploreControllerSearchPlaces = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof exploreControllerSearchPlaces>>,
+      TError,
+      ExploreControllerSearchPlacesMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof exploreControllerSearchPlaces>>,
+  TError,
+  ExploreControllerSearchPlacesMutationVariables,
+  TContext
+> => {
+  return useMutation(getExploreControllerSearchPlacesMutationOptions(options), queryClient);
 };
 export type homeRecommendationsControllerRecommendForHomeResponse200 = {
   data: HomeRecommendationsDto;

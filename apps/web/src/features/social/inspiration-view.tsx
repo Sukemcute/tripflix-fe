@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { socialApi, useApiSession } from '@tripflix/api-client';
 import { useQuery } from '@tanstack/react-query';
-import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { validateInspirationKeyword } from '@/features/discovery/inspiration-keyword';
 import { InstagramLeftDock } from './feed/instagram-left-dock';
 import type { FeedNavFilter } from './feed/floating-nav-rail';
@@ -167,9 +166,9 @@ export function InspirationView() {
   );
 
   const handleOpenResult = useCallback(
-    (post: SocialPostDto) => {
+    (postId: string) => {
       hasOpenedFromGridRef.current = true;
-      navigate({ openPostId: post.id }, 'push');
+      navigate({ openPostId: postId }, 'push');
     },
     [navigate]
   );
