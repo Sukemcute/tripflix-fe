@@ -27,7 +27,7 @@
 | Chỗ ở ngoài Tripflix có nhãn, không nút đặt | Đạt (AI) | AI chỉ gắn `ref` để chọn, không có `priceFrom`; thẻ không mở trang đặt |
 | Chip "Hoàn tác" | Đạt (code) | Nút Hoàn tác trên thẻ `plan:` |
 | api-client có `action` | Đạt | `packages/api-client/src/assistant.ts` |
-| Lưu draft v2 ≤ 2.048 byte | Đạt một phần | `serializeAssistantChat` (app-core) bỏ tin cũ trước. **Giới hạn:** riêng `trip` đã quá 2.048 byte (kế hoạch nhiều ngày, nhiều điểm) thì không lưu `trip`; trong phiên vẫn còn, mở lại app thì mất kế hoạch. Chưa đo cỡ `trip` thật |
+| Lưu draft v2 ≤ 2.048 byte | Đạt một phần | `serializeAssistantChat` (app-core) bỏ tin cũ trước. **Giới hạn:** riêng `trip` đã quá 2.048 byte thì không lưu `trip`; trong phiên vẫn còn, mở lại app thì mất kế hoạch. Đo ở AI: kế hoạch 2 ngày 815 byte (`test_the_plan_stays_small_enough_for_the_app_to_keep` chặn < 1.800). Với id và tên OSM thật ước khoảng 130 byte mỗi điểm, nên kế hoạch **từ khoảng 4 ngày** sẽ không được lưu [ƯỚC TÍNH] |
 | Ảnh trên Android | **Chưa** | Xem mục Ảnh / video |
 
 ## Kết quả kiểm tra
