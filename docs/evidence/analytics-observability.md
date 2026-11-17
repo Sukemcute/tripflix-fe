@@ -15,6 +15,8 @@
 
 ## Kiểm tra
 
+- Sau khi ghép develop ngày 2026-11-17 và sinh lại client từ backend đã đồng bộ: lint/typecheck/test **22/22 tác vụ thành công**, **493 test pass** (tokens 1, i18n 2, admin 3, app-core 174, api-client 220, web 93). Giữ cả API mới của develop và Analytics khi giải xung đột file sinh.
+
 - `pnpm turbo run lint typecheck test --affected`: **21 tác vụ thành công**, **468 test pass** (tokens 1, i18n 2, app-core 159, api-client 213, web 93).
 - `pnpm --filter @tripflix/admin build`: **build production thành công**, 17 trang được tạo.
 - Playwright `tests/e2e/admin/analytics.cjs`: **8 nhóm kiểm tra pass** — đăng nhập BFF thật, metric Prometheus thật, chi tiết Tempo thật, lọc khoảng/service, Trace ID không hợp lệ, lọc trace lỗi, mobile không tràn ngang và thông báo upstream lỗi.
