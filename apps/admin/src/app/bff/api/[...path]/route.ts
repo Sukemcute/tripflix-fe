@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminEventStream } from '@/features/shell/server-realtime';
+import { createAdminEventStream } from '../../../../features/shell/server-realtime';
 
 export const runtime = 'nodejs';
 
