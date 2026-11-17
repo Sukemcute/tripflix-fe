@@ -118,6 +118,7 @@ export {
   usePostSearch,
   useUserSearch,
 } from './explore-search';
+export { getPlaceSearchResults, PLACE_SEARCH_PAGE_SIZE, usePlaceSearchFeed, type PlaceSearchKind } from './place-search-feed';
 export {
   getHomeRecommendations,
   useHomeRecommendations,

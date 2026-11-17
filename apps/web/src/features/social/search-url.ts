@@ -9,12 +9,29 @@ export const SEARCH_OPEN_KIND_PARAM = 'kind';
 /** Bình luận cần nhảy tới trong bài đang mở (link từ thông báo). */
 export const SEARCH_COMMENT_PARAM = 'comment';
 
-export const SEARCH_RESULT_TYPES = ['all', 'posts', 'reels'] as const;
+export const SEARCH_RESULT_TYPES = ['all', 'hotels', 'places', 'food', 'cafe', 'posts', 'reels'] as const;
 export type SearchResultType = (typeof SEARCH_RESULT_TYPES)[number];
 
 /** Giá trị lạ hoặc thiếu thì về Tất cả. */
 export function parseSearchResultType(value: string | null | undefined): SearchResultType {
-  return value === 'posts' || value === 'reels' ? value : 'all';
+  return SEARCH_RESULT_TYPES.find((type) => type === value) ?? 'all';
+}
+
+/** Tab chỗ, điểm → `kind` của POST /api/search/places; tab bài và Tất cả thì null. */
+const PLACE_KIND_OF_TYPE = { hotels: 'stay', places: 'see', food: 'food', cafe: 'cafe' } as const;
+export type PlaceResultType = keyof typeof PLACE_KIND_OF_TYPE;
+
+export function getPlaceKind(type: SearchResultType): (typeof PLACE_KIND_OF_TYPE)[PlaceResultType] | null {
+  return type in PLACE_KIND_OF_TYPE ? PLACE_KIND_OF_TYPE[type as PlaceResultType] : null;
+}
+
+/** Vùng của tab Tất cả (`kind` của ExploreSectionDto) → tab mà nút "Xem tất cả" mở; vùng lạ thì null. */
+const RESULT_TYPE_OF_SECTION: Record<string, SearchResultType> = {
+  stay: 'hotels', see: 'places', food: 'food', cafe: 'cafe', plan: 'posts', post: 'posts', video: 'reels',
+};
+
+export function getSectionResultType(sectionKind: string): SearchResultType | null {
+  return RESULT_TYPE_OF_SECTION[sectionKind] ?? null;
 }
 
 export interface InspirationUrlChanges {
