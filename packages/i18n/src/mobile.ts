@@ -213,6 +213,7 @@ export const mobile = {
     daysNights: '{days} ngày · {nights} đêm',
     bookHint: 'Chọn từng vé bay hoặc phòng muốn đặt. Chạm vào dịch vụ để đổi chuyến bay hoặc phòng.',
     otaBadge: 'Tripflix đặt được',
+    serviceTotal: 'Tổng dịch vụ',
     flightTitle: 'Chuyến bay',
     hotelTitle: 'Nơi ở · {nights} đêm',
     changeOrigin: 'Đổi điểm bay',

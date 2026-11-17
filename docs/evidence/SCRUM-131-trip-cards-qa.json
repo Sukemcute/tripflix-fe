@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "baseline": false,
+  "checks": [
+    "375px: route on one line, long room details untruncated, large prices, selection, flight/hotel change params and passenger update",
+    "390px: route on one line, long room details untruncated, large prices, selection, flight/hotel change params and passenger update",
+    "Browser enlarged text 140% (not native), sold-out/error quote blocks checkout, self-builder shares card and removes items without breaking total/empty CTA",
+    "430px: route on one line, long room details untruncated, large prices, selection, flight/hotel change params and passenger update"
+  ],
+  "pageErrors": [],
+  "apiFixtures": true,
+  "nativeFontAndDeviceTested": false
+}
