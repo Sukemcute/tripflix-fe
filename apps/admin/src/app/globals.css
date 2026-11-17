@@ -1,4 +1,2 @@
 @import '@tripflix/ui-web/styles.css';
-@import '../features/shell/legacy-features.css';
-@import '../features/shell/operations.css';
 @source '../';
