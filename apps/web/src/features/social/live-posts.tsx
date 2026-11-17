@@ -62,9 +62,8 @@ import styles from './live-posts.module.css';
 import { PostImagePicker } from './composer/post-image-picker';
 import { usePostImages } from './composer/use-post-images';
 import { ShareMenu, type ShareMenuHandle } from './share-menu';
-
-// Trang chi tiết bài viết nằm ở post-detail.tsx; giữ export ở đây để app/trips/[slug]/page.tsx không phải đổi.
-export { LivePostDetail } from './post-detail';
+import { PostOwnerMenu } from './post-owner-menu';
+import { buildPostHref } from './search-url';
 
 type FeedFilterMode = 'all' | 'withTrip' | 'saved';
 
@@ -512,13 +511,13 @@ function AccountPostGrid({
                 )}
                 <p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.api.posts}</p>
                 <h3>
-                  <Link prefetch={false} href={`/trips/${post.id}`}>{post.title}</Link>
+                  <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })}>{post.title}</Link>
                 </h3>
                 <p className={styles.postBodyClamped}>{post.body}</p>
                 <p className="small muted">
                   {post.reactionTotal} {vi.api.like} · {post.commentCount} {vi.api.comments}
                 </p>
-                <Link prefetch={false} href={`/trips/${post.id}`} className="secondary-button">
+                <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })} className="secondary-button">
                   {vi.api.detail}
                 </Link>
               </div>
@@ -1006,6 +1005,8 @@ export interface InspirationImmersiveViewerProps {
   onBackToResults?: () => void;
   /** Mở từ link chia sẻ: Reel này hiện đầu tiên, lướt tiếp là bảng tin Reels. Dùng cùng initialPostId. */
   pinnedPostId?: string | null;
+  /** Bình luận cần nhảy tới trong Reel initialPostId (link từ thông báo). */
+  focusCommentId?: string;
 }
 
 export function InspirationImmersiveViewer({
@@ -1017,6 +1018,7 @@ export function InspirationImmersiveViewer({
   initialPostId = null,
   onBackToResults,
   pinnedPostId = null,
+  focusCommentId,
 }: InspirationImmersiveViewerProps) {
   const { isReady, user } = useApiSession();
   const client = useQueryClient();
@@ -1828,17 +1830,11 @@ export function InspirationImmersiveViewer({
                       </div>
                     )}
 
-                    <div className={styles.stageTopControls}>
-                      <Link
-                        prefetch={false}
-                        href={`/trips/${activePost.id}`}
-                        className={styles.stageCircleBtn}
-                        aria-label={vi.api.postMoreOptions}
-                        title={vi.api.detail}
-                      >
-                        <SocialIcon name="more" size={18} />
-                      </Link>
-                    </div>
+                    {activePost.authorId === user?.id && (
+                      <div className={styles.stageTopControls}>
+                        <PostOwnerMenu post={activePost} buttonClassName={styles.stageCircleBtn} />
+                      </div>
+                    )}
                   </>
 
                   {/* Media Track: Vung cuon momentum doc voi proximity snap ben trong Viewport 9:16 co dinh */}
@@ -1983,6 +1979,7 @@ export function InspirationImmersiveViewer({
                 scrollContainerRef={rightScrollRef}
                 composerInputRef={commentInputRef}
                 showSummary
+                focusCommentId={activePost.id === initialPostId ? focusCommentId : undefined}
               />
             </aside>
           )}
@@ -2051,6 +2048,7 @@ export function RightPanelCommentsSynchronized({
   scrollContainerRef,
   composerInputRef,
   showSummary = false,
+  focusCommentId,
 }: {
   post: {
     id: string;
@@ -2063,6 +2061,8 @@ export function RightPanelCommentsSynchronized({
   composerInputRef: React.RefObject<HTMLInputElement | null>;
   /** Tóm tắt AI ở đầu bình luận: chỉ màn Reels bật (giống mobile); tab Bài viết dùng chung panel nhưng không bật. */
   showSummary?: boolean;
+  /** Bình luận mở từ thông báo: đưa luồng của nó lên đầu, mở sẵn trả lời, cuộn tới và tô sáng. */
+  focusCommentId?: string;
 }) {
   const { user, isReady, session } = useApiSession();
   const client = useQueryClient();
@@ -2142,7 +2142,21 @@ export function RightPanelCommentsSynchronized({
     },
   });
 
-  const comments = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const focusedThread = useQuery({
+    queryKey: ['social', 'comment-thread', post.id, focusCommentId, user?.id],
+    enabled: !!focusCommentId,
+    queryFn: ({ signal }) => socialApi.getCommentThread(post.id, focusCommentId!, signal),
+  });
+  const focusTarget = focusedThread.data?.items.find((comment) => comment.id === focusCommentId);
+  const focusRoot = focusTarget?.parentCommentId
+    ? focusedThread.data?.items.find((comment) => comment.id === focusTarget.parentCommentId)
+    : focusTarget;
+  const focusedReply = focusTarget?.parentCommentId ? focusTarget : undefined;
+
+  const loadedComments = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const comments = focusRoot && !loadedComments.some((comment) => comment.id === focusRoot.id)
+    ? [focusRoot, ...loadedComments]
+    : loadedComments;
 
   return (
     <>
@@ -2158,6 +2172,12 @@ export function RightPanelCommentsSynchronized({
             void query.refetch();
           }}
         />
+        {focusCommentId && (
+          <>
+            <ApiErrorNotice error={focusedThread.error} retry={() => void focusedThread.refetch()} />
+            {focusedThread.isSuccess && !focusTarget && <output>{vi.api.commentUnavailable}</output>}
+          </>
+        )}
         {query.isPending && <CommentSkeletonList count={8} />}
         {query.isSuccess && comments.length === 0 && (
           <p className="small muted">{vi.api.noComments}</p>
@@ -2173,6 +2193,8 @@ export function RightPanelCommentsSynchronized({
               comment={comment}
               loginHref={loginHref}
               onReplySelect={(target) => handleReplySelect(target)}
+              focusCommentId={focusCommentId}
+              focusedReply={focusedReply?.parentCommentId === comment.id ? focusedReply : undefined}
             />
           ))}
         </ol>
@@ -2285,6 +2307,8 @@ function CommentNode({
   isReply = false,
   loginHref,
   onReplySelect,
+  focusCommentId,
+  focusedReply,
 }: {
   postId: string;
   postAuthorId: string;
@@ -2303,10 +2327,18 @@ function CommentNode({
   isReply?: boolean;
   loginHref: string;
   onReplySelect: (target: { id: string; authorName: string }) => void;
+  focusCommentId?: string;
+  /** Trả lời được nhắc tới trong thông báo: luôn hiện dù chưa nằm trong trang trả lời đã tải. */
+  focusedReply?: SocialCommentDto;
 }) {
   const { user } = useApiSession();
   const client = useQueryClient();
-  const [showReplies, setShowReplies] = useState(false);
+  const [showReplies, setShowReplies] = useState(Boolean(focusedReply));
+  const isFocused = comment.id === focusCommentId;
+  const focusRef = useRef<HTMLLIElement | null>(null);
+  useEffect(() => {
+    if (isFocused) focusRef.current?.scrollIntoView({ block: 'center' });
+  }, [isFocused]);
   const [isEditing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState(comment.body);
   const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
@@ -2368,11 +2400,18 @@ function CommentNode({
     },
   });
 
-  const replies = repliesQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const loadedReplies = repliesQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const replies = focusedReply && !loadedReplies.some((reply) => reply.id === focusedReply.id)
+    ? [focusedReply, ...loadedReplies]
+    : loadedReplies;
   const totalReplies = (comment as { replyCount?: number }).replyCount ?? repliesQuery.data?.pages[0]?.total ?? replies.length;
 
   return (
-    <li className={styles.panelCommentItem}>
+    <li
+      ref={focusRef}
+      id={`comment-${comment.id}`}
+      className={`${styles.panelCommentItem} ${isFocused ? styles.panelCommentFocused : ''}`}
+    >
       <CommentVisibility commentId={comment.id} isMine={isMine} loginHref={loginHref} className={styles.panelCommentRow}>
         <span className={styles.avatarSmall} data-tone={getAvatarTone(authorDisplay.name)} aria-hidden="true">
           {getInitial(authorDisplay.name)}
@@ -2528,6 +2567,7 @@ function CommentNode({
                     isReply
                     loginHref={loginHref}
                     onReplySelect={onReplySelect}
+                    focusCommentId={focusCommentId}
                   />
                 ))}
               </ol>

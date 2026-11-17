@@ -6,6 +6,7 @@ const { join } = require('node:path');
 const { tmpdir } = require('node:os');
 
 const base = process.env.ANALYTICS_ADMIN_URL || 'http://localhost:3206';
+const api = process.env.ANALYTICS_API_URL || 'http://localhost:8080';
 const output = process.env.ANALYTICS_EVIDENCE_DIR || join(tmpdir(), 'tripflix-analytics');
 
 class AnalyticsPage {
@@ -34,6 +35,28 @@ class AnalyticsPage {
   }
 }
 
+/** Admin không còn trang đăng nhập riêng (TF05I): đăng nhập core-api, xin mã một lần rồi mở /auth/handoff như web làm. */
+async function openAdminSession(page) {
+  const login = await fetch(`${api}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      email: process.env.ANALYTICS_TEST_EMAIL || 'superadmin@tripflix.local',
+      password: process.env.ANALYTICS_TEST_PASSWORD || 'tripflix-dev-123',
+    }),
+  });
+  assert.equal(login.status, 200, 'Login failed');
+  const { accessToken } = await login.json();
+  const handoff = await fetch(`${api}/api/auth/admin-handoff`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${accessToken}` },
+  });
+  assert.equal(handoff.status, 200, 'Admin handoff failed');
+  const { code } = await handoff.json();
+  await page.goto(`${base}/auth/handoff#code=${encodeURIComponent(code)}`);
+  await page.waitForURL(`${base}/`);
+}
+
 async function poll(read, ready, message) {
   const until = Date.now() + 90_000;
   while (Date.now() < until) {
@@ -47,7 +70,7 @@ async function poll(read, ready, message) {
 (async () => {
   await mkdir(output, { recursive: true });
   await poll(
-    async () => (await fetch(`${base}/bff/api/auth/password-key`)).status,
+    async () => (await fetch(`${api}/api/auth/password-key`)).status,
     (status) => status === 200,
     'Backend is not ready',
   );
@@ -61,15 +84,8 @@ async function poll(read, ready, message) {
   page.on('pageerror', (error) => errors.push(error.message));
   const ui = new AnalyticsPage(page);
   try {
+    await openAdminSession(page);
     await page.goto(`${base}/analytics`);
-    await page.waitForURL('**/login?returnTo=*');
-    await page
-      .getByLabel('Email', { exact: true })
-      .fill(process.env.ANALYTICS_TEST_EMAIL || 'superadmin@tripflix.local');
-    await page
-      .getByLabel('Mật khẩu', { exact: true })
-      .fill(process.env.ANALYTICS_TEST_PASSWORD || 'tripflix-dev-123');
-    await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
     await page.getByRole('heading', { name: 'Số liệu & giám sát', exact: true }).waitFor();
     await page.getByLabel('Tự cập nhật mỗi 30 giây').uncheck();
     for (let index = 0; index < 24; index++)

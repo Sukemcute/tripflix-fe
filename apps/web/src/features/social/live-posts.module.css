@@ -1805,6 +1805,13 @@
   animation: commentFadeIn 200ms ease-out both;
 }
 
+/* Bình luận mở từ thông báo: tô nền riêng hàng bình luận, không tô cả luồng trả lời bên dưới. */
+.panelCommentFocused > :first-child {
+  border-radius: 12px;
+  background: var(--color-sea-mist);
+  box-shadow: 0 0 0 6px var(--color-sea-mist);
+}
+
 @keyframes commentFadeIn {
   from {
     opacity: 0;

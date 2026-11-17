@@ -11,6 +11,7 @@ import {
   formatCompactCount,
 } from '../live-posts';
 import { getPostImages, POST_COVER_MASCOT } from '../post-cover';
+import { PostOwnerMenu } from '../post-owner-menu';
 import { AdaptivePostMedia } from './adaptive-post-media';
 import styles from './social-feed.module.css';
 
@@ -139,14 +140,18 @@ export function PostCard({
           </div>
         </div>
 
-        <button
-          type="button"
-          className={styles.headerMenuBtn}
-          title="Tùy chọn bài viết"
-          aria-label="Tùy chọn bài viết"
-        >
-          <SocialIcon name="more" size={18} />
-        </button>
+        {currentUser?.id === post.authorId ? (
+          <PostOwnerMenu post={post} buttonClassName={styles.headerMenuBtn} />
+        ) : (
+          <button
+            type="button"
+            className={styles.headerMenuBtn}
+            title="Tùy chọn bài viết"
+            aria-label="Tùy chọn bài viết"
+          >
+            <SocialIcon name="more" size={18} />
+          </button>
+        )}
       </header>
 
       {/* 2. Body: Title, Content, Hashtags */}

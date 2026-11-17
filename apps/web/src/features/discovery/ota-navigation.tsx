@@ -30,8 +30,7 @@ const NAVIGATION = [
 function matches(href: string, pathname: string) {
   return (
     pathname === href ||
-    (href === '/search' && pathname.startsWith('/hotels/')) ||
-    (href === '/inspiration' && pathname.startsWith('/trips/'))
+    (href === '/search' && pathname.startsWith('/hotels/'))
   );
 }
 
