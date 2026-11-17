@@ -1,5 +1,7 @@
 # TF101 phần 4 — Web cập nhật bình luận realtime và hiện dòng thay thế
 
+> Bản tối ưu sau review Thành: xem `TF101-giam-tai-binh-luan-realtime.md`. Luồng tải lại toàn bộ mô tả bên dưới đã được thay bằng đọc trang đầu theo tín hiệu.
+
 - Jira: [SCRUM-125](https://tripflix.atlassian.net/browse/SCRUM-125)
 - Nhánh: `trang/TF101-web-binh-luan-realtime` · Trang (dùng AI: có) · 2026-11-17
 - Phụ thuộc API BE [#249](https://github.com/Sukemcute/tripflix-be/pull/249). Client sinh từ OpenAPI BE mới có moderationState; không sửa tay code sinh.
