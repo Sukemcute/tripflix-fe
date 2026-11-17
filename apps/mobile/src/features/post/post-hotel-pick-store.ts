@@ -12,6 +12,8 @@ export interface PostHotelPick {
   ratePlanCode?: string;
   roomName?: string;
   rateName?: string;
+  /** Giá cả kỳ ở của phòng vừa chọn; màn tự lên lộ trình cộng vào tổng (TF105). */
+  totalPrice?: number;
 }
 
 let current: PostHotelPick | null = null;
@@ -32,7 +34,7 @@ export function savePostHotel(key: string, hotel: { hotelId: string; hotelName: 
 /** Loại phòng chỉ ghi khi đúng khách sạn vừa chọn cho điểm đó. */
 export function savePostRoom(
   key: string,
-  room: { productId: string; ratePlanCode: string; roomName: string; rateName: string },
+  room: { productId: string; ratePlanCode: string; roomName: string; rateName: string; totalPrice?: number },
 ): void {
   if (!current || current.key !== key) return;
   current = { ...current, ...room };

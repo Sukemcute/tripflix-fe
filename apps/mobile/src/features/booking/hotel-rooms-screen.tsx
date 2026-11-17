@@ -211,6 +211,7 @@ export function HotelRoomsScreen() {
                       ratePlanCode,
                       roomName: room.name,
                       rateName: rate.name,
+                      totalPrice: rate.totalPrice,
                     });
                     router.back();
                     return;

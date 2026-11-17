@@ -90,6 +90,8 @@ export function FlightSearchScreen() {
     return typeof value === 'string' ? value : '';
   };
   const isTripPick = read('pick') === 'trip';
+  // Tự lên lộ trình (pickMode=builder): khách tự chọn chặng và ngày; đặt theo lộ trình thì chặng, ngày cố định.
+  const isRouteLocked = isTripPick && read('pickMode') !== 'builder';
   const tripCopy = vi.mobile.tripPlan;
   const initial = {
     from: read('from'),
@@ -100,7 +102,15 @@ export function FlightSearchScreen() {
     infants: read('infants'),
   };
   const search = parseFlightSearch(initial);
-  const [draft, setDraft] = useState({ ...initial, date: search?.date ?? getFlightToday() });
+  // Chưa có chặng (mở từ tự lên lộ trình) vẫn giữ ngày được truyền vào thay vì về hôm nay.
+  const [draft, setDraft] = useState({
+    ...initial,
+    date:
+      search?.date ??
+      (/^\d{4}-\d{2}-\d{2}$/.test(initial.date) && initial.date >= getFlightToday()
+        ? initial.date
+        : getFlightToday()),
+  });
   const [picker, setPicker] = useState<Picker>();
   const [hasInvalidSearch, setInvalidSearch] = useState(false);
   const routes = useFlightRoutes();
@@ -192,7 +202,13 @@ export function FlightSearchScreen() {
   return (
     <Screen title={isTripPick ? tripCopy.pickFlightTitle : copy.title}>
       <Txt variant="title">{isTripPick ? tripCopy.pickFlightTitle : copy.title}</Txt>
-      <Txt style={ui.muted}>{isTripPick ? tripCopy.pickNotice : copy.intro}</Txt>
+      <Txt style={ui.muted}>
+        {isRouteLocked
+          ? tripCopy.pickNotice
+          : isTripPick
+            ? vi.mobile.tripBuilder.pickFlightNotice
+            : copy.intro}
+      </Txt>
       <Card>
         {(['from', 'to'] as const).map((key) => {
           const { label, options } = choices[key];
@@ -203,11 +219,11 @@ export function FlightSearchScreen() {
               <Button
                 tone="secondary"
                 icon="chevron-down"
-                disabled={isTripPick || isLocked || !options.length}
+                disabled={isRouteLocked || isLocked || !options.length}
                 onPress={() => setPicker(key)}
               >
                 {selection?.label ??
-                  (isTripPick ? draft[key] : undefined) ??
+                  (isRouteLocked ? draft[key] : undefined) ??
                   (key === 'to' && !draft.from ? copy.selectOriginFirst : copy.selectAirport)}
               </Button>
             </View>
@@ -217,7 +233,7 @@ export function FlightSearchScreen() {
           label={copy.date}
           value={draft.date}
           min={getFlightToday()}
-          isDisabled={isTripPick || isLocked}
+          isDisabled={isRouteLocked || isLocked}
           onChange={(date) => setDraft((previous) => ({ ...previous, date }))}
         />
         <View style={{ gap: spacing.xs }}>
@@ -233,7 +249,7 @@ export function FlightSearchScreen() {
         </View>
         <Button
           icon="search-outline"
-          disabled={isTripPick || isLocked || !destinations.some(({ value }) => value === draft.to)}
+          disabled={isRouteLocked || isLocked || !destinations.some(({ value }) => value === draft.to)}
           onPress={submit}
         >
           {copy.search}
@@ -388,6 +404,8 @@ function FlightResults({
                           ratePlanCode: fareCode,
                           totalPrice: fare.totalPrice,
                           date: search.date,
+                          from: search.from,
+                          to: search.to,
                           flightNumber: cabin.flightNumber,
                           departTime: cabin.departTime,
                           cabinName: cabin.cabinName,

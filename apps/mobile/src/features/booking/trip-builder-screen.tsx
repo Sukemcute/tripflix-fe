@@ -1,89 +1,159 @@
 import { useMutation } from '@tanstack/react-query';
 import { buildTripPlanCheckout, getTripDayDate, readSoldOutConflict } from '@tripflix/app-core';
-import {
-  createCheckoutOperation,
-  getFutureDate,
-  HttpError,
-  useApiSession,
-  useFlightRoutes,
-  useTripFlightSuggestions,
-  useTripStaySuggestions,
-  type TripFlightSuggestion,
-  type TripStaySuggestion,
-} from '@tripflix/api-client';
+import { createCheckoutOperation, getFutureDate, HttpError, useApiSession } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router, type Href } from 'expo-router';
-import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ApiErrorNotice } from '@/components/api-state';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { DateSingleField } from '@/components/date-sheet';
-import { LoadingDots } from '@/components/loading-dots';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { clearPostHotelPick, usePostHotelPick } from '@/features/post/post-hotel-pick-store';
 import { DestinationPicker } from '@/features/post/trip-plan-editor';
 import { CommerceError } from './commerce-state';
-import { ChoiceChip } from './trip-plan-parts';
+import { useTripPicks } from './trip-booking-store';
+import { ProductCard } from './trip-plan-parts';
 
 const copy = vi.mobile.tripBuilder;
 const MAX_ADULTS = 9;
+/** Khoá chung với màn đặt vé máy bay ở chế độ chọn; mỗi chuyến bay một pickId riêng. */
+const FLIGHT_PICK_KEY = 'trip-builder';
+/** Khoá thẻ khách sạn có tiền tố riêng để không lẫn với trình soạn lộ trình lúc đăng bài (cùng kho chọn khách sạn). */
+const HOTEL_KEY_PREFIX = 'builder:';
 
-type FlightSort = 'cheapest' | 'best_time';
-type StaySort = 'best_price' | 'top_rated';
+interface HotelItem {
+  kind: 'hotel';
+  key: string;
+  checkIn: string;
+  nights: number;
+  hotelName: string;
+  productId: string;
+  ratePlanCode: string;
+  roomName: string;
+  rateName: string;
+  totalPrice: number;
+}
+
+interface FlightItem {
+  kind: 'flight';
+  key: string;
+  date: string;
+  from: string;
+  to: string;
+  productId: string;
+  ratePlanCode: string;
+  flightNumber: string | null;
+  departTime: string | null;
+  fareName: string;
+  totalPrice: number;
+}
+
+type TripItem = HotelItem | FlightItem;
+type HotelDraft = { key: string; checkIn: string; nights: number };
+
+let keySeq = 0;
+const nextKey = (prefix: string) => `${prefix}${Date.now().toString(36)}-${(keySeq += 1)}`;
 
 /**
- * Tự lên lộ trình ở tab Đặt (TF105): khách chọn nơi đến, ngày, số khách rồi thêm vé bay hai chiều và chỗ ở
- * từ gợi ý của discovery (GET /api/trip-builder/*), giữ chỗ chung một đơn như đặt theo lộ trình.
+ * Tự lên lộ trình ở tab Đặt (TF105): thêm, bớt khách sạn và chuyến bay tuỳ ý. Mỗi món chọn ở màn thật của app
+ * (tìm khách sạn → chọn phòng, đặt vé máy bay ở chế độ chọn) rồi quay về thành một thẻ; giữ chỗ tất cả trong một đơn.
  */
 export function TripBuilderScreen() {
   const { user } = useApiSession();
-  const routes = useFlightRoutes();
   const [destination, setDestination] = useState({ destinationName: '', destinationPlaceId: '' });
-  const [departDate, setDepartDate] = useState(() => getFutureDate(14));
-  const [nights, setNights] = useState(2);
   const [adults, setAdults] = useState(2);
-  const [from, setFrom] = useState('SGN');
-  const [flightSort, setFlightSort] = useState<{ outbound: FlightSort; inbound: FlightSort }>({
-    outbound: 'cheapest',
-    inbound: 'best_time',
-  });
-  const [staySort, setStaySort] = useState<StaySort>('best_price');
-  const [picked, setPicked] = useState<{
-    outbound: TripFlightSuggestion | null;
-    inbound: TripFlightSuggestion | null;
-    stay: TripStaySuggestion | null;
-  }>({ outbound: null, inbound: null, stay: null });
+  const [items, setItems] = useState<TripItem[]>([]);
+  // Khách sạn sắp thêm hoặc đang đổi: chọn ngày nhận và số đêm trước khi sang màn tìm khách sạn.
+  const [hotelDraft, setHotelDraft] = useState<HotelDraft | null>(null);
+  const [pendingFlightKey, setPendingFlightKey] = useState<string | null>(null);
 
-  const place = destination.destinationPlaceId;
-  const returnDate = getTripDayDate(departDate, nights + 1);
-  const isDateValid = departDate >= getFutureDate(0);
-  const canSuggest = !!place && isDateValid;
-  // Đổi điều kiện thì bỏ lựa chọn cũ: giá và chỗ của ngày, số khách cũ không còn đúng.
-  const conditionKey = JSON.stringify([place, from, departDate, nights, adults]);
-  const [pickedKey, setPickedKey] = useState(conditionKey);
-  if (pickedKey !== conditionKey) {
-    setPickedKey(conditionKey);
-    setPicked({ outbound: null, inbound: null, stay: null });
-  }
+  // Loại phòng chọn xong ở màn chọn phòng: thêm hoặc thay thẻ đúng khoá.
+  const hotelPick = usePostHotelPick();
+  useEffect(() => {
+    if (!hotelPick?.key.startsWith(HOTEL_KEY_PREFIX) || !hotelPick.productId || hotelPick.totalPrice == null)
+      return;
+    if (hotelDraft?.key !== hotelPick.key) return;
+    const card: HotelItem = {
+      kind: 'hotel',
+      key: hotelPick.key,
+      checkIn: hotelDraft.checkIn,
+      nights: hotelDraft.nights,
+      hotelName: hotelPick.hotelName,
+      productId: hotelPick.productId,
+      ratePlanCode: hotelPick.ratePlanCode ?? '',
+      roomName: hotelPick.roomName ?? '',
+      rateName: hotelPick.rateName ?? '',
+      totalPrice: hotelPick.totalPrice,
+    };
+    setItems((current) => [...current.filter((item) => item.key !== card.key), card]);
+    setHotelDraft(null);
+    clearPostHotelPick();
+  }, [hotelPick, hotelDraft]);
 
-  const outbound = useTripFlightSuggestions(
-    canSuggest ? { place, from, departDate, returnDate, adults, sort: flightSort.outbound } : null,
-  );
-  const inbound = useTripFlightSuggestions(
-    canSuggest ? { place, from, departDate, returnDate, adults, sort: flightSort.inbound } : null,
-  );
-  const stays = useTripStaySuggestions(
-    canSuggest ? { place, checkIn: departDate, checkOut: returnDate, adults, sort: staySort } : null,
-  );
-  // Sân bay đang chọn đứng đầu để luôn thấy ngay, không phải cuộn tìm.
-  const origins = [
-    from,
-    ...(routes.data ?? []).map((route) => route.airport).filter((code) => code !== from),
-  ];
+  // Chuyến bay chọn xong ở màn đặt vé nằm trong picks theo pickId.
+  const picks = useTripPicks();
+  useEffect(() => {
+    if (!pendingFlightKey || picks.key !== FLIGHT_PICK_KEY) return;
+    const offer = picks.values[pendingFlightKey];
+    if (!offer?.date || !offer.from || !offer.to) return;
+    const card: FlightItem = {
+      kind: 'flight',
+      key: pendingFlightKey,
+      date: offer.date,
+      from: offer.from,
+      to: offer.to,
+      productId: offer.productId,
+      ratePlanCode: offer.ratePlanCode,
+      flightNumber: offer.flightNumber ?? null,
+      departTime: offer.departTime ?? null,
+      fareName: offer.fareName ?? '',
+      totalPrice: offer.totalPrice,
+    };
+    setItems((current) => [...current.filter((item) => item.key !== card.key), card]);
+    setPendingFlightKey(null);
+  }, [picks, pendingFlightKey]);
 
-  const total =
-    (picked.outbound?.totalPrice ?? 0) + (picked.inbound?.totalPrice ?? 0) + (picked.stay?.totalPrice ?? 0);
-  const pickedCount = [picked.outbound, picked.inbound, picked.stay].filter(Boolean).length;
+  const sorted = [...items].sort((a, b) => itemDate(a).localeCompare(itemDate(b)));
+  const lastHotel = sorted.filter((item): item is HotelItem => item.kind === 'hotel').at(-1);
+  const total = items.reduce((sum, item) => sum + item.totalPrice, 0);
+
+  const searchHotel = (draft: HotelDraft) =>
+    router.push({
+      pathname: '/search',
+      params: {
+        pick: 'post',
+        pickKey: draft.key,
+        q: destination.destinationName,
+        checkIn: draft.checkIn,
+        checkOut: getTripDayDate(draft.checkIn, draft.nights + 1),
+        adults: String(adults),
+      },
+    });
+  const searchFlight = (item?: FlightItem) => {
+    const key = item?.key ?? nextKey('flight:');
+    setPendingFlightKey(key);
+    router.push({
+      pathname: '/flights',
+      params: {
+        pick: 'trip',
+        pickMode: 'builder',
+        pickKey: FLIGHT_PICK_KEY,
+        pickId: key,
+        passengers: String(adults),
+        ...(item
+          ? { from: item.from, to: item.to, date: item.date }
+          : { date: sorted[0] ? itemDate(sorted[0]) : getFutureDate(14) }),
+      },
+    });
+  };
+  const remove = (key: string) => setItems((current) => current.filter((item) => item.key !== key));
+  // Đổi số khách thì giá cũ không còn đúng: bỏ hết thẻ để chọn lại.
+  const changeAdults = (value: number) => {
+    setAdults(value);
+    setItems([]);
+  };
+
   const [createCheckout] = useState(createCheckoutOperation);
   const booking = useMutation({
     retry: false,
@@ -91,33 +161,31 @@ export function TripBuilderScreen() {
       createCheckout(
         buildTripPlanCheckout({
           adults,
-          flights: [
-            ...(picked.outbound ? [{ ...picked.outbound, date: departDate }] : []),
-            ...(picked.inbound ? [{ ...picked.inbound, date: returnDate }] : []),
-          ],
-          rooms: picked.stay
-            ? [
-                {
-                  productId: picked.stay.roomProductId,
-                  ratePlanCode: picked.stay.ratePlanCode,
-                  checkIn: departDate,
-                  checkOut: returnDate,
-                },
-              ]
-            : [],
+          flights: items.flatMap((item) =>
+            item.kind === 'flight'
+              ? [{ productId: item.productId, ratePlanCode: item.ratePlanCode, date: item.date }]
+              : [],
+          ),
+          rooms: items.flatMap((item) =>
+            item.kind === 'hotel'
+              ? [
+                  {
+                    productId: item.productId,
+                    ratePlanCode: item.ratePlanCode,
+                    checkIn: item.checkIn,
+                    checkOut: getTripDayDate(item.checkIn, item.nights + 1),
+                  },
+                ]
+              : [],
+          ),
         }),
       ),
     onSuccess: ({ orderId }) => router.push({ pathname: '/checkout', params: { id: orderId } }),
-    // Hết chỗ lúc giữ thì tải lại gợi ý để khách thấy lựa chọn còn bán.
-    onError: (error) => {
-      if (!(error instanceof HttpError && readSoldOutConflict(error.body))) return;
-      void outbound.refetch();
-      void inbound.refetch();
-      void stays.refetch();
-    },
   });
+  const soldOutProductId =
+    booking.error instanceof HttpError ? readSoldOutConflict(booking.error.body)?.productId : undefined;
   const book = () => {
-    if (!pickedCount || booking.isPending) return;
+    if (!items.length || booking.isPending) return;
     if (!user) {
       router.push({ pathname: '/login', params: { returnTo: '/trip-builder' } });
       return;
@@ -132,10 +200,10 @@ export function TripBuilderScreen() {
       footer={
         <View style={styles.footer}>
           <View style={ui.flex}>
-            <Txt style={styles.muted}>{t('mobile.tripBuilder.pickedCount', { count: pickedCount })}</Txt>
+            <Txt style={styles.muted}>{t('mobile.tripBuilder.pickedCount', { count: items.length })}</Txt>
             <Txt style={styles.total}>{money(total)}</Txt>
           </View>
-          <Button compact icon="flash" disabled={!pickedCount || booking.isPending} onPress={book}>
+          <Button compact icon="flash" disabled={!items.length || booking.isPending} onPress={book}>
             {booking.isPending ? copy.booking : copy.book}
           </Button>
         </View>
@@ -147,158 +215,102 @@ export function TripBuilderScreen() {
           placeId={destination.destinationPlaceId}
           onChange={setDestination}
         />
-        <DateSingleField
-          label={copy.departDate}
-          value={departDate}
-          min={getFutureDate(0)}
-          onChange={setDepartDate}
-        />
-        <Stepper
-          label={t('mobile.tripBuilder.nights', { count: nights })}
-          value={nights}
-          min={1}
-          max={14}
-          onChange={setNights}
-        />
         <Stepper
           label={t('mobile.tripBuilder.adults', { count: adults })}
           value={adults}
           min={1}
           max={MAX_ADULTS}
-          onChange={setAdults}
+          onChange={changeAdults}
         />
-        {!place && <Txt style={styles.muted}>{copy.pickDestinationHint}</Txt>}
       </View>
 
-      {canSuggest && (
-        <Section
-          tone="flight"
-          icon="airplane"
-          title={t('mobile.tripBuilder.flightsTitle', { place: destination.destinationName })}
-        >
-          <Row style={styles.origin}>
-            <Txt style={styles.originLabel}>{copy.flyFrom}</Txt>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.originChips}
-            >
-              {origins.map((code) => (
-                <ChoiceChip
-                  key={code}
-                  label={code}
-                  isSelected={code === from}
-                  onPress={() => setFrom(code)}
-                />
-              ))}
-            </ScrollView>
-          </Row>
-          {(['outbound', 'inbound'] as const).map((leg) => {
-            const query = leg === 'outbound' ? outbound : inbound;
-            const options = query.data?.[leg] ?? [];
-            return (
-              <View key={leg} style={styles.leg}>
-                <Txt style={styles.legTitle}>
-                  {leg === 'outbound'
-                    ? t('mobile.tripBuilder.outbound', { date: formatShortDate(departDate) })
-                    : t('mobile.tripBuilder.inbound', { date: formatShortDate(returnDate) })}
-                </Txt>
-                <Row style={styles.chips}>
-                  {(['cheapest', 'best_time'] as const).map((sort) => (
-                    <ChoiceChip
-                      key={sort}
-                      label={copy.flightSorts[sort]}
-                      isSelected={flightSort[leg] === sort}
-                      onPress={() => setFlightSort({ ...flightSort, [leg]: sort })}
-                    />
-                  ))}
-                </Row>
-                <OptionList
-                  isLoading={query.isFetching && !query.data}
-                  error={query.error}
-                  retry={() => void query.refetch()}
-                  isEmpty={options.length === 0}
-                  tone="flight"
-                  isNoneSelected={!picked[leg]}
-                  onNone={() => setPicked({ ...picked, [leg]: null })}
-                >
-                  {options.map((flight) => (
-                    <OptionRow
-                      key={flight.flightId}
-                      tone="flight"
-                      isSelected={picked[leg]?.flightId === flight.flightId}
-                      onPress={() => setPicked({ ...picked, [leg]: flight })}
-                      title={`${flight.departTime ?? '--:--'} → ${flight.arriveTime ?? '--:--'} · ${flight.fromAirport} → ${flight.toAirport}`}
-                      detail={[
-                        flight.airline,
-                        t('mobile.tripBuilder.perPerson', { amount: money(flight.unitPrice) }),
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                      price={money(flight.totalPrice)}
-                      reason={flight.reason?.text}
-                    />
-                  ))}
-                </OptionList>
-              </View>
-            );
-          })}
-        </Section>
+      <Txt style={styles.heading}>{copy.itemsTitle}</Txt>
+      {sorted.length === 0 && !hotelDraft && <Txt style={styles.muted}>{copy.emptyItems}</Txt>}
+      {sorted.map((item) =>
+        item.kind === 'hotel' ? (
+          <ProductCard
+            key={item.key}
+            tone="hotel"
+            icon="bed"
+            title={item.hotelName}
+            detail={[
+              `${formatShortDate(item.checkIn)} → ${formatShortDate(getTripDayDate(item.checkIn, item.nights + 1))}`,
+              t('mobile.tripBuilder.nights', { count: item.nights }),
+              item.roomName,
+              item.rateName,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+            price={money(item.totalPrice)}
+            status={soldOutProductId === item.productId ? vi.mobile.tripPlan.soldOutItem : undefined}
+            onExpand={() => setHotelDraft({ key: item.key, checkIn: item.checkIn, nights: item.nights })}
+            actionLabel={copy.remove}
+            onAction={() => remove(item.key)}
+          />
+        ) : (
+          <ProductCard
+            key={item.key}
+            tone="flight"
+            icon="airplane"
+            title={`${item.from} → ${item.to}`}
+            detail={[formatShortDate(item.date), item.flightNumber, item.departTime, item.fareName]
+              .filter(Boolean)
+              .join(' · ')}
+            price={money(item.totalPrice)}
+            status={soldOutProductId === item.productId ? vi.mobile.tripPlan.soldOutItem : undefined}
+            onExpand={() => searchFlight(item)}
+            actionLabel={copy.remove}
+            onAction={() => remove(item.key)}
+          />
+        ),
       )}
 
-      {canSuggest && (
-        <Section
-          tone="hotel"
-          icon="bed"
-          title={t('mobile.tripBuilder.staysTitle', { place: destination.destinationName })}
-        >
-          <Txt style={styles.muted}>
-            {t('mobile.tripBuilder.stayRange', {
-              checkIn: formatShortDate(departDate),
-              checkOut: formatShortDate(returnDate),
-              nights,
-            })}
-          </Txt>
-          <Row style={styles.chips}>
-            {(['best_price', 'top_rated'] as const).map((sort) => (
-              <ChoiceChip
-                key={sort}
-                label={copy.staySorts[sort]}
-                isSelected={staySort === sort}
-                onPress={() => setStaySort(sort)}
-              />
-            ))}
+      {hotelDraft && (
+        <View style={styles.draft}>
+          <Txt style={styles.draftTitle}>{copy.hotelDraftTitle}</Txt>
+          <DateSingleField
+            label={copy.checkIn}
+            value={hotelDraft.checkIn}
+            min={getFutureDate(0)}
+            onChange={(checkIn) => setHotelDraft({ ...hotelDraft, checkIn })}
+          />
+          <Stepper
+            label={t('mobile.tripBuilder.nights', { count: hotelDraft.nights })}
+            value={hotelDraft.nights}
+            min={1}
+            max={30}
+            onChange={(nights) => setHotelDraft({ ...hotelDraft, nights })}
+          />
+          <Row style={styles.draftActions}>
+            <Button tone="text" onPress={() => setHotelDraft(null)}>
+              {copy.cancel}
+            </Button>
+            <Button compact icon="search" onPress={() => searchHotel(hotelDraft)}>
+              {copy.findHotel}
+            </Button>
           </Row>
-          <OptionList
-            isLoading={stays.isFetching && !stays.data}
-            error={stays.error}
-            retry={() => void stays.refetch()}
-            isEmpty={(stays.data ?? []).length === 0}
-            tone="hotel"
-            isNoneSelected={!picked.stay}
-            onNone={() => setPicked({ ...picked, stay: null })}
-          >
-            {(stays.data ?? []).map((stay) => (
-              <OptionRow
-                key={stay.hotelId}
-                tone="hotel"
-                isSelected={picked.stay?.hotelId === stay.hotelId}
-                onPress={() => setPicked({ ...picked, stay })}
-                title={stay.name}
-                detail={[
-                  stay.stars ? `${stay.stars}★` : null,
-                  t('mobile.tripBuilder.perNight', { amount: money(stay.unitPrice) }),
-                  stay.rating ? `${stay.rating.average}/5` : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-                price={money(stay.totalPrice)}
-                reason={stay.reason?.text}
-              />
-            ))}
-          </OptionList>
-        </Section>
+        </View>
       )}
+
+      <Row style={styles.addRow}>
+        <AddButton
+          icon="bed"
+          label={copy.addHotel}
+          tone="hotel"
+          isDisabled={!!hotelDraft}
+          onPress={() =>
+            setHotelDraft({
+              key: nextKey(HOTEL_KEY_PREFIX),
+              // Khách sạn mới nối tiếp khách sạn trước, không có thì từ ngày đi gợi ý.
+              checkIn: lastHotel
+                ? getTripDayDate(lastHotel.checkIn, lastHotel.nights + 1)
+                : getFutureDate(14),
+              nights: 2,
+            })
+          }
+        />
+        <AddButton icon="airplane" label={copy.addFlight} tone="flight" onPress={() => searchFlight()} />
+      </Row>
       <CommerceError error={booking.error} />
     </Screen>
   );
@@ -322,6 +334,10 @@ export function TripBuilderEntry() {
       <Icon name="chevron-forward" size={mobileIconSize.control} color={colors.textMuted} />
     </Pressable>
   );
+}
+
+function itemDate(item: TripItem): string {
+  return item.kind === 'hotel' ? item.checkIn : item.date;
 }
 
 function formatShortDate(iso: string): string {
@@ -366,112 +382,38 @@ function Stepper({
   );
 }
 
-const TONES = {
-  flight: { ink: colors.tealInk, soft: colors.seaMist },
-  hotel: { ink: colors.coralInk, soft: colors.coralTint },
-} as const;
-
-function Section({
-  tone,
+function AddButton({
   icon,
-  title,
-  children,
-}: {
-  tone: keyof typeof TONES;
-  icon: 'airplane' | 'bed';
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <View style={[styles.section, { borderColor: TONES[tone].ink, backgroundColor: TONES[tone].soft }]}>
-      <Row style={styles.sectionHead}>
-        <Icon name={icon} size={18} color={TONES[tone].ink} />
-        <Txt style={styles.sectionTitle}>{title}</Txt>
-      </Row>
-      {children}
-    </View>
-  );
-}
-
-function OptionList({
-  isLoading,
-  error,
-  retry,
-  isEmpty,
+  label,
   tone,
-  isNoneSelected,
-  onNone,
-  children,
-}: {
-  isLoading: boolean;
-  error: unknown;
-  retry: () => void;
-  isEmpty: boolean;
-  tone: keyof typeof TONES;
-  isNoneSelected: boolean;
-  onNone: () => void;
-  children: ReactNode;
-}) {
-  if (isLoading) return <LoadingDots />;
-  return (
-    <View style={styles.options}>
-      <ApiErrorNotice error={error} retry={retry} />
-      {!error && isEmpty && <Txt style={styles.muted}>{copy.empty}</Txt>}
-      {children}
-      <OptionRow tone={tone} isSelected={isNoneSelected} onPress={onNone} title={copy.none} />
-    </View>
-  );
-}
-
-function OptionRow({
-  tone,
-  isSelected,
   onPress,
-  title,
-  detail,
-  price,
-  reason,
+  isDisabled = false,
 }: {
-  tone: keyof typeof TONES;
-  isSelected: boolean;
+  icon: 'bed' | 'airplane';
+  label: string;
+  tone: 'hotel' | 'flight';
   onPress: () => void;
-  title: string;
-  detail?: string;
-  price?: string;
-  reason?: string;
+  isDisabled?: boolean;
 }) {
-  const ink = TONES[tone].ink;
+  const ink = tone === 'hotel' ? colors.coralInk : colors.tealInk;
   return (
     <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ checked: isSelected }}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled }}
+      disabled={isDisabled}
       onPress={onPress}
-      style={({ pressed }) => [styles.option, isSelected && { borderColor: ink }, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.add, { borderColor: ink }, (pressed || isDisabled) && styles.pressed]}
     >
-      <Icon
-        name={isSelected ? 'radio-button-on' : 'radio-button-off'}
-        size={20}
-        color={isSelected ? ink : colors.textMuted}
-      />
-      <View style={ui.flex}>
-        <Txt style={styles.optionTitle} numberOfLines={2}>
-          {title}
-        </Txt>
-        {!!detail && <Txt style={styles.muted}>{detail}</Txt>}
-        {!!reason && (
-          <View style={[styles.reason, { backgroundColor: TONES[tone].soft }]}>
-            <Txt style={[styles.reasonText, { color: ink }]}>{reason}</Txt>
-          </View>
-        )}
-      </View>
-      {!!price && <Txt style={styles.price}>{price}</Txt>}
+      <Icon name={icon} size={18} color={ink} />
+      <Txt style={[styles.addText, { color: ink }]}>{label}</Txt>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  pressed: { opacity: 0.8 },
+  pressed: { opacity: 0.6 },
   muted: { ...compactType.body, fontFamily: nativeFonts.regular, color: colors.textMuted },
+  heading: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.ink },
   card: {
     gap: spacing.md,
     padding: spacing.md,
@@ -489,47 +431,31 @@ const styles = StyleSheet.create({
     minWidth: 20,
     textAlign: 'center',
   },
-  section: {
-    gap: spacing.sm,
+  draft: {
+    gap: spacing.md,
     padding: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderStyle: 'dashed',
+    borderColor: colors.coralInk,
+    backgroundColor: colors.coralTint,
   },
-  sectionHead: { alignItems: 'center', gap: spacing.xs },
-  sectionTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.ink, flexShrink: 1 },
-  origin: { alignItems: 'center', gap: spacing.sm },
-  originLabel: {
-    ...compactType.body,
-    fontFamily: nativeFonts.regular,
-    color: colors.textMuted,
-    flexShrink: 0,
-  },
-  chips: { gap: spacing.sm, flexWrap: 'wrap' },
-  originChips: { gap: spacing.sm },
-  leg: { gap: spacing.sm },
-  legTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.tealInk },
-  options: { gap: spacing.sm },
-  option: {
+  draftTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.coralInk },
+  draftActions: { justifyContent: 'flex-end', alignItems: 'center', gap: spacing.sm },
+  addRow: { gap: spacing.sm },
+  add: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.md,
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
     borderRadius: radius.md,
-    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.transparent,
+    borderStyle: 'dashed',
+    backgroundColor: colors.background,
   },
-  optionTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.ink },
-  reason: {
-    alignSelf: 'flex-start',
-    marginTop: 4,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
-  },
-  reasonText: { ...compactType.label, fontFamily: nativeFonts.semibold },
-  price: { ...compactType.price, fontFamily: nativeFonts.bold, color: colors.ink },
+  addText: { ...compactType.heading, fontFamily: nativeFonts.semibold },
   footer: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   total: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.coralInk },
   entry: {
