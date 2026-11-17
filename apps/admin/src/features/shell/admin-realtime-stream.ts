@@ -11,7 +11,7 @@ export interface AdminRealtimeListener {
 
 interface EventSourceLike {
   addEventListener(type: string, listener: () => void): void;
-  onerror: ((this: EventSourceLike, event: Event) => unknown) | null;
+  onerror: ((event: Event) => unknown) | null;
   close(): void;
 }
 
