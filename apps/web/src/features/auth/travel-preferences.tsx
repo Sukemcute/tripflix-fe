@@ -3,7 +3,7 @@ import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import type { MyProfileDto, TravelPreferencesDto } from '@tripflix/api-client/core-api/model/index';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { useMyProfile } from './account-profile';
 
@@ -37,13 +37,14 @@ const ordered = (options: Record<string, string>, codes: string[]) => Object.key
 /** Kiểu đính tag: mỗi lựa chọn một pill có nút bỏ, nút "+" mở danh sách còn lại. Nhiều pill thì xuống dòng trong khung. */
 function TagPicker({ label, options, value, onChange }: FieldProps) {
   const ref = useDismissible();
+  const labelId = useId();
   const remaining = Object.keys(options).filter((c) => !value.includes(c));
   return (
-    <div className="travel-field travel-field-wide">
-      <span className="travel-field-label" id="travel-tags-label">
+    <div className="travel-field">
+      <span className="travel-field-label" id={labelId}>
         {label}
       </span>
-      <fieldset className="travel-tags" aria-labelledby="travel-tags-label">
+      <fieldset className="travel-tags" aria-labelledby={labelId}>
         {value.map((code) => (
           <button
             key={code}
@@ -58,7 +59,8 @@ function TagPicker({ label, options, value, onChange }: FieldProps) {
         ))}
         {!value.length && <span className="auth-hint">{vi.api.travelAny}</span>}
         {remaining.length > 0 && (
-          <details ref={ref} className="travel-add" name="travel-select">
+          // Cùng name: mở ô này thì trình duyệt tự đóng ô kia, hai danh sách không đè nhau.
+          <details ref={ref} className="travel-add" name="travel-add">
             <summary aria-label={`${vi.api.travelAdd}: ${label}`}>+</summary>
             <div className="travel-menu">
               {remaining.map((code) => (
@@ -78,33 +80,6 @@ function TagPicker({ label, options, value, onChange }: FieldProps) {
           </details>
         )}
       </fieldset>
-    </div>
-  );
-}
-
-/** Ô dropdown chọn nhiều cho danh sách ngắn (vùng, mức chi phí): checkbox trong <details>, chữ dài thì cắt "…". */
-function MultiSelect({ label, options, value, onChange }: FieldProps) {
-  const ref = useDismissible();
-  const summary = value.length ? value.map((code) => options[code] ?? code).join(', ') : vi.api.travelAny;
-  return (
-    <div className="travel-field">
-      <span className="travel-field-label">{label}</span>
-      {/* Cùng name: trình duyệt tự đóng ô kia khi mở ô này, hai danh sách không đè nhau. */}
-      <details ref={ref} className="travel-select" name="travel-select">
-        <summary aria-label={`${label}: ${summary}`}>{summary}</summary>
-        <fieldset aria-label={label} className="travel-menu">
-          {Object.keys(options).map((code) => (
-            <label key={code} className="travel-select-option">
-              <input
-                type="checkbox"
-                checked={value.includes(code)}
-                onChange={() => onChange(ordered(options, value.includes(code) ? value.filter((c) => c !== code) : [...value, code]))}
-              />
-              {options[code]}
-            </label>
-          ))}
-        </fieldset>
-      </details>
     </div>
   );
 }
@@ -159,13 +134,13 @@ export function TravelPreferencesCard({ userId }: { userId: string }) {
             value={current.interests}
             onChange={(interests) => setDraft({ ...current, interests: interests as Draft['interests'] })}
           />
-          <MultiSelect
+          <TagPicker
             label={vi.api.travelRegions}
             options={vi.api.travelRegionOptions}
             value={current.regions}
             onChange={(regions) => setDraft({ ...current, regions: regions as Draft['regions'] })}
           />
-          <MultiSelect
+          <TagPicker
             label={vi.api.travelBudgetLevels}
             options={vi.api.travelBudgetLevelOptions}
             value={current.budgetLevels}

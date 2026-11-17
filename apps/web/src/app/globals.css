@@ -3429,7 +3429,6 @@ body:has([class*="feedPageWrapper"]) #content {
 }
 .travel-fields {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 .travel-field {
@@ -3439,39 +3438,6 @@ body:has([class*="feedPageWrapper"]) #content {
 .travel-field-label {
   font-size: 14px;
   font-weight: 600;
-}
-.travel-select {
-  position: relative;
-}
-.travel-select summary {
-  display: block;
-  line-height: 46px;
-  padding: 0 40px 0 16px;
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  background: var(--color-background);
-  cursor: pointer;
-  list-style: none;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.travel-select summary::-webkit-details-marker {
-  display: none;
-}
-.travel-select summary::after {
-  content: '';
-  position: absolute;
-  right: 18px;
-  top: 20px;
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(45deg);
-}
-.travel-select[open] summary {
-  border-color: var(--color-teal-ink);
 }
 .travel-menu {
   position: absolute;
@@ -3501,10 +3467,7 @@ body:has([class*="feedPageWrapper"]) #content {
   text-align: left;
   cursor: pointer;
 }
-/* "Bạn thích": khung riêng cả hàng, pill xuống dòng khi nhiều, nút + mở danh sách còn lại. */
-.travel-field-wide {
-  grid-column: 1 / -1;
-}
+/* Mỗi trường một khung: pill xuống dòng khi nhiều, nút + mở danh sách còn lại. */
 .travel-tags {
   display: flex;
   min-width: 0;
@@ -3556,14 +3519,8 @@ body:has([class*="feedPageWrapper"]) #content {
   width: max-content;
   min-width: 200px;
 }
-.travel-select-option:hover,
-.travel-select-option:has(input:checked) {
+.travel-select-option:hover {
   background: var(--color-sea-mist);
-}
-@media (max-width: 640px) {
-  .travel-fields {
-    grid-template-columns: 1fr;
-  }
 }
 /* Mục "Bảo mật & thiết bị" dùng khung profile-card; khoảng cách giữa các phần đã có gap của account-panel. */
 .account-panel > .profile-card-header {
