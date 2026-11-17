@@ -4,6 +4,7 @@
  * Tripflix AI Service
  * OpenAPI spec version: 0.1.0
  */
+import type { Awaiting } from './awaiting';
 import type { CardRef } from './cardRef';
 import type { DraftChoice } from './draftChoice';
 import type { DraftOp } from './draftOp';
@@ -26,6 +27,7 @@ export interface TripContext {
    */
   adults?: number;
   asked?: boolean;
+  awaiting?: Awaiting | null;
   /**
    * @minimum 0
    * @maximum 9
@@ -44,6 +46,7 @@ export interface TripContext {
   interests?: string[];
   /** @maxItems 5 */
   lastCards?: CardRef[];
+  mealsOnly?: boolean;
   /** @maxItems 5 */
   ops?: DraftOp[];
   /** @maxLength 60 */

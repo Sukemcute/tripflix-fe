@@ -9,6 +9,7 @@ export type DraftStopSlot = (typeof DraftStopSlot)[keyof typeof DraftStopSlot];
 
 export const DraftStopSlot = {
   sáng: 'sáng',
+  trưa: 'trưa',
   chiều: 'chiều',
   tối: 'tối',
 } as const;

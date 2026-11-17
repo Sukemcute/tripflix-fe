@@ -12,7 +12,7 @@ export interface ChatRequest {
   action?: DraftAction | null;
   contextPostId?: string | null;
   conversationId: string;
-  /** @maxItems 10 */
+  /** @maxItems 30 */
   history?: Turn[];
   /**
    * @minLength 1

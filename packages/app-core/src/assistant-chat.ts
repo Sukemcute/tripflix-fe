@@ -2,9 +2,10 @@
 // (Bảo chốt 2026-11-16). Server không lưu hội thoại nên app gửi lại history và trip mỗi lượt.
 
 export const ASSISTANT_CHAT_DAYS = 7;
-/** 10 lượt hỏi đáp; server chỉ đọc 10 tin gần nhất. */
+/** Lưu trên máy 20 tin (10 lượt hỏi đáp). */
 export const ASSISTANT_SAVED_MESSAGES = 20;
-export const ASSISTANT_HISTORY_TURNS = 10;
+/** Tin gửi kèm mỗi lượt: server đọc tối đa 20 tin khi test (TF31, 2026-11-17), nhận tối đa 30. */
+export const ASSISTANT_HISTORY_TURNS = 20;
 const MAX_TEXT_CHARS = 2000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
