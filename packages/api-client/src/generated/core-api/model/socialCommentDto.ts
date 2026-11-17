@@ -4,10 +4,16 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { SocialCommentDtoModerationState } from './socialCommentDtoModerationState';
 import type { SocialCommentDtoStatus } from './socialCommentDtoStatus';
 
 export interface SocialCommentDto {
   status?: SocialCommentDtoStatus;
+  /**
+   * Trạng thái kiểm duyệt hiển thị cho tác giả
+   * @nullable
+   */
+  moderationState: SocialCommentDtoModerationState;
   id: string;
   postId: string;
   authorId: string;

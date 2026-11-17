@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { moderationApi, socialApi, useApiSession } from '@tripflix/api-client';
@@ -10,15 +10,17 @@ import type {
   ModerationCaseDto,
   ModerationLogDto,
 } from '@tripflix/api-client/core-api/model/index';
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import { AdminApiError } from '../shell/api-state';
 import { PostModeration } from './post-moderation';
 import { getContentWarning, getRiskLevel, getVisobertScore } from './risk-level';
 import riskStyles from './risk-level.module.css';
 import { CaseContextTags } from './case-context-tags';
 import operations from './moderation-operations.module.css';
+import { useFreshIds } from './use-fresh-ids';
 
 const text = vi.moderation;
+const copyOps = vi.adminOperations;
 const reasonKeys = Object.keys(text.reasons) as (keyof typeof text.reasons)[];
 const date = (value: string) => new Date(value).toLocaleString('vi-VN');
 const refreshInterval = 30_000;
@@ -474,6 +476,11 @@ function ModerationQueue({
       query.data?.pages.flatMap((page) => page.items.map((item) => [item.id, item] as const)),
     ).values(),
   ];
+  const loadedIds = useMemo(
+    () => query.data?.pages.flatMap((page) => page.items.map((item) => item.id)),
+    [query.data],
+  );
+  const freshIds = useFreshIds(loadedIds);
 
   // Lọc theo subcategory và ô tìm kiếm
   const filteredItems = rawItems.filter((item) => {
@@ -555,6 +562,19 @@ function ModerationQueue({
             }}
           />
         </div>
+        {freshIds.size > 0 && (
+          <button
+            type="button"
+            className="self-end rounded-full bg-teal-soft px-3 py-1 text-xs font-bold text-teal-ink hover:bg-teal hover:text-background"
+            onClick={() =>
+              document
+                .querySelector('[data-fresh-case="true"]')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }
+          >
+            {t('adminOperations.freshCases', { count: freshIds.size })}
+          </button>
+        )}
       </div>
 
       {/* Chia Layout: Subnav Menu bên trái + Bảng Danh sách bên phải */}
@@ -712,7 +732,11 @@ function ModerationQueue({
                     const categoryLabel = item.targetType === 'comment' ? 'Bình luận' : 'Bài viết';
 
                     return (
-                      <tr key={item.id} className="mod-row-case">
+                      <tr
+                        key={item.id}
+                        data-fresh-case={freshIds.has(item.id) || undefined}
+                        className={`mod-row-case transition-colors ${freshIds.has(item.id) ? 'bg-teal-soft/60' : ''}`}
+                      >
                         <td>
                           <input
                             type="checkbox"
@@ -726,6 +750,11 @@ function ModerationQueue({
                           <div className="mod-content-cell">
                             <div className="mod-content-meta">
                               <span className="mod-content-title">
+                                {freshIds.has(item.id) && (
+                                  <span className="mr-1.5 inline-block rounded-full bg-teal px-1.5 py-0.5 align-middle text-[10px] font-bold text-background">
+                                    {copyOps.freshCase}
+                                  </span>
+                                )}
                                 {item.targetPreview || `${categoryLabel} #${item.targetId.slice(0, 8)}`}
                               </span>
                               <div className="mod-content-sub">

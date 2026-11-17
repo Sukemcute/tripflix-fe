@@ -32,12 +32,7 @@ export {
 export { getSecondsLeft, useResendCooldown } from './resend-cooldown';
 export { socialApi } from './social';
 export { useFollowAuthor } from './follows';
-export {
-  getPublicProfileQueryKey,
-  useAuthorReels,
-  useAuthorVlogs,
-  usePublicProfile,
-} from './public-profile';
+export { getPublicProfileQueryKey, useAuthorReels, useAuthorVlogs, usePublicProfile } from './public-profile';
 export { moderationApi } from './moderation';
 export { removeUnavailablePost } from './remove-unavailable-post';
 export { useSocialPosts } from './queries';
@@ -94,7 +89,7 @@ export {
   type NotificationReadResult,
   type NotificationPostTarget,
 } from './notifications';
-export { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime } from './notifications-realtime';
+export { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime, watchPostComments } from './notifications-realtime';
 export { findCachedFeedCard, removeReelFromSavedFeedCache, updateReelSocialCache } from './reel-social-cache';
 export { updateCommentLikeCache } from './comment-like-cache';
 export { evictPostFromCache, isPostNotFoundError } from './post-cache';
@@ -123,6 +118,7 @@ export {
   usePostSearch,
   useUserSearch,
 } from './explore-search';
+export { getPlaceSearchResults, PLACE_SEARCH_PAGE_SIZE, usePlaceSearchFeed, type PlaceSearchKind } from './place-search-feed';
 export {
   getHomeRecommendations,
   useHomeRecommendations,
@@ -166,6 +162,7 @@ export {
   type VideoMimeType,
   type VideoUploadOptions,
   type VideoUploadSource,
+  type VideoUploadState,
 } from './video-upload';
 export {
   AssistantError,

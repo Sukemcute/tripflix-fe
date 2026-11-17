@@ -125,6 +125,7 @@ export function AnalyticsWorkspace() {
   const [tab, setTab] = useState<'overview' | 'traces'>('overview');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [errorsOnly, setErrorsOnly] = useState(false);
+  const [includeSuccessfulPreflights, setIncludeSuccessfulPreflights] = useState(false);
   const [minDurationMs, setMinDurationMs] = useState(0);
   const [traceInput, setTraceInput] = useState('');
   const [traceValidation, setTraceValidation] = useState('');
@@ -147,7 +148,7 @@ export function AnalyticsWorkspace() {
     retry: false,
   });
   const traces = useQuery({
-    queryKey: ['analytics', 'traces', range, service, errorsOnly, minDurationMs],
+    queryKey: ['analytics', 'traces', range, service, errorsOnly, minDurationMs, includeSuccessfulPreflights],
     enabled: tab === 'traces',
     queryFn: async ({ signal }) =>
       (
@@ -156,6 +157,7 @@ export function AnalyticsWorkspace() {
             range,
             ...(service ? { service } : {}),
             errorsOnly: errorsOnly ? 'true' : 'false',
+            includeSuccessfulPreflights: includeSuccessfulPreflights ? 'true' : 'false',
             minDurationMs,
           },
           { signal },
@@ -435,6 +437,10 @@ export function AnalyticsWorkspace() {
                   onChange={(event) => setErrorsOnly(event.target.checked)}
                 />
                 {copy.errorsOnly}
+              </label>
+              <label className={styles.checkbox} title={copy.preflightHelp}>
+                <input type="checkbox" checked={includeSuccessfulPreflights} onChange={(event) => setIncludeSuccessfulPreflights(event.target.checked)} />
+                {copy.includeSuccessfulPreflights}
               </label>
               <label>
                 {copy.minDuration}

@@ -5,14 +5,39 @@ import type {
   SocialCommentPageDto,
   SocialPostDetailDto,
 } from '@tripflix/api-client/core-api/model/index';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { socialApi } from '@tripflix/api-client';
 import {
   addCommentToCache,
   refreshCommentsIfStale,
   removeCommentFromCache,
   replaceCommentInCache,
   setCommentReactionInCache,
+  reloadPostComments,
 } from './comment-cache';
+
+vi.mock('@tripflix/api-client', () => ({ socialApi: { getPost: vi.fn() } }));
+
+it('realtime tải lại danh sách gốc, trả lời và focus, cập nhật số đếm từ server', async () => {
+  const client = new QueryClient();
+  client.setQueryData(['social', 'comments', 'p1'], { pages: [] });
+  client.setQueryData(['social', 'comments', 'p1', 'root'], { pages: [] });
+  client.setQueryData(['social', 'comment-thread', 'p1', 'focus'], { items: [] });
+  client.setQueryData(['social', 'post', 'p1'], { post: { id: 'p1', commentCount: 4 } });
+  const list = { pages: [{ items: [{ id: 'p1', commentCount: 4 }, { id: 'p2', commentCount: 8 }] }], pageParams: [null] };
+  client.setQueryData(['social', 'public', 'viewer'], list);
+  vi.mocked(socialApi.getPost).mockResolvedValue({ post: { id: 'p1', commentCount: 2 } } as SocialPostDetailDto);
+
+  await reloadPostComments(client, 'p1');
+
+  expect(client.getQueryState(['social', 'comments', 'p1'])?.isInvalidated).toBe(true);
+  expect(client.getQueryState(['social', 'comments', 'p1', 'root'])?.isInvalidated).toBe(true);
+  expect(client.getQueryState(['social', 'comment-thread', 'p1', 'focus'])?.isInvalidated).toBe(true);
+  expect(client.getQueryData(['social', 'post', 'p1'])).toEqual({ post: { id: 'p1', commentCount: 2 } });
+  expect(client.getQueryData(['social', 'public', 'viewer'])).toEqual({ ...list, pages: [{ items: [
+    { id: 'p1', commentCount: 2 }, { id: 'p2', commentCount: 8 },
+  ] }] });
+});
 
 const POST_ID = 'post-1';
 const USER_ID = 'user-1';
@@ -26,6 +51,7 @@ type CommentPages = InfiniteData<SocialCommentPageDto>;
 
 function makeComment(id: string, overrides: Partial<SocialCommentDto> = {}): SocialCommentDto {
   return {
+    moderationState: null,
     id,
     postId: POST_ID,
     authorId: USER_ID,

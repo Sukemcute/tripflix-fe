@@ -8,6 +8,7 @@ import {
   useApiSession,
   useFollowAuthor,
 } from '@tripflix/api-client';
+import { VerifiedTripBadge } from './verified-trip-badge';
 import type { TripAttachmentDto } from '@tripflix/api-client/core-api/model/index';
 import { isBackSwipeComplete } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
@@ -316,6 +317,7 @@ export function LivePostDetailScreen() {
                     {authorName}
                   </Txt>
                 )}
+                {!!post?.isVerified && <VerifiedTripBadge tone="dark" />}
                 {canShowFollow && (
                   <>
                     <Button

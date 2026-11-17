@@ -1,4 +1,5 @@
 import type { InfiniteData, QueryClient, QueryKey } from '@tanstack/react-query';
+import { socialApi } from '@tripflix/api-client';
 import type {
   FeedPageDto,
   SocialCommentDto,
@@ -13,6 +14,28 @@ import type {
  */
 type CommentPages = InfiniteData<SocialCommentPageDto>;
 type CommentUpdate = (comment: SocialCommentDto) => SocialCommentDto | null;
+
+/** Tín hiệu chỉ mang postId: đọc lại bình luận và số đếm chuẩn của bài từ server. */
+export async function reloadPostComments(client: QueryClient, postId: string): Promise<void> {
+  await Promise.all([
+    client.invalidateQueries({ queryKey: ['social', 'comments', postId] }),
+    client.invalidateQueries({ queryKey: ['social', 'comment-thread', postId] }),
+    socialApi.getPost(postId).then((detail) => {
+      client.setQueriesData<SocialPostDetailDto>({ queryKey: ['social', 'post', postId] }, detail);
+      client.setQueriesData<InfiniteData<{ items: SocialPostDetailDto['post'][] }>>(
+        { queryKey: ['social'], predicate: (query) => !['comments', 'post', 'comment-thread'].includes(String(query.queryKey[1])) },
+        (data) => hasPages(data) ? ({ ...data, pages: data.pages.map((page) => ({ ...page,
+          items: page.items?.map((post) => post.id === postId ? { ...post, commentCount: detail.post.commentCount } : post),
+        })) }) : data,
+      );
+      client.setQueriesData<InfiniteData<FeedPageDto>>({ queryKey: ['feed'] }, (data) => data && ({
+        ...data, pages: data.pages.map((page) => ({ ...page, items: page.items.map((post) =>
+          post.postId === postId ? { ...post, counts: { ...post.counts, comments: detail.post.commentCount } } : post),
+        })),
+      }));
+    }).catch(() => { void client.invalidateQueries({ queryKey: ['social', 'post', postId] }); }),
+  ]);
+}
 
 function commentListsKey(postId: string): QueryKey {
   return ['social', 'comments', postId];

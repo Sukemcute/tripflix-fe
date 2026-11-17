@@ -13,6 +13,7 @@ import {
   useReelsByIds,
   useReelsFeed,
   useSocialPosts,
+  watchPostComments,
 } from '@tripflix/api-client';
 import {
   mediaUploadControllerCreateUpload,
@@ -38,11 +39,13 @@ import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { getAvatarTone } from './avatar-tone';
 import { EmojiPicker } from './emoji-picker';
 import { CommentVisibility } from './comment-visibility';
+import { ModeratedComment } from './moderated-comment';
 import {
   addCommentToCache,
   removeCommentFromCache,
   replaceCommentInCache,
   setCommentReactionInCache,
+  reloadPostComments,
 } from './comment-cache';
 import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
@@ -2095,6 +2098,9 @@ export function RightPanelCommentsSynchronized({
   const { user, isReady, session } = useApiSession();
   const client = useQueryClient();
   const initialDraft = getCommentDraft(post.id);
+  useEffect(() => watchPostComments(post.id, () => {
+    void reloadPostComments(client, post.id);
+  }), [client, post.id, user?.id]);
   const [body, setBody] = useState(initialDraft?.body ?? '');
   const [isEmojiOpen, setEmojiOpen] = useState(false);
   // Cả viên thuốc nhập (ô chữ và nút emoji) tính là bên trong bảng emoji: bấm vào để gõ không đóng bảng.
@@ -2352,6 +2358,7 @@ function CommentNode({
     isLiked: boolean;
     authorName?: string | null;
     replyToName?: string | null;
+    moderationState?: 'hidden' | null;
   };
   isReply?: boolean;
   loginHref: string;
@@ -2434,6 +2441,21 @@ function CommentNode({
     ? [focusedReply, ...loadedReplies]
     : loadedReplies;
   const totalReplies = (comment as { replyCount?: number }).replyCount ?? repliesQuery.data?.pages[0]?.total ?? replies.length;
+
+  if (comment.moderationState === 'hidden') {
+    return (
+      <li ref={focusRef} id={`comment-${comment.id}`} className={styles.panelCommentItem}>
+        <ModeratedComment />
+        <ApiErrorNotice error={commentMutation.error} />
+        {isMine && (
+          <button type="button" className={styles.panelCommentActionBtn}
+            disabled={commentMutation.isPending} onClick={() => commentMutation.mutate('delete')}>
+            {vi.api.remove}
+          </button>
+        )}
+      </li>
+    );
+  }
 
   return (
     <li

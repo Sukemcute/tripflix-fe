@@ -386,9 +386,9 @@ export function SocialFeedView({
 
       const target = event.target as HTMLElement | null;
 
-      // 1. Neu dang thao tac tren popup modal, dialog hoac o nhap van ban -> Giu nguyen mac dinh
+      // 1. Neu dang thao tac tren popup modal, dialog, bang tha xuong tren header hoac o nhap van ban -> Giu nguyen mac dinh
       if (
-        target?.closest('dialog, [role="dialog"]') ||
+        target?.closest('dialog, [role="dialog"], .header-popover') ||
         target?.closest('input, textarea, select, [contenteditable="true"]')
       ) {
         return;
