@@ -19,19 +19,19 @@
   flex-direction: column;
   gap: 12px;
   width: min(340px, calc(100vw - 32px));
-  padding: 16px;
+  padding: 14px;
   border: 1px solid var(--color-border);
-  border-radius: 16px;
-  background: var(--color-surface);
+  border-radius: 12px;
+  background: var(--color-background);
   color: var(--color-text);
-  box-shadow: 0 12px 32px var(--color-overlay);
+  /* Cùng kiểu menu xổ xuống chung của tab Cảm hứng (share-menu.module.css) (TF25). */
+  box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--color-ink) 30%, transparent);
   text-align: left;
 }
 
 .label {
   margin: 0;
-  color: var(--color-teal-ink);
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
