@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { useHeaderPopover } from '@/features/shared/use-header-popover';
 import { ADMIN_URL, getInitial, isStaffRole } from './account-helpers';
+import { useOpenAdmin } from './admin-handoff';
 
 /**
  * Góc phải header: chưa đăng nhập thì link "Đăng nhập"; đã đăng nhập thì avatar tròn (chữ cái đầu của tên) mở menu
@@ -55,6 +56,7 @@ export function HeaderAccount() {
   const { user, isReady, session } = useApiSession();
   const router = useRouter();
   const { isOpen, root, toggle, setOpen, close } = useHeaderPopover();
+  const openAdmin = useOpenAdmin();
   const logout = useMutation({
     mutationFn: () => session.logout(),
     onSuccess: () => {
@@ -128,14 +130,21 @@ export function HeaderAccount() {
             </li>
             {ADMIN_URL && isStaffRole(user.role) && (
               <li>
-                <a href={ADMIN_URL} onClick={closeMenu}>
+                <a
+                  href={ADMIN_URL}
+                  aria-disabled={openAdmin.isPending}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    if (!openAdmin.isPending) openAdmin.mutate();
+                  }}
+                >
                   <MenuIcon name="admin" />
                   {vi.api.openAdmin}
                 </a>
               </li>
             )}
           </ul>
-          <ApiErrorNotice error={logout.error} />
+          <ApiErrorNotice error={logout.error ?? openAdmin.error} />
           <button
             type="button"
             className="header-account-logout"

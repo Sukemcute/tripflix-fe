@@ -124,7 +124,7 @@ export const api = {
   sendResetLink: 'Gửi liên kết đặt lại',
   sending: 'Đang gửi…',
   forgotSent:
-    'Nếu email này có tài khoản, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu. Hãy kiểm tra hộp thư, kể cả mục thư rác.',
+    'Chúng tôi đã gửi liên kết đặt lại mật khẩu, có hiệu lực trong 30 phút. Hãy kiểm tra hộp thư, kể cả mục thư rác.',
   resetTitle: 'Đặt mật khẩu mới',
   resetBody: 'Chọn mật khẩu mới từ 8–128 ký tự. Sau khi đổi, bạn sẽ được đăng xuất khỏi mọi thiết bị.',
   resetSubmit: 'Lưu mật khẩu mới',
@@ -555,4 +555,15 @@ export const api = {
   immersiveFeaturedComments: 'Bình luận nổi bật',
   immersiveReplyingTo: 'Đang trả lời {name}',
   immersiveCancelReply: 'Hủy trả lời',
+  // Trang cá nhân công khai (TF47)
+  profileFollowers: 'Người theo dõi',
+  profileFollowing: 'Đang theo dõi',
+  profileLikes: 'Lượt thích',
+  profileVideos: 'Video',
+  profilePosts: 'Bài viết',
+  profileNoVideos: 'Chưa đăng video nào.',
+  profileNoPosts: 'Chưa đăng bài viết nào.',
+  profileNotFound: 'Không tìm thấy người dùng này.',
+  profileOpen: 'Xem trang của {name}',
+  profileLoadMore: 'Xem thêm',
 } as const;

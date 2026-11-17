@@ -11,6 +11,7 @@ import { CommentLikeButton } from './comment-like-button';
 import { ReelCommentComposer } from './reel-comment-composer';
 import { CommunitySummary } from './post-summary';
 import { ReportButton } from './report-button';
+import { LoadingDots } from '@/components/loading-dots';
 
 const REPORT_HIT_SLOP = { top: 6, bottom: 6, left: 15, right: 15 };
 const COMPACT_REPORT_HIT_SLOP = { top: 6, bottom: 6, left: 4, right: 4 };
@@ -55,6 +56,8 @@ export function LiveComments({
   onLoginRequired,
   onRevealComment,
   showSummary = false,
+  focusCommentId,
+  focusThreadId,
 }: {
   postId: string;
   parentCommentId?: string;
@@ -67,12 +70,17 @@ export function LiveComments({
   onLoginRequired?: () => void;
   /** Cuộn danh sách tới vị trí y (tính trong nội dung), để bình luận đang trả lời nằm trên cùng. */
   onRevealComment?: (y: number) => void;
+  /** Mở từ thông báo: làm nổi bật bình luận này; nếu là trả lời thì mở sẵn luồng focusThreadId. */
+  focusCommentId?: string;
+  focusThreadId?: string;
 }) {
   const { user } = useApiSession();
   const client = useQueryClient();
   const [body, setBody] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
-  const [replying, setReplying] = useState<string | undefined>();
+  const [replying, setReplying] = useState<string | undefined>(parentCommentId ? undefined : focusThreadId);
+  // Chỉ cuộn tới bình luận từ thông báo một lần, sau đó người dùng tự cuộn.
+  const hasRevealedFocus = useRef(false);
   // Trả lời đi qua ô nhập chính ở đáy khung, như TikTok: không mở ô nhập thứ hai trong danh sách.
   const [replyTarget, setReplyTarget] = useState<{ id: string; name: string }>();
   const [focusRequest, setFocusRequest] = useState(0);
@@ -130,7 +138,7 @@ export function LiveComments({
           void query.refetch();
         }}
       />
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      {query.isPending && <LoadingDots />}
       {/* Trả lời trống thì không cần lời mời bình luận; chỉ danh sách gốc mới hiện. */}
       {!parentCommentId && query.data?.pages[0]?.items.length === 0 && <Notice>{vi.api.noComments}</Notice>}
       {query.data?.pages
@@ -155,15 +163,28 @@ export function LiveComments({
             <View
               key={comment.id}
               style={compact ? styles.comment : undefined}
-              onLayout={(event) => commentOffsets.current.set(comment.id, event.nativeEvent.layout.y)}
+              onLayout={(event) => {
+                const { y } = event.nativeEvent.layout;
+                commentOffsets.current.set(comment.id, y);
+                // Trả lời nằm trong luồng nên cuộn tới bình luận gốc; danh sách chỉ đo được vị trí của mức gốc.
+                if (comment.id === (focusThreadId ?? focusCommentId) && onRevealComment && !hasRevealedFocus.current) {
+                  hasRevealedFocus.current = true;
+                  onRevealComment(Math.max(0, y - spacing.sm));
+                }
+              }}
             >
               {compact && (
                 <View style={[styles.avatar, !!parentCommentId && styles.replyAvatar]}>
                   <Icon name="person-outline" size={parentCommentId ? 12 : 14} color={colors.textMuted} />
                 </View>
               )}
-              <Card style={compact ? styles.commentBody : undefined}>
-                <Txt variant="caption" style={compact && styles.author}>
+              <Card style={[compact && styles.commentBody, comment.id === focusCommentId && styles.focused]}>
+                <Txt
+                  variant="caption"
+                  style={compact && styles.author}
+                  accessibilityRole="link"
+                  onPress={() => router.push({ pathname: '/user/[id]', params: { id: comment.authorId } })}
+                >
                   {authorName}{comment.replyToName && ` ↳ ${comment.replyToName}`}
                   {!compact && ` · ${new Date(comment.createdAt).toLocaleDateString('vi-VN')}`}
                 </Txt>
@@ -247,6 +268,7 @@ export function LiveComments({
                     <LiveComments
                       postId={postId}
                       parentCommentId={comment.id}
+                      focusCommentId={focusCommentId}
                       showHeading={!compact}
                       compact={compact}
                       onLoginRequired={onLoginRequired}
@@ -388,6 +410,7 @@ export function LiveComments({
 }
 
 const styles = StyleSheet.create({
+  focused: { backgroundColor: colors.sunSoft, borderRadius: 12 },
   inlineComposer: { gap: spacing.lg },
   composer: {
     paddingHorizontal: spacing.md,

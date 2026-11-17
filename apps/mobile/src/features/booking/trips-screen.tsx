@@ -13,7 +13,6 @@ import {
   copy,
   Empty,
   formatDate,
-  IconButton,
   money,
   Screen,
   Segments,
@@ -21,6 +20,8 @@ import {
   ui,
 } from '@/components/mobile-ui';
 import { CommerceError, useRefreshOnOpen } from './commerce-state';
+import { NotificationBell } from '@/features/account/notification-bell';
+import { LoadingDots } from '@/components/loading-dots';
 
 const text = vi.commerce;
 export function CommerceTripsScreen() {
@@ -32,11 +33,7 @@ export function CommerceTripsScreen() {
       title={copy.profile.myTrips}
       scroll={!user}
       right={
-        <IconButton
-          name="notifications-outline"
-          label={copy.common.notification}
-          onPress={() => router.push('/notifications')}
-        />
+        <NotificationBell />
       }
     >
       <View style={{ gap: spacing.sm, paddingBottom: spacing.md }}>
@@ -57,7 +54,7 @@ export function CommerceTripsScreen() {
         }}
       />
       {!isReady ? (
-        <Txt>{vi.api.loading}</Txt>
+        <LoadingDots />
       ) : user ? (
         <BookedTrips key={user.id} tab={tab} />
       ) : (
@@ -115,7 +112,7 @@ function BookedTrips({ tab }: { tab: number }) {
               void query.refetch();
             }}
           />
-          {query.isPending && <Txt>{vi.api.loading}</Txt>}
+          {query.isPending && <LoadingDots />}
         </>
       }
       ListEmptyComponent={

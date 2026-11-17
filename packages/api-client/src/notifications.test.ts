@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { configureHttp, HttpError } from './http';
 import {
+  getNotificationPostTarget,
   notificationsApi,
+  readCreatedNotification,
   shouldRetryNotifications,
   useNotifications,
   useMarkNotificationRead,
@@ -172,4 +174,25 @@ it('invalidates the current user inbox after successful read mutations', async (
   }
   expect(hooks.invalidate).toHaveBeenCalledTimes(2);
   expect(hooks.invalidate).toHaveBeenCalledWith({ queryKey: ['notifications', 'user-1'] });
+});
+
+it('đọc thông báo trong payload socket, payload lạ thì trả null', () => {
+  const item = {
+    id: 'n1', type: 'comment.created', title: 'Có bình luận mới', body: 'An đã bình luận bài của bạn.',
+    link: null, data: { postId: 'p1', commentId: 'c1', excerpt: 'Đẹp quá' },
+    createdAt: '2026-11-16T00:00:00.000Z', readAt: null,
+  };
+  expect(readCreatedNotification({ item })).toEqual(item);
+  expect(readCreatedNotification({ item: { id: 'n1' } })).toBeNull();
+  expect(readCreatedNotification(null)).toBeNull();
+});
+
+it.each([
+  { type: 'comment.created', data: { postId: 'p1', commentId: 'c1', parentCommentId: null }, expected: { postId: 'p1', commentId: 'c1' } },
+  { type: 'comment.replied', data: { postId: 'p1', commentId: 'c2', parentCommentId: 'c1' }, expected: { postId: 'p1', commentId: 'c2', threadId: 'c1' } },
+  { type: 'reaction.post', data: { postId: 'p1' }, expected: { postId: 'p1' } },
+  { type: 'moderation.removed', data: { postId: 'p1', commentId: 'c1' }, expected: null },
+  { type: 'booking.paid', data: { orderId: 'o1' }, expected: null },
+])('bấm thông báo $type thì mở đúng bài và bình luận', ({ type, data, expected }) => {
+  expect(getNotificationPostTarget({ type, data })).toEqual(expected);
 });

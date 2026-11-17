@@ -15,6 +15,7 @@ import { AccountSecurity } from './account-security';
 import { EmailVerificationNotice } from './email-verification-notice';
 import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
 import { ADMIN_URL, getInitial, isStaffRole } from './account-helpers';
+import { useOpenAdmin } from './admin-handoff';
 
 // Màn đăng nhập nằm ở login-form.tsx; giữ export ở đây để app/login/page.tsx không phải đổi.
 export { LiveLogin } from './login-form';
@@ -27,6 +28,7 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
   const { user, isReady, session } = useApiSession();
   const router = useRouter();
   const [tab, setTab] = useState<AccountTab>(initialTab);
+  const openAdmin = useOpenAdmin();
   const logout = useMutation({
     mutationFn: () => session.logout(),
     onSuccess: () => router.push('/'),
@@ -70,7 +72,14 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
               </button>
             ))}
             {ADMIN_URL && isStaffRole(user.role) && (
-              <a href={ADMIN_URL}>
+              <a
+                href={ADMIN_URL}
+                aria-disabled={openAdmin.isPending}
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (!openAdmin.isPending) openAdmin.mutate();
+                }}
+              >
                 <NavIcon name="admin" />
                 {vi.api.openAdmin}
               </a>
@@ -85,7 +94,7 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
               {vi.api.logout}
             </button>
           </nav>
-          <ApiErrorNotice error={logout.error} />
+          <ApiErrorNotice error={logout.error ?? openAdmin.error} />
         </aside>
         <div className="profile-main">
           {user.emailVerified === false && <EmailVerificationNotice key={`verify-${user.id}`} />}

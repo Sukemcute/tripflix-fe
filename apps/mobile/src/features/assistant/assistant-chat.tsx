@@ -16,8 +16,6 @@ import {
 import {
   GestureDetector,
   GestureHandlerRootView,
-  GestureStateManager,
-  useNativeGesture,
   usePanGesture,
   type PanGestureActiveEvent,
 } from 'react-native-gesture-handler';
@@ -38,6 +36,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { Icon, IconButton, Mascot, Txt, type IconName } from '@/components/mobile-ui';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { SHEET_CLOSE_SPRING } from '@/components/motion';
+import { useSheetListDrag } from '@/components/use-sheet-list-drag';
 import { BUBBLE_MASCOT_SIZE, BUBBLE_SIZE, useAssistant } from './assistant-provider';
 import { AssistantCards } from './assistant-cards';
 
@@ -85,7 +84,9 @@ export function AssistantChat({
             <Mascot size={34} />
           </View>
           <View style={{ flex: 1 }}>
-            <Txt variant="heading" style={compactType.heading}>{copy.name}</Txt>
+            <Txt variant="heading" style={compactType.heading}>
+              {copy.name}
+            </Txt>
             <Txt variant="caption" style={styles.subtitle}>
               {copy.subtitle}
             </Txt>
@@ -99,7 +100,12 @@ export function AssistantChat({
               else input.current?.focus();
             }}
           />
-          <IconButton name="remove-outline" size={mobileIconSize.control} label={copy.minimize} onPress={close} />
+          <IconButton
+            name="remove-outline"
+            size={mobileIconSize.control}
+            label={copy.minimize}
+            onPress={close}
+          />
         </View>,
       )}
       {chat.isPreview && (
@@ -157,7 +163,9 @@ export function AssistantChat({
                       <Icon name={prompt.icon as IconName} color={c.coralInk} size={mobileIconSize.control} />
                     </View>
                     <View style={styles.promptText}>
-                      <Txt variant="label" style={compactType.body}>{prompt.label}</Txt>
+                      <Txt variant="label" style={compactType.body}>
+                        {prompt.label}
+                      </Txt>
                       <Txt variant="caption" style={styles.promptCaption}>
                         {prompt.caption}
                       </Txt>
@@ -189,13 +197,20 @@ export function AssistantChat({
                       {copy.name}
                     </Txt>
                   )}
-                  <Txt
-                    selectable
-                    style={[compactType.body, message.role === 'user' && styles.userText]}
-                  >
+                  <Txt selectable style={[compactType.body, message.role === 'user' && styles.userText]}>
                     {message.text}
                   </Txt>
-                  {!!message.cards?.length && <AssistantCards cards={message.cards} onOpen={close} />}
+                  {!!message.cards?.length && (
+                    <AssistantCards
+                      cards={message.cards}
+                      onOpen={close}
+                      actions={
+                        message.id === chat.messages.at(-1)?.id && !chat.isPending
+                          ? { act: (label, action) => void chat.act(label, action), canUndo: !!chat.trip?.ops?.length }
+                          : undefined
+                      }
+                    />
+                  )}
                   {message.action === 'login' && (
                     <Pressable
                       accessibilityRole="button"
@@ -211,22 +226,24 @@ export function AssistantChat({
                       </Txt>
                     </Pressable>
                   )}
-                  {message.id === chat.messages.at(-1)?.id && !chat.isPending && !!message.suggestions?.length && (
-                    <View style={styles.chips}>
-                      {message.suggestions.map((suggestion) => (
-                        <Pressable
-                          key={suggestion}
-                          accessibilityRole="button"
-                          onPress={() => void chat.send(suggestion)}
-                          style={styles.chip}
-                        >
-                          <Txt variant="label" style={styles.chipText}>
-                            {suggestion}
-                          </Txt>
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
+                  {message.id === chat.messages.at(-1)?.id &&
+                    !chat.isPending &&
+                    !!message.suggestions?.length && (
+                      <View style={styles.chips}>
+                        {message.suggestions.map((suggestion) => (
+                          <Pressable
+                            key={suggestion}
+                            accessibilityRole="button"
+                            onPress={() => void chat.send(suggestion)}
+                            style={styles.chip}
+                          >
+                            <Txt variant="label" style={styles.chipText}>
+                              {suggestion}
+                            </Txt>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
                 </View>
               </View>
             ))
@@ -280,7 +297,11 @@ export function AssistantChat({
             onPress={() => void chat.send()}
             style={[styles.send, isDisabled && { backgroundColor: c.surfaceMuted }]}
           >
-            <Icon name="arrow-up" size={mobileIconSize.control} color={isDisabled ? c.textMuted : c.background} />
+            <Icon
+              name="arrow-up"
+              size={mobileIconSize.control}
+              color={isDisabled ? c.textMuted : c.background}
+            />
           </Pressable>
         </View>
         <Txt variant="caption" style={styles.footnote}>
@@ -290,7 +311,9 @@ export function AssistantChat({
       {isConfirming && (
         <View style={styles.confirmBackdrop} accessibilityViewIsModal>
           <View style={styles.confirm}>
-            <Txt variant="heading" style={compactType.heading}>{copy.resetTitle}</Txt>
+            <Txt variant="heading" style={compactType.heading}>
+              {copy.resetTitle}
+            </Txt>
             <Txt style={styles.mutedBody}>{copy.resetBody}</Txt>
             <Pressable
               accessibilityRole="button"
@@ -309,7 +332,9 @@ export function AssistantChat({
               onPress={() => setIsConfirming(false)}
               style={styles.confirmAction}
             >
-              <Txt variant="label" style={compactType.label}>{copy.cancel}</Txt>
+              <Txt variant="label" style={compactType.label}>
+                {copy.cancel}
+              </Txt>
             </Pressable>
           </View>
         </View>
@@ -407,9 +432,6 @@ function AssistantModal() {
   };
   // Keyboard chỉ có ở luồng JS; worklet phải gọi qua hàm này, không đọc Keyboard.dismiss trực tiếp.
   const dismissKeyboard = () => Keyboard.dismiss();
-  const listTop = useSharedValue(0);
-  const touchX = useSharedValue(0);
-  const touchY = useSharedValue(0);
   const startDrag = (translationY: number) => {
     'worklet';
     // Cử chỉ chỉ nhận sau vài điểm; trừ đoạn đó để khung không nhảy.
@@ -434,34 +456,19 @@ function AssistantModal() {
     onUpdate: moveDrag,
     onDeactivate: settleDrag,
   });
-  // Danh sách đang ở trên cùng thì vuốt xuống là kéo khung; còn lại vẫn cuộn tin nhắn như thường.
-  const listScroll = useNativeGesture();
-  const listDrag = usePanGesture({
-    manualActivation: true,
-    simultaneousWith: listScroll,
-    onTouchesDown: (event) => {
-      const touch = event.allTouches[0];
-      if (!touch || listTop.get() > 1 || event.numberOfTouches !== 1) {
-        GestureStateManager.fail(event.handlerTag);
-        return;
-      }
-      touchX.set(touch.absoluteX);
-      touchY.set(touch.absoluteY);
+  // Danh sách cuộn dở (chat tự cuộn xuống tin mới nhất) thì cuộn lên trước, chạm đỉnh thì cùng ngón tay đó kéo khung.
+  const {
+    pan: listDrag,
+    scroll: listScroll,
+    onScroll: onListScroll,
+  } = useSheetListDrag({
+    activateAfter: 12,
+    onActivate: (event) => {
+      'worklet';
+      startDrag(event.translationY);
     },
-    onTouchesMove: (event) => {
-      const touch = event.allTouches[0];
-      if (!touch) return;
-      const dy = touch.absoluteY - touchY.get();
-      const dx = Math.abs(touch.absoluteX - touchX.get());
-      if (dy < -8 || dx > 20 || event.numberOfTouches !== 1) GestureStateManager.fail(event.handlerTag);
-      else if (dy > 12 && dy > dx && listTop.get() <= 1) GestureStateManager.activate(event.handlerTag);
-    },
-    onActivate: (event) => startDrag(event.translationY),
     onUpdate: moveDrag,
     onDeactivate: settleDrag,
-  });
-  const onListScroll = useAnimatedScrollHandler((event) => {
-    listTop.set(event.contentOffset.y);
   });
   return (
     <Modal

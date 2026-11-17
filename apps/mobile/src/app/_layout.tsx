@@ -15,6 +15,8 @@ import { CommerceProvider } from '@/features/booking/commerce-provider';
 import { AssistantProvider } from '@/features/assistant/assistant-provider';
 import { assistantTransport } from '@/features/assistant/assistant-transport';
 import { ReelsLaunchProvider } from '@/features/feed/reels-launch';
+import { OnboardingProvider } from '@/features/onboarding/onboarding-provider';
+import { NotificationBanner } from '@/features/account/notification-banner';
 
 const tokenStorage =
   Platform.OS === 'web'
@@ -24,7 +26,7 @@ const tokenStorage =
         write: (token: string) => SecureStore.setItemAsync('tripflix.refresh', token),
         clear: () => SecureStore.deleteItemAsync('tripflix.refresh'),
       };
-// Mở app là vào thẳng tab Reels như TikTok; trang chào vẫn ở /onboarding.
+// Returning visitors enter Reels; first-time entry is handled by the tabs gate.
 export const unstable_settings = { anchor: '(tabs)' };
 
 export default function RootLayout() {
@@ -60,27 +62,34 @@ export default function RootLayout() {
           client={Platform.OS === 'web' ? 'web' : 'native'}
           storage={tokenStorage}
         >
-          <CommerceProvider>
-            <ReviewProvider>
-              <AssistantProvider transport={assistantTransport}>
-                {fontError && <Txt variant="caption">{copy.common.fontError}</Txt>}
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    contentStyle: { backgroundColor: colors.background },
-                    animation: 'none',
-                  }}
-                >
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="my-trips" />
-                  <Stack.Screen
-                    name="trip/[slug]"
-                    options={{ animation: 'default', fullScreenGestureEnabled: true }}
-                  />
-                </Stack>
-              </AssistantProvider>
-            </ReviewProvider>
-          </CommerceProvider>
+          <OnboardingProvider>
+            <CommerceProvider>
+              <ReviewProvider>
+                <AssistantProvider transport={assistantTransport}>
+                  {fontError && <Txt variant="caption">{copy.common.fontError}</Txt>}
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                      contentStyle: { backgroundColor: colors.background },
+                      animation: 'none',
+                    }}
+                  >
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="my-trips" />
+                    <Stack.Screen
+                      name="trip/[slug]"
+                      options={{ animation: 'default', fullScreenGestureEnabled: true }}
+                    />
+                    <Stack.Screen
+                      name="user/[id]"
+                      options={{ animation: 'default', fullScreenGestureEnabled: true }}
+                    />
+                  </Stack>
+                  <NotificationBanner />
+                </AssistantProvider>
+              </ReviewProvider>
+            </CommerceProvider>
+          </OnboardingProvider>
         </ApiSessionProvider>
       </QueryClientProvider>
     );

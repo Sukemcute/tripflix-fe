@@ -11,6 +11,7 @@ import { Badge, Button, Icon, money, Notice, Row, Screen, Txt, ui } from '@/comp
 import { ApiErrorNotice } from '@/components/api-state';
 import { saveTripHotel } from '@/features/booking/trip-booking-store';
 import { formatDay } from '@/features/booking/trip-plan-parts';
+import { LoadingDots } from '@/components/loading-dots';
 
 const HOTEL_LIMIT = 6;
 type HotelHit = {
@@ -158,7 +159,7 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
       </Row>
       {pick && (
         <>
-          {query.isFetching && !query.isFetchingNextPage && <Txt style={ui.muted}>{vi.api.loading}</Txt>}
+          {query.isFetching && !query.isFetchingNextPage && <LoadingDots />}
           <ApiErrorNotice
             error={query.error}
             retry={() => {

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { usePostImages } from './composer/use-post-images';
+import { buildPostHref } from './search-url';
 
 // Khu chọn ảnh kéo theo icon của live-posts (nặng), nên chỉ tải khi mở mục đăng bài.
 const PostImagePicker = dynamic(() => import('./composer/post-image-picker').then((m) => m.PostImagePicker), {
@@ -128,7 +129,7 @@ export function PostComposer() {
             {mutation.isPending ? vi.api.saving : vi.api.saveDraft}
           </button>
           {id && (
-            <Link prefetch={false} className="secondary-button" href={`/trips/${id}`}>
+            <Link prefetch={false} className="secondary-button" href={buildPostHref(id)}>
               {vi.api.detail}
             </Link>
           )}

@@ -56,4 +56,6 @@ export const assistant = {
   source: 'Nguồn',
   watchReel: 'Xem reel',
   bookTrip: 'Đặt theo lộ trình',
+  choose: 'Chọn',
+  undo: 'Hoàn tác',
 } as const;

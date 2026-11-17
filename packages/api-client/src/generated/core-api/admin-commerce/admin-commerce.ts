@@ -637,3 +637,131 @@ export const useAdminCalendarControllerUpdateFlightCalendar = <TError = void, TC
 > => {
   return useMutation(getAdminCalendarControllerUpdateFlightCalendarMutationOptions(options), queryClient);
 };
+export type adminMetricsControllerGetMetricsResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type adminMetricsControllerGetMetricsResponseSuccess = adminMetricsControllerGetMetricsResponse200 & {
+  headers: Headers;
+};
+export type adminMetricsControllerGetMetricsResponse = adminMetricsControllerGetMetricsResponseSuccess;
+
+export const getAdminMetricsControllerGetMetricsUrl = () => {
+  return `/api/admin/commerce/metrics`;
+};
+
+export const adminMetricsControllerGetMetrics = async (
+  options?: Parameters<typeof http>[1],
+): Promise<adminMetricsControllerGetMetricsResponse> => {
+  return http<adminMetricsControllerGetMetricsResponse>(getAdminMetricsControllerGetMetricsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAdminMetricsControllerGetMetricsQueryKey = () => {
+  return [`/api/admin/commerce/metrics`] as const;
+};
+
+export const getAdminMetricsControllerGetMetricsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof http>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminMetricsControllerGetMetricsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>> = ({ signal }) =>
+    adminMetricsControllerGetMetrics({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminMetricsControllerGetMetricsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>
+>;
+export type AdminMetricsControllerGetMetricsQueryError = unknown;
+
+export function useAdminMetricsControllerGetMetrics<
+  TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminMetricsControllerGetMetrics<
+  TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminMetricsControllerGetMetrics<
+  TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useAdminMetricsControllerGetMetrics<
+  TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminMetricsControllerGetMetricsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

@@ -125,7 +125,7 @@ export function ModerationPostDetail({
         {status === 'published' && (
           <a
             className="admin-text-button admin-post-web-link"
-            href={`${WEB_URL}/trips/${encodeURIComponent(post.id)}`}
+            href={`${WEB_URL}/inspiration?open=${encodeURIComponent(post.id)}`}
             target="_blank"
             rel="noreferrer"
           >

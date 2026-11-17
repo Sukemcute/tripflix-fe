@@ -3624,3 +3624,13 @@ body:has([class*="feedPageWrapper"]) #content {
     transition: none;
   }
 }
+
+/* Tên người dùng dẫn tới trang cá nhân công khai (TF47): giữ màu chữ xung quanh. */
+.profile-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.profile-link:hover {
+  text-decoration: underline;
+}

@@ -1,4 +1,4 @@
-import { feedApi, type AssistantCard } from '@tripflix/api-client';
+import { feedApi, type AssistantAction, type AssistantCard } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors as c, radius, spacing as s } from '@tripflix/tokens';
 import { useQuery } from '@tanstack/react-query';
@@ -45,19 +45,48 @@ function openReel(card: AssistantCard, isInFeed: boolean, onOpen: () => void) {
 function openCard(card: AssistantCard, onOpen: () => void) {
   onOpen();
   if (card.kind === 'stay') router.push({ pathname: '/hotel/[id]', params: { id: card.id } });
-  else router.push({ pathname: '/trip/[slug]', params: { slug: card.id } });
+  else if (card.kind === 'flight') {
+    // Màn chọn vé có sẵn tự tìm lại theo tuyến, ngày, số khách; giá và chỗ luôn lấy mới từ core.
+    router.push({
+      pathname: '/flights',
+      params: {
+        from: card.fromAirport ?? '',
+        to: card.toAirport ?? '',
+        date: card.flightDate ?? '',
+        passengers: String(card.passengers ?? 1),
+      },
+    });
+  } else router.push({ pathname: '/trip/[slug]', params: { slug: card.id } });
 }
 
-const INFO_KINDS = new Set(['weather', 'checklist', 'itinerary', 'summary']);
+const ROW_ICONS: Record<string, IconName> = { stay: 'bed-outline', flight: 'airplane-outline' };
+
+const INFO_KINDS = new Set(['weather', 'checklist', 'itinerary', 'summary', 'compare', 'transport']);
 const INFO_ICONS: Record<string, IconName> = {
   weather: 'partly-sunny-outline',
   checklist: 'checkbox-outline',
   itinerary: 'map-outline',
   summary: 'chatbubbles-outline',
+  compare: 'bed-outline',
+  transport: 'bus-outline',
 };
 
+/** Nút của thẻ kế hoạch: chỉ có trên câu trả lời mới nhất, vì lựa chọn cũ không còn hiệu lực. */
+type CardActions = { act: (label: string, action: AssistantAction) => void; canUndo: boolean };
+
 /** Thẻ không có giá: các dòng do code dựng từ dữ liệu thật (dự báo, luật checklist, lộ trình của reel). */
-function InfoCard({ card, reel, onOpen }: { card: AssistantCard; reel?: Reel; onOpen: () => void }) {
+function InfoCard({
+  card,
+  reel,
+  onOpen,
+  actions,
+}: {
+  card: AssistantCard;
+  reel?: Reel;
+  onOpen: () => void;
+  actions?: CardActions;
+}) {
+  const isPlan = card.id.startsWith('plan:');
   return (
     <View style={styles.info}>
       <View style={styles.infoHeader}>
@@ -67,19 +96,42 @@ function InfoCard({ card, reel, onOpen }: { card: AssistantCard; reel?: Reel; on
         </Txt>
       </View>
       {card.lines?.map((line, index) => (
-        <Txt key={`${card.ref}-${index}`} style={compactType.meta}>
-          <Txt variant="label" style={compactType.meta}>
-            {line.label}
+        <View key={`${card.ref}-${index}`} style={styles.line}>
+          <Txt style={[compactType.meta, { flex: 1 }]}>
+            <Txt variant="label" style={compactType.meta}>
+              {line.label}
+            </Txt>
+            {line.detail ? ` · ${line.detail}` : ''}
           </Txt>
-          {line.detail ? ` · ${line.detail}` : ''}
-        </Txt>
+          {!!line.ref && actions && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${copy.choose}: ${line.label}`}
+              onPress={() => actions.act(`${copy.choose} ${line.label}`, { type: 'select', ref: line.ref ?? '' })}
+              style={styles.action}
+            >
+              <Txt variant="label" style={styles.actionText}>{copy.choose}</Txt>
+            </Pressable>
+          )}
+        </View>
       ))}
       {!!card.source && (
         <Txt variant="caption" style={styles.source}>
           {copy.source}: {card.source}
         </Txt>
       )}
-      {card.kind === 'itinerary' && (
+      {isPlan && actions?.canUndo && (
+        <View style={styles.actions}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => actions.act(copy.undo, { type: 'undo' })}
+            style={styles.action}
+          >
+            <Txt variant="label" style={styles.actionText}>{copy.undo}</Txt>
+          </Pressable>
+        </View>
+      )}
+      {card.kind === 'itinerary' && !isPlan && (
         <View style={styles.actions}>
           {reel && (
             <Pressable accessibilityRole="button" onPress={() => openReel(card, true, onOpen)} style={styles.action}>
@@ -121,11 +173,19 @@ function VideoCard({ card, reel, onPlay }: { card: AssistantCard; reel?: Reel; o
 }
 
 /** Thẻ Tripi tìm được: video thành hàng thẻ dọc như Reels (bấm để mở ở Reels), bài viết và nơi ở thành dòng bấm được. */
-export function AssistantCards({ cards, onOpen }: { cards: AssistantCard[]; onOpen: () => void }) {
+export function AssistantCards({
+  cards,
+  onOpen,
+  actions,
+}: {
+  cards: AssistantCard[];
+  onOpen: () => void;
+  actions?: CardActions;
+}) {
   const videos = cards.filter((card) => card.kind === 'video');
   const infos = cards.filter((card) => INFO_KINDS.has(card.kind));
   // Thẻ lạ (app cũ chưa biết) thì bỏ qua thay vì hiện dòng bấm vào trang sai.
-  const others = cards.filter((card) => card.kind === 'stay' || card.kind === 'post' || card.kind === 'plan');
+  const others = cards.filter((card) => ['stay', 'flight', 'post', 'plan'].includes(card.kind));
   const reelIds = [...videos, ...infos.filter((card) => card.kind === 'itinerary')].map((card) => card.id);
   const reels = useFeedReels(reelIds).data ?? {};
   return (
@@ -143,7 +203,7 @@ export function AssistantCards({ cards, onOpen }: { cards: AssistantCard[]; onOp
         </ScrollView>
       )}
       {infos.map((card) => (
-        <InfoCard key={card.ref} card={card} reel={reels[card.id]} onOpen={onOpen} />
+        <InfoCard key={card.ref} card={card} reel={reels[card.id]} onOpen={onOpen} actions={actions} />
       ))}
       {others.map((card) => (
         <Pressable
@@ -153,7 +213,7 @@ export function AssistantCards({ cards, onOpen }: { cards: AssistantCard[]; onOp
           style={({ pressed }) => [styles.row, pressed && { opacity: 0.85 }]}
         >
           <Icon
-            name={card.kind === 'stay' ? 'bed-outline' : 'map-outline'}
+            name={ROW_ICONS[card.kind] ?? 'map-outline'}
             size={mobileIconSize.control}
             color={c.tealInk}
           />
@@ -195,6 +255,7 @@ const styles = StyleSheet.create({
   videoCaption: { padding: s.sm, backgroundColor: c.overlayHeavy },
   videoTitle: { ...compactType.meta, color: c.background },
   price: { ...compactType.meta, color: c.coralInk },
+  line: { flexDirection: 'row', alignItems: 'center', gap: s.sm },
   info: { gap: s.xs, padding: s.sm, borderRadius: radius.md, backgroundColor: c.warmMist },
   infoHeader: { flexDirection: 'row', alignItems: 'center', gap: s.sm },
   source: { ...compactType.meta, color: c.textMuted },

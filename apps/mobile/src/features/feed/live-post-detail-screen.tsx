@@ -32,6 +32,7 @@ import { SHEET_CLOSE_SPRING } from '@/components/motion';
 import { PostActionBar } from './post-action-bar';
 import { ReelCommentsPanel } from './reel-comments-panel';
 import { ReportButton } from './report-button';
+import { LoadingDots } from '@/components/loading-dots';
 
 const copy = vi.mobile.postDetail;
 const NO_COMMENTS: readonly { id: number; body: string }[] = [];
@@ -105,10 +106,11 @@ function TripPlan({ trip }: { trip: TripAttachmentDto }) {
 }
 
 export function LivePostDetailScreen() {
-  const { slug = '' } = useLocalSearchParams<{ slug: string }>();
+  // comment/thread đến từ thông báo: mở sẵn khung bình luận và nhảy tới bình luận đó.
+  const { slug = '', comment, thread } = useLocalSearchParams<{ slug: string; comment?: string; thread?: string }>();
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
-  const [hasComments, setHasComments] = useState(false);
+  const [hasComments, setHasComments] = useState(!!comment);
   const commentsProgress = useSharedValue(0);
   const navigation = useNavigation();
   const swipeX = useSharedValue(0);
@@ -297,7 +299,12 @@ export function LivePostDetailScreen() {
               <View style={styles.intro}>
                 {!!title && <Txt variant="heading">{title}</Txt>}
                 {!!authorName && (
-                  <Txt variant="small" style={styles.muted}>
+                  <Txt
+                    variant="small"
+                    style={styles.muted}
+                    accessibilityRole="link"
+                    onPress={post ? () => router.push({ pathname: '/user/[id]', params: { id: post.authorId } }) : undefined}
+                  >
                     {authorName}
                   </Txt>
                 )}
@@ -326,7 +333,7 @@ export function LivePostDetailScreen() {
                 )}
               </View>
             )}
-            {(!isReady || query.isPending) && <Txt style={styles.muted}>{vi.api.loading}</Txt>}
+            {(!isReady || query.isPending) && <LoadingDots />}
             {post && (
               <>
                 {!!post.body && (
@@ -363,6 +370,8 @@ export function LivePostDetailScreen() {
               onClose={() => setHasComments(false)}
               hasBackdrop
               loginReturnTo={`/trip/${slug}`}
+              focusCommentId={comment}
+              focusThreadId={thread}
             />
           </Screen>
         </Animated.View>

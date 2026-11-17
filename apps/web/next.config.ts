@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
 import { OPTIMIZED_IMAGE_HOSTS } from './src/lib/remote-images';
+import { SECURITY_HEADERS } from './src/lib/security-headers';
 
 const config: NextConfig = {
   // Image Docker prod chỉ chép thư mục standalone (apps/web/Dockerfile).
@@ -18,6 +19,9 @@ const config: NextConfig = {
   ],
   images: {
     remotePatterns: OPTIMIZED_IMAGE_HOSTS.map((hostname) => ({ protocol: 'https' as const, hostname })),
+  },
+  async headers() {
+    return [{ source: '/:path*', headers: [...SECURITY_HEADERS] }];
   },
 };
 
