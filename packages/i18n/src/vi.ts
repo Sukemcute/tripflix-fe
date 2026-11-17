@@ -12,10 +12,12 @@ import { terms } from './terms';
 import { moderation } from './moderation';
 import { searchMonitoring } from './search-monitoring';
 import { discoveryJobs } from './discovery-jobs';
+import { analytics } from './analytics';
 import { aiUsage } from './ai-usage';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
+  analytics,
   searchMonitoring,
   discoveryJobs,
   aiUsage,
@@ -50,7 +52,7 @@ export const vi = {
     title: 'Tripflix Admin',
     overview: 'Tổng quan',
     moderation: 'Kiểm duyệt',
-    analytics: 'Xu hướng & Gian lận',
+    analytics: 'Số liệu & Giám sát',
     searchMonitoring: 'Theo dõi tìm kiếm',
     searchJobs: 'Job tìm kiếm',
     recommendJobs: 'Job gợi ý',

@@ -15,6 +15,7 @@ import { InventoryCalendar } from '../inventory/inventory-calendar';
 import { AdminOverview } from '../overview/admin-overview';
 import { SearchMonitoring } from '../search-monitoring/search-monitoring';
 import { DiscoveryJobs } from '../discovery-jobs/discovery-jobs';
+import { AnalyticsWorkspace } from '../analytics/analytics-workspace';
 import { AiUsageReport } from '../ai-usage/ai-usage-report';
 import searchStyles from '../search-monitoring/search-monitoring.module.css';
 import {
@@ -184,7 +185,7 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
 
           <div className="admin-topbar-right">
             {/* Bộ chọn thời gian */}
-            {label !== 'admin.searchMonitoring' && <>
+            {label !== 'admin.searchMonitoring' && label !== 'admin.analytics' && <>
             <div className="admin-date-picker">
               <IconCalendar />
               <select
@@ -267,6 +268,8 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
             ) : (
               profile.data && <ModerationWorkspace />
             )
+          ) : label === 'admin.analytics' ? (
+            profile.isPending ? <output>{vi.api.loading}</output> : user.role !== 'superadmin' ? <p role="alert">{vi.analytics.accessDenied}</p> : profile.data && <AnalyticsWorkspace />
           ) : label === 'admin.searchMonitoring' ? (
             profile.isPending ? <output>{vi.api.loading}</output> : profile.data && <SearchMonitoring />
           ) : label === 'admin.searchJobs' || label === 'admin.recommendJobs' ? (
@@ -307,7 +310,7 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
                   <div style={{ padding: 32, textAlign: 'center' }}>
                     <h2>{t(label)}</h2>
                     <p className="admin-empty" style={{ marginTop: 12 }}>
-                      {label === 'admin.analytics' ? vi.api.analyticsUnavailable : vi.api.ordersUnavailable}
+                      {vi.api.ordersUnavailable}
                     </p>
                   </div>
                 ))
