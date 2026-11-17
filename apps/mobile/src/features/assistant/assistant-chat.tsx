@@ -200,7 +200,17 @@ export function AssistantChat({
                   <Txt selectable style={[compactType.body, message.role === 'user' && styles.userText]}>
                     {message.text}
                   </Txt>
-                  {!!message.cards?.length && <AssistantCards cards={message.cards} onOpen={close} />}
+                  {!!message.cards?.length && (
+                    <AssistantCards
+                      cards={message.cards}
+                      onOpen={close}
+                      actions={
+                        message.id === chat.messages.at(-1)?.id && !chat.isPending
+                          ? { act: (label, action) => void chat.act(label, action), canUndo: !!chat.trip?.ops?.length }
+                          : undefined
+                      }
+                    />
+                  )}
                   {message.action === 'login' && (
                     <Pressable
                       accessibilityRole="button"
