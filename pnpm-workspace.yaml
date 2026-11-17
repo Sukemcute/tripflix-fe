@@ -12,6 +12,8 @@ catalog:
   '@tanstack/react-query': ^5.105.3
   # Realtime thông báo (TF46): client của kênh /ws Socket.IO ở notification-service, cùng bản với tripflix-be.
   socket.io-client: ^4.8.3
+  # Biểu đồ của admin (TF104): SVG, responsive, có tooltip/legend; dùng chung một bản cho cả repo.
+  recharts: ^3.10.1
   '@tailwindcss/postcss': ^4.3.4
   '@types/node': ^24.0.0
   '@types/react': ~19.3.0
