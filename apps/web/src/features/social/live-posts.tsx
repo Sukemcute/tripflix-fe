@@ -48,7 +48,6 @@ import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
 import {
-  attachReelVideoSource,
   getReelRenderMode,
   pickReelAfterRemoval,
   prependPinnedReelCards,
@@ -56,6 +55,7 @@ import {
   toReelPost,
   type ReelPost,
 } from './reel-post';
+import { attachReelHlsSource } from './reel-hls';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
@@ -763,12 +763,30 @@ function MediaTrackItem({
   const hlsUrl = reelCard?.video.hlsUrl;
   // Chờ API đặt cookie video (Set-Cookie cho tên miền media, TF82) rồi mới gắn nguồn; thẻ <video> tự gửi cookie
   // khi tải playlist và segment. Gắn sớm hơn thì CloudFront trả 403 khi đã bật khoá video.
-  const { isSettled: isPlaybackSessionSettled } = usePlaybackSession();
+  const { isSettled: isPlaybackSessionSettled, refresh: refreshPlaybackSession } = usePlaybackSession();
+  // Số lần đã xin cookie mới vì lỗi 403 cho Reel này; tăng lên là gắn lại nguồn với cookie mới.
+  const [authRetryCount, setAuthRetryCount] = useState(0);
+  // Hàm của cha đổi mỗi lần render; giữ bản mới nhất trong ref để effect gắn nguồn không chạy lại vì nó.
+  const reportMediaError = useRef(() => onMediaError(post.id));
+  useEffect(() => {
+    reportMediaError.current = () => onMediaError(post.id);
+  }, [onMediaError, post.id]);
   useEffect(() => {
     const video = localVideoRef.current;
     if (!hasVideo || !video || !hlsUrl || !isPlaybackSessionSettled) return;
-    return attachReelVideoSource(video, hlsUrl);
-  }, [hasVideo, hlsUrl, isPlaybackSessionSettled]);
+    // Trình duyệt phát HLS sẵn: thẻ <video> như cũ. Chrome, Firefox máy tính: hls.js gửi kèm cookie (TF64).
+    return attachReelHlsSource(video, hlsUrl, {
+      onAuthError: () => {
+        // Chỉ xin lại một lần: lỗi tiếp thì không phải do cookie, báo lỗi như thường.
+        if (authRetryCount >= 1) {
+          reportMediaError.current();
+          return;
+        }
+        void refreshPlaybackSession().then(() => setAuthRetryCount((count) => count + 1));
+      },
+      onFatalError: () => reportMediaError.current(),
+    });
+  }, [hasVideo, hlsUrl, isPlaybackSessionSettled, authRetryCount, refreshPlaybackSession]);
 
   // timeupdate chỉ bắn ~4 lần/giây nên thanh tiến độ nhảy bậc; đọc currentTime mỗi khung hình và
   // cập nhật thẳng transform qua ref (không setState) để mượt và không render lại cả viewer.
