@@ -4,6 +4,7 @@ import { colors, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiErrorNotice } from '@/components/api-state';
 import { LoadingDots } from '@/components/loading-dots';
@@ -38,7 +39,8 @@ export function AuthorReelsScreen() {
     if (hasNextPage && !isFetching && !isError) void fetchNextPage({ cancelRefetch: false });
   }, [hasNextPage, isFetching, isError, fetchNextPage]);
   return (
-    <View style={styles.root}>
+    // Trình phát Reels dùng cử chỉ (tua, nhấn giữ) nên cần gốc của gesture-handler như tab Reels.
+    <GestureHandlerRootView style={styles.root}>
       {items.length > 0 ? (
         <ReelsFeed
           items={items}
@@ -63,7 +65,7 @@ export function AuthorReelsScreen() {
       >
         <Icon name="chevron-back" size={26} color={colors.background} />
       </Pressable>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 
