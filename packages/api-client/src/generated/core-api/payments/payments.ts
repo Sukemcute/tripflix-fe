@@ -4,7 +4,9 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from '@tanstack/react-query';
+import {
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -14,14 +16,19 @@ import type {
   QueryKey,
   UndefinedInitialDataOptions,
   UseQueryOptions,
-  UseQueryResult,
+  UseQueryResult
 } from '@tanstack/react-query';
 
-import type { VnpayReturnResultDto } from '../model';
+import type {
+  VnpayReturnResultDto
+} from '../model';
 
 import { http } from '../../../http';
 
+
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -39,247 +46,214 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type vnpayCallbackControllerIpnResponse200 = {
-  data: void;
-  status: 200;
-};
+  data: void
+  status: 200
+}
 
-export type vnpayCallbackControllerIpnResponseSuccess = vnpayCallbackControllerIpnResponse200 & {
+export type vnpayCallbackControllerIpnResponseSuccess = (vnpayCallbackControllerIpnResponse200) & {
   headers: Headers;
 };
-export type vnpayCallbackControllerIpnResponse = vnpayCallbackControllerIpnResponseSuccess;
+;
+
+export type vnpayCallbackControllerIpnResponse = (vnpayCallbackControllerIpnResponseSuccess)
 
 export const getVnpayCallbackControllerIpnUrl = () => {
-  return `/api/payments/vnpay/ipn`;
-};
 
-export const vnpayCallbackControllerIpn = async (
-  options?: Parameters<typeof http>[1],
-): Promise<vnpayCallbackControllerIpnResponse> => {
-  return http<vnpayCallbackControllerIpnResponse>(getVnpayCallbackControllerIpnUrl(), {
+
+
+
+  return `/api/payments/vnpay/ipn`
+}
+
+export const vnpayCallbackControllerIpn = async ( options?: Parameters<typeof http>[1]): Promise<vnpayCallbackControllerIpnResponse> => {
+
+  return http<vnpayCallbackControllerIpnResponse>(getVnpayCallbackControllerIpnUrl(),
+  {
     ...options,
-    method: 'GET',
-  });
-};
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
 
 export const getVnpayCallbackControllerIpnQueryKey = () => {
-  return [`/api/payments/vnpay/ipn`] as const;
-};
+    return [
+    `/api/payments/vnpay/ipn`
+    ] as const;
+    }
 
-export const getVnpayCallbackControllerIpnQueryOptions = <
-  TData = Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>,
-  TError = unknown,
->(options?: {
-  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError, TData>>;
-  request?: SecondParameter<typeof http>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getVnpayCallbackControllerIpnQueryKey();
+export const getVnpayCallbackControllerIpnQueryOptions = <TData = Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError, TData>>, request?: SecondParameter<typeof http>}
+) => {
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>> = ({ signal }) =>
-    vnpayCallbackControllerIpn({ signal, ...requestOptions });
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  const queryKey =  queryOptions?.queryKey ?? getVnpayCallbackControllerIpnQueryKey();
 
-export type VnpayCallbackControllerIpnQueryResult = NonNullable<
-  Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>
->;
-export type VnpayCallbackControllerIpnQueryError = unknown;
 
-export function useVnpayCallbackControllerIpn<
-  TData = Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>,
-  TError = unknown,
->(
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError, TData>> &
-      Pick<
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>> = ({ signal }) => vnpayCallbackControllerIpn({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type VnpayCallbackControllerIpnQueryResult = NonNullable<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>>
+export type VnpayCallbackControllerIpnQueryError = unknown
+
+
+export function useVnpayCallbackControllerIpn<TData = Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>,
           TError,
           Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useVnpayCallbackControllerIpn<
-  TData = Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useVnpayCallbackControllerIpn<TData = Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>,
           TError,
           Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useVnpayCallbackControllerIpn<
-  TData = Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError, TData>>;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useVnpayCallbackControllerIpn<TData = Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useVnpayCallbackControllerIpn<
-  TData = Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError, TData>>;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getVnpayCallbackControllerIpnQueryOptions(options);
+export function useVnpayCallbackControllerIpn<TData = Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerIpn>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getVnpayCallbackControllerIpnQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
 
 export type vnpayCallbackControllerReturnResponse200 = {
-  data: VnpayReturnResultDto;
-  status: 200;
-};
+  data: VnpayReturnResultDto
+  status: 200
+}
 
-export type vnpayCallbackControllerReturnResponseSuccess = vnpayCallbackControllerReturnResponse200 & {
+export type vnpayCallbackControllerReturnResponseSuccess = (vnpayCallbackControllerReturnResponse200) & {
   headers: Headers;
 };
-export type vnpayCallbackControllerReturnResponse = vnpayCallbackControllerReturnResponseSuccess;
+;
+
+export type vnpayCallbackControllerReturnResponse = (vnpayCallbackControllerReturnResponseSuccess)
 
 export const getVnpayCallbackControllerReturnUrl = () => {
-  return `/api/payments/vnpay/return`;
-};
 
-export const vnpayCallbackControllerReturn = async (
-  options?: Parameters<typeof http>[1],
-): Promise<vnpayCallbackControllerReturnResponse> => {
-  return http<vnpayCallbackControllerReturnResponse>(getVnpayCallbackControllerReturnUrl(), {
+
+
+
+  return `/api/payments/vnpay/return`
+}
+
+export const vnpayCallbackControllerReturn = async ( options?: Parameters<typeof http>[1]): Promise<vnpayCallbackControllerReturnResponse> => {
+
+  return http<vnpayCallbackControllerReturnResponse>(getVnpayCallbackControllerReturnUrl(),
+  {
     ...options,
-    method: 'GET',
-  });
-};
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
 
 export const getVnpayCallbackControllerReturnQueryKey = () => {
-  return [`/api/payments/vnpay/return`] as const;
-};
+    return [
+    `/api/payments/vnpay/return`
+    ] as const;
+    }
 
-export const getVnpayCallbackControllerReturnQueryOptions = <
-  TData = Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>,
-  TError = unknown,
->(options?: {
-  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError, TData>>;
-  request?: SecondParameter<typeof http>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getVnpayCallbackControllerReturnQueryKey();
+export const getVnpayCallbackControllerReturnQueryOptions = <TData = Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError, TData>>, request?: SecondParameter<typeof http>}
+) => {
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>> = ({ signal }) =>
-    vnpayCallbackControllerReturn({ signal, ...requestOptions });
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  const queryKey =  queryOptions?.queryKey ?? getVnpayCallbackControllerReturnQueryKey();
 
-export type VnpayCallbackControllerReturnQueryResult = NonNullable<
-  Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>
->;
-export type VnpayCallbackControllerReturnQueryError = unknown;
 
-export function useVnpayCallbackControllerReturn<
-  TData = Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>,
-  TError = unknown,
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError, TData>
-    > &
-      Pick<
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>> = ({ signal }) => vnpayCallbackControllerReturn({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type VnpayCallbackControllerReturnQueryResult = NonNullable<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>>
+export type VnpayCallbackControllerReturnQueryError = unknown
+
+
+export function useVnpayCallbackControllerReturn<TData = Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>,
           TError,
           Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useVnpayCallbackControllerReturn<
-  TData = Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useVnpayCallbackControllerReturn<TData = Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>,
           TError,
           Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useVnpayCallbackControllerReturn<
-  TData = Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useVnpayCallbackControllerReturn<TData = Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useVnpayCallbackControllerReturn<
-  TData = Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getVnpayCallbackControllerReturnQueryOptions(options);
+export function useVnpayCallbackControllerReturn<TData = Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof vnpayCallbackControllerReturn>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getVnpayCallbackControllerReturnQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+

@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type MyProfileDtoRole = (typeof MyProfileDtoRole)[keyof typeof MyProfileDtoRole];
+export type MyProfileDtoRole = typeof MyProfileDtoRole[keyof typeof MyProfileDtoRole];
+
 
 export const MyProfileDtoRole = {
   member: 'member',

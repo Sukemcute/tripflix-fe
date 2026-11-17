@@ -16,9 +16,9 @@ export interface SocialPostDto {
   id: string;
   authorId: string;
   /**
-   * Tên hiển thị của tác giả
-   * @nullable
-   */
+     * Tên hiển thị của tác giả
+     * @nullable
+     */
   authorName?: string | null;
   postType: SocialPostDtoPostType;
   title: string;

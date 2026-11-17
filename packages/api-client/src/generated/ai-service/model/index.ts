@@ -7,6 +7,16 @@
 
 export * from './cardRef';
 export * from './chatRequest';
+export * from './draftAction';
+export * from './draftActionType';
+export * from './draftChoice';
+export * from './draftChoiceSource';
+export * from './draftOp';
+export * from './draftOpOp';
+export * from './draftStop';
+export * from './draftStopSlot';
+export * from './draftTransport';
+export * from './draftTransportMode';
 export * from './getHealthHealthGet200';
 export * from './hTTPValidationError';
 export * from './moderateItem';
@@ -16,6 +26,7 @@ export * from './moderateResult';
 export * from './moderateResultCategories';
 export * from './moderateResultScores';
 export * from './tripContext';
+export * from './tripContextV';
 export * from './turn';
 export * from './turnKind';
 export * from './turnRole';

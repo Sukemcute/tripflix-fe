@@ -8,8 +8,8 @@
 /**
  * Bỏ trống: khách tự chọn trên trang VNPay. VNPAYQR: vào thẳng màn mã QR
  */
-export type StartVnpayRequestDtoBankCode =
-  (typeof StartVnpayRequestDtoBankCode)[keyof typeof StartVnpayRequestDtoBankCode];
+export type StartVnpayRequestDtoBankCode = typeof StartVnpayRequestDtoBankCode[keyof typeof StartVnpayRequestDtoBankCode];
+
 
 export const StartVnpayRequestDtoBankCode = {
   VNPAYQR: 'VNPAYQR',

@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ReportDtoReasonCode = (typeof ReportDtoReasonCode)[keyof typeof ReportDtoReasonCode];
+export type ReportDtoReasonCode = typeof ReportDtoReasonCode[keyof typeof ReportDtoReasonCode];
+
 
 export const ReportDtoReasonCode = {
   SPAM_OR_COMMERCIAL: 'SPAM_OR_COMMERCIAL',

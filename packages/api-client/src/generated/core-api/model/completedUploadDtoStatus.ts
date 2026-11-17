@@ -8,8 +8,8 @@
 /**
  * Video: processing (đang chuyển mã), ready khi gọi lại lúc đã xong. Ảnh: ready ngay.
  */
-export type CompletedUploadDtoStatus =
-  (typeof CompletedUploadDtoStatus)[keyof typeof CompletedUploadDtoStatus];
+export type CompletedUploadDtoStatus = typeof CompletedUploadDtoStatus[keyof typeof CompletedUploadDtoStatus];
+
 
 export const CompletedUploadDtoStatus = {
   processing: 'processing',

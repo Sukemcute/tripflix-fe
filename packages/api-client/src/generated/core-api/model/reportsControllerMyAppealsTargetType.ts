@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ReportsControllerMyAppealsTargetType =
-  (typeof ReportsControllerMyAppealsTargetType)[keyof typeof ReportsControllerMyAppealsTargetType];
+export type ReportsControllerMyAppealsTargetType = typeof ReportsControllerMyAppealsTargetType[keyof typeof ReportsControllerMyAppealsTargetType];
+
 
 export const ReportsControllerMyAppealsTargetType = {
   post: 'post',

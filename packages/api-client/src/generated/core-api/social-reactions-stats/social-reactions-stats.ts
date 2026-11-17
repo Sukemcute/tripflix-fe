@@ -4,7 +4,10 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -17,14 +20,22 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
+  UseQueryResult
 } from '@tanstack/react-query';
 
-import type { PostReactionDto, PostStatsDto, SetReactionDto, UpdatedPostReactionDto } from '../model';
+import type {
+  PostReactionDto,
+  PostStatsDto,
+  SetReactionDto,
+  UpdatedPostReactionDto
+} from '../model';
 
 import { http } from '../../../http';
 
+
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -42,30 +53,32 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type reactionsControllerSetReactionResponse200 = {
-  data: UpdatedPostReactionDto;
-  status: 200;
-};
+  data: UpdatedPostReactionDto
+  status: 200
+}
 
-export type reactionsControllerSetReactionResponseSuccess = reactionsControllerSetReactionResponse200 & {
+export type reactionsControllerSetReactionResponseSuccess = (reactionsControllerSetReactionResponse200) & {
   headers: Headers;
 };
-export type reactionsControllerSetReactionResponse = reactionsControllerSetReactionResponseSuccess;
+;
 
-export const getReactionsControllerSetReactionUrl = (id: string) => {
-  return `/api/v1/posts/${id}/reaction`;
-};
+export type reactionsControllerSetReactionResponse = (reactionsControllerSetReactionResponseSuccess)
+
+export const getReactionsControllerSetReactionUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/posts/${id}/reaction`
+}
 
 /**
  * @summary Thêm, đổi hoặc bỏ cảm xúc trên bài đăng (FR10 - Idempotent)
  */
-export const reactionsControllerSetReaction = async (
-  id: string,
-  setReactionDto: SetReactionDto,
-  options?: Parameters<typeof http>[1],
-): Promise<reactionsControllerSetReactionResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit['headers']>,
-  ): Record<string, string | readonly string[]> => {
+export const reactionsControllerSetReaction = async (id: string,
+    setReactionDto: SetReactionDto, options?: Parameters<typeof http>[1]): Promise<reactionsControllerSetReactionResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -79,353 +92,287 @@ export const reactionsControllerSetReaction = async (
     }
     return headers;
   };
-  return http<reactionsControllerSetReactionResponse>(getReactionsControllerSetReactionUrl(id), {
+return http<reactionsControllerSetReactionResponse>(getReactionsControllerSetReactionUrl(id),
+  {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(setReactionDto),
-  });
-};
+    body: JSON.stringify(setReactionDto)
+  }
+);}
+
+
+
+
 
 export const getReactionsControllerSetReactionMutationKey = () => ['reactionsControllerSetReaction'] as const;
 
-export const getReactionsControllerSetReactionMutationOptions = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof reactionsControllerSetReaction>>,
-    TError,
-    ReactionsControllerSetReactionMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof http>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof reactionsControllerSetReaction>>,
-  TError,
-  ReactionsControllerSetReactionMutationVariables,
-  TContext
-> => {
-  const mutationKey = getReactionsControllerSetReactionMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+export const getReactionsControllerSetReactionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reactionsControllerSetReaction>>, TError,ReactionsControllerSetReactionMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+): UseMutationOptions<Awaited<ReturnType<typeof reactionsControllerSetReaction>>, TError,ReactionsControllerSetReactionMutationVariables, TContext> => {
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof reactionsControllerSetReaction>>,
-    ReactionsControllerSetReactionMutationVariables
-  > = (props) => {
-    const { id, data } = props ?? {};
+const mutationKey = getReactionsControllerSetReactionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-    return reactionsControllerSetReaction(id, data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type ReactionsControllerSetReactionMutationResult = NonNullable<
-  Awaited<ReturnType<typeof reactionsControllerSetReaction>>
->;
-export type ReactionsControllerSetReactionMutationBody = SetReactionDto;
-export type ReactionsControllerSetReactionMutationError = unknown;
-export type ReactionsControllerSetReactionMutationVariables = { id: string; data: SetReactionDto };
 
-/**
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reactionsControllerSetReaction>>, ReactionsControllerSetReactionMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reactionsControllerSetReaction(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReactionsControllerSetReactionMutationResult = NonNullable<Awaited<ReturnType<typeof reactionsControllerSetReaction>>>
+    export type ReactionsControllerSetReactionMutationBody = SetReactionDto
+    export type ReactionsControllerSetReactionMutationError = unknown
+    export type ReactionsControllerSetReactionMutationVariables = {id: string;data: SetReactionDto}
+
+    /**
  * @summary Thêm, đổi hoặc bỏ cảm xúc trên bài đăng (FR10 - Idempotent)
  */
-export const useReactionsControllerSetReaction = <TError = unknown, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof reactionsControllerSetReaction>>,
-      TError,
-      ReactionsControllerSetReactionMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof reactionsControllerSetReaction>>,
-  TError,
-  ReactionsControllerSetReactionMutationVariables,
-  TContext
-> => {
-  return useMutation(getReactionsControllerSetReactionMutationOptions(options), queryClient);
-};
-export type reactionsControllerGetMyReactionResponse200 = {
-  data: PostReactionDto;
-  status: 200;
-};
+export const useReactionsControllerSetReaction = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reactionsControllerSetReaction>>, TError,ReactionsControllerSetReactionMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reactionsControllerSetReaction>>,
+        TError,
+        ReactionsControllerSetReactionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReactionsControllerSetReactionMutationOptions(options), queryClient);
+    }
+    export type reactionsControllerGetMyReactionResponse200 = {
+  data: PostReactionDto
+  status: 200
+}
 
-export type reactionsControllerGetMyReactionResponseSuccess = reactionsControllerGetMyReactionResponse200 & {
+export type reactionsControllerGetMyReactionResponseSuccess = (reactionsControllerGetMyReactionResponse200) & {
   headers: Headers;
 };
-export type reactionsControllerGetMyReactionResponse = reactionsControllerGetMyReactionResponseSuccess;
+;
 
-export const getReactionsControllerGetMyReactionUrl = (id: string) => {
-  return `/api/v1/posts/${id}/reaction`;
-};
+export type reactionsControllerGetMyReactionResponse = (reactionsControllerGetMyReactionResponseSuccess)
+
+export const getReactionsControllerGetMyReactionUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/posts/${id}/reaction`
+}
 
 /**
  * @summary Lấy cảm xúc hiện tại của mình đối với bài đăng (FR10)
  */
-export const reactionsControllerGetMyReaction = async (
-  id: string,
-  options?: Parameters<typeof http>[1],
-): Promise<reactionsControllerGetMyReactionResponse> => {
-  return http<reactionsControllerGetMyReactionResponse>(getReactionsControllerGetMyReactionUrl(id), {
+export const reactionsControllerGetMyReaction = async (id: string, options?: Parameters<typeof http>[1]): Promise<reactionsControllerGetMyReactionResponse> => {
+
+  return http<reactionsControllerGetMyReactionResponse>(getReactionsControllerGetMyReactionUrl(id),
+  {
     ...options,
-    method: 'GET',
-  });
-};
+    method: 'GET'
 
-export const getReactionsControllerGetMyReactionQueryKey = (id: string) => {
-  return [`/api/v1/posts/${id}/reaction`] as const;
-};
 
-export const getReactionsControllerGetMyReactionQueryOptions = <
-  TData = Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
+  }
+);}
+
+
+
+
+
+export const getReactionsControllerGetMyReactionQueryKey = (id: string,) => {
+    return [
+    `/api/v1/posts/${id}/reaction`
+    ] as const;
+    }
+
+
+export const getReactionsControllerGetMyReactionQueryOptions = <TData = Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError, TData>>, request?: SecondParameter<typeof http>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getReactionsControllerGetMyReactionQueryKey(id);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>> = ({ signal }) =>
-    reactionsControllerGetMyReaction(id, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getReactionsControllerGetMyReactionQueryKey(id);
 
-  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type ReactionsControllerGetMyReactionQueryResult = NonNullable<
-  Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>
->;
-export type ReactionsControllerGetMyReactionQueryError = unknown;
 
-export function useReactionsControllerGetMyReaction<
-  TData = Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>,
-  TError = unknown,
->(
-  id: string,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError, TData>
-    > &
-      Pick<
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>> = ({ signal }) => reactionsControllerGetMyReaction(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ReactionsControllerGetMyReactionQueryResult = NonNullable<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>>
+export type ReactionsControllerGetMyReactionQueryError = unknown
+
+
+export function useReactionsControllerGetMyReaction<TData = Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError = unknown>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>,
           TError,
           Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useReactionsControllerGetMyReaction<
-  TData = Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReactionsControllerGetMyReaction<TData = Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>,
           TError,
           Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useReactionsControllerGetMyReaction<
-  TData = Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReactionsControllerGetMyReaction<TData = Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Lấy cảm xúc hiện tại của mình đối với bài đăng (FR10)
  */
 
-export function useReactionsControllerGetMyReaction<
-  TData = Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getReactionsControllerGetMyReactionQueryOptions(id, options);
+export function useReactionsControllerGetMyReaction<TData = Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetMyReaction>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getReactionsControllerGetMyReactionQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
 
 export type reactionsControllerGetStatsResponse200 = {
-  data: PostStatsDto;
-  status: 200;
-};
+  data: PostStatsDto
+  status: 200
+}
 
-export type reactionsControllerGetStatsResponseSuccess = reactionsControllerGetStatsResponse200 & {
+export type reactionsControllerGetStatsResponseSuccess = (reactionsControllerGetStatsResponse200) & {
   headers: Headers;
 };
-export type reactionsControllerGetStatsResponse = reactionsControllerGetStatsResponseSuccess;
+;
 
-export const getReactionsControllerGetStatsUrl = (id: string) => {
-  return `/api/v1/posts/${id}/stats`;
-};
+export type reactionsControllerGetStatsResponse = (reactionsControllerGetStatsResponseSuccess)
+
+export const getReactionsControllerGetStatsUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/posts/${id}/stats`
+}
 
 /**
  * @summary Lấy tổng số cảm xúc, bình luận, chia sẻ, lưu (FR10)
  */
-export const reactionsControllerGetStats = async (
-  id: string,
-  options?: Parameters<typeof http>[1],
-): Promise<reactionsControllerGetStatsResponse> => {
-  return http<reactionsControllerGetStatsResponse>(getReactionsControllerGetStatsUrl(id), {
+export const reactionsControllerGetStats = async (id: string, options?: Parameters<typeof http>[1]): Promise<reactionsControllerGetStatsResponse> => {
+
+  return http<reactionsControllerGetStatsResponse>(getReactionsControllerGetStatsUrl(id),
+  {
     ...options,
-    method: 'GET',
-  });
-};
+    method: 'GET'
 
-export const getReactionsControllerGetStatsQueryKey = (id: string) => {
-  return [`/api/v1/posts/${id}/stats`] as const;
-};
 
-export const getReactionsControllerGetStatsQueryOptions = <
-  TData = Awaited<ReturnType<typeof reactionsControllerGetStats>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError, TData>>;
-    request?: SecondParameter<typeof http>;
-  },
+  }
+);}
+
+
+
+
+
+export const getReactionsControllerGetStatsQueryKey = (id: string,) => {
+    return [
+    `/api/v1/posts/${id}/stats`
+    ] as const;
+    }
+
+
+export const getReactionsControllerGetStatsQueryOptions = <TData = Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError, TData>>, request?: SecondParameter<typeof http>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getReactionsControllerGetStatsQueryKey(id);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof reactionsControllerGetStats>>> = ({ signal }) =>
-    reactionsControllerGetStats(id, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getReactionsControllerGetStatsQueryKey(id);
 
-  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof reactionsControllerGetStats>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type ReactionsControllerGetStatsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof reactionsControllerGetStats>>
->;
-export type ReactionsControllerGetStatsQueryError = unknown;
 
-export function useReactionsControllerGetStats<
-  TData = Awaited<ReturnType<typeof reactionsControllerGetStats>>,
-  TError = unknown,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError, TData>> &
-      Pick<
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof reactionsControllerGetStats>>> = ({ signal }) => reactionsControllerGetStats(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ReactionsControllerGetStatsQueryResult = NonNullable<Awaited<ReturnType<typeof reactionsControllerGetStats>>>
+export type ReactionsControllerGetStatsQueryError = unknown
+
+
+export function useReactionsControllerGetStats<TData = Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError = unknown>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof reactionsControllerGetStats>>,
           TError,
           Awaited<ReturnType<typeof reactionsControllerGetStats>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useReactionsControllerGetStats<
-  TData = Awaited<ReturnType<typeof reactionsControllerGetStats>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReactionsControllerGetStats<TData = Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof reactionsControllerGetStats>>,
           TError,
           Awaited<ReturnType<typeof reactionsControllerGetStats>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useReactionsControllerGetStats<
-  TData = Awaited<ReturnType<typeof reactionsControllerGetStats>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError, TData>>;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReactionsControllerGetStats<TData = Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Lấy tổng số cảm xúc, bình luận, chia sẻ, lưu (FR10)
  */
 
-export function useReactionsControllerGetStats<
-  TData = Awaited<ReturnType<typeof reactionsControllerGetStats>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError, TData>>;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getReactionsControllerGetStatsQueryOptions(id, options);
+export function useReactionsControllerGetStats<TData = Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reactionsControllerGetStats>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getReactionsControllerGetStatsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+

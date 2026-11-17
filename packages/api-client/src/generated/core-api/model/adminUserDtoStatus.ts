@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminUserDtoStatus = (typeof AdminUserDtoStatus)[keyof typeof AdminUserDtoStatus];
+export type AdminUserDtoStatus = typeof AdminUserDtoStatus[keyof typeof AdminUserDtoStatus];
+
 
 export const AdminUserDtoStatus = {
   active: 'active',

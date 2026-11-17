@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ObservabilityControllerListTracesRange =
-  (typeof ObservabilityControllerListTracesRange)[keyof typeof ObservabilityControllerListTracesRange];
+export type ObservabilityControllerListTracesRange = typeof ObservabilityControllerListTracesRange[keyof typeof ObservabilityControllerListTracesRange];
+
 
 export const ObservabilityControllerListTracesRange = {
   '15m': '15m',

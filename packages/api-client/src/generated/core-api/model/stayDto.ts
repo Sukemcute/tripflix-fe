@@ -22,8 +22,8 @@ export interface StayDto {
   /** Tổng tiền cả kỳ ở, mọi phòng (VND) */
   totalPrice: number;
   /**
-   * Điểm đánh giá của khách; null khi khách sạn chưa có đánh giá
-   * @nullable
-   */
+     * Điểm đánh giá của khách; null khi khách sạn chưa có đánh giá
+     * @nullable
+     */
   rating: StayRatingDto | null;
 }

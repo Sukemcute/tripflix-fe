@@ -8,13 +8,13 @@
 export interface ExploreAuthorDto {
   id: string;
   /**
-   * Tên hiển thị; null nếu không tìm thấy người dùng
-   * @nullable
-   */
+     * Tên hiển thị; null nếu không tìm thấy người dùng
+     * @nullable
+     */
   name: string | null;
   /**
-   * Chưa có dữ liệu, hiện luôn là null (như feed)
-   * @nullable
-   */
+     * Chưa có dữ liệu, hiện luôn là null (như feed)
+     * @nullable
+     */
   avatarUrl: string | null;
 }

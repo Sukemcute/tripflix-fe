@@ -13,24 +13,24 @@ export interface HotelRatePlanQuoteDto {
   /** Huỷ miễn phí trước ngày nhận phòng bao nhiêu ngày */
   freeCancelDays: number;
   /**
-   * Cả kỳ ở, mọi phòng (VND)
-   * @nullable
-   */
+     * Cả kỳ ở, mọi phòng (VND)
+     * @nullable
+     */
   totalPrice: number | null;
   /**
-   * Một đêm một phòng (VND)
-   * @nullable
-   */
+     * Một đêm một phòng (VND)
+     * @nullable
+     */
   pricePerNight: number | null;
   /**
-   * Giá gạch một đêm một phòng (VND), chỉ để hiển thị
-   * @nullable
-   */
+     * Giá gạch một đêm một phòng (VND), chỉ để hiển thị
+     * @nullable
+     */
   listPricePerNight: number | null;
   /**
-   * % giảm so với giá gạch
-   * @nullable
-   */
+     * % giảm so với giá gạch
+     * @nullable
+     */
   discountPct: number | null;
   perks: string[];
 }

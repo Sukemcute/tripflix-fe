@@ -8,8 +8,8 @@ import type { SetCommentReactionDtoType } from './setCommentReactionDtoType';
 
 export interface SetCommentReactionDto {
   /**
-   * Loại cảm xúc ("like" để thích, null để hủy thích, để trống để toggle)
-   * @nullable
-   */
+     * Loại cảm xúc ("like" để thích, null để hủy thích, để trống để toggle)
+     * @nullable
+     */
   type?: SetCommentReactionDtoType;
 }

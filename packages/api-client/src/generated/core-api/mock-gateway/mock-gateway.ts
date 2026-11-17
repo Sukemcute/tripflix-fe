@@ -4,7 +4,10 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -17,14 +20,20 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
+  UseQueryResult
 } from '@tanstack/react-query';
 
-import type { CreateTokenRequestDto, TokenDto } from '../model';
+import type {
+  CreateTokenRequestDto,
+  TokenDto
+} from '../model';
 
 import { http } from '../../../http';
 
+
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -42,26 +51,28 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type mockGatewayControllerCreateTokenResponse200 = {
-  data: TokenDto;
-  status: 200;
-};
+  data: TokenDto
+  status: 200
+}
 
-export type mockGatewayControllerCreateTokenResponseSuccess = mockGatewayControllerCreateTokenResponse200 & {
+export type mockGatewayControllerCreateTokenResponseSuccess = (mockGatewayControllerCreateTokenResponse200) & {
   headers: Headers;
 };
-export type mockGatewayControllerCreateTokenResponse = mockGatewayControllerCreateTokenResponseSuccess;
+;
+
+export type mockGatewayControllerCreateTokenResponse = (mockGatewayControllerCreateTokenResponseSuccess)
 
 export const getMockGatewayControllerCreateTokenUrl = () => {
-  return `/api/mock-gateway/tokens`;
-};
 
-export const mockGatewayControllerCreateToken = async (
-  createTokenRequestDto: CreateTokenRequestDto,
-  options?: Parameters<typeof http>[1],
-): Promise<mockGatewayControllerCreateTokenResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit['headers']>,
-  ): Record<string, string | readonly string[]> => {
+
+
+
+  return `/api/mock-gateway/tokens`
+}
+
+export const mockGatewayControllerCreateToken = async (createTokenRequestDto: CreateTokenRequestDto, options?: Parameters<typeof http>[1]): Promise<mockGatewayControllerCreateTokenResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -75,206 +86,166 @@ export const mockGatewayControllerCreateToken = async (
     }
     return headers;
   };
-  return http<mockGatewayControllerCreateTokenResponse>(getMockGatewayControllerCreateTokenUrl(), {
+return http<mockGatewayControllerCreateTokenResponse>(getMockGatewayControllerCreateTokenUrl(),
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(createTokenRequestDto),
-  });
+    body: JSON.stringify(createTokenRequestDto)
+  }
+);}
+
+
+
+
+
+export const getMockGatewayControllerCreateTokenMutationKey = () => ['mockGatewayControllerCreateToken'] as const;
+
+export const getMockGatewayControllerCreateTokenMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mockGatewayControllerCreateToken>>, TError,MockGatewayControllerCreateTokenMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+): UseMutationOptions<Awaited<ReturnType<typeof mockGatewayControllerCreateToken>>, TError,MockGatewayControllerCreateTokenMutationVariables, TContext> => {
+
+const mutationKey = getMockGatewayControllerCreateTokenMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mockGatewayControllerCreateToken>>, MockGatewayControllerCreateTokenMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  mockGatewayControllerCreateToken(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MockGatewayControllerCreateTokenMutationResult = NonNullable<Awaited<ReturnType<typeof mockGatewayControllerCreateToken>>>
+    export type MockGatewayControllerCreateTokenMutationBody = CreateTokenRequestDto
+    export type MockGatewayControllerCreateTokenMutationError = unknown
+    export type MockGatewayControllerCreateTokenMutationVariables = {data: CreateTokenRequestDto}
+
+    export const useMockGatewayControllerCreateToken = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mockGatewayControllerCreateToken>>, TError,MockGatewayControllerCreateTokenMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof mockGatewayControllerCreateToken>>,
+        TError,
+        MockGatewayControllerCreateTokenMutationVariables,
+        TContext
+      > => {
+      return useMutation(getMockGatewayControllerCreateTokenMutationOptions(options), queryClient);
+    }
+    export type mockGatewayControllerListTestCardsResponse200 = {
+  data: void
+  status: 200
+}
+
+export type mockGatewayControllerListTestCardsResponseSuccess = (mockGatewayControllerListTestCardsResponse200) & {
+  headers: Headers;
 };
+;
 
-export const getMockGatewayControllerCreateTokenMutationKey = () =>
-  ['mockGatewayControllerCreateToken'] as const;
-
-export const getMockGatewayControllerCreateTokenMutationOptions = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof mockGatewayControllerCreateToken>>,
-    TError,
-    MockGatewayControllerCreateTokenMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof http>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof mockGatewayControllerCreateToken>>,
-  TError,
-  MockGatewayControllerCreateTokenMutationVariables,
-  TContext
-> => {
-  const mutationKey = getMockGatewayControllerCreateTokenMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof mockGatewayControllerCreateToken>>,
-    MockGatewayControllerCreateTokenMutationVariables
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return mockGatewayControllerCreateToken(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type MockGatewayControllerCreateTokenMutationResult = NonNullable<
-  Awaited<ReturnType<typeof mockGatewayControllerCreateToken>>
->;
-export type MockGatewayControllerCreateTokenMutationBody = CreateTokenRequestDto;
-export type MockGatewayControllerCreateTokenMutationError = unknown;
-export type MockGatewayControllerCreateTokenMutationVariables = { data: CreateTokenRequestDto };
-
-export const useMockGatewayControllerCreateToken = <TError = unknown, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof mockGatewayControllerCreateToken>>,
-      TError,
-      MockGatewayControllerCreateTokenMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof mockGatewayControllerCreateToken>>,
-  TError,
-  MockGatewayControllerCreateTokenMutationVariables,
-  TContext
-> => {
-  return useMutation(getMockGatewayControllerCreateTokenMutationOptions(options), queryClient);
-};
-export type mockGatewayControllerListTestCardsResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type mockGatewayControllerListTestCardsResponseSuccess =
-  mockGatewayControllerListTestCardsResponse200 & {
-    headers: Headers;
-  };
-export type mockGatewayControllerListTestCardsResponse = mockGatewayControllerListTestCardsResponseSuccess;
+export type mockGatewayControllerListTestCardsResponse = (mockGatewayControllerListTestCardsResponseSuccess)
 
 export const getMockGatewayControllerListTestCardsUrl = () => {
-  return `/api/mock-gateway/test-cards`;
-};
 
-export const mockGatewayControllerListTestCards = async (
-  options?: Parameters<typeof http>[1],
-): Promise<mockGatewayControllerListTestCardsResponse> => {
-  return http<mockGatewayControllerListTestCardsResponse>(getMockGatewayControllerListTestCardsUrl(), {
+
+
+
+  return `/api/mock-gateway/test-cards`
+}
+
+export const mockGatewayControllerListTestCards = async ( options?: Parameters<typeof http>[1]): Promise<mockGatewayControllerListTestCardsResponse> => {
+
+  return http<mockGatewayControllerListTestCardsResponse>(getMockGatewayControllerListTestCardsUrl(),
+  {
     ...options,
-    method: 'GET',
-  });
-};
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
 
 export const getMockGatewayControllerListTestCardsQueryKey = () => {
-  return [`/api/mock-gateway/test-cards`] as const;
-};
+    return [
+    `/api/mock-gateway/test-cards`
+    ] as const;
+    }
 
-export const getMockGatewayControllerListTestCardsQueryOptions = <
-  TData = Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>,
-  TError = unknown,
->(options?: {
-  query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError, TData>
-  >;
-  request?: SecondParameter<typeof http>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getMockGatewayControllerListTestCardsQueryKey();
+export const getMockGatewayControllerListTestCardsQueryOptions = <TData = Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError, TData>>, request?: SecondParameter<typeof http>}
+) => {
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>> = ({
-    signal,
-  }) => mockGatewayControllerListTestCards({ signal, ...requestOptions });
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  const queryKey =  queryOptions?.queryKey ?? getMockGatewayControllerListTestCardsQueryKey();
 
-export type MockGatewayControllerListTestCardsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>
->;
-export type MockGatewayControllerListTestCardsQueryError = unknown;
 
-export function useMockGatewayControllerListTestCards<
-  TData = Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>,
-  TError = unknown,
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError, TData>
-    > &
-      Pick<
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>> = ({ signal }) => mockGatewayControllerListTestCards({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MockGatewayControllerListTestCardsQueryResult = NonNullable<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>>
+export type MockGatewayControllerListTestCardsQueryError = unknown
+
+
+export function useMockGatewayControllerListTestCards<TData = Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>,
           TError,
           Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useMockGatewayControllerListTestCards<
-  TData = Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMockGatewayControllerListTestCards<TData = Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>,
           TError,
           Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useMockGatewayControllerListTestCards<
-  TData = Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMockGatewayControllerListTestCards<TData = Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useMockGatewayControllerListTestCards<
-  TData = Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getMockGatewayControllerListTestCardsQueryOptions(options);
+export function useMockGatewayControllerListTestCards<TData = Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mockGatewayControllerListTestCards>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getMockGatewayControllerListTestCardsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+

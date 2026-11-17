@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerAppealsView =
-  (typeof AdminModerationControllerAppealsView)[keyof typeof AdminModerationControllerAppealsView];
+export type AdminModerationControllerAppealsView = typeof AdminModerationControllerAppealsView[keyof typeof AdminModerationControllerAppealsView];
+
 
 export const AdminModerationControllerAppealsView = {
   pending: 'pending',

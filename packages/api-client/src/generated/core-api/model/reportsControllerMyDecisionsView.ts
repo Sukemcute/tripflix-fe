@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ReportsControllerMyDecisionsView =
-  (typeof ReportsControllerMyDecisionsView)[keyof typeof ReportsControllerMyDecisionsView];
+export type ReportsControllerMyDecisionsView = typeof ReportsControllerMyDecisionsView[keyof typeof ReportsControllerMyDecisionsView];
+
 
 export const ReportsControllerMyDecisionsView = {
   pending: 'pending',

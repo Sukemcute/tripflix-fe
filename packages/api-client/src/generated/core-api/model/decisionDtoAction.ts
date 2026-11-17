@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type DecisionDtoAction = (typeof DecisionDtoAction)[keyof typeof DecisionDtoAction];
+export type DecisionDtoAction = typeof DecisionDtoAction[keyof typeof DecisionDtoAction];
+
 
 export const DecisionDtoAction = {
   hide: 'hide',

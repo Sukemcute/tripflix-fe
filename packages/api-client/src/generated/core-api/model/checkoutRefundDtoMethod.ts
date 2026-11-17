@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CheckoutRefundDtoMethod = (typeof CheckoutRefundDtoMethod)[keyof typeof CheckoutRefundDtoMethod];
+export type CheckoutRefundDtoMethod = typeof CheckoutRefundDtoMethod[keyof typeof CheckoutRefundDtoMethod];
+
 
 export const CheckoutRefundDtoMethod = {
   vnpay: 'vnpay',

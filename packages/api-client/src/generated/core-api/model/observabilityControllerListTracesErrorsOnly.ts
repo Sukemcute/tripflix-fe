@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ObservabilityControllerListTracesErrorsOnly =
-  (typeof ObservabilityControllerListTracesErrorsOnly)[keyof typeof ObservabilityControllerListTracesErrorsOnly];
+export type ObservabilityControllerListTracesErrorsOnly = typeof ObservabilityControllerListTracesErrorsOnly[keyof typeof ObservabilityControllerListTracesErrorsOnly];
+
 
 export const ObservabilityControllerListTracesErrorsOnly = {
   true: 'true',

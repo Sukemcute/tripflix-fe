@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ObservabilityControllerGetOverviewRange =
-  (typeof ObservabilityControllerGetOverviewRange)[keyof typeof ObservabilityControllerGetOverviewRange];
+export type ObservabilityControllerGetOverviewRange = typeof ObservabilityControllerGetOverviewRange[keyof typeof ObservabilityControllerGetOverviewRange];
+
 
 export const ObservabilityControllerGetOverviewRange = {
   '15m': '15m',

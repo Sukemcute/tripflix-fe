@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ReportsControllerMyAppealsStatus =
-  (typeof ReportsControllerMyAppealsStatus)[keyof typeof ReportsControllerMyAppealsStatus];
+export type ReportsControllerMyAppealsStatus = typeof ReportsControllerMyAppealsStatus[keyof typeof ReportsControllerMyAppealsStatus];
+
 
 export const ReportsControllerMyAppealsStatus = {
   pending: 'pending',

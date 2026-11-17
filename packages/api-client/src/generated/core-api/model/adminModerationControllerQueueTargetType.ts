@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerQueueTargetType =
-  (typeof AdminModerationControllerQueueTargetType)[keyof typeof AdminModerationControllerQueueTargetType];
+export type AdminModerationControllerQueueTargetType = typeof AdminModerationControllerQueueTargetType[keyof typeof AdminModerationControllerQueueTargetType];
+
 
 export const AdminModerationControllerQueueTargetType = {
   post: 'post',

@@ -8,8 +8,8 @@
 /**
  * Hành động kiểm duyệt
  */
-export type CreateModerationActionDtoAction =
-  (typeof CreateModerationActionDtoAction)[keyof typeof CreateModerationActionDtoAction];
+export type CreateModerationActionDtoAction = typeof CreateModerationActionDtoAction[keyof typeof CreateModerationActionDtoAction];
+
 
 export const CreateModerationActionDtoAction = {
   hide: 'hide',

@@ -9,8 +9,8 @@
  * Loại cảm xúc ("like" để thích, null để hủy thích, để trống để toggle)
  * @nullable
  */
-export type SetCommentReactionDtoType =
-  (typeof SetCommentReactionDtoType)[keyof typeof SetCommentReactionDtoType] | null;
+export type SetCommentReactionDtoType = typeof SetCommentReactionDtoType[keyof typeof SetCommentReactionDtoType] | null;
+
 
 export const SetCommentReactionDtoType = {
   like: 'like',

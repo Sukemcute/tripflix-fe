@@ -17,9 +17,9 @@ export interface HotelRoomOfferDto {
   /** @nullable */
   areaM2: number | null;
   /**
-   * city | sea | garden | mountain | pool | river
-   * @nullable
-   */
+     * city | sea | garden | mountain | pool | river
+     * @nullable
+     */
   view: string | null;
   /** URL ảnh phòng */
   images: string[];
@@ -30,9 +30,9 @@ export interface HotelRoomOfferDto {
   /** @nullable */
   reason: HotelRoomOfferDtoReason;
   /**
-   * Số phòng thật còn lại suốt kỳ ở
-   * @nullable
-   */
+     * Số phòng thật còn lại suốt kỳ ở
+     * @nullable
+     */
   remaining: number | null;
   ratePlans: HotelRatePlanQuoteDto[];
 }

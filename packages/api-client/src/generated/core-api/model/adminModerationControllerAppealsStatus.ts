@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerAppealsStatus =
-  (typeof AdminModerationControllerAppealsStatus)[keyof typeof AdminModerationControllerAppealsStatus];
+export type AdminModerationControllerAppealsStatus = typeof AdminModerationControllerAppealsStatus[keyof typeof AdminModerationControllerAppealsStatus];
+
 
 export const AdminModerationControllerAppealsStatus = {
   pending: 'pending',

@@ -11,9 +11,9 @@ export interface CheckoutRefundDto {
   /** Tổng số tiền hoàn (VND) */
   amount: number;
   /**
-   * Phí huỷ đơn đã thanh toán (VND)
-   * @minimum 0
-   */
+     * Phí huỷ đơn đã thanh toán (VND)
+     * @minimum 0
+     */
   feeAmount: number;
   status: CheckoutRefundDtoStatus;
   method: CheckoutRefundDtoMethod;

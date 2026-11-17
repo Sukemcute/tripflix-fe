@@ -18,9 +18,9 @@ export interface FeedCardDto {
   title: string;
   caption: string;
   /**
-   * Chưa có dữ liệu, hiện luôn là null
-   * @nullable
-   */
+     * Chưa có dữ liệu, hiện luôn là null
+     * @nullable
+     */
   region: string | null;
   tags: string[];
   /** Chưa có dữ liệu, hiện luôn rỗng */
@@ -29,13 +29,13 @@ export interface FeedCardDto {
   tripAttachment?: TripAttachmentDto | null;
   counts: FeedCountsDto;
   /**
-   * null với khách
-   * @nullable
-   */
+     * null với khách
+     * @nullable
+     */
   viewerState: FeedViewerStateDto | null;
   /**
-   * Chưa xếp hạng, hiện luôn là null
-   * @nullable
-   */
+     * Chưa xếp hạng, hiện luôn là null
+     * @nullable
+     */
   reason: FeedReasonDto | null;
 }

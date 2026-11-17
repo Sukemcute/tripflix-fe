@@ -9,9 +9,9 @@ export interface ReconcileHeldSummariesResponseDto {
   /** Danh sách postId có tóm tắt đang bị giữ lại cần tóm tắt bù */
   postIds: string[];
   /**
-   * Cursor cho trang tiếp theo (null nếu hết)
-   * @nullable
-   */
+     * Cursor cho trang tiếp theo (null nếu hết)
+     * @nullable
+     */
   nextCursor: string | null;
   /** Tổng số bài viết trong trang hiện tại */
   total: number;

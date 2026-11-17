@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerQueueSource =
-  (typeof AdminModerationControllerQueueSource)[keyof typeof AdminModerationControllerQueueSource];
+export type AdminModerationControllerQueueSource = typeof AdminModerationControllerQueueSource[keyof typeof AdminModerationControllerQueueSource];
+
 
 export const AdminModerationControllerQueueSource = {
   rule: 'rule',

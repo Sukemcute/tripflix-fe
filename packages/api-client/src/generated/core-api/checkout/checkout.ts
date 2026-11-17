@@ -4,7 +4,10 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -17,7 +20,7 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
@@ -34,12 +37,15 @@ import type {
   SetGuestsResultDto,
   StartVnpayRequestDto,
   StartVnpayResultDto,
-  TripPageDto,
+  TripPageDto
 } from '../model';
 
 import { http } from '../../../http';
 
+
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -57,33 +63,33 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type checkoutControllerCreateResponse200 = {
-  data: CheckoutDto;
-  status: 200;
-};
+  data: CheckoutDto
+  status: 200
+}
 
 export type checkoutControllerCreateResponse201 = {
-  data: CheckoutDto;
-  status: 201;
-};
+  data: CheckoutDto
+  status: 201
+}
 
-export type checkoutControllerCreateResponseSuccess = (
-  checkoutControllerCreateResponse200 | checkoutControllerCreateResponse201
-) & {
+export type checkoutControllerCreateResponseSuccess = (checkoutControllerCreateResponse200 | checkoutControllerCreateResponse201) & {
   headers: Headers;
 };
-export type checkoutControllerCreateResponse = checkoutControllerCreateResponseSuccess;
+;
+
+export type checkoutControllerCreateResponse = (checkoutControllerCreateResponseSuccess)
 
 export const getCheckoutControllerCreateUrl = () => {
-  return `/api/checkout`;
-};
 
-export const checkoutControllerCreate = async (
-  checkoutRequestDto: CheckoutRequestDto,
-  options?: Parameters<typeof http>[1],
-): Promise<checkoutControllerCreateResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit['headers']>,
-  ): Record<string, string | readonly string[]> => {
+
+
+
+  return `/api/checkout`
+}
+
+export const checkoutControllerCreate = async (checkoutRequestDto: CheckoutRequestDto, options?: Parameters<typeof http>[1]): Promise<checkoutControllerCreateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -97,341 +103,299 @@ export const checkoutControllerCreate = async (
     }
     return headers;
   };
-  return http<checkoutControllerCreateResponse>(getCheckoutControllerCreateUrl(), {
+return http<checkoutControllerCreateResponse>(getCheckoutControllerCreateUrl(),
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(checkoutRequestDto),
-  });
-};
+    body: JSON.stringify(checkoutRequestDto)
+  }
+);}
+
+
+
+
 
 export const getCheckoutControllerCreateMutationKey = () => ['checkoutControllerCreate'] as const;
 
-export const getCheckoutControllerCreateMutationOptions = <TError = unknown, TContext = unknown>(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof checkoutControllerCreate>>,
-    TError,
-    CheckoutControllerCreateMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof http>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof checkoutControllerCreate>>,
-  TError,
-  CheckoutControllerCreateMutationVariables,
-  TContext
-> => {
-  const mutationKey = getCheckoutControllerCreateMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+export const getCheckoutControllerCreateMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerCreate>>, TError,CheckoutControllerCreateMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerCreate>>, TError,CheckoutControllerCreateMutationVariables, TContext> => {
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof checkoutControllerCreate>>,
-    CheckoutControllerCreateMutationVariables
-  > = (props) => {
-    const { data } = props ?? {};
+const mutationKey = getCheckoutControllerCreateMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-    return checkoutControllerCreate(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type CheckoutControllerCreateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof checkoutControllerCreate>>
->;
-export type CheckoutControllerCreateMutationBody = CheckoutRequestDto;
-export type CheckoutControllerCreateMutationError = unknown;
-export type CheckoutControllerCreateMutationVariables = { data: CheckoutRequestDto };
 
-export const useCheckoutControllerCreate = <TError = unknown, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof checkoutControllerCreate>>,
-      TError,
-      CheckoutControllerCreateMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof checkoutControllerCreate>>,
-  TError,
-  CheckoutControllerCreateMutationVariables,
-  TContext
-> => {
-  return useMutation(getCheckoutControllerCreateMutationOptions(options), queryClient);
-};
-export type checkoutControllerListResponse200 = {
-  data: TripPageDto;
-  status: 200;
-};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkoutControllerCreate>>, CheckoutControllerCreateMutationVariables> = (props) => {
+          const {data} = props ?? {};
 
-export type checkoutControllerListResponseSuccess = checkoutControllerListResponse200 & {
+          return  checkoutControllerCreate(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckoutControllerCreateMutationResult = NonNullable<Awaited<ReturnType<typeof checkoutControllerCreate>>>
+    export type CheckoutControllerCreateMutationBody = CheckoutRequestDto
+    export type CheckoutControllerCreateMutationError = unknown
+    export type CheckoutControllerCreateMutationVariables = {data: CheckoutRequestDto}
+
+    export const useCheckoutControllerCreate = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerCreate>>, TError,CheckoutControllerCreateMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof checkoutControllerCreate>>,
+        TError,
+        CheckoutControllerCreateMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCheckoutControllerCreateMutationOptions(options), queryClient);
+    }
+    export type checkoutControllerListResponse200 = {
+  data: TripPageDto
+  status: 200
+}
+
+export type checkoutControllerListResponseSuccess = (checkoutControllerListResponse200) & {
   headers: Headers;
 };
-export type checkoutControllerListResponse = checkoutControllerListResponseSuccess;
+;
+
+export type checkoutControllerListResponse = (checkoutControllerListResponseSuccess)
 
 export const getCheckoutControllerListUrl = () => {
-  return `/api/checkout`;
-};
 
-export const checkoutControllerList = async (
-  options?: Parameters<typeof http>[1],
-): Promise<checkoutControllerListResponse> => {
-  return http<checkoutControllerListResponse>(getCheckoutControllerListUrl(), {
+
+
+
+  return `/api/checkout`
+}
+
+export const checkoutControllerList = async ( options?: Parameters<typeof http>[1]): Promise<checkoutControllerListResponse> => {
+
+  return http<checkoutControllerListResponse>(getCheckoutControllerListUrl(),
+  {
     ...options,
-    method: 'GET',
-  });
-};
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
 
 export const getCheckoutControllerListQueryKey = () => {
-  return [`/api/checkout`] as const;
-};
+    return [
+    `/api/checkout`
+    ] as const;
+    }
 
-export const getCheckoutControllerListQueryOptions = <
-  TData = Awaited<ReturnType<typeof checkoutControllerList>>,
-  TError = unknown,
->(options?: {
-  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>>;
-  request?: SecondParameter<typeof http>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getCheckoutControllerListQueryKey();
+export const getCheckoutControllerListQueryOptions = <TData = Awaited<ReturnType<typeof checkoutControllerList>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>>, request?: SecondParameter<typeof http>}
+) => {
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof checkoutControllerList>>> = ({ signal }) =>
-    checkoutControllerList({ signal, ...requestOptions });
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof checkoutControllerList>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  const queryKey =  queryOptions?.queryKey ?? getCheckoutControllerListQueryKey();
 
-export type CheckoutControllerListQueryResult = NonNullable<
-  Awaited<ReturnType<typeof checkoutControllerList>>
->;
-export type CheckoutControllerListQueryError = unknown;
 
-export function useCheckoutControllerList<
-  TData = Awaited<ReturnType<typeof checkoutControllerList>>,
-  TError = unknown,
->(
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>> &
-      Pick<
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkoutControllerList>>> = ({ signal }) => checkoutControllerList({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CheckoutControllerListQueryResult = NonNullable<Awaited<ReturnType<typeof checkoutControllerList>>>
+export type CheckoutControllerListQueryError = unknown
+
+
+export function useCheckoutControllerList<TData = Awaited<ReturnType<typeof checkoutControllerList>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkoutControllerList>>,
           TError,
           Awaited<ReturnType<typeof checkoutControllerList>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useCheckoutControllerList<
-  TData = Awaited<ReturnType<typeof checkoutControllerList>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckoutControllerList<TData = Awaited<ReturnType<typeof checkoutControllerList>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkoutControllerList>>,
           TError,
           Awaited<ReturnType<typeof checkoutControllerList>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useCheckoutControllerList<
-  TData = Awaited<ReturnType<typeof checkoutControllerList>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>>;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckoutControllerList<TData = Awaited<ReturnType<typeof checkoutControllerList>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useCheckoutControllerList<
-  TData = Awaited<ReturnType<typeof checkoutControllerList>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>>;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getCheckoutControllerListQueryOptions(options);
+export function useCheckoutControllerList<TData = Awaited<ReturnType<typeof checkoutControllerList>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerList>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getCheckoutControllerListQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
 
 export type checkoutControllerGetResponse200 = {
-  data: CheckoutDto;
-  status: 200;
-};
+  data: CheckoutDto
+  status: 200
+}
 
-export type checkoutControllerGetResponseSuccess = checkoutControllerGetResponse200 & {
+export type checkoutControllerGetResponseSuccess = (checkoutControllerGetResponse200) & {
   headers: Headers;
 };
-export type checkoutControllerGetResponse = checkoutControllerGetResponseSuccess;
+;
 
-export const getCheckoutControllerGetUrl = (id: string) => {
-  return `/api/checkout/${id}`;
-};
+export type checkoutControllerGetResponse = (checkoutControllerGetResponseSuccess)
 
-export const checkoutControllerGet = async (
-  id: string,
-  options?: Parameters<typeof http>[1],
-): Promise<checkoutControllerGetResponse> => {
-  return http<checkoutControllerGetResponse>(getCheckoutControllerGetUrl(id), {
+export const getCheckoutControllerGetUrl = (id: string,) => {
+
+
+
+
+  return `/api/checkout/${id}`
+}
+
+export const checkoutControllerGet = async (id: string, options?: Parameters<typeof http>[1]): Promise<checkoutControllerGetResponse> => {
+
+  return http<checkoutControllerGetResponse>(getCheckoutControllerGetUrl(id),
+  {
     ...options,
-    method: 'GET',
-  });
-};
+    method: 'GET'
 
-export const getCheckoutControllerGetQueryKey = (id: string) => {
-  return [`/api/checkout/${id}`] as const;
-};
 
-export const getCheckoutControllerGetQueryOptions = <
-  TData = Awaited<ReturnType<typeof checkoutControllerGet>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerGet>>, TError, TData>>;
-    request?: SecondParameter<typeof http>;
-  },
+  }
+);}
+
+
+
+
+
+export const getCheckoutControllerGetQueryKey = (id: string,) => {
+    return [
+    `/api/checkout/${id}`
+    ] as const;
+    }
+
+
+export const getCheckoutControllerGetQueryOptions = <TData = Awaited<ReturnType<typeof checkoutControllerGet>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerGet>>, TError, TData>>, request?: SecondParameter<typeof http>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getCheckoutControllerGetQueryKey(id);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof checkoutControllerGet>>> = ({ signal }) =>
-    checkoutControllerGet(id, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getCheckoutControllerGetQueryKey(id);
 
-  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof checkoutControllerGet>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type CheckoutControllerGetQueryResult = NonNullable<Awaited<ReturnType<typeof checkoutControllerGet>>>;
-export type CheckoutControllerGetQueryError = unknown;
 
-export function useCheckoutControllerGet<
-  TData = Awaited<ReturnType<typeof checkoutControllerGet>>,
-  TError = unknown,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerGet>>, TError, TData>> &
-      Pick<
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkoutControllerGet>>> = ({ signal }) => checkoutControllerGet(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CheckoutControllerGetQueryResult = NonNullable<Awaited<ReturnType<typeof checkoutControllerGet>>>
+export type CheckoutControllerGetQueryError = unknown
+
+
+export function useCheckoutControllerGet<TData = Awaited<ReturnType<typeof checkoutControllerGet>>, TError = unknown>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkoutControllerGet>>,
           TError,
           Awaited<ReturnType<typeof checkoutControllerGet>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useCheckoutControllerGet<
-  TData = Awaited<ReturnType<typeof checkoutControllerGet>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerGet>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckoutControllerGet<TData = Awaited<ReturnType<typeof checkoutControllerGet>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkoutControllerGet>>,
           TError,
           Awaited<ReturnType<typeof checkoutControllerGet>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useCheckoutControllerGet<
-  TData = Awaited<ReturnType<typeof checkoutControllerGet>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerGet>>, TError, TData>>;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckoutControllerGet<TData = Awaited<ReturnType<typeof checkoutControllerGet>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerGet>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useCheckoutControllerGet<
-  TData = Awaited<ReturnType<typeof checkoutControllerGet>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerGet>>, TError, TData>>;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getCheckoutControllerGetQueryOptions(id, options);
+export function useCheckoutControllerGet<TData = Awaited<ReturnType<typeof checkoutControllerGet>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerGet>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getCheckoutControllerGetQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export type checkoutControllerSetGuestsResponse200 = {
-  data: SetGuestsResultDto;
-  status: 200;
-};
 
-export type checkoutControllerSetGuestsResponseSuccess = checkoutControllerSetGuestsResponse200 & {
+
+
+
+
+export type checkoutControllerSetGuestsResponse200 = {
+  data: SetGuestsResultDto
+  status: 200
+}
+
+export type checkoutControllerSetGuestsResponseSuccess = (checkoutControllerSetGuestsResponse200) & {
   headers: Headers;
 };
-export type checkoutControllerSetGuestsResponse = checkoutControllerSetGuestsResponseSuccess;
+;
 
-export const getCheckoutControllerSetGuestsUrl = (id: string) => {
-  return `/api/checkout/${id}/guests`;
-};
+export type checkoutControllerSetGuestsResponse = (checkoutControllerSetGuestsResponseSuccess)
 
-export const checkoutControllerSetGuests = async (
-  id: string,
-  setGuestsRequestDto: SetGuestsRequestDto,
-  options?: Parameters<typeof http>[1],
-): Promise<checkoutControllerSetGuestsResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit['headers']>,
-  ): Record<string, string | readonly string[]> => {
+export const getCheckoutControllerSetGuestsUrl = (id: string,) => {
+
+
+
+
+  return `/api/checkout/${id}/guests`
+}
+
+export const checkoutControllerSetGuests = async (id: string,
+    setGuestsRequestDto: SetGuestsRequestDto, options?: Parameters<typeof http>[1]): Promise<checkoutControllerSetGuestsResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -445,107 +409,92 @@ export const checkoutControllerSetGuests = async (
     }
     return headers;
   };
-  return http<checkoutControllerSetGuestsResponse>(getCheckoutControllerSetGuestsUrl(id), {
+return http<checkoutControllerSetGuestsResponse>(getCheckoutControllerSetGuestsUrl(id),
+  {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(setGuestsRequestDto),
-  });
-};
+    body: JSON.stringify(setGuestsRequestDto)
+  }
+);}
+
+
+
+
 
 export const getCheckoutControllerSetGuestsMutationKey = () => ['checkoutControllerSetGuests'] as const;
 
-export const getCheckoutControllerSetGuestsMutationOptions = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof checkoutControllerSetGuests>>,
-    TError,
-    CheckoutControllerSetGuestsMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof http>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof checkoutControllerSetGuests>>,
-  TError,
-  CheckoutControllerSetGuestsMutationVariables,
-  TContext
-> => {
-  const mutationKey = getCheckoutControllerSetGuestsMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+export const getCheckoutControllerSetGuestsMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerSetGuests>>, TError,CheckoutControllerSetGuestsMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerSetGuests>>, TError,CheckoutControllerSetGuestsMutationVariables, TContext> => {
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof checkoutControllerSetGuests>>,
-    CheckoutControllerSetGuestsMutationVariables
-  > = (props) => {
-    const { id, data } = props ?? {};
+const mutationKey = getCheckoutControllerSetGuestsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-    return checkoutControllerSetGuests(id, data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type CheckoutControllerSetGuestsMutationResult = NonNullable<
-  Awaited<ReturnType<typeof checkoutControllerSetGuests>>
->;
-export type CheckoutControllerSetGuestsMutationBody = SetGuestsRequestDto;
-export type CheckoutControllerSetGuestsMutationError = unknown;
-export type CheckoutControllerSetGuestsMutationVariables = { id: string; data: SetGuestsRequestDto };
 
-export const useCheckoutControllerSetGuests = <TError = unknown, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof checkoutControllerSetGuests>>,
-      TError,
-      CheckoutControllerSetGuestsMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof checkoutControllerSetGuests>>,
-  TError,
-  CheckoutControllerSetGuestsMutationVariables,
-  TContext
-> => {
-  return useMutation(getCheckoutControllerSetGuestsMutationOptions(options), queryClient);
-};
-export type checkoutControllerPayResponse200 = {
-  data: PayResultDto;
-  status: 200;
-};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkoutControllerSetGuests>>, CheckoutControllerSetGuestsMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  checkoutControllerSetGuests(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckoutControllerSetGuestsMutationResult = NonNullable<Awaited<ReturnType<typeof checkoutControllerSetGuests>>>
+    export type CheckoutControllerSetGuestsMutationBody = SetGuestsRequestDto
+    export type CheckoutControllerSetGuestsMutationError = unknown
+    export type CheckoutControllerSetGuestsMutationVariables = {id: string;data: SetGuestsRequestDto}
+
+    export const useCheckoutControllerSetGuests = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerSetGuests>>, TError,CheckoutControllerSetGuestsMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof checkoutControllerSetGuests>>,
+        TError,
+        CheckoutControllerSetGuestsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCheckoutControllerSetGuestsMutationOptions(options), queryClient);
+    }
+    export type checkoutControllerPayResponse200 = {
+  data: PayResultDto
+  status: 200
+}
 
 export type checkoutControllerPayResponse202 = {
-  data: PayResultDto;
-  status: 202;
-};
+  data: PayResultDto
+  status: 202
+}
 
-export type checkoutControllerPayResponseSuccess = (
-  checkoutControllerPayResponse200 | checkoutControllerPayResponse202
-) & {
+export type checkoutControllerPayResponseSuccess = (checkoutControllerPayResponse200 | checkoutControllerPayResponse202) & {
   headers: Headers;
 };
-export type checkoutControllerPayResponse = checkoutControllerPayResponseSuccess;
+;
 
-export const getCheckoutControllerPayUrl = (id: string) => {
-  return `/api/checkout/${id}/pay`;
-};
+export type checkoutControllerPayResponse = (checkoutControllerPayResponseSuccess)
 
-export const checkoutControllerPay = async (
-  id: string,
-  payRequestDto: PayRequestDto,
-  options?: Parameters<typeof http>[1],
-): Promise<checkoutControllerPayResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit['headers']>,
-  ): Record<string, string | readonly string[]> => {
+export const getCheckoutControllerPayUrl = (id: string,) => {
+
+
+
+
+  return `/api/checkout/${id}/pay`
+}
+
+export const checkoutControllerPay = async (id: string,
+    payRequestDto: PayRequestDto, options?: Parameters<typeof http>[1]): Promise<checkoutControllerPayResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -559,97 +508,87 @@ export const checkoutControllerPay = async (
     }
     return headers;
   };
-  return http<checkoutControllerPayResponse>(getCheckoutControllerPayUrl(id), {
+return http<checkoutControllerPayResponse>(getCheckoutControllerPayUrl(id),
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(payRequestDto),
-  });
-};
+    body: JSON.stringify(payRequestDto)
+  }
+);}
+
+
+
+
 
 export const getCheckoutControllerPayMutationKey = () => ['checkoutControllerPay'] as const;
 
-export const getCheckoutControllerPayMutationOptions = <TError = unknown, TContext = unknown>(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof checkoutControllerPay>>,
-    TError,
-    CheckoutControllerPayMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof http>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof checkoutControllerPay>>,
-  TError,
-  CheckoutControllerPayMutationVariables,
-  TContext
-> => {
-  const mutationKey = getCheckoutControllerPayMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+export const getCheckoutControllerPayMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerPay>>, TError,CheckoutControllerPayMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerPay>>, TError,CheckoutControllerPayMutationVariables, TContext> => {
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof checkoutControllerPay>>,
-    CheckoutControllerPayMutationVariables
-  > = (props) => {
-    const { id, data } = props ?? {};
+const mutationKey = getCheckoutControllerPayMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-    return checkoutControllerPay(id, data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type CheckoutControllerPayMutationResult = NonNullable<
-  Awaited<ReturnType<typeof checkoutControllerPay>>
->;
-export type CheckoutControllerPayMutationBody = PayRequestDto;
-export type CheckoutControllerPayMutationError = unknown;
-export type CheckoutControllerPayMutationVariables = { id: string; data: PayRequestDto };
 
-export const useCheckoutControllerPay = <TError = unknown, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof checkoutControllerPay>>,
-      TError,
-      CheckoutControllerPayMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof checkoutControllerPay>>,
-  TError,
-  CheckoutControllerPayMutationVariables,
-  TContext
-> => {
-  return useMutation(getCheckoutControllerPayMutationOptions(options), queryClient);
-};
-export type checkoutControllerConfirm3dsResponse200 = {
-  data: PayResultDto;
-  status: 200;
-};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkoutControllerPay>>, CheckoutControllerPayMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
 
-export type checkoutControllerConfirm3dsResponseSuccess = checkoutControllerConfirm3dsResponse200 & {
+          return  checkoutControllerPay(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckoutControllerPayMutationResult = NonNullable<Awaited<ReturnType<typeof checkoutControllerPay>>>
+    export type CheckoutControllerPayMutationBody = PayRequestDto
+    export type CheckoutControllerPayMutationError = unknown
+    export type CheckoutControllerPayMutationVariables = {id: string;data: PayRequestDto}
+
+    export const useCheckoutControllerPay = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerPay>>, TError,CheckoutControllerPayMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof checkoutControllerPay>>,
+        TError,
+        CheckoutControllerPayMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCheckoutControllerPayMutationOptions(options), queryClient);
+    }
+    export type checkoutControllerConfirm3dsResponse200 = {
+  data: PayResultDto
+  status: 200
+}
+
+export type checkoutControllerConfirm3dsResponseSuccess = (checkoutControllerConfirm3dsResponse200) & {
   headers: Headers;
 };
-export type checkoutControllerConfirm3dsResponse = checkoutControllerConfirm3dsResponseSuccess;
+;
 
-export const getCheckoutControllerConfirm3dsUrl = (id: string) => {
-  return `/api/checkout/${id}/3ds`;
-};
+export type checkoutControllerConfirm3dsResponse = (checkoutControllerConfirm3dsResponseSuccess)
 
-export const checkoutControllerConfirm3ds = async (
-  id: string,
-  confirmThreeDsRequestDto: ConfirmThreeDsRequestDto,
-  options?: Parameters<typeof http>[1],
-): Promise<checkoutControllerConfirm3dsResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit['headers']>,
-  ): Record<string, string | readonly string[]> => {
+export const getCheckoutControllerConfirm3dsUrl = (id: string,) => {
+
+
+
+
+  return `/api/checkout/${id}/3ds`
+}
+
+export const checkoutControllerConfirm3ds = async (id: string,
+    confirmThreeDsRequestDto: ConfirmThreeDsRequestDto, options?: Parameters<typeof http>[1]): Promise<checkoutControllerConfirm3dsResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -663,410 +602,351 @@ export const checkoutControllerConfirm3ds = async (
     }
     return headers;
   };
-  return http<checkoutControllerConfirm3dsResponse>(getCheckoutControllerConfirm3dsUrl(id), {
+return http<checkoutControllerConfirm3dsResponse>(getCheckoutControllerConfirm3dsUrl(id),
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(confirmThreeDsRequestDto),
-  });
-};
+    body: JSON.stringify(confirmThreeDsRequestDto)
+  }
+);}
+
+
+
+
 
 export const getCheckoutControllerConfirm3dsMutationKey = () => ['checkoutControllerConfirm3ds'] as const;
 
-export const getCheckoutControllerConfirm3dsMutationOptions = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof checkoutControllerConfirm3ds>>,
-    TError,
-    CheckoutControllerConfirm3dsMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof http>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof checkoutControllerConfirm3ds>>,
-  TError,
-  CheckoutControllerConfirm3dsMutationVariables,
-  TContext
-> => {
-  const mutationKey = getCheckoutControllerConfirm3dsMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+export const getCheckoutControllerConfirm3dsMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerConfirm3ds>>, TError,CheckoutControllerConfirm3dsMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerConfirm3ds>>, TError,CheckoutControllerConfirm3dsMutationVariables, TContext> => {
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof checkoutControllerConfirm3ds>>,
-    CheckoutControllerConfirm3dsMutationVariables
-  > = (props) => {
-    const { id, data } = props ?? {};
+const mutationKey = getCheckoutControllerConfirm3dsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-    return checkoutControllerConfirm3ds(id, data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type CheckoutControllerConfirm3dsMutationResult = NonNullable<
-  Awaited<ReturnType<typeof checkoutControllerConfirm3ds>>
->;
-export type CheckoutControllerConfirm3dsMutationBody = ConfirmThreeDsRequestDto;
-export type CheckoutControllerConfirm3dsMutationError = unknown;
-export type CheckoutControllerConfirm3dsMutationVariables = { id: string; data: ConfirmThreeDsRequestDto };
 
-export const useCheckoutControllerConfirm3ds = <TError = unknown, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof checkoutControllerConfirm3ds>>,
-      TError,
-      CheckoutControllerConfirm3dsMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof checkoutControllerConfirm3ds>>,
-  TError,
-  CheckoutControllerConfirm3dsMutationVariables,
-  TContext
-> => {
-  return useMutation(getCheckoutControllerConfirm3dsMutationOptions(options), queryClient);
-};
-export type checkoutControllerCancelQuoteResponse200 = {
-  data: CancelQuoteResultDto;
-  status: 200;
-};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkoutControllerConfirm3ds>>, CheckoutControllerConfirm3dsMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
 
-export type checkoutControllerCancelQuoteResponseSuccess = checkoutControllerCancelQuoteResponse200 & {
+          return  checkoutControllerConfirm3ds(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckoutControllerConfirm3dsMutationResult = NonNullable<Awaited<ReturnType<typeof checkoutControllerConfirm3ds>>>
+    export type CheckoutControllerConfirm3dsMutationBody = ConfirmThreeDsRequestDto
+    export type CheckoutControllerConfirm3dsMutationError = unknown
+    export type CheckoutControllerConfirm3dsMutationVariables = {id: string;data: ConfirmThreeDsRequestDto}
+
+    export const useCheckoutControllerConfirm3ds = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerConfirm3ds>>, TError,CheckoutControllerConfirm3dsMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof checkoutControllerConfirm3ds>>,
+        TError,
+        CheckoutControllerConfirm3dsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCheckoutControllerConfirm3dsMutationOptions(options), queryClient);
+    }
+    export type checkoutControllerCancelQuoteResponse200 = {
+  data: CancelQuoteResultDto
+  status: 200
+}
+
+export type checkoutControllerCancelQuoteResponseSuccess = (checkoutControllerCancelQuoteResponse200) & {
   headers: Headers;
 };
-export type checkoutControllerCancelQuoteResponse = checkoutControllerCancelQuoteResponseSuccess;
+;
 
-export const getCheckoutControllerCancelQuoteUrl = (id: string) => {
-  return `/api/checkout/${id}/cancel-quote`;
-};
+export type checkoutControllerCancelQuoteResponse = (checkoutControllerCancelQuoteResponseSuccess)
 
-export const checkoutControllerCancelQuote = async (
-  id: string,
-  options?: Parameters<typeof http>[1],
-): Promise<checkoutControllerCancelQuoteResponse> => {
-  return http<checkoutControllerCancelQuoteResponse>(getCheckoutControllerCancelQuoteUrl(id), {
+export const getCheckoutControllerCancelQuoteUrl = (id: string,) => {
+
+
+
+
+  return `/api/checkout/${id}/cancel-quote`
+}
+
+export const checkoutControllerCancelQuote = async (id: string, options?: Parameters<typeof http>[1]): Promise<checkoutControllerCancelQuoteResponse> => {
+
+  return http<checkoutControllerCancelQuoteResponse>(getCheckoutControllerCancelQuoteUrl(id),
+  {
     ...options,
-    method: 'GET',
-  });
-};
+    method: 'GET'
 
-export const getCheckoutControllerCancelQuoteQueryKey = (id: string) => {
-  return [`/api/checkout/${id}/cancel-quote`] as const;
-};
 
-export const getCheckoutControllerCancelQuoteQueryOptions = <
-  TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
+  }
+);}
+
+
+
+
+
+export const getCheckoutControllerCancelQuoteQueryKey = (id: string,) => {
+    return [
+    `/api/checkout/${id}/cancel-quote`
+    ] as const;
+    }
+
+
+export const getCheckoutControllerCancelQuoteQueryOptions = <TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>>, request?: SecondParameter<typeof http>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getCheckoutControllerCancelQuoteQueryKey(id);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>> = ({ signal }) =>
-    checkoutControllerCancelQuote(id, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getCheckoutControllerCancelQuoteQueryKey(id);
 
-  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type CheckoutControllerCancelQuoteQueryResult = NonNullable<
-  Awaited<ReturnType<typeof checkoutControllerCancelQuote>>
->;
-export type CheckoutControllerCancelQuoteQueryError = unknown;
 
-export function useCheckoutControllerCancelQuote<
-  TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
-  TError = unknown,
->(
-  id: string,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>
-    > &
-      Pick<
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>> = ({ signal }) => checkoutControllerCancelQuote(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CheckoutControllerCancelQuoteQueryResult = NonNullable<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>>
+export type CheckoutControllerCancelQuoteQueryError = unknown
+
+
+export function useCheckoutControllerCancelQuote<TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError = unknown>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
           TError,
           Awaited<ReturnType<typeof checkoutControllerCancelQuote>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useCheckoutControllerCancelQuote<
-  TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckoutControllerCancelQuote<TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
           TError,
           Awaited<ReturnType<typeof checkoutControllerCancelQuote>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useCheckoutControllerCancelQuote<
-  TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckoutControllerCancelQuote<TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useCheckoutControllerCancelQuote<
-  TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>,
-  TError = unknown,
->(
-  id: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getCheckoutControllerCancelQuoteQueryOptions(id, options);
+export function useCheckoutControllerCancelQuote<TData = Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkoutControllerCancelQuote>>, TError, TData>>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getCheckoutControllerCancelQuoteQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export type checkoutControllerCancelPaidResponse200 = {
-  data: CancelPaidResultDto;
-  status: 200;
-};
 
-export type checkoutControllerCancelPaidResponseSuccess = checkoutControllerCancelPaidResponse200 & {
+
+
+
+
+export type checkoutControllerCancelPaidResponse200 = {
+  data: CancelPaidResultDto
+  status: 200
+}
+
+export type checkoutControllerCancelPaidResponseSuccess = (checkoutControllerCancelPaidResponse200) & {
   headers: Headers;
 };
-export type checkoutControllerCancelPaidResponse = checkoutControllerCancelPaidResponseSuccess;
+;
 
-export const getCheckoutControllerCancelPaidUrl = (id: string) => {
-  return `/api/checkout/${id}/cancel-paid`;
-};
+export type checkoutControllerCancelPaidResponse = (checkoutControllerCancelPaidResponseSuccess)
 
-export const checkoutControllerCancelPaid = async (
-  id: string,
-  options?: Parameters<typeof http>[1],
-): Promise<checkoutControllerCancelPaidResponse> => {
-  return http<checkoutControllerCancelPaidResponse>(getCheckoutControllerCancelPaidUrl(id), {
+export const getCheckoutControllerCancelPaidUrl = (id: string,) => {
+
+
+
+
+  return `/api/checkout/${id}/cancel-paid`
+}
+
+export const checkoutControllerCancelPaid = async (id: string, options?: Parameters<typeof http>[1]): Promise<checkoutControllerCancelPaidResponse> => {
+
+  return http<checkoutControllerCancelPaidResponse>(getCheckoutControllerCancelPaidUrl(id),
+  {
     ...options,
-    method: 'POST',
-  });
-};
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
 
 export const getCheckoutControllerCancelPaidMutationKey = () => ['checkoutControllerCancelPaid'] as const;
 
-export const getCheckoutControllerCancelPaidMutationOptions = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof checkoutControllerCancelPaid>>,
-    TError,
-    CheckoutControllerCancelPaidMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof http>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof checkoutControllerCancelPaid>>,
-  TError,
-  CheckoutControllerCancelPaidMutationVariables,
-  TContext
-> => {
-  const mutationKey = getCheckoutControllerCancelPaidMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+export const getCheckoutControllerCancelPaidMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerCancelPaid>>, TError,CheckoutControllerCancelPaidMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerCancelPaid>>, TError,CheckoutControllerCancelPaidMutationVariables, TContext> => {
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof checkoutControllerCancelPaid>>,
-    CheckoutControllerCancelPaidMutationVariables
-  > = (props) => {
-    const { id } = props ?? {};
+const mutationKey = getCheckoutControllerCancelPaidMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-    return checkoutControllerCancelPaid(id, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type CheckoutControllerCancelPaidMutationResult = NonNullable<
-  Awaited<ReturnType<typeof checkoutControllerCancelPaid>>
->;
 
-export type CheckoutControllerCancelPaidMutationError = unknown;
-export type CheckoutControllerCancelPaidMutationVariables = { id: string };
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkoutControllerCancelPaid>>, CheckoutControllerCancelPaidMutationVariables> = (props) => {
+          const {id} = props ?? {};
 
-export const useCheckoutControllerCancelPaid = <TError = unknown, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof checkoutControllerCancelPaid>>,
-      TError,
-      CheckoutControllerCancelPaidMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof checkoutControllerCancelPaid>>,
-  TError,
-  CheckoutControllerCancelPaidMutationVariables,
-  TContext
-> => {
-  return useMutation(getCheckoutControllerCancelPaidMutationOptions(options), queryClient);
-};
-export type checkoutControllerCancelResponse200 = {
-  data: CancelHoldResultDto;
-  status: 200;
-};
+          return  checkoutControllerCancelPaid(id,requestOptions)
+        }
 
-export type checkoutControllerCancelResponseSuccess = checkoutControllerCancelResponse200 & {
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckoutControllerCancelPaidMutationResult = NonNullable<Awaited<ReturnType<typeof checkoutControllerCancelPaid>>>
+
+    export type CheckoutControllerCancelPaidMutationError = unknown
+    export type CheckoutControllerCancelPaidMutationVariables = {id: string}
+
+    export const useCheckoutControllerCancelPaid = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerCancelPaid>>, TError,CheckoutControllerCancelPaidMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof checkoutControllerCancelPaid>>,
+        TError,
+        CheckoutControllerCancelPaidMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCheckoutControllerCancelPaidMutationOptions(options), queryClient);
+    }
+    export type checkoutControllerCancelResponse200 = {
+  data: CancelHoldResultDto
+  status: 200
+}
+
+export type checkoutControllerCancelResponseSuccess = (checkoutControllerCancelResponse200) & {
   headers: Headers;
 };
-export type checkoutControllerCancelResponse = checkoutControllerCancelResponseSuccess;
+;
 
-export const getCheckoutControllerCancelUrl = (id: string) => {
-  return `/api/checkout/${id}/cancel`;
-};
+export type checkoutControllerCancelResponse = (checkoutControllerCancelResponseSuccess)
 
-export const checkoutControllerCancel = async (
-  id: string,
-  options?: Parameters<typeof http>[1],
-): Promise<checkoutControllerCancelResponse> => {
-  return http<checkoutControllerCancelResponse>(getCheckoutControllerCancelUrl(id), {
+export const getCheckoutControllerCancelUrl = (id: string,) => {
+
+
+
+
+  return `/api/checkout/${id}/cancel`
+}
+
+export const checkoutControllerCancel = async (id: string, options?: Parameters<typeof http>[1]): Promise<checkoutControllerCancelResponse> => {
+
+  return http<checkoutControllerCancelResponse>(getCheckoutControllerCancelUrl(id),
+  {
     ...options,
-    method: 'POST',
-  });
-};
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
 
 export const getCheckoutControllerCancelMutationKey = () => ['checkoutControllerCancel'] as const;
 
-export const getCheckoutControllerCancelMutationOptions = <TError = unknown, TContext = unknown>(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof checkoutControllerCancel>>,
-    TError,
-    CheckoutControllerCancelMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof http>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof checkoutControllerCancel>>,
-  TError,
-  CheckoutControllerCancelMutationVariables,
-  TContext
-> => {
-  const mutationKey = getCheckoutControllerCancelMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+export const getCheckoutControllerCancelMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerCancel>>, TError,CheckoutControllerCancelMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerCancel>>, TError,CheckoutControllerCancelMutationVariables, TContext> => {
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof checkoutControllerCancel>>,
-    CheckoutControllerCancelMutationVariables
-  > = (props) => {
-    const { id } = props ?? {};
+const mutationKey = getCheckoutControllerCancelMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-    return checkoutControllerCancel(id, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type CheckoutControllerCancelMutationResult = NonNullable<
-  Awaited<ReturnType<typeof checkoutControllerCancel>>
->;
 
-export type CheckoutControllerCancelMutationError = unknown;
-export type CheckoutControllerCancelMutationVariables = { id: string };
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkoutControllerCancel>>, CheckoutControllerCancelMutationVariables> = (props) => {
+          const {id} = props ?? {};
 
-export const useCheckoutControllerCancel = <TError = unknown, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof checkoutControllerCancel>>,
-      TError,
-      CheckoutControllerCancelMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof checkoutControllerCancel>>,
-  TError,
-  CheckoutControllerCancelMutationVariables,
-  TContext
-> => {
-  return useMutation(getCheckoutControllerCancelMutationOptions(options), queryClient);
-};
-export type vnpayCheckoutControllerStartResponse200 = {
-  data: StartVnpayResultDto;
-  status: 200;
-};
+          return  checkoutControllerCancel(id,requestOptions)
+        }
 
-export type vnpayCheckoutControllerStartResponseSuccess = vnpayCheckoutControllerStartResponse200 & {
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckoutControllerCancelMutationResult = NonNullable<Awaited<ReturnType<typeof checkoutControllerCancel>>>
+
+    export type CheckoutControllerCancelMutationError = unknown
+    export type CheckoutControllerCancelMutationVariables = {id: string}
+
+    export const useCheckoutControllerCancel = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkoutControllerCancel>>, TError,CheckoutControllerCancelMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof checkoutControllerCancel>>,
+        TError,
+        CheckoutControllerCancelMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCheckoutControllerCancelMutationOptions(options), queryClient);
+    }
+    export type vnpayCheckoutControllerStartResponse200 = {
+  data: StartVnpayResultDto
+  status: 200
+}
+
+export type vnpayCheckoutControllerStartResponseSuccess = (vnpayCheckoutControllerStartResponse200) & {
   headers: Headers;
 };
-export type vnpayCheckoutControllerStartResponse = vnpayCheckoutControllerStartResponseSuccess;
+;
 
-export const getVnpayCheckoutControllerStartUrl = (id: string) => {
-  return `/api/checkout/${id}/pay-vnpay`;
-};
+export type vnpayCheckoutControllerStartResponse = (vnpayCheckoutControllerStartResponseSuccess)
 
-export const vnpayCheckoutControllerStart = async (
-  id: string,
-  startVnpayRequestDto: StartVnpayRequestDto,
-  options?: Parameters<typeof http>[1],
-): Promise<vnpayCheckoutControllerStartResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit['headers']>,
-  ): Record<string, string | readonly string[]> => {
+export const getVnpayCheckoutControllerStartUrl = (id: string,) => {
+
+
+
+
+  return `/api/checkout/${id}/pay-vnpay`
+}
+
+export const vnpayCheckoutControllerStart = async (id: string,
+    startVnpayRequestDto: StartVnpayRequestDto, options?: Parameters<typeof http>[1]): Promise<vnpayCheckoutControllerStartResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -1080,163 +960,139 @@ export const vnpayCheckoutControllerStart = async (
     }
     return headers;
   };
-  return http<vnpayCheckoutControllerStartResponse>(getVnpayCheckoutControllerStartUrl(id), {
+return http<vnpayCheckoutControllerStartResponse>(getVnpayCheckoutControllerStartUrl(id),
+  {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(startVnpayRequestDto),
-  });
-};
+    body: JSON.stringify(startVnpayRequestDto)
+  }
+);}
+
+
+
+
 
 export const getVnpayCheckoutControllerStartMutationKey = () => ['vnpayCheckoutControllerStart'] as const;
 
-export const getVnpayCheckoutControllerStartMutationOptions = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof vnpayCheckoutControllerStart>>,
-    TError,
-    VnpayCheckoutControllerStartMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof http>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof vnpayCheckoutControllerStart>>,
-  TError,
-  VnpayCheckoutControllerStartMutationVariables,
-  TContext
-> => {
-  const mutationKey = getVnpayCheckoutControllerStartMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+export const getVnpayCheckoutControllerStartMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof vnpayCheckoutControllerStart>>, TError,VnpayCheckoutControllerStartMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+): UseMutationOptions<Awaited<ReturnType<typeof vnpayCheckoutControllerStart>>, TError,VnpayCheckoutControllerStartMutationVariables, TContext> => {
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof vnpayCheckoutControllerStart>>,
-    VnpayCheckoutControllerStartMutationVariables
-  > = (props) => {
-    const { id, data } = props ?? {};
+const mutationKey = getVnpayCheckoutControllerStartMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-    return vnpayCheckoutControllerStart(id, data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type VnpayCheckoutControllerStartMutationResult = NonNullable<
-  Awaited<ReturnType<typeof vnpayCheckoutControllerStart>>
->;
-export type VnpayCheckoutControllerStartMutationBody = StartVnpayRequestDto;
-export type VnpayCheckoutControllerStartMutationError = unknown;
-export type VnpayCheckoutControllerStartMutationVariables = { id: string; data: StartVnpayRequestDto };
 
-export const useVnpayCheckoutControllerStart = <TError = unknown, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof vnpayCheckoutControllerStart>>,
-      TError,
-      VnpayCheckoutControllerStartMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof vnpayCheckoutControllerStart>>,
-  TError,
-  VnpayCheckoutControllerStartMutationVariables,
-  TContext
-> => {
-  return useMutation(getVnpayCheckoutControllerStartMutationOptions(options), queryClient);
-};
-export type vnpayCheckoutControllerCancelResponse200 = {
-  data: CancelVnpayResultDto;
-  status: 200;
-};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof vnpayCheckoutControllerStart>>, VnpayCheckoutControllerStartMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
 
-export type vnpayCheckoutControllerCancelResponseSuccess = vnpayCheckoutControllerCancelResponse200 & {
+          return  vnpayCheckoutControllerStart(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VnpayCheckoutControllerStartMutationResult = NonNullable<Awaited<ReturnType<typeof vnpayCheckoutControllerStart>>>
+    export type VnpayCheckoutControllerStartMutationBody = StartVnpayRequestDto
+    export type VnpayCheckoutControllerStartMutationError = unknown
+    export type VnpayCheckoutControllerStartMutationVariables = {id: string;data: StartVnpayRequestDto}
+
+    export const useVnpayCheckoutControllerStart = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof vnpayCheckoutControllerStart>>, TError,VnpayCheckoutControllerStartMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof vnpayCheckoutControllerStart>>,
+        TError,
+        VnpayCheckoutControllerStartMutationVariables,
+        TContext
+      > => {
+      return useMutation(getVnpayCheckoutControllerStartMutationOptions(options), queryClient);
+    }
+    export type vnpayCheckoutControllerCancelResponse200 = {
+  data: CancelVnpayResultDto
+  status: 200
+}
+
+export type vnpayCheckoutControllerCancelResponseSuccess = (vnpayCheckoutControllerCancelResponse200) & {
   headers: Headers;
 };
-export type vnpayCheckoutControllerCancelResponse = vnpayCheckoutControllerCancelResponseSuccess;
+;
 
-export const getVnpayCheckoutControllerCancelUrl = (id: string) => {
-  return `/api/checkout/${id}/vnpay-cancel`;
-};
+export type vnpayCheckoutControllerCancelResponse = (vnpayCheckoutControllerCancelResponseSuccess)
 
-export const vnpayCheckoutControllerCancel = async (
-  id: string,
-  options?: Parameters<typeof http>[1],
-): Promise<vnpayCheckoutControllerCancelResponse> => {
-  return http<vnpayCheckoutControllerCancelResponse>(getVnpayCheckoutControllerCancelUrl(id), {
+export const getVnpayCheckoutControllerCancelUrl = (id: string,) => {
+
+
+
+
+  return `/api/checkout/${id}/vnpay-cancel`
+}
+
+export const vnpayCheckoutControllerCancel = async (id: string, options?: Parameters<typeof http>[1]): Promise<vnpayCheckoutControllerCancelResponse> => {
+
+  return http<vnpayCheckoutControllerCancelResponse>(getVnpayCheckoutControllerCancelUrl(id),
+  {
     ...options,
-    method: 'POST',
-  });
-};
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
 
 export const getVnpayCheckoutControllerCancelMutationKey = () => ['vnpayCheckoutControllerCancel'] as const;
 
-export const getVnpayCheckoutControllerCancelMutationOptions = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>,
-    TError,
-    VnpayCheckoutControllerCancelMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof http>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>,
-  TError,
-  VnpayCheckoutControllerCancelMutationVariables,
-  TContext
-> => {
-  const mutationKey = getVnpayCheckoutControllerCancelMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+export const getVnpayCheckoutControllerCancelMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>, TError,VnpayCheckoutControllerCancelMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+): UseMutationOptions<Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>, TError,VnpayCheckoutControllerCancelMutationVariables, TContext> => {
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>,
-    VnpayCheckoutControllerCancelMutationVariables
-  > = (props) => {
-    const { id } = props ?? {};
+const mutationKey = getVnpayCheckoutControllerCancelMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
 
-    return vnpayCheckoutControllerCancel(id, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type VnpayCheckoutControllerCancelMutationResult = NonNullable<
-  Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>
->;
 
-export type VnpayCheckoutControllerCancelMutationError = unknown;
-export type VnpayCheckoutControllerCancelMutationVariables = { id: string };
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>, VnpayCheckoutControllerCancelMutationVariables> = (props) => {
+          const {id} = props ?? {};
 
-export const useVnpayCheckoutControllerCancel = <TError = unknown, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>,
-      TError,
-      VnpayCheckoutControllerCancelMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>,
-  TError,
-  VnpayCheckoutControllerCancelMutationVariables,
-  TContext
-> => {
-  return useMutation(getVnpayCheckoutControllerCancelMutationOptions(options), queryClient);
-};
+          return  vnpayCheckoutControllerCancel(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VnpayCheckoutControllerCancelMutationResult = NonNullable<Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>>
+
+    export type VnpayCheckoutControllerCancelMutationError = unknown
+    export type VnpayCheckoutControllerCancelMutationVariables = {id: string}
+
+    export const useVnpayCheckoutControllerCancel = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>, TError,VnpayCheckoutControllerCancelMutationVariables, TContext>, request?: SecondParameter<typeof http>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof vnpayCheckoutControllerCancel>>,
+        TError,
+        VnpayCheckoutControllerCancelMutationVariables,
+        TContext
+      > => {
+      return useMutation(getVnpayCheckoutControllerCancelMutationOptions(options), queryClient);
+    }

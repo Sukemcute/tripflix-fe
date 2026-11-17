@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ReelRecommendationItemDtoSource =
-  (typeof ReelRecommendationItemDtoSource)[keyof typeof ReelRecommendationItemDtoSource];
+export type ReelRecommendationItemDtoSource = typeof ReelRecommendationItemDtoSource[keyof typeof ReelRecommendationItemDtoSource];
+
 
 export const ReelRecommendationItemDtoSource = {
   hot: 'hot',

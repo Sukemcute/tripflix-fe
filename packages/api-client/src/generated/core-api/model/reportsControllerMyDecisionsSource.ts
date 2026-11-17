@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ReportsControllerMyDecisionsSource =
-  (typeof ReportsControllerMyDecisionsSource)[keyof typeof ReportsControllerMyDecisionsSource];
+export type ReportsControllerMyDecisionsSource = typeof ReportsControllerMyDecisionsSource[keyof typeof ReportsControllerMyDecisionsSource];
+
 
 export const ReportsControllerMyDecisionsSource = {
   rule: 'rule',

@@ -8,8 +8,8 @@
 /**
  * Nguồn ứng viên: hot (điểm nóng), fresh (đăng trong 48 giờ), explore (~5% ngẫu nhiên để đo), own (bài người xem vừa đăng)
  */
-export type PostRecommendationItemDtoSource =
-  (typeof PostRecommendationItemDtoSource)[keyof typeof PostRecommendationItemDtoSource];
+export type PostRecommendationItemDtoSource = typeof PostRecommendationItemDtoSource[keyof typeof PostRecommendationItemDtoSource];
+
 
 export const PostRecommendationItemDtoSource = {
   hot: 'hot',

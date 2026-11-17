@@ -12,14 +12,14 @@ export interface DiscoveryJobDto {
   job: DiscoveryJobDtoJob;
   group: DiscoveryJobDtoGroup;
   /**
-   * Chu kỳ tự chạy đang dùng (ms); null = chỉ chạy lúc khởi động
-   * @nullable
-   */
+     * Chu kỳ tự chạy đang dùng (ms); null = chỉ chạy lúc khởi động
+     * @nullable
+     */
   intervalMs: number | null;
   /**
-   * Chu kỳ mặc định trong code (ms); null = chỉ chạy lúc khởi động
-   * @nullable
-   */
+     * Chu kỳ mặc định trong code (ms); null = chỉ chạy lúc khởi động
+     * @nullable
+     */
   defaultIntervalMs: number | null;
   /** Admin đổi được chu kỳ (PUT …/jobs/:job/interval) */
   canChangeInterval: boolean;

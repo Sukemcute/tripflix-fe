@@ -8,8 +8,8 @@
 /**
  * already_verified: email đã xác thực, không gửi gì
  */
-export type ResendVerificationResultDtoStatus =
-  (typeof ResendVerificationResultDtoStatus)[keyof typeof ResendVerificationResultDtoStatus];
+export type ResendVerificationResultDtoStatus = typeof ResendVerificationResultDtoStatus[keyof typeof ResendVerificationResultDtoStatus];
+
 
 export const ResendVerificationResultDtoStatus = {
   sent: 'sent',

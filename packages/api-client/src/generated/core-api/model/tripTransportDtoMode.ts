@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TripTransportDtoMode = (typeof TripTransportDtoMode)[keyof typeof TripTransportDtoMode];
+export type TripTransportDtoMode = typeof TripTransportDtoMode[keyof typeof TripTransportDtoMode];
+
 
 export const TripTransportDtoMode = {
   flight: 'flight',

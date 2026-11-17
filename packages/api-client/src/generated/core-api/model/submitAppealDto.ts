@@ -7,8 +7,8 @@
 
 export interface SubmitAppealDto {
   /**
-   * @minLength 1
-   * @maxLength 1000
-   */
+     * @minLength 1
+     * @maxLength 1000
+     */
   reason: string;
 }

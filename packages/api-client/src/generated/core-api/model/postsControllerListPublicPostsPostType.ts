@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type PostsControllerListPublicPostsPostType =
-  (typeof PostsControllerListPublicPostsPostType)[keyof typeof PostsControllerListPublicPostsPostType];
+export type PostsControllerListPublicPostsPostType = typeof PostsControllerListPublicPostsPostType[keyof typeof PostsControllerListPublicPostsPostType];
+
 
 export const PostsControllerListPublicPostsPostType = {
   vlog: 'vlog',

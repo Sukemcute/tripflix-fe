@@ -9,7 +9,8 @@
  * 'running': job đang chạy, không chạy chồng
  * @nullable
  */
-export type RunJobDtoReason = (typeof RunJobDtoReason)[keyof typeof RunJobDtoReason] | null;
+export type RunJobDtoReason = typeof RunJobDtoReason[keyof typeof RunJobDtoReason] | null;
+
 
 export const RunJobDtoReason = {
   running: 'running',

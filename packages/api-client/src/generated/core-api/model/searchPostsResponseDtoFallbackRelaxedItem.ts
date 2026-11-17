@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type SearchPostsResponseDtoFallbackRelaxedItem =
-  (typeof SearchPostsResponseDtoFallbackRelaxedItem)[keyof typeof SearchPostsResponseDtoFallbackRelaxedItem];
+export type SearchPostsResponseDtoFallbackRelaxedItem = typeof SearchPostsResponseDtoFallbackRelaxedItem[keyof typeof SearchPostsResponseDtoFallbackRelaxedItem];
+
 
 export const SearchPostsResponseDtoFallbackRelaxedItem = {
   place: 'place',

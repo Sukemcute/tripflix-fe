@@ -12,16 +12,16 @@ export interface SocialCommentDto {
   postId: string;
   authorId: string;
   /**
-   * Tên hiển thị của tác giả
-   * @nullable
-   */
+     * Tên hiển thị của tác giả
+     * @nullable
+     */
   authorName?: string | null;
   /** @nullable */
   parentCommentId: string | null;
   /**
-   * Tên hiển thị của người được trả lời
-   * @nullable
-   */
+     * Tên hiển thị của người được trả lời
+     * @nullable
+     */
   replyToName?: string | null;
   body: string;
   isEdited: boolean;

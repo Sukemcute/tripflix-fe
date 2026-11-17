@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminUserDtoRole = (typeof AdminUserDtoRole)[keyof typeof AdminUserDtoRole];
+export type AdminUserDtoRole = typeof AdminUserDtoRole[keyof typeof AdminUserDtoRole];
+
 
 export const AdminUserDtoRole = {
   member: 'member',

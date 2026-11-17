@@ -10,57 +10,57 @@ import type { PostSummaryResponseDtoStatus } from './postSummaryResponseDtoStatu
 
 export interface PostSummaryResponseDto {
   /**
-   * Nguồn bình luận; null cho bản cũ, [] nếu không dùng bình luận
-   * @nullable
-   */
+     * Nguồn bình luận; null cho bản cũ, [] nếu không dùng bình luận
+     * @nullable
+     */
   sourceCommentIds: string[] | null;
   /** Mã bài đăng */
   postId: string;
   /** Trạng thái tóm tắt */
   status: PostSummaryResponseDtoStatus;
   /**
-   * Nội dung tóm tắt tiếng Việt sinh từ AI
-   * @nullable
-   */
+     * Nội dung tóm tắt tiếng Việt sinh từ AI
+     * @nullable
+     */
   summary?: string | null;
   /** Các điểm nổi bật từ thảo luận cộng đồng */
   keyTakeaways: string[];
   /**
-   * Chi tiết phân tích cấu trúc: khen/chê, video vs thực tế
-   * @nullable
-   */
+     * Chi tiết phân tích cấu trúc: khen/chê, video vs thực tế
+     * @nullable
+     */
   content?: PostSummaryResponseDtoContent;
   /**
-   * Cờ và đánh giá an toàn
-   * @nullable
-   */
+     * Cờ và đánh giá an toàn
+     * @nullable
+     */
   safety?: PostSummaryResponseDtoSafety;
   /**
-   * Bản băm của tập bình luận dùng để tóm tắt
-   * @nullable
-   */
+     * Bản băm của tập bình luận dùng để tóm tắt
+     * @nullable
+     */
   inputHash?: string | null;
   /** Số lượng bình luận tại thời điểm tóm tắt */
   commentCountAtSummary: number;
   /**
-   * Phiên bản prompt
-   * @nullable
-   */
+     * Phiên bản prompt
+     * @nullable
+     */
   promptVersion?: string | null;
   /**
-   * Tên mô hình LLM
-   * @nullable
-   */
+     * Tên mô hình LLM
+     * @nullable
+     */
   modelName?: string | null;
   /**
-   * Thời điểm sinh kết quả
-   * @nullable
-   */
+     * Thời điểm sinh kết quả
+     * @nullable
+     */
   generatedAt?: string | null;
   /**
-   * Lần AI kiểm gần nhất thấy đầu vào không đổi; null khi chưa kiểm lại từ lúc lưu
-   * @nullable
-   */
+     * Lần AI kiểm gần nhất thấy đầu vào không đổi; null khi chưa kiểm lại từ lúc lưu
+     * @nullable
+     */
   checkedAt?: string | null;
   /** Bản tóm tắt đã cũ: số bình luận đổi, hoặc có bình luận mới/bị sửa sau max(generatedAt, checkedAt) */
   isStale: boolean;

@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type IndexJobHealthDtoStatus = (typeof IndexJobHealthDtoStatus)[keyof typeof IndexJobHealthDtoStatus];
+export type IndexJobHealthDtoStatus = typeof IndexJobHealthDtoStatus[keyof typeof IndexJobHealthDtoStatus];
+
 
 export const IndexJobHealthDtoStatus = {
   pending: 'pending',

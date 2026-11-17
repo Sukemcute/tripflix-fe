@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type IndexJobHealthDtoJob = (typeof IndexJobHealthDtoJob)[keyof typeof IndexJobHealthDtoJob];
+export type IndexJobHealthDtoJob = typeof IndexJobHealthDtoJob[keyof typeof IndexJobHealthDtoJob];
+
 
 export const IndexJobHealthDtoJob = {
   explore: 'explore',

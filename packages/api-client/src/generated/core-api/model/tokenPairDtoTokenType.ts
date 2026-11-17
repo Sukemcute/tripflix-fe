@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TokenPairDtoTokenType = (typeof TokenPairDtoTokenType)[keyof typeof TokenPairDtoTokenType];
+export type TokenPairDtoTokenType = typeof TokenPairDtoTokenType[keyof typeof TokenPairDtoTokenType];
+
 
 export const TokenPairDtoTokenType = {
   Bearer: 'Bearer',

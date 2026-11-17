@@ -10,8 +10,8 @@ export interface TripPageDto {
   /** Mới đặt trước */
   trips: TripDto[];
   /**
-   * Gửi lại làm cursor để lấy trang sau; null là hết
-   * @nullable
-   */
+     * Gửi lại làm cursor để lấy trang sau; null là hết
+     * @nullable
+     */
   nextCursor: string | null;
 }

@@ -15,6 +15,10 @@
 
 ## Kiểm tra
 
+- Ghép FE #175/#176 đã merge ngày 2026-11-17: giữ mobile action/select/undo và hợp đồng AI v2. Chỉ sinh lại Orval project `coreApi` từ backend đã ghép, giữ đủ AI usage và observability.
+- Sửa lỗi tích hợp BFF chặn `GET /api/analytics/ai-usage` thành 404. Test hồi quy BFF **3/3 pass**: chuyển tiếp query và server session cho cả hai API, thiếu phiên nhận 401, lệnh ghi và đường dẫn ngoài allowlist vẫn bị chặn.
+- Kiểm tra sau khi giải conflict: **22/22** tác vụ lint/typecheck/test thành công, **498 test pass** (admin 8); build admin thành công. Code mobile và client AI giữ nguyên so với develop. Giới hạn lưu kế hoạch 2.048 byte trong evidence của Bảo vẫn còn, không thuộc sửa conflict.
+
 - Sau khi ghép develop ngày 2026-11-17 và sinh lại client từ backend đã đồng bộ: lint/typecheck/test **22/22 tác vụ thành công**, **493 test pass** (tokens 1, i18n 2, admin 3, app-core 174, api-client 220, web 93). Giữ cả API mới của develop và Analytics khi giải xung đột file sinh.
 
 - `pnpm turbo run lint typecheck test --affected`: **21 tác vụ thành công**, **468 test pass** (tokens 1, i18n 2, app-core 159, api-client 213, web 93).

@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerQueueStatus =
-  (typeof AdminModerationControllerQueueStatus)[keyof typeof AdminModerationControllerQueueStatus];
+export type AdminModerationControllerQueueStatus = typeof AdminModerationControllerQueueStatus[keyof typeof AdminModerationControllerQueueStatus];
+
 
 export const AdminModerationControllerQueueStatus = {
   pending: 'pending',

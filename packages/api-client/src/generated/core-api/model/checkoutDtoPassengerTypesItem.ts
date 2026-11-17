@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CheckoutDtoPassengerTypesItem =
-  (typeof CheckoutDtoPassengerTypesItem)[keyof typeof CheckoutDtoPassengerTypesItem];
+export type CheckoutDtoPassengerTypesItem = typeof CheckoutDtoPassengerTypesItem[keyof typeof CheckoutDtoPassengerTypesItem];
+
 
 export const CheckoutDtoPassengerTypesItem = {
   adult: 'adult',

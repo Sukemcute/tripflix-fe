@@ -8,8 +8,8 @@
 /**
  * @nullable
  */
-export type MyDecisionDtoAppealStatus =
-  (typeof MyDecisionDtoAppealStatus)[keyof typeof MyDecisionDtoAppealStatus] | null;
+export type MyDecisionDtoAppealStatus = typeof MyDecisionDtoAppealStatus[keyof typeof MyDecisionDtoAppealStatus] | null;
+
 
 export const MyDecisionDtoAppealStatus = {
   pending: 'pending',

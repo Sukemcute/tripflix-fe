@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerFailedScansStatus =
-  (typeof AdminModerationControllerFailedScansStatus)[keyof typeof AdminModerationControllerFailedScansStatus];
+export type AdminModerationControllerFailedScansStatus = typeof AdminModerationControllerFailedScansStatus[keyof typeof AdminModerationControllerFailedScansStatus];
+
 
 export const AdminModerationControllerFailedScansStatus = {
   pending: 'pending',

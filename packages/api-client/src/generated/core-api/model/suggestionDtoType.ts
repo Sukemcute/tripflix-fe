@@ -8,7 +8,8 @@
 /**
  * place: tỉnh hoặc điểm đến · hotel: khách sạn · airport: sân bay
  */
-export type SuggestionDtoType = (typeof SuggestionDtoType)[keyof typeof SuggestionDtoType];
+export type SuggestionDtoType = typeof SuggestionDtoType[keyof typeof SuggestionDtoType];
+
 
 export const SuggestionDtoType = {
   place: 'place',

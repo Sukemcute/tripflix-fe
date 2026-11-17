@@ -16,9 +16,9 @@ export interface SearchPostsResponseDto {
   /** Số bài khớp trên mọi trang */
   total: number;
   /**
-   * Con trỏ trang sau; null = hết
-   * @nullable
-   */
+     * Con trỏ trang sau; null = hết
+     * @nullable
+     */
   nextCursor: string | null;
   /** Từ trong câu mà dữ liệu không có. Chỉ có giá trị khi `isFallback = true`, rỗng nếu không */
   dropped: string[];

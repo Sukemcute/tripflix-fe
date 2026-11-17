@@ -9,8 +9,8 @@ export interface GuestDto {
   /** Họ tên theo giấy tờ */
   fullName: string;
   /**
-   * Bắt buộc khi có vé bay
-   * @nullable
-   */
+     * Bắt buộc khi có vé bay
+     * @nullable
+     */
   birthdate?: string | null;
 }

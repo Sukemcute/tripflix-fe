@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerFailedScansReasonCode =
-  (typeof AdminModerationControllerFailedScansReasonCode)[keyof typeof AdminModerationControllerFailedScansReasonCode];
+export type AdminModerationControllerFailedScansReasonCode = typeof AdminModerationControllerFailedScansReasonCode[keyof typeof AdminModerationControllerFailedScansReasonCode];
+
 
 export const AdminModerationControllerFailedScansReasonCode = {
   SPAM_OR_COMMERCIAL: 'SPAM_OR_COMMERCIAL',

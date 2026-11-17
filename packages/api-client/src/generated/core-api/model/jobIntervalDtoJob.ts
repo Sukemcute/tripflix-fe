@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type JobIntervalDtoJob = (typeof JobIntervalDtoJob)[keyof typeof JobIntervalDtoJob];
+export type JobIntervalDtoJob = typeof JobIntervalDtoJob[keyof typeof JobIntervalDtoJob];
+
 
 export const JobIntervalDtoJob = {
   explore: 'explore',

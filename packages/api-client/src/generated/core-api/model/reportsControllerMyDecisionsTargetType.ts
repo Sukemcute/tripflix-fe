@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ReportsControllerMyDecisionsTargetType =
-  (typeof ReportsControllerMyDecisionsTargetType)[keyof typeof ReportsControllerMyDecisionsTargetType];
+export type ReportsControllerMyDecisionsTargetType = typeof ReportsControllerMyDecisionsTargetType[keyof typeof ReportsControllerMyDecisionsTargetType];
+
 
 export const ReportsControllerMyDecisionsTargetType = {
   post: 'post',

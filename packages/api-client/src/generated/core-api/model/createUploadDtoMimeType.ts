@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CreateUploadDtoMimeType = (typeof CreateUploadDtoMimeType)[keyof typeof CreateUploadDtoMimeType];
+export type CreateUploadDtoMimeType = typeof CreateUploadDtoMimeType[keyof typeof CreateUploadDtoMimeType];
+
 
 export const CreateUploadDtoMimeType = {
   'video/mp4': 'video/mp4',

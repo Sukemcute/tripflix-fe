@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type SocialPostDtoPostType = (typeof SocialPostDtoPostType)[keyof typeof SocialPostDtoPostType];
+export type SocialPostDtoPostType = typeof SocialPostDtoPostType[keyof typeof SocialPostDtoPostType];
+
 
 export const SocialPostDtoPostType = {
   video: 'video',

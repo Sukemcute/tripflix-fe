@@ -8,8 +8,8 @@
 /**
  * @nullable
  */
-export type UpdateProfileDtoGender =
-  (typeof UpdateProfileDtoGender)[keyof typeof UpdateProfileDtoGender] | null;
+export type UpdateProfileDtoGender = typeof UpdateProfileDtoGender[keyof typeof UpdateProfileDtoGender] | null;
+
 
 export const UpdateProfileDtoGender = {
   male: 'male',

@@ -8,26 +8,26 @@ import type { CheckoutItemRequestDto } from './checkoutItemRequestDto';
 
 export interface CheckoutRequestDto {
   /**
-   * @minimum 1
-   * @maximum 9
-   */
+     * @minimum 1
+     * @maximum 9
+     */
   adults: number;
   /**
-   * Chỉ khi giỏ có vé bay: trẻ em 2–11 tuổi, chiếm ghế, giá 75%; cộng người lớn tối đa 9
-   * @minimum 0
-   * @maximum 8
-   */
+     * Chỉ khi giỏ có vé bay: trẻ em 2–11 tuổi, chiếm ghế, giá 75%; cộng người lớn tối đa 9
+     * @minimum 0
+     * @maximum 8
+     */
   children?: number;
   /**
-   * Chỉ khi giỏ có vé bay: em bé dưới 2 tuổi (tới chặng cuối), không chiếm ghế, giá 10%; không quá số người lớn
-   * @minimum 0
-   * @maximum 9
-   */
+     * Chỉ khi giỏ có vé bay: em bé dưới 2 tuổi (tới chặng cuối), không chiếm ghế, giá 10%; không quá số người lớn
+     * @minimum 0
+     * @maximum 9
+     */
   infants?: number;
   /**
-   * Bài đăng dẫn tới đơn này (Đặt y chang)
-   * @nullable
-   */
+     * Bài đăng dẫn tới đơn này (Đặt y chang)
+     * @nullable
+     */
   sourcePostId?: string | null;
   items: CheckoutItemRequestDto[];
 }

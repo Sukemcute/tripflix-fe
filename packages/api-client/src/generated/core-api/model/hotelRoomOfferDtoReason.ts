@@ -8,8 +8,8 @@
 /**
  * @nullable
  */
-export type HotelRoomOfferDtoReason =
-  (typeof HotelRoomOfferDtoReason)[keyof typeof HotelRoomOfferDtoReason] | null;
+export type HotelRoomOfferDtoReason = typeof HotelRoomOfferDtoReason[keyof typeof HotelRoomOfferDtoReason] | null;
+
 
 export const HotelRoomOfferDtoReason = {
   NOT_ON_SALE: 'NOT_ON_SALE',

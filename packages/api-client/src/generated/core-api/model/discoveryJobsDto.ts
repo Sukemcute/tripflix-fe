@@ -12,8 +12,8 @@ export interface DiscoveryJobsDto {
   checkedAt: number;
   jobs: DiscoveryJobDto[];
   /**
-   * Chỉ có khi group=recommend
-   * @nullable
-   */
+     * Chỉ có khi group=recommend
+     * @nullable
+     */
   recommendStats: RecommendStatsDto | null;
 }

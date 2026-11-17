@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type IndexHealthPointDtoStatus =
-  (typeof IndexHealthPointDtoStatus)[keyof typeof IndexHealthPointDtoStatus];
+export type IndexHealthPointDtoStatus = typeof IndexHealthPointDtoStatus[keyof typeof IndexHealthPointDtoStatus];
+
 
 export const IndexHealthPointDtoStatus = {
   healthy: 'healthy',

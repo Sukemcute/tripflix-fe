@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TripDtoStatus = (typeof TripDtoStatus)[keyof typeof TripDtoStatus];
+export type TripDtoStatus = typeof TripDtoStatus[keyof typeof TripDtoStatus];
+
 
 export const TripDtoStatus = {
   pending: 'pending',

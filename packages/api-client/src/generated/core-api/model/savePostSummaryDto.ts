@@ -14,42 +14,42 @@ export interface SavePostSummaryDto {
   /** Trạng thái tóm tắt bài viết */
   status?: SavePostSummaryDtoStatus;
   /**
-   * Nội dung tóm tắt tiếng Việt sinh từ AI (bắt buộc khi status là ready)
-   * @nullable
-   */
+     * Nội dung tóm tắt tiếng Việt sinh từ AI (bắt buộc khi status là ready)
+     * @nullable
+     */
   summary?: string | null;
   /** Các điểm nổi bật đúc kết từ thảo luận cộng đồng */
   keyTakeaways?: string[];
   /**
-   * Bản băm hash của tập bình luận đã dùng để tóm tắt
-   * @nullable
-   */
+     * Bản băm hash của tập bình luận đã dùng để tóm tắt
+     * @nullable
+     */
   inputHash?: string | null;
   /** Số lượng bình luận tại thời điểm thực hiện tóm tắt */
   commentCount?: number;
   /**
-   * Chi tiết phân tích cấu trúc: khen/chê, video vs thực tế, trích dẫn commentId
-   * @nullable
-   */
+     * Chi tiết phân tích cấu trúc: khen/chê, video vs thực tế, trích dẫn commentId
+     * @nullable
+     */
   content?: SavePostSummaryDtoContent;
   /**
-   * Cờ và đánh giá an toàn: rủi ro, tin đồn, yêu cầu kiểm duyệt
-   * @nullable
-   */
+     * Cờ và đánh giá an toàn: rủi ro, tin đồn, yêu cầu kiểm duyệt
+     * @nullable
+     */
   safety?: SavePostSummaryDtoSafety;
   /**
-   * Phiên bản prompt
-   * @nullable
-   */
+     * Phiên bản prompt
+     * @nullable
+     */
   promptVersion?: string | null;
   /**
-   * Tên mô hình LLM
-   * @nullable
-   */
+     * Tên mô hình LLM
+     * @nullable
+     */
   modelName?: string | null;
   /**
-   * Thời điểm sinh kết quả
-   * @nullable
-   */
+     * Thời điểm sinh kết quả
+     * @nullable
+     */
   generatedAt?: string | null;
 }

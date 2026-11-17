@@ -8,7 +8,8 @@
 /**
  * recent_place: nơi vừa tìm · good_deal: rẻ hơn trung vị cùng hạng sao
  */
-export type HomeReasonDtoCode = (typeof HomeReasonDtoCode)[keyof typeof HomeReasonDtoCode];
+export type HomeReasonDtoCode = typeof HomeReasonDtoCode[keyof typeof HomeReasonDtoCode];
+
 
 export const HomeReasonDtoCode = {
   recent_place: 'recent_place',

@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CheckoutItemDtoProductType =
-  (typeof CheckoutItemDtoProductType)[keyof typeof CheckoutItemDtoProductType];
+export type CheckoutItemDtoProductType = typeof CheckoutItemDtoProductType[keyof typeof CheckoutItemDtoProductType];
+
 
 export const CheckoutItemDtoProductType = {
   room: 'room',

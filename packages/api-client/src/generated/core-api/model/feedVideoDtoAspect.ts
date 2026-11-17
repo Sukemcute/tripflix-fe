@@ -5,7 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FeedVideoDtoAspect = (typeof FeedVideoDtoAspect)[keyof typeof FeedVideoDtoAspect];
+export type FeedVideoDtoAspect = typeof FeedVideoDtoAspect[keyof typeof FeedVideoDtoAspect];
+
 
 export const FeedVideoDtoAspect = {
   '9:16': '9:16',

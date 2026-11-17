@@ -13,9 +13,9 @@ export interface PoliciesDto {
   /** @nullable */
   deposit: string | null;
   /**
-   * VND/phòng/đêm
-   * @nullable
-   */
+     * VND/phòng/đêm
+     * @nullable
+     */
   depositAmount: number | null;
   /** @nullable */
   stay: string | null;

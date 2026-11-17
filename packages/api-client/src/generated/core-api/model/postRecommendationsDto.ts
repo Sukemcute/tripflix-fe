@@ -11,8 +11,8 @@ export interface PostRecommendationsDto {
   /** Thuật toán đã dùng (khách hoặc cấu hình lỗi thì là trending) */
   algo: string;
   /**
-   * Gửi lại ở `cursor` để lấy trang sau; null là hết
-   * @nullable
-   */
+     * Gửi lại ở `cursor` để lấy trang sau; null là hết
+     * @nullable
+     */
   nextCursor: string | null;
 }

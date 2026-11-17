@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type PostRecommendationsControllerRecommendPostsPostType =
-  (typeof PostRecommendationsControllerRecommendPostsPostType)[keyof typeof PostRecommendationsControllerRecommendPostsPostType];
+export type PostRecommendationsControllerRecommendPostsPostType = typeof PostRecommendationsControllerRecommendPostsPostType[keyof typeof PostRecommendationsControllerRecommendPostsPostType];
+
 
 export const PostRecommendationsControllerRecommendPostsPostType = {
   video: 'video',

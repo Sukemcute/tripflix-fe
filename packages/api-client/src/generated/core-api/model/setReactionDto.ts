@@ -8,8 +8,8 @@ import type { SetReactionDtoType } from './setReactionDtoType';
 
 export interface SetReactionDto {
   /**
-   * Loại cảm xúc hoặc null để hủy cảm xúc
-   * @nullable
-   */
+     * Loại cảm xúc hoặc null để hủy cảm xúc
+     * @nullable
+     */
   type: SetReactionDtoType;
 }

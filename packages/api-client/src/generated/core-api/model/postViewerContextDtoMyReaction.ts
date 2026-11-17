@@ -8,8 +8,8 @@
 /**
  * @nullable
  */
-export type PostViewerContextDtoMyReaction =
-  (typeof PostViewerContextDtoMyReaction)[keyof typeof PostViewerContextDtoMyReaction] | null;
+export type PostViewerContextDtoMyReaction = typeof PostViewerContextDtoMyReaction[keyof typeof PostViewerContextDtoMyReaction] | null;
+
 
 export const PostViewerContextDtoMyReaction = {
   like: 'like',
