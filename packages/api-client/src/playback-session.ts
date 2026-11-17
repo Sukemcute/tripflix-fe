@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { mediaPlaybackControllerCreateSession } from './generated/core-api/media/media';
 import { readEntity } from './response';
 
@@ -49,8 +50,14 @@ export function usePlaybackSession({ enabled = true }: { enabled?: boolean } = {
     retry: 1,
     retryDelay: 500,
   });
+  const { refetch } = query;
+  // Xin cookie mới ngay, khi player gặp lỗi có thể do cookie hết hạn (403).
+  const refresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
   return {
     cookieHeader: query.data ? buildPlaybackCookieHeader(query.data.cookies) : null,
     isSettled: !enabled || query.isSuccess || query.isError,
+    refresh,
   };
 }
