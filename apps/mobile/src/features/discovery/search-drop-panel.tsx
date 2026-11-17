@@ -13,6 +13,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { Chip, Icon, IconButton, money, Txt } from '@/components/mobile-ui';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { SHEET_CLOSE_SPRING, SHEET_OPEN_SPRING } from '@/components/motion';
+import { LoadingDots } from '@/components/loading-dots';
 
 const copy = vi.mobile.searchPanel;
 const DEBOUNCE_MS = 300;
@@ -72,7 +73,9 @@ export function SearchDropPanel({ visible, onClose }: { visible: boolean; onClos
       >
         <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
           <View style={styles.inputBox}>
-            <Icon name="search-outline" size={mobileIconSize.control} color={colors.textMuted} />
+            <View style={styles.inputIcon}>
+              <Icon name="search" size={mobileIconSize.inline} color={colors.tealInk} />
+            </View>
             <TextInput
               ref={input}
               value={text}
@@ -148,7 +151,7 @@ function StateText({
   isEmpty: boolean;
   query: string;
 }) {
-  if (isLoading) return <Txt style={styles.muted}>{copy.loading}</Txt>;
+  if (isLoading) return <LoadingDots />;
   if (isError) return <Txt style={styles.error}>{copy.error}</Txt>;
   if (isEmpty) return <Txt style={styles.muted}>{t('mobile.searchPanel.empty', { q: query })}</Txt>;
   return null;
@@ -344,10 +347,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    height: mobileLayout.touchTarget,
-    paddingHorizontal: spacing.md,
+    minHeight: 52,
+    paddingLeft: spacing.xs,
+    paddingRight: spacing.md,
     borderRadius: radius.pill,
-    backgroundColor: colors.warmMist,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  // Cùng kiểu ô tìm ở đầu trang chủ (TF48).
+  inputIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.tealSoft,
   },
   input: { flex: 1, color: colors.ink, ...compactType.body },
   tabs: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
