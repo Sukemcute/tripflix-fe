@@ -659,7 +659,7 @@ function PointRow({
 }
 
 /** Điểm đến chọn từ ô tìm kiếm của discovery (/api/suggest, loại place); gõ tay vẫn giữ tên để tham khảo. */
-function DestinationPicker({
+export function DestinationPicker({
   name,
   placeId,
   onChange,

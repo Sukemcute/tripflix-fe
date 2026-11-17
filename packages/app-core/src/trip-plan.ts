@@ -495,7 +495,8 @@ export interface TripPlanCheckoutInput {
   adults: number;
   children?: number;
   infants?: number;
-  sourcePostId: string;
+  /** Bài đăng dẫn tới đơn (Đặt y chang); bỏ trống khi khách tự lên lộ trình. */
+  sourcePostId?: string;
   flights: readonly { productId: string; ratePlanCode: string; date: string }[];
   rooms: readonly { productId: string; ratePlanCode: string; checkIn: string; checkOut: string }[];
 }
@@ -526,7 +527,7 @@ export function buildTripPlanCheckout(input: TripPlanCheckoutInput) {
     adults: input.adults,
     ...(hasFlights && input.children ? { children: input.children } : {}),
     ...(hasFlights && input.infants ? { infants: input.infants } : {}),
-    sourcePostId: input.sourcePostId,
+    ...(input.sourcePostId ? { sourcePostId: input.sourcePostId } : {}),
     items,
   };
 }

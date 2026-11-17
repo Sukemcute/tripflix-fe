@@ -35,6 +35,7 @@ import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { CartLink } from './cart-ui';
 import { CommerceError } from './commerce-state';
+import { TripBuilderEntry } from './trip-builder-screen';
 
 const soldOutOf = (error: unknown) =>
   error instanceof HttpError && error.status === 409 ? readSoldOutConflict(error.body) : null;
@@ -667,6 +668,7 @@ export function TripBookingScreen() {
     : posts;
   const featured = (isDisabled: boolean) => (
     <View style={{ gap: spacing.md }}>
+      <TripBuilderEntry />
       <Txt variant="heading">{copy.featured}</Txt>
       {destinations.length > 1 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={layout.filters}>
