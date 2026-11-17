@@ -1,4 +1,5 @@
 import { nativeFonts as fonts, colors } from '@tripflix/tokens';
+import { vi } from '@tripflix/i18n';
 import { resolveMobileLoginReturn } from '@tripflix/app-core';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
@@ -114,14 +115,15 @@ export function OnboardingScreen() {
 }
 
 function OnboardingFlow() {
-  const { record, updateDraft, finish, continueOnce, storageError } = useOnboarding();
+  const { record, updateDraft, finish, continueOnce, storageError, accountError, isAccount } =
+    useOnboarding();
   const { mode, source, returnTo } = useLocalSearchParams<{
     mode?: string;
     source?: string;
     returnTo?: string;
   }>();
   const [step, setStep] = useState<OnboardingStep>(() =>
-    record.status === 'draft' ? record.step : 'welcome',
+    record.status === 'draft' ? record.step : source === 'account' ? 'interests' : 'welcome',
   );
   const [saving, setSaving] = useState(false);
   const [failedFinish, setFailedFinish] = useState<'skipped' | 'completed' | null>(null);
@@ -133,7 +135,8 @@ function OnboardingFlow() {
   const chosenPace = paces.find((item) => item.id === record.pace);
 
   function continueToApp() {
-    if (source === 'signup') router.dismissTo(resolveMobileLoginReturn(returnTo) as Href);
+    if (source === 'signup' || source === 'account')
+      router.dismissTo(resolveMobileLoginReturn(returnTo) as Href);
     else if (mode === 'edit' && router.canGoBack()) router.back();
     else router.replace('/(tabs)');
   }
@@ -208,7 +211,7 @@ function OnboardingFlow() {
         {welcome ? (
           mode === 'edit' ? (
             <TextAction label="Đóng" onPress={back} />
-          ) : source === 'signup' ? (
+          ) : source === 'signup' || source === 'account' ? (
             <TextAction label="Khám phá trước" onPress={() => void leave('skipped')} disabled={saving} />
           ) : (
             <TextAction label="Đăng nhập" onPress={() => void leave('skipped', true)} disabled={saving} />
@@ -445,7 +448,7 @@ function OnboardingFlow() {
               <View style={styles.localNote}>
                 <Icon name="bookmark-outline" size={20} color={INK} />
                 <Txt style={styles.localNoteText}>
-                  Gu được lưu trên thiết bị này. Bạn có thể mở lại ở Hồ sơ → Gu du lịch.
+                  {isAccount ? vi.api.onboardingAccountSaveHint : vi.api.onboardingDeviceSaveHint}
                 </Txt>
               </View>
             </>
@@ -454,11 +457,11 @@ function OnboardingFlow() {
       </ScrollView>
 
       <View style={styles.footer}>
-        {storageError && (
+        {(storageError || accountError) && (
           <View accessibilityRole="alert" style={styles.error}>
             <Txt style={styles.errorText}>
-              Chưa lưu được trên thiết bị. Lựa chọn vẫn còn trong phiên này.
-              {failedFinish ? ' Bấm lại để thử lưu.' : ''}
+              {accountError ? vi.api.onboardingAccountSaveError : vi.api.onboardingDeviceSaveError}
+              {failedFinish ? vi.api.onboardingRetrySave : ''}
             </Txt>
             {failedFinish && (
               <TextAction

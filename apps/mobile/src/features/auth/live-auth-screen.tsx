@@ -46,6 +46,7 @@ import {
 import { ApiErrorNotice } from '@/components/api-state';
 import { GoogleLoginButton } from '@/features/auth/google-login-button';
 import { useOnboarding } from '@/features/onboarding/onboarding-provider';
+import { needsAccountOnboarding } from '@/features/onboarding/onboarding-model';
 
 const regionNames =
   typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['vi'], { type: 'region' }) : null;
@@ -75,7 +76,7 @@ function WebLinkText({ path, children }: { path: string; children: string }) {
 
 export function LiveLoginScreen() {
   const { session, isReady } = useApiSession();
-  const { startAfterSignup, ready: onboardingReady } = useOnboarding();
+  const { startForAccount, ready: onboardingReady } = useOnboarding();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const [isRegistering, setRegistering] = useState(false);
   const [email, setEmail] = useState('');
@@ -123,24 +124,22 @@ export function LiveLoginScreen() {
           nationality,
           acceptTerms: true,
         });
-        return 'registered' as const;
+        return;
       }
       await session.login({ email: email.trim(), password });
-      return 'logged-in' as const;
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       setPassword('');
-      if (result === 'registered') {
-        startAfterSignup();
-        router.replace({
-          pathname: '/onboarding',
-          params: { source: 'signup', returnTo: resolveMobileLoginReturn(returnTo) },
-        });
-      } else leaveAfterLogin();
+      leaveAfterLogin();
     },
   });
   function leaveAfterLogin() {
-    router.dismissTo(resolveMobileLoginReturn(returnTo) as Href);
+    const profile = session.getSnapshot().user;
+    const destination = resolveMobileLoginReturn(returnTo);
+    if (profile && needsAccountOnboarding(profile)) {
+      startForAccount();
+      router.replace({ pathname: '/onboarding', params: { source: 'account', returnTo: destination } });
+    } else router.dismissTo(destination as Href);
   }
   const isBusy = mutation.isPending || requestCode.isPending;
   const registrationError = (error: unknown) => {

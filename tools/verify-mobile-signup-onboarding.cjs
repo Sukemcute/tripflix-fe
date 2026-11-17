@@ -44,8 +44,23 @@ class SignupPage {
     await this.page.getByLabel('Mã xác thực email', { exact: true }).fill('12345678');
     await this.button('Tạo tài khoản').click();
   }
+  async login(email = profile.email) {
+    await this.page.getByLabel('Email', { exact: true }).fill(email);
+    await this.page.getByLabel('Mật khẩu', { exact: true }).fill('QA-onboarding-journey-2026!');
+    await this.button('Đăng nhập & tiếp tục').click();
+  }
+  async selectTaste() {
+    await this.page.getByRole('checkbox', { name: 'Biển & nắng', exact: true }).click();
+    await this.button('Chọn nhịp chuyến đi').click();
+    await this.page.getByRole('radio', { name: 'Chậm một chút', exact: true }).click();
+    await this.button('Xem gu của tôi').click();
+  }
   async stored() {
-    return this.page.evaluate((key) => JSON.parse(localStorage.getItem(key)), KEY);
+    return this.page.evaluate(
+      (key) =>
+        JSON.parse(localStorage.getItem(key + '.account'))?.record ?? JSON.parse(localStorage.getItem(key)),
+      KEY,
+    );
   }
   async snapshot(name) {
     await this.page.evaluate(() => document.fonts.ready);
@@ -64,7 +79,13 @@ class SignupPage {
   });
   const checks = [],
     errors = [];
-  async function fresh(previousStatus = 'completed', rejectRegistration = false, blockStorage = false) {
+  async function fresh(
+    previousStatus = 'completed',
+    rejectRegistration = false,
+    blockStorage = false,
+    preferences = null,
+    restored = false,
+  ) {
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },
       isMobile: true,
@@ -80,7 +101,7 @@ class SignupPage {
         if (block) {
           const setItem = Storage.prototype.setItem;
           Storage.prototype.setItem = function (key, value) {
-            if (key === 'tripflix.onboarding.v1') throw new Error('QA storage full');
+            if (key.startsWith('tripflix.onboarding.v1')) throw new Error('QA storage full');
             return setItem.call(this, key, value);
           };
         }
@@ -88,7 +109,9 @@ class SignupPage {
       { key: KEY, status: previousStatus, block: blockStorage },
     );
     const requests = [];
-    let authenticated = false;
+    const account = { ...profile, travelPreferences: preferences };
+    let rejectSave = false;
+    let authenticated = restored;
     await context.route('**/api/**', async (route) => {
       const request = route.request(),
         path = new URL(request.url()).pathname;
@@ -115,20 +138,34 @@ class SignupPage {
         authenticated = true;
         return route.fulfill({ json: token });
       }
-      if (path === '/api/auth/me') return route.fulfill({ json: profile });
+      if (path === '/api/auth/me' && request.method() === 'PATCH') {
+        if (rejectSave) return route.fulfill({ status: 503, json: {} });
+        account.travelPreferences = request.postDataJSON().travelPreferences;
+        return route.fulfill({ json: account });
+      }
+      if (path === '/api/auth/me') return route.fulfill({ json: account });
       return route.fulfill({ json: { items: [], nextCursor: null, unreadCount: 0 } });
     });
     const page = await context.newPage();
     page.on('pageerror', (error) => errors.push(error.message));
-    return { page, ui: new SignupPage(page), context, requests };
+    return {
+      page,
+      ui: new SignupPage(page),
+      context,
+      requests,
+      account,
+      rejectSave: (value) => {
+        rejectSave = value;
+      },
+    };
   }
   try {
     {
-      const { context, page, ui, requests } = await fresh();
+      const { context, page, ui, requests, account } = await fresh();
       await ui.goto();
       await ui.register();
       await page.waitForURL(
-        (url) => url.pathname === '/onboarding' && url.searchParams.get('source') === 'signup',
+        (url) => url.pathname === '/onboarding' && url.searchParams.get('source') === 'account',
       );
       await ui.button('Chọn nhịp chuyến đi').waitFor();
       assert.equal(
@@ -146,6 +183,8 @@ class SignupPage {
       await page.waitForURL((url) => url.pathname === '/create');
       assert.equal((await ui.stored()).status, 'completed');
       assert.deepEqual((await ui.stored()).interests, ['coast']);
+      assert.equal(account.travelPreferences.status, 'completed');
+      assert.deepEqual(account.travelPreferences.interests, ['coast']);
       assert(requests.some((r) => r.path === '/api/auth/register'));
       await page.goto(`${base}/me`);
       await ui.button('Cài đặt').click();
@@ -167,16 +206,83 @@ class SignupPage {
       await page.waitForURL((url) => url.pathname === '/saved');
       assert.equal((await ui.stored()).status, 'skipped');
       checks.push('Previously skipped device still shows signup survey; skipping resumes saved task');
+      await ui.goto('/saved');
+      await ui.login();
+      await ui.button('Chọn nhịp chuyến đi').waitFor();
+      checks.push('Skipped account is asked again on its next login');
       await context.close();
     }
     {
-      const { context, page, ui, requests } = await fresh();
+      const { context, page, ui, account, rejectSave } = await fresh('completed', false, false, {
+        status: 'skipped',
+        interests: ['food'],
+        regions: ['south'],
+        budgetLevels: ['moderate'],
+        updatedAt: new Date().toISOString(),
+      });
+      await ui.goto('/saved');
+      await ui.login();
+      await ui.button('Chọn nhịp chuyến đi').waitFor();
+      await ui.selectTaste();
+      rejectSave(true);
+      await ui.button('Lưu và khám phá').click();
+      await page.getByText('Chưa lưu được vào tài khoản.', { exact: false }).waitFor();
+      assert.equal(account.travelPreferences.status, 'skipped');
+      assert.equal(new URL(page.url()).pathname, '/onboarding');
+      rejectSave(false);
+      await ui.button('Lưu và khám phá').click();
+      await page.waitForURL((url) => url.pathname === '/saved');
+      assert.deepEqual(account.travelPreferences.interests, ['coast', 'food']);
+      assert.deepEqual(account.travelPreferences.regions, ['south']);
+      assert.deepEqual(account.travelPreferences.budgetLevels, ['moderate']);
+      await ui.goto('/saved');
+      await ui.login();
+      await page.waitForURL((url) => url.pathname === '/saved');
+      checks.push(
+        'Incomplete existing account is prompted; failed PATCH retains draft; retry preserves web fields and stops future prompts',
+      );
+      const firstPreferences = account.travelPreferences;
+      account.id = 'qa-second-member';
+      account.email = 'second@example.test';
+      account.travelPreferences = null;
+      await ui.goto('/saved');
+      await ui.login(account.email);
+      await ui.button('Chọn nhịp chuyến đi').waitFor();
+      assert.equal(
+        await page.getByRole('checkbox', { name: 'Biển & nắng', exact: true }).getAttribute('aria-checked'),
+        'false',
+      );
+      assert.equal(
+        (await page.evaluate((key) => JSON.parse(localStorage.getItem(key + '.account')), KEY)).accountId,
+        account.id,
+      );
+      await ui.button('Khám phá trước').click();
+      await page.waitForURL((url) => url.pathname === '/saved');
+      account.id = profile.id;
+      account.email = profile.email;
+      account.travelPreferences = firstPreferences;
+      await ui.goto('/saved');
+      await ui.login();
+      await page.waitForURL((url) => url.pathname === '/saved');
+      checks.push(
+        'Switching accounts isolates drafts; completed first account is not blocked by second-account cache',
+      );
+      await context.close();
+    }
+    {
+      const { context, page, ui, requests, account } = await fresh('skipped', false, false, {
+        status: 'completed',
+        interests: ['coast'],
+        regions: [],
+        budgetLevels: [],
+        updatedAt: new Date().toISOString(),
+      });
       await ui.goto('/saved');
       await page.getByLabel('Email', { exact: true }).fill(profile.email);
       await page.getByLabel('Mật khẩu', { exact: true }).fill('QA-onboarding-journey-2026!');
       await ui.button('Đăng nhập & tiếp tục').click();
       await page.waitForURL((url) => url.pathname === '/saved');
-      assert.equal((await ui.stored()).status, 'completed');
+      assert.equal(account.travelPreferences.status, 'completed');
       assert(!requests.some((r) => r.path === '/api/auth/register'));
       checks.push('Existing password login keeps normal return path and does not restart onboarding');
       await context.close();
@@ -199,9 +305,20 @@ class SignupPage {
       await ui.register();
       await ui.button('Chọn nhịp chuyến đi').waitFor();
       await ui.button('Khám phá trước').click();
-      await ui.button('Khám phá lần này').click();
       await page.waitForURL((url) => url.pathname === '/saved');
-      checks.push('Storage failure escape preserves the original post-signup destination');
+      checks.push('Account save and return succeed even when the device cache is unavailable');
+      await context.close();
+    }
+    {
+      const { context, page, ui } = await fresh('completed', false, false, null, true);
+      await page.goto(base);
+      await ui.button('Chọn nhịp chuyến đi').waitFor();
+      await ui.button('Khám phá trước').click();
+      await page.waitForURL((url) => url.pathname === '/');
+      await page.getByRole('tab', { name: 'Dành cho bạn', exact: true }).waitFor();
+      checks.push(
+        'Restored account without survey is prompted once and skip does not create a navigation loop',
+      );
       await context.close();
     }
     assert.deepEqual(errors, []);

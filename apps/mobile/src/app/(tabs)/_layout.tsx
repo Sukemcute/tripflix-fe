@@ -7,7 +7,7 @@ import { InsideTabBarContext, Txt } from '@/components/mobile-ui';
 import { FloatingTabBar } from '@/components/floating-tab-bar';
 import { useUnreadNotificationCount } from '@/features/account/notification-bell';
 import { useOnboarding } from '@/features/onboarding/onboarding-provider';
-import { shouldOfferOnboarding } from '@/features/onboarding/onboarding-model';
+import { needsAccountOnboarding, shouldOfferOnboarding } from '@/features/onboarding/onboarding-model';
 
 // Mobile V1 design: creation is an action; notifications live behind the bell.
 const TABS: readonly { name: string; label: MessageKey }[] = [
@@ -20,7 +20,7 @@ const TABS: readonly { name: string; label: MessageKey }[] = [
 
 export default function TabsLayout() {
   const { user, isReady } = useApiSession();
-  const { record, ready } = useOnboarding();
+  const { record, ready, dismissedAccount } = useOnboarding();
   const pathname = usePathname();
   const params = useGlobalSearchParams();
   if (!ready || !isReady)
@@ -31,7 +31,14 @@ export default function TabsLayout() {
     );
   return (
     <ReadyTabs
-      offerOnEntry={!user && shouldOfferOnboarding(record, pathname, Object.keys(params).length > 0)}
+      offerOnEntry={
+        user
+          ? needsAccountOnboarding(user) &&
+            dismissedAccount !== user.id &&
+            pathname === '/' &&
+            Object.keys(params).length === 0
+          : shouldOfferOnboarding(record, pathname, Object.keys(params).length > 0)
+      }
     />
   );
 }
@@ -41,7 +48,16 @@ function ReadyTabs({ offerOnEntry }: { offerOnEntry: boolean }) {
   // Decide once after hydration. Editing a draft later must not interrupt the active tab.
   const [offer] = useState(offerOnEntry);
   const unreadCount = useUnreadNotificationCount();
-  if (offer) return <Redirect href="/onboarding" />;
+  if (offer)
+    return (
+      <Redirect
+        href={
+          user
+            ? { pathname: '/onboarding', params: { source: 'account', returnTo: '/(tabs)' } }
+            : '/onboarding'
+        }
+      />
+    );
   return (
     <InsideTabBarContext.Provider value>
       <Tabs
