@@ -125,7 +125,11 @@ export function TripPlanEditor({
             key={value}
             accessibilityRole="button"
             accessibilityState={{ selected: source === value }}
-            onPress={() => setSource(value)}
+            onPress={() => {
+              setSource(value);
+              // Tự nhập thì lộ trình không còn gắn với đơn đã đặt, để bài không được xác thực "đã đi" sai.
+              if (value === 'manual' && draft.bookingId) onChange({ ...draft, bookingId: null });
+            }}
             style={[styles.segmentItem, source === value && styles.segmentActive]}
           >
             <Txt style={[styles.segmentText, source === value && styles.segmentTextActive]}>
@@ -233,6 +237,8 @@ function PaidTripPicker({
           trip.items[0]?.productName ??
           '';
         const isPicked = pickedOrderId === trip.orderId;
+        // Chỉ chuyến đã kết thúc mới được xác thực "đã đi" khi đăng; chuyến sắp tới vẫn dùng làm lộ trình được.
+        const isDone = !!trip.endDate && trip.endDate < getFutureDate(0);
         return (
           <Pressable
             key={trip.orderId}
@@ -257,7 +263,11 @@ function PaidTripPicker({
                 {place}
               </Txt>
               <Txt variant="caption" style={styles.muted} numberOfLines={1}>
-                {[trip.startDate, t('mobile.tripPlan.editor.tripSummary', { flights, rooms })]
+                {[
+                  trip.startDate,
+                  t('mobile.tripPlan.editor.tripSummary', { flights, rooms }),
+                  isDone ? copy.tripDone : copy.tripUpcoming,
+                ]
                   .filter(Boolean)
                   .join(' · ')}
               </Txt>
@@ -266,6 +276,9 @@ function PaidTripPicker({
           </Pressable>
         );
       })}
+      <Txt variant="caption" style={styles.muted}>
+        {copy.tripVerifyHint}
+      </Txt>
     </View>
   );
 }
