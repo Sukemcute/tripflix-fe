@@ -1,0 +1,16 @@
+{
+  "checks": [
+    "Fresh launch, choose, back, reload draft, edit review, save, returning visitor",
+    "Profile opens editor; editing does not re-trigger first-run gate or reset completion",
+    "Layout 375x667, visible CTAs, all stages fit horizontally",
+    "Layout 430x932, visible CTAs, all stages fit horizontally",
+    "Layout 320x568, visible CTAs, all stages fit horizontally",
+    "Skip without login, persisted across reload",
+    "Direct explore link preserves destination without onboarding interruption",
+    "Root reel deep link bypasses first-run gate",
+    "Storage failure retains selections, no false success, retry succeeds"
+  ],
+  "pageErrors": [],
+  "passed": true,
+  "nativeTested": false
+}

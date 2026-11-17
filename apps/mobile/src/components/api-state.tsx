@@ -1,7 +1,8 @@
 import { getApiErrorKind, useApiSession } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { router } from 'expo-router';
-import { Button, Notice, Screen, Txt } from './mobile-ui';
+import { Button, Notice, Screen } from './mobile-ui';
+import { LoadingDots } from './loading-dots';
 
 export function ApiErrorNotice({ error, retry }: { error: unknown; retry?: () => void }) {
   if (!error) return null;
@@ -21,7 +22,7 @@ export function RequireAccount() {
   return (
     <Screen title={vi.api.account}>
       {!isReady ? (
-        <Txt>{vi.api.loading}</Txt>
+        <LoadingDots />
       ) : (
         <>
           <ApiErrorNotice

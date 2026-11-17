@@ -1,4 +1,4 @@
-import { buildInspirationHref } from './search-url';
+import { buildPostHref } from './search-url';
 
 /** Kênh chia sẻ mở trang ngoài; "copy" và "native" (hộp chia sẻ của máy) xử lý riêng trong menu. */
 export type ShareChannel = 'facebook' | 'x' | 'email';
@@ -8,8 +8,7 @@ export type ShareChannel = 'facebook' | 'x' | 'email';
  * Cùng dạng với shareUrl của BE (`PostShareLinks`), chỉ khác lấy địa chỉ web từ trang đang mở.
  */
 export function buildPostShareUrl(origin: string, postId: string, postType: string): string {
-  const path = buildInspirationHref('/inspiration', '', { openPostId: postId, isOpenReel: postType === 'video' });
-  return `${origin.replace(/\/+$/, '')}${path}`;
+  return `${origin.replace(/\/+$/, '')}${buildPostHref(postId, { postType })}`;
 }
 
 /** Link mở trang chia sẻ của từng mạng xã hội (không cần app id). */

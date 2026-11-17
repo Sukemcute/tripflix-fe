@@ -1,0 +1,513 @@
+.root {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+  max-width: 1560px;
+  margin-inline: auto;
+  color: var(--color-text);
+}
+.root h1 {
+  font-size: clamp(24px, 2.3vw, 32px);
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  margin: 6px 0 10px;
+}
+.root h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+.root p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+.root small {
+  display: block;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+.root code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.root :is(button, input, select, summary):focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 3px;
+}
+.heading,
+.toolbar,
+.panelHeading,
+.traceToolbar,
+.lookup {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.heading > div {
+  min-width: 0;
+}
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  font-weight: 800;
+  color: var(--color-teal-ink);
+}
+.refresh,
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-background);
+  font-size: 12px;
+  font-weight: 700;
+  min-height: 42px;
+  white-space: nowrap;
+}
+.refresh {
+  background: var(--color-navy);
+  color: var(--color-background);
+  border-color: var(--color-navy);
+}
+.refresh svg {
+  width: 16px;
+  height: 16px;
+}
+.toolbar {
+  background: var(--color-background);
+  padding: 16px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.root label {
+  display: grid;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+.root select,
+.root input:not([type='checkbox']) {
+  min-height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  background: var(--color-background);
+  color: var(--color-text);
+  min-width: 170px;
+  max-width: 100%;
+}
+.root .checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.checkbox input {
+  accent-color: var(--color-teal-ink);
+  width: 16px;
+  height: 16px;
+}
+.refreshState {
+  display: grid;
+  gap: 8px;
+  text-align: right;
+}
+.tabs {
+  display: flex;
+  gap: 28px;
+  border-bottom: 1px solid var(--color-border);
+}
+.tabs button {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0 0 13px;
+  color: var(--color-text-muted);
+  border-bottom: 3px solid transparent;
+}
+.tabs button[aria-current='page'] {
+  border-color: var(--color-teal);
+  color: var(--color-teal-ink);
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.metric {
+  padding: 22px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  border-top: 3px solid var(--color-teal);
+}
+.metric:nth-child(3) {
+  border-top-color: var(--color-coral);
+}
+.metric:nth-child(4) {
+  border-top-color: var(--color-sun);
+}
+.metric h2 {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.metric > strong {
+  font-size: clamp(22px, 2.1vw, 34px);
+  font-variant-numeric: tabular-nums;
+  display: block;
+  margin: 12px 0;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+.metric p {
+  font-size: 11px;
+}
+.charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.panel {
+  min-width: 0;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.panelHeading {
+  padding: 22px 24px;
+  align-items: flex-start;
+}
+.panelHeading > div {
+  min-width: 0;
+}
+.panelHeading p {
+  font-size: 11px;
+}
+.unit {
+  display: inline-block;
+  border: 1px solid var(--color-border);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.chart {
+  width: 100%;
+  padding: 0 16px 8px;
+}
+.chart text {
+  fill: var(--color-text-muted);
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+.gridLine {
+  stroke: var(--color-border);
+  stroke-dasharray: 3 4;
+}
+.trafficLine,
+.latencyLine {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.trafficLine {
+  stroke: var(--color-teal);
+}
+.latencyLine {
+  stroke: var(--color-coral);
+}
+.point {
+  fill: var(--color-teal);
+}
+.chartDetails {
+  margin: 0 24px 20px;
+}
+.chartDetails summary {
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+.chartDetails .tableScroll {
+  max-height: 240px;
+  overflow: auto;
+}
+.tableScroll {
+  overflow-x: auto;
+}
+.traceTable {
+  max-height: 420px;
+  overflow: auto;
+}
+.traceTable th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.root table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+.root th {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  background: var(--color-surface);
+}
+.root :is(th, td) {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+.root tbody tr:last-child td {
+  border-bottom: 0;
+}
+.root td {
+  font-variant-numeric: tabular-nums;
+}
+.root td strong {
+  font-weight: 600;
+}
+.live,
+.stale {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.live {
+  color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+}
+.stale {
+  color: var(--color-coral-ink);
+  background: var(--color-coral-tint);
+}
+.live::before,
+.stale::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.method {
+  font-family: var(--font-mono);
+  color: var(--color-teal-ink);
+  background: var(--color-sea-mist);
+  font-size: 10px;
+  padding: 3px 6px;
+  margin-right: 10px;
+  border-radius: 4px;
+}
+.root .empty {
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 36px 24px;
+  min-height: 120px;
+}
+.charts .empty {
+  min-height: 218px;
+}
+.notice {
+  padding: 16px 20px;
+  border: 1px solid var(--color-warning);
+  background: var(--color-sun-soft);
+  border-radius: 10px;
+  font-size: 13px;
+}
+.notice p {
+  margin-top: 4px;
+}
+.pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  border-left: 3px solid var(--color-teal);
+  padding: 8px 18px;
+}
+.pipeline strong {
+  font-size: 12px;
+}
+.pipeline small {
+  flex-basis: 100%;
+}
+.pipeline > span {
+  font-size: 11px;
+  color: var(--color-teal-ink);
+}
+.traceToolbar {
+  justify-content: flex-start;
+  padding: 0 24px 20px;
+}
+.lookup {
+  align-items: flex-end;
+  padding: 0 24px 24px;
+}
+.lookup label {
+  flex: 1;
+  min-width: 0;
+}
+.lookup input {
+  width: 100%;
+  font-family: var(--font-mono);
+}
+.traceLink {
+  color: var(--color-teal-ink);
+  font-weight: 700;
+  text-align: left;
+}
+.traceLink:hover {
+  text-decoration: underline;
+}
+.traceId {
+  display: block;
+  margin: 6px 0;
+}
+.validation {
+  color: var(--color-danger) !important;
+  padding: 0 24px 16px;
+}
+.waterfall {
+  padding: 0 24px 24px;
+  overflow-x: auto;
+}
+.spanRow {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(200px, 2fr) 100px;
+  gap: 20px;
+  padding: 16px 0;
+  border-top: 1px solid var(--color-border);
+  min-width: 580px;
+  align-items: center;
+}
+.spanRow strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.spanRow code {
+  color: var(--color-text-subtle);
+  font-size: 9px;
+}
+.spanTrack {
+  background: var(--color-surface-muted);
+  height: 20px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.spanBar,
+.errorBar {
+  display: block;
+  height: 100%;
+  min-width: 3px;
+  border-radius: 4px;
+}
+.spanBar {
+  background: var(--color-teal);
+}
+.errorBar {
+  background: var(--color-danger);
+}
+.number {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+@media (max-width: 1100px) {
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .charts {
+    grid-template-columns: 1fr;
+  }
+  .toolbar {
+    align-items: flex-start;
+  }
+}
+@media (max-width: 640px) {
+  .root {
+    gap: 18px;
+  }
+  .heading {
+    flex-wrap: wrap;
+  }
+  .toolbar {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+  .filters {
+    width: 100%;
+    gap: 12px;
+  }
+  .filters label {
+    flex: 1;
+    min-width: 0;
+  }
+  .filters select {
+    min-width: 0;
+    width: 100%;
+  }
+  .refreshState {
+    text-align: left;
+  }
+  .metrics {
+    gap: 10px;
+  }
+  .metric {
+    padding: 16px 12px;
+  }
+  .metric > strong {
+    font-size: 25px;
+  }
+  .metric p {
+    font-size: 10px;
+  }
+  .panelHeading {
+    padding: 18px 16px;
+    gap: 12px;
+  }
+  .traceToolbar {
+    padding: 0 16px 16px;
+    flex-wrap: wrap;
+  }
+  .lookup {
+    padding: 0 16px 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .lookup label {
+    flex-basis: 100%;
+  }
+  .lookup button {
+    width: 100%;
+  }
+  .waterfall {
+    padding-inline: 16px;
+  }
+}

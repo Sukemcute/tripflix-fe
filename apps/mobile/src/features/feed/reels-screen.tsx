@@ -5,7 +5,7 @@ import {
   REEL_LOOKAHEAD_COUNT,
   selectReelPoster,
 } from '@tripflix/app-core';
-import { reloadReelsFeed, useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
+import { reloadReelsFeed, usePlaybackSession, useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, spacing } from '@tripflix/tokens';
@@ -107,6 +107,8 @@ export function ReelsScreen() {
   // Loaded up front so a swipe finds its list and first poster ready instead of a dark wait.
   const forYouFeed = useReelsFeed({ tab: 'for_you' });
   const hotFeed = useReelsFeed({ tab: 'hot' });
+  // Cookie video xin cùng lúc với feed; ReelsFeed dùng lại kết quả này (cùng query), video đầu không chờ thêm.
+  usePlaybackSession();
   const forYouPlaybacks = useMemo(() => readPlaybacks(forYouFeed.data), [forYouFeed.data]);
   const hotPlaybacks = useMemo(() => readPlaybacks(hotFeed.data), [hotFeed.data]);
   const firstPlaybackOf = (reelTab: ReelTab) =>
@@ -518,6 +520,8 @@ export function ReelsFeed({
   const isPlaybackEnabled = isFocused && isForeground && !isOffline;
   // expo-network does not expose system Data Saver / Low Data Mode flags.
   const isDataLimited = false;
+  // Xin cookie video ngay khi vào Reels, song song với feed, để video đầu không phải chờ thêm.
+  const playbackSession = usePlaybackSession();
   const slots = usePlayerPool({
     items,
     activeIndex: currentIndex,
@@ -527,6 +531,8 @@ export function ReelsFeed({
     isMuted: false,
     isDataLimited,
     retry,
+    playbackCookieHeader: playbackSession.cookieHeader,
+    isPlaybackSessionSettled: playbackSession.isSettled,
   });
 
   useEffect(() => {

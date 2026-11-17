@@ -6,6 +6,8 @@ export const SEARCH_QUERY_PARAM = 'q';
 export const SEARCH_OPEN_PARAM = 'open';
 export const SEARCH_TYPE_PARAM = 'type';
 export const SEARCH_OPEN_KIND_PARAM = 'kind';
+/** Bình luận cần nhảy tới trong bài đang mở (link từ thông báo). */
+export const SEARCH_COMMENT_PARAM = 'comment';
 
 export const SEARCH_RESULT_TYPES = ['all', 'posts', 'reels'] as const;
 export type SearchResultType = (typeof SEARCH_RESULT_TYPES)[number];
@@ -46,12 +48,15 @@ export function buildInspirationHref(
     }
     params.delete(SEARCH_OPEN_PARAM);
     params.delete(SEARCH_OPEN_KIND_PARAM);
+    params.delete(SEARCH_COMMENT_PARAM);
   }
   if (changes.resultType !== undefined) {
     if (changes.resultType === 'all') params.delete(SEARCH_TYPE_PARAM);
     else params.set(SEARCH_TYPE_PARAM, changes.resultType);
   }
   if (changes.openPostId !== undefined) {
+    // Bình luận chỉ thuộc bài đang mở: đổi bài thì bỏ.
+    if (changes.openPostId !== params.get(SEARCH_OPEN_PARAM)) params.delete(SEARCH_COMMENT_PARAM);
     if (changes.openPostId) params.set(SEARCH_OPEN_PARAM, changes.openPostId);
     else params.delete(SEARCH_OPEN_PARAM);
     if (changes.openPostId && changes.isOpenReel) params.set(SEARCH_OPEN_KIND_PARAM, 'reel');
@@ -61,4 +66,10 @@ export function buildInspirationHref(
   else if (changes.view === 'posts') params.delete('view');
   const query = params.toString();
   return query ? `${pathname}?${query}` : pathname;
+}
+
+/** Đường dẫn mở một bài ở trang Cảm hứng: Reel mở trong trình xem Reels, commentId thì nhảy tới bình luận đó. */
+export function buildPostHref(postId: string, options: { postType?: string; commentId?: string } = {}): string {
+  const path = buildInspirationHref('/inspiration', '', { openPostId: postId, isOpenReel: options.postType === 'video' });
+  return options.commentId ? `${path}&${SEARCH_COMMENT_PARAM}=${encodeURIComponent(options.commentId)}` : path;
 }

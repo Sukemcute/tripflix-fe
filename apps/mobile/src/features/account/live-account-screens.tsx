@@ -27,9 +27,11 @@ import {
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount, UnavailableScreen } from '@/components/api-state';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { LoadingDots } from '@/components/loading-dots';
 
 const profile = copy.profile;
 
+/** Menu cài đặt (TF47B): mở từ nút bánh răng trên trang cá nhân ở tab Tôi. */
 export function LiveProfileScreen() {
   const { user, isReady, error, session } = useApiSession();
   const [help, setHelp] = useState(false);
@@ -52,6 +54,11 @@ export function LiveProfileScreen() {
       icon: 'notifications-outline',
       onPress: () => router.push('/notifications'),
     },
+    {
+      label: 'Gu du lịch',
+      icon: 'compass-outline',
+      onPress: () => router.push({ pathname: '/onboarding', params: { mode: 'edit' } }),
+    },
     { label: profile.help, icon: 'help-buoy-outline', onPress: () => setHelp(true) },
   ] as const;
   const stats = [
@@ -72,7 +79,7 @@ export function LiveProfileScreen() {
     .toLocaleUpperCase('vi-VN');
 
   return (
-    <Screen compact header={null} padded={false}>
+    <Screen compact title={profile.menu} padded={false}>
       <View>
         <View style={styles.cover}>
           <Logo />
@@ -235,7 +242,7 @@ function ProfileEditor({ user }: { user: UserDto }) {
           void query.refetch();
         }}
       />
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      {query.isPending && <LoadingDots />}
       {query.data?.map((device) => (
         <Card key={device.id}>
           <Txt variant="label">

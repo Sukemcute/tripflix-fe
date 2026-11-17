@@ -38,6 +38,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SearchDropPanel } from './search-drop-panel';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { NotificationBell } from '@/features/account/notification-bell';
+import { LoadingDots } from '@/components/loading-dots';
 
 const RECOMMENDATION_LIMIT = 3;
 
@@ -258,8 +259,10 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
       }
     >
       <SearchDropPanel visible={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-      {/* Search Bar at the very top */}
-      {!back ? (
+      {/* Trang chủ: hero ảnh biển + ô tìm kiếm nổi, cùng kiểu trang chủ web (TF48). */}
+      {isBrowsing ? (
+        <HomeHero onOpenSearch={() => setIsSearchOpen(true)} />
+      ) : !back ? (
         <Pressable
           accessibilityRole="search"
           accessibilityLabel={vi.mobile.searchPanel.placeholder}
@@ -295,15 +298,11 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
 
       {isBrowsing && (
         <>
-          <Button tone="teal" icon="airplane-outline" onPress={() => router.push('/flights')}>
-            {vi.flights.title}
-          </Button>
-
-          <View style={{ gap: spacing.xs }}>
+          <View style={styles.sectionHead}>
+            <Txt variant="title">{copy.explore.browseTitle}</Txt>
             <Txt variant="small" style={ui.muted}>
               {copy.explore.intro}
             </Txt>
-            <Txt variant="title">{copy.explore.browseTitle}</Txt>
           </View>
 
           <Row style={styles.categories}>
@@ -360,7 +359,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
           {understood?.place && <HotelWebRedirectCard place={understood.place} />}
 
           {/* Loading */}
-          {search.isPending && <Txt>{vi.api.loading}</Txt>}
+          {search.isPending && <LoadingDots />}
 
           {/* Error */}
           <ApiErrorNotice
@@ -453,6 +452,60 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
   );
 }
 
+function HomeHero({ onOpenSearch }: { onOpenSearch: () => void }) {
+  return (
+    <View>
+      <View style={styles.homeHero}>
+        <Image source={assets.sea} style={StyleSheet.absoluteFill} contentFit="cover" accessible={false} />
+        <View style={styles.homeHeroShade} />
+        <Txt variant="title" style={styles.homeHeroTitle}>
+          {vi.api.authHeroFirst}
+        </Txt>
+        <Txt variant="title" style={[styles.homeHeroTitle, styles.homeHeroAccent]}>
+          {vi.api.authHeroSecond}
+        </Txt>
+        <Image source={assets.explore} style={styles.homeHeroMascot} contentFit="contain" accessible={false} />
+      </View>
+      <View style={styles.searchCard}>
+        <Pressable
+          accessibilityRole="search"
+          accessibilityLabel={vi.mobile.searchPanel.placeholder}
+          style={({ pressed }) => [styles.heroSearch, pressed && styles.heroSearchPressed]}
+          onPress={onOpenSearch}
+        >
+          <View style={styles.heroSearchIcon}>
+            <Icon name="search" color={colors.tealInk} size={mobileIconSize.inline} />
+          </View>
+          <View style={ui.flex}>
+            <Txt variant="caption" style={styles.heroSearchLabel}>
+              {vi.api.search}
+            </Txt>
+            <Txt variant="small" style={styles.searchHint} numberOfLines={1}>
+              {vi.mobile.searchPanel.placeholder}
+            </Txt>
+          </View>
+          <View style={styles.heroSearchGo}>
+            <Icon name="arrow-forward" color={colors.background} size={mobileIconSize.inline} />
+          </View>
+        </Pressable>
+        <Row style={styles.quickLinks}>
+          <Button
+            tone="secondary"
+            compact
+            icon="bed-outline"
+            onPress={() => router.push({ pathname: '/search', params: { autoFocus: '1' } })}
+          >
+            {vi.api.hotels}
+          </Button>
+          <Button tone="secondary" compact icon="airplane-outline" onPress={() => router.push('/flights')}>
+            {vi.flights.title}
+          </Button>
+        </Row>
+      </View>
+    </View>
+  );
+}
+
 function ExploreHighlights({ category }: { category: 'all' | 'sea' | 'weekend' }) {
   const isWeekend = category === 'weekend';
   const destinations = [
@@ -498,7 +551,7 @@ function ExploreHighlights({ category }: { category: 'all' | 'sea' | 'weekend' }
                 ? copy.explore.beachTitle
                 : copy.explore.curatedTitle}
           </Txt>
-          <Button tone="text" onPress={() => openSearch()} icon="arrow-forward">
+          <Button tone="secondary" compact onPress={() => openSearch()} icon="arrow-forward">
             {copy.common.viewAll}
           </Button>
         </Row>
@@ -540,8 +593,13 @@ function StayRecommendations() {
 
   return (
     <>
-      <Txt variant="heading">{vi.api.suggestionsLabel}</Txt>
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      <View style={styles.sectionHead}>
+        <Txt variant="title">{vi.ota.recommendationTitle}</Txt>
+        <Txt variant="small" style={ui.muted}>
+          {vi.ota.recommendationIntro}
+        </Txt>
+      </View>
+      {query.isPending && <LoadingDots />}
       <ApiErrorNotice
         error={query.error}
         retry={() => {
@@ -707,6 +765,76 @@ const styles = StyleSheet.create({
     color: colors.ink,
     ...compactType.body,
   },
+  homeHero: {
+    height: 260,
+    borderRadius: mobileLayout.cardRadius,
+    overflow: 'hidden',
+    padding: spacing.lg,
+    backgroundColor: colors.ink,
+  },
+  homeHeroShade: { ...StyleSheet.absoluteFill, backgroundColor: colors.overlay },
+  homeHeroTitle: {
+    color: colors.background,
+    fontFamily: nativeFonts.extraBold,
+    fontSize: 34,
+    lineHeight: 42,
+    letterSpacing: -1,
+  },
+  homeHeroAccent: { color: colors.sunSoft },
+  homeHeroMascot: { position: 'absolute', left: spacing.sm, bottom: spacing.xl, width: 104, height: 104 },
+  searchCard: {
+    marginTop: -spacing.xl,
+    marginHorizontal: spacing.md,
+    padding: spacing.md,
+    gap: spacing.md,
+    borderRadius: mobileLayout.cardRadius,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: colors.ink,
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  quickLinks: { gap: spacing.sm },
+  searchHint: { color: colors.textMuted },
+  heroSearch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingLeft: spacing.sm,
+    paddingRight: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  heroSearchPressed: { backgroundColor: colors.seaMist },
+  heroSearchIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.tealSoft,
+  },
+  heroSearchLabel: {
+    color: colors.tealInk,
+    fontFamily: nativeFonts.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  heroSearchGo: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.coral,
+  },
+  sectionHead: { gap: spacing.xs },
   result: { alignItems: 'flex-start' },
   resultPhoto: { width: 90, height: 112, borderRadius: radius.md, backgroundColor: colors.seaMist },
   categories: { flexWrap: 'wrap', gap: spacing.sm },

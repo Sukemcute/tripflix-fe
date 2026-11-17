@@ -11,6 +11,7 @@ import { CommentLikeButton } from './comment-like-button';
 import { ReelCommentComposer } from './reel-comment-composer';
 import { CommunitySummary } from './post-summary';
 import { ReportButton } from './report-button';
+import { LoadingDots } from '@/components/loading-dots';
 
 const REPORT_HIT_SLOP = { top: 6, bottom: 6, left: 15, right: 15 };
 const COMPACT_REPORT_HIT_SLOP = { top: 6, bottom: 6, left: 4, right: 4 };
@@ -137,7 +138,7 @@ export function LiveComments({
           void query.refetch();
         }}
       />
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      {query.isPending && <LoadingDots />}
       {/* Trả lời trống thì không cần lời mời bình luận; chỉ danh sách gốc mới hiện. */}
       {!parentCommentId && query.data?.pages[0]?.items.length === 0 && <Notice>{vi.api.noComments}</Notice>}
       {query.data?.pages

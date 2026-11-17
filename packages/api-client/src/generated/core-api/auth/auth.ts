@@ -21,6 +21,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminHandoffDto,
+  AdminHandoffExchangeDto,
   ChangePasswordDto,
   ForgotPasswordAcceptedDto,
   ForgotPasswordDto,
@@ -862,6 +864,220 @@ export const useAuthControllerRefresh = <TError = void, TContext = unknown>(
   TContext
 > => {
   return useMutation(getAuthControllerRefreshMutationOptions(options), queryClient);
+};
+export type authControllerCreateAdminHandoffResponse200 = {
+  data: AdminHandoffDto;
+  status: 200;
+};
+
+export type authControllerCreateAdminHandoffResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type authControllerCreateAdminHandoffResponseSuccess = authControllerCreateAdminHandoffResponse200 & {
+  headers: Headers;
+};
+export type authControllerCreateAdminHandoffResponseError = authControllerCreateAdminHandoffResponse403 & {
+  headers: Headers;
+};
+
+export type authControllerCreateAdminHandoffResponse =
+  authControllerCreateAdminHandoffResponseSuccess | authControllerCreateAdminHandoffResponseError;
+
+export const getAuthControllerCreateAdminHandoffUrl = () => {
+  return `/api/auth/admin-handoff`;
+};
+
+export const authControllerCreateAdminHandoff = async (
+  options?: Parameters<typeof http>[1],
+): Promise<authControllerCreateAdminHandoffResponse> => {
+  return http<authControllerCreateAdminHandoffResponse>(getAuthControllerCreateAdminHandoffUrl(), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getAuthControllerCreateAdminHandoffMutationKey = () =>
+  ['authControllerCreateAdminHandoff'] as const;
+
+export const getAuthControllerCreateAdminHandoffMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerCreateAdminHandoff>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authControllerCreateAdminHandoff>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = getAuthControllerCreateAdminHandoffMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authControllerCreateAdminHandoff>>,
+    void
+  > = () => {
+    return authControllerCreateAdminHandoff(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerCreateAdminHandoffMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerCreateAdminHandoff>>
+>;
+
+export type AuthControllerCreateAdminHandoffMutationError = void;
+
+export const useAuthControllerCreateAdminHandoff = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerCreateAdminHandoff>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authControllerCreateAdminHandoff>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getAuthControllerCreateAdminHandoffMutationOptions(options), queryClient);
+};
+export type authControllerExchangeAdminHandoffResponse200 = {
+  data: TokenPairDto;
+  status: 200;
+};
+
+export type authControllerExchangeAdminHandoffResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type authControllerExchangeAdminHandoffResponseSuccess =
+  authControllerExchangeAdminHandoffResponse200 & {
+    headers: Headers;
+  };
+export type authControllerExchangeAdminHandoffResponseError =
+  authControllerExchangeAdminHandoffResponse403 & {
+    headers: Headers;
+  };
+
+export type authControllerExchangeAdminHandoffResponse =
+  authControllerExchangeAdminHandoffResponseSuccess | authControllerExchangeAdminHandoffResponseError;
+
+export const getAuthControllerExchangeAdminHandoffUrl = () => {
+  return `/api/auth/admin-handoff/exchange`;
+};
+
+export const authControllerExchangeAdminHandoff = async (
+  adminHandoffExchangeDto: AdminHandoffExchangeDto,
+  options?: Parameters<typeof http>[1],
+): Promise<authControllerExchangeAdminHandoffResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<authControllerExchangeAdminHandoffResponse>(getAuthControllerExchangeAdminHandoffUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(adminHandoffExchangeDto),
+  });
+};
+
+export const getAuthControllerExchangeAdminHandoffMutationKey = () =>
+  ['authControllerExchangeAdminHandoff'] as const;
+
+export const getAuthControllerExchangeAdminHandoffMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerExchangeAdminHandoff>>,
+    TError,
+    AuthControllerExchangeAdminHandoffMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authControllerExchangeAdminHandoff>>,
+  TError,
+  AuthControllerExchangeAdminHandoffMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAuthControllerExchangeAdminHandoffMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authControllerExchangeAdminHandoff>>,
+    AuthControllerExchangeAdminHandoffMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return authControllerExchangeAdminHandoff(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerExchangeAdminHandoffMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerExchangeAdminHandoff>>
+>;
+export type AuthControllerExchangeAdminHandoffMutationBody = AdminHandoffExchangeDto;
+export type AuthControllerExchangeAdminHandoffMutationError = void;
+export type AuthControllerExchangeAdminHandoffMutationVariables = { data: AdminHandoffExchangeDto };
+
+export const useAuthControllerExchangeAdminHandoff = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerExchangeAdminHandoff>>,
+      TError,
+      AuthControllerExchangeAdminHandoffMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authControllerExchangeAdminHandoff>>,
+  TError,
+  AuthControllerExchangeAdminHandoffMutationVariables,
+  TContext
+> => {
+  return useMutation(getAuthControllerExchangeAdminHandoffMutationOptions(options), queryClient);
 };
 export type authControllerLogoutResponse204 = {
   data: void;

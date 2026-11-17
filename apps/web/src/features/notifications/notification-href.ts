@@ -1,4 +1,5 @@
 import type { InboxNotification } from '@tripflix/api-client';
+import { buildPostHref } from '../social/search-url';
 
 /**
  * Nơi mở khi bấm thông báo. Thông báo đơn (đã thanh toán, đã huỷ) có orderId thì mở thẳng trang đơn,
@@ -12,7 +13,7 @@ export function resolveNotificationHref(
   const { postId, commentId } = notification.data;
   if ((notification.type === 'comment.created' || notification.type === 'comment.replied') &&
     typeof postId === 'string' && postId && typeof commentId === 'string' && commentId) {
-    return `/trips/${encodeURIComponent(postId)}?comment=${encodeURIComponent(commentId)}`;
+    return buildPostHref(postId, { commentId });
   }
   const { link } = notification;
   if (!link) return null;
