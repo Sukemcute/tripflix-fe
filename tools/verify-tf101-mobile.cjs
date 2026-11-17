@@ -70,4 +70,3 @@ async function main() {
   } finally { await browser.close(); }
 }
 main().catch((error) => { console.error(error); process.exitCode = 1; });
-
