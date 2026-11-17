@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { subscribeAdminRealtime } from './admin-realtime-stream';
 
 export function useAdminRealtime(enabled: boolean) {
   const client = useQueryClient();
@@ -17,15 +18,16 @@ export function useAdminRealtime(enabled: boolean) {
           void client.invalidateQueries({ queryKey });
       }, 250);
     };
-    const stream = new EventSource('/bff/api/admin/realtime');
     const connecting = () => setStatus(navigator.onLine ? 'connecting' : 'offline');
-    stream.addEventListener('ready', () => {
-      setStatus('live');
-      reload();
+    // Dùng chung một luồng cho mọi trang để chuyển trang không phải nối lại (TF104).
+    const unsubscribe = subscribeAdminRealtime({
+      onReady: () => {
+        setStatus('live');
+        reload();
+      },
+      onChange: reload,
+      onReconnecting: connecting,
     });
-    stream.addEventListener('moderation.changed', reload);
-    stream.addEventListener('reconnecting', connecting);
-    stream.onerror = connecting;
     const reconnect = () => {
       connecting();
       reload();
@@ -33,7 +35,7 @@ export function useAdminRealtime(enabled: boolean) {
     window.addEventListener('online', reconnect);
     window.addEventListener('offline', connecting);
     return () => {
-      stream.close();
+      unsubscribe();
       if (timer) clearTimeout(timer);
       window.removeEventListener('online', reconnect);
       window.removeEventListener('offline', connecting);

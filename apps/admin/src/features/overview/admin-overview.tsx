@@ -7,6 +7,7 @@ import { vi } from '@tripflix/i18n';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { AdminApiError } from '../shell/api-state';
 import { EmptyState, LoadingState, Metric, Panel } from '../shell/operations-ui';
+import { ThroughputPanel } from './throughput-panel';
 const copy = vi.adminOperations;
 
 export function AdminOverview() {
@@ -235,6 +236,7 @@ export function AdminOverview() {
           )}
         </Panel>
       </div>
+      <ThroughputPanel />
     </div>
   );
 }
