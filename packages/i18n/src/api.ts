@@ -85,7 +85,7 @@ export const api = {
   onboardingNone: 'Chưa chọn',
   onboardingEdit: 'Sửa',
   onboardingSave: 'Lưu sở thích',
-  onboardingRetry: 'Thử lại',
+  onboardingSkipQuestion: 'Bỏ qua câu này',
   onboardingSaveFailed: 'Chưa lưu được sở thích vào tài khoản. Lựa chọn của bạn vẫn được giữ.',
   onboardingGuestNote:
     'Bạn chưa đăng nhập: sở thích lưu trên trình duyệt này và sẽ được lưu vào tài khoản sau khi bạn đăng nhập.',

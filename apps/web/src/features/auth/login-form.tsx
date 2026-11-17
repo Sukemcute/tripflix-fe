@@ -4,11 +4,11 @@ import { REGISTRATION_CODE_PATTERN } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useAfterAuth } from '@/features/onboarding/use-after-auth';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AuthErrorNotice, AuthField, PasswordField } from './auth-fields';
-import { readDeviceName, readSafeReturnTo, withReturnTo } from './auth-return';
+import { readDeviceName, withReturnTo } from './auth-return';
 import { GoogleButton } from './google-button';
 
 /**
@@ -17,15 +17,12 @@ import { GoogleButton } from './google-button';
  */
 export function LiveLogin({ returnTo }: { returnTo?: string }) {
   const { session, isReady, error } = useApiSession();
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [loginChallengeId, setLoginChallengeId] = useState<string>();
-  const goBack = useCallback(
-    () => router.replace(readSafeReturnTo(returnTo ?? '/account')),
-    [router, returnTo],
-  );
+  // Về trang cũ, hoặc mở khảo sát sở thích nếu hồ sơ chưa làm (SCRUM-160).
+  const goBack = useAfterAuth(returnTo);
 
   const cooldown = useResendCooldown();
   const requestCode = useMutation({
