@@ -1,530 +1,484 @@
 'use client';
-import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { moderationApi, useApiSession } from '@tripflix/api-client';
+import type { ModerationCaseDto, ModerationLogDto } from '@tripflix/api-client/core-api/model/index';
+import { colors } from '@tripflix/tokens';
+import { t, vi } from '@tripflix/i18n';
+import { cn } from '@tripflix/ui-web';
 import Link from 'next/link';
-import {
-  UserGrowthChart,
-  ContentStatusDonut,
-  ContentViewsBarChart,
-  OrdersPaymentsCard,
-} from './overview-charts';
+import { AlertRow } from '../live/ops-alerts-page';
+import { useDiscoveryJobs, useIndexHealth, useOpsAlerts } from '../live/ops-alerts';
+import { LiveIndicator } from '../live/live-indicator';
+import { useStaffLive } from '../live/staff-live';
+import { getRiskLevel } from '../moderation/risk-level';
+import { AdminApiError } from '../shell/api-state';
+import { formatNumber, formatRelative, shortId } from '../ui/format';
+import { Icon } from '../ui/icon';
+import { Badge, Card, CardHeader, EmptyState, PageHeader, Skeleton, StatTile, type Tone } from '../ui/primitives';
+import { useNow } from '../ui/use-now';
+import { MixDonut, QueueTrendChart, ThroughputChart, type ThroughputBucket } from './overview-charts';
+
+const text = vi.adminConsole.overview;
+const actionLabels = vi.moderation as unknown as Record<string, string>;
+const reasonLabels = vi.moderation.reasons as Record<string, string>;
+const HOUR_MS = 3_600_000;
+const RISK_TONE: Record<string, Tone> = { critical: 'danger', high: 'coral', medium: 'sun', low: 'teal' };
+const ACTION_TONE: Record<string, Tone> = {
+  hide: 'coral',
+  auto_hide: 'sun',
+  remove: 'danger',
+  restore: 'teal',
+  dismiss: 'neutral',
+};
+
+/** Chia thao tác của 24 giờ gần nhất theo giờ, tách nhân sự và hệ thống. */
+export function buildThroughput(items: ModerationLogDto[], now: number): ThroughputBucket[] {
+  const currentHour = Math.floor(now / HOUR_MS) * HOUR_MS;
+  const buckets = Array.from({ length: 24 }, (_, index) => {
+    const start = currentHour - (23 - index) * HOUR_MS;
+    return { start, hour: `${new Date(start).getHours()}h`, staff: 0, system: 0 };
+  });
+  for (const item of items) {
+    const index = 23 - Math.floor((currentHour - Math.floor(new Date(item.createdAt).getTime() / HOUR_MS) * HOUR_MS) / HOUR_MS);
+    const bucket = buckets[index];
+    if (!bucket) continue;
+    if (item.actorType === 'system') bucket.system += 1;
+    else bucket.staff += 1;
+  }
+  return buckets.map(({ hour, staff, system }) => ({ hour, staff, system }));
+}
 
 export function AdminOverview() {
-  const [modFilter, setModFilter] = useState<'all' | 'post' | 'video' | 'comment'>('all');
+  const { user } = useApiSession();
+  const { stats, samples, feed, pollMs } = useStaffLive();
+  const { alerts } = useOpsAlerts();
+  const now = useNow();
+  const summary = stats.data;
+
+  const priority = useQuery({
+    queryKey: ['moderation', 'queue', 'overview-priority'],
+    queryFn: ({ signal }) => moderationApi.queue({ view: 'pending', limit: 5 }, signal),
+    refetchInterval: pollMs,
+  });
+  const log = useQuery({
+    queryKey: ['moderation', 'log', 'overview'],
+    queryFn: ({ signal }) => moderationApi.log({ limit: 100 }, signal),
+    refetchInterval: pollMs,
+  });
+  const logItems = log.data?.items ?? [];
+  const throughput = buildThroughput(logItems, now);
+  const hasThroughput = throughput.some((bucket) => bucket.staff + bucket.system > 0);
+  const actionCounts = Object.entries(
+    logItems.reduce<Record<string, number>>((counts, item) => {
+      counts[item.action] = (counts[item.action] ?? 0) + 1;
+      return counts;
+    }, {}),
+  ).sort(([, a], [, b]) => b - a);
+  const maxAction = Math.max(1, ...actionCounts.map(([, count]) => count));
+
+  const value = (count: number | undefined) => (count === undefined ? '—' : formatNumber(count));
 
   return (
-    <div className="overview-root">
-      {/* Hàng 1: 5 Thẻ Chỉ số KPI Vận hành Nền tảng */}
-      <section className="overview-kpi-grid" aria-label="Các chỉ số chính">
-        {/* KPI 1: Người dùng hoạt động */}
-        <div className="overview-kpi-card">
-          <div className="kpi-card-inner">
-            <div className="kpi-icon-circle cyan">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0284C7" strokeWidth="2.2">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-            </div>
-            <div className="kpi-data-block">
-              <span className="kpi-label">Người dùng hoạt động</span>
-              <strong className="kpi-value">125.430</strong>
-              <span className="trend-tag up">
-                ↑ +8,2% <span className="trend-sub">so với 7 ngày trước</span>
-              </span>
-            </div>
-          </div>
-          {/* Họa tiết trang trí góc mờ */}
-          <div className="kpi-bg-accent cyan" />
-        </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title={user ? t('adminConsole.overview.greeting', { name: user.displayName }) : text.title}
+        subtitle={text.subtitle}
+        actions={<LiveIndicator />}
+      />
+      <AdminApiError error={stats.error} retry={() => void stats.refetch()} />
 
-        {/* KPI 2: Chuyến đi (Booking) */}
-        <div className="overview-kpi-card">
-          <div className="kpi-card-inner">
-            <div className="kpi-icon-circle amber">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.2">
-                <rect width="20" height="14" x="2" y="7" rx="2" />
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-              </svg>
-            </div>
-            <div className="kpi-data-block">
-              <span className="kpi-label">Chuyến đi (Booking)</span>
-              <strong className="kpi-value">8.742</strong>
-              <span className="trend-tag up">
-                ↑ +12,6% <span className="trend-sub">so với 7 ngày trước</span>
-              </span>
-            </div>
-          </div>
-          <div className="kpi-bg-accent amber" />
-        </div>
-
-        {/* KPI 3: Nội dung đăng tải */}
-        <div className="overview-kpi-card">
-          <div className="kpi-card-inner">
-            <div className="kpi-icon-circle blue">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.2">
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-            </div>
-            <div className="kpi-data-block">
-              <span className="kpi-label">Nội dung đăng tải</span>
-              <strong className="kpi-value">21.359</strong>
-              <span className="trend-tag up">
-                ↑ +9,4% <span className="trend-sub">so với 7 ngày trước</span>
-              </span>
-            </div>
-          </div>
-          <div className="kpi-bg-accent blue" />
-        </div>
-
-        {/* KPI 4: Lượt xem */}
-        <div className="overview-kpi-card">
-          <div className="kpi-card-inner">
-            <div className="kpi-icon-circle emerald">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </div>
-            <div className="kpi-data-block">
-              <span className="kpi-label">Lượt xem</span>
-              <strong className="kpi-value">2,48M</strong>
-              <span className="trend-tag up">
-                ↑ +15,3%
-              </span>
-            </div>
-          </div>
-          <div className="kpi-bg-accent emerald" />
-        </div>
-
-        {/* KPI 5: Lượt yêu thích */}
-        <div className="overview-kpi-card">
-          <div className="kpi-card-inner">
-            <div className="kpi-icon-circle rose">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E11D48" strokeWidth="2.2">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-              </svg>
-            </div>
-            <div className="kpi-data-block">
-              <span className="kpi-label">Lượt yêu thích</span>
-              <strong className="kpi-value">436.921</strong>
-              <span className="trend-tag up">
-                ↑ +11,8%
-              </span>
-            </div>
-          </div>
-          <div className="kpi-bg-accent rose" />
-        </div>
+      <section aria-label={text.title} className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <StatTile
+          label={text.kpiPending}
+          icon="inbox"
+          tone="navy"
+          isLoading={stats.isPending}
+          value={value(summary?.pendingTotal)}
+          sub={summary && t('adminConsole.overview.kpiPendingSub', { posts: summary.pendingPosts, comments: summary.pendingComments })}
+        />
+        <StatTile
+          label={text.kpiUrgent}
+          icon="alert"
+          tone="danger"
+          isLoading={stats.isPending}
+          isHighlighted={!!summary?.pendingUrgent}
+          value={value(summary?.pendingUrgent)}
+          sub={summary && t('adminConsole.overview.kpiUrgentSub', { severity: summary.urgentSeverity })}
+        />
+        <StatTile
+          label={text.kpiOldest}
+          icon="jobs"
+          tone="sun"
+          isLoading={stats.isPending}
+          value={summary?.oldestPendingAt ? formatRelative(summary.oldestPendingAt, now) : '—'}
+          sub={summary && !summary.oldestPendingAt ? text.kpiOldestNone : undefined}
+        />
+        <StatTile
+          label={text.kpiAutoHidden}
+          icon="shield"
+          tone="teal"
+          isLoading={stats.isPending}
+          value={value(summary?.autoHidden24h)}
+          sub={text.kpiAutoHiddenSub}
+        />
+        <StatTile
+          label={text.kpiReports}
+          icon="users"
+          tone="coral"
+          isLoading={stats.isPending}
+          value={value(summary?.reports24h)}
+          sub={text.kpiReportsSub}
+        />
+        <StatTile
+          label={text.kpiAppeals}
+          icon="comment"
+          tone="navy"
+          isLoading={stats.isPending}
+          value={value(summary?.pendingAppeals)}
+          sub={summary && summary.failedScans + summary.deferredScans > 0
+            ? `${text.kpiScans}: ${summary.failedScans} · ${t('adminConsole.overview.kpiScansSub', { deferred: summary.deferredScans })}`
+            : text.kpiAppealsSub}
+        />
       </section>
 
-      {/* Hàng 2: Tăng trưởng người dùng + Trạng thái nội dung + Cảnh báo hệ thống */}
-      <section className="overview-row-dashboard-2">
-        {/* Cột 1: Tăng trưởng người dùng (Area Line Chart) */}
-        <div className="overview-card-panel">
-          <UserGrowthChart />
-        </div>
-
-        {/* Cột 2: Trạng thái nội dung (Donut Chart) */}
-        <div className="overview-card-panel">
-          <ContentStatusDonut />
-        </div>
-
-        {/* Cột 3: Cảnh báo hệ thống (Live Alerts Feed) */}
-        <div className="overview-card-panel">
-          <div className="overview-chart-header">
-            <h3 className="overview-card-title">
-              <span className="chart-icon-box red">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                  <line x1="12" x2="12" y1="9" y2="13" />
-                  <line x1="12" x2="12.01" y1="17" y2="17" />
-                </svg>
-              </span>
-              Cảnh báo hệ thống
-            </h3>
-            <span className="badge-alert-count">12</span>
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
+        <Card>
+          <CardHeader
+            icon="pulse"
+            title={text.queueTrend}
+            hint={text.queueTrendHint}
+            action={
+              <div className="flex items-center gap-3 text-[11px] font-semibold text-text-muted">
+                <Legend color="bg-teal" label={text.seriesPending} />
+                <Legend color="bg-danger" label={text.seriesUrgent} />
+              </div>
+            }
+          />
+          <div className="px-3 pb-3">
+            {samples.length > 1 ? (
+              <QueueTrendChart points={samples} labels={{ pending: text.seriesPending, urgent: text.seriesUrgent }} />
+            ) : (
+              <EmptyState icon="pulse" title={text.queueTrendEmpty} className="h-[220px]" />
+            )}
           </div>
+        </Card>
 
-          <div className="alerts-feed-list">
-            <div className="alert-feed-item">
-              <div className="alert-feed-icon warning">⚠️</div>
-              <div className="alert-feed-content">
-                <strong className="alert-feed-title">Thanh toán thành công, chưa xác nhận đặt chỗ</strong>
-                <span className="alert-feed-meta">BK-2841 • Đã quá 30 phút</span>
-              </div>
-              <span className="alert-feed-time">10:24</span>
-            </div>
-
-            <div className="alert-feed-item">
-              <div className="alert-feed-icon warning">⚠️</div>
-              <div className="alert-feed-content">
-                <strong className="alert-feed-title">Nghi vấn giao dịch bị tính phí hai lần</strong>
-                <span className="alert-feed-meta">BK-2838 • Cần đối soát</span>
-              </div>
-              <span className="alert-feed-time">10:12</span>
-            </div>
-
-            <div className="alert-feed-item">
-              <div className="alert-feed-icon warning">⚠️</div>
-              <div className="alert-feed-content">
-                <strong className="alert-feed-title">Bài đăng tăng tương tác bất thường</strong>
-                <span className="alert-feed-meta">RL-8201 • Nghi vấn seeding</span>
-              </div>
-              <span className="alert-feed-time">09:48</span>
-            </div>
-
-            <div className="alert-feed-item">
-              <div className="alert-feed-icon info">ℹ️</div>
-              <div className="alert-feed-content">
-                <strong className="alert-feed-title">API phản hồi chậm</strong>
-                <span className="alert-feed-meta">Thời gian trung bình 2,8s (ngưỡng: 1,5s)</span>
-              </div>
-              <span className="alert-feed-time">09:30</span>
-            </div>
+        <Card>
+          <CardHeader icon="overview" title={text.mix} hint={text.mixHint} />
+          <div className="px-5 pb-5">
+            {summary && summary.pendingTotal > 0 ? (
+              <>
+                <MixDonut
+                  centerValue={formatNumber(summary.pendingTotal)}
+                  centerLabel={text.kpiPending}
+                  slices={[
+                    { name: text.mixPosts, value: summary.pendingPosts, color: colors.navy },
+                    { name: text.mixComments, value: summary.pendingComments, color: colors.teal },
+                  ]}
+                />
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <MixStat color="bg-navy" label={text.mixPosts} value={summary.pendingPosts} total={summary.pendingTotal} />
+                  <MixStat color="bg-teal" label={text.mixComments} value={summary.pendingComments} total={summary.pendingTotal} />
+                </dl>
+              </>
+            ) : stats.isPending ? (
+              <Skeleton className="mx-auto mt-4 size-40 rounded-full" />
+            ) : (
+              <EmptyState icon="check" title={text.mixEmpty} />
+            )}
           </div>
-        </div>
-      </section>
+        </Card>
 
-      {/* Hàng 3: Lượt xem nội dung + Đơn hàng & Thanh toán + Top điểm đến */}
-      <section className="overview-row-equal-3">
-        {/* Cột 1: Lượt xem nội dung (Bar Chart) */}
-        <div className="overview-card-panel">
-          <ContentViewsBarChart />
-        </div>
+        <Card>
+          <CardHeader
+            icon="bell"
+            title={vi.adminConsole.alerts.title}
+            action={
+              <Link href="/alerts" className="text-xs font-semibold text-teal-ink hover:underline">
+                {text.viewAll}
+              </Link>
+            }
+          />
+          {alerts.length ? (
+            <ul className="flex flex-col px-2 pb-3">
+              {alerts.slice(0, 4).map((alert) => (
+                <AlertRow key={alert.id} alert={alert} isCompact />
+              ))}
+            </ul>
+          ) : (
+            <EmptyState icon="check" title={vi.adminConsole.alerts.none} />
+          )}
+        </Card>
+      </div>
 
-        {/* Cột 2: Đơn hàng & Thanh toán (Mini Donut & Metrics) */}
-        <div className="overview-card-panel">
-          <OrdersPaymentsCard />
-        </div>
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <Card>
+          <CardHeader
+            icon="shield"
+            title={text.priority}
+            hint={text.priorityHint}
+            action={
+              <Link href="/moderation" className="text-xs font-semibold text-teal-ink hover:underline">
+                {text.openQueue}
+              </Link>
+            }
+          />
+          <AdminApiError error={priority.error} />
+          {priority.isPending ? (
+            <div className="flex flex-col gap-2 px-5 pb-5">
+              {[0, 1, 2].map((index) => (
+                <Skeleton key={index} className="h-14" />
+              ))}
+            </div>
+          ) : priority.data?.items.length ? (
+            <ul className="flex flex-col px-2 pb-3">
+              {priority.data.items.map((item) => (
+                <PriorityRow key={item.id} item={item} now={now} />
+              ))}
+            </ul>
+          ) : (
+            <EmptyState icon="check" title={text.priorityEmpty} />
+          )}
+        </Card>
 
-        {/* Cột 3: Top điểm đến (theo lượt xem) */}
-        <div className="overview-card-panel">
-          <div className="overview-chart-header" style={{ flexWrap: 'nowrap', gap: 6 }}>
-            <h3 className="overview-card-title" style={{ fontSize: 13, whiteSpace: 'nowrap', minWidth: 0 }}>
-              <span className="chart-icon-box coral">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-              </span>
-              <span>Top điểm đến</span>
-              <span className="card-sub-hint" style={{ fontSize: 10 }}>(lượt xem)</span>
-            </h3>
-            <Link href="/analytics" className="card-header-link" style={{ fontSize: 11, whiteSpace: 'nowrap', flexShrink: 0 }}>
-              Xem tất cả →
-            </Link>
+        <Card>
+          <CardHeader icon="audit" title={text.activity} hint={text.activityHint} />
+          {feed.length > 0 && (
+            <ul className="flex flex-wrap gap-1.5 px-5 pb-3" aria-label={vi.adminConsole.live.live}>
+              {feed.slice(0, 4).map((entry) => (
+                <li key={entry.id}>
+                  <Badge tone="teal" hasDot>
+                    {entry.kinds.map((kind) => vi.adminConsole.signalKinds[kind]).join(', ')} · {formatRelative(entry.at, now)}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+          <AdminApiError error={log.error} />
+          {log.isPending ? (
+            <div className="flex flex-col gap-2 px-5 pb-5">
+              <Skeleton className="h-10" />
+              <Skeleton className="h-10" />
+            </div>
+          ) : logItems.length ? (
+            <ol className="relative mx-5 mb-4 border-l border-border">
+              {logItems.slice(0, 7).map((item) => (
+                <ActivityItem key={item.id} item={item} now={now} />
+              ))}
+            </ol>
+          ) : (
+            <EmptyState title={text.activityEmpty} />
+          )}
+        </Card>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <Card>
+          <CardHeader
+            icon="report"
+            title={text.throughput}
+            hint={text.throughputHint}
+            action={
+              <div className="flex items-center gap-3 text-[11px] font-semibold text-text-muted">
+                <Legend color="bg-navy" label={text.throughputStaff} />
+                <Legend color="bg-teal" label={text.throughputSystem} />
+              </div>
+            }
+          />
+          <div className="px-3 pb-3">
+            {hasThroughput ? (
+              <ThroughputChart
+                buckets={throughput}
+                labels={{ staff: text.throughputStaff, system: text.throughputSystem }}
+              />
+            ) : (
+              <EmptyState icon="report" title={text.throughputEmpty} className="h-[200px]" />
+            )}
           </div>
-
-          <div className="destinations-list">
-            <div className="destination-item">
-              <span className="dest-rank gold">👑 1</span>
-              <div className="dest-thumb dalat" />
-              <div className="dest-info">
-                <strong className="dest-name">Đà Lạt</strong>
-                <span className="dest-views">326,4K</span>
-              </div>
-              <span className="trend-tag up">↑ +18,2%</span>
+          {actionCounts.length > 0 && (
+            <div className="border-t border-border px-5 py-4">
+              <h3 className="mb-2 text-xs font-semibold text-text-muted">{text.actionMix}</h3>
+              <ul className="flex flex-col gap-2">
+                {actionCounts.map(([action, count]) => (
+                  <li key={action} className="grid grid-cols-[96px_minmax(0,1fr)_40px] items-center gap-3 text-xs">
+                    <span className="font-semibold text-text">{actionLabels[action] ?? action}</span>
+                    <span className="h-2 overflow-hidden rounded-full bg-surface-muted">
+                      <span
+                        className={cn('block h-full rounded-full', {
+                          'bg-coral': ACTION_TONE[action] === 'coral',
+                          'bg-sun': ACTION_TONE[action] === 'sun',
+                          'bg-danger': ACTION_TONE[action] === 'danger',
+                          'bg-teal': ACTION_TONE[action] === 'teal',
+                          'bg-text-subtle': !ACTION_TONE[action] || ACTION_TONE[action] === 'neutral',
+                        })}
+                        style={{ width: `${(count / maxAction) * 100}%` }}
+                      />
+                    </span>
+                    <span className="text-right font-semibold tabular-nums">{count}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-
-            <div className="destination-item">
-              <span className="dest-rank silver">🥈 2</span>
-              <div className="dest-thumb danang" />
-              <div className="dest-info">
-                <strong className="dest-name">Đà Nẵng</strong>
-                <span className="dest-views">287,9K</span>
-              </div>
-              <span className="trend-tag up">↑ +12,5%</span>
-            </div>
-
-            <div className="destination-item">
-              <span className="dest-rank bronze">🥉 3</span>
-              <div className="dest-thumb nhatrang" />
-              <div className="dest-info">
-                <strong className="dest-name">Nha Trang</strong>
-                <span className="dest-views">219,7K</span>
-              </div>
-              <span className="trend-tag up">↑ +11,9%</span>
-            </div>
-
-            <div className="destination-item">
-              <span className="dest-rank">4</span>
-              <div className="dest-thumb sapa" />
-              <div className="dest-info">
-                <strong className="dest-name">Sapa</strong>
-                <span className="dest-views">181,2K</span>
-              </div>
-              <span className="trend-tag up">↑ +9,6%</span>
-            </div>
-
-            <div className="destination-item">
-              <span className="dest-rank">5</span>
-              <div className="dest-thumb phuquoc" />
-              <div className="dest-info">
-                <strong className="dest-name">Phú Quốc</strong>
-                <span className="dest-views">176,8K</span>
-              </div>
-              <span className="trend-tag up">↑ +8,9%</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Hàng 4: Hàng đợi kiểm duyệt + Hoạt động gần đây + Nhật ký kiểm toán */}
-      <section className="overview-row-equal-3">
-        {/* Cột 1: Hàng đợi kiểm duyệt (Cards) */}
-        <div className="overview-card-panel">
-          <div className="overview-chart-header" style={{ flexWrap: 'nowrap', gap: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-              <h3 className="overview-card-title" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
-                <span className="chart-icon-box orange">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    <path d="m9 12 2 2 4-4" />
-                  </svg>
-                </span>
-                <span>Hàng đợi kiểm duyệt</span>
-              </h3>
-              <span className="badge-alert-count">312</span>
-            </div>
-            <Link href="/moderation" className="card-header-link" style={{ fontSize: 11, whiteSpace: 'nowrap', flexShrink: 0 }}>
-              Xem tất cả →
-            </Link>
-          </div>
-
-          {/* Tab filter nhỏ */}
-          <div className="mod-mini-tabs">
-            <button
-              type="button"
-              className={`mod-mini-tab ${modFilter === 'all' ? 'is-active' : ''}`}
-              onClick={() => setModFilter('all')}
-            >
-              Tất cả (312)
-            </button>
-            <button
-              type="button"
-              className={`mod-mini-tab ${modFilter === 'post' ? 'is-active' : ''}`}
-              onClick={() => setModFilter('post')}
-            >
-              Bài viết (178)
-            </button>
-            <button
-              type="button"
-              className={`mod-mini-tab ${modFilter === 'video' ? 'is-active' : ''}`}
-              onClick={() => setModFilter('video')}
-            >
-              Video (86)
-            </button>
-            <button
-              type="button"
-              className={`mod-mini-tab ${modFilter === 'comment' ? 'is-active' : ''}`}
-              onClick={() => setModFilter('comment')}
-            >
-              Bình luận (48)
-            </button>
-          </div>
-
-          {/* Danh sách thẻ kiểm duyệt */}
-          <div className="mod-cards-stack">
-            {/* Thẻ 1 */}
-            <div className="mod-queue-card">
-              <div className="mod-card-thumb-wrap">
-                <div className="mod-card-thumb hagiang" />
-                <span className="mod-card-duration">02:34</span>
-              </div>
-              <div className="mod-card-body">
-                <strong className="mod-card-title">Khám phá Hà Giang mùa hoa tam giác mạch</strong>
-                <span className="mod-card-author">@travelwithminh • 2 giờ trước</span>
-                <div className="mod-card-badges">
-                  <span className="risk-pill danger">Rủi ro cao</span>
-                  <span className="report-count-tag">Báo cáo: 12</span>
-                </div>
-              </div>
-              <div className="mod-card-actions">
-                <Link href="/moderation" className="btn-action-view">
-                  👁️ Xem
-                </Link>
-                <button type="button" className="btn-action-approve">
-                  ✓ Duyệt
-                </button>
-              </div>
-            </div>
-
-            {/* Thẻ 2 */}
-            <div className="mod-queue-card">
-              <div className="mod-card-thumb-wrap">
-                <div className="mod-card-thumb phuquoc" />
-                <span className="mod-card-duration">01:18</span>
-              </div>
-              <div className="mod-card-body">
-                <strong className="mod-card-title">Review resort Phú Quốc 5 sao</strong>
-                <span className="mod-card-author">@linhtravels • 3 giờ trước</span>
-                <div className="mod-card-badges">
-                  <span className="risk-pill warning">Rủi ro trung bình</span>
-                  <span className="report-count-tag">Báo cáo: 4</span>
-                </div>
-              </div>
-              <div className="mod-card-actions">
-                <Link href="/moderation" className="btn-action-view">
-                  👁️ Xem
-                </Link>
-                <button type="button" className="btn-action-approve">
-                  ✓ Duyệt
-                </button>
-              </div>
-            </div>
-
-            {/* Thẻ 3 */}
-            <div className="mod-queue-card">
-              <div className="mod-card-thumb-wrap">
-                <div className="mod-card-thumb taxua" />
-              </div>
-              <div className="mod-card-body">
-                <strong className="mod-card-title">Cắm trại ở Tà Xùa – Trải nghiệm đáng nhớ</strong>
-                <span className="mod-card-author">@outdoor_tuan • 4 giờ trước</span>
-                <div className="mod-card-badges">
-                  <span className="risk-pill warning">Rủi ro trung bình</span>
-                  <span className="report-count-tag">Báo cáo: 3</span>
-                </div>
-              </div>
-              <div className="mod-card-actions">
-                <Link href="/moderation" className="btn-action-view">
-                  👁️ Xem
-                </Link>
-                <button type="button" className="btn-action-approve">
-                  ✓ Duyệt
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Cột 2: Hoạt động gần đây (Timeline) */}
-        <div className="overview-card-panel">
-          <div className="overview-chart-header" style={{ flexWrap: 'nowrap', gap: 6 }}>
-            <h3 className="overview-card-title" style={{ fontSize: 13, whiteSpace: 'nowrap', minWidth: 0 }}>
-              <span className="chart-icon-box rose">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-              </span>
-              <span>Hoạt động gần đây</span>
-            </h3>
-            <Link href="/moderation" className="card-header-link" style={{ fontSize: 11, whiteSpace: 'nowrap', flexShrink: 0 }}>
-              Xem tất cả →
-            </Link>
-          </div>
-
-          <div className="activity-timeline-list">
-            <div className="activity-timeline-item">
-              <div className="timeline-dot green" />
-              <div className="timeline-info">
-                <span className="timeline-text">
-                  <strong>Admin</strong> duyệt bài viết <code>#RL-8192</code>
-                </span>
-                <span className="timeline-time">10:42</span>
-              </div>
-            </div>
-
-            <div className="activity-timeline-item">
-              <div className="timeline-dot amber" />
-              <div className="timeline-info">
-                <span className="timeline-text">
-                  <strong>user_4587</strong> gửi báo cáo nội dung
-                </span>
-                <span className="timeline-time">10:30</span>
-              </div>
-            </div>
-
-            <div className="activity-timeline-item">
-              <div className="timeline-dot red" />
-              <div className="timeline-info">
-                <span className="timeline-text">
-                  <strong>Hệ thống</strong> phát hiện tương tác bất thường
-                </span>
-                <span className="timeline-time">10:12</span>
-              </div>
-            </div>
-
-            <div className="activity-timeline-item">
-              <div className="timeline-dot green" />
-              <div className="timeline-info">
-                <span className="timeline-text">
-                  Xác nhận đơn hàng <code>BK-2840</code>
-                </span>
-                <span className="timeline-time">09:58</span>
-              </div>
-            </div>
-
-            <div className="activity-timeline-item">
-              <div className="timeline-dot blue" />
-              <div className="timeline-info">
-                <span className="timeline-text">
-                  Cập nhật chính sách cộng đồng (v1.3)
-                </span>
-                <span className="timeline-time">09:41</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Cột 3: Nhật ký kiểm toán (Audit Log Table) */}
-        <div className="overview-card-panel">
-          <div className="overview-chart-header" style={{ flexWrap: 'nowrap', gap: 6 }}>
-            <h3 className="overview-card-title" style={{ fontSize: 13, whiteSpace: 'nowrap', minWidth: 0 }}>
-              <span className="chart-icon-box orange">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-              </span>
-              <span>Nhật ký kiểm toán</span>
-            </h3>
-            <Link href="/moderation" className="card-header-link" style={{ fontSize: 11, whiteSpace: 'nowrap', flexShrink: 0 }}>
-              Xem tất cả →
-            </Link>
-          </div>
-
-          <div className="audit-preview-table-wrap">
-            <table className="audit-preview-table">
-              <thead>
-                <tr>
-                  <th>Thời gian</th>
-                  <th>Người thực hiện</th>
-                  <th>Hành động</th>
-                  <th>Đối tượng</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>10:42:18</td>
-                  <td><span className="audit-actor">mod_012</span></td>
-                  <td><span className="audit-action orange">Tạm ẩn bài đăng</span></td>
-                  <td><code>#RL-8192</code></td>
-                </tr>
-                <tr>
-                  <td>10:30:04</td>
-                  <td><span className="audit-actor admin">admin_001</span></td>
-                  <td><span className="audit-action green">Khôi phục bài đăng</span></td>
-                  <td><code>#RL-8167</code></td>
-                </tr>
-                <tr>
-                  <td>10:12:31</td>
-                  <td><span className="audit-actor">mod_008</span></td>
-                  <td><span className="audit-action red">Xóa bình luận</span></td>
-                  <td><code>#CM-2038</code></td>
-                </tr>
-                <tr>
-                  <td>09:58:10</td>
-                  <td><span className="audit-actor admin">admin_001</span></td>
-                  <td><span className="audit-action red">Khóa tài khoản</span></td>
-                  <td><code>#USR-028</code></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+          )}
+        </Card>
+        <SystemHealthCard now={now} />
+      </div>
     </div>
+  );
+}
+
+function Legend({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={cn('size-2 rounded-full', color)} aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+function MixStat({ color, label, value, total }: { color: string; label: string; value: number; total: number }) {
+  return (
+    <div className="rounded-xl bg-surface px-3 py-2">
+      <dt className="flex items-center gap-1.5 text-text-muted">
+        <span className={cn('size-2 rounded-full', color)} aria-hidden="true" />
+        {label}
+      </dt>
+      <dd className="mt-0.5 font-bold text-text tabular-nums">
+        {formatNumber(value)} <span className="font-normal text-text-muted">· {Math.round((value / total) * 100)}%</span>
+      </dd>
+    </div>
+  );
+}
+
+function PriorityRow({ item, now }: { item: ModerationCaseDto; now: number }) {
+  const risk = getRiskLevel(item.severity);
+  const tone = RISK_TONE[risk.tone] ?? 'neutral';
+  return (
+    <li>
+      <Link
+        href={`/moderation?case=${encodeURIComponent(item.id)}`}
+        className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-surface"
+      >
+        <span
+          className={cn(
+            'grid size-10 shrink-0 place-items-center rounded-xl text-sm font-bold tabular-nums',
+            tone === 'danger' && 'bg-danger/10 text-danger',
+            tone === 'coral' && 'bg-coral-tint text-coral-ink',
+            tone === 'sun' && 'bg-sun-soft text-ink',
+            tone === 'teal' && 'bg-teal-soft text-teal-ink',
+          )}
+          title={risk.label}
+        >
+          {item.severity}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold text-text">
+            {item.targetPreview || `${item.targetType === 'comment' ? vi.moderation.comment : vi.moderation.post} #${shortId(item.targetId)}`}
+          </span>
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-text-muted">
+            <span>{item.targetType === 'comment' ? vi.moderation.comment : vi.moderation.post}</span>
+            {item.reportCount > 0 && <span>· {t('api.reportCount', { count: item.reportCount })}</span>}
+            {item.isAutoHidden && <span>· {vi.moderation.autoHidden}</span>}
+            <span>· {formatRelative(item.createdAt, now)}</span>
+          </span>
+        </span>
+        <Icon name="chevronRight" size={16} className="text-text-subtle" />
+      </Link>
+    </li>
+  );
+}
+
+function ActivityItem({ item, now }: { item: ModerationLogDto; now: number }) {
+  const tone = ACTION_TONE[item.action] ?? 'neutral';
+  return (
+    <li className="relative py-2.5 pl-5">
+      <span
+        className={cn(
+          'absolute top-4 -left-[5px] size-2.5 rounded-full ring-4 ring-background',
+          tone === 'coral' && 'bg-coral',
+          tone === 'sun' && 'bg-sun',
+          tone === 'danger' && 'bg-danger',
+          tone === 'teal' && 'bg-teal',
+          tone === 'neutral' && 'bg-text-subtle',
+        )}
+        aria-hidden="true"
+      />
+      <p className="text-sm text-text">
+        <strong className="font-semibold">
+          {item.actorType === 'system' ? vi.moderation.system : `${vi.moderation.staff} ${shortId(item.moderatorId)}`}
+        </strong>{' '}
+        {(actionLabels[item.action] ?? item.action).toLowerCase()}{' '}
+        {item.targetType === 'comment' ? vi.moderation.comment.toLowerCase() : vi.moderation.post.toLowerCase()}
+      </p>
+      <p className="mt-0.5 text-xs text-text-muted">
+        {reasonLabels[item.reasonCode] ?? item.reasonCode} · {formatRelative(item.createdAt, now)}
+      </p>
+    </li>
+  );
+}
+
+function SystemHealthCard({ now }: { now: number }) {
+  const health = useIndexHealth();
+  const searchJobs = useDiscoveryJobs('search');
+  const recommendJobs = useDiscoveryJobs('recommend');
+  const jobs = [...(searchJobs.data?.jobs ?? []), ...(recommendJobs.data?.jobs ?? [])];
+  const workerTone: Record<string, Tone> = { healthy: 'teal', attention: 'sun', offline: 'danger', unknown: 'neutral' };
+  const outcomeTone: Record<string, Tone> = { running: 'navy', succeeded: 'teal', skipped: 'neutral', failed: 'danger' };
+  return (
+    <Card>
+      <CardHeader icon="search" title={text.health} hint={text.healthHint} />
+      <AdminApiError error={health.error ?? searchJobs.error ?? recommendJobs.error} />
+      <div className="flex flex-col gap-4 px-5 pb-5">
+        <div>
+          <h3 className="mb-2 text-xs font-semibold text-text-muted">{text.workers}</h3>
+          {health.isPending ? (
+            <Skeleton className="h-10" />
+          ) : health.data?.workers.length ? (
+            <ul className="flex flex-col gap-1.5">
+              {health.data.workers.map((worker) => (
+                <li key={worker.id} className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 text-sm">
+                  <span className="min-w-0 truncate font-semibold">{worker.name}</span>
+                  <span className="flex items-center gap-2 text-xs text-text-muted">
+                    {formatRelative(worker.lastSeenAt, now)}
+                    <Badge tone={workerTone[worker.status] ?? 'neutral'} hasDot>
+                      {vi.adminConsole.workerStatus[worker.status]}
+                    </Badge>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-text-muted">{text.noWorkers}</p>
+          )}
+        </div>
+        <div>
+          <h3 className="mb-2 text-xs font-semibold text-text-muted">{text.jobs}</h3>
+          <ul className="flex flex-col gap-1.5">
+            {jobs.map((job) => {
+              const lastRun = job.runs[0];
+              return (
+                <li key={job.job}>
+                  <Link
+                    href={job.group === 'search' ? '/search-jobs' : '/recommend-jobs'}
+                    className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 text-sm hover:bg-surface-muted"
+                  >
+                    <span className="min-w-0 truncate font-semibold">{vi.discoveryJobs.jobs[job.job]}</span>
+                    <span className="flex items-center gap-2 text-xs text-text-muted">
+                      {lastRun ? formatRelative(lastRun.startedAt, now) : text.neverRun}
+                      {lastRun && (
+                        <Badge tone={job.isRunning ? 'navy' : outcomeTone[lastRun.outcome] ?? 'neutral'} hasDot>
+                          {vi.adminConsole.jobOutcome[job.isRunning ? 'running' : lastRun.outcome]}
+                        </Badge>
+                      )}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+            {!jobs.length && (searchJobs.isPending || recommendJobs.isPending) && <Skeleton className="h-10" />}
+          </ul>
+        </div>
+      </div>
+    </Card>
   );
 }
