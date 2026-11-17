@@ -2,6 +2,9 @@
    Màu lấy từ token; mọi chuyển động tắt khi người dùng chọn giảm chuyển động. */
 
 .page {
+  /* Bóng khối nhẹ: lệch ít, màu nhạt, không dùng navy đặc. */
+  --shadow-ink: color-mix(in srgb, var(--color-navy) 22%, transparent);
+  --shadow-accent: color-mix(in srgb, var(--color-coral-ink) 35%, transparent);
   position: relative;
   isolation: isolate;
   display: grid;
@@ -154,7 +157,7 @@
   border: 3px solid var(--color-navy);
   border-radius: 24px;
   background: var(--color-background);
-  box-shadow: 6px 6px 0 var(--color-navy);
+  box-shadow: 3px 3px 0 var(--shadow-ink);
   font-size: 16px;
   font-weight: 700;
   line-height: 1.5;
@@ -225,7 +228,7 @@
   border: 3px solid var(--color-navy);
   border-radius: 32px;
   background: var(--color-background);
-  box-shadow: 10px 10px 0 var(--color-navy);
+  box-shadow: 5px 5px 0 var(--shadow-ink);
 }
 .stepForward {
   animation: slideForward 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -360,7 +363,7 @@
   border: 3px solid var(--color-navy);
   border-radius: 24px;
   background: var(--color-navy);
-  box-shadow: 5px 5px 0 var(--color-navy);
+  box-shadow: 3px 3px 0 var(--shadow-ink);
   cursor: pointer;
   transition:
     transform 0.2s ease-out,
@@ -368,11 +371,11 @@
 }
 .photoCard:hover {
   transform: translate(-2px, -2px) rotate(-0.6deg);
-  box-shadow: 8px 8px 0 var(--color-navy);
+  box-shadow: 4px 4px 0 var(--shadow-ink);
 }
 .photoCard:active {
   transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 var(--color-navy);
+  box-shadow: 1px 1px 0 var(--shadow-ink);
 }
 .photoCard:focus-within {
   outline: 4px solid var(--color-coral-ink);
@@ -380,10 +383,10 @@
 }
 .photoCard.isSelected {
   border-color: var(--color-coral-ink);
-  box-shadow: 5px 5px 0 var(--color-coral-ink);
+  box-shadow: 3px 3px 0 var(--shadow-accent);
 }
 .photoCard.isSelected:hover {
-  box-shadow: 8px 8px 0 var(--color-coral-ink);
+  box-shadow: 4px 4px 0 var(--shadow-accent);
 }
 .photo {
   object-fit: cover;
@@ -494,7 +497,7 @@
   border: 3px solid var(--color-navy);
   border-radius: 24px;
   background: var(--color-background);
-  box-shadow: 5px 5px 0 var(--color-navy);
+  box-shadow: 3px 3px 0 var(--shadow-ink);
   text-align: center;
   cursor: pointer;
   transition:
@@ -504,7 +507,7 @@
 }
 .paceCard:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 8px 8px 0 var(--color-navy);
+  box-shadow: 4px 4px 0 var(--shadow-ink);
 }
 .paceCard:focus-within {
   outline: 4px solid var(--color-coral-ink);
@@ -513,7 +516,7 @@
 .paceCard.isSelected {
   border-color: var(--color-coral-ink);
   background: var(--color-coral-tint);
-  box-shadow: 5px 5px 0 var(--color-coral-ink);
+  box-shadow: 3px 3px 0 var(--shadow-accent);
 }
 .paceArt {
   width: 96px;
@@ -689,15 +692,15 @@
     color-mix(in srgb, var(--color-coral-ink) 82%, var(--color-navy))
   );
   color: var(--color-background);
-  box-shadow: 5px 5px 0 var(--color-navy);
+  box-shadow: 3px 3px 0 var(--shadow-ink);
 }
 .primary:hover:not(:disabled) {
   transform: translate(-2px, -2px);
-  box-shadow: 7px 7px 0 var(--color-navy);
+  box-shadow: 4px 4px 0 var(--shadow-ink);
 }
 .primary:active:not(:disabled) {
   transform: translate(3px, 3px);
-  box-shadow: 2px 2px 0 var(--color-navy);
+  box-shadow: 1px 1px 0 var(--shadow-ink);
 }
 .primary:disabled {
   border-color: var(--color-text-subtle);
@@ -712,15 +715,15 @@
 .secondary {
   background: var(--color-background);
   color: var(--color-navy);
-  box-shadow: 4px 4px 0 var(--color-navy);
+  box-shadow: 2px 2px 0 var(--shadow-ink);
 }
 .secondary:hover:not(:disabled) {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 var(--color-navy);
+  box-shadow: 3px 3px 0 var(--shadow-ink);
 }
 .secondary:active:not(:disabled) {
   transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 var(--color-navy);
+  box-shadow: 1px 1px 0 var(--shadow-ink);
 }
 .ghost {
   display: inline-flex;
@@ -895,7 +898,7 @@
     max-width: none;
     font-size: 14.5px;
     padding: 12px 16px;
-    box-shadow: 4px 4px 0 var(--color-navy);
+    box-shadow: 2px 2px 0 var(--shadow-ink);
   }
   .bubble::after {
     left: -9px;
@@ -935,7 +938,7 @@
   .panel {
     padding: 20px;
     border-radius: 26px;
-    box-shadow: 6px 6px 0 var(--color-navy);
+    box-shadow: 3px 3px 0 var(--shadow-ink);
   }
   .paceGrid {
     grid-template-columns: minmax(0, 1fr);
