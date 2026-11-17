@@ -290,14 +290,9 @@ class AdminPage {
     );
     await ui.open('/staff');
     await page.getByText('Tính năng này dành cho quản trị viên cao nhất.', { exact: true }).waitFor();
-    await page.route(/\/login\?returnTo=admin$/, (route) =>
-      route.fulfill({
-        contentType: 'text/html',
-        body: '<!doctype html><html lang="vi"><body><h1>Đăng nhập Tripflix</h1></body></html>',
-      }),
-    );
-    await page.goto(base + '/auth/handoff');
-    await page.waitForURL(/\/login\?returnTo=admin$/);
+    await page.goto(base + '/login');
+    await page.getByRole('heading', { name: 'Đăng nhập quản trị', exact: true }).waitFor();
+    await ui.snapshot('login-390.png');
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ passed: true, pages: pages.length, output, fixtureData: true }));
   } finally {

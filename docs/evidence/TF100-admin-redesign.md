@@ -13,7 +13,7 @@
 - Search giữ đầy đủ truy vấn, phân trang, giám sát, export JSON và worker health; biểu đồ xu hướng dùng Recharts, giữ khoảng trống khi request lỗi. Jobs có tổng hợp các lượt đã tải và biểu đồ thời gian thực thi từ lịch sử thật. Lịch có khối chọn tài nguyên và khối cập nhật riêng.
 - Cảnh báo tổng hợp kiểm duyệt/index health. Audit và Báo cáo đọc nhật ký kiểm duyệt; CSV chỉ xuất các dòng đã tải, escape dữ liệu và chống formula injection.
 - Analytics và Đơn hàng chưa có API cho màn quản trị; hiển thị trạng thái chưa tích hợp với lối sang các màn khả dụng. Báo cáo/Audit không nhận là báo cáo toàn hệ thống.
-- Admin dùng chung phiên web qua mã handoff một lần; shell chuyển người chưa có phiên tới đăng nhập web. CSS chung cũ được thu gọn: shell/Tổng quan/Nhân sự dùng Tailwind, các feature còn lại giữ CSS Modules và một lớp tương thích đã bỏ nhiều rule không dùng.
+- Trang đăng nhập được làm lại cùng hệ màu; vẫn giữ đăng nhập admin trực tiếp và luồng handoff một lần từ phiên web. CSS chung cũ được thu gọn: shell/Tổng quan/Nhân sự dùng Tailwind, các feature còn lại giữ CSS Modules và một lớp tương thích đã bỏ nhiều rule không dùng.
 
 ## Realtime
 
