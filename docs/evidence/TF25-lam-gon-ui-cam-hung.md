@@ -28,6 +28,13 @@
   - Giờ sau khi đăng, web lấy chi tiết bài rồi chèn lên đầu feed bài viết và "Bài đăng của tôi" (`composer/published-post.ts`).
   - Cuối màn hình hiện "Đã đăng bài viết." kèm nút "Xem bài" cuộn tới bài; tự ẩn sau 6 giây.
   - Reels thì báo video đang xử lý, sẽ hiện trong mục Reels sau ít phút.
+- **Bớt màu thừa, đồng bộ kiểu (đợt rà toàn tab):**
+  - Hashtag trên thẻ bài thành chữ xám, tối đa 3 thẻ kèm "+N" (rê chuột xem đủ).
+  - Icon thanh soạn bài cùng một màu; nút "+" ở thanh bên cùng màu nút "Đăng bài".
+  - Nhãn "tác giả" trong bình luận thành chữ xám.
+  - Chữ mô tả trong pop-up (gợi ý ô ảnh, ô video, phần lịch trình) cùng cỡ 0.8rem màu xám.
+  - Ô xổ xuống trong pop-up (quyền riêng tư, ngày) bỏ mũi tên mặc định của hệ điều hành, vẽ mũi tên bằng màu token.
+  - Ba menu xổ xuống (chia sẻ, "…" của bài, "…" của bình luận) cùng một kiểu: nền trắng, viền mỏng, bo 12px, bóng xám nhẹ, chữ mục 0.88rem.
 - **Trang tài khoản:** bỏ mục "Chia sẻ trải nghiệm"; đăng bài chỉ còn ở tab Cảm hứng. `?tab=create` cũ mở tab Tài khoản.
 
 ## Đối chiếu "Xong khi"
@@ -62,4 +69,5 @@
 ## Ảnh hưởng tới phần của người khác
 - `live-account.tsx` (Dũng viết phần lớn): bỏ tab `create` (10 dòng). `post-composer.tsx` của Dũng giữ nguyên nhưng không còn chỗ dùng; đã nhắn Dũng tự quyết có xoá không.
 - `tests/e2e/api-integration.cjs` (Trang viết): bước "Lưu bản nháp và đăng bài chữ vào database" chuyển sang pop-up ở tab Cảm hứng, vẫn kiểm đủ lưu nháp, đăng, trạng thái `published`, thêm kiểm hashtag. Bước cũ vốn đã hỏng từ commit `274ba20` (link "Xem chi tiết" đổi sang `/inspiration?open=…` nên `href.split('/').pop()` không còn ra id).
+- `post-owner-menu.module.css` (Dũng) và `comment-visibility.module.css` (Trang): chỉ đổi CSS cho theo kiểu menu chung, không đổi hành vi; anh Thành đồng ý, đã báo hai người.
 - Anh Thành đã đồng ý cách làm này trong phiên.
