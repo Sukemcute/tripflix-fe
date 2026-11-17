@@ -1,4 +1,4 @@
-import { QueryClient, type InfiniteData } from '@tanstack/react-query';
+import { InfiniteQueryObserver, QueryClient, type InfiniteData } from '@tanstack/react-query';
 import type {
   FeedPageDto,
   SocialCommentDto,
@@ -20,8 +20,8 @@ vi.mock('@tripflix/api-client', () => ({ socialApi: { getPost: vi.fn() } }));
 
 it('realtime tải lại danh sách gốc, trả lời và focus, cập nhật số đếm từ server', async () => {
   const client = new QueryClient();
-  client.setQueryData(['social', 'comments', 'p1'], { pages: [] });
-  client.setQueryData(['social', 'comments', 'p1', 'root'], { pages: [] });
+  client.setQueryData(['social', 'comments', 'p1'], { pages: [], pageParams: [] });
+  client.setQueryData(['social', 'comments', 'p1', 'root'], { pages: [], pageParams: [] });
   client.setQueryData(['social', 'comment-thread', 'p1', 'focus'], { items: [] });
   client.setQueryData(['social', 'post', 'p1'], { post: { id: 'p1', commentCount: 4 } });
   const list = { pages: [{ items: [{ id: 'p1', commentCount: 4 }, { id: 'p2', commentCount: 8 }] }], pageParams: [null] };
@@ -37,6 +37,37 @@ it('realtime tải lại danh sách gốc, trả lời và focus, cập nhật s
   expect(client.getQueryData(['social', 'public', 'viewer'])).toEqual({ ...list, pages: [{ items: [
     { id: 'p1', commentCount: 2 }, { id: 'p2', commentCount: 8 },
   ] }] });
+});
+
+it.each([
+  { kind: 'created' as const, parent: undefined, target: 'root' },
+  { kind: 'created' as const, parent: 'root-1', target: 'replies' },
+  { kind: 'updated' as const, parent: undefined, target: 'root' },
+  { kind: 'hidden' as const, parent: undefined, target: 'root' },
+  { kind: 'deleted' as const, parent: undefined, target: 'root' },
+])('$kind parent=$parent: chỉ một request trang đầu dù đã cuộn 10 trang', async ({ kind, parent, target }) => {
+  const client = new QueryClient();
+  vi.mocked(socialApi.getPost).mockClear();
+  vi.mocked(socialApi.getPost).mockResolvedValue({ post: { id: POST_ID, commentCount: 2 } } as SocialPostDetailDto);
+  const roots = vi.fn().mockResolvedValue({ items: [makeComment('root-1')], nextCursor: 'next', total: 100 });
+  const replies = vi.fn().mockResolvedValue({ items: [makeComment('reply-1')], nextCursor: null, total: 1 });
+  const observer = (key: unknown[], queryFn: typeof roots) => new InfiniteQueryObserver(client, {
+    queryKey: key, queryFn, initialPageParam: undefined as string | undefined,
+    initialData: makePages(Array.from({ length: 10 }, (_, i) => [makeComment(`c-${i}`)]), 100),
+    getNextPageParam: (page: SocialCommentPageDto) => page.nextCursor ?? undefined, staleTime: Infinity,
+  });
+  const rootObserver = observer(rootListKey, roots);
+  const repliesObserver = observer(repliesKey('root-1'), replies);
+  const stopRoot = rootObserver.subscribe(() => {});
+  const stopReplies = repliesObserver.subscribe(() => {});
+  try {
+    await reloadPostComments(client, POST_ID, [{ postId: POST_ID, kind, parentCommentId: parent, actorId: 'other' }]);
+    expect(roots).toHaveBeenCalledTimes(target === 'root' ? 1 : 0);
+    expect(replies).toHaveBeenCalledTimes(target === 'replies' ? 1 : 0);
+    expect(socialApi.getPost).toHaveBeenCalledTimes(kind === 'hidden' || kind === 'deleted' ? 1 : 0);
+    expect(client.getQueryData<CommentPages>(target === 'root' ? rootListKey : repliesKey('root-1'))?.pages).toHaveLength(1);
+    expect(client.getQueryData<CommentPages>(target === 'root' ? repliesKey('root-1') : rootListKey)?.pages).toHaveLength(10);
+  } finally { stopRoot(); stopReplies(); client.clear(); }
 });
 
 const POST_ID = 'post-1';

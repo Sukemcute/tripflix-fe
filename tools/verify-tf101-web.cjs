@@ -63,6 +63,26 @@ async function main() {
     await expect(row.getByRole('link', { name: 'Tìm hiểu thêm' })).toHaveAttribute('href', '/account/moderation');
     await expect(row.getByRole('button', { name: 'Sửa', exact: true })).toHaveCount(0);
     await expect(row.getByRole('button', { name: 'Xóa', exact: true })).toBeVisible();
+    await view.notice.evaluate((notice) => {
+      let container = notice.parentElement;
+      while (container && !['auto', 'scroll'].includes(getComputedStyle(container).overflowY)) container = container.parentElement;
+      if (!container) throw new Error('Không tìm thấy vùng cuộn bình luận');
+      const spacer = document.createElement('div');
+      spacer.style.height = '3000px';
+      spacer.style.flexShrink = '0';
+      container.append(spacer);
+      container.scrollTop = 200;
+    });
+    const beforePending = reads;
+    socket.send('42' + JSON.stringify(['post.comments.changed', { postId, kind: 'created', actorId: userId }]));
+    socket.send('42' + JSON.stringify(['post.comments.changed', { postId, kind: 'created', actorId: 'other-user' }]));
+    const newComments = page.getByRole('button', { name: '1 bình luận mới', exact: true });
+    await expect(newComments).toBeVisible();
+    assert.equal(reads, beforePending, 'Đang cuộn: không tải lại trước khi bấm; tín hiệu của mình bị bỏ qua');
+    await page.screenshot({ path: path.join(output, 'new-comments-pending.png'), fullPage: true });
+    await newComments.click();
+    await expect.poll(() => reads).toBe(beforePending + 1);
+    await expect(newComments).toHaveCount(0);
     await page.screenshot({ path: path.join(output, 'hidden-comment-desktop.png'), fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(view.notice).toBeVisible();
