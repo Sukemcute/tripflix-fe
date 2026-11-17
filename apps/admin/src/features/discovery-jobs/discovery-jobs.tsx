@@ -7,9 +7,16 @@ import {
   adminDiscoveryJobsControllerRun,
   adminDiscoveryJobsControllerSetInterval,
 } from '@tripflix/api-client/core-api/admin-discovery-jobs/admin-discovery-jobs';
-import type { DiscoveryJobDto, DiscoveryJobsDto, JobRunDto, RecommendStatsDto } from '@tripflix/api-client/core-api/model/index';
+import type {
+  DiscoveryJobDto,
+  DiscoveryJobsDto,
+  JobRunDto,
+  RecommendStatsDto,
+} from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { useState } from 'react';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { EmptyState, LoadingState, Metric, Panel } from '../shell/operations-ui';
 import { AdminApiError } from '../shell/api-state';
 import { formatInterval, INTERVAL_PRESET_MINUTES, toIntervalMs } from './interval';
 import { VocabGaps } from './vocab-gaps';
@@ -26,14 +33,20 @@ export function nextPollMs(data: DiscoveryJobsDto | undefined): number {
   return isBusy ? RUNNING_POLL_MS : IDLE_POLL_MS;
 }
 
-const timestamp = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Bangkok', dateStyle: 'short', timeStyle: 'medium' });
+const timestamp = new Intl.DateTimeFormat('vi-VN', {
+  timeZone: 'Asia/Bangkok',
+  dateStyle: 'short',
+  timeStyle: 'medium',
+});
 const formatAt = (at: number | string | null) => (at === null ? '—' : timestamp.format(new Date(at)));
-const formatDuration = (ms: number | null) => (ms === null ? '—' : ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} s`);
+const formatDuration = (ms: number | null) =>
+  ms === null ? '—' : ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} s`;
 
 function formatSummary(run: JobRunDto): string {
   const s = run.summary;
   if (!s) return '—';
-  if (s.posts !== undefined && s.users !== undefined) return t('discoveryJobs.summary.postsUsers', { posts: s.posts, users: s.users });
+  if (s.posts !== undefined && s.users !== undefined)
+    return t('discoveryJobs.summary.postsUsers', { posts: s.posts, users: s.users });
   if (s.deleted !== undefined) return t('discoveryJobs.summary.deleted', { deleted: s.deleted });
   if (s.count !== undefined) return t('discoveryJobs.summary.count', { count: s.count });
   return '—';
@@ -62,13 +75,13 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
   const data = jobs.isError ? undefined : jobs.data;
   return (
     <>
-      <div className="admin-page-heading">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="admin-eyebrow">{copy.eyebrow}</p>
-          <h1>{copy[group].title}</h1>
-          <p>{copy[group].description}</p>
         </div>
-        <span className="admin-badge">{data ? t('discoveryJobs.checkedAt', { time: formatAt(data.checkedAt) }) : vi.api.loading}</span>
+        <span className="admin-badge">
+          {data ? t('discoveryJobs.checkedAt', { time: formatAt(data.checkedAt) }) : vi.api.loading}
+        </span>
       </div>
       <p className="admin-helper">
         {copy.polling} {!canRun && copy.superadminOnly}
@@ -77,8 +90,35 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
       {jobs.isError && <AdminApiError error={jobs.error} retry={() => void jobs.refetch()} />}
       {run.isError && <AdminApiError error={run.error} />}
 
+      {jobs.isPending && <LoadingState />}
+      {data && (
+        <section className="grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label={copy.history}>
+          <Metric label={copy.running} value={data.jobs.filter((job) => job.isRunning).length} />
+          <Metric
+            label={copy.outcome.succeeded}
+            value={
+              data.jobs.flatMap((job) => job.runs).filter((entry) => entry.outcome === 'succeeded').length
+            }
+            hint={vi.adminOperations.loadedLog}
+          />
+          <Metric
+            label={copy.outcome.failed}
+            value={data.jobs.flatMap((job) => job.runs).filter((entry) => entry.outcome === 'failed').length}
+            hint={vi.adminOperations.loadedLog}
+            urgent
+          />
+          <Metric
+            label={copy.outcome.skipped}
+            value={data.jobs.flatMap((job) => job.runs).filter((entry) => entry.outcome === 'skipped').length}
+            hint={vi.adminOperations.loadedLog}
+          />
+        </section>
+      )}
+      {data && !data.jobs.length && <EmptyState title={vi.adminOperations.noJobs} />}
+
       {data?.jobs.map((job) => {
-        const isBusy = job.isRunning || job.runs[0]?.outcome === 'running' || (run.isPending && run.variables === job.job);
+        const isBusy =
+          job.isRunning || job.runs[0]?.outcome === 'running' || (run.isPending && run.variables === job.job);
         return (
           <section key={job.job} className="admin-data" aria-label={copy.jobs[job.job]}>
             <div className="admin-data-heading">
@@ -86,15 +126,25 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
                 <h2>
                   {copy.jobs[job.job]} <code>{job.job}</code>
                 </h2>
-                <p>{job.intervalMs === null ? copy.onBoot : t('discoveryJobs.every', { interval: formatInterval(job.intervalMs) })}</p>
+                <p>
+                  {job.intervalMs === null
+                    ? copy.onBoot
+                    : t('discoveryJobs.every', { interval: formatInterval(job.intervalMs) })}
+                </p>
               </div>
               {canRun && (
-                <button type="button" className="admin-primary" disabled={isBusy} onClick={() => run.mutate(job.job)}>
+                <button
+                  type="button"
+                  className="admin-primary"
+                  disabled={isBusy}
+                  onClick={() => run.mutate(job.job)}
+                >
                   {isBusy ? copy.running : copy.run}
                 </button>
               )}
             </div>
             {canRun && job.canChangeInterval && <IntervalEditor job={job} queryKey={queryKey} />}
+            <JobDurationChart runs={job.runs} />
             <RunsTable runs={job.runs} />
           </section>
         );
@@ -106,12 +156,54 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
   );
 }
 
+function JobDurationChart({ runs }: { runs: JobRunDto[] }) {
+  const data = runs
+    .filter((run) => run.durationMs !== null)
+    .slice(0, 12)
+    .toReversed()
+    .map((run) => ({ at: run.startedAt, durationMs: run.durationMs }));
+  if (!data.length) return null;
+  return (
+    <Panel title={vi.adminOperations.duration} description={vi.adminOperations.durationHint}>
+      <div className="h-48 w-full p-4" aria-label={vi.adminOperations.duration}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ left: 0, right: 12 }}>
+            <CartesianGrid vertical={false} stroke="var(--color-border)" />
+            <XAxis
+              dataKey="at"
+              tickFormatter={(at) =>
+                new Date(at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+              }
+              fontSize={10}
+              minTickGap={30}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis width={48} fontSize={10} unit="ms" axisLine={false} tickLine={false} />
+            <Tooltip labelFormatter={(at) => formatAt(Number(at))} />
+            <Bar
+              dataKey="durationMs"
+              name={copy.columns.duration}
+              unit=" ms"
+              fill="var(--color-teal-ink)"
+              maxBarSize={24}
+              radius={[3, 3, 0, 0]}
+              isAnimationActive={false}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </Panel>
+  );
+}
+
 function IntervalEditor({ job, queryKey }: { job: DiscoveryJobDto; queryKey: string[] }) {
   const client = useQueryClient();
   const [minutes, setMinutes] = useState(job.intervalMs === null ? '' : String(job.intervalMs / 60_000));
   const [notice, setNotice] = useState('');
   const save = useMutation({
-    mutationFn: async (intervalMs: number | null) => (await adminDiscoveryJobsControllerSetInterval(job.job, { intervalMs })).data,
+    mutationFn: async (intervalMs: number | null) =>
+      (await adminDiscoveryJobsControllerSetInterval(job.job, { intervalMs })).data,
     onSuccess: (result) => {
       if (result?.intervalMs) setMinutes(String(result.intervalMs / 60_000));
       setNotice(copy.interval.saved);
@@ -134,7 +226,10 @@ function IntervalEditor({ job, queryKey }: { job: DiscoveryJobDto; queryKey: str
       >
         <label>
           {copy.interval.label}
-          <select value={isPreset ? minutes : 'custom'} onChange={(event) => setMinutes(event.target.value === 'custom' ? '' : event.target.value)}>
+          <select
+            value={isPreset ? minutes : 'custom'}
+            onChange={(event) => setMinutes(event.target.value === 'custom' ? '' : event.target.value)}
+          >
             {presets.map((m) => (
               <option key={m} value={m}>
                 {`${formatInterval(m * 60_000)}${m * 60_000 === job.defaultIntervalMs ? ` (${copy.interval.isDefault})` : ''}`}
@@ -146,19 +241,38 @@ function IntervalEditor({ job, queryKey }: { job: DiscoveryJobDto; queryKey: str
         {!isPreset && (
           <label>
             {copy.interval.custom}
-            <input type="number" min={1} max={1440} step={1} required value={minutes} onChange={(event) => setMinutes(event.target.value)} />
+            <input
+              type="number"
+              min={1}
+              max={1440}
+              step={1}
+              required
+              value={minutes}
+              onChange={(event) => setMinutes(event.target.value)}
+            />
           </label>
         )}
-        <button type="submit" className="admin-primary" disabled={save.isPending || intervalMs === null || intervalMs === job.intervalMs}>
+        <button
+          type="submit"
+          className="admin-primary"
+          disabled={save.isPending || intervalMs === null || intervalMs === job.intervalMs}
+        >
           {save.isPending ? copy.interval.saving : copy.interval.save}
         </button>
         {!isDefault && job.defaultIntervalMs !== null && (
-          <button type="button" className="admin-secondary" disabled={save.isPending} onClick={() => save.mutate(null)}>
+          <button
+            type="button"
+            className="admin-secondary"
+            disabled={save.isPending}
+            onClick={() => save.mutate(null)}
+          >
             {t('discoveryJobs.interval.reset', { interval: formatInterval(job.defaultIntervalMs) })}
           </button>
         )}
       </form>
-      {minutes !== '' && intervalMs === null && <output className="admin-helper">{copy.interval.invalid}</output>}
+      {minutes !== '' && intervalMs === null && (
+        <output className="admin-helper">{copy.interval.invalid}</output>
+      )}
       {job.job === 'recommend_build' && <p className="admin-helper">{copy.interval.recommendNote}</p>}
       {notice && <output className="admin-helper">{notice}</output>}
       {save.isError && <AdminApiError error={save.error} />}
@@ -187,7 +301,9 @@ function RunsTable({ runs }: { runs: JobRunDto[] }) {
               <td>{formatAt(r.startedAt)}</td>
               <td>{copy.trigger[r.trigger]}</td>
               <td>
-                <span className={`admin-status ${r.outcome === 'succeeded' ? '' : 'waiting'}`}>{copy.outcome[r.outcome]}</span>
+                <span data-outcome={r.outcome} className={`admin-status ${r.outcome === 'succeeded' ? '' : 'waiting'}`}>
+                  {copy.outcome[r.outcome]}
+                </span>
               </td>
               <td>{formatDuration(r.durationMs)}</td>
               <td>{formatSummary(r)}</td>
@@ -201,7 +317,9 @@ function RunsTable({ runs }: { runs: JobRunDto[] }) {
 }
 
 function RecommendStats({ stats }: { stats: RecommendStatsDto }) {
-  const counts = (['interactionsLast10m', 'interactionsLast24h', 'posts', 'usersWithFeatures'] as const).map((k) => [copy.stats[k], stats[k]] as const);
+  const counts = (['interactionsLast10m', 'interactionsLast24h', 'posts', 'usersWithFeatures'] as const).map(
+    (k) => [copy.stats[k], stats[k]] as const,
+  );
   return (
     <section className="admin-data" aria-label={copy.stats.title}>
       <div className="admin-data-heading">

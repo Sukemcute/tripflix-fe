@@ -21,7 +21,9 @@
     "@tripflix/utils": "workspace:*",
     "next": "catalog:",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "recharts": "^3.10.1",
+    "socket.io-client": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "catalog:",

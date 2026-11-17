@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
+import { createAdminEventStream } from '@/features/shell/server-realtime';
 
 export const runtime = 'nodejs';
 
@@ -55,7 +56,10 @@ function forward(response: Response): Response {
 async function authError(response: Response) {
   // Giữ mã lỗi để client có thể lấy lại khoá khi mật khẩu mã hoá bị từ chối.
   const data = await response.json().catch(() => null);
-  const result = reply(response.status, data?.code === 'password_envelope_invalid' ? { code: data.code } : undefined);
+  const result = reply(
+    response.status,
+    data?.code === 'password_envelope_invalid' ? { code: data.code } : undefined,
+  );
   const retryAfter = response.headers.get('retry-after');
   if (retryAfter) result.headers.set('retry-after', retryAfter);
   return result;
@@ -63,25 +67,33 @@ async function authError(response: Response) {
 
 async function readTokens(response: Response): Promise<Tokens> {
   const data = await response.json();
-  const refreshCookie = response.headers.getSetCookie()
+  const refreshCookie = response.headers
+    .getSetCookie()
     .map((value) => value.split(';', 1)[0] ?? '')
     .find((value) => /^tripflix_refresh(?:_[a-zA-Z0-9_-]+)?=[^;]+$/.test(value));
   if (
-    !refreshCookie || typeof data?.accessToken !== 'string' || !data.accessToken ||
-    !Number.isFinite(data.expiresIn) || data.expiresIn <= 0
+    !refreshCookie ||
+    typeof data?.accessToken !== 'string' ||
+    !data.accessToken ||
+    !Number.isFinite(data.expiresIn) ||
+    data.expiresIn <= 0
   ) {
     throw new Error('Invalid Core API session response');
   }
   return { access: data.accessToken, accessExpiresAt: Date.now() + data.expiresIn * 1000, refreshCookie };
 }
 
-function upstream(request: NextRequest, path: string, options: {
-  access?: string;
-  web?: boolean;
-  cookie?: string;
-  body?: string;
-  method?: string;
-} = {}) {
+function upstream(
+  request: NextRequest,
+  path: string,
+  options: {
+    access?: string;
+    web?: boolean;
+    cookie?: string;
+    body?: string;
+    method?: string;
+  } = {},
+) {
   const headers = new Headers();
   for (const name of ['x-request-id', 'idempotency-key', 'user-agent']) {
     const value = request.headers.get(name);
@@ -241,11 +253,23 @@ async function handle(request: NextRequest, context: RouteContext<'/bff/api/[...
     if (isLogout) return await logout(request, id, session);
     if (session.closing) return reply(401);
     if (isRefresh) {
-      session.refresh ??= refresh(request, id, session).finally(() => { session.refresh = undefined; });
+      session.refresh ??= refresh(request, id, session).finally(() => {
+        session.refresh = undefined;
+      });
       // Mỗi caller cần một response riêng khi nhiều tab cùng yêu cầu refresh.
       return (await session.refresh).clone();
     }
     if (session.accessExpiresAt <= Date.now()) return reply(401);
+    if (method === 'GET' && path === '/api/admin/realtime') {
+      const origin = request.headers.get('origin');
+      if ((origin && origin !== adminOrigin) || request.headers.get('sec-fetch-site') === 'cross-site')
+        return reply(403);
+      return createAdminEventStream({
+        url: process.env.ADMIN_REALTIME_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080',
+        signal: request.signal,
+        getSession: () => sessions.get(id),
+      });
+    }
     const body = method === 'GET' || !request.body ? undefined : await request.text();
     return forward(await upstream(request, path + request.nextUrl.search, { access: session.access, body }));
   } catch {

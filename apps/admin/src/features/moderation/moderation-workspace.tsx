@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { moderationApi, socialApi, useApiSession } from '@tripflix/api-client';
@@ -21,7 +21,7 @@ import operations from './moderation-operations.module.css';
 const text = vi.moderation;
 const reasonKeys = Object.keys(text.reasons) as (keyof typeof text.reasons)[];
 const date = (value: string) => new Date(value).toLocaleString('vi-VN');
-const refreshInterval = 5_000;
+const refreshInterval = 30_000;
 type QueueView = NonNullable<AdminModerationControllerQueueParams['view']>;
 const queueTabs = { pending: 'Chờ duyệt', reviewed: 'Đã duyệt', hidden: 'Đã ẩn', removed: 'Đã gỡ' };
 const destination: Record<DecisionDto['action'], QueueView> = {
@@ -61,8 +61,10 @@ function RiskTags({ item }: { item: ModerationCaseDto }) {
   return (
     <div className={riskStyles.tags}>
       {warning ? (
-        <span className={`${riskStyles.tag} ${riskStyles[warning.tone]}`}
-          title="Dấu hiệu từ luật lọc tại lần đánh giá được lưu. Cần xem ngữ cảnh khi ra quyết định.">
+        <span
+          className={`${riskStyles.tag} ${riskStyles[warning.tone]}`}
+          title="Dấu hiệu từ luật lọc tại lần đánh giá được lưu. Cần xem ngữ cảnh khi ra quyết định."
+        >
           {warning.label}
         </span>
       ) : item.severity >= 50 ? (
@@ -73,14 +75,18 @@ function RiskTags({ item }: { item: ModerationCaseDto }) {
         <span className={`${riskStyles.tag} ${riskStyles.medium}`}>Cần xem xét</span>
       )}
       {score !== null && (
-        <span className={`${riskStyles.tag} ${riskStyles.evidence}`}
-          title="Score toxic của ViSoBERT tại lần đánh giá được lưu. Ngưỡng gắn cờ mặc định 0,97. Đây là score mô hình, chưa phải xác suất vi phạm đã hiệu chỉnh.">
+        <span
+          className={`${riskStyles.tag} ${riskStyles.evidence}`}
+          title="Score toxic của ViSoBERT tại lần đánh giá được lưu. Ngưỡng gắn cờ mặc định 0,97. Đây là score mô hình, chưa phải xác suất vi phạm đã hiệu chỉnh."
+        >
           ViSoBERT {score.toFixed(4)}
         </span>
       )}
       {item.flags.aiUnavailable === true && (
-        <span className={`${riskStyles.tag} ${riskStyles.medium}`}
-          title="Core không nhận được verdict AI hợp lệ ở lần đánh giá được lưu. Đây là trạng thái lịch sử của hồ sơ, cần đối chiếu log để biết nguyên nhân và trạng thái hiện tại.">
+        <span
+          className={`${riskStyles.tag} ${riskStyles.medium}`}
+          title="Core không nhận được verdict AI hợp lệ ở lần đánh giá được lưu. Đây là trạng thái lịch sử của hồ sơ, cần đối chiếu log để biết nguyên nhân và trạng thái hiện tại."
+        >
           Chưa có kết quả AI ở lần đánh giá này
         </span>
       )}
@@ -101,22 +107,29 @@ export function ModerationWorkspace() {
   const show = (value: number | undefined) => (summary ? value : stats.isError ? '—' : '…');
   const pendingTotal = summary?.pendingTotal;
   const urgentCount = summary?.pendingUrgent ?? 0;
-  const autoHiddenCount = summary?.autoHidden24h ?? 0;
 
   return (
     <div className="mod-workspace-container">
       {/* 4 Thẻ KPI Giám sát Vận hành Thời gian thực */}
-      <section className="admin-mod-monitoring-header" aria-label={text.monitoringTitle} aria-busy={stats.isPending}>
+      <section
+        className="admin-mod-monitoring-header"
+        aria-label={text.monitoringTitle}
+        aria-busy={stats.isPending}
+      >
         <div className="mod-monitor-card card-pending">
-          <span className="mod-monitor-label">📋 {text.kpiPending}</span>
+          <span className="mod-monitor-label">{text.kpiPending}</span>
           <strong className="mod-monitor-value">{show(summary?.pendingTotal)}</strong>
           <span className={`mod-monitor-sub ${urgentCount > 0 ? 'is-urgent' : ''}`}>
-            {urgentCount > 0 ? `🚨 ${urgentCount} ${text.kpiUrgentCount}` : `✓ ${text.cleanEvidence}`}
+            {summary
+              ? urgentCount > 0
+                ? `${urgentCount} ${text.kpiUrgentCount}`
+                : vi.adminOperations.noUrgent
+              : '—'}
           </span>
         </div>
 
         <div className="mod-monitor-card card-urgent">
-          <span className="mod-monitor-label">🚨 {text.kpiUrgent}</span>
+          <span className="mod-monitor-label">{text.kpiUrgent}</span>
           <strong className="mod-monitor-value is-urgent">{show(summary?.pendingUrgent)}</strong>
           <span className="mod-monitor-sub">
             {summary?.oldestPendingAt
@@ -126,21 +139,18 @@ export function ModerationWorkspace() {
         </div>
 
         <div className="mod-monitor-card card-engine">
-          <span className="mod-monitor-label">🤖 {text.activeEngine}</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className="pulse-dot" />
-            <strong style={{ fontSize: 16, fontWeight: 700 }}>{text.engineStatus}</strong>
-          </div>
-          <span className="mod-monitor-sub">
-            {autoHiddenCount > 0 ? `${text.kpiAutoHidden24h} ${autoHiddenCount}` : text.kpiAutoHiddenNone}
-          </span>
+          <span className="mod-monitor-label">{vi.adminOperations.autoHidden}</span>
+          <strong className="mod-monitor-value">{show(summary?.autoHidden24h)}</strong>
+          <span className="mod-monitor-sub">{summary ? text.kpiAutoHidden24h : '—'}</span>
         </div>
 
         <div className="mod-monitor-card card-sla">
-          <span className="mod-monitor-label">👥 {text.communityReports}</span>
+          <span className="mod-monitor-label">{text.communityReports}</span>
           <strong className="mod-monitor-value is-good">{show(summary?.reports24h)}</strong>
           <span className="mod-monitor-sub">
-            {summary ? `${text.kpiReports24h} · ${text.kpiUpdatedAt} ${date(summary.generatedAt)}` : text.kpiReports24h}
+            {summary
+              ? `${text.kpiReports24h} · ${text.kpiUpdatedAt} ${date(summary.generatedAt)}`
+              : text.kpiReports24h}
           </span>
         </div>
       </section>
@@ -216,6 +226,7 @@ function AppealQueue() {
   const client = useQueryClient();
   const query = useInfiniteQuery({
     queryKey: ['moderation', 'appeals'],
+    refetchInterval: refreshInterval,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) => moderationApi.appeals(pageParam, signal),
     getNextPageParam: (page) => (page.nextCursor ? Number(page.nextCursor) : undefined),
@@ -230,62 +241,121 @@ function AppealQueue() {
   const items = query.data?.pages.flatMap((page) => page.items) ?? [];
   return (
     <section className={`mod-table-panel ${operations.panel}`} aria-label="Hàng chờ khiếu nại">
-      <header className={operations.header}><div><h2>Khiếu nại đang chờ</h2><p>Đối chiếu quyết định gốc và nội dung hiện tại trước khi xét lại.</p></div><span className={operations.count}>{items.length} hồ sơ đã tải</span></header>
+      <header className={operations.header}>
+        <div>
+          <h2>Khiếu nại đang chờ</h2>
+          <p>Đối chiếu quyết định gốc và nội dung hiện tại trước khi xét lại.</p>
+        </div>
+        <span className={operations.count}>{items.length} hồ sơ đã tải</span>
+      </header>
       <div className={operations.content}>
-      {query.isPending && <output className={operations.empty}>Đang tải khiếu nại…</output>}
-      {query.error && <AdminApiError error={query.error} />}
-      {decision.error && <AdminApiError error={decision.error} />}
-      {!query.isPending && !query.error && !items.length && <p className={operations.empty}>Không có khiếu nại đang chờ.</p>}
-      {items.map(({ appeal, decision: original, targetText, targetStatus }) => (
-        <article key={appeal.id} className={operations.appeal}>
-          <header className={operations.scanTitle}><h3>{original.targetType === 'post' ? 'Bài viết' : 'Bình luận'}</h3><span className={operations.failed}>Chờ xét lại</span><time className={operations.meta} dateTime={appeal.createdAt}>{date(appeal.createdAt)}</time></header>
-          <p className={operations.meta}>
-            Quyết định: {({ hide: 'Ẩn', auto_hide: 'Tự động ẩn', remove: 'Gỡ', restore: 'Khôi phục', dismiss: 'Bỏ qua' } as Record<string, string>)[original.action] ?? original.action} · Lý do:{' '}
-            {text.reasons[original.reasonCode as keyof typeof text.reasons] ?? original.reasonCode}
-          </p>
-          <div className={operations.appealReason}><strong>Nội dung khiếu nại</strong><p>{appeal.reason}</p></div>
-          <div className={operations.evidenceGrid}>
-          <section><h4>Bằng chứng lúc quyết định</h4><p>
-            {typeof original.evidenceSnapshot?.text === 'string'
-              ? original.evidenceSnapshot.text
-              : 'Quyết định cũ chưa lưu snapshot'}
-          </p><p className={operations.meta}>Chính sách: {original.policyVersion ?? 'Chưa ghi phiên bản'}</p></section>
-          <section><h4>Nội dung hiện tại</h4><p>{targetText ?? 'Không khả dụng'}</p><p className={operations.meta}>Trạng thái: {({ held: vi.api.moderationHeld, hidden: 'Đang ẩn', removed: 'Đã gỡ', visible: 'Đang hiển thị', published: 'Đã công khai', draft: 'Bản nháp' } as Record<string, string>)[targetStatus ?? ''] ?? 'Không khả dụng'}</p></section>
-          </div>
-          <p className={operations.identifier}>
-            Mã bài viết: {original.postId}
-            {original.commentId ? ` · Bình luận: ${original.commentId}` : ''}
-          </p>
-          {!original.contentVersion && <p className={operations.hint}>Quyết định cũ thiếu phiên bản nội dung; cần xử lý thủ công.</p>}
-          {original.moderatorId === user?.id && <p className={operations.hint}>Bạn đã ra quyết định gốc. Cần một kiểm duyệt viên khác xét khiếu nại này.</p>}
-          <div className={operations.appealActions}>
+        {query.isPending && <output className={operations.empty}>Đang tải khiếu nại…</output>}
+        {query.error && <AdminApiError error={query.error} />}
+        {decision.error && <AdminApiError error={decision.error} />}
+        {!query.isPending && !query.error && !items.length && (
+          <p className={operations.empty}>Không có khiếu nại đang chờ.</p>
+        )}
+        {items.map(({ appeal, decision: original, targetText, targetStatus }) => (
+          <article key={appeal.id} className={operations.appeal}>
+            <header className={operations.scanTitle}>
+              <h3>{original.targetType === 'post' ? 'Bài viết' : 'Bình luận'}</h3>
+              <span className={operations.failed}>Chờ xét lại</span>
+              <time className={operations.meta} dateTime={appeal.createdAt}>
+                {date(appeal.createdAt)}
+              </time>
+            </header>
+            <p className={operations.meta}>
+              Quyết định:{' '}
+              {(
+                {
+                  hide: 'Ẩn',
+                  auto_hide: 'Tự động ẩn',
+                  remove: 'Gỡ',
+                  restore: 'Khôi phục',
+                  dismiss: 'Bỏ qua',
+                } as Record<string, string>
+              )[original.action] ?? original.action}{' '}
+              · Lý do: {text.reasons[original.reasonCode as keyof typeof text.reasons] ?? original.reasonCode}
+            </p>
+            <div className={operations.appealReason}>
+              <strong>Nội dung khiếu nại</strong>
+              <p>{appeal.reason}</p>
+            </div>
+            <div className={operations.evidenceGrid}>
+              <section>
+                <h4>Bằng chứng lúc quyết định</h4>
+                <p>
+                  {typeof original.evidenceSnapshot?.text === 'string'
+                    ? original.evidenceSnapshot.text
+                    : 'Quyết định cũ chưa lưu snapshot'}
+                </p>
+                <p className={operations.meta}>
+                  Chính sách: {original.policyVersion ?? 'Chưa ghi phiên bản'}
+                </p>
+              </section>
+              <section>
+                <h4>Nội dung hiện tại</h4>
+                <p>{targetText ?? 'Không khả dụng'}</p>
+                <p className={operations.meta}>
+                  Trạng thái:{' '}
+                  {(
+                    {
+                      held: vi.api.moderationHeld,
+                      hidden: 'Đang ẩn',
+                      removed: 'Đã gỡ',
+                      visible: 'Đang hiển thị',
+                      published: 'Đã công khai',
+                      draft: 'Bản nháp',
+                    } as Record<string, string>
+                  )[targetStatus ?? ''] ?? 'Không khả dụng'}
+                </p>
+              </section>
+            </div>
+            <p className={operations.identifier}>
+              Mã bài viết: {original.postId}
+              {original.commentId ? ` · Bình luận: ${original.commentId}` : ''}
+            </p>
+            {!original.contentVersion && (
+              <p className={operations.hint}>Quyết định cũ thiếu phiên bản nội dung; cần xử lý thủ công.</p>
+            )}
+            {original.moderatorId === user?.id && (
+              <p className={operations.hint}>
+                Bạn đã ra quyết định gốc. Cần một kiểm duyệt viên khác xét khiếu nại này.
+              </p>
+            )}
+            <div className={operations.appealActions}>
+              <button
+                className={operations.button}
+                type="button"
+                disabled={decision.isPending || original.moderatorId === user?.id}
+                onClick={() => decision.mutate({ id: appeal.id, outcome: 'upheld' })}
+              >
+                Giữ quyết định
+              </button>{' '}
+              <button
+                className={`${operations.button} ${operations.accept}`}
+                type="button"
+                disabled={decision.isPending || !original.contentVersion || original.moderatorId === user?.id}
+                onClick={() => {
+                  if (window.confirm('Chấp nhận khiếu nại và khôi phục nội dung nếu còn đủ điều kiện?'))
+                    decision.mutate({ id: appeal.id, outcome: 'overturned' });
+                }}
+              >
+                Chấp nhận khiếu nại
+              </button>
+            </div>
+          </article>
+        ))}
+        {query.hasNextPage && (
           <button
             className={operations.button}
             type="button"
-            disabled={decision.isPending || original.moderatorId === user?.id}
-            onClick={() => decision.mutate({ id: appeal.id, outcome: 'upheld' })}
+            disabled={query.isFetchingNextPage}
+            onClick={() => void query.fetchNextPage()}
           >
-            Giữ quyết định
-          </button>{' '}
-          <button
-            className={`${operations.button} ${operations.accept}`}
-            type="button"
-            disabled={decision.isPending || !original.contentVersion || original.moderatorId === user?.id}
-            onClick={() => {
-              if (window.confirm('Chấp nhận khiếu nại và khôi phục nội dung nếu còn đủ điều kiện?'))
-                decision.mutate({ id: appeal.id, outcome: 'overturned' });
-            }}
-          >
-            Chấp nhận khiếu nại
+            Xem thêm
           </button>
-          </div>
-        </article>
-      ))}
-      {query.hasNextPage && (
-        <button className={operations.button} type="button" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>
-          Xem thêm
-        </button>
-      )}
+        )}
       </div>
     </section>
   );
@@ -295,6 +365,7 @@ function FailedScans() {
   const client = useQueryClient();
   const query = useInfiniteQuery({
     queryKey: ['moderation', 'failed-scans'],
+    refetchInterval: refreshInterval,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) => moderationApi.failedScans(pageParam, signal),
     getNextPageParam: (page) => (page.nextCursor ? Number(page.nextCursor) : undefined),
@@ -307,37 +378,61 @@ function FailedScans() {
   return (
     <section className={`mod-table-panel ${operations.panel}`} aria-label="Scan cần phục hồi">
       <header className={operations.header}>
-        <div><h2>Scan cần phục hồi</h2><p>Các lượt kiểm tra đã hết số lần tự động thử lại.</p></div>
+        <div>
+          <h2>Scan cần phục hồi</h2>
+          <p>Các lượt kiểm tra đã hết số lần tự động thử lại.</p>
+        </div>
         <span className={operations.count}>{items.length} scan đã tải</span>
       </header>
       <div className={operations.content}>
-      <p className={operations.hint}>
-        Kiểm tra AI đã hoạt động trước khi lên lịch thử lại. Hệ thống vẫn kiểm tra phiên bản và quyết định của
-        moderator.
-      </p>
-      {query.isPending && <output className={operations.empty}>Đang tải scan…</output>}
-      <AdminApiError error={query.error ?? retry.error} />
-      {retry.isSuccess && <output className={operations.success}>Đã lên lịch kiểm tra lại nội dung.</output>}
-      {!query.isPending && !query.error && !items.length && <p className={operations.empty}>Không có scan cần phục hồi.</p>}
-      <div className={operations.scans}>
-      {items.map((item) => (
-        <article key={item.eventId} className={operations.scan}>
-          <div className={operations.scanInfo}>
-            <div className={operations.scanTitle}><h3>{item.targetType === 'post' ? 'Bài viết' : 'Bình luận'}</h3><span className={operations.failed}>Hết lượt tự thử</span></div>
-            <p className={operations.identifier}>ID nội dung: <code>{item.targetId}</code></p>
-            <p className={operations.meta}>{item.attempts} lần thử · Cập nhật {date(item.updatedAt)}</p>
-          </div>
-          <button className={operations.button} type="button" disabled={retry.isPending} onClick={() => retry.mutate(item.eventId)}>
-            {retry.isPending && retry.variables === item.eventId ? 'Đang lên lịch…' : 'Lên lịch thử lại'}
+        <p className={operations.hint}>
+          Kiểm tra AI đã hoạt động trước khi lên lịch thử lại. Hệ thống vẫn kiểm tra phiên bản và quyết định
+          của moderator.
+        </p>
+        {query.isPending && <output className={operations.empty}>Đang tải scan…</output>}
+        <AdminApiError error={query.error ?? retry.error} />
+        {retry.isSuccess && (
+          <output className={operations.success}>Đã lên lịch kiểm tra lại nội dung.</output>
+        )}
+        {!query.isPending && !query.error && !items.length && (
+          <p className={operations.empty}>Không có scan cần phục hồi.</p>
+        )}
+        <div className={operations.scans}>
+          {items.map((item) => (
+            <article key={item.eventId} className={operations.scan}>
+              <div className={operations.scanInfo}>
+                <div className={operations.scanTitle}>
+                  <h3>{item.targetType === 'post' ? 'Bài viết' : 'Bình luận'}</h3>
+                  <span className={operations.failed}>Hết lượt tự thử</span>
+                </div>
+                <p className={operations.identifier}>
+                  ID nội dung: <code>{item.targetId}</code>
+                </p>
+                <p className={operations.meta}>
+                  {item.attempts} lần thử · Cập nhật {date(item.updatedAt)}
+                </p>
+              </div>
+              <button
+                className={operations.button}
+                type="button"
+                disabled={retry.isPending}
+                onClick={() => retry.mutate(item.eventId)}
+              >
+                {retry.isPending && retry.variables === item.eventId ? 'Đang lên lịch…' : 'Lên lịch thử lại'}
+              </button>
+            </article>
+          ))}
+        </div>
+        {query.hasNextPage && (
+          <button
+            className={operations.button}
+            type="button"
+            disabled={query.isFetchingNextPage}
+            onClick={() => void query.fetchNextPage()}
+          >
+            {query.isFetchingNextPage ? 'Đang tải…' : 'Xem thêm'}
           </button>
-        </article>
-      ))}
-      </div>
-      {query.hasNextPage && (
-        <button className={operations.button} type="button" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>
-          {query.isFetchingNextPage ? 'Đang tải…' : 'Xem thêm'}
-        </button>
-      )}
+        )}
       </div>
     </section>
   );
@@ -409,6 +504,7 @@ function ModerationQueue({
       await Promise.all([
         client.invalidateQueries({ queryKey: ['moderation'] }),
         client.invalidateQueries({ queryKey: ['social'] }),
+        client.invalidateQueries({ queryKey: ['admin-posts'] }),
       ]);
       if (!result.failed.length) onDecision(body.action);
     },
@@ -443,10 +539,13 @@ function ModerationQueue({
       {/* Thanh Bộ lọc & Tìm kiếm (Filter Bar) */}
       <div className="mod-filter-bar">
         <div className="mod-filter-group" style={{ flex: 1, minWidth: 200 }}>
-          <span className="mod-filter-label">Tìm kiếm</span>
+          <label className="mod-filter-label" htmlFor="moderation-search">
+            Tìm kiếm
+          </label>
           <input
             type="text"
             className="mod-search-input"
+            id="moderation-search"
             placeholder="Tìm trên các hồ sơ đã tải"
             value={searchQuery}
             disabled={bulk.isPending}
@@ -491,7 +590,7 @@ function ModerationQueue({
           {/* Thanh Thao Tác Hàng Loạt */}
           <div className="mod-bulk-toolbar">
             <div className="mod-bulk-left">
-              <span style={{ fontWeight: 600, color: '#0F172A' }}>
+              <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>
                 Đã chọn {selectedItems.length} nội dung
               </span>
               {view !== 'removed' && (
@@ -543,7 +642,7 @@ function ModerationQueue({
               {bulk.isPending && <output>Đang xử lý các mục đã chọn…</output>}
             </div>
             <div>
-              <span style={{ fontSize: 11, color: '#64748B' }}>
+              <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                 Sắp xếp: <strong>Mức rủi ro giảm dần ▾</strong>
               </span>
             </div>
@@ -577,9 +676,8 @@ function ModerationQueue({
             </div>
           )}
 
-          {!query.isPending && filteredItems.length === 0 && (
-            <div style={{ padding: 48, textAlign: 'center', color: '#64748B' }}>
-              <span style={{ fontSize: 36, display: 'block', marginBottom: 12 }}>🎉</span>
+          {!query.isPending && !query.error && filteredItems.length === 0 && (
+            <div style={{ padding: 48, textAlign: 'center', color: 'var(--color-text-muted)' }}>
               <h3>Không có hồ sơ nào</h3>
               <p style={{ fontSize: 12, marginTop: 6 }}>Hàng đợi hiện đang sạch sẽ hoặc không khớp bộ lọc.</p>
             </div>
@@ -602,7 +700,9 @@ function ModerationQueue({
                     <th>Nội dung</th>
                     <th>Thể loại</th>
                     <th>Số báo cáo</th>
-                    <th title="Điểm ưu tiên hồ sơ từ chính sách Core, thang 0–100. AI gắn cờ đóng góp 60 điểm.">Điểm ưu tiên</th>
+                    <th title="Điểm ưu tiên hồ sơ từ chính sách Core, thang 0–100. AI gắn cờ đóng góp 60 điểm.">
+                      Điểm ưu tiên
+                    </th>
                     <th style={{ textAlign: 'right' }}>Hành động</th>
                   </tr>
                 </thead>
@@ -629,7 +729,9 @@ function ModerationQueue({
                                 {item.targetPreview || `${categoryLabel} #${item.targetId.slice(0, 8)}`}
                               </span>
                               <div className="mod-content-sub">
-                                <span>@{item.authorId ? item.authorId.slice(0, 8) : 'user_4587'}</span>
+                                <span>
+                                  {text.author}: {item.authorId ? item.authorId.slice(0, 8) : '—'}
+                                </span>
                                 <span className="mod-type-tag">{categoryLabel}</span>
                               </div>
                               <CaseContextTags item={item} visibility={view} />
@@ -638,15 +740,28 @@ function ModerationQueue({
                           </div>
                         </td>
                         <td>
-                          <span style={{ color: '#475569', fontWeight: 500 }}>{categoryLabel}</span>
+                          <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>
+                            {categoryLabel}
+                          </span>
                         </td>
                         <td>
-                          <strong style={{ color: item.reportCount > 0 ? '#DC2626' : '#64748B' }}>
+                          <strong
+                            style={{
+                              color:
+                                item.reportCount > 0 ? 'var(--color-coral-ink)' : 'var(--color-text-muted)',
+                            }}
+                          >
                             {item.reportCount}
                           </strong>
                         </td>
                         <td>
-                          <span className={getRiskBadgeClass(getContentWarning(item.flags) ? Math.max(50, item.severity) : item.severity)}>{item.severity}</span>
+                          <span
+                            className={getRiskBadgeClass(
+                              getContentWarning(item.flags) ? Math.max(50, item.severity) : item.severity,
+                            )}
+                          >
+                            {item.severity}
+                          </span>
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <button
@@ -673,9 +788,9 @@ function ModerationQueue({
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '14px 18px',
-              borderTop: '1px solid #F1F5F9',
+              borderTop: '1px solid var(--color-surface-muted)',
               fontSize: 12,
-              color: '#64748B',
+              color: 'var(--color-text-muted)',
             }}
           >
             <span>
@@ -718,8 +833,14 @@ function CaseDetailModal({
   onDecision: (action: DecisionDto['action']) => void;
 }) {
   const client = useQueryClient();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
   const [modalTab, setModalTab] = useState<'info' | 'reports' | 'history'>('info');
-  const [reasonCode, setReasonCode] = useState<DecisionDto['reasonCode'] | ''>('SPAM_OR_COMMERCIAL');
+  const [reasonCode, setReasonCode] = useState<DecisionDto['reasonCode'] | ''>('');
   const [notes, setNotes] = useState('');
 
   const detail = useQuery({
@@ -736,6 +857,7 @@ function CaseDetailModal({
       await Promise.all([
         client.invalidateQueries({ queryKey: ['moderation'] }),
         client.invalidateQueries({ queryKey: ['social'] }),
+        client.invalidateQueries({ queryKey: ['admin-posts'] }),
       ]);
       onClose();
       if (action !== 'dismiss' || detail.data?.target?.status !== 'hidden') onDecision(action);
@@ -746,13 +868,12 @@ function CaseDetailModal({
 
   return (
     <div className="mod-modal-overlay">
-      <button
-        type="button"
-        className="mod-modal-backdrop-btn"
-        onClick={onClose}
-        aria-label="Đóng nền modal"
-      />
-      <dialog open className="mod-modal-dialog" aria-modal="true" aria-labelledby="mod-modal-heading">
+      <dialog
+        ref={dialogRef}
+        onCancel={onClose}
+        className="mod-modal-dialog"
+        aria-labelledby="mod-modal-heading"
+      >
         {/* Modal Header */}
         <div className="mod-modal-header">
           <h2 id="mod-modal-heading" className="mod-modal-title">
@@ -799,38 +920,39 @@ function CaseDetailModal({
 
           {item && modalTab === 'info' && (
             <>
-              {/* Mockup Video Player Preview */}
-              <div className="mod-player-mockup">
-                {/* Ảnh minh họa video */}
+              {item.target?.coverUrl && (
                 <Image
-                  src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
-                  alt="Video thumbnail review Phú Quốc"
-                  className="mod-player-bg"
+                  src={item.target.coverUrl}
+                  alt={text.cover}
+                  className="mb-5 max-h-80 w-full rounded-lg object-contain"
                   width={800}
                   height={400}
                   unoptimized
                 />
-                <button type="button" className="mod-play-center-btn" aria-label="Phát video kiểm duyệt">
-                  ▶
-                </button>
-                <span className="mod-player-duration">02:34</span>
-              </div>
+              )}
 
               {/* Thông tin bài viết dưới Video */}
               <div className="mod-post-info-box">
                 <h3 className="mod-post-title">{item.target?.text || 'Không có nội dung văn bản'}</h3>
                 <div className="mod-post-author-row">
-                  <span>@{item.authorId ? item.authorId.slice(0, 8) : 'user_4587'}</span>
+                  <span>
+                    {text.author}: {item.authorId ? item.authorId.slice(0, 8) : '—'}
+                  </span>
                   <span>•</span>
                   <span>Hồ sơ tạo {date(item.createdAt)}</span>
-                  <span className="mod-type-tag">{item.targetType === 'comment' ? 'Bình luận' : 'Bài viết'}</span>
-                  <span className="mod-risk-tag-large">Ưu tiên {item.severity}/100 · {getRiskLevel(item.severity).label}</span>
+                  <span className="mod-type-tag">
+                    {item.targetType === 'comment' ? 'Bình luận' : 'Bài viết'}
+                  </span>
+                  <span className="mod-risk-tag-large">
+                    Ưu tiên {item.severity}/100 · {getRiskLevel(item.severity).label}
+                  </span>
                 </div>
                 <CaseContextTags item={item} visibility={item.target?.status} />
                 <RiskTags item={item} />
                 <p className={riskStyles.note}>
-                  Điểm ưu tiên được tính từ luật, cờ AI và số báo cáo. AI gắn cờ đóng góp 60 điểm.
-                  Hồ sơ có thể giữ điểm cao nhất từ các lần đánh giá trước. Cần xem bằng chứng và ngữ cảnh trước khi kết luận vi phạm.
+                  Điểm ưu tiên được tính từ luật, cờ AI và số báo cáo. AI gắn cờ đóng góp 60 điểm. Hồ sơ có
+                  thể giữ điểm cao nhất từ các lần đánh giá trước. Cần xem bằng chứng và ngữ cảnh trước khi
+                  kết luận vi phạm.
                 </p>
               </div>
 
@@ -843,16 +965,8 @@ function CaseDetailModal({
                 <div className="mod-meta-item">
                   <span className="mod-meta-label">Loại</span>
                   <strong className="mod-meta-val">
-                    {item.targetType === 'comment' ? 'Bình luận' : 'Reel / Video'}
+                    {item.targetType === 'comment' ? 'Bình luận' : vi.adminOperations.posts}
                   </strong>
-                </div>
-                <div className="mod-meta-item">
-                  <span className="mod-meta-label">Lượt xem</span>
-                  <strong className="mod-meta-val">428.624</strong>
-                </div>
-                <div className="mod-meta-item">
-                  <span className="mod-meta-label">Lượt thích</span>
-                  <strong className="mod-meta-val">65.320</strong>
                 </div>
                 <div className="mod-meta-item">
                   <span className="mod-meta-label">Báo cáo</span>
@@ -860,11 +974,17 @@ function CaseDetailModal({
                 </div>
                 <div className="mod-meta-item">
                   <span className="mod-meta-label">Lý do ghi nhận</span>
-                  <strong className="mod-meta-val" style={{ color: '#DC2626' }}>
-                    {[...new Set([
-                      typeof item.flags.reasonCode === 'string' ? item.flags.reasonCode : null,
-                      ...item.reports.map((report) => report.reasonCode),
-                    ])].flatMap((code) => code && code in text.reasons ? [text.reasons[code as keyof typeof text.reasons]] : []).join(', ') || 'Chưa có lý do cụ thể'}
+                  <strong className="mod-meta-val" style={{ color: 'var(--color-coral-ink)' }}>
+                    {[
+                      ...new Set([
+                        typeof item.flags.reasonCode === 'string' ? item.flags.reasonCode : null,
+                        ...item.reports.map((report) => report.reasonCode),
+                      ]),
+                    ]
+                      .flatMap((code) =>
+                        code && code in text.reasons ? [text.reasons[code as keyof typeof text.reasons]] : [],
+                      )
+                      .join(', ') || 'Chưa có lý do cụ thể'}
                   </strong>
                 </div>
               </div>
@@ -872,7 +992,7 @@ function CaseDetailModal({
               {/* Nhập nhận xét & chọn lý do xử lý */}
               <div className="mod-notes-wrap">
                 <label className="mod-notes-label" htmlFor="mod-reason-select">
-                  Lý do quyết định vi phạm <span style={{ color: '#DC2626' }}>*</span>
+                  Lý do quyết định vi phạm <span style={{ color: 'var(--color-coral-ink)' }}>*</span>
                 </label>
                 <select
                   id="mod-reason-select"
@@ -880,6 +1000,7 @@ function CaseDetailModal({
                   value={reasonCode}
                   onChange={(e) => setReasonCode(e.target.value as typeof reasonCode)}
                 >
+                  <option value="">{text.chooseReason}</option>
                   {reasonKeys.map((k) => (
                     <option key={k} value={k}>
                       {text.reasons[k]}
@@ -893,7 +1014,8 @@ function CaseDetailModal({
                 <textarea
                   id="mod-notes-input"
                   className="mod-notes-textarea"
-                  placeholder="Nhập nhận xét (bắt buộc)..."
+                  placeholder={text.note}
+                  maxLength={500}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -906,21 +1028,23 @@ function CaseDetailModal({
           {item && modalTab === 'reports' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {item.reports.length === 0 ? (
-                <p style={{ color: '#64748B' }}>Chưa có báo cáo người dùng trực tiếp.</p>
+                <p style={{ color: 'var(--color-text-muted)' }}>Chưa có báo cáo người dùng trực tiếp.</p>
               ) : (
                 item.reports.map((r) => (
                   <div
                     key={r.id}
                     style={{
-                      background: '#F8FAFC',
+                      background: 'var(--color-surface)',
                       padding: 12,
                       borderRadius: 8,
-                      border: '1px solid #E2E8F0',
+                      border: '1px solid var(--color-border)',
                     }}
                   >
                     <strong>{text.reasons[r.reasonCode as keyof typeof text.reasons] ?? r.reasonCode}</strong>
                     {r.reasonDetail && <p style={{ margin: '4px 0 0', fontSize: 12 }}>{r.reasonDetail}</p>}
-                    <span style={{ fontSize: 10, color: '#94A3B8' }}>{date(r.createdAt)}</span>
+                    <span style={{ fontSize: 10, color: 'var(--color-text-subtle)' }}>
+                      {date(r.createdAt)}
+                    </span>
                   </div>
                 ))
               )}
@@ -959,16 +1083,18 @@ function CaseDetailModal({
               Ẩn (Tạm thời)
             </button>
           )}
-          {item?.target && ['held', 'hidden', 'removed'].includes(item.target.status) && (
-            <button
-              type="button"
-              className="btn-decision restore"
-              disabled={decision.isPending || !reasonCode}
-              onClick={() => decision.mutate('restore')}
-            >
-              {item.target.status === 'held' ? vi.api.moderationReleaseHeld : 'Khôi phục'}
-            </button>
-          )}
+          {item?.target &&
+            ['held', 'hidden', 'removed'].includes(item.target.status) &&
+            (item.target.status !== 'held' || item.status !== 'pending') && (
+              <button
+                type="button"
+                className="btn-decision restore"
+                disabled={decision.isPending || !reasonCode}
+                onClick={() => decision.mutate('restore')}
+              >
+                {item.target.status === 'held' ? vi.api.moderationReleaseHeld : 'Khôi phục'}
+              </button>
+            )}
           {item?.target && ['visible', 'published', 'hidden', 'held'].includes(item.target.status) && (
             <button
               type="button"
@@ -1011,12 +1137,26 @@ function LogTable({ items }: { items: ModerationLogDto[] }) {
                 : action.action;
             return (
               <tr key={action.id}>
-                <td><time dateTime={action.createdAt}>{date(action.createdAt)}</time></td>
-                <td><span className={operations.actor}>{action.actorType === 'system' ? 'Hệ thống tự động' : 'Kiểm duyệt viên'}</span>{action.actorType !== 'system' && <code className={operations.actorId} title={action.moderatorId}>{action.moderatorId?.slice(0, 8) || 'Chưa xác định'}</code>}</td>
+                <td>
+                  <time dateTime={action.createdAt}>{date(action.createdAt)}</time>
+                </td>
+                <td>
+                  <span className={operations.actor}>
+                    {action.actorType === 'system' ? 'Hệ thống tự động' : 'Kiểm duyệt viên'}
+                  </span>
+                  {action.actorType !== 'system' && (
+                    <code className={operations.actorId} title={action.moderatorId}>
+                      {action.moderatorId?.slice(0, 8) || 'Chưa xác định'}
+                    </code>
+                  )}
+                </td>
                 <td>
                   <span className={`log-action-badge action-${action.action}`}>{actionLabel}</span>
                 </td>
-                <td>{text.reasons[action.reasonCode as keyof typeof text.reasons] ?? action.reasonCode}{action.reasonDetail && <p className={operations.reasonDetail}>{action.reasonDetail}</p>}</td>
+                <td>
+                  {text.reasons[action.reasonCode as keyof typeof text.reasons] ?? action.reasonCode}
+                  {action.reasonDetail && <p className={operations.reasonDetail}>{action.reasonDetail}</p>}
+                </td>
               </tr>
             );
           })}
@@ -1040,7 +1180,10 @@ function ModerationLog() {
   return (
     <section className={`mod-table-panel ${operations.panel}`} aria-label="Nhật ký thao tác">
       <header className={operations.header}>
-        <div><h2>Nhật ký thao tác kiểm duyệt</h2><p>Lịch sử quyết định của kiểm duyệt viên và hệ thống.</p></div>
+        <div>
+          <h2>Nhật ký thao tác kiểm duyệt</h2>
+          <p>Lịch sử quyết định của kiểm duyệt viên và hệ thống.</p>
+        </div>
         <span className={operations.count}>{rawItems.length} bản ghi đã tải</span>
       </header>
       <AdminApiError
@@ -1055,7 +1198,18 @@ function ModerationLog() {
         </div>
       )}
       {!query.isPending && !query.error && <LogTable items={rawItems} />}
-      {query.hasNextPage && <footer className={operations.footer}><button className={operations.button} type="button" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>{query.isFetchingNextPage ? 'Đang tải…' : 'Xem thêm'}</button></footer>}
+      {query.hasNextPage && (
+        <footer className={operations.footer}>
+          <button
+            className={operations.button}
+            type="button"
+            disabled={query.isFetchingNextPage}
+            onClick={() => void query.fetchNextPage()}
+          >
+            {query.isFetchingNextPage ? 'Đang tải…' : 'Xem thêm'}
+          </button>
+        </footer>
+      )}
     </section>
   );
 }

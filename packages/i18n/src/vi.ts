@@ -12,15 +12,17 @@ import { terms } from './terms';
 import { moderation } from './moderation';
 import { searchMonitoring } from './search-monitoring';
 import { discoveryJobs } from './discovery-jobs';
+import { adminOperations } from './admin-operations';
 import { analytics } from './analytics';
 import { aiUsage } from './ai-usage';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
   analytics,
+  aiUsage,
+  adminOperations,
   searchMonitoring,
   discoveryJobs,
-  aiUsage,
   assistant,
   moderation,
   flights,
@@ -53,10 +55,10 @@ export const vi = {
     overview: 'Tổng quan',
     moderation: 'Kiểm duyệt',
     analytics: 'Số liệu & Giám sát',
+    aiUsage: 'Chi phí AI',
     searchMonitoring: 'Theo dõi tìm kiếm',
     searchJobs: 'Job tìm kiếm',
     recommendJobs: 'Job gợi ý',
-    aiUsage: 'Chi phí AI',
     inventory: 'Lịch trống & giá',
     orders: 'Đơn hàng & Thanh toán',
     users: 'Người dùng',

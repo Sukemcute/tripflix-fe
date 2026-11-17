@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import { AdminApiError } from '../shell/api-state';
+import { EmptyState, Panel } from '../shell/operations-ui';
 
 interface CalendarRequest {
   kind: 'room' | 'flight';
@@ -79,39 +80,52 @@ export function InventoryCalendar() {
     onSuccess: () => client.invalidateQueries({ queryKey: ['calendar'] }),
   });
   return (
-    <>
-      <form
-        className="admin-filters"
-        onSubmit={(event) => {
-          event.preventDefault();
-          mutation.reset();
-          setPatch({});
-          setRequested({ kind, id: id.trim(), from, to });
-        }}
-      >
-        <label>
-          {vi.api.inventory}
-          <select value={kind} onChange={(event) => setKind(event.target.value as typeof kind)}>
-            <option value="room">{vi.api.roomType}</option>
-            <option value="flight">{vi.api.flight}</option>
-          </select>
-        </label>
-        <label>
-          {vi.api.resourceId}
-          <input required value={id} maxLength={100} onChange={(event) => setId(event.target.value)} />
-        </label>
-        <label>
-          {vi.api.from}
-          <input type="date" required value={from} onChange={(event) => setFrom(event.target.value)} />
-        </label>
-        <label>
-          {vi.api.to}
-          <input type="date" required value={to} onChange={(event) => setTo(event.target.value)} />
-        </label>
-        <button className="admin-primary" disabled={!id.trim() || query.isFetching}>
-          {vi.api.loadCalendar}
-        </button>
-      </form>
+    <div className="space-y-5">
+      <Panel title={vi.admin.inventory} description={vi.adminOperations.calendarHint}>
+        <form
+          className="admin-filters p-5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            mutation.reset();
+            setPatch({});
+            setRequested({ kind, id: id.trim(), from, to });
+          }}
+        >
+          <label>
+            {vi.api.inventory}
+            <select value={kind} onChange={(event) => setKind(event.target.value as typeof kind)}>
+              <option value="room">{vi.api.roomType}</option>
+              <option value="flight">{vi.api.flight}</option>
+            </select>
+          </label>
+          <label>
+            {vi.api.resourceId}
+            <input required value={id} maxLength={100} onChange={(event) => setId(event.target.value)} />
+          </label>
+          <label>
+            {vi.api.from}
+            <input type="date" required value={from} onChange={(event) => setFrom(event.target.value)} />
+          </label>
+          <label>
+            {vi.api.to}
+            <input
+              type="date"
+              required
+              min={from}
+              value={to}
+              onChange={(event) => setTo(event.target.value)}
+            />
+          </label>
+          <button className="admin-primary" disabled={!id.trim() || query.isFetching}>
+            {vi.api.loadCalendar}
+          </button>
+        </form>
+      </Panel>
+      {!requested && (
+        <Panel title={vi.adminOperations.calendarEmpty}>
+          <EmptyState description={vi.adminOperations.calendarHint} />
+        </Panel>
+      )}
       <AdminApiError
         error={query.error}
         retry={() => {
@@ -121,8 +135,8 @@ export function InventoryCalendar() {
       {requested && query.isPending && <output>{vi.api.loading}</output>}
       {query.data?.length === 0 && <p className="admin-empty">{vi.api.empty}</p>}
       {requested && query.data && (
-        <>
-          <p>
+        <Panel title={vi.api.inventory}>
+          <p className="break-all px-5 py-4 text-xs text-text-muted">
             {requested.id} · {requested.from} → {requested.to}
           </p>
           <div className="admin-table-scroll">
@@ -154,17 +168,17 @@ export function InventoryCalendar() {
             </table>
           </div>
           <form
-            className="admin-login-form"
+            className="grid gap-4 border-t border-border p-5 sm:grid-cols-2 xl:grid-cols-3"
             onSubmit={(event) => {
               event.preventDefault();
               mutation.mutate();
             }}
           >
-            <h2>{vi.api.save}</h2>
+            <h2 className="text-sm font-bold sm:col-span-2 xl:col-span-3">{vi.api.save}</h2>
             {numberFields
               .filter((field) => requested.kind === 'room' || field === 'total' || field === 'price')
               .map((field) => (
-                <label key={field}>
+                <label key={field} className="grid gap-2 text-xs">
                   {labels[field]}
                   <input
                     type="number"
@@ -181,7 +195,7 @@ export function InventoryCalendar() {
             {booleanFields
               .filter((field) => requested.kind === 'room' || field === 'isStopSell')
               .map((field) => (
-                <label key={field}>
+                <label key={field} className="grid gap-2 text-xs">
                   {labels[field]}
                   <select
                     value={patch[field] ?? ''}
@@ -204,8 +218,8 @@ export function InventoryCalendar() {
               {mutation.isPending ? vi.api.saving : vi.api.save}
             </button>
           </form>
-        </>
+        </Panel>
       )}
-    </>
+    </div>
   );
 }
