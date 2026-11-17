@@ -14,6 +14,36 @@ type HandshakeError = Error & { data?: { code?: string } };
 
 // Người dùng đang có socket /ws kết nối; useNotifications dựa vào đây để bỏ polling khi đã có realtime.
 let connectedUserId: string | null = null;
+let commentsSocket: Socket | null = null;
+const postWatchers = new Map<string, Set<() => void>>();
+const postTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function reloadPostComments(postId: string): void {
+  if (postTimers.has(postId)) return;
+  postTimers.set(postId, setTimeout(() => {
+    postTimers.delete(postId);
+    postWatchers.get(postId)?.forEach((onChange) => onChange());
+  }, 1000));
+}
+
+/** Dùng socket thông báo hiện có; nhiều bảng cùng bài chỉ chiếm một phòng. */
+export function watchPostComments(postId: string, onChange: () => void): () => void {
+  let watchers = postWatchers.get(postId);
+  if (!watchers) {
+    watchers = new Set();
+    postWatchers.set(postId, watchers);
+    if (commentsSocket?.connected) commentsSocket.emit('post.watch', { postId });
+  }
+  watchers.add(onChange);
+  return () => {
+    watchers.delete(onChange);
+    if (watchers.size) return;
+    postWatchers.delete(postId);
+    if (commentsSocket?.connected) commentsSocket.emit('post.unwatch', { postId });
+    clearTimeout(postTimers.get(postId));
+    postTimers.delete(postId);
+  };
+}
 
 /** Socket /ws của người dùng này đang kết nối thì thông báo mới tự đến, không cần poll. */
 export function isNotificationsSocketConnected(userId: string | undefined): boolean {
@@ -52,6 +82,13 @@ export function useNotificationsRealtime(onNotificationCreated?: (payload: unkno
         void Promise.resolve(getHttpConfig().getAccessToken?.() ?? null).then((token) => send({ token }));
       },
     });
+    commentsSocket = socket;
+    socket.on('post.comments.changed', (payload: unknown) => {
+      if (!payload || typeof payload !== 'object' || !('postId' in payload)) return;
+      if (typeof payload.postId === 'string' && postWatchers.has(payload.postId)) {
+        reloadPostComments(payload.postId);
+      }
+    });
 
     const refreshAndReconnect = async () => {
       // Tối đa 3 lần liên tiếp để token hỏng không làm vòng lặp vô hạn; lần nối được thì đặt lại.
@@ -64,6 +101,10 @@ export function useNotificationsRealtime(onNotificationCreated?: (payload: unkno
     socket.on('connect', () => {
       refreshRetries = 0;
       connectedUserId = userId;
+      postWatchers.forEach((_, postId) => {
+        socket.emit('post.watch', { postId });
+        reloadPostComments(postId);
+      });
       // Tải lại để bù phần lỡ; lượt tải này cũng tính lại refetchInterval nên polling tắt.
       reload();
     });
@@ -85,6 +126,9 @@ export function useNotificationsRealtime(onNotificationCreated?: (payload: unkno
 
     return () => {
       isClosed = true;
+      if (commentsSocket === socket) commentsSocket = null;
+      postTimers.forEach(clearTimeout);
+      postTimers.clear();
       if (connectedUserId === userId) connectedUserId = null;
       socket.disconnect();
     };

@@ -5,6 +5,7 @@ import {
   NOTIFICATION_CREATED_EVENT,
   NOTIFICATION_READ_EVENT,
   useNotificationsRealtime,
+  watchPostComments,
 } from './notifications-realtime';
 
 const invalidateQueries = vi.fn();
@@ -21,6 +22,8 @@ vi.mock('./session', () => ({ useApiSession: () => sessionState }));
 type Handler = (...args: unknown[]) => void;
 const handlers = new Map<string, Handler>();
 const socket = {
+  connected: true,
+  emit: vi.fn(),
   on: vi.fn((event: string, handler: Handler) => handlers.set(event, handler)),
   connect: vi.fn(),
   disconnect: vi.fn(),
@@ -39,6 +42,43 @@ beforeEach(() => {
 afterEach(() => cleanup?.());
 
 describe('useNotificationsRealtime', () => {
+  it('vào phòng, lọc đúng bài, gom thay đổi mỗi giây và rời phòng khi đóng', () => {
+    vi.useFakeTimers();
+    configureHttp({ baseUrl: 'https://gateway.example' });
+    useNotificationsRealtime();
+    const onChange = vi.fn();
+    const stop = watchPostComments('p1', onChange);
+    expect(socket.emit).toHaveBeenCalledWith('post.watch', { postId: 'p1' });
+    fire('post.comments.changed', { postId: 'p2' });
+    fire('post.comments.changed', null);
+    vi.advanceTimersByTime(1000);
+    expect(onChange).not.toHaveBeenCalled();
+    fire('post.comments.changed', { postId: 'p1' });
+    fire('post.comments.changed', { postId: 'p1' });
+    vi.advanceTimersByTime(1000);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    fire('connect');
+    vi.advanceTimersByTime(1000);
+    expect(onChange).toHaveBeenCalledTimes(2);
+    fire('post.comments.changed', { postId: 'p1' });
+    stop();
+    vi.advanceTimersByTime(1000);
+    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(socket.emit).toHaveBeenCalledWith('post.unwatch', { postId: 'p1' });
+    vi.useRealTimers();
+  });
+
+  it('hai bảng cùng bài dùng chung phòng, đóng bảng cuối mới unwatch', () => {
+    configureHttp({ baseUrl: 'https://gateway.example' });
+    useNotificationsRealtime();
+    const stopFirst = watchPostComments('p1', vi.fn());
+    const stopSecond = watchPostComments('p1', vi.fn());
+    expect(socket.emit).toHaveBeenCalledTimes(1);
+    stopFirst();
+    expect(socket.emit).toHaveBeenCalledTimes(1);
+    stopSecond();
+    expect(socket.emit).toHaveBeenCalledTimes(2);
+  });
   it('đã đăng nhập thì mở /ws qua gateway, chỉ dùng websocket, gửi access token lúc bắt tay', async () => {
     configureHttp({ baseUrl: 'https://gateway.example', getAccessToken: () => 'tok-1' });
     useNotificationsRealtime();

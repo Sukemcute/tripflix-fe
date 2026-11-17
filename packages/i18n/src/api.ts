@@ -308,6 +308,8 @@ export const api = {
   shareEmail: 'Email',
   shareMoreOptions: 'Khác',
   comments: 'Bình luận',
+  commentModerationHidden: 'Bình luận này vi phạm Tiêu chuẩn cộng đồng',
+  commentModerationLearnMore: 'Tìm hiểu thêm',
   commentBody: 'Viết bình luận',
   send: 'Gửi',
   edit: 'Sửa',

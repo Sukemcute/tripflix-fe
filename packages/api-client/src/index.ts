@@ -89,7 +89,7 @@ export {
   type NotificationReadResult,
   type NotificationPostTarget,
 } from './notifications';
-export { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime } from './notifications-realtime';
+export { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime, watchPostComments } from './notifications-realtime';
 export { findCachedFeedCard, removeReelFromSavedFeedCache, updateReelSocialCache } from './reel-social-cache';
 export { updateCommentLikeCache } from './comment-like-cache';
 export { evictPostFromCache, isPostNotFoundError } from './post-cache';

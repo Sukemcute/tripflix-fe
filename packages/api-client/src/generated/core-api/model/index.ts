@@ -361,6 +361,7 @@ export * from './signedPartDto';
 export * from './signedPartsDto';
 export * from './socialAuthorDto';
 export * from './socialCommentDto';
+export * from './socialCommentDtoModerationState';
 export * from './socialCommentDtoStatus';
 export * from './socialCommentPageDto';
 export * from './socialModerationHistoryDto';
