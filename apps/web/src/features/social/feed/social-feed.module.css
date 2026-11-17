@@ -833,8 +833,6 @@
 
 .itineraryPoiLink:hover {
   border-color: color-mix(in srgb, var(--color-coral) 45%, transparent);
-  color: var(--color-coral-ink);
-  transform: translateX(2px);
 }
 
 .itineraryPoiSub {
@@ -1331,7 +1329,6 @@
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  border: 1px solid #E2E8F0;
 }
 
 .composerAvatar {
@@ -1346,7 +1343,6 @@
   color: var(--color-coral);
   font-size: 15px;
   flex-shrink: 0;
-  border: 1px solid color-mix(in srgb, var(--color-coral) 15%, transparent);
 }
 
 .composerInputPill,
@@ -1501,7 +1497,6 @@
   color: var(--color-coral);
   font-size: 15px;
   flex-shrink: 0;
-  border: 1px solid color-mix(in srgb, var(--color-coral) 15%, transparent);
 }
 
 .authorMeta {
@@ -1521,9 +1516,15 @@
   font-size: 15px;
   font-weight: 700;
   color: var(--color-text);
+  text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+a.authorAvatar {
+  flex-shrink: 0;
+  text-decoration: none;
 }
 
 .authorVerified {
@@ -1539,10 +1540,6 @@
   font-size: 12px;
   color: #64748B;
   flex-wrap: wrap;
-}
-
-.authorHandle {
-  color: var(--color-text-muted);
 }
 
 .authorDot {
@@ -1641,12 +1638,6 @@
   font-weight: 500;
   cursor: pointer;
   transition: color 160ms ease;
-}
-
-.postTagPill:hover {
-  color: var(--color-text);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 .postTagMore {
@@ -2070,10 +2061,6 @@
   font-size: 12px;
   font-weight: 600;
   transition: all 160ms ease;
-}
-
-.postHashtag:hover {
-  background: color-mix(in srgb, var(--color-coral) 12%, transparent) !important;
 }
 
 /* Comment Thread Wrapper in Contextual Panel */

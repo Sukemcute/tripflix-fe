@@ -1206,7 +1206,6 @@
   height: 38px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
-  border: 1.5px solid rgba(255, 255, 255, 0.65);
   color: rgb(255 255 255);
   font-size: 0.86rem;
   font-weight: 800;
@@ -1225,11 +1224,6 @@
   gap: 5px;
   font-size: 0.92rem;
   font-weight: 800;
-}
-
-.overlayAuthorHandle {
-  font-size: 0.76rem;
-  color: rgba(247, 247, 248, 0.72);
 }
 
 .stageBottomOverlay > * {
@@ -1284,10 +1278,6 @@
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-}
-
-.overlayTagPill:hover {
-  background: rgba(255, 255, 255, 0.24);
 }
 
 .overlayAttachedTripCard {
@@ -1439,7 +1429,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 6px;
 }
 
 .actionAvatarBadgeWrap {
@@ -1455,7 +1445,6 @@
   height: 44px;
   border-radius: 999px;
   background: var(--iv-elevated-bg);
-  border: 2px solid var(--iv-accent);
   color: var(--iv-text);
   font-weight: 800;
   font-size: 0.9rem;
@@ -1506,6 +1495,12 @@
   transition:
     transform 160ms ease,
     color 160ms ease;
+}
+
+/* Icon đặc như icon chia sẻ: tim, bình luận, lưu là hình nét đơn nên tô đầy bằng màu chữ (trắng; đã thích, đang mở,
+   đã lưu thì theo màu trạng thái bên dưới). */
+.verticalActionCircle svg {
+  fill: currentColor;
 }
 
 .verticalActionItem:hover .verticalActionCircle {
@@ -1725,8 +1720,23 @@
   cursor: pointer;
 }
 
-.hashtagBtn:hover {
+/* Như TikTok: tên tác giả (Reels, bình luận) bấm được nhưng rê chuột không gạch chân, không đổi màu. */
+.profileLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Riêng tên tác giả trên video Reels: gạch chân khi rê chuột (anh Thành muốn giữ ở Reels). */
+.overlayAuthorNameRow .profileLink:hover {
   text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Avatar trong Reels và bình luận là link tới trang cá nhân: giữ nguyên kiểu, không gạch chân. */
+a.overlayAvatar,
+a.avatarSmall {
+  flex-shrink: 0;
+  text-decoration: none;
 }
 
 .postSummaryStatsRow {

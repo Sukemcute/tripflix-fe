@@ -15,18 +15,20 @@ import { useRef, useState } from 'react';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { isOptimizedImageUrl } from '@/lib/remote-images';
 import { SocialIcon, formatCompactCount } from '../live-posts';
-import { CommunitySummary } from '../post-summary';
-import { getPostCover, POST_COVER_MASCOT } from '../post-cover';
+import { getPostCover, getPostImages, POST_COVER_MASCOT } from '../post-cover';
 import { buildPostHref } from '../search-url';
 import { ShareMenu, type ShareMenuHandle } from '../share-menu';
 import {
+  assignStopThumbnails,
   buildPlaceMapUrl,
   countTripStops,
+  estimateStayCost,
   findFirstFlightRoute,
   formatTransportRoute,
   getAuthorShortName,
   getTripDayCount,
   groupTripDays,
+  listFlightRoutes,
   pickSimilarTrips,
 } from './trip-plan-data';
 import styles from './trip-plan-view.module.css';
@@ -143,17 +145,16 @@ export function TripPlanView({ postId }: { postId: string }) {
               <h2 id="trip-plan-schedule" className={styles.sectionHeading}>
                 {vi.api.tripPlanScheduleHeading}
               </h2>
-              <TripSchedule trip={trip} destination={destination} tipAuthor={tipAuthor} hotelsById={hotelsById} />
+              <TripSchedule
+                trip={trip}
+                destination={destination}
+                tipAuthor={tipAuthor}
+                hotelsById={hotelsById}
+                imagePool={getTripImages(post)}
+              />
             </section>
 
             <TripMoments post={post} />
-
-            <section aria-labelledby="trip-plan-voices">
-              <h2 id="trip-plan-voices" className={styles.sectionHeading}>
-                {vi.api.tripPlanVoicesTitle}
-              </h2>
-              <TripVoices post={post} />
-            </section>
           </div>
 
           <aside className={styles.side}>
@@ -169,7 +170,7 @@ export function TripPlanView({ postId }: { postId: string }) {
                 </ul>
               </section>
             )}
-            {trip.estimatedCostPerPerson ? <CostCard trip={trip} /> : null}
+            <CostBreakdown trip={trip} stays={stays} hotelsById={hotelsById} />
           </aside>
         </div>
 
@@ -288,14 +289,23 @@ function TripSchedule({
   destination,
   tipAuthor,
   hotelsById,
+  imagePool,
 }: {
   trip: TripAttachmentDto;
   destination?: string;
   tipAuthor: string;
   hotelsById: Map<string, HotelDetail>;
+  imagePool: string[];
 }) {
   const days = groupTripDays(trip);
   if (days.length === 0) return <p className={styles.muted}>{vi.api.tripPlanEmptyDays}</p>;
+  // Ảnh từng điểm theo đúng thứ tự hiện; chặng di chuyển không có ảnh.
+  const places = days.flatMap(({ items }) => items).filter((item) => !item.transport);
+  const thumbnails = assignStopThumbnails(
+    places.map((item) => getPostCover(item.location || destination, item.title)),
+    imagePool,
+  );
+  const thumbnailOf = new Map(places.map((item, index) => [item, thumbnails[index] ?? null]));
   return (
     <ol className={styles.days}>
       {days.map(({ day, items }) => (
@@ -309,6 +319,7 @@ function TripSchedule({
                 destination={destination}
                 tipAuthor={tipAuthor}
                 hotel={item.hotel ? hotelsById.get(item.hotel.hotelId) : undefined}
+                thumbnail={thumbnailOf.get(item) ?? null}
               />
             ))}
           </ul>
@@ -323,11 +334,13 @@ function TripStop({
   destination,
   tipAuthor,
   hotel,
+  thumbnail,
 }: {
   item: TripItineraryItemDto;
   destination?: string;
   tipAuthor: string;
   hotel?: HotelDetail;
+  thumbnail: string | null;
 }) {
   const route = formatTransportRoute(item.transport);
   const mapUrl = item.transport
@@ -356,7 +369,13 @@ function TripStop({
   ].filter((part) => part !== null);
 
   return (
-    <li className={styles.stop}>
+    <li className={styles.stop} data-has-thumb={thumbnail ? true : undefined}>
+      {thumbnail && (
+        <span className={styles.stopThumb}>
+          <Image src={thumbnail} alt="" fill sizes="(max-width: 860px) 100vw, 200px" unoptimized={!isOptimizedImageUrl(thumbnail)} />
+        </span>
+      )}
+      <div className={styles.stopBody}>
       {(item.time || price) && (
         <div className={styles.stopHead}>
           <span className={styles.time}>{item.time}</span>
@@ -384,13 +403,33 @@ function TripStop({
           <strong>{t('api.tripPlanTipFrom', { name: tipAuthor })}</strong> {item.notes}
         </p>
       )}
+      </div>
     </li>
   );
 }
 
-/** Ảnh tác giả đăng kèm bài; bài là Reels thì ô lớn đầu tiên mở Reel của chuyến. */
+/** Bộ ảnh của chuyến, cùng nguồn với thẻ bài ở feed: ảnh tác giả; không có thì ảnh minh hoạ theo điểm đến, điểm dừng. */
+function getTripImages(post: SocialPostDto): string[] {
+  const trip = post.tripAttachment;
+  return getPostImages({
+    uploadedImageUrls: post.images?.map((image) => image.url),
+    mediaIds: post.mediaIds,
+    posterUrl: trip?.posterUrl,
+    destinationName: trip?.destinationName,
+    hotelName: trip?.hotelName,
+    title: post.title,
+    body: post.body,
+    hashtags: post.hashtags,
+    itineraryItems: trip?.items,
+  }).map((image) => image.src);
+}
+
+/**
+ * Ảnh của chuyến, cùng nguồn với thẻ bài ở feed: ảnh tác giả tải lên; bài không có ảnh thì ảnh minh hoạ theo điểm
+ * đến và các điểm dừng. Bài là Reels thì ô lớn đầu tiên mở Reel của chuyến.
+ */
 function TripMoments({ post }: { post: SocialPostDto }) {
-  const images = (post.images ?? []).filter((image) => /^https?:\/\//i.test(image.url));
+  const images = getTripImages(post).map((url, index) => ({ id: `${index}-${url}`, url }));
   const isReel = post.postType === 'video';
   if (images.length === 0 && !isReel) return null;
   const tiles = images.slice(0, isReel ? MOMENT_TILES - 1 : MOMENT_TILES);
@@ -433,37 +472,6 @@ function TripMoments({ post }: { post: SocialPostDto }) {
         ))}
       </div>
     </section>
-  );
-}
-
-/** Tóm tắt AI của bình luận (dùng chung với tab Cảm hứng) và hai bình luận đầu tiên. */
-function TripVoices({ post }: { post: SocialPostDto }) {
-  const commentsQuery = useQuery({
-    queryKey: ['social', 'trip-plan-comments', post.id],
-    queryFn: ({ signal }) => socialApi.listComments(post.id, undefined, undefined, signal),
-    enabled: post.commentCount > 0,
-    staleTime: 60_000,
-  });
-  const comments = (commentsQuery.data?.items ?? [])
-    .filter((comment) => comment.status === 'visible' && comment.body.trim())
-    .slice(0, 2);
-  return (
-    <div className={styles.voices}>
-      {post.commentCount > 0 && <CommunitySummary postId={post.id} />}
-      {comments.length > 0 && (
-        <ul className={styles.quotes}>
-          {comments.map((comment) => (
-            <li key={comment.id} className={styles.quote}>
-              <strong>{comment.authorName ?? vi.api.tripPlanAuthorFallback}</strong>
-              <p>{comment.body}</p>
-            </li>
-          ))}
-        </ul>
-      )}
-      <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })} className={styles.inlineLink}>
-        {t('api.tripPlanViewAllComments', { count: formatCompactCount(post.commentCount) })}
-      </Link>
-    </div>
   );
 }
 
@@ -521,15 +529,54 @@ function StayImage({ url, name }: { url: string | null; name: string }) {
   );
 }
 
-function CostCard({ trip }: { trip: TripAttachmentDto }) {
+/**
+ * Chi phí từng mục từ dữ liệu có thật: tiền phòng = giá từ hiện tại × số đêm (mỗi phòng), các chặng bay (giá theo ngày
+ * đặt nên chỉ liệt kê), tổng/người tác giả ghi. Lịch trình chưa có giá từng điểm nên không chia ăn uống, tham quan.
+ */
+function CostBreakdown({
+  trip,
+  stays,
+  hotelsById,
+}: {
+  trip: TripAttachmentDto;
+  stays: TripPlanStay[];
+  hotelsById: Map<string, HotelDetail>;
+}) {
+  const stayCost = estimateStayCost(
+    stays,
+    new Map(stays.map((stay) => [stay.hotelId, hotelsById.get(stay.hotelId)?.priceFrom])),
+  );
+  const flights = listFlightRoutes(trip);
+  if (stays.length === 0 && flights.length === 0 && !trip.estimatedCostPerPerson) return null;
   return (
     <section className={styles.panel} aria-labelledby="trip-plan-cost">
       <h2 id="trip-plan-cost" className={styles.panelTitle}>
-        {vi.api.tripPlanCostTitle}
+        {vi.api.tripPlanCostBreakdownTitle}
       </h2>
-      <p className={styles.costValue}>
-        {t('api.tripPlanCostPerPerson', { price: formatPrice(trip.estimatedCostPerPerson ?? 0) })}
-      </p>
+      <ul className={styles.costRows}>
+        {stays.length > 0 && (
+          <li className={styles.costRow}>
+            <span>{t('api.tripPlanCostStay', { nights: stayCost.nights })}</span>
+            <strong>
+              {stayCost.total > 0
+                ? t('api.tripPlanCostFromPerRoom', { price: formatPrice(stayCost.total) })
+                : vi.api.tripPlanCostNoPrice}
+            </strong>
+          </li>
+        )}
+        {flights.map((route, index) => (
+          <li key={`${route}-${index}`} className={styles.costRow}>
+            <span>{t('api.tripPlanCostFlight', { route })}</span>
+            <strong>{vi.api.tripPlanCostOnBooking}</strong>
+          </li>
+        ))}
+      </ul>
+      {trip.estimatedCostPerPerson ? (
+        <div className={styles.costTotal}>
+          <span>{vi.api.tripPlanCostAuthorTotal}</span>
+          <strong>{t('api.tripPlanCostPerPerson', { price: formatPrice(trip.estimatedCostPerPerson) })}</strong>
+        </div>
+      ) : null}
       <p className={styles.muted}>{trip.priceDisclaimer?.trim() || vi.api.tripPlanCostNote}</p>
     </section>
   );

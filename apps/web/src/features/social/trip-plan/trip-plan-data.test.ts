@@ -1,13 +1,16 @@
 import type { TripItineraryItemDto } from '@tripflix/api-client/core-api/model/index';
 import { describe, expect, it } from 'vitest';
 import {
+  assignStopThumbnails,
   buildPlaceMapUrl,
   countTripStops,
+  estimateStayCost,
   findFirstFlightRoute,
   formatTransportRoute,
   getAuthorShortName,
   getTripDayCount,
   groupTripDays,
+  listFlightRoutes,
   pickSimilarTrips,
 } from './trip-plan-data';
 
@@ -92,5 +95,46 @@ describe('số liệu nhanh của chuyến', () => {
     expect(getAuthorShortName('Bảo Ngọc')).toBe('Ngọc');
     expect(getAuthorShortName('Travel')).toBe('Travel');
     expect(getAuthorShortName(null)).toBeNull();
+  });
+});
+
+describe('chi phí từng mục', () => {
+  it('tiền phòng = giá từ × số đêm của từng chặng ở; chặng chưa có giá đếm vào missing', () => {
+    const stays = [
+      { hotelId: 'a', nights: 2 },
+      { hotelId: 'b', nights: 1 },
+      { hotelId: 'c', nights: 1 },
+    ];
+    const prices = new Map<string, number | null>([
+      ['a', 1_000_000],
+      ['b', 800_000],
+      ['c', null],
+    ]);
+    expect(estimateStayCost(stays, prices)).toEqual({ total: 2_800_000, nights: 4, missing: 1 });
+    expect(estimateStayCost([], prices)).toEqual({ total: 0, nights: 0, missing: 0 });
+  });
+
+  it('liệt kê các chặng bay hợp lệ theo thứ tự', () => {
+    expect(
+      listFlightRoutes({
+        items: [
+          { day: 1, title: 'Đi', transport: { mode: 'flight', fromAirport: 'HAN', toAirport: 'CXR' } },
+          { day: 2, title: 'Xe', transport: { mode: 'bus' } },
+          { day: 4, title: 'Về', transport: { mode: 'flight', fromAirport: 'CXR', toAirport: 'HAN' } },
+        ],
+      }),
+    ).toEqual(['HAN → CXR', 'CXR → HAN']);
+  });
+});
+
+describe('ảnh nhỏ từng điểm dừng', () => {
+  it('ảnh riêng nếu chưa dùng; trùng hoặc thiếu thì lấy ảnh chưa dùng của chuyến; hết ảnh thì dùng lại ảnh riêng', () => {
+    expect(assignStopThumbnails(['bien', 'bien', null, 'bien'], ['bien', 'dao', 'kayak'])).toEqual([
+      'bien',
+      'dao',
+      'kayak',
+      'bien',
+    ]);
+    expect(assignStopThumbnails([null], [])).toEqual([null]);
   });
 });

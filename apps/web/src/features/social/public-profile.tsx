@@ -6,7 +6,7 @@ import { vi } from '@tripflix/i18n';
 import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
-import { SocialIcon } from './live-posts';
+import { SocialIcon, formatAuthorDisplay } from './live-posts';
 import { buildInspirationHref, buildPostHref } from './search-url';
 import grid from './search-results-grid.module.css';
 import styles from './public-profile.module.css';
@@ -51,7 +51,12 @@ export function PublicProfile({ userId }: { userId: string }) {
           {getNameInitials(displayName) || 'TF'}
         </span>
         <div className={styles.info}>
-          <h1 className={styles.name}>{displayName}</h1>
+          <div className={styles.nameBlock}>
+            <h1 className={styles.name}>{displayName}</h1>
+            {/* Tên tài khoản chỉ hiện ở trang cá nhân (bài viết, Reels đã bỏ). Chưa có trường username thật nên tạo
+                từ tên hiển thị như các chỗ khác (formatAuthorDisplay). */}
+            <p className={styles.handle}>{formatAuthorDisplay(userId, displayName).handle}</p>
+          </div>
           <ul className={styles.stats}>
             {stats.map((item) => (
               <li key={item.label}>

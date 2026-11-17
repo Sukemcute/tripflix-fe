@@ -901,19 +901,25 @@ function MediaTrackItem({
       {/* Bottom Post Overlay */}
       <div className={styles.stageBottomOverlay}>
         <div className={styles.overlayAuthorRow}>
-          <span className={styles.overlayAvatar} aria-hidden="true">
+          {/* Avatar cũng mở trang cá nhân như tên; bỏ khỏi thứ tự Tab để không đọc trùng link. */}
+          <Link
+            prefetch={false}
+            className={styles.overlayAvatar}
+            href={`/u/${post.authorId}`}
+            aria-hidden="true"
+            tabIndex={-1}
+          >
             {getInitial(authorInfo.name)}
-          </span>
+          </Link>
           <div className={styles.overlayAuthorMeta}>
             <div className={styles.overlayAuthorNameRow}>
-              <Link prefetch={false} className="profile-link" href={`/u/${post.authorId}`}>
+              <Link prefetch={false} className={styles.profileLink} href={`/u/${post.authorId}`}>
                 {authorInfo.name}
               </Link>
               {(post.isVerified || reelCard?.author.isKol) && (
                 <SocialIcon name="verified" size={16} />
               )}
             </div>
-            <span className={styles.overlayAuthorHandle}>{authorInfo.handle}</span>
           </div>
         </div>
 
@@ -2487,13 +2493,20 @@ function CommentNode({
       className={`${styles.panelCommentItem} ${isFocused ? styles.panelCommentFocused : ''}`}
     >
       <CommentVisibility commentId={comment.id} isMine={isMine} loginHref={loginHref} className={styles.panelCommentRow}>
-        <span className={styles.avatarSmall} data-tone={getAvatarTone(authorDisplay.name)} aria-hidden="true">
+        <Link
+          prefetch={false}
+          className={styles.avatarSmall}
+          data-tone={getAvatarTone(authorDisplay.name)}
+          href={`/u/${comment.authorId}`}
+          aria-hidden="true"
+          tabIndex={-1}
+        >
           {getInitial(authorDisplay.name)}
-        </span>
+        </Link>
         <div className={styles.panelCommentContent}>
           <div className={styles.panelCommentMeta}>
             <span className={styles.panelCommentAuthor}>
-              <Link prefetch={false} className="profile-link" href={`/u/${comment.authorId}`}>
+              <Link prefetch={false} className={styles.profileLink} href={`/u/${comment.authorId}`}>
                 {authorDisplay.name}
               </Link>
               {comment.replyToName && ` ↳ ${comment.replyToName}`}

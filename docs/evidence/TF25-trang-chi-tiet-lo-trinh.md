@@ -32,6 +32,12 @@
   - **Khoảnh khắc:** ảnh của bài; nếu bài là Reels thì ô lớn mở Reel ở tab Cảm hứng.
   - **Người đi trước nói gì:** dùng lại `CommunitySummary` (tóm tắt AI bình luận) kèm 2 bình luận đầu và link xem tất cả.
   - **Người lên lịch trình** và **chuyến tương tự** (tìm theo điểm đến bằng `usePostSearchFeed`, chỉ giữ bài có lịch trình).
+- **Chỉnh theo góp ý của anh Thành:**
+  - Bỏ mục "Người đi trước nói gì".
+  - **Khoảnh khắc:** dùng cùng bộ ảnh với thẻ bài ở feed (`getPostImages`). Bài có ảnh tác giả thì chỉ dùng ảnh đó; không có thì dùng ảnh minh hoạ theo điểm đến và các điểm dừng.
+  - **Ảnh nhỏ từng điểm dừng:** chọn như sidebar lịch trình (`getPostCover` theo nơi). Ảnh trùng hoặc thiếu thì lấy ảnh chưa dùng trong bộ ảnh của chuyến (`assignStopThumbnails`).
+  - **Chi phí từng mục:** tiền phòng = giá từ hiện tại × số đêm (mỗi phòng), các chặng bay ghi "Giá khi đặt", và tổng tác giả ước tính/người.
+  - Giá các điểm khác ngoài khách sạn chưa có vì lịch trình chưa có trường giá từng điểm.
 - **Bản đồ:** chỉ có link mở Google Maps ở từng điểm. Bản đồ nhúng cần thêm thư viện và toạ độ của từng điểm, nên để sau.
 - **Đặt theo lộ trình:** để bước 2. Phần này dùng lại logic `app-core` mà Thắng đã làm cho mobile ở TF105.
 - Không đổi API, không thêm thư viện.
@@ -47,7 +53,7 @@
 
 ## Kết quả kiểm tra
 - `pnpm turbo run lint typecheck test --filter=@tripflix/web`: 3/3 task pass.
-  - Test: 29 file pass, gồm `trip-plan-data.test.ts` 10/10.
+  - Test: 29 file pass, gồm `trip-plan-data.test.ts` 13/13.
   - Lint: 0 lỗi, 15 cảnh báo đều có từ trước.
 - Chụp bằng Chrome headless ở 1440px và 390px (gửi trong phiên, không commit).
 - Ở môi trường dev, link ảnh khách sạn trên CloudFront (`dev/unknown/images/...`) trả 403. Đây là lỗi dữ liệu môi trường, không do thay đổi này; trang hiện icon thay thế khi ảnh lỗi.
