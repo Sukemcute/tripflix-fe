@@ -42,12 +42,15 @@ export function AuthorReelsScreen() {
     // Trình phát Reels dùng cử chỉ (tua, nhấn giữ) nên cần gốc của gesture-handler như tab Reels.
     <GestureHandlerRootView style={styles.root}>
       {items.length > 0 ? (
-        <ReelsFeed
-          items={items}
-          targetId={reel}
-          onLoadMore={loadMore}
-          isFetchingMore={feed.isFetchingNextPage}
-        />
+        // Chừa tai thỏ và thanh vuốt về nhà như tab Reels; phủ cả màn thì video dọc bị phóng to, cắt mất hai bên.
+        <View style={[styles.feed, { marginTop: insets.top, marginBottom: insets.bottom }]}>
+          <ReelsFeed
+            items={items}
+            targetId={reel}
+            onLoadMore={loadMore}
+            isFetchingMore={feed.isFetchingNextPage}
+          />
+        </View>
       ) : (
         <View style={styles.center}>
           {feed.isPending ? (
@@ -71,6 +74,7 @@ export function AuthorReelsScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.text },
+  feed: { flex: 1, overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   back: {
     position: 'absolute',
