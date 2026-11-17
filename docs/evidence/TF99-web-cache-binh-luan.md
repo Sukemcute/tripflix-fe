@@ -9,13 +9,14 @@
   - Xoá: bỏ khỏi mọi danh sách, bớt `total`; xoá bình luận gốc thì trừ thêm số trả lời đang hiện (BE xoá luôn trả lời) và bỏ cache trả lời của nó.
   - Giữ đúng quy tắc đếm của BE: bình luận bị giữ chờ duyệt (`held`) vẫn hiện cho người gửi nhưng không cộng `commentCount`. Trường hợp không biết chắc (sửa xong bị giữ, xoá bình luận không có trong cache) thì tải lại bài đó thay vì đoán số.
   - Tóm tắt AI chỉ đánh dấu cũ (`refetchType: 'none'`): AI tạo lại sau, không đổi ngay khi vừa gửi.
+- Thả tim bình luận: ghi `isLiked`, `likeCount` server trả về vào mọi danh sách (`setCommentReactionInCache`) thay vì tải lại mọi trang bình luận của bài.
 - Mở panel bình luận ở feed: `refreshCommentsIfStale` thay cho làm mới mọi trang. Dữ liệu còn mới (< `staleTime` 30 s) thì dùng luôn; đã cũ thì chỉ giữ trang đầu rồi tải lại.
 - Nối vào `live-posts.tsx` (panel bình luận, `CommentNode`), `live-comments.tsx` (trang chi tiết bài, chỉ đổi `onSuccess`), `feed/social-feed-view.tsx` (lúc mở panel).
 
 ## Đối chiếu "Xong khi"
 | Tiêu chí | Đạt | Bằng chứng |
 |---|---|---|
-| Gửi, sửa, xoá bình luận không tải lại mọi trang | Đạt | `comment-cache.test.ts` (10 test); đo F1 bên dưới: sau khi gửi 0 request |
+| Gửi, sửa, xoá, thả tim bình luận không tải lại mọi trang | Đạt | `comment-cache.test.ts` (11 test); đo F1 bên dưới: sau khi gửi 0 request |
 | Số bình luận, số trả lời đúng như BE | Đạt | test "bình luận bị giữ…", "xoá bình luận gốc…", "xoá trả lời…" |
 | Mở panel không tải lại mọi trang | Đạt | test "mở lại panel khi dữ liệu đã cũ…"; đo F1 |
 
@@ -26,13 +27,14 @@ Dựng đúng các query đang mở trên trang feed cộng đồng khi panel b�
 |---|---|---|---|
 | Gửi 1 bình luận | 3 trang | 7 request · 40 KB · 149 ms | 0 |
 | Gửi 1 bình luận | 10 trang | 14 request · 112 KB · 161 ms | 0 |
+| Thả tim 1 bình luận | 10 trang | 11 request · 104 KB (làm mới mọi danh sách bình luận của bài) | 0 |
 | Mở lại panel (dữ liệu < 30 s) | 10 trang | 11 request · 104 KB | 0 |
 | Mở lại panel (dữ liệu đã cũ) | 10 trang | 11 request · 104 KB | 2 request · 11 KB (trang đầu bình luận + trả lời) |
 
 Feed local chỉ có 1 trang; trên server feed nhiều trang hơn (và feed gợi ý đi qua discovery) thì cách cũ còn tốn thêm mỗi trang một request.
 
 ## Kết quả kiểm tra
-- `pnpm turbo run lint typecheck test --affected`: lint 0 lỗi; test web 17 file pass (gồm `comment-cache.test.ts` 10/10), api-client 29, app-core 18, admin 1, i18n 1 file pass; typecheck web pass.
+- `pnpm turbo run lint typecheck test --affected`: lint 0 lỗi; test web 17 file pass (gồm `comment-cache.test.ts` 11/11), api-client 29, app-core 18, admin 1, i18n 1 file pass; typecheck web pass.
 - `@tripflix/mobile#typecheck` fail ở máy local vì file sinh `.expo/types/router.d.ts` (gitignore) cũ hơn route `/my-trips`; không liên quan thay đổi này, không sửa.
 
 ## Cách kiểm lại
