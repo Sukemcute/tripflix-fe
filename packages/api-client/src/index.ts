@@ -154,6 +154,7 @@ export {
   type AssistantAnswer,
   type AssistantAnswerKind,
   type AssistantCard,
+  type AssistantAction,
   type AssistantCardLine,
   type AssistantTrip,
 } from './assistant';
