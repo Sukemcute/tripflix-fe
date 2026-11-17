@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AuthErrorNotice, AuthField, PasswordField } from './auth-fields';
+import { ADMIN_RETURN_TO, useOpenAdmin } from './admin-handoff';
 import { readDeviceName, readSafeReturnTo, withReturnTo } from './auth-return';
 import { GoogleButton } from './google-button';
 
@@ -16,16 +17,23 @@ import { GoogleButton } from './google-button';
  * Tạo tài khoản nằm ở trang riêng /register (register-form.tsx).
  */
 export function LiveLogin({ returnTo }: { returnTo?: string }) {
-  const { session, isReady, error } = useApiSession();
+  const { session, isReady, error, user } = useApiSession();
   const router = useRouter();
+  const isAdminReturn = returnTo === ADMIN_RETURN_TO;
+  const openAdmin = useOpenAdmin();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [loginChallengeId, setLoginChallengeId] = useState<string>();
-  const goBack = useCallback(
-    () => router.replace(readSafeReturnTo(returnTo ?? '/account')),
-    [router, returnTo],
-  );
+  const goBack = useCallback(() => {
+    // Về admin do effect bên dưới lo, khi phiên đã có user.
+    if (!isAdminReturn) router.replace(readSafeReturnTo(returnTo ?? '/account'));
+  }, [router, returnTo, isAdminReturn]);
+  const { mutate: startAdminHandoff, isIdle: isAdminHandoffIdle } = openAdmin;
+  // Đã đăng nhập (sẵn hoặc vừa xong) mà đến từ trang quản trị: chuyển thẳng về admin.
+  useEffect(() => {
+    if (isAdminReturn && user && isAdminHandoffIdle) startAdminHandoff();
+  }, [isAdminReturn, user, isAdminHandoffIdle, startAdminHandoff]);
 
   const cooldown = useResendCooldown();
   const requestCode = useMutation({
@@ -81,6 +89,7 @@ export function LiveLogin({ returnTo }: { returnTo?: string }) {
   return (
     <>
       <h2 className="auth-panel-title">{vi.api.authLoginTitle}</h2>
+      <ApiErrorNotice error={openAdmin.error} />
       <ApiErrorNotice
         error={error}
         retry={() => {
