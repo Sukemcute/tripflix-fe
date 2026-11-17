@@ -8,7 +8,7 @@ import {
 } from '@tripflix/api-client';
 import { formatProfileCount, getNameInitials } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { colors as c, mobileLayout, nativeFonts, spacing as s } from '@tripflix/tokens';
+import { colors as c, mobileLayout, nativeFonts, radius, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
@@ -90,7 +90,8 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
           {isReady && !isMine && (
             <Button
               tone={follow.isFollowing ? 'secondary' : 'primary'}
-              compact
+              icon={follow.isFollowing ? 'checkmark' : 'person-add-outline'}
+              style={styles.follow}
               disabled={!!user && !follow.canToggle}
               onPress={() => {
                 if (user) follow.toggle();
@@ -260,6 +261,7 @@ const styles = StyleSheet.create({
   avatarText: { ...compactType.title, fontFamily: nativeFonts.bold },
   stats: { flexDirection: 'row', alignSelf: 'stretch', marginVertical: s.sm },
   stat: { flex: 1, alignItems: 'center', gap: s.xs },
+  follow: { minWidth: 180, borderRadius: radius.pill },
   tabs: { flexDirection: 'row', borderBottomColor: c.border, borderBottomWidth: StyleSheet.hairlineWidth },
   tab: {
     flex: 1,
