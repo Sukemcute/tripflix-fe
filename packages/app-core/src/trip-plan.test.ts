@@ -3,8 +3,16 @@ import {
   applyTripPlanChoices,
   buildTripAttachment,
   buildTripPlanCheckout,
-  EMPTY_TRIP_PLAN_DAY,
+  buildTripDraftFromOrder,
+  createTripPlanDraft,
+  createTripPlanPoint,
+  isBookableTripPoint,
+  moveTripPlanPoint,
+  sortTripPlanPointsByTime,
   getBookableTripPlan,
+  getTripPlanStays,
+  findTripOutboundFlight,
+  pickTripFlightDestination,
   getTripDayDate,
   getTripNights,
   hasTripPlan,
@@ -15,31 +23,43 @@ import {
   TRIP_PLAN_MAX_ITEMS,
 } from './trip-plan';
 
+const labels = {
+  flight: 'Máy bay',
+  bus: 'Xe khách',
+  train: 'Tàu hoả',
+  car: 'Ô tô',
+  other: 'Khác',
+} as const;
+
 describe('trip plan', () => {
-  it('dựng trip_attachment từ bản nháp: phương tiện thành mục đầu ngày, bỏ dòng trống', () => {
-    const labels = {
-      flight: 'Máy bay',
-      bus: 'Xe khách',
-      train: 'Tàu hoả',
-      car: 'Ô tô',
-      other: 'Khác',
-    } as const;
+  it('dựng trip_attachment từ bản nháp: giữ thứ tự điểm, giờ hợp lệ, bỏ điểm trống', () => {
     expect(
       buildTripAttachment(
         {
           destinationName: ' Đà Lạt ',
-          hotel: { hotelId: 'h1', hotelName: 'Ana Mandara' },
+          destinationPlaceId: 'da-lat',
+          posterMediaId: 'img-1',
+          bookingId: 'order-1',
           days: [
             {
-              activities: [
-                { title: 'Hồ Xuân Hương', location: 'Trung tâm' },
-                { title: '  ', location: '' },
+              points: [
+                createTripPlanPoint({ mode: 'flight', fromCode: 'SGN', toCode: 'DLI', time: '06:45' }),
+                createTripPlanPoint({ title: 'Hồ Xuân Hương', location: 'Trung tâm', time: '25:00' }),
+                createTripPlanPoint({ title: '  ' }),
               ],
-              transport: { mode: 'flight', fromCode: 'SGN', toCode: 'DLI', note: '' },
             },
             {
-              ...EMPTY_TRIP_PLAN_DAY,
-              transport: { mode: 'bus', fromCode: '', toCode: '', note: 'Nhà xe Phương Trang' },
+              points: [
+                createTripPlanPoint({ mode: 'bus', note: 'Nhà xe Phương Trang' }),
+                createTripPlanPoint({
+                  kind: 'hotel',
+                  hotelId: 'h1',
+                  title: 'Ana Mandara',
+                  productId: 'h1--DLX',
+                  ratePlanCode: 'RO',
+                  roomName: 'Deluxe',
+                }),
+              ],
             },
           ],
         },
@@ -48,21 +68,122 @@ describe('trip plan', () => {
     ).toEqual({
       daysCount: 2,
       destinationName: 'Đà Lạt',
+      destinationPlaceId: 'da-lat',
       hotelId: 'h1',
       hotelName: 'Ana Mandara',
+      hotelProductId: 'h1--DLX',
+      hotelRatePlanCode: 'RO',
+      posterMediaId: 'img-1',
+      bookingId: 'order-1',
       items: [
         {
           day: 1,
           title: 'Máy bay SGN → DLI',
+          time: '06:45',
           transport: { mode: 'flight', fromAirport: 'SGN', toAirport: 'DLI' },
         },
         { day: 1, title: 'Hồ Xuân Hương', location: 'Trung tâm' },
         { day: 2, title: 'Xe khách', notes: 'Nhà xe Phương Trang', transport: { mode: 'bus' } },
+        {
+          day: 2,
+          title: 'Ana Mandara',
+          notes: 'Deluxe',
+          hotel: { hotelId: 'h1', productId: 'h1--DLX', ratePlanCode: 'RO' },
+        },
       ],
     });
+    expect(buildTripAttachment(createTripPlanDraft(), labels)).toBeNull();
+  });
+
+  it('sắp lại điểm trong ngày: kéo đổi chỗ và sắp theo giờ', () => {
+    const [a, b, c] = [
+      createTripPlanPoint({ title: 'A', time: '16:30' }),
+      createTripPlanPoint({ title: 'B' }),
+      createTripPlanPoint({ title: 'C', time: '06:00' }),
+    ];
+    expect(moveTripPlanPoint({ points: [a!, b!, c!] }, 2, 0).points.map((p) => p.title)).toEqual([
+      'C',
+      'A',
+      'B',
+    ]);
+    expect(moveTripPlanPoint({ points: [a!, b!] }, 0, 5).points.map((p) => p.title)).toEqual(['A', 'B']);
+    expect(sortTripPlanPointsByTime({ points: [a!, b!, c!] }).points.map((p) => p.title)).toEqual([
+      'C',
+      'A',
+      'B',
+    ]);
+    expect(a!.key).not.toBe(b!.key);
+  });
+
+  it('chặng bay đủ mã sân bay mới đặt được', () => {
+    expect(isBookableTripPoint(createTripPlanPoint({ mode: 'flight', fromCode: 'SGN', toCode: 'CXR' }))).toBe(
+      true,
+    );
+    expect(isBookableTripPoint(createTripPlanPoint({ mode: 'flight', fromCode: 'SGN', toCode: 'SGN' }))).toBe(
+      false,
+    );
+    expect(isBookableTripPoint(createTripPlanPoint({ mode: 'bus', fromCode: 'SGN', toCode: 'CXR' }))).toBe(
+      false,
+    );
+    expect(isBookableTripPoint(createTripPlanPoint({ title: 'Cáp treo' }))).toBe(false);
+  });
+
+  it('dựng bản nháp từ chuyến đã đi: vé bay đúng ngày, khách sạn thành chỗ ở', () => {
+    const draft = buildTripDraftFromOrder({
+      orderId: 'order-1',
+      startDate: '2026-12-01',
+      endDate: '2026-12-03',
+      items: [
+        {
+          productType: 'flight',
+          productName: 'VJ135',
+          fromAirport: 'SGN',
+          toAirport: 'CXR',
+          date: '2026-12-01',
+        },
+        {
+          productType: 'room',
+          productName: 'Deluxe',
+          propertyId: 'P-1',
+          propertyName: 'Vinpearl',
+          date: '2026-12-01',
+        },
+        {
+          productType: 'flight',
+          productName: 'VJ136',
+          fromAirport: 'CXR',
+          toAirport: 'SGN',
+          date: '2026-12-03',
+        },
+        { productType: 'flight', productName: 'thiếu sân bay', date: '2026-12-02' },
+      ],
+    });
+    expect(draft.bookingId).toBe('order-1');
     expect(
-      buildTripAttachment({ destinationName: '', hotel: null, days: [EMPTY_TRIP_PLAN_DAY] }, labels),
-    ).toBeNull();
+      draft.days.map((day) =>
+        day.points.map((p) =>
+          p.kind === 'hotel' ? `ks:${p.hotelId}` : p.mode ? `${p.fromCode}-${p.toCode}` : 'trống',
+        ),
+      ),
+    ).toEqual([['SGN-CXR', 'ks:P-1'], ['trống'], ['CXR-SGN']]);
+    expect(buildTripAttachment(draft, labels)?.items).toContainEqual({
+      day: 1,
+      title: 'Vinpearl',
+      time: '14:00',
+      notes: 'Deluxe',
+      hotel: { hotelId: 'P-1' },
+    });
+    expect(buildTripAttachment(draft, labels)?.items).toHaveLength(3);
+  });
+
+  it('điểm khách sạn đặt được khi đã chọn khách sạn, gửi lên như một mục trong ngày', () => {
+    const hotel = createTripPlanPoint({ kind: 'hotel', hotelId: 'P-1', title: 'Vinpearl', mode: 'bus' });
+    expect(isBookableTripPoint(hotel)).toBe(true);
+    expect(isBookableTripPoint(createTripPlanPoint({ kind: 'hotel' }))).toBe(false);
+    const draft = { ...createTripPlanDraft(), days: [{ points: [hotel] }] };
+    expect(buildTripAttachment(draft, labels)?.items).toEqual([
+      { day: 1, title: 'Vinpearl', hotel: { hotelId: 'P-1' } },
+    ]);
   });
 
   it('cho đặt riêng vé hoặc phòng và giữ các chặng tự túc', () => {
@@ -70,12 +191,12 @@ describe('trip plan', () => {
     expect(getBookableTripPlan({})).toBeNull();
     expect(getBookableTripPlan({ items: [{ day: 1, transport: { mode: 'bus' } }] })).toBeNull();
     expect(getBookableTripPlan({ hotelId: 'h', items: [{ day: 1 }] })).toEqual({
-      hotelId: 'h',
+      hotels: [{ id: 'hotel0', day: 1, nights: 1, hotelId: 'h' }],
       flights: [],
       selfArranged: [],
     });
     expect(getBookableTripPlan({ items: [flight] })).toEqual({
-      hotelId: null,
+      hotels: [],
       flights: [{ day: 1, from: 'SGN', to: 'DLI' }],
       selfArranged: [],
     });
@@ -89,7 +210,7 @@ describe('trip plan', () => {
         ],
       }),
     ).toEqual({
-      hotelId: 'h',
+      hotels: [{ id: 'hotel0', day: 1, nights: 2, hotelId: 'h' }],
       flights: [{ day: 1, from: 'SGN', to: 'DLI' }],
       selfArranged: [
         { day: 2, title: 'Xe đến biển', mode: 'bus' },
@@ -108,7 +229,7 @@ describe('trip plan', () => {
       { mode: 'other' as const },
     ]) {
       expect(getBookableTripPlan({ hotelId: 'h', items: [{ day: 1, transport }] })).toEqual({
-        hotelId: 'h',
+        hotels: [{ id: 'hotel0', day: 1, nights: 1, hotelId: 'h' }],
         flights: [],
         selfArranged: [{ day: 1, mode: transport.mode }],
       });
@@ -132,6 +253,7 @@ describe('trip plan', () => {
     ]);
     expect(
       getBookableTripPlan({
+        hotelId: 'h',
         items: Array.from({ length: TRIP_PLAN_MAX_ITEMS }, (_, index) => leg(index + 1)),
       }),
     ).toBeNull();
@@ -200,12 +322,37 @@ describe('trip plan', () => {
       expect(isValidTripPlanPassengers(passengers, 9)).toBe(false);
   });
 
-  it('cho chọn khách sạn khi lộ trình chỉ có vé bay', () => {
-    expect(applyTripPlanChoices({ hotelId: null, flights: [] }, {})).toEqual({ hotelId: null, flights: [] });
-    expect(applyTripPlanChoices({ hotelId: null, flights: [] }, { hotelId: 'h2' })).toEqual({
-      hotelId: 'h2',
-      flights: [],
+  it('mỗi điểm khách sạn là một chặng ở, tới khách sạn kế tiếp hoặc hết chuyến', () => {
+    const plan = getBookableTripPlan({
+      hotelId: 'h1',
+      daysCount: 6,
+      items: [
+        { day: 1, title: 'Ana Mandara', hotel: { hotelId: 'h1', productId: 'h1--DLX', ratePlanCode: 'RO' } },
+        { day: 2, title: 'Ana Mandara', hotel: { hotelId: 'h1' } },
+        { day: 3, title: 'Vinpearl', hotel: { hotelId: 'h2' } },
+        { day: 5, title: 'Sai', hotel: { hotelId: 'h3' } },
+        { day: 5, title: 'Mường Thanh', hotel: { hotelId: 'h4' } },
+      ],
     });
+    expect(plan?.hotels).toEqual([
+      {
+        id: 'hotel0',
+        day: 1,
+        nights: 2,
+        hotelId: 'h1',
+        hotelName: 'Ana Mandara',
+        productId: 'h1--DLX',
+        ratePlanCode: 'RO',
+      },
+      { id: 'hotel1', day: 3, nights: 2, hotelId: 'h2', hotelName: 'Vinpearl' },
+      { id: 'hotel2', day: 5, nights: 1, hotelId: 'h4', hotelName: 'Mường Thanh' },
+    ]);
+  });
+
+  it('bài cũ chỉ có khách sạn của chuyến thì ở từ ngày 1 tới hết chuyến', () => {
+    expect(
+      getTripPlanStays({ hotelId: 'h', hotelProductId: 'P', hotelRatePlanCode: 'RO', daysCount: 4 }),
+    ).toEqual([{ id: 'hotel0', day: 1, nights: 3, hotelId: 'h', productId: 'P', ratePlanCode: 'RO' }]);
   });
 
   it('ở tới sáng ngày cuối, ít nhất một đêm', () => {
@@ -278,19 +425,60 @@ describe('trip plan', () => {
 
   it('đổi sân bay nhà ở cả chiều đi lẫn chiều về và đổi khách sạn', () => {
     const plan = {
-      hotelId: 'h1',
+      hotels: [{ id: 'hotel0', day: 1, nights: 3, hotelId: 'h1', productId: 'P', ratePlanCode: 'RO' }],
       flights: [
         { day: 1, from: 'SGN', to: 'CXR' },
         { day: 4, from: 'CXR', to: 'SGN' },
       ],
     };
-    expect(applyTripPlanChoices(plan, { homeAirport: 'HAN', hotelId: 'h2' })).toEqual({
-      hotelId: 'h2',
+    expect(
+      applyTripPlanChoices(plan, { homeAirport: 'HAN', hotels: { hotel0: { id: 'h2', name: 'Vinpearl' } } }),
+    ).toEqual({
+      hotels: [{ id: 'hotel0', day: 1, nights: 3, hotelId: 'h2', hotelName: 'Vinpearl' }],
       flights: [
         { day: 1, from: 'HAN', to: 'CXR' },
         { day: 4, from: 'CXR', to: 'HAN' },
       ],
     });
     expect(applyTripPlanChoices(plan, {})).toEqual(plan);
+  });
+});
+
+describe('chặng bay theo điểm đến (TF105)', () => {
+  const destinations = [
+    { code: 'DLI', name: 'Đà Lạt' },
+    { code: 'CXR', name: 'Nha Trang / Cam Ranh' },
+  ];
+  it('lấy sân bay khớp điểm đến, không phân biệt dấu', () => {
+    expect(
+      pickTripFlightDestination({ from: 'SGN', destinations, destinationName: 'nha trang', outbound: null }),
+    ).toBe('CXR');
+    expect(
+      pickTripFlightDestination({ from: 'SGN', destinations, destinationName: 'Da Lat', outbound: null }),
+    ).toBe('DLI');
+    expect(
+      pickTripFlightDestination({ from: 'SGN', destinations, destinationName: 'Huế', outbound: null }),
+    ).toBe('');
+  });
+  it('chiều về bay về lại sân bay nhà của chiều đi', () => {
+    expect(
+      pickTripFlightDestination({
+        from: 'CXR',
+        destinations: [{ code: 'SGN', name: 'Hồ Chí Minh' }],
+        destinationName: 'Nha Trang',
+        outbound: { from: 'SGN', to: 'CXR' },
+      }),
+    ).toBe('SGN');
+  });
+  it('tìm chặng bay chiều đi đã chọn đủ sân bay', () => {
+    const draft = {
+      ...createTripPlanDraft(),
+      days: [
+        { points: [createTripPlanPoint({ mode: 'flight', fromCode: 'SGN' })] },
+        { points: [createTripPlanPoint({ mode: 'flight', fromCode: 'SGN', toCode: 'CXR' })] },
+      ],
+    };
+    expect(findTripOutboundFlight(draft)).toEqual({ from: 'SGN', to: 'CXR' });
+    expect(findTripOutboundFlight(createTripPlanDraft())).toBeNull();
   });
 });

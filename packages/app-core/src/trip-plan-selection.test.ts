@@ -41,6 +41,7 @@ describe('parseTripPlanSelection', () => {
     { ...selected, trip: { hotelId: 'h', daysCount: 31 } },
     { ...selected, trip: { hotelId: 'h', items: {} } },
     { ...selected, trip: { hotelId: 'h', items: [null] } },
+    { ...selected, trip: { hotelId: 'h', items: [{ day: 1, title: 'Sai', hotel: { hotelId: 1 } }] } },
     { ...selected, trip: { hotelId: 'h', items: [{ day: 0, title: 'Sai' }] } },
     { ...selected, trip: { hotelId: 'h', items: [{ day: 1, title: 'Sai', transport: { mode: 'boat' } }] } },
   ])('bỏ cấu trúc không hợp lệ trước khi đưa lên UI', (value) => {

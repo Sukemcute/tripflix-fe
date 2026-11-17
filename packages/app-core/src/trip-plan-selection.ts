@@ -8,6 +8,9 @@ export interface TripPlanSelection {
   trip: {
     hotelId?: string;
     hotelName?: string;
+    /** Loại phòng người đăng chọn; đặt theo lộ trình ưu tiên phòng này nếu còn bán. */
+    hotelProductId?: string;
+    hotelRatePlanCode?: string;
     destinationName?: string;
     daysCount?: number;
     items?: {
@@ -15,6 +18,9 @@ export interface TripPlanSelection {
       title: string;
       location?: string;
       notes?: string;
+      time?: string;
+      /** Khách sạn của điểm này; một chuyến có thể ở nhiều khách sạn (TF105). */
+      hotel?: { hotelId: string; productId?: string; ratePlanCode?: string };
       transport?: { mode: TripPlanMode; fromAirport?: string; toAirport?: string };
     }[];
   };
@@ -39,7 +45,7 @@ export function parseTripPlanSelection(raw: string | null): TripPlanSelection | 
     if (
       !trip ||
       typeof trip !== 'object' ||
-      [trip.hotelId, trip.hotelName, trip.destinationName].some(
+      [trip.hotelId, trip.hotelName, trip.hotelProductId, trip.hotelRatePlanCode, trip.destinationName].some(
         (value) => value !== undefined && typeof value !== 'string',
       ) ||
       (trip.daysCount !== undefined &&
@@ -58,6 +64,17 @@ export function parseTripPlanSelection(raw: string | null): TripPlanSelection | 
             item.day > TRIP_PLAN_MAX_DAYS ||
             typeof item.title !== 'string' ||
             [item.location, item.notes].some((value) => value !== undefined && typeof value !== 'string')
+          )
+            return true;
+          const hotel = item.hotel;
+          if (
+            hotel !== undefined &&
+            (!hotel ||
+              typeof hotel !== 'object' ||
+              typeof hotel.hotelId !== 'string' ||
+              [hotel.productId, hotel.ratePlanCode].some(
+                (value) => value !== undefined && typeof value !== 'string',
+              ))
           )
             return true;
           const transport = item.transport;
