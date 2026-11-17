@@ -12,6 +12,8 @@ import {
   getBookableTripPlan,
   getTripPlanStays,
   findTripOutboundFlight,
+  findPlaceAirport,
+  planNextTripFlight,
   pickTripFlightDestination,
   getTripDayDate,
   getTripNights,
@@ -480,5 +482,60 @@ describe('chặng bay theo điểm đến (TF105)', () => {
     };
     expect(findTripOutboundFlight(draft)).toEqual({ from: 'SGN', to: 'CXR' });
     expect(findTripOutboundFlight(createTripPlanDraft())).toBeNull();
+  });
+});
+
+describe('findPlaceAirport (TF105 tự lên lộ trình)', () => {
+  const routes = [
+    {
+      destinations: [
+        { code: 'HAN', name: 'Hà Nội' },
+        { code: 'CXR', name: 'Khánh Hòa / Nha Trang' },
+      ],
+    },
+    { destinations: [{ code: 'SGN', name: 'TP. Hồ Chí Minh' }] },
+  ];
+  it('tìm sân bay theo tên nơi, không phân biệt dấu; không khớp thì null', () => {
+    expect(findPlaceAirport(routes, 'Hà Nội')).toBe('HAN');
+    expect(findPlaceAirport(routes, 'nha trang')).toBe('CXR');
+    expect(findPlaceAirport(routes, 'Huế')).toBeNull();
+    expect(findPlaceAirport(routes, '')).toBeNull();
+  });
+});
+
+describe('planNextTripFlight (TF105 tự lên lộ trình)', () => {
+  const base = { hotels: [], placeAirport: 'HAN', defaultHome: 'SGN', defaultDate: '2026-12-01' };
+  it('chưa có chuyến nào: chiều đi từ nhà tới sân bay nơi đến, ngày nhận phòng đầu', () => {
+    expect(
+      planNextTripFlight({ ...base, flights: [], hotels: [{ checkIn: '2026-12-05', nights: 2 }] }),
+    ).toEqual({ leg: 'outbound', from: 'SGN', to: 'HAN', date: '2026-12-05' });
+  });
+  it('đã có chiều đi: chiều về từ nơi đến về nhà, bay ngày trả phòng cuối', () => {
+    expect(
+      planNextTripFlight({
+        ...base,
+        flights: [{ from: 'DAD', to: 'HAN', date: '2026-12-05' }],
+        hotels: [
+          { checkIn: '2026-12-07', nights: 1 },
+          { checkIn: '2026-12-05', nights: 2 },
+        ],
+      }),
+    ).toEqual({ leg: 'inbound', from: 'HAN', to: 'DAD', date: '2026-12-08' });
+    expect(
+      planNextTripFlight({ ...base, flights: [{ from: 'SGN', to: 'HAN', date: '2026-12-05' }] }).date,
+    ).toBe('2026-12-07');
+  });
+  it('đủ hai chiều hoặc nơi đến chưa có sân bay thì thêm chiều đi, sân bay đến để trống khi chưa biết', () => {
+    const both = [
+      { from: 'SGN', to: 'HAN', date: '2026-12-05' },
+      { from: 'HAN', to: 'SGN', date: '2026-12-08' },
+    ];
+    expect(planNextTripFlight({ ...base, flights: both }).leg).toBe('outbound');
+    expect(planNextTripFlight({ ...base, placeAirport: null, flights: [] })).toEqual({
+      leg: 'outbound',
+      from: 'SGN',
+      to: '',
+      date: '2026-12-01',
+    });
   });
 });

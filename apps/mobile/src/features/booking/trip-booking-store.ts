@@ -80,6 +80,9 @@ export function useTripHotels(key: string): Record<string, TripHotel> | undefine
 
 export type TripBookingOffer = TripPlanOffer & {
   date?: string;
+  /** Chặng bay; màn tự lên lộ trình cần để hiện thẻ (TF105). */
+  from?: string;
+  to?: string;
   flightNumber?: string | null;
   departTime?: string | null;
   cabinName?: string;

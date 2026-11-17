@@ -177,3 +177,12 @@ export {
   type AssistantCardLine,
   type AssistantTrip,
 } from './assistant';
+export {
+  tripBuilderApi,
+  useTripFlightSuggestions,
+  useTripStaySuggestions,
+  type TripFlightSuggestion,
+  type TripFlightsQuery,
+  type TripStaySuggestion,
+  type TripStaysQuery,
+} from './trip-builder';

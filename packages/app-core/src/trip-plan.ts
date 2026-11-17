@@ -495,7 +495,8 @@ export interface TripPlanCheckoutInput {
   adults: number;
   children?: number;
   infants?: number;
-  sourcePostId: string;
+  /** Bài đăng dẫn tới đơn (Đặt y chang); bỏ trống khi khách tự lên lộ trình. */
+  sourcePostId?: string;
   flights: readonly { productId: string; ratePlanCode: string; date: string }[];
   rooms: readonly { productId: string; ratePlanCode: string; checkIn: string; checkOut: string }[];
 }
@@ -526,7 +527,7 @@ export function buildTripPlanCheckout(input: TripPlanCheckoutInput) {
     adults: input.adults,
     ...(hasFlights && input.children ? { children: input.children } : {}),
     ...(hasFlights && input.infants ? { infants: input.infants } : {}),
-    sourcePostId: input.sourcePostId,
+    ...(input.sourcePostId ? { sourcePostId: input.sourcePostId } : {}),
     items,
   };
 }
@@ -602,4 +603,58 @@ export function pickTripFlightDestination(input: {
     return !!name && (name.includes(target) || target.includes(name));
   });
   return match?.code ?? '';
+}
+
+/**
+ * Sân bay của một nơi (Hà Nội → HAN) từ danh sách tuyến bay: lấy sân bay đến có tên khớp tên nơi, không phân biệt dấu.
+ * Không khớp thì null để người dùng tự chọn. Dùng cho tự lên lộ trình (TF105).
+ */
+export function findPlaceAirport(
+  routes: readonly { destinations: readonly { code: string; name: string }[] }[],
+  placeName: string,
+): string | null {
+  const target = normalizePlaceName(placeName);
+  if (!target) return null;
+  for (const route of routes) {
+    for (const destination of route.destinations) {
+      const name = normalizePlaceName(destination.name);
+      if (name && (name.includes(target) || target.includes(name))) return destination.code;
+    }
+  }
+  return null;
+}
+
+/**
+ * Chặng của chuyến bay sắp thêm khi tự lên lộ trình (TF105). Đã có chiều đi tới nơi đến mà chưa có chiều về thì là chiều
+ * về (bay ngày trả phòng cuối, không có khách sạn thì sau chiều đi 2 ngày); còn lại là chiều đi từ nhà tới nơi đến,
+ * bay ngày nhận phòng đầu. Nơi đến chưa có sân bay thì để trống để người dùng tự chọn.
+ */
+export function planNextTripFlight(input: {
+  flights: readonly { from: string; to: string; date: string }[];
+  hotels: readonly { checkIn: string; nights: number }[];
+  placeAirport: string | null;
+  defaultHome: string;
+  defaultDate: string;
+}): { leg: 'outbound' | 'inbound'; from: string; to: string; date: string } {
+  const { flights, placeAirport } = input;
+  const hotels = [...input.hotels].sort((a, b) => a.checkIn.localeCompare(b.checkIn));
+  const outbound = placeAirport ? flights.find((flight) => flight.to === placeAirport) : undefined;
+  const hasReturn = !!placeAirport && flights.some((flight) => flight.from === placeAirport);
+  if (outbound && !hasReturn) {
+    const lastHotel = hotels.at(-1);
+    return {
+      leg: 'inbound',
+      from: outbound.to,
+      to: outbound.from,
+      date: lastHotel
+        ? getTripDayDate(lastHotel.checkIn, lastHotel.nights + 1)
+        : getTripDayDate(outbound.date, 3),
+    };
+  }
+  return {
+    leg: 'outbound',
+    from: flights[0]?.from ?? input.defaultHome,
+    to: placeAirport ?? '',
+    date: hotels[0]?.checkIn ?? input.defaultDate,
+  };
 }
