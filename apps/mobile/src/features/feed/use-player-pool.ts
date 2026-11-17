@@ -51,6 +51,8 @@ function usePlayerSlot({
   isMuted,
   isDataLimited,
   retry,
+  playbackCookieHeader,
+  isPlaybackSessionSettled,
 }: {
   item?: ReelItem;
   isCurrent: boolean;
@@ -59,6 +61,8 @@ function usePlayerSlot({
   isMuted: boolean;
   isDataLimited: boolean;
   retry: number;
+  playbackCookieHeader: string | null;
+  isPlaybackSessionSettled: boolean;
 }) {
   const player = useVideoPlayer(null, (instance) => {
     instance.loop = true;
@@ -71,9 +75,15 @@ function usePlayerSlot({
   const assignment = useMemo(() => ({ sourceKey }), [sourceKey]);
   const [fallback, setFallback] = useState<{ assignment: typeof assignment; index: number } | null>(null);
   const sourceIndex = fallback?.assignment === assignment ? fallback.index : 0;
-  const uri = sources[sourceIndex] ?? null;
+  // Chờ có cookie xem video (TF82) rồi mới gắn nguồn: gắn trước thì CloudFront trả 403 khi đã bật khoá.
+  const uri = isPlaybackSessionSettled ? (sources[sourceIndex] ?? null) : null;
   const request = useMemo(() => ({ assignment, uri }), [assignment, uri]);
   const queue = useRef(Promise.resolve());
+  // Đọc cookie lúc gắn nguồn, không đưa vào request: cookie mới (vài giờ một lần) không bắt video đang xem tải lại.
+  const cookieHeader = useRef(playbackCookieHeader);
+  useEffect(() => {
+    cookieHeader.current = playbackCookieHeader;
+  }, [playbackCookieHeader]);
   const appliedLimitsKey = useRef<string | null>(null);
   const readyRequest = useRef<typeof request | null>(null);
   const [loadedRequest, setLoadedRequest] = useState<typeof request | null>(null);
@@ -101,7 +111,12 @@ function usePlayerSlot({
         await player.replaceAsync(
           request.uri
             ? // expo-video cannot cache HLS on iOS, so caching is only requested on Android.
-              { uri: request.uri, contentType: 'hls', useCaching: Platform.OS === 'android' }
+              {
+                uri: request.uri,
+                contentType: 'hls',
+                useCaching: Platform.OS === 'android',
+                ...(cookieHeader.current ? { headers: { Cookie: cookieHeader.current } } : {}),
+              }
             : null,
         );
         if (!controller.signal.aborted) setLoadedRequest(request);
@@ -191,6 +206,8 @@ export function usePlayerPool({
   isMuted,
   isDataLimited,
   retry,
+  playbackCookieHeader,
+  isPlaybackSessionSettled,
 }: {
   items: readonly ReelItem[];
   activeIndex: number;
@@ -200,6 +217,9 @@ export function usePlayerPool({
   isMuted: boolean;
   isDataLimited: boolean;
   retry: { id: string; attempt: number } | null;
+  /** Header Cookie của CloudFront (usePlaybackSession); null khi BE chưa bật ký cookie. */
+  playbackCookieHeader: string | null;
+  isPlaybackSessionSettled: boolean;
 }) {
   const indexes = getReelPlayerIndexes(items.length, activeIndex);
   const itemAt = (slot: number) => {
@@ -225,6 +245,8 @@ export function usePlayerPool({
       isMuted,
       isDataLimited,
       retry: retry?.id === item?.id ? (retry?.attempt ?? 0) : 0,
+      playbackCookieHeader,
+      isPlaybackSessionSettled,
     };
   };
   const first = usePlayerSlot(optionsAt(0));
