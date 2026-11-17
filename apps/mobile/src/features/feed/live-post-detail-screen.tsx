@@ -8,6 +8,7 @@ import {
   useApiSession,
   useFollowAuthor,
 } from '@tripflix/api-client';
+import { VerifiedTripBadge } from './verified-trip-badge';
 import type { TripAttachmentDto } from '@tripflix/api-client/core-api/model/index';
 import { isBackSwipeComplete } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
@@ -32,6 +33,7 @@ import { SHEET_CLOSE_SPRING } from '@/components/motion';
 import { PostActionBar } from './post-action-bar';
 import { ReelCommentsPanel } from './reel-comments-panel';
 import { ReportButton } from './report-button';
+import { LoadingDots } from '@/components/loading-dots';
 
 const copy = vi.mobile.postDetail;
 const NO_COMMENTS: readonly { id: number; body: string }[] = [];
@@ -63,7 +65,7 @@ function TripPlan({ trip }: { trip: TripAttachmentDto }) {
                   {index < items.length - 1 && <View style={styles.railLine} />}
                 </View>
                 <View style={[styles.stopBody, index < items.length - 1 && styles.stopGap]}>
-                  <Txt variant="label">{item.title}</Txt>
+                  <Txt variant="label">{item.time ? `${item.time} · ${item.title}` : item.title}</Txt>
                   {!!item.location && (
                     <Txt variant="small" style={styles.muted}>
                       {item.location}
@@ -106,7 +108,11 @@ function TripPlan({ trip }: { trip: TripAttachmentDto }) {
 
 export function LivePostDetailScreen() {
   // comment/thread đến từ thông báo: mở sẵn khung bình luận và nhảy tới bình luận đó.
-  const { slug = '', comment, thread } = useLocalSearchParams<{ slug: string; comment?: string; thread?: string }>();
+  const {
+    slug = '',
+    comment,
+    thread,
+  } = useLocalSearchParams<{ slug: string; comment?: string; thread?: string }>();
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
   const [hasComments, setHasComments] = useState(!!comment);
@@ -302,11 +308,16 @@ export function LivePostDetailScreen() {
                     variant="small"
                     style={styles.muted}
                     accessibilityRole="link"
-                    onPress={post ? () => router.push({ pathname: '/user/[id]', params: { id: post.authorId } }) : undefined}
+                    onPress={
+                      post
+                        ? () => router.push({ pathname: '/user/[id]', params: { id: post.authorId } })
+                        : undefined
+                    }
                   >
                     {authorName}
                   </Txt>
                 )}
+                {!!post?.isVerified && <VerifiedTripBadge tone="dark" />}
                 {canShowFollow && (
                   <>
                     <Button
@@ -318,8 +329,11 @@ export function LivePostDetailScreen() {
                         else router.push({ pathname: '/login', params: { returnTo: `/trip/${slug}` } });
                       }}
                     >
-                      {follow.isLoading || follow.isUpdating ? vi.api.loading
-                        : follow.isFollowing ? vi.api.unfollowAuthor : vi.api.followAuthor}
+                      {follow.isLoading || follow.isUpdating
+                        ? vi.api.loading
+                        : follow.isFollowing
+                          ? vi.api.unfollowAuthor
+                          : vi.api.followAuthor}
                     </Button>
                     <ApiErrorNotice error={follow.error} retry={() => void follow.retry()} />
                   </>
@@ -332,7 +346,7 @@ export function LivePostDetailScreen() {
                 )}
               </View>
             )}
-            {(!isReady || query.isPending) && <Txt style={styles.muted}>{vi.api.loading}</Txt>}
+            {(!isReady || query.isPending) && <LoadingDots />}
             {post && (
               <>
                 {!!post.body && (

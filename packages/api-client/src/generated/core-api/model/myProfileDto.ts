@@ -6,6 +6,7 @@
  */
 import type { MyProfileDtoGender } from './myProfileDtoGender';
 import type { MyProfileDtoRole } from './myProfileDtoRole';
+import type { TravelPreferencesDto } from './travelPreferencesDto';
 
 export interface MyProfileDto {
   id: string;
@@ -23,4 +24,9 @@ export interface MyProfileDto {
   gender: MyProfileDtoGender;
   /** @nullable */
   nationality: string | null;
+  /**
+   * null: chưa làm khảo sát sở thích
+   * @nullable
+   */
+  travelPreferences: TravelPreferencesDto | null;
 }

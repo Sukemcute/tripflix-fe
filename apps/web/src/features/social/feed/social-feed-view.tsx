@@ -13,6 +13,7 @@ import {
 } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { SocialIcon, ComposerModal, RightPanelCommentsSynchronized } from '../live-posts';
+import { refreshCommentsIfStale } from '../comment-cache';
 import { useHasUserInteracted } from '../use-has-user-interacted';
 import { useSettledFlag } from '../use-settled-flag';
 import { usePresence } from '../use-presence';
@@ -36,6 +37,8 @@ export interface SocialFeedViewProps {
   searchKeyword?: string;
   /** Bài mở từ trang chủ hoặc grid kết quả: cuộn sẵn tới bài đó. */
   focusPostId?: string | null;
+  /** Bình luận cần nhảy tới trong bài focusPostId (link từ thông báo): mở sẵn panel bình luận. */
+  focusCommentId?: string;
   onBackToResults?: () => void;
   isItineraryOpen?: boolean;
   onOpenItinerary?: () => void;
@@ -51,6 +54,7 @@ export function SocialFeedView({
   initialKeyword = '',
   searchKeyword,
   focusPostId = null,
+  focusCommentId,
   onBackToResults,
   isItineraryOpen: propIsItineraryOpen,
   onOpenItinerary,
@@ -78,7 +82,7 @@ export function SocialFeedView({
   // Layout states
   // Màn rộng mở sẵn panel bình luận; người dùng đóng/mở thì giữ lựa chọn đó. Server render coi như đóng để không lệch hydration.
   const isWideScreen = useIsWideScreen();
-  const [rightOpenChoice, setIsRightOpen] = useState<boolean | null>(null);
+  const [rightOpenChoice, setIsRightOpen] = useState<boolean | null>(focusCommentId ? true : null);
   const isRightOpen = rightOpenChoice ?? isWideScreen;
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [activeFocusedPostId, setActiveFocusedPostId] = useState<string | null>(null);
@@ -382,9 +386,9 @@ export function SocialFeedView({
 
       const target = event.target as HTMLElement | null;
 
-      // 1. Neu dang thao tac tren popup modal, dialog hoac o nhap van ban -> Giu nguyen mac dinh
+      // 1. Neu dang thao tac tren popup modal, dialog, bang tha xuong tren header hoac o nhap van ban -> Giu nguyen mac dinh
       if (
-        target?.closest('dialog, [role="dialog"]') ||
+        target?.closest('dialog, [role="dialog"], .header-popover') ||
         target?.closest('input, textarea, select, [contenteditable="true"]')
       ) {
         return;
@@ -665,7 +669,7 @@ export function SocialFeedView({
       // Neu dang dong hoac dang mo bai khac -> Mo panel va tai moi binh luan
       setActiveCommentPostId(postId);
       setIsRightOpen(true);
-      void client.invalidateQueries({ queryKey: ['social', 'comments', postId] });
+      refreshCommentsIfStale(client, postId);
       setTimeout(() => {
         commentInputRef.current?.focus();
       }, 80);
@@ -703,6 +707,7 @@ export function SocialFeedView({
             leftPresence.isClosing ? styles.sidebarClosingLeft : ''
           }`}
           trip={activeItineraryPost?.tripAttachment}
+          postId={activeItineraryPost?.id}
           postTitle={activeItineraryPost?.title}
           hashtags={activeItineraryPost?.hashtags}
           coverImage={activeItineraryCover}
@@ -752,7 +757,7 @@ export function SocialFeedView({
               <button
                 type="button"
                 className={styles.composerTagBtn}
-                title="Đăng ảnh hoặc video"
+                data-tooltip="Đăng ảnh hoặc video"
                 onClick={() => {
                   if (!user) {
                     window.location.href = loginReturnHref;
@@ -775,7 +780,7 @@ export function SocialFeedView({
               <button
                 type="button"
                 className={styles.composerTagBtn}
-                title="Đính kèm lịch trình chuyến đi"
+                data-tooltip="Đính kèm lịch trình chuyến đi"
                 onClick={() => {
                   if (!user) {
                     window.location.href = loginReturnHref;
@@ -797,7 +802,7 @@ export function SocialFeedView({
               <button
                 type="button"
                 className={styles.composerTagBtn}
-                title="Thêm hashtag chủ đề"
+                data-tooltip="Thêm hashtag chủ đề"
                 onClick={() => {
                   if (!user) {
                     window.location.href = loginReturnHref;
@@ -935,7 +940,7 @@ export function SocialFeedView({
               type="button"
               className={reelsStyles.iconGhostBtn}
               aria-label={vi.api.commentPanelClose}
-              title={vi.api.commentPanelClose}
+              data-tooltip={vi.api.commentPanelClose}
               onClick={() => {
                 setIsRightOpen(false);
               }}
@@ -951,6 +956,7 @@ export function SocialFeedView({
               loginHref={loginReturnHref}
               scrollContainerRef={rightScrollRef}
               composerInputRef={commentInputRef}
+              focusCommentId={activeCommentPost.id === focusPostId ? focusCommentId : undefined}
             />
           ) : (
             <div className={styles.emptyCommentsNotice}>
@@ -1008,7 +1014,7 @@ export function SocialFeedView({
                 type="button"
                 className={reelsStyles.galleryCloseBtn}
                 aria-label={vi.api.immersiveCloseGallery}
-                title={vi.api.immersiveCloseGallery}
+                data-tooltip={vi.api.immersiveCloseGallery}
                 onClick={() => setGalleryState(null)}
               >
                 <SocialIcon name="close" size={18} />
@@ -1035,7 +1041,7 @@ export function SocialFeedView({
                   className={`${reelsStyles.gallerySlideNavBtn} ${reelsStyles.gallerySlidePrev}`}
                   disabled={galleryState.index <= 0}
                   aria-label={vi.api.immersivePrevSlide}
-                  title={vi.api.immersivePrevSlide}
+                  data-tooltip={vi.api.immersivePrevSlide}
                   onClick={() =>
                     setGalleryState((prev) =>
                       prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null,
@@ -1049,7 +1055,7 @@ export function SocialFeedView({
                   className={`${reelsStyles.gallerySlideNavBtn} ${reelsStyles.gallerySlideNext}`}
                   disabled={galleryState.index >= activeGalleryImages.length - 1}
                   aria-label={vi.api.immersiveNextSlide}
-                  title={vi.api.immersiveNextSlide}
+                  data-tooltip={vi.api.immersiveNextSlide}
                   onClick={() =>
                     setGalleryState((prev) =>
                       prev ? { ...prev, index: Math.min(activeGalleryImages.length - 1, prev.index + 1) } : null,

@@ -9,12 +9,13 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { BookingsList } from '@/features/checkout/bookings-screen';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { PublicPosts } from '@/features/social/live-posts';
-import { PostComposer } from '@/features/social/post-composer';
 import { ProfileInfoCard } from './account-profile';
+import { TravelPreferencesCard } from './travel-preferences';
 import { AccountSecurity } from './account-security';
 import { EmailVerificationNotice } from './email-verification-notice';
 import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
 import { ADMIN_URL, getInitial, isStaffRole } from './account-helpers';
+import { useOpenAdmin } from './admin-handoff';
 
 // Màn đăng nhập nằm ở login-form.tsx; giữ export ở đây để app/login/page.tsx không phải đổi.
 export { LiveLogin } from './login-form';
@@ -27,6 +28,7 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
   const { user, isReady, session } = useApiSession();
   const router = useRouter();
   const [tab, setTab] = useState<AccountTab>(initialTab);
+  const openAdmin = useOpenAdmin();
   const logout = useMutation({
     mutationFn: () => session.logout(),
     onSuccess: () => router.push('/'),
@@ -70,7 +72,14 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
               </button>
             ))}
             {ADMIN_URL && isStaffRole(user.role) && (
-              <a href={ADMIN_URL}>
+              <a
+                href={ADMIN_URL}
+                aria-disabled={openAdmin.isPending}
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (!openAdmin.isPending) openAdmin.mutate();
+                }}
+              >
                 <NavIcon name="admin" />
                 {vi.api.openAdmin}
               </a>
@@ -85,16 +94,17 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
               {vi.api.logout}
             </button>
           </nav>
-          <ApiErrorNotice error={logout.error} />
+          <ApiErrorNotice error={logout.error ?? openAdmin.error} />
         </aside>
         <div className="profile-main">
           {user.emailVerified === false && <EmailVerificationNotice key={`verify-${user.id}`} />}
           {tab === 'profile' ? (
-            <ProfileInfoCard key={user.id} userId={user.id} />
+            <div className="profile-stack">
+              <ProfileInfoCard key={user.id} userId={user.id} />
+              <TravelPreferencesCard key={`travel-${user.id}`} userId={user.id} />
+            </div>
           ) : tab === 'security' ? (
             <AccountSecurity key={user.id} userId={user.id} />
-          ) : tab === 'create' ? (
-            <PostComposer />
           ) : tab === 'bookings' ? (
             <AccountSection id="account-bookings" title={TAB_LABELS[tab]} hint={vi.commerce.bookedHint}>
               <BookingsList />
@@ -145,7 +155,6 @@ const TAB_LABELS: Record<AccountTab, string> = {
   bookings: vi.commerce.booked,
   mine: vi.api.myPosts,
   bookmarks: vi.api.bookmarks,
-  create: vi.api.create,
 };
 
 const NAV_ICONS: Record<AccountTab | 'admin' | 'logout', ReactNode> = {
@@ -174,12 +183,6 @@ const NAV_ICONS: Record<AccountTab | 'admin' | 'logout', ReactNode> = {
     </>
   ),
   bookmarks: <path d="M6 3h12v18l-6-4-6 4V3Z" />,
-  create: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8v8M8 12h8" />
-    </>
-  ),
   admin: (
     <>
       <rect x="3" y="3" width="7" height="7" rx="1.5" />

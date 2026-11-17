@@ -15,12 +15,22 @@ export interface TripAttachmentDto {
   hotelId?: string;
   /** Điểm đến */
   destinationName?: string;
+  /** refId điểm đến lấy từ /api/suggest */
+  destinationPlaceId?: string;
+  /** Loại phòng người đăng chọn (productId) */
+  hotelProductId?: string;
+  /** Gói giá của loại phòng người đăng chọn */
+  hotelRatePlanCode?: string;
   /** Số ngày */
   daysCount?: number;
   /** Chi phí ước tính / người */
   estimatedCostPerPerson?: number;
   /** Lưu ý giá tham khảo */
   priceDisclaimer?: string;
+  /** Ảnh poster riêng của lộ trình (asset ảnh đã tải lên); bỏ trống thì dùng poster video */
+  posterMediaId?: string;
+  /** Chỉ có trong phản hồi: link ảnh poster của lộ trình */
+  posterUrl?: string;
   /** Các mục trong lịch trình */
   items?: TripItineraryItemDto[];
 }

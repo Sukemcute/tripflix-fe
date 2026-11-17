@@ -6,13 +6,32 @@ export const SEARCH_QUERY_PARAM = 'q';
 export const SEARCH_OPEN_PARAM = 'open';
 export const SEARCH_TYPE_PARAM = 'type';
 export const SEARCH_OPEN_KIND_PARAM = 'kind';
+/** Bình luận cần nhảy tới trong bài đang mở (link từ thông báo). */
+export const SEARCH_COMMENT_PARAM = 'comment';
 
-export const SEARCH_RESULT_TYPES = ['all', 'posts', 'reels'] as const;
+export const SEARCH_RESULT_TYPES = ['all', 'hotels', 'places', 'food', 'cafe', 'posts', 'reels'] as const;
 export type SearchResultType = (typeof SEARCH_RESULT_TYPES)[number];
 
 /** Giá trị lạ hoặc thiếu thì về Tất cả. */
 export function parseSearchResultType(value: string | null | undefined): SearchResultType {
-  return value === 'posts' || value === 'reels' ? value : 'all';
+  return SEARCH_RESULT_TYPES.find((type) => type === value) ?? 'all';
+}
+
+/** Tab chỗ, điểm → `kind` của POST /api/search/places; tab bài và Tất cả thì null. */
+const PLACE_KIND_OF_TYPE = { hotels: 'stay', places: 'see', food: 'food', cafe: 'cafe' } as const;
+export type PlaceResultType = keyof typeof PLACE_KIND_OF_TYPE;
+
+export function getPlaceKind(type: SearchResultType): (typeof PLACE_KIND_OF_TYPE)[PlaceResultType] | null {
+  return type in PLACE_KIND_OF_TYPE ? PLACE_KIND_OF_TYPE[type as PlaceResultType] : null;
+}
+
+/** Vùng của tab Tất cả (`kind` của ExploreSectionDto) → tab mà nút "Xem tất cả" mở; vùng lạ thì null. */
+const RESULT_TYPE_OF_SECTION: Record<string, SearchResultType> = {
+  stay: 'hotels', see: 'places', food: 'food', cafe: 'cafe', plan: 'posts', post: 'posts', video: 'reels',
+};
+
+export function getSectionResultType(sectionKind: string): SearchResultType | null {
+  return RESULT_TYPE_OF_SECTION[sectionKind] ?? null;
 }
 
 export interface InspirationUrlChanges {
@@ -46,12 +65,15 @@ export function buildInspirationHref(
     }
     params.delete(SEARCH_OPEN_PARAM);
     params.delete(SEARCH_OPEN_KIND_PARAM);
+    params.delete(SEARCH_COMMENT_PARAM);
   }
   if (changes.resultType !== undefined) {
     if (changes.resultType === 'all') params.delete(SEARCH_TYPE_PARAM);
     else params.set(SEARCH_TYPE_PARAM, changes.resultType);
   }
   if (changes.openPostId !== undefined) {
+    // Bình luận chỉ thuộc bài đang mở: đổi bài thì bỏ.
+    if (changes.openPostId !== params.get(SEARCH_OPEN_PARAM)) params.delete(SEARCH_COMMENT_PARAM);
     if (changes.openPostId) params.set(SEARCH_OPEN_PARAM, changes.openPostId);
     else params.delete(SEARCH_OPEN_PARAM);
     if (changes.openPostId && changes.isOpenReel) params.set(SEARCH_OPEN_KIND_PARAM, 'reel');
@@ -61,4 +83,10 @@ export function buildInspirationHref(
   else if (changes.view === 'posts') params.delete('view');
   const query = params.toString();
   return query ? `${pathname}?${query}` : pathname;
+}
+
+/** Đường dẫn mở một bài ở trang Cảm hứng: Reel mở trong trình xem Reels, commentId thì nhảy tới bình luận đó. */
+export function buildPostHref(postId: string, options: { postType?: string; commentId?: string } = {}): string {
+  const path = buildInspirationHref('/inspiration', '', { openPostId: postId, isOpenReel: options.postType === 'video' });
+  return options.commentId ? `${path}&${SEARCH_COMMENT_PARAM}=${encodeURIComponent(options.commentId)}` : path;
 }

@@ -4,8 +4,9 @@ import {
   layoutReelVideo,
   REEL_LOOKAHEAD_COUNT,
   selectReelPoster,
+  shouldRefreshPlaybackForReel,
 } from '@tripflix/app-core';
-import { reloadReelsFeed, useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
+import { reloadReelsFeed, usePlaybackSession, useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, spacing } from '@tripflix/tokens';
@@ -39,6 +40,7 @@ import { Button, Icon, IconButton, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 import { SHEET_CLOSE_SPRING } from '@/components/motion';
 import { SearchDropPanel } from '@/features/discovery/search-drop-panel';
+import { useReelViewTracking } from './feed-events';
 import { ReelSlide } from './reel-slide';
 import type { ReelItem } from './reel-types';
 import { useReelsLaunch } from './reels-launch';
@@ -107,6 +109,8 @@ export function ReelsScreen() {
   // Loaded up front so a swipe finds its list and first poster ready instead of a dark wait.
   const forYouFeed = useReelsFeed({ tab: 'for_you' });
   const hotFeed = useReelsFeed({ tab: 'hot' });
+  // Cookie video xin cùng lúc với feed; ReelsFeed dùng lại kết quả này (cùng query), video đầu không chờ thêm.
+  usePlaybackSession();
   const forYouPlaybacks = useMemo(() => readPlaybacks(forYouFeed.data), [forYouFeed.data]);
   const hotPlaybacks = useMemo(() => readPlaybacks(hotFeed.data), [hotFeed.data]);
   const firstPlaybackOf = (reelTab: ReelTab) =>
@@ -518,6 +522,8 @@ export function ReelsFeed({
   const isPlaybackEnabled = isFocused && isForeground && !isOffline;
   // expo-network does not expose system Data Saver / Low Data Mode flags.
   const isDataLimited = false;
+  // Xin cookie video ngay khi vào Reels, song song với feed, để video đầu không phải chờ thêm.
+  const playbackSession = usePlaybackSession();
   const slots = usePlayerPool({
     items,
     activeIndex: currentIndex,
@@ -527,7 +533,38 @@ export function ReelsFeed({
     isMuted: false,
     isDataLimited,
     retry,
+    playbackCookieHeader: playbackSession.cookieHeader,
+    isPlaybackSessionSettled: playbackSession.isSettled,
   });
+  // TF82: Reel đang xem lỗi (có thể do cookie hết hạn khi app nằm nền lâu) thì xin cookie mới rồi tải lại một lần.
+  // Nguồn mới đọc cookie lúc gắn (use-player-pool), nên chỉ cần tăng retry sau khi refresh xong.
+  const refreshedReelIds = useRef(new Set<string>());
+  const visibleReelId = items[visibleIndex]?.id;
+  const hasVisibleError = slots.find((slot) => slot.index === visibleIndex)?.hasError ?? false;
+  const { refresh: refreshPlaybackSession } = playbackSession;
+  useEffect(() => {
+    const reelId = visibleReelId;
+    if (
+      !reelId ||
+      !shouldRefreshPlaybackForReel({
+        reelId,
+        hasError: hasVisibleError,
+        refreshedReelIds: refreshedReelIds.current,
+      })
+    ) {
+      return;
+    }
+    refreshedReelIds.current.add(reelId);
+    void refreshPlaybackSession().then(() =>
+      setRetry((value) => ({ id: reelId, attempt: (value?.attempt ?? 0) + 1 })),
+    );
+  }, [visibleReelId, hasVisibleError, refreshPlaybackSession]);
+  // Chỉ đếm Reels thật đang phát cho người xem thấy; Reels mẫu không gửi (TF23).
+  const watchedItem = isSample ? undefined : items[visibleIndex];
+  useReelViewTracking(
+    watchedItem?.postId ?? null,
+    isPlaybackEnabled && !isLaunching && pausedId !== watchedItem?.id,
+  );
 
   useEffect(() => {
     if (isPlaybackEnabled && currentIndex + REEL_LOOKAHEAD_COUNT >= items.length - 1) onLoadMore?.();

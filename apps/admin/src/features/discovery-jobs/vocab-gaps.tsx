@@ -15,7 +15,8 @@ export function VocabGaps() {
   const gaps = useQuery({
     queryKey: ['admin', 'vocab-gaps', days],
     // Client sinh ra gõ kiểu cả nhánh 400 (data: void) dù http() đã ném lỗi khi không ok.
-    queryFn: async ({ signal }) => (await adminVocabGapsControllerList({ days }, { signal })).data || undefined,
+    queryFn: async ({ signal }) =>
+      (await adminVocabGapsControllerList({ days }, { signal })).data || undefined,
     retry: false,
   });
   const data = gaps.isError ? undefined : gaps.data;
@@ -27,7 +28,14 @@ export function VocabGaps() {
           <h2>{copy.title}</h2>
           <p>{copy.description}</p>
         </div>
-        {data && <span className="admin-badge">{t('discoveryJobs.vocabGaps.summary', { queries: data.queries.toLocaleString('vi-VN'), days: data.days })}</span>}
+        {data && (
+          <span className="admin-badge">
+            {t('discoveryJobs.vocabGaps.summary', {
+              queries: data.queries.toLocaleString('vi-VN'),
+              days: data.days,
+            })}
+          </span>
+        )}
       </div>
       <div className="admin-filters">
         <label>
@@ -59,8 +67,9 @@ export function VocabGaps() {
                 <tr key={gap.gram}>
                   <td>
                     <details>
-                      <summary>
-                        <code>{gap.gram}</code> {gap.samples[0] && <span className="admin-post-muted">“{gap.samples[0]}”</span>}
+                      <summary aria-label={gap.gram}>
+                        <code>{gap.gram}</code>{' '}
+                        {gap.samples[0] && <span className="admin-post-muted">“{gap.samples[0]}”</span>}
                       </summary>
                       <p>
                         {copy.variants}: {gap.variants.map((v) => `${v.gram} (${v.queryHits})`).join(', ')}

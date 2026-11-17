@@ -1,5 +1,5 @@
 // Trợ lý Tripi (AI service POST /chat): trả SSE nên đọc bằng httpRaw thay vì hàm Orval sinh ra.
-import type { ChatRequest, TripContext } from './generated/ai-service/model';
+import type { ChatRequest, DraftAction, TripContext } from './generated/ai-service/model';
 import { HttpError, httpRaw } from './http';
 
 export type AssistantAnswerKind = 'answer' | 'clarify' | 'refusal' | 'no_result' | 'fallback';
@@ -9,7 +9,12 @@ export type AssistantTrip = TripContext;
 export interface AssistantCardLine {
   label: string;
   detail?: string;
+  /** Lựa chọn bấm được trên thẻ so sánh: gửi lại trong `action.ref`. */
+  ref?: string | null;
 }
+
+/** Nút trên thẻ (Chọn, Bỏ điểm, Hoàn tác): AI chạy thẳng phép sửa, không gọi LLM. */
+export type AssistantAction = DraftAction;
 
 /** Thẻ gợi ý trong câu trả lời; khớp model Card của tripflix-ai (SSE nên không có trong OpenAPI). */
 export interface AssistantCard {

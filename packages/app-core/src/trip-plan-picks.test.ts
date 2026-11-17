@@ -10,16 +10,24 @@ describe('lựa chọn giá cho lộ trình', () => {
   it('dùng mã đã chọn nhưng lấy giá và mô tả hiện tại', () => {
     expect(resolveTripPlanOffer(offers, picks, picks.key, 'hotel')).toBe(picked);
   });
+  it('chưa tự chọn thì ưu tiên loại phòng người đăng chọn, hết phòng thì về phòng rẻ nhất (TF105)', () => {
+    const author = { productId: 'room-b', ratePlanCode: 'flex' };
+    expect(resolveTripPlanOffer(offers, picks, 'other-date-party', 'hotel', author)).toBe(picked);
+    expect(resolveTripPlanOffer([cheapest], picks, 'other-date-party', 'hotel', author)).toBe(cheapest);
+    expect(
+      resolveTripPlanOffer(offers, picks, picks.key, 'hotel', { productId: 'room-a', ratePlanCode: 'basic' }),
+    ).toBe(picked);
+  });
   it('bỏ lựa chọn của bộ lọc cũ', () => {
     expect(resolveTripPlanOffer(offers, picks, 'other-date-party', 'hotel')).toBe(cheapest);
   });
   it('đổi khách sạn thay kế hoạch và bỏ gói phòng của chỗ ở trước', () => {
     const basePlan = getBookableTripPlan({ hotelId: 'hotel-a' })!;
-    const nextPlan = applyTripPlanChoices(basePlan, { hotelId: 'hotel-b' });
+    const nextPlan = applyTripPlanChoices(basePlan, { hotels: { hotel0: { id: 'hotel-b', name: 'B' } } });
     const previousKey = JSON.stringify(['post-1', basePlan, '2026-12-01', '2026-12-03', { adults: 2 }]);
     const nextKey = JSON.stringify(['post-1', nextPlan, '2026-12-01', '2026-12-03', { adults: 2 }]);
-    expect(nextPlan.hotelId).toBe('hotel-b');
-    expect(basePlan.hotelId).toBe('hotel-a');
+    expect(nextPlan.hotels[0]?.hotelId).toBe('hotel-b');
+    expect(basePlan.hotels[0]?.hotelId).toBe('hotel-a');
     expect(
       resolveTripPlanOffer(offers, { key: previousKey, values: { hotel: picked } }, nextKey, 'hotel'),
     ).toBe(cheapest);

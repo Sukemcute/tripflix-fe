@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { socialApi, useApiSession } from '@tripflix/api-client';
+import { socialApi, useApiSession, usePostCommentsRealtime } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
@@ -11,6 +11,8 @@ import { CommentLikeButton } from './comment-like-button';
 import { ReelCommentComposer } from './reel-comment-composer';
 import { CommunitySummary } from './post-summary';
 import { ReportButton } from './report-button';
+import { LoadingDots } from '@/components/loading-dots';
+import { ModeratedComment } from './moderated-comment';
 
 const REPORT_HIT_SLOP = { top: 6, bottom: 6, left: 15, right: 15 };
 const COMPACT_REPORT_HIT_SLOP = { top: 6, bottom: 6, left: 4, right: 4 };
@@ -57,6 +59,7 @@ export function LiveComments({
   showSummary = false,
   focusCommentId,
   focusThreadId,
+  onModerationDetails,
 }: {
   postId: string;
   parentCommentId?: string;
@@ -72,9 +75,11 @@ export function LiveComments({
   /** Mở từ thông báo: làm nổi bật bình luận này; nếu là trả lời thì mở sẵn luồng focusThreadId. */
   focusCommentId?: string;
   focusThreadId?: string;
+  onModerationDetails?: () => void;
 }) {
   const { user } = useApiSession();
   const client = useQueryClient();
+  usePostCommentsRealtime(postId, !parentCommentId);
   const [body, setBody] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
   const [replying, setReplying] = useState<string | undefined>(parentCommentId ? undefined : focusThreadId);
@@ -105,6 +110,15 @@ export function LiveComments({
     queryFn: ({ pageParam, signal }) => socialApi.listComments(postId, pageParam, parentCommentId, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
+  useEffect(() => {
+    const hiddenIds = new Set(query.data?.pages.flatMap((page) => page.items)
+      .filter((comment) => comment.moderationState === 'hidden').map((comment) => comment.id));
+    if (editing && hiddenIds.has(editing)) {
+      setEditing(null);
+      setBody('');
+    }
+    if (replyTarget && hiddenIds.has(replyTarget.id)) setReplyTarget(undefined);
+  }, [query.data, editing, replyTarget]);
   const mutation = useMutation({
     mutationFn: async (action: 'save' | string) =>
       action !== 'save'
@@ -137,12 +151,18 @@ export function LiveComments({
           void query.refetch();
         }}
       />
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      {query.isPending && <LoadingDots />}
       {/* Trả lời trống thì không cần lời mời bình luận; chỉ danh sách gốc mới hiện. */}
       {!parentCommentId && query.data?.pages[0]?.items.length === 0 && <Notice>{vi.api.noComments}</Notice>}
       {query.data?.pages
         .flatMap((page) => page.items)
         .map((comment) => {
+          if (comment.moderationState === 'hidden') {
+            return <ModeratedComment key={comment.id}
+              onLearnMore={onModerationDetails ?? (() => router.push('/moderation-status'))}
+              onDelete={comment.authorId === user?.id ? () => mutation.mutate(comment.id) : undefined}
+              isDeleting={mutation.isPending} />;
+          }
           const authorName =
             comment.authorId === user?.id
               ? user.displayName
@@ -271,6 +291,7 @@ export function LiveComments({
                       showHeading={!compact}
                       compact={compact}
                       onLoginRequired={onLoginRequired}
+                      onModerationDetails={onModerationDetails}
                     />
                   </View>
                 )}

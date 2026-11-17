@@ -9,9 +9,12 @@ import {
   updateReelSocialCache,
   uploadChunkToPresignedUrl,
   useApiSession,
+  usePlaybackSession,
   useReelsByIds,
   useReelsFeed,
   useSocialPosts,
+  watchPostComments,
+  type PostCommentsChange,
 } from '@tripflix/api-client';
 import {
   mediaUploadControllerCreateUpload,
@@ -19,6 +22,7 @@ import {
 } from '@tripflix/api-client/core-api/media/media';
 import type {
   FeedCardDto,
+  SocialCommentDto,
   SocialPostDto,
   TripAttachmentDto,
   TripItineraryItemDto,
@@ -36,11 +40,19 @@ import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { getAvatarTone } from './avatar-tone';
 import { EmojiPicker } from './emoji-picker';
 import { CommentVisibility } from './comment-visibility';
+import { ModeratedComment } from './moderated-comment';
+import {
+  addCommentToCache,
+  removeCommentFromCache,
+  replaceCommentInCache,
+  setCommentReactionInCache,
+  reloadPostComments,
+  shiftPostCommentCount,
+} from './comment-cache';
 import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
 import {
-  attachReelVideoSource,
   getReelRenderMode,
   pickReelAfterRemoval,
   prependPinnedReelCards,
@@ -48,16 +60,20 @@ import {
   toReelPost,
   type ReelPost,
 } from './reel-post';
+import { attachReelHlsSource } from './reel-hls';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
 import styles from './live-posts.module.css';
 import { PostImagePicker } from './composer/post-image-picker';
 import { usePostImages } from './composer/use-post-images';
+import { HashtagInput } from './composer/hashtag-input';
+import { SoftSelect } from '@/features/shared/soft-select';
+import { addPublishedPostToFeeds, publishNoticeStore } from './composer/published-post';
+import { calculateUploadPercent, parseStoredHashtags, pickDroppedVideo } from './composer/composer-inputs';
 import { ShareMenu, type ShareMenuHandle } from './share-menu';
-
-// Trang chi tiết bài viết nằm ở post-detail.tsx; giữ export ở đây để app/trips/[slug]/page.tsx không phải đổi.
-export { LivePostDetail } from './post-detail';
+import { PostOwnerMenu } from './post-owner-menu';
+import { buildPostHref } from './search-url';
 
 type FeedFilterMode = 'all' | 'withTrip' | 'saved';
 
@@ -505,13 +521,13 @@ function AccountPostGrid({
                 )}
                 <p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.api.posts}</p>
                 <h3>
-                  <Link prefetch={false} href={`/trips/${post.id}`}>{post.title}</Link>
+                  <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })}>{post.title}</Link>
                 </h3>
                 <p className={styles.postBodyClamped}>{post.body}</p>
                 <p className="small muted">
                   {post.reactionTotal} {vi.api.like} · {post.commentCount} {vi.api.comments}
                 </p>
-                <Link prefetch={false} href={`/trips/${post.id}`} className="secondary-button">
+                <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })} className="secondary-button">
                   {vi.api.detail}
                 </Link>
               </div>
@@ -754,11 +770,32 @@ function MediaTrackItem({
   // Gắn nguồn ở đây (không qua prop src) để lần dọn của Strict Mode không làm video mất nguồn; lướt ra xa thì
   // nhả nguồn để ngắt tải segment ngay (xem attachReelVideoSource).
   const hlsUrl = reelCard?.video.hlsUrl;
+  // Chờ API đặt cookie video (Set-Cookie cho tên miền media, TF82) rồi mới gắn nguồn; thẻ <video> tự gửi cookie
+  // khi tải playlist và segment. Gắn sớm hơn thì CloudFront trả 403 khi đã bật khoá video.
+  const { isSettled: isPlaybackSessionSettled, refresh: refreshPlaybackSession } = usePlaybackSession();
+  // Số lần đã xin cookie mới vì lỗi 403 cho Reel này; tăng lên là gắn lại nguồn với cookie mới.
+  const [authRetryCount, setAuthRetryCount] = useState(0);
+  // Hàm của cha đổi mỗi lần render; giữ bản mới nhất trong ref để effect gắn nguồn không chạy lại vì nó.
+  const reportMediaError = useRef(() => onMediaError(post.id));
+  useEffect(() => {
+    reportMediaError.current = () => onMediaError(post.id);
+  }, [onMediaError, post.id]);
   useEffect(() => {
     const video = localVideoRef.current;
-    if (!hasVideo || !video || !hlsUrl) return;
-    return attachReelVideoSource(video, hlsUrl);
-  }, [hasVideo, hlsUrl]);
+    if (!hasVideo || !video || !hlsUrl || !isPlaybackSessionSettled) return;
+    // Trình duyệt phát HLS sẵn: thẻ <video> như cũ. Chrome, Firefox máy tính: hls.js gửi kèm cookie (TF64).
+    return attachReelHlsSource(video, hlsUrl, {
+      onAuthError: () => {
+        // Chỉ xin lại một lần: lỗi tiếp thì không phải do cookie, báo lỗi như thường.
+        if (authRetryCount >= 1) {
+          reportMediaError.current();
+          return;
+        }
+        void refreshPlaybackSession().then(() => setAuthRetryCount((count) => count + 1));
+      },
+      onFatalError: () => reportMediaError.current(),
+    });
+  }, [hasVideo, hlsUrl, isPlaybackSessionSettled, authRetryCount, refreshPlaybackSession]);
 
   // timeupdate chỉ bắn ~4 lần/giây nên thanh tiến độ nhảy bậc; đọc currentTime mỗi khung hình và
   // cập nhật thẳng transform qua ref (không setState) để mượt và không render lại cả viewer.
@@ -864,19 +901,25 @@ function MediaTrackItem({
       {/* Bottom Post Overlay */}
       <div className={styles.stageBottomOverlay}>
         <div className={styles.overlayAuthorRow}>
-          <span className={styles.overlayAvatar} aria-hidden="true">
+          {/* Avatar cũng mở trang cá nhân như tên; bỏ khỏi thứ tự Tab để không đọc trùng link. */}
+          <Link
+            prefetch={false}
+            className={styles.overlayAvatar}
+            href={`/u/${post.authorId}`}
+            aria-hidden="true"
+            tabIndex={-1}
+          >
             {getInitial(authorInfo.name)}
-          </span>
+          </Link>
           <div className={styles.overlayAuthorMeta}>
             <div className={styles.overlayAuthorNameRow}>
-              <Link prefetch={false} className="profile-link" href={`/u/${post.authorId}`}>
+              <Link prefetch={false} className={styles.profileLink} href={`/u/${post.authorId}`}>
                 {authorInfo.name}
               </Link>
               {(post.isVerified || reelCard?.author.isKol) && (
                 <SocialIcon name="verified" size={16} />
               )}
             </div>
-            <span className={styles.overlayAuthorHandle}>{authorInfo.handle}</span>
           </div>
         </div>
 
@@ -999,6 +1042,8 @@ export interface InspirationImmersiveViewerProps {
   onBackToResults?: () => void;
   /** Mở từ link chia sẻ: Reel này hiện đầu tiên, lướt tiếp là bảng tin Reels. Dùng cùng initialPostId. */
   pinnedPostId?: string | null;
+  /** Bình luận cần nhảy tới trong Reel initialPostId (link từ thông báo). */
+  focusCommentId?: string;
 }
 
 export function InspirationImmersiveViewer({
@@ -1010,6 +1055,7 @@ export function InspirationImmersiveViewer({
   initialPostId = null,
   onBackToResults,
   pinnedPostId = null,
+  focusCommentId,
 }: InspirationImmersiveViewerProps) {
   const { isReady, user } = useApiSession();
   const client = useQueryClient();
@@ -1071,6 +1117,8 @@ export function InspirationImmersiveViewer({
   // Tìm kiếm không chạy ở đây: nhấn Enter thì trang Cảm hứng hiện grid kết quả (search của discovery).
   const isSearchReels = searchReelIds !== undefined;
   const feedQuery = useReelsFeed({ enabled: isReady && !isSearchReels, isSavedOnly: isSavedMode });
+  // Cookie video xin cùng lúc với feed; từng Reel dùng lại kết quả này (cùng query), video đầu không chờ thêm.
+  usePlaybackSession();
   const searchReelsQuery = useReelsByIds(searchReelIds ?? [], { enabled: isSearchReels });
   const reelsQuery = isSearchReels ? searchReelsQuery : feedQuery;
   const postsQuery = reelsQuery;
@@ -1716,6 +1764,7 @@ export function InspirationImmersiveViewer({
           <ItinerarySidebarPanel
             className={styles.itineraryInReels}
             trip={hasItinerary ? trip : null}
+            postId={activePost?.id}
             postTitle={activePost?.title}
             hashtags={activePost?.hashtags}
             coverImage={coverImage}
@@ -1821,17 +1870,11 @@ export function InspirationImmersiveViewer({
                       </div>
                     )}
 
-                    <div className={styles.stageTopControls}>
-                      <Link
-                        prefetch={false}
-                        href={`/trips/${activePost.id}`}
-                        className={styles.stageCircleBtn}
-                        aria-label={vi.api.postMoreOptions}
-                        title={vi.api.detail}
-                      >
-                        <SocialIcon name="more" size={18} />
-                      </Link>
-                    </div>
+                    {activePost.authorId === user?.id && (
+                      <div className={styles.stageTopControls}>
+                        <PostOwnerMenu post={activePost} buttonClassName={styles.stageCircleBtn} />
+                      </div>
+                    )}
                   </>
 
                   {/* Media Track: Vung cuon momentum doc voi proximity snap ben trong Viewport 9:16 co dinh */}
@@ -1921,7 +1964,7 @@ export function InspirationImmersiveViewer({
                       type="button"
                       className={styles.navArrowBtn}
                       aria-label={vi.api.immersivePrevPost}
-                      title={vi.api.immersivePrevPost}
+                      data-tooltip={vi.api.immersivePrevPost}
                       disabled={activeIndex <= 0}
                       onClick={() => navigateStep(-1)}
                     >
@@ -1931,7 +1974,7 @@ export function InspirationImmersiveViewer({
                       type="button"
                       className={styles.navArrowBtn}
                       aria-label={vi.api.immersiveNextPost}
-                      title={vi.api.immersiveNextPost}
+                      data-tooltip={vi.api.immersiveNextPost}
                       disabled={activeIndex >= posts.length - 1 && !postsQuery.hasNextPage}
                       onClick={() => navigateStep(1)}
                     >
@@ -1960,7 +2003,7 @@ export function InspirationImmersiveViewer({
                   type="button"
                   className={styles.iconGhostBtn}
                   aria-label={vi.api.commentPanelClose}
-                  title={vi.api.commentPanelClose}
+                  data-tooltip={vi.api.commentPanelClose}
                   onClick={() => setRightOpen(false)}
                 >
                   <SocialIcon name="close" size={17} />
@@ -1976,6 +2019,7 @@ export function InspirationImmersiveViewer({
                 scrollContainerRef={rightScrollRef}
                 composerInputRef={commentInputRef}
                 showSummary
+                focusCommentId={activePost.id === initialPostId ? focusCommentId : undefined}
               />
             </aside>
           )}
@@ -2044,6 +2088,7 @@ export function RightPanelCommentsSynchronized({
   scrollContainerRef,
   composerInputRef,
   showSummary = false,
+  focusCommentId,
 }: {
   post: {
     id: string;
@@ -2056,10 +2101,24 @@ export function RightPanelCommentsSynchronized({
   composerInputRef: React.RefObject<HTMLInputElement | null>;
   /** Tóm tắt AI ở đầu bình luận: chỉ màn Reels bật (giống mobile); tab Bài viết dùng chung panel nhưng không bật. */
   showSummary?: boolean;
+  /** Bình luận mở từ thông báo: đưa luồng của nó lên đầu, mở sẵn trả lời, cuộn tới và tô sáng. */
+  focusCommentId?: string;
 }) {
   const { user, isReady, session } = useApiSession();
   const client = useQueryClient();
   const initialDraft = getCommentDraft(post.id);
+  const [pendingComments, setPendingComments] = useState<readonly PostCommentsChange[]>([]);
+  useEffect(() => watchPostComments(post.id, (changes) => {
+    const pending = changes.filter((change) => change.kind === 'created' && !change.parentCommentId &&
+      (scrollContainerRef.current?.scrollTop ?? 0) > 48);
+    if (pending.length) {
+      shiftPostCommentCount(client, post.id, pending.length);
+      setPendingComments((current) => [...current.filter((change) => change.postId === post.id), ...pending]);
+    }
+    const immediate = changes.filter((change) => !pending.includes(change));
+    if (immediate.length) void reloadPostComments(client, post.id, immediate);
+  }), [client, post.id, user?.id, scrollContainerRef]);
+  const pendingForPost = pendingComments.filter((change) => change.postId === post.id);
   const [body, setBody] = useState(initialDraft?.body ?? '');
   const [isEmojiOpen, setEmojiOpen] = useState(false);
   // Cả viên thuốc nhập (ô chữ và nút emoji) tính là bên trong bảng emoji: bấm vào để gõ không đóng bảng.
@@ -2127,18 +2186,29 @@ export function RightPanelCommentsSynchronized({
         throw error;
       }
     },
-    onSuccess: async () => {
+    onSuccess: (createdComment) => {
       saveCommentDraft(post.id, null);
       setBody('');
       setReplyTarget(null);
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ['social'] }),
-        client.invalidateQueries({ queryKey: ['feed'], refetchType: 'none' }),
-      ]);
+      if (createdComment) addCommentToCache(client, createdComment);
     },
   });
 
-  const comments = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const focusedThread = useQuery({
+    queryKey: ['social', 'comment-thread', post.id, focusCommentId, user?.id],
+    enabled: !!focusCommentId,
+    queryFn: ({ signal }) => socialApi.getCommentThread(post.id, focusCommentId!, signal),
+  });
+  const focusTarget = focusedThread.data?.items.find((comment) => comment.id === focusCommentId);
+  const focusRoot = focusTarget?.parentCommentId
+    ? focusedThread.data?.items.find((comment) => comment.id === focusTarget.parentCommentId)
+    : focusTarget;
+  const focusedReply = focusTarget?.parentCommentId ? focusTarget : undefined;
+
+  const loadedComments = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const comments = focusRoot && !loadedComments.some((comment) => comment.id === focusRoot.id)
+    ? [focusRoot, ...loadedComments]
+    : loadedComments;
 
   return (
     <>
@@ -2146,6 +2216,17 @@ export function RightPanelCommentsSynchronized({
         ref={scrollContainerRef}
         className={styles.rightScrollArea}
       >
+        {pendingForPost.length > 0 && (
+          <button type="button" aria-live="polite" className={styles.utilityBtn}
+            style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--color-surface)' }} onClick={() => {
+            const changes = pendingForPost;
+            setPendingComments([]);
+            scrollContainerRef.current?.scrollTo({ top: 0 });
+            void reloadPostComments(client, post.id, changes.map((change) => ({ ...change, kind: 'updated' })));
+          }}>
+            {t('api.newComments', { count: pendingForPost.length })}
+          </button>
+        )}
         {showSummary && <ReelCommentSummary key={post.id} postId={post.id} />}
         <ApiErrorNotice error={addMutation.error} />
         <ApiErrorNotice
@@ -2154,6 +2235,12 @@ export function RightPanelCommentsSynchronized({
             void query.refetch();
           }}
         />
+        {focusCommentId && (
+          <>
+            <ApiErrorNotice error={focusedThread.error} retry={() => void focusedThread.refetch()} />
+            {focusedThread.isSuccess && !focusTarget && <output>{vi.api.commentUnavailable}</output>}
+          </>
+        )}
         {query.isPending && <CommentSkeletonList count={8} />}
         {query.isSuccess && comments.length === 0 && (
           <p className="small muted">{vi.api.noComments}</p>
@@ -2169,6 +2256,8 @@ export function RightPanelCommentsSynchronized({
               comment={comment}
               loginHref={loginHref}
               onReplySelect={(target) => handleReplySelect(target)}
+              focusCommentId={focusCommentId}
+              focusedReply={focusedReply?.parentCommentId === comment.id ? focusedReply : undefined}
             />
           ))}
         </ol>
@@ -2216,8 +2305,9 @@ export function RightPanelCommentsSynchronized({
                 {getInitial(user.displayName)}
               </span>
               {user.emailVerified && (
-                <span className={styles.composerVerifiedBadge} title="Tài khoản đã xác thực">
+                <span className={styles.composerVerifiedBadge} data-tooltip="Tài khoản đã xác thực">
                   <SocialIcon name="verified" size={11} />
+                  <span className={styles.srOnly}>Tài khoản đã xác thực</span>
                 </span>
               )}
             </div>
@@ -2281,6 +2371,8 @@ function CommentNode({
   isReply = false,
   loginHref,
   onReplySelect,
+  focusCommentId,
+  focusedReply,
 }: {
   postId: string;
   postAuthorId: string;
@@ -2295,14 +2387,23 @@ function CommentNode({
     isLiked: boolean;
     authorName?: string | null;
     replyToName?: string | null;
+    moderationState?: 'hidden' | null;
   };
   isReply?: boolean;
   loginHref: string;
   onReplySelect: (target: { id: string; authorName: string }) => void;
+  focusCommentId?: string;
+  /** Trả lời được nhắc tới trong thông báo: luôn hiện dù chưa nằm trong trang trả lời đã tải. */
+  focusedReply?: SocialCommentDto;
 }) {
   const { user } = useApiSession();
   const client = useQueryClient();
-  const [showReplies, setShowReplies] = useState(false);
+  const [showReplies, setShowReplies] = useState(Boolean(focusedReply));
+  const isFocused = comment.id === focusCommentId;
+  const focusRef = useRef<HTMLLIElement | null>(null);
+  useEffect(() => {
+    if (isFocused) focusRef.current?.scrollIntoView({ block: 'center' });
+  }, [isFocused]);
   const [isEditing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState(comment.body);
   const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
@@ -2341,8 +2442,10 @@ function CommentNode({
     onError: (_, __, context) => {
       setOptimisticLiked(context?.previous ?? null);
     },
-    onSettled: async () => {
-      await client.invalidateQueries({ queryKey: ['social', 'comments', postId] });
+    onSuccess: (reaction) => {
+      setCommentReactionInCache(client, postId, reaction);
+    },
+    onSettled: () => {
       setOptimisticLiked(null);
     },
   });
@@ -2352,35 +2455,66 @@ function CommentNode({
       if (action === 'delete') return socialApi.deleteComment(comment.id);
       return socialApi.editComment(comment.id, editBody.trim());
     },
-    onSuccess: async (_, action) => {
-      if (action === 'edit') setEditing(false);
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ['social'] }),
-        client.invalidateQueries({ queryKey: ['feed'], refetchType: 'none' }),
-      ]);
+    onSuccess: (updatedComment, action) => {
+      if (action === 'delete') {
+        removeCommentFromCache(client, postId, comment.id);
+        return;
+      }
+      setEditing(false);
+      replaceCommentInCache(client, updatedComment as SocialCommentDto);
     },
   });
 
-  const replies = repliesQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const loadedReplies = repliesQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const replies = focusedReply && !loadedReplies.some((reply) => reply.id === focusedReply.id)
+    ? [focusedReply, ...loadedReplies]
+    : loadedReplies;
   const totalReplies = (comment as { replyCount?: number }).replyCount ?? repliesQuery.data?.pages[0]?.total ?? replies.length;
 
+  if (comment.moderationState === 'hidden') {
+    return (
+      <li ref={focusRef} id={`comment-${comment.id}`} className={styles.panelCommentItem}>
+        <ModeratedComment />
+        <ApiErrorNotice error={commentMutation.error} />
+        {isMine && (
+          <button type="button" className={styles.panelCommentActionBtn}
+            disabled={commentMutation.isPending} onClick={() => commentMutation.mutate('delete')}>
+            {vi.api.remove}
+          </button>
+        )}
+      </li>
+    );
+  }
+
   return (
-    <li className={styles.panelCommentItem}>
+    <li
+      ref={focusRef}
+      id={`comment-${comment.id}`}
+      className={`${styles.panelCommentItem} ${isFocused ? styles.panelCommentFocused : ''}`}
+    >
       <CommentVisibility commentId={comment.id} isMine={isMine} loginHref={loginHref} className={styles.panelCommentRow}>
-        <span className={styles.avatarSmall} data-tone={getAvatarTone(authorDisplay.name)} aria-hidden="true">
+        <Link
+          prefetch={false}
+          className={styles.avatarSmall}
+          data-tone={getAvatarTone(authorDisplay.name)}
+          href={`/u/${comment.authorId}`}
+          aria-hidden="true"
+          tabIndex={-1}
+        >
           {getInitial(authorDisplay.name)}
-        </span>
+        </Link>
         <div className={styles.panelCommentContent}>
           <div className={styles.panelCommentMeta}>
             <span className={styles.panelCommentAuthor}>
-              <Link prefetch={false} className="profile-link" href={`/u/${comment.authorId}`}>
+              <Link prefetch={false} className={styles.profileLink} href={`/u/${comment.authorId}`}>
                 {authorDisplay.name}
               </Link>
               {comment.replyToName && ` ↳ ${comment.replyToName}`}
             </span>
             {isAuthorVerified && (
-              <span className={styles.commentVerifiedIcon} title="Tài khoản đã xác minh">
+              <span className={styles.commentVerifiedIcon} data-tooltip="Tài khoản đã xác minh">
                 <SocialIcon name="verified" size={13} />
+                <span className={styles.srOnly}>Tài khoản đã xác minh</span>
               </span>
             )}
             {isPostAuthor && (
@@ -2521,6 +2655,7 @@ function CommentNode({
                     isReply
                     loginHref={loginHref}
                     onReplySelect={onReplySelect}
+                    focusCommentId={focusCommentId}
                   />
                 ))}
               </ol>
@@ -2560,6 +2695,13 @@ export interface ComposerModalProps {
 }
 
 /** Modal tạo và quản lý bài đăng / bản nháp */
+const VISIBILITY_OPTIONS = [
+  { value: 'public', label: 'Công khai với mọi người' },
+  { value: 'private', label: 'Chỉ mình tôi' },
+];
+
+const ITINERARY_DAY_OPTIONS = Array.from({ length: 15 }, (_, i) => ({ value: String(i + 1), label: `Ngày ${i + 1}` }));
+
 export function ComposerModal({
   onClose,
   initialView = 'compose',
@@ -2600,7 +2742,8 @@ export function ComposerModal({
   const [postType, setPostType] = useState<'video' | 'vlog'>(initialPostType);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [hashtagsText, setHashtagsText] = useState('');
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [isVideoDragOver, setIsVideoDragOver] = useState(false);
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
 
   // Phương tiện (Video)
@@ -2633,7 +2776,7 @@ export function ComposerModal({
     setTitle(draft.title || '');
     setBody(draft.body || '');
     setPostType(draft.postType === 'video' ? 'video' : 'vlog');
-    setHashtagsText((draft.hashtags || []).join(', '));
+    setHashtags(parseStoredHashtags(draft.hashtags));
     setVisibility((draft.visibility as 'public' | 'private') || 'public');
     // mediaIds của bài viết là ảnh, của Reels là video.
     setExistingMediaId(draft.postType === 'video' ? draft.mediaIds?.[0] || null : null);
@@ -2688,7 +2831,7 @@ export function ComposerModal({
     setEditingDraftId(null);
     setTitle('');
     setBody('');
-    setHashtagsText('');
+    setHashtags([]);
     setPostType(initialPostType);
     setVisibility('public');
     setExistingMediaId(null);
@@ -2858,20 +3001,21 @@ export function ComposerModal({
       const end = Math.min(file.size, start + partSizeBytes);
       const chunk = file.slice(start, end);
 
-      setUploadStepText(`Đang tải lên phần ${part.partNumber}/${parts.length}...`);
+      setUploadStepText(vi.api.composerVideoUploadPart);
 
-      const { etag } = await uploadChunkToPresignedUrl(part.url, chunk);
+      const { etag } = await uploadChunkToPresignedUrl(part.url, chunk, undefined, (sentBytes) =>
+        setUploadProgress(calculateUploadPercent(start + sentBytes, file.size)),
+      );
 
       uploadedParts.push({
         partNumber: part.partNumber,
         etag: etag || `"${part.partNumber}"`,
       });
 
-      const percent = Math.round(((i + 1) / parts.length) * 80) + 5;
-      setUploadProgress(percent);
+      setUploadProgress(calculateUploadPercent(end, file.size));
     }
 
-    setUploadStepText('Đang hoàn tất và xử lý video...');
+    setUploadStepText(vi.api.composerVideoProcessing);
     const completeRes = await mediaUploadControllerCompleteUpload(assetId, {
       parts: uploadedParts,
     });
@@ -2925,10 +3069,7 @@ export function ComposerModal({
         setExistingMediaId(uploadedAssetId);
       }
 
-      const parsedTags = hashtagsText
-        .split(/[,\s#]+/)
-        .map((item) => item.trim())
-        .filter(Boolean);
+      const parsedTags = hashtags;
 
       let tripAttachment: TripAttachmentDto | undefined = undefined;
       if (enableItinerary && destinationName.trim()) {
@@ -2987,11 +3128,16 @@ export function ComposerModal({
         await socialApi.publishPost(currentId);
       }
 
-      return { id: currentId, published: shouldPublish };
+      return { id: currentId, published: shouldPublish, postType };
     },
     onSuccess: async (data) => {
       await client.invalidateQueries({ queryKey: ['social'] });
-      if (data.published) {
+      if (data.published && data.id) {
+        // Feed gợi ý giữ nguyên trang đã tải khi làm mới: chèn bài vừa đăng lên đầu để thấy ngay, không phải F5.
+        const detail = await socialApi.getPost(data.id).catch(() => null);
+        if (detail) addPublishedPostToFeeds(client, detail.post);
+        if (data.postType === 'video') void client.invalidateQueries({ queryKey: ['feed'] });
+        publishNoticeStore.show(data.id, data.postType);
         onClose();
       } else {
         setSaveSuccessMsg('Đã lưu bản nháp thành công.');
@@ -3018,19 +3164,26 @@ export function ComposerModal({
       <dialog open className={styles.modalBackdrop} aria-label="Bản nháp của bạn">
         <div className={styles.composerModalCard}>
           <div className={styles.panelHeaderBar}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h3 className={styles.panelHeaderTitle}>Bản nháp của bạn</h3>
-              <span className={styles.composerSectionBadge}>{draftsCount}</span>
-            </div>
-            <div className={styles.composerHeaderActions}>
+            <div className={styles.draftsHeaderTitle}>
               <button
                 type="button"
-                className={styles.composerHeaderDraftsBtn}
-                onClick={handleNewPost}
+                className={styles.iconGhostBtn}
+                aria-label="Quay lại soạn thảo"
+                data-tooltip="Quay lại soạn thảo"
+                onClick={() => setViewMode('compose')}
               >
-                <SocialIcon name="plus" size={14} />
-                <span>Viết bài mới</span>
+                <SocialIcon name="chevronLeft" size={18} />
               </button>
+              <h3 className={styles.panelHeaderTitle}>Bản nháp</h3>
+              {draftsCount > 0 && <span className={styles.draftsCount}>{draftsCount}</span>}
+            </div>
+            <div className={styles.composerHeaderActions}>
+              {drafts.length > 0 && (
+                <button type="button" className={styles.draftsNewBtn} onClick={handleNewPost}>
+                  <SocialIcon name="plus" size={14} />
+                  <span>Viết bài mới</span>
+                </button>
+              )}
               <button
                 type="button"
                 className={styles.iconGhostBtn}
@@ -3049,14 +3202,14 @@ export function ComposerModal({
               </div>
             ) : drafts.length === 0 ? (
               <div className={styles.draftEmptyState}>
-                <SocialIcon name="bookmark" size={32} />
-                <p>Bạn chưa có bản nháp nào được lưu.</p>
-                <button
-                  type="button"
-                  className={styles.createPostBtn}
-                  onClick={() => setViewMode('compose')}
-                >
-                  Bắt đầu viết bài
+                <span className={styles.draftEmptyIcon}>
+                  <SocialIcon name="bookmark" size={22} />
+                </span>
+                <p className={styles.draftEmptyTitle}>Chưa có bản nháp</p>
+                <p className={styles.draftEmptyHint}>Khi soạn bài, bấm “Lưu bản nháp” để viết tiếp sau.</p>
+                <button type="button" className={styles.draftsNewBtn} onClick={handleNewPost}>
+                  <SocialIcon name="plus" size={14} />
+                  <span>Viết bài mới</span>
                 </button>
               </div>
             ) : (
@@ -3073,19 +3226,15 @@ export function ComposerModal({
                     </div>
                   </div>
 
-                  <div className={styles.draftMeta}>
-                    <span className={styles.draftBadge}>
-                      {draft.postType === 'video' ? 'Video' : 'Bài viết'}
-                    </span>
-                    {draft.tripAttachment?.destinationName && (
-                      <span className={styles.draftBadge}>
-                        {draft.tripAttachment.destinationName}
-                      </span>
-                    )}
-                    <span>
-                      {new Date(draft.updatedAt || draft.createdAt).toLocaleDateString('vi-VN')}
-                    </span>
-                  </div>
+                  <p className={styles.draftMeta}>
+                    {[
+                      draft.postType === 'video' ? 'Reels' : 'Bài viết',
+                      draft.tripAttachment?.destinationName,
+                      `Sửa ${new Date(draft.updatedAt || draft.createdAt).toLocaleDateString('vi-VN')}`,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
 
                   <div className={styles.draftActions}>
                     <button
@@ -3109,15 +3258,6 @@ export function ComposerModal({
             )}
           </div>
 
-          <div className={styles.composerModalFooter}>
-            <button
-              type="button"
-              className={styles.utilityBtn}
-              onClick={() => setViewMode('compose')}
-            >
-              Quay lại soạn thảo
-            </button>
-          </div>
         </div>
       </dialog>
     );
@@ -3136,14 +3276,9 @@ export function ComposerModal({
       >
         {/* Tiêu đề modal */}
         <div className={styles.panelHeaderBar}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h3 className={styles.panelHeaderTitle}>
-              {editingDraftId ? 'Chỉnh sửa bản nháp' : vi.api.feedCreatePostCta}
-            </h3>
-            {editingDraftId && (
-              <span className={styles.editingDraftBadge}>Đang chỉnh sửa bản nháp</span>
-            )}
-          </div>
+          <h3 className={styles.panelHeaderTitle}>
+            {editingDraftId ? 'Sửa bản nháp' : vi.api.feedCreatePostCta}
+          </h3>
           <div className={styles.composerHeaderActions}>
             <button
               type="button"
@@ -3169,7 +3304,6 @@ export function ComposerModal({
         {/* Thông báo lưu nháp thành công */}
         {saveSuccessMsg && (
           <output className={styles.saveSuccessBanner}>
-            <SocialIcon name="sparkles" size={16} />
             <span>{saveSuccessMsg}</span>
           </output>
         )}
@@ -3204,7 +3338,6 @@ export function ComposerModal({
         <div className={styles.composerSection}>
           <div className={styles.composerSectionHeader}>
             <h4 className={styles.composerSectionTitle}>Nội dung bài viết</h4>
-            <span className={styles.composerSectionBadge}>Bắt buộc</span>
           </div>
 
           <input
@@ -3230,25 +3363,16 @@ export function ComposerModal({
           />
 
           <div className={styles.composerMetaRow}>
-            <input
-              className={styles.composerInput}
-              aria-label={vi.api.hashtags}
-              placeholder={vi.api.composerHashtagPlaceholder}
-              value={hashtagsText}
-              disabled={isFormBusy}
-              onChange={(event) => setHashtagsText(event.target.value)}
-            />
+            <HashtagInput tags={hashtags} onChange={setHashtags} isDisabled={isFormBusy} />
 
-            <select
-              className={styles.composerInput}
+            <SoftSelect
+              className={styles.composerSelect}
               value={visibility}
-              disabled={isFormBusy}
-              onChange={(event) => setVisibility(event.target.value as 'public' | 'private')}
+              options={VISIBILITY_OPTIONS}
+              onChange={(value) => setVisibility(value === 'private' ? 'private' : 'public')}
               aria-label="Quyền riêng tư"
-            >
-              <option value="public">Công khai với mọi người</option>
-              <option value="private">Chỉ mình tôi</option>
-            </select>
+              disabled={isFormBusy}
+            />
           </div>
         </div>
 
@@ -3273,7 +3397,6 @@ export function ComposerModal({
               <SocialIcon name="video" size={16} />
               <span>Video Reels</span>
             </h4>
-            <span className={styles.composerSectionBadge}>Bắt buộc với Reels</span>
           </div>
 
           <input
@@ -3292,13 +3415,29 @@ export function ComposerModal({
             <button
               type="button"
               className={styles.composerDropzone}
+              data-drag-over={isVideoDragOver || undefined}
+              disabled={isFormBusy}
               onClick={() => fileInputRef.current?.click()}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setIsVideoDragOver(true);
+              }}
+              onDragLeave={() => setIsVideoDragOver(false)}
+              onDrop={(event) => {
+                event.preventDefault();
+                setIsVideoDragOver(false);
+                const dropped = pickDroppedVideo(event.dataTransfer.files);
+                if ('file' in dropped) void handleSelectFile(dropped.file);
+                else if (dropped.error === 'type') setUploadError(vi.api.composerVideoInvalidType);
+              }}
             >
-              <div className={styles.composerDropzoneIcon}>
-                <SocialIcon name="upload" size={22} />
-              </div>
-              <p className={styles.composerDropzoneText}>Kéo thả hoặc nhấn để chọn video Reels</p>
-              <p className={styles.composerDropzoneHint}>Hỗ trợ MP4, MOV (Tối đa 5 phút, 1 GB)</p>
+              <span className={styles.composerDropzoneIcon}>
+                <SocialIcon name="upload" size={20} />
+              </span>
+              <span className={styles.composerDropzoneText}>
+                {isVideoDragOver ? vi.api.composerVideoDropActive : vi.api.composerVideoDropHint}
+              </span>
+              <span className={styles.composerDropzoneHint}>{vi.api.composerVideoFormatHint}</span>
             </button>
           ) : (
             <div className={styles.composerVideoPreviewCard}>
@@ -3333,7 +3472,7 @@ export function ComposerModal({
                     type="button"
                     className={styles.removeItineraryItemBtn}
                     onClick={handleRemoveVideo}
-                    title="Xóa video đã chọn"
+                    data-tooltip="Xóa video đã chọn"
                     aria-label="Xóa video đã chọn"
                   >
                     <SocialIcon name="trash" size={16} />
@@ -3347,10 +3486,14 @@ export function ComposerModal({
                     <span>{uploadStepText}</span>
                     <span>{uploadProgress}%</span>
                   </div>
-                  <div className={styles.composerProgressBarBg}>
+                  <div
+                    className={styles.composerProgressBarBg}
+                    aria-hidden="true"
+                    data-finishing={uploadProgress >= 90 && uploadProgress < 100 ? true : undefined}
+                  >
                     <div
                       className={styles.composerProgressBarFill}
-                      style={{ width: `${uploadProgress}%` }}
+                      style={{ transform: `scaleX(${uploadProgress / 100})` }}
                     />
                   </div>
                 </div>
@@ -3446,22 +3589,14 @@ export function ComposerModal({
               {itineraryItems.map((item, index) => (
                 <div key={item.id} className={styles.itineraryItemCard}>
                   <div className={styles.itineraryItemHeader}>
-                    <label className={styles.itineraryDaySelect} htmlFor={`itinerary-day-${item.id}`}>
-                      Ngày:
-                      <select
-                        id={`itinerary-day-${item.id}`}
-                        className={styles.itineraryDaySelect}
-                        value={item.day}
-                        disabled={isFormBusy}
-                        onChange={(e) => handleUpdateItem(item.id, 'day', Number(e.target.value))}
-                      >
-                        {Array.from({ length: 15 }, (_, i) => i + 1).map((d) => (
-                          <option key={d} value={d}>
-                            Ngày {d}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                    <SoftSelect
+                      className={`${styles.composerSelect} ${styles.itineraryDayField}`}
+                      value={String(item.day)}
+                      options={ITINERARY_DAY_OPTIONS}
+                      onChange={(day) => handleUpdateItem(item.id, 'day', Number(day))}
+                      aria-label={`Ngày của hoạt động ${index + 1}`}
+                      disabled={isFormBusy}
+                    />
 
                     <input
                       className={styles.composerInput}
@@ -3478,7 +3613,7 @@ export function ComposerModal({
                       className={styles.removeItineraryItemBtn}
                       onClick={() => handleRemoveItem(item.id)}
                       disabled={isFormBusy}
-                      title="Xóa hoạt động này"
+                      data-tooltip="Xóa hoạt động này"
                       aria-label="Xóa hoạt động"
                     >
                       <SocialIcon name="trash" size={15} />

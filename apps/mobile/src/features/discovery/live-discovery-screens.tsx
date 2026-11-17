@@ -45,6 +45,7 @@ import {
   ExploreStaysLoading,
   ExploreStaysNotice,
 } from './explore-home';
+import { LoadingDots } from '@/components/loading-dots';
 
 const RECOMMENDATION_LIMIT = 3;
 
@@ -271,7 +272,6 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
   return (
     <Screen compact title={back ? vi.api.search : undefined} back={back} right={<NotificationBell />}>
       <SearchDropPanel visible={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-      {/* Search Bar at the very top */}
       {!back ? (
         <Pressable
           accessibilityRole="search"
@@ -344,7 +344,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
           {understood?.place && <HotelWebRedirectCard place={understood.place} />}
 
           {/* Loading */}
-          {search.isPending && <Txt>{vi.api.loading}</Txt>}
+          {search.isPending && <LoadingDots />}
 
           {/* Error */}
           <ApiErrorNotice
@@ -491,8 +491,15 @@ export function LiveSearchEntry() {
     checkOut?: string;
     adults?: string;
   }>();
-  if (pick === 'trip' && pickId === 'hotelProperty' && pickKey && checkIn && checkOut && adults) {
-    return <TripHotelSearchScreen q={q ?? ''} pick={{ key: pickKey, checkIn, checkOut, adults }} />;
+  if (pick === 'post' && pickKey && checkIn && checkOut && adults) {
+    return (
+      <TripHotelSearchScreen q={q ?? ''} pick={{ key: pickKey, checkIn, checkOut, adults, mode: 'post' }} />
+    );
+  }
+  // pickId 'hotelProperty:<chặng ở>': đổi khách sạn của một chặng khi đặt theo lộ trình.
+  if (pick === 'trip' && pickId?.startsWith('hotelProperty') && pickKey && checkIn && checkOut && adults) {
+    const stayId = pickId.split(':')[1] || 'hotel0';
+    return <TripHotelSearchScreen q={q ?? ''} pick={{ key: pickKey, checkIn, checkOut, adults, stayId }} />;
   }
   return view === 'mine' ? <LiveFeedScreen kind="mine" /> : <LiveSearchScreen back />;
 }

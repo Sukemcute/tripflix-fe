@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   buildTripAttachment,
-  EMPTY_TRIP_PLAN_DAY,
+  createTripPlanDraft,
   getPostCaption,
   getPostTitleFromCaption,
   POST_MEDIA_LIMITS,
@@ -14,13 +14,15 @@ import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams, useNavigation, usePreventRemove } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Keyboard, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Keyboard, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { startPostUpload } from './post-upload-store';
 import { TripPlanEditor } from './trip-plan-editor';
 import { startVideoCompression, type VideoCompression } from './video-compress';
 import { toPickedVideo, type PickedVideo } from './video-source';
 import {
   Button,
-  Chip,
   copy,
   Field,
   Icon,
@@ -33,6 +35,7 @@ import {
   ui,
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
+import { LoadingDots } from '@/components/loading-dots';
 
 export function LiveCreateScreen() {
   const { user, isReady } = useApiSession();
@@ -52,7 +55,7 @@ export function LiveCreateScreen() {
             void query.refetch();
           }}
         />
-        {query.isPending && <Txt>{vi.api.loading}</Txt>}
+        {query.isPending && <LoadingDots />}
       </Screen>
     );
   return <DraftEditor key={postId ?? 'new'} post={query.data?.post} />;
@@ -75,13 +78,12 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
   const [compressPercent, setCompressPercent] = useState<number | null>(null);
   const [pickerError, setPickerError] = useState<string | null>(null);
   const [isPicking, setPicking] = useState(false);
-  // Đăng kèm lộ trình là tuỳ chọn; tắt thì đăng như bài thường.
+  // Đăng theo từng bước (TF105): xem lại video → chi tiết bài → (tuỳ chọn) soạn lộ trình.
+  const [step, setStep] = useState<'video' | 'details' | 'trip'>(post ? 'details' : 'video');
+  // Đăng kèm lộ trình là tuỳ chọn; chưa mở bước lộ trình thì đăng như bài thường.
   const [hasTripPlan, setHasTripPlan] = useState(false);
-  const [tripDraft, setTripDraft] = useState<TripPlanDraft>({
-    destinationName: '',
-    hotel: null,
-    days: [EMPTY_TRIP_PLAN_DAY],
-  });
+  const [tripDraft, setTripDraft] = useState<TripPlanDraft>(createTripPlanDraft);
+  const [isDraggingPoint, setDraggingPoint] = useState(false);
   const uploadAbort = useRef<AbortController | null>(null);
   // Đăng xong thì thay cả form bằng màn báo đã đăng, để không ai bấm đăng lại hay tưởng chưa đăng.
   const [published, setPublished] = useState<{ id: string; hasVideo: boolean } | null>(null);
@@ -194,6 +196,32 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
       await client.invalidateQueries({ queryKey: ['social'] });
     },
   });
+  // Đăng (TF105): giao việc nén, tải video và đăng bài cho tiến trình nền rồi về màn chính ngay.
+  function publishInBackground() {
+    if (!body.trim() || mutation.isPending) return;
+    const tripAttachment = hasTripPlan ? buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) : null;
+    startPostUpload(getPostTitleFromCaption(body), {
+      postId: id,
+      draft: {
+        title: getPostTitleFromCaption(body),
+        body: body.trim(),
+        hashtags: hashtags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        visibility,
+        ...(tripAttachment ? { trip_attachment: tripAttachment } : {}),
+      },
+      video,
+      // Tiến trình nền giữ file nén; màn này đóng lại không được xoá nó.
+      compression: compression.current,
+      uploadedAssetId,
+      client,
+    });
+    compression.current = null;
+    Keyboard.dismiss();
+    router.replace('/(tabs)');
+  }
   const isBusy = mutation.isPending || isPicking;
   const navigation = useNavigation();
   // Đang đăng hay lưu mà bấm quay lại, vuốt mép hay nút back Android: hỏi trước, không thoát ngay.
@@ -218,7 +246,6 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
     ]);
   });
   const progressPercent = uploadPercent ?? compressPercent;
-  const videoLabel = video ? copy.create.videoSelected : copy.create.selectVideo;
   const videoDetail =
     uploadPercent !== null
       ? t('mobile.create.uploadingVideo', { percent: uploadPercent })
@@ -233,9 +260,87 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
   if (published) return <PublishedView postId={published.id} hasVideo={published.hasVideo} />;
   const isSaving = mutation.isPending && mutation.variables === 'save';
   const isPublishing = mutation.isPending && mutation.variables === 'publish';
+  const tripAttachment = hasTripPlan ? buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) : null;
+  const tripSummary = tripAttachment
+    ? [
+        tripAttachment.destinationName,
+        t('mobile.tripPlan.dayCount', { days: tripAttachment.daysCount }),
+        t('mobile.tripPlan.editor.bookableCount', {
+          count: tripAttachment.items.filter((item) => item.transport?.fromAirport || item.hotel).length,
+        }),
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : copy.create.tripAdd;
+
+  if (step === 'video') {
+    return (
+      <VideoStep
+        video={video}
+        isPicking={isPicking}
+        progressPercent={progressPercent}
+        detail={videoDetail}
+        error={pickerError}
+        onPick={() => {
+          void pickVideo();
+        }}
+        onNext={() => setStep('details')}
+      />
+    );
+  }
+
+  if (step === 'trip') {
+    return (
+      <Screen
+        scroll={false}
+        padded={false}
+        header={
+          <StepHeader
+            title={vi.mobile.tripPlan.editor.toggle}
+            onBack={() => setStep('details')}
+            right={
+              <Button tone="text" onPress={() => setStep('details')}>
+                {copy.create.tripDone}
+              </Button>
+            }
+          />
+        }
+        footer={
+          <View style={styles.actions}>
+            <Button
+              compact
+              tone="secondary"
+              style={styles.draft}
+              onPress={() => {
+                setHasTripPlan(false);
+                setTripDraft(createTripPlanDraft());
+                setStep('details');
+              }}
+            >
+              {copy.create.tripRemove}
+            </Button>
+            <Button compact style={styles.publish} onPress={() => setStep('details')}>
+              {copy.create.tripDone}
+            </Button>
+          </View>
+        }
+      >
+        {/* Cuộn riêng để khoá cuộn lúc đang kéo thẻ, không thì danh sách vừa cuộn vừa kéo. */}
+        <ScrollView
+          scrollEnabled={!isDraggingPoint}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[ui.content, ui.pad]}
+          showsVerticalScrollIndicator={false}
+        >
+          <TripPlanEditor draft={tripDraft} onChange={setTripDraft} onDragChange={setDraggingPoint} />
+        </ScrollView>
+      </Screen>
+    );
+  }
+
   return (
     <Screen
-      title={copy.create.title}
+      header={<StepHeader title={copy.create.title} onBack={post ? undefined : () => setStep('video')} />}
       footer={
         <View style={styles.footer}>
           {/* Ngay trên nút bấm, không bị bàn phím hay thanh nút che như khi nằm cuối form. */}
@@ -245,20 +350,28 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
             <ApiErrorNotice error={mutation.error} />
           )}
           {mutation.isSuccess && mutation.variables === 'save' && <Notice>{vi.api.draftSaved}</Notice>}
+          {progressPercent !== null && (
+            <Txt variant="caption" style={ui.muted} accessibilityLiveRegion="polite">
+              {videoDetail}
+            </Txt>
+          )}
           <View style={styles.actions}>
             <Button
+              compact
               tone="secondary"
+              icon="document-outline"
               style={styles.draft}
               disabled={mutation.isPending || !body.trim()}
               onPress={() => mutation.mutate('save')}
             >
-              {isSaving ? vi.api.saving : id ? vi.api.save : copy.create.saveDraftShort}
+              {isSaving ? vi.api.saving : id ? copy.create.saveShort : copy.create.draftShort}
             </Button>
             <Button
-              icon="paper-plane-outline"
+              compact
+              icon="arrow-up-circle-outline"
               style={styles.publish}
               disabled={mutation.isPending || !body.trim()}
-              onPress={() => mutation.mutate('publish')}
+              onPress={publishInBackground}
             >
               {isPublishing ? copy.create.publishing : vi.api.publish}
             </Button>
@@ -267,50 +380,38 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
       }
     >
       <View style={styles.form}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={video ? copy.create.changeVideo : copy.create.selectVideo}
-          accessibilityHint={videoDetail}
-          disabled={isBusy}
-          onPress={() => {
-            void pickVideo();
-          }}
-          style={({ pressed }) => [styles.media, video && styles.mediaSelected, pressed && styles.pressed]}
-        >
-          <View style={styles.mediaIcon}>
-            <Icon name={video ? 'film-outline' : 'add'} size={24} color={colors.tealInk} />
-          </View>
-          <View style={styles.mediaText}>
-            <Txt variant="label" numberOfLines={1}>
-              {isPicking ? copy.create.selecting : videoLabel}
-            </Txt>
-            <Txt
-              variant="caption"
-              numberOfLines={1}
-              style={ui.muted}
-              accessibilityLiveRegion={progressPercent !== null ? 'polite' : 'none'}
+        <View style={styles.captionBlock}>
+          <Txt variant="label">{copy.create.story}</Txt>
+          <Row style={styles.captionRow}>
+            <TextInput
+              accessibilityLabel={copy.create.story}
+              placeholder={copy.create.placeholder}
+              placeholderTextColor={colors.textMuted}
+              value={body}
+              onChangeText={setBody}
+              multiline
+              style={[ui.input, styles.storyBox]}
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={video ? copy.create.changeVideo : copy.create.selectVideo}
+              disabled={isBusy || !!post}
+              onPress={() => setStep('video')}
+              style={({ pressed }) => [styles.thumb, pressed && styles.pressed]}
             >
-              {videoDetail}
-            </Txt>
-            {progressPercent !== null && (
-              <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
-              </View>
-            )}
-          </View>
-          {video && !mutation.isPending && (
-            <IconButton name="close" label={copy.create.remove} onPress={() => selectVideo(null)} />
-          )}
-        </Pressable>
-        {pickerError && <Notice tone="error">{pickerError}</Notice>}
-        <Field
-          label={copy.create.story}
-          placeholder={copy.create.placeholder}
-          value={body}
-          onChangeText={setBody}
-          multiline
-          style={styles.story}
-        />
+              {video ? (
+                <VideoThumb uri={video.uri} />
+              ) : (
+                <Icon name="film-outline" size={24} color={colors.tealInk} />
+              )}
+              {!post && (
+                <View style={styles.thumbLabel}>
+                  <Txt style={styles.thumbLabelText}>{copy.create.preview}</Txt>
+                </View>
+              )}
+            </Pressable>
+          </Row>
+        </View>
         <Field
           label={copy.create.hashtagsLabel}
           placeholder={copy.create.hashtagsPlaceholder}
@@ -318,31 +419,48 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
           onChangeText={setHashtags}
           autoCapitalize="none"
         />
-        <View style={styles.tripToggle}>
-          <View style={styles.mediaText}>
-            <Txt variant="label">{vi.mobile.tripPlan.editor.toggle}</Txt>
-            <Txt variant="caption" style={ui.muted}>
-              {vi.mobile.tripPlan.editor.toggleHint}
-            </Txt>
-          </View>
-          <Switch
-            accessibilityLabel={vi.mobile.tripPlan.editor.toggle}
-            value={hasTripPlan}
-            onValueChange={setHasTripPlan}
-            trackColor={{ true: colors.tealInk, false: colors.border }}
-          />
-        </View>
-        {hasTripPlan && <TripPlanEditor draft={tripDraft} onChange={setTripDraft} />}
-        <View style={styles.visibility}>
-          <Txt variant="label">{copy.create.visibility}</Txt>
-          <Row style={styles.chips}>
-            <Chip selected={visibility === 'public'} onPress={() => setVisibility('public')}>
-              {vi.api.public}
-            </Chip>
-            <Chip selected={visibility === 'private'} onPress={() => setVisibility('private')}>
-              {vi.api.private}
-            </Chip>
-          </Row>
+        <View style={styles.rows}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setHasTripPlan(true);
+              setStep('trip');
+            }}
+            style={({ pressed }) => [
+              styles.listRow,
+              tripAttachment && styles.listRowActive,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Icon name="map-outline" size={22} color={colors.tealInk} />
+            <View style={styles.flex}>
+              <Txt variant="label">{vi.mobile.tripPlan.editor.toggle}</Txt>
+              <Txt variant="caption" style={tripAttachment ? styles.tripOn : ui.muted} numberOfLines={1}>
+                {tripSummary}
+              </Txt>
+            </View>
+            <Icon name="chevron-forward" size={18} color={colors.textMuted} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setVisibility(visibility === 'public' ? 'private' : 'public')}
+            style={({ pressed }) => [styles.listRow, pressed && styles.pressed]}
+          >
+            <Icon
+              name={visibility === 'public' ? 'earth-outline' : 'lock-closed-outline'}
+              size={22}
+              color={colors.ink}
+            />
+            <View style={styles.flex}>
+              <Txt variant="label">
+                {visibility === 'public' ? copy.create.visibilityPublic : copy.create.visibilityPrivate}
+              </Txt>
+              <Txt variant="caption" style={ui.muted}>
+                {copy.create.visibilityHint}
+              </Txt>
+            </View>
+            <Icon name="swap-horizontal" size={18} color={colors.textMuted} />
+          </Pressable>
         </View>
         {id && (
           <Button tone="text" onPress={() => router.push({ pathname: '/trip/[slug]', params: { slug: id } })}>
@@ -351,6 +469,193 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
         )}
       </View>
     </Screen>
+  );
+}
+
+/** Đầu trang của từng bước: nút lùi về bước trước (không thoát hẳn màn đăng). */
+function StepHeader({
+  title,
+  onBack,
+  right,
+}: {
+  title: string;
+  onBack?: () => void;
+  right?: React.ReactNode;
+}) {
+  return (
+    <Row style={styles.stepHeader}>
+      <IconButton
+        name="arrow-back"
+        label={vi.mobile.create.back}
+        onPress={() => (onBack ? onBack() : router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+      />
+      <Txt variant="label" style={styles.flex}>
+        {title}
+      </Txt>
+      {right}
+    </Row>
+  );
+}
+
+/** Bước 1: xem lại video gần như toàn màn hình rồi bấm Tiếp. */
+function VideoStep({
+  video,
+  isPicking,
+  progressPercent,
+  detail,
+  error,
+  onPick,
+  onNext,
+}: {
+  video: PickedVideo | null;
+  isPicking: boolean;
+  progressPercent: number | null;
+  detail: string;
+  error: string | null;
+  onPick: () => void;
+  onNext: () => void;
+}) {
+  const close = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)'));
+  // Chưa chọn video: màn chào sáng, một nút chính, thay cho khối màu trống.
+  if (!video) {
+    return (
+      <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.welcomeScreen}>
+        <Row style={styles.welcomeHeader}>
+          <IconButton name="close" label={vi.mobile.create.back} onPress={close} />
+          <Txt variant="label" style={styles.welcomeHeaderTitle}>
+            {copy.create.title}
+          </Txt>
+          <View style={styles.welcomeHeaderSpacer} />
+        </Row>
+        <View style={styles.welcomeBody}>
+          <View style={styles.welcomeIcon}>
+            <Icon name="videocam-outline" size={40} color={colors.coralInk} />
+          </View>
+          <Txt variant="heading" style={styles.welcomeTitle}>
+            {copy.create.welcomeTitle}
+          </Txt>
+          <Txt style={styles.welcomeText}>{copy.create.welcomeBody}</Txt>
+          <Button icon="images-outline" style={styles.welcomeButton} disabled={isPicking} onPress={onPick}>
+            {isPicking ? copy.create.selecting : copy.create.selectVideo}
+          </Button>
+          {error && <Notice tone="error">{error}</Notice>}
+          <View style={styles.welcomeTips}>
+            {[
+              { icon: 'phone-portrait-outline' as const, text: copy.create.tipVertical },
+              { icon: 'map-outline' as const, text: copy.create.tipTrip },
+            ].map((tip) => (
+              <Row key={tip.icon} style={styles.welcomeTip}>
+                <Icon name={tip.icon} size={18} color={colors.tealInk} />
+                <Txt variant="small" style={styles.flex}>
+                  {tip.text}
+                </Txt>
+              </Row>
+            ))}
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  return (
+    <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.videoScreen}>
+      <View style={styles.videoStage}>
+        <VideoPreview uri={video.uri} />
+        <View style={styles.videoTop}>
+          <IconButton
+            name="close"
+            label={vi.mobile.create.back}
+            color={colors.background}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+          />
+          {video && (
+            <Pressable accessibilityRole="button" onPress={onPick} style={styles.videoPill}>
+              <Txt style={styles.videoPillText}>{copy.create.changeVideo}</Txt>
+            </Pressable>
+          )}
+        </View>
+        {video && (
+          <View style={styles.videoBottom}>
+            <Txt style={styles.videoInfo}>{detail}</Txt>
+            {progressPercent !== null && (
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+              </View>
+            )}
+          </View>
+        )}
+      </View>
+      {error && <Notice tone="error">{error}</Notice>}
+      <Row style={styles.videoActions}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+          style={[styles.pill, styles.pillLight]}
+        >
+          <Txt style={styles.pillLightText}>{copy.create.cancel}</Txt>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !video }}
+          disabled={!video}
+          onPress={onNext}
+          style={[styles.pill, styles.pillPrimary, !video && styles.pillDisabled]}
+        >
+          <Txt style={styles.pillPrimaryText}>{copy.create.next}</Txt>
+        </Pressable>
+      </Row>
+    </SafeAreaView>
+  );
+}
+
+/** Xem lại video vừa chọn: phát có tiếng; chạm video để dừng/phát, nút loa để tắt/bật tiếng. */
+function VideoPreview({ uri }: { uri: string }) {
+  const [isMuted, setMuted] = useState(false);
+  const [isPaused, setPaused] = useState(false);
+  const player = useVideoPlayer(uri, (instance) => {
+    instance.loop = true;
+    instance.play();
+  });
+  useEffect(() => {
+    player.muted = isMuted;
+  }, [player, isMuted]);
+  return (
+    <>
+      <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="cover" nativeControls={false} />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={isPaused ? copy.create.play : copy.create.pause}
+        style={StyleSheet.absoluteFill}
+        onPress={() => {
+          if (isPaused) player.play();
+          else player.pause();
+          setPaused(!isPaused);
+        }}
+      >
+        {isPaused && (
+          <View style={styles.previewPaused}>
+            <Icon name="play" size={56} color={colors.background} />
+          </View>
+        )}
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={isMuted ? copy.create.unmute : copy.create.mute}
+        onPress={() => setMuted(!isMuted)}
+        style={styles.previewSound}
+      >
+        <Icon name={isMuted ? 'volume-mute' : 'volume-high'} size={20} color={colors.background} />
+      </Pressable>
+    </>
+  );
+}
+
+/** Ảnh nhỏ ở bước chi tiết: khung đầu của video, không phát. */
+function VideoThumb({ uri }: { uri: string }) {
+  const player = useVideoPlayer(uri, (instance) => {
+    instance.muted = true;
+  });
+  return (
+    <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="cover" nativeControls={false} />
   );
 }
 
@@ -420,6 +725,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.seaMist,
   },
   mediaText: { flex: 1, gap: spacing.xs },
+  previewPaused: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  previewSound: {
+    position: 'absolute',
+    right: spacing.md,
+    bottom: spacing.md,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.overlay,
+  },
   progressTrack: { height: 4, borderRadius: 2, backgroundColor: colors.border, overflow: 'hidden' },
   progressFill: { height: 4, backgroundColor: colors.tealInk },
   story: { minHeight: 88, textAlignVertical: 'top' },
@@ -432,10 +749,123 @@ const styles = StyleSheet.create({
   chips: { gap: spacing.sm },
   tripToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   footer: { gap: spacing.sm },
+  flex: { flex: 1 },
+  captionBlock: { gap: spacing.sm },
+  captionRow: { alignItems: 'stretch', gap: spacing.md },
+  storyBox: { flex: 1, height: 136, textAlignVertical: 'top', paddingTop: spacing.md },
+  thumb: {
+    width: 102,
+    height: 136,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.seaMist,
+  },
+  thumbLabel: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingVertical: spacing.xs,
+    alignItems: 'center',
+    backgroundColor: colors.overlayHeavy,
+  },
+  thumbLabelText: { color: colors.background, fontSize: 12 },
+  rows: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+  listRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.md,
+  },
+  listRowActive: { backgroundColor: colors.seaMist },
+  tripOn: { color: colors.tealInk },
+  stepHeader: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  videoScreen: { flex: 1, backgroundColor: colors.ink, padding: spacing.sm, gap: spacing.sm },
+  videoStage: { flex: 1, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.tealInk },
+  videoEmpty: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    padding: spacing.lg,
+  },
+  videoEmptyText: { color: colors.background, fontSize: 17, fontWeight: '600' },
+  videoEmptyHint: { color: colors.background, fontSize: 13, textAlign: 'center' },
+  welcomeScreen: { flex: 1, backgroundColor: colors.background },
+  welcomeHeader: { alignItems: 'center', paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
+  welcomeHeaderTitle: { flex: 1, textAlign: 'center' },
+  welcomeHeaderSpacer: { width: 44 },
+  welcomeBody: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    paddingHorizontal: mobileLayout.gutter + spacing.sm,
+    paddingBottom: spacing.xl * 2,
+  },
+  welcomeIcon: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.warmMist,
+  },
+  welcomeTitle: { textAlign: 'center' },
+  welcomeText: { textAlign: 'center', color: colors.textMuted },
+  welcomeButton: { alignSelf: 'stretch', marginTop: spacing.sm },
+  welcomeTips: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
+  welcomeTip: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  videoTop: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    right: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  videoPill: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.overlayHeavy,
+  },
+  videoPillText: { color: colors.background, fontSize: 13 },
+  videoBottom: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    bottom: spacing.md,
+    gap: spacing.xs,
+  },
+  videoInfo: { color: colors.background, fontSize: 12 },
+  videoActions: { gap: spacing.sm },
+  pill: { flex: 1, alignItems: 'center', paddingVertical: spacing.md, borderRadius: radius.pill },
+  pillLight: { backgroundColor: colors.background },
+  pillLightText: { color: colors.ink, fontWeight: '600' },
+  pillPrimary: { backgroundColor: colors.coral },
+  pillPrimaryText: { color: colors.background, fontWeight: '600' },
+  pillDisabled: { opacity: 0.5 },
   actions: { flexDirection: 'row', gap: spacing.sm },
   published: { alignItems: 'center', gap: spacing.md, paddingTop: spacing.xl },
   publishedTitle: { textAlign: 'center' },
   publishedBody: { textAlign: 'center', color: colors.textMuted },
   draft: { flex: 1 },
-  publish: { flex: 2 },
+  publish: { flex: 1 },
 });

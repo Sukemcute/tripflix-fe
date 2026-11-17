@@ -1,8 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  changePassword,
-  useApiSession,
-} from '@tripflix/api-client';
+import { changePassword, useApiSession } from '@tripflix/api-client';
 import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import type { UserDto } from '@tripflix/api-client/core-api/model/index';
 import { DISPLAY_NAME_MAX, NEW_PASSWORD_MAX } from '@tripflix/app-core';
@@ -27,9 +24,11 @@ import {
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount, UnavailableScreen } from '@/components/api-state';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { LoadingDots } from '@/components/loading-dots';
 
 const profile = copy.profile;
 
+/** Menu cài đặt (TF47B): mở từ nút bánh răng trên trang cá nhân ở tab Tôi. */
 export function LiveProfileScreen() {
   const { user, isReady, error, session } = useApiSession();
   const [help, setHelp] = useState(false);
@@ -60,11 +59,6 @@ export function LiveProfileScreen() {
     { label: profile.help, icon: 'help-buoy-outline', onPress: () => setHelp(true) },
   ] as const;
   const stats = [
-    {
-      label: profile.posts,
-      icon: 'albums-outline',
-      onPress: () => router.push({ pathname: '/search', params: { view: 'mine' } }),
-    },
     { label: copy.tabs.trips, icon: 'bag-handle-outline', onPress: links[0].onPress },
     { label: profile.saved, icon: 'bookmark-outline', onPress: links[1].onPress },
   ] as const;
@@ -77,7 +71,7 @@ export function LiveProfileScreen() {
     .toLocaleUpperCase('vi-VN');
 
   return (
-    <Screen compact header={null} padded={false}>
+    <Screen compact title={profile.menu} padded={false}>
       <View>
         <View style={styles.cover}>
           <Logo />
@@ -240,7 +234,7 @@ function ProfileEditor({ user }: { user: UserDto }) {
           void query.refetch();
         }}
       />
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      {query.isPending && <LoadingDots />}
       {query.data?.map((device) => (
         <Card key={device.id}>
           <Txt variant="label">

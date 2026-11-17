@@ -325,3 +325,39 @@ describe('sendLoginCode and 2-step login', () => {
     });
   });
 });
+
+describe('admin handoff', () => {
+  it('web requests a one-time code with the access token', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(200, { ...pair, refreshToken: undefined }))
+      .mockResolvedValueOnce(json(200, { ...user, role: 'moderator' }))
+      .mockResolvedValueOnce(json(200, { code: 'handoff-code', expiresIn: 60 }));
+    const session = new SessionClient({ baseUrl: 'http://api', client: 'web' });
+    await session.loginWithGoogle({ idToken: 'google-id-token' });
+
+    await expect(session.createAdminHandoff()).resolves.toBe('handoff-code');
+    const [url, init] = fetchMock.mock.calls[2]!;
+    expect(String(url)).toBe('http://api/api/auth/admin-handoff');
+    expect(init!.method).toBe('POST');
+    expect(new Headers(init!.headers).get('authorization')).toBe('Bearer access-1');
+  });
+
+  it('admin exchanges the code through the BFF with a browser proof, then loads the user', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (url) =>
+        String(url).endsWith('/auth/me') ? json(200, user) : new Response(null, { status: 204 }),
+      );
+    const session = new SessionClient({ baseUrl: '/bff', client: 'web', serverSession: true });
+
+    await session.exchangeAdminHandoff('handoff-code');
+
+    expect(session.getSnapshot().user).toEqual(user);
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe('/bff/api/auth/admin-handoff/exchange');
+    expect(JSON.parse(String(init!.body))).toEqual({ code: 'handoff-code' });
+    expect(new Headers(init!.headers).get('X-Tripflix-Session-Proof')).toBe('signed-proof');
+    expect(new Headers(init!.headers).get('X-Tripflix-Client')).toBe('web');
+  });
+});

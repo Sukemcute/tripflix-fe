@@ -1,4 +1,4 @@
-import { useApiSession, type AssistantCard, type AssistantTrip } from '@tripflix/api-client';
+import { useApiSession, type AssistantAction, type AssistantCard, type AssistantTrip } from '@tripflix/api-client';
 import { completeAssistantTurn, parseAssistantChat, serializeAssistantChat, type AssistantChatMessage } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren } from 'react';
@@ -18,7 +18,7 @@ export type AssistantMessage = AssistantChatMessage & {
 export type AssistantReply = Omit<AssistantMessage, 'id' | 'role'> & { trip?: AssistantTrip | null };
 export type AssistantOrigin = { x: number; y: number; width: number; height: number };
 /** Gửi kèm mỗi lượt: reel đang mở và những gì Tripi nhớ về chuyến đi. */
-export type AssistantContext = { trip: AssistantTrip | null; contextPostId?: string };
+export type AssistantContext = { trip: AssistantTrip | null; contextPostId?: string; action?: AssistantAction };
 export type AssistantTransport = (
   messages: readonly AssistantMessage[],
   signal: AbortSignal,
@@ -96,7 +96,8 @@ function useAssistantState(transport?: AssistantTransport) {
     return () => restore.abort();
   }, [userId, clear, saveChat]);
 
-  async function send(text = draft, retry = false) {
+  /** action: nút trên thẻ (Chọn, Hoàn tác); text là chữ hiện trong khung chat cho lượt đó. */
+  async function send(text = draft, retry = false, action?: AssistantAction) {
     if (!text.trim() || request.current) return;
     const next = retry
       ? messages
@@ -109,7 +110,7 @@ function useAssistantState(transport?: AssistantTransport) {
     setIsPending(true);
     try {
       const reply = transport
-        ? await transport(next, controller.signal, { trip, contextPostId })
+        ? await transport(next, controller.signal, { trip, contextPostId, action })
         : vi.assistant.demoReply;
       const { trip: nextTrip, ...answer } = typeof reply === 'string' ? { text: reply } : reply;
       if (!answer.text.trim()) throw new Error('Empty assistant response');
@@ -130,6 +131,8 @@ function useAssistantState(transport?: AssistantTransport) {
     if (userId) saveChat(null);
   }
   return {
+    trip,
+    act: (label: string, action: AssistantAction) => send(label, false, action),
     isOpen: dialog !== null,
     origin: dialog?.origin,
     openDialog,

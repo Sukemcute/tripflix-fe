@@ -7,5 +7,5 @@ export interface ReelItem {
   body?: string;
   postId?: string;
   playback: ReelPlayback;
-  social?: Pick<FeedCardDto, 'author' | 'counts' | 'viewerState'>;
+  social?: Pick<FeedCardDto, 'author' | 'counts' | 'viewerState'> & Partial<Pick<FeedCardDto, 'isVerified'>>;
 }

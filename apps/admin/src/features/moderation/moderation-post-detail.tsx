@@ -5,16 +5,8 @@ import type {
   SocialModerationHistoryDto,
 } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
-import Image from 'next/image';
 import type { ReactNode } from 'react';
 
-/** Ảnh bìa theo điểm đến, cùng bộ ảnh với trang bài viết bên web (apps/web post-cover.ts). */
-const DESTINATION_COVERS = new Map([
-  ['nha trang', '/brand/sea.jpg'],
-  ['hội an', '/brand/hoian.jpg'],
-  ['đà nẵng', '/brand/home-shore.jpg'],
-]);
-const COVER_MASCOT = '/brand/tripi-welcome.png';
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3100';
 
 const ACTIONS: readonly CreateModerationActionDtoAction[] = ['hide', 'remove', 'restore'];
@@ -58,7 +50,6 @@ export function ModerationPostDetail({
   notice: ReactNode;
 }) {
   const trip = post.trip_attachment;
-  const cover = DESTINATION_COVERS.get(trip?.destinationName?.trim().toLowerCase() ?? '');
   const status = post.status as PostStatus;
   const authorName = post.author.display_name;
 
@@ -69,7 +60,9 @@ export function ModerationPostDetail({
           <p className="admin-post-kicker">
             {trip?.destinationName && <span>{trip.destinationName}</span>}
             <span>{t('api.postPublishedOn', { date: formatDate(post.created_at) })}</span>
-            <span className={`admin-post-status is-${status}`}>{status === 'held' ? vi.api.moderationHeld : vi.api[status] ?? post.status}</span>
+            <span className={`admin-post-status is-${status}`}>
+              {status === 'held' ? vi.api.moderationHeld : (vi.api[status] ?? post.status)}
+            </span>
           </p>
           <h2>{post.title}</h2>
           <div className="admin-post-byline">
@@ -88,14 +81,17 @@ export function ModerationPostDetail({
         </header>
 
         {post.media_ids.length > 0 && (
-          <figure className={cover ? 'admin-post-cover' : 'admin-post-cover is-brand'}>
-            {cover ? (
-              <Image src={cover} alt="" fill sizes="(max-width: 1100px) 100vw, 55vw" />
-            ) : (
-              <Image className="admin-post-mascot" src={COVER_MASCOT} alt="" width={120} height={120} />
-            )}
-            <figcaption>{t('api.moderationMediaCount', { count: post.media_ids.length })}</figcaption>
-          </figure>
+          <section className="my-5 rounded-lg border border-border bg-surface p-4 text-xs">
+            <p className="font-bold">{t('api.moderationMediaCount', { count: post.media_ids.length })}</p>
+            <p className="mt-2 text-text-muted">{vi.adminOperations.noMedia}</p>
+            <ul className="mt-2 space-y-1 text-[10px] text-text-muted">
+              {post.media_ids.map((id) => (
+                <li key={id}>
+                  <code>{id}</code>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         {post.body.trim() ? (
@@ -125,7 +121,7 @@ export function ModerationPostDetail({
         {status === 'published' && (
           <a
             className="admin-text-button admin-post-web-link"
-            href={`${WEB_URL}/trips/${encodeURIComponent(post.id)}`}
+            href={`${WEB_URL}/inspiration?open=${encodeURIComponent(post.id)}`}
             target="_blank"
             rel="noreferrer"
           >

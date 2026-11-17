@@ -215,8 +215,7 @@ export function SearchMonitoring() {
     <div className={styles.root}>
       <header className={styles.heading}>
         <div>
-          <p className="admin-eyebrow">{copy.eyebrow}</p>
-          <h1>{copy.title}</h1>
+          <h2>{copy.eyebrow}</h2>
           <p>{copy.description}</p>
         </div>
         <span className="admin-badge">{isMonitoring ? copy.trends.active : copy.readOnly}</span>

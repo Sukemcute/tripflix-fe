@@ -8,6 +8,7 @@ import { BottomSheet } from '@/components/bottom-sheet';
 import { Button, Icon, Row, Txt } from '@/components/mobile-ui';
 import { useAssistant } from '@/features/assistant/assistant-provider';
 import { saveTripBooking } from '@/features/booking/trip-booking-store';
+import { trackFeedEvent } from './feed-events';
 import { ProductCard, styles } from '@/features/booking/trip-plan-parts';
 
 const copy = vi.mobile.tripPlan;
@@ -41,6 +42,7 @@ export function TripPlanSheet({
     assistant.openDialog(undefined, postId);
   };
   const book = () => {
+    trackFeedEvent({ type: 'booking_click', postId, hotelId: trip.hotelId ?? null, surface: 'reels_trip_plan' });
     saveTripBooking({ postId, postTitle, authorName, coverUrl, trip });
     onClose();
     router.navigate('/(tabs)/book');
@@ -76,7 +78,7 @@ export function TripPlanSheet({
       <View style={styles.timeline}>
         {Array.from({ length: days }, (_, index) => index + 1).map((day) => {
           const flightLegs = (plan?.flights ?? []).filter((leg) => leg.day === day);
-          const community = items.filter((item) => item.day === day && !item.transport);
+          const community = items.filter((item) => item.day === day && !item.transport && !item.hotel);
           const selfArranged =
             plan?.selfArranged.filter((leg) => leg.day === day) ??
             items
@@ -97,14 +99,17 @@ export function TripPlanSheet({
                     detail={copy.flightTitle}
                   />
                 ))}
-                {day === 1 && plan?.hotelId && (
-                  <ProductCard
-                    tone="hotel"
-                    icon="bed"
-                    title={trip.hotelName ?? copy.stayTitle}
-                    detail={t('mobile.tripPlan.hotelTitle', { nights })}
-                  />
-                )}
+                {plan?.hotels
+                  .filter((stay) => stay.day === day)
+                  .map((stay) => (
+                    <ProductCard
+                      key={stay.id}
+                      tone="hotel"
+                      icon="bed"
+                      title={stay.hotelName ?? trip.hotelName ?? copy.stayTitle}
+                      detail={t('mobile.tripPlan.hotelTitle', { nights: stay.nights })}
+                    />
+                  ))}
                 {selfArranged.map((leg, index) => (
                   <View key={'self' + index} style={styles.stop}>
                     <Icon name="bus-outline" size={14} color={colors.textMuted} />
@@ -120,7 +125,9 @@ export function TripPlanSheet({
                       <View key={index} style={styles.stop}>
                         <Icon name="location-outline" size={14} color={colors.textMuted} />
                         <View style={styles.stopText}>
-                          <Txt style={styles.description}>{item.title}</Txt>
+                          <Txt style={styles.description}>
+                            {item.time ? `${item.time} · ${item.title}` : item.title}
+                          </Txt>
                           {!!(item.location || item.notes) && (
                             <Txt style={styles.muted}>
                               {[item.location, item.notes].filter(Boolean).join(' · ')}

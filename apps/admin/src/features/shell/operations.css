@@ -1,0 +1,594 @@
+/* Feature-level compatibility while components move to Tailwind utilities. */
+body {
+  font-variant-numeric: tabular-nums;
+}
+.ops-dialog::backdrop,
+.mod-modal-dialog::backdrop {
+  background: var(--color-overlay);
+  backdrop-filter: blur(3px);
+}
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 3px;
+}
+.ops-content,
+.ops-content > *,
+.ops-content .mod-workspace-container > * {
+  min-width: 0;
+}
+.ops-content .mod-header-row {
+  display: block;
+  min-width: 0;
+}
+.ops-content .mod-tabs-main {
+  max-width: 100%;
+}
+.ops-content .mod-filter-group {
+  width: 100%;
+  min-width: 0 !important;
+}
+.ops-content :is(h1, h2, h3) {
+  text-wrap: pretty;
+}
+.ops-content :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-size: 12px;
+  padding: 10px 12px;
+}
+.ops-content :is(input[type='checkbox'], input[type='radio']) {
+  accent-color: var(--color-teal-ink);
+}
+.ops-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+.ops-table th {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 12px 20px;
+  white-space: nowrap;
+}
+.ops-table td {
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-border);
+  vertical-align: top;
+  line-height: 1.65;
+}
+.ops-table tbody tr:hover {
+  background: var(--color-surface);
+}
+.ops-tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 3px 7px;
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.ops-content .text-danger {
+  color: var(--color-coral-ink);
+}
+.admin-primary,
+.staff-btn-create-modal {
+  background: var(--color-teal-ink);
+  color: var(--color-background);
+  box-shadow: none;
+  border-radius: 6px;
+  min-height: 36px;
+  font-size: 12px;
+}
+.admin-primary:hover:not(:disabled),
+.staff-btn-create-modal:hover {
+  background: var(--color-ink);
+  transform: none;
+  box-shadow: none;
+}
+.admin-secondary {
+  border-radius: 6px;
+  min-height: 34px;
+  padding: 7px 12px;
+  font-size: 11px;
+  box-shadow: none;
+}
+.admin-secondary:hover:not(:disabled) {
+  transform: none;
+}
+.admin-error {
+  border: 1px solid var(--color-danger);
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+  margin: 12px;
+}
+.admin-error .admin-secondary {
+  margin-top: 8px;
+}
+.admin-page-heading {
+  margin-bottom: 20px;
+}
+.ops-content .admin-page-heading h1 {
+  font-size: 18px;
+}
+.ops-content .admin-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.ops-content :is(.admin-data, .admin-content-card) {
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background);
+  box-shadow: none;
+}
+.ops-content :is(.admin-data-heading, .admin-filters) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+.ops-content .admin-data-heading {
+  align-items: center;
+  justify-content: space-between;
+}
+.ops-content .admin-filters label {
+  display: grid;
+  gap: 6px;
+  font-size: 11px;
+}
+.ops-content :is(.admin-table-scroll, .staff-table-scroll) {
+  overflow-x: auto;
+}
+.ops-content :is(.admin-table-scroll, .staff-table-scroll) table {
+  min-width: 640px;
+  width: 100%;
+  border-collapse: collapse;
+}
+.ops-content :is(.admin-table-scroll, .staff-table-scroll) th {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  text-align: left;
+  padding: 12px 16px;
+}
+.ops-content :is(.admin-table-scroll, .staff-table-scroll) td {
+  padding: 16px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+.ops-content .admin-status {
+  border-radius: 4px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+  padding: 4px 7px;
+  font-size: 10px;
+}
+.ops-content .admin-status[data-outcome='failed'] {
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+.ops-content .admin-status[data-outcome='running'] {
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
+}
+.ops-content .admin-status[data-outcome='skipped'] {
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+.ops-content :is(.mod-workspace-container, .staff-workspace-container) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+.ops-content :is(.admin-mod-monitoring-header, .staff-kpi-grid) {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+.ops-content :is(.mod-monitor-card, .staff-kpi-card) {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 10px;
+  min-height: 140px;
+  padding: 20px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: none;
+  overflow: hidden;
+}
+.ops-content :is(.mod-monitor-label, .staff-kpi-label) {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+.ops-content :is(.mod-monitor-value, .staff-kpi-val) {
+  font-size: 30px;
+  line-height: 1.2;
+  color: var(--color-ink);
+  letter-spacing: -0.04em;
+}
+.ops-content .mod-monitor-value.is-urgent {
+  color: var(--color-danger);
+}
+.ops-content :is(.mod-monitor-sub, .staff-kpi-sub) {
+  font-size: 10px;
+  line-height: 1.65;
+  color: var(--color-text-muted);
+}
+.ops-content .mod-monitor-card::before,
+.ops-content .staff-kpi-icon-circle,
+.ops-content .tab-pill-icon {
+  display: none;
+}
+.ops-content .pulse-dot {
+  background: var(--color-teal);
+  box-shadow: none;
+  animation: none;
+}
+.ops-content :is(.mod-tabs-main, .staff-tabs-bar) {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 20px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+.ops-content :is(.mod-tab-btn, .staff-tab-pill) {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 12px 0;
+  font-size: 11px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  box-shadow: none;
+}
+.ops-content :is(.mod-tab-btn, .staff-tab-pill).is-active {
+  color: var(--color-teal-ink);
+  border-bottom-color: var(--color-teal-ink);
+  background: transparent;
+}
+.ops-content .mod-filter-bar {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+}
+.ops-content .mod-filter-group {
+  max-width: 420px;
+}
+.ops-content .mod-filter-label {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+.ops-content .mod-split-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.ops-content .mod-subnav-card {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  overflow-x: auto;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+}
+.ops-content .mod-subnav-btn {
+  flex-shrink: 0;
+  width: auto;
+  padding: 7px 12px;
+  white-space: nowrap;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  color: var(--color-text-muted);
+  background: var(--color-background);
+  font-size: 10px;
+}
+.ops-content .mod-subnav-btn.is-active {
+  background: var(--color-teal-soft);
+  color: var(--color-teal-ink);
+  border-color: var(--color-teal-soft);
+}
+.ops-content :is(.mod-table-panel, .staff-table-panel) {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background);
+  box-shadow: none;
+  overflow: hidden;
+}
+.ops-content .mod-bulk-toolbar {
+  padding: 12px 16px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.ops-content .mod-bulk-left {
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+}
+.ops-content .mod-bulk-toolbar select {
+  max-width: 210px;
+  padding: 6px 8px;
+  font-size: 10px;
+}
+.ops-content :is(.mod-bulk-btn, .staff-btn-action) {
+  min-height: 30px;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  box-shadow: none;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-size: 10px;
+}
+.ops-content :is(.mod-bulk-btn.delete, .staff-btn-action.lock, .staff-btn-action.revoke) {
+  color: var(--color-danger);
+}
+.ops-content .mod-cases-table {
+  table-layout: auto;
+  min-width: 700px;
+}
+.ops-content .mod-cases-table th {
+  background: var(--color-surface);
+  padding: 12px 16px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.ops-content .mod-cases-table td {
+  border-bottom: 1px solid var(--color-border);
+  padding: 18px 16px;
+  font-size: 11px;
+  vertical-align: top;
+}
+.ops-content .mod-cases-table :is(th, td):nth-child(2) {
+  min-width: 240px;
+  width: auto;
+  max-width: 520px;
+}
+.ops-content .mod-content-title {
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: normal;
+  -webkit-line-clamp: 2;
+}
+.ops-content .mod-content-sub {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  margin-top: 6px;
+}
+.ops-content :is(.mod-type-tag, .mod-risk-badge, .mod-risk-tag-large, .role-pill, .status-pill) {
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 6px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+.ops-content :is(.mod-risk-badge.high-90, .mod-risk-badge.high-80, .status-pill.locked) {
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+.ops-content :is(.mod-risk-badge.med-60, .role-pill.superadmin) {
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
+}
+.ops-content :is(.mod-risk-badge.low-30, .role-pill.moderator, .status-pill.active) {
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+.ops-content .mod-btn-detail {
+  padding: 6px 10px;
+  background: var(--color-background);
+  color: var(--color-teal-ink);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  font-size: 10px;
+  box-shadow: none;
+}
+.ops-content .mod-btn-detail:hover {
+  background: var(--color-teal-soft);
+}
+.mod-modal-overlay {
+  z-index: 60;
+  display: contents;
+  background: transparent;
+  backdrop-filter: none;
+}
+.mod-modal-overlay .mod-modal-dialog {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(760px, 100%);
+  max-width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-left: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-background);
+  box-shadow: none;
+}
+.mod-modal-overlay .mod-modal-header {
+  border-radius: 0;
+  padding: 20px 24px;
+}
+.mod-modal-overlay .mod-modal-title {
+  font-size: 16px;
+}
+.mod-modal-overlay .mod-modal-body {
+  padding: 24px;
+}
+.mod-modal-overlay .mod-modal-tabs {
+  gap: 20px;
+  padding-inline: 24px;
+}
+.mod-modal-overlay .mod-modal-tab {
+  padding: 12px 0;
+  font-size: 12px;
+}
+.mod-modal-overlay .mod-modal-tab.is-active {
+  color: var(--color-teal-ink);
+  border-color: var(--color-teal-ink);
+}
+.mod-modal-overlay .mod-post-title {
+  font-size: 15px;
+  font-weight: 400;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.85;
+}
+.mod-modal-overlay .mod-meta-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: var(--color-surface);
+  border-radius: 8px;
+}
+.mod-modal-overlay .mod-meta-val {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.mod-modal-overlay .mod-modal-footer {
+  flex-wrap: wrap;
+  background: var(--color-background);
+  border-top: 1px solid var(--color-border);
+  padding: 16px 24px;
+}
+.mod-modal-overlay .btn-decision {
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 11px;
+  box-shadow: none;
+}
+.mod-modal-overlay .btn-decision.remove {
+  background: var(--color-danger);
+}
+.mod-modal-overlay .btn-decision.restore {
+  background: var(--color-teal-ink);
+}
+.ops-content .staff-header-row {
+  margin: 0;
+}
+.ops-content .staff-page-title {
+  font-size: 16px;
+}
+.ops-content .staff-page-sub {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.ops-content :is(.staff-toolbar, .staff-pagination-bar) {
+  padding: 16px;
+  background: transparent;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ops-content .staff-search-box {
+  border-radius: 6px;
+  box-shadow: none;
+}
+.ops-content .staff-search-input {
+  border: 0 !important;
+}
+.ops-content .staff-search-btn {
+  border-radius: 4px;
+  background: var(--color-teal-ink);
+}
+.ops-content .staff-avatar-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  box-shadow: none;
+  background: var(--color-sea-mist) !important;
+  color: var(--color-teal-ink);
+}
+.ops-content .staff-user-name {
+  font-size: 12px;
+}
+.ops-content .staff-user-id {
+  font-size: 9px;
+}
+.ops-content .staff-role-card {
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  box-shadow: none;
+}
+.ops-content .staff-roles-grid {
+  gap: 16px;
+}
+.ops-content .staff-prd-banner {
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  border-color: var(--color-border);
+}
+.ops-content .staff-create-dialog {
+  border-radius: 12px;
+  width: min(560px, calc(100vw - 32px));
+}
+@media (max-width: 900px) {
+  .ops-content :is(.admin-mod-monitoring-header, .staff-kpi-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ops-content .staff-roles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 540px) {
+  .ops-content .mod-cases-table :is(th, td):last-child {
+    position: sticky;
+    right: 0;
+    background: var(--color-background);
+    border-left: 1px solid var(--color-border);
+  }
+  .ops-content .mod-cases-table th:last-child {
+    background: var(--color-surface);
+  }
+  .ops-content :is(.mod-monitor-card, .staff-kpi-card) {
+    padding: 14px;
+  }
+  .ops-content :is(.mod-monitor-value, .staff-kpi-val) {
+    font-size: 26px;
+  }
+  .mod-modal-overlay .mod-modal-body {
+    padding: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

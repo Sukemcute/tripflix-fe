@@ -19,6 +19,7 @@ import {
   ui,
 } from '@/components/mobile-ui';
 import { CommerceError } from './commerce-state';
+import { LoadingDots } from '@/components/loading-dots';
 
 const text = vi.commerce;
 
@@ -91,7 +92,7 @@ export function CancelOrder({ orderId }: { orderId: string }) {
   return (
     <Card>
       <Txt variant="heading">{text.cancelTitle}</Txt>
-      {quote.isPending && <Txt>{vi.api.loading}</Txt>}
+      {quote.isPending && <LoadingDots />}
       <CommerceError error={quote.error} retry={() => void quote.refetch()} />
       {details && !details.isCancellable && <Notice tone="warning">{text.cancelBlocked}</Notice>}
       {details?.isCancellable && (

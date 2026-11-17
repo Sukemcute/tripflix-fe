@@ -16,6 +16,21 @@ export interface CheckoutItemDto {
    * @nullable
    */
   propertyName: string | null;
+  /**
+   * Mã khách sạn của mục phòng; vé bay là null
+   * @nullable
+   */
+  propertyId?: string | null;
+  /**
+   * Sân bay đi của vé bay; phòng là null
+   * @nullable
+   */
+  fromAirport?: string | null;
+  /**
+   * Sân bay đến của vé bay; phòng là null
+   * @nullable
+   */
+  toAirport?: string | null;
   date: string;
   dateTo: string;
   nights: number;

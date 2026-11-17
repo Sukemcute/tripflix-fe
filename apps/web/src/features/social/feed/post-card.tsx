@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { vi, t } from '@tripflix/i18n';
 import {
@@ -11,8 +12,12 @@ import {
   formatCompactCount,
 } from '../live-posts';
 import { getPostImages, POST_COVER_MASCOT } from '../post-cover';
+import { PostOwnerMenu } from '../post-owner-menu';
 import { AdaptivePostMedia } from './adaptive-post-media';
 import styles from './social-feed.module.css';
+
+/** Hiện tối đa 3 hashtag trên thẻ bài, phần còn lại gộp thành "+N" (rê chuột xem đủ). */
+const VISIBLE_HASHTAGS = 3;
 
 export interface PostCardProps {
   post: SocialPostDto;
@@ -102,29 +107,39 @@ export function PostCard({
     currentUser?.displayName
   );
 
+  const profileHref = `/u/${encodeURIComponent(post.authorId)}`;
+
   return (
     <article
       className={`${styles.postCard} ${isCommentActive ? styles.postCardActiveComment : ''}`}
       aria-label={post.title}
+      data-post-id={post.id}
     >
       {/* 1. Post Header: Avatar, Name, Handle, Date, Location, Menu */}
       <header className={styles.postHeader}>
         <div className={styles.authorLeft}>
-          <div className={styles.authorAvatar} aria-hidden="true">
+          {/* Avatar và tên dẫn tới trang cá nhân như Reels; avatar bỏ khỏi thứ tự Tab để không đọc trùng link. */}
+          <Link
+            prefetch={false}
+            href={profileHref}
+            className={styles.authorAvatar}
+            aria-hidden="true"
+            tabIndex={-1}
+          >
             {authorInfo.name.charAt(0).toUpperCase()}
-          </div>
+          </Link>
           <div className={styles.authorMeta}>
             <div className={styles.authorNameRow}>
-              <span className={styles.authorName}>{authorInfo.name}</span>
+              <Link prefetch={false} href={profileHref} className={styles.authorName}>
+                {authorInfo.name}
+              </Link>
               {post.isVerified && (
-                <span className={styles.authorVerified} title={vi.api.postVerifiedAccountTitle} aria-label={vi.api.postVerifiedBadge}>
+                <span className={styles.authorVerified} data-tooltip={vi.api.postVerifiedAccountTitle} aria-label={vi.api.postVerifiedBadge}>
                   <SocialIcon name="verified" size={15} />
                 </span>
               )}
             </div>
             <div className={styles.authorSubRow}>
-              <span className={styles.authorHandle}>{authorInfo.handle}</span>
-              <span className={styles.authorDot}>·</span>
               <time dateTime={post.createdAt}>{formatDateVi(post.createdAt)}</time>
               {trip?.destinationName && (
                 <>
@@ -139,14 +154,18 @@ export function PostCard({
           </div>
         </div>
 
-        <button
-          type="button"
-          className={styles.headerMenuBtn}
-          title="Tùy chọn bài viết"
-          aria-label="Tùy chọn bài viết"
-        >
-          <SocialIcon name="more" size={18} />
-        </button>
+        {currentUser?.id === post.authorId ? (
+          <PostOwnerMenu post={post} buttonClassName={styles.headerMenuBtn} />
+        ) : (
+          <button
+            type="button"
+            className={styles.headerMenuBtn}
+            data-tooltip="Tùy chọn bài viết"
+            aria-label="Tùy chọn bài viết"
+          >
+            <SocialIcon name="more" size={18} />
+          </button>
+        )}
       </header>
 
       {/* 2. Body: Title, Content, Hashtags */}
@@ -173,7 +192,7 @@ export function PostCard({
 
       {post.hashtags && post.hashtags.length > 0 && (
         <div className={styles.postTagsWrap}>
-          {post.hashtags.map((tag) => (
+          {post.hashtags.slice(0, VISIBLE_HASHTAGS).map((tag) => (
             <button
               key={tag}
               type="button"
@@ -183,6 +202,14 @@ export function PostCard({
               #{tag}
             </button>
           ))}
+          {post.hashtags.length > VISIBLE_HASHTAGS && (
+            <span
+              className={styles.postTagMore}
+              data-tooltip={post.hashtags.slice(VISIBLE_HASHTAGS).map((tag) => `#${tag}`).join(' ')}
+            >
+              +{post.hashtags.length - VISIBLE_HASHTAGS}
+            </span>
+          )}
         </div>
       )}
 
@@ -199,7 +226,7 @@ export function PostCard({
           type="button"
           className={styles.postAttachedTrip}
           onClick={() => onViewItinerary?.(post.id)}
-          title={vi.api.postViewItineraryTitle}
+          data-tooltip={vi.api.postViewItineraryTitle}
           aria-label={t('api.postViewItineraryAria', { name: trip.hotelName ?? trip.destinationName ?? post.title })}
         >
           <div className={styles.tripCardLeft}>

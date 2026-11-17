@@ -1,0 +1,37 @@
+.menu {
+  position: relative;
+}
+
+.menu > summary {
+  list-style: none;
+}
+
+.menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(340px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 12px 32px var(--color-overlay);
+  text-align: left;
+}
+
+.label {
+  margin: 0;
+  color: var(--color-teal-ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}

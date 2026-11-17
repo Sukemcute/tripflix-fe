@@ -163,3 +163,19 @@ export function getReelResolutionCap(aspect: ReelPlayback['aspect']): { width: n
   if (aspect === '16:9') return { width: 960, height: 540 };
   return { width: 540, height: 540 };
 }
+
+/**
+ * TF82: Reel đang xem báo lỗi thì có thể cookie CloudFront đã hết hạn (403), nhưng expo-video không cho biết mã lỗi.
+ * Xin cookie mới rồi tải lại, mỗi Reel chỉ một lần: lỗi không do cookie thì không xin lặp mãi.
+ */
+export function shouldRefreshPlaybackForReel({
+  reelId,
+  hasError,
+  refreshedReelIds,
+}: {
+  reelId: string | undefined;
+  hasError: boolean;
+  refreshedReelIds: ReadonlySet<string>;
+}): boolean {
+  return hasError && reelId !== undefined && !refreshedReelIds.has(reelId);
+}

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { VerifiedTripBadge } from './verified-trip-badge';
 import { getCollapsedCaptionLength, getPostCaption, getReelScale, hasTripPlan } from '@tripflix/app-core';
 import {
   HttpError,
@@ -376,7 +377,9 @@ export function ReelSocialOverlay({
           disabled={isSample || !item.social}
           accessibilityRole="link"
           accessibilityLabel={t('api.profileOpen', { name: author })}
-          onPress={() => item.social && router.push({ pathname: '/user/[id]', params: { id: item.social.author.id } })}
+          onPress={() =>
+            item.social && router.push({ pathname: '/user/[id]', params: { id: item.social.author.id } })
+          }
         >
           {item.social?.author.avatarUrl ? (
             <Image source={item.social.author.avatarUrl} style={styles.avatar} />
@@ -388,6 +391,7 @@ export function ReelSocialOverlay({
           <Txt variant="label" style={styles.author} numberOfLines={1}>
             {author}
           </Txt>
+          {!!item.social?.isVerified && <VerifiedTripBadge />}
         </Pressable>
         {/* Lays out the full text unseen: RN cannot place inline text after its own truncation. */}
         <View
@@ -510,7 +514,12 @@ export function ReelSocialOverlay({
           postId={postId}
           postTitle={title}
           authorName={author}
-          coverUrl={item.playback.posters.w540 || item.playback.posters.w360 || item.playback.posters.w720}
+          coverUrl={
+            tripPlan.posterUrl ||
+            item.playback.posters.w540 ||
+            item.playback.posters.w360 ||
+            item.playback.posters.w720
+          }
           trip={tripPlan}
         />
       )}
