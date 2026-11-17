@@ -3,7 +3,7 @@ import { Redirect, Tabs, router, useGlobalSearchParams, usePathname } from 'expo
 import { useApiSession } from '@tripflix/api-client';
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Txt } from '@/components/mobile-ui';
+import { InsideTabBarContext, Txt } from '@/components/mobile-ui';
 import { FloatingTabBar } from '@/components/floating-tab-bar';
 import { useUnreadNotificationCount } from '@/features/account/notification-bell';
 import { useOnboarding } from '@/features/onboarding/onboarding-provider';
@@ -43,39 +43,41 @@ function ReadyTabs({ offerOnEntry }: { offerOnEntry: boolean }) {
   const unreadCount = useUnreadNotificationCount();
   if (offer) return <Redirect href="/onboarding" />;
   return (
-    <Tabs
-      tabBar={(props) => <FloatingTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-        animation: 'none',
-      }}
-    >
-      {TABS.map((tab) => (
-        <Tabs.Screen
-          key={tab.name}
-          name={tab.name}
-          listeners={
-            tab.name === 'compose'
-              ? {
-                  tabPress: (event) => {
-                    event.preventDefault();
-                    if (!isReady) return;
-                    router.push(user ? '/create' : { pathname: '/login', params: { returnTo: '/create' } });
-                  },
-                }
-              : undefined
-          }
-          options={{
-            title: t(tab.label),
-            ...(tab.name === 'explore' &&
-              unreadCount > 0 && {
-                tabBarBadge: unreadCount,
-                tabBarAccessibilityLabel: `${t(tab.label)}, ${t('api.notificationsUnreadCount', { count: unreadCount })}`,
-              }),
-          }}
-        />
-      ))}
-      <Tabs.Screen name="inbox" options={{ href: null }} />
-    </Tabs>
+    <InsideTabBarContext.Provider value>
+      <Tabs
+        tabBar={(props) => <FloatingTabBar {...props} />}
+        screenOptions={{
+          headerShown: false,
+          animation: 'none',
+        }}
+      >
+        {TABS.map((tab) => (
+          <Tabs.Screen
+            key={tab.name}
+            name={tab.name}
+            listeners={
+              tab.name === 'compose'
+                ? {
+                    tabPress: (event) => {
+                      event.preventDefault();
+                      if (!isReady) return;
+                      router.push(user ? '/create' : { pathname: '/login', params: { returnTo: '/create' } });
+                    },
+                  }
+                : undefined
+            }
+            options={{
+              title: t(tab.label),
+              ...(tab.name === 'explore' &&
+                unreadCount > 0 && {
+                  tabBarBadge: unreadCount,
+                  tabBarAccessibilityLabel: `${t(tab.label)}, ${t('api.notificationsUnreadCount', { count: unreadCount })}`,
+                }),
+            }}
+          />
+        ))}
+        <Tabs.Screen name="inbox" options={{ href: null }} />
+      </Tabs>
+    </InsideTabBarContext.Provider>
   );
 }
