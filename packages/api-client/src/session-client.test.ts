@@ -28,7 +28,6 @@ const json = (status: number, body: unknown) =>
 afterEach(() => vi.restoreAllMocks());
 
 describe('session integration', () => {
-
   it('restores and signs in through the Admin BFF without receiving a token pair', async () => {
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')
@@ -57,12 +56,16 @@ describe('session integration', () => {
   });
 
   it('reports a profile 401 after successful login as a session error', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) =>
-      String(url).endsWith('/auth/login') ? json(200, pair) : json(401, {}),
-    );
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (url) =>
+        String(url).endsWith('/auth/login') ? json(200, pair) : json(401, {}),
+      );
     const session = new SessionClient({ baseUrl: '', client: 'web' });
 
-    const [result] = await Promise.allSettled([session.login({ email: user.email, password: 'example-password' })]);
+    const [result] = await Promise.allSettled([
+      session.login({ email: user.email, password: 'example-password' }),
+    ]);
     expect(result?.status).toBe('rejected');
     if (result?.status !== 'rejected') throw new Error('Expected profile loading to fail');
     expect(getAuthErrorKind(result.reason, 'login')).toBeNull();
@@ -327,6 +330,22 @@ describe('sendLoginCode and 2-step login', () => {
 });
 
 describe('admin handoff', () => {
+  it.each([null, 'skipped', 'completed'] as const)(
+    'Google loads authoritative survey status %s before login completion',
+    async (status) => {
+      const travelPreferences = status
+        ? { status, interests: ['coast'], regions: [], budgetLevels: [], updatedAt: '2026-11-18T00:00:00Z' }
+        : null;
+      const fetchMock = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(json(200, pair))
+        .mockResolvedValueOnce(json(200, { ...user, travelPreferences }));
+      const session = new SessionClient({ baseUrl: '', client: 'web' });
+      await session.loginWithGoogle({ idToken: 'qa-google-id-token' });
+      expect(session.getSnapshot().user?.travelPreferences).toEqual(travelPreferences);
+      expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(['/api/auth/google', '/api/auth/me']);
+    },
+  );
   it('web requests a one-time code with the access token', async () => {
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')

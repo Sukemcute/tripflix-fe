@@ -44,6 +44,12 @@ export const api = {
   saved: 'Đã lưu thay đổi.',
   save: 'Lưu thay đổi',
   saving: 'Đang lưu…',
+  onboardingAccountSaveHint:
+    'Sở thích được lưu vào tài khoản. Nhịp chuyến đi hiện chỉ lưu trên thiết bị này. Xem lại ở Tôi → Cài đặt → Gu du lịch.',
+  onboardingDeviceSaveHint: 'Gu được lưu trên thiết bị này. Bạn có thể mở lại ở Tôi → Cài đặt → Gu du lịch.',
+  onboardingAccountSaveError: 'Chưa lưu được vào tài khoản. Lựa chọn vẫn được giữ; vui lòng thử lại.',
+  onboardingDeviceSaveError: 'Chưa lưu được trên thiết bị. Lựa chọn vẫn còn trong phiên này.',
+  onboardingRetrySave: ' Bấm lại để thử lưu.',
   cancel: 'Hủy',
   next: 'Xem thêm',
   previous: 'Trang trước',
@@ -178,10 +184,16 @@ export const api = {
   profileSaved: 'Đã lưu thông tin cá nhân.',
   // Sở thích du lịch (TF106): chỉ lưu, chưa đổi gợi ý
   travelTitle: 'Sở thích du lịch',
-  travelHint: 'Chọn kiểu nơi, vùng và mức chi phí bạn muốn để gợi ý điểm đến hợp hơn. Hiện chỉ lưu lại, chưa dùng để thay đổi gợi ý.',
+  travelHint:
+    'Chọn kiểu nơi, vùng và mức chi phí bạn muốn để gợi ý điểm đến hợp hơn. Hiện chỉ lưu lại, chưa dùng để thay đổi gợi ý.',
   travelInterests: 'Bạn thích',
   travelRegions: 'Vùng muốn đi',
-  travelRegionOptions: { north: 'Miền Bắc', central: 'Miền Trung', highlands: 'Tây Nguyên', south: 'Miền Nam' },
+  travelRegionOptions: {
+    north: 'Miền Bắc',
+    central: 'Miền Trung',
+    highlands: 'Tây Nguyên',
+    south: 'Miền Nam',
+  },
   travelBudgetLevels: 'Mức chi phí',
   travelBudgetLevelOptions: { saving: 'Tiết kiệm', moderate: 'Vừa phải', premium: 'Cao cấp' },
   travelAny: 'Chưa chọn',
@@ -271,7 +283,8 @@ export const api = {
   searchShortPlaceholder: 'homestay đà lạt dưới 1tr, ks nha trang…',
   searchPostsButton: 'Tìm',
   searchPostsBusy: 'Đang tìm…',
-  searchPostsHint: 'Gõ tự nhiên, có dấu hay không đều được: nơi, ngân sách, số ngày (ví dụ: đà lạt 3n2đ dưới 3tr).',
+  searchPostsHint:
+    'Gõ tự nhiên, có dấu hay không đều được: nơi, ngân sách, số ngày (ví dụ: đà lạt 3n2đ dưới 3tr).',
   searchPostsRequired: 'Nhập từ khóa để tìm bài viết.',
   searchPostsTooShort: 'Nhập ít nhất 2 ký tự để tìm bài viết.',
   searchPostsTooLong: 'Từ khóa tìm kiếm tối đa 100 ký tự.',
@@ -554,7 +567,8 @@ export const api = {
   postTripFromPrice: 'Từ {cost}/người',
   postTripDefaultSubtitle: 'Khám phá lịch trình & trải nghiệm thực tế',
   postUnavailable: 'Bài viết không còn khả dụng',
-  postUnavailableHint: 'Bài viết này có thể đã bị tác giả xoá, tạm ẩn để kiểm duyệt hoặc đường dẫn không chính xác.',
+  postUnavailableHint:
+    'Bài viết này có thể đã bị tác giả xoá, tạm ẩn để kiểm duyệt hoặc đường dẫn không chính xác.',
   postUnavailableNext: 'Xem bài tiếp theo',
   backHome: 'Quay lại trang chủ',
   commentPanelAria: 'Bảng bình luận và chi tiết bài viết',

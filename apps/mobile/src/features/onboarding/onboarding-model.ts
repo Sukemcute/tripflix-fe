@@ -1,3 +1,5 @@
+import type { MyProfileDto, TravelPreferencesDto } from '@tripflix/api-client/core-api/model/index';
+
 export const ONBOARDING_KEY = 'tripflix.onboarding.v1';
 export const INTEREST_IDS = ['coast', 'nature', 'culture', 'stays'] as const;
 export const PACE_IDS = ['slow', 'balanced', 'active'] as const;
@@ -44,4 +46,46 @@ export function parseOnboarding(raw: string | null): OnboardingRecord {
 /** Only interrupt a plain first launch. Links with a destination keep their route. */
 export function shouldOfferOnboarding(record: OnboardingRecord, pathname: string, hasParams: boolean) {
   return pathname === '/' && !hasParams && (record.status === 'unseen' || record.status === 'draft');
+}
+export function needsAccountOnboarding(profile: MyProfileDto) {
+  return profile.travelPreferences?.status !== 'completed';
+}
+
+export function recordFromProfile(
+  preferences: TravelPreferencesDto | null,
+  cached?: OnboardingRecord,
+): OnboardingRecord {
+  const saved = preferences?.status === 'completed';
+  return {
+    version: 1,
+    status: saved ? 'completed' : cached?.status === 'draft' ? 'draft' : (preferences?.status ?? 'unseen'),
+    interests:
+      saved || !cached
+        ? (preferences?.interests ?? []).filter((id): id is Interest => INTEREST_IDS.includes(id as Interest))
+        : cached.interests,
+    pace: cached?.pace ?? null,
+    step: !saved && cached?.status === 'draft' ? cached.step : 'welcome',
+  };
+}
+
+export function profilePreferences(
+  record: OnboardingRecord,
+  status: 'completed' | 'skipped',
+  previous: TravelPreferencesDto | null,
+): TravelPreferencesDto {
+  return {
+    status,
+    interests:
+      status === 'skipped'
+        ? (previous?.interests ?? [])
+        : [
+            ...new Set([
+              ...record.interests,
+              ...(previous?.interests ?? []).filter((id) => !INTEREST_IDS.includes(id as Interest)),
+            ]),
+          ],
+    regions: previous?.regions ?? [],
+    budgetLevels: previous?.budgetLevels ?? [],
+    updatedAt: new Date().toISOString(),
+  };
 }
