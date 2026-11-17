@@ -63,6 +63,7 @@ import styles from './live-posts.module.css';
 import { PostImagePicker } from './composer/post-image-picker';
 import { usePostImages } from './composer/use-post-images';
 import { HashtagInput } from './composer/hashtag-input';
+import { SoftSelect } from '@/features/shared/soft-select';
 import { addPublishedPostToFeeds, publishNoticeStore } from './composer/published-post';
 import { calculateUploadPercent, parseStoredHashtags, pickDroppedVideo } from './composer/composer-inputs';
 import { ShareMenu, type ShareMenuHandle } from './share-menu';
@@ -2634,6 +2635,13 @@ export interface ComposerModalProps {
 }
 
 /** Modal tạo và quản lý bài đăng / bản nháp */
+const VISIBILITY_OPTIONS = [
+  { value: 'public', label: 'Công khai với mọi người' },
+  { value: 'private', label: 'Chỉ mình tôi' },
+];
+
+const ITINERARY_DAY_OPTIONS = Array.from({ length: 15 }, (_, i) => ({ value: String(i + 1), label: `Ngày ${i + 1}` }));
+
 export function ComposerModal({
   onClose,
   initialView = 'compose',
@@ -3303,16 +3311,14 @@ export function ComposerModal({
           <div className={styles.composerMetaRow}>
             <HashtagInput tags={hashtags} onChange={setHashtags} isDisabled={isFormBusy} />
 
-            <select
-              className={styles.composerInput}
+            <SoftSelect
+              className={styles.composerSelect}
               value={visibility}
-              disabled={isFormBusy}
-              onChange={(event) => setVisibility(event.target.value as 'public' | 'private')}
+              options={VISIBILITY_OPTIONS}
+              onChange={(value) => setVisibility(value === 'private' ? 'private' : 'public')}
               aria-label="Quyền riêng tư"
-            >
-              <option value="public">Công khai với mọi người</option>
-              <option value="private">Chỉ mình tôi</option>
-            </select>
+              disabled={isFormBusy}
+            />
           </div>
         </div>
 
@@ -3529,22 +3535,14 @@ export function ComposerModal({
               {itineraryItems.map((item, index) => (
                 <div key={item.id} className={styles.itineraryItemCard}>
                   <div className={styles.itineraryItemHeader}>
-                    <label className={styles.itineraryDaySelect} htmlFor={`itinerary-day-${item.id}`}>
-                      Ngày:
-                      <select
-                        id={`itinerary-day-${item.id}`}
-                        className={styles.itineraryDaySelect}
-                        value={item.day}
-                        disabled={isFormBusy}
-                        onChange={(e) => handleUpdateItem(item.id, 'day', Number(e.target.value))}
-                      >
-                        {Array.from({ length: 15 }, (_, i) => i + 1).map((d) => (
-                          <option key={d} value={d}>
-                            Ngày {d}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                    <SoftSelect
+                      className={`${styles.composerSelect} ${styles.itineraryDayField}`}
+                      value={String(item.day)}
+                      options={ITINERARY_DAY_OPTIONS}
+                      onChange={(day) => handleUpdateItem(item.id, 'day', Number(day))}
+                      aria-label={`Ngày của hoạt động ${index + 1}`}
+                      disabled={isFormBusy}
+                    />
 
                     <input
                       className={styles.composerInput}
