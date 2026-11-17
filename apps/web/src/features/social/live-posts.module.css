@@ -917,7 +917,6 @@
   border-radius: 999px;
   background: rgba(15, 17, 22, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(8px);
   color: rgb(255 255 255);
   font-size: 0.8rem;
   font-weight: 700;
@@ -933,7 +932,6 @@
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(15, 17, 22, 0.75);
-  backdrop-filter: blur(8px);
   color: rgb(255 255 255);
   cursor: pointer;
   transition: background-color 160ms ease;
@@ -966,7 +964,6 @@
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.22);
   background: rgba(15, 17, 22, 0.68);
-  backdrop-filter: blur(8px);
   color: rgb(255 255 255);
   cursor: pointer;
   transition:
@@ -1876,7 +1873,7 @@
   height: 14px;
   border-radius: 999px;
   background: #FFFFFF;
-  color: #FF6A00;
+  color: var(--color-coral);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
@@ -1914,7 +1911,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #FF6A00;
+  color: var(--color-coral);
 }
 
 .authorRoleTag {
@@ -2078,16 +2075,15 @@
   height: 36px;
   border-radius: 999px;
   border: 0;
-  background: linear-gradient(135deg, var(--color-coral) 0%, var(--color-coral-soft) 100%);
+  background: var(--color-coral);
   color: var(--color-background);
-  box-shadow: 0 6px 14px -8px color-mix(in srgb, var(--color-coral) 80%, transparent);
   cursor: pointer;
   flex-shrink: 0;
-  transition: transform 160ms ease;
+  transition: background-color 160ms ease;
 }
 
 .panelSendBtn:hover:not(:disabled) {
-  transform: scale(1.06);
+  background: var(--color-coral-ink);
 }
 
 .panelSendBtn:disabled {
@@ -2107,34 +2103,33 @@
   margin: 0;
   border: 0;
   z-index: 70;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(8px);
+  background: var(--color-overlay);
   display: grid;
   place-items: center;
   padding: 20px;
   /* Light Theme tokens explicitly defined for root modal */
-  --iv-panel-bg: #FFFFFF;
-  --iv-elevated-bg: #F8FAFC;
-  --iv-hover-bg: #F1F5F9;
-  --iv-text: #141B3D;
-  --iv-text-muted: #64748B;
-  --iv-border: #E2E8F0;
-  --iv-accent: #FF6A00;
-  --iv-accent-ink: #FFFFFF;
-  --iv-accent-soft: rgba(255, 106, 0, 0.12);
-  --iv-shadow: 0 20px 48px -8px rgba(15, 23, 42, 0.22), 0 4px 16px rgba(15, 23, 42, 0.08);
+  --iv-panel-bg: var(--color-background);
+  --iv-elevated-bg: var(--color-surface);
+  --iv-hover-bg: var(--color-surface-muted);
+  --iv-text: var(--color-text);
+  --iv-text-muted: var(--color-text-muted);
+  --iv-border: var(--color-border);
+  --iv-accent: var(--color-coral);
+  --iv-accent-ink: var(--color-background);
+  --iv-accent-soft: var(--color-coral-tint);
+  --iv-shadow: 0 12px 32px -12px color-mix(in srgb, var(--color-ink) 30%, transparent);
 }
 
 .composerModalCard {
   width: min(680px, 100%);
   max-height: 88vh;
   overflow-y: auto;
-  background: #FFFFFF !important;
-  color: #141B3D !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 20px;
+  background: var(--color-background);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25), 0 4px 16px rgba(15, 23, 42, 0.08) !important;
+  box-shadow: var(--iv-shadow);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -2213,17 +2208,28 @@
 }
 
 .composerDropzone {
+  width: 100%;
   border: 1.5px dashed var(--iv-border);
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 24px 16px;
   text-align: center;
   cursor: pointer;
-  transition: all 180ms ease;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
   background: var(--iv-elevated-bg);
+  font: inherit;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+/* Đang kéo file qua: viền liền màu nhấn, nền ấm hơn để biết thả vào được. */
+.composerDropzone[data-drag-over] {
+  border-style: solid;
+  border-color: var(--iv-accent);
+  background: var(--iv-accent-soft);
 }
 
 .composerDropzone:hover {
@@ -2240,7 +2246,7 @@
   align-items: center;
   justify-content: center;
   color: var(--iv-accent);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--iv-border);
 }
 
 .composerDropzoneText {
@@ -2294,6 +2300,7 @@
 }
 
 .composerProgressBarBg {
+  position: relative;
   width: 100%;
   height: 6px;
   background: var(--iv-border);
@@ -2301,11 +2308,43 @@
   overflow: hidden;
 }
 
+/* scaleX thay cho width: trình duyệt chỉ vẽ lại lớp này, không tính lại bố cục mỗi lần số byte đổi. */
 .composerProgressBarFill {
+  width: 100%;
   height: 100%;
   background: var(--iv-accent);
-  transition: width 200ms ease;
   border-radius: 999px;
+  transform-origin: left center;
+  transition: transform 280ms linear;
+}
+
+/* Gửi xong, chờ server hoàn tất: vệt sáng chạy qua để biết vẫn đang làm, không đứng im ở 90%. */
+.composerProgressBarBg[data-finishing]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: color-mix(in srgb, var(--color-background) 45%, transparent);
+  animation: composer-progress-sweep 1.1s ease-in-out infinite;
+}
+
+@keyframes composer-progress-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composerProgressBarFill {
+    transition: none;
+  }
+
+  .composerProgressBarBg[data-finishing]::after {
+    animation: none;
+  }
 }
 
 .composerProgressText {
@@ -2470,6 +2509,16 @@
   gap: 10px;
 }
 
+/* Nút ở chân pop-up đăng bài: nút phụ có viền, nút chính màu trơn; không bóng đổ. */
+.composerModalFooter .utilityBtn {
+  border: 1px solid var(--iv-border);
+  box-shadow: none;
+}
+
+.composerModalFooter .createPostBtn {
+  box-shadow: none;
+}
+
 .composerHeaderActions {
   display: flex;
   align-items: center;
@@ -2498,28 +2547,11 @@
   color: var(--iv-accent);
 }
 
-.editingDraftBadge {
-  font-size: 0.74rem;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
 
 .saveSuccessBanner {
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: rgba(34, 197, 94, 0.1);
-  color: rgb(22, 101, 52);
+  color: var(--color-teal-ink);
   font-size: 0.84rem;
   font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .draftsListContainer {
