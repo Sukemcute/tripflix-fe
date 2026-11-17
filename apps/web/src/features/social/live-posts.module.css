@@ -312,7 +312,6 @@
   border: 0;
   background: var(--iv-accent);
   color: var(--color-background);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
   font: inherit;
   font-size: 0.84rem;
   font-weight: 700;
@@ -2525,9 +2524,6 @@
   box-shadow: none;
 }
 
-.composerModalFooter .createPostBtn {
-  box-shadow: none;
-}
 
 .composerHeaderActions {
   display: flex;
@@ -2613,21 +2609,11 @@
 }
 
 .draftMeta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.78rem;
+  margin: 0;
+  font-size: 0.8rem;
   color: var(--iv-text-muted);
-  flex-wrap: wrap;
 }
 
-.draftBadge {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--iv-panel-bg);
-  font-weight: 500;
-  border: 1px solid var(--iv-border);
-}
 
 .draftActions {
   display: flex;
@@ -2667,20 +2653,81 @@
 }
 
 .draftDeleteBtn:hover {
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.3);
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
 }
 
 .draftEmptyState {
-  padding: 36px 16px;
+  padding: 40px 16px 32px;
   text-align: center;
-  color: var(--iv-text-muted);
-  font-size: 0.88rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
+}
+
+.draftEmptyIcon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: var(--iv-elevated-bg);
+  color: var(--iv-text-muted);
+}
+
+.draftEmptyTitle {
+  margin: 0;
+  color: var(--iv-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.draftEmptyHint {
+  margin: 0 0 12px;
+  color: var(--iv-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.draftsHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: -6px;
+}
+
+.draftsCount {
+  color: var(--iv-text-muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+/* Nút phụ viền mảnh, không bóng: "Viết bài mới" ở đầu màn bản nháp và ở màn trống. */
+.draftsNewBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 14px;
+  border: 1px solid var(--iv-border);
+  border-radius: 999px;
+  background: var(--iv-panel-bg);
+  color: var(--iv-text);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.draftsNewBtn:hover {
+  background: var(--iv-hover-bg);
+  border-color: var(--iv-text-muted);
 }
 
 .drawerBackdrop {
@@ -2835,4 +2882,14 @@
     transition: none !important;
     animation: none;
   }
+}
+
+/* Chữ chỉ cho trình đọc màn hình (huy hiệu xác minh chỉ có icon). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

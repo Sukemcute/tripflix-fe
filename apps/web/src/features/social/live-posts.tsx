@@ -1952,7 +1952,7 @@ export function InspirationImmersiveViewer({
                       type="button"
                       className={styles.navArrowBtn}
                       aria-label={vi.api.immersivePrevPost}
-                      title={vi.api.immersivePrevPost}
+                      data-tooltip={vi.api.immersivePrevPost}
                       disabled={activeIndex <= 0}
                       onClick={() => navigateStep(-1)}
                     >
@@ -1962,7 +1962,7 @@ export function InspirationImmersiveViewer({
                       type="button"
                       className={styles.navArrowBtn}
                       aria-label={vi.api.immersiveNextPost}
-                      title={vi.api.immersiveNextPost}
+                      data-tooltip={vi.api.immersiveNextPost}
                       disabled={activeIndex >= posts.length - 1 && !postsQuery.hasNextPage}
                       onClick={() => navigateStep(1)}
                     >
@@ -1991,7 +1991,7 @@ export function InspirationImmersiveViewer({
                   type="button"
                   className={styles.iconGhostBtn}
                   aria-label={vi.api.commentPanelClose}
-                  title={vi.api.commentPanelClose}
+                  data-tooltip={vi.api.commentPanelClose}
                   onClick={() => setRightOpen(false)}
                 >
                   <SocialIcon name="close" size={17} />
@@ -2270,8 +2270,9 @@ export function RightPanelCommentsSynchronized({
                 {getInitial(user.displayName)}
               </span>
               {user.emailVerified && (
-                <span className={styles.composerVerifiedBadge} title="Tài khoản đã xác thực">
+                <span className={styles.composerVerifiedBadge} data-tooltip="Tài khoản đã xác thực">
                   <SocialIcon name="verified" size={11} />
+                  <span className={styles.srOnly}>Tài khoản đã xác thực</span>
                 </span>
               )}
             </div>
@@ -2453,8 +2454,9 @@ function CommentNode({
               {comment.replyToName && ` ↳ ${comment.replyToName}`}
             </span>
             {isAuthorVerified && (
-              <span className={styles.commentVerifiedIcon} title="Tài khoản đã xác minh">
+              <span className={styles.commentVerifiedIcon} data-tooltip="Tài khoản đã xác minh">
                 <SocialIcon name="verified" size={13} />
+                <span className={styles.srOnly}>Tài khoản đã xác minh</span>
               </span>
             )}
             {isPostAuthor && (
@@ -3104,19 +3106,26 @@ export function ComposerModal({
       <dialog open className={styles.modalBackdrop} aria-label="Bản nháp của bạn">
         <div className={styles.composerModalCard}>
           <div className={styles.panelHeaderBar}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h3 className={styles.panelHeaderTitle}>Bản nháp của bạn</h3>
-              <span className={styles.composerSectionBadge}>{draftsCount}</span>
-            </div>
-            <div className={styles.composerHeaderActions}>
+            <div className={styles.draftsHeaderTitle}>
               <button
                 type="button"
-                className={styles.composerHeaderDraftsBtn}
-                onClick={handleNewPost}
+                className={styles.iconGhostBtn}
+                aria-label="Quay lại soạn thảo"
+                data-tooltip="Quay lại soạn thảo"
+                onClick={() => setViewMode('compose')}
               >
-                <SocialIcon name="plus" size={14} />
-                <span>Viết bài mới</span>
+                <SocialIcon name="chevronLeft" size={18} />
               </button>
+              <h3 className={styles.panelHeaderTitle}>Bản nháp</h3>
+              {draftsCount > 0 && <span className={styles.draftsCount}>{draftsCount}</span>}
+            </div>
+            <div className={styles.composerHeaderActions}>
+              {drafts.length > 0 && (
+                <button type="button" className={styles.draftsNewBtn} onClick={handleNewPost}>
+                  <SocialIcon name="plus" size={14} />
+                  <span>Viết bài mới</span>
+                </button>
+              )}
               <button
                 type="button"
                 className={styles.iconGhostBtn}
@@ -3135,14 +3144,14 @@ export function ComposerModal({
               </div>
             ) : drafts.length === 0 ? (
               <div className={styles.draftEmptyState}>
-                <SocialIcon name="bookmark" size={32} />
-                <p>Bạn chưa có bản nháp nào được lưu.</p>
-                <button
-                  type="button"
-                  className={styles.createPostBtn}
-                  onClick={() => setViewMode('compose')}
-                >
-                  Bắt đầu viết bài
+                <span className={styles.draftEmptyIcon}>
+                  <SocialIcon name="bookmark" size={22} />
+                </span>
+                <p className={styles.draftEmptyTitle}>Chưa có bản nháp</p>
+                <p className={styles.draftEmptyHint}>Khi soạn bài, bấm “Lưu bản nháp” để viết tiếp sau.</p>
+                <button type="button" className={styles.draftsNewBtn} onClick={handleNewPost}>
+                  <SocialIcon name="plus" size={14} />
+                  <span>Viết bài mới</span>
                 </button>
               </div>
             ) : (
@@ -3159,19 +3168,15 @@ export function ComposerModal({
                     </div>
                   </div>
 
-                  <div className={styles.draftMeta}>
-                    <span className={styles.draftBadge}>
-                      {draft.postType === 'video' ? 'Video' : 'Bài viết'}
-                    </span>
-                    {draft.tripAttachment?.destinationName && (
-                      <span className={styles.draftBadge}>
-                        {draft.tripAttachment.destinationName}
-                      </span>
-                    )}
-                    <span>
-                      {new Date(draft.updatedAt || draft.createdAt).toLocaleDateString('vi-VN')}
-                    </span>
-                  </div>
+                  <p className={styles.draftMeta}>
+                    {[
+                      draft.postType === 'video' ? 'Reels' : 'Bài viết',
+                      draft.tripAttachment?.destinationName,
+                      `Sửa ${new Date(draft.updatedAt || draft.createdAt).toLocaleDateString('vi-VN')}`,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
 
                   <div className={styles.draftActions}>
                     <button
@@ -3195,15 +3200,6 @@ export function ComposerModal({
             )}
           </div>
 
-          <div className={styles.composerModalFooter}>
-            <button
-              type="button"
-              className={styles.utilityBtn}
-              onClick={() => setViewMode('compose')}
-            >
-              Quay lại soạn thảo
-            </button>
-          </div>
         </div>
       </dialog>
     );
@@ -3418,7 +3414,7 @@ export function ComposerModal({
                     type="button"
                     className={styles.removeItineraryItemBtn}
                     onClick={handleRemoveVideo}
-                    title="Xóa video đã chọn"
+                    data-tooltip="Xóa video đã chọn"
                     aria-label="Xóa video đã chọn"
                   >
                     <SocialIcon name="trash" size={16} />
@@ -3559,7 +3555,7 @@ export function ComposerModal({
                       className={styles.removeItineraryItemBtn}
                       onClick={() => handleRemoveItem(item.id)}
                       disabled={isFormBusy}
-                      title="Xóa hoạt động này"
+                      data-tooltip="Xóa hoạt động này"
                       aria-label="Xóa hoạt động"
                     >
                       <SocialIcon name="trash" size={15} />
