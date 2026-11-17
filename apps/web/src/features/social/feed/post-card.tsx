@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { vi, t } from '@tripflix/i18n';
 import {
@@ -106,6 +107,8 @@ export function PostCard({
     currentUser?.displayName
   );
 
+  const profileHref = `/u/${encodeURIComponent(post.authorId)}`;
+
   return (
     <article
       className={`${styles.postCard} ${isCommentActive ? styles.postCardActiveComment : ''}`}
@@ -115,12 +118,21 @@ export function PostCard({
       {/* 1. Post Header: Avatar, Name, Handle, Date, Location, Menu */}
       <header className={styles.postHeader}>
         <div className={styles.authorLeft}>
-          <div className={styles.authorAvatar} aria-hidden="true">
+          {/* Avatar và tên dẫn tới trang cá nhân như Reels; avatar bỏ khỏi thứ tự Tab để không đọc trùng link. */}
+          <Link
+            prefetch={false}
+            href={profileHref}
+            className={styles.authorAvatar}
+            aria-hidden="true"
+            tabIndex={-1}
+          >
             {authorInfo.name.charAt(0).toUpperCase()}
-          </div>
+          </Link>
           <div className={styles.authorMeta}>
             <div className={styles.authorNameRow}>
-              <span className={styles.authorName}>{authorInfo.name}</span>
+              <Link prefetch={false} href={profileHref} className={styles.authorName}>
+                {authorInfo.name}
+              </Link>
               {post.isVerified && (
                 <span className={styles.authorVerified} data-tooltip={vi.api.postVerifiedAccountTitle} aria-label={vi.api.postVerifiedBadge}>
                   <SocialIcon name="verified" size={15} />

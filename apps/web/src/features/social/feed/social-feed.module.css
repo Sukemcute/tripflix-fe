@@ -1521,9 +1521,20 @@
   font-size: 15px;
   font-weight: 700;
   color: var(--color-text);
+  text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.authorName:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+a.authorAvatar {
+  flex-shrink: 0;
+  text-decoration: none;
 }
 
 .authorVerified {
