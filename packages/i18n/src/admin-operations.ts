@@ -11,6 +11,12 @@ export const adminOperations = {
   // TF104: hồ sơ vừa vào hàng chờ sau khi realtime làm mới.
   freshCase: 'Mới',
   freshCases: '{count} hồ sơ mới vào hàng chờ',
+  throughput: 'Nhịp xử lý 24 giờ',
+  throughputHint: 'Số quyết định mỗi giờ trong 100 thao tác gần nhất, tách kiểm duyệt viên và hệ thống.',
+  throughputStaff: 'Kiểm duyệt viên',
+  throughputSystem: 'Hệ thống tự động',
+  throughputEmpty: 'Chưa có thao tác kiểm duyệt trong 24 giờ qua.',
+  actionMix: 'Loại quyết định',
   moderator: 'Kiểm duyệt viên',
   superadmin: 'Quản trị hệ thống',
   live: 'Kiểm duyệt: cập nhật trực tiếp',
