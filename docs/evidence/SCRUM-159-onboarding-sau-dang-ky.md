@@ -20,7 +20,7 @@ Luồng tiếp tục qua nhịp đi và xem lại. Lưu, bỏ qua hoặc khám p
 4. API từ chối đăng ký: ở lại form, không reset sở thích cũ.
 5. Storage lỗi: khám phá tạm thời vẫn quay về tác vụ ban đầu.
 
-Mobile typecheck/lint và boundary check pass; lint còn cảnh báo có sẵn ngoài các file thay đổi. Ảnh `01-after-signup.png`, `02-review-before-return.png` và JSON kết quả được lưu trong evidence cục bộ và liên kết từ Jira.
+Mobile typecheck/lint và boundary check pass; lint còn cảnh báo có sẵn ngoài các file thay đổi. Chín nhóm regression onboarding hiện có cũng pass; đường mở lại đã được cập nhật theo menu `/settings` trên develop. Kết quả: [signup QA](SCRUM-159-signup-qa.json), [onboarding regression](SCRUM-159-onboarding-regression.json). Ảnh `01-after-signup.png`, `02-review-before-return.png` được lưu trong evidence cục bộ và liên kết từ Jira.
 
 ## Cách thử
 
@@ -28,7 +28,7 @@ Mobile typecheck/lint và boundary check pass; lint còn cảnh báo có sẵn n
 2. Nhập thông tin bắt buộc, nhận OTP 8 số và bấm Tạo tài khoản.
 3. Khi đăng ký/đăng nhập tự động thành công, thấy ngay bước chọn trải nghiệm.
 4. Chọn gu và lưu hoặc bỏ qua; trở về Hồ sơ/tác vụ đang dở.
-5. Muốn xem lại sau này: Hồ sơ → Gu du lịch, hoặc `/onboarding`.
+5. Muốn xem lại sau này: Tôi → Cài đặt (bánh răng) → Gu du lịch, hoặc `/onboarding`.
 
 Chạy QA với runtime Playwright bên ngoài repo:
 

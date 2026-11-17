@@ -147,8 +147,14 @@ class SignupPage {
       assert.equal((await ui.stored()).status, 'completed');
       assert.deepEqual((await ui.stored()).interests, ['coast']);
       assert(requests.some((r) => r.path === '/api/auth/register'));
+      await page.goto(`${base}/me`);
+      await ui.button('Cài đặt').click();
+      await ui.button('Gu du lịch').click();
+      await ui.button('Chọn gu của tôi').waitFor();
+      await ui.button('Đóng').click();
+      await ui.button('Gu du lịch').waitFor();
       checks.push(
-        'Real signup form → authenticated onboarding despite completed device record → save → original create task',
+        'Signup → authenticated survey despite completed device record → save → create; profile/settings reopens taste editor',
       );
       await context.close();
     }
