@@ -10,6 +10,8 @@
   - Tài khoản: PATCH `/api/auth/me` rồi tải lại hồ sơ. Chỉ báo "Đã lưu sở thích của bạn." khi PATCH thành công; lỗi/mất mạng giữ lựa chọn và có nút Thử lại (giữ nguyên thời điểm bấm hoàn tất). Bỏ qua khi hồ sơ đã `completed` thì không ghi đè.
   - `/account` → thẻ "Sở thích du lịch" có nút "Làm lại khảo sát" (`?mode=edit`, điền sẵn sở thích đã lưu). Đây là đường vào cho SCRUM-162.
 - Không ghi "đã cá nhân hoá feed" ở chỗ nào.
+- **Giao diện web (làm lại theo góp ý)**: trang đứng riêng (ẩn header/footer bằng `body:has([data-onboarding-page])`, cùng cách trang chủ đang dùng), phong cách mềm kiểu clay. Tripi đứng cạnh nội dung, có bong bóng thoại; đổi dáng và câu nói theo bước và theo lựa chọn vừa bấm (ảnh động ở màn chào và màn hoàn tất). Thẻ sở thích dùng ảnh điểm đến có sẵn, dấu ✓ + chữ "Đã chọn", hiện lần lượt (stagger), chuyển bước trượt theo chiều tới/lùi, màn hoàn tất có confetti. Tắt toàn bộ chuyển động khi `prefers-reduced-motion`. Nút chính nền `coral-ink` để chữ trắng đạt tương phản. Hướng thiết kế tra bằng công cụ ui-ux-pro-max (claymorphism, stagger, reduced motion, không dùng emoji làm icon), giữ màu/font thương hiệu từ token.
+- Ảnh Tripi gốc nặng 1–2MB/ảnh nên dáng tĩnh vẫn qua bộ tối ưu của `next/image` và được tải sẵn đúng URL (`getImageProps` + `preload`); ảnh động (2–3MB) chỉ dùng ở màn chào và hoàn tất.
 
 ## Khác với tin nhắn của Duy (cần Duy/Dũng biết)
 - BE đã merge TF106 với hợp đồng `{status, interests, regions, budgetLevels, updatedAt}`, **chưa có `pace`**, nên web và mobile hiện chỉ lưu nhịp đi trên máy, không gửi `pace`, giữ nguyên `regions`/`budgetLevels` đã có. Khi BE thêm `pace` và chạy `pnpm gen:api`, nối thêm vào `buildTravelPreferences` (một chỗ).

@@ -16,6 +16,13 @@ const pass = (name) => {
 const local = (page) => page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? 'null'), KEY);
 const interest = (page, title) => page.getByRole('checkbox', { name: new RegExp(`^${title}`) });
 const pace = (page, title) => page.getByRole('radio', { name: new RegExp(`^${title}`) });
+// Bấm vào cả thẻ như người dùng (ô thật bị ẩn hình, ảnh phủ lên trên).
+// Ảnh bằng chứng: chờ ảnh tải xong, tua hết hiệu ứng CSS để ảnh không bị chụp giữa chừng.
+const settle = (page) =>
+  page
+    .waitForFunction(() => [...document.images].every((image) => image.complete), null, { timeout: 15000 })
+    .catch(() => {});
+const pick = (option) => option.page().locator('label').filter({ has: option }).click();
 
 async function guestFlow(browser) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'vi-VN' });
@@ -24,33 +31,47 @@ async function guestFlow(browser) {
   page.on('request', (request) => request.method() === 'PATCH' && patches.push(request.url()));
   await page.goto(`${base}/onboarding`);
   await page.getByRole('heading', { name: 'Chuyến đi, theo gu của bạn.' }).waitFor();
-  await page.screenshot({ path: join(output, '1-welcome.png') });
+  await settle(page);
+  await page.screenshot({ animations: 'disabled', path: join(output, '1-welcome.png') });
   await page.getByRole('button', { name: 'Chọn gu của tôi' }).click();
 
   assert.equal(await page.getByRole('checkbox').count(), 6, 'đủ 6 sở thích');
-  for (const title of ['Biển & đảo', 'Núi & thiên nhiên', 'Phố cổ & văn hoá', 'Ăn uống', 'Thành phố & về đêm', 'Nghỉ dưỡng'])
+  for (const title of [
+    'Biển & đảo',
+    'Núi & thiên nhiên',
+    'Phố cổ & văn hoá',
+    'Ăn uống',
+    'Thành phố & về đêm',
+    'Nghỉ dưỡng',
+  ])
     await interest(page, title).waitFor();
   pass('guest: 6 sở thích đúng nhãn');
   const next = page.getByRole('button', { name: 'Tiếp tục' });
   assert(await next.isDisabled(), 'chưa chọn thì chưa tiếp tục');
 
-  await interest(page, 'Thành phố & về đêm').check({ force: true });
-  await interest(page, 'Ăn uống').check({ force: true });
-  assert.equal(await page.getByText('✓ Đã chọn').count(), 2, 'mục đã chọn có dấu ✓ và chữ');
+  await pick(interest(page, 'Thành phố & về đêm'));
+  await pick(interest(page, 'Ăn uống'));
+  assert.equal(await page.getByText('Đã chọn', { exact: true }).count(), 2, 'mục đã chọn có dấu ✓ và chữ');
   await page.getByText('Đã chọn 2 · gợi ý chọn 2–5 điều bạn thích.').waitFor();
   pass('guest: mục đã chọn có ✓ + chữ, gợi ý 2–5');
-  await page.screenshot({ path: join(output, '2-interests.png') });
+  await settle(page);
+  await page.screenshot({ animations: 'disabled', path: join(output, '2-interests.png') });
   await next.click();
 
-  await pace(page, 'Chậm một chút').check({ force: true });
+  await pick(pace(page, 'Chậm một chút'));
+  await settle(page);
+  await page.screenshot({ animations: 'disabled', path: join(output, '2b-pace.png') });
   await page.getByRole('button', { name: 'Tiếp tục' }).click();
-  await page.getByText('Ăn uống · Thành phố & về đêm').waitFor();
-  await page.screenshot({ path: join(output, '3-review.png') });
+  await page.getByRole('list', { name: 'Ăn uống · Thành phố & về đêm' }).waitFor();
+  await settle(page);
+  await page.screenshot({ animations: 'disabled', path: join(output, '3-review.png') });
 
-  await page.getByRole('button', { name: '← Quay lại' }).click();
+  await page.getByRole('button', { name: 'Quay lại' }).click();
   assert(await pace(page, 'Chậm một chút').isChecked(), 'Back giữ nhịp đi');
-  await page.getByRole('button', { name: '← Quay lại' }).click();
-  assert(await interest(page, 'Ăn uống').isChecked() && (await interest(page, 'Thành phố & về đêm').isChecked()));
+  await page.getByRole('button', { name: 'Quay lại' }).click();
+  assert(
+    (await interest(page, 'Ăn uống').isChecked()) && (await interest(page, 'Thành phố & về đêm').isChecked()),
+  );
   pass('guest: Back giữ các lựa chọn');
 
   await page.reload();
@@ -69,7 +90,8 @@ async function guestFlow(browser) {
   assert(Date.parse(saved.completedAt) > 0, 'có completedAt');
   assert.equal(patches.length, 0, 'khách không gọi PATCH');
   pass('guest: hoàn tất chỉ lưu local, không gọi API');
-  await page.screenshot({ path: join(output, '4-guest-saved.png') });
+  await settle(page);
+  await page.screenshot({ animations: 'disabled', path: join(output, '4-guest-saved.png') });
 
   await page.evaluate((key) => localStorage.removeItem(key), KEY);
   await page.goto(`${base}/onboarding`);
@@ -86,7 +108,8 @@ async function guestFlow(browser) {
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     'điện thoại không tràn ngang',
   );
-  await page.screenshot({ path: join(output, '5-mobile-width.png'), fullPage: true });
+  await settle(page);
+  await page.screenshot({ animations: 'disabled', path: join(output, '5-mobile-width.png'), fullPage: true });
   pass('guest: màn hình 390px không tràn ngang');
   await context.close();
 }
@@ -118,7 +141,10 @@ async function accountFlow(browser) {
     const request = route.request();
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
     if (request.url().endsWith('/api/auth/refresh'))
-      return route.fulfill({ headers: cors, json: { accessToken: 't', tokenType: 'Bearer', expiresIn: 900 } });
+      return route.fulfill({
+        headers: cors,
+        json: { accessToken: 't', tokenType: 'Bearer', expiresIn: 900 },
+      });
     if (request.method() === 'PATCH') {
       bodies.push(request.postDataJSON());
       if (failures-- > 0) return route.fulfill({ status: 503, headers: cors, json: { message: 'down' } });
@@ -130,17 +156,18 @@ async function accountFlow(browser) {
   await page.goto(`${base}/onboarding?returnTo=%2Faccount`);
   // Đã đăng nhập thì bỏ qua màn chào, vào thẳng câu hỏi.
   await page.getByRole('heading', { name: 'Điều gì khiến bạn muốn xách ba lô?' }).waitFor();
-  await interest(page, 'Biển & đảo').check({ force: true });
-  await interest(page, 'Ăn uống').check({ force: true });
+  await pick(interest(page, 'Biển & đảo'));
+  await pick(interest(page, 'Ăn uống'));
   await page.getByRole('button', { name: 'Tiếp tục' }).click();
-  await pace(page, 'Đi thật nhiều').check({ force: true });
+  await pick(pace(page, 'Đi thật nhiều'));
   await page.getByRole('button', { name: 'Tiếp tục' }).click();
   await page.getByRole('button', { name: 'Lưu sở thích' }).click();
 
   await page.getByText('Chưa lưu được sở thích vào tài khoản. Lựa chọn của bạn vẫn được giữ.').waitFor();
   assert.equal(await page.getByText('Đã lưu sở thích của bạn.').count(), 0, 'lỗi thì không báo đã lưu');
-  await page.getByText('Biển & đảo · Ăn uống').waitFor();
-  await page.screenshot({ path: join(output, '6-account-error.png') });
+  await page.getByRole('list', { name: 'Biển & đảo · Ăn uống' }).waitFor();
+  await settle(page);
+  await page.screenshot({ animations: 'disabled', path: join(output, '6-account-error.png') });
   pass('tài khoản: PATCH lỗi → giữ lựa chọn, không báo đã lưu');
 
   await page.getByRole('button', { name: 'Thử lại' }).click();
@@ -152,7 +179,8 @@ async function accountFlow(browser) {
   assert.deepEqual(Object.keys(sent).sort(), ['budgetLevels', 'interests', 'regions', 'status', 'updatedAt']);
   assert.equal(bodies[0].travelPreferences.updatedAt, sent.updatedAt, 'thử lại giữ thời điểm bấm hoàn tất');
   pass('tài khoản: thử lại thành công → báo đã lưu; body đúng, không gửi pace');
-  await page.screenshot({ path: join(output, '7-account-saved.png') });
+  await settle(page);
+  await page.screenshot({ animations: 'disabled', path: join(output, '7-account-saved.png') });
   await page.getByRole('link', { name: 'Tiếp tục' }).click();
   await page.waitForURL(`${base}/account`);
   pass('tài khoản: tiếp tục về /account');
@@ -197,7 +225,8 @@ async function loginFlow(browser) {
           publicKey: Buffer.from([9, ...new Uint8Array(31)]).toString('base64url'),
           serverTime: Math.floor(Date.now() / 1000),
         });
-      if (path === '/api/auth/login-code') return reply({ loginChallengeId: 'qa-challenge', resendAfterSeconds: 0 });
+      if (path === '/api/auth/login-code')
+        return reply({ loginChallengeId: 'qa-challenge', resendAfterSeconds: 0 });
       if (path === '/api/auth/login') {
         state.isAuthenticated = true;
         return reply({ accessToken: 't', tokenType: 'Bearer', expiresIn: 900 });
@@ -228,7 +257,7 @@ async function loginFlow(browser) {
   const guest = await newSession(null);
   await guest.page.goto(`${base}/onboarding`);
   await guest.page.getByRole('button', { name: 'Chọn gu của tôi' }).click();
-  await interest(guest.page, 'Ăn uống').check({ force: true });
+  await pick(interest(guest.page, 'Ăn uống'));
   await guest.page.getByRole('button', { name: 'Tiếp tục' }).click();
   await guest.page.getByRole('button', { name: 'Bỏ qua câu này' }).click();
   await guest.page.getByRole('button', { name: 'Lưu sở thích' }).click();
@@ -253,11 +282,14 @@ async function loginFlow(browser) {
   // 3) Tài khoản chưa có khảo sát, máy trống: đăng nhập xong được mời làm khảo sát.
   const fresh = await newSession(null);
   await signIn(fresh.page, '/account');
-  await fresh.page.waitForURL((url) => url.pathname === '/onboarding' && url.searchParams.get('returnTo') === '/account');
+  await fresh.page.waitForURL(
+    (url) => url.pathname === '/onboarding' && url.searchParams.get('returnTo') === '/account',
+  );
   await fresh.page.getByRole('heading', { name: 'Điều gì khiến bạn muốn xách ba lô?' }).waitFor();
   assert.equal(fresh.state.patches.length, 0);
   pass('đăng nhập: hồ sơ chưa làm khảo sát → mở /onboarding, chưa gửi gì');
-  await fresh.page.screenshot({ path: join(output, '8-after-login-survey.png') });
+  await settle(fresh.page);
+  await fresh.page.screenshot({ animations: 'disabled', path: join(output, '8-after-login-survey.png') });
   await fresh.context.close();
 
   // 4) Hồ sơ đã completed: đi thẳng, không mời lại dù máy có bản nháp.

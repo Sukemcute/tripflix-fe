@@ -11,7 +11,9 @@ describe('decidePostAuth', () => {
 
   it('khách đã làm xong trên máy, hồ sơ chưa completed: gửi một lần', () => {
     expect(decidePostAuth({ travelPreferences: null }, local('completed'))).toBe('sync-local');
-    expect(decidePostAuth({ travelPreferences: { status: 'skipped' } }, local('completed'))).toBe('sync-local');
+    expect(decidePostAuth({ travelPreferences: { status: 'skipped' } }, local('completed'))).toBe(
+      'sync-local',
+    );
   });
 
   it('chưa làm, đã bỏ qua hoặc làm dở thì mời khảo sát', () => {
