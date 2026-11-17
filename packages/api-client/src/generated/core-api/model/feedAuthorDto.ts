@@ -8,14 +8,14 @@
 export interface FeedAuthorDto {
   id: string;
   /**
-     * Chưa có dữ liệu, hiện luôn là null
-     * @nullable
-     */
+   * Chưa có dữ liệu, hiện luôn là null
+   * @nullable
+   */
   name: string | null;
   /**
-     * Chưa có dữ liệu, hiện luôn là null
-     * @nullable
-     */
+   * Chưa có dữ liệu, hiện luôn là null
+   * @nullable
+   */
   avatarUrl: string | null;
   /** Chưa có dữ liệu, hiện luôn là false */
   isKol: boolean;

@@ -25,8 +25,8 @@ export interface ModerationCaseDto {
   createdAt: string;
   updatedAt: string;
   /**
-     * Text preview returned in the queue.
-     * @nullable
-     */
+   * Text preview returned in the queue.
+   * @nullable
+   */
   targetPreview?: string | null;
 }

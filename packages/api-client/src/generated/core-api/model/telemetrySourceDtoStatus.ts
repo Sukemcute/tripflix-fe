@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TelemetrySourceDtoStatus = typeof TelemetrySourceDtoStatus[keyof typeof TelemetrySourceDtoStatus];
-
+export type TelemetrySourceDtoStatus =
+  (typeof TelemetrySourceDtoStatus)[keyof typeof TelemetrySourceDtoStatus];
 
 export const TelemetrySourceDtoStatus = {
   ready: 'ready',

@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AppealDtoStatus = typeof AppealDtoStatus[keyof typeof AppealDtoStatus];
-
+export type AppealDtoStatus = (typeof AppealDtoStatus)[keyof typeof AppealDtoStatus];
 
 export const AppealDtoStatus = {
   pending: 'pending',

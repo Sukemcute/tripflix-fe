@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type PostsControllerListMyPostsStatus = typeof PostsControllerListMyPostsStatus[keyof typeof PostsControllerListMyPostsStatus];
-
+export type PostsControllerListMyPostsStatus =
+  (typeof PostsControllerListMyPostsStatus)[keyof typeof PostsControllerListMyPostsStatus];
 
 export const PostsControllerListMyPostsStatus = {
   all: 'all',

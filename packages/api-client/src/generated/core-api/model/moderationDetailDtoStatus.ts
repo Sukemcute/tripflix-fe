@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ModerationDetailDtoStatus = typeof ModerationDetailDtoStatus[keyof typeof ModerationDetailDtoStatus];
-
+export type ModerationDetailDtoStatus =
+  (typeof ModerationDetailDtoStatus)[keyof typeof ModerationDetailDtoStatus];
 
 export const ModerationDetailDtoStatus = {
   pending: 'pending',

@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ReportsControllerMyAppealsReasonCode = typeof ReportsControllerMyAppealsReasonCode[keyof typeof ReportsControllerMyAppealsReasonCode];
-
+export type ReportsControllerMyAppealsReasonCode =
+  (typeof ReportsControllerMyAppealsReasonCode)[keyof typeof ReportsControllerMyAppealsReasonCode];
 
 export const ReportsControllerMyAppealsReasonCode = {
   SPAM_OR_COMMERCIAL: 'SPAM_OR_COMMERCIAL',

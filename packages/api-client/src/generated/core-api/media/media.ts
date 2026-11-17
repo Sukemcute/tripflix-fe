@@ -4,14 +4,12 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation
-} from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import type {
   MutationFunction,
   QueryClient,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
 } from '@tanstack/react-query';
 
 import type {
@@ -21,46 +19,45 @@ import type {
   CreatedUploadDto,
   MediaErrorDto,
   ResignPartsDto,
-  SignedPartsDto
+  SignedPartsDto,
 } from '../model';
 
 import { http } from '../../../http';
 
-
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-
-
 export type mediaUploadControllerCreateUploadResponse201 = {
-  data: CreatedUploadDto
-  status: 201
-}
+  data: CreatedUploadDto;
+  status: 201;
+};
 
 export type mediaUploadControllerCreateUploadResponse422 = {
-  data: MediaErrorDto
-  status: 422
-}
-
-export type mediaUploadControllerCreateUploadResponseSuccess = (mediaUploadControllerCreateUploadResponse201) & {
-  headers: Headers;
-};
-export type mediaUploadControllerCreateUploadResponseError = (mediaUploadControllerCreateUploadResponse422) & {
-  headers: Headers;
+  data: MediaErrorDto;
+  status: 422;
 };
 
-export type mediaUploadControllerCreateUploadResponse = (mediaUploadControllerCreateUploadResponseSuccess | mediaUploadControllerCreateUploadResponseError)
+export type mediaUploadControllerCreateUploadResponseSuccess =
+  mediaUploadControllerCreateUploadResponse201 & {
+    headers: Headers;
+  };
+export type mediaUploadControllerCreateUploadResponseError = mediaUploadControllerCreateUploadResponse422 & {
+  headers: Headers;
+};
+
+export type mediaUploadControllerCreateUploadResponse =
+  mediaUploadControllerCreateUploadResponseSuccess | mediaUploadControllerCreateUploadResponseError;
 
 export const getMediaUploadControllerCreateUploadUrl = () => {
+  return `/api/media/uploads`;
+};
 
-
-
-
-  return `/api/media/uploads`
-}
-
-export const mediaUploadControllerCreateUpload = async (createUploadDto: CreateUploadDto, options?: Parameters<typeof http>[1]): Promise<mediaUploadControllerCreateUploadResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const mediaUploadControllerCreateUpload = async (
+  createUploadDto: CreateUploadDto,
+  options?: Parameters<typeof http>[1],
+): Promise<mediaUploadControllerCreateUploadResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -74,99 +71,118 @@ export const mediaUploadControllerCreateUpload = async (createUploadDto: CreateU
     }
     return headers;
   };
-return http<mediaUploadControllerCreateUploadResponse>(getMediaUploadControllerCreateUploadUrl(),
-  {
+  return http<mediaUploadControllerCreateUploadResponse>(getMediaUploadControllerCreateUploadUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(createUploadDto)
-  }
-);}
+    body: JSON.stringify(createUploadDto),
+  });
+};
 
+export const getMediaUploadControllerCreateUploadMutationKey = () =>
+  ['mediaUploadControllerCreateUpload'] as const;
 
+export const getMediaUploadControllerCreateUploadMutationOptions = <
+  TError = MediaErrorDto,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof mediaUploadControllerCreateUpload>>,
+    TError,
+    MediaUploadControllerCreateUploadMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof mediaUploadControllerCreateUpload>>,
+  TError,
+  MediaUploadControllerCreateUploadMutationVariables,
+  TContext
+> => {
+  const mutationKey = getMediaUploadControllerCreateUploadMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof mediaUploadControllerCreateUpload>>,
+    MediaUploadControllerCreateUploadMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return mediaUploadControllerCreateUpload(data, requestOptions);
+  };
 
-export const getMediaUploadControllerCreateUploadMutationKey = () => ['mediaUploadControllerCreateUpload'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getMediaUploadControllerCreateUploadMutationOptions = <TError = MediaErrorDto,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mediaUploadControllerCreateUpload>>, TError,MediaUploadControllerCreateUploadMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof mediaUploadControllerCreateUpload>>, TError,MediaUploadControllerCreateUploadMutationVariables, TContext> => {
+export type MediaUploadControllerCreateUploadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof mediaUploadControllerCreateUpload>>
+>;
+export type MediaUploadControllerCreateUploadMutationBody = CreateUploadDto;
+export type MediaUploadControllerCreateUploadMutationError = MediaErrorDto;
+export type MediaUploadControllerCreateUploadMutationVariables = { data: CreateUploadDto };
 
-const mutationKey = getMediaUploadControllerCreateUploadMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mediaUploadControllerCreateUpload>>, MediaUploadControllerCreateUploadMutationVariables> = (props) => {
-          const {data} = props ?? {};
-
-          return  mediaUploadControllerCreateUpload(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type MediaUploadControllerCreateUploadMutationResult = NonNullable<Awaited<ReturnType<typeof mediaUploadControllerCreateUpload>>>
-    export type MediaUploadControllerCreateUploadMutationBody = CreateUploadDto
-    export type MediaUploadControllerCreateUploadMutationError = MediaErrorDto
-    export type MediaUploadControllerCreateUploadMutationVariables = {data: CreateUploadDto}
-
-    export const useMediaUploadControllerCreateUpload = <TError = MediaErrorDto,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mediaUploadControllerCreateUpload>>, TError,MediaUploadControllerCreateUploadMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof mediaUploadControllerCreateUpload>>,
-        TError,
-        MediaUploadControllerCreateUploadMutationVariables,
-        TContext
-      > => {
-      return useMutation(getMediaUploadControllerCreateUploadMutationOptions(options), queryClient);
-    }
-    export type mediaUploadControllerResignPartsResponse200 = {
-  data: SignedPartsDto
-  status: 200
-}
+export const useMediaUploadControllerCreateUpload = <TError = MediaErrorDto, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof mediaUploadControllerCreateUpload>>,
+      TError,
+      MediaUploadControllerCreateUploadMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof mediaUploadControllerCreateUpload>>,
+  TError,
+  MediaUploadControllerCreateUploadMutationVariables,
+  TContext
+> => {
+  return useMutation(getMediaUploadControllerCreateUploadMutationOptions(options), queryClient);
+};
+export type mediaUploadControllerResignPartsResponse200 = {
+  data: SignedPartsDto;
+  status: 200;
+};
 
 export type mediaUploadControllerResignPartsResponse404 = {
-  data: MediaErrorDto
-  status: 404
-}
+  data: MediaErrorDto;
+  status: 404;
+};
 
 export type mediaUploadControllerResignPartsResponse409 = {
-  data: MediaErrorDto
-  status: 409
-}
-
-export type mediaUploadControllerResignPartsResponseSuccess = (mediaUploadControllerResignPartsResponse200) & {
-  headers: Headers;
-};
-export type mediaUploadControllerResignPartsResponseError = (mediaUploadControllerResignPartsResponse404 | mediaUploadControllerResignPartsResponse409) & {
-  headers: Headers;
+  data: MediaErrorDto;
+  status: 409;
 };
 
-export type mediaUploadControllerResignPartsResponse = (mediaUploadControllerResignPartsResponseSuccess | mediaUploadControllerResignPartsResponseError)
+export type mediaUploadControllerResignPartsResponseSuccess = mediaUploadControllerResignPartsResponse200 & {
+  headers: Headers;
+};
+export type mediaUploadControllerResignPartsResponseError = (
+  mediaUploadControllerResignPartsResponse404 | mediaUploadControllerResignPartsResponse409
+) & {
+  headers: Headers;
+};
 
-export const getMediaUploadControllerResignPartsUrl = (assetId: string,) => {
+export type mediaUploadControllerResignPartsResponse =
+  mediaUploadControllerResignPartsResponseSuccess | mediaUploadControllerResignPartsResponseError;
 
+export const getMediaUploadControllerResignPartsUrl = (assetId: string) => {
+  return `/api/media/uploads/${assetId}/parts`;
+};
 
-
-
-  return `/api/media/uploads/${assetId}/parts`
-}
-
-export const mediaUploadControllerResignParts = async (assetId: string,
-    resignPartsDto: ResignPartsDto, options?: Parameters<typeof http>[1]): Promise<mediaUploadControllerResignPartsResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const mediaUploadControllerResignParts = async (
+  assetId: string,
+  resignPartsDto: ResignPartsDto,
+  options?: Parameters<typeof http>[1],
+): Promise<mediaUploadControllerResignPartsResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -180,109 +196,132 @@ export const mediaUploadControllerResignParts = async (assetId: string,
     }
     return headers;
   };
-return http<mediaUploadControllerResignPartsResponse>(getMediaUploadControllerResignPartsUrl(assetId),
-  {
+  return http<mediaUploadControllerResignPartsResponse>(getMediaUploadControllerResignPartsUrl(assetId), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(resignPartsDto)
-  }
-);}
+    body: JSON.stringify(resignPartsDto),
+  });
+};
 
+export const getMediaUploadControllerResignPartsMutationKey = () =>
+  ['mediaUploadControllerResignParts'] as const;
 
+export const getMediaUploadControllerResignPartsMutationOptions = <
+  TError = MediaErrorDto,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof mediaUploadControllerResignParts>>,
+    TError,
+    MediaUploadControllerResignPartsMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof mediaUploadControllerResignParts>>,
+  TError,
+  MediaUploadControllerResignPartsMutationVariables,
+  TContext
+> => {
+  const mutationKey = getMediaUploadControllerResignPartsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof mediaUploadControllerResignParts>>,
+    MediaUploadControllerResignPartsMutationVariables
+  > = (props) => {
+    const { assetId, data } = props ?? {};
 
+    return mediaUploadControllerResignParts(assetId, data, requestOptions);
+  };
 
-export const getMediaUploadControllerResignPartsMutationKey = () => ['mediaUploadControllerResignParts'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getMediaUploadControllerResignPartsMutationOptions = <TError = MediaErrorDto,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mediaUploadControllerResignParts>>, TError,MediaUploadControllerResignPartsMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof mediaUploadControllerResignParts>>, TError,MediaUploadControllerResignPartsMutationVariables, TContext> => {
+export type MediaUploadControllerResignPartsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof mediaUploadControllerResignParts>>
+>;
+export type MediaUploadControllerResignPartsMutationBody = ResignPartsDto;
+export type MediaUploadControllerResignPartsMutationError = MediaErrorDto;
+export type MediaUploadControllerResignPartsMutationVariables = { assetId: string; data: ResignPartsDto };
 
-const mutationKey = getMediaUploadControllerResignPartsMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mediaUploadControllerResignParts>>, MediaUploadControllerResignPartsMutationVariables> = (props) => {
-          const {assetId,data} = props ?? {};
-
-          return  mediaUploadControllerResignParts(assetId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type MediaUploadControllerResignPartsMutationResult = NonNullable<Awaited<ReturnType<typeof mediaUploadControllerResignParts>>>
-    export type MediaUploadControllerResignPartsMutationBody = ResignPartsDto
-    export type MediaUploadControllerResignPartsMutationError = MediaErrorDto
-    export type MediaUploadControllerResignPartsMutationVariables = {assetId: string;data: ResignPartsDto}
-
-    export const useMediaUploadControllerResignParts = <TError = MediaErrorDto,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mediaUploadControllerResignParts>>, TError,MediaUploadControllerResignPartsMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof mediaUploadControllerResignParts>>,
-        TError,
-        MediaUploadControllerResignPartsMutationVariables,
-        TContext
-      > => {
-      return useMutation(getMediaUploadControllerResignPartsMutationOptions(options), queryClient);
-    }
-    export type mediaUploadControllerCompleteUploadResponse202 = {
-  data: CompletedUploadDto
-  status: 202
-}
+export const useMediaUploadControllerResignParts = <TError = MediaErrorDto, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof mediaUploadControllerResignParts>>,
+      TError,
+      MediaUploadControllerResignPartsMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof mediaUploadControllerResignParts>>,
+  TError,
+  MediaUploadControllerResignPartsMutationVariables,
+  TContext
+> => {
+  return useMutation(getMediaUploadControllerResignPartsMutationOptions(options), queryClient);
+};
+export type mediaUploadControllerCompleteUploadResponse202 = {
+  data: CompletedUploadDto;
+  status: 202;
+};
 
 export type mediaUploadControllerCompleteUploadResponse404 = {
-  data: MediaErrorDto
-  status: 404
-}
+  data: MediaErrorDto;
+  status: 404;
+};
 
 export type mediaUploadControllerCompleteUploadResponse409 = {
-  data: MediaErrorDto
-  status: 409
-}
+  data: MediaErrorDto;
+  status: 409;
+};
 
 export type mediaUploadControllerCompleteUploadResponse410 = {
-  data: MediaErrorDto
-  status: 410
-}
+  data: MediaErrorDto;
+  status: 410;
+};
 
 export type mediaUploadControllerCompleteUploadResponse422 = {
-  data: MediaErrorDto
-  status: 422
-}
-
-export type mediaUploadControllerCompleteUploadResponseSuccess = (mediaUploadControllerCompleteUploadResponse202) & {
-  headers: Headers;
-};
-export type mediaUploadControllerCompleteUploadResponseError = (mediaUploadControllerCompleteUploadResponse404 | mediaUploadControllerCompleteUploadResponse409 | mediaUploadControllerCompleteUploadResponse410 | mediaUploadControllerCompleteUploadResponse422) & {
-  headers: Headers;
+  data: MediaErrorDto;
+  status: 422;
 };
 
-export type mediaUploadControllerCompleteUploadResponse = (mediaUploadControllerCompleteUploadResponseSuccess | mediaUploadControllerCompleteUploadResponseError)
+export type mediaUploadControllerCompleteUploadResponseSuccess =
+  mediaUploadControllerCompleteUploadResponse202 & {
+    headers: Headers;
+  };
+export type mediaUploadControllerCompleteUploadResponseError = (
+  | mediaUploadControllerCompleteUploadResponse404
+  | mediaUploadControllerCompleteUploadResponse409
+  | mediaUploadControllerCompleteUploadResponse410
+  | mediaUploadControllerCompleteUploadResponse422
+) & {
+  headers: Headers;
+};
 
-export const getMediaUploadControllerCompleteUploadUrl = (assetId: string,) => {
+export type mediaUploadControllerCompleteUploadResponse =
+  mediaUploadControllerCompleteUploadResponseSuccess | mediaUploadControllerCompleteUploadResponseError;
 
+export const getMediaUploadControllerCompleteUploadUrl = (assetId: string) => {
+  return `/api/media/uploads/${assetId}/complete`;
+};
 
-
-
-  return `/api/media/uploads/${assetId}/complete`
-}
-
-export const mediaUploadControllerCompleteUpload = async (assetId: string,
-    completeUploadDto: CompleteUploadDto, options?: Parameters<typeof http>[1]): Promise<mediaUploadControllerCompleteUploadResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const mediaUploadControllerCompleteUpload = async (
+  assetId: string,
+  completeUploadDto: CompleteUploadDto,
+  options?: Parameters<typeof http>[1],
+): Promise<mediaUploadControllerCompleteUploadResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -296,60 +335,82 @@ export const mediaUploadControllerCompleteUpload = async (assetId: string,
     }
     return headers;
   };
-return http<mediaUploadControllerCompleteUploadResponse>(getMediaUploadControllerCompleteUploadUrl(assetId),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(completeUploadDto)
-  }
-);}
+  return http<mediaUploadControllerCompleteUploadResponse>(
+    getMediaUploadControllerCompleteUploadUrl(assetId),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+      body: JSON.stringify(completeUploadDto),
+    },
+  );
+};
 
+export const getMediaUploadControllerCompleteUploadMutationKey = () =>
+  ['mediaUploadControllerCompleteUpload'] as const;
 
+export const getMediaUploadControllerCompleteUploadMutationOptions = <
+  TError = MediaErrorDto,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof mediaUploadControllerCompleteUpload>>,
+    TError,
+    MediaUploadControllerCompleteUploadMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof mediaUploadControllerCompleteUpload>>,
+  TError,
+  MediaUploadControllerCompleteUploadMutationVariables,
+  TContext
+> => {
+  const mutationKey = getMediaUploadControllerCompleteUploadMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof mediaUploadControllerCompleteUpload>>,
+    MediaUploadControllerCompleteUploadMutationVariables
+  > = (props) => {
+    const { assetId, data } = props ?? {};
 
+    return mediaUploadControllerCompleteUpload(assetId, data, requestOptions);
+  };
 
-export const getMediaUploadControllerCompleteUploadMutationKey = () => ['mediaUploadControllerCompleteUpload'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getMediaUploadControllerCompleteUploadMutationOptions = <TError = MediaErrorDto,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mediaUploadControllerCompleteUpload>>, TError,MediaUploadControllerCompleteUploadMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof mediaUploadControllerCompleteUpload>>, TError,MediaUploadControllerCompleteUploadMutationVariables, TContext> => {
+export type MediaUploadControllerCompleteUploadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof mediaUploadControllerCompleteUpload>>
+>;
+export type MediaUploadControllerCompleteUploadMutationBody = CompleteUploadDto;
+export type MediaUploadControllerCompleteUploadMutationError = MediaErrorDto;
+export type MediaUploadControllerCompleteUploadMutationVariables = {
+  assetId: string;
+  data: CompleteUploadDto;
+};
 
-const mutationKey = getMediaUploadControllerCompleteUploadMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mediaUploadControllerCompleteUpload>>, MediaUploadControllerCompleteUploadMutationVariables> = (props) => {
-          const {assetId,data} = props ?? {};
-
-          return  mediaUploadControllerCompleteUpload(assetId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type MediaUploadControllerCompleteUploadMutationResult = NonNullable<Awaited<ReturnType<typeof mediaUploadControllerCompleteUpload>>>
-    export type MediaUploadControllerCompleteUploadMutationBody = CompleteUploadDto
-    export type MediaUploadControllerCompleteUploadMutationError = MediaErrorDto
-    export type MediaUploadControllerCompleteUploadMutationVariables = {assetId: string;data: CompleteUploadDto}
-
-    export const useMediaUploadControllerCompleteUpload = <TError = MediaErrorDto,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mediaUploadControllerCompleteUpload>>, TError,MediaUploadControllerCompleteUploadMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof mediaUploadControllerCompleteUpload>>,
-        TError,
-        MediaUploadControllerCompleteUploadMutationVariables,
-        TContext
-      > => {
-      return useMutation(getMediaUploadControllerCompleteUploadMutationOptions(options), queryClient);
-    }
+export const useMediaUploadControllerCompleteUpload = <TError = MediaErrorDto, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof mediaUploadControllerCompleteUpload>>,
+      TError,
+      MediaUploadControllerCompleteUploadMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof mediaUploadControllerCompleteUpload>>,
+  TError,
+  MediaUploadControllerCompleteUploadMutationVariables,
+  TContext
+> => {
+  return useMutation(getMediaUploadControllerCompleteUploadMutationOptions(options), queryClient);
+};

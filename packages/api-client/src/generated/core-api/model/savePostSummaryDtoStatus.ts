@@ -8,8 +8,8 @@
 /**
  * Trạng thái tóm tắt bài viết
  */
-export type SavePostSummaryDtoStatus = typeof SavePostSummaryDtoStatus[keyof typeof SavePostSummaryDtoStatus];
-
+export type SavePostSummaryDtoStatus =
+  (typeof SavePostSummaryDtoStatus)[keyof typeof SavePostSummaryDtoStatus];
 
 export const SavePostSummaryDtoStatus = {
   no_comments: 'no_comments',

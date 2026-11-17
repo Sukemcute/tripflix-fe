@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerAppealsSource = typeof AdminModerationControllerAppealsSource[keyof typeof AdminModerationControllerAppealsSource];
-
+export type AdminModerationControllerAppealsSource =
+  (typeof AdminModerationControllerAppealsSource)[keyof typeof AdminModerationControllerAppealsSource];
 
 export const AdminModerationControllerAppealsSource = {
   rule: 'rule',

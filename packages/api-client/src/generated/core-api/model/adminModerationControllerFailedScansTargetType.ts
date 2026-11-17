@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerFailedScansTargetType = typeof AdminModerationControllerFailedScansTargetType[keyof typeof AdminModerationControllerFailedScansTargetType];
-
+export type AdminModerationControllerFailedScansTargetType =
+  (typeof AdminModerationControllerFailedScansTargetType)[keyof typeof AdminModerationControllerFailedScansTargetType];
 
 export const AdminModerationControllerFailedScansTargetType = {
   post: 'post',

@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type PayResultDtoOutcome = typeof PayResultDtoOutcome[keyof typeof PayResultDtoOutcome];
-
+export type PayResultDtoOutcome = (typeof PayResultDtoOutcome)[keyof typeof PayResultDtoOutcome];
 
 export const PayResultDtoOutcome = {
   paid: 'paid',

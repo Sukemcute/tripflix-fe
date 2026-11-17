@@ -8,8 +8,8 @@
 /**
  * pending: đã huỷ lần trả, trả lại hoặc huỷ giỏ được
  */
-export type CancelVnpayResultDtoStatus = typeof CancelVnpayResultDtoStatus[keyof typeof CancelVnpayResultDtoStatus];
-
+export type CancelVnpayResultDtoStatus =
+  (typeof CancelVnpayResultDtoStatus)[keyof typeof CancelVnpayResultDtoStatus];
 
 export const CancelVnpayResultDtoStatus = {
   pending: 'pending',

@@ -8,8 +8,7 @@
 /**
  * @nullable
  */
-export type MyReportDtoCaseStatus = typeof MyReportDtoCaseStatus[keyof typeof MyReportDtoCaseStatus] | null;
-
+export type MyReportDtoCaseStatus = (typeof MyReportDtoCaseStatus)[keyof typeof MyReportDtoCaseStatus] | null;
 
 export const MyReportDtoCaseStatus = {
   pending: 'pending',

@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AppealOutcomeDtoOutcome = typeof AppealOutcomeDtoOutcome[keyof typeof AppealOutcomeDtoOutcome];
-
+export type AppealOutcomeDtoOutcome = (typeof AppealOutcomeDtoOutcome)[keyof typeof AppealOutcomeDtoOutcome];
 
 export const AppealOutcomeDtoOutcome = {
   upheld: 'upheld',

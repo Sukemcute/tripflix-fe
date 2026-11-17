@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CancelHoldResultDtoStatus = typeof CancelHoldResultDtoStatus[keyof typeof CancelHoldResultDtoStatus];
-
+export type CancelHoldResultDtoStatus =
+  (typeof CancelHoldResultDtoStatus)[keyof typeof CancelHoldResultDtoStatus];
 
 export const CancelHoldResultDtoStatus = {
   cancelled: 'cancelled',

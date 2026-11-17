@@ -8,8 +8,7 @@
 /**
  * Loại bài đăng
  */
-export type CreatePostDtoPostType = typeof CreatePostDtoPostType[keyof typeof CreatePostDtoPostType];
-
+export type CreatePostDtoPostType = (typeof CreatePostDtoPostType)[keyof typeof CreatePostDtoPostType];
 
 export const CreatePostDtoPostType = {
   video: 'video',

@@ -10,9 +10,9 @@ export interface HotelReviewDto {
   id: string;
   authorName: string;
   /**
-     * @minimum 1
-     * @maximum 5
-     */
+   * @minimum 1
+   * @maximum 5
+   */
   rating: number;
   /** @nullable */
   title: string | null;
@@ -21,14 +21,14 @@ export interface HotelReviewDto {
   /** URL ảnh khách chụp */
   images: string[];
   /**
-     * family | couple | solo | business | friends
-     * @nullable
-     */
+   * family | couple | solo | business | friends
+   * @nullable
+   */
   travelerType: string | null;
   /**
-     * Tháng lưu trú (ngày 01)
-     * @nullable
-     */
+   * Tháng lưu trú (ngày 01)
+   * @nullable
+   */
   stayMonth: string | null;
   /** @nullable */
   room: ReviewRoomDto | null;

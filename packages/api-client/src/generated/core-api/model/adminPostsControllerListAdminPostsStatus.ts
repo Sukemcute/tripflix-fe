@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminPostsControllerListAdminPostsStatus = typeof AdminPostsControllerListAdminPostsStatus[keyof typeof AdminPostsControllerListAdminPostsStatus];
-
+export type AdminPostsControllerListAdminPostsStatus =
+  (typeof AdminPostsControllerListAdminPostsStatus)[keyof typeof AdminPostsControllerListAdminPostsStatus];
 
 export const AdminPostsControllerListAdminPostsStatus = {
   draft: 'draft',

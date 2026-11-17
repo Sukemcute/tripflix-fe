@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type JobRunDtoTrigger = typeof JobRunDtoTrigger[keyof typeof JobRunDtoTrigger];
-
+export type JobRunDtoTrigger = (typeof JobRunDtoTrigger)[keyof typeof JobRunDtoTrigger];
 
 export const JobRunDtoTrigger = {
   schedule: 'schedule',

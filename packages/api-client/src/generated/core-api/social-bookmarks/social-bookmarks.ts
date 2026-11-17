@@ -4,10 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -20,22 +17,19 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
 import type {
   BookmarksControllerListMyBookmarksParams,
   SetBookmarkDto,
   SocialPostPageDto,
-  UpdatedBookmarkDto
+  UpdatedBookmarkDto,
 } from '../model';
 
 import { http } from '../../../http';
 
-
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -53,32 +47,30 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type bookmarksControllerSetBookmarkResponse200 = {
-  data: UpdatedBookmarkDto
-  status: 200
-}
+  data: UpdatedBookmarkDto;
+  status: 200;
+};
 
-export type bookmarksControllerSetBookmarkResponseSuccess = (bookmarksControllerSetBookmarkResponse200) & {
+export type bookmarksControllerSetBookmarkResponseSuccess = bookmarksControllerSetBookmarkResponse200 & {
   headers: Headers;
 };
-;
+export type bookmarksControllerSetBookmarkResponse = bookmarksControllerSetBookmarkResponseSuccess;
 
-export type bookmarksControllerSetBookmarkResponse = (bookmarksControllerSetBookmarkResponseSuccess)
-
-export const getBookmarksControllerSetBookmarkUrl = (id: string,) => {
-
-
-
-
-  return `/api/v1/posts/${id}/bookmark`
-}
+export const getBookmarksControllerSetBookmarkUrl = (id: string) => {
+  return `/api/v1/posts/${id}/bookmark`;
+};
 
 /**
  * @summary Lưu hoặc bỏ lưu bài viết (PRD F3)
  */
-export const bookmarksControllerSetBookmark = async (id: string,
-    setBookmarkDto: SetBookmarkDto, options?: Parameters<typeof http>[1]): Promise<bookmarksControllerSetBookmarkResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const bookmarksControllerSetBookmark = async (
+  id: string,
+  setBookmarkDto: SetBookmarkDto,
+  options?: Parameters<typeof http>[1],
+): Promise<bookmarksControllerSetBookmarkResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -92,189 +84,247 @@ export const bookmarksControllerSetBookmark = async (id: string,
     }
     return headers;
   };
-return http<bookmarksControllerSetBookmarkResponse>(getBookmarksControllerSetBookmarkUrl(id),
-  {
+  return http<bookmarksControllerSetBookmarkResponse>(getBookmarksControllerSetBookmarkUrl(id), {
     ...options,
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(setBookmarkDto)
-  }
-);}
-
-
-
-
+    body: JSON.stringify(setBookmarkDto),
+  });
+};
 
 export const getBookmarksControllerSetBookmarkMutationKey = () => ['bookmarksControllerSetBookmark'] as const;
 
-export const getBookmarksControllerSetBookmarkMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bookmarksControllerSetBookmark>>, TError,BookmarksControllerSetBookmarkMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof bookmarksControllerSetBookmark>>, TError,BookmarksControllerSetBookmarkMutationVariables, TContext> => {
+export const getBookmarksControllerSetBookmarkMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bookmarksControllerSetBookmark>>,
+    TError,
+    BookmarksControllerSetBookmarkMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof bookmarksControllerSetBookmark>>,
+  TError,
+  BookmarksControllerSetBookmarkMutationVariables,
+  TContext
+> => {
+  const mutationKey = getBookmarksControllerSetBookmarkMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-const mutationKey = getBookmarksControllerSetBookmarkMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof bookmarksControllerSetBookmark>>,
+    BookmarksControllerSetBookmarkMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
 
+    return bookmarksControllerSetBookmark(id, data, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type BookmarksControllerSetBookmarkMutationResult = NonNullable<
+  Awaited<ReturnType<typeof bookmarksControllerSetBookmark>>
+>;
+export type BookmarksControllerSetBookmarkMutationBody = SetBookmarkDto;
+export type BookmarksControllerSetBookmarkMutationError = unknown;
+export type BookmarksControllerSetBookmarkMutationVariables = { id: string; data: SetBookmarkDto };
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bookmarksControllerSetBookmark>>, BookmarksControllerSetBookmarkMutationVariables> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  bookmarksControllerSetBookmark(id,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type BookmarksControllerSetBookmarkMutationResult = NonNullable<Awaited<ReturnType<typeof bookmarksControllerSetBookmark>>>
-    export type BookmarksControllerSetBookmarkMutationBody = SetBookmarkDto
-    export type BookmarksControllerSetBookmarkMutationError = unknown
-    export type BookmarksControllerSetBookmarkMutationVariables = {id: string;data: SetBookmarkDto}
-
-    /**
+/**
  * @summary Lưu hoặc bỏ lưu bài viết (PRD F3)
  */
-export const useBookmarksControllerSetBookmark = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bookmarksControllerSetBookmark>>, TError,BookmarksControllerSetBookmarkMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof bookmarksControllerSetBookmark>>,
-        TError,
-        BookmarksControllerSetBookmarkMutationVariables,
-        TContext
-      > => {
-      return useMutation(getBookmarksControllerSetBookmarkMutationOptions(options), queryClient);
-    }
-    export type bookmarksControllerListMyBookmarksResponse200 = {
-  data: SocialPostPageDto
-  status: 200
-}
+export const useBookmarksControllerSetBookmark = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof bookmarksControllerSetBookmark>>,
+      TError,
+      BookmarksControllerSetBookmarkMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof bookmarksControllerSetBookmark>>,
+  TError,
+  BookmarksControllerSetBookmarkMutationVariables,
+  TContext
+> => {
+  return useMutation(getBookmarksControllerSetBookmarkMutationOptions(options), queryClient);
+};
+export type bookmarksControllerListMyBookmarksResponse200 = {
+  data: SocialPostPageDto;
+  status: 200;
+};
 
 export type bookmarksControllerListMyBookmarksResponse400 = {
-  data: void
-  status: 400
-}
-
-export type bookmarksControllerListMyBookmarksResponseSuccess = (bookmarksControllerListMyBookmarksResponse200) & {
-  headers: Headers;
-};
-export type bookmarksControllerListMyBookmarksResponseError = (bookmarksControllerListMyBookmarksResponse400) & {
-  headers: Headers;
+  data: void;
+  status: 400;
 };
 
-export type bookmarksControllerListMyBookmarksResponse = (bookmarksControllerListMyBookmarksResponseSuccess | bookmarksControllerListMyBookmarksResponseError)
+export type bookmarksControllerListMyBookmarksResponseSuccess =
+  bookmarksControllerListMyBookmarksResponse200 & {
+    headers: Headers;
+  };
+export type bookmarksControllerListMyBookmarksResponseError =
+  bookmarksControllerListMyBookmarksResponse400 & {
+    headers: Headers;
+  };
 
-export const getBookmarksControllerListMyBookmarksUrl = (params?: BookmarksControllerListMyBookmarksParams,) => {
+export type bookmarksControllerListMyBookmarksResponse =
+  bookmarksControllerListMyBookmarksResponseSuccess | bookmarksControllerListMyBookmarksResponseError;
+
+export const getBookmarksControllerListMyBookmarksUrl = (
+  params?: BookmarksControllerListMyBookmarksParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/v1/me/bookmarks?${stringifiedParams}` : `/api/v1/me/bookmarks`
-}
+  return stringifiedParams.length > 0 ? `/api/v1/me/bookmarks?${stringifiedParams}` : `/api/v1/me/bookmarks`;
+};
 
 /**
  * @summary Lấy danh sách bài viết đã lưu của tôi
  */
-export const bookmarksControllerListMyBookmarks = async (params?: BookmarksControllerListMyBookmarksParams, options?: Parameters<typeof http>[1]): Promise<bookmarksControllerListMyBookmarksResponse> => {
-
-  return http<bookmarksControllerListMyBookmarksResponse>(getBookmarksControllerListMyBookmarksUrl(params),
-  {
+export const bookmarksControllerListMyBookmarks = async (
+  params?: BookmarksControllerListMyBookmarksParams,
+  options?: Parameters<typeof http>[1],
+): Promise<bookmarksControllerListMyBookmarksResponse> => {
+  return http<bookmarksControllerListMyBookmarksResponse>(getBookmarksControllerListMyBookmarksUrl(params), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
-
-  }
-);}
-
-
-
-
-
-export const getBookmarksControllerListMyBookmarksQueryKey = (params?: BookmarksControllerListMyBookmarksParams,) => {
-    return [
-    `/api/v1/me/bookmarks`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getBookmarksControllerListMyBookmarksQueryOptions = <TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError = void>(params?: BookmarksControllerListMyBookmarksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getBookmarksControllerListMyBookmarksQueryKey = (
+  params?: BookmarksControllerListMyBookmarksParams,
 ) => {
+  return [`/api/v1/me/bookmarks`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getBookmarksControllerListMyBookmarksQueryOptions = <
+  TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
+  TError = void,
+>(
+  params?: BookmarksControllerListMyBookmarksParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getBookmarksControllerListMyBookmarksQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getBookmarksControllerListMyBookmarksQueryKey(params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>> = ({
+    signal,
+  }) => bookmarksControllerListMyBookmarks(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>> = ({ signal }) => bookmarksControllerListMyBookmarks(params, { signal, ...requestOptions });
+export type BookmarksControllerListMyBookmarksQueryResult = NonNullable<
+  Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>
+>;
+export type BookmarksControllerListMyBookmarksQueryError = void;
 
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type BookmarksControllerListMyBookmarksQueryResult = NonNullable<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>>
-export type BookmarksControllerListMyBookmarksQueryError = void
-
-
-export function useBookmarksControllerListMyBookmarks<TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError = void>(
- params: undefined |  BookmarksControllerListMyBookmarksParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError, TData>> & Pick<
+export function useBookmarksControllerListMyBookmarks<
+  TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
+  TError = void,
+>(
+  params: undefined | BookmarksControllerListMyBookmarksParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
           TError,
           Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useBookmarksControllerListMyBookmarks<TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError = void>(
- params?: BookmarksControllerListMyBookmarksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useBookmarksControllerListMyBookmarks<
+  TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
+  TError = void,
+>(
+  params?: BookmarksControllerListMyBookmarksParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
           TError,
           Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useBookmarksControllerListMyBookmarks<TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError = void>(
- params?: BookmarksControllerListMyBookmarksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useBookmarksControllerListMyBookmarks<
+  TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
+  TError = void,
+>(
+  params?: BookmarksControllerListMyBookmarksParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Lấy danh sách bài viết đã lưu của tôi
  */
 
-export function useBookmarksControllerListMyBookmarks<TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError = void>(
- params?: BookmarksControllerListMyBookmarksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useBookmarksControllerListMyBookmarks<
+  TData = Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>,
+  TError = void,
+>(
+  params?: BookmarksControllerListMyBookmarksParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof bookmarksControllerListMyBookmarks>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getBookmarksControllerListMyBookmarksQueryOptions(params, options);
 
-  const queryOptions = getBookmarksControllerListMyBookmarksQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
-

@@ -4,10 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -20,7 +17,7 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
 import type {
@@ -28,15 +25,12 @@ import type {
   AdminSocialPostDetailDto,
   AdminSocialPostPageDto,
   CreateModerationActionDto,
-  SocialModerationResultDto
+  SocialModerationResultDto,
 } from '../model';
 
 import { http } from '../../../http';
 
-
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -54,263 +48,338 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type adminPostsControllerListAdminPostsResponse200 = {
-  data: AdminSocialPostPageDto
-  status: 200
-}
-
-export type adminPostsControllerListAdminPostsResponseSuccess = (adminPostsControllerListAdminPostsResponse200) & {
-  headers: Headers;
+  data: AdminSocialPostPageDto;
+  status: 200;
 };
-;
 
-export type adminPostsControllerListAdminPostsResponse = (adminPostsControllerListAdminPostsResponseSuccess)
+export type adminPostsControllerListAdminPostsResponseSuccess =
+  adminPostsControllerListAdminPostsResponse200 & {
+    headers: Headers;
+  };
+export type adminPostsControllerListAdminPostsResponse = adminPostsControllerListAdminPostsResponseSuccess;
 
-export const getAdminPostsControllerListAdminPostsUrl = (params?: AdminPostsControllerListAdminPostsParams,) => {
+export const getAdminPostsControllerListAdminPostsUrl = (
+  params?: AdminPostsControllerListAdminPostsParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/v1/admin/posts?${stringifiedParams}` : `/api/v1/admin/posts`
-}
+  return stringifiedParams.length > 0 ? `/api/v1/admin/posts?${stringifiedParams}` : `/api/v1/admin/posts`;
+};
 
 /**
  * @summary Danh sách bài đăng trong trang quản trị (FR13)
  */
-export const adminPostsControllerListAdminPosts = async (params?: AdminPostsControllerListAdminPostsParams, options?: Parameters<typeof http>[1]): Promise<adminPostsControllerListAdminPostsResponse> => {
-
-  return http<adminPostsControllerListAdminPostsResponse>(getAdminPostsControllerListAdminPostsUrl(params),
-  {
+export const adminPostsControllerListAdminPosts = async (
+  params?: AdminPostsControllerListAdminPostsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<adminPostsControllerListAdminPostsResponse> => {
+  return http<adminPostsControllerListAdminPostsResponse>(getAdminPostsControllerListAdminPostsUrl(params), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
-
-  }
-);}
-
-
-
-
-
-export const getAdminPostsControllerListAdminPostsQueryKey = (params?: AdminPostsControllerListAdminPostsParams,) => {
-    return [
-    `/api/v1/admin/posts`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getAdminPostsControllerListAdminPostsQueryOptions = <TData = Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError = unknown>(params?: AdminPostsControllerListAdminPostsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getAdminPostsControllerListAdminPostsQueryKey = (
+  params?: AdminPostsControllerListAdminPostsParams,
 ) => {
+  return [`/api/v1/admin/posts`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getAdminPostsControllerListAdminPostsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>,
+  TError = unknown,
+>(
+  params?: AdminPostsControllerListAdminPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getAdminPostsControllerListAdminPostsQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getAdminPostsControllerListAdminPostsQueryKey(params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>> = ({
+    signal,
+  }) => adminPostsControllerListAdminPosts(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>> = ({ signal }) => adminPostsControllerListAdminPosts(params, { signal, ...requestOptions });
+export type AdminPostsControllerListAdminPostsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>
+>;
+export type AdminPostsControllerListAdminPostsQueryError = unknown;
 
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type AdminPostsControllerListAdminPostsQueryResult = NonNullable<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>>
-export type AdminPostsControllerListAdminPostsQueryError = unknown
-
-
-export function useAdminPostsControllerListAdminPosts<TData = Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError = unknown>(
- params: undefined |  AdminPostsControllerListAdminPostsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError, TData>> & Pick<
+export function useAdminPostsControllerListAdminPosts<
+  TData = Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>,
+  TError = unknown,
+>(
+  params: undefined | AdminPostsControllerListAdminPostsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>,
           TError,
           Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminPostsControllerListAdminPosts<TData = Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError = unknown>(
- params?: AdminPostsControllerListAdminPostsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminPostsControllerListAdminPosts<
+  TData = Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>,
+  TError = unknown,
+>(
+  params?: AdminPostsControllerListAdminPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>,
           TError,
           Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminPostsControllerListAdminPosts<TData = Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError = unknown>(
- params?: AdminPostsControllerListAdminPostsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminPostsControllerListAdminPosts<
+  TData = Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>,
+  TError = unknown,
+>(
+  params?: AdminPostsControllerListAdminPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Danh sách bài đăng trong trang quản trị (FR13)
  */
 
-export function useAdminPostsControllerListAdminPosts<TData = Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError = unknown>(
- params?: AdminPostsControllerListAdminPostsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useAdminPostsControllerListAdminPosts<
+  TData = Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>,
+  TError = unknown,
+>(
+  params?: AdminPostsControllerListAdminPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerListAdminPosts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminPostsControllerListAdminPostsQueryOptions(params, options);
 
-  const queryOptions = getAdminPostsControllerListAdminPostsQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
 
 export type adminPostsControllerGetAdminPostDetailResponse200 = {
-  data: AdminSocialPostDetailDto
-  status: 200
-}
-
-export type adminPostsControllerGetAdminPostDetailResponseSuccess = (adminPostsControllerGetAdminPostDetailResponse200) & {
-  headers: Headers;
+  data: AdminSocialPostDetailDto;
+  status: 200;
 };
-;
 
-export type adminPostsControllerGetAdminPostDetailResponse = (adminPostsControllerGetAdminPostDetailResponseSuccess)
+export type adminPostsControllerGetAdminPostDetailResponseSuccess =
+  adminPostsControllerGetAdminPostDetailResponse200 & {
+    headers: Headers;
+  };
+export type adminPostsControllerGetAdminPostDetailResponse =
+  adminPostsControllerGetAdminPostDetailResponseSuccess;
 
-export const getAdminPostsControllerGetAdminPostDetailUrl = (id: string,) => {
-
-
-
-
-  return `/api/v1/admin/posts/${id}`
-}
+export const getAdminPostsControllerGetAdminPostDetailUrl = (id: string) => {
+  return `/api/v1/admin/posts/${id}`;
+};
 
 /**
  * @summary Chi tiết bài đăng kèm lịch sử kiểm duyệt (FR13)
  */
-export const adminPostsControllerGetAdminPostDetail = async (id: string, options?: Parameters<typeof http>[1]): Promise<adminPostsControllerGetAdminPostDetailResponse> => {
+export const adminPostsControllerGetAdminPostDetail = async (
+  id: string,
+  options?: Parameters<typeof http>[1],
+): Promise<adminPostsControllerGetAdminPostDetailResponse> => {
+  return http<adminPostsControllerGetAdminPostDetailResponse>(
+    getAdminPostsControllerGetAdminPostDetailUrl(id),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
 
-  return http<adminPostsControllerGetAdminPostDetailResponse>(getAdminPostsControllerGetAdminPostDetailUrl(id),
-  {
-    ...options,
-    method: 'GET'
+export const getAdminPostsControllerGetAdminPostDetailQueryKey = (id: string) => {
+  return [`/api/v1/admin/posts/${id}`] as const;
+};
 
-
-  }
-);}
-
-
-
-
-
-export const getAdminPostsControllerGetAdminPostDetailQueryKey = (id: string,) => {
-    return [
-    `/api/v1/admin/posts/${id}`
-    ] as const;
-    }
-
-
-export const getAdminPostsControllerGetAdminPostDetailQueryOptions = <TData = Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getAdminPostsControllerGetAdminPostDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getAdminPostsControllerGetAdminPostDetailQueryKey(id);
 
-  const queryKey =  queryOptions?.queryKey ?? getAdminPostsControllerGetAdminPostDetailQueryKey(id);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>> = ({
+    signal,
+  }) => adminPostsControllerGetAdminPostDetail(id, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type AdminPostsControllerGetAdminPostDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>
+>;
+export type AdminPostsControllerGetAdminPostDetailQueryError = unknown;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>> = ({ signal }) => adminPostsControllerGetAdminPostDetail(id, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type AdminPostsControllerGetAdminPostDetailQueryResult = NonNullable<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>>
-export type AdminPostsControllerGetAdminPostDetailQueryError = unknown
-
-
-export function useAdminPostsControllerGetAdminPostDetail<TData = Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError = unknown>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError, TData>> & Pick<
+export function useAdminPostsControllerGetAdminPostDetail<
+  TData = Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>,
+  TError = unknown,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>,
           TError,
           Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminPostsControllerGetAdminPostDetail<TData = Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminPostsControllerGetAdminPostDetail<
+  TData = Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>,
           TError,
           Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminPostsControllerGetAdminPostDetail<TData = Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminPostsControllerGetAdminPostDetail<
+  TData = Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Chi tiết bài đăng kèm lịch sử kiểm duyệt (FR13)
  */
 
-export function useAdminPostsControllerGetAdminPostDetail<TData = Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useAdminPostsControllerGetAdminPostDetail<
+  TData = Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminPostsControllerGetAdminPostDetail>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminPostsControllerGetAdminPostDetailQueryOptions(id, options);
 
-  const queryOptions = getAdminPostsControllerGetAdminPostDetailQueryOptions(id,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-
-
-
-
-
 export type adminPostsControllerModeratePostResponse201 = {
-  data: SocialModerationResultDto
-  status: 201
-}
+  data: SocialModerationResultDto;
+  status: 201;
+};
 
-export type adminPostsControllerModeratePostResponseSuccess = (adminPostsControllerModeratePostResponse201) & {
+export type adminPostsControllerModeratePostResponseSuccess = adminPostsControllerModeratePostResponse201 & {
   headers: Headers;
 };
-;
+export type adminPostsControllerModeratePostResponse = adminPostsControllerModeratePostResponseSuccess;
 
-export type adminPostsControllerModeratePostResponse = (adminPostsControllerModeratePostResponseSuccess)
-
-export const getAdminPostsControllerModeratePostUrl = (id: string,) => {
-
-
-
-
-  return `/api/v1/admin/posts/${id}/moderation-actions`
-}
+export const getAdminPostsControllerModeratePostUrl = (id: string) => {
+  return `/api/v1/admin/posts/${id}/moderation-actions`;
+};
 
 /**
  * @summary Xử lý kiểm duyệt bài viết (FR13)
  */
-export const adminPostsControllerModeratePost = async (id: string,
-    createModerationActionDto: CreateModerationActionDto, options?: Parameters<typeof http>[1]): Promise<adminPostsControllerModeratePostResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const adminPostsControllerModeratePost = async (
+  id: string,
+  createModerationActionDto: CreateModerationActionDto,
+  options?: Parameters<typeof http>[1],
+): Promise<adminPostsControllerModeratePostResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -324,63 +393,82 @@ export const adminPostsControllerModeratePost = async (id: string,
     }
     return headers;
   };
-return http<adminPostsControllerModeratePostResponse>(getAdminPostsControllerModeratePostUrl(id),
-  {
+  return http<adminPostsControllerModeratePostResponse>(getAdminPostsControllerModeratePostUrl(id), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(createModerationActionDto)
-  }
-);}
+    body: JSON.stringify(createModerationActionDto),
+  });
+};
 
+export const getAdminPostsControllerModeratePostMutationKey = () =>
+  ['adminPostsControllerModeratePost'] as const;
 
+export const getAdminPostsControllerModeratePostMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminPostsControllerModeratePost>>,
+    TError,
+    AdminPostsControllerModeratePostMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminPostsControllerModeratePost>>,
+  TError,
+  AdminPostsControllerModeratePostMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminPostsControllerModeratePostMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminPostsControllerModeratePost>>,
+    AdminPostsControllerModeratePostMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
 
+    return adminPostsControllerModeratePost(id, data, requestOptions);
+  };
 
-export const getAdminPostsControllerModeratePostMutationKey = () => ['adminPostsControllerModeratePost'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getAdminPostsControllerModeratePostMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminPostsControllerModeratePost>>, TError,AdminPostsControllerModeratePostMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof adminPostsControllerModeratePost>>, TError,AdminPostsControllerModeratePostMutationVariables, TContext> => {
+export type AdminPostsControllerModeratePostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminPostsControllerModeratePost>>
+>;
+export type AdminPostsControllerModeratePostMutationBody = CreateModerationActionDto;
+export type AdminPostsControllerModeratePostMutationError = unknown;
+export type AdminPostsControllerModeratePostMutationVariables = {
+  id: string;
+  data: CreateModerationActionDto;
+};
 
-const mutationKey = getAdminPostsControllerModeratePostMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminPostsControllerModeratePost>>, AdminPostsControllerModeratePostMutationVariables> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  adminPostsControllerModeratePost(id,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type AdminPostsControllerModeratePostMutationResult = NonNullable<Awaited<ReturnType<typeof adminPostsControllerModeratePost>>>
-    export type AdminPostsControllerModeratePostMutationBody = CreateModerationActionDto
-    export type AdminPostsControllerModeratePostMutationError = unknown
-    export type AdminPostsControllerModeratePostMutationVariables = {id: string;data: CreateModerationActionDto}
-
-    /**
+/**
  * @summary Xử lý kiểm duyệt bài viết (FR13)
  */
-export const useAdminPostsControllerModeratePost = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminPostsControllerModeratePost>>, TError,AdminPostsControllerModeratePostMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof adminPostsControllerModeratePost>>,
-        TError,
-        AdminPostsControllerModeratePostMutationVariables,
-        TContext
-      > => {
-      return useMutation(getAdminPostsControllerModeratePostMutationOptions(options), queryClient);
-    }
+export const useAdminPostsControllerModeratePost = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminPostsControllerModeratePost>>,
+      TError,
+      AdminPostsControllerModeratePostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminPostsControllerModeratePost>>,
+  TError,
+  AdminPostsControllerModeratePostMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminPostsControllerModeratePostMutationOptions(options), queryClient);
+};

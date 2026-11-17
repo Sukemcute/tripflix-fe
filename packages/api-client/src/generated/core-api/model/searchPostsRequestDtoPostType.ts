@@ -8,8 +8,8 @@
 /**
  * all: cả lộ trình, video, bài viết · plan: bài có lộ trình (gồm video kèm lộ trình) · video · post: bài viết thường · article: plan + post, bỏ mọi video (kể cả video kèm lộ trình)
  */
-export type SearchPostsRequestDtoPostType = typeof SearchPostsRequestDtoPostType[keyof typeof SearchPostsRequestDtoPostType];
-
+export type SearchPostsRequestDtoPostType =
+  (typeof SearchPostsRequestDtoPostType)[keyof typeof SearchPostsRequestDtoPostType];
 
 export const SearchPostsRequestDtoPostType = {
   all: 'all',

@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type DiscoveryJobDtoJob = typeof DiscoveryJobDtoJob[keyof typeof DiscoveryJobDtoJob];
-
+export type DiscoveryJobDtoJob = (typeof DiscoveryJobDtoJob)[keyof typeof DiscoveryJobDtoJob];
 
 export const DiscoveryJobDtoJob = {
   explore: 'explore',

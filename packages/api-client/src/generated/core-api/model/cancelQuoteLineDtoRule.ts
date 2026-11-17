@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CancelQuoteLineDtoRule = typeof CancelQuoteLineDtoRule[keyof typeof CancelQuoteLineDtoRule];
-
+export type CancelQuoteLineDtoRule = (typeof CancelQuoteLineDtoRule)[keyof typeof CancelQuoteLineDtoRule];
 
 export const CancelQuoteLineDtoRule = {
   free_cancel: 'free_cancel',

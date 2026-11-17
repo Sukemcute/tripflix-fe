@@ -8,8 +8,7 @@
 /**
  * @nullable
  */
-export type FlightOfferDtoReason = typeof FlightOfferDtoReason[keyof typeof FlightOfferDtoReason] | null;
-
+export type FlightOfferDtoReason = (typeof FlightOfferDtoReason)[keyof typeof FlightOfferDtoReason] | null;
 
 export const FlightOfferDtoReason = {
   NOT_ON_SALE: 'NOT_ON_SALE',

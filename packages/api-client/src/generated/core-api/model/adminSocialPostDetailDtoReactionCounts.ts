@@ -5,4 +5,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminSocialPostDetailDtoReactionCounts = {[key: string]: number};
+export type AdminSocialPostDetailDtoReactionCounts = { [key: string]: number };

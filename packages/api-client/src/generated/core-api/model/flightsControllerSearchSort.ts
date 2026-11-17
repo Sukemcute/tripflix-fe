@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FlightsControllerSearchSort = typeof FlightsControllerSearchSort[keyof typeof FlightsControllerSearchSort];
-
+export type FlightsControllerSearchSort =
+  (typeof FlightsControllerSearchSort)[keyof typeof FlightsControllerSearchSort];
 
 export const FlightsControllerSearchSort = {
   recommended: 'recommended',

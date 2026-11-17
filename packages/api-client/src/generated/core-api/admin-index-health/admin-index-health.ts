@@ -4,9 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useQuery
-} from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -16,19 +14,14 @@ import type {
   QueryKey,
   UndefinedInitialDataOptions,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
-import type {
-  IndexHealthDto
-} from '../model';
+import type { IndexHealthDto } from '../model';
 
 import { http } from '../../../http';
 
-
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -46,108 +39,130 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type adminIndexHealthControllerCheckResponse200 = {
-  data: IndexHealthDto
-  status: 200
-}
+  data: IndexHealthDto;
+  status: 200;
+};
 
-export type adminIndexHealthControllerCheckResponseSuccess = (adminIndexHealthControllerCheckResponse200) & {
+export type adminIndexHealthControllerCheckResponseSuccess = adminIndexHealthControllerCheckResponse200 & {
   headers: Headers;
 };
-;
-
-export type adminIndexHealthControllerCheckResponse = (adminIndexHealthControllerCheckResponseSuccess)
+export type adminIndexHealthControllerCheckResponse = adminIndexHealthControllerCheckResponseSuccess;
 
 export const getAdminIndexHealthControllerCheckUrl = () => {
+  return `/api/v1/admin/search/index-health`;
+};
 
-
-
-
-  return `/api/v1/admin/search/index-health`
-}
-
-export const adminIndexHealthControllerCheck = async ( options?: Parameters<typeof http>[1]): Promise<adminIndexHealthControllerCheckResponse> => {
-
-  return http<adminIndexHealthControllerCheckResponse>(getAdminIndexHealthControllerCheckUrl(),
-  {
+export const adminIndexHealthControllerCheck = async (
+  options?: Parameters<typeof http>[1],
+): Promise<adminIndexHealthControllerCheckResponse> => {
+  return http<adminIndexHealthControllerCheckResponse>(getAdminIndexHealthControllerCheckUrl(), {
     ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
+    method: 'GET',
+  });
+};
 
 export const getAdminIndexHealthControllerCheckQueryKey = () => {
-    return [
-    `/api/v1/admin/search/index-health`
-    ] as const;
-    }
+  return [`/api/v1/admin/search/index-health`] as const;
+};
 
+export const getAdminIndexHealthControllerCheckQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof http>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-export const getAdminIndexHealthControllerCheckQueryOptions = <TData = Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof http>}
-) => {
+  const queryKey = queryOptions?.queryKey ?? getAdminIndexHealthControllerCheckQueryKey();
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>> = ({ signal }) =>
+    adminIndexHealthControllerCheck({ signal, ...requestOptions });
 
-  const queryKey =  queryOptions?.queryKey ?? getAdminIndexHealthControllerCheckQueryKey();
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type AdminIndexHealthControllerCheckQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>
+>;
+export type AdminIndexHealthControllerCheckQueryError = unknown;
 
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>> = ({ signal }) => adminIndexHealthControllerCheck({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type AdminIndexHealthControllerCheckQueryResult = NonNullable<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>>
-export type AdminIndexHealthControllerCheckQueryError = unknown
-
-
-export function useAdminIndexHealthControllerCheck<TData = Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError, TData>> & Pick<
+export function useAdminIndexHealthControllerCheck<
+  TData = Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>,
           TError,
           Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminIndexHealthControllerCheck<TData = Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminIndexHealthControllerCheck<
+  TData = Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>,
           TError,
           Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminIndexHealthControllerCheck<TData = Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminIndexHealthControllerCheck<
+  TData = Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-export function useAdminIndexHealthControllerCheck<TData = Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useAdminIndexHealthControllerCheck<
+  TData = Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminIndexHealthControllerCheck>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminIndexHealthControllerCheckQueryOptions(options);
 
-  const queryOptions = getAdminIndexHealthControllerCheckQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
-

@@ -14,9 +14,9 @@ export interface JobRunDto {
   /** epoch ms */
   startedAt: number;
   /**
-     * epoch ms
-     * @nullable
-     */
+   * epoch ms
+   * @nullable
+   */
   finishedAt: number | null;
   outcome: JobRunDtoOutcome;
   /** @nullable */

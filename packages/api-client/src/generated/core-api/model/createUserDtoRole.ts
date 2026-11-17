@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CreateUserDtoRole = typeof CreateUserDtoRole[keyof typeof CreateUserDtoRole];
-
+export type CreateUserDtoRole = (typeof CreateUserDtoRole)[keyof typeof CreateUserDtoRole];
 
 export const CreateUserDtoRole = {
   moderator: 'moderator',

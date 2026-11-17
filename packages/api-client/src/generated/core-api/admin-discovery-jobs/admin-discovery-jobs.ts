@@ -4,10 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -20,7 +17,7 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
 import type {
@@ -28,15 +25,12 @@ import type {
   DiscoveryJobsDto,
   JobIntervalDto,
   RunJobDto,
-  SetJobIntervalRequestDto
+  SetJobIntervalRequestDto,
 } from '../model';
 
 import { http } from '../../../http';
 
-
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -54,255 +48,317 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type adminDiscoveryJobsControllerListResponse200 = {
-  data: DiscoveryJobsDto
-  status: 200
-}
+  data: DiscoveryJobsDto;
+  status: 200;
+};
 
-export type adminDiscoveryJobsControllerListResponseSuccess = (adminDiscoveryJobsControllerListResponse200) & {
+export type adminDiscoveryJobsControllerListResponseSuccess = adminDiscoveryJobsControllerListResponse200 & {
   headers: Headers;
 };
-;
+export type adminDiscoveryJobsControllerListResponse = adminDiscoveryJobsControllerListResponseSuccess;
 
-export type adminDiscoveryJobsControllerListResponse = (adminDiscoveryJobsControllerListResponseSuccess)
-
-export const getAdminDiscoveryJobsControllerListUrl = (params: AdminDiscoveryJobsControllerListParams,) => {
+export const getAdminDiscoveryJobsControllerListUrl = (params: AdminDiscoveryJobsControllerListParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/v1/admin/discovery/jobs?${stringifiedParams}` : `/api/v1/admin/discovery/jobs`
-}
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/discovery/jobs?${stringifiedParams}`
+    : `/api/v1/admin/discovery/jobs`;
+};
 
 /**
  * @summary Trạng thái và lịch sử chạy của job tìm kiếm hoặc gợi ý
  */
-export const adminDiscoveryJobsControllerList = async (params: AdminDiscoveryJobsControllerListParams, options?: Parameters<typeof http>[1]): Promise<adminDiscoveryJobsControllerListResponse> => {
-
-  return http<adminDiscoveryJobsControllerListResponse>(getAdminDiscoveryJobsControllerListUrl(params),
-  {
+export const adminDiscoveryJobsControllerList = async (
+  params: AdminDiscoveryJobsControllerListParams,
+  options?: Parameters<typeof http>[1],
+): Promise<adminDiscoveryJobsControllerListResponse> => {
+  return http<adminDiscoveryJobsControllerListResponse>(getAdminDiscoveryJobsControllerListUrl(params), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
-
-  }
-);}
-
-
-
-
-
-export const getAdminDiscoveryJobsControllerListQueryKey = (params?: AdminDiscoveryJobsControllerListParams,) => {
-    return [
-    `/api/v1/admin/discovery/jobs`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getAdminDiscoveryJobsControllerListQueryOptions = <TData = Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError = unknown>(params: AdminDiscoveryJobsControllerListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getAdminDiscoveryJobsControllerListQueryKey = (
+  params?: AdminDiscoveryJobsControllerListParams,
 ) => {
+  return [`/api/v1/admin/discovery/jobs`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getAdminDiscoveryJobsControllerListQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>,
+  TError = unknown,
+>(
+  params: AdminDiscoveryJobsControllerListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getAdminDiscoveryJobsControllerListQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getAdminDiscoveryJobsControllerListQueryKey(params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>> = ({ signal }) =>
+    adminDiscoveryJobsControllerList(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>> = ({ signal }) => adminDiscoveryJobsControllerList(params, { signal, ...requestOptions });
+export type AdminDiscoveryJobsControllerListQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>
+>;
+export type AdminDiscoveryJobsControllerListQueryError = unknown;
 
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type AdminDiscoveryJobsControllerListQueryResult = NonNullable<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>>
-export type AdminDiscoveryJobsControllerListQueryError = unknown
-
-
-export function useAdminDiscoveryJobsControllerList<TData = Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError = unknown>(
- params: AdminDiscoveryJobsControllerListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError, TData>> & Pick<
+export function useAdminDiscoveryJobsControllerList<
+  TData = Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>,
+  TError = unknown,
+>(
+  params: AdminDiscoveryJobsControllerListParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>,
           TError,
           Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminDiscoveryJobsControllerList<TData = Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError = unknown>(
- params: AdminDiscoveryJobsControllerListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminDiscoveryJobsControllerList<
+  TData = Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>,
+  TError = unknown,
+>(
+  params: AdminDiscoveryJobsControllerListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>,
           TError,
           Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminDiscoveryJobsControllerList<TData = Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError = unknown>(
- params: AdminDiscoveryJobsControllerListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminDiscoveryJobsControllerList<
+  TData = Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>,
+  TError = unknown,
+>(
+  params: AdminDiscoveryJobsControllerListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Trạng thái và lịch sử chạy của job tìm kiếm hoặc gợi ý
  */
 
-export function useAdminDiscoveryJobsControllerList<TData = Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError = unknown>(
- params: AdminDiscoveryJobsControllerListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useAdminDiscoveryJobsControllerList<
+  TData = Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>,
+  TError = unknown,
+>(
+  params: AdminDiscoveryJobsControllerListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerList>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminDiscoveryJobsControllerListQueryOptions(params, options);
 
-  const queryOptions = getAdminDiscoveryJobsControllerListQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-
-
-
-
-
 export type adminDiscoveryJobsControllerRunResponse202 = {
-  data: RunJobDto
-  status: 202
-}
+  data: RunJobDto;
+  status: 202;
+};
 
 export type adminDiscoveryJobsControllerRunResponse404 = {
-  data: void
-  status: 404
-}
-
-export type adminDiscoveryJobsControllerRunResponseSuccess = (adminDiscoveryJobsControllerRunResponse202) & {
-  headers: Headers;
-};
-export type adminDiscoveryJobsControllerRunResponseError = (adminDiscoveryJobsControllerRunResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type adminDiscoveryJobsControllerRunResponse = (adminDiscoveryJobsControllerRunResponseSuccess | adminDiscoveryJobsControllerRunResponseError)
+export type adminDiscoveryJobsControllerRunResponseSuccess = adminDiscoveryJobsControllerRunResponse202 & {
+  headers: Headers;
+};
+export type adminDiscoveryJobsControllerRunResponseError = adminDiscoveryJobsControllerRunResponse404 & {
+  headers: Headers;
+};
 
-export const getAdminDiscoveryJobsControllerRunUrl = (job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',) => {
+export type adminDiscoveryJobsControllerRunResponse =
+  adminDiscoveryJobsControllerRunResponseSuccess | adminDiscoveryJobsControllerRunResponseError;
 
-
-
-
-  return `/api/v1/admin/discovery/jobs/${job}/run`
-}
+export const getAdminDiscoveryJobsControllerRunUrl = (
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',
+) => {
+  return `/api/v1/admin/discovery/jobs/${job}/run`;
+};
 
 /**
  * @summary Chạy ngay một job (không chờ xong); theo dõi bằng GET
  */
-export const adminDiscoveryJobsControllerRun = async (job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge', options?: Parameters<typeof http>[1]): Promise<adminDiscoveryJobsControllerRunResponse> => {
-
-  return http<adminDiscoveryJobsControllerRunResponse>(getAdminDiscoveryJobsControllerRunUrl(job),
-  {
+export const adminDiscoveryJobsControllerRun = async (
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',
+  options?: Parameters<typeof http>[1],
+): Promise<adminDiscoveryJobsControllerRunResponse> => {
+  return http<adminDiscoveryJobsControllerRunResponse>(getAdminDiscoveryJobsControllerRunUrl(job), {
     ...options,
-    method: 'POST'
+    method: 'POST',
+  });
+};
 
+export const getAdminDiscoveryJobsControllerRunMutationKey = () =>
+  ['adminDiscoveryJobsControllerRun'] as const;
 
-  }
-);}
+export const getAdminDiscoveryJobsControllerRunMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerRun>>,
+    TError,
+    AdminDiscoveryJobsControllerRunMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerRun>>,
+  TError,
+  AdminDiscoveryJobsControllerRunMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminDiscoveryJobsControllerRunMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerRun>>,
+    AdminDiscoveryJobsControllerRunMutationVariables
+  > = (props) => {
+    const { job } = props ?? {};
 
+    return adminDiscoveryJobsControllerRun(job, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type AdminDiscoveryJobsControllerRunMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerRun>>
+>;
 
-export const getAdminDiscoveryJobsControllerRunMutationKey = () => ['adminDiscoveryJobsControllerRun'] as const;
+export type AdminDiscoveryJobsControllerRunMutationError = void;
+export type AdminDiscoveryJobsControllerRunMutationVariables = {
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge';
+};
 
-export const getAdminDiscoveryJobsControllerRunMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerRun>>, TError,AdminDiscoveryJobsControllerRunMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerRun>>, TError,AdminDiscoveryJobsControllerRunMutationVariables, TContext> => {
-
-const mutationKey = getAdminDiscoveryJobsControllerRunMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminDiscoveryJobsControllerRun>>, AdminDiscoveryJobsControllerRunMutationVariables> = (props) => {
-          const {job} = props ?? {};
-
-          return  adminDiscoveryJobsControllerRun(job,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type AdminDiscoveryJobsControllerRunMutationResult = NonNullable<Awaited<ReturnType<typeof adminDiscoveryJobsControllerRun>>>
-
-    export type AdminDiscoveryJobsControllerRunMutationError = void
-    export type AdminDiscoveryJobsControllerRunMutationVariables = {job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge'}
-
-    /**
+/**
  * @summary Chạy ngay một job (không chờ xong); theo dõi bằng GET
  */
-export const useAdminDiscoveryJobsControllerRun = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerRun>>, TError,AdminDiscoveryJobsControllerRunMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof adminDiscoveryJobsControllerRun>>,
-        TError,
-        AdminDiscoveryJobsControllerRunMutationVariables,
-        TContext
-      > => {
-      return useMutation(getAdminDiscoveryJobsControllerRunMutationOptions(options), queryClient);
-    }
-    export type adminDiscoveryJobsControllerSetIntervalResponse200 = {
-  data: JobIntervalDto
-  status: 200
-}
+export const useAdminDiscoveryJobsControllerRun = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminDiscoveryJobsControllerRun>>,
+      TError,
+      AdminDiscoveryJobsControllerRunMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerRun>>,
+  TError,
+  AdminDiscoveryJobsControllerRunMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminDiscoveryJobsControllerRunMutationOptions(options), queryClient);
+};
+export type adminDiscoveryJobsControllerSetIntervalResponse200 = {
+  data: JobIntervalDto;
+  status: 200;
+};
 
 export type adminDiscoveryJobsControllerSetIntervalResponse400 = {
-  data: void
-  status: 400
-}
+  data: void;
+  status: 400;
+};
 
 export type adminDiscoveryJobsControllerSetIntervalResponse404 = {
-  data: void
-  status: 404
-}
-
-export type adminDiscoveryJobsControllerSetIntervalResponseSuccess = (adminDiscoveryJobsControllerSetIntervalResponse200) & {
-  headers: Headers;
-};
-export type adminDiscoveryJobsControllerSetIntervalResponseError = (adminDiscoveryJobsControllerSetIntervalResponse400 | adminDiscoveryJobsControllerSetIntervalResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type adminDiscoveryJobsControllerSetIntervalResponse = (adminDiscoveryJobsControllerSetIntervalResponseSuccess | adminDiscoveryJobsControllerSetIntervalResponseError)
+export type adminDiscoveryJobsControllerSetIntervalResponseSuccess =
+  adminDiscoveryJobsControllerSetIntervalResponse200 & {
+    headers: Headers;
+  };
+export type adminDiscoveryJobsControllerSetIntervalResponseError = (
+  adminDiscoveryJobsControllerSetIntervalResponse400 | adminDiscoveryJobsControllerSetIntervalResponse404
+) & {
+  headers: Headers;
+};
 
-export const getAdminDiscoveryJobsControllerSetIntervalUrl = (job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',) => {
+export type adminDiscoveryJobsControllerSetIntervalResponse =
+  | adminDiscoveryJobsControllerSetIntervalResponseSuccess
+  | adminDiscoveryJobsControllerSetIntervalResponseError;
 
-
-
-
-  return `/api/v1/admin/discovery/jobs/${job}/interval`
-}
+export const getAdminDiscoveryJobsControllerSetIntervalUrl = (
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',
+) => {
+  return `/api/v1/admin/discovery/jobs/${job}/interval`;
+};
 
 /**
  * @summary Đổi chu kỳ tự chạy của job (explore, recommend_build); có hiệu lực trong vòng 1 phút, không cần khởi động lại
  */
-export const adminDiscoveryJobsControllerSetInterval = async (job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',
-    setJobIntervalRequestDto: SetJobIntervalRequestDto, options?: Parameters<typeof http>[1]): Promise<adminDiscoveryJobsControllerSetIntervalResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const adminDiscoveryJobsControllerSetInterval = async (
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',
+  setJobIntervalRequestDto: SetJobIntervalRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<adminDiscoveryJobsControllerSetIntervalResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -316,63 +372,85 @@ export const adminDiscoveryJobsControllerSetInterval = async (job: 'explore' | '
     }
     return headers;
   };
-return http<adminDiscoveryJobsControllerSetIntervalResponse>(getAdminDiscoveryJobsControllerSetIntervalUrl(job),
-  {
-    ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(setJobIntervalRequestDto)
-  }
-);}
+  return http<adminDiscoveryJobsControllerSetIntervalResponse>(
+    getAdminDiscoveryJobsControllerSetIntervalUrl(job),
+    {
+      ...options,
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+      body: JSON.stringify(setJobIntervalRequestDto),
+    },
+  );
+};
 
+export const getAdminDiscoveryJobsControllerSetIntervalMutationKey = () =>
+  ['adminDiscoveryJobsControllerSetInterval'] as const;
 
+export const getAdminDiscoveryJobsControllerSetIntervalMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>,
+    TError,
+    AdminDiscoveryJobsControllerSetIntervalMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>,
+  TError,
+  AdminDiscoveryJobsControllerSetIntervalMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminDiscoveryJobsControllerSetIntervalMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>,
+    AdminDiscoveryJobsControllerSetIntervalMutationVariables
+  > = (props) => {
+    const { job, data } = props ?? {};
 
+    return adminDiscoveryJobsControllerSetInterval(job, data, requestOptions);
+  };
 
-export const getAdminDiscoveryJobsControllerSetIntervalMutationKey = () => ['adminDiscoveryJobsControllerSetInterval'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getAdminDiscoveryJobsControllerSetIntervalMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>, TError,AdminDiscoveryJobsControllerSetIntervalMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>, TError,AdminDiscoveryJobsControllerSetIntervalMutationVariables, TContext> => {
+export type AdminDiscoveryJobsControllerSetIntervalMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>
+>;
+export type AdminDiscoveryJobsControllerSetIntervalMutationBody = SetJobIntervalRequestDto;
+export type AdminDiscoveryJobsControllerSetIntervalMutationError = void;
+export type AdminDiscoveryJobsControllerSetIntervalMutationVariables = {
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge';
+  data: SetJobIntervalRequestDto;
+};
 
-const mutationKey = getAdminDiscoveryJobsControllerSetIntervalMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>, AdminDiscoveryJobsControllerSetIntervalMutationVariables> = (props) => {
-          const {job,data} = props ?? {};
-
-          return  adminDiscoveryJobsControllerSetInterval(job,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type AdminDiscoveryJobsControllerSetIntervalMutationResult = NonNullable<Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>>
-    export type AdminDiscoveryJobsControllerSetIntervalMutationBody = SetJobIntervalRequestDto
-    export type AdminDiscoveryJobsControllerSetIntervalMutationError = void
-    export type AdminDiscoveryJobsControllerSetIntervalMutationVariables = {job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge';data: SetJobIntervalRequestDto}
-
-    /**
+/**
  * @summary Đổi chu kỳ tự chạy của job (explore, recommend_build); có hiệu lực trong vòng 1 phút, không cần khởi động lại
  */
-export const useAdminDiscoveryJobsControllerSetInterval = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>, TError,AdminDiscoveryJobsControllerSetIntervalMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>,
-        TError,
-        AdminDiscoveryJobsControllerSetIntervalMutationVariables,
-        TContext
-      > => {
-      return useMutation(getAdminDiscoveryJobsControllerSetIntervalMutationOptions(options), queryClient);
-    }
+export const useAdminDiscoveryJobsControllerSetInterval = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>,
+      TError,
+      AdminDiscoveryJobsControllerSetIntervalMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>,
+  TError,
+  AdminDiscoveryJobsControllerSetIntervalMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminDiscoveryJobsControllerSetIntervalMutationOptions(options), queryClient);
+};

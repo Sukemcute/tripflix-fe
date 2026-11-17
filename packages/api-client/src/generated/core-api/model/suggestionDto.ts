@@ -16,13 +16,13 @@ export interface SuggestionDto {
   /** Tên hiện ở dòng chính */
   name: string;
   /**
-     * Dòng phụ: tỉnh cha của điểm đến, nơi của khách sạn, "mã · nơi" của sân bay; tỉnh thì null
-     * @nullable
-     */
+   * Dòng phụ: tỉnh cha của điểm đến, nơi của khách sạn, "mã · nơi" của sân bay; tỉnh thì null
+   * @nullable
+   */
   subtitle: string | null;
   /**
-     * Địa điểm chứa dòng này
-     * @nullable
-     */
+   * Địa điểm chứa dòng này
+   * @nullable
+   */
   placeId: string | null;
 }

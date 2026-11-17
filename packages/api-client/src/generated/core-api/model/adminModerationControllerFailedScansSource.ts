@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerFailedScansSource = typeof AdminModerationControllerFailedScansSource[keyof typeof AdminModerationControllerFailedScansSource];
-
+export type AdminModerationControllerFailedScansSource =
+  (typeof AdminModerationControllerFailedScansSource)[keyof typeof AdminModerationControllerFailedScansSource];
 
 export const AdminModerationControllerFailedScansSource = {
   rule: 'rule',

@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type SocialPostDtoStatus = typeof SocialPostDtoStatus[keyof typeof SocialPostDtoStatus];
-
+export type SocialPostDtoStatus = (typeof SocialPostDtoStatus)[keyof typeof SocialPostDtoStatus];
 
 export const SocialPostDtoStatus = {
   draft: 'draft',

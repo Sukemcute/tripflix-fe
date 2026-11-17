@@ -15,8 +15,8 @@ export interface LoginDto {
   /** ID thử thách mã xác thực đăng nhập từ POST /auth/login-code */
   loginChallengeId?: string;
   /**
-     * Mã xác thực 8 chữ số gửi qua email
-     * @pattern ^[0-9]{8}$
-     */
+   * Mã xác thực 8 chữ số gửi qua email
+   * @pattern ^[0-9]{8}$
+   */
   code?: string;
 }

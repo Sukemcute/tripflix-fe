@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FeedVideoDtoLevelsItem = typeof FeedVideoDtoLevelsItem[keyof typeof FeedVideoDtoLevelsItem];
-
+export type FeedVideoDtoLevelsItem = (typeof FeedVideoDtoLevelsItem)[keyof typeof FeedVideoDtoLevelsItem];
 
 export const FeedVideoDtoLevelsItem = {
   NUMBER_360: 360,

@@ -8,8 +8,7 @@
 /**
  * Quyền riêng tư
  */
-export type CreatePostDtoVisibility = typeof CreatePostDtoVisibility[keyof typeof CreatePostDtoVisibility];
-
+export type CreatePostDtoVisibility = (typeof CreatePostDtoVisibility)[keyof typeof CreatePostDtoVisibility];
 
 export const CreatePostDtoVisibility = {
   public: 'public',

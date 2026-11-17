@@ -9,9 +9,9 @@ import type { TagCountDto } from './tagCountDto';
 
 export interface ReviewSummaryDto {
   /**
-     * Điểm trung bình đánh giá trên Tripflix
-     * @nullable
-     */
+   * Điểm trung bình đánh giá trên Tripflix
+   * @nullable
+   */
   average: number | null;
   count: number;
   /** Từ 5 sao xuống 1 sao */
@@ -19,8 +19,8 @@ export interface ReviewSummaryDto {
   /** Tag nhiều nhất trước, tối đa 10 */
   tags: TagCountDto[];
   /**
-     * Tóm tắt ý kiến khách
-     * @nullable
-     */
+   * Tóm tắt ý kiến khách
+   * @nullable
+   */
   aiSummary: string | null;
 }

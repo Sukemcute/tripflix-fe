@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CheckoutRefundDtoStatus = typeof CheckoutRefundDtoStatus[keyof typeof CheckoutRefundDtoStatus];
-
+export type CheckoutRefundDtoStatus = (typeof CheckoutRefundDtoStatus)[keyof typeof CheckoutRefundDtoStatus];
 
 export const CheckoutRefundDtoStatus = {
   refunded: 'refunded',

@@ -12,9 +12,9 @@ export interface ExploreUnderstoodDto {
   /** Vùng câu nhắm tới, theo thứ tự trong câu */
   intents: string[];
   /**
-     * Ngân sách (VND)
-     * @nullable
-     */
+   * Ngân sách (VND)
+   * @nullable
+   */
   budget: number | null;
   /** @nullable */
   days: number | null;

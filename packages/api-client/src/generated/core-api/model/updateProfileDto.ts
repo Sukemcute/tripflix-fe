@@ -10,20 +10,20 @@ export interface UpdateProfileDto {
   /** @maxLength 30 */
   displayName?: string;
   /**
-     * 8–15 chữ số, có thể bắt đầu bằng +; dấu cách, chấm, gạch được bỏ. null hoặc "" để xoá.
-     * @nullable
-     */
+   * 8–15 chữ số, có thể bắt đầu bằng +; dấu cách, chấm, gạch được bỏ. null hoặc "" để xoá.
+   * @nullable
+   */
   phone?: string | null;
   /**
-     * Tuổi 13–120
-     * @nullable
-     */
+   * Tuổi 13–120
+   * @nullable
+   */
   dateOfBirth?: string | null;
   /** @nullable */
   gender?: UpdateProfileDtoGender;
   /**
-     * ISO 3166-1 alpha-2
-     * @nullable
-     */
+   * ISO 3166-1 alpha-2
+   * @nullable
+   */
   nationality?: string | null;
 }

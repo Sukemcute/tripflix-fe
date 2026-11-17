@@ -8,9 +8,9 @@
 export interface FlightCalendarDayDto {
   date: string;
   /**
-     * Giá một vé rẻ nhất ngày đó trên tuyến (VND)
-     * @nullable
-     */
+   * Giá một vé rẻ nhất ngày đó trên tuyến (VND)
+   * @nullable
+   */
   priceFrom: number | null;
   isAvailable: boolean;
 }

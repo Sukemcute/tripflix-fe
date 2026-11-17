@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type SocialPostDtoVisibility = typeof SocialPostDtoVisibility[keyof typeof SocialPostDtoVisibility];
-
+export type SocialPostDtoVisibility = (typeof SocialPostDtoVisibility)[keyof typeof SocialPostDtoVisibility];
 
 export const SocialPostDtoVisibility = {
   public: 'public',

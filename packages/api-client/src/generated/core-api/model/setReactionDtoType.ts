@@ -9,8 +9,7 @@
  * Loại cảm xúc hoặc null để hủy cảm xúc
  * @nullable
  */
-export type SetReactionDtoType = typeof SetReactionDtoType[keyof typeof SetReactionDtoType] | null;
-
+export type SetReactionDtoType = (typeof SetReactionDtoType)[keyof typeof SetReactionDtoType] | null;
 
 export const SetReactionDtoType = {
   like: 'like',

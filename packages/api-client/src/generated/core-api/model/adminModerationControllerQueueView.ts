@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerQueueView = typeof AdminModerationControllerQueueView[keyof typeof AdminModerationControllerQueueView];
-
+export type AdminModerationControllerQueueView =
+  (typeof AdminModerationControllerQueueView)[keyof typeof AdminModerationControllerQueueView];
 
 export const AdminModerationControllerQueueView = {
   pending: 'pending',

@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type BookmarksControllerListMyBookmarksPostType = typeof BookmarksControllerListMyBookmarksPostType[keyof typeof BookmarksControllerListMyBookmarksPostType];
-
+export type BookmarksControllerListMyBookmarksPostType =
+  (typeof BookmarksControllerListMyBookmarksPostType)[keyof typeof BookmarksControllerListMyBookmarksPostType];
 
 export const BookmarksControllerListMyBookmarksPostType = {
   vlog: 'vlog',

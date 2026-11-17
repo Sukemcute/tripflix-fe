@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type PostRecommendationsControllerRecommendPostsMode = typeof PostRecommendationsControllerRecommendPostsMode[keyof typeof PostRecommendationsControllerRecommendPostsMode];
-
+export type PostRecommendationsControllerRecommendPostsMode =
+  (typeof PostRecommendationsControllerRecommendPostsMode)[keyof typeof PostRecommendationsControllerRecommendPostsMode];
 
 export const PostRecommendationsControllerRecommendPostsMode = {
   for_you: 'for_you',

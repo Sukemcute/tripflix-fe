@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerAppealsReasonCode = typeof AdminModerationControllerAppealsReasonCode[keyof typeof AdminModerationControllerAppealsReasonCode];
-
+export type AdminModerationControllerAppealsReasonCode =
+  (typeof AdminModerationControllerAppealsReasonCode)[keyof typeof AdminModerationControllerAppealsReasonCode];
 
 export const AdminModerationControllerAppealsReasonCode = {
   SPAM_OR_COMMERCIAL: 'SPAM_OR_COMMERCIAL',

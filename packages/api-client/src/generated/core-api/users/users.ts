@@ -4,9 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useQuery
-} from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -16,20 +14,14 @@ import type {
   QueryKey,
   UndefinedInitialDataOptions,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
-import type {
-  UserSearchControllerSearchParams,
-  UserSearchResponseDto
-} from '../model';
+import type { UserSearchControllerSearchParams, UserSearchResponseDto } from '../model';
 
 import { http } from '../../../http';
 
-
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -47,122 +39,148 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type userSearchControllerSearchResponse200 = {
-  data: UserSearchResponseDto
-  status: 200
-}
+  data: UserSearchResponseDto;
+  status: 200;
+};
 
 export type userSearchControllerSearchResponse429 = {
-  data: void
-  status: 429
-}
-
-export type userSearchControllerSearchResponseSuccess = (userSearchControllerSearchResponse200) & {
-  headers: Headers;
-};
-export type userSearchControllerSearchResponseError = (userSearchControllerSearchResponse429) & {
-  headers: Headers;
+  data: void;
+  status: 429;
 };
 
-export type userSearchControllerSearchResponse = (userSearchControllerSearchResponseSuccess | userSearchControllerSearchResponseError)
+export type userSearchControllerSearchResponseSuccess = userSearchControllerSearchResponse200 & {
+  headers: Headers;
+};
+export type userSearchControllerSearchResponseError = userSearchControllerSearchResponse429 & {
+  headers: Headers;
+};
 
-export const getUserSearchControllerSearchUrl = (params: UserSearchControllerSearchParams,) => {
+export type userSearchControllerSearchResponse =
+  userSearchControllerSearchResponseSuccess | userSearchControllerSearchResponseError;
+
+export const getUserSearchControllerSearchUrl = (params: UserSearchControllerSearchParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/v1/users/search?${stringifiedParams}` : `/api/v1/users/search`
-}
+  return stringifiedParams.length > 0 ? `/api/v1/users/search?${stringifiedParams}` : `/api/v1/users/search`;
+};
 
-export const userSearchControllerSearch = async (params: UserSearchControllerSearchParams, options?: Parameters<typeof http>[1]): Promise<userSearchControllerSearchResponse> => {
-
-  return http<userSearchControllerSearchResponse>(getUserSearchControllerSearchUrl(params),
-  {
+export const userSearchControllerSearch = async (
+  params: UserSearchControllerSearchParams,
+  options?: Parameters<typeof http>[1],
+): Promise<userSearchControllerSearchResponse> => {
+  return http<userSearchControllerSearchResponse>(getUserSearchControllerSearchUrl(params), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
+export const getUserSearchControllerSearchQueryKey = (params?: UserSearchControllerSearchParams) => {
+  return [`/api/v1/users/search`, ...(params ? [params] : [])] as const;
+};
 
-  }
-);}
-
-
-
-
-
-export const getUserSearchControllerSearchQueryKey = (params?: UserSearchControllerSearchParams,) => {
-    return [
-    `/api/v1/users/search`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getUserSearchControllerSearchQueryOptions = <TData = Awaited<ReturnType<typeof userSearchControllerSearch>>, TError = void>(params: UserSearchControllerSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerSearch>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getUserSearchControllerSearchQueryOptions = <
+  TData = Awaited<ReturnType<typeof userSearchControllerSearch>>,
+  TError = void,
+>(
+  params: UserSearchControllerSearchParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerSearch>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getUserSearchControllerSearchQueryKey(params);
 
-  const queryKey =  queryOptions?.queryKey ?? getUserSearchControllerSearchQueryKey(params);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof userSearchControllerSearch>>> = ({ signal }) =>
+    userSearchControllerSearch(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof userSearchControllerSearch>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type UserSearchControllerSearchQueryResult = NonNullable<
+  Awaited<ReturnType<typeof userSearchControllerSearch>>
+>;
+export type UserSearchControllerSearchQueryError = void;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof userSearchControllerSearch>>> = ({ signal }) => userSearchControllerSearch(params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerSearch>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type UserSearchControllerSearchQueryResult = NonNullable<Awaited<ReturnType<typeof userSearchControllerSearch>>>
-export type UserSearchControllerSearchQueryError = void
-
-
-export function useUserSearchControllerSearch<TData = Awaited<ReturnType<typeof userSearchControllerSearch>>, TError = void>(
- params: UserSearchControllerSearchParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerSearch>>, TError, TData>> & Pick<
+export function useUserSearchControllerSearch<
+  TData = Awaited<ReturnType<typeof userSearchControllerSearch>>,
+  TError = void,
+>(
+  params: UserSearchControllerSearchParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerSearch>>, TError, TData>> &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof userSearchControllerSearch>>,
           TError,
           Awaited<ReturnType<typeof userSearchControllerSearch>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useUserSearchControllerSearch<TData = Awaited<ReturnType<typeof userSearchControllerSearch>>, TError = void>(
- params: UserSearchControllerSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerSearch>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useUserSearchControllerSearch<
+  TData = Awaited<ReturnType<typeof userSearchControllerSearch>>,
+  TError = void,
+>(
+  params: UserSearchControllerSearchParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerSearch>>, TError, TData>> &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof userSearchControllerSearch>>,
           TError,
           Awaited<ReturnType<typeof userSearchControllerSearch>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useUserSearchControllerSearch<TData = Awaited<ReturnType<typeof userSearchControllerSearch>>, TError = void>(
- params: UserSearchControllerSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerSearch>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useUserSearchControllerSearch<
+  TData = Awaited<ReturnType<typeof userSearchControllerSearch>>,
+  TError = void,
+>(
+  params: UserSearchControllerSearchParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerSearch>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-export function useUserSearchControllerSearch<TData = Awaited<ReturnType<typeof userSearchControllerSearch>>, TError = void>(
- params: UserSearchControllerSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerSearch>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useUserSearchControllerSearch<
+  TData = Awaited<ReturnType<typeof userSearchControllerSearch>>,
+  TError = void,
+>(
+  params: UserSearchControllerSearchParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerSearch>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getUserSearchControllerSearchQueryOptions(params, options);
 
-  const queryOptions = getUserSearchControllerSearchQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
-

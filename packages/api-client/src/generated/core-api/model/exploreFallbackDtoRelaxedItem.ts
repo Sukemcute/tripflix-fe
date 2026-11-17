@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ExploreFallbackDtoRelaxedItem = typeof ExploreFallbackDtoRelaxedItem[keyof typeof ExploreFallbackDtoRelaxedItem];
-
+export type ExploreFallbackDtoRelaxedItem =
+  (typeof ExploreFallbackDtoRelaxedItem)[keyof typeof ExploreFallbackDtoRelaxedItem];
 
 export const ExploreFallbackDtoRelaxedItem = {
   place: 'place',

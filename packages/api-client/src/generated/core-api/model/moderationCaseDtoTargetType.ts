@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ModerationCaseDtoTargetType = typeof ModerationCaseDtoTargetType[keyof typeof ModerationCaseDtoTargetType];
-
+export type ModerationCaseDtoTargetType =
+  (typeof ModerationCaseDtoTargetType)[keyof typeof ModerationCaseDtoTargetType];
 
 export const ModerationCaseDtoTargetType = {
   post: 'post',

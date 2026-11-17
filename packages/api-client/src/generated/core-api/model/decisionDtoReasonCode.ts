@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type DecisionDtoReasonCode = typeof DecisionDtoReasonCode[keyof typeof DecisionDtoReasonCode];
-
+export type DecisionDtoReasonCode = (typeof DecisionDtoReasonCode)[keyof typeof DecisionDtoReasonCode];
 
 export const DecisionDtoReasonCode = {
   SPAM_OR_COMMERCIAL: 'SPAM_OR_COMMERCIAL',

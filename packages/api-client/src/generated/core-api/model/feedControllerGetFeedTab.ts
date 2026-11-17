@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FeedControllerGetFeedTab = typeof FeedControllerGetFeedTab[keyof typeof FeedControllerGetFeedTab];
-
+export type FeedControllerGetFeedTab =
+  (typeof FeedControllerGetFeedTab)[keyof typeof FeedControllerGetFeedTab];
 
 export const FeedControllerGetFeedTab = {
   for_you: 'for_you',

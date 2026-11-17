@@ -7,10 +7,10 @@
 
 export interface SetJobIntervalRequestDto {
   /**
-     * Chu kỳ mới (ms), 1 phút đến 24 giờ; null = về mặc định
-     * @minimum 60000
-     * @maximum 86400000
-     * @nullable
-     */
+   * Chu kỳ mới (ms), 1 phút đến 24 giờ; null = về mặc định
+   * @minimum 60000
+   * @maximum 86400000
+   * @nullable
+   */
   intervalMs: number | null;
 }

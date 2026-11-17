@@ -9,8 +9,8 @@ import type { FeedCardDto } from './feedCardDto';
 export interface FeedPageDto {
   items: FeedCardDto[];
   /**
-     * null nghĩa là hết bài
-     * @nullable
-     */
+   * null nghĩa là hết bài
+   * @nullable
+   */
   nextCursor: string | null;
 }

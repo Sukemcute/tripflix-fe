@@ -11,10 +11,10 @@ export interface RegisterDto {
   /** Mật khẩu đã mã hoá bằng khoá của GET /auth/password-key, dạng "#TFPWD:1:<keyId>:<ts>:<dữ liệu>". Gửi trường này thay cho trường mật khẩu thường tương ứng, không gửi cả hai. */
   encPassword?: string;
   /**
-     * Cách cũ, gửi mật khẩu gốc. Bị từ chối khi server bật AUTH_PASSWORD_ENCRYPTION_REQUIRED.
-     * @minLength 12
-     * @maxLength 64
-     */
+   * Cách cũ, gửi mật khẩu gốc. Bị từ chối khi server bật AUTH_PASSWORD_ENCRYPTION_REQUIRED.
+   * @minLength 12
+   * @maxLength 64
+   */
   password?: string;
   /** @maxLength 30 */
   displayName: string;
@@ -24,10 +24,10 @@ export interface RegisterDto {
   dateOfBirth: string;
   gender: RegisterDtoGender;
   /**
-     * Mã quốc gia ISO 3166-1 alpha-2
-     * @minLength 2
-     * @maxLength 2
-     */
+   * Mã quốc gia ISO 3166-1 alpha-2
+   * @minLength 2
+   * @maxLength 2
+   */
   nationality: string;
   /** Đã đọc và đồng ý Điều khoản sử dụng, Chính sách bảo mật */
   acceptTerms: true;

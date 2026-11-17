@@ -18,8 +18,8 @@ export interface SampleCommentItemDto {
   likeCount: number;
   createdAt: string;
   /**
-     * Thời điểm chỉnh sửa bình luận (null nếu chưa từng sửa)
-     * @nullable
-     */
+   * Thời điểm chỉnh sửa bình luận (null nếu chưa từng sửa)
+   * @nullable
+   */
   editedAt?: string | null;
 }

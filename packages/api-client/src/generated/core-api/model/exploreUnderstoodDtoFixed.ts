@@ -8,4 +8,4 @@
 /**
  * Từ đã sửa lỗi gõ
  */
-export type ExploreUnderstoodDtoFixed = {[key: string]: string};
+export type ExploreUnderstoodDtoFixed = { [key: string]: string };

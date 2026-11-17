@@ -4,10 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -20,7 +17,7 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
 import type {
@@ -34,15 +31,12 @@ import type {
   SocialCommentDto,
   SocialCommentPageDto,
   UpdateCommentDto,
-  UpdatedCommentReactionDto
+  UpdatedCommentReactionDto,
 } from '../model';
 
 import { http } from '../../../http';
 
-
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -60,39 +54,40 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type commentsControllerCreateCommentResponse201 = {
-  data: SocialCommentDto
-  status: 201
-}
+  data: SocialCommentDto;
+  status: 201;
+};
 
 export type commentsControllerCreateCommentResponse403 = {
-  data: void
-  status: 403
-}
-
-export type commentsControllerCreateCommentResponseSuccess = (commentsControllerCreateCommentResponse201) & {
-  headers: Headers;
-};
-export type commentsControllerCreateCommentResponseError = (commentsControllerCreateCommentResponse403) & {
-  headers: Headers;
+  data: void;
+  status: 403;
 };
 
-export type commentsControllerCreateCommentResponse = (commentsControllerCreateCommentResponseSuccess | commentsControllerCreateCommentResponseError)
+export type commentsControllerCreateCommentResponseSuccess = commentsControllerCreateCommentResponse201 & {
+  headers: Headers;
+};
+export type commentsControllerCreateCommentResponseError = commentsControllerCreateCommentResponse403 & {
+  headers: Headers;
+};
 
-export const getCommentsControllerCreateCommentUrl = (postId: string,) => {
+export type commentsControllerCreateCommentResponse =
+  commentsControllerCreateCommentResponseSuccess | commentsControllerCreateCommentResponseError;
 
-
-
-
-  return `/api/v1/posts/${postId}/comments`
-}
+export const getCommentsControllerCreateCommentUrl = (postId: string) => {
+  return `/api/v1/posts/${postId}/comments`;
+};
 
 /**
  * @summary Tạo bình luận mới trên bài đăng (FR11)
  */
-export const commentsControllerCreateComment = async (postId: string,
-    createCommentDto: CreateCommentDto, options?: Parameters<typeof http>[1]): Promise<commentsControllerCreateCommentResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const commentsControllerCreateComment = async (
+  postId: string,
+  createCommentDto: CreateCommentDto,
+  options?: Parameters<typeof http>[1],
+): Promise<commentsControllerCreateCommentResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -106,220 +101,279 @@ export const commentsControllerCreateComment = async (postId: string,
     }
     return headers;
   };
-return http<commentsControllerCreateCommentResponse>(getCommentsControllerCreateCommentUrl(postId),
-  {
+  return http<commentsControllerCreateCommentResponse>(getCommentsControllerCreateCommentUrl(postId), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(createCommentDto)
-  }
-);}
+    body: JSON.stringify(createCommentDto),
+  });
+};
 
+export const getCommentsControllerCreateCommentMutationKey = () =>
+  ['commentsControllerCreateComment'] as const;
 
+export const getCommentsControllerCreateCommentMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof commentsControllerCreateComment>>,
+    TError,
+    CommentsControllerCreateCommentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof commentsControllerCreateComment>>,
+  TError,
+  CommentsControllerCreateCommentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCommentsControllerCreateCommentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof commentsControllerCreateComment>>,
+    CommentsControllerCreateCommentMutationVariables
+  > = (props) => {
+    const { postId, data } = props ?? {};
 
+    return commentsControllerCreateComment(postId, data, requestOptions);
+  };
 
-export const getCommentsControllerCreateCommentMutationKey = () => ['commentsControllerCreateComment'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getCommentsControllerCreateCommentMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsControllerCreateComment>>, TError,CommentsControllerCreateCommentMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof commentsControllerCreateComment>>, TError,CommentsControllerCreateCommentMutationVariables, TContext> => {
+export type CommentsControllerCreateCommentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof commentsControllerCreateComment>>
+>;
+export type CommentsControllerCreateCommentMutationBody = CreateCommentDto;
+export type CommentsControllerCreateCommentMutationError = void;
+export type CommentsControllerCreateCommentMutationVariables = { postId: string; data: CreateCommentDto };
 
-const mutationKey = getCommentsControllerCreateCommentMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof commentsControllerCreateComment>>, CommentsControllerCreateCommentMutationVariables> = (props) => {
-          const {postId,data} = props ?? {};
-
-          return  commentsControllerCreateComment(postId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CommentsControllerCreateCommentMutationResult = NonNullable<Awaited<ReturnType<typeof commentsControllerCreateComment>>>
-    export type CommentsControllerCreateCommentMutationBody = CreateCommentDto
-    export type CommentsControllerCreateCommentMutationError = void
-    export type CommentsControllerCreateCommentMutationVariables = {postId: string;data: CreateCommentDto}
-
-    /**
+/**
  * @summary Tạo bình luận mới trên bài đăng (FR11)
  */
-export const useCommentsControllerCreateComment = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsControllerCreateComment>>, TError,CommentsControllerCreateCommentMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof commentsControllerCreateComment>>,
-        TError,
-        CommentsControllerCreateCommentMutationVariables,
-        TContext
-      > => {
-      return useMutation(getCommentsControllerCreateCommentMutationOptions(options), queryClient);
-    }
-    export type commentsControllerListCommentsResponse200 = {
-  data: SocialCommentPageDto
-  status: 200
-}
+export const useCommentsControllerCreateComment = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof commentsControllerCreateComment>>,
+      TError,
+      CommentsControllerCreateCommentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof commentsControllerCreateComment>>,
+  TError,
+  CommentsControllerCreateCommentMutationVariables,
+  TContext
+> => {
+  return useMutation(getCommentsControllerCreateCommentMutationOptions(options), queryClient);
+};
+export type commentsControllerListCommentsResponse200 = {
+  data: SocialCommentPageDto;
+  status: 200;
+};
 
-export type commentsControllerListCommentsResponseSuccess = (commentsControllerListCommentsResponse200) & {
+export type commentsControllerListCommentsResponseSuccess = commentsControllerListCommentsResponse200 & {
   headers: Headers;
 };
-;
+export type commentsControllerListCommentsResponse = commentsControllerListCommentsResponseSuccess;
 
-export type commentsControllerListCommentsResponse = (commentsControllerListCommentsResponseSuccess)
-
-export const getCommentsControllerListCommentsUrl = (postId: string,
-    params?: CommentsControllerListCommentsParams,) => {
+export const getCommentsControllerListCommentsUrl = (
+  postId: string,
+  params?: CommentsControllerListCommentsParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/v1/posts/${postId}/comments?${stringifiedParams}` : `/api/v1/posts/${postId}/comments`
-}
+  return stringifiedParams.length > 0
+    ? `/api/v1/posts/${postId}/comments?${stringifiedParams}`
+    : `/api/v1/posts/${postId}/comments`;
+};
 
 /**
  * @summary Lấy danh sách bình luận của bài đăng (FR11)
  */
-export const commentsControllerListComments = async (postId: string,
-    params?: CommentsControllerListCommentsParams, options?: Parameters<typeof http>[1]): Promise<commentsControllerListCommentsResponse> => {
-
-  return http<commentsControllerListCommentsResponse>(getCommentsControllerListCommentsUrl(postId,params),
-  {
+export const commentsControllerListComments = async (
+  postId: string,
+  params?: CommentsControllerListCommentsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<commentsControllerListCommentsResponse> => {
+  return http<commentsControllerListCommentsResponse>(getCommentsControllerListCommentsUrl(postId, params), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
-
-  }
-);}
-
-
-
-
-
-export const getCommentsControllerListCommentsQueryKey = (postId: string,
-    params?: CommentsControllerListCommentsParams,) => {
-    return [
-    `/api/v1/posts/${postId}/comments`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getCommentsControllerListCommentsQueryOptions = <TData = Awaited<ReturnType<typeof commentsControllerListComments>>, TError = unknown>(postId: string,
-    params?: CommentsControllerListCommentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerListComments>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getCommentsControllerListCommentsQueryKey = (
+  postId: string,
+  params?: CommentsControllerListCommentsParams,
 ) => {
+  return [`/api/v1/posts/${postId}/comments`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getCommentsControllerListCommentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof commentsControllerListComments>>,
+  TError = unknown,
+>(
+  postId: string,
+  params?: CommentsControllerListCommentsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerListComments>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getCommentsControllerListCommentsQueryKey(postId,params);
+  const queryKey = queryOptions?.queryKey ?? getCommentsControllerListCommentsQueryKey(postId, params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof commentsControllerListComments>>> = ({ signal }) =>
+    commentsControllerListComments(postId, params, { signal, ...requestOptions });
 
+  return {
+    queryKey,
+    queryFn,
+    enabled: postId !== null && postId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof commentsControllerListComments>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof commentsControllerListComments>>> = ({ signal }) => commentsControllerListComments(postId,params, { signal, ...requestOptions });
+export type CommentsControllerListCommentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof commentsControllerListComments>>
+>;
+export type CommentsControllerListCommentsQueryError = unknown;
 
-
-
-
-
-   return  { queryKey, queryFn, enabled: postId !== null && postId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof commentsControllerListComments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CommentsControllerListCommentsQueryResult = NonNullable<Awaited<ReturnType<typeof commentsControllerListComments>>>
-export type CommentsControllerListCommentsQueryError = unknown
-
-
-export function useCommentsControllerListComments<TData = Awaited<ReturnType<typeof commentsControllerListComments>>, TError = unknown>(
- postId: string,
-    params: undefined |  CommentsControllerListCommentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerListComments>>, TError, TData>> & Pick<
+export function useCommentsControllerListComments<
+  TData = Awaited<ReturnType<typeof commentsControllerListComments>>,
+  TError = unknown,
+>(
+  postId: string,
+  params: undefined | CommentsControllerListCommentsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerListComments>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof commentsControllerListComments>>,
           TError,
           Awaited<ReturnType<typeof commentsControllerListComments>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCommentsControllerListComments<TData = Awaited<ReturnType<typeof commentsControllerListComments>>, TError = unknown>(
- postId: string,
-    params?: CommentsControllerListCommentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerListComments>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCommentsControllerListComments<
+  TData = Awaited<ReturnType<typeof commentsControllerListComments>>,
+  TError = unknown,
+>(
+  postId: string,
+  params?: CommentsControllerListCommentsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerListComments>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof commentsControllerListComments>>,
           TError,
           Awaited<ReturnType<typeof commentsControllerListComments>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCommentsControllerListComments<TData = Awaited<ReturnType<typeof commentsControllerListComments>>, TError = unknown>(
- postId: string,
-    params?: CommentsControllerListCommentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerListComments>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCommentsControllerListComments<
+  TData = Awaited<ReturnType<typeof commentsControllerListComments>>,
+  TError = unknown,
+>(
+  postId: string,
+  params?: CommentsControllerListCommentsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerListComments>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Lấy danh sách bình luận của bài đăng (FR11)
  */
 
-export function useCommentsControllerListComments<TData = Awaited<ReturnType<typeof commentsControllerListComments>>, TError = unknown>(
- postId: string,
-    params?: CommentsControllerListCommentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerListComments>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useCommentsControllerListComments<
+  TData = Awaited<ReturnType<typeof commentsControllerListComments>>,
+  TError = unknown,
+>(
+  postId: string,
+  params?: CommentsControllerListCommentsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerListComments>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getCommentsControllerListCommentsQueryOptions(postId, params, options);
 
-  const queryOptions = getCommentsControllerListCommentsQueryOptions(postId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-
-
-
-
-
 export type commentsControllerSetCommentReactionResponse200 = {
-  data: UpdatedCommentReactionDto
-  status: 200
-}
-
-export type commentsControllerSetCommentReactionResponseSuccess = (commentsControllerSetCommentReactionResponse200) & {
-  headers: Headers;
+  data: UpdatedCommentReactionDto;
+  status: 200;
 };
-;
 
-export type commentsControllerSetCommentReactionResponse = (commentsControllerSetCommentReactionResponseSuccess)
+export type commentsControllerSetCommentReactionResponseSuccess =
+  commentsControllerSetCommentReactionResponse200 & {
+    headers: Headers;
+  };
+export type commentsControllerSetCommentReactionResponse =
+  commentsControllerSetCommentReactionResponseSuccess;
 
-export const getCommentsControllerSetCommentReactionUrl = (commentId: string,) => {
-
-
-
-
-  return `/api/v1/comments/${commentId}/reaction`
-}
+export const getCommentsControllerSetCommentReactionUrl = (commentId: string) => {
+  return `/api/v1/comments/${commentId}/reaction`;
+};
 
 /**
  * @summary Thả tim hoặc hủy thả tim cho bình luận (FR11 - Idempotent)
  */
-export const commentsControllerSetCommentReaction = async (commentId: string,
-    setCommentReactionDto: SetCommentReactionDto, options?: Parameters<typeof http>[1]): Promise<commentsControllerSetCommentReactionResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const commentsControllerSetCommentReaction = async (
+  commentId: string,
+  setCommentReactionDto: SetCommentReactionDto,
+  options?: Parameters<typeof http>[1],
+): Promise<commentsControllerSetCommentReactionResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -333,93 +387,113 @@ export const commentsControllerSetCommentReaction = async (commentId: string,
     }
     return headers;
   };
-return http<commentsControllerSetCommentReactionResponse>(getCommentsControllerSetCommentReactionUrl(commentId),
-  {
-    ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(setCommentReactionDto)
-  }
-);}
+  return http<commentsControllerSetCommentReactionResponse>(
+    getCommentsControllerSetCommentReactionUrl(commentId),
+    {
+      ...options,
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+      body: JSON.stringify(setCommentReactionDto),
+    },
+  );
+};
 
+export const getCommentsControllerSetCommentReactionMutationKey = () =>
+  ['commentsControllerSetCommentReaction'] as const;
 
+export const getCommentsControllerSetCommentReactionMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>,
+    TError,
+    CommentsControllerSetCommentReactionMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>,
+  TError,
+  CommentsControllerSetCommentReactionMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCommentsControllerSetCommentReactionMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>,
+    CommentsControllerSetCommentReactionMutationVariables
+  > = (props) => {
+    const { commentId, data } = props ?? {};
 
+    return commentsControllerSetCommentReaction(commentId, data, requestOptions);
+  };
 
-export const getCommentsControllerSetCommentReactionMutationKey = () => ['commentsControllerSetCommentReaction'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getCommentsControllerSetCommentReactionMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>, TError,CommentsControllerSetCommentReactionMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>, TError,CommentsControllerSetCommentReactionMutationVariables, TContext> => {
+export type CommentsControllerSetCommentReactionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>
+>;
+export type CommentsControllerSetCommentReactionMutationBody = SetCommentReactionDto;
+export type CommentsControllerSetCommentReactionMutationError = unknown;
+export type CommentsControllerSetCommentReactionMutationVariables = {
+  commentId: string;
+  data: SetCommentReactionDto;
+};
 
-const mutationKey = getCommentsControllerSetCommentReactionMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>, CommentsControllerSetCommentReactionMutationVariables> = (props) => {
-          const {commentId,data} = props ?? {};
-
-          return  commentsControllerSetCommentReaction(commentId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CommentsControllerSetCommentReactionMutationResult = NonNullable<Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>>
-    export type CommentsControllerSetCommentReactionMutationBody = SetCommentReactionDto
-    export type CommentsControllerSetCommentReactionMutationError = unknown
-    export type CommentsControllerSetCommentReactionMutationVariables = {commentId: string;data: SetCommentReactionDto}
-
-    /**
+/**
  * @summary Thả tim hoặc hủy thả tim cho bình luận (FR11 - Idempotent)
  */
-export const useCommentsControllerSetCommentReaction = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>, TError,CommentsControllerSetCommentReactionMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>,
-        TError,
-        CommentsControllerSetCommentReactionMutationVariables,
-        TContext
-      > => {
-      return useMutation(getCommentsControllerSetCommentReactionMutationOptions(options), queryClient);
-    }
-    export type commentsControllerEditCommentResponse200 = {
-  data: SocialCommentDto
-  status: 200
-}
+export const useCommentsControllerSetCommentReaction = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>,
+      TError,
+      CommentsControllerSetCommentReactionMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof commentsControllerSetCommentReaction>>,
+  TError,
+  CommentsControllerSetCommentReactionMutationVariables,
+  TContext
+> => {
+  return useMutation(getCommentsControllerSetCommentReactionMutationOptions(options), queryClient);
+};
+export type commentsControllerEditCommentResponse200 = {
+  data: SocialCommentDto;
+  status: 200;
+};
 
-export type commentsControllerEditCommentResponseSuccess = (commentsControllerEditCommentResponse200) & {
+export type commentsControllerEditCommentResponseSuccess = commentsControllerEditCommentResponse200 & {
   headers: Headers;
 };
-;
+export type commentsControllerEditCommentResponse = commentsControllerEditCommentResponseSuccess;
 
-export type commentsControllerEditCommentResponse = (commentsControllerEditCommentResponseSuccess)
-
-export const getCommentsControllerEditCommentUrl = (commentId: string,) => {
-
-
-
-
-  return `/api/v1/comments/${commentId}`
-}
+export const getCommentsControllerEditCommentUrl = (commentId: string) => {
+  return `/api/v1/comments/${commentId}`;
+};
 
 /**
  * @summary Chỉnh sửa bình luận của mình (FR11)
  */
-export const commentsControllerEditComment = async (commentId: string,
-    updateCommentDto: UpdateCommentDto, options?: Parameters<typeof http>[1]): Promise<commentsControllerEditCommentResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const commentsControllerEditComment = async (
+  commentId: string,
+  updateCommentDto: UpdateCommentDto,
+  options?: Parameters<typeof http>[1],
+): Promise<commentsControllerEditCommentResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -433,423 +507,543 @@ export const commentsControllerEditComment = async (commentId: string,
     }
     return headers;
   };
-return http<commentsControllerEditCommentResponse>(getCommentsControllerEditCommentUrl(commentId),
-  {
+  return http<commentsControllerEditCommentResponse>(getCommentsControllerEditCommentUrl(commentId), {
     ...options,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(updateCommentDto)
-  }
-);}
-
-
-
-
+    body: JSON.stringify(updateCommentDto),
+  });
+};
 
 export const getCommentsControllerEditCommentMutationKey = () => ['commentsControllerEditComment'] as const;
 
-export const getCommentsControllerEditCommentMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsControllerEditComment>>, TError,CommentsControllerEditCommentMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof commentsControllerEditComment>>, TError,CommentsControllerEditCommentMutationVariables, TContext> => {
+export const getCommentsControllerEditCommentMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof commentsControllerEditComment>>,
+    TError,
+    CommentsControllerEditCommentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof commentsControllerEditComment>>,
+  TError,
+  CommentsControllerEditCommentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCommentsControllerEditCommentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-const mutationKey = getCommentsControllerEditCommentMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof commentsControllerEditComment>>,
+    CommentsControllerEditCommentMutationVariables
+  > = (props) => {
+    const { commentId, data } = props ?? {};
 
+    return commentsControllerEditComment(commentId, data, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type CommentsControllerEditCommentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof commentsControllerEditComment>>
+>;
+export type CommentsControllerEditCommentMutationBody = UpdateCommentDto;
+export type CommentsControllerEditCommentMutationError = unknown;
+export type CommentsControllerEditCommentMutationVariables = { commentId: string; data: UpdateCommentDto };
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof commentsControllerEditComment>>, CommentsControllerEditCommentMutationVariables> = (props) => {
-          const {commentId,data} = props ?? {};
-
-          return  commentsControllerEditComment(commentId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CommentsControllerEditCommentMutationResult = NonNullable<Awaited<ReturnType<typeof commentsControllerEditComment>>>
-    export type CommentsControllerEditCommentMutationBody = UpdateCommentDto
-    export type CommentsControllerEditCommentMutationError = unknown
-    export type CommentsControllerEditCommentMutationVariables = {commentId: string;data: UpdateCommentDto}
-
-    /**
+/**
  * @summary Chỉnh sửa bình luận của mình (FR11)
  */
-export const useCommentsControllerEditComment = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsControllerEditComment>>, TError,CommentsControllerEditCommentMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof commentsControllerEditComment>>,
-        TError,
-        CommentsControllerEditCommentMutationVariables,
-        TContext
-      > => {
-      return useMutation(getCommentsControllerEditCommentMutationOptions(options), queryClient);
-    }
-    export type commentsControllerDeleteCommentResponse200 = {
-  data: DeletedSocialItemDto
-  status: 200
-}
+export const useCommentsControllerEditComment = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof commentsControllerEditComment>>,
+      TError,
+      CommentsControllerEditCommentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof commentsControllerEditComment>>,
+  TError,
+  CommentsControllerEditCommentMutationVariables,
+  TContext
+> => {
+  return useMutation(getCommentsControllerEditCommentMutationOptions(options), queryClient);
+};
+export type commentsControllerDeleteCommentResponse200 = {
+  data: DeletedSocialItemDto;
+  status: 200;
+};
 
-export type commentsControllerDeleteCommentResponseSuccess = (commentsControllerDeleteCommentResponse200) & {
+export type commentsControllerDeleteCommentResponseSuccess = commentsControllerDeleteCommentResponse200 & {
   headers: Headers;
 };
-;
+export type commentsControllerDeleteCommentResponse = commentsControllerDeleteCommentResponseSuccess;
 
-export type commentsControllerDeleteCommentResponse = (commentsControllerDeleteCommentResponseSuccess)
-
-export const getCommentsControllerDeleteCommentUrl = (commentId: string,) => {
-
-
-
-
-  return `/api/v1/comments/${commentId}`
-}
+export const getCommentsControllerDeleteCommentUrl = (commentId: string) => {
+  return `/api/v1/comments/${commentId}`;
+};
 
 /**
  * @summary Xóa bình luận của mình (FR11)
  */
-export const commentsControllerDeleteComment = async (commentId: string, options?: Parameters<typeof http>[1]): Promise<commentsControllerDeleteCommentResponse> => {
-
-  return http<commentsControllerDeleteCommentResponse>(getCommentsControllerDeleteCommentUrl(commentId),
-  {
+export const commentsControllerDeleteComment = async (
+  commentId: string,
+  options?: Parameters<typeof http>[1],
+): Promise<commentsControllerDeleteCommentResponse> => {
+  return http<commentsControllerDeleteCommentResponse>(getCommentsControllerDeleteCommentUrl(commentId), {
     ...options,
-    method: 'DELETE'
+    method: 'DELETE',
+  });
+};
 
+export const getCommentsControllerDeleteCommentMutationKey = () =>
+  ['commentsControllerDeleteComment'] as const;
 
-  }
-);}
+export const getCommentsControllerDeleteCommentMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof commentsControllerDeleteComment>>,
+    TError,
+    CommentsControllerDeleteCommentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof commentsControllerDeleteComment>>,
+  TError,
+  CommentsControllerDeleteCommentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCommentsControllerDeleteCommentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof commentsControllerDeleteComment>>,
+    CommentsControllerDeleteCommentMutationVariables
+  > = (props) => {
+    const { commentId } = props ?? {};
 
+    return commentsControllerDeleteComment(commentId, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type CommentsControllerDeleteCommentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof commentsControllerDeleteComment>>
+>;
 
-export const getCommentsControllerDeleteCommentMutationKey = () => ['commentsControllerDeleteComment'] as const;
+export type CommentsControllerDeleteCommentMutationError = unknown;
+export type CommentsControllerDeleteCommentMutationVariables = { commentId: string };
 
-export const getCommentsControllerDeleteCommentMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsControllerDeleteComment>>, TError,CommentsControllerDeleteCommentMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof commentsControllerDeleteComment>>, TError,CommentsControllerDeleteCommentMutationVariables, TContext> => {
-
-const mutationKey = getCommentsControllerDeleteCommentMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof commentsControllerDeleteComment>>, CommentsControllerDeleteCommentMutationVariables> = (props) => {
-          const {commentId} = props ?? {};
-
-          return  commentsControllerDeleteComment(commentId,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CommentsControllerDeleteCommentMutationResult = NonNullable<Awaited<ReturnType<typeof commentsControllerDeleteComment>>>
-
-    export type CommentsControllerDeleteCommentMutationError = unknown
-    export type CommentsControllerDeleteCommentMutationVariables = {commentId: string}
-
-    /**
+/**
  * @summary Xóa bình luận của mình (FR11)
  */
-export const useCommentsControllerDeleteComment = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsControllerDeleteComment>>, TError,CommentsControllerDeleteCommentMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof commentsControllerDeleteComment>>,
-        TError,
-        CommentsControllerDeleteCommentMutationVariables,
-        TContext
-      > => {
-      return useMutation(getCommentsControllerDeleteCommentMutationOptions(options), queryClient);
-    }
-    export type commentsControllerSampleCommentsResponse200 = {
-  data: SampleCommentsResponseDto
-  status: 200
-}
+export const useCommentsControllerDeleteComment = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof commentsControllerDeleteComment>>,
+      TError,
+      CommentsControllerDeleteCommentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof commentsControllerDeleteComment>>,
+  TError,
+  CommentsControllerDeleteCommentMutationVariables,
+  TContext
+> => {
+  return useMutation(getCommentsControllerDeleteCommentMutationOptions(options), queryClient);
+};
+export type commentsControllerSampleCommentsResponse200 = {
+  data: SampleCommentsResponseDto;
+  status: 200;
+};
 
 export type commentsControllerSampleCommentsResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type commentsControllerSampleCommentsResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type commentsControllerSampleCommentsResponse404 = {
-  data: void
-  status: 404
-}
-
-export type commentsControllerSampleCommentsResponseSuccess = (commentsControllerSampleCommentsResponse200) & {
-  headers: Headers;
-};
-export type commentsControllerSampleCommentsResponseError = (commentsControllerSampleCommentsResponse401 | commentsControllerSampleCommentsResponse403 | commentsControllerSampleCommentsResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type commentsControllerSampleCommentsResponse = (commentsControllerSampleCommentsResponseSuccess | commentsControllerSampleCommentsResponseError)
+export type commentsControllerSampleCommentsResponseSuccess = commentsControllerSampleCommentsResponse200 & {
+  headers: Headers;
+};
+export type commentsControllerSampleCommentsResponseError = (
+  | commentsControllerSampleCommentsResponse401
+  | commentsControllerSampleCommentsResponse403
+  | commentsControllerSampleCommentsResponse404
+) & {
+  headers: Headers;
+};
 
-export const getCommentsControllerSampleCommentsUrl = (postId: string,
-    params?: CommentsControllerSampleCommentsParams,) => {
+export type commentsControllerSampleCommentsResponse =
+  commentsControllerSampleCommentsResponseSuccess | commentsControllerSampleCommentsResponseError;
+
+export const getCommentsControllerSampleCommentsUrl = (
+  postId: string,
+  params?: CommentsControllerSampleCommentsParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/v1/posts/${postId}/comments/sample?${stringifiedParams}` : `/api/v1/posts/${postId}/comments/sample`
-}
+  return stringifiedParams.length > 0
+    ? `/api/v1/posts/${postId}/comments/sample?${stringifiedParams}`
+    : `/api/v1/posts/${postId}/comments/sample`;
+};
 
 /**
  * Chỉ dành cho ai-service. Trả về mẫu ngẫu nhiên các bình luận visible kèm bộ đếm tổng thể để ước lượng thống kê.
  * @summary Lấy mẫu ngẫu nhiên có kiểm soát các bình luận visible (TF14/TF33 chịu tải AI Summary)
  */
-export const commentsControllerSampleComments = async (postId: string,
-    params?: CommentsControllerSampleCommentsParams, options?: Parameters<typeof http>[1]): Promise<commentsControllerSampleCommentsResponse> => {
+export const commentsControllerSampleComments = async (
+  postId: string,
+  params?: CommentsControllerSampleCommentsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<commentsControllerSampleCommentsResponse> => {
+  return http<commentsControllerSampleCommentsResponse>(
+    getCommentsControllerSampleCommentsUrl(postId, params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
 
-  return http<commentsControllerSampleCommentsResponse>(getCommentsControllerSampleCommentsUrl(postId,params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getCommentsControllerSampleCommentsQueryKey = (postId: string,
-    params?: CommentsControllerSampleCommentsParams,) => {
-    return [
-    `/api/v1/posts/${postId}/comments/sample`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getCommentsControllerSampleCommentsQueryOptions = <TData = Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError = void>(postId: string,
-    params?: CommentsControllerSampleCommentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getCommentsControllerSampleCommentsQueryKey = (
+  postId: string,
+  params?: CommentsControllerSampleCommentsParams,
 ) => {
+  return [`/api/v1/posts/${postId}/comments/sample`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getCommentsControllerSampleCommentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof commentsControllerSampleComments>>,
+  TError = void,
+>(
+  postId: string,
+  params?: CommentsControllerSampleCommentsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getCommentsControllerSampleCommentsQueryKey(postId,params);
+  const queryKey = queryOptions?.queryKey ?? getCommentsControllerSampleCommentsQueryKey(postId, params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof commentsControllerSampleComments>>> = ({ signal }) =>
+    commentsControllerSampleComments(postId, params, { signal, ...requestOptions });
 
+  return {
+    queryKey,
+    queryFn,
+    enabled: postId !== null && postId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof commentsControllerSampleComments>>> = ({ signal }) => commentsControllerSampleComments(postId,params, { signal, ...requestOptions });
+export type CommentsControllerSampleCommentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof commentsControllerSampleComments>>
+>;
+export type CommentsControllerSampleCommentsQueryError = void;
 
-
-
-
-
-   return  { queryKey, queryFn, enabled: postId !== null && postId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CommentsControllerSampleCommentsQueryResult = NonNullable<Awaited<ReturnType<typeof commentsControllerSampleComments>>>
-export type CommentsControllerSampleCommentsQueryError = void
-
-
-export function useCommentsControllerSampleComments<TData = Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError = void>(
- postId: string,
-    params: undefined |  CommentsControllerSampleCommentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError, TData>> & Pick<
+export function useCommentsControllerSampleComments<
+  TData = Awaited<ReturnType<typeof commentsControllerSampleComments>>,
+  TError = void,
+>(
+  postId: string,
+  params: undefined | CommentsControllerSampleCommentsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof commentsControllerSampleComments>>,
           TError,
           Awaited<ReturnType<typeof commentsControllerSampleComments>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCommentsControllerSampleComments<TData = Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError = void>(
- postId: string,
-    params?: CommentsControllerSampleCommentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCommentsControllerSampleComments<
+  TData = Awaited<ReturnType<typeof commentsControllerSampleComments>>,
+  TError = void,
+>(
+  postId: string,
+  params?: CommentsControllerSampleCommentsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof commentsControllerSampleComments>>,
           TError,
           Awaited<ReturnType<typeof commentsControllerSampleComments>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCommentsControllerSampleComments<TData = Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError = void>(
- postId: string,
-    params?: CommentsControllerSampleCommentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCommentsControllerSampleComments<
+  TData = Awaited<ReturnType<typeof commentsControllerSampleComments>>,
+  TError = void,
+>(
+  postId: string,
+  params?: CommentsControllerSampleCommentsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Lấy mẫu ngẫu nhiên có kiểm soát các bình luận visible (TF14/TF33 chịu tải AI Summary)
  */
 
-export function useCommentsControllerSampleComments<TData = Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError = void>(
- postId: string,
-    params?: CommentsControllerSampleCommentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useCommentsControllerSampleComments<
+  TData = Awaited<ReturnType<typeof commentsControllerSampleComments>>,
+  TError = void,
+>(
+  postId: string,
+  params?: CommentsControllerSampleCommentsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerSampleComments>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getCommentsControllerSampleCommentsQueryOptions(postId, params, options);
 
-  const queryOptions = getCommentsControllerSampleCommentsQueryOptions(postId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-
-
-
-
-
 export type commentsControllerGetCommentStatsResponse200 = {
-  data: PostCommentStatsResponseDto
-  status: 200
-}
+  data: PostCommentStatsResponseDto;
+  status: 200;
+};
 
 export type commentsControllerGetCommentStatsResponse401 = {
-  data: void
-  status: 401
-}
+  data: void;
+  status: 401;
+};
 
 export type commentsControllerGetCommentStatsResponse403 = {
-  data: void
-  status: 403
-}
+  data: void;
+  status: 403;
+};
 
 export type commentsControllerGetCommentStatsResponse404 = {
-  data: void
-  status: 404
-}
-
-export type commentsControllerGetCommentStatsResponseSuccess = (commentsControllerGetCommentStatsResponse200) & {
-  headers: Headers;
-};
-export type commentsControllerGetCommentStatsResponseError = (commentsControllerGetCommentStatsResponse401 | commentsControllerGetCommentStatsResponse403 | commentsControllerGetCommentStatsResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type commentsControllerGetCommentStatsResponse = (commentsControllerGetCommentStatsResponseSuccess | commentsControllerGetCommentStatsResponseError)
+export type commentsControllerGetCommentStatsResponseSuccess =
+  commentsControllerGetCommentStatsResponse200 & {
+    headers: Headers;
+  };
+export type commentsControllerGetCommentStatsResponseError = (
+  | commentsControllerGetCommentStatsResponse401
+  | commentsControllerGetCommentStatsResponse403
+  | commentsControllerGetCommentStatsResponse404
+) & {
+  headers: Headers;
+};
 
-export const getCommentsControllerGetCommentStatsUrl = (postId: string,) => {
+export type commentsControllerGetCommentStatsResponse =
+  commentsControllerGetCommentStatsResponseSuccess | commentsControllerGetCommentStatsResponseError;
 
-
-
-
-  return `/api/v1/posts/${postId}/comment-stats`
-}
+export const getCommentsControllerGetCommentStatsUrl = (postId: string) => {
+  return `/api/v1/posts/${postId}/comment-stats`;
+};
 
 /**
  * Chỉ dành cho ai-service. Phục vụ suy luận thống kê mẫu (Population Estimation).
  * @summary Lấy thống kê số bình luận visible và số người viết khác nhau của bài đăng
  */
-export const commentsControllerGetCommentStats = async (postId: string, options?: Parameters<typeof http>[1]): Promise<commentsControllerGetCommentStatsResponse> => {
-
-  return http<commentsControllerGetCommentStatsResponse>(getCommentsControllerGetCommentStatsUrl(postId),
-  {
+export const commentsControllerGetCommentStats = async (
+  postId: string,
+  options?: Parameters<typeof http>[1],
+): Promise<commentsControllerGetCommentStatsResponse> => {
+  return http<commentsControllerGetCommentStatsResponse>(getCommentsControllerGetCommentStatsUrl(postId), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
+export const getCommentsControllerGetCommentStatsQueryKey = (postId: string) => {
+  return [`/api/v1/posts/${postId}/comment-stats`] as const;
+};
 
-  }
-);}
-
-
-
-
-
-export const getCommentsControllerGetCommentStatsQueryKey = (postId: string,) => {
-    return [
-    `/api/v1/posts/${postId}/comment-stats`
-    ] as const;
-    }
-
-
-export const getCommentsControllerGetCommentStatsQueryOptions = <TData = Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError = void>(postId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getCommentsControllerGetCommentStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof commentsControllerGetCommentStats>>,
+  TError = void,
+>(
+  postId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getCommentsControllerGetCommentStatsQueryKey(postId);
 
-  const queryKey =  queryOptions?.queryKey ?? getCommentsControllerGetCommentStatsQueryKey(postId);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>> = ({
+    signal,
+  }) => commentsControllerGetCommentStats(postId, { signal, ...requestOptions });
 
+  return {
+    queryKey,
+    queryFn,
+    enabled: postId !== null && postId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
 
+export type CommentsControllerGetCommentStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof commentsControllerGetCommentStats>>
+>;
+export type CommentsControllerGetCommentStatsQueryError = void;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>> = ({ signal }) => commentsControllerGetCommentStats(postId, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: postId !== null && postId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CommentsControllerGetCommentStatsQueryResult = NonNullable<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>>
-export type CommentsControllerGetCommentStatsQueryError = void
-
-
-export function useCommentsControllerGetCommentStats<TData = Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError = void>(
- postId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError, TData>> & Pick<
+export function useCommentsControllerGetCommentStats<
+  TData = Awaited<ReturnType<typeof commentsControllerGetCommentStats>>,
+  TError = void,
+>(
+  postId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof commentsControllerGetCommentStats>>,
           TError,
           Awaited<ReturnType<typeof commentsControllerGetCommentStats>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCommentsControllerGetCommentStats<TData = Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError = void>(
- postId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCommentsControllerGetCommentStats<
+  TData = Awaited<ReturnType<typeof commentsControllerGetCommentStats>>,
+  TError = void,
+>(
+  postId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof commentsControllerGetCommentStats>>,
           TError,
           Awaited<ReturnType<typeof commentsControllerGetCommentStats>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCommentsControllerGetCommentStats<TData = Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError = void>(
- postId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCommentsControllerGetCommentStats<
+  TData = Awaited<ReturnType<typeof commentsControllerGetCommentStats>>,
+  TError = void,
+>(
+  postId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Lấy thống kê số bình luận visible và số người viết khác nhau của bài đăng
  */
 
-export function useCommentsControllerGetCommentStats<TData = Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError = void>(
- postId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useCommentsControllerGetCommentStats<
+  TData = Awaited<ReturnType<typeof commentsControllerGetCommentStats>>,
+  TError = void,
+>(
+  postId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof commentsControllerGetCommentStats>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getCommentsControllerGetCommentStatsQueryOptions(postId, options);
 
-  const queryOptions = getCommentsControllerGetCommentStatsQueryOptions(postId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
-

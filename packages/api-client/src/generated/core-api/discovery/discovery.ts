@@ -4,10 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -20,7 +17,7 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
 import type {
@@ -39,15 +36,12 @@ import type {
   StayPageDto,
   StaysControllerListStaysParams,
   SuggestControllerSuggestParams,
-  SuggestResponseDto
+  SuggestResponseDto,
 } from '../model';
 
 import { http } from '../../../http';
 
-
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -65,38 +59,38 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type suggestControllerSuggestResponse200 = {
-  data: SuggestResponseDto
-  status: 200
-}
+  data: SuggestResponseDto;
+  status: 200;
+};
 
 export type suggestControllerSuggestResponse400 = {
-  data: void
-  status: 400
-}
-
-export type suggestControllerSuggestResponseSuccess = (suggestControllerSuggestResponse200) & {
-  headers: Headers;
-};
-export type suggestControllerSuggestResponseError = (suggestControllerSuggestResponse400) & {
-  headers: Headers;
+  data: void;
+  status: 400;
 };
 
-export type suggestControllerSuggestResponse = (suggestControllerSuggestResponseSuccess | suggestControllerSuggestResponseError)
+export type suggestControllerSuggestResponseSuccess = suggestControllerSuggestResponse200 & {
+  headers: Headers;
+};
+export type suggestControllerSuggestResponseError = suggestControllerSuggestResponse400 & {
+  headers: Headers;
+};
 
-export const getSuggestControllerSuggestUrl = (params: SuggestControllerSuggestParams,) => {
+export type suggestControllerSuggestResponse =
+  suggestControllerSuggestResponseSuccess | suggestControllerSuggestResponseError;
+
+export const getSuggestControllerSuggestUrl = (params: SuggestControllerSuggestParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/suggest?${stringifiedParams}` : `/api/suggest`
-}
+  return stringifiedParams.length > 0 ? `/api/suggest?${stringifiedParams}` : `/api/suggest`;
+};
 
 /**
  * Dùng cho web OTA (kiểu Traveloka), gọi sau mỗi lần ngừng gõ khoảng 250 ms. Công khai, không cần đăng nhập.
@@ -108,128 +102,155 @@ export const getSuggestControllerSuggestUrl = (params: SuggestControllerSuggestP
  * - Không khớp gì thì `items: []` (không phải lỗi).
  * @summary Gợi ý địa điểm, khách sạn, sân bay khi gõ ở ô tìm trang đặt chỗ
  */
-export const suggestControllerSuggest = async (params: SuggestControllerSuggestParams, options?: Parameters<typeof http>[1]): Promise<suggestControllerSuggestResponse> => {
-
-  return http<suggestControllerSuggestResponse>(getSuggestControllerSuggestUrl(params),
-  {
+export const suggestControllerSuggest = async (
+  params: SuggestControllerSuggestParams,
+  options?: Parameters<typeof http>[1],
+): Promise<suggestControllerSuggestResponse> => {
+  return http<suggestControllerSuggestResponse>(getSuggestControllerSuggestUrl(params), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
+export const getSuggestControllerSuggestQueryKey = (params?: SuggestControllerSuggestParams) => {
+  return [`/api/suggest`, ...(params ? [params] : [])] as const;
+};
 
-  }
-);}
-
-
-
-
-
-export const getSuggestControllerSuggestQueryKey = (params?: SuggestControllerSuggestParams,) => {
-    return [
-    `/api/suggest`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getSuggestControllerSuggestQueryOptions = <TData = Awaited<ReturnType<typeof suggestControllerSuggest>>, TError = void>(params: SuggestControllerSuggestParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestControllerSuggest>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getSuggestControllerSuggestQueryOptions = <
+  TData = Awaited<ReturnType<typeof suggestControllerSuggest>>,
+  TError = void,
+>(
+  params: SuggestControllerSuggestParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestControllerSuggest>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getSuggestControllerSuggestQueryKey(params);
 
-  const queryKey =  queryOptions?.queryKey ?? getSuggestControllerSuggestQueryKey(params);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof suggestControllerSuggest>>> = ({ signal }) =>
+    suggestControllerSuggest(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof suggestControllerSuggest>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type SuggestControllerSuggestQueryResult = NonNullable<
+  Awaited<ReturnType<typeof suggestControllerSuggest>>
+>;
+export type SuggestControllerSuggestQueryError = void;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof suggestControllerSuggest>>> = ({ signal }) => suggestControllerSuggest(params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof suggestControllerSuggest>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type SuggestControllerSuggestQueryResult = NonNullable<Awaited<ReturnType<typeof suggestControllerSuggest>>>
-export type SuggestControllerSuggestQueryError = void
-
-
-export function useSuggestControllerSuggest<TData = Awaited<ReturnType<typeof suggestControllerSuggest>>, TError = void>(
- params: SuggestControllerSuggestParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestControllerSuggest>>, TError, TData>> & Pick<
+export function useSuggestControllerSuggest<
+  TData = Awaited<ReturnType<typeof suggestControllerSuggest>>,
+  TError = void,
+>(
+  params: SuggestControllerSuggestParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestControllerSuggest>>, TError, TData>> &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof suggestControllerSuggest>>,
           TError,
           Awaited<ReturnType<typeof suggestControllerSuggest>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useSuggestControllerSuggest<TData = Awaited<ReturnType<typeof suggestControllerSuggest>>, TError = void>(
- params: SuggestControllerSuggestParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestControllerSuggest>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSuggestControllerSuggest<
+  TData = Awaited<ReturnType<typeof suggestControllerSuggest>>,
+  TError = void,
+>(
+  params: SuggestControllerSuggestParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestControllerSuggest>>, TError, TData>> &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof suggestControllerSuggest>>,
           TError,
           Awaited<ReturnType<typeof suggestControllerSuggest>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useSuggestControllerSuggest<TData = Awaited<ReturnType<typeof suggestControllerSuggest>>, TError = void>(
- params: SuggestControllerSuggestParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestControllerSuggest>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSuggestControllerSuggest<
+  TData = Awaited<ReturnType<typeof suggestControllerSuggest>>,
+  TError = void,
+>(
+  params: SuggestControllerSuggestParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestControllerSuggest>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Gợi ý địa điểm, khách sạn, sân bay khi gõ ở ô tìm trang đặt chỗ
  */
 
-export function useSuggestControllerSuggest<TData = Awaited<ReturnType<typeof suggestControllerSuggest>>, TError = void>(
- params: SuggestControllerSuggestParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestControllerSuggest>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useSuggestControllerSuggest<
+  TData = Awaited<ReturnType<typeof suggestControllerSuggest>>,
+  TError = void,
+>(
+  params: SuggestControllerSuggestParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestControllerSuggest>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSuggestControllerSuggestQueryOptions(params, options);
 
-  const queryOptions = getSuggestControllerSuggestQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-
-
-
-
-
 export type placesControllerPlacesResponse200 = {
-  data: PlacesResponseDto
-  status: 200
-}
+  data: PlacesResponseDto;
+  status: 200;
+};
 
 export type placesControllerPlacesResponse400 = {
-  data: void
-  status: 400
-}
-
-export type placesControllerPlacesResponseSuccess = (placesControllerPlacesResponse200) & {
-  headers: Headers;
-};
-export type placesControllerPlacesResponseError = (placesControllerPlacesResponse400) & {
-  headers: Headers;
+  data: void;
+  status: 400;
 };
 
-export type placesControllerPlacesResponse = (placesControllerPlacesResponseSuccess | placesControllerPlacesResponseError)
+export type placesControllerPlacesResponseSuccess = placesControllerPlacesResponse200 & {
+  headers: Headers;
+};
+export type placesControllerPlacesResponseError = placesControllerPlacesResponse400 & {
+  headers: Headers;
+};
 
-export const getPlacesControllerPlacesUrl = (params?: PlacesControllerPlacesParams,) => {
+export type placesControllerPlacesResponse =
+  placesControllerPlacesResponseSuccess | placesControllerPlacesResponseError;
+
+export const getPlacesControllerPlacesUrl = (params?: PlacesControllerPlacesParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/places?${stringifiedParams}` : `/api/places`
-}
+  return stringifiedParams.length > 0 ? `/api/places?${stringifiedParams}` : `/api/places`;
+};
 
 /**
  * Dữ liệu © OpenStreetMap contributors (ODbL), nạp sẵn cho các thành phố demo. App phải hiện `attribution` kèm danh sách.
@@ -239,128 +260,155 @@ export const getPlacesControllerPlacesUrl = (params?: PlacesControllerPlacesPara
  * - Không khớp thành phố thì `items: []` (không phải lỗi).
  * @summary Điểm tham quan, ăn uống, chỗ ở có toạ độ quanh một thành phố hoặc một toạ độ
  */
-export const placesControllerPlaces = async (params?: PlacesControllerPlacesParams, options?: Parameters<typeof http>[1]): Promise<placesControllerPlacesResponse> => {
-
-  return http<placesControllerPlacesResponse>(getPlacesControllerPlacesUrl(params),
-  {
+export const placesControllerPlaces = async (
+  params?: PlacesControllerPlacesParams,
+  options?: Parameters<typeof http>[1],
+): Promise<placesControllerPlacesResponse> => {
+  return http<placesControllerPlacesResponse>(getPlacesControllerPlacesUrl(params), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
+export const getPlacesControllerPlacesQueryKey = (params?: PlacesControllerPlacesParams) => {
+  return [`/api/places`, ...(params ? [params] : [])] as const;
+};
 
-  }
-);}
-
-
-
-
-
-export const getPlacesControllerPlacesQueryKey = (params?: PlacesControllerPlacesParams,) => {
-    return [
-    `/api/places`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getPlacesControllerPlacesQueryOptions = <TData = Awaited<ReturnType<typeof placesControllerPlaces>>, TError = void>(params?: PlacesControllerPlacesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getPlacesControllerPlacesQueryOptions = <
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params?: PlacesControllerPlacesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getPlacesControllerPlacesQueryKey(params);
 
-  const queryKey =  queryOptions?.queryKey ?? getPlacesControllerPlacesQueryKey(params);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof placesControllerPlaces>>> = ({ signal }) =>
+    placesControllerPlaces(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof placesControllerPlaces>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type PlacesControllerPlacesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof placesControllerPlaces>>
+>;
+export type PlacesControllerPlacesQueryError = void;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof placesControllerPlaces>>> = ({ signal }) => placesControllerPlaces(params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type PlacesControllerPlacesQueryResult = NonNullable<Awaited<ReturnType<typeof placesControllerPlaces>>>
-export type PlacesControllerPlacesQueryError = void
-
-
-export function usePlacesControllerPlaces<TData = Awaited<ReturnType<typeof placesControllerPlaces>>, TError = void>(
- params: undefined |  PlacesControllerPlacesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>> & Pick<
+export function usePlacesControllerPlaces<
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params: undefined | PlacesControllerPlacesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>> &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof placesControllerPlaces>>,
           TError,
           Awaited<ReturnType<typeof placesControllerPlaces>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePlacesControllerPlaces<TData = Awaited<ReturnType<typeof placesControllerPlaces>>, TError = void>(
- params?: PlacesControllerPlacesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePlacesControllerPlaces<
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params?: PlacesControllerPlacesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>> &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof placesControllerPlaces>>,
           TError,
           Awaited<ReturnType<typeof placesControllerPlaces>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePlacesControllerPlaces<TData = Awaited<ReturnType<typeof placesControllerPlaces>>, TError = void>(
- params?: PlacesControllerPlacesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePlacesControllerPlaces<
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params?: PlacesControllerPlacesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Điểm tham quan, ăn uống, chỗ ở có toạ độ quanh một thành phố hoặc một toạ độ
  */
 
-export function usePlacesControllerPlaces<TData = Awaited<ReturnType<typeof placesControllerPlaces>>, TError = void>(
- params?: PlacesControllerPlacesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function usePlacesControllerPlaces<
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params?: PlacesControllerPlacesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getPlacesControllerPlacesQueryOptions(params, options);
 
-  const queryOptions = getPlacesControllerPlacesQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-
-
-
-
-
 export type staysControllerListStaysResponse200 = {
-  data: StayPageDto
-  status: 200
-}
+  data: StayPageDto;
+  status: 200;
+};
 
 export type staysControllerListStaysResponse400 = {
-  data: void
-  status: 400
-}
-
-export type staysControllerListStaysResponseSuccess = (staysControllerListStaysResponse200) & {
-  headers: Headers;
-};
-export type staysControllerListStaysResponseError = (staysControllerListStaysResponse400) & {
-  headers: Headers;
+  data: void;
+  status: 400;
 };
 
-export type staysControllerListStaysResponse = (staysControllerListStaysResponseSuccess | staysControllerListStaysResponseError)
+export type staysControllerListStaysResponseSuccess = staysControllerListStaysResponse200 & {
+  headers: Headers;
+};
+export type staysControllerListStaysResponseError = staysControllerListStaysResponse400 & {
+  headers: Headers;
+};
 
-export const getStaysControllerListStaysUrl = (params: StaysControllerListStaysParams,) => {
+export type staysControllerListStaysResponse =
+  staysControllerListStaysResponseSuccess | staysControllerListStaysResponseError;
+
+export const getStaysControllerListStaysUrl = (params: StaysControllerListStaysParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/stays?${stringifiedParams}` : `/api/stays`
-}
+  return stringifiedParams.length > 0 ? `/api/stays?${stringifiedParams}` : `/api/stays`;
+};
 
 /**
  * Gọi sau khi người dùng chọn một địa điểm ở `/api/suggest` (dùng `refId` của dòng `place` làm `placeId`) và chọn ngày, số khách. Công khai.
@@ -372,121 +420,145 @@ export const getStaysControllerListStaysUrl = (params: StaysControllerListStaysP
  * - Không phải tìm theo chữ: muốn tìm theo tên thì dùng `/api/suggest`.
  * @summary Khách sạn còn phòng ở một nơi cho ngày đã chọn (trang kết quả web OTA)
  */
-export const staysControllerListStays = async (params: StaysControllerListStaysParams, options?: Parameters<typeof http>[1]): Promise<staysControllerListStaysResponse> => {
-
-  return http<staysControllerListStaysResponse>(getStaysControllerListStaysUrl(params),
-  {
+export const staysControllerListStays = async (
+  params: StaysControllerListStaysParams,
+  options?: Parameters<typeof http>[1],
+): Promise<staysControllerListStaysResponse> => {
+  return http<staysControllerListStaysResponse>(getStaysControllerListStaysUrl(params), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
+export const getStaysControllerListStaysQueryKey = (params?: StaysControllerListStaysParams) => {
+  return [`/api/stays`, ...(params ? [params] : [])] as const;
+};
 
-  }
-);}
-
-
-
-
-
-export const getStaysControllerListStaysQueryKey = (params?: StaysControllerListStaysParams,) => {
-    return [
-    `/api/stays`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getStaysControllerListStaysQueryOptions = <TData = Awaited<ReturnType<typeof staysControllerListStays>>, TError = void>(params: StaysControllerListStaysParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof staysControllerListStays>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getStaysControllerListStaysQueryOptions = <
+  TData = Awaited<ReturnType<typeof staysControllerListStays>>,
+  TError = void,
+>(
+  params: StaysControllerListStaysParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof staysControllerListStays>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getStaysControllerListStaysQueryKey(params);
 
-  const queryKey =  queryOptions?.queryKey ?? getStaysControllerListStaysQueryKey(params);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof staysControllerListStays>>> = ({ signal }) =>
+    staysControllerListStays(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof staysControllerListStays>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type StaysControllerListStaysQueryResult = NonNullable<
+  Awaited<ReturnType<typeof staysControllerListStays>>
+>;
+export type StaysControllerListStaysQueryError = void;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof staysControllerListStays>>> = ({ signal }) => staysControllerListStays(params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof staysControllerListStays>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type StaysControllerListStaysQueryResult = NonNullable<Awaited<ReturnType<typeof staysControllerListStays>>>
-export type StaysControllerListStaysQueryError = void
-
-
-export function useStaysControllerListStays<TData = Awaited<ReturnType<typeof staysControllerListStays>>, TError = void>(
- params: StaysControllerListStaysParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof staysControllerListStays>>, TError, TData>> & Pick<
+export function useStaysControllerListStays<
+  TData = Awaited<ReturnType<typeof staysControllerListStays>>,
+  TError = void,
+>(
+  params: StaysControllerListStaysParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof staysControllerListStays>>, TError, TData>> &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof staysControllerListStays>>,
           TError,
           Awaited<ReturnType<typeof staysControllerListStays>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useStaysControllerListStays<TData = Awaited<ReturnType<typeof staysControllerListStays>>, TError = void>(
- params: StaysControllerListStaysParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof staysControllerListStays>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useStaysControllerListStays<
+  TData = Awaited<ReturnType<typeof staysControllerListStays>>,
+  TError = void,
+>(
+  params: StaysControllerListStaysParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof staysControllerListStays>>, TError, TData>> &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof staysControllerListStays>>,
           TError,
           Awaited<ReturnType<typeof staysControllerListStays>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useStaysControllerListStays<TData = Awaited<ReturnType<typeof staysControllerListStays>>, TError = void>(
- params: StaysControllerListStaysParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof staysControllerListStays>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useStaysControllerListStays<
+  TData = Awaited<ReturnType<typeof staysControllerListStays>>,
+  TError = void,
+>(
+  params: StaysControllerListStaysParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof staysControllerListStays>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Khách sạn còn phòng ở một nơi cho ngày đã chọn (trang kết quả web OTA)
  */
 
-export function useStaysControllerListStays<TData = Awaited<ReturnType<typeof staysControllerListStays>>, TError = void>(
- params: StaysControllerListStaysParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof staysControllerListStays>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useStaysControllerListStays<
+  TData = Awaited<ReturnType<typeof staysControllerListStays>>,
+  TError = void,
+>(
+  params: StaysControllerListStaysParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof staysControllerListStays>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getStaysControllerListStaysQueryOptions(params, options);
 
-  const queryOptions = getStaysControllerListStaysQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-
-
-
-
-
 export type exploreControllerSearchResponse200 = {
-  data: ExploreResponseDto
-  status: 200
-}
+  data: ExploreResponseDto;
+  status: 200;
+};
 
 export type exploreControllerSearchResponse400 = {
-  data: void
-  status: 400
-}
-
-export type exploreControllerSearchResponseSuccess = (exploreControllerSearchResponse200) & {
-  headers: Headers;
-};
-export type exploreControllerSearchResponseError = (exploreControllerSearchResponse400) & {
-  headers: Headers;
+  data: void;
+  status: 400;
 };
 
-export type exploreControllerSearchResponse = (exploreControllerSearchResponseSuccess | exploreControllerSearchResponseError)
+export type exploreControllerSearchResponseSuccess = exploreControllerSearchResponse200 & {
+  headers: Headers;
+};
+export type exploreControllerSearchResponseError = exploreControllerSearchResponse400 & {
+  headers: Headers;
+};
+
+export type exploreControllerSearchResponse =
+  exploreControllerSearchResponseSuccess | exploreControllerSearchResponseError;
 
 export const getExploreControllerSearchUrl = () => {
-
-
-
-
-  return `/api/search`
-}
+  return `/api/search`;
+};
 
 /**
  * Một ô tìm cho app. Công khai, không cần đăng nhập. Chỉ đọc chỉ mục của discovery (dựng lại mỗi 10 phút).
@@ -498,9 +570,13 @@ export const getExploreControllerSearchUrl = () => {
  * - `loc` chỉ dùng khi câu không nói nơi.
  * @summary Tìm khám phá bằng câu tự nhiên, kết quả chia theo vùng (Ở đâu, Lộ trình, Bài viết, Video...)
  */
-export const exploreControllerSearch = async (exploreRequestDto: ExploreRequestDto, options?: Parameters<typeof http>[1]): Promise<exploreControllerSearchResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const exploreControllerSearch = async (
+  exploreRequestDto: ExploreRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<exploreControllerSearchResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -514,92 +590,101 @@ export const exploreControllerSearch = async (exploreRequestDto: ExploreRequestD
     }
     return headers;
   };
-return http<exploreControllerSearchResponse>(getExploreControllerSearchUrl(),
-  {
+  return http<exploreControllerSearchResponse>(getExploreControllerSearchUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(exploreRequestDto)
-  }
-);}
-
-
-
-
+    body: JSON.stringify(exploreRequestDto),
+  });
+};
 
 export const getExploreControllerSearchMutationKey = () => ['exploreControllerSearch'] as const;
 
-export const getExploreControllerSearchMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exploreControllerSearch>>, TError,ExploreControllerSearchMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof exploreControllerSearch>>, TError,ExploreControllerSearchMutationVariables, TContext> => {
+export const getExploreControllerSearchMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof exploreControllerSearch>>,
+    TError,
+    ExploreControllerSearchMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof exploreControllerSearch>>,
+  TError,
+  ExploreControllerSearchMutationVariables,
+  TContext
+> => {
+  const mutationKey = getExploreControllerSearchMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-const mutationKey = getExploreControllerSearchMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof exploreControllerSearch>>,
+    ExploreControllerSearchMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return exploreControllerSearch(data, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type ExploreControllerSearchMutationResult = NonNullable<
+  Awaited<ReturnType<typeof exploreControllerSearch>>
+>;
+export type ExploreControllerSearchMutationBody = ExploreRequestDto;
+export type ExploreControllerSearchMutationError = void;
+export type ExploreControllerSearchMutationVariables = { data: ExploreRequestDto };
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof exploreControllerSearch>>, ExploreControllerSearchMutationVariables> = (props) => {
-          const {data} = props ?? {};
-
-          return  exploreControllerSearch(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ExploreControllerSearchMutationResult = NonNullable<Awaited<ReturnType<typeof exploreControllerSearch>>>
-    export type ExploreControllerSearchMutationBody = ExploreRequestDto
-    export type ExploreControllerSearchMutationError = void
-    export type ExploreControllerSearchMutationVariables = {data: ExploreRequestDto}
-
-    /**
+/**
  * @summary Tìm khám phá bằng câu tự nhiên, kết quả chia theo vùng (Ở đâu, Lộ trình, Bài viết, Video...)
  */
-export const useExploreControllerSearch = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exploreControllerSearch>>, TError,ExploreControllerSearchMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof exploreControllerSearch>>,
-        TError,
-        ExploreControllerSearchMutationVariables,
-        TContext
-      > => {
-      return useMutation(getExploreControllerSearchMutationOptions(options), queryClient);
-    }
-    export type exploreControllerSearchPostsResponse200 = {
-  data: SearchPostsResponseDto
-  status: 200
-}
+export const useExploreControllerSearch = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof exploreControllerSearch>>,
+      TError,
+      ExploreControllerSearchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof exploreControllerSearch>>,
+  TError,
+  ExploreControllerSearchMutationVariables,
+  TContext
+> => {
+  return useMutation(getExploreControllerSearchMutationOptions(options), queryClient);
+};
+export type exploreControllerSearchPostsResponse200 = {
+  data: SearchPostsResponseDto;
+  status: 200;
+};
 
 export type exploreControllerSearchPostsResponse400 = {
-  data: void
-  status: 400
-}
-
-export type exploreControllerSearchPostsResponseSuccess = (exploreControllerSearchPostsResponse200) & {
-  headers: Headers;
-};
-export type exploreControllerSearchPostsResponseError = (exploreControllerSearchPostsResponse400) & {
-  headers: Headers;
+  data: void;
+  status: 400;
 };
 
-export type exploreControllerSearchPostsResponse = (exploreControllerSearchPostsResponseSuccess | exploreControllerSearchPostsResponseError)
+export type exploreControllerSearchPostsResponseSuccess = exploreControllerSearchPostsResponse200 & {
+  headers: Headers;
+};
+export type exploreControllerSearchPostsResponseError = exploreControllerSearchPostsResponse400 & {
+  headers: Headers;
+};
+
+export type exploreControllerSearchPostsResponse =
+  exploreControllerSearchPostsResponseSuccess | exploreControllerSearchPostsResponseError;
 
 export const getExploreControllerSearchPostsUrl = () => {
-
-
-
-
-  return `/api/search/posts`
-}
+  return `/api/search/posts`;
+};
 
 /**
  * Cho tab tìm bài trên app và web Cảm hứng. Công khai. Cùng bộ hiểu câu và chỉ mục với `POST /api/search`.
@@ -611,9 +696,13 @@ export const getExploreControllerSearchPostsUrl = () => {
  * - Không bài nào khớp đủ câu (vd "mùa thu hà nội", lộ trình vượt ngân sách): `isFallback: true`, `items` là kết quả thay thế, `fallbackRelaxed` là điều kiện đã nới, `dropped` là các từ bị bỏ.
  * @summary Tìm bài (lộ trình, video, bài viết) bằng câu tự nhiên, có phân trang
  */
-export const exploreControllerSearchPosts = async (searchPostsRequestDto: SearchPostsRequestDto, options?: Parameters<typeof http>[1]): Promise<exploreControllerSearchPostsResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const exploreControllerSearchPosts = async (
+  searchPostsRequestDto: SearchPostsRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<exploreControllerSearchPostsResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -627,99 +716,118 @@ export const exploreControllerSearchPosts = async (searchPostsRequestDto: Search
     }
     return headers;
   };
-return http<exploreControllerSearchPostsResponse>(getExploreControllerSearchPostsUrl(),
-  {
+  return http<exploreControllerSearchPostsResponse>(getExploreControllerSearchPostsUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(searchPostsRequestDto)
-  }
-);}
-
-
-
-
+    body: JSON.stringify(searchPostsRequestDto),
+  });
+};
 
 export const getExploreControllerSearchPostsMutationKey = () => ['exploreControllerSearchPosts'] as const;
 
-export const getExploreControllerSearchPostsMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exploreControllerSearchPosts>>, TError,ExploreControllerSearchPostsMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof exploreControllerSearchPosts>>, TError,ExploreControllerSearchPostsMutationVariables, TContext> => {
+export const getExploreControllerSearchPostsMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof exploreControllerSearchPosts>>,
+    TError,
+    ExploreControllerSearchPostsMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof exploreControllerSearchPosts>>,
+  TError,
+  ExploreControllerSearchPostsMutationVariables,
+  TContext
+> => {
+  const mutationKey = getExploreControllerSearchPostsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-const mutationKey = getExploreControllerSearchPostsMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof exploreControllerSearchPosts>>,
+    ExploreControllerSearchPostsMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return exploreControllerSearchPosts(data, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type ExploreControllerSearchPostsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof exploreControllerSearchPosts>>
+>;
+export type ExploreControllerSearchPostsMutationBody = SearchPostsRequestDto;
+export type ExploreControllerSearchPostsMutationError = void;
+export type ExploreControllerSearchPostsMutationVariables = { data: SearchPostsRequestDto };
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof exploreControllerSearchPosts>>, ExploreControllerSearchPostsMutationVariables> = (props) => {
-          const {data} = props ?? {};
-
-          return  exploreControllerSearchPosts(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ExploreControllerSearchPostsMutationResult = NonNullable<Awaited<ReturnType<typeof exploreControllerSearchPosts>>>
-    export type ExploreControllerSearchPostsMutationBody = SearchPostsRequestDto
-    export type ExploreControllerSearchPostsMutationError = void
-    export type ExploreControllerSearchPostsMutationVariables = {data: SearchPostsRequestDto}
-
-    /**
+/**
  * @summary Tìm bài (lộ trình, video, bài viết) bằng câu tự nhiên, có phân trang
  */
-export const useExploreControllerSearchPosts = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exploreControllerSearchPosts>>, TError,ExploreControllerSearchPostsMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof exploreControllerSearchPosts>>,
-        TError,
-        ExploreControllerSearchPostsMutationVariables,
-        TContext
-      > => {
-      return useMutation(getExploreControllerSearchPostsMutationOptions(options), queryClient);
-    }
-    export type homeRecommendationsControllerRecommendForHomeResponse200 = {
-  data: HomeRecommendationsDto
-  status: 200
-}
+export const useExploreControllerSearchPosts = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof exploreControllerSearchPosts>>,
+      TError,
+      ExploreControllerSearchPostsMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof exploreControllerSearchPosts>>,
+  TError,
+  ExploreControllerSearchPostsMutationVariables,
+  TContext
+> => {
+  return useMutation(getExploreControllerSearchPostsMutationOptions(options), queryClient);
+};
+export type homeRecommendationsControllerRecommendForHomeResponse200 = {
+  data: HomeRecommendationsDto;
+  status: 200;
+};
 
 export type homeRecommendationsControllerRecommendForHomeResponse400 = {
-  data: void
-  status: 400
-}
-
-export type homeRecommendationsControllerRecommendForHomeResponseSuccess = (homeRecommendationsControllerRecommendForHomeResponse200) & {
-  headers: Headers;
-};
-export type homeRecommendationsControllerRecommendForHomeResponseError = (homeRecommendationsControllerRecommendForHomeResponse400) & {
-  headers: Headers;
+  data: void;
+  status: 400;
 };
 
-export type homeRecommendationsControllerRecommendForHomeResponse = (homeRecommendationsControllerRecommendForHomeResponseSuccess | homeRecommendationsControllerRecommendForHomeResponseError)
+export type homeRecommendationsControllerRecommendForHomeResponseSuccess =
+  homeRecommendationsControllerRecommendForHomeResponse200 & {
+    headers: Headers;
+  };
+export type homeRecommendationsControllerRecommendForHomeResponseError =
+  homeRecommendationsControllerRecommendForHomeResponse400 & {
+    headers: Headers;
+  };
 
-export const getHomeRecommendationsControllerRecommendForHomeUrl = (params?: HomeRecommendationsControllerRecommendForHomeParams,) => {
+export type homeRecommendationsControllerRecommendForHomeResponse =
+  | homeRecommendationsControllerRecommendForHomeResponseSuccess
+  | homeRecommendationsControllerRecommendForHomeResponseError;
+
+export const getHomeRecommendationsControllerRecommendForHomeUrl = (
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/recommendations/home?${stringifiedParams}` : `/api/recommendations/home`
-}
+  return stringifiedParams.length > 0
+    ? `/api/recommendations/home?${stringifiedParams}`
+    : `/api/recommendations/home`;
+};
 
 /**
  * Công khai, không cần đăng nhập. Server không lưu gì về người dùng.
@@ -730,128 +838,198 @@ export const getHomeRecommendationsControllerRecommendForHomeUrl = (params?: Hom
  * - Giá là "từ X/đêm" trong 30 ngày tới; còn phòng và giá thật cho ngày cụ thể xem ở trang chi tiết hoặc `/api/stays`.
  * @summary Gợi ý điểm đến và khách sạn deal hời cho trang chủ web
  */
-export const homeRecommendationsControllerRecommendForHome = async (params?: HomeRecommendationsControllerRecommendForHomeParams, options?: Parameters<typeof http>[1]): Promise<homeRecommendationsControllerRecommendForHomeResponse> => {
+export const homeRecommendationsControllerRecommendForHome = async (
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+  options?: Parameters<typeof http>[1],
+): Promise<homeRecommendationsControllerRecommendForHomeResponse> => {
+  return http<homeRecommendationsControllerRecommendForHomeResponse>(
+    getHomeRecommendationsControllerRecommendForHomeUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
 
-  return http<homeRecommendationsControllerRecommendForHomeResponse>(getHomeRecommendationsControllerRecommendForHomeUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getHomeRecommendationsControllerRecommendForHomeQueryKey = (params?: HomeRecommendationsControllerRecommendForHomeParams,) => {
-    return [
-    `/api/recommendations/home`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getHomeRecommendationsControllerRecommendForHomeQueryOptions = <TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>, TError = void>(params?: HomeRecommendationsControllerRecommendForHomeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getHomeRecommendationsControllerRecommendForHomeQueryKey = (
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
 ) => {
+  return [`/api/recommendations/home`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getHomeRecommendationsControllerRecommendForHomeQueryOptions = <
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+  TError = void,
+>(
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getHomeRecommendationsControllerRecommendForHomeQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getHomeRecommendationsControllerRecommendForHomeQueryKey(params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>> = ({
+    signal,
+  }) => homeRecommendationsControllerRecommendForHome(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>> = ({ signal }) => homeRecommendationsControllerRecommendForHome(params, { signal, ...requestOptions });
+export type HomeRecommendationsControllerRecommendForHomeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>
+>;
+export type HomeRecommendationsControllerRecommendForHomeQueryError = void;
 
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type HomeRecommendationsControllerRecommendForHomeQueryResult = NonNullable<Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>>
-export type HomeRecommendationsControllerRecommendForHomeQueryError = void
-
-
-export function useHomeRecommendationsControllerRecommendForHome<TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>, TError = void>(
- params: undefined |  HomeRecommendationsControllerRecommendForHomeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>, TError, TData>> & Pick<
+export function useHomeRecommendationsControllerRecommendForHome<
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+  TError = void,
+>(
+  params: undefined | HomeRecommendationsControllerRecommendForHomeParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
           TError,
           Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHomeRecommendationsControllerRecommendForHome<TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>, TError = void>(
- params?: HomeRecommendationsControllerRecommendForHomeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useHomeRecommendationsControllerRecommendForHome<
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+  TError = void,
+>(
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
           TError,
           Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useHomeRecommendationsControllerRecommendForHome<TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>, TError = void>(
- params?: HomeRecommendationsControllerRecommendForHomeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useHomeRecommendationsControllerRecommendForHome<
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+  TError = void,
+>(
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Gợi ý điểm đến và khách sạn deal hời cho trang chủ web
  */
 
-export function useHomeRecommendationsControllerRecommendForHome<TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>, TError = void>(
- params?: HomeRecommendationsControllerRecommendForHomeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useHomeRecommendationsControllerRecommendForHome<
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+  TError = void,
+>(
+  params?: HomeRecommendationsControllerRecommendForHomeParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerRecommendForHome>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getHomeRecommendationsControllerRecommendForHomeQueryOptions(params, options);
 
-  const queryOptions = getHomeRecommendationsControllerRecommendForHomeQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-
-
-
-
-
 export type postRecommendationsControllerRecommendPostsResponse200 = {
-  data: PostRecommendationsDto
-  status: 200
-}
+  data: PostRecommendationsDto;
+  status: 200;
+};
 
 export type postRecommendationsControllerRecommendPostsResponse400 = {
-  data: void
-  status: 400
-}
-
-export type postRecommendationsControllerRecommendPostsResponseSuccess = (postRecommendationsControllerRecommendPostsResponse200) & {
-  headers: Headers;
-};
-export type postRecommendationsControllerRecommendPostsResponseError = (postRecommendationsControllerRecommendPostsResponse400) & {
-  headers: Headers;
+  data: void;
+  status: 400;
 };
 
-export type postRecommendationsControllerRecommendPostsResponse = (postRecommendationsControllerRecommendPostsResponseSuccess | postRecommendationsControllerRecommendPostsResponseError)
+export type postRecommendationsControllerRecommendPostsResponseSuccess =
+  postRecommendationsControllerRecommendPostsResponse200 & {
+    headers: Headers;
+  };
+export type postRecommendationsControllerRecommendPostsResponseError =
+  postRecommendationsControllerRecommendPostsResponse400 & {
+    headers: Headers;
+  };
 
-export const getPostRecommendationsControllerRecommendPostsUrl = (params?: PostRecommendationsControllerRecommendPostsParams,) => {
+export type postRecommendationsControllerRecommendPostsResponse =
+  | postRecommendationsControllerRecommendPostsResponseSuccess
+  | postRecommendationsControllerRecommendPostsResponseError;
+
+export const getPostRecommendationsControllerRecommendPostsUrl = (
+  params?: PostRecommendationsControllerRecommendPostsParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/recommendations/posts?${stringifiedParams}` : `/api/recommendations/posts`
-}
+  return stringifiedParams.length > 0
+    ? `/api/recommendations/posts?${stringifiedParams}`
+    : `/api/recommendations/posts`;
+};
 
 /**
  * Đăng nhập tuỳ chọn. Gu người dùng tính lại mỗi 10 phút từ cảm xúc, bình luận, chia sẻ, đơn, lượt tìm.
@@ -863,219 +1041,311 @@ export const getPostRecommendationsControllerRecommendPostsUrl = (params?: PostR
  * - Khoảng 5% vị trí là bài ngẫu nhiên (`source: explore`) để đo chất lượng gợi ý.
  * @summary Gợi ý bài viết cho bạn hoặc đang thịnh hành
  */
-export const postRecommendationsControllerRecommendPosts = async (params?: PostRecommendationsControllerRecommendPostsParams, options?: Parameters<typeof http>[1]): Promise<postRecommendationsControllerRecommendPostsResponse> => {
+export const postRecommendationsControllerRecommendPosts = async (
+  params?: PostRecommendationsControllerRecommendPostsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<postRecommendationsControllerRecommendPostsResponse> => {
+  return http<postRecommendationsControllerRecommendPostsResponse>(
+    getPostRecommendationsControllerRecommendPostsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
 
-  return http<postRecommendationsControllerRecommendPostsResponse>(getPostRecommendationsControllerRecommendPostsUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getPostRecommendationsControllerRecommendPostsQueryKey = (params?: PostRecommendationsControllerRecommendPostsParams,) => {
-    return [
-    `/api/recommendations/posts`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getPostRecommendationsControllerRecommendPostsQueryOptions = <TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError = void>(params?: PostRecommendationsControllerRecommendPostsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getPostRecommendationsControllerRecommendPostsQueryKey = (
+  params?: PostRecommendationsControllerRecommendPostsParams,
 ) => {
+  return [`/api/recommendations/posts`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getPostRecommendationsControllerRecommendPostsQueryOptions = <
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getPostRecommendationsControllerRecommendPostsQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getPostRecommendationsControllerRecommendPostsQueryKey(params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>> = ({
+    signal,
+  }) => postRecommendationsControllerRecommendPosts(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>> = ({ signal }) => postRecommendationsControllerRecommendPosts(params, { signal, ...requestOptions });
+export type PostRecommendationsControllerRecommendPostsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>
+>;
+export type PostRecommendationsControllerRecommendPostsQueryError = void;
 
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type PostRecommendationsControllerRecommendPostsQueryResult = NonNullable<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>>
-export type PostRecommendationsControllerRecommendPostsQueryError = void
-
-
-export function usePostRecommendationsControllerRecommendPosts<TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError = void>(
- params: undefined |  PostRecommendationsControllerRecommendPostsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>> & Pick<
+export function usePostRecommendationsControllerRecommendPosts<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+  TError = void,
+>(
+  params: undefined | PostRecommendationsControllerRecommendPostsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
           TError,
           Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePostRecommendationsControllerRecommendPosts<TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError = void>(
- params?: PostRecommendationsControllerRecommendPostsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePostRecommendationsControllerRecommendPosts<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
           TError,
           Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePostRecommendationsControllerRecommendPosts<TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError = void>(
- params?: PostRecommendationsControllerRecommendPostsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePostRecommendationsControllerRecommendPosts<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Gợi ý bài viết cho bạn hoặc đang thịnh hành
  */
 
-export function usePostRecommendationsControllerRecommendPosts<TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError = void>(
- params?: PostRecommendationsControllerRecommendPostsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function usePostRecommendationsControllerRecommendPosts<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getPostRecommendationsControllerRecommendPostsQueryOptions(params, options);
 
-  const queryOptions = getPostRecommendationsControllerRecommendPostsQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-
-
-
-
-
 export type postRecommendationsControllerRecommendReelsResponse200 = {
-  data: ReelRecommendationsDto
-  status: 200
-}
+  data: ReelRecommendationsDto;
+  status: 200;
+};
 
 export type postRecommendationsControllerRecommendReelsResponse400 = {
-  data: void
-  status: 400
-}
-
-export type postRecommendationsControllerRecommendReelsResponseSuccess = (postRecommendationsControllerRecommendReelsResponse200) & {
-  headers: Headers;
-};
-export type postRecommendationsControllerRecommendReelsResponseError = (postRecommendationsControllerRecommendReelsResponse400) & {
-  headers: Headers;
+  data: void;
+  status: 400;
 };
 
-export type postRecommendationsControllerRecommendReelsResponse = (postRecommendationsControllerRecommendReelsResponseSuccess | postRecommendationsControllerRecommendReelsResponseError)
+export type postRecommendationsControllerRecommendReelsResponseSuccess =
+  postRecommendationsControllerRecommendReelsResponse200 & {
+    headers: Headers;
+  };
+export type postRecommendationsControllerRecommendReelsResponseError =
+  postRecommendationsControllerRecommendReelsResponse400 & {
+    headers: Headers;
+  };
 
-export const getPostRecommendationsControllerRecommendReelsUrl = (params?: PostRecommendationsControllerRecommendReelsParams,) => {
+export type postRecommendationsControllerRecommendReelsResponse =
+  | postRecommendationsControllerRecommendReelsResponseSuccess
+  | postRecommendationsControllerRecommendReelsResponseError;
+
+export const getPostRecommendationsControllerRecommendReelsUrl = (
+  params?: PostRecommendationsControllerRecommendReelsParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/recommendations/reels?${stringifiedParams}` : `/api/recommendations/reels`
-}
+  return stringifiedParams.length > 0
+    ? `/api/recommendations/reels?${stringifiedParams}`
+    : `/api/recommendations/reels`;
+};
 
 /**
  * Xếp hạng video bằng discovery (gồm điểm xu hướng và chống lặp cho người đăng nhập) rồi lấy thẻ phát được từ content/feed trong một request.
  * @summary Gợi ý Reels phát được (trending hoặc for_you)
  */
-export const postRecommendationsControllerRecommendReels = async (params?: PostRecommendationsControllerRecommendReelsParams, options?: Parameters<typeof http>[1]): Promise<postRecommendationsControllerRecommendReelsResponse> => {
+export const postRecommendationsControllerRecommendReels = async (
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<postRecommendationsControllerRecommendReelsResponse> => {
+  return http<postRecommendationsControllerRecommendReelsResponse>(
+    getPostRecommendationsControllerRecommendReelsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
 
-  return http<postRecommendationsControllerRecommendReelsResponse>(getPostRecommendationsControllerRecommendReelsUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getPostRecommendationsControllerRecommendReelsQueryKey = (params?: PostRecommendationsControllerRecommendReelsParams,) => {
-    return [
-    `/api/recommendations/reels`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getPostRecommendationsControllerRecommendReelsQueryOptions = <TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError = void>(params?: PostRecommendationsControllerRecommendReelsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getPostRecommendationsControllerRecommendReelsQueryKey = (
+  params?: PostRecommendationsControllerRecommendReelsParams,
 ) => {
+  return [`/api/recommendations/reels`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getPostRecommendationsControllerRecommendReelsQueryOptions = <
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getPostRecommendationsControllerRecommendReelsQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getPostRecommendationsControllerRecommendReelsQueryKey(params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>> = ({
+    signal,
+  }) => postRecommendationsControllerRecommendReels(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>> = ({ signal }) => postRecommendationsControllerRecommendReels(params, { signal, ...requestOptions });
+export type PostRecommendationsControllerRecommendReelsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>
+>;
+export type PostRecommendationsControllerRecommendReelsQueryError = void;
 
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type PostRecommendationsControllerRecommendReelsQueryResult = NonNullable<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>>
-export type PostRecommendationsControllerRecommendReelsQueryError = void
-
-
-export function usePostRecommendationsControllerRecommendReels<TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError = void>(
- params: undefined |  PostRecommendationsControllerRecommendReelsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>> & Pick<
+export function usePostRecommendationsControllerRecommendReels<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params: undefined | PostRecommendationsControllerRecommendReelsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
           TError,
           Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePostRecommendationsControllerRecommendReels<TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError = void>(
- params?: PostRecommendationsControllerRecommendReelsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePostRecommendationsControllerRecommendReels<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
           TError,
           Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePostRecommendationsControllerRecommendReels<TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError = void>(
- params?: PostRecommendationsControllerRecommendReelsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePostRecommendationsControllerRecommendReels<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Gợi ý Reels phát được (trending hoặc for_you)
  */
 
-export function usePostRecommendationsControllerRecommendReels<TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError = void>(
- params?: PostRecommendationsControllerRecommendReelsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function usePostRecommendationsControllerRecommendReels<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getPostRecommendationsControllerRecommendReelsQueryOptions(params, options);
 
-  const queryOptions = getPostRecommendationsControllerRecommendReelsQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
-

@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type JobRunDtoOutcome = typeof JobRunDtoOutcome[keyof typeof JobRunDtoOutcome];
-
+export type JobRunDtoOutcome = (typeof JobRunDtoOutcome)[keyof typeof JobRunDtoOutcome];
 
 export const JobRunDtoOutcome = {
   running: 'running',

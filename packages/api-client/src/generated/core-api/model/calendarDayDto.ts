@@ -8,9 +8,9 @@
 export interface CalendarDayDto {
   date: string;
   /**
-     * Giá một đêm rẻ nhất ngày đó (VND)
-     * @nullable
-     */
+   * Giá một đêm rẻ nhất ngày đó (VND)
+   * @nullable
+   */
   priceFrom: number | null;
   isAvailable: boolean;
 }

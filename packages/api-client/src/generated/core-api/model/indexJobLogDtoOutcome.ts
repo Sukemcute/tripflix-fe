@@ -8,8 +8,7 @@
 /**
  * @nullable
  */
-export type IndexJobLogDtoOutcome = typeof IndexJobLogDtoOutcome[keyof typeof IndexJobLogDtoOutcome] | null;
-
+export type IndexJobLogDtoOutcome = (typeof IndexJobLogDtoOutcome)[keyof typeof IndexJobLogDtoOutcome] | null;
 
 export const IndexJobLogDtoOutcome = {
   succeeded: 'succeeded',

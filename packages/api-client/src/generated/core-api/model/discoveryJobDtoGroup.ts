@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type DiscoveryJobDtoGroup = typeof DiscoveryJobDtoGroup[keyof typeof DiscoveryJobDtoGroup];
-
+export type DiscoveryJobDtoGroup = (typeof DiscoveryJobDtoGroup)[keyof typeof DiscoveryJobDtoGroup];
 
 export const DiscoveryJobDtoGroup = {
   search: 'search',

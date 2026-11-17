@@ -4,10 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -20,7 +17,7 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
 import type {
@@ -30,15 +27,12 @@ import type {
   AdminRoomDayDto,
   UpdateCalendarResultDto,
   UpdateFlightCalendarDto,
-  UpdateRoomCalendarDto
+  UpdateRoomCalendarDto,
 } from '../model';
 
 import { http } from '../../../http';
 
-
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -56,157 +50,207 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type adminCalendarControllerGetRoomCalendarResponse200 = {
-  data: AdminRoomDayDto[]
-  status: 200
-}
-
-export type adminCalendarControllerGetRoomCalendarResponseSuccess = (adminCalendarControllerGetRoomCalendarResponse200) & {
-  headers: Headers;
+  data: AdminRoomDayDto[];
+  status: 200;
 };
-;
 
-export type adminCalendarControllerGetRoomCalendarResponse = (adminCalendarControllerGetRoomCalendarResponseSuccess)
+export type adminCalendarControllerGetRoomCalendarResponseSuccess =
+  adminCalendarControllerGetRoomCalendarResponse200 & {
+    headers: Headers;
+  };
+export type adminCalendarControllerGetRoomCalendarResponse =
+  adminCalendarControllerGetRoomCalendarResponseSuccess;
 
-export const getAdminCalendarControllerGetRoomCalendarUrl = (id: string,
-    params: AdminCalendarControllerGetRoomCalendarParams,) => {
+export const getAdminCalendarControllerGetRoomCalendarUrl = (
+  id: string,
+  params: AdminCalendarControllerGetRoomCalendarParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/admin/commerce/room-types/${id}/calendar?${stringifiedParams}` : `/api/admin/commerce/room-types/${id}/calendar`
-}
+  return stringifiedParams.length > 0
+    ? `/api/admin/commerce/room-types/${id}/calendar?${stringifiedParams}`
+    : `/api/admin/commerce/room-types/${id}/calendar`;
+};
 
-export const adminCalendarControllerGetRoomCalendar = async (id: string,
-    params: AdminCalendarControllerGetRoomCalendarParams, options?: Parameters<typeof http>[1]): Promise<adminCalendarControllerGetRoomCalendarResponse> => {
+export const adminCalendarControllerGetRoomCalendar = async (
+  id: string,
+  params: AdminCalendarControllerGetRoomCalendarParams,
+  options?: Parameters<typeof http>[1],
+): Promise<adminCalendarControllerGetRoomCalendarResponse> => {
+  return http<adminCalendarControllerGetRoomCalendarResponse>(
+    getAdminCalendarControllerGetRoomCalendarUrl(id, params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
 
-  return http<adminCalendarControllerGetRoomCalendarResponse>(getAdminCalendarControllerGetRoomCalendarUrl(id,params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getAdminCalendarControllerGetRoomCalendarQueryKey = (id: string,
-    params?: AdminCalendarControllerGetRoomCalendarParams,) => {
-    return [
-    `/api/admin/commerce/room-types/${id}/calendar`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getAdminCalendarControllerGetRoomCalendarQueryOptions = <TData = Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError = unknown>(id: string,
-    params: AdminCalendarControllerGetRoomCalendarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getAdminCalendarControllerGetRoomCalendarQueryKey = (
+  id: string,
+  params?: AdminCalendarControllerGetRoomCalendarParams,
 ) => {
+  return [`/api/admin/commerce/room-types/${id}/calendar`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getAdminCalendarControllerGetRoomCalendarQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>,
+  TError = unknown,
+>(
+  id: string,
+  params: AdminCalendarControllerGetRoomCalendarParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getAdminCalendarControllerGetRoomCalendarQueryKey(id,params);
+  const queryKey = queryOptions?.queryKey ?? getAdminCalendarControllerGetRoomCalendarQueryKey(id, params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>> = ({
+    signal,
+  }) => adminCalendarControllerGetRoomCalendar(id, params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>> = ({ signal }) => adminCalendarControllerGetRoomCalendar(id,params, { signal, ...requestOptions });
+export type AdminCalendarControllerGetRoomCalendarQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>
+>;
+export type AdminCalendarControllerGetRoomCalendarQueryError = unknown;
 
-
-
-
-
-   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type AdminCalendarControllerGetRoomCalendarQueryResult = NonNullable<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>>
-export type AdminCalendarControllerGetRoomCalendarQueryError = unknown
-
-
-export function useAdminCalendarControllerGetRoomCalendar<TData = Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError = unknown>(
- id: string,
-    params: AdminCalendarControllerGetRoomCalendarParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError, TData>> & Pick<
+export function useAdminCalendarControllerGetRoomCalendar<
+  TData = Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>,
+  TError = unknown,
+>(
+  id: string,
+  params: AdminCalendarControllerGetRoomCalendarParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>,
           TError,
           Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminCalendarControllerGetRoomCalendar<TData = Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError = unknown>(
- id: string,
-    params: AdminCalendarControllerGetRoomCalendarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminCalendarControllerGetRoomCalendar<
+  TData = Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>,
+  TError = unknown,
+>(
+  id: string,
+  params: AdminCalendarControllerGetRoomCalendarParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>,
           TError,
           Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminCalendarControllerGetRoomCalendar<TData = Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError = unknown>(
- id: string,
-    params: AdminCalendarControllerGetRoomCalendarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminCalendarControllerGetRoomCalendar<
+  TData = Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>,
+  TError = unknown,
+>(
+  id: string,
+  params: AdminCalendarControllerGetRoomCalendarParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-export function useAdminCalendarControllerGetRoomCalendar<TData = Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError = unknown>(
- id: string,
-    params: AdminCalendarControllerGetRoomCalendarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useAdminCalendarControllerGetRoomCalendar<
+  TData = Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>,
+  TError = unknown,
+>(
+  id: string,
+  params: AdminCalendarControllerGetRoomCalendarParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetRoomCalendar>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminCalendarControllerGetRoomCalendarQueryOptions(id, params, options);
 
-  const queryOptions = getAdminCalendarControllerGetRoomCalendarQueryOptions(id,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
 
 export type adminCalendarControllerUpdateRoomCalendarResponse200 = {
-  data: UpdateCalendarResultDto
-  status: 200
-}
+  data: UpdateCalendarResultDto;
+  status: 200;
+};
 
 export type adminCalendarControllerUpdateRoomCalendarResponse409 = {
-  data: void
-  status: 409
-}
-
-export type adminCalendarControllerUpdateRoomCalendarResponseSuccess = (adminCalendarControllerUpdateRoomCalendarResponse200) & {
-  headers: Headers;
-};
-export type adminCalendarControllerUpdateRoomCalendarResponseError = (adminCalendarControllerUpdateRoomCalendarResponse409) & {
-  headers: Headers;
+  data: void;
+  status: 409;
 };
 
-export type adminCalendarControllerUpdateRoomCalendarResponse = (adminCalendarControllerUpdateRoomCalendarResponseSuccess | adminCalendarControllerUpdateRoomCalendarResponseError)
+export type adminCalendarControllerUpdateRoomCalendarResponseSuccess =
+  adminCalendarControllerUpdateRoomCalendarResponse200 & {
+    headers: Headers;
+  };
+export type adminCalendarControllerUpdateRoomCalendarResponseError =
+  adminCalendarControllerUpdateRoomCalendarResponse409 & {
+    headers: Headers;
+  };
 
-export const getAdminCalendarControllerUpdateRoomCalendarUrl = (id: string,) => {
+export type adminCalendarControllerUpdateRoomCalendarResponse =
+  | adminCalendarControllerUpdateRoomCalendarResponseSuccess
+  | adminCalendarControllerUpdateRoomCalendarResponseError;
 
+export const getAdminCalendarControllerUpdateRoomCalendarUrl = (id: string) => {
+  return `/api/admin/commerce/room-types/${id}/calendar`;
+};
 
-
-
-  return `/api/admin/commerce/room-types/${id}/calendar`
-}
-
-export const adminCalendarControllerUpdateRoomCalendar = async (id: string,
-    updateRoomCalendarDto: UpdateRoomCalendarDto, options?: Parameters<typeof http>[1]): Promise<adminCalendarControllerUpdateRoomCalendarResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const adminCalendarControllerUpdateRoomCalendar = async (
+  id: string,
+  updateRoomCalendarDto: UpdateRoomCalendarDto,
+  options?: Parameters<typeof http>[1],
+): Promise<adminCalendarControllerUpdateRoomCalendarResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -220,215 +264,287 @@ export const adminCalendarControllerUpdateRoomCalendar = async (id: string,
     }
     return headers;
   };
-return http<adminCalendarControllerUpdateRoomCalendarResponse>(getAdminCalendarControllerUpdateRoomCalendarUrl(id),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(updateRoomCalendarDto)
-  }
-);}
-
-
-
-
-
-export const getAdminCalendarControllerUpdateRoomCalendarMutationKey = () => ['adminCalendarControllerUpdateRoomCalendar'] as const;
-
-export const getAdminCalendarControllerUpdateRoomCalendarMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCalendarControllerUpdateRoomCalendar>>, TError,AdminCalendarControllerUpdateRoomCalendarMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof adminCalendarControllerUpdateRoomCalendar>>, TError,AdminCalendarControllerUpdateRoomCalendarMutationVariables, TContext> => {
-
-const mutationKey = getAdminCalendarControllerUpdateRoomCalendarMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminCalendarControllerUpdateRoomCalendar>>, AdminCalendarControllerUpdateRoomCalendarMutationVariables> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  adminCalendarControllerUpdateRoomCalendar(id,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type AdminCalendarControllerUpdateRoomCalendarMutationResult = NonNullable<Awaited<ReturnType<typeof adminCalendarControllerUpdateRoomCalendar>>>
-    export type AdminCalendarControllerUpdateRoomCalendarMutationBody = UpdateRoomCalendarDto
-    export type AdminCalendarControllerUpdateRoomCalendarMutationError = void
-    export type AdminCalendarControllerUpdateRoomCalendarMutationVariables = {id: string;data: UpdateRoomCalendarDto}
-
-    export const useAdminCalendarControllerUpdateRoomCalendar = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCalendarControllerUpdateRoomCalendar>>, TError,AdminCalendarControllerUpdateRoomCalendarMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof adminCalendarControllerUpdateRoomCalendar>>,
-        TError,
-        AdminCalendarControllerUpdateRoomCalendarMutationVariables,
-        TContext
-      > => {
-      return useMutation(getAdminCalendarControllerUpdateRoomCalendarMutationOptions(options), queryClient);
-    }
-    export type adminCalendarControllerGetFlightCalendarResponse200 = {
-  data: AdminFlightDayDto[]
-  status: 200
-}
-
-export type adminCalendarControllerGetFlightCalendarResponseSuccess = (adminCalendarControllerGetFlightCalendarResponse200) & {
-  headers: Headers;
+  return http<adminCalendarControllerUpdateRoomCalendarResponse>(
+    getAdminCalendarControllerUpdateRoomCalendarUrl(id),
+    {
+      ...options,
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+      body: JSON.stringify(updateRoomCalendarDto),
+    },
+  );
 };
-;
 
-export type adminCalendarControllerGetFlightCalendarResponse = (adminCalendarControllerGetFlightCalendarResponseSuccess)
+export const getAdminCalendarControllerUpdateRoomCalendarMutationKey = () =>
+  ['adminCalendarControllerUpdateRoomCalendar'] as const;
 
-export const getAdminCalendarControllerGetFlightCalendarUrl = (id: string,
-    params: AdminCalendarControllerGetFlightCalendarParams,) => {
+export const getAdminCalendarControllerUpdateRoomCalendarMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminCalendarControllerUpdateRoomCalendar>>,
+    TError,
+    AdminCalendarControllerUpdateRoomCalendarMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminCalendarControllerUpdateRoomCalendar>>,
+  TError,
+  AdminCalendarControllerUpdateRoomCalendarMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminCalendarControllerUpdateRoomCalendarMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminCalendarControllerUpdateRoomCalendar>>,
+    AdminCalendarControllerUpdateRoomCalendarMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminCalendarControllerUpdateRoomCalendar(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminCalendarControllerUpdateRoomCalendarMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminCalendarControllerUpdateRoomCalendar>>
+>;
+export type AdminCalendarControllerUpdateRoomCalendarMutationBody = UpdateRoomCalendarDto;
+export type AdminCalendarControllerUpdateRoomCalendarMutationError = void;
+export type AdminCalendarControllerUpdateRoomCalendarMutationVariables = {
+  id: string;
+  data: UpdateRoomCalendarDto;
+};
+
+export const useAdminCalendarControllerUpdateRoomCalendar = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminCalendarControllerUpdateRoomCalendar>>,
+      TError,
+      AdminCalendarControllerUpdateRoomCalendarMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminCalendarControllerUpdateRoomCalendar>>,
+  TError,
+  AdminCalendarControllerUpdateRoomCalendarMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminCalendarControllerUpdateRoomCalendarMutationOptions(options), queryClient);
+};
+export type adminCalendarControllerGetFlightCalendarResponse200 = {
+  data: AdminFlightDayDto[];
+  status: 200;
+};
+
+export type adminCalendarControllerGetFlightCalendarResponseSuccess =
+  adminCalendarControllerGetFlightCalendarResponse200 & {
+    headers: Headers;
+  };
+export type adminCalendarControllerGetFlightCalendarResponse =
+  adminCalendarControllerGetFlightCalendarResponseSuccess;
+
+export const getAdminCalendarControllerGetFlightCalendarUrl = (
+  id: string,
+  params: AdminCalendarControllerGetFlightCalendarParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/admin/commerce/flights/${id}/calendar?${stringifiedParams}` : `/api/admin/commerce/flights/${id}/calendar`
-}
+  return stringifiedParams.length > 0
+    ? `/api/admin/commerce/flights/${id}/calendar?${stringifiedParams}`
+    : `/api/admin/commerce/flights/${id}/calendar`;
+};
 
-export const adminCalendarControllerGetFlightCalendar = async (id: string,
-    params: AdminCalendarControllerGetFlightCalendarParams, options?: Parameters<typeof http>[1]): Promise<adminCalendarControllerGetFlightCalendarResponse> => {
+export const adminCalendarControllerGetFlightCalendar = async (
+  id: string,
+  params: AdminCalendarControllerGetFlightCalendarParams,
+  options?: Parameters<typeof http>[1],
+): Promise<adminCalendarControllerGetFlightCalendarResponse> => {
+  return http<adminCalendarControllerGetFlightCalendarResponse>(
+    getAdminCalendarControllerGetFlightCalendarUrl(id, params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
 
-  return http<adminCalendarControllerGetFlightCalendarResponse>(getAdminCalendarControllerGetFlightCalendarUrl(id,params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getAdminCalendarControllerGetFlightCalendarQueryKey = (id: string,
-    params?: AdminCalendarControllerGetFlightCalendarParams,) => {
-    return [
-    `/api/admin/commerce/flights/${id}/calendar`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getAdminCalendarControllerGetFlightCalendarQueryOptions = <TData = Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError = unknown>(id: string,
-    params: AdminCalendarControllerGetFlightCalendarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getAdminCalendarControllerGetFlightCalendarQueryKey = (
+  id: string,
+  params?: AdminCalendarControllerGetFlightCalendarParams,
 ) => {
+  return [`/api/admin/commerce/flights/${id}/calendar`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getAdminCalendarControllerGetFlightCalendarQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>,
+  TError = unknown,
+>(
+  id: string,
+  params: AdminCalendarControllerGetFlightCalendarParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getAdminCalendarControllerGetFlightCalendarQueryKey(id,params);
+  const queryKey = queryOptions?.queryKey ?? getAdminCalendarControllerGetFlightCalendarQueryKey(id, params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>> = ({
+    signal,
+  }) => adminCalendarControllerGetFlightCalendar(id, params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>> = ({ signal }) => adminCalendarControllerGetFlightCalendar(id,params, { signal, ...requestOptions });
+export type AdminCalendarControllerGetFlightCalendarQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>
+>;
+export type AdminCalendarControllerGetFlightCalendarQueryError = unknown;
 
-
-
-
-
-   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type AdminCalendarControllerGetFlightCalendarQueryResult = NonNullable<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>>
-export type AdminCalendarControllerGetFlightCalendarQueryError = unknown
-
-
-export function useAdminCalendarControllerGetFlightCalendar<TData = Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError = unknown>(
- id: string,
-    params: AdminCalendarControllerGetFlightCalendarParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError, TData>> & Pick<
+export function useAdminCalendarControllerGetFlightCalendar<
+  TData = Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>,
+  TError = unknown,
+>(
+  id: string,
+  params: AdminCalendarControllerGetFlightCalendarParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>,
           TError,
           Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminCalendarControllerGetFlightCalendar<TData = Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError = unknown>(
- id: string,
-    params: AdminCalendarControllerGetFlightCalendarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminCalendarControllerGetFlightCalendar<
+  TData = Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>,
+  TError = unknown,
+>(
+  id: string,
+  params: AdminCalendarControllerGetFlightCalendarParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>,
           TError,
           Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminCalendarControllerGetFlightCalendar<TData = Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError = unknown>(
- id: string,
-    params: AdminCalendarControllerGetFlightCalendarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminCalendarControllerGetFlightCalendar<
+  TData = Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>,
+  TError = unknown,
+>(
+  id: string,
+  params: AdminCalendarControllerGetFlightCalendarParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-export function useAdminCalendarControllerGetFlightCalendar<TData = Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError = unknown>(
- id: string,
-    params: AdminCalendarControllerGetFlightCalendarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useAdminCalendarControllerGetFlightCalendar<
+  TData = Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>,
+  TError = unknown,
+>(
+  id: string,
+  params: AdminCalendarControllerGetFlightCalendarParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminCalendarControllerGetFlightCalendar>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminCalendarControllerGetFlightCalendarQueryOptions(id, params, options);
 
-  const queryOptions = getAdminCalendarControllerGetFlightCalendarQueryOptions(id,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-
-
-
-
-
 export type adminCalendarControllerUpdateFlightCalendarResponse200 = {
-  data: UpdateCalendarResultDto
-  status: 200
-}
+  data: UpdateCalendarResultDto;
+  status: 200;
+};
 
 export type adminCalendarControllerUpdateFlightCalendarResponse409 = {
-  data: void
-  status: 409
-}
-
-export type adminCalendarControllerUpdateFlightCalendarResponseSuccess = (adminCalendarControllerUpdateFlightCalendarResponse200) & {
-  headers: Headers;
-};
-export type adminCalendarControllerUpdateFlightCalendarResponseError = (adminCalendarControllerUpdateFlightCalendarResponse409) & {
-  headers: Headers;
+  data: void;
+  status: 409;
 };
 
-export type adminCalendarControllerUpdateFlightCalendarResponse = (adminCalendarControllerUpdateFlightCalendarResponseSuccess | adminCalendarControllerUpdateFlightCalendarResponseError)
+export type adminCalendarControllerUpdateFlightCalendarResponseSuccess =
+  adminCalendarControllerUpdateFlightCalendarResponse200 & {
+    headers: Headers;
+  };
+export type adminCalendarControllerUpdateFlightCalendarResponseError =
+  adminCalendarControllerUpdateFlightCalendarResponse409 & {
+    headers: Headers;
+  };
 
-export const getAdminCalendarControllerUpdateFlightCalendarUrl = (id: string,) => {
+export type adminCalendarControllerUpdateFlightCalendarResponse =
+  | adminCalendarControllerUpdateFlightCalendarResponseSuccess
+  | adminCalendarControllerUpdateFlightCalendarResponseError;
 
+export const getAdminCalendarControllerUpdateFlightCalendarUrl = (id: string) => {
+  return `/api/admin/commerce/flights/${id}/calendar`;
+};
 
-
-
-  return `/api/admin/commerce/flights/${id}/calendar`
-}
-
-export const adminCalendarControllerUpdateFlightCalendar = async (id: string,
-    updateFlightCalendarDto: UpdateFlightCalendarDto, options?: Parameters<typeof http>[1]): Promise<adminCalendarControllerUpdateFlightCalendarResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+export const adminCalendarControllerUpdateFlightCalendar = async (
+  id: string,
+  updateFlightCalendarDto: UpdateFlightCalendarDto,
+  options?: Parameters<typeof http>[1],
+): Promise<adminCalendarControllerUpdateFlightCalendarResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
@@ -442,166 +558,210 @@ export const adminCalendarControllerUpdateFlightCalendar = async (id: string,
     }
     return headers;
   };
-return http<adminCalendarControllerUpdateFlightCalendarResponse>(getAdminCalendarControllerUpdateFlightCalendarUrl(id),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(updateFlightCalendarDto)
-  }
-);}
+  return http<adminCalendarControllerUpdateFlightCalendarResponse>(
+    getAdminCalendarControllerUpdateFlightCalendarUrl(id),
+    {
+      ...options,
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+      body: JSON.stringify(updateFlightCalendarDto),
+    },
+  );
+};
 
+export const getAdminCalendarControllerUpdateFlightCalendarMutationKey = () =>
+  ['adminCalendarControllerUpdateFlightCalendar'] as const;
 
+export const getAdminCalendarControllerUpdateFlightCalendarMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminCalendarControllerUpdateFlightCalendar>>,
+    TError,
+    AdminCalendarControllerUpdateFlightCalendarMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminCalendarControllerUpdateFlightCalendar>>,
+  TError,
+  AdminCalendarControllerUpdateFlightCalendarMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminCalendarControllerUpdateFlightCalendarMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminCalendarControllerUpdateFlightCalendar>>,
+    AdminCalendarControllerUpdateFlightCalendarMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
 
+    return adminCalendarControllerUpdateFlightCalendar(id, data, requestOptions);
+  };
 
-export const getAdminCalendarControllerUpdateFlightCalendarMutationKey = () => ['adminCalendarControllerUpdateFlightCalendar'] as const;
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getAdminCalendarControllerUpdateFlightCalendarMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCalendarControllerUpdateFlightCalendar>>, TError,AdminCalendarControllerUpdateFlightCalendarMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof adminCalendarControllerUpdateFlightCalendar>>, TError,AdminCalendarControllerUpdateFlightCalendarMutationVariables, TContext> => {
+export type AdminCalendarControllerUpdateFlightCalendarMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminCalendarControllerUpdateFlightCalendar>>
+>;
+export type AdminCalendarControllerUpdateFlightCalendarMutationBody = UpdateFlightCalendarDto;
+export type AdminCalendarControllerUpdateFlightCalendarMutationError = void;
+export type AdminCalendarControllerUpdateFlightCalendarMutationVariables = {
+  id: string;
+  data: UpdateFlightCalendarDto;
+};
 
-const mutationKey = getAdminCalendarControllerUpdateFlightCalendarMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export const useAdminCalendarControllerUpdateFlightCalendar = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminCalendarControllerUpdateFlightCalendar>>,
+      TError,
+      AdminCalendarControllerUpdateFlightCalendarMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminCalendarControllerUpdateFlightCalendar>>,
+  TError,
+  AdminCalendarControllerUpdateFlightCalendarMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminCalendarControllerUpdateFlightCalendarMutationOptions(options), queryClient);
+};
+export type adminMetricsControllerGetMetricsResponse200 = {
+  data: void;
+  status: 200;
+};
 
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminCalendarControllerUpdateFlightCalendar>>, AdminCalendarControllerUpdateFlightCalendarMutationVariables> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  adminCalendarControllerUpdateFlightCalendar(id,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type AdminCalendarControllerUpdateFlightCalendarMutationResult = NonNullable<Awaited<ReturnType<typeof adminCalendarControllerUpdateFlightCalendar>>>
-    export type AdminCalendarControllerUpdateFlightCalendarMutationBody = UpdateFlightCalendarDto
-    export type AdminCalendarControllerUpdateFlightCalendarMutationError = void
-    export type AdminCalendarControllerUpdateFlightCalendarMutationVariables = {id: string;data: UpdateFlightCalendarDto}
-
-    export const useAdminCalendarControllerUpdateFlightCalendar = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCalendarControllerUpdateFlightCalendar>>, TError,AdminCalendarControllerUpdateFlightCalendarMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof adminCalendarControllerUpdateFlightCalendar>>,
-        TError,
-        AdminCalendarControllerUpdateFlightCalendarMutationVariables,
-        TContext
-      > => {
-      return useMutation(getAdminCalendarControllerUpdateFlightCalendarMutationOptions(options), queryClient);
-    }
-    export type adminMetricsControllerGetMetricsResponse200 = {
-  data: void
-  status: 200
-}
-
-export type adminMetricsControllerGetMetricsResponseSuccess = (adminMetricsControllerGetMetricsResponse200) & {
+export type adminMetricsControllerGetMetricsResponseSuccess = adminMetricsControllerGetMetricsResponse200 & {
   headers: Headers;
 };
-;
-
-export type adminMetricsControllerGetMetricsResponse = (adminMetricsControllerGetMetricsResponseSuccess)
+export type adminMetricsControllerGetMetricsResponse = adminMetricsControllerGetMetricsResponseSuccess;
 
 export const getAdminMetricsControllerGetMetricsUrl = () => {
+  return `/api/admin/commerce/metrics`;
+};
 
-
-
-
-  return `/api/admin/commerce/metrics`
-}
-
-export const adminMetricsControllerGetMetrics = async ( options?: Parameters<typeof http>[1]): Promise<adminMetricsControllerGetMetricsResponse> => {
-
-  return http<adminMetricsControllerGetMetricsResponse>(getAdminMetricsControllerGetMetricsUrl(),
-  {
+export const adminMetricsControllerGetMetrics = async (
+  options?: Parameters<typeof http>[1],
+): Promise<adminMetricsControllerGetMetricsResponse> => {
+  return http<adminMetricsControllerGetMetricsResponse>(getAdminMetricsControllerGetMetricsUrl(), {
     ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
+    method: 'GET',
+  });
+};
 
 export const getAdminMetricsControllerGetMetricsQueryKey = () => {
-    return [
-    `/api/admin/commerce/metrics`
-    ] as const;
-    }
+  return [`/api/admin/commerce/metrics`] as const;
+};
 
+export const getAdminMetricsControllerGetMetricsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof http>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-export const getAdminMetricsControllerGetMetricsQueryOptions = <TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>>, request?: SecondParameter<typeof http>}
-) => {
+  const queryKey = queryOptions?.queryKey ?? getAdminMetricsControllerGetMetricsQueryKey();
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>> = ({ signal }) =>
+    adminMetricsControllerGetMetrics({ signal, ...requestOptions });
 
-  const queryKey =  queryOptions?.queryKey ?? getAdminMetricsControllerGetMetricsQueryKey();
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type AdminMetricsControllerGetMetricsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>
+>;
+export type AdminMetricsControllerGetMetricsQueryError = unknown;
 
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>> = ({ signal }) => adminMetricsControllerGetMetrics({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type AdminMetricsControllerGetMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>>
-export type AdminMetricsControllerGetMetricsQueryError = unknown
-
-
-export function useAdminMetricsControllerGetMetrics<TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError = unknown>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>> & Pick<
+export function useAdminMetricsControllerGetMetrics<
+  TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
           TError,
           Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminMetricsControllerGetMetrics<TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminMetricsControllerGetMetrics<
+  TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
           TError,
           Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAdminMetricsControllerGetMetrics<TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminMetricsControllerGetMetrics<
+  TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-export function useAdminMetricsControllerGetMetrics<TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useAdminMetricsControllerGetMetrics<
+  TData = Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminMetricsControllerGetMetrics>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminMetricsControllerGetMetricsQueryOptions(options);
 
-  const queryOptions = getAdminMetricsControllerGetMetricsQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
-

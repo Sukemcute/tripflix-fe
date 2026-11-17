@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type SocialCommentDtoStatus = typeof SocialCommentDtoStatus[keyof typeof SocialCommentDtoStatus];
-
+export type SocialCommentDtoStatus = (typeof SocialCommentDtoStatus)[keyof typeof SocialCommentDtoStatus];
 
 export const SocialCommentDtoStatus = {
   visible: 'visible',

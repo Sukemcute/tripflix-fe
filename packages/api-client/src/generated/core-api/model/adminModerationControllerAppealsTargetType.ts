@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminModerationControllerAppealsTargetType = typeof AdminModerationControllerAppealsTargetType[keyof typeof AdminModerationControllerAppealsTargetType];
-
+export type AdminModerationControllerAppealsTargetType =
+  (typeof AdminModerationControllerAppealsTargetType)[keyof typeof AdminModerationControllerAppealsTargetType];
 
 export const AdminModerationControllerAppealsTargetType = {
   post: 'post',

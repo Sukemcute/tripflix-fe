@@ -12,8 +12,8 @@ export interface StayPageDto {
   /** Số khách sạn khớp trên mọi trang */
   total: number;
   /**
-     * Gửi lại ở `cursor` để lấy trang sau; null là hết
-     * @nullable
-     */
+   * Gửi lại ở `cursor` để lấy trang sau; null là hết
+   * @nullable
+   */
   nextCursor: string | null;
 }

@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ModerationDetailDtoTargetType = typeof ModerationDetailDtoTargetType[keyof typeof ModerationDetailDtoTargetType];
-
+export type ModerationDetailDtoTargetType =
+  (typeof ModerationDetailDtoTargetType)[keyof typeof ModerationDetailDtoTargetType];
 
 export const ModerationDetailDtoTargetType = {
   post: 'post',

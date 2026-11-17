@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FeedControllerGetFeedSaved = typeof FeedControllerGetFeedSaved[keyof typeof FeedControllerGetFeedSaved];
-
+export type FeedControllerGetFeedSaved =
+  (typeof FeedControllerGetFeedSaved)[keyof typeof FeedControllerGetFeedSaved];
 
 export const FeedControllerGetFeedSaved = {
   true: 'true',

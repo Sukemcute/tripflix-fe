@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type StaysControllerListStaysSort = typeof StaysControllerListStaysSort[keyof typeof StaysControllerListStaysSort];
-
+export type StaysControllerListStaysSort =
+  (typeof StaysControllerListStaysSort)[keyof typeof StaysControllerListStaysSort];
 
 export const StaysControllerListStaysSort = {
   price: 'price',

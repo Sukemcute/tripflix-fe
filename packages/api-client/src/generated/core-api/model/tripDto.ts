@@ -26,14 +26,14 @@ export interface TripDto {
   /** @nullable */
   paidAt: string | null;
   /**
-     * Ngày đi sớm nhất trong đơn
-     * @nullable
-     */
+   * Ngày đi sớm nhất trong đơn
+   * @nullable
+   */
   startDate: string | null;
   /**
-     * Ngày về / trả phòng muộn nhất trong đơn
-     * @nullable
-     */
+   * Ngày về / trả phòng muộn nhất trong đơn
+   * @nullable
+   */
   endDate: string | null;
   items: CheckoutItemDto[];
 }

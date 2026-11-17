@@ -8,8 +8,8 @@
 /**
  * Trạng thái tóm tắt
  */
-export type PostSummaryResponseDtoStatus = typeof PostSummaryResponseDtoStatus[keyof typeof PostSummaryResponseDtoStatus];
-
+export type PostSummaryResponseDtoStatus =
+  (typeof PostSummaryResponseDtoStatus)[keyof typeof PostSummaryResponseDtoStatus];
 
 export const PostSummaryResponseDtoStatus = {
   no_comments: 'no_comments',

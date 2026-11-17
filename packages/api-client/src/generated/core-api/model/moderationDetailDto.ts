@@ -28,9 +28,9 @@ export interface ModerationDetailDto {
   createdAt: string;
   updatedAt: string;
   /**
-     * Text preview returned in the queue.
-     * @nullable
-     */
+   * Text preview returned in the queue.
+   * @nullable
+   */
   targetPreview?: string | null;
   /** @nullable */
   target: ModerationTargetDto | null;

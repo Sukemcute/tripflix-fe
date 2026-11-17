@@ -8,8 +8,7 @@
 /**
  * see: tham quan · food: ăn uống · cafe · lodging: chỗ ở ngoài Tripflix
  */
-export type PointOfInterestDtoKind = typeof PointOfInterestDtoKind[keyof typeof PointOfInterestDtoKind];
-
+export type PointOfInterestDtoKind = (typeof PointOfInterestDtoKind)[keyof typeof PointOfInterestDtoKind];
 
 export const PointOfInterestDtoKind = {
   see: 'see',

@@ -19,13 +19,13 @@ export interface UpdateRoomCalendarDto {
   /** Không trả phòng vào ngày này */
   isClosedToDeparture?: boolean;
   /**
-     * @minimum 1
-     * @maximum 14
-     */
+   * @minimum 1
+   * @maximum 14
+   */
   minLos?: number;
   /**
-     * @minimum 1
-     * @maximum 14
-     */
+   * @minimum 1
+   * @maximum 14
+   */
   maxLos?: number;
 }

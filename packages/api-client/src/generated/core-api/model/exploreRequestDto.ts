@@ -10,8 +10,8 @@ export interface ExploreRequestDto {
   /** Câu người dùng gõ, có dấu hay không đều được (1–200 ký tự) */
   q: string;
   /**
-     * Vị trí người dùng. Chỉ dùng khi câu không nói nơi: chỗ gần người dùng được xếp lên
-     * @nullable
-     */
+   * Vị trí người dùng. Chỉ dùng khi câu không nói nơi: chỗ gần người dùng được xếp lên
+   * @nullable
+   */
   loc?: ExploreLocationDto | null;
 }

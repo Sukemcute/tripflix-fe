@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AiUsageResponseDtoGroupBy = typeof AiUsageResponseDtoGroupBy[keyof typeof AiUsageResponseDtoGroupBy];
-
+export type AiUsageResponseDtoGroupBy =
+  (typeof AiUsageResponseDtoGroupBy)[keyof typeof AiUsageResponseDtoGroupBy];
 
 export const AiUsageResponseDtoGroupBy = {
   feature: 'feature',

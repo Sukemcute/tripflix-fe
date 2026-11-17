@@ -8,8 +8,7 @@
 /**
  * Số từ
  */
-export type VocabGapDtoN = typeof VocabGapDtoN[keyof typeof VocabGapDtoN];
-
+export type VocabGapDtoN = (typeof VocabGapDtoN)[keyof typeof VocabGapDtoN];
 
 export const VocabGapDtoN = {
   NUMBER_1: 1,

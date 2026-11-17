@@ -17,18 +17,18 @@ export interface ExploreResponseDto {
   /** Vùng câu nhắm tới đứng đầu, vùng rỗng xuống cuối */
   sections: ExploreSectionDto[];
   /**
-     * Kết quả thay thế: vùng câu muốn không có mục nào khớp đủ câu (đúng nơi, không vượt ngân sách, khớp từ) nên nới điều kiện. null nếu có kết quả chính hoặc không có gì liên quan
-     * @nullable
-     */
+   * Kết quả thay thế: vùng câu muốn không có mục nào khớp đủ câu (đúng nơi, không vượt ngân sách, khớp từ) nên nới điều kiện. null nếu có kết quả chính hoặc không có gì liên quan
+   * @nullable
+   */
   fallback: ExploreFallbackDto | null;
   /**
-     * Đã thay bằng `fallback.items` (cùng mục, không có `relaxed`)
-     * @deprecated
-     */
+   * Đã thay bằng `fallback.items` (cùng mục, không có `relaxed`)
+   * @deprecated
+   */
   suggest: ExploreSuggestItemDto[];
   /**
-     * Đã thay bằng `fallback.dropped`
-     * @deprecated
-     */
+   * Đã thay bằng `fallback.dropped`
+   * @deprecated
+   */
   dropped: string[];
 }

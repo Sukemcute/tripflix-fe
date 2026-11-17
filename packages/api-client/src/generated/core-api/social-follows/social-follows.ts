@@ -4,10 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -20,22 +17,19 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
 import type {
   FollowStatusDto,
   FollowsControllerListPostRecipientsParams,
   PostFollowerPageDto,
-  PublicProfileDto
+  PublicProfileDto,
 } from '../model';
 
 import { http } from '../../../http';
 
-
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -53,500 +47,610 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type followsControllerGetProfileResponse200 = {
-  data: PublicProfileDto
-  status: 200
-}
+  data: PublicProfileDto;
+  status: 200;
+};
 
 export type followsControllerGetProfileResponse404 = {
-  data: void
-  status: 404
-}
-
-export type followsControllerGetProfileResponseSuccess = (followsControllerGetProfileResponse200) & {
-  headers: Headers;
-};
-export type followsControllerGetProfileResponseError = (followsControllerGetProfileResponse404) & {
-  headers: Headers;
+  data: void;
+  status: 404;
 };
 
-export type followsControllerGetProfileResponse = (followsControllerGetProfileResponseSuccess | followsControllerGetProfileResponseError)
+export type followsControllerGetProfileResponseSuccess = followsControllerGetProfileResponse200 & {
+  headers: Headers;
+};
+export type followsControllerGetProfileResponseError = followsControllerGetProfileResponse404 & {
+  headers: Headers;
+};
 
-export const getFollowsControllerGetProfileUrl = (userId: string,) => {
+export type followsControllerGetProfileResponse =
+  followsControllerGetProfileResponseSuccess | followsControllerGetProfileResponseError;
 
+export const getFollowsControllerGetProfileUrl = (userId: string) => {
+  return `/api/v1/users/${userId}/profile`;
+};
 
-
-
-  return `/api/v1/users/${userId}/profile`
-}
-
-export const followsControllerGetProfile = async (userId: string, options?: Parameters<typeof http>[1]): Promise<followsControllerGetProfileResponse> => {
-
-  return http<followsControllerGetProfileResponse>(getFollowsControllerGetProfileUrl(userId),
-  {
+export const followsControllerGetProfile = async (
+  userId: string,
+  options?: Parameters<typeof http>[1],
+): Promise<followsControllerGetProfileResponse> => {
+  return http<followsControllerGetProfileResponse>(getFollowsControllerGetProfileUrl(userId), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
+export const getFollowsControllerGetProfileQueryKey = (userId: string) => {
+  return [`/api/v1/users/${userId}/profile`] as const;
+};
 
-  }
-);}
-
-
-
-
-
-export const getFollowsControllerGetProfileQueryKey = (userId: string,) => {
-    return [
-    `/api/v1/users/${userId}/profile`
-    ] as const;
-    }
-
-
-export const getFollowsControllerGetProfileQueryOptions = <TData = Awaited<ReturnType<typeof followsControllerGetProfile>>, TError = void>(userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getFollowsControllerGetProfileQueryOptions = <
+  TData = Awaited<ReturnType<typeof followsControllerGetProfile>>,
+  TError = void,
+>(
+  userId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getFollowsControllerGetProfileQueryKey(userId);
 
-  const queryKey =  queryOptions?.queryKey ?? getFollowsControllerGetProfileQueryKey(userId);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof followsControllerGetProfile>>> = ({ signal }) =>
+    followsControllerGetProfile(userId, { signal, ...requestOptions });
 
+  return {
+    queryKey,
+    queryFn,
+    enabled: userId !== null && userId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
 
+export type FollowsControllerGetProfileQueryResult = NonNullable<
+  Awaited<ReturnType<typeof followsControllerGetProfile>>
+>;
+export type FollowsControllerGetProfileQueryError = void;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof followsControllerGetProfile>>> = ({ signal }) => followsControllerGetProfile(userId, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: userId !== null && userId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type FollowsControllerGetProfileQueryResult = NonNullable<Awaited<ReturnType<typeof followsControllerGetProfile>>>
-export type FollowsControllerGetProfileQueryError = void
-
-
-export function useFollowsControllerGetProfile<TData = Awaited<ReturnType<typeof followsControllerGetProfile>>, TError = void>(
- userId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>> & Pick<
+export function useFollowsControllerGetProfile<
+  TData = Awaited<ReturnType<typeof followsControllerGetProfile>>,
+  TError = void,
+>(
+  userId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>> &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof followsControllerGetProfile>>,
           TError,
           Awaited<ReturnType<typeof followsControllerGetProfile>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useFollowsControllerGetProfile<TData = Awaited<ReturnType<typeof followsControllerGetProfile>>, TError = void>(
- userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useFollowsControllerGetProfile<
+  TData = Awaited<ReturnType<typeof followsControllerGetProfile>>,
+  TError = void,
+>(
+  userId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>> &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof followsControllerGetProfile>>,
           TError,
           Awaited<ReturnType<typeof followsControllerGetProfile>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useFollowsControllerGetProfile<TData = Awaited<ReturnType<typeof followsControllerGetProfile>>, TError = void>(
- userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useFollowsControllerGetProfile<
+  TData = Awaited<ReturnType<typeof followsControllerGetProfile>>,
+  TError = void,
+>(
+  userId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-export function useFollowsControllerGetProfile<TData = Awaited<ReturnType<typeof followsControllerGetProfile>>, TError = void>(
- userId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useFollowsControllerGetProfile<
+  TData = Awaited<ReturnType<typeof followsControllerGetProfile>>,
+  TError = void,
+>(
+  userId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetProfile>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getFollowsControllerGetProfileQueryOptions(userId, options);
 
-  const queryOptions = getFollowsControllerGetProfileQueryOptions(userId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
 
 export type followsControllerGetStatusResponse200 = {
-  data: FollowStatusDto
-  status: 200
-}
+  data: FollowStatusDto;
+  status: 200;
+};
 
-export type followsControllerGetStatusResponseSuccess = (followsControllerGetStatusResponse200) & {
+export type followsControllerGetStatusResponseSuccess = followsControllerGetStatusResponse200 & {
   headers: Headers;
 };
-;
+export type followsControllerGetStatusResponse = followsControllerGetStatusResponseSuccess;
 
-export type followsControllerGetStatusResponse = (followsControllerGetStatusResponseSuccess)
+export const getFollowsControllerGetStatusUrl = (authorId: string) => {
+  return `/api/v1/users/${authorId}/follow`;
+};
 
-export const getFollowsControllerGetStatusUrl = (authorId: string,) => {
-
-
-
-
-  return `/api/v1/users/${authorId}/follow`
-}
-
-export const followsControllerGetStatus = async (authorId: string, options?: Parameters<typeof http>[1]): Promise<followsControllerGetStatusResponse> => {
-
-  return http<followsControllerGetStatusResponse>(getFollowsControllerGetStatusUrl(authorId),
-  {
+export const followsControllerGetStatus = async (
+  authorId: string,
+  options?: Parameters<typeof http>[1],
+): Promise<followsControllerGetStatusResponse> => {
+  return http<followsControllerGetStatusResponse>(getFollowsControllerGetStatusUrl(authorId), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
+export const getFollowsControllerGetStatusQueryKey = (authorId: string) => {
+  return [`/api/v1/users/${authorId}/follow`] as const;
+};
 
-  }
-);}
-
-
-
-
-
-export const getFollowsControllerGetStatusQueryKey = (authorId: string,) => {
-    return [
-    `/api/v1/users/${authorId}/follow`
-    ] as const;
-    }
-
-
-export const getFollowsControllerGetStatusQueryOptions = <TData = Awaited<ReturnType<typeof followsControllerGetStatus>>, TError = unknown>(authorId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetStatus>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getFollowsControllerGetStatusQueryOptions = <
+  TData = Awaited<ReturnType<typeof followsControllerGetStatus>>,
+  TError = unknown,
+>(
+  authorId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetStatus>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getFollowsControllerGetStatusQueryKey(authorId);
 
-  const queryKey =  queryOptions?.queryKey ?? getFollowsControllerGetStatusQueryKey(authorId);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof followsControllerGetStatus>>> = ({ signal }) =>
+    followsControllerGetStatus(authorId, { signal, ...requestOptions });
 
+  return {
+    queryKey,
+    queryFn,
+    enabled: authorId !== null && authorId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetStatus>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
 
+export type FollowsControllerGetStatusQueryResult = NonNullable<
+  Awaited<ReturnType<typeof followsControllerGetStatus>>
+>;
+export type FollowsControllerGetStatusQueryError = unknown;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof followsControllerGetStatus>>> = ({ signal }) => followsControllerGetStatus(authorId, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: authorId !== null && authorId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetStatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type FollowsControllerGetStatusQueryResult = NonNullable<Awaited<ReturnType<typeof followsControllerGetStatus>>>
-export type FollowsControllerGetStatusQueryError = unknown
-
-
-export function useFollowsControllerGetStatus<TData = Awaited<ReturnType<typeof followsControllerGetStatus>>, TError = unknown>(
- authorId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetStatus>>, TError, TData>> & Pick<
+export function useFollowsControllerGetStatus<
+  TData = Awaited<ReturnType<typeof followsControllerGetStatus>>,
+  TError = unknown,
+>(
+  authorId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetStatus>>, TError, TData>> &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof followsControllerGetStatus>>,
           TError,
           Awaited<ReturnType<typeof followsControllerGetStatus>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useFollowsControllerGetStatus<TData = Awaited<ReturnType<typeof followsControllerGetStatus>>, TError = unknown>(
- authorId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetStatus>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useFollowsControllerGetStatus<
+  TData = Awaited<ReturnType<typeof followsControllerGetStatus>>,
+  TError = unknown,
+>(
+  authorId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetStatus>>, TError, TData>> &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof followsControllerGetStatus>>,
           TError,
           Awaited<ReturnType<typeof followsControllerGetStatus>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useFollowsControllerGetStatus<TData = Awaited<ReturnType<typeof followsControllerGetStatus>>, TError = unknown>(
- authorId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetStatus>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useFollowsControllerGetStatus<
+  TData = Awaited<ReturnType<typeof followsControllerGetStatus>>,
+  TError = unknown,
+>(
+  authorId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetStatus>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-export function useFollowsControllerGetStatus<TData = Awaited<ReturnType<typeof followsControllerGetStatus>>, TError = unknown>(
- authorId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetStatus>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useFollowsControllerGetStatus<
+  TData = Awaited<ReturnType<typeof followsControllerGetStatus>>,
+  TError = unknown,
+>(
+  authorId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerGetStatus>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getFollowsControllerGetStatusQueryOptions(authorId, options);
 
-  const queryOptions = getFollowsControllerGetStatusQueryOptions(authorId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-
-
-
-
-
 export type followsControllerFollowResponse200 = {
-  data: FollowStatusDto
-  status: 200
-}
+  data: FollowStatusDto;
+  status: 200;
+};
 
-export type followsControllerFollowResponseSuccess = (followsControllerFollowResponse200) & {
+export type followsControllerFollowResponseSuccess = followsControllerFollowResponse200 & {
   headers: Headers;
 };
-;
+export type followsControllerFollowResponse = followsControllerFollowResponseSuccess;
 
-export type followsControllerFollowResponse = (followsControllerFollowResponseSuccess)
+export const getFollowsControllerFollowUrl = (authorId: string) => {
+  return `/api/v1/users/${authorId}/follow`;
+};
 
-export const getFollowsControllerFollowUrl = (authorId: string,) => {
-
-
-
-
-  return `/api/v1/users/${authorId}/follow`
-}
-
-export const followsControllerFollow = async (authorId: string, options?: Parameters<typeof http>[1]): Promise<followsControllerFollowResponse> => {
-
-  return http<followsControllerFollowResponse>(getFollowsControllerFollowUrl(authorId),
-  {
+export const followsControllerFollow = async (
+  authorId: string,
+  options?: Parameters<typeof http>[1],
+): Promise<followsControllerFollowResponse> => {
+  return http<followsControllerFollowResponse>(getFollowsControllerFollowUrl(authorId), {
     ...options,
-    method: 'PUT'
-
-
-  }
-);}
-
-
-
-
+    method: 'PUT',
+  });
+};
 
 export const getFollowsControllerFollowMutationKey = () => ['followsControllerFollow'] as const;
 
-export const getFollowsControllerFollowMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof followsControllerFollow>>, TError,FollowsControllerFollowMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof followsControllerFollow>>, TError,FollowsControllerFollowMutationVariables, TContext> => {
+export const getFollowsControllerFollowMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof followsControllerFollow>>,
+    TError,
+    FollowsControllerFollowMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof followsControllerFollow>>,
+  TError,
+  FollowsControllerFollowMutationVariables,
+  TContext
+> => {
+  const mutationKey = getFollowsControllerFollowMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-const mutationKey = getFollowsControllerFollowMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof followsControllerFollow>>,
+    FollowsControllerFollowMutationVariables
+  > = (props) => {
+    const { authorId } = props ?? {};
 
+    return followsControllerFollow(authorId, requestOptions);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
+export type FollowsControllerFollowMutationResult = NonNullable<
+  Awaited<ReturnType<typeof followsControllerFollow>>
+>;
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof followsControllerFollow>>, FollowsControllerFollowMutationVariables> = (props) => {
-          const {authorId} = props ?? {};
+export type FollowsControllerFollowMutationError = unknown;
+export type FollowsControllerFollowMutationVariables = { authorId: string };
 
-          return  followsControllerFollow(authorId,requestOptions)
-        }
+export const useFollowsControllerFollow = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof followsControllerFollow>>,
+      TError,
+      FollowsControllerFollowMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof followsControllerFollow>>,
+  TError,
+  FollowsControllerFollowMutationVariables,
+  TContext
+> => {
+  return useMutation(getFollowsControllerFollowMutationOptions(options), queryClient);
+};
+export type followsControllerUnfollowResponse200 = {
+  data: FollowStatusDto;
+  status: 200;
+};
 
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type FollowsControllerFollowMutationResult = NonNullable<Awaited<ReturnType<typeof followsControllerFollow>>>
-
-    export type FollowsControllerFollowMutationError = unknown
-    export type FollowsControllerFollowMutationVariables = {authorId: string}
-
-    export const useFollowsControllerFollow = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof followsControllerFollow>>, TError,FollowsControllerFollowMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof followsControllerFollow>>,
-        TError,
-        FollowsControllerFollowMutationVariables,
-        TContext
-      > => {
-      return useMutation(getFollowsControllerFollowMutationOptions(options), queryClient);
-    }
-    export type followsControllerUnfollowResponse200 = {
-  data: FollowStatusDto
-  status: 200
-}
-
-export type followsControllerUnfollowResponseSuccess = (followsControllerUnfollowResponse200) & {
+export type followsControllerUnfollowResponseSuccess = followsControllerUnfollowResponse200 & {
   headers: Headers;
 };
-;
+export type followsControllerUnfollowResponse = followsControllerUnfollowResponseSuccess;
 
-export type followsControllerUnfollowResponse = (followsControllerUnfollowResponseSuccess)
+export const getFollowsControllerUnfollowUrl = (authorId: string) => {
+  return `/api/v1/users/${authorId}/follow`;
+};
 
-export const getFollowsControllerUnfollowUrl = (authorId: string,) => {
-
-
-
-
-  return `/api/v1/users/${authorId}/follow`
-}
-
-export const followsControllerUnfollow = async (authorId: string, options?: Parameters<typeof http>[1]): Promise<followsControllerUnfollowResponse> => {
-
-  return http<followsControllerUnfollowResponse>(getFollowsControllerUnfollowUrl(authorId),
-  {
+export const followsControllerUnfollow = async (
+  authorId: string,
+  options?: Parameters<typeof http>[1],
+): Promise<followsControllerUnfollowResponse> => {
+  return http<followsControllerUnfollowResponse>(getFollowsControllerUnfollowUrl(authorId), {
     ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-
+    method: 'DELETE',
+  });
+};
 
 export const getFollowsControllerUnfollowMutationKey = () => ['followsControllerUnfollow'] as const;
 
-export const getFollowsControllerUnfollowMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof followsControllerUnfollow>>, TError,FollowsControllerUnfollowMutationVariables, TContext>, request?: SecondParameter<typeof http>}
-): UseMutationOptions<Awaited<ReturnType<typeof followsControllerUnfollow>>, TError,FollowsControllerUnfollowMutationVariables, TContext> => {
+export const getFollowsControllerUnfollowMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof followsControllerUnfollow>>,
+    TError,
+    FollowsControllerUnfollowMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof followsControllerUnfollow>>,
+  TError,
+  FollowsControllerUnfollowMutationVariables,
+  TContext
+> => {
+  const mutationKey = getFollowsControllerUnfollowMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-const mutationKey = getFollowsControllerUnfollowMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof followsControllerUnfollow>>,
+    FollowsControllerUnfollowMutationVariables
+  > = (props) => {
+    const { authorId } = props ?? {};
 
+    return followsControllerUnfollow(authorId, requestOptions);
+  };
 
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof followsControllerUnfollow>>, FollowsControllerUnfollowMutationVariables> = (props) => {
-          const {authorId} = props ?? {};
-
-          return  followsControllerUnfollow(authorId,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type FollowsControllerUnfollowMutationResult = NonNullable<Awaited<ReturnType<typeof followsControllerUnfollow>>>
-
-    export type FollowsControllerUnfollowMutationError = unknown
-    export type FollowsControllerUnfollowMutationVariables = {authorId: string}
-
-    export const useFollowsControllerUnfollow = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof followsControllerUnfollow>>, TError,FollowsControllerUnfollowMutationVariables, TContext>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof followsControllerUnfollow>>,
-        TError,
-        FollowsControllerUnfollowMutationVariables,
-        TContext
-      > => {
-      return useMutation(getFollowsControllerUnfollowMutationOptions(options), queryClient);
-    }
-    export type followsControllerListPostRecipientsResponse200 = {
-  data: PostFollowerPageDto
-  status: 200
-}
-
-export type followsControllerListPostRecipientsResponseSuccess = (followsControllerListPostRecipientsResponse200) & {
-  headers: Headers;
+  return { mutationFn, ...mutationOptions };
 };
-;
 
-export type followsControllerListPostRecipientsResponse = (followsControllerListPostRecipientsResponseSuccess)
+export type FollowsControllerUnfollowMutationResult = NonNullable<
+  Awaited<ReturnType<typeof followsControllerUnfollow>>
+>;
 
-export const getFollowsControllerListPostRecipientsUrl = (postId: string,
-    params?: FollowsControllerListPostRecipientsParams,) => {
+export type FollowsControllerUnfollowMutationError = unknown;
+export type FollowsControllerUnfollowMutationVariables = { authorId: string };
+
+export const useFollowsControllerUnfollow = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof followsControllerUnfollow>>,
+      TError,
+      FollowsControllerUnfollowMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof followsControllerUnfollow>>,
+  TError,
+  FollowsControllerUnfollowMutationVariables,
+  TContext
+> => {
+  return useMutation(getFollowsControllerUnfollowMutationOptions(options), queryClient);
+};
+export type followsControllerListPostRecipientsResponse200 = {
+  data: PostFollowerPageDto;
+  status: 200;
+};
+
+export type followsControllerListPostRecipientsResponseSuccess =
+  followsControllerListPostRecipientsResponse200 & {
+    headers: Headers;
+  };
+export type followsControllerListPostRecipientsResponse = followsControllerListPostRecipientsResponseSuccess;
+
+export const getFollowsControllerListPostRecipientsUrl = (
+  postId: string,
+  params?: FollowsControllerListPostRecipientsParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/v1/internal/posts/${postId}/follower-recipients?${stringifiedParams}` : `/api/v1/internal/posts/${postId}/follower-recipients`
-}
+  return stringifiedParams.length > 0
+    ? `/api/v1/internal/posts/${postId}/follower-recipients?${stringifiedParams}`
+    : `/api/v1/internal/posts/${postId}/follower-recipients`;
+};
 
-export const followsControllerListPostRecipients = async (postId: string,
-    params?: FollowsControllerListPostRecipientsParams, options?: Parameters<typeof http>[1]): Promise<followsControllerListPostRecipientsResponse> => {
+export const followsControllerListPostRecipients = async (
+  postId: string,
+  params?: FollowsControllerListPostRecipientsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<followsControllerListPostRecipientsResponse> => {
+  return http<followsControllerListPostRecipientsResponse>(
+    getFollowsControllerListPostRecipientsUrl(postId, params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
 
-  return http<followsControllerListPostRecipientsResponse>(getFollowsControllerListPostRecipientsUrl(postId,params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getFollowsControllerListPostRecipientsQueryKey = (postId: string,
-    params?: FollowsControllerListPostRecipientsParams,) => {
-    return [
-    `/api/v1/internal/posts/${postId}/follower-recipients`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getFollowsControllerListPostRecipientsQueryOptions = <TData = Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError = unknown>(postId: string,
-    params?: FollowsControllerListPostRecipientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getFollowsControllerListPostRecipientsQueryKey = (
+  postId: string,
+  params?: FollowsControllerListPostRecipientsParams,
 ) => {
+  return [`/api/v1/internal/posts/${postId}/follower-recipients`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getFollowsControllerListPostRecipientsQueryOptions = <
+  TData = Awaited<ReturnType<typeof followsControllerListPostRecipients>>,
+  TError = unknown,
+>(
+  postId: string,
+  params?: FollowsControllerListPostRecipientsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getFollowsControllerListPostRecipientsQueryKey(postId,params);
+  const queryKey = queryOptions?.queryKey ?? getFollowsControllerListPostRecipientsQueryKey(postId, params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof followsControllerListPostRecipients>>> = ({
+    signal,
+  }) => followsControllerListPostRecipients(postId, params, { signal, ...requestOptions });
 
+  return {
+    queryKey,
+    queryFn,
+    enabled: postId !== null && postId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof followsControllerListPostRecipients>>> = ({ signal }) => followsControllerListPostRecipients(postId,params, { signal, ...requestOptions });
+export type FollowsControllerListPostRecipientsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof followsControllerListPostRecipients>>
+>;
+export type FollowsControllerListPostRecipientsQueryError = unknown;
 
-
-
-
-
-   return  { queryKey, queryFn, enabled: postId !== null && postId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type FollowsControllerListPostRecipientsQueryResult = NonNullable<Awaited<ReturnType<typeof followsControllerListPostRecipients>>>
-export type FollowsControllerListPostRecipientsQueryError = unknown
-
-
-export function useFollowsControllerListPostRecipients<TData = Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError = unknown>(
- postId: string,
-    params: undefined |  FollowsControllerListPostRecipientsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError, TData>> & Pick<
+export function useFollowsControllerListPostRecipients<
+  TData = Awaited<ReturnType<typeof followsControllerListPostRecipients>>,
+  TError = unknown,
+>(
+  postId: string,
+  params: undefined | FollowsControllerListPostRecipientsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof followsControllerListPostRecipients>>,
           TError,
           Awaited<ReturnType<typeof followsControllerListPostRecipients>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useFollowsControllerListPostRecipients<TData = Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError = unknown>(
- postId: string,
-    params?: FollowsControllerListPostRecipientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useFollowsControllerListPostRecipients<
+  TData = Awaited<ReturnType<typeof followsControllerListPostRecipients>>,
+  TError = unknown,
+>(
+  postId: string,
+  params?: FollowsControllerListPostRecipientsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof followsControllerListPostRecipients>>,
           TError,
           Awaited<ReturnType<typeof followsControllerListPostRecipients>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useFollowsControllerListPostRecipients<TData = Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError = unknown>(
- postId: string,
-    params?: FollowsControllerListPostRecipientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useFollowsControllerListPostRecipients<
+  TData = Awaited<ReturnType<typeof followsControllerListPostRecipients>>,
+  TError = unknown,
+>(
+  postId: string,
+  params?: FollowsControllerListPostRecipientsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-export function useFollowsControllerListPostRecipients<TData = Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError = unknown>(
- postId: string,
-    params?: FollowsControllerListPostRecipientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useFollowsControllerListPostRecipients<
+  TData = Awaited<ReturnType<typeof followsControllerListPostRecipients>>,
+  TError = unknown,
+>(
+  postId: string,
+  params?: FollowsControllerListPostRecipientsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof followsControllerListPostRecipients>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getFollowsControllerListPostRecipientsQueryOptions(postId, params, options);
 
-  const queryOptions = getFollowsControllerListPostRecipientsQueryOptions(postId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
-

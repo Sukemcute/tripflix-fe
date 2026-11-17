@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type PublishedPostDtoStatus = typeof PublishedPostDtoStatus[keyof typeof PublishedPostDtoStatus];
-
+export type PublishedPostDtoStatus = (typeof PublishedPostDtoStatus)[keyof typeof PublishedPostDtoStatus];
 
 export const PublishedPostDtoStatus = {
   published: 'published',

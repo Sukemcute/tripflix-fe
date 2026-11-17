@@ -13,33 +13,33 @@ export interface FlightFareQuoteDto {
   /** Hoàn vé miễn phí trước ngày bay bao nhiêu ngày */
   freeCancelDays: number;
   /**
-     * Giá một vé người lớn (VND); null khi không bán được
-     * @nullable
-     */
+   * Giá một vé người lớn (VND); null khi không bán được
+   * @nullable
+   */
   pricePerPerson: number | null;
   /**
-     * Giá một vé trẻ em 2–11 tuổi (75%, VND); null khi không bán được
-     * @nullable
-     */
+   * Giá một vé trẻ em 2–11 tuổi (75%, VND); null khi không bán được
+   * @nullable
+   */
   childPrice: number | null;
   /**
-     * Giá một vé em bé dưới 2 tuổi (10%, VND); null khi không bán được
-     * @nullable
-     */
+   * Giá một vé em bé dưới 2 tuổi (10%, VND); null khi không bán được
+   * @nullable
+   */
   infantPrice: number | null;
   /**
-     * Cả nhóm: người lớn, trẻ em, em bé (VND); null khi không bán được
-     * @nullable
-     */
+   * Cả nhóm: người lớn, trẻ em, em bé (VND); null khi không bán được
+   * @nullable
+   */
   totalPrice: number | null;
   /**
-     * Hành lý xách tay (kg/khách)
-     * @nullable
-     */
+   * Hành lý xách tay (kg/khách)
+   * @nullable
+   */
   carryOnKg: number | null;
   /**
-     * Hành lý ký gửi (kg/khách); 0 là không có
-     * @nullable
-     */
+   * Hành lý ký gửi (kg/khách); 0 là không có
+   * @nullable
+   */
   checkedKg: number | null;
 }

@@ -25,19 +25,19 @@ export interface HotelDetailDto {
   /** @nullable */
   city: string | null;
   /**
-     * @minimum 1
-     * @maximum 5
-     * @nullable
-     */
+   * @minimum 1
+   * @maximum 5
+   * @nullable
+   */
   stars: number | null;
   /** @nullable */
   brand: string | null;
   /** @nullable */
   style: string | null;
   /**
-     * Đường dẫn ảnh đại diện
-     * @nullable
-     */
+   * Đường dẫn ảnh đại diện
+   * @nullable
+   */
   thumbnail: string | null;
   images: string[];
   /** @nullable */
@@ -60,9 +60,9 @@ export interface HotelDetailDto {
   policies: PoliciesDto;
   stay: StayDto;
   /**
-     * Giá một đêm rẻ nhất cho kỳ ở này (VND)
-     * @nullable
-     */
+   * Giá một đêm rẻ nhất cho kỳ ở này (VND)
+   * @nullable
+   */
   priceFrom: number | null;
   isAvailable: boolean;
   rooms: HotelRoomOfferDto[];

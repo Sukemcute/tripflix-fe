@@ -12,9 +12,9 @@ export interface SearchPostsRequestDto {
   /** all: cả lộ trình, video, bài viết · plan: bài có lộ trình (gồm video kèm lộ trình) · video · post: bài viết thường · article: plan + post, bỏ mọi video (kể cả video kèm lộ trình) */
   postType?: SearchPostsRequestDtoPostType;
   /**
-     * `nextCursor` của trang trước
-     * @nullable
-     */
+   * `nextCursor` của trang trước
+   * @nullable
+   */
   cursor?: string | null;
   /** 1–50 */
   limit?: number;

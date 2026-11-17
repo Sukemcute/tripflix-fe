@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ServiceTokenDtoTokenType = typeof ServiceTokenDtoTokenType[keyof typeof ServiceTokenDtoTokenType];
-
+export type ServiceTokenDtoTokenType =
+  (typeof ServiceTokenDtoTokenType)[keyof typeof ServiceTokenDtoTokenType];
 
 export const ServiceTokenDtoTokenType = {
   Bearer: 'Bearer',

@@ -15,9 +15,9 @@ export interface HomeStayPickDto {
   /** @nullable */
   stars: number | null;
   /**
-     * Chuỗi khách sạn; null nếu độc lập
-     * @nullable
-     */
+   * Chuỗi khách sạn; null nếu độc lập
+   * @nullable
+   */
   brand: string | null;
   /** Giá thấp nhất một đêm một phòng trong 30 ngày tới (VND), hiện "từ X/đêm" */
   priceFrom: number;

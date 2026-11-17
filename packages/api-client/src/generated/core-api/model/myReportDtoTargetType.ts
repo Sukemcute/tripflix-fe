@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type MyReportDtoTargetType = typeof MyReportDtoTargetType[keyof typeof MyReportDtoTargetType];
-
+export type MyReportDtoTargetType = (typeof MyReportDtoTargetType)[keyof typeof MyReportDtoTargetType];
 
 export const MyReportDtoTargetType = {
   post: 'post',

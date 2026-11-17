@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type RecommendReasonDtoCode = typeof RecommendReasonDtoCode[keyof typeof RecommendReasonDtoCode];
-
+export type RecommendReasonDtoCode = (typeof RecommendReasonDtoCode)[keyof typeof RecommendReasonDtoCode];
 
 export const RecommendReasonDtoCode = {
   matches_place: 'matches_place',

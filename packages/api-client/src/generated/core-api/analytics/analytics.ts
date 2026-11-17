@@ -4,9 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useQuery
-} from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -16,7 +14,7 @@ import type {
   QueryKey,
   UndefinedInitialDataOptions,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
 import type {
@@ -26,15 +24,12 @@ import type {
   ObservabilityControllerListTracesParams,
   ObservabilityDto,
   TraceDetailDto,
-  TraceListDto
+  TraceListDto,
 } from '../model';
 
 import { http } from '../../../http';
 
-
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -52,461 +47,605 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type aiUsageControllerGetAiUsageResponse200 = {
-  data: AiUsageResponseDto
-  status: 200
-}
+  data: AiUsageResponseDto;
+  status: 200;
+};
 
 export type aiUsageControllerGetAiUsageResponse400 = {
-  data: void
-  status: 400
-}
-
-export type aiUsageControllerGetAiUsageResponseSuccess = (aiUsageControllerGetAiUsageResponse200) & {
-  headers: Headers;
-};
-export type aiUsageControllerGetAiUsageResponseError = (aiUsageControllerGetAiUsageResponse400) & {
-  headers: Headers;
+  data: void;
+  status: 400;
 };
 
-export type aiUsageControllerGetAiUsageResponse = (aiUsageControllerGetAiUsageResponseSuccess | aiUsageControllerGetAiUsageResponseError)
+export type aiUsageControllerGetAiUsageResponseSuccess = aiUsageControllerGetAiUsageResponse200 & {
+  headers: Headers;
+};
+export type aiUsageControllerGetAiUsageResponseError = aiUsageControllerGetAiUsageResponse400 & {
+  headers: Headers;
+};
 
-export const getAiUsageControllerGetAiUsageUrl = (params?: AiUsageControllerGetAiUsageParams,) => {
+export type aiUsageControllerGetAiUsageResponse =
+  aiUsageControllerGetAiUsageResponseSuccess | aiUsageControllerGetAiUsageResponseError;
+
+export const getAiUsageControllerGetAiUsageUrl = (params?: AiUsageControllerGetAiUsageParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/analytics/ai-usage?${stringifiedParams}` : `/api/analytics/ai-usage`
-}
+  return stringifiedParams.length > 0
+    ? `/api/analytics/ai-usage?${stringifiedParams}`
+    : `/api/analytics/ai-usage`;
+};
 
 /**
  * Ngày theo giờ Việt Nam, gồm cả `from` và `to`. Mặc định 7 ngày tới hôm nay, tối đa 92 ngày. Chi phí là ước tính.
  * @summary Số lần gọi, token và chi phí AI theo tính năng, ngày hoặc model
  */
-export const aiUsageControllerGetAiUsage = async (params?: AiUsageControllerGetAiUsageParams, options?: Parameters<typeof http>[1]): Promise<aiUsageControllerGetAiUsageResponse> => {
-
-  return http<aiUsageControllerGetAiUsageResponse>(getAiUsageControllerGetAiUsageUrl(params),
-  {
+export const aiUsageControllerGetAiUsage = async (
+  params?: AiUsageControllerGetAiUsageParams,
+  options?: Parameters<typeof http>[1],
+): Promise<aiUsageControllerGetAiUsageResponse> => {
+  return http<aiUsageControllerGetAiUsageResponse>(getAiUsageControllerGetAiUsageUrl(params), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
+export const getAiUsageControllerGetAiUsageQueryKey = (params?: AiUsageControllerGetAiUsageParams) => {
+  return [`/api/analytics/ai-usage`, ...(params ? [params] : [])] as const;
+};
 
-  }
-);}
-
-
-
-
-
-export const getAiUsageControllerGetAiUsageQueryKey = (params?: AiUsageControllerGetAiUsageParams,) => {
-    return [
-    `/api/analytics/ai-usage`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getAiUsageControllerGetAiUsageQueryOptions = <TData = Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError = void>(params?: AiUsageControllerGetAiUsageParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getAiUsageControllerGetAiUsageQueryOptions = <
+  TData = Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>,
+  TError = void,
+>(
+  params?: AiUsageControllerGetAiUsageParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getAiUsageControllerGetAiUsageQueryKey(params);
 
-  const queryKey =  queryOptions?.queryKey ?? getAiUsageControllerGetAiUsageQueryKey(params);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>> = ({ signal }) =>
+    aiUsageControllerGetAiUsage(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type AiUsageControllerGetAiUsageQueryResult = NonNullable<
+  Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>
+>;
+export type AiUsageControllerGetAiUsageQueryError = void;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>> = ({ signal }) => aiUsageControllerGetAiUsage(params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type AiUsageControllerGetAiUsageQueryResult = NonNullable<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>>
-export type AiUsageControllerGetAiUsageQueryError = void
-
-
-export function useAiUsageControllerGetAiUsage<TData = Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError = void>(
- params: undefined |  AiUsageControllerGetAiUsageParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError, TData>> & Pick<
+export function useAiUsageControllerGetAiUsage<
+  TData = Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>,
+  TError = void,
+>(
+  params: undefined | AiUsageControllerGetAiUsageParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError, TData>> &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>,
           TError,
           Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAiUsageControllerGetAiUsage<TData = Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError = void>(
- params?: AiUsageControllerGetAiUsageParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAiUsageControllerGetAiUsage<
+  TData = Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>,
+  TError = void,
+>(
+  params?: AiUsageControllerGetAiUsageParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError, TData>> &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>,
           TError,
           Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAiUsageControllerGetAiUsage<TData = Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError = void>(
- params?: AiUsageControllerGetAiUsageParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAiUsageControllerGetAiUsage<
+  TData = Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>,
+  TError = void,
+>(
+  params?: AiUsageControllerGetAiUsageParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Số lần gọi, token và chi phí AI theo tính năng, ngày hoặc model
  */
 
-export function useAiUsageControllerGetAiUsage<TData = Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError = void>(
- params?: AiUsageControllerGetAiUsageParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useAiUsageControllerGetAiUsage<
+  TData = Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>,
+  TError = void,
+>(
+  params?: AiUsageControllerGetAiUsageParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiUsageControllerGetAiUsage>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAiUsageControllerGetAiUsageQueryOptions(params, options);
 
-  const queryOptions = getAiUsageControllerGetAiUsageQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
 
 export type observabilityControllerGetOverviewResponse200 = {
-  data: ObservabilityDto
-  status: 200
-}
-
-export type observabilityControllerGetOverviewResponseSuccess = (observabilityControllerGetOverviewResponse200) & {
-  headers: Headers;
+  data: ObservabilityDto;
+  status: 200;
 };
-;
 
-export type observabilityControllerGetOverviewResponse = (observabilityControllerGetOverviewResponseSuccess)
+export type observabilityControllerGetOverviewResponseSuccess =
+  observabilityControllerGetOverviewResponse200 & {
+    headers: Headers;
+  };
+export type observabilityControllerGetOverviewResponse = observabilityControllerGetOverviewResponseSuccess;
 
-export const getObservabilityControllerGetOverviewUrl = (params?: ObservabilityControllerGetOverviewParams,) => {
+export const getObservabilityControllerGetOverviewUrl = (
+  params?: ObservabilityControllerGetOverviewParams,
+) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/analytics/observability?${stringifiedParams}` : `/api/analytics/observability`
-}
+  return stringifiedParams.length > 0
+    ? `/api/analytics/observability?${stringifiedParams}`
+    : `/api/analytics/observability`;
+};
 
-export const observabilityControllerGetOverview = async (params?: ObservabilityControllerGetOverviewParams, options?: Parameters<typeof http>[1]): Promise<observabilityControllerGetOverviewResponse> => {
-
-  return http<observabilityControllerGetOverviewResponse>(getObservabilityControllerGetOverviewUrl(params),
-  {
+export const observabilityControllerGetOverview = async (
+  params?: ObservabilityControllerGetOverviewParams,
+  options?: Parameters<typeof http>[1],
+): Promise<observabilityControllerGetOverviewResponse> => {
+  return http<observabilityControllerGetOverviewResponse>(getObservabilityControllerGetOverviewUrl(params), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
-
-  }
-);}
-
-
-
-
-
-export const getObservabilityControllerGetOverviewQueryKey = (params?: ObservabilityControllerGetOverviewParams,) => {
-    return [
-    `/api/analytics/observability`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getObservabilityControllerGetOverviewQueryOptions = <TData = Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError = unknown>(params?: ObservabilityControllerGetOverviewParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getObservabilityControllerGetOverviewQueryKey = (
+  params?: ObservabilityControllerGetOverviewParams,
 ) => {
+  return [`/api/analytics/observability`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getObservabilityControllerGetOverviewQueryOptions = <
+  TData = Awaited<ReturnType<typeof observabilityControllerGetOverview>>,
+  TError = unknown,
+>(
+  params?: ObservabilityControllerGetOverviewParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getObservabilityControllerGetOverviewQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getObservabilityControllerGetOverviewQueryKey(params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof observabilityControllerGetOverview>>> = ({
+    signal,
+  }) => observabilityControllerGetOverview(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof observabilityControllerGetOverview>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof observabilityControllerGetOverview>>> = ({ signal }) => observabilityControllerGetOverview(params, { signal, ...requestOptions });
+export type ObservabilityControllerGetOverviewQueryResult = NonNullable<
+  Awaited<ReturnType<typeof observabilityControllerGetOverview>>
+>;
+export type ObservabilityControllerGetOverviewQueryError = unknown;
 
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ObservabilityControllerGetOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof observabilityControllerGetOverview>>>
-export type ObservabilityControllerGetOverviewQueryError = unknown
-
-
-export function useObservabilityControllerGetOverview<TData = Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError = unknown>(
- params: undefined |  ObservabilityControllerGetOverviewParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError, TData>> & Pick<
+export function useObservabilityControllerGetOverview<
+  TData = Awaited<ReturnType<typeof observabilityControllerGetOverview>>,
+  TError = unknown,
+>(
+  params: undefined | ObservabilityControllerGetOverviewParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof observabilityControllerGetOverview>>,
           TError,
           Awaited<ReturnType<typeof observabilityControllerGetOverview>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useObservabilityControllerGetOverview<TData = Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError = unknown>(
- params?: ObservabilityControllerGetOverviewParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useObservabilityControllerGetOverview<
+  TData = Awaited<ReturnType<typeof observabilityControllerGetOverview>>,
+  TError = unknown,
+>(
+  params?: ObservabilityControllerGetOverviewParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof observabilityControllerGetOverview>>,
           TError,
           Awaited<ReturnType<typeof observabilityControllerGetOverview>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useObservabilityControllerGetOverview<TData = Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError = unknown>(
- params?: ObservabilityControllerGetOverviewParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useObservabilityControllerGetOverview<
+  TData = Awaited<ReturnType<typeof observabilityControllerGetOverview>>,
+  TError = unknown,
+>(
+  params?: ObservabilityControllerGetOverviewParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-export function useObservabilityControllerGetOverview<TData = Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError = unknown>(
- params?: ObservabilityControllerGetOverviewParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useObservabilityControllerGetOverview<
+  TData = Awaited<ReturnType<typeof observabilityControllerGetOverview>>,
+  TError = unknown,
+>(
+  params?: ObservabilityControllerGetOverviewParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetOverview>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getObservabilityControllerGetOverviewQueryOptions(params, options);
 
-  const queryOptions = getObservabilityControllerGetOverviewQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
 
 export type observabilityControllerListTracesResponse200 = {
-  data: TraceListDto
-  status: 200
-}
-
-export type observabilityControllerListTracesResponseSuccess = (observabilityControllerListTracesResponse200) & {
-  headers: Headers;
+  data: TraceListDto;
+  status: 200;
 };
-;
 
-export type observabilityControllerListTracesResponse = (observabilityControllerListTracesResponseSuccess)
+export type observabilityControllerListTracesResponseSuccess =
+  observabilityControllerListTracesResponse200 & {
+    headers: Headers;
+  };
+export type observabilityControllerListTracesResponse = observabilityControllerListTracesResponseSuccess;
 
-export const getObservabilityControllerListTracesUrl = (params?: ObservabilityControllerListTracesParams,) => {
+export const getObservabilityControllerListTracesUrl = (params?: ObservabilityControllerListTracesParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
+      normalizedParams.append(key, value === null ? 'null' : String(value));
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/analytics/observability/traces?${stringifiedParams}` : `/api/analytics/observability/traces`
-}
+  return stringifiedParams.length > 0
+    ? `/api/analytics/observability/traces?${stringifiedParams}`
+    : `/api/analytics/observability/traces`;
+};
 
-export const observabilityControllerListTraces = async (params?: ObservabilityControllerListTracesParams, options?: Parameters<typeof http>[1]): Promise<observabilityControllerListTracesResponse> => {
-
-  return http<observabilityControllerListTracesResponse>(getObservabilityControllerListTracesUrl(params),
-  {
+export const observabilityControllerListTraces = async (
+  params?: ObservabilityControllerListTracesParams,
+  options?: Parameters<typeof http>[1],
+): Promise<observabilityControllerListTracesResponse> => {
+  return http<observabilityControllerListTracesResponse>(getObservabilityControllerListTracesUrl(params), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
-
-  }
-);}
-
-
-
-
-
-export const getObservabilityControllerListTracesQueryKey = (params?: ObservabilityControllerListTracesParams,) => {
-    return [
-    `/api/analytics/observability/traces`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getObservabilityControllerListTracesQueryOptions = <TData = Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError = unknown>(params?: ObservabilityControllerListTracesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getObservabilityControllerListTracesQueryKey = (
+  params?: ObservabilityControllerListTracesParams,
 ) => {
+  return [`/api/analytics/observability/traces`, ...(params ? [params] : [])] as const;
+};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+export const getObservabilityControllerListTracesQueryOptions = <
+  TData = Awaited<ReturnType<typeof observabilityControllerListTraces>>,
+  TError = unknown,
+>(
+  params?: ObservabilityControllerListTracesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getObservabilityControllerListTracesQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getObservabilityControllerListTracesQueryKey(params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof observabilityControllerListTraces>>> = ({
+    signal,
+  }) => observabilityControllerListTraces(params, { signal, ...requestOptions });
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof observabilityControllerListTraces>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof observabilityControllerListTraces>>> = ({ signal }) => observabilityControllerListTraces(params, { signal, ...requestOptions });
+export type ObservabilityControllerListTracesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof observabilityControllerListTraces>>
+>;
+export type ObservabilityControllerListTracesQueryError = unknown;
 
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ObservabilityControllerListTracesQueryResult = NonNullable<Awaited<ReturnType<typeof observabilityControllerListTraces>>>
-export type ObservabilityControllerListTracesQueryError = unknown
-
-
-export function useObservabilityControllerListTraces<TData = Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError = unknown>(
- params: undefined |  ObservabilityControllerListTracesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError, TData>> & Pick<
+export function useObservabilityControllerListTraces<
+  TData = Awaited<ReturnType<typeof observabilityControllerListTraces>>,
+  TError = unknown,
+>(
+  params: undefined | ObservabilityControllerListTracesParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof observabilityControllerListTraces>>,
           TError,
           Awaited<ReturnType<typeof observabilityControllerListTraces>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useObservabilityControllerListTraces<TData = Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError = unknown>(
- params?: ObservabilityControllerListTracesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useObservabilityControllerListTraces<
+  TData = Awaited<ReturnType<typeof observabilityControllerListTraces>>,
+  TError = unknown,
+>(
+  params?: ObservabilityControllerListTracesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof observabilityControllerListTraces>>,
           TError,
           Awaited<ReturnType<typeof observabilityControllerListTraces>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useObservabilityControllerListTraces<TData = Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError = unknown>(
- params?: ObservabilityControllerListTracesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useObservabilityControllerListTraces<
+  TData = Awaited<ReturnType<typeof observabilityControllerListTraces>>,
+  TError = unknown,
+>(
+  params?: ObservabilityControllerListTracesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-export function useObservabilityControllerListTraces<TData = Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError = unknown>(
- params?: ObservabilityControllerListTracesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useObservabilityControllerListTraces<
+  TData = Awaited<ReturnType<typeof observabilityControllerListTraces>>,
+  TError = unknown,
+>(
+  params?: ObservabilityControllerListTracesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerListTraces>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getObservabilityControllerListTracesQueryOptions(params, options);
 
-  const queryOptions = getObservabilityControllerListTracesQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
 
 export type observabilityControllerGetTraceResponse200 = {
-  data: TraceDetailDto
-  status: 200
-}
+  data: TraceDetailDto;
+  status: 200;
+};
 
-export type observabilityControllerGetTraceResponseSuccess = (observabilityControllerGetTraceResponse200) & {
+export type observabilityControllerGetTraceResponseSuccess = observabilityControllerGetTraceResponse200 & {
   headers: Headers;
 };
-;
+export type observabilityControllerGetTraceResponse = observabilityControllerGetTraceResponseSuccess;
 
-export type observabilityControllerGetTraceResponse = (observabilityControllerGetTraceResponseSuccess)
+export const getObservabilityControllerGetTraceUrl = (traceId: string) => {
+  return `/api/analytics/observability/traces/${traceId}`;
+};
 
-export const getObservabilityControllerGetTraceUrl = (traceId: string,) => {
-
-
-
-
-  return `/api/analytics/observability/traces/${traceId}`
-}
-
-export const observabilityControllerGetTrace = async (traceId: string, options?: Parameters<typeof http>[1]): Promise<observabilityControllerGetTraceResponse> => {
-
-  return http<observabilityControllerGetTraceResponse>(getObservabilityControllerGetTraceUrl(traceId),
-  {
+export const observabilityControllerGetTrace = async (
+  traceId: string,
+  options?: Parameters<typeof http>[1],
+): Promise<observabilityControllerGetTraceResponse> => {
+  return http<observabilityControllerGetTraceResponse>(getObservabilityControllerGetTraceUrl(traceId), {
     ...options,
-    method: 'GET'
+    method: 'GET',
+  });
+};
 
+export const getObservabilityControllerGetTraceQueryKey = (traceId: string) => {
+  return [`/api/analytics/observability/traces/${traceId}`] as const;
+};
 
-  }
-);}
-
-
-
-
-
-export const getObservabilityControllerGetTraceQueryKey = (traceId: string,) => {
-    return [
-    `/api/analytics/observability/traces/${traceId}`
-    ] as const;
-    }
-
-
-export const getObservabilityControllerGetTraceQueryOptions = <TData = Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError = unknown>(traceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError, TData>>, request?: SecondParameter<typeof http>}
+export const getObservabilityControllerGetTraceQueryOptions = <
+  TData = Awaited<ReturnType<typeof observabilityControllerGetTrace>>,
+  TError = unknown,
+>(
+  traceId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
 ) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getObservabilityControllerGetTraceQueryKey(traceId);
 
-  const queryKey =  queryOptions?.queryKey ?? getObservabilityControllerGetTraceQueryKey(traceId);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof observabilityControllerGetTrace>>> = ({ signal }) =>
+    observabilityControllerGetTrace(traceId, { signal, ...requestOptions });
 
+  return {
+    queryKey,
+    queryFn,
+    enabled: traceId !== null && traceId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
 
+export type ObservabilityControllerGetTraceQueryResult = NonNullable<
+  Awaited<ReturnType<typeof observabilityControllerGetTrace>>
+>;
+export type ObservabilityControllerGetTraceQueryError = unknown;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof observabilityControllerGetTrace>>> = ({ signal }) => observabilityControllerGetTrace(traceId, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: traceId !== null && traceId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type ObservabilityControllerGetTraceQueryResult = NonNullable<Awaited<ReturnType<typeof observabilityControllerGetTrace>>>
-export type ObservabilityControllerGetTraceQueryError = unknown
-
-
-export function useObservabilityControllerGetTrace<TData = Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError = unknown>(
- traceId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError, TData>> & Pick<
+export function useObservabilityControllerGetTrace<
+  TData = Awaited<ReturnType<typeof observabilityControllerGetTrace>>,
+  TError = unknown,
+>(
+  traceId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof observabilityControllerGetTrace>>,
           TError,
           Awaited<ReturnType<typeof observabilityControllerGetTrace>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useObservabilityControllerGetTrace<TData = Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError = unknown>(
- traceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useObservabilityControllerGetTrace<
+  TData = Awaited<ReturnType<typeof observabilityControllerGetTrace>>,
+  TError = unknown,
+>(
+  traceId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof observabilityControllerGetTrace>>,
           TError,
           Awaited<ReturnType<typeof observabilityControllerGetTrace>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useObservabilityControllerGetTrace<TData = Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError = unknown>(
- traceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useObservabilityControllerGetTrace<
+  TData = Awaited<ReturnType<typeof observabilityControllerGetTrace>>,
+  TError = unknown,
+>(
+  traceId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-export function useObservabilityControllerGetTrace<TData = Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError = unknown>(
- traceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError, TData>>, request?: SecondParameter<typeof http>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useObservabilityControllerGetTrace<
+  TData = Awaited<ReturnType<typeof observabilityControllerGetTrace>>,
+  TError = unknown,
+>(
+  traceId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof observabilityControllerGetTrace>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getObservabilityControllerGetTraceQueryOptions(traceId, options);
 
-  const queryOptions = getObservabilityControllerGetTraceQueryOptions(traceId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
-
-
-
-
-
-

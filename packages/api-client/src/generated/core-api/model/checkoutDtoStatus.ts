@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CheckoutDtoStatus = typeof CheckoutDtoStatus[keyof typeof CheckoutDtoStatus];
-
+export type CheckoutDtoStatus = (typeof CheckoutDtoStatus)[keyof typeof CheckoutDtoStatus];
 
 export const CheckoutDtoStatus = {
   pending: 'pending',

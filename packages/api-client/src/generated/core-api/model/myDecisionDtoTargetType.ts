@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type MyDecisionDtoTargetType = typeof MyDecisionDtoTargetType[keyof typeof MyDecisionDtoTargetType];
-
+export type MyDecisionDtoTargetType = (typeof MyDecisionDtoTargetType)[keyof typeof MyDecisionDtoTargetType];
 
 export const MyDecisionDtoTargetType = {
   post: 'post',

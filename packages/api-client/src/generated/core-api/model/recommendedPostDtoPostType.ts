@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type RecommendedPostDtoPostType = typeof RecommendedPostDtoPostType[keyof typeof RecommendedPostDtoPostType];
-
+export type RecommendedPostDtoPostType =
+  (typeof RecommendedPostDtoPostType)[keyof typeof RecommendedPostDtoPostType];
 
 export const RecommendedPostDtoPostType = {
   video: 'video',

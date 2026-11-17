@@ -5,8 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AiUsageControllerGetAiUsageGroupBy = typeof AiUsageControllerGetAiUsageGroupBy[keyof typeof AiUsageControllerGetAiUsageGroupBy];
-
+export type AiUsageControllerGetAiUsageGroupBy =
+  (typeof AiUsageControllerGetAiUsageGroupBy)[keyof typeof AiUsageControllerGetAiUsageGroupBy];
 
 export const AiUsageControllerGetAiUsageGroupBy = {
   feature: 'feature',

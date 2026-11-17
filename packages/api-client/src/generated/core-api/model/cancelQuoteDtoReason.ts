@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CancelQuoteDtoReason = typeof CancelQuoteDtoReason[keyof typeof CancelQuoteDtoReason];
-
+export type CancelQuoteDtoReason = (typeof CancelQuoteDtoReason)[keyof typeof CancelQuoteDtoReason];
 
 export const CancelQuoteDtoReason = {
   ALREADY_STARTED: 'ALREADY_STARTED',
