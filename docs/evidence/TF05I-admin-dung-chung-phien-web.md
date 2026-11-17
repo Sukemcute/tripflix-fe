@@ -33,3 +33,10 @@
 ## Ảnh hưởng tới phần của người khác
 - Có: `apps/web`, `apps/admin` (Thành). Đã nêu trong kế hoạch được duyệt; cần Thành review. `packages/api-client` (Dũng).
 - Deploy (Phong): không đổi. Admin dùng `NEXT_PUBLIC_WEB_URL` đã có; server cần `AUTH_WEB_ORIGINS` gồm origin admin (đã có hướng dẫn trong `deploy/SERVER.md`).
+
+## Cập nhật 2026-11-17: mở lại trang đăng nhập admin
+- Theo yêu cầu của Dũng: admin có lại trang `/login` riêng (đăng nhập mật khẩu qua BFF như trước TF05I). Chưa đăng nhập vào admin thì về `/login` của admin, không sang web nữa.
+- Giữ nút "Mở trang quản trị" bên web: bấm là vào thẳng dashboard admin qua `/auth/handoff`, không phải đăng nhập lại. Mã hỏng hoặc thiếu thì về `/login` của admin.
+- Bỏ `/login?returnTo=admin` bên web. BFF admin nhận cả `/api/auth/login` và `/api/auth/admin-handoff/exchange` (dùng chung bước tạo phiên).
+- Test analytics và script e2e analytics (Trang) trả về như trước TF05I.
+- Kiểm: `pnpm turbo run lint typecheck test --affected` 22/22 task xanh.

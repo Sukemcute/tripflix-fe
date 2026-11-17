@@ -59,9 +59,8 @@ it('không phải nhân viên: thu hồi phiên vừa tạo, không đặt cooki
   expect(String(fetchMock.mock.calls[2]![0])).toMatch(/\/api\/auth\/logout$/);
 });
 
-it('bỏ đăng nhập mật khẩu ở admin; body đổi mã sai dạng thì 400, không gọi core', async () => {
+it('body đổi mã sai dạng thì 400, không gọi core', async () => {
   const fetchMock = vi.spyOn(globalThis, 'fetch');
-  expect((await post(['auth', 'login'], { email: 'a@b.c', encPassword: 'x' })).status).toBe(404);
   expect((await post(['auth', 'admin-handoff', 'exchange'], { code: 'x', extra: 1 })).status).toBe(400);
   expect((await post(['auth', 'admin-handoff', 'exchange'], { code: 1 })).status).toBe(400);
   expect(fetchMock).not.toHaveBeenCalled();
