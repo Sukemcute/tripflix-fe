@@ -5,7 +5,9 @@
  * để dữ liệu cũ trỏ sang host lạ không làm hỏng trang.
  */
 export const OPTIMIZED_IMAGE_HOSTS = [
-  // CDN ảnh của Tripflix (S3 + CloudFront, MEDIA_CDN_URL bên core-api).
+  // CDN ảnh của Tripflix (S3 + CloudFront, MEDIA_CDN_URL bên core-api). Tên miền riêng từ TF82;
+  // giữ tên cloudfront.net cho dữ liệu và bản core-api cũ còn trả link đó.
+  'media.tripflix.io.vn',
   'd399hxccn6y84z.cloudfront.net',
   'images.unsplash.com',
 ] as const;
