@@ -469,15 +469,33 @@ function HomeHero({ onOpenSearch }: { onOpenSearch: () => void }) {
         <Pressable
           accessibilityRole="search"
           accessibilityLabel={vi.mobile.searchPanel.placeholder}
-          style={styles.searchBar}
+          style={({ pressed }) => [styles.heroSearch, pressed && styles.heroSearchPressed]}
           onPress={onOpenSearch}
         >
-          <Icon name="search-outline" color={colors.textMuted} size={mobileIconSize.control} />
-          <Txt style={styles.searchHint} numberOfLines={1}>
-            {vi.mobile.searchPanel.placeholder}
-          </Txt>
+          <View style={styles.heroSearchIcon}>
+            <Icon name="search" color={colors.tealInk} size={mobileIconSize.inline} />
+          </View>
+          <View style={ui.flex}>
+            <Txt variant="caption" style={styles.heroSearchLabel}>
+              {vi.api.search}
+            </Txt>
+            <Txt variant="small" style={styles.searchHint} numberOfLines={1}>
+              {vi.mobile.searchPanel.placeholder}
+            </Txt>
+          </View>
+          <View style={styles.heroSearchGo}>
+            <Icon name="arrow-forward" color={colors.background} size={mobileIconSize.inline} />
+          </View>
         </Pressable>
         <Row style={styles.quickLinks}>
+          <Button
+            tone="secondary"
+            compact
+            icon="bed-outline"
+            onPress={() => router.push({ pathname: '/search', params: { autoFocus: '1' } })}
+          >
+            {vi.api.hotels}
+          </Button>
           <Button tone="secondary" compact icon="airplane-outline" onPress={() => router.push('/flights')}>
             {vi.flights.title}
           </Button>
@@ -779,7 +797,42 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   quickLinks: { gap: spacing.sm },
-  searchHint: { flex: 1, minWidth: 0, color: colors.textMuted },
+  searchHint: { color: colors.textMuted },
+  heroSearch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingLeft: spacing.sm,
+    paddingRight: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  heroSearchPressed: { backgroundColor: colors.seaMist },
+  heroSearchIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.tealSoft,
+  },
+  heroSearchLabel: {
+    color: colors.tealInk,
+    fontFamily: nativeFonts.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  heroSearchGo: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.coral,
+  },
   sectionHead: { gap: spacing.xs },
   result: { alignItems: 'flex-start' },
   resultPhoto: { width: 90, height: 112, borderRadius: radius.md, backgroundColor: colors.seaMist },

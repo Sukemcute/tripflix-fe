@@ -6,7 +6,10 @@
 - Tab Khám phá (trang chủ mobile) mở đầu bằng hero ảnh biển, khẩu hiệu "Thấy là thích, nhích là đi" như web
   (dòng hai màu kem) và linh vật cáo, thay cho ô tìm kiếm và dải "Vé máy bay" phẳng.
 - Ô tìm kiếm nằm trong thẻ trắng nổi đè lên mép dưới hero, giống ô tìm phòng trên web; "Vé máy bay" thành nút
-  viên thuốc trong thẻ đó. Bấm ô tìm vẫn mở bảng tìm như trước.
+  viên thuốc trong thẻ đó, kèm nút "Khách sạn" mở trang tìm (gõ điểm đến ra khách sạn). Bấm ô tìm vẫn mở bảng
+  tìm như trước.
+- Ô tìm kiếm làm lại kiểu web: viên thuốc, icon tròn xanh bên trái, nhãn "TÌM KIẾM" chữ in hoa trên dòng gợi ý,
+  nút mũi tên cam bên phải.
 - Tiêu đề mục theo kiểu web: "Đi đâu tiếp đây?" và "Gợi ý dành cho bạn" chữ to kèm dòng phụ; "Xem tất cả" thành
   nút bo tròn.
 - Sửa chữ gợi ý trong ô tìm bị lệch lên trên.
