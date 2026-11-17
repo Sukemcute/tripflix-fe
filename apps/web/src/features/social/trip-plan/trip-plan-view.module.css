@@ -1,0 +1,376 @@
+/* Trang chi tiết chuyến đi: một cột lịch trình, một cột nơi ở và chi phí; màu từ token, không bóng màu, không gradient. */
+.page {
+  width: min(1120px, calc(100% - 32px));
+  margin: 24px auto 64px;
+  color: var(--color-text);
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  min-height: 220px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-background);
+}
+
+.heroImage {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 14px;
+  background-color: var(--color-surface-muted);
+}
+
+.heroImage img {
+  object-fit: cover;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--color-coral-ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.meta {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.byline {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+}
+
+.byline a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.byline a:hover {
+  color: var(--color-text);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 24px;
+  margin-top: 24px;
+  align-items: start;
+}
+
+.schedule,
+.side > section {
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-background);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 112px;
+}
+
+.sectionTitle {
+  margin: 0 0 14px;
+  color: var(--color-navy);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.muted {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* Ngày: số tròn trên một đường dọc mảnh nối các ngày. */
+.days {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  position: relative;
+  padding: 0 0 20px 40px;
+}
+
+.day::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 30px;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.day:last-child {
+  padding-bottom: 0;
+}
+
+.day:last-child::before {
+  display: none;
+}
+
+.dayTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  margin: 0 0 10px -40px;
+  color: var(--color-navy);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.dayNumber {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-coral);
+  color: var(--color-background);
+  font-size: 0.8rem;
+}
+
+.stops {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stop {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+/* Cột giờ chỉ có khi trong ngày có điểm ghi giờ; ngày không ghi giờ thì không chừa cột trống. */
+.stops[data-has-time] .stop {
+  grid-template-columns: 48px minmax(0, 1fr);
+}
+
+.stops:not([data-has-time]) .time {
+  display: none;
+}
+
+.time {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stopBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.stopTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.transport {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.stopMeta {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+}
+
+.notes {
+  margin: 4px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.mapLink {
+  color: var(--color-teal-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mapLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Nơi ở */
+.stays {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stay {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.stayImage {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+
+.stayImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stayBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stayName {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.stayMeta {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.stayActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+}
+
+.stayButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text);
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.stayButton:hover {
+  background: var(--color-surface);
+  border-color: var(--color-text-muted);
+}
+
+.cost .costValue,
+.costValue {
+  margin: 0 0 6px;
+  color: var(--color-navy);
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.notFound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 64px 16px;
+  text-align: center;
+}
+
+/* Khung xương lúc tải: khối xám nhạt, nhịp sáng nhẹ. */
+.skeleton {
+  border-color: transparent;
+  background: var(--color-surface-muted);
+  animation: trip-plan-pulse 1.4s ease-in-out infinite;
+}
+
+.skeletonLine {
+  height: 72px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+}
+
+@keyframes trip-plan-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (max-width: 860px) {
+  .hero,
+  .columns {
+    grid-template-columns: 1fr;
+  }
+
+  .side {
+    position: static;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
