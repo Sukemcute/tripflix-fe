@@ -65,7 +65,7 @@ export function ContextualPanel({
         <button
           type="button"
           className={styles.contextCloseBtn}
-          title={activeCommentPost ? 'Quay lại khám phá' : 'Thu gọn bảng'}
+          data-tooltip={activeCommentPost ? 'Quay lại khám phá' : 'Thu gọn bảng'}
           aria-label={activeCommentPost ? 'Quay lại khám phá' : 'Thu gọn bảng'}
           onClick={activeCommentPost ? onCloseComment : onClosePanel}
         >

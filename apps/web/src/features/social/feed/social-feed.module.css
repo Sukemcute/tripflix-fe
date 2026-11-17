@@ -1,6 +1,6 @@
 /* --------------------------------------------------------------------------
    Tripflix Social Feed Design System Tokens — LIGHT THEME
-   Brand Orange: #FF6A00 / #FF5A3C
+   Brand Orange: var(--color-coral) / #FF5A3C
    Page Background: #F8FAFC
    Card / Surface: #FFFFFF
    Sub-surface / Pill: #F1F5F9
@@ -120,12 +120,12 @@
 }
 
 .dockCreateBtn {
-  background: var(--color-teal-ink);
+  background: var(--color-coral);
   color: var(--color-background);
 }
 
 .dockCreateBtn:hover {
-  background: color-mix(in srgb, var(--color-teal-ink) 88%, var(--color-ink));
+  background: var(--color-coral-ink);
   color: var(--color-background);
 }
 
@@ -610,20 +610,16 @@
   height: 40px;
   padding: 0 14px;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--color-coral) 0%, var(--color-coral-soft) 100%);
+  background: var(--color-coral);
   color: var(--color-background) !important;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
-  box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--color-coral) 80%, transparent);
-  transition:
-    transform 160ms ease,
-    box-shadow 160ms ease;
+  transition: background-color 160ms ease;
 }
 
 .itineraryViewDetailBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 22px -10px color-mix(in srgb, var(--color-coral) 90%, transparent);
+  background: var(--color-coral-ink);
 }
 
 /* Tabs dạng viên thuốc */
@@ -668,6 +664,12 @@
   overflow-y: auto;
   padding: 14px 16px 18px;
   overscroll-behavior: contain;
+  /* Vẫn cuộn bằng chuột, bàn phím, vuốt; chỉ ẩn thanh cuộn như cột feed. */
+  scrollbar-width: none;
+}
+
+.itineraryScrollBody::-webkit-scrollbar {
+  display: none;
 }
 
 .itineraryEmptyText {
@@ -698,11 +700,7 @@
   bottom: -18px;
   width: 2px;
   border-radius: 2px;
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--color-coral) 45%, transparent),
-    var(--color-border)
-  );
+  background: var(--color-border);
 }
 
 .itineraryDayBlock:last-child::before {
@@ -726,11 +724,10 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-coral) 0%, var(--color-coral-soft) 100%);
+  background: var(--color-coral);
   color: var(--color-background);
   font-size: 12px;
   font-weight: 800;
-  box-shadow: 0 0 0 4px var(--color-coral-tint);
 }
 
 .itineraryDayTitle {
@@ -757,17 +754,11 @@
   border-radius: 14px;
   background: var(--color-background);
   border: 1px solid var(--color-border);
-  box-shadow: 0 4px 12px -10px color-mix(in srgb, var(--color-ink) 40%, transparent);
-  transition:
-    transform 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease;
+  transition: border-color 160ms ease;
 }
 
 .itineraryStopCard:hover {
-  transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--color-coral) 40%, transparent);
-  box-shadow: 0 10px 20px -14px color-mix(in srgb, var(--color-coral) 70%, transparent);
 }
 
 .itineraryStopThumb {
@@ -860,7 +851,7 @@
 .itineraryCostCard {
   padding: 18px 16px;
   border-radius: 18px;
-  background: linear-gradient(160deg, var(--color-warm-mist) 0%, var(--color-background) 100%);
+  background: var(--color-warm-mist);
   border: 1px solid var(--color-coral-tint);
   text-align: center;
 }
@@ -908,8 +899,8 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: rgba(255, 106, 0, 0.08);
-  color: #FF6A00;
+  background: color-mix(in srgb, var(--color-coral) 8%, transparent);
+  color: var(--color-coral);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -962,7 +953,7 @@
 }
 
 .itinerarySuggestedCard:hover {
-  border-color: #FF6A00;
+  border-color: var(--color-coral);
   background: #FFFBF8;
 }
 
@@ -998,7 +989,7 @@
 .itinerarySuggestedAction {
   font-size: 11px;
   font-weight: 600;
-  color: #FF6A00;
+  color: var(--color-coral);
 }
 
 /* --------------------------------------------------------------------------
@@ -1189,8 +1180,8 @@
 }
 
 .railItemBtnActive {
-  background: rgba(255, 106, 0, 0.1) !important;
-  color: #FF6A00 !important;
+  background: color-mix(in srgb, var(--color-coral) 10%, transparent) !important;
+  color: var(--color-coral) !important;
 }
 
 .railItemBtnActive::after {
@@ -1200,18 +1191,17 @@
   width: 3px;
   height: 18px;
   border-radius: 3px;
-  background: #FF6A00;
+  background: var(--color-coral);
 }
 
 .railCreateBtn {
-  background: #FF6A00;
+  background: var(--color-coral);
   color: #FFFFFF;
   margin-top: 6px;
-  box-shadow: 0 2px 10px rgba(255, 106, 0, 0.35);
 }
 
 .railCreateBtn:hover {
-  background: #ff7d1a;
+  background: var(--color-coral-ink);
   color: #FFFFFF;
   transform: scale(1.06);
 }
@@ -1353,10 +1343,10 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: #FF6A00;
+  color: var(--color-coral);
   font-size: 15px;
   flex-shrink: 0;
-  border: 1px solid rgba(255, 106, 0, 0.15);
+  border: 1px solid color-mix(in srgb, var(--color-coral) 15%, transparent);
 }
 
 .composerInputPill,
@@ -1405,37 +1395,39 @@
   border-radius: 8px;
   border: none;
   background: transparent;
-  color: #334155;
+  color: var(--color-text-muted);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 160ms ease;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
 }
 
 .composerTagBtn:hover {
-  background: #F8FAFC;
-  color: #141B3D;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .composerTagIconMedia {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #16A34A; /* Xanh la cho Anh/Video */
+  color: inherit;
 }
 
 .composerTagIconTrip {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7C3AED; /* Tim cho Gan chuyen di */
+  color: inherit;
 }
 
 .composerTagIconHash {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6366F1; /* Cham cho Hashtag */
+  color: inherit;
 }
 
 .composerSubmitBtn,
@@ -1446,21 +1438,18 @@
   padding: 8px 22px;
   border-radius: 9999px;
   border: none;
-  background: #FF6A00;
+  background: var(--color-coral);
   color: #FFFFFF;
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(255, 106, 0, 0.28);
-  transition: all 160ms ease;
+  transition: background-color 160ms ease;
   white-space: nowrap;
 }
 
 .composerSubmitBtn:hover,
 .composerActionBtn:hover {
-  background: #E85F00;
-  box-shadow: 0 4px 12px rgba(255, 106, 0, 0.35);
-  transform: translateY(-1px);
+  background: var(--color-coral-ink);
 }
 
 /* --------------------------------------------------------------------------
@@ -1482,8 +1471,7 @@
 }
 
 .postCardActiveComment {
-  border-color: rgba(255, 106, 0, 0.5);
-  box-shadow: 0 4px 18px rgba(255, 106, 0, 0.1);
+  border-color: color-mix(in srgb, var(--color-coral) 50%, transparent);
 }
 
 /* Post Header */
@@ -1510,10 +1498,10 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: #FF6A00;
+  color: var(--color-coral);
   font-size: 15px;
   flex-shrink: 0;
-  border: 1px solid rgba(255, 106, 0, 0.15);
+  border: 1px solid color-mix(in srgb, var(--color-coral) 15%, transparent);
 }
 
 .authorMeta {
@@ -1539,7 +1527,7 @@
 }
 
 .authorVerified {
-  color: #FF6A00;
+  color: var(--color-coral);
   display: flex;
   align-items: center;
 }
@@ -1621,7 +1609,7 @@
 .postReadMoreBtn {
   background: none;
   border: none;
-  color: #FF6A00;
+  color: var(--color-coral);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -1637,25 +1625,33 @@
 .postTagsWrap {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-top: 8px;
 }
 
+/* Hashtag là chữ xám như phần phụ của bài, không phải viên thuốc màu: nhiều thẻ không làm thẻ bài rối. */
 .postTagPill {
-  padding: 3px 10px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  color: #FF6A00;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 160ms ease;
+  transition: color 160ms ease;
 }
 
 .postTagPill:hover {
-  background: var(--color-warm-mist);
-  border-color: color-mix(in srgb, var(--color-coral) 30%, transparent);
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.postTagMore {
+  color: var(--color-text-subtle);
+  font-size: 13px;
 }
 
 /* Attached Trip Card in Post (Single Entry Point) */
@@ -1679,7 +1675,7 @@
 
 .postAttachedTrip:hover {
   background: #F1F5F9;
-  border-color: rgba(255, 106, 0, 0.4);
+  border-color: color-mix(in srgb, var(--color-coral) 40%, transparent);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--color-text) 4%, transparent);
 }
 
@@ -1800,16 +1796,16 @@
 }
 
 .actionBtnSaved {
-  color: #FF6A00 !important;
+  color: var(--color-coral) !important;
 }
 
 .actionBtnSaved svg {
-  fill: #FF6A00;
+  fill: var(--color-coral);
 }
 
 .actionBtnActive {
-  background: rgba(255, 106, 0, 0.1) !important;
-  color: #FF6A00 !important;
+  background: color-mix(in srgb, var(--color-coral) 10%, transparent) !important;
+  color: var(--color-coral) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -1896,7 +1892,6 @@
   color: #FFFFFF;
   font-size: 24px;
   font-weight: 700;
-  backdrop-filter: blur(4px);
   pointer-events: none;
 }
 
@@ -1938,7 +1933,7 @@
 }
 
 .videoOverlayBtn:hover {
-  background: #FF6A00;
+  background: var(--color-coral);
 }
 
 /* --------------------------------------------------------------------------
@@ -2071,14 +2066,14 @@
   border-radius: 12px;
   background: #F1F5F9;
   border: 1px solid #E2E8F0;
-  color: #FF6A00;
+  color: var(--color-coral);
   font-size: 12px;
   font-weight: 600;
   transition: all 160ms ease;
 }
 
 .postHashtag:hover {
-  background: rgba(255, 106, 0, 0.12) !important;
+  background: color-mix(in srgb, var(--color-coral) 12%, transparent) !important;
 }
 
 /* Comment Thread Wrapper in Contextual Panel */
@@ -2131,7 +2126,7 @@
   padding: 8px 20px;
   border-radius: 20px;
   border: none;
-  background: #FF6A00;
+  background: var(--color-coral);
   color: #FFFFFF;
   font-size: 13px;
   font-weight: 600;
@@ -2140,7 +2135,7 @@
 }
 
 .emptyFeedAction:hover {
-  background: #ff7d1a;
+  background: var(--color-coral-ink);
 }
 
 
@@ -2162,9 +2157,9 @@
   --iv-text: #141B3D;
   --iv-text-muted: #64748B;
   --iv-border: #E2E8F0;
-  --iv-accent: #FF6A00;
+  --iv-accent: var(--color-coral);
   --iv-accent-ink: #FFFFFF;
-  --iv-accent-soft: rgba(255, 106, 0, 0.12);
+  --iv-accent-soft: color-mix(in srgb, var(--color-coral) 12%, transparent);
 }
 
 .emptyCommentsNotice {

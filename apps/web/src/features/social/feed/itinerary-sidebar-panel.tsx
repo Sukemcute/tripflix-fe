@@ -93,7 +93,7 @@ export function ItinerarySidebarPanel({
           type="button"
           className={styles.itineraryCollapseBtn}
           aria-label={vi.api.immersiveItineraryCollapse}
-          title={vi.api.immersiveItineraryCollapse}
+          data-tooltip={vi.api.immersiveItineraryCollapse}
           onClick={onClose}
         >
           <SocialIcon name="chevronLeft" size={18} />
