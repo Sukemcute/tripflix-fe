@@ -1285,10 +1285,6 @@
   cursor: pointer;
 }
 
-.overlayTagPill:hover {
-  background: rgba(255, 255, 255, 0.24);
-}
-
 .overlayAttachedTripCard {
   display: flex;
   align-items: center;
@@ -1729,8 +1725,17 @@
   cursor: pointer;
 }
 
-.hashtagBtn:hover {
-  opacity: 0.8;
+/* Như TikTok: tên tác giả (Reels, bình luận) bấm được nhưng rê chuột không gạch chân, không đổi màu. */
+.profileLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Avatar trong Reels và bình luận là link tới trang cá nhân: giữ nguyên kiểu, không gạch chân. */
+a.overlayAvatar,
+a.avatarSmall {
+  flex-shrink: 0;
+  text-decoration: none;
 }
 
 .postSummaryStatsRow {

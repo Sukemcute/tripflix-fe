@@ -153,14 +153,6 @@
   text-decoration: none;
 }
 
-.authorName:hover {
-  color: var(--color-coral-ink);
-}
-
-.subtleLink:hover {
-  color: var(--color-text);
-}
-
 .subtleLink {
   color: var(--color-text-muted);
   font-size: 0.85rem;
@@ -392,10 +384,6 @@
   color: var(--color-teal-ink);
   font-weight: 600;
   text-decoration: none;
-}
-
-.inlineLink:hover {
-  color: var(--color-navy);
 }
 
 /* Khoảnh khắc: lưới ảnh, ô đầu to gấp đôi */

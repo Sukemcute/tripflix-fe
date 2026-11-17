@@ -833,8 +833,6 @@
 
 .itineraryPoiLink:hover {
   border-color: color-mix(in srgb, var(--color-coral) 45%, transparent);
-  color: var(--color-coral-ink);
-  transform: translateX(2px);
 }
 
 .itineraryPoiSub {
@@ -1524,10 +1522,6 @@
   text-overflow: ellipsis;
 }
 
-.authorName:hover {
-  color: var(--color-coral-ink);
-}
-
 a.authorAvatar {
   flex-shrink: 0;
   text-decoration: none;
@@ -1648,10 +1642,6 @@ a.authorAvatar {
   font-weight: 500;
   cursor: pointer;
   transition: color 160ms ease;
-}
-
-.postTagPill:hover {
-  color: var(--color-text);
 }
 
 .postTagMore {
@@ -2075,10 +2065,6 @@ a.authorAvatar {
   font-size: 12px;
   font-weight: 600;
   transition: all 160ms ease;
-}
-
-.postHashtag:hover {
-  background: color-mix(in srgb, var(--color-coral) 12%, transparent) !important;
 }
 
 /* Comment Thread Wrapper in Contextual Panel */
