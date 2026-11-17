@@ -3467,6 +3467,10 @@ body:has([class*="feedPageWrapper"]) #content {
   text-align: left;
   cursor: pointer;
 }
+/* .primary-button:disabled hiện con trỏ chờ; nút Lưu ở đây còn bị khoá khi chưa đổi gì, lúc đó không phải đang tải. */
+.travel-form .primary-button:disabled:not([aria-busy='true']) {
+  cursor: not-allowed;
+}
 /* Mỗi trường một khung: pill xuống dòng khi nhiều, nút + mở danh sách còn lại. */
 .travel-tags {
   display: flex;

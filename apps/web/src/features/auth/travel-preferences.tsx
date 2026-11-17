@@ -155,7 +155,7 @@ export function TravelPreferencesCard({ userId }: { userId: string }) {
         <ApiErrorNotice error={save.error} />
         {save.isSuccess && !isDirty && <output className="auth-hint">{vi.api.travelSaved}</output>}
         <div className="profile-actions">
-          <button className="primary-button" disabled={save.isPending || !isDirty}>
+          <button className="primary-button" disabled={save.isPending || !isDirty} aria-busy={save.isPending}>
             {save.isPending ? vi.api.saving : vi.api.save}
           </button>
           {saved && (
