@@ -2507,6 +2507,11 @@
   gap: 10px;
 }
 
+/* Thanh tiêu đề dùng chung với panel bình luận có đệm riêng; trong pop-up card đã có đệm 24px nên bỏ đệm trên, trái, phải. */
+.composerModalCard > .panelHeaderBar {
+  padding: 0 0 14px;
+}
+
 /* Ô chọn dùng chung (SoftSelect) trong pop-up: cùng nền, cỡ chữ với các ô nhập bên cạnh. */
 .composerSelect > button {
   background: var(--iv-elevated-bg);
