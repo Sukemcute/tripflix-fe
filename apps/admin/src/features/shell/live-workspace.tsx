@@ -5,10 +5,10 @@ import { adminControllerGetMe } from '@tripflix/api-client/core-api/admin/admin'
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t, vi, type MessageKey } from '@tripflix/i18n';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { adminNav, quickAccessLinks, type AdminNavItem } from './nav';
 import { AdminApiError } from './api-state';
+import { WEB_HOME_URL, WEB_LOGIN_URL } from '../auth/web-login';
 import { StaffManagement } from '../staff/staff-management';
 import { ModerationWorkspace } from '../moderation/moderation-workspace';
 import { InventoryCalendar } from '../inventory/inventory-calendar';
@@ -63,8 +63,6 @@ function renderQuickIcon(icon: 'shield' | 'box' | 'alert' | 'doc') {
 
 export function AdminWorkspace({ label }: { label: MessageKey }) {
   const { user, isReady, error, session } = useApiSession();
-  const router = useRouter();
-  const path = adminNav.find((entry) => entry.label === label)?.href ?? '/';
   const isStaff = user?.role === 'moderator' || user?.role === 'superadmin';
   const [selectedRange, setSelectedRange] = useState('7 ngày qua (07/01 - 13/01)');
 
@@ -76,12 +74,12 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
 
   const logout = useMutation({
     mutationFn: () => session.logout(),
-    onSuccess: () => router.replace('/login'),
+    onSuccess: () => window.location.assign(WEB_HOME_URL),
   });
 
   useEffect(() => {
-    if (isReady && !user && !error) router.replace(`/login?returnTo=${encodeURIComponent(path)}`);
-  }, [isReady, user, error, path, router]);
+    if (isReady && !user && !error) window.location.replace(WEB_LOGIN_URL);
+  }, [isReady, user, error]);
 
   if (!isReady)
     return (
@@ -99,7 +97,7 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
             void session.initialize();
           }}
         />
-        <Link href={`/login?returnTo=${encodeURIComponent(path)}`}>{vi.api.loginRequired}</Link>
+        <a href={WEB_LOGIN_URL}>{vi.api.loginRequired}</a>
       </main>
     );
 

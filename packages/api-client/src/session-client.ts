@@ -199,6 +199,17 @@ export class SessionClient {
     const response = await auth.authControllerLoginWithGoogle(input, await this.proofOptions('google'));
     await this.completeLogin(response.data, version);
   }
+  /** Web: mã dùng một lần (60 giây) để mở trang quản trị bằng phiên này. Không phải nhân viên: HttpError 403. */
+  async createAdminHandoff(): Promise<string> {
+    const response = await auth.authControllerCreateAdminHandoff();
+    return readEntity(response.data, ['code']).code;
+  }
+  /** Trang quản trị: đổi mã từ web lấy phiên riêng, gắn khoá trình duyệt của admin. */
+  async exchangeAdminHandoff(code: string): Promise<void> {
+    const version = ++this.version;
+    const response = await auth.authControllerExchangeAdminHandoff({ code }, await this.proofOptions('login'));
+    await this.completeLogin(response.data, version);
+  }
   private async completeLogin(data: TokenPairDto | void, version: number): Promise<void> {
     if (version !== this.version) return;
     if (!this.options.serverSession &&
