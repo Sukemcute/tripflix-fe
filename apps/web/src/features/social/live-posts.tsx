@@ -63,6 +63,7 @@ import styles from './live-posts.module.css';
 import { PostImagePicker } from './composer/post-image-picker';
 import { usePostImages } from './composer/use-post-images';
 import { HashtagInput } from './composer/hashtag-input';
+import { addPublishedPostToFeeds, publishNoticeStore } from './composer/published-post';
 import { calculateUploadPercent, parseStoredHashtags, pickDroppedVideo } from './composer/composer-inputs';
 import { ShareMenu, type ShareMenuHandle } from './share-menu';
 import { PostOwnerMenu } from './post-owner-menu';
@@ -3059,11 +3060,16 @@ export function ComposerModal({
         await socialApi.publishPost(currentId);
       }
 
-      return { id: currentId, published: shouldPublish };
+      return { id: currentId, published: shouldPublish, postType };
     },
     onSuccess: async (data) => {
       await client.invalidateQueries({ queryKey: ['social'] });
-      if (data.published) {
+      if (data.published && data.id) {
+        // Feed gợi ý giữ nguyên trang đã tải khi làm mới: chèn bài vừa đăng lên đầu để thấy ngay, không phải F5.
+        const detail = await socialApi.getPost(data.id).catch(() => null);
+        if (detail) addPublishedPostToFeeds(client, detail.post);
+        if (data.postType === 'video') void client.invalidateQueries({ queryKey: ['feed'] });
+        publishNoticeStore.show(data.id, data.postType);
         onClose();
       } else {
         setSaveSuccessMsg('Đã lưu bản nháp thành công.');
