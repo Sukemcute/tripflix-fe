@@ -250,14 +250,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
   const nextCursor = search.data?.nextCursor;
 
   return (
-    <Screen
-      compact
-      title={back ? vi.api.search : undefined}
-      back={back}
-      right={
-        <NotificationBell />
-      }
-    >
+    <Screen compact title={back ? vi.api.search : undefined} back={back} right={<NotificationBell />}>
       <SearchDropPanel visible={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       {/* Trang chủ: hero ảnh biển + ô tìm kiếm nổi, cùng kiểu trang chủ web (TF48). */}
       {isBrowsing ? (
@@ -717,8 +710,15 @@ export function LiveSearchEntry() {
     checkOut?: string;
     adults?: string;
   }>();
-  if (pick === 'trip' && pickId === 'hotelProperty' && pickKey && checkIn && checkOut && adults) {
-    return <TripHotelSearchScreen q={q ?? ''} pick={{ key: pickKey, checkIn, checkOut, adults }} />;
+  if (pick === 'post' && pickKey && checkIn && checkOut && adults) {
+    return (
+      <TripHotelSearchScreen q={q ?? ''} pick={{ key: pickKey, checkIn, checkOut, adults, mode: 'post' }} />
+    );
+  }
+  // pickId 'hotelProperty:<chặng ở>': đổi khách sạn của một chặng khi đặt theo lộ trình.
+  if (pick === 'trip' && pickId?.startsWith('hotelProperty') && pickKey && checkIn && checkOut && adults) {
+    const stayId = pickId.split(':')[1] || 'hotel0';
+    return <TripHotelSearchScreen q={q ?? ''} pick={{ key: pickKey, checkIn, checkOut, adults, stayId }} />;
   }
   return view === 'mine' ? <LiveFeedScreen kind="mine" /> : <LiveSearchScreen back />;
 }

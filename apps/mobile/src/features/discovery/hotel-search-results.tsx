@@ -10,6 +10,7 @@ import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Badge, Button, Icon, money, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 import { saveTripHotel } from '@/features/booking/trip-booking-store';
+import { savePostHotel } from '@/features/post/post-hotel-pick-store';
 import { formatDay } from '@/features/booking/trip-plan-parts';
 import { LoadingDots } from '@/components/loading-dots';
 
@@ -23,7 +24,15 @@ type HotelHit = {
   price?: number;
   rating?: { average: number; count: number } | null;
 };
-type TripHotelPick = { key: string; checkIn: string; checkOut: string; adults: string };
+type TripHotelPick = {
+  key: string;
+  checkIn: string;
+  checkOut: string;
+  adults: string;
+  mode?: 'trip' | 'post';
+  /** Chặng ở cần đổi khách sạn khi đặt theo lộ trình. */
+  stayId?: string;
+};
 type HotelPage = { items: HotelHit[]; nextCursor?: string | null };
 
 /** Dùng lại thẻ kết quả tìm kiếm; kỳ ở và số khách luôn lấy từ lộ trình. */
@@ -144,8 +153,23 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
   ];
   if (!pick && !hotels.length) return null;
   const openHotel = (hotel: HotelHit) => {
+    if (pick?.mode === 'post') {
+      savePostHotel(pick.key, { hotelId: hotel.hotelId, hotelName: hotel.name });
+      router.replace({
+        pathname: '/hotel-rooms',
+        params: {
+          id: hotel.hotelId,
+          pick: 'post',
+          pickKey: pick.key,
+          checkIn: pick.checkIn,
+          checkOut: pick.checkOut,
+          adults: pick.adults,
+        },
+      });
+      return;
+    }
     if (pick) {
-      saveTripHotel(pick.key, { id: hotel.hotelId, name: hotel.name });
+      saveTripHotel(pick.key, pick.stayId ?? 'hotel0', { id: hotel.hotelId, name: hotel.name });
       router.back();
       return;
     }
