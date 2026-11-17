@@ -1,10 +1,8 @@
-import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { compactType } from '@/components/mobile-scale';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
-const copy = vi.mobile.tripPlan;
 const DAY_DOT = 10;
 export function formatDay(date: string) {
   return new Date(`${date}T00:00:00Z`).toLocaleDateString('vi-VN', {
@@ -52,12 +50,7 @@ export function ProductCard({
   const accent = tone === 'flight' ? colors.teal : colors.coral;
   const ink = tone === 'flight' ? colors.tealInk : colors.coralInk;
   return (
-    <View
-      style={[
-        styles.card,
-        { borderColor: accent, backgroundColor: tone === 'flight' ? colors.seaMist : colors.warmMist },
-      ]}
-    >
+    <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.background }]}>
       <View style={styles.cardRow}>
         {onToggle && (
           <Pressable
@@ -86,16 +79,14 @@ export function ProductCard({
             <Icon name={icon} size={18} color={colors.background} />
           </View>
           <View style={styles.cardBody}>
-            <Txt style={[styles.otaBadge, { color: ink }]}>{copy.otaBadge}</Txt>
             <Txt style={styles.cardTitle} numberOfLines={2}>
               {title}
             </Txt>
             {!!detail && (
-              <Txt style={styles.cardDetail} numberOfLines={3}>
+              <Txt style={styles.cardDetail} numberOfLines={2}>
                 {detail}
               </Txt>
             )}
-            {onExpand && <Txt style={[styles.cardDetail, { color: ink }]}>{copy.viewAndChange}</Txt>}
           </View>
           {onExpand && <Icon name="chevron-forward" size={16} color={ink} />}
           <View style={styles.cardPrice}>

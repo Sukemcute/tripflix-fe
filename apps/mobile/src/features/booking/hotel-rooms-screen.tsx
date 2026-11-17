@@ -19,6 +19,7 @@ import { saveBookingSelection, useBookingSelection } from './cart-store';
 import { RoomCard, type Guests } from './hotel-parts';
 import { saveTripPick } from './trip-booking-store';
 import { LoadingDots } from '@/components/loading-dots';
+import { savePostRoom } from '@/features/post/post-hotel-pick-store';
 
 const text = vi.commerce;
 const hotelText = vi.hotel;
@@ -39,7 +40,9 @@ export function HotelRoomsScreen() {
     children?: string;
     infants?: string;
   }>();
-  const isTripPick = params.pick === 'trip';
+  // 'post': chọn phòng cho điểm khách sạn khi soạn lộ trình (TF105); dùng chung giao diện chọn của đặt lộ trình.
+  const isPostPick = params.pick === 'post';
+  const isTripPick = params.pick === 'trip' || isPostPick;
   const { isReady } = useApiSession();
   const today = getFutureDate(0);
   const [dates, setDates] = useState({
@@ -192,7 +195,8 @@ export function HotelRoomsScreen() {
           rooms={countRoomsForGuests({ ...stay, maxGuests: room.maxGuests })}
           isDisabled={
             query.isFetching ||
-            (isTripPick && (!params.pickKey || !params.pickId || !valid || !hotel.isAvailable))
+            (isTripPick &&
+              (!params.pickKey || (!isPostPick && !params.pickId) || !valid || !hotel.isAvailable))
           }
           pickedRatePlanCode={
             isTripPick && params.productId === room.productId ? params.ratePlanCode : undefined
@@ -201,6 +205,16 @@ export function HotelRoomsScreen() {
             isTripPick
               ? (ratePlanCode) => {
                   const rate = room.ratePlans.find((option) => option.code === ratePlanCode);
+                  if (isPostPick && params.pickKey && rate?.totalPrice != null && room.isAvailable) {
+                    savePostRoom(params.pickKey, {
+                      productId: room.productId,
+                      ratePlanCode,
+                      roomName: room.name,
+                      rateName: rate.name,
+                    });
+                    router.back();
+                    return;
+                  }
                   if (
                     !params.pickKey ||
                     !params.pickId ||

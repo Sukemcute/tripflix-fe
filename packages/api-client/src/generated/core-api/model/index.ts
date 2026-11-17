@@ -394,6 +394,7 @@ export * from './traceSummaryDto';
 export * from './tripAttachmentDto';
 export * from './tripDto';
 export * from './tripDtoStatus';
+export * from './tripItemHotelDto';
 export * from './tripItineraryItemDto';
 export * from './tripPageDto';
 export * from './tripTransportDto';

@@ -40,7 +40,7 @@ readStoredTrip()
 let pendingWrite = Promise.resolve();
 export function saveTripBooking(trip: SelectedTripBooking | null): void {
   hasChanged = true;
-  selectedHotel = null;
+  selectedHotels = null;
   selectedTrip = trip;
   notify();
   // Ghi theo thứ tự để lựa chọn cuối cùng luôn thắng khi người dùng đổi nhanh.
@@ -55,22 +55,27 @@ export function useTripBooking(): SelectedTripBooking | null {
 }
 
 type TripHotel = { id: string; name: string };
-let selectedHotel: { key: string; hotel: TripHotel } | null = null;
+let selectedHotels: { key: string; hotels: Record<string, TripHotel> } | null = null;
 
-/** Chỗ ở chỉ dùng cho bài đang đặt; đổi bài sẽ bỏ lựa chọn cũ. */
-export function saveTripHotel(key: string, hotel: TripHotel): void {
+/** Khách sạn đổi theo từng chặng ở (`stayId`), chỉ dùng cho bài đang đặt; đổi bài sẽ bỏ lựa chọn cũ. */
+export function saveTripHotel(key: string, stayId: string, hotel: TripHotel): void {
   if (selectedTrip?.postId !== key) return;
-  selectedHotel = { key, hotel };
-  picks = { key: '', values: {} };
+  selectedHotels = {
+    key,
+    hotels: { ...(selectedHotels?.key === key ? selectedHotels.hotels : {}), [stayId]: hotel },
+  };
+  // Bỏ gói phòng đã chọn của chặng này vì khách sạn đã khác.
+  const { [stayId]: _dropped, ...rest } = picks.values;
+  picks = { key: picks.key, values: rest };
   notify();
 }
-export function useTripHotel(key: string): TripHotel | undefined {
+export function useTripHotels(key: string): Record<string, TripHotel> | undefined {
   const selection = useSyncExternalStore(
     subscribe,
-    () => selectedHotel,
-    () => selectedHotel,
+    () => selectedHotels,
+    () => selectedHotels,
   );
-  return selection?.key === key ? selection.hotel : undefined;
+  return selection?.key === key ? selection.hotels : undefined;
 }
 
 export type TripBookingOffer = TripPlanOffer & {

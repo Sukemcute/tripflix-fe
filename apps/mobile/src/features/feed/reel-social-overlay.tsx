@@ -376,7 +376,9 @@ export function ReelSocialOverlay({
           disabled={isSample || !item.social}
           accessibilityRole="link"
           accessibilityLabel={t('api.profileOpen', { name: author })}
-          onPress={() => item.social && router.push({ pathname: '/user/[id]', params: { id: item.social.author.id } })}
+          onPress={() =>
+            item.social && router.push({ pathname: '/user/[id]', params: { id: item.social.author.id } })
+          }
         >
           {item.social?.author.avatarUrl ? (
             <Image source={item.social.author.avatarUrl} style={styles.avatar} />
@@ -510,7 +512,12 @@ export function ReelSocialOverlay({
           postId={postId}
           postTitle={title}
           authorName={author}
-          coverUrl={item.playback.posters.w540 || item.playback.posters.w360 || item.playback.posters.w720}
+          coverUrl={
+            tripPlan.posterUrl ||
+            item.playback.posters.w540 ||
+            item.playback.posters.w360 ||
+            item.playback.posters.w720
+          }
           trip={tripPlan}
         />
       )}

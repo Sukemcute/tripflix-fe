@@ -64,7 +64,7 @@ function TripPlan({ trip }: { trip: TripAttachmentDto }) {
                   {index < items.length - 1 && <View style={styles.railLine} />}
                 </View>
                 <View style={[styles.stopBody, index < items.length - 1 && styles.stopGap]}>
-                  <Txt variant="label">{item.title}</Txt>
+                  <Txt variant="label">{item.time ? `${item.time} · ${item.title}` : item.title}</Txt>
                   {!!item.location && (
                     <Txt variant="small" style={styles.muted}>
                       {item.location}
@@ -107,7 +107,11 @@ function TripPlan({ trip }: { trip: TripAttachmentDto }) {
 
 export function LivePostDetailScreen() {
   // comment/thread đến từ thông báo: mở sẵn khung bình luận và nhảy tới bình luận đó.
-  const { slug = '', comment, thread } = useLocalSearchParams<{ slug: string; comment?: string; thread?: string }>();
+  const {
+    slug = '',
+    comment,
+    thread,
+  } = useLocalSearchParams<{ slug: string; comment?: string; thread?: string }>();
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
   const [hasComments, setHasComments] = useState(!!comment);
@@ -303,7 +307,11 @@ export function LivePostDetailScreen() {
                     variant="small"
                     style={styles.muted}
                     accessibilityRole="link"
-                    onPress={post ? () => router.push({ pathname: '/user/[id]', params: { id: post.authorId } }) : undefined}
+                    onPress={
+                      post
+                        ? () => router.push({ pathname: '/user/[id]', params: { id: post.authorId } })
+                        : undefined
+                    }
                   >
                     {authorName}
                   </Txt>
@@ -319,8 +327,11 @@ export function LivePostDetailScreen() {
                         else router.push({ pathname: '/login', params: { returnTo: `/trip/${slug}` } });
                       }}
                     >
-                      {follow.isLoading || follow.isUpdating ? vi.api.loading
-                        : follow.isFollowing ? vi.api.unfollowAuthor : vi.api.followAuthor}
+                      {follow.isLoading || follow.isUpdating
+                        ? vi.api.loading
+                        : follow.isFollowing
+                          ? vi.api.unfollowAuthor
+                          : vi.api.followAuthor}
                     </Button>
                     <ApiErrorNotice error={follow.error} retry={() => void follow.retry()} />
                   </>
