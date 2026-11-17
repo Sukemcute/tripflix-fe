@@ -13,6 +13,9 @@
 - Tiêu đề mục theo kiểu web: "Đi đâu tiếp đây?" và "Gợi ý dành cho bạn" chữ to kèm dòng phụ; "Xem tất cả" thành
   nút bo tròn.
 - Sửa chữ gợi ý trong ô tìm bị lệch lên trên.
+- Ô tìm trong bảng tìm thả xuống cùng kiểu ô ở trang chủ (viên thuốc, icon tròn xanh).
+- Thay chữ "Đang tải…" đứng riêng bằng ba chấm nhảy (`components/loading-dots.tsx`, dùng reanimated có sẵn) ở 20
+  chỗ trong app mobile; trình đọc màn hình vẫn đọc "Đang tải". Chữ "Đang tải" trên nút bấm giữ nguyên.
 - Chỉ dùng ảnh, chữ (`vi.api.authHero*`, `vi.ota.recommendation*`) và màu có sẵn; không thêm thư viện.
 
 ## Đối chiếu "Xong khi"
@@ -22,7 +25,7 @@
 | Không đổi chức năng tìm kiếm, vé máy bay, gợi ý | Có | Bấm ô tìm mở bảng tìm, nút Vé máy bay mở `/flights` (đã thử trên Expo web) |
 
 ## Kết quả kiểm tra
-- `pnpm turbo run lint typecheck test --affected`: 22/22 task pass.
+- `pnpm turbo run lint typecheck test --affected`: 22/22 task pass; không có cảnh báo lint ở file của TF48.
 
 ## Cách kiểm lại
 1. `pnpm --filter @tripflix/mobile start -c`, mở tab Khám phá.
