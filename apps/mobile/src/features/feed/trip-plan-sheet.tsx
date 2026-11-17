@@ -8,6 +8,7 @@ import { BottomSheet } from '@/components/bottom-sheet';
 import { Button, Icon, Row, Txt } from '@/components/mobile-ui';
 import { useAssistant } from '@/features/assistant/assistant-provider';
 import { saveTripBooking } from '@/features/booking/trip-booking-store';
+import { trackFeedEvent } from './feed-events';
 import { ProductCard, styles } from '@/features/booking/trip-plan-parts';
 
 const copy = vi.mobile.tripPlan;
@@ -41,6 +42,7 @@ export function TripPlanSheet({
     assistant.openDialog(undefined, postId);
   };
   const book = () => {
+    trackFeedEvent({ type: 'booking_click', postId, hotelId: trip.hotelId ?? null, surface: 'reels_trip_plan' });
     saveTripBooking({ postId, postTitle, authorName, coverUrl, trip });
     onClose();
     router.navigate('/(tabs)/book');
