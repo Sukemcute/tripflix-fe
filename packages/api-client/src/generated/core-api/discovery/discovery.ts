@@ -23,6 +23,7 @@ import type {
 import type {
   ExploreRequestDto,
   ExploreResponseDto,
+  FlightSuggestionsDto,
   HomeRecommendationsControllerRecommendForHomeParams,
   HomeRecommendationsDto,
   PlacesControllerPlacesParams,
@@ -36,9 +37,12 @@ import type {
   SearchPostsRequestDto,
   SearchPostsResponseDto,
   StayPageDto,
+  StaySuggestionsDto,
   StaysControllerListStaysParams,
   SuggestControllerSuggestParams,
   SuggestResponseDto,
+  TripBuilderControllerSuggestFlightsParams,
+  TripBuilderControllerSuggestStaysParams,
 } from '../model';
 
 import { http } from '../../../http';
@@ -1468,6 +1472,356 @@ export function usePostRecommendationsControllerRecommendReels<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getPostRecommendationsControllerRecommendReelsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type tripBuilderControllerSuggestFlightsResponse200 = {
+  data: FlightSuggestionsDto;
+  status: 200;
+};
+
+export type tripBuilderControllerSuggestFlightsResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type tripBuilderControllerSuggestFlightsResponseSuccess =
+  tripBuilderControllerSuggestFlightsResponse200 & {
+    headers: Headers;
+  };
+export type tripBuilderControllerSuggestFlightsResponseError =
+  tripBuilderControllerSuggestFlightsResponse400 & {
+    headers: Headers;
+  };
+
+export type tripBuilderControllerSuggestFlightsResponse =
+  tripBuilderControllerSuggestFlightsResponseSuccess | tripBuilderControllerSuggestFlightsResponseError;
+
+export const getTripBuilderControllerSuggestFlightsUrl = (
+  params: TripBuilderControllerSuggestFlightsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/trip-builder/flights?${stringifiedParams}`
+    : `/api/trip-builder/flights`;
+};
+
+/**
+ * `place` là `refId` của dòng `place` trong `/api/suggest`; `from` là sân bay nhà của khách.
+ * - Chỉ chuyến còn chỗ cho đúng ngày; giá là hạng ghế rẻ nhất còn bán.
+ * - `sort=cheapest` (rẻ trước) hoặc `best_time` (chiều đi tới kịp nhận phòng, chiều về còn trọn buổi sáng cuối lên trước).
+ * - `reason` là câu ngắn hiện dưới lựa chọn, có thể null.
+ * @summary Gợi ý vé bay chiều đi và chiều về tới một nơi
+ */
+export const tripBuilderControllerSuggestFlights = async (
+  params: TripBuilderControllerSuggestFlightsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<tripBuilderControllerSuggestFlightsResponse> => {
+  return http<tripBuilderControllerSuggestFlightsResponse>(
+    getTripBuilderControllerSuggestFlightsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getTripBuilderControllerSuggestFlightsQueryKey = (
+  params?: TripBuilderControllerSuggestFlightsParams,
+) => {
+  return [`/api/trip-builder/flights`, ...(params ? [params] : [])] as const;
+};
+
+export const getTripBuilderControllerSuggestFlightsQueryOptions = <
+  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
+  TError = void,
+>(
+  params: TripBuilderControllerSuggestFlightsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getTripBuilderControllerSuggestFlightsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>> = ({
+    signal,
+  }) => tripBuilderControllerSuggestFlights(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type TripBuilderControllerSuggestFlightsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>
+>;
+export type TripBuilderControllerSuggestFlightsQueryError = void;
+
+export function useTripBuilderControllerSuggestFlights<
+  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
+  TError = void,
+>(
+  params: TripBuilderControllerSuggestFlightsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
+          TError,
+          Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useTripBuilderControllerSuggestFlights<
+  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
+  TError = void,
+>(
+  params: TripBuilderControllerSuggestFlightsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
+          TError,
+          Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useTripBuilderControllerSuggestFlights<
+  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
+  TError = void,
+>(
+  params: TripBuilderControllerSuggestFlightsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Gợi ý vé bay chiều đi và chiều về tới một nơi
+ */
+
+export function useTripBuilderControllerSuggestFlights<
+  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
+  TError = void,
+>(
+  params: TripBuilderControllerSuggestFlightsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getTripBuilderControllerSuggestFlightsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type tripBuilderControllerSuggestStaysResponse200 = {
+  data: StaySuggestionsDto;
+  status: 200;
+};
+
+export type tripBuilderControllerSuggestStaysResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type tripBuilderControllerSuggestStaysResponseSuccess =
+  tripBuilderControllerSuggestStaysResponse200 & {
+    headers: Headers;
+  };
+export type tripBuilderControllerSuggestStaysResponseError = tripBuilderControllerSuggestStaysResponse400 & {
+  headers: Headers;
+};
+
+export type tripBuilderControllerSuggestStaysResponse =
+  tripBuilderControllerSuggestStaysResponseSuccess | tripBuilderControllerSuggestStaysResponseError;
+
+export const getTripBuilderControllerSuggestStaysUrl = (params: TripBuilderControllerSuggestStaysParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/trip-builder/stays?${stringifiedParams}`
+    : `/api/trip-builder/stays`;
+};
+
+/**
+ * `place` là `refId` của dòng `place` trong `/api/suggest`. Chỉ khách sạn còn phòng, giá thật từ commerce.
+ * - `sort=best_price` (rẻ một đêm trước) hoặc `top_rated` (điểm đánh giá cao trước).
+ * @summary Gợi ý chỗ ở còn phòng ở một nơi
+ */
+export const tripBuilderControllerSuggestStays = async (
+  params: TripBuilderControllerSuggestStaysParams,
+  options?: Parameters<typeof http>[1],
+): Promise<tripBuilderControllerSuggestStaysResponse> => {
+  return http<tripBuilderControllerSuggestStaysResponse>(getTripBuilderControllerSuggestStaysUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getTripBuilderControllerSuggestStaysQueryKey = (
+  params?: TripBuilderControllerSuggestStaysParams,
+) => {
+  return [`/api/trip-builder/stays`, ...(params ? [params] : [])] as const;
+};
+
+export const getTripBuilderControllerSuggestStaysQueryOptions = <
+  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
+  TError = void,
+>(
+  params: TripBuilderControllerSuggestStaysParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getTripBuilderControllerSuggestStaysQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>> = ({
+    signal,
+  }) => tripBuilderControllerSuggestStays(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type TripBuilderControllerSuggestStaysQueryResult = NonNullable<
+  Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>
+>;
+export type TripBuilderControllerSuggestStaysQueryError = void;
+
+export function useTripBuilderControllerSuggestStays<
+  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
+  TError = void,
+>(
+  params: TripBuilderControllerSuggestStaysParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
+          TError,
+          Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useTripBuilderControllerSuggestStays<
+  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
+  TError = void,
+>(
+  params: TripBuilderControllerSuggestStaysParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
+          TError,
+          Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useTripBuilderControllerSuggestStays<
+  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
+  TError = void,
+>(
+  params: TripBuilderControllerSuggestStaysParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Gợi ý chỗ ở còn phòng ở một nơi
+ */
+
+export function useTripBuilderControllerSuggestStays<
+  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
+  TError = void,
+>(
+  params: TripBuilderControllerSuggestStaysParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getTripBuilderControllerSuggestStaysQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
