@@ -21,6 +21,8 @@ export function VerifiedTripBadge({ tone = 'light' }: { tone?: 'light' | 'dark' 
 
 const styles = StyleSheet.create({
   badge: {
+    // Ôm vừa chữ, không kéo dài theo khung cha (khối tác giả xếp dọc).
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
