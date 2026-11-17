@@ -108,6 +108,8 @@ function upstream(request: NextRequest, path: string, options: {
 }
 
 function allowed(path: string, method: string) {
+  if (method === 'GET' && path === '/api/analytics/ai-usage') return true;
+  if (method === 'GET' && /^\/api\/analytics\/observability(?:\/traces(?:\/[a-f0-9]{32})?)?$/i.test(path)) return true;
   if (path.startsWith('/api/admin/') || path.startsWith('/api/v1/admin/')) return true;
   if (method === 'GET') return path === '/api/auth/me' || path === '/api/recommendations/home';
   return method === 'POST' && (path === '/api/search' || path === '/api/search/posts');
