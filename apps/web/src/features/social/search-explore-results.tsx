@@ -184,7 +184,8 @@ function CardBody({ item }: { item: ExploreItemDto }) {
       </span>
       <span className={styles.caption}>{item.title}</span>
       <span className={styles.cardMeta}>
-        {[item.subtitle, price, item.reason].filter(Boolean).join(' · ')}
+        {/* reason của discovery đã có nơi ("Ở Đà Lạt") và giá; chỉ ghép nơi, giá khi reason trống. */}
+        {item.reason || [item.subtitle, price].filter(Boolean).join(' · ')}
         {item.location && item.kind !== 'stay' && <span className={styles.mapHint}> · {vi.api.searchResultsMapHint}</span>}
       </span>
     </>
