@@ -23,7 +23,6 @@ import type {
 import type {
   ExploreRequestDto,
   ExploreResponseDto,
-  FlightSuggestionsDto,
   HomeRecommendationsControllerRecommendForHomeParams,
   HomeRecommendationsDto,
   PlacesControllerPlacesParams,
@@ -37,12 +36,11 @@ import type {
   SearchPostsRequestDto,
   SearchPostsResponseDto,
   StayPageDto,
-  StaySuggestionsDto,
   StaysControllerListStaysParams,
   SuggestControllerSuggestParams,
   SuggestResponseDto,
-  TripBuilderControllerSuggestFlightsParams,
-  TripBuilderControllerSuggestStaysParams,
+  TripAddonRequestDto,
+  TripAddonsDto,
 } from '../model';
 
 import { http } from '../../../http';
@@ -1480,352 +1478,129 @@ export function usePostRecommendationsControllerRecommendReels<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export type tripBuilderControllerSuggestFlightsResponse200 = {
-  data: FlightSuggestionsDto;
+export type tripAddonsControllerSuggestResponse200 = {
+  data: TripAddonsDto;
   status: 200;
 };
 
-export type tripBuilderControllerSuggestFlightsResponse400 = {
+export type tripAddonsControllerSuggestResponse400 = {
   data: void;
   status: 400;
 };
 
-export type tripBuilderControllerSuggestFlightsResponseSuccess =
-  tripBuilderControllerSuggestFlightsResponse200 & {
-    headers: Headers;
-  };
-export type tripBuilderControllerSuggestFlightsResponseError =
-  tripBuilderControllerSuggestFlightsResponse400 & {
-    headers: Headers;
-  };
-
-export type tripBuilderControllerSuggestFlightsResponse =
-  tripBuilderControllerSuggestFlightsResponseSuccess | tripBuilderControllerSuggestFlightsResponseError;
-
-export const getTripBuilderControllerSuggestFlightsUrl = (
-  params: TripBuilderControllerSuggestFlightsParams,
-) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value));
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0
-    ? `/api/trip-builder/flights?${stringifiedParams}`
-    : `/api/trip-builder/flights`;
+export type tripAddonsControllerSuggestResponseSuccess = tripAddonsControllerSuggestResponse200 & {
+  headers: Headers;
 };
-
-/**
- * `place` là `refId` của dòng `place` trong `/api/suggest`; `from` là sân bay nhà của khách.
- * - Chỉ chuyến còn chỗ cho đúng ngày; giá là hạng ghế rẻ nhất còn bán.
- * - `sort=cheapest` (rẻ trước) hoặc `best_time` (chiều đi tới kịp nhận phòng, chiều về còn trọn buổi sáng cuối lên trước).
- * - `reason` là câu ngắn hiện dưới lựa chọn, có thể null.
- * @summary Gợi ý vé bay chiều đi và chiều về tới một nơi
- */
-export const tripBuilderControllerSuggestFlights = async (
-  params: TripBuilderControllerSuggestFlightsParams,
-  options?: Parameters<typeof http>[1],
-): Promise<tripBuilderControllerSuggestFlightsResponse> => {
-  return http<tripBuilderControllerSuggestFlightsResponse>(
-    getTripBuilderControllerSuggestFlightsUrl(params),
-    {
-      ...options,
-      method: 'GET',
-    },
-  );
-};
-
-export const getTripBuilderControllerSuggestFlightsQueryKey = (
-  params?: TripBuilderControllerSuggestFlightsParams,
-) => {
-  return [`/api/trip-builder/flights`, ...(params ? [params] : [])] as const;
-};
-
-export const getTripBuilderControllerSuggestFlightsQueryOptions = <
-  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
-  TError = void,
->(
-  params: TripBuilderControllerSuggestFlightsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getTripBuilderControllerSuggestFlightsQueryKey(params);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>> = ({
-    signal,
-  }) => tripBuilderControllerSuggestFlights(params, { signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type TripBuilderControllerSuggestFlightsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>
->;
-export type TripBuilderControllerSuggestFlightsQueryError = void;
-
-export function useTripBuilderControllerSuggestFlights<
-  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
-  TError = void,
->(
-  params: TripBuilderControllerSuggestFlightsParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>, TError, TData>
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
-          TError,
-          Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useTripBuilderControllerSuggestFlights<
-  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
-  TError = void,
->(
-  params: TripBuilderControllerSuggestFlightsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>, TError, TData>
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
-          TError,
-          Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useTripBuilderControllerSuggestFlights<
-  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
-  TError = void,
->(
-  params: TripBuilderControllerSuggestFlightsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-/**
- * @summary Gợi ý vé bay chiều đi và chiều về tới một nơi
- */
-
-export function useTripBuilderControllerSuggestFlights<
-  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>,
-  TError = void,
->(
-  params: TripBuilderControllerSuggestFlightsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestFlights>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getTripBuilderControllerSuggestFlightsQueryOptions(params, options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-export type tripBuilderControllerSuggestStaysResponse200 = {
-  data: StaySuggestionsDto;
-  status: 200;
-};
-
-export type tripBuilderControllerSuggestStaysResponse400 = {
-  data: void;
-  status: 400;
-};
-
-export type tripBuilderControllerSuggestStaysResponseSuccess =
-  tripBuilderControllerSuggestStaysResponse200 & {
-    headers: Headers;
-  };
-export type tripBuilderControllerSuggestStaysResponseError = tripBuilderControllerSuggestStaysResponse400 & {
+export type tripAddonsControllerSuggestResponseError = tripAddonsControllerSuggestResponse400 & {
   headers: Headers;
 };
 
-export type tripBuilderControllerSuggestStaysResponse =
-  tripBuilderControllerSuggestStaysResponseSuccess | tripBuilderControllerSuggestStaysResponseError;
+export type tripAddonsControllerSuggestResponse =
+  tripAddonsControllerSuggestResponseSuccess | tripAddonsControllerSuggestResponseError;
 
-export const getTripBuilderControllerSuggestStaysUrl = (params: TripBuilderControllerSuggestStaysParams) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value));
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0
-    ? `/api/trip-builder/stays?${stringifiedParams}`
-    : `/api/trip-builder/stays`;
+export const getTripAddonsControllerSuggestUrl = () => {
+  return `/api/recommendations/trip-addons`;
 };
 
 /**
- * `place` là `refId` của dòng `place` trong `/api/suggest`. Chỉ khách sạn còn phòng, giá thật từ commerce.
- * - `sort=best_price` (rẻ một đêm trước) hoặc `top_rated` (điểm đánh giá cao trước).
- * @summary Gợi ý chỗ ở còn phòng ở một nơi
+ * Công khai, chỉ đọc. Gọi ở màn xem lại trước khi giữ chỗ (giỏ phòng, xem lại chuyến bay) với các mục đang chọn.
+ *
+ * - Có phòng, chưa có vé: chuyến bay tới nơi của khách sạn, chiều đi ngày nhận phòng, chiều về ngày trả phòng (từ khách sạn cuối), bay từ `fromAirport` (mặc định SGN). Xếp bằng ranker `trip_flights@v0` trên hồ sơ `flight_profile@v0`. Nhóm: rẻ nhất, giờ đẹp, bay nhanh, có vé hoàn huỷ, được đặt nhiều.
+ * - Có vé, chưa có phòng: khách sạn còn phòng ở tỉnh của sân bay đến, từ ngày đi tới ngày về (vé một chiều: 2 đêm). Xếp bằng ranker `trip_stays@v0` trên hồ sơ `hotel_profile@v0` (job 10 phút). Nhóm: giá tốt, đánh giá cao, gần chỗ đi chơi, nhiều chỗ ăn chơi, đáng tiền, được đặt nhiều; mọi nhóm trừ giá tốt bỏ khách sạn vượt ngân sách (`budgetLevels`).
+ * - Mỗi nhóm có `perGroup` mục; FE hiện nhóm thành chip, mục mang nhãn lý do (`badges`).
+ * - Đủ cả hai: `missing = null`, không gợi ý.
+ * - Người dùng tích một gợi ý thì gửi nó cùng các mục cũ trong **một** `POST /checkout` (giữ chỗ chung, trả tiền một lần).
+ * @summary Gợi ý phần còn thiếu của chuyến (vé máy bay hoặc khách sạn), trước khi giữ chỗ
  */
-export const tripBuilderControllerSuggestStays = async (
-  params: TripBuilderControllerSuggestStaysParams,
+export const tripAddonsControllerSuggest = async (
+  tripAddonRequestDto: TripAddonRequestDto,
   options?: Parameters<typeof http>[1],
-): Promise<tripBuilderControllerSuggestStaysResponse> => {
-  return http<tripBuilderControllerSuggestStaysResponse>(getTripBuilderControllerSuggestStaysUrl(params), {
+): Promise<tripAddonsControllerSuggestResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<tripAddonsControllerSuggestResponse>(getTripAddonsControllerSuggestUrl(), {
     ...options,
-    method: 'GET',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(tripAddonRequestDto),
   });
 };
 
-export const getTripBuilderControllerSuggestStaysQueryKey = (
-  params?: TripBuilderControllerSuggestStaysParams,
-) => {
-  return [`/api/trip-builder/stays`, ...(params ? [params] : [])] as const;
-};
+export const getTripAddonsControllerSuggestMutationKey = () => ['tripAddonsControllerSuggest'] as const;
 
-export const getTripBuilderControllerSuggestStaysQueryOptions = <
-  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
-  TError = void,
->(
-  params: TripBuilderControllerSuggestStaysParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getTripBuilderControllerSuggestStaysQueryKey(params);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>> = ({
-    signal,
-  }) => tripBuilderControllerSuggestStays(params, { signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
+export const getTripAddonsControllerSuggestMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
     TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+    TripAddonsControllerSuggestMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+  TError,
+  TripAddonsControllerSuggestMutationVariables,
+  TContext
+> => {
+  const mutationKey = getTripAddonsControllerSuggestMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-export type TripBuilderControllerSuggestStaysQueryResult = NonNullable<
-  Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>
->;
-export type TripBuilderControllerSuggestStaysQueryError = void;
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+    TripAddonsControllerSuggestMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
 
-export function useTripBuilderControllerSuggestStays<
-  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
-  TError = void,
->(
-  params: TripBuilderControllerSuggestStaysParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>, TError, TData>
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
-          TError,
-          Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useTripBuilderControllerSuggestStays<
-  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
-  TError = void,
->(
-  params: TripBuilderControllerSuggestStaysParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>, TError, TData>
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
-          TError,
-          Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useTripBuilderControllerSuggestStays<
-  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
-  TError = void,
->(
-  params: TripBuilderControllerSuggestStaysParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-/**
- * @summary Gợi ý chỗ ở còn phòng ở một nơi
- */
-
-export function useTripBuilderControllerSuggestStays<
-  TData = Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>,
-  TError = void,
->(
-  params: TripBuilderControllerSuggestStaysParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof tripBuilderControllerSuggestStays>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof http>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getTripBuilderControllerSuggestStaysQueryOptions(params, options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
+    return tripAddonsControllerSuggest(data, requestOptions);
   };
 
-  return withQueryKey(query, queryOptions.queryKey);
-}
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TripAddonsControllerSuggestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof tripAddonsControllerSuggest>>
+>;
+export type TripAddonsControllerSuggestMutationBody = TripAddonRequestDto;
+export type TripAddonsControllerSuggestMutationError = void;
+export type TripAddonsControllerSuggestMutationVariables = { data: TripAddonRequestDto };
+
+/**
+ * @summary Gợi ý phần còn thiếu của chuyến (vé máy bay hoặc khách sạn), trước khi giữ chỗ
+ */
+export const useTripAddonsControllerSuggest = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+      TError,
+      TripAddonsControllerSuggestMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+  TError,
+  TripAddonsControllerSuggestMutationVariables,
+  TContext
+> => {
+  return useMutation(getTripAddonsControllerSuggestMutationOptions(options), queryClient);
+};

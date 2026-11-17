@@ -89,7 +89,11 @@ export {
   type NotificationReadResult,
   type NotificationPostTarget,
 } from './notifications';
-export { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime, watchPostComments } from './notifications-realtime';
+export {
+  NOTIFICATION_CREATED_EVENT,
+  useNotificationsRealtime,
+  watchPostComments,
+} from './notifications-realtime';
 export type { PostCommentsChange } from './notifications-realtime';
 export { usePostCommentsRealtime } from './post-comments-realtime';
 export { findCachedFeedCard, removeReelFromSavedFeedCache, updateReelSocialCache } from './reel-social-cache';
@@ -120,7 +124,12 @@ export {
   usePostSearch,
   useUserSearch,
 } from './explore-search';
-export { getPlaceSearchResults, PLACE_SEARCH_PAGE_SIZE, usePlaceSearchFeed, type PlaceSearchKind } from './place-search-feed';
+export {
+  getPlaceSearchResults,
+  PLACE_SEARCH_PAGE_SIZE,
+  usePlaceSearchFeed,
+  type PlaceSearchKind,
+} from './place-search-feed';
 export {
   getHomeRecommendations,
   useHomeRecommendations,
@@ -178,11 +187,10 @@ export {
   type AssistantTrip,
 } from './assistant';
 export {
-  tripBuilderApi,
-  useTripFlightSuggestions,
-  useTripStaySuggestions,
-  type TripFlightSuggestion,
-  type TripFlightsQuery,
-  type TripStaySuggestion,
-  type TripStaysQuery,
-} from './trip-builder';
+  tripAddonsApi,
+  useTripAddons,
+  type TripAddonFlight,
+  type TripAddonRequest,
+  type TripAddons,
+  type TripAddonStay,
+} from './trip-addons';
