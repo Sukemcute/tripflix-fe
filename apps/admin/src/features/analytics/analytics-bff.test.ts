@@ -12,7 +12,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 async function login() {
   const fetch = vi.fn(async (input: URL, _init?: RequestInit) => {
-    if (input.pathname === '/api/auth/admin-handoff/exchange')
+    if (input.pathname === '/api/auth/login')
       return new Response(JSON.stringify({ accessToken: 'fixture-access', expiresIn: 3600 }), {
         headers: {
           'content-type': 'application/json',
@@ -23,12 +23,12 @@ async function login() {
   });
   vi.stubGlobal('fetch', fetch);
   const response = await POST(
-    new NextRequest(`${origin}/bff/api/auth/admin-handoff/exchange`, {
+    new NextRequest(`${origin}/bff/api/auth/login`, {
       method: 'POST',
       headers: { origin, 'content-type': 'application/json' },
-      body: JSON.stringify({ code: 'fixture-handoff-code' }),
+      body: JSON.stringify({ email: 'staff@example.test', encPassword: 'fixture-envelope' }),
     }),
-    context('auth/admin-handoff/exchange'),
+    context('auth/login'),
   );
   expect(response.status).toBe(204);
   const cookie = response.headers.get('set-cookie')!.split(';')[0]!;
