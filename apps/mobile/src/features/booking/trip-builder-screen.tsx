@@ -72,6 +72,42 @@ type FlightDraft = { key: string; leg: 'outbound' | 'inbound'; from: string; to:
 /** Số gợi ý hiện trong mỗi khung; muốn xem thêm thì sang màn tìm đầy đủ. */
 const SUGGESTION_LIMIT = 3;
 
+/**
+ * Lộ trình đang soạn nằm ngoài màn hình: sang màn đăng nhập (bấm Giữ chỗ khi chưa đăng nhập) rồi quay lại,
+ * màn được dựng lại mà các thẻ vẫn còn. Trên web lưu thêm vào sessionStorage để tải lại trang không mất.
+ */
+interface BuilderState {
+  destination: { destinationName: string; destinationPlaceId: string };
+  adults: number;
+  items: TripItem[];
+}
+const BUILDER_STORAGE_KEY = 'tripflix.tripBuilder.v1';
+const emptyBuilder = (): BuilderState => ({
+  destination: { destinationName: '', destinationPlaceId: '' },
+  adults: 2,
+  items: [],
+});
+let savedBuilder: BuilderState | null = null;
+function readBuilder(): BuilderState {
+  if (savedBuilder) return savedBuilder;
+  try {
+    const raw = globalThis.sessionStorage?.getItem(BUILDER_STORAGE_KEY);
+    if (raw) savedBuilder = JSON.parse(raw) as BuilderState;
+  } catch {
+    // Không đọc được (máy chặn lưu trữ) thì bắt đầu trống.
+  }
+  return savedBuilder ?? emptyBuilder();
+}
+function writeBuilder(state: BuilderState | null) {
+  savedBuilder = state;
+  try {
+    if (state) globalThis.sessionStorage?.setItem(BUILDER_STORAGE_KEY, JSON.stringify(state));
+    else globalThis.sessionStorage?.removeItem(BUILDER_STORAGE_KEY);
+  } catch {
+    // Chỉ là tiện lợi: không lưu được thì vẫn giữ trong bộ nhớ.
+  }
+}
+
 let keySeq = 0;
 const nextKey = (prefix: string) => `${prefix}${Date.now().toString(36)}-${(keySeq += 1)}`;
 
@@ -81,9 +117,13 @@ const nextKey = (prefix: string) => `${prefix}${Date.now().toString(36)}-${(keyS
  */
 export function TripBuilderScreen() {
   const { user } = useApiSession();
-  const [destination, setDestination] = useState({ destinationName: '', destinationPlaceId: '' });
-  const [adults, setAdults] = useState(2);
-  const [items, setItems] = useState<TripItem[]>([]);
+  const [initial] = useState(readBuilder);
+  const [destination, setDestination] = useState(initial.destination);
+  const [adults, setAdults] = useState(initial.adults);
+  const [items, setItems] = useState<TripItem[]>(initial.items);
+  useEffect(() => {
+    writeBuilder({ destination, adults, items });
+  }, [destination, adults, items]);
   // Khách sạn sắp thêm hoặc đang đổi: chọn ngày nhận và số đêm trước khi sang màn tìm khách sạn.
   const [hotelDraft, setHotelDraft] = useState<HotelDraft | null>(null);
   const [pendingFlightKey, setPendingFlightKey] = useState<string | null>(null);
@@ -291,7 +331,11 @@ export function TripBuilderScreen() {
           ),
         }),
       ),
-    onSuccess: ({ orderId }) => router.push({ pathname: '/checkout', params: { id: orderId } }),
+    onSuccess: ({ orderId }) => {
+      // Đã thành đơn: lần sau mở lại là lộ trình mới.
+      writeBuilder(null);
+      router.push({ pathname: '/checkout', params: { id: orderId } });
+    },
   });
   const soldOutProductId =
     booking.error instanceof HttpError ? readSoldOutConflict(booking.error.body)?.productId : undefined;
