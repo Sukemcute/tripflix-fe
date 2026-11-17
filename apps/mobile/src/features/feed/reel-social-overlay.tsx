@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { VerifiedTripBadge } from './verified-trip-badge';
 import { getCollapsedCaptionLength, getPostCaption, getReelScale, hasTripPlan } from '@tripflix/app-core';
 import {
   HttpError,
@@ -390,6 +391,7 @@ export function ReelSocialOverlay({
           <Txt variant="label" style={styles.author} numberOfLines={1}>
             {author}
           </Txt>
+          {!!item.social?.isVerified && <VerifiedTripBadge />}
         </Pressable>
         {/* Lays out the full text unseen: RN cannot place inline text after its own truncation. */}
         <View
