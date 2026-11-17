@@ -239,6 +239,7 @@ export * from './nearbyDto';
 export * from './observabilityControllerGetOverviewParams';
 export * from './observabilityControllerGetOverviewRange';
 export * from './observabilityControllerListTracesErrorsOnly';
+export * from './observabilityControllerListTracesIncludeSuccessfulPreflights';
 export * from './observabilityControllerListTracesParams';
 export * from './observabilityControllerListTracesRange';
 export * from './observabilityDto';

@@ -5,10 +5,13 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ObservabilityControllerListTracesErrorsOnly } from './observabilityControllerListTracesErrorsOnly';
+import type { ObservabilityControllerListTracesIncludeSuccessfulPreflights } from './observabilityControllerListTracesIncludeSuccessfulPreflights';
 import type { ObservabilityControllerListTracesRange } from './observabilityControllerListTracesRange';
 
 export type ObservabilityControllerListTracesParams = {
   minDurationMs?: number;
+  /** Hiện cả preflight CORS đã xác nhận thành công; mặc định ẩn */
+  includeSuccessfulPreflights?: ObservabilityControllerListTracesIncludeSuccessfulPreflights;
   errorsOnly?: ObservabilityControllerListTracesErrorsOnly;
   service?: string;
   range?: ObservabilityControllerListTracesRange;
