@@ -17,6 +17,4 @@ export type PostsControllerListPublicPostsParams = {
   post_type?: PostsControllerListPublicPostsPostType;
   /** Lọc theo hashtag */
   hashtag?: string;
-  /** Đã ngừng dùng: tìm bài qua POST /api/search/posts (discovery). Vẫn nhận để client cũ không lỗi (tìm ILIKE trong tiêu đề và nội dung); sẽ gỡ ở bản sau */
-  keyword?: string;
 };
