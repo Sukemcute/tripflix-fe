@@ -179,6 +179,8 @@ export const api = {
   travelBudgetLevels: 'Mức chi phí',
   travelBudgetLevelOptions: { saving: 'Tiết kiệm', moderate: 'Vừa phải', premium: 'Cao cấp' },
   travelAny: 'Chưa chọn',
+  travelAdd: 'Thêm',
+  travelRemove: 'Bỏ {label}',
   travelInterestOptions: {
     coast: 'Biển & đảo',
     nature: 'Núi & thiên nhiên',

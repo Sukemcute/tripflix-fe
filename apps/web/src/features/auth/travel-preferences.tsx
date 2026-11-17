@@ -8,28 +8,11 @@ import { ApiErrorNotice } from '@/features/shared/api-state';
 import { useMyProfile } from './account-profile';
 
 type Draft = Pick<TravelPreferencesDto, 'interests' | 'regions' | 'budgetLevels'>;
-type Field = keyof Draft;
+type FieldProps = { label: string; options: Record<string, string>; value: string[]; onChange: (next: string[]) => void };
 
-const FIELDS: { field: Field; label: string; options: Record<string, string> }[] = [
-  { field: 'interests', label: vi.api.travelInterests, options: vi.api.travelInterestOptions },
-  { field: 'regions', label: vi.api.travelRegions, options: vi.api.travelRegionOptions },
-  { field: 'budgetLevels', label: vi.api.travelBudgetLevels, options: vi.api.travelBudgetLevelOptions },
-];
-
-/** Ô dropdown chọn nhiều: <details> gốc của trình duyệt, mở ra danh sách checkbox; giữ thứ tự mã theo danh sách gốc. */
-function MultiSelect({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: Record<string, string>;
-  value: string[];
-  onChange: (next: string[]) => void;
-}) {
+/** <details> không tự đóng khi bấm ra ngoài hoặc Esc; danh sách đang mở sẽ che nút Lưu bên dưới. */
+function useDismissible() {
   const ref = useRef<HTMLDetailsElement>(null);
-  // <details> không tự đóng khi bấm ra ngoài; danh sách mở sẽ che nút Lưu bên dưới.
   useEffect(() => {
     const close = (event: Event) => {
       const details = ref.current;
@@ -45,7 +28,63 @@ function MultiSelect({
       document.removeEventListener('keydown', close);
     };
   }, []);
-  const codes = Object.keys(options);
+  return ref;
+}
+
+/** Giữ thứ tự mã theo danh sách gốc, không theo thứ tự bấm. */
+const ordered = (options: Record<string, string>, codes: string[]) => Object.keys(options).filter((c) => codes.includes(c));
+
+/** Kiểu đính tag: mỗi lựa chọn một pill có nút bỏ, nút "+" mở danh sách còn lại. Nhiều pill thì xuống dòng trong khung. */
+function TagPicker({ label, options, value, onChange }: FieldProps) {
+  const ref = useDismissible();
+  const remaining = Object.keys(options).filter((c) => !value.includes(c));
+  return (
+    <div className="travel-field travel-field-wide">
+      <span className="travel-field-label" id="travel-tags-label">
+        {label}
+      </span>
+      <fieldset className="travel-tags" aria-labelledby="travel-tags-label">
+        {value.map((code) => (
+          <button
+            key={code}
+            type="button"
+            className="travel-tag"
+            aria-label={vi.api.travelRemove.replace('{label}', options[code] ?? code)}
+            onClick={() => onChange(value.filter((c) => c !== code))}
+          >
+            {options[code] ?? code}
+            <span aria-hidden="true">×</span>
+          </button>
+        ))}
+        {!value.length && <span className="auth-hint">{vi.api.travelAny}</span>}
+        {remaining.length > 0 && (
+          <details ref={ref} className="travel-add" name="travel-select">
+            <summary aria-label={`${vi.api.travelAdd}: ${label}`}>+</summary>
+            <div className="travel-menu">
+              {remaining.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  className="travel-select-option"
+                  onClick={() => {
+                    if (ref.current) ref.current.open = false;
+                    onChange(ordered(options, [...value, code]));
+                  }}
+                >
+                  {options[code]}
+                </button>
+              ))}
+            </div>
+          </details>
+        )}
+      </fieldset>
+    </div>
+  );
+}
+
+/** Ô dropdown chọn nhiều cho danh sách ngắn (vùng, mức chi phí): checkbox trong <details>, chữ dài thì cắt "…". */
+function MultiSelect({ label, options, value, onChange }: FieldProps) {
+  const ref = useDismissible();
   const summary = value.length ? value.map((code) => options[code] ?? code).join(', ') : vi.api.travelAny;
   return (
     <div className="travel-field">
@@ -53,13 +92,13 @@ function MultiSelect({
       {/* Cùng name: trình duyệt tự đóng ô kia khi mở ô này, hai danh sách không đè nhau. */}
       <details ref={ref} className="travel-select" name="travel-select">
         <summary aria-label={`${label}: ${summary}`}>{summary}</summary>
-        <fieldset aria-label={label}>
-          {codes.map((code) => (
+        <fieldset aria-label={label} className="travel-menu">
+          {Object.keys(options).map((code) => (
             <label key={code} className="travel-select-option">
               <input
                 type="checkbox"
                 checked={value.includes(code)}
-                onChange={() => onChange(codes.filter((c) => (c === code ? !value.includes(c) : value.includes(c))))}
+                onChange={() => onChange(ordered(options, value.includes(code) ? value.filter((c) => c !== code) : [...value, code]))}
               />
               {options[code]}
             </label>
@@ -114,15 +153,24 @@ export function TravelPreferencesCard({ userId }: { userId: string }) {
         }}
       >
         <div className="travel-fields">
-          {FIELDS.map(({ field, label, options }) => (
-            <MultiSelect
-              key={field}
-              label={label}
-              options={options}
-              value={current[field]}
-              onChange={(next) => setDraft({ ...current, [field]: next })}
-            />
-          ))}
+          <TagPicker
+            label={vi.api.travelInterests}
+            options={vi.api.travelInterestOptions}
+            value={current.interests}
+            onChange={(interests) => setDraft({ ...current, interests: interests as Draft['interests'] })}
+          />
+          <MultiSelect
+            label={vi.api.travelRegions}
+            options={vi.api.travelRegionOptions}
+            value={current.regions}
+            onChange={(regions) => setDraft({ ...current, regions: regions as Draft['regions'] })}
+          />
+          <MultiSelect
+            label={vi.api.travelBudgetLevels}
+            options={vi.api.travelBudgetLevelOptions}
+            value={current.budgetLevels}
+            onChange={(budgetLevels) => setDraft({ ...current, budgetLevels: budgetLevels as Draft['budgetLevels'] })}
+          />
         </div>
         {saved && !isDirty && (
           <p className="auth-hint">

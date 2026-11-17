@@ -3444,9 +3444,8 @@ body:has([class*="feedPageWrapper"]) #content {
   position: relative;
 }
 .travel-select summary {
-  display: flex;
-  align-items: center;
-  min-height: 48px;
+  display: block;
+  line-height: 46px;
   padding: 0 40px 0 16px;
   border: 1px solid var(--color-border);
   border-radius: 16px;
@@ -3474,7 +3473,7 @@ body:has([class*="feedPageWrapper"]) #content {
 .travel-select[open] summary {
   border-color: var(--color-teal-ink);
 }
-.travel-select fieldset {
+.travel-menu {
   position: absolute;
   z-index: 10;
   left: 0;
@@ -3494,8 +3493,68 @@ body:has([class*="feedPageWrapper"]) #content {
   gap: 10px;
   min-height: 44px;
   padding: 0 12px;
+  border: 0;
   border-radius: 12px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
+}
+/* "Bạn thích": khung riêng cả hàng, pill xuống dòng khi nhiều, nút + mở danh sách còn lại. */
+.travel-field-wide {
+  grid-column: 1 / -1;
+}
+.travel-tags {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 7px 8px 7px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-background);
+}
+.travel-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.travel-add {
+  position: relative;
+}
+.travel-add summary {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px dashed var(--color-teal-ink);
+  border-radius: 999px;
+  color: var(--color-teal-ink);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.travel-add summary::-webkit-details-marker {
+  display: none;
+}
+.travel-add .travel-menu {
+  right: auto;
+  width: max-content;
+  min-width: 200px;
 }
 .travel-select-option:hover,
 .travel-select-option:has(input:checked) {
