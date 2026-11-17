@@ -43,7 +43,7 @@ import {
   saveTripBooking,
   useTripBooking,
   useTripPicks,
-  useTripHotel,
+  useTripHotels,
   type SelectedTripBooking,
 } from './trip-booking-store';
 import { LoadingDots } from '@/components/loading-dots';
@@ -66,13 +66,13 @@ function SelectedTripScreen({
   const [children, setChildren] = useState(0);
   const [infants, setInfants] = useState(0);
   const [homeAirport, setHomeAirport] = useState<string>();
-  const hotel = useTripHotel(postId);
+  const swappedHotels = useTripHotels(postId);
   const [openChooser, setOpenChooser] = useState<'origin' | null>(null);
   const items = trip.items ?? [];
   const days = Math.max(trip.daysCount ?? 0, ...items.map((item) => item.day), 1);
   const nights = getTripNights(days);
   const basePlan = getBookableTripPlan(trip);
-  const plan = basePlan && applyTripPlanChoices(basePlan, { homeAirport, hotelId: hotel?.id });
+  const plan = basePlan && applyTripPlanChoices(basePlan, { homeAirport, hotels: swappedHotels });
   const isDateValid = startDate >= getFutureDate(0);
   const checkIn = isDateValid ? startDate : '';
   const checkOut = isDateValid ? getTripDayDate(startDate, nights + 1) : '';
@@ -103,8 +103,11 @@ function SelectedTripScreen({
         : [...current.excluded, id],
     });
   const picks = useTripPicks();
-  const choose = <T extends TripPlanOffer>(id: string, offers: T[]): T | null =>
-    resolveTripPlanOffer(offers, picks, selectionKey, id);
+  const choose = <T extends TripPlanOffer>(
+    id: string,
+    offers: T[],
+    preferred?: { productId?: string; ratePlanCode?: string },
+  ): T | null => resolveTripPlanOffer(offers, picks, selectionKey, id, preferred);
   const flightQueries = useQueries({
     queries: (plan?.flights ?? []).map((leg) => {
       const date = isDateValid ? getTripDayDate(startDate, leg.day) : '';
@@ -136,33 +139,56 @@ function SelectedTripScreen({
       };
     }),
   });
-  const hotelQuote = useQuery({
-    queryKey: ['commerce', 'trip-plan-hotel', plan?.hotelId, checkIn, checkOut, adults],
-    enabled: isReady && !!plan?.hotelId && isDateValid && isPassengerValid,
-    staleTime: 0,
-    retry: false,
-    queryFn: async ({ signal }) => {
-      const stay = await commerceApi.getHotel(plan!.hotelId!, { checkIn, checkOut, adults }, signal);
-      const offers = listTripPlanOffers(stay.rooms.map((room) => ({ ...room, plans: room.ratePlans }))).map(
-        (offer) => {
-          const room = stay.rooms.find((candidate) => candidate.productId === offer.productId)!;
+  // Mỗi chặng ở báo giá riêng theo ngày nhận và trả phòng của chặng đó (TF105: một chuyến nhiều khách sạn).
+  const stays = (plan?.hotels ?? []).map((stay) => ({
+    ...stay,
+    checkIn: isDateValid ? getTripDayDate(startDate, stay.day) : '',
+    checkOut: isDateValid ? getTripDayDate(startDate, stay.day + stay.nights) : '',
+  }));
+  const hotelQueries = useQueries({
+    queries: stays.map((stay) => ({
+      queryKey: ['commerce', 'trip-plan-hotel', stay.hotelId, stay.checkIn, stay.checkOut, adults],
+      enabled: isReady && isDateValid && isPassengerValid,
+      staleTime: 0,
+      retry: false,
+      queryFn: async ({ signal }: { signal: AbortSignal }) => {
+        const { checkIn: stayIn, checkOut: stayOut } = stay;
+        const detail = await commerceApi.getHotel(
+          stay.hotelId,
+          { checkIn: stayIn, checkOut: stayOut, adults },
+          signal,
+        );
+        const offers = listTripPlanOffers(
+          detail.rooms.map((room) => ({ ...room, plans: room.ratePlans })),
+        ).map((offer) => {
+          const room = detail.rooms.find((candidate) => candidate.productId === offer.productId)!;
           const rate = room.ratePlans.find((candidate) => candidate.code === offer.ratePlanCode)!;
-          return { ...offer, checkIn, checkOut, roomName: room.name, rateName: rate.name };
-        },
-      );
-      return { hotelName: stay.name, city: stay.city ?? stay.province.name, offers };
-    },
+          return { ...offer, checkIn: stayIn, checkOut: stayOut, roomName: room.name, rateName: rate.name };
+        });
+        return { hotelName: detail.name, city: detail.city ?? detail.province.name, offers };
+      },
+    })),
   });
   const flightQuotes = flightQueries.map((query, index) =>
     !query.isFetching && !query.isError ? choose('f' + index, query.data ?? []) : null,
   );
-  const room =
-    !hotelQuote.isFetching && !hotelQuote.isError ? choose('hotel', hotelQuote.data?.offers ?? []) : null;
+  // Loại phòng người đăng chọn khi soạn lộ trình (TF105); hết phòng thì về phòng rẻ nhất.
+  const stayRooms = stays.map((stay, index) => {
+    const query = hotelQueries[index]!;
+    return !query.isFetching && !query.isError
+      ? choose(stay.id, query.data?.offers ?? [], {
+          productId: stay.productId,
+          ratePlanCode: stay.ratePlanCode,
+        })
+      : null;
+  });
   const selectedFlights = flightQuotes.flatMap((flight, index) =>
     flight && !current.excluded.includes('f' + index) ? [flight] : [],
   );
-  const selectedRooms = room && !current.excluded.includes('hotel') ? [room] : [];
-  const isChecking = flightQueries.some((query) => query.isFetching) || hotelQuote.isFetching;
+  const selectedRooms = stayRooms.flatMap((room, index) =>
+    room && !current.excluded.includes(stays[index]!.id) ? [room] : [],
+  );
+  const isChecking = [...flightQueries, ...hotelQueries].some((query) => query.isFetching);
   const canBook =
     isReady &&
     isDateValid &&
@@ -171,7 +197,7 @@ function SelectedTripScreen({
     selectedFlights.length + selectedRooms.length > 0;
   const total = getTripPlanTotal([
     ...flightQuotes.map((offer, index) => ({ offer, isSelected: !current.excluded.includes('f' + index) })),
-    { offer: room, isSelected: !current.excluded.includes('hotel') },
+    ...stayRooms.map((offer, index) => ({ offer, isSelected: !current.excluded.includes(stays[index]!.id) })),
   ]);
   const quoteStatus = !isDateValid ? copy.invalidDate : isChecking ? copy.checking : '';
 
@@ -197,8 +223,7 @@ function SelectedTripScreen({
     // Hết chỗ lúc giữ: xem lại giá và chỗ để khách thấy ngay món nào đã hết.
     onError: (error) => {
       if (!soldOutOf(error)) return;
-      void hotelQuote.refetch();
-      for (const query of flightQueries) void query.refetch();
+      for (const query of [...flightQueries, ...hotelQueries]) void query.refetch();
     },
   });
   const soldOutProductId = soldOutOf(booking.error)?.productId;
@@ -210,67 +235,74 @@ function SelectedTripScreen({
     }
     booking.mutate();
   };
-  const hotelName = hotel?.name ?? hotelQuote.data?.hotelName ?? trip.hotelName ?? copy.stayTitle;
-  const hotelCard = plan?.hotelId && (
-    <ProductCard
-      tone="hotel"
-      icon="bed"
-      title={hotelName}
-      detail={[t('mobile.tripPlan.hotelTitle', { nights }), room?.roomName, room?.rateName]
-        .filter(Boolean)
-        .join(' · ')}
-      price={hotelQuote.isFetching ? '…' : room ? money(room.totalPrice) : undefined}
-      status={
-        hotelQuote.isError
-          ? copy.quoteFailed
-          : (hotelQuote.isSuccess && !room) || (!!room && room.productId === soldOutProductId)
-            ? copy.soldOutItem
+  const hotelCard = (index: number) => {
+    const stay = stays[index]!;
+    const query = hotelQueries[index]!;
+    const room = stayRooms[index] ?? null;
+    const hotelName = stay.hotelName ?? query.data?.hotelName ?? trip.hotelName ?? copy.stayTitle;
+    const canChange = !booking.isPending && isDateValid && isPassengerValid;
+    return (
+      <ProductCard
+        key={stay.id}
+        tone="hotel"
+        icon="bed"
+        title={hotelName}
+        detail={[t('mobile.tripPlan.hotelTitle', { nights: stay.nights }), room?.roomName, room?.rateName]
+          .filter(Boolean)
+          .join(' · ')}
+        price={query.isFetching ? '…' : room ? money(room.totalPrice) : undefined}
+        status={
+          query.isError
+            ? copy.quoteFailed
+            : (query.isSuccess && !room) || (!!room && room.productId === soldOutProductId)
+              ? copy.soldOutItem
+              : undefined
+        }
+        isSelected={!!room && !current.excluded.includes(stay.id)}
+        isDisabled={!room || booking.isPending}
+        onToggle={() => toggle(stay.id)}
+        onExpand={
+          canChange
+            ? () =>
+                router.push({
+                  pathname: '/hotel-rooms',
+                  params: {
+                    id: stay.hotelId,
+                    checkIn: stay.checkIn,
+                    checkOut: stay.checkOut,
+                    adults: String(adults),
+                    children: String(children),
+                    infants: String(infants),
+                    pick: 'trip',
+                    pickId: stay.id,
+                    pickKey: selectionKey,
+                    productId: room?.productId,
+                    ratePlanCode: room?.ratePlanCode,
+                  },
+                })
             : undefined
-      }
-      isSelected={!!room && !current.excluded.includes('hotel')}
-      isDisabled={!room || booking.isPending}
-      onToggle={() => toggle('hotel')}
-      onExpand={
-        booking.isPending || !isDateValid || !isPassengerValid
-          ? undefined
-          : () =>
-              router.push({
-                pathname: '/hotel-rooms',
-                params: {
-                  id: plan.hotelId!,
-                  checkIn,
-                  checkOut,
-                  adults: String(adults),
-                  children: String(children),
-                  infants: String(infants),
-                  pick: 'trip',
-                  pickId: 'hotel',
-                  pickKey: selectionKey,
-                  productId: room?.productId,
-                  ratePlanCode: room?.ratePlanCode,
-                },
-              })
-      }
-      actionLabel={copy.changeHotel}
-      onAction={
-        booking.isPending || !isDateValid || !isPassengerValid
-          ? undefined
-          : () =>
-              router.push({
-                pathname: '/search',
-                params: {
-                  pick: 'trip',
-                  pickId: 'hotelProperty',
-                  pickKey: postId,
-                  q: trip.destinationName || hotelQuote.data?.city || hotelName,
-                  checkIn,
-                  checkOut,
-                  adults: String(adults),
-                },
-              })
-      }
-    />
-  );
+        }
+        actionLabel={copy.changeHotel}
+        onAction={
+          canChange
+            ? () =>
+                router.push({
+                  pathname: '/search',
+                  params: {
+                    pick: 'trip',
+                    pickId: 'hotelProperty:' + stay.id,
+                    pickKey: postId,
+                    q: trip.destinationName || query.data?.city || hotelName,
+                    checkIn: stay.checkIn,
+                    checkOut: stay.checkOut,
+                    adults: String(adults),
+                  },
+                })
+            : undefined
+        }
+      />
+    );
+  };
 
   return (
     <Screen
@@ -287,7 +319,7 @@ function SelectedTripScreen({
             <Txt style={styles.muted}>
               {t('mobile.tripPlan.pickedCount', {
                 picked: selectedFlights.length + selectedRooms.length,
-                total: (plan?.flights.length ?? 0) + (plan?.hotelId ? 1 : 0),
+                total: (plan?.flights.length ?? 0) + stays.length,
               }) +
                 ' · ' +
                 t('mobile.tripPlan.passengerSummary', passengers)}
@@ -460,7 +492,7 @@ function SelectedTripScreen({
               const flightLegs = (plan?.flights ?? [])
                 .map((leg, legIndex) => ({ leg, legIndex }))
                 .filter(({ leg }) => leg.day === day);
-              const community = items.filter((item) => item.day === day && !item.transport);
+              const community = items.filter((item) => item.day === day && !item.transport && !item.hotel);
               const selfArranged =
                 basePlan?.selfArranged.filter((leg) => leg.day === day) ??
                 items
@@ -563,7 +595,7 @@ function SelectedTripScreen({
                         </ProductCard>
                       );
                     })}
-                    {day === 1 && hotelCard}
+                    {stays.map((stay, index) => (stay.day === day ? hotelCard(index) : null))}
                     {selfArranged.map((leg, index) => (
                       <View key={'self' + index} style={styles.stop}>
                         <Icon name="bus-outline" size={14} color={colors.textMuted} />
@@ -583,7 +615,9 @@ function SelectedTripScreen({
                               color={colors.textMuted}
                             />
                             <View style={styles.stopText}>
-                              <Txt style={styles.description}>{item.title}</Txt>
+                              <Txt style={styles.description}>
+                                {item.time ? `${item.time} · ${item.title}` : item.title}
+                              </Txt>
                               {!!(item.location || item.notes) && (
                                 <Txt style={styles.muted}>
                                   {[item.location, item.notes].filter(Boolean).join(' · ')}
@@ -657,7 +691,9 @@ export function TripBookingScreen() {
           const trip = post.tripAttachment!;
           const plan = getBookableTripPlan(trip)!;
           const days = Math.max(trip.daysCount ?? 0, ...(trip.items ?? []).map((item) => item.day), 1);
-          const poster = post.video.posters.w540 || post.video.posters.w360 || post.video.posters.w720;
+          // Poster riêng của lộ trình (TF105) trước, không có thì ảnh bìa video.
+          const poster =
+            trip.posterUrl || post.video.posters.w540 || post.video.posters.w360 || post.video.posters.w720;
           return (
             <Pressable
               key={post.postId}
@@ -696,7 +732,7 @@ export function TripBookingScreen() {
                   {plan.flights.length > 0 && (
                     <Icon name="airplane-outline" size={13} color={colors.background} />
                   )}
-                  {!!plan.hotelId && <Icon name="bed-outline" size={13} color={colors.background} />}
+                  {plan.hotels.length > 0 && <Icon name="bed-outline" size={13} color={colors.background} />}
                 </Row>
               </View>
             </Pressable>
