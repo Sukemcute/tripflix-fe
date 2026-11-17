@@ -113,14 +113,12 @@ function allowed(path: string, method: string) {
   return method === 'POST' && (path === '/api/search' || path === '/api/search/posts');
 }
 
-async function login(request: NextRequest, id: string | undefined) {
-  // Chặn cả request gửi trực tiếp đến BFF với trường mật khẩu gốc.
+/** Admin không có đăng nhập mật khẩu riêng: đổi mã một lần do web cấp (POST /api/auth/admin-handoff) lấy phiên. */
+async function exchangeHandoff(request: NextRequest, id: string | undefined) {
   const data = await request.json().catch(() => null);
-  if (!data || typeof data.email !== 'string' || typeof data.encPassword !== 'string' || 'password' in data) {
-    return reply(400);
-  }
-  const body = JSON.stringify({ email: data.email, encPassword: data.encPassword });
-  const response = await upstream(request, '/api/auth/login', { web: true, body });
+  if (!data || typeof data.code !== 'string' || Object.keys(data).length !== 1) return reply(400);
+  const body = JSON.stringify({ code: data.code });
+  const response = await upstream(request, '/api/auth/admin-handoff/exchange', { web: true, body });
   if (!response.ok) return authError(response);
   const tokens = await readTokens(response);
   const profile = await upstream(request, '/api/admin/me', { method: 'GET', access: tokens.access });
@@ -210,10 +208,7 @@ async function handle(request: NextRequest, context: RouteContext<'/bff/api/[...
   const id = request.cookies.get(cookieName)?.value;
   const session = id ? sessions.get(id) : undefined;
   try {
-    if (method === 'GET' && path === '/api/auth/password-key') {
-      return forward(await upstream(request, path));
-    }
-    if (method === 'POST' && path === '/api/auth/login') return await login(request, id);
+    if (method === 'POST' && path === '/api/auth/admin-handoff/exchange') return await exchangeHandoff(request, id);
 
     const isRefresh = method === 'POST' && path === '/api/auth/refresh';
     const isLogout = method === 'POST' && path === '/api/auth/logout';
