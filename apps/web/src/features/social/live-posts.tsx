@@ -10,6 +10,7 @@ import {
   uploadChunkToPresignedUrl,
   useApiSession,
   usePlaybackSession,
+  useRecommendedReelsFeed,
   useReelsByIds,
   useReelsFeed,
   useSocialPosts,
@@ -22,6 +23,7 @@ import {
 } from '@tripflix/api-client/core-api/media/media';
 import type {
   FeedCardDto,
+  PostRecommendationsControllerRecommendReelsMode,
   SocialCommentDto,
   SocialPostDto,
   TripAttachmentDto,
@@ -1116,7 +1118,13 @@ export function InspirationImmersiveViewer({
   const isSavedMode = filterMode === 'saved';
   // Tìm kiếm không chạy ở đây: nhấn Enter thì trang Cảm hứng hiện grid kết quả (search của discovery).
   const isSearchReels = searchReelIds !== undefined;
-  const feedQuery = useReelsFeed({ enabled: isReady && !isSearchReels, isSavedOnly: isSavedMode });
+  const [reelsMode, setReelsMode] = useState<PostRecommendationsControllerRecommendReelsMode>('trending');
+  const savedFeedQuery = useReelsFeed({ enabled: isReady && !isSearchReels && isSavedMode, isSavedOnly: true });
+  const recommendedReelsQuery = useRecommendedReelsFeed({
+    enabled: isReady && !isSearchReels && !isSavedMode,
+    mode: reelsMode,
+  });
+  const feedQuery = isSavedMode ? savedFeedQuery : recommendedReelsQuery;
   // Cookie video xin cùng lúc với feed; từng Reel dùng lại kết quả này (cùng query), video đầu không chờ thêm.
   usePlaybackSession();
   const searchReelsQuery = useReelsByIds(searchReelIds ?? [], { enabled: isSearchReels });
@@ -1786,6 +1794,58 @@ export function InspirationImmersiveViewer({
                 <SocialIcon name="chevronLeft" size={16} />
                 {vi.api.searchResultsBack}
               </button>
+            )}
+            {!isSearchReels && !isSavedMode && (
+              <div
+                role="tablist"
+                aria-label={vi.api.recommendModeAria}
+                style={{
+                  position: 'absolute',
+                  top: 14,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  zIndex: 25,
+                  display: 'flex',
+                  gap: 6,
+                  padding: '4px 6px',
+                  borderRadius: 999,
+                  background: 'rgba(15, 23, 42, 0.55)',
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                {(
+                  [
+                    { value: 'trending', label: vi.api.recommendModeTrending },
+                    { value: 'for_you', label: vi.api.recommendModeForYou },
+                    { value: 'has_plan', label: vi.api.recommendModeHasPlan },
+                    { value: 'recent', label: vi.api.recommendModeRecent },
+                  ] as const
+                ).map((option) => {
+                  const selected = option.value === reelsMode;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="tab"
+                      aria-selected={selected}
+                      onClick={() => setReelsMode(option.value)}
+                      style={{
+                        border: 'none',
+                        borderRadius: 999,
+                        padding: '5px 12px',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        background: selected ? '#ffffff' : 'transparent',
+                        color: selected ? '#0f172a' : '#f8fafc',
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
             )}
             {filterMode === 'saved' && !user ? (
               <div className={`empty-state ${styles.centerEmptyBox}`}>
