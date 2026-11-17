@@ -2,6 +2,7 @@ import { t, type MessageKey } from '@tripflix/i18n';
 import { Tabs, router } from 'expo-router';
 import { useApiSession } from '@tripflix/api-client';
 import { FloatingTabBar } from '@/components/floating-tab-bar';
+import { useUnreadNotificationCount } from '@/features/account/notification-bell';
 
 // Mobile V1 design: creation is an action; notifications live behind the bell.
 const TABS: readonly { name: string; label: MessageKey }[] = [
@@ -14,6 +15,8 @@ const TABS: readonly { name: string; label: MessageKey }[] = [
 
 export default function TabsLayout() {
   const { user, isReady } = useApiSession();
+  // Chuông nằm ở Khám phá nên tab này mang số chưa đọc.
+  const unreadCount = useUnreadNotificationCount();
   return (
     <Tabs
       tabBar={(props) => <FloatingTabBar {...props} />}
@@ -39,6 +42,11 @@ export default function TabsLayout() {
           }
           options={{
             title: t(tab.label),
+            ...(tab.name === 'explore' &&
+              unreadCount > 0 && {
+                tabBarBadge: unreadCount,
+                tabBarAccessibilityLabel: `${t(tab.label)}, ${t('api.notificationsUnreadCount', { count: unreadCount })}`,
+              }),
           }}
         />
       ))}

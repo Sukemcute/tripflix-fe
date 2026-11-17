@@ -2,6 +2,7 @@ export * from './admin/admin';
 export * from './admin-commerce/admin-commerce';
 export * from './admin-discovery-jobs/admin-discovery-jobs';
 export * from './admin-index-health/admin-index-health';
+export * from './admin-search-vocab-gaps/admin-search-vocab-gaps';
 export * from './analytics/analytics';
 export * from './auth/auth';
 export * from './checkout/checkout';

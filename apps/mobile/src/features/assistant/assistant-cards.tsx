@@ -45,8 +45,21 @@ function openReel(card: AssistantCard, isInFeed: boolean, onOpen: () => void) {
 function openCard(card: AssistantCard, onOpen: () => void) {
   onOpen();
   if (card.kind === 'stay') router.push({ pathname: '/hotel/[id]', params: { id: card.id } });
-  else router.push({ pathname: '/trip/[slug]', params: { slug: card.id } });
+  else if (card.kind === 'flight') {
+    // Màn chọn vé có sẵn tự tìm lại theo tuyến, ngày, số khách; giá và chỗ luôn lấy mới từ core.
+    router.push({
+      pathname: '/flights',
+      params: {
+        from: card.fromAirport ?? '',
+        to: card.toAirport ?? '',
+        date: card.flightDate ?? '',
+        passengers: String(card.passengers ?? 1),
+      },
+    });
+  } else router.push({ pathname: '/trip/[slug]', params: { slug: card.id } });
 }
+
+const ROW_ICONS: Record<string, IconName> = { stay: 'bed-outline', flight: 'airplane-outline' };
 
 const INFO_KINDS = new Set(['weather', 'checklist', 'itinerary', 'summary']);
 const INFO_ICONS: Record<string, IconName> = {
@@ -125,7 +138,7 @@ export function AssistantCards({ cards, onOpen }: { cards: AssistantCard[]; onOp
   const videos = cards.filter((card) => card.kind === 'video');
   const infos = cards.filter((card) => INFO_KINDS.has(card.kind));
   // Thẻ lạ (app cũ chưa biết) thì bỏ qua thay vì hiện dòng bấm vào trang sai.
-  const others = cards.filter((card) => card.kind === 'stay' || card.kind === 'post' || card.kind === 'plan');
+  const others = cards.filter((card) => ['stay', 'flight', 'post', 'plan'].includes(card.kind));
   const reelIds = [...videos, ...infos.filter((card) => card.kind === 'itinerary')].map((card) => card.id);
   const reels = useFeedReels(reelIds).data ?? {};
   return (
@@ -153,7 +166,7 @@ export function AssistantCards({ cards, onOpen }: { cards: AssistantCard[]; onOp
           style={({ pressed }) => [styles.row, pressed && { opacity: 0.85 }]}
         >
           <Icon
-            name={card.kind === 'stay' ? 'bed-outline' : 'map-outline'}
+            name={ROW_ICONS[card.kind] ?? 'map-outline'}
             size={mobileIconSize.control}
             color={c.tealInk}
           />

@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { UnreadBadge } from './unread-badge';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 const ICONS: Record<string, IconName> = {
@@ -67,7 +68,10 @@ export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, ins
               <ComposeIcon />
             ) : (
               <>
-                <Ionicons name={ICONS[route.name]!} size={TAB_ICON_SIZE} color={tint} />
+                <View>
+                  <Ionicons name={ICONS[route.name]!} size={TAB_ICON_SIZE} color={tint} />
+                  <UnreadBadge count={Number(options.tabBarBadge ?? 0)} style={styles.badge} />
+                </View>
                 <Text
                   aria-hidden
                   numberOfLines={1}
@@ -130,5 +134,6 @@ const styles = StyleSheet.create({
   plusShadow: { boxShadow: [{ offsetX: 0, offsetY: 1.5, blurRadius: 2, color: colors.composeIconShadow }] },
   plusHorizontal: { width: PLUS_LENGTH, height: PLUS_THICKNESS },
   plusVertical: { width: PLUS_THICKNESS, height: PLUS_LENGTH },
+  badge: { top: -4, right: -10, borderColor: colors.tabBar },
   label: { fontFamily: nativeFonts.semibold, fontSize: 10, lineHeight: 13, textAlign: 'center' },
 });

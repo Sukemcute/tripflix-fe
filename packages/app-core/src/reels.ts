@@ -142,11 +142,14 @@ export function layoutReelCommentsVideo({
 }
 
 export const REEL_LOOKAHEAD_COUNT = 3;
+/** Giữ 2 video vừa lướt qua, vì iOS không lưu HLS xuống máy: lướt ngược quá số này là tải lại từ đầu. */
+export const REEL_BEHIND_COUNT = 2;
+export const REEL_PLAYER_COUNT = REEL_BEHIND_COUNT + 1 + REEL_LOOKAHEAD_COUNT;
 
-/** Keep the first load to three videos, then retain one behind and preload three ahead. */
+/** Lúc mở chỉ nạp ba video; lướt rồi thì giữ hai video phía sau và nạp trước ba video phía trước. */
 export function getReelPlayerIndexes(count: number, activeIndex: number): (number | null)[] {
-  const slots = Array<number | null>(REEL_LOOKAHEAD_COUNT + 2).fill(null);
-  const first = Math.max(0, activeIndex - 1);
+  const slots = Array<number | null>(REEL_PLAYER_COUNT).fill(null);
+  const first = Math.max(0, activeIndex - REEL_BEHIND_COUNT);
   const last = activeIndex === 0 ? 2 : activeIndex + REEL_LOOKAHEAD_COUNT;
   for (let index = first; index <= Math.min(count - 1, last); index++) {
     slots[index % slots.length] = index;

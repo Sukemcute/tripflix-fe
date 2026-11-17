@@ -37,6 +37,7 @@ import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SearchDropPanel } from './search-drop-panel';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { NotificationBell } from '@/features/account/notification-bell';
 
 const RECOMMENDATION_LIMIT = 3;
 
@@ -253,11 +254,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
       title={back ? vi.api.search : undefined}
       back={back}
       right={
-        <IconButton
-          name="notifications-outline"
-          label={copy.common.notification}
-          onPress={() => router.push('/notifications')}
-        />
+        <NotificationBell />
       }
     >
       <SearchDropPanel visible={isSearchOpen} onClose={() => setIsSearchOpen(false)} />

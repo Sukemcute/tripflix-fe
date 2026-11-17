@@ -12,9 +12,9 @@ import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import * as ImagePicker from 'expo-image-picker';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation, usePreventRemove } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Keyboard, Pressable, StyleSheet, Switch, View } from 'react-native';
 import { TripPlanEditor } from './trip-plan-editor';
 import { startVideoCompression, type VideoCompression } from './video-compress';
 import { toPickedVideo, type PickedVideo } from './video-source';
@@ -25,6 +25,7 @@ import {
   Field,
   Icon,
   IconButton,
+  Mascot,
   Notice,
   Row,
   Screen,
@@ -82,6 +83,10 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
     days: [EMPTY_TRIP_PLAN_DAY],
   });
   const uploadAbort = useRef<AbortController | null>(null);
+  // Đăng xong thì thay cả form bằng màn báo đã đăng, để không ai bấm đăng lại hay tưởng chưa đăng.
+  const [published, setPublished] = useState<{ id: string; hasVideo: boolean } | null>(null);
+  // Video đã tải xong thì bài sẽ được tạo dù người dùng rời màn, nên lúc đó không cho huỷ nữa.
+  const [isUploadDone, setUploadDone] = useState(false);
   useEffect(
     () => () => {
       uploadAbort.current?.abort();
@@ -158,7 +163,9 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
 
   const mutation = useMutation({
     mutationFn: async (action: 'save' | 'publish') => {
+      setUploadDone(false);
       const assetId = await uploadSelectedVideo();
+      setUploadDone(true);
       const tripAttachment = hasTripPlan ? buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) : null;
       const draft = {
         title: getPostTitleFromCaption(body),
@@ -178,12 +185,38 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
       if (action === 'publish' && savedPost.status === 'draft') await socialApi.publishPost(savedPost.id);
       return savedPost;
     },
-    onSuccess: async (savedPost) => {
+    onSuccess: async (savedPost, action) => {
       setId(savedPost.id);
+      if (action === 'publish') {
+        Keyboard.dismiss();
+        setPublished({ id: savedPost.id, hasVideo: savedPost.postType === 'video' });
+      }
       await client.invalidateQueries({ queryKey: ['social'] });
     },
   });
   const isBusy = mutation.isPending || isPicking;
+  const navigation = useNavigation();
+  // Đang đăng hay lưu mà bấm quay lại, vuốt mép hay nút back Android: hỏi trước, không thoát ngay.
+  usePreventRemove(mutation.isPending, ({ data }) => {
+    const title =
+      mutation.variables === 'save' ? copy.create.leaveSavingTitle : copy.create.leavePublishingTitle;
+    if (isUploadDone) {
+      Alert.alert(title, copy.create.leaveAlmostDone, [{ text: copy.create.stay }]);
+      return;
+    }
+    Alert.alert(title, copy.create.leaveWillCancel, [
+      { text: copy.create.stay, style: 'cancel' },
+      {
+        text: copy.create.cancelAndLeave,
+        style: 'destructive',
+        onPress: () => {
+          uploadAbort.current?.abort();
+          compression.current?.dispose();
+          navigation.dispatch(data.action);
+        },
+      },
+    ]);
+  });
   const progressPercent = uploadPercent ?? compressPercent;
   const videoLabel = video ? copy.create.videoSelected : copy.create.selectVideo;
   const videoDetail =
@@ -197,31 +230,39 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
               size: (video.sizeBytes / 1_000_000).toFixed(1),
             })
           : copy.create.videoHint;
+  if (published) return <PublishedView postId={published.id} hasVideo={published.hasVideo} />;
+  const isSaving = mutation.isPending && mutation.variables === 'save';
+  const isPublishing = mutation.isPending && mutation.variables === 'publish';
   return (
     <Screen
       title={copy.create.title}
       footer={
-        <View style={styles.actions}>
-          <Button
-            tone="secondary"
-            style={styles.draft}
-            disabled={mutation.isPending || !body.trim()}
-            onPress={() => mutation.mutate('save')}
-          >
-            {mutation.isPending && mutation.variables === 'save'
-              ? vi.api.saving
-              : id
-                ? vi.api.save
-                : copy.create.saveDraftShort}
-          </Button>
-          <Button
-            icon="paper-plane-outline"
-            style={styles.publish}
-            disabled={mutation.isPending || !body.trim()}
-            onPress={() => mutation.mutate('publish')}
-          >
-            {vi.api.publish}
-          </Button>
+        <View style={styles.footer}>
+          {/* Ngay trên nút bấm, không bị bàn phím hay thanh nút che như khi nằm cuối form. */}
+          {mutation.error && video && !uploadedAssetId ? (
+            <Notice tone="error">{copy.create.uploadFailed}</Notice>
+          ) : (
+            <ApiErrorNotice error={mutation.error} />
+          )}
+          {mutation.isSuccess && mutation.variables === 'save' && <Notice>{vi.api.draftSaved}</Notice>}
+          <View style={styles.actions}>
+            <Button
+              tone="secondary"
+              style={styles.draft}
+              disabled={mutation.isPending || !body.trim()}
+              onPress={() => mutation.mutate('save')}
+            >
+              {isSaving ? vi.api.saving : id ? vi.api.save : copy.create.saveDraftShort}
+            </Button>
+            <Button
+              icon="paper-plane-outline"
+              style={styles.publish}
+              disabled={mutation.isPending || !body.trim()}
+              onPress={() => mutation.mutate('publish')}
+            >
+              {isPublishing ? copy.create.publishing : vi.api.publish}
+            </Button>
+          </View>
         </View>
       }
     >
@@ -303,22 +344,49 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
             </Chip>
           </Row>
         </View>
-        {mutation.error && video && !uploadedAssetId ? (
-          <Notice tone="error">{copy.create.uploadFailed}</Notice>
-        ) : (
-          <ApiErrorNotice error={mutation.error} />
-        )}
-        {mutation.isSuccess && (
-          <Notice>
-            {mutation.variables === 'publish' ? vi.api.published : vi.api.draftSaved}
-            {uploadedAssetId ? ` ${copy.create.videoProcessing}` : ''}
-          </Notice>
-        )}
         {id && (
           <Button tone="text" onPress={() => router.push({ pathname: '/trip/[slug]', params: { slug: id } })}>
             {vi.api.detail}
           </Button>
         )}
+      </View>
+    </Screen>
+  );
+}
+
+function PublishedView({ postId, hasVideo }: { postId: string; hasVideo: boolean }) {
+  return (
+    <Screen
+      title={copy.create.title}
+      back={false}
+      footer={
+        <View style={styles.footer}>
+          <Button
+            icon="eye-outline"
+            onPress={() => router.replace({ pathname: '/trip/[slug]', params: { slug: postId } })}
+          >
+            {copy.create.viewPost}
+          </Button>
+          <Button
+            tone="secondary"
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+          >
+            {copy.create.done}
+          </Button>
+        </View>
+      }
+    >
+      <View style={styles.published} testID="post-published">
+        <Mascot pose="celebrate" size={132} />
+        <Txt variant="title" style={styles.publishedTitle} accessibilityRole="header">
+          {copy.create.publishedTitle}
+        </Txt>
+        <Txt style={styles.publishedBody}>
+          {hasVideo ? copy.create.publishedVideoBody : copy.create.publishedBody}
+        </Txt>
+        <Button tone="text" onPress={() => router.replace('/create')}>
+          {copy.create.postAnother}
+        </Button>
       </View>
     </Screen>
   );
@@ -363,7 +431,11 @@ const styles = StyleSheet.create({
   },
   chips: { gap: spacing.sm },
   tripToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  footer: { gap: spacing.sm },
   actions: { flexDirection: 'row', gap: spacing.sm },
+  published: { alignItems: 'center', gap: spacing.md, paddingTop: spacing.xl },
+  publishedTitle: { textAlign: 'center' },
+  publishedBody: { textAlign: 'center', color: colors.textMuted },
   draft: { flex: 1 },
   publish: { flex: 2 },
 });
