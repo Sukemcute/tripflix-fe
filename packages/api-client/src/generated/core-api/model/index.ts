@@ -11,6 +11,8 @@ export * from './adminControllerSearchUsersParams';
 export * from './adminDiscoveryJobsControllerListGroup';
 export * from './adminDiscoveryJobsControllerListParams';
 export * from './adminFlightDayDto';
+export * from './adminHandoffDto';
+export * from './adminHandoffExchangeDto';
 export * from './adminModerationControllerActionsParams';
 export * from './adminModerationControllerAppealsParams';
 export * from './adminModerationControllerAppealsReasonCode';
