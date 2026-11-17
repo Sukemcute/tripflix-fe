@@ -13,10 +13,11 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-background">
-      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border px-5 py-4">
-        <div>
-          <h2 className="text-sm font-bold text-ink">{title}</h2>
+    <section className="min-w-0 overflow-hidden rounded-xl border border-text-subtle/40 bg-background shadow-sm">
+      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border bg-surface-muted px-5 py-4">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 h-5 w-1 shrink-0 rounded-full bg-teal" aria-hidden="true" />
+          <h2 className="text-sm font-bold text-navy">{title}</h2>
           {description && <p className="mt-1 text-xs leading-relaxed text-text-muted">{description}</p>}
         </div>
         {action}
@@ -38,10 +39,12 @@ export function Metric({
   urgent?: boolean;
 }) {
   return (
-    <article className="min-w-0 rounded-xl border border-border bg-background p-5">
-      <p className="text-xs text-text-muted">{label}</p>
+    <article
+      className={`min-w-0 rounded-xl border border-t-4 border-text-subtle/40 bg-background p-5 shadow-sm ${urgent && value ? 'border-t-danger' : 'border-t-teal'}`}
+    >
+      <p className="text-sm font-semibold text-text-muted">{label}</p>
       <strong
-        className={`mt-3 block text-3xl font-bold tracking-tight tabular-nums ${urgent && value ? 'text-danger' : 'text-ink'}`}
+        className={`mt-3 block text-4xl font-bold tracking-tight tabular-nums ${urgent && value ? 'text-danger' : 'text-navy'}`}
       >
         {value === undefined ? '—' : value.toLocaleString('vi-VN')}
       </strong>
