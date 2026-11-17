@@ -1,6 +1,7 @@
 import * as Linking from 'expo-linking';
 import {
   useApiSession,
+  getApiErrorKind,
   usePostSearch,
   type ExploreItemDto,
   type ExploreUnderstoodDto,
@@ -13,7 +14,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
-  assets,
   Badge,
   Button,
   Card,
@@ -38,6 +38,13 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SearchDropPanel } from './search-drop-panel';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { NotificationBell } from '@/features/account/notification-bell';
+import {
+  ExploreHome,
+  ExploreStayCard,
+  ExploreStaysHeading,
+  ExploreStaysLoading,
+  ExploreStaysNotice,
+} from './explore-home';
 import { LoadingDots } from '@/components/loading-dots';
 
 const RECOMMENDATION_LIMIT = 3;
@@ -249,13 +256,23 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
   const total = search.data?.total ?? 0;
   const nextCursor = search.data?.nextCursor;
 
+  if (isBrowsing)
+    return (
+      <ExploreHome
+        category={category}
+        onCategoryChange={setCategory}
+        searchOpen={isSearchOpen}
+        onSearchOpen={() => setIsSearchOpen(true)}
+        onSearchClose={() => setIsSearchOpen(false)}
+      >
+        <StayRecommendations />
+      </ExploreHome>
+    );
+
   return (
     <Screen compact title={back ? vi.api.search : undefined} back={back} right={<NotificationBell />}>
       <SearchDropPanel visible={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-      {/* Trang chủ: hero ảnh biển + ô tìm kiếm nổi, cùng kiểu trang chủ web (TF48). */}
-      {isBrowsing ? (
-        <HomeHero onOpenSearch={() => setIsSearchOpen(true)} />
-      ) : !back ? (
+      {!back ? (
         <Pressable
           accessibilityRole="search"
           accessibilityLabel={vi.mobile.searchPanel.placeholder}
@@ -287,31 +304,6 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
           )}
           <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={() => submitSearch()} />
         </View>
-      )}
-
-      {isBrowsing && (
-        <>
-          <View style={styles.sectionHead}>
-            <Txt variant="title">{copy.explore.browseTitle}</Txt>
-            <Txt variant="small" style={ui.muted}>
-              {copy.explore.intro}
-            </Txt>
-          </View>
-
-          <Row style={styles.categories}>
-            <Chip selected={category === 'all'} onPress={() => setCategory('all')}>
-              {copy.notifications.all}
-            </Chip>
-            <Chip selected={category === 'sea'} onPress={() => setCategory('sea')}>
-              {copy.explore.sea}
-            </Chip>
-            <Chip selected={category === 'weekend'} onPress={() => setCategory('weekend')}>
-              {copy.explore.weekend}
-            </Chip>
-          </Row>
-          <ExploreHighlights category={category} />
-          <StayRecommendations />
-        </>
       )}
 
       {!isBrowsing && (
@@ -445,127 +437,6 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
   );
 }
 
-function HomeHero({ onOpenSearch }: { onOpenSearch: () => void }) {
-  return (
-    <View>
-      <View style={styles.homeHero}>
-        <Image source={assets.sea} style={StyleSheet.absoluteFill} contentFit="cover" accessible={false} />
-        <View style={styles.homeHeroShade} />
-        <Txt variant="title" style={styles.homeHeroTitle}>
-          {vi.api.authHeroFirst}
-        </Txt>
-        <Txt variant="title" style={[styles.homeHeroTitle, styles.homeHeroAccent]}>
-          {vi.api.authHeroSecond}
-        </Txt>
-        <Image source={assets.explore} style={styles.homeHeroMascot} contentFit="contain" accessible={false} />
-      </View>
-      <View style={styles.searchCard}>
-        <Pressable
-          accessibilityRole="search"
-          accessibilityLabel={vi.mobile.searchPanel.placeholder}
-          style={({ pressed }) => [styles.heroSearch, pressed && styles.heroSearchPressed]}
-          onPress={onOpenSearch}
-        >
-          <View style={styles.heroSearchIcon}>
-            <Icon name="search" color={colors.tealInk} size={mobileIconSize.inline} />
-          </View>
-          <View style={ui.flex}>
-            <Txt variant="caption" style={styles.heroSearchLabel}>
-              {vi.api.search}
-            </Txt>
-            <Txt variant="small" style={styles.searchHint} numberOfLines={1}>
-              {vi.mobile.searchPanel.placeholder}
-            </Txt>
-          </View>
-          <View style={styles.heroSearchGo}>
-            <Icon name="arrow-forward" color={colors.background} size={mobileIconSize.inline} />
-          </View>
-        </Pressable>
-        <Row style={styles.quickLinks}>
-          <Button
-            tone="secondary"
-            compact
-            icon="bed-outline"
-            onPress={() => router.push({ pathname: '/search', params: { autoFocus: '1' } })}
-          >
-            {vi.api.hotels}
-          </Button>
-          <Button tone="secondary" compact icon="airplane-outline" onPress={() => router.push('/flights')}>
-            {vi.flights.title}
-          </Button>
-        </Row>
-      </View>
-    </View>
-  );
-}
-
-function ExploreHighlights({ category }: { category: 'all' | 'sea' | 'weekend' }) {
-  const isWeekend = category === 'weekend';
-  const destinations = [
-    { name: copy.explore.nhaTrang, image: assets.beach },
-    category === 'sea'
-      ? { name: copy.explore.haLong, image: assets.vietnam }
-      : { name: copy.explore.hoiAn, image: assets.hoiAn },
-  ];
-  const openSearch = (q?: string) => router.push({ pathname: '/search', params: q ? { q } : {} });
-  const featured = destinations[isWeekend ? 1 : 0]!;
-  return (
-    <>
-      <Pressable accessibilityRole="button" onPress={() => openSearch(featured.name)} style={styles.hero}>
-        <Image
-          source={isWeekend ? featured.image : assets.vietnam}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-        />
-        <View style={styles.heroShade} />
-        <Badge tone="sun" icon="sunny-outline">
-          {copy.explore.mood}
-        </Badge>
-        <View style={{ gap: spacing.sm }}>
-          <Txt variant="title" style={styles.heroTitle}>
-            {isWeekend ? copy.explore.weekendHero : copy.explore.beachHero}
-          </Txt>
-          <Row>
-            <Txt variant="caption" style={styles.heroBody}>
-              {copy.explore.liveHeroBody}
-            </Txt>
-            <View style={styles.heroArrow}>
-              <Icon name="arrow-forward" color={colors.background} size={mobileIconSize.control} />
-            </View>
-          </Row>
-        </View>
-      </Pressable>
-      <View style={{ gap: spacing.md }}>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <Txt variant="heading" style={ui.flex}>
-            {isWeekend
-              ? copy.explore.weekendTitle
-              : category === 'sea'
-                ? copy.explore.beachTitle
-                : copy.explore.curatedTitle}
-          </Txt>
-          <Button tone="secondary" compact onPress={() => openSearch()} icon="arrow-forward">
-            {copy.common.viewAll}
-          </Button>
-        </Row>
-        <View style={styles.destinations}>
-          {(isWeekend ? [...destinations].reverse() : destinations).map((destination) => (
-            <Pressable
-              key={destination.name}
-              accessibilityRole="button"
-              onPress={() => openSearch(destination.name)}
-              style={styles.destination}
-            >
-              <Image source={destination.image} style={styles.destinationImage} contentFit="cover" />
-              <Txt variant="label">{destination.name}</Txt>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-    </>
-  );
-}
-
 function StayRecommendations() {
   const { isReady } = useApiSession();
   const query = useQuery({
@@ -584,117 +455,27 @@ function StayRecommendations() {
     },
   });
 
+  const destinations = query.data?.filter((destination) => destination.hotels.length > 0);
   return (
     <>
-      <View style={styles.sectionHead}>
-        <Txt variant="title">{vi.ota.recommendationTitle}</Txt>
-        <Txt variant="small" style={ui.muted}>
-          {vi.ota.recommendationIntro}
-        </Txt>
-      </View>
-      {query.isPending && <LoadingDots />}
-      <ApiErrorNotice
-        error={query.error}
-        retry={() => {
-          void query.refetch();
-        }}
-      />
-      {query.data?.length === 0 && <Notice>{vi.api.noSuggestions}</Notice>}
-      {query.data?.map((dest) => {
-        const bestStay = dest.hotels[0];
-        if (!bestStay) return null;
-        return (
-          <Card
-            key={dest.province.slug || bestStay.hotelId}
-            style={{ padding: 0, overflow: 'hidden', gap: 0 }}
-          >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={bestStay.name}
-              onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: bestStay.hotelId } })}
-            >
-              <View>
-                {bestStay.thumbnail ? (
-                  <Image
-                    source={bestStay.thumbnail}
-                    style={{ width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.seaMist }}
-                    contentFit="cover"
-                  />
-                ) : (
-                  <View style={{ width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.seaMist }} />
-                )}
-                {/* Nhãn nổi trên ảnh như thẻ khách sạn của web. */}
-                <Row style={{ position: 'absolute', top: spacing.sm, left: spacing.sm, gap: spacing.xs }}>
-                  <Badge tone="teal" icon="location-outline">
-                    {dest.province.name}
-                  </Badge>
-                  {bestStay.stars ? <Badge tone="sun">{`${bestStay.stars} ★`}</Badge> : null}
-                </Row>
-                <View
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    paddingHorizontal: spacing.md,
-                    paddingTop: spacing.xl,
-                    paddingBottom: spacing.sm,
-                    backgroundColor: colors.overlay,
-                  }}
-                >
-                  <Txt variant="heading" style={{ color: colors.background }} numberOfLines={2}>
-                    {bestStay.name}
-                  </Txt>
-                </View>
-              </View>
-            </Pressable>
-            <View style={{ padding: spacing.md, gap: spacing.sm }}>
-              <Row
-                style={{
-                  gap: spacing.xs,
-                  alignItems: 'flex-start',
-                  padding: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.seaMist,
-                }}
-              >
-                <Icon name="pricetag-outline" size={16} color={colors.tealInk} />
-                <Txt variant="small" style={{ flex: 1, color: colors.tealInk }}>
-                  {bestStay.reason.text}
-                </Txt>
-              </Row>
-              <Row style={{ alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.sm }}>
-                <View style={{ flexShrink: 1 }}>
-                  <Txt variant="small" style={{ color: colors.textMuted }}>
-                    {vi.hotel.from}
-                  </Txt>
-                  <Txt variant="title" style={{ color: colors.coralInk }}>
-                    {money(bestStay.priceFrom)}
-                  </Txt>
-                  <Txt variant="small" style={{ color: colors.textMuted }}>
-                    / {vi.api.perNight}
-                  </Txt>
-                </View>
-                <Button
-                  icon="arrow-forward"
-                  onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: bestStay.hotelId } })}
-                >
-                  {vi.hotel.viewRooms}
-                </Button>
-              </Row>
-              {dest.otherDealsCount > 0 && (
-                <Button
-                  tone="text"
-                  onPress={() => router.push({ pathname: '/search', params: { q: dest.province.name } })}
-                  icon="arrow-forward"
-                >
-                  {`Khám phá thêm ${dest.otherDealsCount} deal hời`}
-                </Button>
-              )}
-            </View>
-          </Card>
-        );
-      })}
+      <ExploreStaysHeading />
+      {query.isPending && <ExploreStaysLoading />}
+      {query.error && (
+        <ExploreStaysNotice
+          message={vi.api[getApiErrorKind(query.error)]}
+          busy={query.isFetching}
+          retry={() => {
+            void query.refetch();
+          }}
+        />
+      )}
+      {destinations?.length === 0 && <ExploreStaysNotice message={vi.api.noSuggestions} />}
+      {destinations?.map((destination) => (
+        <ExploreStayCard
+          key={destination.province.slug || destination.hotels[0]?.hotelId}
+          destination={destination}
+        />
+      ))}
     </>
   );
 }
@@ -765,103 +546,9 @@ const styles = StyleSheet.create({
     color: colors.ink,
     ...compactType.body,
   },
-  homeHero: {
-    height: 260,
-    borderRadius: mobileLayout.cardRadius,
-    overflow: 'hidden',
-    padding: spacing.lg,
-    backgroundColor: colors.ink,
-  },
-  homeHeroShade: { ...StyleSheet.absoluteFill, backgroundColor: colors.overlay },
-  homeHeroTitle: {
-    color: colors.background,
-    fontFamily: nativeFonts.extraBold,
-    fontSize: 34,
-    lineHeight: 42,
-    letterSpacing: -1,
-  },
-  homeHeroAccent: { color: colors.sunSoft },
-  homeHeroMascot: { position: 'absolute', left: spacing.sm, bottom: spacing.xl, width: 104, height: 104 },
-  searchCard: {
-    marginTop: -spacing.xl,
-    marginHorizontal: spacing.md,
-    padding: spacing.md,
-    gap: spacing.md,
-    borderRadius: mobileLayout.cardRadius,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: colors.ink,
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
-  },
-  quickLinks: { gap: spacing.sm },
-  searchHint: { color: colors.textMuted },
-  heroSearch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.sm,
-    paddingLeft: spacing.sm,
-    paddingRight: spacing.sm,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  heroSearchPressed: { backgroundColor: colors.seaMist },
-  heroSearchIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.tealSoft,
-  },
-  heroSearchLabel: {
-    color: colors.tealInk,
-    fontFamily: nativeFonts.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  heroSearchGo: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.coral,
-  },
-  sectionHead: { gap: spacing.xs },
   result: { alignItems: 'flex-start' },
   resultPhoto: { width: 90, height: 112, borderRadius: radius.md, backgroundColor: colors.seaMist },
   categories: { flexWrap: 'wrap', gap: spacing.sm },
-  hero: {
-    minHeight: 235,
-    borderRadius: mobileLayout.cardRadius,
-    overflow: 'hidden',
-    padding: spacing.lg,
-    justifyContent: 'space-between',
-    gap: spacing.xl,
-    backgroundColor: colors.ink,
-  },
-  heroShade: { ...StyleSheet.absoluteFill, backgroundColor: colors.overlay },
-  heroTitle: { ...compactType.title, color: colors.background },
-  heroBody: { flex: 1, color: colors.background, fontFamily: nativeFonts.semibold },
-  heroArrow: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  destinations: { flexDirection: 'row', gap: spacing.md },
-  destination: { flex: 1, minWidth: 0, gap: spacing.sm },
-  destinationImage: { width: '100%', height: 124, borderRadius: radius.lg, backgroundColor: colors.seaMist },
   assistant: {
     flexDirection: 'row',
     alignItems: 'center',
