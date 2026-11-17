@@ -1,6 +1,7 @@
 import { nativeFonts as fonts, colors } from '@tripflix/tokens';
+import { resolveMobileLoginReturn } from '@tripflix/app-core';
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import {
   AccessibilityInfo,
@@ -114,7 +115,11 @@ export function OnboardingScreen() {
 
 function OnboardingFlow() {
   const { record, updateDraft, finish, continueOnce, storageError } = useOnboarding();
-  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const { mode, source, returnTo } = useLocalSearchParams<{
+    mode?: string;
+    source?: string;
+    returnTo?: string;
+  }>();
   const [step, setStep] = useState<OnboardingStep>(() =>
     record.status === 'draft' ? record.step : 'welcome',
   );
@@ -126,6 +131,12 @@ function OnboardingFlow() {
   const welcome = step === 'welcome';
   const chosen = interests.filter((item) => record.interests.includes(item.id));
   const chosenPace = paces.find((item) => item.id === record.pace);
+
+  function continueToApp() {
+    if (source === 'signup') router.dismissTo(resolveMobileLoginReturn(returnTo) as Href);
+    else if (mode === 'edit' && router.canGoBack()) router.back();
+    else router.replace('/(tabs)');
+  }
 
   function go(next: OnboardingStep) {
     setStep(next);
@@ -153,8 +164,7 @@ function OnboardingFlow() {
       return;
     }
     if (login) router.replace({ pathname: '/login', params: { returnTo: '/' } });
-    else if (mode === 'edit' && router.canGoBack()) router.back();
-    else router.replace('/(tabs)');
+    else continueToApp();
   }
 
   function back() {
@@ -198,6 +208,8 @@ function OnboardingFlow() {
         {welcome ? (
           mode === 'edit' ? (
             <TextAction label="Đóng" onPress={back} />
+          ) : source === 'signup' ? (
+            <TextAction label="Khám phá trước" onPress={() => void leave('skipped')} disabled={saving} />
           ) : (
             <TextAction label="Đăng nhập" onPress={() => void leave('skipped', true)} disabled={saving} />
           )
@@ -453,7 +465,7 @@ function OnboardingFlow() {
                 label="Khám phá lần này"
                 onPress={() => {
                   continueOnce();
-                  router.replace('/(tabs)');
+                  continueToApp();
                 }}
               />
             )}
