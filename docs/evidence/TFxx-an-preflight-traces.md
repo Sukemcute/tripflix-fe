@@ -12,6 +12,7 @@
 ## Kết quả kiểm tra
 
 - `pnpm turbo run lint typecheck test --affected`: 22 task thành công.
+- `pnpm turbo run build --filter=@tripflix/admin...`: build production thành công.
 - `tests/e2e/admin/preflight-traces.cjs`: pass trên Chrome, 1440/390 px, không page error hoặc tràn ngang trang.
 - E2E kiểm tra mặc định ẩn, bật/tắt hiện lại, giữ OPTIONS lỗi/thông thường/cũ, phối hợp bộ lọc lỗi và độ trễ.
 - E2E gọi ObservabilityService BE đã build với Tempo 2.9 thật có fixture cô lập; auth/BFF dùng adapter kiểm thử. Không phải kiểm chứng lưu lượng staging.
@@ -25,4 +26,4 @@
 ## Phạm vi và giới hạn
 
 - Admin (Thành), API client và i18n. Không sửa mobile/web hoặc deploy.
-- Phụ thuộc PR BE cùng nhánh cho query mới và phân loại request mới. Trace cũ chưa phân loại vẫn hiện; chưa deploy staging. Build production được ghi trong PR sau khi hoàn tất.
+- Phụ thuộc PR BE cùng nhánh cho query mới và phân loại request mới. Trace cũ chưa phân loại vẫn hiện; chưa deploy staging.
