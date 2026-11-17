@@ -15,10 +15,11 @@ export function ForgotPassword() {
   return (
     <>
       <h2>{vi.api.forgotTitle}</h2>
-      <p className="auth-hint">{vi.api.forgotBody}</p>
-      {request.isSuccess ? (
-        <output className="auth-success">{vi.api.forgotSent}</output>
-      ) : (
+      {/* Gửi xong thì câu hướng dẫn đổi thành câu đã gửi, không thêm hộp thông báo. */}
+      <p className="auth-hint" role="status">
+        {request.isSuccess ? vi.api.forgotSent : vi.api.forgotBody}
+      </p>
+      {request.isSuccess ? null : (
         <form
           className="auth-form"
           onSubmit={(event) => {
