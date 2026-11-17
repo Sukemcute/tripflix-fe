@@ -81,6 +81,14 @@ export {
   type NotificationPostTarget,
 } from './notifications';
 export { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime } from './notifications-realtime';
+export {
+  STAFF_MODERATION_CHANGED_EVENT,
+  useStaffRealtime,
+  type StaffModerationChangeKind,
+  type StaffModerationSignal,
+  type StaffRealtimeState,
+  type StaffRealtimeStatus,
+} from './staff-realtime';
 export { findCachedFeedCard, removeReelFromSavedFeedCache, updateReelSocialCache } from './reel-social-cache';
 export { updateCommentLikeCache } from './comment-like-cache';
 export { evictPostFromCache, isPostNotFoundError } from './post-cache';

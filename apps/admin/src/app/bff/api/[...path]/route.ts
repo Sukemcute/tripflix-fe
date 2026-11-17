@@ -11,6 +11,7 @@ const adminOrigin = process.env.ADMIN_ORIGIN ?? process.env.NEXT_PUBLIC_ADMIN_UR
 const coreUrl = process.env.ADMIN_CORE_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 const noStore = { 'Cache-Control': 'no-store' };
 const proofHeader = 'x-tripflix-session-proof';
+const REALTIME_TOKEN_PATH = '/api/admin/realtime-token';
 
 interface Tokens {
   access: string;
@@ -232,6 +233,11 @@ async function handle(request: NextRequest, context: RouteContext<'/bff/api/[...
       return (await session.refresh).clone();
     }
     if (session.accessExpiresAt <= Date.now()) return reply(401);
+    // TF104: socket /ws không đi qua BFF nên cần access token ngắn hạn. Không bao giờ trả refresh cookie;
+    // cookie phiên sameSite=strict và không có CORS nên trang khác không đọc được phản hồi này.
+    if (method === 'GET' && path === REALTIME_TOKEN_PATH) {
+      return reply(200, { accessToken: session.access, expiresAt: session.accessExpiresAt });
+    }
     const body = method === 'GET' || !request.body ? undefined : await request.text();
     return forward(await upstream(request, path + request.nextUrl.search, { access: session.access, body }));
   } catch {
