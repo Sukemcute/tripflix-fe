@@ -122,7 +122,7 @@ export function PostCard({
             <div className={styles.authorNameRow}>
               <span className={styles.authorName}>{authorInfo.name}</span>
               {post.isVerified && (
-                <span className={styles.authorVerified} title={vi.api.postVerifiedAccountTitle} aria-label={vi.api.postVerifiedBadge}>
+                <span className={styles.authorVerified} data-tooltip={vi.api.postVerifiedAccountTitle} aria-label={vi.api.postVerifiedBadge}>
                   <SocialIcon name="verified" size={15} />
                 </span>
               )}
@@ -150,7 +150,7 @@ export function PostCard({
           <button
             type="button"
             className={styles.headerMenuBtn}
-            title="Tùy chọn bài viết"
+            data-tooltip="Tùy chọn bài viết"
             aria-label="Tùy chọn bài viết"
           >
             <SocialIcon name="more" size={18} />
@@ -195,7 +195,7 @@ export function PostCard({
           {post.hashtags.length > VISIBLE_HASHTAGS && (
             <span
               className={styles.postTagMore}
-              title={post.hashtags.slice(VISIBLE_HASHTAGS).map((tag) => `#${tag}`).join(' ')}
+              data-tooltip={post.hashtags.slice(VISIBLE_HASHTAGS).map((tag) => `#${tag}`).join(' ')}
             >
               +{post.hashtags.length - VISIBLE_HASHTAGS}
             </span>
@@ -216,7 +216,7 @@ export function PostCard({
           type="button"
           className={styles.postAttachedTrip}
           onClick={() => onViewItinerary?.(post.id)}
-          title={vi.api.postViewItineraryTitle}
+          data-tooltip={vi.api.postViewItineraryTitle}
           aria-label={t('api.postViewItineraryAria', { name: trip.hotelName ?? trip.destinationName ?? post.title })}
         >
           <div className={styles.tripCardLeft}>

@@ -102,7 +102,7 @@ export function PostImagePicker({ images, isDisabled = false }: PostImagePickerP
                       className={styles.iconButton}
                       disabled={isDisabled || index === 0}
                       aria-label={t('api.composerImageMoveLeft', { index: position })}
-                      title={t('api.composerImageMoveLeft', { index: position })}
+                      data-tooltip={t('api.composerImageMoveLeft', { index: position })}
                       onClick={() => images.move(item.key, -1)}
                     >
                       <SocialIcon name="chevronLeft" size={14} />
@@ -112,7 +112,7 @@ export function PostImagePicker({ images, isDisabled = false }: PostImagePickerP
                       className={styles.iconButton}
                       disabled={isDisabled || index === items.length - 1}
                       aria-label={t('api.composerImageMoveRight', { index: position })}
-                      title={t('api.composerImageMoveRight', { index: position })}
+                      data-tooltip={t('api.composerImageMoveRight', { index: position })}
                       onClick={() => images.move(item.key, 1)}
                     >
                       <SocialIcon name="chevronRight" size={14} />
@@ -122,7 +122,7 @@ export function PostImagePicker({ images, isDisabled = false }: PostImagePickerP
                       className={styles.iconButton}
                       disabled={isDisabled}
                       aria-label={t('api.composerImageRemove', { index: position })}
-                      title={t('api.composerImageRemove', { index: position })}
+                      data-tooltip={t('api.composerImageRemove', { index: position })}
                       onClick={() => images.remove(item.key)}
                     >
                       <SocialIcon name="close" size={14} />

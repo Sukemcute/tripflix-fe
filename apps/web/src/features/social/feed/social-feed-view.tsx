@@ -756,7 +756,7 @@ export function SocialFeedView({
               <button
                 type="button"
                 className={styles.composerTagBtn}
-                title="Đăng ảnh hoặc video"
+                data-tooltip="Đăng ảnh hoặc video"
                 onClick={() => {
                   if (!user) {
                     window.location.href = loginReturnHref;
@@ -779,7 +779,7 @@ export function SocialFeedView({
               <button
                 type="button"
                 className={styles.composerTagBtn}
-                title="Đính kèm lịch trình chuyến đi"
+                data-tooltip="Đính kèm lịch trình chuyến đi"
                 onClick={() => {
                   if (!user) {
                     window.location.href = loginReturnHref;
@@ -801,7 +801,7 @@ export function SocialFeedView({
               <button
                 type="button"
                 className={styles.composerTagBtn}
-                title="Thêm hashtag chủ đề"
+                data-tooltip="Thêm hashtag chủ đề"
                 onClick={() => {
                   if (!user) {
                     window.location.href = loginReturnHref;
@@ -939,7 +939,7 @@ export function SocialFeedView({
               type="button"
               className={reelsStyles.iconGhostBtn}
               aria-label={vi.api.commentPanelClose}
-              title={vi.api.commentPanelClose}
+              data-tooltip={vi.api.commentPanelClose}
               onClick={() => {
                 setIsRightOpen(false);
               }}
@@ -1013,7 +1013,7 @@ export function SocialFeedView({
                 type="button"
                 className={reelsStyles.galleryCloseBtn}
                 aria-label={vi.api.immersiveCloseGallery}
-                title={vi.api.immersiveCloseGallery}
+                data-tooltip={vi.api.immersiveCloseGallery}
                 onClick={() => setGalleryState(null)}
               >
                 <SocialIcon name="close" size={18} />
@@ -1040,7 +1040,7 @@ export function SocialFeedView({
                   className={`${reelsStyles.gallerySlideNavBtn} ${reelsStyles.gallerySlidePrev}`}
                   disabled={galleryState.index <= 0}
                   aria-label={vi.api.immersivePrevSlide}
-                  title={vi.api.immersivePrevSlide}
+                  data-tooltip={vi.api.immersivePrevSlide}
                   onClick={() =>
                     setGalleryState((prev) =>
                       prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null,
@@ -1054,7 +1054,7 @@ export function SocialFeedView({
                   className={`${reelsStyles.gallerySlideNavBtn} ${reelsStyles.gallerySlideNext}`}
                   disabled={galleryState.index >= activeGalleryImages.length - 1}
                   aria-label={vi.api.immersiveNextSlide}
-                  title={vi.api.immersiveNextSlide}
+                  data-tooltip={vi.api.immersiveNextSlide}
                   onClick={() =>
                     setGalleryState((prev) =>
                       prev ? { ...prev, index: Math.min(activeGalleryImages.length - 1, prev.index + 1) } : null,

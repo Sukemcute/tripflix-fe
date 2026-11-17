@@ -25,6 +25,7 @@ import {
 } from './search-url';
 import { useIsWideScreen } from './use-wide-screen';
 import { PublishToast } from './composer/publish-toast';
+import { TooltipLayer } from './feed/tooltip-layer';
 import styles from './feed/social-feed.module.css';
 
 const InspirationImmersiveViewer = dynamic(
@@ -282,6 +283,7 @@ export function InspirationView() {
         />
       )}
       <PublishToast />
+      <TooltipLayer />
     </div>
   );
 }
