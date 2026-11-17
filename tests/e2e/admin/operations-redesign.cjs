@@ -178,6 +178,17 @@ class AdminPage {
           },
         ],
       });
+    if (path === '/api/analytics/observability')
+      return send({
+        generatedAt: Date.now(),
+        from: Date.now() - 3_600_000,
+        to: Date.now(),
+        metricsSource: { status: 'not_configured' },
+        summary: { requests: 0, requestRate: null, errorRate: null, p50Ms: null, p95Ms: null },
+        series: [],
+        services: [],
+        routes: [],
+      });
     if (path.endsWith('/discovery/jobs'))
       return send({
         checkedAt: Date.now(),
@@ -279,9 +290,14 @@ class AdminPage {
     );
     await ui.open('/staff');
     await page.getByText('Tính năng này dành cho quản trị viên cao nhất.', { exact: true }).waitFor();
-    await page.goto(base + '/login');
-    await page.getByRole('heading', { name: 'Đăng nhập quản trị', exact: true }).waitFor();
-    await ui.snapshot('login-390.png');
+    await page.route(/\/login\?returnTo=admin$/, (route) =>
+      route.fulfill({
+        contentType: 'text/html',
+        body: '<!doctype html><html lang="vi"><body><h1>Đăng nhập Tripflix</h1></body></html>',
+      }),
+    );
+    await page.goto(base + '/auth/handoff');
+    await page.waitForURL(/\/login\?returnTo=admin$/);
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ passed: true, pages: pages.length, output, fixtureData: true }));
   } finally {
