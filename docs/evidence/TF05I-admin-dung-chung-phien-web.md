@@ -40,3 +40,8 @@
 - Bỏ `/login?returnTo=admin` bên web. BFF admin nhận cả `/api/auth/login` và `/api/auth/admin-handoff/exchange` (dùng chung bước tạo phiên).
 - Test analytics và script e2e analytics (Trang) trả về như trước TF05I.
 - Kiểm: `pnpm turbo run lint typecheck test --affected` 22/22 task xanh.
+
+## Cập nhật 2026-11-17: thiết kế lại trang đăng nhập admin
+- Chỉ đổi giao diện `/login` của admin cho giống trang đăng nhập web: ảnh nền mờ toàn trang, cụm ảnh + mascot + câu chào bên trái, thẻ kính mờ bên phải; ô nhập có icon, nhãn nổi, nút hiện/ẩn mật khẩu. Logic đăng nhập giữ nguyên; không thêm mã xác thực hay quên mật khẩu.
+- Đã xem trên preview (desktop 1280 và điện thoại 375x812, không tràn ngang). Ảnh trong PR.
+- Kiểm: `pnpm turbo run lint typecheck test --filter=@tripflix/admin` 3/3 task xanh.
