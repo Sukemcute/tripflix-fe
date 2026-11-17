@@ -52,6 +52,11 @@ export function LiveProfileScreen() {
       icon: 'notifications-outline',
       onPress: () => router.push('/notifications'),
     },
+    {
+      label: 'Gu du lịch',
+      icon: 'compass-outline',
+      onPress: () => router.push({ pathname: '/onboarding', params: { mode: 'edit' } }),
+    },
     { label: profile.help, icon: 'help-buoy-outline', onPress: () => setHelp(true) },
   ] as const;
   const stats = [
