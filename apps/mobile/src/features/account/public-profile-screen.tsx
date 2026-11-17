@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Button, copy, Icon, IconButton, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { LoadingDots } from '@/components/loading-dots';
 
 const GRID_COLUMNS = 3;
 const GRID_GAP = 2;
@@ -179,7 +180,7 @@ function GridState({
   emptyText: string;
   children: React.ReactNode;
 }) {
-  if (query.isPending) return <Txt style={[ui.center, ui.muted, styles.state]}>{vi.api.loading}</Txt>;
+  if (query.isPending) return <LoadingDots />;
   if (query.error) return <ApiErrorNotice error={query.error} retry={() => void query.refetch()} />;
   if (isEmpty) return <Txt style={[ui.center, ui.muted, styles.state]}>{emptyText}</Txt>;
   return (
