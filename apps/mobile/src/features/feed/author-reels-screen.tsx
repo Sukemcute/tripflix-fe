@@ -42,14 +42,16 @@ export function AuthorReelsScreen() {
     // Trình phát Reels dùng cử chỉ (tua, nhấn giữ) nên cần gốc của gesture-handler như tab Reels.
     <GestureHandlerRootView style={styles.root}>
       {items.length > 0 ? (
-        // Chừa tai thỏ và thanh vuốt về nhà như tab Reels; phủ cả màn thì video dọc bị phóng to, cắt mất hai bên.
-        <View style={[styles.feed, { marginTop: insets.top, marginBottom: insets.bottom }]}>
-          <ReelsFeed
-            items={items}
-            targetId={reel}
-            onLoadMore={loadMore}
-            isFetchingMore={feed.isFetchingNextPage}
-          />
+        // Khung đúng 9:16 giữa màn (viền đen trên dưới khi máy dài hơn): video dọc hiện trọn, không bị phóng to cắt hai bên.
+        <View style={[styles.stage, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+          <View style={styles.feed}>
+            <ReelsFeed
+              items={items}
+              targetId={reel}
+              onLoadMore={loadMore}
+              isFetchingMore={feed.isFetchingNextPage}
+            />
+          </View>
         </View>
       ) : (
         <View style={styles.center}>
@@ -74,7 +76,8 @@ export function AuthorReelsScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.text },
-  feed: { flex: 1, overflow: 'hidden' },
+  stage: { flex: 1, justifyContent: 'center' },
+  feed: { width: '100%', aspectRatio: 9 / 16, maxHeight: '100%', alignSelf: 'center', overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   back: {
     position: 'absolute',
