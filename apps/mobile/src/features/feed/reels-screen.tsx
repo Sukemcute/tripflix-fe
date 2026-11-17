@@ -40,6 +40,7 @@ import { Button, Icon, IconButton, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 import { SHEET_CLOSE_SPRING } from '@/components/motion';
 import { SearchDropPanel } from '@/features/discovery/search-drop-panel';
+import { useReelViewTracking } from './feed-events';
 import { ReelSlide } from './reel-slide';
 import type { ReelItem } from './reel-types';
 import { useReelsLaunch } from './reels-launch';
@@ -558,6 +559,12 @@ export function ReelsFeed({
       setRetry((value) => ({ id: reelId, attempt: (value?.attempt ?? 0) + 1 })),
     );
   }, [visibleReelId, hasVisibleError, refreshPlaybackSession]);
+  // Chỉ đếm Reels thật đang phát cho người xem thấy; Reels mẫu không gửi (TF23).
+  const watchedItem = isSample ? undefined : items[visibleIndex];
+  useReelViewTracking(
+    watchedItem?.postId ?? null,
+    isPlaybackEnabled && !isLaunching && pausedId !== watchedItem?.id,
+  );
 
   useEffect(() => {
     if (isPlaybackEnabled && currentIndex + REEL_LOOKAHEAD_COUNT >= items.length - 1) onLoadMore?.();
