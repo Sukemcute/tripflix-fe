@@ -25,6 +25,9 @@ export function useFollowAuthor(authorId?: string) {
     onMutate: () => client.cancelQueries({ queryKey, exact: true }),
     onSuccess: (next, { target, viewerId }) => {
       client.setQueryData(['social', 'follow', viewerId, target], next);
+      // Số người theo dõi trên trang cá nhân của cả hai người đổi theo.
+      void client.invalidateQueries({ queryKey: ['social', 'profile', target] });
+      void client.invalidateQueries({ queryKey: ['social', 'profile', viewerId] });
     },
     onError: (_, { target, viewerId }) => client.invalidateQueries({
       queryKey: ['social', 'follow', viewerId, target], exact: true,

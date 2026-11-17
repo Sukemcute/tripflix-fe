@@ -5,11 +5,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReelItem } from './reel-types';
 
 const RENDITION_TIMEOUT_MS = 8_000;
+const CURRENT_BUFFER_SECONDS = 30;
+const AHEAD_BUFFER_SECONDS = 10;
+const BEHIND_BUFFER_SECONDS = 4;
 
 /** Native SharedObjects have mutable setters, outside React's immutable render data. */
 function applyPlayerLimits(
   player: VideoPlayer,
-  { forwardBufferDuration, maxResolution }: {
+  {
+    forwardBufferDuration,
+    maxResolution,
+  }: {
     forwardBufferDuration: number;
     maxResolution: VideoPlayer['maxResolution'];
   },
@@ -204,8 +210,13 @@ export function usePlayerPool({
     const item = itemAt(slot);
     const index = indexes[slot];
     const isCurrent = index === focusedIndex;
-    // Keep the two farther-ahead players to roughly one HLS segment on native.
-    const forwardBufferDuration = isCurrent ? 30 : index != null && index > focusedIndex + 1 ? 2 : 4;
+    // Video phía trước tải sẵn 10 giây đầu để lướt tới là chạy ngay, kể cả lướt liền 3 video;
+    // video phía sau giữ phần đã tải, không tải thêm.
+    const forwardBufferDuration = isCurrent
+      ? CURRENT_BUFFER_SECONDS
+      : index != null && index > focusedIndex
+        ? AHEAD_BUFFER_SECONDS
+        : BEHIND_BUFFER_SECONDS;
     return {
       item,
       isCurrent,
@@ -221,5 +232,10 @@ export function usePlayerPool({
   const third = usePlayerSlot(optionsAt(2));
   const fourth = usePlayerSlot(optionsAt(3));
   const fifth = usePlayerSlot(optionsAt(4));
-  return [first, second, third, fourth, fifth].map((slot, index) => ({ ...slot, index: indexes[index] }));
+  // Số hook cố định bằng REEL_PLAYER_COUNT (6).
+  const sixth = usePlayerSlot(optionsAt(5));
+  return [first, second, third, fourth, fifth, sixth].map((slot, index) => ({
+    ...slot,
+    index: indexes[index],
+  }));
 }

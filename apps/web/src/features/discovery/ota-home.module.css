@@ -406,6 +406,7 @@
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
   animation: shimmerSweep 3.5s infinite;
+  animation-play-state: var(--home-animation-state, running);
   will-change: transform;
   pointer-events: none;
 }
@@ -491,15 +492,28 @@
 .stayHeader {
   position: relative;
   isolation: isolate;
-  filter: drop-shadow(0 14px 28px rgba(0, 108, 99, 0.1));
-  transition:
-    transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1),
-    filter 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+  transition: transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+
+/* A separate shadow avoids filtering the masked ticket and its moving image every frame. */
+.stayHeader::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 22px;
+  box-shadow: 0 18px 56px rgb(0 108 99 / 16%);
+  opacity: 0.65;
+  transition: opacity 450ms ease;
+  pointer-events: none;
 }
 
 .stayHeader:hover {
   transform: translateY(-4px);
-  filter: drop-shadow(0 24px 36px rgba(0, 108, 99, 0.18));
+}
+
+.stayHeader:hover::before {
+  opacity: 1;
 }
 
 .stayTicket {
@@ -508,8 +522,9 @@
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   align-items: stretch;
   border-radius: 22px;
-  background: var(--water-glass);
-  backdrop-filter: blur(14px);
+  /* A milky fill retains the glass tint without repeatedly sampling the animated water. */
+  background: color-mix(in srgb, var(--water-glass) 75%, #fafffb);
+  color: #102f36;
   overflow: hidden;
 
   /* TRUE CSS MASK - Khoét lỗ trực tiếp trên layer background của vé */
@@ -721,7 +736,7 @@
   font-weight: 800;
   transform: rotate(-13deg);
   background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(4px);
+  backdrop-filter: var(--home-backdrop, blur(4px));
   box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.1),
     inset 0 0 0 1.5px rgba(211, 47, 47, 0.35);
@@ -1047,7 +1062,7 @@
     transform 450ms cubic-bezier(0.2, 0.7, 0.25, 1),
     box-shadow 450ms cubic-bezier(0.2, 0.7, 0.25, 1);
   background: var(--water-glass);
-  backdrop-filter: blur(14px);
+  backdrop-filter: var(--home-backdrop, blur(8px));
   color: #102f36;
 }
 
@@ -1154,7 +1169,6 @@
   padding: clamp(4px, 1vw, 11px);
   border-radius: 4px;
   background: var(--water-glass);
-  backdrop-filter: blur(14px);
   color: #102f36;
   box-shadow: 0 8px 18px color-mix(in srgb, var(--color-teal-ink) 24%, transparent);
 }
@@ -1181,6 +1195,7 @@
   stroke-width: 1.5;
   stroke-dasharray: 4 7;
   animation: tripiMarchDash 12s linear infinite;
+  animation-play-state: var(--home-animation-state, running);
 }
 
 @keyframes tripiMarchDash {
@@ -1194,6 +1209,7 @@
   left: 8%;
   rotate: -13deg;
   animation: floatGentle1 6s ease-in-out infinite;
+  animation-play-state: var(--home-animation-state, running);
 }
 
 .tripiTown {
@@ -1202,6 +1218,7 @@
   rotate: 12deg;
   text-align: right;
   animation: floatGentle2 7s ease-in-out infinite;
+  animation-play-state: var(--home-animation-state, running);
 }
 
 @keyframes floatGentle1 {
@@ -1251,6 +1268,7 @@
   color: var(--color-coral-ink);
   font-size: clamp(1rem, 2.5vw, 2rem);
   animation: stampSpinSlow 18s linear infinite;
+  animation-play-state: var(--home-animation-state, running);
 }
 
 @keyframes stampSpinSlow {
@@ -1477,7 +1495,9 @@
     scroll-behavior: smooth;
   }
 
-  :global([data-home-entered]) {
+  /* Animate the small foreground elements rather than a section-sized translucent surface. */
+  :global([data-home-entered]) > .sectionHead,
+  :global([data-home-entered]) .tripiCopy {
     animation: section-arrive 1152ms cubic-bezier(0.2, 0.7, 0.25, 1);
   }
 
@@ -1813,7 +1833,7 @@
   color: var(--water-ink);
   background: var(--water-panel);
   border-radius: 22px;
-  backdrop-filter: blur(14px);
+  backdrop-filter: var(--home-backdrop, blur(8px));
   box-shadow: var(--water-shadow);
 }
 
@@ -1885,7 +1905,8 @@
 
 .hotelInfo {
   background: var(--water-glass);
-  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: var(--home-backdrop, blur(8px));
+  backdrop-filter: var(--home-backdrop, blur(8px));
 }
 
 .loadingState::after {

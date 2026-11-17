@@ -68,6 +68,24 @@ it('keeps the same post in sync across feed tabs, including rollback', () => {
   expect(readHot().pages[0]!.items[0]!.viewerState?.liked).toBe(false);
 });
 
+it('keeps Reels opened from search results (useReelsByIds) in sync, including rollback', () => {
+  const { client, feed } = setup();
+  const byIdsKey = ['feed', 'byIds', 'one,two', 'viewer'];
+  const otherViewerKey = ['feed', 'byIds', 'one,two', 'someone-else'];
+  client.setQueryData(byIdsKey, feed);
+  client.setQueryData(otherViewerKey, feed);
+  const readByIds = () => client.getQueryData<InfiniteData<FeedPageDto>>(byIdsKey)!;
+
+  const rollback = updateReelSocialCache(client, 'viewer', 'one', 'like', true);
+  expect(readByIds().pages[0]!.items[0]!.viewerState?.liked).toBe(true);
+  expect(readByIds().pages[0]!.items[0]!.counts.likes).toBe(6);
+  expect(client.getQueryData<InfiniteData<FeedPageDto>>(otherViewerKey)!.pages[0]!.items[0]!.counts.likes).toBe(5);
+
+  rollback();
+  expect(readByIds().pages[0]!.items[0]!.viewerState?.liked).toBe(false);
+  expect(readByIds().pages[0]!.items[0]!.counts.likes).toBe(5);
+});
+
 it('keeps the saved Reels list in sync with the other tabs, including rollback', () => {
   const { client, feed, read } = setup();
   const savedKey = ['feed', 'saved', 'viewer'];

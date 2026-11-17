@@ -15,6 +15,7 @@ import { InventoryCalendar } from '../inventory/inventory-calendar';
 import { AdminOverview } from '../overview/admin-overview';
 import { SearchMonitoring } from '../search-monitoring/search-monitoring';
 import { DiscoveryJobs } from '../discovery-jobs/discovery-jobs';
+import { AiUsageReport } from '../ai-usage/ai-usage-report';
 import searchStyles from '../search-monitoring/search-monitoring.module.css';
 import {
   IconOverview,
@@ -275,6 +276,16 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
               <output>{vi.api.loading}</output>
             ) : (
               profile.data && <DiscoveryJobs key={label} group={label === 'admin.searchJobs' ? 'search' : 'recommend'} />
+            )
+          ) : label === 'admin.aiUsage' ? (
+            profile.isPending ? (
+              <output>{vi.api.loading}</output>
+            ) : user.role !== 'superadmin' ? (
+              <section className="admin-content-card">
+                <p role="alert">{vi.api.superadminOnly}</p>
+              </section>
+            ) : (
+              profile.data && <AiUsageReport />
             )
           ) : label === 'admin.users' || label === 'admin.staff' ? (
             profile.isPending ? (

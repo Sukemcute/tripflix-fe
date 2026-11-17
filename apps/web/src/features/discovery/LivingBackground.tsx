@@ -27,6 +27,9 @@ type Pellet = Point & { age: number };
 type Fish = Point & { heading: number; speed: number; seed: number; phase: number };
 type Brush = CanvasRenderingContext2D;
 
+// Cache the radial light textures per renderer; the canvas can be collected on navigation.
+const glowTextures = new WeakMap<Brush, Map<string, HTMLCanvasElement>>();
+
 function clamp(value: number, min = 0, max = 1) {
   return Math.min(max, Math.max(min, value));
 }
@@ -59,11 +62,25 @@ function ellipse(ctx: Brush, x: number, y: number, rx: number, ry: number, color
 }
 
 function glow(ctx: Brush, x: number, y: number, radius: number, color: string) {
-  const light = ctx.createRadialGradient(x, y, 0, x, y, radius);
-  light.addColorStop(0, color);
-  light.addColorStop(1, 'transparent');
-  ctx.fillStyle = light;
-  ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+  let textures = glowTextures.get(ctx);
+  if (!textures) {
+    textures = new Map();
+    glowTextures.set(ctx, textures);
+  }
+  let texture = textures.get(color);
+  if (!texture) {
+    texture = document.createElement('canvas');
+    texture.width = texture.height = 128;
+    const brush = texture.getContext('2d');
+    if (!brush) return;
+    const light = brush.createRadialGradient(64, 64, 0, 64, 64, 64);
+    light.addColorStop(0, color);
+    light.addColorStop(1, 'transparent');
+    brush.fillStyle = light;
+    brush.fillRect(0, 0, 128, 128);
+    textures.set(color, texture);
+  }
+  ctx.drawImage(texture, x - radius, y - radius, radius * 2, radius * 2);
 }
 
 function ring(ctx: Brush, x: number, y: number, radius: number, opacity: number) {
@@ -301,10 +318,9 @@ function drawBoat(
 
 function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hover: HTMLSpanElement) {
   const home = canvas.closest<HTMLElement>('main');
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { alpha: false });
   if (!ctx || !home) return;
 
-  const search = home.querySelector('#ota-search');
   const rower = home.querySelector<HTMLImageElement>('[data-hero-layer="rower"] img') ?? new Image();
   const caustics = document.createElement('canvas');
   const floor = caustics.getContext('2d');
@@ -321,6 +337,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
   }));
   const padPositions: Point[] = [];
   const islands: HTMLCanvasElement[] = [];
+  const trees: HTMLCanvasElement[] = [];
   let width = 0;
   let height = 0;
   let small = false;
@@ -375,6 +392,8 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
   function measureScroll() {
     maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
     scrollTarget = window.scrollY;
+    // Suspense replaces the initial search placeholder; do not keep that detached node.
+    const search = home!.querySelector('#ota-search');
     introEnd = search ? search.getBoundingClientRect().bottom + scrollTarget : 0;
     updateWaterVisibility();
     requestFrame();
@@ -393,6 +412,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
     caustics.height = Math.max(28, Math.round(caustics.width * height / width));
     floorPixels = floor?.createImageData(caustics.width, caustics.height);
     floorTick = -1;
+    trees.length = 0;
     for (const member of fish) {
       member.x = oldWidth ? member.x * width / oldWidth : member.seed % 2 ? width + 20 : -20;
       member.y = oldHeight ? member.y * height / oldHeight : height * (0.13 + noise(member.seed + 13) * 0.74);
@@ -484,10 +504,21 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
         const x = i % 2 ? width - noise(i + 14) * span * 0.05 : noise(i + 14) * span * 0.05;
         const y = waterPosition(i + 27, 0.77);
         const size = 6 + noise(i + 23) * span * 0.024;
+        if (y < -size * 3 || y > height + size * 3) continue;
         for (let j = 0; j < 3; j++) {
           const px = x + (noise(i * 8 + j) - 0.5) * size * 1.7;
           const py = y + noise(j + i) * size * 1.5;
-          pine(brush, px, py, size * (0.6 + noise(i + j + 444) * 0.4), i * 4 + j);
+          const key = i * 3 + j;
+          let sprite = trees[key];
+          if (!sprite) {
+            sprite = document.createElement('canvas');
+            const extent = Math.ceil(size + 5);
+            sprite.width = sprite.height = extent * 2;
+            const treeBrush = sprite.getContext('2d');
+            if (treeBrush) pine(treeBrush, extent, extent, size * (0.6 + noise(i + j + 444) * 0.4), i * 4 + j);
+            trees[key] = sprite;
+          }
+          brush.drawImage(sprite, px - sprite.width / 2, py - sprite.height / 2);
         }
       }
       for (let i = 0; i < 4; i++) {
@@ -701,7 +732,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
   function draw(now: number) {
     frame = 0;
     if (!active || document.hidden) return;
-    if (previous && now - previous < 1000 / 20 - 1) {
+    if (previous && now - previous < 1000 / 30 - 1) {
       requestFrame();
       return;
     }

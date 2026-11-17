@@ -6,7 +6,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Mascot } from '@/components/mobile-ui';
 import { BUBBLE_MASCOT_SIZE, BUBBLE_SIZE, useAssistant } from './assistant-provider';
 
-export function AssistantTrigger({ size }: { size: number }) {
+/** postId: reel đang xem, để Tripi đọc lộ trình, review và khách sạn của đúng reel đó. */
+export function AssistantTrigger({ size, postId }: { size: number; postId?: string }) {
   const chat = useAssistant();
   const navigation = useNavigation();
   const bubble = useRef<ComponentRef<typeof View>>(null);
@@ -14,12 +15,12 @@ export function AssistantTrigger({ size }: { size: number }) {
     if (!navigation.isFocused()) return;
     const anchor = bubble.current;
     if (!anchor) {
-      chat.openDialog();
+      chat.openDialog(undefined, postId);
       return;
     }
     anchor.measureInWindow((x, y, width, height) => {
       if (!navigation.isFocused() || bubble.current !== anchor) return;
-      chat.openDialog(width > 0 && height > 0 ? { x, y, width, height } : undefined);
+      chat.openDialog(width > 0 && height > 0 ? { x, y, width, height } : undefined, postId);
     });
   };
   return (

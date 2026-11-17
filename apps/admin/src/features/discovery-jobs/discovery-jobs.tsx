@@ -5,11 +5,14 @@ import { useApiSession } from '@tripflix/api-client';
 import {
   adminDiscoveryJobsControllerList,
   adminDiscoveryJobsControllerRun,
+  adminDiscoveryJobsControllerSetInterval,
 } from '@tripflix/api-client/core-api/admin-discovery-jobs/admin-discovery-jobs';
 import type { DiscoveryJobDto, DiscoveryJobsDto, JobRunDto, RecommendStatsDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import { AdminApiError } from '../shell/api-state';
+import { formatInterval, INTERVAL_PRESET_MINUTES, toIntervalMs } from './interval';
+import { VocabGaps } from './vocab-gaps';
 
 const copy = vi.discoveryJobs;
 export type DiscoveryJobGroup = 'search' | 'recommend';
@@ -26,7 +29,6 @@ export function nextPollMs(data: DiscoveryJobsDto | undefined): number {
 const timestamp = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Bangkok', dateStyle: 'short', timeStyle: 'medium' });
 const formatAt = (at: number | string | null) => (at === null ? '—' : timestamp.format(new Date(at)));
 const formatDuration = (ms: number | null) => (ms === null ? '—' : ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} s`);
-const formatInterval = (ms: number) => (ms >= 3_600_000 ? `${ms / 3_600_000} giờ` : `${ms / 60_000} phút`);
 
 function formatSummary(run: JobRunDto): string {
   const s = run.summary;
@@ -92,12 +94,74 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
                 </button>
               )}
             </div>
+            {canRun && job.canChangeInterval && <IntervalEditor job={job} queryKey={queryKey} />}
             <RunsTable runs={job.runs} />
           </section>
         );
       })}
 
       {data?.recommendStats && <RecommendStats stats={data.recommendStats} />}
+      {group === 'search' && <VocabGaps />}
+    </>
+  );
+}
+
+function IntervalEditor({ job, queryKey }: { job: DiscoveryJobDto; queryKey: string[] }) {
+  const client = useQueryClient();
+  const [minutes, setMinutes] = useState(job.intervalMs === null ? '' : String(job.intervalMs / 60_000));
+  const [notice, setNotice] = useState('');
+  const save = useMutation({
+    mutationFn: async (intervalMs: number | null) => (await adminDiscoveryJobsControllerSetInterval(job.job, { intervalMs })).data,
+    onSuccess: (result) => {
+      if (result?.intervalMs) setMinutes(String(result.intervalMs / 60_000));
+      setNotice(copy.interval.saved);
+    },
+    onSettled: () => client.invalidateQueries({ queryKey }),
+  });
+  const intervalMs = toIntervalMs(Number(minutes));
+  const presets: number[] = [...INTERVAL_PRESET_MINUTES];
+  const isPreset = presets.includes(Number(minutes));
+  const isDefault = job.intervalMs === job.defaultIntervalMs;
+
+  return (
+    <>
+      <form
+        className="admin-filters"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (intervalMs !== null) save.mutate(intervalMs);
+        }}
+      >
+        <label>
+          {copy.interval.label}
+          <select value={isPreset ? minutes : 'custom'} onChange={(event) => setMinutes(event.target.value === 'custom' ? '' : event.target.value)}>
+            {presets.map((m) => (
+              <option key={m} value={m}>
+                {`${formatInterval(m * 60_000)}${m * 60_000 === job.defaultIntervalMs ? ` (${copy.interval.isDefault})` : ''}`}
+              </option>
+            ))}
+            <option value="custom">{copy.interval.custom}</option>
+          </select>
+        </label>
+        {!isPreset && (
+          <label>
+            {copy.interval.custom}
+            <input type="number" min={1} max={1440} step={1} required value={minutes} onChange={(event) => setMinutes(event.target.value)} />
+          </label>
+        )}
+        <button type="submit" className="admin-primary" disabled={save.isPending || intervalMs === null || intervalMs === job.intervalMs}>
+          {save.isPending ? copy.interval.saving : copy.interval.save}
+        </button>
+        {!isDefault && job.defaultIntervalMs !== null && (
+          <button type="button" className="admin-secondary" disabled={save.isPending} onClick={() => save.mutate(null)}>
+            {t('discoveryJobs.interval.reset', { interval: formatInterval(job.defaultIntervalMs) })}
+          </button>
+        )}
+      </form>
+      {minutes !== '' && intervalMs === null && <output className="admin-helper">{copy.interval.invalid}</output>}
+      {job.job === 'recommend_build' && <p className="admin-helper">{copy.interval.recommendNote}</p>}
+      {notice && <output className="admin-helper">{notice}</output>}
+      {save.isError && <AdminApiError error={save.error} />}
     </>
   );
 }

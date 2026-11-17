@@ -8,8 +8,6 @@ import { Keyboard, Modal, Pressable, StyleSheet, View, useWindowDimensions } fro
 import {
   GestureDetector,
   GestureHandlerRootView,
-  GestureStateManager,
-  useNativeGesture,
   usePanGesture,
   type PanGestureActiveEvent,
 } from 'react-native-gesture-handler';
@@ -18,7 +16,6 @@ import Animated, {
   interpolate,
   useAnimatedKeyboard,
   useAnimatedReaction,
-  useAnimatedScrollHandler,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
@@ -28,6 +25,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 import { IconButton, Notice, Txt } from '@/components/mobile-ui';
 import { SHEET_CLOSE_SPRING, SHEET_OPEN_SPRING } from '@/components/motion';
+import { useSheetListDrag } from '@/components/use-sheet-list-drag';
 import { ReelCommentComposer } from './reel-comment-composer';
 import { LiveComments } from './live-comments';
 
@@ -44,6 +42,8 @@ export function ReelCommentsPanel({
   hasBackdrop = false,
   loginReturnTo = '/(tabs)',
   showSummary = false,
+  focusCommentId,
+  focusThreadId,
 }: {
   visible: boolean;
   /** 0 when closed, 1 when fully open; follows the finger so the video can move with the sheet. */
@@ -60,14 +60,14 @@ export function ReelCommentsPanel({
   loginReturnTo?: string;
   /** Chỉ reel bật; trang chi tiết bài dùng chung khung này nhưng không có AI summary. */
   showSummary?: boolean;
+  /** Bình luận cần nhảy tới khi mở từ thông báo, và bình luận gốc của luồng nếu đó là trả lời. */
+  focusCommentId?: string;
+  focusThreadId?: string;
 }) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const sheetHeight = getReelCommentsSheetHeight(height);
   const translateY = useSharedValue(height);
-  const scrollY = useSharedValue(0);
-  const startX = useSharedValue(0);
-  const startY = useSharedValue(0);
   const startOffset = useSharedValue(0);
   const closing = useSharedValue(false);
   const canDrag = useDerivedValue(() => !closing.get());
@@ -90,13 +90,6 @@ export function ReelCommentsPanel({
     Keyboard.dismiss();
     animateOut(0);
   };
-  useEffect(() => {
-    if (visible) {
-      scrollY.set(0);
-      closing.set(false);
-      translateY.set(withSpring(0, SHEET_OPEN_SPRING));
-    }
-  }, [visible, translateY, scrollY, closing]);
   const move = (event: PanGestureActiveEvent) => {
     'worklet';
     translateY.set(Math.max(0, startOffset.get() + event.translationY));
@@ -119,35 +112,30 @@ export function ReelCommentsPanel({
     onUpdate: move,
     onDeactivate: settle,
   });
-  const nativeScroll = useNativeGesture();
-  const listPan = usePanGesture({
+  // Danh sách cuộn dở thì cuộn lên trước, chạm đỉnh thì cùng ngón tay đó kéo sheet.
+  const {
+    pan: listPan,
+    scroll: nativeScroll,
+    onScroll,
+    scrollY,
+  } = useSheetListDrag({
     enabled: canDrag,
-    manualActivation: true,
-    simultaneousWith: nativeScroll,
-    onTouchesDown: (event) => {
-      const touch = event.allTouches[0];
-      if (!touch || scrollY.get() > 1 || event.numberOfTouches !== 1) {
-        GestureStateManager.fail(event.handlerTag);
-        return;
-      }
-      startX.set(touch.absoluteX);
-      startY.set(touch.absoluteY);
-    },
-    onTouchesMove: (event) => {
-      const touch = event.allTouches[0];
-      if (!touch) return;
-      const dy = touch.absoluteY - startY.get();
-      const dx = Math.abs(touch.absoluteX - startX.get());
-      if (dy < -8 || dx > 20 || event.numberOfTouches !== 1) GestureStateManager.fail(event.handlerTag);
-      else if (dy > 12 && dy > dx && scrollY.get() <= 1) GestureStateManager.activate(event.handlerTag);
-    },
+    activateAfter: 12,
     onActivate: (event) => {
+      'worklet';
       // Activation happens a few points in; subtracting that keeps the sheet from jumping.
       startOffset.set(translateY.get() - event.translationY);
     },
     onUpdate: move,
     onDeactivate: settle,
   });
+  useEffect(() => {
+    if (visible) {
+      scrollY.set(0);
+      closing.set(false);
+      translateY.set(withSpring(0, SHEET_OPEN_SPRING));
+    }
+  }, [visible, translateY, scrollY, closing]);
   // Khung đứng yên; chỉ phần đáy dãn theo bàn phím từng khung hình, nên ô nhập nằm ngay trên bàn phím
   // còn danh sách bình luận thấp lại. Lúc bàn phím mở, nó đã che thanh Home nên không cần đệm cho thanh đó.
   const keyboard = useAnimatedKeyboard();
@@ -166,9 +154,6 @@ export function ReelCommentsPanel({
     () => interpolate(translateY.get(), [0, sheetHeight], [1, 0], Extrapolation.CLAMP),
     (progress) => openProgress.set(progress),
   );
-  const onScroll = useAnimatedScrollHandler((event) => {
-    scrollY.set(event.contentOffset.y);
-  });
   const list = useRef<ComponentRef<typeof Animated.ScrollView>>(null);
   const revealComment = useCallback((y: number) => list.current?.scrollTo({ y, animated: true }), []);
   const renderContent = (content: ReactNode) => (
@@ -224,6 +209,8 @@ export function ReelCommentsPanel({
                 renderContent={renderContent}
                 onRevealComment={revealComment}
                 showSummary={showSummary}
+                focusCommentId={focusCommentId}
+                focusThreadId={focusThreadId}
                 onLoginRequired={() => {
                   close();
                   router.push({ pathname: '/login', params: { returnTo: loginReturnTo } });
@@ -241,8 +228,12 @@ export function ReelCommentsPanel({
                           <Txt variant="caption">{vi.mobile.reelComments.yourInitials}</Txt>
                         </View>
                         <View style={styles.body}>
-                          <Txt variant="caption" style={styles.muted}>{vi.mobile.reels.sampleCommentAuthor}</Txt>
-                          <Txt variant="small" style={styles.message}>{comment.body}</Txt>
+                          <Txt variant="caption" style={styles.muted}>
+                            {vi.mobile.reels.sampleCommentAuthor}
+                          </Txt>
+                          <Txt variant="small" style={styles.message}>
+                            {comment.body}
+                          </Txt>
                           <Txt variant="caption" style={styles.muted}>
                             {vi.mobile.reelComments.justNow}
                           </Txt>
@@ -291,7 +282,12 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
   },
-  content: { paddingHorizontal: spacing.md, paddingTop: spacing.xs, paddingBottom: spacing.sm, gap: spacing.sm },
+  content: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
+    gap: spacing.sm,
+  },
   comment: { flexDirection: 'row', gap: spacing.sm },
   avatar: {
     width: 30,

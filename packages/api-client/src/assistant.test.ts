@@ -1,12 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { parseSseEvents, sendAssistantMessage } from './assistant';
+import { AssistantError, parseSseEvents, sendAssistantMessage } from './assistant';
 import { configureHttp } from './http';
 
 const stream = [
   'event: status\ndata: {"step":"understanding"}\n\n',
   'event: text\ndata: {"delta":"Gợi ý cho bạn"}\n\n',
   'event: cards\ndata: {"items":[{"ref":"r1","id":"P-1","kind":"stay","title":"Khách sạn A"}]}\n\n',
-  'event: done\ndata: {"kind":"answer","usage":{}}\n\n',
+  'event: suggestions\ndata: {"items":["Cần mang gì?"]}\n\n',
+  'event: trip\ndata: {"v":1,"place":"Đà Nẵng","adults":2}\n\n',
+  'event: done\ndata: {"kind":"answer","usage":{},"degraded":["llm"]}\n\n',
 ].join('');
 
 afterEach(() => vi.restoreAllMocks());
@@ -34,6 +36,25 @@ describe('sendAssistantMessage', () => {
       kind: 'answer',
       text: 'Gợi ý cho bạn',
       cards: [{ ref: 'r1', id: 'P-1', kind: 'stay', title: 'Khách sạn A' }],
+      suggestions: ['Cần mang gì?'],
+      trip: { v: 1, place: 'Đà Nẵng', adults: 2 },
+      degraded: ['llm'],
+    });
+  });
+
+  it('turns a refused turn into an AssistantError with its code', async () => {
+    configureHttp({ baseUrl: '' });
+    const refusal = { code: 'GUEST_LIMIT_REACHED', message: 'x', retryAfterSeconds: 3600, loginRequired: true };
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(refusal), { status: 429 }));
+    const error = await sendAssistantMessage({ conversationId: 'x', message: 'hi' }, { baseUrl: '/ai' }).catch(
+      (caught: unknown) => caught,
+    );
+    expect(error).toBeInstanceOf(AssistantError);
+    expect(error).toMatchObject({
+      status: 429,
+      code: 'GUEST_LIMIT_REACHED',
+      retryAfterSeconds: 3600,
+      isLoginRequired: true,
     });
   });
 

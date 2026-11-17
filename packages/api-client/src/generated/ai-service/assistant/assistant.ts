@@ -18,12 +18,29 @@ import { http } from '../../../http';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+export type chatChatPostResponse409 = {
+  data: void;
+  status: 409;
+};
+
 export type chatChatPostResponse422 = {
   data: HTTPValidationError;
   status: 422;
 };
 
-export type chatChatPostResponseError = chatChatPostResponse422 & {
+export type chatChatPostResponse429 = {
+  data: void;
+  status: 429;
+};
+
+export type chatChatPostResponse503 = {
+  data: void;
+  status: 503;
+};
+
+export type chatChatPostResponseError = (
+  chatChatPostResponse409 | chatChatPostResponse422 | chatChatPostResponse429 | chatChatPostResponse503
+) & {
   headers: Headers;
 };
 
@@ -66,7 +83,10 @@ export const chatChatPost = async (
 
 export const getChatChatPostMutationKey = () => ['chatChatPost'] as const;
 
-export const getChatChatPostMutationOptions = <TError = HTTPValidationError, TContext = unknown>(options?: {
+export const getChatChatPostMutationOptions = <
+  TError = void | HTTPValidationError,
+  TContext = unknown,
+>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof chatChatPost>>,
     TError,
@@ -101,13 +121,13 @@ export const getChatChatPostMutationOptions = <TError = HTTPValidationError, TCo
 
 export type ChatChatPostMutationResult = NonNullable<Awaited<ReturnType<typeof chatChatPost>>>;
 export type ChatChatPostMutationBody = ChatRequest;
-export type ChatChatPostMutationError = HTTPValidationError;
+export type ChatChatPostMutationError = void | HTTPValidationError;
 export type ChatChatPostMutationVariables = { data: ChatRequest };
 
 /**
  * @summary Chat
  */
-export const useChatChatPost = <TError = HTTPValidationError, TContext = unknown>(
+export const useChatChatPost = <TError = void | HTTPValidationError, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof chatChatPost>>,

@@ -2791,6 +2791,30 @@ body:has([class*="feedPageWrapper"]) #content {
   background: var(--color-warm-mist);
   overflow: hidden;
 }
+/* Ảnh tác giả tải lên ở trang chi tiết bài: ảnh đầu (ảnh bìa) rộng cả hàng, các ảnh sau chia hai cột. */
+.post-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.post-gallery-item {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+  background: var(--color-warm-mist);
+  overflow: hidden;
+}
+.post-gallery-item:first-child {
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 9;
+  border-radius: 20px;
+}
+.post-gallery-item > img {
+  object-fit: cover;
+}
 .post-cover.is-brand {
   background: linear-gradient(135deg, var(--color-sea-mist), var(--color-sun-soft));
 }
@@ -3551,9 +3575,20 @@ body:has([class*="feedPageWrapper"]) #content {
   flex-direction: column;
   gap: 8px;
 }
-.composer-field label {
+.composer-field label,
+.composer-field-title {
   font-size: 14px;
   font-weight: 700;
+}
+.composer-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.composer-fieldset > legend {
+  margin-bottom: 8px;
+  padding: 0;
 }
 .composer-label-row {
   display: flex;
@@ -3588,4 +3623,14 @@ body:has([class*="feedPageWrapper"]) #content {
   .account-page .auth-field input {
     transition: none;
   }
+}
+
+/* Tên người dùng dẫn tới trang cá nhân công khai (TF47): giữ màu chữ xung quanh. */
+.profile-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.profile-link:hover {
+  text-decoration: underline;
 }

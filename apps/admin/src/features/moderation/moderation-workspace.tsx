@@ -250,7 +250,7 @@ function AppealQueue() {
               ? original.evidenceSnapshot.text
               : 'Quyết định cũ chưa lưu snapshot'}
           </p><p className={operations.meta}>Chính sách: {original.policyVersion ?? 'Chưa ghi phiên bản'}</p></section>
-          <section><h4>Nội dung hiện tại</h4><p>{targetText ?? 'Không khả dụng'}</p><p className={operations.meta}>Trạng thái: {({ hidden: 'Đang ẩn', removed: 'Đã gỡ', visible: 'Đang hiển thị', published: 'Đã công khai', draft: 'Bản nháp' } as Record<string, string>)[targetStatus ?? ''] ?? 'Không khả dụng'}</p></section>
+          <section><h4>Nội dung hiện tại</h4><p>{targetText ?? 'Không khả dụng'}</p><p className={operations.meta}>Trạng thái: {({ held: vi.api.moderationHeld, hidden: 'Đang ẩn', removed: 'Đã gỡ', visible: 'Đang hiển thị', published: 'Đã công khai', draft: 'Bản nháp' } as Record<string, string>)[targetStatus ?? ''] ?? 'Không khả dụng'}</p></section>
           </div>
           <p className={operations.identifier}>
             Mã bài viết: {original.postId}
@@ -946,10 +946,10 @@ function CaseDetailModal({
               disabled={decision.isPending || !reasonCode}
               onClick={() => decision.mutate('dismiss')}
             >
-              Đóng hồ sơ
+              {item.target?.status === 'held' ? vi.api.moderationReleaseHeld : 'Đóng hồ sơ'}
             </button>
           )}
-          {item?.target && ['visible', 'published'].includes(item.target.status) && (
+          {item?.target && ['visible', 'published', 'held'].includes(item.target.status) && (
             <button
               type="button"
               className="btn-decision hide"
@@ -959,17 +959,17 @@ function CaseDetailModal({
               Ẩn (Tạm thời)
             </button>
           )}
-          {item?.target && ['hidden', 'removed'].includes(item.target.status) && (
+          {item?.target && ['held', 'hidden', 'removed'].includes(item.target.status) && (
             <button
               type="button"
               className="btn-decision restore"
               disabled={decision.isPending || !reasonCode}
               onClick={() => decision.mutate('restore')}
             >
-              Khôi phục
+              {item.target.status === 'held' ? vi.api.moderationReleaseHeld : 'Khôi phục'}
             </button>
           )}
-          {item?.target && ['visible', 'published', 'hidden'].includes(item.target.status) && (
+          {item?.target && ['visible', 'published', 'hidden', 'held'].includes(item.target.status) && (
             <button
               type="button"
               className="btn-decision remove"

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getInitial } from '@/features/auth/account-helpers';
+import { isOptimizedImageUrl } from '@/lib/remote-images';
 import { LiveComments } from './live-comments';
 import { getPostCover, POST_COVER_MASCOT } from './post-cover';
 
@@ -130,7 +131,9 @@ export function LivePostDetail({ id, focusCommentId }: { id: string; focusCommen
                 <span className="post-avatar" aria-hidden="true">
                   {getInitial(authorName)}
                 </span>
-                <span>{authorName}</span>
+                <Link prefetch={false} className="profile-link" href={`/u/${post.authorId}`}>
+                  {authorName}
+                </Link>
                 {canShowFollow && (user ? (
                   <button type="button" className="secondary-button" onClick={follow.toggle} disabled={!follow.canToggle}>
                     {follow.isLoading || follow.isUpdating ? vi.api.loading
@@ -150,7 +153,24 @@ export function LivePostDetail({ id, focusCommentId }: { id: string; focusCommen
               {canShowFollow && <ApiErrorNotice error={follow.error} retry={() => void follow.retry()} />}
             </header>
 
-            {post.mediaIds.length > 0 && (
+            {!!post.images?.length && (
+              <ul className="post-gallery" aria-label={post.title}>
+                {post.images.map((image, index) => (
+                  <li key={image.id} className="post-gallery-item">
+                    <Image
+                      src={image.url}
+                      alt={t('api.postImageAlt', { index: index + 1, total: post.images?.length ?? 0 })}
+                      fill
+                      sizes={index === 0 ? '(max-width: 900px) 100vw, 60vw' : '(max-width: 900px) 50vw, 30vw'}
+                      unoptimized={!isOptimizedImageUrl(image.url)}
+                      priority={index === 0}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {post.mediaIds.length > 0 && !post.images?.length && (
               <figure className={cover ? 'post-cover' : 'post-cover is-brand'}>
                 {cover ? (
                   <Image src={cover} alt="" fill sizes="(max-width: 900px) 100vw, 60vw" />
@@ -329,7 +349,6 @@ export function LivePostDetail({ id, focusCommentId }: { id: string; focusCommen
                     </button>
                   )}
                 </div>
-                <p className="post-card-note">{vi.api.mediaUnavailable}</p>
               </section>
             )}
           </aside>

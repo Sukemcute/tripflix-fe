@@ -82,6 +82,7 @@ export function PostCard({
 
   const postImages = useMemo(() => {
     return getPostImages({
+      uploadedImageUrls: post.images?.map((image) => image.url),
       mediaIds: post.mediaIds,
       destinationName: trip?.destinationName,
       hotelName: trip?.hotelName,

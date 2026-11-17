@@ -9,6 +9,10 @@ import type { CreateUploadDtoMimeType } from './createUploadDtoMimeType';
 export interface CreateUploadDto {
   mimeType: CreateUploadDtoMimeType;
   fileSizeBytes: number;
-  /** Làm tròn lên số nguyên. Tối đa 5 phút. */
-  durationSec: number;
+  /** Bắt buộc với video, làm tròn lên số nguyên, tối đa 5 phút. Ảnh thì không gửi. */
+  durationSec?: number;
+  /** Chỉ cho ảnh: chiều rộng đọc từ file, để dàn trang. */
+  widthPx?: number;
+  /** Chỉ cho ảnh: chiều cao đọc từ file. */
+  heightPx?: number;
 }

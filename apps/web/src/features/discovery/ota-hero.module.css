@@ -489,14 +489,17 @@
 @media (prefers-reduced-motion: no-preference) {
   .rowerLayer {
     animation: rowerVoyage 48s linear infinite;
+    animation-play-state: var(--home-animation-state, running);
   }
 
   .rowerImage {
     animation: rowerBob 4.8s ease-in-out infinite;
+    animation-play-state: var(--home-animation-state, running);
   }
 
   .rowerLayer::before {
     animation: paddleRipple 4.8s ease-out infinite;
+    animation-play-state: var(--home-animation-state, running);
   }
 
   .typographyLayer {

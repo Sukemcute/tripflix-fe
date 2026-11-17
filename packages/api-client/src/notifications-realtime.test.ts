@@ -11,7 +11,10 @@ const invalidateQueries = vi.fn();
 let cleanup: (() => void) | void;
 let sessionState = { isReady: true, user: { id: 'u1' } as { id: string } | null };
 
-vi.mock('react', () => ({ useEffect: (effect: () => (() => void) | void) => (cleanup = effect()) }));
+vi.mock('react', () => ({
+  useEffect: (effect: () => (() => void) | void) => (cleanup = effect()),
+  useRef: <T>(current: T) => ({ current }),
+}));
 vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ invalidateQueries }) }));
 vi.mock('./session', () => ({ useApiSession: () => sessionState }));
 
@@ -59,6 +62,15 @@ describe('useNotificationsRealtime', () => {
     fire('connect');
     expect(invalidateQueries).toHaveBeenCalledTimes(3);
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['notifications', 'u1'] });
+  });
+
+  it('có thông báo mới thì chuyển nguyên payload cho callback, ví dụ để mobile hiện banner', () => {
+    configureHttp({ baseUrl: 'https://gateway.example' });
+    const onCreated = vi.fn();
+    useNotificationsRealtime(onCreated);
+    fire(NOTIFICATION_CREATED_EVENT, { item: { id: 'n1' } });
+    expect(onCreated).toHaveBeenCalledWith({ item: { id: 'n1' } });
+    expect(invalidateQueries).toHaveBeenCalledTimes(1);
   });
 
   it('token bị từ chối hoặc hết hạn thì làm mới token rồi nối lại, tối đa 3 lần liên tiếp', async () => {

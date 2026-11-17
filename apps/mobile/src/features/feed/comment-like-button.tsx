@@ -71,12 +71,15 @@ export function CommentLikeButton({
       <Animated.View style={heartStyle}>
         <Icon
           name={isLiked ? 'heart' : 'heart-outline'}
-          size={compact ? 15 : 20}
+          size={compact ? 18 : 22}
           color={isLiked ? colors.coral : colors.textMuted}
         />
       </Animated.View>
       {likeCount > 0 && (
-        <Txt variant="caption" style={[isLiked ? styles.countLiked : styles.count, compact && styles.compactCount]}>
+        <Txt
+          variant="caption"
+          style={[isLiked ? styles.countLiked : styles.count, compact && styles.compactCount]}
+        >
           {countFormat.format(likeCount)}
         </Txt>
       )}
@@ -99,7 +102,7 @@ const styles = StyleSheet.create({
     minHeight: 26,
     marginLeft: 'auto',
   },
-  compactCount: { fontSize: 10, lineHeight: 15 },
+  compactCount: { fontSize: 11, lineHeight: 15 },
   pressed: { opacity: 0.6 },
   count: { color: colors.textMuted },
   countLiked: { color: colors.coralInk },

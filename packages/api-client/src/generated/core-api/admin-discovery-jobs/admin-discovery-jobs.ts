@@ -20,7 +20,13 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { AdminDiscoveryJobsControllerListParams, DiscoveryJobsDto, RunJobDto } from '../model';
+import type {
+  AdminDiscoveryJobsControllerListParams,
+  DiscoveryJobsDto,
+  JobIntervalDto,
+  RunJobDto,
+  SetJobIntervalRequestDto,
+} from '../model';
 
 import { http } from '../../../http';
 
@@ -306,4 +312,145 @@ export const useAdminDiscoveryJobsControllerRun = <TError = void, TContext = unk
   TContext
 > => {
   return useMutation(getAdminDiscoveryJobsControllerRunMutationOptions(options), queryClient);
+};
+export type adminDiscoveryJobsControllerSetIntervalResponse200 = {
+  data: JobIntervalDto;
+  status: 200;
+};
+
+export type adminDiscoveryJobsControllerSetIntervalResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type adminDiscoveryJobsControllerSetIntervalResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type adminDiscoveryJobsControllerSetIntervalResponseSuccess =
+  adminDiscoveryJobsControllerSetIntervalResponse200 & {
+    headers: Headers;
+  };
+export type adminDiscoveryJobsControllerSetIntervalResponseError = (
+  adminDiscoveryJobsControllerSetIntervalResponse400 | adminDiscoveryJobsControllerSetIntervalResponse404
+) & {
+  headers: Headers;
+};
+
+export type adminDiscoveryJobsControllerSetIntervalResponse =
+  | adminDiscoveryJobsControllerSetIntervalResponseSuccess
+  | adminDiscoveryJobsControllerSetIntervalResponseError;
+
+export const getAdminDiscoveryJobsControllerSetIntervalUrl = (
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',
+) => {
+  return `/api/v1/admin/discovery/jobs/${job}/interval`;
+};
+
+/**
+ * @summary Đổi chu kỳ tự chạy của job (explore, recommend_build); có hiệu lực trong vòng 1 phút, không cần khởi động lại
+ */
+export const adminDiscoveryJobsControllerSetInterval = async (
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',
+  setJobIntervalRequestDto: SetJobIntervalRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<adminDiscoveryJobsControllerSetIntervalResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<adminDiscoveryJobsControllerSetIntervalResponse>(
+    getAdminDiscoveryJobsControllerSetIntervalUrl(job),
+    {
+      ...options,
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+      body: JSON.stringify(setJobIntervalRequestDto),
+    },
+  );
+};
+
+export const getAdminDiscoveryJobsControllerSetIntervalMutationKey = () =>
+  ['adminDiscoveryJobsControllerSetInterval'] as const;
+
+export const getAdminDiscoveryJobsControllerSetIntervalMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>,
+    TError,
+    AdminDiscoveryJobsControllerSetIntervalMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>,
+  TError,
+  AdminDiscoveryJobsControllerSetIntervalMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminDiscoveryJobsControllerSetIntervalMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>,
+    AdminDiscoveryJobsControllerSetIntervalMutationVariables
+  > = (props) => {
+    const { job, data } = props ?? {};
+
+    return adminDiscoveryJobsControllerSetInterval(job, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminDiscoveryJobsControllerSetIntervalMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>
+>;
+export type AdminDiscoveryJobsControllerSetIntervalMutationBody = SetJobIntervalRequestDto;
+export type AdminDiscoveryJobsControllerSetIntervalMutationError = void;
+export type AdminDiscoveryJobsControllerSetIntervalMutationVariables = {
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge';
+  data: SetJobIntervalRequestDto;
+};
+
+/**
+ * @summary Đổi chu kỳ tự chạy của job (explore, recommend_build); có hiệu lực trong vòng 1 phút, không cần khởi động lại
+ */
+export const useAdminDiscoveryJobsControllerSetInterval = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>,
+      TError,
+      AdminDiscoveryJobsControllerSetIntervalMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetInterval>>,
+  TError,
+  AdminDiscoveryJobsControllerSetIntervalMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminDiscoveryJobsControllerSetIntervalMutationOptions(options), queryClient);
 };

@@ -32,6 +32,12 @@ export {
 export { getSecondsLeft, useResendCooldown } from './resend-cooldown';
 export { socialApi } from './social';
 export { useFollowAuthor } from './follows';
+export {
+  getPublicProfileQueryKey,
+  useAuthorReels,
+  useAuthorVlogs,
+  usePublicProfile,
+} from './public-profile';
 export { moderationApi } from './moderation';
 export { removeUnavailablePost } from './remove-unavailable-post';
 export { useSocialPosts } from './queries';
@@ -63,13 +69,16 @@ export {
   type ReelFeedTab,
 } from './feed';
 export {
+  getNotificationPostTarget,
   notificationsApi,
+  readCreatedNotification,
   useNotifications,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
   type InboxNotification,
   type NotificationsPage,
   type NotificationReadResult,
+  type NotificationPostTarget,
 } from './notifications';
 export { NOTIFICATION_CREATED_EVENT, useNotificationsRealtime } from './notifications-realtime';
 export { findCachedFeedCard, removeReelFromSavedFeedCache, updateReelSocialCache } from './reel-social-cache';
@@ -128,6 +137,16 @@ export {
 } from './commerce';
 export { PresignedUploadError, uploadChunkToPresignedUrl } from './media-upload';
 export {
+  IMAGE_MIME_TYPES,
+  MAX_POST_IMAGES,
+  MAX_POST_IMAGE_BYTES,
+  resolveImageMimeType,
+  uploadImage,
+  type ImageMimeType,
+  type ImageUploadOptions,
+  type ImageUploadSource,
+} from './image-upload';
+export {
   resolveVideoMimeType,
   uploadVideo,
   type VideoMimeType,
@@ -135,9 +154,13 @@ export {
   type VideoUploadSource,
 } from './video-upload';
 export {
+  AssistantError,
   parseSseEvents,
   sendAssistantMessage,
   type AssistantAnswer,
   type AssistantAnswerKind,
   type AssistantCard,
+  type AssistantAction,
+  type AssistantCardLine,
+  type AssistantTrip,
 } from './assistant';

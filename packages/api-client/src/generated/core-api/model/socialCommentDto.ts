@@ -4,8 +4,10 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { SocialCommentDtoStatus } from './socialCommentDtoStatus';
 
 export interface SocialCommentDto {
+  status?: SocialCommentDtoStatus;
   id: string;
   postId: string;
   authorId: string;

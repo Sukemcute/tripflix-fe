@@ -26,6 +26,8 @@ import type {
   ForgotPasswordDto,
   GoogleLoginDto,
   JwksDto,
+  LoginCodeDto,
+  LoginCodeResultDto,
   LoginDto,
   MyProfileDto,
   PasswordKeyDto,
@@ -403,6 +405,112 @@ export const useAuthControllerRegister = <TError = unknown, TContext = unknown>(
   TContext
 > => {
   return useMutation(getAuthControllerRegisterMutationOptions(options), queryClient);
+};
+export type authControllerRequestLoginCodeResponse202 = {
+  data: LoginCodeResultDto;
+  status: 202;
+};
+
+export type authControllerRequestLoginCodeResponseSuccess = authControllerRequestLoginCodeResponse202 & {
+  headers: Headers;
+};
+export type authControllerRequestLoginCodeResponse = authControllerRequestLoginCodeResponseSuccess;
+
+export const getAuthControllerRequestLoginCodeUrl = () => {
+  return `/api/auth/login-code`;
+};
+
+export const authControllerRequestLoginCode = async (
+  loginCodeDto: LoginCodeDto,
+  options?: Parameters<typeof http>[1],
+): Promise<authControllerRequestLoginCodeResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<authControllerRequestLoginCodeResponse>(getAuthControllerRequestLoginCodeUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(loginCodeDto),
+  });
+};
+
+export const getAuthControllerRequestLoginCodeMutationKey = () => ['authControllerRequestLoginCode'] as const;
+
+export const getAuthControllerRequestLoginCodeMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerRequestLoginCode>>,
+    TError,
+    AuthControllerRequestLoginCodeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authControllerRequestLoginCode>>,
+  TError,
+  AuthControllerRequestLoginCodeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAuthControllerRequestLoginCodeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authControllerRequestLoginCode>>,
+    AuthControllerRequestLoginCodeMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return authControllerRequestLoginCode(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerRequestLoginCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerRequestLoginCode>>
+>;
+export type AuthControllerRequestLoginCodeMutationBody = LoginCodeDto;
+export type AuthControllerRequestLoginCodeMutationError = unknown;
+export type AuthControllerRequestLoginCodeMutationVariables = { data: LoginCodeDto };
+
+export const useAuthControllerRequestLoginCode = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerRequestLoginCode>>,
+      TError,
+      AuthControllerRequestLoginCodeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authControllerRequestLoginCode>>,
+  TError,
+  AuthControllerRequestLoginCodeMutationVariables,
+  TContext
+> => {
+  return useMutation(getAuthControllerRequestLoginCodeMutationOptions(options), queryClient);
 };
 export type authControllerLoginResponse200 = {
   data: TokenPairDto;
