@@ -45,6 +45,7 @@ import {
   useTripHotel,
   type SelectedTripBooking,
 } from './trip-booking-store';
+import { LoadingDots } from '@/components/loading-dots';
 
 const copy = vi.mobile.tripPlan;
 
@@ -595,7 +596,7 @@ export function TripBookingScreen() {
           void feed.refetch();
         }}
       />
-      {feed.isPending && <Txt style={styles.muted}>{vi.api.loading}</Txt>}
+      {feed.isPending && <LoadingDots />}
       {!feed.isPending && !feed.isError && posts.length === 0 && (
         <Txt style={styles.muted}>{copy.featuredEmpty}</Txt>
       )}

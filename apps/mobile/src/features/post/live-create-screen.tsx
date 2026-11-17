@@ -33,6 +33,7 @@ import {
   ui,
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
+import { LoadingDots } from '@/components/loading-dots';
 
 export function LiveCreateScreen() {
   const { user, isReady } = useApiSession();
@@ -52,7 +53,7 @@ export function LiveCreateScreen() {
             void query.refetch();
           }}
         />
-        {query.isPending && <Txt>{vi.api.loading}</Txt>}
+        {query.isPending && <LoadingDots />}
       </Screen>
     );
   return <DraftEditor key={postId ?? 'new'} post={query.data?.post} />;

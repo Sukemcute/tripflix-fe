@@ -38,6 +38,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SearchDropPanel } from './search-drop-panel';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { NotificationBell } from '@/features/account/notification-bell';
+import { LoadingDots } from '@/components/loading-dots';
 
 const RECOMMENDATION_LIMIT = 3;
 
@@ -358,7 +359,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
           {understood?.place && <HotelWebRedirectCard place={understood.place} />}
 
           {/* Loading */}
-          {search.isPending && <Txt>{vi.api.loading}</Txt>}
+          {search.isPending && <LoadingDots />}
 
           {/* Error */}
           <ApiErrorNotice
@@ -598,7 +599,7 @@ function StayRecommendations() {
           {vi.ota.recommendationIntro}
         </Txt>
       </View>
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      {query.isPending && <LoadingDots />}
       <ApiErrorNotice
         error={query.error}
         retry={() => {

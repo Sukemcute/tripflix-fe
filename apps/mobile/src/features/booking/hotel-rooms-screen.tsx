@@ -18,6 +18,7 @@ import { CartLink, SelectionBar, Stepper } from './cart-ui';
 import { saveBookingSelection, useBookingSelection } from './cart-store';
 import { RoomCard, type Guests } from './hotel-parts';
 import { saveTripPick } from './trip-booking-store';
+import { LoadingDots } from '@/components/loading-dots';
 
 const text = vi.commerce;
 const hotelText = vi.hotel;
@@ -180,7 +181,7 @@ export function HotelRoomsScreen() {
           void query.refetch();
         }}
       />
-      {query.isFetching && <Txt>{vi.api.loading}</Txt>}
+      {query.isFetching && <LoadingDots />}
       {hotel && !hotel.isAvailable && <Notice tone="warning">{text.unavailable}</Notice>}
       {hotel?.rooms.map((room) => (
         <RoomCard

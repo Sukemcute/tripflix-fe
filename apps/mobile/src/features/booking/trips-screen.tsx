@@ -21,6 +21,7 @@ import {
 } from '@/components/mobile-ui';
 import { CommerceError, useRefreshOnOpen } from './commerce-state';
 import { NotificationBell } from '@/features/account/notification-bell';
+import { LoadingDots } from '@/components/loading-dots';
 
 const text = vi.commerce;
 export function CommerceTripsScreen() {
@@ -53,7 +54,7 @@ export function CommerceTripsScreen() {
         }}
       />
       {!isReady ? (
-        <Txt>{vi.api.loading}</Txt>
+        <LoadingDots />
       ) : user ? (
         <BookedTrips key={user.id} tab={tab} />
       ) : (
@@ -111,7 +112,7 @@ function BookedTrips({ tab }: { tab: number }) {
               void query.refetch();
             }}
           />
-          {query.isPending && <Txt>{vi.api.loading}</Txt>}
+          {query.isPending && <LoadingDots />}
         </>
       }
       ListEmptyComponent={

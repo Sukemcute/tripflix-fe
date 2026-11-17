@@ -32,6 +32,7 @@ import { SHEET_CLOSE_SPRING } from '@/components/motion';
 import { PostActionBar } from './post-action-bar';
 import { ReelCommentsPanel } from './reel-comments-panel';
 import { ReportButton } from './report-button';
+import { LoadingDots } from '@/components/loading-dots';
 
 const copy = vi.mobile.postDetail;
 const NO_COMMENTS: readonly { id: number; body: string }[] = [];
@@ -332,7 +333,7 @@ export function LivePostDetailScreen() {
                 )}
               </View>
             )}
-            {(!isReady || query.isPending) && <Txt style={styles.muted}>{vi.api.loading}</Txt>}
+            {(!isReady || query.isPending) && <LoadingDots />}
             {post && (
               <>
                 {!!post.body && (

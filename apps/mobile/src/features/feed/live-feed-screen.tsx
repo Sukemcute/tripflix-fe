@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { Button, Card, copy, Empty, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 import { View } from 'react-native';
+import { LoadingDots } from '@/components/loading-dots';
 
 export function LivePostCard({ post }: { post: SocialPostDto }) {
   return (
@@ -62,7 +63,7 @@ export function LiveFeedScreen({ kind = 'public' }: { kind?: 'public' | 'mine' |
           onAction={() => router.push({ pathname: '/login', params: { returnTo: '/saved' } })}
         />
       ) : query.isPending && !query.error ? (
-        <Txt>{vi.api.loading}</Txt>
+        <LoadingDots />
       ) : null}
       {posts?.length === 0 &&
         (isSaved ? (

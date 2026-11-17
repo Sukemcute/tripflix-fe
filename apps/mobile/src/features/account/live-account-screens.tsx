@@ -27,6 +27,7 @@ import {
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount, UnavailableScreen } from '@/components/api-state';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { LoadingDots } from '@/components/loading-dots';
 
 const profile = copy.profile;
 
@@ -235,7 +236,7 @@ function ProfileEditor({ user }: { user: UserDto }) {
           void query.refetch();
         }}
       />
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      {query.isPending && <LoadingDots />}
       {query.data?.map((device) => (
         <Card key={device.id}>
           <Txt variant="label">

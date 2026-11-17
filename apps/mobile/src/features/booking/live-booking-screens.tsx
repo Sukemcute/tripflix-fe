@@ -38,6 +38,7 @@ import { CommerceError, HoldTimer, useCommerceOrder } from './commerce-state';
 import { useCommerce } from './commerce-provider';
 import { CancelHold, CancelOrder, OrderCancelledScreen } from './order-cancel';
 import { PaymentSuccessScreen } from './payment-success';
+import { LoadingDots } from '@/components/loading-dots';
 
 const text = vi.commerce;
 const BIRTHDATE_MESSAGES: Partial<Record<GuestFieldError, MessageKey>> = {
@@ -402,7 +403,7 @@ function CheckoutForm() {
           void query.refetch();
         }}
       />
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      {query.isPending && <LoadingDots />}
       {order && (
         <>
           {order.status === 'pending' && !isExpired && (
@@ -829,7 +830,7 @@ export function CommerceOrderScreen() {
           void query.refetch();
         }}
       />
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      {query.isPending && <LoadingDots />}
       {query.data && (
         <>
           <OrderSummary order={query.data} />
