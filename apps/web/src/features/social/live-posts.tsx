@@ -62,6 +62,8 @@ import { CommentSkeletonList } from './comment-skeleton';
 import styles from './live-posts.module.css';
 import { PostImagePicker } from './composer/post-image-picker';
 import { usePostImages } from './composer/use-post-images';
+import { HashtagInput } from './composer/hashtag-input';
+import { calculateUploadPercent, parseStoredHashtags, pickDroppedVideo } from './composer/composer-inputs';
 import { ShareMenu, type ShareMenuHandle } from './share-menu';
 import { PostOwnerMenu } from './post-owner-menu';
 import { buildPostHref } from './search-url';
@@ -2671,7 +2673,8 @@ export function ComposerModal({
   const [postType, setPostType] = useState<'video' | 'vlog'>(initialPostType);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [hashtagsText, setHashtagsText] = useState('');
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [isVideoDragOver, setIsVideoDragOver] = useState(false);
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
 
   // Phương tiện (Video)
@@ -2704,7 +2707,7 @@ export function ComposerModal({
     setTitle(draft.title || '');
     setBody(draft.body || '');
     setPostType(draft.postType === 'video' ? 'video' : 'vlog');
-    setHashtagsText((draft.hashtags || []).join(', '));
+    setHashtags(parseStoredHashtags(draft.hashtags));
     setVisibility((draft.visibility as 'public' | 'private') || 'public');
     // mediaIds của bài viết là ảnh, của Reels là video.
     setExistingMediaId(draft.postType === 'video' ? draft.mediaIds?.[0] || null : null);
@@ -2759,7 +2762,7 @@ export function ComposerModal({
     setEditingDraftId(null);
     setTitle('');
     setBody('');
-    setHashtagsText('');
+    setHashtags([]);
     setPostType(initialPostType);
     setVisibility('public');
     setExistingMediaId(null);
@@ -2929,20 +2932,21 @@ export function ComposerModal({
       const end = Math.min(file.size, start + partSizeBytes);
       const chunk = file.slice(start, end);
 
-      setUploadStepText(`Đang tải lên phần ${part.partNumber}/${parts.length}...`);
+      setUploadStepText(vi.api.composerVideoUploadPart);
 
-      const { etag } = await uploadChunkToPresignedUrl(part.url, chunk);
+      const { etag } = await uploadChunkToPresignedUrl(part.url, chunk, undefined, (sentBytes) =>
+        setUploadProgress(calculateUploadPercent(start + sentBytes, file.size)),
+      );
 
       uploadedParts.push({
         partNumber: part.partNumber,
         etag: etag || `"${part.partNumber}"`,
       });
 
-      const percent = Math.round(((i + 1) / parts.length) * 80) + 5;
-      setUploadProgress(percent);
+      setUploadProgress(calculateUploadPercent(end, file.size));
     }
 
-    setUploadStepText('Đang hoàn tất và xử lý video...');
+    setUploadStepText(vi.api.composerVideoProcessing);
     const completeRes = await mediaUploadControllerCompleteUpload(assetId, {
       parts: uploadedParts,
     });
@@ -2996,10 +3000,7 @@ export function ComposerModal({
         setExistingMediaId(uploadedAssetId);
       }
 
-      const parsedTags = hashtagsText
-        .split(/[,\s#]+/)
-        .map((item) => item.trim())
-        .filter(Boolean);
+      const parsedTags = hashtags;
 
       let tripAttachment: TripAttachmentDto | undefined = undefined;
       if (enableItinerary && destinationName.trim()) {
@@ -3207,14 +3208,9 @@ export function ComposerModal({
       >
         {/* Tiêu đề modal */}
         <div className={styles.panelHeaderBar}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h3 className={styles.panelHeaderTitle}>
-              {editingDraftId ? 'Chỉnh sửa bản nháp' : vi.api.feedCreatePostCta}
-            </h3>
-            {editingDraftId && (
-              <span className={styles.editingDraftBadge}>Đang chỉnh sửa bản nháp</span>
-            )}
-          </div>
+          <h3 className={styles.panelHeaderTitle}>
+            {editingDraftId ? 'Sửa bản nháp' : vi.api.feedCreatePostCta}
+          </h3>
           <div className={styles.composerHeaderActions}>
             <button
               type="button"
@@ -3240,7 +3236,6 @@ export function ComposerModal({
         {/* Thông báo lưu nháp thành công */}
         {saveSuccessMsg && (
           <output className={styles.saveSuccessBanner}>
-            <SocialIcon name="sparkles" size={16} />
             <span>{saveSuccessMsg}</span>
           </output>
         )}
@@ -3275,7 +3270,6 @@ export function ComposerModal({
         <div className={styles.composerSection}>
           <div className={styles.composerSectionHeader}>
             <h4 className={styles.composerSectionTitle}>Nội dung bài viết</h4>
-            <span className={styles.composerSectionBadge}>Bắt buộc</span>
           </div>
 
           <input
@@ -3301,14 +3295,7 @@ export function ComposerModal({
           />
 
           <div className={styles.composerMetaRow}>
-            <input
-              className={styles.composerInput}
-              aria-label={vi.api.hashtags}
-              placeholder={vi.api.composerHashtagPlaceholder}
-              value={hashtagsText}
-              disabled={isFormBusy}
-              onChange={(event) => setHashtagsText(event.target.value)}
-            />
+            <HashtagInput tags={hashtags} onChange={setHashtags} isDisabled={isFormBusy} />
 
             <select
               className={styles.composerInput}
@@ -3344,7 +3331,6 @@ export function ComposerModal({
               <SocialIcon name="video" size={16} />
               <span>Video Reels</span>
             </h4>
-            <span className={styles.composerSectionBadge}>Bắt buộc với Reels</span>
           </div>
 
           <input
@@ -3363,13 +3349,29 @@ export function ComposerModal({
             <button
               type="button"
               className={styles.composerDropzone}
+              data-drag-over={isVideoDragOver || undefined}
+              disabled={isFormBusy}
               onClick={() => fileInputRef.current?.click()}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setIsVideoDragOver(true);
+              }}
+              onDragLeave={() => setIsVideoDragOver(false)}
+              onDrop={(event) => {
+                event.preventDefault();
+                setIsVideoDragOver(false);
+                const dropped = pickDroppedVideo(event.dataTransfer.files);
+                if ('file' in dropped) void handleSelectFile(dropped.file);
+                else if (dropped.error === 'type') setUploadError(vi.api.composerVideoInvalidType);
+              }}
             >
-              <div className={styles.composerDropzoneIcon}>
-                <SocialIcon name="upload" size={22} />
-              </div>
-              <p className={styles.composerDropzoneText}>Kéo thả hoặc nhấn để chọn video Reels</p>
-              <p className={styles.composerDropzoneHint}>Hỗ trợ MP4, MOV (Tối đa 5 phút, 1 GB)</p>
+              <span className={styles.composerDropzoneIcon}>
+                <SocialIcon name="upload" size={20} />
+              </span>
+              <span className={styles.composerDropzoneText}>
+                {isVideoDragOver ? vi.api.composerVideoDropActive : vi.api.composerVideoDropHint}
+              </span>
+              <span className={styles.composerDropzoneHint}>{vi.api.composerVideoFormatHint}</span>
             </button>
           ) : (
             <div className={styles.composerVideoPreviewCard}>
@@ -3418,10 +3420,14 @@ export function ComposerModal({
                     <span>{uploadStepText}</span>
                     <span>{uploadProgress}%</span>
                   </div>
-                  <div className={styles.composerProgressBarBg}>
+                  <div
+                    className={styles.composerProgressBarBg}
+                    aria-hidden="true"
+                    data-finishing={uploadProgress >= 90 && uploadProgress < 100 ? true : undefined}
+                  >
                     <div
                       className={styles.composerProgressBarFill}
-                      style={{ width: `${uploadProgress}%` }}
+                      style={{ transform: `scaleX(${uploadProgress / 100})` }}
                     />
                   </div>
                 </div>
