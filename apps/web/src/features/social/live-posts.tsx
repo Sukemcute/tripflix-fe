@@ -19,6 +19,7 @@ import {
 } from '@tripflix/api-client/core-api/media/media';
 import type {
   FeedCardDto,
+  SocialCommentDto,
   SocialPostDto,
   TripAttachmentDto,
   TripItineraryItemDto,
@@ -36,6 +37,12 @@ import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { getAvatarTone } from './avatar-tone';
 import { EmojiPicker } from './emoji-picker';
 import { CommentVisibility } from './comment-visibility';
+import {
+  addCommentToCache,
+  removeCommentFromCache,
+  replaceCommentInCache,
+  setCommentReactionInCache,
+} from './comment-cache';
 import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
@@ -2127,14 +2134,11 @@ export function RightPanelCommentsSynchronized({
         throw error;
       }
     },
-    onSuccess: async () => {
+    onSuccess: (createdComment) => {
       saveCommentDraft(post.id, null);
       setBody('');
       setReplyTarget(null);
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ['social'] }),
-        client.invalidateQueries({ queryKey: ['feed'], refetchType: 'none' }),
-      ]);
+      if (createdComment) addCommentToCache(client, createdComment);
     },
   });
 
@@ -2341,8 +2345,10 @@ function CommentNode({
     onError: (_, __, context) => {
       setOptimisticLiked(context?.previous ?? null);
     },
-    onSettled: async () => {
-      await client.invalidateQueries({ queryKey: ['social', 'comments', postId] });
+    onSuccess: (reaction) => {
+      setCommentReactionInCache(client, postId, reaction);
+    },
+    onSettled: () => {
       setOptimisticLiked(null);
     },
   });
@@ -2352,12 +2358,13 @@ function CommentNode({
       if (action === 'delete') return socialApi.deleteComment(comment.id);
       return socialApi.editComment(comment.id, editBody.trim());
     },
-    onSuccess: async (_, action) => {
-      if (action === 'edit') setEditing(false);
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ['social'] }),
-        client.invalidateQueries({ queryKey: ['feed'], refetchType: 'none' }),
-      ]);
+    onSuccess: (updatedComment, action) => {
+      if (action === 'delete') {
+        removeCommentFromCache(client, postId, comment.id);
+        return;
+      }
+      setEditing(false);
+      replaceCommentInCache(client, updatedComment as SocialCommentDto);
     },
   });
 

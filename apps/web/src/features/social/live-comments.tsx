@@ -1,6 +1,7 @@
 'use client';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { socialApi, useApiSession } from '@tripflix/api-client';
+import type { SocialCommentDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -9,6 +10,7 @@ import { CommunitySummary } from './post-summary';
 import { getInitial } from '@/features/auth/account-helpers';
 import { CommentSkeletonList } from './comment-skeleton';
 import { CommentVisibility } from './comment-visibility';
+import { addCommentToCache, removeCommentFromCache, replaceCommentInCache } from './comment-cache';
 
 /**
  * Bình luận của một bài (hoặc trả lời của một bình luận khi có parentCommentId).
@@ -57,13 +59,19 @@ export function LiveComments({
         : action.type === 'edit'
           ? socialApi.editComment(action.id, editBody.trim())
           : socialApi.addComment(postId, body.trim(), replyTarget?.id ?? parentCommentId),
-    onSuccess: async (_, action) => {
+    onSuccess: (savedComment, action) => {
+      if (action.type === 'delete') {
+        removeCommentFromCache(client, postId, action.id);
+        return;
+      }
       if (action.type === 'add') {
         setBody('');
         setReplyTarget(undefined);
+        addCommentToCache(client, savedComment as SocialCommentDto);
+        return;
       }
-      if (action.type === 'edit') setEditing(null);
-      await client.invalidateQueries({ queryKey: ['social'] });
+      setEditing(null);
+      replaceCommentInCache(client, savedComment as SocialCommentDto);
     },
   });
   const comments = query.data?.pages.flatMap((page) => page.items) ?? [];

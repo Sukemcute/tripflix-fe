@@ -13,6 +13,7 @@ import {
 } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { SocialIcon, ComposerModal, RightPanelCommentsSynchronized } from '../live-posts';
+import { refreshCommentsIfStale } from '../comment-cache';
 import { useHasUserInteracted } from '../use-has-user-interacted';
 import { useSettledFlag } from '../use-settled-flag';
 import { usePresence } from '../use-presence';
@@ -665,7 +666,7 @@ export function SocialFeedView({
       // Neu dang dong hoac dang mo bai khac -> Mo panel va tai moi binh luan
       setActiveCommentPostId(postId);
       setIsRightOpen(true);
-      void client.invalidateQueries({ queryKey: ['social', 'comments', postId] });
+      refreshCommentsIfStale(client, postId);
       setTimeout(() => {
         commentInputRef.current?.focus();
       }, 80);
