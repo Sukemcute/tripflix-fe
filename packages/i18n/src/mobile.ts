@@ -120,6 +120,8 @@ export const mobile = {
     backToUsers: 'Quay lại danh sách người dùng',
   },
   tripPlan: {
+    verified: 'Đã đi',
+    verifiedLabel: 'Đã đi thật chuyến này, lộ trình lấy từ chuyến đã đặt và đi xong',
     bookingTitle: 'Đặt lộ trình',
     changeTrip: 'Đổi lộ trình',
     pickHotelTitle: 'Chọn khách sạn cho lộ trình',
