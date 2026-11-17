@@ -11,7 +11,7 @@ import {
   usePostSearchFeed,
   updateReelSocialCache,
 } from '@tripflix/api-client';
-import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
+import type { PostRecommendationsControllerRecommendPostsMode, SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { SocialIcon, ComposerModal, RightPanelCommentsSynchronized } from '../live-posts';
 import { refreshCommentsIfStale } from '../comment-cache';
 import { useHasUserInteracted } from '../use-has-user-interacted';
@@ -49,6 +49,13 @@ export interface SocialFeedViewProps {
   onCloseComposer?: () => void;
 }
 
+const RECOMMEND_MODE_OPTIONS: Array<{ value: PostRecommendationsControllerRecommendPostsMode; label: string }> = [
+  { value: 'for_you', label: vi.api.recommendModeForYou },
+  { value: 'trending', label: vi.api.recommendModeTrending },
+  { value: 'has_plan', label: vi.api.recommendModeHasPlan },
+  { value: 'recent', label: vi.api.recommendModeRecent },
+];
+
 export function SocialFeedView({
   isVisible = true,
   initialKeyword = '',
@@ -69,6 +76,7 @@ export function SocialFeedView({
 
   // Controlled or uncontrolled fallbacks
   const activeFilter = propFilterMode ?? 'all';
+  const [recommendMode, setRecommendMode] = useState<PostRecommendationsControllerRecommendPostsMode>('for_you');
 
   const [localIsItineraryOpen, setLocalIsItineraryOpen] = useState(true);
   const isItineraryOpen = propIsItineraryOpen ?? localIsItineraryOpen;
@@ -101,7 +109,7 @@ export function SocialFeedView({
   const queryKind: 'public' | 'bookmarks' = activeFilter === 'saved' ? 'bookmarks' : 'public';
   const isSearchMode = activeFilter !== 'saved' && effectiveKeyword.length > 0;
   // Tab Bài viết chỉ lấy vlog; Reels có luồng riêng (/v1/feed).
-  const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended');
+  const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended', { recommendMode });
   // Tìm kiếm: cùng query với grid kết quả (search của discovery) nên mở bài từ grid không gọi lại API.
   const searchQuery = usePostSearchFeed(isSearchMode ? effectiveKeyword : '');
   const postsQuery = isSearchMode ? searchQuery : feedQuery;
@@ -839,6 +847,35 @@ export function SocialFeedView({
             </button>
           </div>
         </div>
+
+        {!isSearchMode && activeFilter !== 'saved' && (
+          <div
+            role="tablist"
+            aria-label={vi.api.recommendModeAria}
+            style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}
+          >
+            {RECOMMEND_MODE_OPTIONS.map((option) => {
+              const selected = option.value === recommendMode;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  className={styles.composerTagBtn}
+                  style={
+                    selected
+                      ? { background: 'var(--tf-color-ink, #111827)', color: '#fff', borderColor: 'transparent' }
+                      : undefined
+                  }
+                  onClick={() => setRecommendMode(option.value)}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Loading state */}
         {!isFocusUnavailable && (postsQuery.isPending || isFocusPending) && (

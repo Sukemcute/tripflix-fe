@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { t, vi } from '@tripflix/i18n';
 import { useApiSession, usePostSearchFeed } from '@tripflix/api-client';
-import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
+import type { SearchPostsRequestDtoSort, SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getAvatarTone } from './avatar-tone';
 import { formatAuthorDisplay, formatCompactCount, SocialIcon } from './live-posts';
@@ -26,6 +26,12 @@ const RESULT_TYPE_LABELS: Record<SearchResultType, string> = {
   posts: vi.api.searchResultsTabPosts,
   reels: vi.api.searchResultsTabReels,
 };
+
+const POST_SORT_OPTIONS: Array<{ value: SearchPostsRequestDtoSort; label: string }> = [
+  { value: 'relevance', label: vi.api.postSortRelevance },
+  { value: 'trending', label: vi.api.postSortTrending },
+  { value: 'recent', label: vi.api.postSortRecent },
+];
 
 export interface SearchResultsGridProps {
   keyword: string;
@@ -52,11 +58,12 @@ export function SearchResultsGrid({
 }: SearchResultsGridProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const placeKind = getPlaceKind(resultType);
+  const [sort, setSort] = useState<SearchPostsRequestDtoSort>('relevance');
 
   // Từ khoá hoặc tab mới thì cuộn về đầu grid.
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
-  }, [keyword, resultType]);
+  }, [keyword, resultType, sort]);
 
   return (
     <section ref={scrollRef} className={styles.resultsScroll} aria-label={vi.api.searchResultsAria}>
@@ -88,13 +95,30 @@ export function SearchResultsGrid({
       ) : placeKind ? (
         <PlaceResults keyword={keyword} kind={placeKind} onOpenPost={onOpenPost} onOpenReel={onOpenReel} />
       ) : (
-        <PostResults
-          keyword={keyword}
-          resultType={resultType}
-          scrollRef={scrollRef}
-          onOpenPost={onOpenPost}
-          onOpenReel={onOpenReel}
-        />
+        <>
+          <div className={styles.tabs} role="tablist" aria-label={vi.api.postSortAria}>
+            {POST_SORT_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="tab"
+                aria-selected={option.value === sort}
+                className={styles.tab}
+                onClick={() => setSort(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <PostResults
+            keyword={keyword}
+            resultType={resultType}
+            sort={sort}
+            scrollRef={scrollRef}
+            onOpenPost={onOpenPost}
+            onOpenReel={onOpenReel}
+          />
+        </>
       )}
     </section>
   );
@@ -104,16 +128,18 @@ export function SearchResultsGrid({
 function PostResults({
   keyword,
   resultType,
+  sort,
   scrollRef,
   onOpenPost,
   onOpenReel,
 }: Pick<SearchResultsGridProps, 'keyword' | 'resultType' | 'onOpenPost' | 'onOpenReel'> & {
+  sort: SearchPostsRequestDtoSort;
   scrollRef: RefObject<HTMLDivElement | null>;
 }) {
   const { user } = useApiSession();
   // Reels hỏi thẳng discovery loại video. Bài viết chưa có loại khớp đúng vlog bên discovery nên dùng chung
   // kết quả Tất cả rồi lọc (cùng query với tab Bài viết khi mở bài, không gọi lại).
-  const searchQuery = usePostSearchFeed(keyword, resultType === 'reels' ? 'video' : undefined);
+  const searchQuery = usePostSearchFeed(keyword, resultType === 'reels' ? 'video' : undefined, sort);
   const { hasNextPage, isFetchingNextPage, isPending, fetchNextPage } = searchQuery;
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 

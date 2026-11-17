@@ -8,8 +8,13 @@ import type { StayProvinceDto } from './stayProvinceDto';
 import type { StayRatingDto } from './stayRatingDto';
 
 export interface StayDto {
-  /** Mã khách sạn của commerce; mở trang chi tiết bằng mã này */
+  /** Mã khách sạn của commerce */
   hotelId: string;
+  /**
+   * Mã trên URL trang chi tiết (`/hotels/<slug>`); null thì dùng `hotelId`
+   * @nullable
+   */
+  slug: string | null;
   name: string;
   /** @nullable */
   stars: number | null;

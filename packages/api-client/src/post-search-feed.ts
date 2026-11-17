@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { getPostSearchResults } from './explore-search';
-import type { SearchPostsRequestDtoPostType, SocialPostDto } from './generated/core-api/model';
+import type { SearchPostsRequestDtoPostType, SearchPostsRequestDtoSort, SocialPostDto } from './generated/core-api/model';
 import { useApiSession } from './session';
 import { socialApi } from './social';
 
@@ -18,6 +18,7 @@ export interface PostSearchFeedPage {
 export interface PostSearchFeedOptions {
   /** Không truyền là mọi loại (Reels lẫn bài viết); `video` chỉ Reels. */
   postType?: SearchPostsRequestDtoPostType;
+  sort?: SearchPostsRequestDtoSort;
   cursor?: string;
   signal?: AbortSignal;
 }
@@ -28,10 +29,10 @@ export interface PostSearchFeedOptions {
  */
 export async function searchPostFeedPage(
   keyword: string,
-  { postType, cursor, signal }: PostSearchFeedOptions = {},
+  { postType, sort, cursor, signal }: PostSearchFeedOptions = {},
 ): Promise<PostSearchFeedPage> {
   const found = await getPostSearchResults(
-    { q: keyword, cursor, limit: POST_SEARCH_FEED_PAGE_SIZE, ...(postType ? { postType } : {}) },
+    { q: keyword, cursor, limit: POST_SEARCH_FEED_PAGE_SIZE, ...(postType ? { postType } : {}), ...(sort ? { sort } : {}) },
     signal,
   );
   const thumbnails: Record<string, string | null> = {};
@@ -58,22 +59,27 @@ export function getPostSearchFeedQueryKey(
   keyword: string,
   userId: string | null | undefined,
   postType: SearchPostsRequestDtoPostType = 'all',
+  sort: SearchPostsRequestDtoSort = 'relevance',
 ) {
-  return ['social', 'search', userId ?? null, keyword, postType] as const;
+  return ['social', 'search', userId ?? null, keyword, postType, sort] as const;
 }
 
 /**
  * Kết quả tìm bài theo từ khoá đã chốt (nhấn Enter), có phân trang. Grid kết quả và tab Bài viết dùng chung
  * một query nên mở bài từ grid không phải tìm lại.
  */
-export function usePostSearchFeed(keyword: string, postType?: SearchPostsRequestDtoPostType) {
+export function usePostSearchFeed(
+  keyword: string,
+  postType?: SearchPostsRequestDtoPostType,
+  sort?: SearchPostsRequestDtoSort,
+) {
   const { user, isReady } = useApiSession();
   const query = keyword.trim();
   return useInfiniteQuery({
-    queryKey: getPostSearchFeedQueryKey(query, user?.id, postType),
+    queryKey: getPostSearchFeedQueryKey(query, user?.id, postType, sort),
     enabled: isReady && query.length > 0,
     initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam, signal }) => searchPostFeedPage(query, { postType, cursor: pageParam, signal }),
+    queryFn: ({ pageParam, signal }) => searchPostFeedPage(query, { postType, sort, cursor: pageParam, signal }),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
 }

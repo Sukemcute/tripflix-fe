@@ -41,6 +41,8 @@ import type {
   StaysControllerListStaysParams,
   SuggestControllerSuggestParams,
   SuggestResponseDto,
+  TripAddonRequestDto,
+  TripAddonsDto,
   TripBuilderControllerSuggestFlightsParams,
   TripBuilderControllerSuggestStaysParams,
 } from '../model';
@@ -696,6 +698,7 @@ export const getExploreControllerSearchPostsUrl = () => {
  * Cho tab tìm bài trên app và web Cảm hứng. Công khai. Cùng bộ hiểu câu và chỉ mục với `POST /api/search`.
  *
  * - `postType`: `all` (mặc định), `plan`, `video`, `post`, `article`. Video kèm lộ trình thuộc cả `plan` và `video`; với `all` chỉ trả một lần. `article` = `plan` + `post` nhưng bỏ mọi video, lọc ở server nên trang luôn đủ `limit`.
+ * - `sort`: `relevance` (mặc định, liên quan nhất), `trending` (điểm `hot@v2`), `recent` (mới nhất trước). Chỉ đổi thứ tự trong tập kết quả khớp, không đổi `total` hay `isFallback`.
  * - Mỗi bài có `likes`, `comments`, `createdAt`, `author` để hiện thẻ. Không có trạng thái đã thích/đã lưu của người xem.
  * - Kết quả chính không bao giờ vượt ngân sách trong câu (chi phí mỗi người của lộ trình). Bài bị ẩn hoặc xoá không trả về.
  * - Phân trang: gửi `nextCursor` của trang trước vào `cursor`. Không có kết quả thì `items: []`, `total: 0`.
@@ -1165,6 +1168,9 @@ export const getPostRecommendationsControllerRecommendPostsUrl = (
  * Đăng nhập tuỳ chọn. Gu người dùng tính lại mỗi 10 phút từ cảm xúc, bình luận, chia sẻ, đơn, lượt tìm.
  *
  * - `for_you`: theo gu; khách (không token) nhận `trending`, xem trường `algo`.
+ * - `trending`: bài thịnh hành chung.
+ * - `has_plan`: giống `for_you` (khách nhận `trending`) nhưng chỉ lấy bài có lịch trình.
+ * - `recent`: bài mới đăng gần đây (mới nhất trước, không xếp hạng cá nhân hoá).
  * - Không bỏ bài nào vì lịch sử người xem, chỉ hạ điểm: bài đã tương tác, bài đã gợi ý ở phiên trước (hơn 30 phút, trong 48 giờ, tối đa 100 bài), bài thứ 3 trở đi của cùng tác giả. Gọi lại cùng cursor ra cùng trang.
  * - Người đăng nhập: bài tự đăng trong 1 giờ lên đầu feed của chính họ (`reason.code: own_post`, `source: own`); người khác thấy bài đó như bài thường.
  * - Phân trang: gửi `nextCursor` của trang trước vào `cursor`; trang sau dùng cùng thuật toán với trang đầu.
@@ -1345,8 +1351,8 @@ export const getPostRecommendationsControllerRecommendReelsUrl = (
 };
 
 /**
- * Xếp hạng video bằng discovery (gồm điểm xu hướng và chống lặp cho người đăng nhập) rồi lấy thẻ phát được từ content/feed trong một request.
- * @summary Gợi ý Reels phát được (trending hoặc for_you)
+ * Xếp hạng video bằng discovery (gồm điểm xu hướng, lọc có lịch trình, mới đăng và chống lặp cho người đăng nhập) rồi lấy thẻ phát được từ content/feed trong một request.
+ * @summary Gợi ý Reels phát được (trending, for_you, has_plan hoặc recent)
  */
 export const postRecommendationsControllerRecommendReels = async (
   params?: PostRecommendationsControllerRecommendReelsParams,
@@ -1455,7 +1461,7 @@ export function usePostRecommendationsControllerRecommendReels<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Gợi ý Reels phát được (trending hoặc for_you)
+ * @summary Gợi ý Reels phát được (trending, for_you, has_plan hoặc recent)
  */
 
 export function usePostRecommendationsControllerRecommendReels<
@@ -1480,6 +1486,132 @@ export function usePostRecommendationsControllerRecommendReels<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export type tripAddonsControllerSuggestResponse200 = {
+  data: TripAddonsDto;
+  status: 200;
+};
+
+export type tripAddonsControllerSuggestResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type tripAddonsControllerSuggestResponseSuccess = tripAddonsControllerSuggestResponse200 & {
+  headers: Headers;
+};
+export type tripAddonsControllerSuggestResponseError = tripAddonsControllerSuggestResponse400 & {
+  headers: Headers;
+};
+
+export type tripAddonsControllerSuggestResponse =
+  tripAddonsControllerSuggestResponseSuccess | tripAddonsControllerSuggestResponseError;
+
+export const getTripAddonsControllerSuggestUrl = () => {
+  return `/api/recommendations/trip-addons`;
+};
+
+/**
+ * Công khai, chỉ đọc. Gọi ở màn xem lại trước khi giữ chỗ (giỏ phòng, xem lại chuyến bay) với các mục đang chọn.
+ *
+ * - Có phòng, chưa có vé: chuyến bay tới nơi của khách sạn, chiều đi ngày nhận phòng, chiều về ngày trả phòng (từ khách sạn cuối), bay từ `fromAirport` (mặc định SGN). Xếp bằng ranker `trip_flights@v0` trên hồ sơ `flight_profile@v0`. Nhóm: rẻ nhất, giờ đẹp, bay nhanh, có vé hoàn huỷ, được đặt nhiều.
+ * - Có vé, chưa có phòng: khách sạn còn phòng ở tỉnh của sân bay đến, từ ngày đi tới ngày về (vé một chiều: 2 đêm). Xếp bằng ranker `trip_stays@v0` trên hồ sơ `hotel_profile@v0` (job 10 phút). Nhóm: giá tốt, đánh giá cao, gần chỗ đi chơi, nhiều chỗ ăn chơi, đáng tiền, được đặt nhiều; mọi nhóm trừ giá tốt bỏ khách sạn vượt ngân sách (`budgetLevels`).
+ * - Mỗi nhóm có `perGroup` mục; FE hiện nhóm thành chip, mục mang nhãn lý do (`badges`).
+ * - Đủ cả hai: `missing = null`, không gợi ý.
+ * - Người dùng tích một gợi ý thì gửi nó cùng các mục cũ trong **một** `POST /checkout` (giữ chỗ chung, trả tiền một lần).
+ * @summary Gợi ý phần còn thiếu của chuyến (vé máy bay hoặc khách sạn), trước khi giữ chỗ
+ */
+export const tripAddonsControllerSuggest = async (
+  tripAddonRequestDto: TripAddonRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<tripAddonsControllerSuggestResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<tripAddonsControllerSuggestResponse>(getTripAddonsControllerSuggestUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(tripAddonRequestDto),
+  });
+};
+
+export const getTripAddonsControllerSuggestMutationKey = () => ['tripAddonsControllerSuggest'] as const;
+
+export const getTripAddonsControllerSuggestMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+    TError,
+    TripAddonsControllerSuggestMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+  TError,
+  TripAddonsControllerSuggestMutationVariables,
+  TContext
+> => {
+  const mutationKey = getTripAddonsControllerSuggestMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+    TripAddonsControllerSuggestMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return tripAddonsControllerSuggest(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TripAddonsControllerSuggestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof tripAddonsControllerSuggest>>
+>;
+export type TripAddonsControllerSuggestMutationBody = TripAddonRequestDto;
+export type TripAddonsControllerSuggestMutationError = void;
+export type TripAddonsControllerSuggestMutationVariables = { data: TripAddonRequestDto };
+
+/**
+ * @summary Gợi ý phần còn thiếu của chuyến (vé máy bay hoặc khách sạn), trước khi giữ chỗ
+ */
+export const useTripAddonsControllerSuggest = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+      TError,
+      TripAddonsControllerSuggestMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+  TError,
+  TripAddonsControllerSuggestMutationVariables,
+  TContext
+> => {
+  return useMutation(getTripAddonsControllerSuggestMutationOptions(options), queryClient);
+};
 export type tripBuilderControllerSuggestFlightsResponse200 = {
   data: FlightSuggestionsDto;
   status: 200;

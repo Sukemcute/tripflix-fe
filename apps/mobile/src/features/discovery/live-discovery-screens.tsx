@@ -7,6 +7,7 @@ import {
   type ExploreUnderstoodDto,
   type SearchPostsRequestDtoPostType,
 } from '@tripflix/api-client';
+import type { SearchPostsRequestDtoSort } from '@tripflix/api-client/core-api/model/index';
 import { homeRecommendationsControllerRecommendForHome } from '@tripflix/api-client/core-api/discovery/discovery';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
@@ -202,6 +203,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
   const [text, setText] = useState(q ?? '');
   const [submittedQuery, setSubmittedQuery] = useState(q?.trim() ?? '');
   const [postType, setPostType] = useState<SearchPostsRequestDtoPostType>('all');
+  const [sort, setSort] = useState<SearchPostsRequestDtoSort>('relevance');
   const [cursor, setCursor] = useState<string | null>(null);
   const [category, setCategory] = useState<'all' | 'sea' | 'weekend'>('all');
   // Tab Khám phá: bấm thanh search mở khung thả xuống thay vì gõ ngay trên trang.
@@ -228,6 +230,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
   const search = usePostSearch({
     q: submittedQuery,
     postType,
+    sort,
     cursor,
   });
 
@@ -248,6 +251,11 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
 
   const handlePostTypeChange = (type: SearchPostsRequestDtoPostType) => {
     setPostType(type);
+    setCursor(null);
+  };
+
+  const handleSortChange = (nextSort: SearchPostsRequestDtoSort) => {
+    setSort(nextSort);
     setCursor(null);
   };
 
@@ -322,6 +330,19 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
             </Chip>
             <Chip selected={postType === 'post'} onPress={() => handlePostTypeChange('post')}>
               Bài viết
+            </Chip>
+          </Row>
+
+          {/* Sort Tabs */}
+          <Row style={styles.categories}>
+            <Chip selected={sort === 'relevance'} onPress={() => handleSortChange('relevance')}>
+              {vi.api.postSortRelevance}
+            </Chip>
+            <Chip selected={sort === 'trending'} onPress={() => handleSortChange('trending')}>
+              {vi.api.postSortTrending}
+            </Chip>
+            <Chip selected={sort === 'recent'} onPress={() => handleSortChange('recent')}>
+              {vi.api.postSortRecent}
             </Chip>
           </Row>
 

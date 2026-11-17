@@ -12,5 +12,6 @@ export type PostRecommendationsControllerRecommendPostsParams = {
   /** 1–20, mặc định 20 */
   limit?: unknown;
   postType?: PostRecommendationsControllerRecommendPostsPostType;
+  /** Kiểu gợi ý: for_you, trending, has_plan (có lịch trình), recent (mới đăng) */
   mode?: PostRecommendationsControllerRecommendPostsMode;
 };
