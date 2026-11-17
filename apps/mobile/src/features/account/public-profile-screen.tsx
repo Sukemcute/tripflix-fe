@@ -1,11 +1,18 @@
-import { HttpError, useApiSession, useAuthorReels, useAuthorVlogs, useFollowAuthor, usePublicProfile } from '@tripflix/api-client';
+import {
+  HttpError,
+  useApiSession,
+  useAuthorReels,
+  useAuthorVlogs,
+  useFollowAuthor,
+  usePublicProfile,
+} from '@tripflix/api-client';
 import { formatProfileCount, getNameInitials } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, nativeFonts, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, copy, Icon, IconButton, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
@@ -29,7 +36,11 @@ export function MyProfileScreen() {
       id={user.id}
       back={false}
       right={
-        <IconButton name="settings-outline" label={copy.profile.menu} onPress={() => router.push('/settings')} />
+        <IconButton
+          name="settings-outline"
+          label={copy.profile.menu}
+          onPress={() => router.push('/settings')}
+        />
       }
     />
   );
@@ -120,14 +131,8 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
   );
 }
 
-function useTileSize() {
-  const { width } = useWindowDimensions();
-  return Math.floor((width - mobileLayout.gutter * 2 - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS);
-}
-
 function ReelGrid({ userId }: { userId: string }) {
   const reels = useAuthorReels(userId);
-  const size = useTileSize();
   const items = reels.data?.pages.flatMap((page) => page.items) ?? [];
   return (
     <GridState query={reels} isEmpty={items.length === 0} emptyText={vi.api.profileNoVideos}>
@@ -135,7 +140,6 @@ function ReelGrid({ userId }: { userId: string }) {
         {items.map((reel) => (
           <Tile
             key={reel.postId}
-            size={size}
             image={reel.video.posters.w360}
             likes={reel.counts.likes}
             label={reel.title}
@@ -149,7 +153,6 @@ function ReelGrid({ userId }: { userId: string }) {
 
 function VlogGrid({ userId }: { userId: string }) {
   const vlogs = useAuthorVlogs(userId);
-  const size = useTileSize();
   const items = vlogs.data?.pages.flatMap((page) => page.items) ?? [];
   return (
     <GridState query={vlogs} isEmpty={items.length === 0} emptyText={vi.api.profileNoPosts}>
@@ -157,7 +160,6 @@ function VlogGrid({ userId }: { userId: string }) {
         {items.map((post) => (
           <Tile
             key={post.id}
-            size={size}
             image={post.images?.[0]?.url}
             likes={post.reactionTotal}
             label={post.title}
@@ -175,7 +177,14 @@ function GridState({
   emptyText,
   children,
 }: {
-  query: { isPending: boolean; error: unknown; refetch: () => unknown; hasNextPage: boolean; isFetchingNextPage: boolean; fetchNextPage: () => unknown };
+  query: {
+    isPending: boolean;
+    error: unknown;
+    refetch: () => unknown;
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+    fetchNextPage: () => unknown;
+  };
   isEmpty: boolean;
   emptyText: string;
   children: React.ReactNode;
@@ -187,7 +196,12 @@ function GridState({
     <>
       {children}
       {query.hasNextPage && (
-        <Button tone="text" compact disabled={query.isFetchingNextPage} onPress={() => void query.fetchNextPage()}>
+        <Button
+          tone="text"
+          compact
+          disabled={query.isFetchingNextPage}
+          onPress={() => void query.fetchNextPage()}
+        >
           {query.isFetchingNextPage ? vi.api.loading : vi.api.profileLoadMore}
         </Button>
       )}
@@ -196,37 +210,38 @@ function GridState({
 }
 
 function Tile({
-  size,
   image,
   likes,
   label,
   onPress,
 }: {
-  size: number;
   image?: string;
   likes: number;
   label: string;
   onPress: () => void;
 }) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      style={[styles.tile, { width: size, height: Math.round(size * 1.33) }]}
-    >
-      {image ? (
-        <Image source={image} cachePolicy="memory-disk" contentFit="cover" style={StyleSheet.absoluteFill} accessible={false} />
-      ) : (
-        <Txt variant="caption" numberOfLines={4} style={styles.tileTitle}>
-          {label}
-        </Txt>
-      )}
-      <View style={styles.likes}>
-        <Icon name="heart" size={mobileIconSize.inline} color={c.background} />
-        <Txt variant="caption" style={styles.likesText}>
-          {formatProfileCount(likes)}
-        </Txt>
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.tile}>
+      <View style={styles.tileInner}>
+        {image ? (
+          <Image
+            source={image}
+            cachePolicy="memory-disk"
+            contentFit="cover"
+            style={StyleSheet.absoluteFill}
+            accessible={false}
+          />
+        ) : (
+          <Txt variant="caption" numberOfLines={4} style={styles.tileTitle}>
+            {label}
+          </Txt>
+        )}
+        <View style={styles.likes}>
+          <Icon name="heart" size={mobileIconSize.inline} color={c.background} />
+          <Txt variant="caption" style={styles.likesText}>
+            {formatProfileCount(likes)}
+          </Txt>
+        </View>
       </View>
     </Pressable>
   );
@@ -255,10 +270,19 @@ const styles = StyleSheet.create({
     borderBottomColor: c.transparent,
   },
   tabActive: { borderBottomColor: c.text },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, marginTop: GRID_GAP },
-  tile: { backgroundColor: c.seaMist, overflow: 'hidden', justifyContent: 'center' },
+  // Chia cột theo % (không đo màn hình) để Android luôn xếp đủ 3 ô một hàng.
+  grid: { flexDirection: 'row', flexWrap: 'wrap', margin: -GRID_GAP / 2, marginTop: GRID_GAP / 2 },
+  tile: { width: `${100 / GRID_COLUMNS}%`, aspectRatio: 3 / 4, padding: GRID_GAP / 2 },
+  tileInner: { flex: 1, backgroundColor: c.seaMist, overflow: 'hidden', justifyContent: 'center' },
   tileTitle: { padding: s.sm },
-  likes: { position: 'absolute', left: s.xs, bottom: s.xs, flexDirection: 'row', alignItems: 'center', gap: 2 },
+  likes: {
+    position: 'absolute',
+    left: s.xs,
+    bottom: s.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
   likesText: { color: c.background, fontFamily: nativeFonts.bold },
   state: { paddingVertical: s.xl },
 });
