@@ -90,3 +90,45 @@ export function getAuthorShortName(name: string | null | undefined): string | nu
   const meaningful = words.filter((word) => !/^(travel|review|official|tour|blog|vlog|channel)$/i.test(word));
   return meaningful.at(-1) ?? words.at(-1) ?? null;
 }
+
+/**
+ * Tiền phòng ước tính cho cả chuyến: giá từ (mỗi đêm, mỗi phòng) × số đêm của từng chặng ở. Chặng chưa có giá thì
+ * không tính và trả về trong `missing` để màn hình ghi "chưa có giá" thay vì cộng thiếu mà không báo.
+ */
+export function estimateStayCost(
+  stays: readonly { hotelId: string; nights: number }[],
+  priceFromByHotel: ReadonlyMap<string, number | null | undefined>,
+): { total: number; nights: number; missing: number } {
+  let total = 0;
+  let nights = 0;
+  let missing = 0;
+  for (const stay of stays) {
+    const price = priceFromByHotel.get(stay.hotelId);
+    nights += stay.nights;
+    if (typeof price === 'number' && price > 0) total += price * stay.nights;
+    else missing += 1;
+  }
+  return { total, nights, missing };
+}
+
+/** Các chặng bay hợp lệ của chuyến ("HAN → CXR"), theo thứ tự trong lịch trình. */
+export function listFlightRoutes(trip: Pick<TripAttachmentDto, 'items'> | null | undefined): string[] {
+  return (trip?.items ?? [])
+    .filter((item) => item.transport?.mode === 'flight')
+    .map((item) => formatTransportRoute(item.transport))
+    .filter((route): route is string => route !== null);
+}
+
+/**
+ * Ảnh nhỏ cho từng điểm dừng theo thứ tự hiện: dùng ảnh riêng của điểm nếu chưa điểm nào dùng; trùng hoặc không có
+ * thì lấy ảnh chưa dùng trong bộ ảnh của chuyến; hết ảnh mới dùng lại ảnh riêng (thà trùng còn hơn ô trống).
+ */
+export function assignStopThumbnails(preferred: readonly (string | null | undefined)[], pool: readonly string[]): (string | null)[] {
+  const used = new Set<string>();
+  const takeFromPool = () => pool.find((src) => !used.has(src)) ?? null;
+  return preferred.map((own) => {
+    const pick = own && !used.has(own) ? own : (takeFromPool() ?? own ?? null);
+    if (pick) used.add(pick);
+    return pick;
+  });
+}

@@ -301,6 +301,35 @@
   background: var(--color-background);
 }
 
+/* Điểm có ảnh: ảnh bên trái, nội dung bên phải (điện thoại: ảnh trên). */
+.stop[data-has-thumb] {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 18px;
+  padding: 12px;
+}
+
+.stopThumb {
+  position: relative;
+  display: block;
+  min-height: 132px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--color-surface-muted);
+}
+
+.stopThumb img {
+  object-fit: cover;
+}
+
+.stopBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 6px 4px 0;
+}
+
 .stopHead {
   display: flex;
   justify-content: space-between;
@@ -424,40 +453,6 @@
   font-weight: 800;
 }
 
-/* Người đi trước nói gì */
-.voices {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.quotes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.quote {
-  padding: 14px 16px;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background: var(--color-background);
-  font-size: 0.9rem;
-  line-height: 1.55;
-}
-
-.quote strong {
-  color: var(--color-navy);
-}
-
-.quote p {
-  margin: 4px 0 0;
-  color: var(--color-text);
-}
-
 /* Nơi ở */
 .stays {
   display: flex;
@@ -538,11 +533,45 @@
   border-color: var(--color-text-muted);
 }
 
-.costValue {
-  margin: 0 0 6px;
+
+/* Chi phí từng mục */
+.costRows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+/* Mỗi mục hai dòng: nhãn xám nhỏ, số tiền đậm; cột hẹp không bị xuống dòng lộn xộn. */
+.costRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.costRow strong {
+  color: var(--color-navy);
+  font-size: 0.98rem;
+}
+
+.costTotal {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.costTotal strong {
   color: var(--color-coral-ink);
-  font-size: 1.4rem;
-  font-weight: 800;
+  font-size: 1.15rem;
 }
 
 /* Tác giả */
@@ -672,6 +701,18 @@
 
   .similar {
     grid-template-columns: 1fr;
+  }
+
+  .stop[data-has-thumb] {
+    grid-template-columns: 1fr;
+  }
+
+  .stopThumb {
+    min-height: 168px;
+  }
+
+  .stopBody {
+    padding: 0 4px 4px;
   }
 }
 
