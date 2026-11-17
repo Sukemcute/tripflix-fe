@@ -869,7 +869,9 @@ function MediaTrackItem({
           </span>
           <div className={styles.overlayAuthorMeta}>
             <div className={styles.overlayAuthorNameRow}>
-              <span>{authorInfo.name}</span>
+              <Link prefetch={false} className="profile-link" href={`/u/${post.authorId}`}>
+                {authorInfo.name}
+              </Link>
               {(post.isVerified || reelCard?.author.isKol) && (
                 <SocialIcon name="verified" size={16} />
               )}
@@ -2371,7 +2373,10 @@ function CommentNode({
         <div className={styles.panelCommentContent}>
           <div className={styles.panelCommentMeta}>
             <span className={styles.panelCommentAuthor}>
-              {authorDisplay.name}{comment.replyToName && ` ↳ ${comment.replyToName}`}
+              <Link prefetch={false} className="profile-link" href={`/u/${comment.authorId}`}>
+                {authorDisplay.name}
+              </Link>
+              {comment.replyToName && ` ↳ ${comment.replyToName}`}
             </span>
             {isAuthorVerified && (
               <span className={styles.commentVerifiedIcon} title="Tài khoản đã xác minh">
