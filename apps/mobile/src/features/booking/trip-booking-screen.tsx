@@ -24,15 +24,16 @@ import {
 } from '@tripflix/api-client';
 import { flightsControllerSearch } from '@tripflix/api-client/core-api/flights/flights';
 import { t, vi } from '@tripflix/i18n';
-import { colors, spacing } from '@tripflix/tokens';
+import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { ApiErrorNotice } from '@/components/api-state';
 import { DateSingleField } from '@/components/date-sheet';
 import { mobileIconSize } from '@/components/mobile-scale';
 import { Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { CartLink } from './cart-ui';
 import { CommerceError } from './commerce-state';
 
 const soldOutOf = (error: unknown) =>
@@ -274,6 +275,7 @@ function SelectedTripScreen({
     <Screen
       title={copy.bookingTitle}
       back={false}
+      header={null}
       compact
       background={colors.surface}
       scroll={false}
@@ -281,9 +283,20 @@ function SelectedTripScreen({
       footer={
         <View style={styles.totalRow}>
           <View style={{ flex: 1 }}>
-            <Txt style={styles.muted}>{copy.comboTotal}</Txt>
+            <Txt style={styles.muted}>
+              {t('mobile.tripPlan.pickedCount', {
+                picked: selectedFlights.length + selectedRooms.length,
+                total: (plan?.flights.length ?? 0) + (plan?.hotelId ? 1 : 0),
+              }) +
+                ' · ' +
+                t('mobile.tripPlan.passengerSummary', passengers)}
+            </Txt>
             <Txt style={styles.total}>{money(total)}</Txt>
-            <Txt style={styles.muted}>{t('mobile.tripPlan.passengerSummary', passengers)}</Txt>
+            {adults + children > 0 && total > 0 && (
+              <Txt style={styles.muted}>
+                {t('mobile.tripPlan.perGuest', { amount: money(Math.round(total / (adults + children))) })}
+              </Txt>
+            )}
           </View>
           <Button compact icon="flash" disabled={!canBook || booking.isPending} onPress={book}>
             {booking.isPending ? copy.booking : copy.bookNow}
@@ -291,57 +304,76 @@ function SelectedTripScreen({
         </View>
       }
     >
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[ui.content, ui.pad]}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[ui.content, ui.pad]}
+      >
         <View style={{ gap: spacing.sm }}>
-          <View style={styles.tripHero}>
+          <View style={layout.cover}>
             {selected.coverUrl ? (
-              <Image source={selected.coverUrl} contentFit="cover" style={styles.heroCover} />
+              <Image
+                source={selected.coverUrl}
+                contentFit="cover"
+                contentPosition="top"
+                style={StyleSheet.absoluteFill}
+              />
             ) : (
-              <View style={[styles.heroCover, styles.heroFallback]}>
-                <Icon name="map-outline" size={mobileIconSize.control} color={colors.tealInk} />
-              </View>
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tealInk }]} />
             )}
-            <View style={styles.heroContent}>
-              <Txt style={styles.cardTitle} numberOfLines={2}>
-                {postTitle}
-              </Txt>
-              <Txt style={styles.muted} numberOfLines={2}>
-                {[trip.destinationName, t('mobile.tripPlan.daysNights', { days, nights })]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </Txt>
-              <Txt style={styles.muted} numberOfLines={1}>
-                {t('mobile.tripPlan.bookingBy', { name: authorName })}
-              </Txt>
-              <Pressable
-                accessibilityRole="button"
-                hitSlop={spacing.sm}
-                accessibilityState={{ disabled: booking.isPending }}
-                disabled={booking.isPending}
-                onPress={() => saveTripBooking(null)}
-                style={({ pressed }) => [styles.changeTrip, pressed && styles.pressed]}
-              >
-                <Icon name="swap-horizontal" size={14} color={colors.tealInk} />
-                <Txt style={styles.heroChipText}>{copy.changeTrip}</Txt>
-              </Pressable>
-            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy.changeTrip}
+              disabled={booking.isPending}
+              onPress={() => saveTripBooking(null)}
+              style={({ pressed }) => [layout.coverBack, pressed && styles.pressed]}
+            >
+              <Icon name="arrow-back" size={20} color={colors.background} />
+            </Pressable>
+          </View>
+          <View style={layout.coverText}>
+            <Txt style={layout.coverTitle} numberOfLines={2}>
+              {postTitle}
+            </Txt>
+            <Txt style={layout.coverMeta} numberOfLines={1}>
+              {[
+                trip.destinationName,
+                t('mobile.tripPlan.daysNights', { days, nights }),
+                t('mobile.tripPlan.bookingBy', { name: authorName }),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </Txt>
           </View>
           {plan && (
-            <View style={[styles.bookPanel, { backgroundColor: colors.seaMist }]}>
-              <Row style={styles.totalRow}>
-                <View style={{ flex: 1 }}>
-                  <Txt style={styles.label}>
-                    {formatDay(startDate)} · {t('mobile.tripPlan.daysNights', { days, nights })}
-                  </Txt>
-                  <Txt style={styles.muted}>{t('mobile.tripPlan.passengerSummary', passengers)}</Txt>
-                </View>
-                <Button
-                  tone="text"
-                  disabled={booking.isPending}
-                  onPress={() => setEditing((value) => !value)}
-                >
-                  {isEditing ? copy.collapse : copy.change}
-                </Button>
+            <View style={[styles.bookPanel, layout.panel]}>
+              <Row style={layout.pills}>
+                {[
+                  {
+                    icon: 'calendar-outline' as const,
+                    label: formatDay(startDate) + ' · ' + t('mobile.tripPlan.daysNights', { days, nights }),
+                  },
+                  {
+                    icon: 'people-outline' as const,
+                    label: t('mobile.tripPlan.passengerSummary', passengers),
+                  },
+                ].map((pill) => (
+                  <Pressable
+                    key={pill.icon}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: isEditing, disabled: booking.isPending }}
+                    disabled={booking.isPending}
+                    onPress={() => setEditing((value) => !value)}
+                    style={({ pressed }) => [
+                      layout.pill,
+                      isEditing && layout.pillActive,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Icon name={pill.icon} size={16} color={colors.tealInk} />
+                    <Txt style={layout.pillText}>{pill.label}</Txt>
+                  </Pressable>
+                ))}
               </Row>
               {isEditing && (
                 <>
@@ -413,7 +445,6 @@ function SelectedTripScreen({
                   </View>
                 </>
               )}
-              <Txt style={styles.muted}>{copy.bookHint}</Txt>
               {!!quoteStatus && (
                 <Txt style={styles.status} accessibilityLiveRegion="polite">
                   {quoteStatus}
@@ -578,6 +609,7 @@ function SelectedTripScreen({
 export function TripBookingScreen() {
   const selected = useTripBooking();
   const feed = useReelsFeed();
+  const [destination, setDestination] = useState<string | null>(null);
   const posts = [
     ...new Map(
       (feed.data?.pages.flatMap((page) => page.items) ?? []).map((post) => [post.postId, post]),
@@ -586,9 +618,29 @@ export function TripBookingScreen() {
     (post) =>
       post.postId !== selected?.postId && post.tripAttachment && getBookableTripPlan(post.tripAttachment),
   );
+  const destinations = [
+    ...new Set(
+      posts.map((post) => post.tripAttachment!.destinationName).filter((name): name is string => !!name),
+    ),
+  ];
+  const shownPosts = destination
+    ? posts.filter((post) => post.tripAttachment!.destinationName === destination)
+    : posts;
   const featured = (isDisabled: boolean) => (
     <View style={{ gap: spacing.md }}>
       <Txt variant="heading">{copy.featured}</Txt>
+      {destinations.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={layout.filters}>
+          {[null, ...destinations].map((name) => (
+            <ChoiceChip
+              key={name ?? 'all'}
+              label={name ?? copy.allDestinations}
+              isSelected={destination === name}
+              onPress={() => setDestination(name)}
+            />
+          ))}
+        </ScrollView>
+      )}
       <ApiErrorNotice
         error={feed.error}
         retry={() => {
@@ -599,54 +651,57 @@ export function TripBookingScreen() {
       {!feed.isPending && !feed.isError && posts.length === 0 && (
         <Txt style={styles.muted}>{copy.featuredEmpty}</Txt>
       )}
-      {posts.map((post) => {
-        const trip = post.tripAttachment!;
-        const plan = getBookableTripPlan(trip)!;
-        const days = Math.max(trip.daysCount ?? 0, ...(trip.items ?? []).map((item) => item.day), 1);
-        const poster = post.video.posters.w360 || post.video.posters.w540 || post.video.posters.w720;
-        return (
-          <Pressable
-            key={post.postId}
-            accessibilityRole="button"
-            accessibilityLabel={post.title}
-            disabled={isDisabled}
-            onPress={() =>
-              saveTripBooking({
-                postId: post.postId,
-                postTitle: post.title,
-                authorName: post.author.name ?? copy.communityAuthor,
-                coverUrl: poster,
-                trip,
-              })
-            }
-            style={({ pressed }) => [styles.featuredCard, pressed && styles.pressed]}
-          >
-            {poster && <Image source={poster} contentFit="cover" style={styles.poster} />}
-            <View style={styles.dayContent}>
-              <Txt style={styles.cardTitle}>{post.title}</Txt>
-              <Txt style={styles.muted}>
-                {[trip.destinationName, t('mobile.tripPlan.dayCount', { days })].filter(Boolean).join(' · ')}
-              </Txt>
-              <Row style={styles.choices}>
-                {plan.flights.length > 0 && (
-                  <Row style={{ gap: spacing.xs }}>
-                    <Icon name="airplane-outline" size={14} color={colors.tealInk} />
-                    <Txt style={styles.muted}>
-                      {t('mobile.tripPlan.flightCount', { count: plan.flights.length })}
+      <View style={layout.grid}>
+        {shownPosts.map((post) => {
+          const trip = post.tripAttachment!;
+          const plan = getBookableTripPlan(trip)!;
+          const days = Math.max(trip.daysCount ?? 0, ...(trip.items ?? []).map((item) => item.day), 1);
+          const poster = post.video.posters.w540 || post.video.posters.w360 || post.video.posters.w720;
+          return (
+            <Pressable
+              key={post.postId}
+              accessibilityRole="button"
+              accessibilityLabel={post.title}
+              disabled={isDisabled}
+              onPress={() =>
+                saveTripBooking({
+                  postId: post.postId,
+                  postTitle: post.title,
+                  authorName: post.author.name ?? copy.communityAuthor,
+                  coverUrl: poster,
+                  trip,
+                })
+              }
+              style={({ pressed }) => [layout.reel, pressed && styles.pressed]}
+            >
+              {poster ? (
+                <Image source={poster} contentFit="cover" style={StyleSheet.absoluteFill} />
+              ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tealInk }]} />
+              )}
+              <View style={layout.reelBadge}>
+                <Txt style={layout.reelBadgeText}>{t('mobile.tripPlan.dayCount', { days })}</Txt>
+              </View>
+              <View style={layout.reelText}>
+                <Txt style={layout.reelTitle} numberOfLines={2}>
+                  {post.title}
+                </Txt>
+                <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
+                  {!!trip.destinationName && (
+                    <Txt style={layout.reelMeta} numberOfLines={1}>
+                      {trip.destinationName}
                     </Txt>
-                  </Row>
-                )}
-                {plan.hotelId && (
-                  <Row style={{ gap: spacing.xs }}>
-                    <Icon name="bed-outline" size={14} color={colors.coralInk} />
-                    <Txt style={styles.muted}>{copy.hotelBadge}</Txt>
-                  </Row>
-                )}
-              </Row>
-            </View>
-          </Pressable>
-        );
-      })}
+                  )}
+                  {plan.flights.length > 0 && (
+                    <Icon name="airplane-outline" size={13} color={colors.background} />
+                  )}
+                  {!!plan.hotelId && <Icon name="bed-outline" size={13} color={colors.background} />}
+                </Row>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
       {feed.hasNextPage && (
         <Button
           tone="text"
@@ -662,9 +717,101 @@ export function TripBookingScreen() {
   );
   if (selected) return <SelectedTripScreen key={selected.postId} selected={selected} featured={featured} />;
   return (
-    <Screen title={copy.bookingTitle} back={false} compact background={colors.surface}>
-      <Txt style={styles.muted}>{copy.chooseHint}</Txt>
+    <Screen
+      title={copy.bookingTitle}
+      back={false}
+      header={<BookingHeader />}
+      compact
+      background={colors.surface}
+    >
       {featured(false)}
     </Screen>
   );
 }
+
+/** Đầu trang tab Đặt: tiêu đề lớn và lối vào giỏ, thay cho logo để chừa chỗ cho nội dung. */
+function BookingHeader() {
+  return (
+    <Row style={layout.header}>
+      <Txt variant="title">{copy.bookingTitle}</Txt>
+      <CartLink />
+    </Row>
+  );
+}
+
+const layout = StyleSheet.create({
+  header: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  filters: { gap: spacing.sm },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  reel: {
+    width: '48.5%',
+    aspectRatio: 3 / 4.2,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceMuted,
+  },
+  reelBadge: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.seaMist,
+  },
+  reelBadgeText: { fontSize: 11, color: colors.tealInk },
+  reelText: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    gap: 2,
+    padding: spacing.sm,
+    backgroundColor: colors.overlayHeavy,
+  },
+  reelTitle: { color: colors.background, fontSize: 13, fontWeight: '600', lineHeight: 17 },
+  reelMeta: { color: colors.background, fontSize: 11, flexShrink: 1 },
+  // Ảnh bìa tràn hết bề ngang, giữ phần trên của poster (chữ trên ảnh bìa thường nằm ở đó).
+  cover: {
+    height: 220,
+    marginHorizontal: -mobileLayout.gutter,
+    marginTop: -spacing.md,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceMuted,
+  },
+  coverBack: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.overlayHeavy,
+  },
+  coverText: { gap: 2, paddingTop: spacing.xs },
+  coverTitle: { color: colors.ink, fontSize: 19, fontWeight: '700', lineHeight: 25 },
+  coverMeta: { color: colors.textMuted, fontSize: 13 },
+  panel: { backgroundColor: 'transparent', borderWidth: 0, padding: 0 },
+  pills: { gap: spacing.sm, flexWrap: 'wrap' },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  pillActive: { borderColor: colors.teal, backgroundColor: colors.seaMist },
+  pillText: { fontSize: 13, color: colors.ink },
+});
