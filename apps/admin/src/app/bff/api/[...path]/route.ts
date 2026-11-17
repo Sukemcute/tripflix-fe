@@ -122,7 +122,18 @@ async function login(request: NextRequest, id: string | undefined) {
     return reply(400);
   }
   const body = JSON.stringify({ email: data.email, encPassword: data.encPassword });
-  const response = await upstream(request, '/api/auth/login', { web: true, body });
+  return openSession(request, id, '/api/auth/login', body);
+}
+
+/** Nút "Mở trang quản trị" bên web: đổi mã một lần (POST /api/auth/admin-handoff) lấy phiên, không đăng nhập lại. */
+async function exchangeHandoff(request: NextRequest, id: string | undefined) {
+  const data = await request.json().catch(() => null);
+  if (!data || typeof data.code !== 'string' || Object.keys(data).length !== 1) return reply(400);
+  return openSession(request, id, '/api/auth/admin-handoff/exchange', JSON.stringify({ code: data.code }));
+}
+
+async function openSession(request: NextRequest, id: string | undefined, path: string, body: string) {
+  const response = await upstream(request, path, { web: true, body });
   if (!response.ok) return authError(response);
   const tokens = await readTokens(response);
   const profile = await upstream(request, '/api/admin/me', { method: 'GET', access: tokens.access });
@@ -216,6 +227,7 @@ async function handle(request: NextRequest, context: RouteContext<'/bff/api/[...
       return forward(await upstream(request, path));
     }
     if (method === 'POST' && path === '/api/auth/login') return await login(request, id);
+    if (method === 'POST' && path === '/api/auth/admin-handoff/exchange') return await exchangeHandoff(request, id);
 
     const isRefresh = method === 'POST' && path === '/api/auth/refresh';
     const isLogout = method === 'POST' && path === '/api/auth/logout';

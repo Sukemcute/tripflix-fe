@@ -21,7 +21,7 @@ describe('resolveNotificationHref', () => {
 
   it.each(['comment.created', 'comment.replied'])('mở đúng bình luận cho thông báo cũ %s', (type) => {
     expect(resolveNotificationHref({ type, link: '/trips/p', data: { postId: 'p', commentId: 'c' } }))
-      .toBe('/trips/p?comment=c');
+      .toBe('/inspiration?open=p&comment=c');
   });
 
   it('mở lượt trả lời mới dù link cũ trỏ vào bình luận gốc', () => {
@@ -29,7 +29,7 @@ describe('resolveNotificationHref', () => {
       type: 'comment.replied',
       link: '/trips/p?comment=root',
       data: { postId: 'p', commentId: 'new-reply', parentCommentId: 'root' },
-    })).toBe('/trips/p?comment=new-reply');
+    })).toBe('/inspiration?open=p&comment=new-reply');
   });
 
   it.each(['//evil.example', 'javascript:alert(1)', null])('bỏ link không an toàn hoặc trống: %s', (link) => {
