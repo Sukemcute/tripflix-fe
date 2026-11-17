@@ -37,7 +37,12 @@ import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { getAvatarTone } from './avatar-tone';
 import { EmojiPicker } from './emoji-picker';
 import { CommentVisibility } from './comment-visibility';
-import { addCommentToCache, removeCommentFromCache, replaceCommentInCache } from './comment-cache';
+import {
+  addCommentToCache,
+  removeCommentFromCache,
+  replaceCommentInCache,
+  setCommentReactionInCache,
+} from './comment-cache';
 import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
@@ -2340,8 +2345,10 @@ function CommentNode({
     onError: (_, __, context) => {
       setOptimisticLiked(context?.previous ?? null);
     },
-    onSettled: async () => {
-      await client.invalidateQueries({ queryKey: ['social', 'comments', postId] });
+    onSuccess: (reaction) => {
+      setCommentReactionInCache(client, postId, reaction);
+    },
+    onSettled: () => {
       setOptimisticLiked(null);
     },
   });

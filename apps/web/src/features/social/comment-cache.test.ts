@@ -11,6 +11,7 @@ import {
   refreshCommentsIfStale,
   removeCommentFromCache,
   replaceCommentInCache,
+  setCommentReactionInCache,
 } from './comment-cache';
 
 const POST_ID = 'post-1';
@@ -187,6 +188,17 @@ describe('comment-cache', () => {
 
     expect(postCounts(client).detail).toBe(5);
     expect(client.getQueryState(detailKey)!.isInvalidated).toBe(true);
+  });
+
+  it('thả tim bình luận: ghi đúng số server trả về ở mọi danh sách, không tải lại', () => {
+    const client = seedClient();
+
+    setCommentReactionInCache(client, POST_ID, { commentId: 'r1', isLiked: true, likeCount: 7 });
+
+    const reply = client.getQueryData<CommentPages>(repliesKey('c3'))!.pages[0]!.items[1]!;
+    expect(reply).toMatchObject({ id: 'r1', isLiked: true, likeCount: 7 });
+    expect(client.getQueryState(repliesKey('c3'))!.isInvalidated).toBe(false);
+    expect(client.getQueryState(rootListKey)!.isInvalidated).toBe(false);
   });
 
   it('mở lại panel khi dữ liệu đã cũ: chỉ giữ trang đầu rồi tải lại; còn mới thì không tải', () => {

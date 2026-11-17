@@ -224,6 +224,19 @@ export function removeCommentFromCache(client: QueryClient, postId: string, comm
   markSummaryStale(client, postId);
 }
 
+/** Thả tim bình luận: ghi đúng số và trạng thái server trả về, không tải lại trang nào. */
+export function setCommentReactionInCache(
+  client: QueryClient,
+  postId: string,
+  reaction: Pick<SocialCommentDto, 'isLiked' | 'likeCount'> & { commentId: string },
+) {
+  updateCachedComments(client, postId, (entry) =>
+    entry.id === reaction.commentId
+      ? { ...entry, isLiked: reaction.isLiked, likeCount: reaction.likeCount }
+      : entry,
+  );
+}
+
 /**
  * Mở lại panel bình luận: dữ liệu còn mới thì dùng luôn; đã cũ thì chỉ giữ trang đầu rồi tải lại,
  * để không phải tải lại mọi trang đã cuộn trước đó.
