@@ -1,6 +1,7 @@
 'use client';
 
 import { vi } from '@tripflix/i18n';
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import styles from './search-monitoring.module.css';
 
 const copy = vi.searchMonitoring;
@@ -28,69 +29,46 @@ function TrendChart({
   metric: 'elapsedMs' | 'total' | 'corrections';
   unit: string;
 }) {
-  const first = samples[0];
-  const last = samples.at(-1);
   const values = samples.map((sample) => sample[metric]);
-  const max = Math.max(1, ...values.map((value) => value ?? 0));
-  const x = (sample: SearchObservation) =>
-    first && last && last.recordedAt !== first.recordedAt
-      ? 44 + ((sample.recordedAt - first.recordedAt) / (last.recordedAt - first.recordedAt)) * 358
-      : 223;
-  const y = (value: number) => 142 - (value / max) * 112;
-  let path = '';
-  let hasPrevious = false;
-  samples.forEach((sample) => {
-    const value = sample[metric];
-    if (value === null) {
-      hasPrevious = false;
-      return;
-    }
-    path += `${hasPrevious ? 'L' : 'M'}${x(sample)},${y(value)} `;
-    hasPrevious = true;
-  });
-
   return (
     <section className={styles.panel} aria-label={title}>
       <h2>{title}</h2>
       <p className={styles.hint}>{unit}</p>
-      {/* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- Inline SVG needs an image role to expose its chart title. */}
-      <svg className={styles.trendSvg} viewBox="0 0 440 190" role="img" aria-label={title}>
-        <title>{title}</title>
-        <desc>{text.chartHelp}</desc>
-        {[0, 0.5, 1].map((ratio) => (
-          <g key={ratio}>
-            <line x1="44" x2="402" y1={y(max * ratio)} y2={y(max * ratio)} className={styles.chartGrid} />
-            <text x="36" y={y(max * ratio) + 4} textAnchor="end">
-              {(max * ratio).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}
-            </text>
-          </g>
-        ))}
-        <path d={path} className={styles.chartLine} />
-        {samples.map(
-          (sample, index) =>
-            sample[metric] !== null && (
-              <circle
-                key={index}
-                cx={x(sample)}
-                cy={y(sample[metric])}
-                r="4"
-                className={sample.total === null ? styles.chartError : styles.chartPoint}
-              >
-                <title>{`${formatTime(sample.recordedAt)} · ${sample[metric]} ${unit} · ${sample.total === null ? text.failed : text.success}`}</title>
-              </circle>
-            ),
-        )}
-        {first && (
-          <text x="44" y="174">
-            {formatTime(first.recordedAt)}
-          </text>
-        )}
-        {last && samples.length > 1 && (
-          <text x="402" y="174" textAnchor="end">
-            {formatTime(last.recordedAt)}
-          </text>
-        )}
-      </svg>
+      <div className="mt-4 h-52 w-full" aria-label={title}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={samples} margin={{ top: 8, right: 16, bottom: 12, left: 0 }}>
+            <CartesianGrid vertical={false} stroke="var(--color-border)" />
+            <XAxis
+              dataKey="recordedAt"
+              tickFormatter={formatTime}
+              fontSize={10}
+              minTickGap={40}
+              axisLine={false}
+              tickLine={false}
+              stroke="var(--color-text-muted)"
+            />
+            <YAxis
+              width={44}
+              fontSize={10}
+              axisLine={false}
+              tickLine={false}
+              stroke="var(--color-text-muted)"
+            />
+            <Tooltip labelFormatter={(at) => formatTime(Number(at))} />
+            <Line
+              type="linear"
+              dataKey={metric}
+              name={title}
+              unit={` ${unit}`}
+              stroke="var(--color-teal-ink)"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              connectNulls={false}
+              isAnimationActive={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
       {values.every((value) => value === null) ? (
         <p className={styles.hint}>{text.noValues}</p>
       ) : (

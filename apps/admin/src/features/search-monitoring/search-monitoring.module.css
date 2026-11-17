@@ -3,7 +3,7 @@
 }
 .root {
   display: grid;
-  gap: 24px;
+  gap: 20px;
   min-width: 0;
   max-width: 1440px;
   margin-inline: auto;
@@ -57,7 +57,7 @@
 }
 .tabs {
   display: flex;
-  gap: 24px;
+  gap: 20px;
   border-bottom: 1px solid var(--color-border);
   overflow-x: auto;
 }
@@ -70,14 +70,14 @@
   border-bottom: 3px solid transparent;
 }
 .tabs button[aria-current] {
-  color: var(--color-coral-ink);
-  border-color: var(--color-coral);
+  color: var(--color-teal-ink);
+  border-color: var(--color-teal);
 }
 .panel {
   min-width: 0;
   background: var(--color-background);
   border: 1px solid var(--color-border);
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 24px;
 }
 .panel > p {
@@ -181,7 +181,7 @@
   --series-color: var(--color-teal-ink);
 }
 .runSeries[data-job='suggest'] {
-  --series-color: #ad6b18;
+  --series-color: var(--color-text-muted);
 }
 .runSeries path {
   fill: none;
@@ -195,13 +195,13 @@
   stroke-width: 1.5;
 }
 .runSeries circle[data-outcome='failed'] {
-  fill: var(--color-coral-ink);
+  fill: var(--color-danger);
 }
 .exploreSwatch {
   background: var(--color-teal-ink);
 }
 .suggestSwatch {
-  background: #ad6b18;
+  background: var(--color-text-muted);
 }
 .monitorBottom {
   display: grid;
@@ -377,9 +377,13 @@
 .healthPoint[data-status='healthy'] {
   --health-color: var(--color-teal-ink);
 }
-.healthBadge:is([data-status='attention'], [data-status='pending'], [data-status='overdue']),
+.healthBadge:is([data-status='attention'], [data-status='pending'], [data-status='overdue']) {
+  --health-color: var(--color-coral-ink);
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
+}
 .healthPoint[data-status='attention'] {
-  --health-color: #925309;
+  --health-color: var(--color-sun);
 }
 .healthBadge:is([data-status='offline'], [data-status='failed'], [data-status='stuck']),
 .healthPoint[data-status='offline'] {
@@ -493,7 +497,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   background: var(--color-background);
   border: 1px solid var(--color-border);
-  border-radius: 16px;
+  border-radius: 12px;
 }
 .metrics > div {
   padding: 20px 24px;
@@ -902,4 +906,45 @@
   .shell :global(.admin-main-view) {
     padding: 20px 16px 32px;
   }
+}
+
+.root .heading h1 {
+  font-size: 18px;
+  margin-top: 0;
+}
+.root .heading {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+.root .tabs {
+  gap: 20px;
+}
+.root .tabs button {
+  font-size: 11px;
+  border-bottom-width: 2px;
+  font-weight: 600;
+}
+.root .tabs button[aria-current] {
+  color: var(--color-teal-ink);
+  border-color: var(--color-teal-ink);
+}
+.root .panel {
+  padding: 20px;
+  box-shadow: none;
+}
+.root h2 {
+  font-size: 14px;
+}
+.root h3 {
+  font-size: 12px;
+}
+.root p {
+  font-size: 12px;
+}
+.root table th {
+  font-size: 10px;
+  background: var(--color-surface);
+}
+.root table td {
+  font-size: 11px;
 }
