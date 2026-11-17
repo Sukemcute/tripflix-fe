@@ -495,6 +495,7 @@ export const mobile = {
     create: 'Chia sẻ chuyến đi',
     help: 'Trợ giúp & chính sách',
     settings: 'Cài đặt tài khoản',
+    menu: 'Cài đặt',
     liveHelpBody:
       'Bạn có thể xem điều kiện đổi, hủy và hoàn tiền trong chi tiết đặt chỗ ở mục Chuyến đi của tôi.',
     savedTitle: 'Cảm hứng để dành',

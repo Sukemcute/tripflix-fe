@@ -31,6 +31,7 @@ import { LoadingDots } from '@/components/loading-dots';
 
 const profile = copy.profile;
 
+/** Menu cài đặt (TF47B): mở từ nút bánh răng trên trang cá nhân ở tab Tôi. */
 export function LiveProfileScreen() {
   const { user, isReady, error, session } = useApiSession();
   const [help, setHelp] = useState(false);
@@ -78,7 +79,7 @@ export function LiveProfileScreen() {
     .toLocaleUpperCase('vi-VN');
 
   return (
-    <Screen compact header={null} padded={false}>
+    <Screen compact title={profile.menu} padded={false}>
       <View>
         <View style={styles.cover}>
           <Logo />

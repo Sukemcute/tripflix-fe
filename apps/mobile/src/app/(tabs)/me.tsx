@@ -1,1 +1,1 @@
-export { LiveProfileScreen as default } from '@/features/account/live-account-screens';
+export { MyProfileScreen as default } from '@/features/account/public-profile-screen';
