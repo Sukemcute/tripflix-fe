@@ -1,21 +1,25 @@
-/* Menu chia sẻ kiểu TikTok: nền trắng, viền mỏng, không bóng đổ hay gradient. Ở top layer nên toạ độ theo khung nhìn. */
+/*
+ * Menu xổ xuống chung của tab Cảm hứng: nền trắng, viền mỏng, bo 12px, một lớp bóng xám nhẹ để tách khỏi nội dung
+ * bên dưới; mục 0.88rem, bo 8px, rê chuột nền xám nhạt; chữ phụ 0.8rem màu xám. Ở top layer nên toạ độ theo khung nhìn.
+ */
 .menu {
   position: fixed;
   inset: auto;
   margin: 0;
   width: min(240px, calc(100vw - 16px));
-  padding: 8px;
+  padding: 6px;
   border: 1px solid var(--color-border);
-  border-radius: 16px;
+  border-radius: 12px;
   background: var(--color-background);
   color: var(--color-ink);
+  box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--color-ink) 30%, transparent);
 }
 
 .title {
   margin: 0;
-  padding: 6px 10px 8px;
+  padding: 6px 10px 6px;
   color: var(--color-text-muted);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
@@ -26,12 +30,12 @@
   width: 100%;
   padding: 7px 10px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--color-transparent);
   color: inherit;
   font: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.88rem;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
   transition: background-color 140ms ease;
@@ -72,7 +76,8 @@
 .manualCopy p {
   margin: 0 0 6px;
   color: var(--color-text-muted);
-  font-size: 0.76rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
 }
 
 .manualCopy input {

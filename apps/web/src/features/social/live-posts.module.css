@@ -1915,12 +1915,9 @@
 }
 
 .authorRoleTag {
-  padding: 1px 6px;
-  border-radius: 6px;
-  background: var(--iv-accent-soft);
-  color: var(--iv-accent);
-  font-size: 0.7rem;
-  font-weight: 700;
+  color: var(--iv-text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
 }
 
 .panelCommentText {
@@ -2257,7 +2254,8 @@
 }
 
 .composerDropzoneHint {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
   color: var(--iv-text-muted);
   margin: 0;
 }
@@ -2382,7 +2380,8 @@
 }
 
 .composerItineraryToggleSubtitle {
-  font-size: 0.76rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
   color: var(--iv-text-muted);
 }
 
@@ -2416,7 +2415,7 @@
   padding: 6px 10px;
   border-radius: 8px;
   border: 1px solid var(--iv-border);
-  background: var(--iv-elevated-bg);
+  background-color: var(--iv-elevated-bg);
   font: inherit;
   font-size: 0.82rem;
   font-weight: 600;
@@ -2491,7 +2490,7 @@
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid var(--iv-border);
-  background: var(--iv-elevated-bg);
+  background-color: var(--iv-elevated-bg);
   color: var(--iv-text);
   font: inherit;
   font-size: 0.88rem;
@@ -2507,6 +2506,33 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+/*
+ * Ô xổ xuống trong pop-up đăng bài (quyền riêng tư, ngày của lịch trình): bỏ mũi tên mặc định của hệ điều hành
+ * (mỗi trình duyệt một kiểu) và vẽ mũi tên bằng hai gradient màu token, để trông như các ô nhập cạnh nó.
+ */
+.composerModalCard select {
+  appearance: none;
+  padding-right: 34px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--iv-text-muted) 50%),
+    linear-gradient(135deg, var(--iv-text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 17px) 50%,
+    calc(100% - 12px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.composerModalCard select:hover:not(:disabled) {
+  border-color: var(--iv-text-muted);
+}
+
+.composerModalCard select option {
+  color: var(--color-text);
+  background: var(--color-background);
 }
 
 /* Nút ở chân pop-up đăng bài: nút phụ có viền, nút chính màu trơn; không bóng đổ. */

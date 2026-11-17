@@ -15,6 +15,9 @@ import { PostOwnerMenu } from '../post-owner-menu';
 import { AdaptivePostMedia } from './adaptive-post-media';
 import styles from './social-feed.module.css';
 
+/** Hiện tối đa 3 hashtag trên thẻ bài, phần còn lại gộp thành "+N" (rê chuột xem đủ). */
+const VISIBLE_HASHTAGS = 3;
+
 export interface PostCardProps {
   post: SocialPostDto;
   currentUser: { id: string; displayName: string } | null;
@@ -179,7 +182,7 @@ export function PostCard({
 
       {post.hashtags && post.hashtags.length > 0 && (
         <div className={styles.postTagsWrap}>
-          {post.hashtags.map((tag) => (
+          {post.hashtags.slice(0, VISIBLE_HASHTAGS).map((tag) => (
             <button
               key={tag}
               type="button"
@@ -189,6 +192,14 @@ export function PostCard({
               #{tag}
             </button>
           ))}
+          {post.hashtags.length > VISIBLE_HASHTAGS && (
+            <span
+              className={styles.postTagMore}
+              title={post.hashtags.slice(VISIBLE_HASHTAGS).map((tag) => `#${tag}`).join(' ')}
+            >
+              +{post.hashtags.length - VISIBLE_HASHTAGS}
+            </span>
+          )}
         </div>
       )}
 
