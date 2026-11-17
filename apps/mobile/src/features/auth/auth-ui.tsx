@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   useEffect,
+  useId,
   type ComponentProps,
   type ComponentRef,
   type PropsWithChildren,
@@ -68,6 +69,7 @@ export function AuthField({
   label,
   trailing,
   error,
+  focusOnError = false,
   style,
   onFocus,
   onBlur,
@@ -75,22 +77,28 @@ export function AuthField({
 }: Omit<ComponentProps<typeof TextInput>, 'style'> & {
   label: string;
   error?: string;
+  focusOnError?: boolean;
   trailing?: ReactNode;
   style?: StyleProp<TextStyle>;
 }) {
   const [focused, setFocused] = useState(false);
   const input = useRef<ComponentRef<typeof TextInput>>(null);
+  const errorId = useId();
   useEffect(() => {
-    if (error) input.current?.focus();
-  }, [error]);
+    if (error && focusOnError) input.current?.focus();
+  }, [error, focusOnError]);
   return (
     <View style={styles.field}>
-      <Txt style={styles.label}>{label}</Txt>
+      <Txt style={styles.label}>{label} *</Txt>
       <View style={[styles.inputFrame, focused && styles.focused, !!error && styles.invalid]}>
         <TextInput
           {...props}
           ref={input}
           accessibilityLabel={label}
+          accessibilityHint={[vi.api.mobileAuthRequired, error].filter(Boolean).join('. ')}
+          aria-required={true}
+          aria-invalid={!!error}
+          aria-describedby={error ? errorId : undefined}
           placeholderTextColor={c.textMuted}
           onFocus={(event) => {
             setFocused(true);
@@ -105,7 +113,7 @@ export function AuthField({
         {trailing}
       </View>
       {error && (
-        <Txt accessibilityRole="alert" style={styles.fieldError}>
+        <Txt nativeID={errorId} accessibilityRole="alert" style={styles.fieldError}>
           {error}
         </Txt>
       )}
@@ -142,10 +150,12 @@ export function AuthChoice({
   selected = false,
   onPress,
   disabled = false,
+  onBlur,
 }: PropsWithChildren<{
   selected?: boolean;
   onPress: () => void;
   disabled?: boolean;
+  onBlur?: () => void;
 }>) {
   return (
     <Pressable
@@ -154,6 +164,7 @@ export function AuthChoice({
       aria-pressed={selected}
       disabled={disabled}
       onPress={onPress}
+      onBlur={onBlur}
       style={({ pressed }) => [styles.choice, selected && styles.choiceSelected, pressed && styles.pressed]}
     >
       <Txt style={[styles.choiceLabel, selected && styles.selectedLabel]}>{children}</Txt>

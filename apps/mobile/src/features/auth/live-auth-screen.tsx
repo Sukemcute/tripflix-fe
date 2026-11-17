@@ -93,6 +93,9 @@ export function LiveLoginScreen() {
   const [nationality, setNationality] = useState('VN');
   const [hasAcceptedTerms, setAcceptedTerms] = useState(false);
   const [isNationalityOpen, setNationalityOpen] = useState(false);
+  const [touched, setTouched] = useState<Partial<Record<string, boolean>>>({});
+  const touch = (name: string) => setTouched((current) => ({ ...current, [name]: true }));
+  const isEmailValid = email.trim().length <= 254 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
   const dateOfBirth = parseDayMonthYear(birthText);
   const profileIssue = getSignupProfileIssue({ dateOfBirth, gender, nationality, hasAcceptedTerms });
   const strength = getRegistrationPasswordStrength(password);
@@ -110,7 +113,7 @@ export function LiveLoginScreen() {
     },
   });
   const hasAccountDetails = canSendRegistrationCode({ displayName, email, password });
-  const canSendCode = hasAccountDetails && !profileIssue;
+  const canSendCode = hasAccountDetails && isEmailValid && !profileIssue;
   const canRegister = canSendCode && !!registrationId && REGISTRATION_CODE_PATTERN.test(code);
   const mutation = useMutation({
     mutationFn: async () => {
@@ -155,8 +158,32 @@ export function LiveLoginScreen() {
   const inlineField = isRegistering ? registrationField(inlineSource) : undefined;
   const hasInlineError =
     !!inlineField && ['displayName', 'email', 'password', 'dateOfBirth', 'code'].includes(inlineField);
-  const fieldError = (name: string) =>
+  const serverFieldError = (name: string) =>
     hasInlineError && inlineField === name ? getRegistrationFieldError(inlineSource) : undefined;
+  const localErrors: Record<string, string | undefined> = {
+    email: !email.trim()
+      ? vi.api.mobileAuthEmailRequired
+      : !isEmailValid
+        ? vi.api.mobileAuthEmailInvalid
+        : undefined,
+    password: !password
+      ? vi.api.mobileAuthPasswordRequired
+      : isRegistering && strength !== 'passwordStrong'
+        ? vi.api[strength]
+        : undefined,
+    displayName: !displayName.trim() ? vi.api.mobileAuthNameRequired : undefined,
+    dateOfBirth:
+      profileIssue === 'signupDateOfBirthMissing'
+        ? vi.api.mobileAuthBirthInvalid
+        : profileIssue === 'signupAgeOutOfRange'
+          ? vi.api.mobileAuthAgeInvalid
+          : undefined,
+    code: registrationId && !REGISTRATION_CODE_PATTERN.test(code) ? vi.api.mobileAuthNeedFullCode : undefined,
+    gender: !gender ? vi.api.signupGenderMissing : undefined,
+    terms: !hasAcceptedTerms ? vi.api.signupTermsRequired : undefined,
+  };
+  const fieldError = (name: string) =>
+    serverFieldError(name) ?? (touched[name] ? localErrors[name] : undefined);
   // 429 vì bấm quá sớm: nút đã đếm ngược, thay câu lỗi chung bằng số giây còn lại.
   const sendError =
     cooldown.isWaiting && getRetryAfterSeconds(requestCode.error) !== undefined
@@ -167,22 +194,24 @@ export function LiveLoginScreen() {
   const primaryDisabled =
     !isReady ||
     isBusy ||
-    !email.trim() ||
+    !isEmailValid ||
     !password ||
     (isRegistering && (!onboardingReady || !displayName.trim() || !canRegister));
   const registrationHint = !displayName.trim()
     ? vi.api.mobileAuthNeedName
     : !email.trim()
       ? vi.api.mobileAuthNeedEmail
-      : strength !== 'passwordStrong'
-        ? vi.api[strength]
-        : profileIssue
-          ? vi.api[profileIssue]
-          : !registrationId
-            ? vi.api.mobileAuthNeedCode
-            : !REGISTRATION_CODE_PATTERN.test(code)
-              ? vi.api.mobileAuthNeedFullCode
-              : undefined;
+      : !isEmailValid
+        ? vi.api.mobileAuthEmailInvalid
+        : strength !== 'passwordStrong'
+          ? vi.api[strength]
+          : profileIssue
+            ? vi.api[profileIssue]
+            : !registrationId
+              ? vi.api.mobileAuthNeedCode
+              : !REGISTRATION_CODE_PATTERN.test(code)
+                ? vi.api.mobileAuthNeedFullCode
+                : undefined;
   return (
     <Screen
       padded={false}
@@ -230,6 +259,8 @@ export function LiveLoginScreen() {
           </View>
         )}
 
+        <Txt style={styles.helper}>{vi.api.mobileAuthRequiredLegend}</Txt>
+
         <View style={styles.group}>
           {isRegistering && (
             <Txt variant="heading" style={styles.groupTitle}>
@@ -240,8 +271,14 @@ export function LiveLoginScreen() {
             <Field
               label={vi.api.displayName}
               error={fieldError('displayName')}
+              focusOnError={!!serverFieldError('displayName')}
+              onBlur={() => touch('displayName')}
               value={displayName}
-              onChangeText={setDisplayName}
+              onChangeText={(value) => {
+                setDisplayName(value);
+                mutation.reset();
+                requestCode.reset();
+              }}
               editable={!isBusy}
               maxLength={DISPLAY_NAME_MAX}
             />
@@ -249,6 +286,8 @@ export function LiveLoginScreen() {
           <Field
             label={vi.api.email}
             error={fieldError('email')}
+            focusOnError={!!serverFieldError('email')}
+            onBlur={() => touch('email')}
             value={email}
             onChangeText={(value) => {
               setEmail(value);
@@ -268,8 +307,14 @@ export function LiveLoginScreen() {
             <Field
               label={vi.api.password}
               error={fieldError('password')}
+              focusOnError={!!serverFieldError('password')}
+              onBlur={() => touch('password')}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(value) => {
+                setPassword(value);
+                mutation.reset();
+                requestCode.reset();
+              }}
               editable={!isBusy}
               secureTextEntry={!passwordVisible}
               autoComplete={isRegistering ? 'new-password' : 'current-password'}
@@ -306,7 +351,9 @@ export function LiveLoginScreen() {
                 <Txt
                   style={[styles.helper, !!password && strength === 'passwordStrong' && styles.validPassword]}
                 >
-                  {password ? vi.api[strength] : vi.api.mobileAuthPasswordHint}
+                  {password && strength === 'passwordStrong'
+                    ? vi.api[strength]
+                    : vi.api.mobileAuthPasswordHint}
                 </Txt>
               </View>
             )}
@@ -322,15 +369,21 @@ export function LiveLoginScreen() {
               <Field
                 label={vi.api.dateOfBirthTyped}
                 error={fieldError('dateOfBirth')}
+                focusOnError={!!serverFieldError('dateOfBirth')}
+                onBlur={() => touch('dateOfBirth')}
                 value={birthText}
-                onChangeText={(value) => setBirthText(value.replace(/[^0-9/]/g, ''))}
+                onChangeText={(value) => {
+                  setBirthText(value.replace(/[^0-9/]/g, ''));
+                  mutation.reset();
+                  requestCode.reset();
+                }}
                 placeholder="20/05/2000"
                 keyboardType="numbers-and-punctuation"
                 maxLength={10}
                 editable={!isBusy}
               />
               <View style={styles.fieldGroup}>
-                <Txt style={styles.label}>{vi.api.gender}</Txt>
+                <Txt style={styles.label}>{vi.api.gender} *</Txt>
                 <View style={styles.chips}>
                   {SIGNUP_GENDERS.map((option) => (
                     <Chip
@@ -338,17 +391,24 @@ export function LiveLoginScreen() {
                       selected={gender === option}
                       onPress={() => setGender(option)}
                       disabled={isBusy}
+                      onBlur={() => touch('gender')}
                     >
                       {vi.api.genderOptions[option]}
                     </Chip>
                   ))}
                 </View>
+                {fieldError('gender') && (
+                  <Txt accessibilityRole="alert" style={styles.localError}>
+                    {fieldError('gender')}
+                  </Txt>
+                )}
               </View>
               <View style={styles.fieldGroup}>
-                <Txt style={styles.label}>{vi.api.nationality}</Txt>
+                <Txt style={styles.label}>{vi.api.nationality} *</Txt>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={vi.api.nationality + ': ' + describeNationality(nationality)}
+                  accessibilityHint={vi.api.mobileAuthRequired}
                   accessibilityState={{ expanded: isNationalityOpen, disabled: isBusy }}
                   disabled={isBusy}
                   onPress={() => {
@@ -363,10 +423,13 @@ export function LiveLoginScreen() {
               </View>
               <Pressable
                 accessibilityRole="checkbox"
+                accessibilityHint={vi.api.mobileAuthRequired}
                 accessibilityState={{ checked: hasAcceptedTerms, disabled: isBusy }}
                 aria-checked={hasAcceptedTerms}
+                aria-required={true}
                 disabled={isBusy}
                 onPress={() => setAcceptedTerms(!hasAcceptedTerms)}
+                onBlur={() => touch('terms')}
                 style={styles.terms}
               >
                 <Icon
@@ -378,10 +441,14 @@ export function LiveLoginScreen() {
                   {vi.api.termsAgreePrefix}{' '}
                   <WebLinkText path="/dieu-khoan-su-dung">{vi.terms.title}</WebLinkText> {vi.api.termsAnd}{' '}
                   <WebLinkText path="/chinh-sach-bao-mat">{vi.privacy.title}</WebLinkText>
-                  {vi.api.termsAgreeSuffix}
+                  {vi.api.termsAgreeSuffix} *
                 </Txt>
               </Pressable>
-              {!!profileIssue && hasAccountDetails && <Notice>{vi.api[profileIssue]}</Notice>}
+              {fieldError('terms') && (
+                <Txt accessibilityRole="alert" style={styles.localError}>
+                  {fieldError('terms')}
+                </Txt>
+              )}
             </View>
             <View style={styles.group}>
               <View style={styles.fieldGroup}>
@@ -393,8 +460,13 @@ export function LiveLoginScreen() {
               <Field
                 label={vi.api.registrationCodeLabel}
                 error={fieldError('code')}
+                focusOnError={!!serverFieldError('code')}
+                onBlur={() => touch('code')}
                 value={code}
-                onChangeText={(value) => setCode(value.replace(/[^0-9]/g, ''))}
+                onChangeText={(value) => {
+                  setCode(value.replace(/[^0-9]/g, ''));
+                  mutation.reset();
+                }}
                 keyboardType="number-pad"
                 autoComplete="one-time-code"
                 maxLength={8}
@@ -455,6 +527,7 @@ export function LiveLoginScreen() {
             disabled={isBusy}
             onPress={() => {
               setRegistering(!isRegistering);
+              setTouched({});
               setPasswordVisible(false);
               mutation.reset();
               requestCode.reset();
@@ -526,6 +599,7 @@ const styles = StyleSheet.create({
   passwordGroup: { gap: s.sm },
   passwordHint: { flexDirection: 'row', alignItems: 'flex-start', gap: s.sm },
   helper: { fontSize: 13, lineHeight: 22, color: c.textMuted, flexShrink: 1 },
+  localError: { fontSize: 13, lineHeight: 22, color: c.coralInk },
   validPassword: { color: c.tealInk },
   visibility: { width: 48, minHeight: 52, justifyContent: 'center', alignItems: 'center' },
   actions: { gap: s.md },

@@ -103,6 +103,22 @@ class AuthPage {
       );
       const ui = new AuthPage(page);
       await ui.goto('/login?returnTo=/cart');
+      assert.equal(await ui.field('Email').getAttribute('aria-required'), 'true');
+      assert.equal(await page.getByRole('alert').count(), 0, 'no premature field errors');
+      await ui.field('Email').focus();
+      await ui.field('Mật khẩu').focus();
+      await page.getByText('Vui lòng nhập email.', { exact: true }).waitFor();
+      assert(
+        await ui.field('Mật khẩu').evaluate((input) => input === document.activeElement),
+        'blur errors do not steal focus',
+      );
+      await ui.field('Email').fill('ban@');
+      await ui.field('Mật khẩu').fill('Test-password-2026!');
+      await page.getByText('Email chưa đúng định dạng. Ví dụ: ban@example.com.', { exact: true }).waitFor();
+      assert(await ui.button('Đăng nhập & tiếp tục').isDisabled(), 'invalid email blocks login');
+      await ui.field('Email').fill('ban@example.com');
+      assert.equal(await ui.field('Email').getAttribute('aria-invalid'), 'false');
+      await ui.goto('/login?returnTo=/cart');
       await ui.fits(ui.button('Đăng nhập & tiếp tục'));
       assert(await ui.button('Đăng nhập & tiếp tục').isDisabled());
       await ui.noUnderlines();
@@ -129,6 +145,39 @@ class AuthPage {
       await ui.snapshot(`after-register-${width}`);
       await ui.noUnderlines();
       await ui.noOverflow();
+      if (width === 390) {
+        for (const email of [
+          'ban',
+          'ban@',
+          '@example.com',
+          'ban@example',
+          'ban @example.com',
+          'ban@@example.com',
+        ]) {
+          await ui.field('Email').fill(email);
+          await ui.field('Email').blur();
+          assert(await ui.button('Gửi mã xác thực').isDisabled());
+          assert.equal(await ui.field('Email').getAttribute('aria-invalid'), 'true');
+        }
+        await ui.field('Tên hiển thị').focus();
+        await ui.field('Mật khẩu').fill('short');
+        await ui.field('Ngày sinh (ngày/tháng/năm)').fill('31/02/2000');
+        await ui.field('Email').fill('ban@');
+        await ui.field('Email').blur();
+        await page.getByText('Vui lòng nhập tên hiển thị.', { exact: true }).waitFor();
+        await page.getByText('Nhập ngày sinh có thật theo dạng ngày/tháng/năm.', { exact: true }).waitFor();
+        assert.equal(await ui.field('Mật khẩu').getAttribute('aria-invalid'), 'true');
+        await ui.snapshot('signup-inline-validation');
+        await ui.field('Ngày sinh (ngày/tháng/năm)').fill('01/01/2020');
+        await page.getByText('Độ tuổi đăng ký cần từ 13 đến 120 tuổi.', { exact: true }).waitFor();
+        assert(await ui.button('Gửi mã xác thực').isDisabled());
+        await ui.button('Nữ').focus();
+        await ui.field('Email').focus();
+        await page.getByText('Chọn giới tính.', { exact: true }).waitFor();
+        checks.push(
+          'Required semantics and blur validation: empty fields, malformed email, weak password, impossible date and underage; corrected errors clear without stealing focus',
+        );
+      }
       await ui.fillProfile();
       await ui.button('Quốc tịch: Việt Nam').click();
       await ui.button('Nhật Bản').click();
@@ -146,6 +195,28 @@ class AuthPage {
       await ui.noUnderlines();
       await ui.noOverflow();
       if (width === 390) {
+        await page.getByRole('checkbox').click();
+        await ui.field('Email').focus();
+        await page
+          .getByRole('alert')
+          .filter({ hasText: 'Bạn cần đồng ý Điều khoản sử dụng và Chính sách bảo mật.' })
+          .waitFor();
+        await page.getByRole('checkbox').click();
+        await context.unroute('**/api/auth/registration-code');
+        await context.route('**/api/auth/registration-code', (route) =>
+          route.fulfill({ json: { registrationId: 'qa-otp', resendAfterSeconds: 60 } }),
+        );
+        await ui.button('Gửi mã xác thực').click();
+        await ui.field('Mã xác thực email').fill('123');
+        await ui.field('Email').focus();
+        assert.equal(await ui.field('Mã xác thực email').getAttribute('aria-invalid'), 'true');
+        assert(await ui.button('Tạo tài khoản').isDisabled());
+        await ui.field('Mã xác thực email').fill('12345678');
+        assert.equal(await ui.field('Mã xác thực email').getAttribute('aria-invalid'), 'false');
+        assert(await ui.button('Tạo tài khoản').isEnabled());
+        checks.push(
+          'Gender/terms errors render next to controls; OTP requires 8 digits and clears after correction',
+        );
         await page.setViewportSize({ width, height: 480 });
         await ui.field('Email').focus();
         await ui.field('Email').scrollIntoViewIfNeeded();

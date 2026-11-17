@@ -36,6 +36,15 @@ Các bài browser dùng app thật qua Metro cùng API fixtures, không gửi em
 
 ## Cách kiểm lại
 
+### Bổ sung theo review: required và validate sau khi rời ô
+
+- Email được kiểm tra định dạng ngay trên mobile cho cả đăng nhập và đăng ký; email rỗng, thiếu phần tên/miền, thiếu dấu chấm ở miền, có khoảng trắng bên trong hoặc nhiều dấu `@` đều bị chặn trước thao tác gửi. Khoảng trắng đầu/cuối được trim theo API hiện có. Đây là kiểm tra cú pháp; khả năng nhận email vẫn do bước OTP kiểm chứng.
+- Tất cả trường nhập bắt buộc có dấu `*`, chú thích ở đầu form, thông tin required/invalid và liên kết thông báo cho web accessibility; native có hint bắt buộc/lỗi. Giới tính, quốc tịch và điều khoản cũng được đánh dấu bắt buộc.
+- Tên, email, mật khẩu, ngày sinh và OTP báo lỗi dưới ô sau blur; nhóm giới tính/điều khoản báo cạnh điều khiển sau khi rời. Lỗi cập nhật khi sửa, không tự giành focus. Chỉ lỗi trường trả về từ server giữ hành vi focus hỗ trợ sửa.
+- Dùng lại quy tắc mật khẩu/tuổi hiện có, không đổi validation dùng chung của web hay hợp đồng backend. Đổi chế độ login/register reset trạng thái đã chạm để không hiện lỗi sớm.
+- Browser QA bổ sung các ca email sai định dạng, tên rỗng, mật khẩu yếu, ngày không có thật, dưới tuổi, chưa chọn giới tính/chấp thuận điều khoản, OTP thiếu 8 số, sửa đúng xóa lỗi, không focus trap và metadata required/invalid. Đạt trên app thật với API fixtures; 9 nhóm hồi quy account/onboarding tiếp tục đạt.
+- Ảnh `signup-inline-validation.png` đính kèm Jira; kết quả mới ở `SCRUM-168-auth-ui-qa.json`. Thư mục local: `outputs/mobile-auth-validation-2026-11-18`. Chưa kiểm thử bàn phím và trình đọc màn hình trên thiết bị native.
+
 1. Mở `/login`, rồi `/login?returnTo=/cart`. So sánh tiêu đề và độ cao ảnh; thử hiện/ẩn mật khẩu và thông tin sai.
 2. Chuyển Đăng ký. Đi qua ba nhóm, đổi quốc tịch, xác thực email và đăng ký bằng tài khoản test.
 3. Kiểm tra khảo sát xuất hiện sau đăng ký; bỏ qua rồi đăng nhập lại phải được hỏi lại, tài khoản đã hoàn tất không bị hỏi.
