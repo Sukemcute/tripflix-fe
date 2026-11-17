@@ -9,6 +9,7 @@ import {
   updateReelSocialCache,
   uploadChunkToPresignedUrl,
   useApiSession,
+  usePlaybackSession,
   useReelsByIds,
   useReelsFeed,
   useSocialPosts,
@@ -760,11 +761,14 @@ function MediaTrackItem({
   // Gắn nguồn ở đây (không qua prop src) để lần dọn của Strict Mode không làm video mất nguồn; lướt ra xa thì
   // nhả nguồn để ngắt tải segment ngay (xem attachReelVideoSource).
   const hlsUrl = reelCard?.video.hlsUrl;
+  // Chờ API đặt cookie video (Set-Cookie cho tên miền media, TF82) rồi mới gắn nguồn; thẻ <video> tự gửi cookie
+  // khi tải playlist và segment. Gắn sớm hơn thì CloudFront trả 403 khi đã bật khoá video.
+  const { isSettled: isPlaybackSessionSettled } = usePlaybackSession();
   useEffect(() => {
     const video = localVideoRef.current;
-    if (!hasVideo || !video || !hlsUrl) return;
+    if (!hasVideo || !video || !hlsUrl || !isPlaybackSessionSettled) return;
     return attachReelVideoSource(video, hlsUrl);
-  }, [hasVideo, hlsUrl]);
+  }, [hasVideo, hlsUrl, isPlaybackSessionSettled]);
 
   // timeupdate chỉ bắn ~4 lần/giây nên thanh tiến độ nhảy bậc; đọc currentTime mỗi khung hình và
   // cập nhật thẳng transform qua ref (không setState) để mượt và không render lại cả viewer.
@@ -1080,6 +1084,8 @@ export function InspirationImmersiveViewer({
   // Tìm kiếm không chạy ở đây: nhấn Enter thì trang Cảm hứng hiện grid kết quả (search của discovery).
   const isSearchReels = searchReelIds !== undefined;
   const feedQuery = useReelsFeed({ enabled: isReady && !isSearchReels, isSavedOnly: isSavedMode });
+  // Cookie video xin cùng lúc với feed; từng Reel dùng lại kết quả này (cùng query), video đầu không chờ thêm.
+  usePlaybackSession();
   const searchReelsQuery = useReelsByIds(searchReelIds ?? [], { enabled: isSearchReels });
   const reelsQuery = isSearchReels ? searchReelsQuery : feedQuery;
   const postsQuery = reelsQuery;

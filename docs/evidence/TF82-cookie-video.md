@@ -44,3 +44,12 @@
 
 ## Ảnh hưởng tới phần của người khác
 - `apps/mobile` (Trang): `reels-screen.tsx` và `use-player-pool.ts` thêm tham số cookie, không đổi hành vi khi không có cookie.
+
+## Phần web (nhánh `phong/TF82-cookie-video-web`)
+- `apps/web/src/features/social/live-posts.tsx`:
+  - Component cha xin cookie cùng lúc với tải feed.
+  - Từng Reel chờ có kết quả rồi mới gắn nguồn cho thẻ `<video>`. API trả `Set-Cookie` HttpOnly cho `.tripflix.io.vn` (web gửi `credentials: 'include'`), và thẻ `<video>` tự gửi cookie khi tải `media.tripflix.io.vn`. JavaScript không đọc được cookie, và CloudFront không cần bật CORS.
+- `apps/web/src/lib/remote-images.ts`: thêm `media.tripflix.io.vn` vào danh sách host ảnh Next tối ưu, giữ tên `cloudfront.net` cũ. Test trong `remote-images.test.ts`.
+- Kiểm tra: `pnpm turbo run lint typecheck test --filter=@tripflix/web` đạt, 111 test. Không có cảnh báo lint mới.
+- Chưa thử trong trình duyệt. Trên `localhost`, cookie `.tripflix.io.vn` là cookie bên thứ ba nên bị chặn; phải thử trên `tripflix.io.vn` sau khi deploy. Cách kiểm: DevTools → Network → request `.m3u8` có header `Cookie: CloudFront-…`.
+- Ảnh hưởng: `apps/web` (Thành), trùng với phần cookie của TF64.
