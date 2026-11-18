@@ -33,6 +33,8 @@ import { ApiErrorNotice } from '@/components/api-state';
 import { DateSingleField } from '@/components/date-sheet';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { DragSortList } from '@/features/post/drag-sort-list';
+import { ActivityCard, TimeTag, guessActivityCategory, type ActivityFields } from './activity-card';
 import { CartLink } from './cart-ui';
 import { CommerceError } from './commerce-state';
 import { TripBuilderEntry } from './trip-builder-screen';
@@ -71,6 +73,40 @@ function SelectedTripScreen({
   const [openChooser, setOpenChooser] = useState<'origin' | null>(null);
   const items = trip.items ?? [];
   const days = Math.max(trip.daysCount ?? 0, ...items.map((item) => item.day), 1);
+  // Gợi ý của người đăng (ăn uống, vui chơi…) thành thẻ khách tự sửa, kéo, thêm, bỏ như Tự lên lộ trình.
+  // Chỉ đổi trong lộ trình của khách, bài đăng giữ nguyên; không đặt chỗ nên không vào đơn.
+  const [suggestions, setSuggestions] = useState<(ActivityFields & { day: number })[]>(() =>
+    items
+      .filter((item) => !item.transport && !item.hotel)
+      .map((item, index) => ({
+        key: `s${index}`,
+        day: item.day,
+        time: item.time ?? '',
+        title: item.title,
+        category: guessActivityCategory(item.title),
+        detail: [item.location, item.notes].filter(Boolean).join(' · ') || undefined,
+      })),
+  );
+  const [openSuggestion, setOpenSuggestion] = useState<string | null>(null);
+  const [isDragging, setDragging] = useState(false);
+  const suggestionsOf = (day: number) => suggestions.filter((item) => item.day === day);
+  const updateSuggestion = (key: string, patch: Partial<ActivityFields>) =>
+    setSuggestions((current) => current.map((item) => (item.key === key ? { ...item, ...patch } : item)));
+  const addSuggestion = (day: number) => {
+    const key = `new${Date.now().toString(36)}`;
+    setSuggestions((current) => [...current, { key, day, time: '', title: '', category: 'other' }]);
+    setOpenSuggestion(key);
+  };
+  // Kéo trong một ngày: gợi ý của ngày đổi chỗ cho nhau, ngày khác giữ nguyên.
+  const moveSuggestion = (day: number, from: number, to: number) =>
+    setSuggestions((current) => {
+      const dayItems = current.filter((item) => item.day === day);
+      const [moved] = dayItems.splice(from, 1);
+      if (!moved) return current;
+      dayItems.splice(to, 0, moved);
+      let index = 0;
+      return current.map((item) => (item.day === day ? dayItems[index++]! : item));
+    });
   const nights = getTripNights(days);
   const basePlan = getBookableTripPlan(trip);
   const plan = basePlan && applyTripPlanChoices(basePlan, { homeAirport, hotels: swappedHotels });
@@ -339,6 +375,7 @@ function SelectedTripScreen({
       }
     >
       <ScrollView
+        scrollEnabled={!isDragging}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[ui.content, ui.pad]}
@@ -493,7 +530,6 @@ function SelectedTripScreen({
               const flightLegs = (plan?.flights ?? [])
                 .map((leg, legIndex) => ({ leg, legIndex }))
                 .filter(({ leg }) => leg.day === day);
-              const community = items.filter((item) => item.day === day && !item.transport && !item.hotel);
               const selfArranged =
                 basePlan?.selfArranged.filter((leg) => leg.day === day) ??
                 items
@@ -605,30 +641,38 @@ function SelectedTripScreen({
                         </Txt>
                       </View>
                     ))}
-                    {community.length > 0 && (
-                      <View style={styles.community}>
-                        <Txt style={styles.communityLabel}>{copy.community}</Txt>
-                        {community.map((item, index) => (
-                          <View key={index} style={styles.stop}>
-                            <Icon
-                              name={item.transport ? 'bus-outline' : 'location-outline'}
-                              size={14}
-                              color={colors.textMuted}
-                            />
-                            <View style={styles.stopText}>
-                              <Txt style={styles.description}>
-                                {item.time ? `${item.time} · ${item.title}` : item.title}
-                              </Txt>
-                              {!!(item.location || item.notes) && (
-                                <Txt style={styles.muted}>
-                                  {[item.location, item.notes].filter(Boolean).join(' · ')}
-                                </Txt>
-                              )}
+                    <View style={styles.community}>
+                      <Txt style={styles.communityLabel}>{copy.community}</Txt>
+                      <DragSortList
+                        items={suggestionsOf(day)}
+                        onMove={(from, to) => moveSuggestion(day, from, to)}
+                        onDragChange={setDragging}
+                        renderItem={(item, _index, handle) => (
+                          <Row key={item.key} style={localStyles.timedRow}>
+                            <TimeTag time={item.time} onAdd={() => setOpenSuggestion(item.key)} />
+                            <View style={ui.flex}>
+                              <ActivityCard
+                                item={item}
+                                handle={handle}
+                                isOpen={openSuggestion === item.key}
+                                onToggle={() =>
+                                  setOpenSuggestion(openSuggestion === item.key ? null : item.key)
+                                }
+                                onChange={(patch) => updateSuggestion(item.key, patch)}
+                                onRemove={() =>
+                                  setSuggestions((current) =>
+                                    current.filter((other) => other.key !== item.key),
+                                  )
+                                }
+                              />
                             </View>
-                          </View>
-                        ))}
-                      </View>
-                    )}
+                          </Row>
+                        )}
+                      />
+                      <Button tone="text" icon="add" onPress={() => addSuggestion(day)}>
+                        {copy.addSuggestion}
+                      </Button>
+                    </View>
                   </View>
                 </View>
               );
@@ -858,4 +902,8 @@ const layout = StyleSheet.create({
   },
   pillActive: { borderColor: colors.teal, backgroundColor: colors.seaMist },
   pillText: { ...compactType.body, fontFamily: nativeFonts.medium, color: colors.ink },
+});
+
+const localStyles = StyleSheet.create({
+  timedRow: { alignItems: 'flex-start', gap: spacing.sm },
 });
