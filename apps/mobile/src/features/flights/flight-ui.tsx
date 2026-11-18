@@ -3,7 +3,8 @@ import type { FlightSort } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { compactType } from '@/components/mobile-scale';
 import { assets, Chip, Icon, Row, Txt, ui, type IconName } from '@/components/mobile-ui';
 
@@ -456,3 +457,133 @@ const styles = StyleSheet.create({
   lineRule: { flex: 1, height: 1, backgroundColor: colors.border },
   direct: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.tealInk },
 });
+
+/** Bỏ dấu, chữ thường để tìm "da nang" ra Đà Nẵng. */
+const foldText = (value: string) =>
+  value.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase();
+
+/** Danh sách sân bay trong sheet chọn: ô tìm, ô mã sân bay, tên thành phố và tên sân bay, dấu tích chỗ đang chọn. */
+export function AirportPickerList({
+  options,
+  selected,
+  onSelect,
+}: {
+  options: { value: string; label: string }[];
+  selected: string;
+  onSelect: (code: string) => void;
+}) {
+  const [query, setQuery] = useState('');
+  const needle = foldText(query.trim());
+  const shown = needle ? options.filter((option) => foldText(option.label).includes(needle)) : options;
+  return (
+    <View style={{ gap: spacing.sm }}>
+      <View style={pickerStyles.search}>
+        <Icon name="search-outline" size={18} color={colors.textMuted} />
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder={copy.searchAirport}
+          placeholderTextColor={colors.textMuted}
+          accessibilityLabel={copy.searchAirport}
+          style={pickerStyles.searchInput}
+        />
+      </View>
+      {shown.map(({ value, label }) => {
+        const [, city = value, ...rest] = label.split(' · ');
+        const isSelected = value === selected;
+        return (
+          <Pressable
+            key={value}
+            accessibilityRole="button"
+            accessibilityState={{ selected: isSelected }}
+            onPress={() => onSelect(value)}
+            style={({ pressed }) => [
+              pickerStyles.row,
+              isSelected && pickerStyles.rowSelected,
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <View style={[pickerStyles.code, isSelected && pickerStyles.codeSelected]}>
+              <Txt style={[pickerStyles.codeText, isSelected && { color: colors.background }]}>{value}</Txt>
+            </View>
+            <View style={ui.flex}>
+              <Txt style={pickerStyles.city}>{city}</Txt>
+              {rest.length > 0 && (
+                <Txt variant="small" style={ui.muted}>
+                  {rest.join(' · ')}
+                </Txt>
+              )}
+            </View>
+            {isSelected && <Icon name="checkmark-circle" size={22} color={colors.tealInk} />}
+          </Pressable>
+        );
+      })}
+      {!shown.length && (
+        <Txt variant="small" style={ui.muted}>
+          {copy.noAirportMatch}
+        </Txt>
+      )}
+    </View>
+  );
+}
+
+const pickerStyles = StyleSheet.create({
+  search: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  searchInput: {
+    ...compactType.body,
+    flex: 1,
+    minHeight: 44,
+    fontFamily: nativeFonts.regular,
+    color: colors.ink,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.sm,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  rowSelected: { borderColor: colors.teal, backgroundColor: colors.seaMist },
+  code: {
+    width: 52,
+    height: 44,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.seaMist,
+  },
+  codeSelected: { backgroundColor: colors.tealInk },
+  codeText: { ...compactType.body, fontFamily: nativeFonts.bold, color: colors.tealInk, letterSpacing: 0.5 },
+  city: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
+});
+
+/** Logo hãng; không có logo thì tên hãng (hoặc biểu tượng máy bay). */
+export function FlightAirlineMark({
+  airline,
+  airlineCode,
+}: {
+  airline: string | null;
+  airlineCode: string | null;
+}) {
+  const code = resolveAirlineCode(airlineCode, airline);
+  const logo = code ? AIRLINE_LOGOS[code] : undefined;
+  if (logo)
+    return <Image source={logo} contentFit="contain" contentPosition="left" style={styles.airlineLogo} />;
+  return (
+    <Txt style={styles.airline} numberOfLines={1}>
+      {airline ?? code ?? '✈'}
+    </Txt>
+  );
+}
