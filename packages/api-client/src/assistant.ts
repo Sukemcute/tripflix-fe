@@ -1,5 +1,5 @@
 // Trợ lý Tripi (AI service POST /chat): trả SSE nên đọc bằng httpRaw thay vì hàm Orval sinh ra.
-import type { ChatRequest, DraftAction, TripContext } from './generated/ai-service/model';
+import type { CardAction, ChatRequest, DraftAction, TripContext } from './generated/ai-service/model';
 import { HttpError, httpRaw } from './http';
 
 export type AssistantAnswerKind = 'answer' | 'clarify' | 'refusal' | 'no_result' | 'fallback';
@@ -16,7 +16,7 @@ export interface AssistantCardLine {
 /** Nút trên thẻ (Chọn, Bỏ điểm, Hoàn tác): AI chạy thẳng phép sửa, không gọi LLM. */
 export type AssistantAction = DraftAction;
 
-/** Thẻ gợi ý trong câu trả lời; khớp model Card của tripflix-ai (SSE nên không có trong OpenAPI). */
+/** Thẻ gợi ý trong câu trả lời SSE; khớp model Card của tripflix-ai. */
 export interface AssistantCard {
   ref: string;
   id: string;
@@ -38,6 +38,7 @@ export interface AssistantCard {
   lines?: AssistantCardLine[] | null;
   /** Nguồn phải ghi kèm thẻ, ví dụ "Open-Meteo.com". */
   source?: string | null;
+  actions?: CardAction[] | null;
 }
 
 export interface AssistantAnswer {
@@ -102,6 +103,58 @@ export function parseSseEvents(raw: string): { event: string; data: unknown }[] 
     });
 }
 
+function record(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readCardActions(value: unknown): CardAction[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((action): CardAction[] => {
+    if (
+      !record(action) ||
+      typeof action.label !== 'string' ||
+      !action.label.trim() ||
+      action.label.length > 40
+    )
+      return [];
+    if (
+      action.type === 'select' &&
+      typeof action.ref === 'string' &&
+      action.ref.trim() &&
+      action.ref.length <= 4 &&
+      action.path == null &&
+      action.params == null
+    ) {
+      return [{ type: 'select', label: action.label, ref: action.ref }];
+    }
+    if (
+      action.type === 'book' &&
+      action.path === '/trip-builder' &&
+      action.ref == null &&
+      record(action.params) &&
+      Object.values(action.params).every((param) => typeof param === 'string')
+    ) {
+      return [
+        {
+          type: 'book',
+          label: action.label,
+          path: action.path,
+          params: action.params as Record<string, string>,
+        },
+      ];
+    }
+    return [];
+  });
+}
+
+function readCards(value: unknown): AssistantCard[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(record).map((value) => {
+    const card = value as unknown as AssistantCard;
+    return card.actions === undefined ? card : { ...card, actions: readCardActions(card.actions) };
+  });
+}
+
 export async function sendAssistantMessage(
   request: ChatRequest,
   options: { baseUrl: string; signal?: AbortSignal },
@@ -130,7 +183,7 @@ export async function sendAssistantMessage(
     const payload = data as Record<string, unknown>;
     if (event === 'error') throw new HttpError(503, payload);
     if (event === 'text') answer.text += String(payload.delta ?? '');
-    if (event === 'cards') answer.cards = (payload.items as AssistantCard[] | undefined) ?? [];
+    if (event === 'cards') answer.cards = readCards(payload.items);
     if (event === 'suggestions') answer.suggestions = (payload.items as string[] | undefined) ?? [];
     if (event === 'trip') answer.trip = payload as AssistantTrip;
     if (event === 'done') {

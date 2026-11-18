@@ -9,6 +9,7 @@ import { DatePicker } from './date-picker';
 import { FlightIcon } from './flight-icon';
 import { PassengerPicker } from './passenger-picker';
 import styles from './flights.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.flights;
 const airportNames: Readonly<Record<string, string>> = copy.airports;
@@ -88,7 +89,7 @@ export function FlightSearchForm({
           ))}
         </fieldset>
         {isRound && <input type="hidden" name="trip" value="round" />}
-        {routes.isPending && <output className={styles.searchHint}>{vi.api.loading}</output>}
+        {routes.isPending && <output className={styles.searchHint}><LoadingDots /></output>}
         {routes.data?.length === 0 && <output className={styles.searchHint}>{copy.noRoutes}</output>}
       </div>
       <div className={styles.searchRow} data-round={isRound || undefined}>

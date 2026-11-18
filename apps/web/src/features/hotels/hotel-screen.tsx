@@ -15,6 +15,7 @@ import { HotelGallery } from './hotel-gallery';
 import { HotelIcon } from './hotel-icon';
 import { HotelReviews } from './hotel-reviews';
 import styles from './hotel.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.hotel;
 const hasValue = (value: unknown) => value !== null && value !== undefined && value !== '';
@@ -153,7 +154,7 @@ export function HotelScreen({
       )}
       {!hotel && !query.error && (
         <div className={styles.skeleton}>
-          <output>{copy.loading}</output>
+          <output><LoadingDots label={copy.loading} /></output>
           <div />
           <div />
         </div>
@@ -313,7 +314,7 @@ export function HotelScreen({
                 {copy.changeStayDetails}
               </Link>
             </div>
-            {query.isFetching && <output>{vi.common.loading}</output>}
+            {query.isFetching && <output><LoadingDots label={vi.common.loading} /></output>}
             {!hotel.isAvailable && <p className={styles.notice}>{copy.unavailable}</p>}
             {!hotel.rooms.length && <p className="empty-state">{copy.noRooms}</p>}
             <div aria-busy={query.isFetching}>

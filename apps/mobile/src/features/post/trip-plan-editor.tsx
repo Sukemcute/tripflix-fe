@@ -5,10 +5,12 @@ import {
   createTripPlanDraft,
   createTripPlanPoint,
   findTripOutboundFlight,
+  getTripPlanCategory,
   pickTripFlightDestination,
   isBookableTripPoint,
   moveTripPlanPoint,
   sortTripPlanPointsByTime,
+  TRIP_PLAN_CATEGORIES,
   TRIP_PLAN_MAX_DAYS,
   TRIP_PLAN_TIME_PATTERN,
   type TripPlanDayDraft,
@@ -35,6 +37,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Chip, Field, Icon, IconButton, Notice, Row, Txt } from '@/components/mobile-ui';
 import { toPickedImage } from './image-source';
 import { usePostHotelPick } from './post-hotel-pick-store';
+import { ACTIVITY_ICONS } from '@/features/booking/activity-card';
 
 const copy = vi.mobile.tripPlan.editor;
 
@@ -155,6 +158,16 @@ export function TripPlanEditor({
         name={draft.destinationName}
         placeId={draft.destinationPlaceId}
         onChange={(destination) => onChange({ ...draft, ...destination })}
+      />
+      <Field
+        label={copy.costLabel}
+        placeholder={copy.costPlaceholder}
+        keyboardType="number-pad"
+        value={draft.estimatedCostPerPerson ? draft.estimatedCostPerPerson.toLocaleString('vi-VN') : ''}
+        onChangeText={(value) => {
+          const amount = Number(value.replace(/\D/g, ''));
+          onChange({ ...draft, estimatedCostPerPerson: amount > 0 ? amount : null });
+        }}
       />
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayTabs}>
@@ -514,7 +527,7 @@ function PointRow({
                     ? 'airplane'
                     : point.mode
                       ? 'bus-outline'
-                      : 'location-outline'
+                      : ACTIVITY_ICONS[getTripPlanCategory(point)]
               }
               size={18}
               color={isBookable ? colors.tealInk : colors.textMuted}
@@ -556,27 +569,93 @@ function PointRow({
               </View>
             )}
           </Row>
-          <Row style={styles.chips}>
-            {/* Chỉ khách sạn và máy bay đặt được; mọi thứ khác (ăn uống, vui chơi, đi lại) là gợi ý tham khảo. */}
-            <Chip
-              selected={isHotel}
-              onPress={() => onChange({ kind: 'hotel', mode: null, title: isHotel ? point.title : '' })}
-            >
-              {copy.hotelKind}
-            </Chip>
-            <Chip
-              selected={!isHotel && point.mode === 'flight'}
-              onPress={() => onChange({ kind: 'activity', mode: 'flight', hotelId: '' })}
-            >
-              {vi.mobile.tripPlan.modes.flight}
-            </Chip>
-            <Chip
-              selected={!isHotel && point.mode !== 'flight'}
-              onPress={() => onChange({ kind: 'activity', mode: null, hotelId: '' })}
-            >
-              {copy.suggestionKind}
-            </Chip>
+          {/* Tầng 1: loại điểm (đặt được hay chỉ gợi ý) — ô lớn, có icon. Tầng 2 bên dưới chỉ là loại của gợi ý. */}
+          <Txt variant="caption" style={styles.levelLabel}>
+            {copy.pointKindLabel}
+          </Txt>
+          <Row style={styles.kindRow}>
+            {(
+              [
+                {
+                  key: 'hotel',
+                  icon: 'bed',
+                  label: copy.hotelKind,
+                  isSelected: isHotel,
+                  patch: { kind: 'hotel', mode: null, title: isHotel ? point.title : '' },
+                },
+                {
+                  key: 'flight',
+                  icon: 'airplane',
+                  label: vi.mobile.tripPlan.modes.flight,
+                  isSelected: !isHotel && point.mode === 'flight',
+                  patch: { kind: 'activity', mode: 'flight', hotelId: '' },
+                },
+                {
+                  key: 'suggestion',
+                  icon: 'bulb-outline',
+                  label: copy.suggestionKind,
+                  isSelected: !isHotel && point.mode !== 'flight',
+                  patch: { kind: 'activity', mode: null, hotelId: '' },
+                },
+              ] as const
+            ).map((option) => (
+              <Pressable
+                key={option.key}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: option.isSelected }}
+                onPress={() => onChange(option.patch)}
+                style={({ pressed }) => [
+                  styles.kindOption,
+                  option.isSelected && styles.kindOptionSelected,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Icon
+                  name={option.icon}
+                  size={20}
+                  color={option.isSelected ? colors.background : colors.ink}
+                />
+                <Txt variant="label" style={{ color: option.isSelected ? colors.background : colors.ink }}>
+                  {option.label}
+                </Txt>
+              </Pressable>
+            ))}
           </Row>
+          {!isHotel && !point.mode && (
+            // Loại gợi ý để người xem thấy icon cà phê, ăn uống, vui chơi; chưa chọn thì app đoán theo tên.
+            <View style={styles.subPanel}>
+              <Txt variant="caption" style={styles.levelLabel}>
+                {copy.suggestionCategoryLabel}
+              </Txt>
+              <Row style={styles.subChips}>
+                {TRIP_PLAN_CATEGORIES.map((category) => {
+                  const isSelected = getTripPlanCategory(point) === category;
+                  return (
+                    <Pressable
+                      key={category}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: isSelected }}
+                      onPress={() => onChange({ category })}
+                      style={({ pressed }) => [
+                        styles.subChip,
+                        isSelected && styles.subChipSelected,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Icon
+                        name={ACTIVITY_ICONS[category]}
+                        size={14}
+                        color={isSelected ? colors.tealInk : colors.textMuted}
+                      />
+                      <Txt variant="small" style={{ color: isSelected ? colors.tealInk : colors.textMuted }}>
+                        {vi.mobile.tripBuilder.activityKinds[category]}
+                      </Txt>
+                    </Pressable>
+                  );
+                })}
+              </Row>
+            </View>
+          )}
           {isHotel && (
             <Pressable
               accessibilityRole="button"
@@ -824,6 +903,38 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   chips: { flexWrap: 'wrap', gap: spacing.sm },
+  levelLabel: { color: colors.textMuted },
+  kindRow: { gap: spacing.sm },
+  kindOption: {
+    flex: 1,
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  kindOptionSelected: { backgroundColor: colors.ink, borderColor: colors.ink },
+  subPanel: {
+    gap: spacing.xs,
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  subChips: { flexWrap: 'wrap', gap: spacing.xs },
+  subChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  subChipSelected: { borderColor: colors.tealInk, backgroundColor: colors.tealSoft },
   muted: { color: colors.textMuted },
   flex: { flex: 1 },
   pressed: { opacity: 0.85 },

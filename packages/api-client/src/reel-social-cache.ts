@@ -1,5 +1,5 @@
 import type { InfiniteData, QueryClient } from '@tanstack/react-query';
-import { REEL_FEED_TABS } from './feed';
+import { RECOMMENDED_REELS_KEY, REEL_FEED_TABS } from './feed';
 import type { FeedPageDto } from './generated/core-api/model/feedPageDto';
 import type { socialApi } from './social';
 
@@ -25,14 +25,17 @@ export function updateReelSocialCache(
 ) {
   // A post can sit in several tabs (and in the saved Reels list), so every cached card has to change together.
   // Reels opened from search results or a shared link live under ['feed', 'byIds', ids, userId] (useReelsByIds).
-  const byIdsKeys = client
-    .getQueriesData<InfiniteData<FeedPageDto>>({ queryKey: ['feed', 'byIds'] })
-    .map(([queryKey]) => queryKey)
-    .filter((queryKey) => queryKey[3] === userId);
+  // Reels gợi ý của discovery (mỗi mode một danh sách) live under ['feed', 'recommended', mode, userId].
+  const keysOf = (prefix: readonly unknown[]) =>
+    client
+      .getQueriesData<InfiniteData<FeedPageDto>>({ queryKey: prefix })
+      .map(([queryKey]) => queryKey)
+      .filter((queryKey) => queryKey[3] === userId);
   const feedKeys = [
     ...REEL_FEED_TABS.map((tab) => ['feed', tab, userId]),
     ['feed', 'saved', userId],
-    ...byIdsKeys,
+    ...keysOf(['feed', 'byIds']),
+    ...keysOf(RECOMMENDED_REELS_KEY),
   ];
   const previousFeeds = feedKeys.map((feedKey) => client.getQueryData<InfiniteData<FeedPageDto>>(feedKey));
   const detailKey = ['social', 'post', postId, userId];

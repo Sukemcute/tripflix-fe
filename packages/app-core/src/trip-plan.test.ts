@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   applyTripPlanChoices,
   buildTripAttachment,
+  buildTripDraftFromAttachment,
+  getTripPlanCategory,
+  guessTripPlanCategory,
   buildTripPlanCheckout,
   buildTripDraftFromOrder,
   createTripPlanDraft,
@@ -537,5 +540,104 @@ describe('planNextTripFlight (TF105 tự lên lộ trình)', () => {
       to: '',
       date: '2026-12-01',
     });
+  });
+});
+
+describe('loại điểm gợi ý (TF105)', () => {
+  it('gửi loại người đăng chọn cho điểm gợi ý, không gửi cho khách sạn', () => {
+    const draft = createTripPlanDraft();
+    draft.days[0]!.points = [
+      createTripPlanPoint({ title: 'Cà phê Cộng', category: 'cafe' }),
+      createTripPlanPoint({ title: 'Đi dạo' }),
+      createTripPlanPoint({ kind: 'hotel', title: 'Ana Mandara', hotelId: 'h1', category: 'food' }),
+    ];
+    const items = buildTripAttachment(draft, labels)?.items;
+    expect(items?.[0]).toMatchObject({ title: 'Cà phê Cộng', category: 'cafe' });
+    expect(items?.[1]).not.toHaveProperty('category');
+    expect(items?.[2]).not.toHaveProperty('category');
+  });
+
+  it.each([
+    ['Cà phê ở Cộng', 'cafe'],
+    ['Ăn ở Chợ đêm Phú Quốc', 'food'],
+    ['Quán bún chả', 'food'],
+    ['Ghé Cầu Hôn', 'fun'],
+    ['Trả phòng', 'other'],
+    ['Dăn dò', 'other'],
+  ] as const)('đoán "%s" là %s', (title, category) => {
+    expect(guessTripPlanCategory(title)).toBe(category);
+  });
+
+  it('ưu tiên loại đã lưu, bài cũ thì đoán theo tên', () => {
+    expect(getTripPlanCategory({ title: 'Cà phê', category: 'fun' })).toBe('fun');
+    expect(getTripPlanCategory({ title: 'Cà phê' })).toBe('cafe');
+  });
+});
+
+describe('mở lại lộ trình đã lưu để sửa (TF105)', () => {
+  const saved = {
+    destinationName: 'Phú Quốc',
+    destinationPlaceId: 'phu-quoc',
+    daysCount: 3,
+    estimatedCostPerPerson: 4_500_000,
+    priceDisclaimer: 'Giá chỉ mang tính chất tham khảo',
+    posterMediaId: 'img-1',
+    hotelId: 'h1',
+    hotelName: 'Vinpearl',
+    hotelProductId: 'h1--DLX',
+    hotelRatePlanCode: 'RO',
+    items: [
+      {
+        day: 1,
+        title: 'Máy bay SGN → PQC',
+        time: '06:45',
+        transport: { mode: 'flight' as const, fromAirport: 'SGN', toAirport: 'PQC' },
+      },
+      { day: 1, title: 'Vinpearl', time: '14:00', notes: 'Deluxe', hotel: { hotelId: 'h1', productId: 'h1--DLX', ratePlanCode: 'RO' } },
+      { day: 1, title: 'Ăn ở Chợ đêm', time: '19:00', location: 'Dương Đông', category: 'food' as const },
+      { day: 3, title: 'Bay về sớm', transport: { mode: 'flight' as const, fromAirport: 'PQC', toAirport: 'SGN' } },
+      { day: 2, title: 'Xe khách ra bến', transport: { mode: 'bus' as const } },
+    ],
+  };
+
+  it('lưu lại y như cũ, không mất giờ, khách sạn, chặng bay, loại gợi ý, chi phí', () => {
+    const draft = buildTripDraftFromAttachment(saved, labels);
+    const again = buildTripAttachment(draft, labels);
+    expect(again).toMatchObject({
+      destinationName: 'Phú Quốc',
+      destinationPlaceId: 'phu-quoc',
+      daysCount: 3,
+      estimatedCostPerPerson: 4_500_000,
+      priceDisclaimer: 'Giá chỉ mang tính chất tham khảo',
+      posterMediaId: 'img-1',
+      hotelId: 'h1',
+      hotelProductId: 'h1--DLX',
+    });
+    expect(again?.items).toEqual([
+      saved.items[0],
+      saved.items[1],
+      saved.items[2],
+      saved.items[4],
+      saved.items[3],
+    ]);
+  });
+
+  it('chặng tự đặt tên thì giữ tên, tên tự sinh thì để trống cho người sửa', () => {
+    const draft = buildTripDraftFromAttachment(saved, labels);
+    expect(draft.days[0]!.points[0]).toMatchObject({ title: '', mode: 'flight', fromCode: 'SGN', toCode: 'PQC' });
+    expect(draft.days[2]!.points[0]).toMatchObject({ title: 'Bay về sớm' });
+    expect(draft.days[0]!.points[2]).toMatchObject({ category: 'food', location: 'Dương Đông' });
+  });
+
+  it('bài cũ chỉ ghi tên khách sạn chung cả chuyến thì giữ nguyên khi lưu lại', () => {
+    const draft = buildTripDraftFromAttachment(
+      { destinationName: 'Đà Lạt', hotelName: 'Homestay Mây', items: [{ day: 1, title: 'Cà phê Mê Linh' }] },
+      labels,
+    );
+    expect(buildTripAttachment(draft, labels)).toMatchObject({ hotelName: 'Homestay Mây', daysCount: 1 });
+  });
+
+  it('không có lộ trình thì ra bản nháp trống', () => {
+    expect(buildTripDraftFromAttachment(null, labels)).toMatchObject({ destinationName: '', days: [{ points: [{ title: '' }] }] });
   });
 });

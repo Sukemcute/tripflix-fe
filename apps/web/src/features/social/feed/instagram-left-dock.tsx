@@ -130,7 +130,6 @@ export function InstagramLeftDock({
             id="dock-search-btn"
             type="button"
             className={`${styles.dockItemBtn} ${isSearchOpen || isSearching ? styles.dockItemBtnActive : ''}`}
-            data-tooltip={vi.api.dockSearch}
             aria-label={vi.api.dockSearch}
             aria-expanded={isSearchOpen}
             onClick={toggleSearchDrawer}
@@ -142,7 +141,6 @@ export function InstagramLeftDock({
           <button
             type="button"
             className={getItemClass(activeView === 'posts' && activeFilter === 'all')}
-            data-tooltip={vi.api.dockPosts}
             aria-label={vi.api.dockPosts}
             onClick={() => {
               onSelectView('posts');
@@ -155,7 +153,6 @@ export function InstagramLeftDock({
           <button
             type="button"
             className={getItemClass(activeView === 'reels')}
-            data-tooltip={vi.api.dockReels}
             aria-label={vi.api.dockReels}
             onClick={() => onSelectView('reels')}
           >
@@ -165,7 +162,6 @@ export function InstagramLeftDock({
           <button
             type="button"
             className={getItemClass(activeFilter === 'following' && activeView === 'posts')}
-            data-tooltip={vi.api.dockFollowing}
             aria-label={vi.api.dockFollowing}
             onClick={() => {
               if (activeView !== 'posts') onSelectView('posts');
@@ -178,7 +174,6 @@ export function InstagramLeftDock({
           <button
             type="button"
             className={getItemClass(activeFilter === 'saved' && activeView === 'posts')}
-            data-tooltip={vi.api.immersiveFilterSaved}
             aria-label={vi.api.immersiveFilterSaved}
             onClick={() => {
               if (activeView !== 'posts') onSelectView('posts');
@@ -192,7 +187,6 @@ export function InstagramLeftDock({
           <button
             type="button"
             className={`${styles.dockItemBtn} ${styles.dockCreateBtn}`}
-            data-tooltip={vi.api.dockCreatePost}
             aria-label={vi.api.dockCreatePost}
             onClick={() => onOpenComposer(activeView === 'reels' ? 'video' : 'vlog')}
           >

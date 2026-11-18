@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   buildTripAttachment,
+  buildTripDraftFromAttachment,
   createTripPlanDraft,
-  getPostCaption,
   getPostTitleFromCaption,
   POST_MEDIA_LIMITS,
   type TripPlanDraft,
@@ -63,8 +63,10 @@ export function LiveCreateScreen() {
 function DraftEditor({ post }: { post?: SocialPostDto }) {
   const client = useQueryClient();
   const [id, setId] = useState(post?.id);
-  // Chỉ có caption; tiêu đề core bắt buộc được lấy từ dòng đầu caption khi lưu.
-  const [body, setBody] = useState(post ? getPostCaption(post.title, post.body) : '');
+  // Tiêu đề riêng như web; để trống thì lấy dòng đầu caption (core bắt buộc có tiêu đề).
+  const [title, setTitle] = useState(post?.title ?? '');
+  const [body, setBody] = useState(post?.body ?? '');
+  const postTitle = title.trim() || getPostTitleFromCaption(body);
   const [hashtags, setHashtags] = useState(post?.hashtags.join(', ') ?? '');
   const [visibility, setVisibility] = useState<'public' | 'private'>(
     post?.visibility === 'private' ? 'private' : 'public',
@@ -81,8 +83,13 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
   // Đăng theo từng bước (TF105): xem lại video → chi tiết bài → (tuỳ chọn) soạn lộ trình.
   const [step, setStep] = useState<'video' | 'details' | 'trip'>(post ? 'details' : 'video');
   // Đăng kèm lộ trình là tuỳ chọn; chưa mở bước lộ trình thì đăng như bài thường.
-  const [hasTripPlan, setHasTripPlan] = useState(false);
-  const [tripDraft, setTripDraft] = useState<TripPlanDraft>(createTripPlanDraft);
+  // Sửa bài cũ thì nạp lại lộ trình đã lưu, để lưu lại không mất giờ, khách sạn, chặng bay, loại gợi ý.
+  const [hasTripPlan, setHasTripPlan] = useState(!!post?.tripAttachment);
+  const [tripDraft, setTripDraft] = useState<TripPlanDraft>(() =>
+    post?.tripAttachment
+      ? buildTripDraftFromAttachment(post.tripAttachment, vi.mobile.tripPlan.modes)
+      : createTripPlanDraft(),
+  );
   const [isDraggingPoint, setDraggingPoint] = useState(false);
   const uploadAbort = useRef<AbortController | null>(null);
   // Đăng xong thì thay cả form bằng màn báo đã đăng, để không ai bấm đăng lại hay tưởng chưa đăng.
@@ -170,7 +177,7 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
       setUploadDone(true);
       const tripAttachment = hasTripPlan ? buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) : null;
       const draft = {
-        title: getPostTitleFromCaption(body),
+        title: postTitle,
         body: body.trim(),
         hashtags: hashtags
           .split(',')
@@ -200,10 +207,10 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
   function publishInBackground() {
     if (!body.trim() || mutation.isPending) return;
     const tripAttachment = hasTripPlan ? buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) : null;
-    startPostUpload(getPostTitleFromCaption(body), {
+    startPostUpload(postTitle, {
       postId: id,
       draft: {
-        title: getPostTitleFromCaption(body),
+        title: postTitle,
         body: body.trim(),
         hashtags: hashtags
           .split(',')
@@ -380,6 +387,13 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
       }
     >
       <View style={styles.form}>
+        <Field
+          label={copy.create.titleLabel}
+          placeholder={copy.create.titlePlaceholder}
+          value={title}
+          maxLength={255}
+          onChangeText={setTitle}
+        />
         <View style={styles.captionBlock}>
           <Txt variant="label">{copy.create.story}</Txt>
           <Row style={styles.captionRow}>

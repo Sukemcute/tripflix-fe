@@ -56,6 +56,8 @@ export const assistant = {
   source: 'Nguồn',
   watchReel: 'Xem reel',
   bookTrip: 'Đặt theo lộ trình',
+  bookHotel: 'Đặt phòng',
+  bookFlight: 'Đặt vé',
   choose: 'Chọn',
   undo: 'Hoàn tác',
   // Thiết kế lại khung chat mobile (SCRUM-167): chỉ thêm khoá, các khoá cũ giữ nguyên.

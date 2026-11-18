@@ -1,5 +1,26 @@
 /** Phương tiện của một ngày trong lộ trình người đăng chia sẻ. */
 export type TripPlanMode = 'flight' | 'bus' | 'train' | 'car' | 'other';
+/** Loại điểm gợi ý (không đặt chỗ) để chọn icon: cà phê, ăn uống, vui chơi, khác (TF105). */
+export type TripPlanCategory = 'cafe' | 'food' | 'fun' | 'other';
+export const TRIP_PLAN_CATEGORIES: readonly TripPlanCategory[] = ['cafe', 'food', 'fun', 'other'];
+
+/** Đoán loại theo tên gợi ý, cho bài đăng cũ chưa ghi loại. */
+export function guessTripPlanCategory(title: string): TripPlanCategory {
+  const text = title.toLowerCase();
+  if (/cà phê|cafe|coffee/.test(text)) return 'cafe';
+  // Ranh giới từ của regex JS không nhận chữ có dấu nên tách chữ "ăn" bằng khoảng trắng.
+  if (/(^|\s)ăn(\s|$)|quán|nhà hàng|chợ|bún|phở|bánh|lẩu|hải sản/.test(text)) return 'food';
+  if (/ghé|tham quan|check-in|lặn|tắm|chơi|công viên|bãi/.test(text)) return 'fun';
+  return 'other';
+}
+
+/** Loại của một điểm gợi ý: dùng loại người đăng chọn, bài cũ chưa có thì đoán theo tên. */
+export function getTripPlanCategory(item: {
+  title: string;
+  category?: TripPlanCategory | null;
+}): TripPlanCategory {
+  return item.category ?? guessTripPlanCategory(item.title);
+}
 
 interface TripPlanTransport {
   mode: TripPlanMode;
@@ -32,6 +53,8 @@ export interface TripPlanPointDraft {
   title: string;
   location: string;
   mode: TripPlanMode | null;
+  /** Loại điểm gợi ý người đăng chọn; null khi chưa chọn (lúc đăng không gửi, app tự đoán theo tên). */
+  category: TripPlanCategory | null;
   fromCode: string;
   toCode: string;
   note: string;
@@ -51,6 +74,21 @@ export interface TripPlanDraft {
   posterMediaId: string | null;
   /** Đơn đã đi dùng để dựng lộ trình; không hiện cho người xem. */
   bookingId: string | null;
+  /** Chi phí ước tính mỗi người tác giả tự ghi; null khi không ghi. */
+  estimatedCostPerPerson?: number | null;
+  /**
+   * Phần của bài cũ mà trình soạn không sửa (khách sạn ghi chung cả chuyến, lưu ý giá): giữ nguyên
+   * để mở bản nháp ra rồi lưu lại không làm mất.
+   */
+  preserved?: TripPlanPreserved;
+}
+
+export interface TripPlanPreserved {
+  hotelId?: string;
+  hotelName?: string;
+  hotelProductId?: string;
+  hotelRatePlanCode?: string;
+  priceDisclaimer?: string;
 }
 
 export const TRIP_PLAN_MAX_DAYS = 30;
@@ -73,6 +111,7 @@ export function createTripPlanPoint(
     title: '',
     location: '',
     mode: null,
+    category: null,
     fromCode: '',
     toCode: '',
     note: '',
@@ -91,6 +130,8 @@ export function createTripPlanDraft(): TripPlanDraft {
     days: [createTripPlanDay()],
     posterMediaId: null,
     bookingId: null,
+    estimatedCostPerPerson: null,
+    preserved: {},
   };
 }
 
@@ -139,6 +180,7 @@ export function buildTripAttachment(
         time?: string;
         location?: string;
         notes?: string;
+        category?: TripPlanCategory;
         hotel?: TripPlanItemHotel;
         transport?: TripPlanTransport;
       }[] => {
@@ -189,6 +231,7 @@ export function buildTripAttachment(
             ...notes,
             ...roomNote,
             ...hotel,
+            ...(point.kind !== 'hotel' && point.category ? { category: point.category } : {}),
           },
         ];
       },
@@ -198,7 +241,14 @@ export function buildTripAttachment(
   const hotel = draft.days
     .flatMap((day) => day.points)
     .find((point) => point.kind === 'hotel' && point.hotelId);
-  if (items.length === 0 && !hotel) return null;
+  const preserved = draft.preserved ?? {};
+  const cost =
+    draft.estimatedCostPerPerson && draft.estimatedCostPerPerson > 0
+      ? { estimatedCostPerPerson: Math.round(draft.estimatedCostPerPerson) }
+      : {};
+  if (items.length === 0 && !hotel && !preserved.hotelId && !preserved.hotelName && !cost.estimatedCostPerPerson) {
+    return null;
+  }
   return {
     daysCount: draft.days.length,
     ...(draft.destinationName.trim() ? { destinationName: draft.destinationName.trim() } : {}),
@@ -211,10 +261,122 @@ export function buildTripAttachment(
             ? { hotelProductId: hotel.productId, hotelRatePlanCode: hotel.ratePlanCode }
             : {}),
         }
-      : {}),
+      : // Bài cũ ghi khách sạn chung cả chuyến (không có điểm khách sạn): giữ nguyên khi lưu lại.
+        {
+          ...(preserved.hotelId ? { hotelId: preserved.hotelId } : {}),
+          ...(preserved.hotelName ? { hotelName: preserved.hotelName } : {}),
+          ...(preserved.hotelProductId && preserved.hotelRatePlanCode
+            ? { hotelProductId: preserved.hotelProductId, hotelRatePlanCode: preserved.hotelRatePlanCode }
+            : {}),
+        }),
+    ...cost,
+    ...(preserved.priceDisclaimer ? { priceDisclaimer: preserved.priceDisclaimer } : {}),
     ...(draft.posterMediaId ? { posterMediaId: draft.posterMediaId } : {}),
     ...(draft.bookingId ? { bookingId: draft.bookingId } : {}),
     items,
+  };
+}
+
+/** Lộ trình đã lưu trong bài (trip_attachment), dạng đọc về từ API. */
+export interface TripAttachmentSource {
+  bookingId?: string | null;
+  hotelId?: string | null;
+  hotelName?: string | null;
+  hotelProductId?: string | null;
+  hotelRatePlanCode?: string | null;
+  destinationName?: string | null;
+  destinationPlaceId?: string | null;
+  daysCount?: number | null;
+  estimatedCostPerPerson?: number | null;
+  priceDisclaimer?: string | null;
+  posterMediaId?: string | null;
+  items?: readonly {
+    day: number;
+    title: string;
+    time?: string | null;
+    location?: string | null;
+    notes?: string | null;
+    category?: TripPlanCategory | null;
+    hotel?: { hotelId: string; productId?: string | null; ratePlanCode?: string | null } | null;
+    transport?: { mode: TripPlanMode; fromAirport?: string | null; toAirport?: string | null } | null;
+  }[];
+}
+
+/**
+ * Dựng lại bản nháp từ lộ trình đã lưu, để mở bản nháp hay bài cũ ra sửa mà không mất giờ, khách sạn,
+ * chặng bay, loại gợi ý. Lưu lại bằng buildTripAttachment với cùng modeLabels cho ra đúng dữ liệu cũ.
+ */
+export function buildTripDraftFromAttachment(
+  attachment: TripAttachmentSource | null | undefined,
+  modeLabels: Readonly<Record<TripPlanMode, string>>,
+): TripPlanDraft {
+  const draft = createTripPlanDraft();
+  if (!attachment) return draft;
+  const items = attachment.items ?? [];
+  const dayCount = Math.min(
+    Math.max(attachment.daysCount ?? 0, ...items.map((item) => item.day), 1),
+    TRIP_PLAN_MAX_DAYS,
+  );
+  const days: TripPlanDayDraft[] = Array.from({ length: dayCount }, () => ({ points: [] }));
+  for (const item of items) {
+    const index = Math.min(Math.max(Math.trunc(item.day) - 1, 0), dayCount - 1);
+    const common = {
+      time: item.time ?? '',
+      location: item.location ?? '',
+      note: item.notes ?? '',
+    };
+    if (item.hotel?.hotelId) {
+      days[index]!.points.push(
+        createTripPlanPoint({
+          ...common,
+          kind: 'hotel',
+          hotelId: item.hotel.hotelId,
+          productId: item.hotel.productId ?? '',
+          ratePlanCode: item.hotel.ratePlanCode ?? '',
+          title: item.title,
+        }),
+      );
+      continue;
+    }
+    if (item.transport) {
+      const { mode } = item.transport;
+      const fromCode = item.transport.fromAirport ?? '';
+      const toCode = item.transport.toAirport ?? '';
+      // Tên chặng tự sinh lúc đăng (VD "Máy bay SGN → PQC") thì để trống, giống lúc người đăng chưa đặt tên.
+      const autoTitle = fromCode && toCode ? `${modeLabels[mode]} ${fromCode} → ${toCode}` : modeLabels[mode];
+      days[index]!.points.push(
+        createTripPlanPoint({
+          ...common,
+          mode,
+          fromCode,
+          toCode,
+          title: item.title === autoTitle ? '' : item.title,
+        }),
+      );
+      continue;
+    }
+    days[index]!.points.push(
+      createTripPlanPoint({ ...common, title: item.title, category: item.category ?? null }),
+    );
+  }
+  for (const day of days) if (day.points.length === 0) day.points.push(createTripPlanPoint());
+  const hasHotelPoint = items.some((item) => item.hotel?.hotelId);
+  return {
+    destinationName: attachment.destinationName ?? '',
+    destinationPlaceId: attachment.destinationPlaceId ?? '',
+    days,
+    posterMediaId: attachment.posterMediaId ?? null,
+    bookingId: attachment.bookingId ?? null,
+    estimatedCostPerPerson: attachment.estimatedCostPerPerson ?? null,
+    preserved: {
+      ...(!hasHotelPoint && attachment.hotelId ? { hotelId: attachment.hotelId } : {}),
+      ...(!hasHotelPoint && attachment.hotelName ? { hotelName: attachment.hotelName } : {}),
+      ...(!hasHotelPoint && attachment.hotelProductId ? { hotelProductId: attachment.hotelProductId } : {}),
+      ...(!hasHotelPoint && attachment.hotelRatePlanCode
+        ? { hotelRatePlanCode: attachment.hotelRatePlanCode }
+        : {}),
+      ...(attachment.priceDisclaimer ? { priceDisclaimer: attachment.priceDisclaimer } : {}),
+    },
   };
 }
 
@@ -280,6 +442,8 @@ export function buildTripDraftFromOrder(order: {
     days,
     posterMediaId: null,
     bookingId: order.orderId,
+    estimatedCostPerPerson: null,
+    preserved: {},
   };
 }
 

@@ -11,6 +11,7 @@ import {
   useApiSession,
   useCommentPermissions,
   usePlaybackSession,
+  useRecommendedReelsFeed,
   useReelsByIds,
   useReelsFeed,
   useSocialPosts,
@@ -23,14 +24,24 @@ import {
 } from '@tripflix/api-client/core-api/media/media';
 import type {
   FeedCardDto,
+  PostRecommendationsControllerRecommendReelsMode,
   SocialCommentDto,
   SocialPostDto,
   TripAttachmentDto,
-  TripItineraryItemDto,
   UpdatePostDto,
 } from '@tripflix/api-client/core-api/model/index';
 import { commentsControllerSetCommentReaction } from '@tripflix/api-client/core-api/social-comments/social-comments';
-import { getReelPosterPrefetchUrls, selectReelPoster } from '@tripflix/app-core';
+import {
+  buildTripAttachment,
+  buildTripDraftFromAttachment,
+  createTripPlanDraft,
+  getPostTitleFromCaption,
+  getReelPlaybackSources,
+  getReelPosterPrefetchUrls,
+  selectReelPoster,
+  type TripPlanDraft,
+} from '@tripflix/app-core';
+import { ComposerTripPlanEditor } from './composer/trip-plan-editor';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -56,14 +67,18 @@ import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
 import {
+  canStepToNextReel,
+  getReelBufferSeconds,
   getReelRenderMode,
   pickReelAfterRemoval,
   prependPinnedReelCards,
+  shouldLoadReelSource,
   shouldShowReelBackdrop,
   toReelPost,
   type ReelPost,
 } from './reel-post';
-import { attachReelHlsSource } from './reel-hls';
+import { attachReelHlsSource, REEL_START_SHORT_SIDE, type ReelHlsBufferControl } from './reel-hls';
+import { ReelSeekBar } from './reel-seek-bar';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
@@ -77,6 +92,7 @@ import { calculateUploadPercent, parseStoredHashtags, pickDroppedVideo } from '.
 import { ShareMenu, type ShareMenuHandle } from './share-menu';
 import { PostOptionsMenu } from './post-options-menu';
 import { buildPostHref } from './search-url';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 type FeedFilterMode = 'all' | 'withTrip' | 'saved';
 
@@ -486,7 +502,7 @@ function AccountPostGrid({
   const { isReady, user } = useApiSession();
   const query = useSocialPosts(kind, keyword);
   const posts = query.data?.pages.flatMap((page) => page.items);
-  if (!isReady) return <output>{vi.api.loading}</output>;
+  if (!isReady) return <output><LoadingDots /></output>;
   if (!user) return <Link prefetch={false} href="/login">{vi.api.loginRequired}</Link>;
   return (
     <>
@@ -496,7 +512,7 @@ function AccountPostGrid({
           void query.refetch();
         }}
       />
-      {query.isPending && <output>{vi.api.loading}</output>}
+      {query.isPending && <output><LoadingDots /></output>}
       {posts?.length === 0 && (
         <p className="empty-state">
           {kind === 'bookmarks'
@@ -569,8 +585,14 @@ interface MediaTrackItemProps {
   index: number;
   post: ReelPost;
   isActive: boolean;
-  /** Có thẻ <video> (bài đang xem và bài kế tiếp); bài khác chỉ hiện poster để không tải segment. */
+  /** Có thẻ <video> (bài đang xem, 2 bài phía trước, 1 bài phía sau); bài khác chỉ hiện poster. */
   hasVideo: boolean;
+  /** Được gắn nguồn để tải ngay (shouldLoadReelSource); đã gắn rồi thì giữ tới khi rời cửa sổ video. */
+  canLoadSource: boolean;
+  /** Video của Reel này đã có hình đầu tiên: bài kế tiếp chưa có thì chặn lướt sang. */
+  onFirstFrame: (postId: string) => void;
+  /** Số giây hls.js đệm trước: 30 cho bài đang xem, 10 cho bài phía trước, 4 cho bài phía sau. */
+  bufferSeconds: number;
   /** Có lớp nền mờ (tốn GPU) – chỉ bài đang xem và hai bài sát cạnh. */
   hasBackdrop: boolean;
   reelCard?: FeedCardDto;
@@ -593,6 +615,26 @@ interface MediaTrackItemProps {
  * Chi co Media Track truot doc ben trong khung 9:16 co dinh (chuan TikTok).
  */
 const NO_REEL_POSTERS = { w360: '', w540: '', w720: '' };
+
+/** Khung rỗng cách bài đang xem tới chừng này bài thì hiện vòng chờ (lướt quá nhanh qua vùng chưa tải). */
+const REEL_PLACEHOLDER_SPINNER_RANGE = 6;
+/**
+ * Cuộn khung Reels tới một bài. Không dùng scrollIntoView: lệnh đó cuộn cả mọi khung cha (kể cả khung
+ * `overflow: hidden` của trang), làm cả khung Reels lẫn bình luận bị đẩy lên khi trang cao hơn màn hình vài px.
+ */
+function scrollTrackToIndex(
+  container: HTMLElement,
+  targetEl: HTMLElement | null | undefined,
+  index: number,
+  behavior: ScrollBehavior,
+) {
+  container.scrollTo({ top: targetEl ? targetEl.offsetTop : index * container.clientHeight, behavior });
+}
+
+/** HTMLMediaElement.HAVE_CURRENT_DATA: đã có hình của vị trí hiện tại. */
+const HAVE_CURRENT_DATA = 2;
+/** Video đang xem chưa chạy sau chừng này thì vẫn cho tải trước bài thứ 2 (video lỗi, trình duyệt chặn tự phát). */
+const REEL_PRELOAD_FALLBACK_MS = 2_000;
 
 interface ReelEngagement {
   isLiked: boolean;
@@ -709,6 +751,9 @@ function MediaTrackItem({
   post,
   isActive,
   hasVideo,
+  canLoadSource,
+  onFirstFrame,
+  bufferSeconds,
   hasBackdrop,
   reelCard,
   user,
@@ -763,7 +808,7 @@ function MediaTrackItem({
   );
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
-  const progressFillRef = useRef<HTMLDivElement | null>(null);
+  const [isScrubbing, setScrubbing] = useState(false);
 
   useEffect(() => {
     if (!isActive && localVideoRef.current) {
@@ -774,6 +819,8 @@ function MediaTrackItem({
   // Gắn nguồn ở đây (không qua prop src) để lần dọn của Strict Mode không làm video mất nguồn; lướt ra xa thì
   // nhả nguồn để ngắt tải segment ngay (xem attachReelVideoSource).
   const hlsUrl = reelCard?.video.hlsUrl;
+  // Các mức có sẵn của video (360, 540, 720…), dạng chuỗi để effect gắn nguồn không chạy lại khi thẻ đổi tham chiếu.
+  const levelsKey = reelCard?.video.levels.join(',') ?? '';
   // Chờ API đặt cookie video (Set-Cookie cho tên miền media, TF82) rồi mới gắn nguồn; thẻ <video> tự gửi cookie
   // khi tải playlist và segment. Gắn sớm hơn thì CloudFront trả 403 khi đã bật khoá video.
   const { isSettled: isPlaybackSessionSettled, refresh: refreshPlaybackSession } = usePlaybackSession();
@@ -784,11 +831,44 @@ function MediaTrackItem({
   useEffect(() => {
     reportMediaError.current = () => onMediaError(post.id);
   }, [onMediaError, post.id]);
+  // Số giây đệm đổi theo vị trí khi lướt; đọc qua ref lúc gắn để đổi vị trí không gắn lại nguồn (mất bộ đệm).
+  const bufferSecondsRef = useRef(bufferSeconds);
+  const bufferControlRef = useRef<ReelHlsBufferControl | null>(null);
+  useEffect(() => {
+    bufferSecondsRef.current = bufferSeconds;
+    bufferControlRef.current?.setBufferSeconds(bufferSeconds);
+  }, [bufferSeconds]);
+  // Đã được phép tải một lần thì giữ nguồn tới khi rời cửa sổ video (bài vừa xem xong vẫn giữ bộ đệm).
+  const [isSourceLatched, setSourceLatched] = useState(false);
+  const shouldAttachSource = hasVideo && (canLoadSource || isSourceLatched);
+  if (shouldAttachSource !== isSourceLatched) setSourceLatched(shouldAttachSource);
+  // Nguồn nào đã có hình đầu tiên; đổi nguồn hoặc gỡ nguồn thì không còn khớp nên tự hiện lại vòng chờ.
+  const [firstFrameUrl, setFirstFrameUrl] = useState<string | null>(null);
+  const hasFirstFrame = shouldAttachSource && firstFrameUrl === hlsUrl;
+  const reportFirstFrame = useRef(() => onFirstFrame(post.id));
+  useEffect(() => {
+    reportFirstFrame.current = () => onFirstFrame(post.id);
+  }, [onFirstFrame, post.id]);
   useEffect(() => {
     const video = localVideoRef.current;
-    if (!hasVideo || !video || !hlsUrl || !isPlaybackSessionSettled) return;
-    // Trình duyệt phát HLS sẵn: thẻ <video> như cũ. Chrome, Firefox máy tính: hls.js gửi kèm cookie (TF64).
-    return attachReelHlsSource(video, hlsUrl, {
+    if (!shouldAttachSource || !video || !hlsUrl || !isPlaybackSessionSettled) return;
+    const onLoadedData = () => {
+      setFirstFrameUrl(hlsUrl);
+      reportFirstFrame.current();
+    };
+    // loadeddata có thể không bắn lại khi trình duyệt dùng lại dữ liệu đã có, nên nghe thêm canplay, playing.
+    const firstFrameEvents = ['loadeddata', 'canplay', 'playing'] as const;
+    for (const name of firstFrameEvents) video.addEventListener(name, onLoadedData);
+    // Trình duyệt phát HLS sẵn (Chrome, Edge, Safari): thẻ <video>. Firefox máy tính: hls.js gửi kèm cookie (TF64).
+    const levels = levelsKey ? levelsKey.split(',').map(Number) : [];
+    const release = attachReelHlsSource(video, hlsUrl, {
+      // Trình duyệt tự phát: gắn thẳng mức 720p (hoặc nét nhất có), lỗi thì lùi dần, master cuối.
+      sources: getReelPlaybackSources({ hlsUrl, levels }, REEL_START_SHORT_SIDE),
+      bufferSeconds: bufferSecondsRef.current,
+      onBufferControl: (control) => {
+        bufferControlRef.current = control;
+        control.setBufferSeconds(bufferSecondsRef.current);
+      },
       onAuthError: () => {
         // Chỉ xin lại một lần: lỗi tiếp thì không phải do cookie, báo lỗi như thường.
         if (authRetryCount >= 1) {
@@ -799,24 +879,14 @@ function MediaTrackItem({
       },
       onFatalError: () => reportMediaError.current(),
     });
-  }, [hasVideo, hlsUrl, isPlaybackSessionSettled, authRetryCount, refreshPlaybackSession]);
-
-  // timeupdate chỉ bắn ~4 lần/giây nên thanh tiến độ nhảy bậc; đọc currentTime mỗi khung hình và
-  // cập nhật thẳng transform qua ref (không setState) để mượt và không render lại cả viewer.
-  useEffect(() => {
-    if (!isActive) return;
-    const frame = { id: 0 };
-    const tick = () => {
-      const video = localVideoRef.current;
-      const fill = progressFillRef.current;
-      if (video && fill && video.duration > 0) {
-        fill.style.transform = `scaleX(${Math.min(1, video.currentTime / video.duration)})`;
-      }
-      frame.id = window.requestAnimationFrame(tick);
+    if (video.readyState >= HAVE_CURRENT_DATA) onLoadedData();
+    return () => {
+      for (const name of firstFrameEvents) video.removeEventListener(name, onLoadedData);
+      bufferControlRef.current = null;
+      release();
     };
-    frame.id = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(frame.id);
-  }, [isActive]);
+  }, [shouldAttachSource, hlsUrl, levelsKey, isPlaybackSessionSettled, authRetryCount, refreshPlaybackSession]);
+
 
   return (
     <div
@@ -865,7 +935,6 @@ function MediaTrackItem({
               playsInline
               loop
               muted={isMuted}
-              onError={() => onMediaError(post.id)}
               onClick={isActive ? onTogglePlay : undefined}
             >
               <track kind="captions" />
@@ -881,6 +950,12 @@ function MediaTrackItem({
             />
           )}
 
+          {hasVideo && !hasFirstFrame && (
+            <span className={styles.reelLoadingOverlay} aria-hidden="true">
+              <span className={styles.reelLoadingSpinner} />
+            </span>
+          )}
+
           {isActive && (
             <>
               <button
@@ -894,16 +969,15 @@ function MediaTrackItem({
               >
                 <SocialIcon name={isPlaying ? 'play' : 'pause'} size={26} />
               </button>
-              <div className={styles.progressBarTrack} aria-hidden="true">
-                <div ref={progressFillRef} className={styles.progressBarFill} />
-              </div>
+              <ReelSeekBar videoRef={localVideoRef} onScrubChange={setScrubbing} />
             </>
           )}
         </>
       )}
 
       {/* Bottom Post Overlay */}
-      <div className={styles.stageBottomOverlay}>
+      {/* Đang kéo thanh tua: ẩn tên, chú thích, thẻ lộ trình như TikTok để mốc thời gian nổi rõ. */}
+      <div className={styles.stageBottomOverlay} data-hidden={isScrubbing ? true : undefined}>
         <div className={styles.overlayAuthorRow}>
           {/* Avatar cũng mở trang cá nhân như tên; bỏ khỏi thứ tự Tab để không đọc trùng link. */}
           <Link
@@ -981,19 +1055,20 @@ function MediaTrackItem({
                 />
               </span>
               <div className={styles.overlayTripText}>
+                {/* Tên thẻ là tiêu đề bài (thiếu thì lấy đầu nội dung), không lấy tên khách sạn đầu tiên. */}
                 <span className={styles.overlayTripTitle}>
-                  {trip.hotelName ?? trip.destinationName ?? post.title}
+                  {post.title.trim() || getPostTitleFromCaption(post.body ?? '')}
                 </span>
                 <span className={styles.overlayTripSub}>
                   {[
                     vi.api.immersiveTabSchedule,
-                    trip.items?.length
-                      ? t('api.immersiveStopsCount', { count: trip.items.length })
-                      : trip.daysCount
-                        ? t('api.postTripDaysBadge', { count: trip.daysCount })
+                    trip.daysCount
+                      ? t('api.postTripDaysBadge', { count: trip.daysCount })
+                      : trip.items?.length
+                        ? t('api.immersiveStopsCount', { count: trip.items.length })
                         : null,
                     trip.estimatedCostPerPerson
-                      ? `~${trip.estimatedCostPerPerson.toLocaleString('vi-VN')}d/nguoi`
+                      ? t('api.postTripApproxCost', { cost: trip.estimatedCostPerPerson.toLocaleString('vi-VN') })
                       : null,
                   ]
                     .filter(Boolean)
@@ -1106,6 +1181,18 @@ export function InspirationImmersiveViewer({
   }, [activePostId]);
   const [showPlayFlash, setShowPlayFlash] = useState(false);
   const [mediaErrorPostId, setMediaErrorPostId] = useState<string | null>(null);
+  // Bài có video đã chạy (sự kiện playing): tới lúc đó mới tải trước bài thứ 2 phía trước (shouldLoadReelSource).
+  const [playingPostId, setPlayingPostId] = useState<string | null>(null);
+  // Bài đã có hình đầu tiên: lướt sang bài chưa có thì chặn một lúc (canStepToNextReel).
+  const readyPostIdsRef = useRef(new Set<string>());
+  const markReelReady = useCallback((postId: string) => {
+    readyPostIdsRef.current.add(postId);
+  }, []);
+  // Lúc bắt đầu chặn lướt vì bài kế tiếp chưa có hình; đang chặn thì hiện "Đang tải video tiếp theo".
+  const nextBlockedSinceRef = useRef<number | null>(null);
+  const [isNextBlocked, setNextBlocked] = useState(false);
+  // Đã bấm sang bài kế khi đang ở bài cuối và trang sau đang tải: tải xong thì tự sang.
+  const isNextPendingRef = useRef(false);
   const [captionExpandedPostId, setCaptionExpandedPostId] = useState<string | null>(null);
 
   // Optimistic states per postId
@@ -1121,7 +1208,13 @@ export function InspirationImmersiveViewer({
   const isSavedMode = filterMode === 'saved';
   // Tìm kiếm không chạy ở đây: nhấn Enter thì trang Cảm hứng hiện grid kết quả (search của discovery).
   const isSearchReels = searchReelIds !== undefined;
-  const feedQuery = useReelsFeed({ enabled: isReady && !isSearchReels, isSavedOnly: isSavedMode });
+  const [reelsMode, setReelsMode] = useState<PostRecommendationsControllerRecommendReelsMode>('trending');
+  const savedFeedQuery = useReelsFeed({ enabled: isReady && !isSearchReels && isSavedMode, isSavedOnly: true });
+  const recommendedReelsQuery = useRecommendedReelsFeed({
+    enabled: isReady && !isSearchReels && !isSavedMode,
+    mode: reelsMode,
+  });
+  const feedQuery = isSavedMode ? savedFeedQuery : recommendedReelsQuery;
   // Cookie video xin cùng lúc với feed; từng Reel dùng lại kết quả này (cùng query), video đầu không chờ thêm.
   usePlaybackSession();
   const searchReelsQuery = useReelsByIds(searchReelIds ?? [], { enabled: isSearchReels });
@@ -1266,10 +1359,26 @@ export function InspirationImmersiveViewer({
 
     const videoEl = videoRef.current;
     if (videoEl) {
-      videoEl.currentTime = 0;
+      // Chỉ tua khi video đã chạy dở (lướt ngược lại): video tải sẵn đang ở đầu, tua về 0 vẫn làm trình duyệt
+      // tua thật và tải lại (đo được 1,2–2,8 giây chờ).
+      if (videoEl.currentTime > 0.1) videoEl.currentTime = 0;
       attemptPlayVideo();
     }
   }, [activePost?.id, attemptPlayVideo]);
+
+  // Ưu tiên video đang xem: chạy rồi (hoặc chờ quá REEL_PRELOAD_FALLBACK_MS) mới tải trước bài thứ 2 phía trước.
+  useEffect(() => {
+    const postId = activePost?.id;
+    const videoEl = videoRef.current;
+    if (!postId) return;
+    const markPlaying = () => setPlayingPostId(postId);
+    const fallback = setTimeout(markPlaying, REEL_PRELOAD_FALLBACK_MS);
+    videoEl?.addEventListener('playing', markPlaying);
+    return () => {
+      clearTimeout(fallback);
+      videoEl?.removeEventListener('playing', markPlaying);
+    };
+  }, [activePost?.id]);
 
 
 
@@ -1333,26 +1442,13 @@ export function InspirationImmersiveViewer({
 
       targetIndexRef.current = clamped;
 
-      const targetEl = mediaItemRefs.current[clamped];
-
       if (!smooth) {
         isProgrammaticNavRef.current = false;
-        if (targetEl) {
-          targetEl.scrollIntoView({ behavior: 'auto', block: 'start' });
-        } else {
-          container.scrollTo({ top: clamped * container.clientHeight, behavior: 'auto' });
-        }
+        scrollTrackToIndex(container, mediaItemRefs.current[clamped], clamped, 'auto');
         commitSettledPost(clamped);
       } else {
         isProgrammaticNavRef.current = true;
-        if (targetEl) {
-          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else {
-          container.scrollTo({
-            top: clamped * container.clientHeight,
-            behavior: 'smooth',
-          });
-        }
+        scrollTrackToIndex(container, mediaItemRefs.current[clamped], clamped, 'smooth');
 
         if (scrollEndSafetyTimerRef.current) {
           clearTimeout(scrollEndSafetyTimerRef.current);
@@ -1382,11 +1478,29 @@ export function InspirationImmersiveViewer({
 
       if (direction === 1) {
         if (nextTarget < posts.length) {
+          const nextId = posts[nextTarget]?.id ?? '';
+          // Bài không có video (đang xử lý) hoặc đã lỗi thì không chờ hình.
+          // Đọc thêm readyState của thẻ video phòng khi sự kiện loadeddata tới sau lúc người xem lướt.
+          const nextVideo = mediaItemRefs.current[nextTarget]?.querySelector('video');
+          const isNextReady =
+            readyPostIdsRef.current.has(nextId) ||
+            (nextVideo?.readyState ?? 0) >= HAVE_CURRENT_DATA ||
+            !reelMap.get(nextId)?.video ||
+            mediaErrorPostId === nextId;
+          if (!canStepToNextReel({ isNextReady, blockedSinceMs: nextBlockedSinceRef.current, nowMs: now })) {
+            nextBlockedSinceRef.current ??= now;
+            setNextBlocked(true);
+            return;
+          }
+          nextBlockedSinceRef.current = null;
+          setNextBlocked(false);
           navCooldownRef.current = now + 450;
           goToIndex(nextTarget, true);
-        } else if (postsQuery.hasNextPage && !postsQuery.isFetchingNextPage) {
+        } else if (postsQuery.hasNextPage) {
+          // Hết bài đã tải: đứng yên như lúc hết video, hiện vòng chờ, trang sau về thì tự sang.
+          isNextPendingRef.current = true;
           navCooldownRef.current = now + 450;
-          void postsQuery.fetchNextPage();
+          if (!postsQuery.isFetchingNextPage) void postsQuery.fetchNextPage();
         }
       } else {
         if (nextTarget >= 0) {
@@ -1395,8 +1509,33 @@ export function InspirationImmersiveViewer({
         }
       }
     },
-    [posts.length, postsQuery, goToIndex],
+    [posts, postsQuery, goToIndex, reelMap, mediaErrorPostId],
   );
+
+  // Đang chặn vì bài kế tiếp chưa có hình: có hình rồi thì bỏ thông báo chờ (lướt lại là sang được).
+  useEffect(() => {
+    if (!isNextBlocked) return;
+    const nextIndex = targetIndexRef.current + 1;
+    const nextId = posts[nextIndex]?.id;
+    const timer = setInterval(() => {
+      const nextVideo = mediaItemRefs.current[nextIndex]?.querySelector('video');
+      const isReady = !nextId || readyPostIdsRef.current.has(nextId) || (nextVideo?.readyState ?? 0) >= HAVE_CURRENT_DATA;
+      if (!isReady) return;
+      clearInterval(timer);
+      nextBlockedSinceRef.current = null;
+      setNextBlocked(false);
+    }, 200);
+    return () => clearInterval(timer);
+  }, [isNextBlocked, posts]);
+
+  // Đã bấm sang bài kế ở bài cuối: trang sau về thì tự sang bài mới.
+  useEffect(() => {
+    if (!isNextPendingRef.current || activeIndex < 0 || activeIndex >= posts.length - 1) return;
+    isNextPendingRef.current = false;
+    goToIndex(activeIndex + 1, true);
+  }, [posts.length, activeIndex, goToIndex]);
+
+  const isLoadingMoreReels = activeIndex >= posts.length - 1 && postsQuery.isFetchingNextPage;
 
   // Dong bo targetIndexRef theo activeIndex khi da settled hoac chon bai tu ngoai
   useEffect(() => {
@@ -1413,13 +1552,7 @@ export function InspirationImmersiveViewer({
     lastCommittedPostIdRef.current = activePostId;
     const targetIdx = posts.findIndex((p) => p.id === activePostId);
     if (targetIdx >= 0 && trackScrollRef.current) {
-      const container = trackScrollRef.current;
-      const targetEl = mediaItemRefs.current[targetIdx];
-      if (targetEl) {
-        targetEl.scrollIntoView({ behavior: 'auto', block: 'start' });
-      } else {
-        container.scrollTo({ top: targetIdx * container.clientHeight, behavior: 'auto' });
-      }
+      scrollTrackToIndex(trackScrollRef.current, mediaItemRefs.current[targetIdx], targetIdx, 'auto');
     }
   }, [activePostId, posts]);
 
@@ -1534,10 +1667,13 @@ export function InspirationImmersiveViewer({
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
-      if (
+      // Bỏ qua khi đang gõ chữ; thanh tua (input range) thì ↑ / ↓ vẫn chuyển bài.
+      const isTyping =
         target &&
-        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
-      ) {
+        ((target.tagName === 'INPUT' && (target as HTMLInputElement).type !== 'range') ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable);
+      if (isTyping) {
         return;
       }
       if (event.key === 'ArrowDown') {
@@ -1753,7 +1889,7 @@ export function InspirationImmersiveViewer({
   }, []);
 
   if (!isReady) {
-    return <output className="empty-state">{vi.api.loading}</output>;
+    return <output className="empty-state"><LoadingDots /></output>;
   }
 
   return (
@@ -1792,6 +1928,62 @@ export function InspirationImmersiveViewer({
                 {vi.api.searchResultsBack}
               </button>
             )}
+            {!isSearchReels && !isSavedMode && (
+              <div
+                role="tablist"
+                aria-label={vi.api.recommendModeAria}
+                style={{
+                  position: 'absolute',
+                  top: 14,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  zIndex: 25,
+                  display: 'flex',
+                  gap: 6,
+                  // Màn hẹp (375px) 4 chip rộng hơn khung: giữ trong khung và cuộn ngang thay vì tràn hai mép.
+                  maxWidth: 'calc(100% - 24px)',
+                  overflowX: 'auto',
+                  scrollbarWidth: 'none',
+                  padding: '4px 6px',
+                  borderRadius: 999,
+                  background: 'rgba(15, 23, 42, 0.55)',
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                {(
+                  [
+                    { value: 'trending', label: vi.api.recommendModeTrending },
+                    { value: 'for_you', label: vi.api.recommendModeForYou },
+                    { value: 'has_plan', label: vi.api.recommendModeHasPlan },
+                    { value: 'recent', label: vi.api.recommendModeRecent },
+                  ] as const
+                ).map((option) => {
+                  const selected = option.value === reelsMode;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="tab"
+                      aria-selected={selected}
+                      onClick={() => setReelsMode(option.value)}
+                      style={{
+                        border: 'none',
+                        borderRadius: 999,
+                        padding: '5px 12px',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        background: selected ? '#ffffff' : 'transparent',
+                        color: selected ? '#0f172a' : '#f8fafc',
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {filterMode === 'saved' && !user ? (
               <div className={`empty-state ${styles.centerEmptyBox}`}>
                 <p>{vi.api.loginRequired}</p>
@@ -1800,7 +1992,7 @@ export function InspirationImmersiveViewer({
                 </Link>
               </div>
             ) : isReelListPending ? (
-              <output className="empty-state">{vi.api.loading}</output>
+              <output className="empty-state"><LoadingDots /></output>
             ) : postsQuery.error ? (
               <div className={styles.centerEmptyBox}>
                 <ApiErrorNotice
@@ -1819,6 +2011,8 @@ export function InspirationImmersiveViewer({
                 <div
                   ref={stageFrameRef}
                   className={styles.mediaStageFrame}
+                  // Đang chờ bài kế tiếp hoặc trang sau: khung video trượt lên, lộ dải dưới có vòng chờ (như TikTok).
+                  data-next-loading={isLoadingMoreReels || isNextBlocked ? true : undefined}
                 >
                   {/* Top-Left Volume + Slider & Top-Right Hover Controls (More / Fullscreen) */}
                   <>
@@ -1904,7 +2098,11 @@ export function InspirationImmersiveViewer({
                             data-index={idx}
                             data-post-id={post.id}
                             aria-hidden="true"
-                          />
+                          >
+                            {Math.abs(idx - activeIndex) <= REEL_PLACEHOLDER_SPINNER_RANGE && (
+                              <span className={styles.reelLoadingSpinner} />
+                            )}
+                          </div>
                         );
                       }
                       return (
@@ -1917,6 +2115,9 @@ export function InspirationImmersiveViewer({
                           post={post}
                           isActive={idx === activeIndex}
                           hasVideo={renderMode === 'video'}
+                          canLoadSource={shouldLoadReelSource(idx, activeIndex, playingPostId === activePost?.id)}
+                          onFirstFrame={markReelReady}
+                          bufferSeconds={getReelBufferSeconds(idx, activeIndex)}
                           hasBackdrop={shouldShowReelBackdrop(idx, activeIndex)}
                           actions={renderReelActions(post, idx === activeIndex)}
                           reelCard={reelMap.get(post.id)}
@@ -1941,6 +2142,12 @@ export function InspirationImmersiveViewer({
                       );
                     })}
                   </div>
+                  {(isLoadingMoreReels || isNextBlocked) && (
+                    <output className={styles.reelMoreLoading}>
+                      <span className={styles.reelLoadingSpinnerSmall} aria-hidden="true" />
+                      {isLoadingMoreReels ? vi.api.reelLoadingMore : vi.api.reelLoadingNext}
+                    </output>
+                  )}
                   {isPostNotFound && (
                     <div className={styles.postUnavailableOverlay} role="alert">
                       <div className={styles.postUnavailableIcon} aria-hidden="true">
@@ -1970,7 +2177,6 @@ export function InspirationImmersiveViewer({
                       type="button"
                       className={styles.navArrowBtn}
                       aria-label={vi.api.immersivePrevPost}
-                      data-tooltip={vi.api.immersivePrevPost}
                       disabled={activeIndex <= 0}
                       onClick={() => navigateStep(-1)}
                     >
@@ -1980,7 +2186,6 @@ export function InspirationImmersiveViewer({
                       type="button"
                       className={styles.navArrowBtn}
                       aria-label={vi.api.immersiveNextPost}
-                      data-tooltip={vi.api.immersiveNextPost}
                       disabled={activeIndex >= posts.length - 1 && !postsQuery.hasNextPage}
                       onClick={() => navigateStep(1)}
                     >
@@ -2700,14 +2905,6 @@ function CommentNode({
   );
 }
 
-interface ItineraryItemState {
-  id: string;
-  day: number;
-  title: string;
-  location: string;
-  notes: string;
-}
-
 export interface ComposerModalProps {
   onClose: () => void;
   initialView?: 'compose' | 'drafts';
@@ -2720,8 +2917,6 @@ const VISIBILITY_OPTIONS = [
   { value: 'public', label: 'Công khai với mọi người' },
   { value: 'private', label: 'Chỉ mình tôi' },
 ];
-
-const ITINERARY_DAY_OPTIONS = Array.from({ length: 15 }, (_, i) => ({ value: String(i + 1), label: `Ngày ${i + 1}` }));
 
 export function ComposerModal({
   onClose,
@@ -2782,14 +2977,7 @@ export function ComposerModal({
 
   // Lịch trình chuyến đi (Trip Attachment)
   const [enableItinerary, setEnableItinerary] = useState(false);
-  const [destinationName, setDestinationName] = useState('');
-  const [hotelName, setHotelName] = useState('');
-  const [daysCount, setDaysCount] = useState<string>('');
-  const [estimatedCost, setEstimatedCost] = useState<string>('');
-  const [priceDisclaimer, setPriceDisclaimer] = useState('');
-  const [itineraryItems, setItineraryItems] = useState<ItineraryItemState[]>([
-    { id: '1', day: 1, title: '', location: '', notes: '' },
-  ]);
+  const [tripDraft, setTripDraft] = useState<TripPlanDraft>(createTripPlanDraft);
 
   // Nạp dữ liệu bản nháp vào form để tiếp tục sửa
   const handleLoadDraft = useCallback((draft: SocialPostDto) => {
@@ -2813,36 +3001,10 @@ export function ComposerModal({
 
     if (draft.tripAttachment) {
       setEnableItinerary(true);
-      setDestinationName(draft.tripAttachment.destinationName || '');
-      setHotelName(draft.tripAttachment.hotelName || '');
-      setDaysCount(draft.tripAttachment.daysCount ? String(draft.tripAttachment.daysCount) : '');
-      setEstimatedCost(
-        draft.tripAttachment.estimatedCostPerPerson
-          ? String(draft.tripAttachment.estimatedCostPerPerson)
-          : '',
-      );
-      setPriceDisclaimer(draft.tripAttachment.priceDisclaimer || '');
-      if (draft.tripAttachment.items && draft.tripAttachment.items.length > 0) {
-        setItineraryItems(
-          draft.tripAttachment.items.map((it, idx) => ({
-            id: String(idx + 1),
-            day: it.day,
-            title: it.title,
-            location: it.location || '',
-            notes: it.notes || '',
-          })),
-        );
-      } else {
-        setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
-      }
+      setTripDraft(buildTripDraftFromAttachment(draft.tripAttachment, vi.mobile.tripPlan.modes));
     } else {
       setEnableItinerary(false);
-      setDestinationName('');
-      setHotelName('');
-      setDaysCount('');
-      setEstimatedCost('');
-      setPriceDisclaimer('');
-      setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+      setTripDraft(createTripPlanDraft());
     }
 
     setViewMode('compose');
@@ -2867,12 +3029,7 @@ export function ComposerModal({
       fileInputRef.current.value = '';
     }
     setEnableItinerary(false);
-    setDestinationName('');
-    setHotelName('');
-    setDaysCount('');
-    setEstimatedCost('');
-    setPriceDisclaimer('');
-    setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+    setTripDraft(createTripPlanDraft());
     setUploadError(null);
     setSaveSuccessMsg(null);
     setViewMode('compose');
@@ -2963,33 +3120,6 @@ export function ComposerModal({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
-
-  const handleAddItem = () => {
-    const lastDay = itineraryItems.length > 0 ? itineraryItems[itineraryItems.length - 1]!.day : 1;
-    const newId = Math.random().toString(36).substring(2, 9);
-    setItineraryItems((prev) => [
-      ...prev,
-      { id: newId, day: lastDay, title: '', location: '', notes: '' },
-    ]);
-  };
-
-  const handleRemoveItem = (id: string) => {
-    if (itineraryItems.length <= 1) {
-      setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
-      return;
-    }
-    setItineraryItems((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const handleUpdateItem = (
-    id: string,
-    field: 'day' | 'title' | 'location' | 'notes',
-    value: string | number,
-  ) => {
-    setItineraryItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
-    );
   };
 
   const uploadVideoMultipart = async (file: File, durationSec: number): Promise<string> => {
@@ -3093,27 +3223,8 @@ export function ComposerModal({
       const parsedTags = hashtags;
 
       let tripAttachment: TripAttachmentDto | undefined = undefined;
-      if (enableItinerary && destinationName.trim()) {
-        const filteredItems: TripItineraryItemDto[] = itineraryItems
-          .filter((item) => item.title.trim().length > 0)
-          .map((item) => ({
-            day: Number(item.day) || 1,
-            title: item.title.trim(),
-            ...(item.location.trim() ? { location: item.location.trim() } : {}),
-            ...(item.notes.trim() ? { notes: item.notes.trim() } : {}),
-          }));
-
-        const parsedDays = parseInt(daysCount, 10);
-        const parsedCost = parseInt(estimatedCost.replace(/\D/g, ''), 10);
-
-        tripAttachment = {
-          destinationName: destinationName.trim(),
-          ...(hotelName.trim() ? { hotelName: hotelName.trim() } : {}),
-          ...(!Number.isNaN(parsedDays) && parsedDays > 0 ? { daysCount: parsedDays } : {}),
-          ...(!Number.isNaN(parsedCost) && parsedCost > 0 ? { estimatedCostPerPerson: parsedCost } : {}),
-          ...(priceDisclaimer.trim() ? { priceDisclaimer: priceDisclaimer.trim() } : {}),
-          ...(filteredItems.length > 0 ? { items: filteredItems } : {}),
-        };
+      if (enableItinerary) {
+        tripAttachment = buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) ?? undefined;
       }
 
       let currentId = editingDraftId;
@@ -3217,7 +3328,7 @@ export function ComposerModal({
           <div className={styles.draftsListContainer}>
             {draftsQuery.isLoading ? (
               <div className={styles.draftEmptyState}>
-                <output>Đang tải danh sách bản nháp...</output>
+                <output><LoadingDots label="Đang tải danh sách bản nháp..." /></output>
               </div>
             ) : drafts.length === 0 ? (
               <div className={styles.draftEmptyState}>
@@ -3549,125 +3660,7 @@ export function ComposerModal({
           </label>
 
           {enableItinerary && (
-            <div className={styles.composerItineraryContainer}>
-              <div className={styles.composerMetaRow}>
-                <input
-                  className={styles.composerInput}
-                  aria-label="Điểm đến chuyến đi"
-                  placeholder="Điểm đến (VD: Đà Lạt, Phú Quốc...)"
-                  value={destinationName}
-                  disabled={isFormBusy}
-                  onChange={(e) => setDestinationName(e.target.value)}
-                />
-                <input
-                  className={styles.composerInput}
-                  aria-label="Khách sạn / Resort"
-                  placeholder="Khách sạn (VD: Terracotta Resort...)"
-                  value={hotelName}
-                  disabled={isFormBusy}
-                  onChange={(e) => setHotelName(e.target.value)}
-                />
-              </div>
-
-              <div className={styles.composerMetaRow}>
-                <input
-                  className={styles.composerInput}
-                  type="number"
-                  min={1}
-                  max={30}
-                  aria-label="Số ngày đi"
-                  placeholder="Số ngày (VD: 3)"
-                  value={daysCount}
-                  disabled={isFormBusy}
-                  onChange={(e) => setDaysCount(e.target.value)}
-                />
-                <input
-                  className={styles.composerInput}
-                  aria-label="Chi phí dự tính"
-                  placeholder="Chi phí / người (VD: 3.500.000 VNĐ)"
-                  value={estimatedCost}
-                  disabled={isFormBusy}
-                  onChange={(e) => setEstimatedCost(e.target.value)}
-                />
-              </div>
-
-              <input
-                className={styles.composerInput}
-                aria-label="Ghi chú chi phí"
-                placeholder="Ghi chú chi phí (VD: Giá tham khảo bao gồm vé máy bay và phòng)"
-                value={priceDisclaimer}
-                disabled={isFormBusy}
-                onChange={(e) => setPriceDisclaimer(e.target.value)}
-              />
-
-              <div className={styles.composerSectionHeader} style={{ marginTop: '4px' }}>
-                <h5 className={styles.composerSectionTitle}>Các hoạt động theo ngày</h5>
-                <span className={styles.composerSectionBadge}>{itineraryItems.length} hoạt động</span>
-              </div>
-
-              {itineraryItems.map((item, index) => (
-                <div key={item.id} className={styles.itineraryItemCard}>
-                  <div className={styles.itineraryItemHeader}>
-                    <SoftSelect
-                      className={`${styles.composerSelect} ${styles.itineraryDayField}`}
-                      value={String(item.day)}
-                      options={ITINERARY_DAY_OPTIONS}
-                      onChange={(day) => handleUpdateItem(item.id, 'day', Number(day))}
-                      aria-label={`Ngày của hoạt động ${index + 1}`}
-                      disabled={isFormBusy}
-                    />
-
-                    <input
-                      className={styles.composerInput}
-                      style={{ flex: 1 }}
-                      placeholder="Tên hoạt động (VD: Đón bình minh Cầu Gỗ)"
-                      value={item.title}
-                      disabled={isFormBusy}
-                      onChange={(e) => handleUpdateItem(item.id, 'title', e.target.value)}
-                      required={enableItinerary && index === 0}
-                    />
-
-                    <button
-                      type="button"
-                      className={styles.removeItineraryItemBtn}
-                      onClick={() => handleRemoveItem(item.id)}
-                      disabled={isFormBusy}
-                      data-tooltip="Xóa hoạt động này"
-                      aria-label="Xóa hoạt động"
-                    >
-                      <SocialIcon name="trash" size={15} />
-                    </button>
-                  </div>
-
-                  <div className={styles.composerMetaRow}>
-                    <input
-                      className={styles.composerInput}
-                      placeholder="Địa điểm / Toạ độ (VD: Đồi chè Cầu Đất)"
-                      value={item.location}
-                      disabled={isFormBusy}
-                      onChange={(e) => handleUpdateItem(item.id, 'location', e.target.value)}
-                    />
-                    <input
-                      className={styles.composerInput}
-                      placeholder="Ghi chú / Mẹo (VD: Nên đến trước 5h30 để săn mây)"
-                      value={item.notes}
-                      disabled={isFormBusy}
-                      onChange={(e) => handleUpdateItem(item.id, 'notes', e.target.value)}
-                    />
-                  </div>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                className={styles.addItemBtn}
-                disabled={isFormBusy}
-                onClick={handleAddItem}
-              >
-                <SocialIcon name="plus" size={15} />
-                <span>Thêm hoạt động tiếp theo</span>
-              </button>
-            </div>
+            <ComposerTripPlanEditor draft={tripDraft} onChange={setTripDraft} disabled={isFormBusy} />
           )}
         </div>
 
@@ -3711,7 +3704,7 @@ export function ComposerModal({
             }
           >
             {isUploading
-              ? 'Đang tải video...'
+              ? <LoadingDots label="Đang tải video..." />
               : saveMutation.isPending && saveMutation.variables?.shouldPublish
                 ? vi.api.saving
                 : 'Đăng bài viết'}
