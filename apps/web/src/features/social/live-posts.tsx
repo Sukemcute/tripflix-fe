@@ -3203,7 +3203,7 @@ export function ComposerModal({
           <div className={styles.draftsListContainer}>
             {draftsQuery.isLoading ? (
               <div className={styles.draftEmptyState}>
-                <output>Đang tải danh sách bản nháp...</output>
+                <output><LoadingDots label="Đang tải danh sách bản nháp..." /></output>
               </div>
             ) : drafts.length === 0 ? (
               <div className={styles.draftEmptyState}>
@@ -3697,7 +3697,7 @@ export function ComposerModal({
             }
           >
             {isUploading
-              ? 'Đang tải video...'
+              ? <LoadingDots label="Đang tải video..." />
               : saveMutation.isPending && saveMutation.variables?.shouldPublish
                 ? vi.api.saving
                 : 'Đăng bài viết'}

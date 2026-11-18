@@ -100,7 +100,7 @@ export function PlaceResults({ keyword, kind, ...open }: OpenHandlers & { keywor
           disabled={search.isFetchingNextPage}
           onClick={() => void search.fetchNextPage()}
         >
-          {search.isFetchingNextPage ? vi.api.searchResultsLoadingMore : vi.api.searchResultsLoadMore}
+          {search.isFetchingNextPage ? <LoadingDots label={vi.api.searchResultsLoadingMore} /> : vi.api.searchResultsLoadMore}
         </button>
       )}
       <Attribution items={items} />
