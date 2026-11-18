@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getAvailableStays, getFutureDate, useApiSession, useFlightRoutes } from '@tripflix/api-client';
 import { homeRecommendationsControllerRecommendForHome } from '@tripflix/api-client/core-api/discovery/discovery';
 import { findPlaceAirport, getNextWeekendDates } from '@tripflix/app-core';
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -218,7 +218,19 @@ function StayRow({
           place: stay.province.name,
           thumbnail: stay.thumbnail!,
           price: stay.unitPrice,
-          note: stay.stars ? `${stay.stars}★` : undefined,
+          // Hạng sao của khách sạn khác điểm đánh giá của khách; ghi rõ cả hai để không bị đọc nhầm.
+          note:
+            [
+              stay.stars ? t('mobile.explore.hotelClass', { stars: stay.stars }) : '',
+              stay.rating?.count
+                ? t('mobile.explore.hotelRating', {
+                    score: stay.rating.average.toLocaleString('vi-VN', { maximumFractionDigits: 1 }),
+                    count: stay.rating.count,
+                  })
+                : '',
+            ]
+              .filter(Boolean)
+              .join(' · ') || undefined,
         }));
     },
   });
@@ -251,7 +263,7 @@ function HotelRow({ title, hotels, isLoading }: { title: string; hotels: HotelTi
               <Txt style={styles.hotelName} numberOfLines={2}>
                 {hotel.name}
               </Txt>
-              <Txt variant="small" style={ui.muted} numberOfLines={1}>
+              <Txt variant="small" style={ui.muted} numberOfLines={2}>
                 {[hotel.place, hotel.note].filter(Boolean).join(' · ')}
               </Txt>
               <Txt style={styles.hotelPrice}>

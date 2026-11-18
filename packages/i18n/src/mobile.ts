@@ -390,6 +390,8 @@ export const mobile = {
     weekendStaysTitle: 'Cuối tuần này',
     topRatedTitle: 'Được đánh giá cao',
     perNight: '/đêm',
+    hotelClass: 'Hạng {stars} sao',
+    hotelRating: '★ {score} ({count})',
     staysEmpty: 'Chưa có phòng phù hợp để gợi ý.',
     clearSearch: 'Xoá tìm kiếm',
     hotelResults: 'Khách sạn',
