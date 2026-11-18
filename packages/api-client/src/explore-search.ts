@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   exploreControllerSearch,
   exploreControllerSearchPosts,
@@ -134,16 +134,37 @@ export async function searchUsers(q: string, page = 1, signal?: AbortSignal): Pr
   return readEntity(response.data, ['items', 'page', 'hasMore']) as UserSearchResponseDto;
 }
 
-export function useUserSearch(q: string) {
-  const { isReady } = useApiSession();
+/** Chuẩn hoá và kiểm tra từ khoá tìm người dùng (2–50 ký tự hiển thị sau NFKC, không ký tự điều khiển). */
+export function normalizeUserSearchQuery(q: string): { query: string; isSearchable: boolean } {
   const query = q.normalize('NFKC').replace(/\s+/gu, ' ').trim();
   const folded = query.toLowerCase().normalize('NFD').replace(/[\p{M}\s]/gu, '');
   const isSearchable = query.length <= 50 && folded.length >= 2 && !/\p{C}/u.test(query);
+  return { query, isSearchable };
+}
+
+export function useUserSearch(q: string) {
+  const { isReady } = useApiSession();
+  const { query, isSearchable } = normalizeUserSearchQuery(q);
   const result = useQuery({
     queryKey: ['discovery', 'users', query],
     enabled: isReady && isSearchable,
     retry: false,
     queryFn: ({ signal }) => searchUsers(query, 1, signal),
+  });
+  return { ...result, isSearchable };
+}
+
+/** Tìm người dùng công khai có phân trang cho tab Người dùng. */
+export function useInfiniteUserSearch(q: string) {
+  const { isReady } = useApiSession();
+  const { query, isSearchable } = normalizeUserSearchQuery(q);
+  const result = useInfiniteQuery({
+    queryKey: ['discovery', 'users', 'infinite', query],
+    enabled: isReady && isSearchable,
+    initialPageParam: 1,
+    retry: false,
+    queryFn: ({ pageParam, signal }) => searchUsers(query, pageParam, signal),
+    getNextPageParam: (page) => (page.hasMore ? page.page + 1 : undefined),
   });
   return { ...result, isSearchable };
 }
