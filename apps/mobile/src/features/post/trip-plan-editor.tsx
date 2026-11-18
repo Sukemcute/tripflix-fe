@@ -5,10 +5,12 @@ import {
   createTripPlanDraft,
   createTripPlanPoint,
   findTripOutboundFlight,
+  getTripPlanCategory,
   pickTripFlightDestination,
   isBookableTripPoint,
   moveTripPlanPoint,
   sortTripPlanPointsByTime,
+  TRIP_PLAN_CATEGORIES,
   TRIP_PLAN_MAX_DAYS,
   TRIP_PLAN_TIME_PATTERN,
   type TripPlanDayDraft,
@@ -35,6 +37,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Chip, Field, Icon, IconButton, Notice, Row, Txt } from '@/components/mobile-ui';
 import { toPickedImage } from './image-source';
 import { usePostHotelPick } from './post-hotel-pick-store';
+import { ACTIVITY_ICONS } from '@/features/booking/activity-card';
 
 const copy = vi.mobile.tripPlan.editor;
 
@@ -514,7 +517,7 @@ function PointRow({
                     ? 'airplane'
                     : point.mode
                       ? 'bus-outline'
-                      : 'location-outline'
+                      : ACTIVITY_ICONS[getTripPlanCategory(point)]
               }
               size={18}
               color={isBookable ? colors.tealInk : colors.textMuted}
@@ -577,6 +580,24 @@ function PointRow({
               {copy.suggestionKind}
             </Chip>
           </Row>
+          {!isHotel && !point.mode && (
+            // Loại gợi ý để người xem thấy icon cà phê, ăn uống, vui chơi; chưa chọn thì app đoán theo tên.
+            <Row style={styles.chips}>
+              {TRIP_PLAN_CATEGORIES.map((category) => {
+                const isSelected = getTripPlanCategory(point) === category;
+                return (
+                  <Chip key={category} selected={isSelected} onPress={() => onChange({ category })}>
+                    <Icon
+                      name={ACTIVITY_ICONS[category]}
+                      size={13}
+                      color={isSelected ? colors.background : colors.ink}
+                    />{' '}
+                    {vi.mobile.tripBuilder.activityKinds[category]}
+                  </Chip>
+                );
+              })}
+            </Row>
+          )}
           {isHotel && (
             <Pressable
               accessibilityRole="button"
