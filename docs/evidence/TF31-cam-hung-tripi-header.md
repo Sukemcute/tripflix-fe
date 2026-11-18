@@ -4,6 +4,7 @@
 - Nhánh: `bao/TF31-cam-hung-tripi-header`.
 - Người làm: Bảo, có dùng AI. Ngày: 2026-11-18.
 - Gốc đồng bộ: `origin/develop` tại `9538828`.
+- Đồng bộ lần cuối trước push: `origin/develop` tại `42bf6b9`, merge commit `202ed1a`; không có conflict.
 
 ## Đã làm
 
@@ -26,6 +27,7 @@
 
 - `corepack pnpm turbo run lint typecheck test --affected`: **17/17 tác vụ đạt**, gồm các tác vụ lấy từ cache hợp lệ; lint còn cảnh báo sẵn có trong repo.
 - Sau khi chuyển đọc asset về api-client: `corepack pnpm turbo run lint typecheck test --filter=@tripflix/api-client --filter=@tripflix/web --output-logs=errors-only`: **6/6 tác vụ đạt**.
+- Sau merge develop lần cuối: `corepack pnpm turbo run lint typecheck test --affected --output-logs=errors-only`: **17/17 tác vụ đạt**, 12 lấy từ cache hợp lệ.
 - Web: **38 file test, 249 tests đạt**.
 - API client: **33 file test, 290 tests đạt**.
 - `node tools/check-boundaries.mjs`: đạt, không có vi phạm.
