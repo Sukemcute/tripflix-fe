@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import type { CommerceHotel } from '@tripflix/api-client';
 import {
   addBookingCartItem,
@@ -10,9 +10,9 @@ import {
   type BookingCartItem,
 } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, radius, spacing } from '@tripflix/tokens';
+import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Icon, money, Notice, Row, Txt, ui } from '@/components/mobile-ui';
 import { saveBookingSelection, useBookingSelection } from './cart-store';
 
@@ -34,19 +34,22 @@ export function PhotoGallery({
   rounded = radius.md,
   counterBottom = spacing.sm,
   height,
+  isLoading = false,
 }: {
   images: string[];
   name: string;
   ratio?: number;
   rounded?: number;
-  /** Ảnh đầu trang bị thẻ thông tin đè lên đáy nên đẩy bộ đếm lên cao hơn. */
+  /** Khoảng cách bộ điều khiển ảnh tới đáy khung. */
   counterBottom?: number;
-  /** Chiều cao cố định thay cho tỉ lệ (ảnh đầu trang co giãn cho vừa màn hình). */
+  /** Chiều cao cố định thay cho tỉ lệ. */
   height?: number;
+  isLoading?: boolean;
 }) {
   // Đo đúng bề rộng khung rồi cho ảnh vừa khung, ảnh to nhỏ khác nhau vẫn đều.
   const [frameWidth, setFrameWidth] = useState(0);
   const [index, setIndex] = useState(0);
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const slideWidth = Math.max(frameWidth, 1);
   const slideHeight = height ?? Math.round(slideWidth / ratio);
   // Khung luôn giữ tỉ lệ và luôn đo bề rộng, kể cả lúc chưa có ảnh, để ảnh tới sau vẫn hiện đúng cỡ.
@@ -57,55 +60,190 @@ export function PhotoGallery({
         ...(height ? { height } : { aspectRatio: ratio }),
         borderRadius: rounded,
         overflow: 'hidden',
-        backgroundColor: colors.seaMist,
+        backgroundColor: colors.surfaceMuted,
       }}
     >
       {!images.length && (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="image-outline" size={40} color={colors.tealInk} />
+        <View style={galleryStyles.placeholder}>
+          <Icon name="image-outline" size={28} color={colors.textMuted} />
+          <Txt style={galleryStyles.placeholderText}>
+            {isLoading ? hotelText.photoLoading : hotelText.noPhotos}
+          </Txt>
         </View>
       )}
       {frameWidth > 0 && images.length > 0 && (
         <ScrollView
+          ref={scroll}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onScroll={(event) => setIndex(Math.round(event.nativeEvent.contentOffset.x / slideWidth))}
+          onScroll={(event) =>
+            setIndex(
+              Math.max(
+                0,
+                Math.min(images.length - 1, Math.round(event.nativeEvent.contentOffset.x / slideWidth)),
+              ),
+            )
+          }
           scrollEventThrottle={64}
-          style={{ borderRadius: rounded }}
+          style={{ flex: 1 }}
         >
-          {images.map((uri) => (
-            <Image
-              key={uri}
-              source={uri}
-              style={{ width: slideWidth, height: slideHeight }}
-              contentPosition="center"
-              contentFit="cover"
-              accessibilityLabel={name}
+          {images.map((uri, position) => (
+            <GalleryPhoto
+              key={`${uri}:${position}`}
+              uri={uri}
+              width={slideWidth}
+              height={slideHeight}
+              isActive={position === index}
+              bottomInset={images.length > 1 ? counterBottom + 44 + spacing.sm : spacing.lg}
+              label={`${name}. ${t('hotel.photoPosition', { current: position + 1, total: images.length })}`}
             />
           ))}
         </ScrollView>
       )}
       {images.length > 1 && (
-        <View
-          style={{
-            position: 'absolute',
-            right: spacing.sm,
-            bottom: counterBottom,
-            paddingHorizontal: spacing.sm,
-            paddingVertical: 2,
-            borderRadius: radius.pill,
-            backgroundColor: colors.overlayHeavy,
-          }}
-        >
-          <Txt variant="small" style={{ color: colors.background }}>
-            {index + 1}/{images.length}
-          </Txt>
+        <View style={[galleryStyles.pager, { bottom: counterBottom }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={hotelText.previous}
+            accessibilityState={{ disabled: index === 0 }}
+            disabled={index === 0}
+            onPress={() => scroll.current?.scrollTo({ x: (index - 1) * slideWidth, animated: true })}
+            style={({ pressed }) => [galleryStyles.control, (pressed || index === 0) && galleryStyles.dim]}
+          >
+            <Icon name="chevron-back" size={20} color={colors.background} />
+          </Pressable>
+          <View style={galleryStyles.counter}>
+            <Txt
+              accessibilityLabel={t('hotel.photoPosition', { current: index + 1, total: images.length })}
+              style={galleryStyles.counterText}
+            >
+              {index + 1} / {images.length}
+            </Txt>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={hotelText.next}
+            accessibilityState={{ disabled: index === images.length - 1 }}
+            disabled={index === images.length - 1}
+            onPress={() => scroll.current?.scrollTo({ x: (index + 1) * slideWidth, animated: true })}
+            style={({ pressed }) => [
+              galleryStyles.control,
+              (pressed || index === images.length - 1) && galleryStyles.dim,
+            ]}
+          >
+            <Icon name="chevron-forward" size={20} color={colors.background} />
+          </Pressable>
         </View>
       )}
     </View>
   );
 }
+
+function GalleryPhoto({
+  uri,
+  width,
+  height,
+  label,
+  isActive,
+  bottomInset,
+}: {
+  uri: string;
+  width: number;
+  height: number;
+  label: string;
+  isActive: boolean;
+  bottomInset: number;
+}) {
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [attempt, setAttempt] = useState(0);
+  return (
+    <View
+      style={{ width, height }}
+      aria-hidden={!isActive}
+      accessibilityElementsHidden={!isActive}
+      importantForAccessibility={isActive ? 'auto' : 'no-hide-descendants'}
+    >
+      <Image
+        key={attempt}
+        source={uri}
+        style={StyleSheet.absoluteFill}
+        contentPosition="center"
+        contentFit="cover"
+        accessibilityLabel={label}
+        onLoad={() => setStatus('loaded')}
+        onError={() => setStatus('error')}
+      />
+      {status !== 'loaded' && (
+        <View style={[galleryStyles.placeholder, StyleSheet.absoluteFill, { paddingBottom: bottomInset }]}>
+          <Icon name="image-outline" size={28} color={colors.textMuted} />
+          <Txt accessibilityLiveRegion="polite" style={galleryStyles.placeholderText}>
+            {status === 'error' ? hotelText.imageUnavailable : hotelText.photoLoading}
+          </Txt>
+          {status === 'error' && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setStatus('loading');
+                setAttempt((current) => current + 1);
+              }}
+              style={({ pressed }) => [galleryStyles.retry, pressed && galleryStyles.dim]}
+            >
+              <Txt style={galleryStyles.retryText}>{hotelText.retryPhoto}</Txt>
+            </Pressable>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const galleryStyles = StyleSheet.create({
+  placeholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceMuted,
+    padding: spacing.lg,
+  },
+  placeholderText: { fontSize: 14, lineHeight: 23, color: colors.textMuted, textAlign: 'center' },
+  pager: {
+    position: 'absolute',
+    left: spacing.sm,
+    right: spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  control: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    backgroundColor: colors.overlayHeavy,
+  },
+  counter: {
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    backgroundColor: colors.overlayHeavy,
+  },
+  counterText: { color: colors.background, fontSize: 13, lineHeight: 22, fontFamily: nativeFonts.semibold },
+  retry: {
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  retryText: { fontSize: 14, lineHeight: 23, color: colors.tealInk, fontFamily: nativeFonts.semibold },
+  dim: { opacity: 0.6 },
+});
 
 /** Nút "Chọn" của một gói giá; đã chọn thì thành bộ đếm phòng màu cam (giống bản thiết kế). */
 function RateQty({
