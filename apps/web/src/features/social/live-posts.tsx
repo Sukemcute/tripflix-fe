@@ -828,7 +828,9 @@ function MediaTrackItem({
       setFirstFrameUrl(hlsUrl);
       reportFirstFrame.current();
     };
-    video.addEventListener('loadeddata', onLoadedData);
+    // loadeddata có thể không bắn lại khi trình duyệt dùng lại dữ liệu đã có, nên nghe thêm canplay, playing.
+    const firstFrameEvents = ['loadeddata', 'canplay', 'playing'] as const;
+    for (const name of firstFrameEvents) video.addEventListener(name, onLoadedData);
     // Trình duyệt phát HLS sẵn (Chrome, Edge, Safari): thẻ <video>. Firefox máy tính: hls.js gửi kèm cookie (TF64).
     const levels = levelsKey ? levelsKey.split(',').map(Number) : [];
     const release = attachReelHlsSource(video, hlsUrl, {
@@ -849,8 +851,9 @@ function MediaTrackItem({
       },
       onFatalError: () => reportMediaError.current(),
     });
+    if (video.readyState >= HAVE_CURRENT_DATA) onLoadedData();
     return () => {
-      video.removeEventListener('loadeddata', onLoadedData);
+      for (const name of firstFrameEvents) video.removeEventListener(name, onLoadedData);
       bufferControlRef.current = null;
       release();
     };
@@ -1962,6 +1965,8 @@ export function InspirationImmersiveViewer({
                 <div
                   ref={stageFrameRef}
                   className={styles.mediaStageFrame}
+                  // Đang chờ bài kế tiếp hoặc trang sau: khung video trượt lên, lộ dải dưới có vòng chờ (như TikTok).
+                  data-next-loading={isLoadingMoreReels || isNextBlocked ? true : undefined}
                 >
                   {/* Top-Left Volume + Slider & Top-Right Hover Controls (More / Fullscreen) */}
                   <>

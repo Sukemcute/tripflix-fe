@@ -751,6 +751,8 @@
   /* Chỗ dành cho cột tương tác ở góc dưới phải; cụm lên/xuống tính theo giá trị này để không chồng lên. */
   --iv-action-dock-height: 250px;
   --iv-action-dock-bottom: 48px;
+  /* Chiều cao dải chờ hiện ra dưới video khi đang tải bài kế tiếp. */
+  --iv-next-loading-height: 64px;
   position: relative;
   width: 100%;
   height: 100%;
@@ -1406,22 +1408,30 @@
   animation: reelPendingSpin 0.9s linear infinite;
 }
 
-/* Hết bài đã tải hoặc bài kế tiếp chưa có hình: thông báo nhỏ ở đáy khung, không lướt được tới khi tải xong. */
+/*
+ * Hết bài đã tải hoặc bài kế tiếp chưa có hình: khung video trượt lên một đoạn như lúc vuốt lên ở TikTok, lộ dải
+ * dưới có vòng chờ; tải xong thì trượt về. Dải nằm dưới khung video nên không che chữ, thẻ lộ trình.
+ */
+.mediaTrack {
+  transition: transform 220ms ease;
+}
+
+.mediaStageFrame[data-next-loading] .mediaTrack {
+  transform: translateY(calc(-1 * var(--iv-next-loading-height)));
+}
+
 .reelMoreLoading {
   position: absolute;
-  left: 50%;
-  bottom: 40px;
-  z-index: 6;
-  display: inline-flex;
+  inset: auto 0 0 0;
+  height: var(--iv-next-loading-height);
+  z-index: 0;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: var(--color-overlay-heavy);
   color: var(--color-background);
   font-size: 13px;
   font-weight: 600;
-  transform: translateX(-50%);
   pointer-events: none;
 }
 
@@ -1435,6 +1445,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .mediaTrack {
+    transition: none;
+  }
+
   .progressBarTrack[data-buffering]::after,
   .reelLoadingSpinner,
   .reelLoadingSpinnerSmall {
