@@ -299,93 +299,6 @@
   filter: drop-shadow(0 3px 9px rgb(0 35 46 / 50%));
 }
 
-.appDownload {
-  margin-top: 22px;
-}
-
-.appDownload > p {
-  margin: 0 0 10px;
-  color: rgb(255 255 255 / 92%);
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-shadow: 0 2px 8px rgb(0 35 46 / 42%);
-}
-
-.storeBadges {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-.storeBadge {
-  display: inline-flex;
-  width: 154px;
-  min-height: 56px;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 9px;
-  padding: 7px 12px;
-  border: 1px solid rgb(255 255 255 / 65%);
-  border-radius: 10px;
-  background: #08090b;
-  color: #fff;
-  text-decoration: none;
-  box-shadow: 0 5px 16px rgb(0 22 32 / 28%);
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-}
-
-.storeBadge:hover {
-  transform: translateY(-2px);
-  border-color: #fff;
-  box-shadow: 0 9px 22px rgb(0 22 32 / 34%);
-}
-
-.appleIcon {
-  width: 26px;
-  height: 28px;
-  flex: 0 0 auto;
-}
-
-.playIcon {
-  width: 25px;
-  height: 28px;
-  flex: 0 0 auto;
-}
-
-.downloadIcon {
-  width: 26px;
-  height: 26px;
-  flex: 0 0 auto;
-}
-
-.storeBadgeCopy {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: flex-start;
-  line-height: 1.05;
-  white-space: nowrap;
-}
-
-.storeBadgeCopy small {
-  margin-bottom: 3px;
-  font-size: 0.57rem;
-  font-weight: 500;
-  letter-spacing: 0.015em;
-}
-
-.storeBadgeCopy strong {
-  font-size: 1.02rem;
-  font-weight: 700;
-  letter-spacing: -0.035em;
-}
-
-.downloadBadge {
-  width: 146px;
-}
-
 .description {
   max-width: 56ch;
   font-size: clamp(1rem, 1.1vw, 1.08rem);
@@ -538,24 +451,6 @@
   .copy {
     max-width: 100%;
     padding-bottom: 50px;
-  }
-
-  .appDownload {
-    margin-top: 16px;
-  }
-
-  .storeBadges {
-    gap: 8px;
-  }
-
-  .storeBadge {
-    width: 148px;
-    min-height: 52px;
-    padding-inline: 10px;
-  }
-
-  .downloadBadge {
-    width: 148px;
   }
 
   .letterHotspotsArea {

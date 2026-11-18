@@ -38,7 +38,7 @@
 }
 .footerGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.95fr) minmax(0, 1.4fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.95fr) minmax(0, 0.9fr) minmax(0, 1.4fr);
   align-items: start;
   gap: 24px clamp(18px, 2.8vw, 46px);
   padding-block: clamp(28px, 4vw, 52px) clamp(24px, 3vw, 40px);
