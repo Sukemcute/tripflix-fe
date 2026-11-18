@@ -48,12 +48,28 @@ export function AvatarPhoto({ userId, src }: { userId?: string | null | undefine
           alt=""
           loading="lazy"
           referrerPolicy="no-referrer"
+          style={{ width: '100%', height: '100%' }}
           onError={() => setFailedUrl(url)}
         />
       )}
       {frameOption?.overlaySrc && (
         // oxlint-disable-next-line nextjs/no-img-element -- khung SVG data URL bọc bên ngoài vòng tròn avatar
-        <img className="avatar-outer-deco" src={frameOption.overlaySrc} alt="" aria-hidden="true" />
+        <img
+          className="avatar-outer-deco"
+          src={frameOption.overlaySrc}
+          alt=""
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: '50%',
+            width: '147%',
+            height: '147%',
+            maxWidth: 'none',
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none',
+          }}
+        />
       )}
       {decor.stickers.map((item) => {
         const preset = findStickerPreset(item.presetId);
@@ -68,11 +84,14 @@ export function AvatarPhoto({ userId, src }: { userId?: string | null | undefine
             alt=""
             aria-hidden="true"
             style={{
+              position: 'absolute',
               width: `${sizePct}%`,
               height: `${sizePct}%`,
               left: `${item.x * 100}%`,
               top: `${item.y * 100}%`,
+              maxWidth: 'none',
               transform: `translate(-50%, -50%) rotate(${item.rotationDeg}deg) scaleX(${item.isFlipped ? -1 : 1})`,
+              pointerEvents: 'none',
             }}
           />
         );

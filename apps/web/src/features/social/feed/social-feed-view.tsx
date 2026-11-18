@@ -26,6 +26,7 @@ import { PostCard } from './post-card';
 import { ShareMenu, type ShareMenuHandle } from '../share-menu';
 import { getPostImages } from '../post-cover';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import { getFocusedFeedPosts } from './focused-post';
 import styles from './social-feed.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
@@ -735,6 +736,7 @@ export function SocialFeedView({
           <div className={styles.composerTopRow}>
             <div className={styles.composerAvatar}>
               {user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
+              <AvatarPhoto src={user?.avatarUrl} />
             </div>
             <button
               type="button"
