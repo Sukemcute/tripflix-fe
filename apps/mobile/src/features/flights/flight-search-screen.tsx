@@ -530,6 +530,11 @@ function FlightCard({
       )}
       <FlightTimeline
         airline={flight.airline}
+        airlineCode={flight.airlineCode}
+        baggage={[
+          fare?.carryOnKg != null ? t('flights.carryOn', { kg: fare.carryOnKg }) : '',
+          fare?.checkedKg != null ? t('flights.checked', { kg: fare.checkedKg }) : '',
+        ].filter(Boolean)}
         flightNumber={flight.flightNumber}
         cabinName={cabin.cabinName}
         fromAirport={flight.fromAirport}
@@ -552,6 +557,9 @@ function FlightCard({
                   <Txt variant="small" style={ui.muted}>
                     {copy.perGuestSuffix}
                   </Txt>
+                </Txt>
+                <Txt variant="small" style={ui.muted}>
+                  {copy.taxIncluded}
                 </Txt>
               </>
             ) : (
@@ -670,5 +678,5 @@ const cardStyles = StyleSheet.create({
     borderRadius: radius.lg,
     backgroundColor: colors.coralTint,
   },
-  price: { fontSize: 22, lineHeight: 28, fontFamily: nativeFonts.bold, color: colors.coralInk },
+  price: { fontSize: 22, lineHeight: 28, fontFamily: nativeFonts.bold, color: colors.ink },
 });

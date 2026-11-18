@@ -8,6 +8,26 @@ import { compactType } from '@/components/mobile-scale';
 import { assets, Chip, Icon, Row, Txt, ui, type IconName } from '@/components/mobile-ui';
 
 const copy = vi.flights;
+/** Logo chữ của hãng, cùng bộ với trang vé trên web. */
+const AIRLINE_LOGOS: Record<string, number> = {
+  VN: require('../../../assets/airlines/VN.svg'),
+  VJ: require('../../../assets/airlines/VJ.svg'),
+  VU: require('../../../assets/airlines/VU.png'),
+  QH: require('../../../assets/airlines/QH.svg'),
+  BL: require('../../../assets/airlines/BL.svg'),
+};
+const AIRLINE_NAME_CODES: [RegExp, string][] = [
+  [/vietnam airlines/i, 'VN'],
+  [/vietjet/i, 'VJ'],
+  [/vietravel/i, 'VU'],
+  [/bamboo/i, 'QH'],
+  [/pacific/i, 'BL'],
+];
+/** Mã hãng từ BE, thiếu (dữ liệu cũ) thì đoán theo tên hãng như web. */
+function resolveAirlineCode(code: string | null, airline: string | null): string | null {
+  if (code) return code.toUpperCase();
+  return AIRLINE_NAME_CODES.find(([pattern]) => pattern.test(airline ?? ''))?.[1] ?? null;
+}
 const WEEKDAYS = copy.weekdays.split(' ');
 const STRIP_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -230,6 +250,8 @@ export function formatFlightDuration(minutes: number): string {
 /** Phần đầu thẻ chuyến: hãng, số hiệu, giờ đi – đến to và thời gian bay ở giữa. */
 export function FlightTimeline({
   airline,
+  airlineCode,
+  baggage,
   flightNumber,
   cabinName,
   fromAirport,
@@ -240,6 +262,9 @@ export function FlightTimeline({
   tags,
 }: {
   airline: string | null;
+  airlineCode: string | null;
+  /** "Xách tay 10kg", "Ký gửi 23kg" của gói vé đang xem. */
+  baggage: string[];
   flightNumber: string | null;
   cabinName: string;
   fromAirport: string;
@@ -249,6 +274,8 @@ export function FlightTimeline({
   durationMinutes: number | null;
   tags: { label: string; tone: 'coral' | 'teal' }[];
 }) {
+  const code = resolveAirlineCode(airlineCode, airline);
+  const logo = code ? AIRLINE_LOGOS[code] : undefined;
   return (
     <View style={{ gap: spacing.sm }}>
       {tags.length > 0 && (
@@ -264,13 +291,19 @@ export function FlightTimeline({
         </Row>
       )}
       <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
-        <View style={styles.airlineBadge}>
-          <Icon name="airplane" size={16} color={colors.background} />
-        </View>
+        {logo ? (
+          <Image source={logo} contentFit="contain" contentPosition="left" style={styles.airlineLogo} />
+        ) : (
+          <View style={styles.airlineBadge}>
+            <Icon name="airplane" size={16} color={colors.background} />
+          </View>
+        )}
         <View style={ui.flex}>
-          <Txt style={styles.airline} numberOfLines={1}>
-            {airline ?? flightNumber ?? fromAirport + ' → ' + toAirport}
-          </Txt>
+          {!logo && (
+            <Txt style={styles.airline} numberOfLines={1}>
+              {airline ?? flightNumber ?? fromAirport + ' → ' + toAirport}
+            </Txt>
+          )}
           <Txt style={styles.flightMeta}>{[flightNumber, cabinName].filter(Boolean).join(' · ')}</Txt>
         </View>
       </Row>
@@ -295,6 +328,15 @@ export function FlightTimeline({
           <Txt style={styles.airport}>{toAirport}</Txt>
         </View>
       </Row>
+      {baggage.length > 0 && (
+        <Row style={{ gap: spacing.xs, flexWrap: 'wrap' }}>
+          {baggage.map((item) => (
+            <Txt key={item} style={styles.baggage}>
+              {item}
+            </Txt>
+          ))}
+        </Row>
+      )}
     </View>
   );
 }
@@ -393,6 +435,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.tealInk,
+  },
+  airlineLogo: { width: 120, height: 28 },
+  baggage: {
+    ...compactType.label,
+    fontFamily: nativeFonts.semibold,
+    color: colors.tealInk,
+    backgroundColor: colors.seaMist,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    overflow: 'hidden',
   },
   airline: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
   flightMeta: { ...compactType.label, fontFamily: nativeFonts.regular, color: colors.textMuted },
