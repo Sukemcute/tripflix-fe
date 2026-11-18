@@ -12,6 +12,7 @@ export * from './sheet-list-drag';
 export * from './trip-plan';
 export * from './trip-builder-seed';
 export * from './weekend-dates';
+export * from './flight-sort';
 export * from './assistant-trip-plan';
 export * from './device-name';
 export * from './registration';
