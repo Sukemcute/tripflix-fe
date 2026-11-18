@@ -61,10 +61,10 @@
 .searchRow {
   display: grid;
   grid-template-columns:
-    minmax(200px, 1.4fr) repeat(2, minmax(150px, 1fr)) minmax(190px, 1.2fr) minmax(85px, 0.5fr)
+    minmax(200px, 1.4fr) repeat(2, minmax(150px, 1fr)) minmax(140px, 0.85fr) minmax(135px, 0.85fr)
     auto;
   align-items: center;
-  padding: 4px 6px 4px 10px;
+  padding: 4px; /* Đều bốn phía để nền xanh của ô đầu cách viền thanh một khoảng cố định. */
   border: 1px solid #dce9e6;
   border-radius: 999px;
   background: #fbfdfc;
@@ -155,6 +155,10 @@
 }
 .placeField {
   position: relative;
+}
+/* Ô đầu nằm sát đầu tròn của thanh: bo tròn bên trái để nền xanh khi rê chuột ôm theo thanh. */
+.panel .placeField {
+  border-radius: 999px 12px 12px 999px;
 }
 .suggestions {
   position: fixed;
@@ -395,7 +399,7 @@
   }
   .searchRow {
     grid-template-columns:
-      minmax(170px, 1.3fr) repeat(2, minmax(125px, 1fr)) minmax(150px, 1fr) minmax(65px, 0.45fr)
+      minmax(170px, 1.3fr) repeat(2, minmax(125px, 1fr)) minmax(120px, 0.8fr) minmax(110px, 0.8fr)
       auto;
   }
   .panel .field {
@@ -420,6 +424,7 @@
   }
   .panel .placeField {
     grid-column: 1 / -1;
+    border-radius: 12px;
     border-right: 0;
     border-bottom: 1px solid #e4ecea;
     padding-block: 14px;
