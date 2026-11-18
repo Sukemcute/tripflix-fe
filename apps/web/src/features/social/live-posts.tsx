@@ -602,6 +602,8 @@ const NO_REEL_POSTERS = { w360: '', w540: '', w720: '' };
 
 /** Khung rỗng cách bài đang xem tới chừng này bài thì hiện vòng chờ (lướt quá nhanh qua vùng chưa tải). */
 const REEL_PLACEHOLDER_SPINNER_RANGE = 6;
+/** HTMLMediaElement.HAVE_CURRENT_DATA: đã có hình của vị trí hiện tại. */
+const HAVE_CURRENT_DATA = 2;
 /** Video đang xem chưa chạy sau chừng này thì vẫn cho tải trước bài thứ 2 (video lỗi, trình duyệt chặn tự phát). */
 const REEL_PRELOAD_FALLBACK_MS = 2_000;
 
@@ -1482,8 +1484,13 @@ export function InspirationImmersiveViewer({
         if (nextTarget < posts.length) {
           const nextId = posts[nextTarget]?.id ?? '';
           // Bài không có video (đang xử lý) hoặc đã lỗi thì không chờ hình.
+          // Đọc thêm readyState của thẻ video phòng khi sự kiện loadeddata tới sau lúc người xem lướt.
+          const nextVideo = mediaItemRefs.current[nextTarget]?.querySelector('video');
           const isNextReady =
-            readyPostIdsRef.current.has(nextId) || !reelMap.get(nextId)?.video || mediaErrorPostId === nextId;
+            readyPostIdsRef.current.has(nextId) ||
+            (nextVideo?.readyState ?? 0) >= HAVE_CURRENT_DATA ||
+            !reelMap.get(nextId)?.video ||
+            mediaErrorPostId === nextId;
           if (!canStepToNextReel({ isNextReady, blockedSinceMs: nextBlockedSinceRef.current, nowMs: now })) {
             nextBlockedSinceRef.current ??= now;
             setNextBlocked(true);
@@ -1512,9 +1519,12 @@ export function InspirationImmersiveViewer({
   // Đang chặn vì bài kế tiếp chưa có hình: có hình rồi thì bỏ thông báo chờ (lướt lại là sang được).
   useEffect(() => {
     if (!isNextBlocked) return;
-    const nextId = posts[targetIndexRef.current + 1]?.id;
+    const nextIndex = targetIndexRef.current + 1;
+    const nextId = posts[nextIndex]?.id;
     const timer = setInterval(() => {
-      if (nextId && !readyPostIdsRef.current.has(nextId)) return;
+      const nextVideo = mediaItemRefs.current[nextIndex]?.querySelector('video');
+      const isReady = !nextId || readyPostIdsRef.current.has(nextId) || (nextVideo?.readyState ?? 0) >= HAVE_CURRENT_DATA;
+      if (!isReady) return;
       clearInterval(timer);
       nextBlockedSinceRef.current = null;
       setNextBlocked(false);
