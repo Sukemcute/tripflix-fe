@@ -14,11 +14,13 @@
   height: calc(100dvh - var(--feed-header-height, 106px));
   max-height: calc(100dvh - var(--feed-header-height, 106px));
   min-height: 0;
+  width: var(--ota-container-width, min(1600px, calc(100% - clamp(48px, 8vw, 160px))));
+  margin-inline: auto;
   background: #F8FAFC;
   color: #141B3D;
   font-family: inherit;
   position: relative;
-  padding-left: 88px;
+  padding-left: 76px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -44,7 +46,9 @@
   height: calc(100dvh - var(--feed-header-height, 106px));
   max-height: calc(100dvh - var(--feed-header-height, 106px));
   overflow: hidden;
-  padding-left: 88px;
+  width: var(--ota-container-width, min(1600px, calc(100% - clamp(48px, 8vw, 160px))));
+  margin-inline: auto;
+  padding-left: 76px;
   box-sizing: border-box;
 }
 
@@ -55,7 +59,7 @@
 .instagramDock {
   position: absolute;
   top: 12px;
-  left: 12px;
+  left: 0;
   bottom: 12px;
   width: 64px;
   background: var(--color-background);
@@ -135,7 +139,7 @@
    -------------------------------------------------------------------------- */
 .dockSearchDrawer {
   position: absolute;
-  left: 88px;
+  left: 76px;
   top: 12px;
   bottom: 12px;
   width: 320px;
@@ -431,6 +435,7 @@
   position: relative !important;
   top: auto !important;
   width: 100% !important;
+  min-width: 0 !important;
   height: 100% !important;
   min-height: 0 !important;
 }
@@ -973,12 +978,12 @@
 .splitViewContainer {
   position: relative;
   width: 100%;
-  max-width: 1760px;
+  max-width: 100%;
   height: 100%;
   min-height: 0;
   flex: 1;
   margin: 0 auto;
-  padding: 16px 20px;
+  padding: 12px 0;
   display: grid;
   /* Luôn đủ 5 cột: trình duyệt chỉ chuyển mượt grid-template-columns khi số cột không đổi.
      Khoảng cách nằm trong cột 2 và 4 để cùng co về 0 khi sidebar đóng. */
@@ -1018,7 +1023,7 @@
   animation: sidebarEnterLeft 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.splitViewContainer > .mainFeedColumn {
+.splitViewContainer > .mainFeedFrame {
   grid-column: 3;
   grid-row: 1;
 }
@@ -1209,7 +1214,45 @@
 /* --------------------------------------------------------------------------
    Center Main Social Feed (740-840px)
    -------------------------------------------------------------------------- */
+.mainFeedFrame {
+  --feed-frame-radius: 16px;
+  position: relative;
+  isolation: isolate;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  border-radius: var(--feed-frame-radius);
+}
+
+.clippedPostHighlight {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--color-coral) 50%, transparent);
+  border-radius: var(--feed-frame-radius);
+}
+
+.hoveredPostShadow {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: var(--feed-frame-radius);
+  box-shadow: 0 10px 28px -12px color-mix(in srgb, var(--color-ink) 22%, transparent);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.hoveredPostShadow[data-visible] {
+  opacity: 1;
+}
+
 .mainFeedColumn {
+  position: relative;
+  z-index: 1;
   height: 100%;
   min-height: 0;
   min-width: 0;
@@ -1220,6 +1263,7 @@
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
+  border-radius: var(--feed-frame-radius);
   padding-right: 0;
   padding-bottom: 60px;
   scrollbar-width: none;
@@ -1438,13 +1482,22 @@
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 
-.postCard:hover {
+.postCard:hover,
+.postCard:focus-within {
   border-color: #CBD5E1;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  box-shadow: none;
 }
 
-.postCardActiveComment {
+.postCard.postCardActiveComment,
+.postCard.postCardActiveComment:hover {
   border-color: color-mix(in srgb, var(--color-coral) 50%, transparent);
+  transition: box-shadow 200ms ease;
+}
+
+/* Một viền duy nhất, vẽ ngoài vùng cuộn để không bị mặt nạ bo góc cắt mất. */
+.postCard.postCardActiveComment[data-highlight-framed],
+.postCard.postCardActiveComment[data-highlight-framed]:hover {
+  border-color: transparent;
 }
 
 /* Post Header */
@@ -2162,15 +2215,33 @@ a.authorAvatar {
    -------------------------------------------------------------------------- */
 @media (max-width: 1439px) {
   .splitViewContainer {
-    grid-template-columns: 310px 20px minmax(0, 1fr) 20px 340px;
+    grid-template-columns: 300px 16px minmax(0, 1fr) 16px 330px;
   }
 
   .splitViewNoLeft {
-    grid-template-columns: 0px 0px minmax(0, 1fr) 20px 340px;
+    grid-template-columns: 0px 0px minmax(0, 1fr) 16px 330px;
   }
 
   .splitViewNoRight {
-    grid-template-columns: 310px 20px minmax(0, 1fr) 0px 0px;
+    grid-template-columns: 300px 16px minmax(0, 1fr) 0px 0px;
+  }
+
+  .splitViewCenterOnly {
+    grid-template-columns: 0px 0px minmax(0, 1fr) 0px 0px;
+  }
+}
+
+@media (max-width: 1199px) {
+  .splitViewContainer {
+    grid-template-columns: 270px 14px minmax(0, 1fr) 14px 290px;
+  }
+
+  .splitViewNoLeft {
+    grid-template-columns: 0px 0px minmax(0, 1fr) 14px 290px;
+  }
+
+  .splitViewNoRight {
+    grid-template-columns: 270px 14px minmax(0, 1fr) 0px 0px;
   }
 
   .splitViewCenterOnly {
@@ -2186,7 +2257,7 @@ a.authorAvatar {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .splitViewContainer > .mainFeedColumn {
+  .splitViewContainer > .mainFeedFrame {
     grid-column: auto;
   }
 
@@ -2215,6 +2286,13 @@ a.authorAvatar {
     max-height: 78dvh !important;
     border-radius: 22px 22px 0 0 !important;
     z-index: 70;
+  }
+}
+
+@media (max-width: 900px) {
+  .feedPageWrapper,
+  .feedPageWrapperReels {
+    width: var(--ota-container-width, calc(100% - 40px));
   }
 }
 
@@ -2266,6 +2344,10 @@ a.authorAvatar {
     display: none;
   }
 
+  .mainFeedFrame {
+    --feed-frame-radius: 14px;
+  }
+
   .postCard {
     border-radius: 14px;
     padding: 16px;
@@ -2284,7 +2366,21 @@ a.authorAvatar {
   }
 }
 
+@media (max-width: 640px) {
+  .feedPageWrapper,
+  .feedPageWrapperReels {
+    width: var(--ota-container-width, calc(100% - 32px));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .hoveredPostShadow,
+  .postCard,
+  .postCard.postCardActiveComment,
+  .postCard.postCardActiveComment:hover {
+    transition: none;
+  }
+
   .splitViewContainer {
     transition: none;
   }

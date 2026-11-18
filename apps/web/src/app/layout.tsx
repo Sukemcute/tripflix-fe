@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import './globals.css';
 import { HeaderAccount } from '@/features/auth/header-account';
+import { AssistantHeaderButton } from '@/features/assistant/assistant-widget';
 import { CartLink } from '@/features/checkout/cart-link';
 import { HeaderNotifications } from '@/features/notifications/header-notifications';
 import { Providers } from './providers';
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <OtaNavigation />
               {/* Cụm bên phải: giỏ hàng, chuông, tài khoản trong một viên cùng kiểu menu (TF06P). */}
               <div className="header-actions">
+                <AssistantHeaderButton />
                 <CartLink />
                 <HeaderNotifications />
                 <HeaderAccount />

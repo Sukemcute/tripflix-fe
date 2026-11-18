@@ -23,6 +23,7 @@ import reelsStyles from '../live-posts.module.css';
 import { type FeedNavFilter } from './floating-nav-rail';
 import { ItinerarySidebarPanel } from './itinerary-sidebar-panel';
 import { PostCard } from './post-card';
+import { FeedHighlightFrame } from './feed-highlight-frame';
 import { ShareMenu, type ShareMenuHandle } from '../share-menu';
 import { getPostImages } from '../post-cover';
 import { ApiErrorNotice } from '@/features/shared/api-state';
@@ -746,6 +747,7 @@ export function SocialFeedView({
       )}
 
       {/* 2. Center Column: Main Social Feed (Cuộn mượt độc lập) */}
+      <FeedHighlightFrame scrollRef={mainFeedRef} postId={isRightOpen ? activeCommentPost?.id : undefined} isVisible={isVisible}>
       <main ref={mainFeedRef} className={styles.mainFeedColumn} aria-label="Bảng tin du lịch">
         {isSearchMode && onBackToResults && (
           <div className={styles.searchBackBar}>
@@ -974,6 +976,7 @@ export function SocialFeedView({
           )}
         </div>
       </main>
+      </FeedHighlightFrame>
 
       {/* 3. Right Column: Comment Sidebar (Dùng chung 1 style đồng bộ chuẩn Reels) */}
       {rightPresence.isRendered && (

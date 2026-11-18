@@ -3,12 +3,14 @@
 import { vi } from '@tripflix/i18n';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { TripiMascot } from '@/features/mascot/tripi-mascot';
 import { withReturnTo } from '@/features/auth/auth-return';
 import { AssistantCards } from './assistant-cards';
 import { AssistantIcon, type AssistantIconName } from './assistant-icon';
 import { useAssistant } from './assistant-provider';
+import { GENIE_CLOSE_MS } from './genie-motion';
+import { useGenieMotion } from './use-genie-motion';
 import styles from './assistant.module.css';
 
 const copy = vi.assistant;
@@ -49,30 +51,82 @@ function AssistantThinking() {
   );
 }
 
-function AssistantPanel() {
+function AssistantPanel({
+  isClosing = false,
+  onClosed,
+}: {
+  isClosing?: boolean;
+  onClosed: () => void;
+}) {
   const chat = useAssistant();
   const pathname = usePathname();
   const list = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
+  const panel = useRef<HTMLElement>(null);
   const [isConfirming, setIsConfirming] = useState(false);
+
+  // Đo vị trí mép dưới của .ota-header để neo khung chat chính xác theo thanh điều hướng
+  useLayoutEffect(() => {
+    const headerEl = document.querySelector('.ota-header');
+    const panelEl = panel.current;
+    if (!headerEl || !panelEl) return;
+    const updateAnchor = () => {
+      const isMobile = window.matchMedia('(max-width: 640px)').matches;
+      const top = isMobile ? 0 : Math.max(12, Math.min(Math.ceil(headerEl.getBoundingClientRect().bottom) + 8, window.innerHeight - 160));
+      panelEl.style.setProperty('--panel-top', `${top}px`);
+      panelEl.style.setProperty('--panel-max-height', `${Math.max(0, window.innerHeight - top - 16)}px`);
+      const trigger = document.getElementById('header-assistant-button');
+      if (trigger) {
+        const triggerRect = trigger.getBoundingClientRect();
+        // offsetLeft không đổi trong lúc cửa sổ đang co giãn theo animation.
+        const originX = triggerRect.left + triggerRect.width / 2 - panelEl.offsetLeft;
+        const originY = triggerRect.top + triggerRect.height / 2 - top;
+        panelEl.style.setProperty('--panel-origin-x', `${originX}px`);
+        panelEl.style.setProperty('--panel-origin-y', `${originY}px`);
+      }
+    };
+    updateAnchor();
+    const observer = new ResizeObserver(updateAnchor);
+    observer.observe(headerEl);
+    window.addEventListener('resize', updateAnchor, { passive: true });
+    window.addEventListener('scroll', updateAnchor, { passive: true });
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateAnchor);
+      window.removeEventListener('scroll', updateAnchor);
+    };
+  }, [pathname]);
+
+  useLayoutEffect(() => {
+    list.current?.scrollTo({ top: list.current.scrollHeight });
+  }, [chat.messages.length, chat.isPending, chat.hasError]);
+
+  useGenieMotion(panel, isClosing, onClosed);
+
   // Lỗi không khoá ô nhập: người dùng sửa câu rồi gửi lại, hoặc bấm "Thử gửi lại".
   const isDisabled = !chat.draft.trim() || chat.isPending;
-  const messageCount = chat.messages.length;
 
-  useEffect(() => input.current?.focus(), []);
-  useEffect(() => {
-    list.current?.scrollTo({ top: list.current.scrollHeight });
-  }, [messageCount, chat.isPending, chat.hasError]);
+  useEffect(() => input.current?.focus({ preventScroll: true }), []);
+
+  const handleClose = () => {
+    chat.close();
+    const trigger = document.getElementById('header-assistant-button');
+    trigger?.focus();
+  };
 
   return (
     <section
-      className={styles.panel}
+      ref={panel}
+      id="tripi-assistant-panel"
+      className={`${styles.panel} ${isClosing ? styles.panelClosing : ''}`}
       role="dialog"
       aria-label={copy.name}
+      aria-hidden={isClosing || undefined}
+      inert={Boolean(isClosing)}
       onKeyDown={(event) => {
         if (event.key !== 'Escape') return;
         if (isConfirming) setIsConfirming(false);
-        else chat.close();
+        else handleClose();
       }}
     >
       <header className={styles.header}>
@@ -101,7 +155,7 @@ function AssistantPanel() {
           className={styles.iconButton}
           aria-label={copy.minimize}
           title={copy.minimize}
-          onClick={chat.close}
+          onClick={handleClose}
         >
           <AssistantIcon name="minimize" />
         </button>
@@ -285,19 +339,100 @@ function AssistantPanel() {
   );
 }
 
-/** Nút Tripi nổi góc phải dưới; bấm mở khung chat (ngăn bên trên máy tính, toàn màn hình trên điện thoại). */
+/**
+ * Khung chat Tripi ở gốc (TF31): chỉ hiển thị panel với hiệu ứng mở từ header / thu về khi đóng.
+ * Giữ nguyên phiên chat và tiến trình stream ngay cả khi đóng mở khung.
+ */
 export function AssistantWidget() {
   const chat = useAssistant();
   const pathname = usePathname();
+  const isOpen = chat.isOpen && !isAssistantHidden(pathname);
+  const [lastIsOpen, setLastIsOpen] = useState(isOpen);
+  const [isExiting, setIsExiting] = useState(false);
+  if (lastIsOpen !== isOpen) {
+    setLastIsOpen(isOpen);
+    setIsExiting(!isOpen);
+  }
+  const isClosing = !isOpen && isExiting;
+  const rendered = isOpen || isExiting;
+
+  // Bộ hẹn giờ dự phòng khi onAnimationEnd không kích hoạt
+  useEffect(() => {
+    if (!isClosing) return;
+    const timer = setTimeout(() => {
+      setIsExiting(false);
+    }, GENIE_CLOSE_MS + 1400);
+    return () => clearTimeout(timer);
+  }, [isClosing]);
+
+  // Bấm ra ngoài khung thì đóng
+  useEffect(() => {
+    if (!rendered || isClosing) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      const panelEl = document.getElementById('tripi-assistant-panel');
+      const buttonEl = document.getElementById('header-assistant-button');
+      if (panelEl?.contains(target) || buttonEl?.contains(target)) return;
+      chat.close();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      const panelEl = document.getElementById('tripi-assistant-panel');
+      if (panelEl?.contains(event.target as Node)) return;
+      chat.close();
+      document.getElementById('header-assistant-button')?.focus();
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [rendered, isClosing, chat]);
+
+  const handleClosed = useCallback(() => setIsExiting(false), []);
+
+  if (isAssistantHidden(pathname) || !rendered) return null;
+
+  return <AssistantPanel isClosing={isClosing} onClosed={handleClosed} />;
+}
+
+/**
+ * Nút bật/tắt Tripi trên thanh điều hướng đầu trang (bên cạnh giỏ hàng).
+ */
+export function AssistantHeaderButton() {
+  const chat = useAssistant();
+  const pathname = usePathname();
   if (isAssistantHidden(pathname)) return null;
-  return chat.isOpen ? (
-    <AssistantPanel />
-  ) : (
-    <button type="button" className={styles.bubble} aria-label={copy.open} title={copy.open} onClick={chat.open}>
-      <TripiMascot pose="expr-happy" size={46} alt="" />
-      <span className={styles.bubbleBadge} aria-hidden="true">
-        <AssistantIcon name="sparkles" size={10} />
+
+  const label = chat.isOpen ? `${copy.name}, ${copy.minimize}` : `${copy.name}, ${copy.open}`;
+
+  return (
+    <button
+      id="header-assistant-button"
+      type="button"
+      className={styles.headerButton}
+      aria-expanded={chat.isOpen}
+      aria-controls="tripi-assistant-panel"
+      aria-haspopup="dialog"
+      aria-label={label}
+      title={copy.name}
+      onClick={() => {
+        if (chat.isOpen) {
+          chat.close();
+        } else {
+          chat.open();
+        }
+      }}
+    >
+      <span className={styles.headerMascot}>
+        <TripiMascot pose="expr-happy" size={44} alt="" />
       </span>
+      <span className={styles.headerBadge} aria-hidden="true">
+        <AssistantIcon name="sparkles" size={9} />
+      </span>
+      {chat.isPending && <span className={styles.headerPendingDot} aria-hidden="true" />}
     </button>
   );
 }
