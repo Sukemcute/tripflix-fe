@@ -5,6 +5,7 @@ import { emailVerificationControllerResend } from '@tripflix/api-client/core-api
 import { vi } from '@tripflix/i18n';
 import { useMutation } from '@tanstack/react-query';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 export function EmailVerificationNotice() {
   const { session } = useApiSession();
@@ -43,7 +44,7 @@ export function EmailVerificationNotice() {
             check.mutate();
           }}
         >
-          {check.isPending ? vi.api.loading : vi.api.verifyEmailCheck}
+          {check.isPending ? <LoadingDots /> : vi.api.verifyEmailCheck}
         </button>
       </div>
       {resend.data === 'sent' && <output>{vi.api.verifyEmailSent}</output>}

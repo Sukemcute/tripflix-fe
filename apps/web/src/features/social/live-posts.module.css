@@ -1201,6 +1201,7 @@
 }
 
 .overlayAvatar {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1923,6 +1924,7 @@ a.avatarSmall {
 }
 
 .avatarSmall {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;

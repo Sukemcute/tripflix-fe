@@ -11,6 +11,7 @@ import { SocialIcon, formatAuthorDisplay } from './live-posts';
 import { buildInspirationHref, buildPostHref } from './search-url';
 import grid from './search-results-grid.module.css';
 import styles from './public-profile.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 /** Trang cá nhân công khai (TF47): mở khi bấm tên hoặc avatar một người. */
 export function PublicProfile({ userId }: { userId: string }) {
@@ -33,7 +34,7 @@ export function PublicProfile({ userId }: { userId: string }) {
         {profile.error ? (
           <ApiErrorNotice error={profile.error} retry={() => void profile.refetch()} />
         ) : (
-          <p className={grid.stateBox}>{vi.api.loading}</p>
+          <p className={grid.stateBox}><LoadingDots /></p>
         )}
       </main>
     );
@@ -74,8 +75,7 @@ export function PublicProfile({ userId }: { userId: string }) {
               disabled={!follow.canToggle}
             >
               {follow.isLoading || follow.isUpdating
-                ? vi.api.loading
-                : follow.isFollowing
+                ? <LoadingDots /> : follow.isFollowing
                   ? vi.api.unfollowAuthor
                   : vi.api.followAuthor}
             </button>
@@ -155,7 +155,7 @@ function GridState({
   emptyText: string;
   children: ReactNode;
 }) {
-  if (query.isPending) return <p className={grid.stateBox}>{vi.api.loading}</p>;
+  if (query.isPending) return <p className={grid.stateBox}><LoadingDots /></p>;
   if (query.error) return <ApiErrorNotice error={query.error} retry={() => void query.refetch()} />;
   if (isEmpty) return <p className={grid.stateBox}>{emptyText}</p>;
   return (
@@ -168,7 +168,7 @@ function GridState({
           disabled={query.isFetchingNextPage}
           onClick={() => void query.fetchNextPage()}
         >
-          {query.isFetchingNextPage ? vi.api.loading : vi.api.profileLoadMore}
+          {query.isFetchingNextPage ? <LoadingDots /> : vi.api.profileLoadMore}
         </button>
       )}
     </>

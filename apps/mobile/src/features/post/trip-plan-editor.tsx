@@ -13,7 +13,6 @@ import {
   TRIP_PLAN_TIME_PATTERN,
   type TripPlanDayDraft,
   type TripPlanDraft,
-  type TripPlanMode,
   type TripPlanPointDraft,
 } from '@tripflix/app-core';
 import {
@@ -38,7 +37,6 @@ import { toPickedImage } from './image-source';
 import { usePostHotelPick } from './post-hotel-pick-store';
 
 const copy = vi.mobile.tripPlan.editor;
-const MODES: readonly TripPlanMode[] = ['flight', 'bus', 'train', 'car', 'other'];
 
 /**
  * Soạn lộ trình ngay trong màn đăng video (TF105): lấy từ chuyến đã đi hoặc tự nhập, chọn poster,
@@ -559,27 +557,25 @@ function PointRow({
             )}
           </Row>
           <Row style={styles.chips}>
-            <Chip
-              selected={!isHotel && !point.mode}
-              onPress={() => onChange({ kind: 'activity', mode: null, hotelId: '' })}
-            >
-              {copy.activityKind}
-            </Chip>
+            {/* Chỉ khách sạn và máy bay đặt được; mọi thứ khác (ăn uống, vui chơi, đi lại) là gợi ý tham khảo. */}
             <Chip
               selected={isHotel}
               onPress={() => onChange({ kind: 'hotel', mode: null, title: isHotel ? point.title : '' })}
             >
               {copy.hotelKind}
             </Chip>
-            {MODES.map((mode) => (
-              <Chip
-                key={mode}
-                selected={!isHotel && point.mode === mode}
-                onPress={() => onChange({ kind: 'activity', mode, hotelId: '' })}
-              >
-                {vi.mobile.tripPlan.modes[mode]}
-              </Chip>
-            ))}
+            <Chip
+              selected={!isHotel && point.mode === 'flight'}
+              onPress={() => onChange({ kind: 'activity', mode: 'flight', hotelId: '' })}
+            >
+              {vi.mobile.tripPlan.modes.flight}
+            </Chip>
+            <Chip
+              selected={!isHotel && point.mode !== 'flight'}
+              onPress={() => onChange({ kind: 'activity', mode: null, hotelId: '' })}
+            >
+              {copy.suggestionKind}
+            </Chip>
           </Row>
           {isHotel && (
             <Pressable
