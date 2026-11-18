@@ -69,20 +69,10 @@ export function TripHotelSearchScreen({ q, pick }: { q: string; pick: TripHotelP
 }
 
 /** Kết quả khách sạn cho ô tìm ở Khám phá: gợi ý điểm đến rồi lấy khách sạn còn phòng, giống web. */
-export function HotelSearchResults({
-  q,
-  pick,
-  layout = 'row',
-}: {
-  q: string;
-  pick?: TripHotelPick;
-  /** 'list': danh sách dọc đầy đủ, có tải thêm (ô tìm ở Khám phá); 'row': hàng ngang vài khách sạn. */
-  layout?: 'row' | 'list';
-}) {
-  const isList = !!pick || layout === 'list';
+export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPick }) {
   const { isReady } = useApiSession();
   const query = useInfiniteQuery({
-    queryKey: ['discovery', 'hotel-search', q, pick, isList],
+    queryKey: ['discovery', 'hotel-search', q, pick],
     enabled: isReady && q.length >= 2,
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage: HotelPage) => lastPage.nextCursor ?? undefined,
@@ -104,7 +94,7 @@ export function HotelSearchResults({
             priceMax: '',
             sort: 'price',
           },
-          { signal, limit: isList ? 20 : HOTEL_LIMIT, cursor: pageParam },
+          { signal, limit: pick ? 20 : HOTEL_LIMIT, cursor: pageParam },
         );
         if (stays.items.length)
           return {
@@ -161,7 +151,7 @@ export function HotelSearchResults({
       (query.data?.pages.flatMap((page) => page.items) ?? []).map((hotel) => [hotel.hotelId, hotel]),
     ).values(),
   ];
-  if (!isList && !hotels.length) return null;
+  if (!pick && !hotels.length) return null;
   const openHotel = (hotel: HotelHit) => {
     if (pick?.mode === 'post') {
       savePostHotel(pick.key, { hotelId: hotel.hotelId, hotelName: hotel.name });
@@ -191,7 +181,7 @@ export function HotelSearchResults({
         <Txt variant="heading">{vi.mobile.explore.hotelResults}</Txt>
         <Badge tone="coral" icon="bed-outline">{`${hotels.length}`}</Badge>
       </Row>
-      {isList && (
+      {pick && (
         <>
           {query.isFetching && !query.isFetchingNextPage && <LoadingDots />}
           <ApiErrorNotice
@@ -206,8 +196,8 @@ export function HotelSearchResults({
         </>
       )}
       <ScrollView
-        horizontal={!isList}
-        scrollEnabled={!isList}
+        horizontal={!pick}
+        scrollEnabled={!pick}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ gap: spacing.sm }}
       >
@@ -218,7 +208,7 @@ export function HotelSearchResults({
             accessibilityLabel={pick ? `${vi.mobile.tripPlan.pickHotel}: ${hotel.name}` : hotel.name}
             onPress={() => openHotel(hotel)}
             style={{
-              width: isList ? '100%' : 220,
+              width: pick ? '100%' : 220,
               borderRadius: radius.lg,
               overflow: 'hidden',
               borderWidth: 1,
@@ -229,7 +219,7 @@ export function HotelSearchResults({
             {hotel.thumbnail ? (
               <Image
                 source={hotel.thumbnail}
-                style={isList ? { width: '100%', aspectRatio: 16 / 9 } : { height: 120 }}
+                style={pick ? { width: '100%', aspectRatio: 16 / 9 } : { height: 120 }}
                 contentFit="cover"
               />
             ) : (
@@ -245,10 +235,10 @@ export function HotelSearchResults({
               </View>
             )}
             <View style={{ padding: spacing.sm, gap: 2 }}>
-              <Txt variant="label" numberOfLines={isList ? 2 : 1}>
+              <Txt variant="label" numberOfLines={pick ? 2 : 1}>
                 {hotel.name}
               </Txt>
-              {isList && hotel.rating && (
+              {pick && hotel.rating && (
                 <Txt variant="small" style={{ color: colors.tealInk }}>
                   {hotel.rating.average.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} / 5 ·{' '}
                   {t('hotel.reviewCount', { count: hotel.rating.count })}
@@ -261,7 +251,7 @@ export function HotelSearchResults({
               {hotel.price !== undefined && (
                 <Txt variant="label" style={{ color: colors.coralInk }}>
                   {vi.hotel.from} {money(hotel.price)}
-                  {isList ? ` ${vi.hotel.perNightShort}` : ''}
+                  {pick ? ` ${vi.hotel.perNightShort}` : ''}
                 </Txt>
               )}
               {pick && (
@@ -275,7 +265,7 @@ export function HotelSearchResults({
           </Pressable>
         ))}
       </ScrollView>
-      {isList && query.hasNextPage && (
+      {pick && query.hasNextPage && (
         <Button
           tone="text"
           disabled={query.isFetchingNextPage}

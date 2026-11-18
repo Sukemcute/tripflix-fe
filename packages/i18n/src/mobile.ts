@@ -394,6 +394,8 @@ export const mobile = {
     hotelRating: '★ {score} ({count})',
     staysEmpty: 'Chưa có phòng phù hợp để gợi ý.',
     clearSearch: 'Xoá tìm kiếm',
+    hotelTotal: '{count} khách sạn còn phòng',
+    pageLabel: 'Trang {page}',
     hotelResults: 'Khách sạn',
     livePlaceholder: 'Bạn muốn đi đâu?',
     mood: 'Bật mood xê dịch',

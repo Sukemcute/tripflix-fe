@@ -13,7 +13,7 @@ import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { Button, Chip, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { NotificationBell } from '@/features/account/notification-bell';
 import { FeaturedTrips } from '@/features/booking/featured-trips';
-import { HotelSearchResults } from './hotel-search-results';
+import { ExploreHotelResults } from './explore-hotel-results';
 
 const text = vi.mobile.explore;
 type SearchKind = 'hotel' | 'flight';
@@ -108,7 +108,7 @@ export function ExploreFeed() {
 
       {isResolving && <LoadingDots />}
       {hotelQuery ? (
-        <HotelSearchResults q={hotelQuery} layout="list" />
+        <ExploreHotelResults key={hotelQuery} q={hotelQuery} />
       ) : (
         <>
           <View style={{ gap: spacing.xs }}>
