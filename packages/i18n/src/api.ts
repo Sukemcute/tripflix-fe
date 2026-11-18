@@ -778,6 +778,8 @@ export const api = {
   immersiveNextPost: 'Bài tiếp theo (Phím xuống)',
   reelLoadingMore: 'Đang tải thêm video…',
   reelLoadingNext: 'Đang tải video tiếp theo…',
+  reelSeekAria: 'Tua video',
+  reelSeekValue: '{current} / {duration}',
   immersivePrevSlide: 'Ảnh trước',
   immersiveNextSlide: 'Ảnh tiếp theo',
   immersiveCloseGallery: 'Đóng trình xem ảnh',
