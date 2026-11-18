@@ -602,6 +602,19 @@ const NO_REEL_POSTERS = { w360: '', w540: '', w720: '' };
 
 /** Khung rỗng cách bài đang xem tới chừng này bài thì hiện vòng chờ (lướt quá nhanh qua vùng chưa tải). */
 const REEL_PLACEHOLDER_SPINNER_RANGE = 6;
+/**
+ * Cuộn khung Reels tới một bài. Không dùng scrollIntoView: lệnh đó cuộn cả mọi khung cha (kể cả khung
+ * `overflow: hidden` của trang), làm cả khung Reels lẫn bình luận bị đẩy lên khi trang cao hơn màn hình vài px.
+ */
+function scrollTrackToIndex(
+  container: HTMLElement,
+  targetEl: HTMLElement | null | undefined,
+  index: number,
+  behavior: ScrollBehavior,
+) {
+  container.scrollTo({ top: targetEl ? targetEl.offsetTop : index * container.clientHeight, behavior });
+}
+
 /** HTMLMediaElement.HAVE_CURRENT_DATA: đã có hình của vị trí hiện tại. */
 const HAVE_CURRENT_DATA = 2;
 /** Video đang xem chưa chạy sau chừng này thì vẫn cho tải trước bài thứ 2 (video lỗi, trình duyệt chặn tự phát). */
@@ -1436,26 +1449,13 @@ export function InspirationImmersiveViewer({
 
       targetIndexRef.current = clamped;
 
-      const targetEl = mediaItemRefs.current[clamped];
-
       if (!smooth) {
         isProgrammaticNavRef.current = false;
-        if (targetEl) {
-          targetEl.scrollIntoView({ behavior: 'auto', block: 'start' });
-        } else {
-          container.scrollTo({ top: clamped * container.clientHeight, behavior: 'auto' });
-        }
+        scrollTrackToIndex(container, mediaItemRefs.current[clamped], clamped, 'auto');
         commitSettledPost(clamped);
       } else {
         isProgrammaticNavRef.current = true;
-        if (targetEl) {
-          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else {
-          container.scrollTo({
-            top: clamped * container.clientHeight,
-            behavior: 'smooth',
-          });
-        }
+        scrollTrackToIndex(container, mediaItemRefs.current[clamped], clamped, 'smooth');
 
         if (scrollEndSafetyTimerRef.current) {
           clearTimeout(scrollEndSafetyTimerRef.current);
@@ -1559,13 +1559,7 @@ export function InspirationImmersiveViewer({
     lastCommittedPostIdRef.current = activePostId;
     const targetIdx = posts.findIndex((p) => p.id === activePostId);
     if (targetIdx >= 0 && trackScrollRef.current) {
-      const container = trackScrollRef.current;
-      const targetEl = mediaItemRefs.current[targetIdx];
-      if (targetEl) {
-        targetEl.scrollIntoView({ behavior: 'auto', block: 'start' });
-      } else {
-        container.scrollTo({ top: targetIdx * container.clientHeight, behavior: 'auto' });
-      }
+      scrollTrackToIndex(trackScrollRef.current, mediaItemRefs.current[targetIdx], targetIdx, 'auto');
     }
   }, [activePostId, posts]);
 
