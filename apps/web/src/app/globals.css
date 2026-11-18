@@ -655,6 +655,7 @@ body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-
   border-color: var(--color-coral-ink);
 }
 .header-account-avatar {
+  position: relative;
   display: grid;
   flex: none;
   place-items: center;
@@ -3314,6 +3315,7 @@ body:has([class*="feedPageWrapper"]) #content {
   text-align: center;
 }
 .profile-avatar {
+  position: relative;
   display: grid;
   place-items: center;
   width: 96px;
@@ -3845,10 +3847,8 @@ body:has(> [data-onboarding-page]) > .skip-link {
   display: none;
 }
 
-/* TF109: ảnh đại diện (AvatarPhoto) phủ lên ô chữ cái đầu, bo tròn theo ô. */
-:has(> .avatar-photo) {
-  position: relative;
-}
+/* TF109: ảnh đại diện (AvatarPhoto) phủ lên ô chữ cái đầu, bo tròn theo ô. Ô cha phải có position: relative
+   (đặt sẵn ở từng class avatar; không dùng :has() vì trình duyệt cũ bỏ qua và ảnh tràn ra khung ngoài). */
 .avatar-photo {
   position: absolute;
   inset: 0;

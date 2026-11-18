@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 /**
  * Ảnh đại diện (TF109) đặt chồng lên ô chữ cái đầu sẵn có: tải xong thì che chữ; chưa có ảnh (404) hay ảnh lỗi thì
- * gỡ đi để chữ cái hiện lại. Ô cha tự thành khung cắt tròn nhờ `:has(> .avatar-photo)` trong globals.css.
+ * gỡ đi để chữ cái hiện lại. Ô cha cần `position: relative` (đặt ở class avatar của từng chỗ).
  * `src` có mặt (kể cả null) thì dùng nó thay cho link theo userId: hồ sơ của chính mình đã có avatarUrl mới nhất.
  */
 export function AvatarPhoto({ userId, src }: { userId?: string | null | undefined; src?: string | null | undefined }) {
