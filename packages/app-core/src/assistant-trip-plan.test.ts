@@ -46,6 +46,34 @@ describe('buildAssistantTripSelection', () => {
     expect(isAssistantPlanId('post-1')).toBe(false);
   });
 
+  it('bỏ dòng bay, nhận trả phòng khỏi gợi ý và thêm chuyến bay về ở ngày cuối', () => {
+    const selection = buildAssistantTripSelection(
+      {
+        ...card,
+        lines: [
+          { service: 'flight', label: 'Ngày 1 · ✈ Bay HAN → DLI 13:00–14:40', detail: 'Bay' },
+          { service: 'stay', label: 'Ngày 1 · Nhận phòng D. House', detail: '05/12' },
+          { service: null, label: 'Ngày 1 · chiều', detail: 'Chùa Tàu' },
+          { service: 'flight', label: 'Ngày 3 · ✈ Bay DLI → HAN', detail: 'Bay về' },
+        ],
+      },
+      {
+        days: '3',
+        flightFrom: 'HAN',
+        flightTo: 'DLI',
+        flightDate: '2026-12-05',
+        returnFrom: 'DLI',
+        returnTo: 'HAN',
+      },
+      options,
+    );
+    expect(selection?.trip.items).toEqual([
+      { day: 1, title: 'HAN → DLI', transport: { mode: 'flight', fromAirport: 'HAN', toAirport: 'DLI' } },
+      { day: 1, title: 'Chùa Tàu', notes: 'chiều' },
+      { day: 3, title: 'DLI → HAN', transport: { mode: 'flight', fromAirport: 'DLI', toAirport: 'HAN' } },
+    ]);
+  });
+
   it('không có điểm nào và không có khách sạn thì không tạo lộ trình', () => {
     expect(buildAssistantTripSelection({ ...card, lines: [] }, {}, options)).toBeNull();
   });

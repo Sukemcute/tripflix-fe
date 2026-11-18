@@ -1,9 +1,15 @@
-import { AssistantError, HttpError, sendAssistantMessage } from '@tripflix/api-client';
+import {
+  AssistantError,
+  HttpError,
+  sendAssistantMessage,
+  type AssistantAction,
+  type AssistantTrip,
+} from '@tripflix/api-client';
 import type { Turn } from '@tripflix/api-client/ai-service/model/index';
 import { buildAssistantHistory } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { Platform } from 'react-native';
-import type { AssistantReply, AssistantTransport } from './assistant-provider';
+import type { AssistantMessage, AssistantReply, AssistantTransport } from './assistant-provider';
 
 const AI_BASE_URL =
   process.env.EXPO_PUBLIC_AI_URL ??
@@ -66,22 +72,33 @@ export const assistantTransport: AssistantTransport = async (messages, signal, c
   }
 };
 
+/** Một cuộc trò chuyện riêng ngoài khung chat (ô lên lộ trình ở tab Đặt), không lẫn vào chat đang mở. */
+export function newTripiConversationId(): string {
+  return newConversationId();
+}
+
 /**
- * Hỏi Tripi một lượt ngoài khung chat (ô lên lộ trình ở tab Đặt): cuộc trò chuyện riêng, không lẫn vào chat đang mở.
+ * Gửi một lượt tới Tripi với lịch sử và lựa chọn do nơi gọi tự giữ (ô lên lộ trình ở tab Đặt).
  * Bị từ chối (hết lượt khách, đang bận…) thì trả câu của app thay cho lỗi.
  */
-export async function askTripiOnce(message: string, signal?: AbortSignal): Promise<AssistantReply> {
+export async function askTripiTurn(turn: {
+  conversationId: string;
+  message: string;
+  history: readonly AssistantMessage[];
+  action?: AssistantAction;
+  trip: AssistantTrip | null;
+}): Promise<AssistantReply> {
   try {
     const answer = await sendAssistantMessage(
       {
-        conversationId: newConversationId(),
-        message,
-        history: [],
+        conversationId: turn.conversationId,
+        message: turn.message,
+        history: buildAssistantHistory(turn.history) as Turn[],
         contextPostId: null,
-        action: null,
-        trip: null,
+        action: turn.action ?? null,
+        trip: turn.trip,
       },
-      { baseUrl: AI_BASE_URL, signal },
+      { baseUrl: AI_BASE_URL },
     );
     return {
       text: answer.text,

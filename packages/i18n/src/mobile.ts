@@ -209,6 +209,8 @@ export const mobile = {
     askTripiBody: 'Kể Tripi nghe bạn muốn đi đâu, mấy ngày, bao nhiêu tiền. Lộ trình Tripi lập đặt được ngay tại đây.',
     askTripiPlaceholder: 'VD: Đà Lạt 3 ngày 2 đêm, 5 triệu',
     askTripiSend: 'Hỏi Tripi',
+    askTripiPrefix: 'Lên lộ trình chi tiết từng ngày (chỗ ở, đi lại, ăn chơi) cho chuyến: ',
+    askTripiAgain: 'Hỏi lại từ đầu',
     allDestinations: 'Tất cả',
     perGuest: '≈ {amount}/người',
     pickedCount: '{picked}/{total} dịch vụ',

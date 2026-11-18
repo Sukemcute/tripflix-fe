@@ -1,5 +1,11 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { commerceApi, getFutureDate, useApiSession } from '@tripflix/api-client';
+import {
+  commerceApi,
+  getFutureDate,
+  useApiSession,
+  type AssistantAction,
+  type AssistantTrip,
+} from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
@@ -9,7 +15,8 @@ import { LoadingDots } from '@/components/loading-dots';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { Badge, Button, formatDate, Icon, money, Row, Txt, ui } from '@/components/mobile-ui';
 import { AssistantCards } from '@/features/assistant/assistant-cards';
-import { askTripiOnce } from '@/features/assistant/assistant-transport';
+import type { AssistantMessage } from '@/features/assistant/assistant-provider';
+import { askTripiTurn, newTripiConversationId } from '@/features/assistant/assistant-transport';
 import { styles } from './trip-plan-parts';
 
 const copy = vi.mobile.tripPlan;
@@ -74,22 +81,42 @@ export function UpcomingTrips() {
 }
 
 /**
- * Ô lên lộ trình nhanh: hỏi Tripi một lượt rồi hiện lịch từng ngày ngay bên dưới, không mở khung chat.
- * Nút Đặt trên thẻ lịch đưa lộ trình vào màn Đặt theo lộ trình của tab này.
+ * Ô lên lộ trình nhanh: hỏi Tripi rồi hiện thẻ ngay bên dưới, không mở khung chat. Bấm Chọn trên thẻ khách sạn,
+ * chuyến bay gửi tiếp trong cùng cuộc trò chuyện để Tripi ra lộ trình từng ngày; nút Đặt trên lộ trình đưa về màn
+ * Đặt theo lộ trình của tab này.
  */
 export function AskTripiCard() {
   const [text, setText] = useState('');
-  const plan = useMutation({
+  const [conversationId, setConversationId] = useState(newTripiConversationId);
+  const [messages, setMessages] = useState<AssistantMessage[]>([]);
+  const [trip, setTrip] = useState<AssistantTrip | null>(null);
+  const turn = useMutation({
     retry: false,
-    mutationFn: (message: string) => askTripiOnce(message),
+    mutationFn: ({ message, action }: { message: string; action?: AssistantAction }) =>
+      askTripiTurn({ conversationId, message, history: messages, action, trip }),
+    onSuccess: (reply, { message }) => {
+      if (reply.trip !== undefined) setTrip(reply.trip ?? null);
+      setMessages((current) => [
+        ...current,
+        { id: `u${current.length}`, role: 'user', text: message },
+        { id: `a${current.length}`, role: 'assistant', ...reply },
+      ]);
+    },
   });
-  const ask = () => {
-    const message = text.trim();
-    if (!message || plan.isPending) return;
-    plan.mutate(message);
+  const reset = () => {
+    setConversationId(newTripiConversationId());
+    setMessages([]);
+    setTrip(null);
+    turn.reset();
   };
-  const reply = plan.data;
-  const cards = reply?.cards ?? [];
+  const ask = () => {
+    const request = text.trim();
+    if (!request || turn.isPending) return;
+    // Câu đầu nói rõ cần lộ trình để Tripi không chỉ gợi ý reel; câu sau là trả lời tiếp trong cuộc trò chuyện.
+    turn.mutate({ message: messages.length ? request : copy.askTripiPrefix + request });
+    setText('');
+  };
+  const latest = messages.at(-1);
   return (
     <View style={{ gap: spacing.md }}>
       <View style={layout.ask}>
@@ -108,19 +135,37 @@ export function AskTripiCard() {
           placeholderTextColor={colors.textMuted}
           returnKeyType="send"
           onSubmitEditing={ask}
-          editable={!plan.isPending}
+          editable={!turn.isPending}
           accessibilityLabel={copy.askTripiTitle}
           style={layout.askInput}
         />
-        <Button icon="sparkles-outline" disabled={!text.trim() || plan.isPending} onPress={ask}>
+        <Button icon="sparkles-outline" disabled={!text.trim() || turn.isPending} onPress={ask}>
           {copy.askTripiSend}
         </Button>
+        {messages.length > 0 && (
+          <Button tone="text" icon="refresh" disabled={turn.isPending} onPress={reset}>
+            {copy.askTripiAgain}
+          </Button>
+        )}
       </View>
-      {plan.isPending && <LoadingDots />}
-      {plan.isError && <Txt style={styles.muted}>{vi.assistant.error}</Txt>}
-      {/* Tripi hỏi lại hoặc từ chối thì hiện câu trả lời để khách sửa yêu cầu rồi hỏi tiếp. */}
-      {!!reply?.text && !plan.isPending && <Txt>{reply.text}</Txt>}
-      {cards.length > 0 && !plan.isPending && <AssistantCards cards={cards} onOpen={() => undefined} />}
+      {turn.isPending && <LoadingDots />}
+      {turn.isError && <Txt style={styles.muted}>{vi.assistant.error}</Txt>}
+      {latest && !turn.isPending && (
+        <>
+          {/* Tripi hỏi lại hoặc từ chối thì khách trả lời ngay ở ô trên. */}
+          {!!latest.text && <Txt>{latest.text}</Txt>}
+          {!!latest.cards?.length && (
+            <AssistantCards
+              cards={latest.cards}
+              onOpen={() => undefined}
+              actions={{
+                act: (label, action) => turn.mutate({ message: label, action }),
+                canUndo: messages.length > 2,
+              }}
+            />
+          )}
+        </>
+      )}
     </View>
   );
 }
