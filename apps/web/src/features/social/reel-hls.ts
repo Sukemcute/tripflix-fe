@@ -2,7 +2,10 @@ import { releaseReelVideoSource, type ReelVideoSource } from './reel-post';
 
 /** Phần của thẻ <video> cần để chọn cách phát và gắn hls.js (test được không cần DOM). */
 export type ReelHlsVideo = ReelVideoSource &
-  Pick<HTMLVideoElement, 'canPlayType' | 'addEventListener' | 'removeEventListener' | 'play' | 'paused' | 'readyState'>;
+  Pick<
+    HTMLVideoElement,
+    'canPlayType' | 'addEventListener' | 'removeEventListener' | 'play' | 'paused' | 'readyState' | 'currentTime'
+  >;
 
 /** HTMLMediaElement.HAVE_FUTURE_DATA: đủ dữ liệu để chạy tiếp ngay (hằng số của DOM, không có trong Node khi test). */
 const HAVE_FUTURE_DATA = 3;
@@ -121,29 +124,41 @@ function attachNativeSources(
       return;
     }
     const shouldResume = !video.paused;
+    // Đổi nguồn thì thẻ <video> về đầu: nhớ chỗ đang xem để phát tiếp từ đó.
+    resumeAt = video.currentTime;
     sourceIndex += 1;
     video.src = sources[sourceIndex] ?? '';
     if (shouldResume) void video.play().catch(() => {});
   };
-  // Chỉ hẹn giờ khi người xem đang chờ video này (đã bấm phát mà chưa có hình). Video tải sẵn ngoài màn hình
-  // không hẹn giờ: trình duyệt có thể hoãn tải chúng, lùi mức lúc đó chỉ làm tải lại từ đầu.
+  let resumeAt = 0;
+  const restorePosition = () => {
+    if (resumeAt > 0) video.currentTime = resumeAt;
+    resumeAt = 0;
+  };
+  // Chỉ hẹn giờ khi người xem đang chờ video này: đã bấm phát mà chưa có hình, hoặc đang phát thì đứng chờ tải
+  // (mạng yếu; một mức cố định thì trình duyệt không tự hạ mức). Video tải sẵn ngoài màn hình không hẹn giờ:
+  // trình duyệt có thể hoãn tải chúng, lùi mức lúc đó chỉ làm tải lại từ đầu.
   const armTimeout = () => {
     clearTimeout(timeout);
-    if (video.readyState >= HAVE_FUTURE_DATA || sourceIndex >= sources.length - 1) return;
+    if (video.paused || video.readyState >= HAVE_FUTURE_DATA || sourceIndex >= sources.length - 1) return;
     timeout = setTimeout(fallBack, REEL_RENDITION_TIMEOUT_MS);
   };
   const disarmTimeout = () => clearTimeout(timeout);
   video.addEventListener('error', fallBack);
   video.addEventListener('play', armTimeout);
+  video.addEventListener('waiting', armTimeout);
   video.addEventListener('playing', disarmTimeout);
   video.addEventListener('pause', disarmTimeout);
+  video.addEventListener('loadedmetadata', restorePosition);
   video.src = sources[0] ?? '';
   return () => {
     clearTimeout(timeout);
     video.removeEventListener('error', fallBack);
     video.removeEventListener('play', armTimeout);
+    video.removeEventListener('waiting', armTimeout);
     video.removeEventListener('playing', disarmTimeout);
     video.removeEventListener('pause', disarmTimeout);
+    video.removeEventListener('loadedmetadata', restorePosition);
     releaseReelVideoSource(video);
   };
 }

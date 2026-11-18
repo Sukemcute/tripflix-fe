@@ -37,6 +37,7 @@ function createFakeVideo({ canPlayNative }: { canPlayNative: boolean }) {
     }),
     paused: true,
     readyState: 0,
+    currentTime: 0,
     play: vi.fn(async () => {
       video.paused = false;
     }),
@@ -130,6 +131,29 @@ describe('attachReelHlsSource', () => {
       fast.emit('playing');
       vi.advanceTimersByTime(REEL_RENDITION_TIMEOUT_MS * 2);
       expect(fast.src).toBe(RENDITIONS[0]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('trình duyệt tự phát: đang phát mà đứng chờ tải quá 8 giây (mạng yếu) thì lùi một mức, phát tiếp đúng chỗ', () => {
+    vi.useFakeTimers();
+    try {
+      const video = createFakeVideo({ canPlayNative: true });
+      attachReelHlsSource(video, URL, { ...callbacks(), sources: RENDITIONS, loadLibrary: vi.fn() });
+      video.paused = false;
+      video.readyState = 4;
+      video.emit('playing');
+      video.currentTime = 4.2;
+      video.readyState = 2;
+      video.emit('waiting');
+      vi.advanceTimersByTime(REEL_RENDITION_TIMEOUT_MS - 1);
+      expect(video.src).toBe(RENDITIONS[0]);
+      vi.advanceTimersByTime(1);
+      expect(video.src).toBe(RENDITIONS[1]);
+      video.currentTime = 0;
+      video.emit('loadedmetadata');
+      expect(video.currentTime).toBe(4.2);
     } finally {
       vi.useRealTimers();
     }
