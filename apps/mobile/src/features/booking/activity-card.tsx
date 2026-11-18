@@ -1,4 +1,4 @@
-import { TRIP_PLAN_TIME_PATTERN } from '@tripflix/app-core';
+import { TRIP_PLAN_CATEGORIES, TRIP_PLAN_TIME_PATTERN, type TripPlanCategory } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { type ReactNode } from 'react';
@@ -9,7 +9,7 @@ import { ChoiceChip } from './trip-plan-parts';
 
 const copy = vi.mobile.tripBuilder;
 
-export type ActivityCategory = 'cafe' | 'food' | 'fun' | 'other';
+export type ActivityCategory = TripPlanCategory;
 /** Phần sửa được của một hoạt động hay gợi ý (cà phê, ăn uống, vui chơi…): không đặt chỗ, không tính tiền. */
 export interface ActivityFields {
   key: string;
@@ -20,23 +20,14 @@ export interface ActivityFields {
   detail?: string;
 }
 
-export const ACTIVITY_CATEGORIES: readonly ActivityCategory[] = ['cafe', 'food', 'fun', 'other'];
-const ACTIVITY_ICONS: Record<ActivityCategory, IconName> = {
+export const ACTIVITY_CATEGORIES = TRIP_PLAN_CATEGORIES;
+/** Icon của từng loại hoạt động, gợi ý; dùng chung ở mọi màn lộ trình. */
+export const ACTIVITY_ICONS: Record<ActivityCategory, IconName> = {
   cafe: 'cafe-outline',
   food: 'restaurant-outline',
   fun: 'happy-outline',
   other: 'location-outline',
 };
-
-/** Đoán loại theo tên gợi ý trong bài đăng (bài cũ chưa ghi loại). */
-export function guessActivityCategory(title: string): ActivityCategory {
-  const text = title.toLowerCase();
-  if (/cà phê|cafe|coffee/.test(text)) return 'cafe';
-  // \b của JS chỉ hiểu chữ không dấu nên tách chữ "ăn" bằng khoảng trắng.
-  if (/(^|\s)ăn(\s|$)|quán|nhà hàng|chợ|bún|phở|bánh|lẩu|hải sản/.test(text)) return 'food';
-  if (/ghé|tham quan|check-in|lặn|tắm|chơi|công viên|bãi/.test(text)) return 'fun';
-  return 'other';
-}
 
 /** Cột giờ bên trái mỗi thẻ; hoạt động chưa có giờ thì hiện nút thêm giờ. */
 export function TimeTag({ time, onAdd }: { time: string; onAdd?: () => void }) {

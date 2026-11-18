@@ -5,6 +5,7 @@ import {
   getBookableTripPlan,
   getTripDayDate,
   getTripNights,
+  getTripPlanCategory,
   listTripPlanOffers,
   resolveTripPlanOffer,
   getTripPlanTotal,
@@ -34,7 +35,7 @@ import { DateSingleField } from '@/components/date-sheet';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { DragSortList } from '@/features/post/drag-sort-list';
-import { ActivityCard, TimeTag, guessActivityCategory, type ActivityFields } from './activity-card';
+import { ActivityCard, TimeTag, type ActivityFields } from './activity-card';
 import { CartLink } from './cart-ui';
 import { CommerceError } from './commerce-state';
 import { TripBuilderEntry } from './trip-builder-screen';
@@ -83,7 +84,7 @@ function SelectedTripScreen({
         day: item.day,
         time: item.time ?? '',
         title: item.title,
-        category: guessActivityCategory(item.title),
+        category: getTripPlanCategory(item),
         detail: [item.location, item.notes].filter(Boolean).join(' · ') || undefined,
       })),
   );
