@@ -13,7 +13,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Fragment, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Icon, money, Txt, type IconName } from '@/components/mobile-ui';
+import { Button, Icon, money, Txt, type IconName } from '@/components/mobile-ui';
 import { chatType } from './assistant-visuals';
 
 const copy = vi.assistant;
@@ -74,7 +74,15 @@ const ROW_ICONS: Record<string, IconName> = {
   plan: 'map-outline',
 };
 
-const INFO_KINDS = new Set(['weather', 'checklist', 'itinerary', 'summary', 'compare', 'transport']);
+const INFO_KINDS = new Set([
+  'weather',
+  'checklist',
+  'itinerary',
+  'summary',
+  'compare',
+  'transport',
+  'booking',
+]);
 const INFO_ICONS: Record<string, IconName> = {
   weather: 'partly-sunny-outline',
   checklist: 'checkbox-outline',
@@ -107,6 +115,48 @@ const SKY_ICONS: Record<WeatherSky, IconName> = {
 
 /** Nút của thẻ kế hoạch: chỉ có trên câu trả lời mới nhất, vì lựa chọn cũ không còn hiệu lực. */
 type CardActions = { act: (label: string, action: AssistantAction) => void; canUndo: boolean };
+
+function ServerActions({
+  card,
+  actions,
+  onOpen,
+}: {
+  card: AssistantCard;
+  actions?: CardActions;
+  onOpen: () => void;
+}) {
+  const buttons = card.actions?.filter((action) => {
+    if (action.type === 'book') return action.path === '/trip-builder';
+    // Giữ nút Chọn theo dòng so sánh, không lặp lại action cùng ref ở chân thẻ.
+    return (
+      action.type === 'select' &&
+      action.ref &&
+      actions &&
+      !(card.kind === 'compare' && card.lines?.some((line) => line.ref === action.ref))
+    );
+  });
+  if (!buttons?.length) return null;
+  return (
+    <View style={styles.actions}>
+      {buttons.map((action, index) => (
+        <Button
+          key={`${card.ref}-action-${index}`}
+          compact
+          onPress={() => {
+            if (action.type === 'select' && action.ref) {
+              actions?.act(action.label, { type: 'select', ref: action.ref });
+            } else if (action.type === 'book' && action.path === '/trip-builder') {
+              onOpen();
+              router.push({ pathname: '/trip-builder', params: action.params ?? {} });
+            }
+          }}
+        >
+          {action.label}
+        </Button>
+      ))}
+    </View>
+  );
+}
 
 function CardHeader({ icon, title, subtitle }: { icon: IconName; title: string; subtitle?: string }) {
   return (
@@ -389,30 +439,35 @@ export function AssistantCards({
         </ScrollView>
       )}
       {infos.map((card) => (
-        <Fragment key={card.ref}>{infoCard(card, reels[card.id], onOpen, actions)}</Fragment>
+        <Fragment key={card.ref}>
+          {infoCard(card, reels[card.id], onOpen, actions)}
+          <ServerActions card={card} actions={actions} onOpen={onOpen} />
+        </Fragment>
       ))}
       {others.map((card) => (
-        <Pressable
-          key={card.ref}
-          accessibilityRole="button"
-          onPress={() => openCard(card, onOpen)}
-          style={({ pressed }) => [styles.card, styles.row, pressed && styles.pressed]}
-        >
-          <View style={styles.cardIcon}>
-            <Icon name={ROW_ICONS[card.kind] ?? 'map-outline'} size={20} color={c.coralInk} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Txt numberOfLines={2} style={styles.listLabel}>
-              {card.title}
-            </Txt>
-            {card.priceFrom !== null && (
-              <Txt style={styles.price}>
-                {copy.priceFrom} {money(card.priceFrom)}
+        <Fragment key={card.ref}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => openCard(card, onOpen)}
+            style={({ pressed }) => [styles.card, styles.row, pressed && styles.pressed]}
+          >
+            <View style={styles.cardIcon}>
+              <Icon name={ROW_ICONS[card.kind] ?? 'map-outline'} size={20} color={c.coralInk} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Txt numberOfLines={2} style={styles.listLabel}>
+                {card.title}
               </Txt>
-            )}
-          </View>
-          <Icon name="chevron-forward" size={18} color={c.textMuted} />
-        </Pressable>
+              {card.priceFrom !== null && (
+                <Txt style={styles.price}>
+                  {copy.priceFrom} {money(card.priceFrom)}
+                </Txt>
+              )}
+            </View>
+            <Icon name="chevron-forward" size={18} color={c.textMuted} />
+          </Pressable>
+          <ServerActions card={card} actions={actions} onOpen={onOpen} />
+        </Fragment>
       ))}
     </View>
   );
