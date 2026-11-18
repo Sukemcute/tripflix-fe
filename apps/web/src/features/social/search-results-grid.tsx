@@ -2,16 +2,14 @@
 
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { t, vi } from '@tripflix/i18n';
-import { useApiSession, usePostSearchFeed } from '@tripflix/api-client';
-import type { SearchPostsRequestDtoSort, SocialPostDto } from '@tripflix/api-client/core-api/model/index';
+import { useApiSession, useAuthorReels, useAuthorVlogs, usePostSearchFeed, useUserSearch } from '@tripflix/api-client';
+import type { SearchPostsRequestDtoSort } from '@tripflix/api-client/core-api/model/index';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import { getAvatarTone } from './avatar-tone';
 import { formatAuthorDisplay, formatCompactCount, SocialIcon } from './live-posts';
-import { getPostImages } from './post-cover';
-import { isReelPost } from './post-type-filter';
-import { formatSearchCardDate, getSearchCardCaption } from './search-result-card';
-import { ExploreAllResults, PlaceResults } from './search-explore-results';
+import { mergeSearchGridCards, type GridCardItem } from './search-author-items';
+import { ExploreAllResults, PlaceResults, UserResults } from './search-explore-results';
 import { getPlaceKind, SEARCH_RESULT_TYPES, type SearchResultType } from './search-url';
 import styles from './search-results-grid.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
@@ -21,6 +19,7 @@ const SKELETON_CARD_COUNT = 12;
 
 const RESULT_TYPE_LABELS: Record<SearchResultType, string> = {
   all: vi.api.searchResultsTabAll,
+  users: vi.api.searchResultsTabUsers,
   hotels: vi.api.searchResultsTabHotels,
   places: vi.api.searchResultsTabPlaces,
   food: vi.api.searchResultsTabFood,
@@ -98,6 +97,8 @@ export function SearchResultsGrid({
 
       {resultType === 'all' ? (
         <ExploreAllResults keyword={keyword} onSelectType={onChangeResultType} onOpenPost={onOpenPost} onOpenReel={onOpenReel} />
+      ) : resultType === 'users' ? (
+        <UserResults keyword={keyword} onOpenPost={onOpenPost} onOpenReel={onOpenReel} />
       ) : placeKind ? (
         <PlaceResults keyword={keyword} kind={placeKind} onOpenPost={onOpenPost} onOpenReel={onOpenReel} />
       ) : (
@@ -130,7 +131,7 @@ export function SearchResultsGrid({
   );
 }
 
-/** Tab Bài viết, Reels: bài đầy đủ theo thứ tự discovery, cuộn vô hạn. */
+/** Tab Bài viết, Reels: bài đầy đủ theo thứ tự discovery + bài của tác giả khớp tên, cuộn vô hạn. */
 function PostResults({
   keyword,
   resultType,
@@ -147,23 +148,39 @@ function PostResults({
   // kết quả Tất cả rồi lọc (cùng query với tab Bài viết khi mở bài, không gọi lại).
   const searchQuery = usePostSearchFeed(keyword, resultType === 'reels' ? 'video' : undefined, sort);
   const { hasNextPage, isFetchingNextPage, isPending, fetchNextPage } = searchQuery;
+  const userSearch = useUserSearch(keyword);
+  const topUser = userSearch.data?.items?.[0];
+  const authorVlogs = useAuthorVlogs(resultType === 'posts' ? topUser?.id : undefined);
+  const authorReels = useAuthorReels(resultType === 'reels' ? topUser?.id : undefined);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const posts = useMemo(() => {
-    const items = searchQuery.data?.pages.flatMap((page) => page.items) ?? [];
-    if (resultType === 'posts') return items.filter((post) => post.postType === 'vlog');
-    if (resultType === 'reels') return items.filter(isReelPost);
-    return items;
-  }, [searchQuery.data, resultType]);
-  // Lọc xong mà trống trong khi còn trang sau (vd. trang đầu toàn Reels ở tab Bài viết): tải tiếp thay vì báo rỗng.
-  const isFilling = posts.length === 0 && Boolean(hasNextPage);
-  useEffect(() => {
-    if (isFilling && !isPending && !isFetchingNextPage) void fetchNextPage();
-  }, [isFilling, isPending, isFetchingNextPage, fetchNextPage]);
   const thumbnails = useMemo(
     () => Object.assign({}, ...(searchQuery.data?.pages.map((page) => page.thumbnails) ?? [])) as Record<string, string | null>,
     [searchQuery.data],
   );
+
+  const cards = useMemo<GridCardItem[]>(
+    () =>
+      mergeSearchGridCards({
+        resultType,
+        discoveryItems: searchQuery.data?.pages.flatMap((page) => page.items) ?? [],
+        thumbnails,
+        userVlogs: authorVlogs.data?.pages.flatMap((page) => page.items) ?? [],
+        userReels: authorReels.data?.pages.flatMap((page) => page.items) ?? [],
+        authorName: topUser?.displayName,
+      }),
+    [searchQuery.data, thumbnails, resultType, authorVlogs.data, authorReels.data, topUser?.displayName],
+  );
+
+  const isAuthorQueryPending =
+    (userSearch.isSearchable && userSearch.isPending) ||
+    (Boolean(topUser) && (resultType === 'posts' ? authorVlogs.isPending : authorReels.isPending));
+  // Lọc xong mà trống trong khi còn trang sau (vd. trang đầu toàn Reels ở tab Bài viết): tải tiếp thay vì báo rỗng.
+  const isFilling = cards.length === 0 && Boolean(hasNextPage);
+  const showSkeleton = isPending || isFilling || (cards.length === 0 && isAuthorQueryPending);
+  useEffect(() => {
+    if (isFilling && !isPending && !isFetchingNextPage) void fetchNextPage();
+  }, [isFilling, isPending, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -178,12 +195,14 @@ function PostResults({
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, scrollRef]);
 
-  const handleOpen = (post: SocialPostDto) => {
-    if (isReelPost(post)) {
-      onOpenReel(post.id, posts.filter(isReelPost).map((reel) => reel.id));
+  const allReelIds = useMemo(() => cards.filter((card) => card.isReel).map((card) => card.id), [cards]);
+
+  const handleOpen = (card: GridCardItem) => {
+    if (card.isReel) {
+      onOpenReel(card.id, allReelIds);
       return;
     }
-    onOpenPost(post.id);
+    onOpenPost(card.id);
   };
 
   return (
@@ -192,7 +211,7 @@ function PostResults({
         <div className={styles.stateBox}>
           <ApiErrorNotice error={searchQuery.error} retry={() => void searchQuery.refetch()} />
         </div>
-      ) : isPending || isFilling ? (
+      ) : showSkeleton ? (
         <div className={styles.grid} aria-busy="true">
           {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
             <div key={index} className={styles.skeletonCard} aria-hidden="true">
@@ -202,41 +221,37 @@ function PostResults({
             </div>
           ))}
         </div>
-      ) : posts.length === 0 ? (
+      ) : cards.length === 0 ? (
         <p className={styles.stateBox}>{t('api.noPostsForKeyword', { query: keyword })}</p>
       ) : (
         <ul className={styles.grid}>
-          {posts.map((post) => {
-            const isReel = isReelPost(post);
-            const caption = getSearchCardCaption(post);
-            const author = formatAuthorDisplay(post.authorId, post.authorName, user?.id, user?.displayName);
-            const cover = thumbnails[post.id] ?? (isReel ? undefined : getVlogCover(post));
-            const dateText = formatSearchCardDate(post.publishedAt ?? post.createdAt);
+          {cards.map((card) => {
+            const author = formatAuthorDisplay(card.authorId, card.authorName, user?.id, user?.displayName);
             return (
-              <li key={post.id}>
+              <li key={card.id}>
                 <button
                   type="button"
                   className={styles.card}
-                  onClick={() => handleOpen(post)}
+                  onClick={() => handleOpen(card)}
                 >
-                  <span className={styles.thumb} data-kind={isReel ? 'reel' : 'post'}>
-                    {cover && <span className={styles.thumbImage} style={{ backgroundImage: `url(${cover})` }} />}
-                    {isReel && (
+                  <span className={styles.thumb} data-kind={card.isReel ? 'reel' : 'post'}>
+                    {card.cover && <span className={styles.thumbImage} style={{ backgroundImage: `url(${card.cover})` }} />}
+                    {card.isReel && (
                       <span className={styles.reelBadge} title={vi.api.searchResultReelBadge}>
                         <SocialIcon name="video" size={14} />
                       </span>
                     )}
                     <span
                       className={styles.likes}
-                      aria-label={t('api.searchResultLikes', { count: post.reactionTotal })}
+                      aria-label={t('api.searchResultLikes', { count: card.likes })}
                     >
                       <SocialIcon name="heart" size={14} />
-                      {formatCompactCount(post.reactionTotal)}
+                      {formatCompactCount(card.likes)}
                     </span>
                   </span>
                   <span className={styles.caption}>
-                    {caption.text}
-                    {caption.tags.map((tag) => (
+                    {card.captionText}
+                    {card.tags.map((tag) => (
                       <span key={tag} className={styles.tag}>
                         {' '}#{tag}
                       </span>
@@ -245,10 +260,10 @@ function PostResults({
                   <span className={styles.meta}>
                     <span className={styles.avatar} data-tone={getAvatarTone(author.name)} aria-hidden="true">
                       {author.name.charAt(0).toUpperCase()}
-                      <AvatarPhoto userId={post.authorId} />
+                      <AvatarPhoto userId={card.authorId} />
                     </span>
                     <span className={styles.authorName}>{author.name}</span>
-                    {dateText && <span className={styles.date}>{dateText}</span>}
+                    {card.dateText && <span className={styles.date}>{card.dateText}</span>}
                   </span>
                 </button>
               </li>
@@ -261,18 +276,4 @@ function PostResults({
       {isFetchingNextPage && <p className={styles.loadingMore}><LoadingDots label={vi.api.searchResultsLoadingMore} /></p>}
     </>
   );
-}
-
-/** Bài viết chưa có ảnh bìa từ discovery: ảnh đầu tiên tác giả tải lên, không có thì ảnh minh hoạ như tab Bài viết. */
-function getVlogCover(post: SocialPostDto): string | undefined {
-  return getPostImages({
-    uploadedImageUrls: post.images?.map((image) => image.url),
-    mediaIds: post.mediaIds,
-    destinationName: post.tripAttachment?.destinationName,
-    hotelName: post.tripAttachment?.hotelName,
-    title: post.title,
-    body: post.body,
-    hashtags: post.hashtags,
-    itineraryItems: post.tripAttachment?.items,
-  })[0]?.src;
 }

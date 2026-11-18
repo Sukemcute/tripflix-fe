@@ -20,7 +20,7 @@ export function parseSearchSort(value: string | null | undefined): SearchSort {
   return SEARCH_SORTS.find((sort) => sort === value) ?? 'relevance';
 }
 
-export const SEARCH_RESULT_TYPES = ['all', 'hotels', 'places', 'food', 'cafe', 'posts', 'reels'] as const;
+export const SEARCH_RESULT_TYPES = ['all', 'users', 'hotels', 'places', 'food', 'cafe', 'posts', 'reels'] as const;
 export type SearchResultType = (typeof SEARCH_RESULT_TYPES)[number];
 
 /** Giá trị lạ hoặc thiếu thì về Tất cả. */
@@ -38,7 +38,7 @@ export function getPlaceKind(type: SearchResultType): (typeof PLACE_KIND_OF_TYPE
 
 /** Vùng của tab Tất cả (`kind` của ExploreSectionDto) → tab mà nút "Xem tất cả" mở; vùng lạ thì null. */
 const RESULT_TYPE_OF_SECTION: Record<string, SearchResultType> = {
-  stay: 'hotels', see: 'places', food: 'food', cafe: 'cafe', plan: 'posts', post: 'posts', video: 'reels',
+  user: 'users', stay: 'hotels', see: 'places', food: 'food', cafe: 'cafe', plan: 'posts', post: 'posts', video: 'reels',
 };
 
 export function getSectionResultType(sectionKind: string): SearchResultType | null {

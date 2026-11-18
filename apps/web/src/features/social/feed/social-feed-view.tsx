@@ -117,8 +117,15 @@ export function SocialFeedView({
   // Tìm kiếm: cùng query với grid kết quả (search của discovery) nên mở bài từ grid không gọi lại API.
   const searchQuery = usePostSearchFeed(isSearchMode ? effectiveKeyword : '', undefined, searchSort);
   const postsQuery = isSearchMode ? searchQuery : feedQuery;
-  const isDirectFocus = Boolean(focusPostId) && !isSearchMode;
-  // Grid tìm kiếm đã giữ dữ liệu trong cache; chỉ link mở thẳng mới cần lấy bài theo ID.
+  const searchVlogItems = useMemo(() => {
+    if (!isSearchMode) return [];
+    const items: SocialPostDto[] = searchQuery.data?.pages.flatMap((page) => page.items) ?? [];
+    // Kết quả tìm kiếm gộp cả Reels: tab này chỉ giữ bài viết.
+    return items.filter((post) => post.postType === 'vlog');
+  }, [isSearchMode, searchQuery.data]);
+  const isFocusInSearchItems = Boolean(focusPostId) && searchVlogItems.some((post) => post.id === focusPostId);
+  const isDirectFocus = Boolean(focusPostId) && (!isSearchMode || (searchQuery.isFetched && !isFocusInSearchItems));
+  // Grid tìm kiếm đã giữ dữ liệu trong cache; link mở thẳng hoặc bài lấy từ hồ sơ tác giả cần tải thêm theo ID.
   const focusedPostQuery = useQuery({
     queryKey: ['social', 'post', focusPostId, user?.id],
     enabled: isReady && isVisible && isDirectFocus,
@@ -133,16 +140,25 @@ export function SocialFeedView({
   const isFocusPending = isDirectFocus && focusedPostQuery.isPending;
 
   const allPosts = useMemo(() => {
-    const items: SocialPostDto[] = postsQuery.data?.pages.flatMap((page) => page.items) ?? [];
-    // Kết quả tìm kiếm gộp cả Reels: tab này chỉ giữ bài viết.
-    if (isSearchMode) return items.filter((post) => post.postType === 'vlog');
+    if (isSearchMode && !isDirectFocus) return searchVlogItems;
+    const items: SocialPostDto[] = isSearchMode
+      ? searchVlogItems
+      : (feedQuery.data?.pages.flatMap((page) => page.items) ?? []);
     return getFocusedFeedPosts({
       posts: items,
       focusPostId,
       detail: focusedPostQuery.data,
       hasError: focusedPostQuery.isError,
     });
-  }, [postsQuery.data, isSearchMode, focusPostId, focusedPostQuery.data, focusedPostQuery.isError]);
+  }, [
+    isSearchMode,
+    isDirectFocus,
+    searchVlogItems,
+    feedQuery.data,
+    focusPostId,
+    focusedPostQuery.data,
+    focusedPostQuery.isError,
+  ]);
 
   const posts = useMemo(() => {
     if (activeFilter === 'withTrip') {

@@ -29,20 +29,23 @@ describe('buildInspirationHref với bình luận', () => {
 
 describe('tab kết quả tìm kiếm', () => {
   it('đọc tab từ URL, giá trị lạ về Tất cả', () => {
+    expect(parseSearchResultType('users')).toBe('users');
     expect(parseSearchResultType('cafe')).toBe('cafe');
     expect(parseSearchResultType('hotels')).toBe('hotels');
     expect(parseSearchResultType('bar')).toBe('all');
     expect(parseSearchResultType(null)).toBe('all');
   });
 
-  it('tab chỗ, điểm gọi đúng loại của discovery; tab bài không gọi', () => {
+  it('tab chỗ, điểm gọi đúng loại của discovery; tab bài và người dùng không gọi', () => {
     expect(getPlaceKind('hotels')).toBe('stay');
     expect(getPlaceKind('places')).toBe('see');
+    expect(getPlaceKind('users')).toBeNull();
     expect(getPlaceKind('posts')).toBeNull();
     expect(getPlaceKind('all')).toBeNull();
   });
 
   it('"Xem tất cả" của từng vùng mở đúng tab', () => {
+    expect(getSectionResultType('user')).toBe('users');
     expect(getSectionResultType('stay')).toBe('hotels');
     expect(getSectionResultType('plan')).toBe('posts');
     expect(getSectionResultType('video')).toBe('reels');
@@ -50,6 +53,7 @@ describe('tab kết quả tìm kiếm', () => {
   });
 
   it('giữ tab khi dựng URL, Tất cả thì bỏ tham số', () => {
+    expect(buildInspirationHref('/inspiration', 'q=bao', { resultType: 'users' })).toBe('/inspiration?q=bao&type=users');
     expect(buildInspirationHref('/inspiration', 'q=cafe', { resultType: 'cafe' })).toBe('/inspiration?q=cafe&type=cafe');
     expect(buildInspirationHref('/inspiration', 'q=cafe&type=cafe', { resultType: 'all' })).toBe('/inspiration?q=cafe');
   });
