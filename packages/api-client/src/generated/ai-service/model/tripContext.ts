@@ -53,6 +53,8 @@ export interface TripContext {
   originCity?: string;
   /** @maxItems 4 */
   pending?: DraftChoice[];
+  /** @maxItems 5 */
+  pendingFlights?: DraftTransport[];
   /** @maxLength 100 */
   place?: string;
   priceMaxPerNight?: number | null;

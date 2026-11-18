@@ -15,4 +15,5 @@ export const AwaitingIntent = {
   weather: 'weather',
   packing: 'packing',
   find_reel: 'find_reel',
+  change_transport: 'change_transport',
 } as const;
