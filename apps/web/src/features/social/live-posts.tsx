@@ -1927,6 +1927,10 @@ export function InspirationImmersiveViewer({
                   zIndex: 25,
                   display: 'flex',
                   gap: 6,
+                  // Màn hẹp (375px) 4 chip rộng hơn khung: giữ trong khung và cuộn ngang thay vì tràn hai mép.
+                  maxWidth: 'calc(100% - 24px)',
+                  overflowX: 'auto',
+                  scrollbarWidth: 'none',
                   padding: '4px 6px',
                   borderRadius: 999,
                   background: 'rgba(15, 23, 42, 0.55)',
