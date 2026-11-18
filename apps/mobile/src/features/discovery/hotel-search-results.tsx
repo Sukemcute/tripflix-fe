@@ -69,10 +69,20 @@ export function TripHotelSearchScreen({ q, pick }: { q: string; pick: TripHotelP
 }
 
 /** Kết quả khách sạn cho ô tìm ở Khám phá: gợi ý điểm đến rồi lấy khách sạn còn phòng, giống web. */
-export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPick }) {
+export function HotelSearchResults({
+  q,
+  pick,
+  layout = 'row',
+}: {
+  q: string;
+  pick?: TripHotelPick;
+  /** 'list': danh sách dọc đầy đủ, có tải thêm (ô tìm ở Khám phá); 'row': hàng ngang vài khách sạn. */
+  layout?: 'row' | 'list';
+}) {
+  const isList = !!pick || layout === 'list';
   const { isReady } = useApiSession();
   const query = useInfiniteQuery({
-    queryKey: ['discovery', 'hotel-search', q, pick],
+    queryKey: ['discovery', 'hotel-search', q, pick, isList],
     enabled: isReady && q.length >= 2,
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage: HotelPage) => lastPage.nextCursor ?? undefined,
@@ -94,7 +104,7 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
             priceMax: '',
             sort: 'price',
           },
-          { signal, limit: pick ? 20 : HOTEL_LIMIT, cursor: pageParam },
+          { signal, limit: isList ? 20 : HOTEL_LIMIT, cursor: pageParam },
         );
         if (stays.items.length)
           return {
@@ -151,7 +161,7 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
       (query.data?.pages.flatMap((page) => page.items) ?? []).map((hotel) => [hotel.hotelId, hotel]),
     ).values(),
   ];
-  if (!pick && !hotels.length) return null;
+  if (!isList && !hotels.length) return null;
   const openHotel = (hotel: HotelHit) => {
     if (pick?.mode === 'post') {
       savePostHotel(pick.key, { hotelId: hotel.hotelId, hotelName: hotel.name });
@@ -181,7 +191,7 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
         <Txt variant="heading">{vi.mobile.explore.hotelResults}</Txt>
         <Badge tone="coral" icon="bed-outline">{`${hotels.length}`}</Badge>
       </Row>
-      {pick && (
+      {isList && (
         <>
           {query.isFetching && !query.isFetchingNextPage && <LoadingDots />}
           <ApiErrorNotice
@@ -196,8 +206,8 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
         </>
       )}
       <ScrollView
-        horizontal={!pick}
-        scrollEnabled={!pick}
+        horizontal={!isList}
+        scrollEnabled={!isList}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ gap: spacing.sm }}
       >
@@ -208,7 +218,7 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
             accessibilityLabel={pick ? `${vi.mobile.tripPlan.pickHotel}: ${hotel.name}` : hotel.name}
             onPress={() => openHotel(hotel)}
             style={{
-              width: pick ? '100%' : 220,
+              width: isList ? '100%' : 220,
               borderRadius: radius.lg,
               overflow: 'hidden',
               borderWidth: 1,
@@ -219,7 +229,7 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
             {hotel.thumbnail ? (
               <Image
                 source={hotel.thumbnail}
-                style={pick ? { width: '100%', aspectRatio: 16 / 9 } : { height: 120 }}
+                style={isList ? { width: '100%', aspectRatio: 16 / 9 } : { height: 120 }}
                 contentFit="cover"
               />
             ) : (
@@ -235,10 +245,10 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
               </View>
             )}
             <View style={{ padding: spacing.sm, gap: 2 }}>
-              <Txt variant="label" numberOfLines={pick ? 2 : 1}>
+              <Txt variant="label" numberOfLines={isList ? 2 : 1}>
                 {hotel.name}
               </Txt>
-              {pick && hotel.rating && (
+              {isList && hotel.rating && (
                 <Txt variant="small" style={{ color: colors.tealInk }}>
                   {hotel.rating.average.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} / 5 ·{' '}
                   {t('hotel.reviewCount', { count: hotel.rating.count })}
@@ -251,7 +261,7 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
               {hotel.price !== undefined && (
                 <Txt variant="label" style={{ color: colors.coralInk }}>
                   {vi.hotel.from} {money(hotel.price)}
-                  {pick ? ` ${vi.hotel.perNightShort}` : ''}
+                  {isList ? ` ${vi.hotel.perNightShort}` : ''}
                 </Txt>
               )}
               {pick && (
@@ -265,7 +275,7 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
           </Pressable>
         ))}
       </ScrollView>
-      {pick && query.hasNextPage && (
+      {isList && query.hasNextPage && (
         <Button
           tone="text"
           disabled={query.isFetchingNextPage}

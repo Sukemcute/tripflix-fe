@@ -108,7 +108,7 @@ export function ExploreFeed() {
 
       {isResolving && <LoadingDots />}
       {hotelQuery ? (
-        <HotelSearchResults q={hotelQuery} />
+        <HotelSearchResults q={hotelQuery} layout="list" />
       ) : (
         <>
           <View style={{ gap: spacing.xs }}>
