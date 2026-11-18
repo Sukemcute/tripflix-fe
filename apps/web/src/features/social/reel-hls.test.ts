@@ -100,7 +100,7 @@ describe('attachReelHlsSource', () => {
     expect(video.src).toBe(RENDITIONS[0]);
   });
 
-  it('trình duyệt tự phát: mức đang thử lỗi thì lùi một mức, hết nguồn mới báo lỗi phát', () => {
+  it('trình duyệt tự phát: mức đang thử lỗi thì lùi một mức, chưa báo lỗi khi còn nguồn', () => {
     const video = createFakeVideo({ canPlayNative: true });
     const handlers = callbacks();
     attachReelHlsSource(video, URL, { ...handlers, sources: RENDITIONS, loadLibrary: vi.fn() });
@@ -109,8 +109,21 @@ describe('attachReelHlsSource', () => {
     expect(video.src).toBe(RENDITIONS[1]);
     video.emit('error');
     expect(video.src).toBe(URL);
+    expect(handlers.onAuthError).not.toHaveBeenCalled();
     expect(handlers.onFatalError).not.toHaveBeenCalled();
+  });
+
+  it('trình duyệt tự phát: hết nguồn mà vẫn lỗi (cookie CloudFront có thể hết hạn) thì xin cookie mới một lần, lỗi tiếp mới báo lỗi phát', () => {
+    const video = createFakeVideo({ canPlayNative: true });
+    const handlers = callbacks();
+    attachReelHlsSource(video, URL, { ...handlers, sources: RENDITIONS, loadLibrary: vi.fn() });
+
+    for (let i = 0; i < RENDITIONS.length; i++) video.emit('error');
+    expect(handlers.onAuthError).toHaveBeenCalledTimes(1);
+    expect(handlers.onFatalError).not.toHaveBeenCalled();
+
     video.emit('error');
+    expect(handlers.onAuthError).toHaveBeenCalledTimes(1);
     expect(handlers.onFatalError).toHaveBeenCalledTimes(1);
   });
 
@@ -231,13 +244,16 @@ describe('attachReelHlsSource', () => {
     expect(handlers.onFatalError).toHaveBeenCalledTimes(1);
   });
 
-  it('không có MSE: vẫn gắn src, thẻ <video> lỗi thì báo lỗi phát', async () => {
+  it('không có MSE: vẫn gắn src; thẻ <video> lỗi thì xin cookie mới một lần, lỗi tiếp mới báo lỗi phát', async () => {
     const video = createFakeVideo({ canPlayNative: false });
     const fake = createFakeLibrary({ isSupported: false });
     const handlers = callbacks();
     attachReelHlsSource(video, URL, { ...handlers, loadLibrary: async () => fake.library });
     await flush();
     expect(video.src).toBe(URL);
+    video.emit('error');
+    expect(handlers.onAuthError).toHaveBeenCalledTimes(1);
+    expect(handlers.onFatalError).not.toHaveBeenCalled();
     video.emit('error');
     expect(handlers.onFatalError).toHaveBeenCalledTimes(1);
   });
