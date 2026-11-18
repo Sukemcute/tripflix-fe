@@ -9,7 +9,7 @@ import {
 import { vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { LoadingDots } from '@/components/loading-dots';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
@@ -89,16 +89,28 @@ export function UpcomingTrips() {
   );
 }
 
+/** Cuộc trò chuyện của ô lên lộ trình, sống hết phiên dùng app (ô bị gỡ khi đang xem lộ trình hay thanh toán). */
+let savedChat: {
+  text: string;
+  conversationId: string;
+  messages: AssistantMessage[];
+  trip: AssistantTrip | null;
+} = { text: '', conversationId: newTripiConversationId(), messages: [], trip: null };
+
 /**
  * Ô lên lộ trình nhanh: hỏi Tripi rồi hiện thẻ ngay bên dưới, không mở khung chat. Bấm Chọn trên thẻ khách sạn,
  * chuyến bay gửi tiếp trong cùng cuộc trò chuyện để Tripi ra lộ trình từng ngày; nút Đặt trên lộ trình đưa về màn
  * Đặt theo lộ trình của tab này.
  */
 export function AskTripiCard() {
-  const [text, setText] = useState('');
-  const [conversationId, setConversationId] = useState(newTripiConversationId);
-  const [messages, setMessages] = useState<AssistantMessage[]>([]);
-  const [trip, setTrip] = useState<AssistantTrip | null>(null);
+  // Khởi tạo từ bản giữ ngoài component: bấm Đặt sang màn lộ trình, thanh toán rồi quay lại vẫn còn cuộc trò chuyện.
+  const [text, setText] = useState(savedChat.text);
+  const [conversationId, setConversationId] = useState(savedChat.conversationId);
+  const [messages, setMessages] = useState<AssistantMessage[]>(savedChat.messages);
+  const [trip, setTrip] = useState<AssistantTrip | null>(savedChat.trip);
+  useEffect(() => {
+    savedChat = { text, conversationId, messages, trip };
+  }, [text, conversationId, messages, trip]);
   const turn = useMutation({
     retry: false,
     mutationFn: ({ message, action }: { message: string; action?: AssistantAction }) =>
