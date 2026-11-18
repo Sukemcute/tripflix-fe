@@ -26,11 +26,10 @@ import {
 import { flightsControllerSearch } from '@tripflix/api-client/core-api/flights/flights';
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { DateSingleField } from '@/components/date-sheet';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { assets, Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
@@ -389,23 +388,22 @@ function SelectedTripScreen({
             {selected.trip.posterUrl ? (
               <Image source={selected.trip.posterUrl} contentFit="cover" style={StyleSheet.absoluteFill} />
             ) : (
-              <LinearGradient
-                colors={[colors.seaMist, colors.sunSoft, colors.coralTint]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[StyleSheet.absoluteFill, layout.coverMascot]}
-              >
-                <View style={[layout.coverBubble, layout.coverBubbleLarge]} />
-                <View style={[layout.coverBubble, layout.coverBubbleSmall]} />
-                <View style={[layout.coverBubble, layout.coverBubbleDot]} />
+              <View style={[StyleSheet.absoluteFill, layout.coverMascot]}>
+                {/* Nền giống khung nổi bật của tab Khám phá. */}
+                <Image source={assets.vietnam} contentFit="cover" style={StyleSheet.absoluteFill} />
+                <View style={[StyleSheet.absoluteFill, layout.coverShade]} />
                 <Image source={assets.welcome} contentFit="contain" style={layout.coverMascotImage} />
-              </LinearGradient>
+              </View>
             )}
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={copy.changeTrip}
               disabled={booking.isPending}
-              onPress={() => saveTripBooking(null)}
+              onPress={() => {
+                // Bỏ lộ trình đang đặt để lần sau vào tab Đặt thấy trang đầu; mở từ trang khác thì về trang đó.
+                saveTripBooking(null);
+                if (selected.origin && selected.origin !== '/book') router.navigate(selected.origin as Href);
+              }}
               style={({ pressed }) => [layout.coverBack, pressed && styles.pressed]}
             >
               <Icon name="arrow-back" size={20} color={colors.background} />
@@ -699,7 +697,7 @@ export function TripBookingScreen() {
   const selected = useTripBooking();
   // Lộ trình nổi bật nằm ở tab Khám phá; trang đang đặt vẫn giữ lưới để đổi sang lộ trình khác.
   const featured = (isDisabled: boolean) => (
-    <FeaturedTrips excludePostId={selected?.postId} isDisabled={isDisabled} />
+    <FeaturedTrips excludePostId={selected?.postId} isDisabled={isDisabled} keepOrigin={selected?.origin} />
   );
   if (selected) return <SelectedTripScreen key={selected.postId} selected={selected} featured={featured} />;
   return (
@@ -749,25 +747,7 @@ const layout = StyleSheet.create({
     backgroundColor: colors.surfaceMuted,
   },
   coverMascot: { alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
-  // Vòng tròn mờ trang trí sau linh vật cho nền đỡ trống.
-  coverBubble: { position: 'absolute', borderRadius: 999 },
-  coverBubbleLarge: {
-    width: 220,
-    height: 220,
-    top: -70,
-    right: -50,
-    backgroundColor: colors.background,
-    opacity: 0.45,
-  },
-  coverBubbleSmall: {
-    width: 120,
-    height: 120,
-    bottom: -30,
-    left: -20,
-    backgroundColor: colors.teal,
-    opacity: 0.18,
-  },
-  coverBubbleDot: { width: 36, height: 36, top: 40, left: 48, backgroundColor: colors.coral, opacity: 0.35 },
+  coverShade: { backgroundColor: colors.overlay },
   coverMascotImage: { width: '70%', height: '92%' },
   coverBack: {
     position: 'absolute',

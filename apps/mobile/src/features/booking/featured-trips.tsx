@@ -3,6 +3,7 @@ import { getBookableTripPlan } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
+import { usePathname } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ApiErrorNotice } from '@/components/api-state';
@@ -22,12 +23,17 @@ export function FeaturedTrips({
   excludePostId,
   isDisabled = false,
   onPicked,
+  keepOrigin,
 }: {
   excludePostId?: string;
   isDisabled?: boolean;
   onPicked?: () => void;
+  keepOrigin?: string;
 }) {
   const feed = useReelsFeed();
+  const pathname = usePathname();
+  // Đổi sang lộ trình khác ngay trong màn đặt thì giữ trang gốc của lộ trình trước.
+  const origin = keepOrigin ?? pathname;
   const [destination, setDestination] = useState<string | null>(null);
   // Ô tính bằng điểm ảnh theo bề ngang lưới đo được: trên điện thoại ô 48,5% kèm aspectRatio bị co về 0 nên lưới trắng.
   const [gridWidth, setGridWidth] = useState(0);
@@ -95,6 +101,7 @@ export function FeaturedTrips({
                   authorName: post.author.name ?? copy.communityAuthor,
                   coverUrl: poster,
                   trip,
+                  origin,
                 });
                 onPicked?.();
               }}
