@@ -1308,6 +1308,7 @@
 }
 
 .composerAvatar {
+  position: relative;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -1462,6 +1463,7 @@
 }
 
 .authorAvatar {
+  position: relative;
   width: 42px;
   height: 42px;
   border-radius: 50%;
