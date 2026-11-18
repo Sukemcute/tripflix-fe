@@ -65,6 +65,7 @@ import {
   type ReelPost,
 } from './reel-post';
 import { attachReelHlsSource, REEL_START_SHORT_SIDE, type ReelHlsBufferControl } from './reel-hls';
+import { ReelSeekBar } from './reel-seek-bar';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
@@ -793,8 +794,7 @@ function MediaTrackItem({
   );
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
-  const progressFillRef = useRef<HTMLDivElement | null>(null);
-  const progressTrackRef = useRef<HTMLDivElement | null>(null);
+  const [isScrubbing, setScrubbing] = useState(false);
 
   useEffect(() => {
     if (!isActive && localVideoRef.current) {
@@ -873,34 +873,6 @@ function MediaTrackItem({
     };
   }, [shouldAttachSource, hlsUrl, levelsKey, isPlaybackSessionSettled, authRetryCount, refreshPlaybackSession]);
 
-  // timeupdate chỉ bắn ~4 lần/giây nên thanh tiến độ nhảy bậc; đọc currentTime mỗi khung hình và
-  // cập nhật thẳng transform qua ref (không setState) để mượt và không render lại cả viewer.
-  useEffect(() => {
-    if (!isActive) return;
-    const frame = { id: 0 };
-    // Video đang phát mà thời gian không chạy quá chừng này (mạng yếu, đang tải) thì thanh tiến độ hiện vệt sáng.
-    const stallMs = 400;
-    let lastTime = -1;
-    let lastAdvanceAt = performance.now();
-    const tick = () => {
-      const video = localVideoRef.current;
-      const fill = progressFillRef.current;
-      if (video && fill && video.duration > 0) {
-        fill.style.transform = `scaleX(${Math.min(1, video.currentTime / video.duration)})`;
-      }
-      const track = progressTrackRef.current;
-      if (video && track) {
-        const now = performance.now();
-        if (video.paused || video.currentTime !== lastTime) lastAdvanceAt = now;
-        lastTime = video.currentTime;
-        const isBuffering = !video.paused && now - lastAdvanceAt > stallMs;
-        if (track.hasAttribute('data-buffering') !== isBuffering) track.toggleAttribute('data-buffering', isBuffering);
-      }
-      frame.id = window.requestAnimationFrame(tick);
-    };
-    frame.id = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(frame.id);
-  }, [isActive]);
 
   return (
     <div
@@ -983,16 +955,15 @@ function MediaTrackItem({
               >
                 <SocialIcon name={isPlaying ? 'play' : 'pause'} size={26} />
               </button>
-              <div ref={progressTrackRef} className={styles.progressBarTrack} aria-hidden="true">
-                <div ref={progressFillRef} className={styles.progressBarFill} />
-              </div>
+              <ReelSeekBar videoRef={localVideoRef} onScrubChange={setScrubbing} />
             </>
           )}
         </>
       )}
 
       {/* Bottom Post Overlay */}
-      <div className={styles.stageBottomOverlay}>
+      {/* Đang kéo thanh tua: ẩn tên, chú thích, thẻ lộ trình như TikTok để mốc thời gian nổi rõ. */}
+      <div className={styles.stageBottomOverlay} data-hidden={isScrubbing ? true : undefined}>
         <div className={styles.overlayAuthorRow}>
           {/* Avatar cũng mở trang cá nhân như tên; bỏ khỏi thứ tự Tab để không đọc trùng link. */}
           <Link
@@ -1675,10 +1646,13 @@ export function InspirationImmersiveViewer({
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
-      if (
+      // Bỏ qua khi đang gõ chữ; thanh tua (input range) thì ↑ / ↓ vẫn chuyển bài.
+      const isTyping =
         target &&
-        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
-      ) {
+        ((target.tagName === 'INPUT' && (target as HTMLInputElement).type !== 'range') ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable);
+      if (isTyping) {
         return;
       }
       if (event.key === 'ArrowDown') {
@@ -2125,7 +2099,6 @@ export function InspirationImmersiveViewer({
                       type="button"
                       className={styles.navArrowBtn}
                       aria-label={vi.api.immersivePrevPost}
-                      data-tooltip={vi.api.immersivePrevPost}
                       disabled={activeIndex <= 0}
                       onClick={() => navigateStep(-1)}
                     >
@@ -2135,7 +2108,6 @@ export function InspirationImmersiveViewer({
                       type="button"
                       className={styles.navArrowBtn}
                       aria-label={vi.api.immersiveNextPost}
-                      data-tooltip={vi.api.immersiveNextPost}
                       disabled={activeIndex >= posts.length - 1 && !postsQuery.hasNextPage}
                       onClick={() => navigateStep(1)}
                     >
@@ -3361,7 +3333,7 @@ export function ComposerModal({
           <div className={styles.draftsListContainer}>
             {draftsQuery.isLoading ? (
               <div className={styles.draftEmptyState}>
-                <output>Đang tải danh sách bản nháp...</output>
+                <output><LoadingDots label="Đang tải danh sách bản nháp..." /></output>
               </div>
             ) : drafts.length === 0 ? (
               <div className={styles.draftEmptyState}>
@@ -3855,7 +3827,7 @@ export function ComposerModal({
             }
           >
             {isUploading
-              ? 'Đang tải video...'
+              ? <LoadingDots label="Đang tải video..." />
               : saveMutation.isPending && saveMutation.variables?.shouldPublish
                 ? vi.api.saving
                 : 'Đăng bài viết'}

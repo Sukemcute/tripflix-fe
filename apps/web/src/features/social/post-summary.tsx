@@ -5,6 +5,7 @@ import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import styles from './post-summary.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.summary;
 
@@ -44,7 +45,7 @@ export function CommunitySummary({ postId }: { postId: string }) {
       ) : flow.isLoading ? (
         <div className={styles.body}>
           <output className={styles.loading}>
-            <strong>{query.fetchStatus === 'paused' ? copy.offline : copy.loading}</strong>
+            <strong>{query.fetchStatus === 'paused' ? copy.offline : <LoadingDots label={copy.loading} />}</strong>
             <span>{copy.loadingHint}</span>
             <span className={styles.skeleton} aria-hidden="true" />
             <span className={styles.skeleton} aria-hidden="true" />

@@ -107,20 +107,28 @@ export function pickReelStartLevel(levels: readonly ReelHlsLevel[], maxShortSide
 /**
  * Trình duyệt tự phát HLS tự đo băng thông bằng mức thấp nhất (360p) rồi mới tăng, nên không gắn master mà gắn
  * thẳng playlist của mức nét nhất (`sources[0]`, thường 720p). Mức đó lỗi, hoặc người xem bấm phát mà quá
- * REEL_RENDITION_TIMEOUT_MS chưa có hình, thì lùi sang nguồn kế tiếp; nguồn cuối là master. Hết nguồn mà vẫn lỗi thì
- * báo lỗi phát.
+ * REEL_RENDITION_TIMEOUT_MS chưa có hình, thì lùi sang nguồn kế tiếp; nguồn cuối là master.
+ *
+ * Hết nguồn mà vẫn lỗi: thẻ <video> không cho biết mã lỗi, nên có thể cookie CloudFront đã hết hạn (6 giờ). Gọi
+ * onAuthError một lần để xin cookie mới và gắn lại; lỗi tiếp mới báo lỗi phát (onFatalError).
  */
 function attachNativeSources(
   video: ReelHlsVideo,
   sources: readonly string[],
-  { onFatalError }: { onFatalError: () => void },
+  { onAuthError, onFatalError }: { onAuthError: () => void; onFatalError: () => void },
 ): () => void {
   let sourceIndex = 0;
   let timeout: ReturnType<typeof setTimeout> | undefined;
+  let hasRequestedAuth = false;
   const fallBack = () => {
     clearTimeout(timeout);
     if (sourceIndex >= sources.length - 1) {
-      onFatalError();
+      if (hasRequestedAuth) {
+        onFatalError();
+      } else {
+        hasRequestedAuth = true;
+        onAuthError();
+      }
       return;
     }
     const shouldResume = !video.paused;
@@ -197,7 +205,7 @@ export function attachReelHlsSource(
   },
 ): () => void {
   if (canPlayHlsNatively(video)) {
-    return attachNativeSources(video, sources.length > 0 ? sources : [url], { onFatalError });
+    return attachNativeSources(video, sources.length > 0 ? sources : [url], { onAuthError, onFatalError });
   }
 
   let isReleased = false;
@@ -207,7 +215,7 @@ export function attachReelHlsSource(
     .then((library) => {
       if (isReleased) return;
       if (!library.isSupported()) {
-        releaseNative = attachNativeSources(video, [url], { onFatalError });
+        releaseNative = attachNativeSources(video, [url], { onAuthError, onFatalError });
         return;
       }
       const created = library.create({
