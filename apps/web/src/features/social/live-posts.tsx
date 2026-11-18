@@ -29,7 +29,7 @@ import type {
   UpdatePostDto,
 } from '@tripflix/api-client/core-api/model/index';
 import { commentsControllerSetCommentReaction } from '@tripflix/api-client/core-api/social-comments/social-comments';
-import { getReelPosterPrefetchUrls, selectReelPoster } from '@tripflix/app-core';
+import { getReelPlaybackSources, getReelPosterPrefetchUrls, selectReelPoster } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -53,6 +53,7 @@ import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
 import {
+  getReelBufferSeconds,
   getReelRenderMode,
   pickReelAfterRemoval,
   prependPinnedReelCards,
@@ -60,7 +61,7 @@ import {
   toReelPost,
   type ReelPost,
 } from './reel-post';
-import { attachReelHlsSource } from './reel-hls';
+import { attachReelHlsSource, REEL_START_SHORT_SIDE, type ReelHlsBufferControl } from './reel-hls';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
@@ -565,8 +566,10 @@ interface MediaTrackItemProps {
   index: number;
   post: ReelPost;
   isActive: boolean;
-  /** Có thẻ <video> (bài đang xem và bài kế tiếp); bài khác chỉ hiện poster để không tải segment. */
+  /** Có thẻ <video> (bài đang xem và 2 bài mỗi phía); bài khác chỉ hiện poster để không tải segment. */
   hasVideo: boolean;
+  /** Số giây hls.js đệm trước: 30 cho bài đang xem, 10 cho bài phía trước, 4 cho bài phía sau. */
+  bufferSeconds: number;
   /** Có lớp nền mờ (tốn GPU) – chỉ bài đang xem và hai bài sát cạnh. */
   hasBackdrop: boolean;
   reelCard?: FeedCardDto;
@@ -705,6 +708,7 @@ function MediaTrackItem({
   post,
   isActive,
   hasVideo,
+  bufferSeconds,
   hasBackdrop,
   reelCard,
   user,
@@ -770,6 +774,8 @@ function MediaTrackItem({
   // Gắn nguồn ở đây (không qua prop src) để lần dọn của Strict Mode không làm video mất nguồn; lướt ra xa thì
   // nhả nguồn để ngắt tải segment ngay (xem attachReelVideoSource).
   const hlsUrl = reelCard?.video.hlsUrl;
+  // Các mức có sẵn của video (360, 540, 720…), dạng chuỗi để effect gắn nguồn không chạy lại khi thẻ đổi tham chiếu.
+  const levelsKey = reelCard?.video.levels.join(',') ?? '';
   // Chờ API đặt cookie video (Set-Cookie cho tên miền media, TF82) rồi mới gắn nguồn; thẻ <video> tự gửi cookie
   // khi tải playlist và segment. Gắn sớm hơn thì CloudFront trả 403 khi đã bật khoá video.
   const { isSettled: isPlaybackSessionSettled, refresh: refreshPlaybackSession } = usePlaybackSession();
@@ -780,11 +786,26 @@ function MediaTrackItem({
   useEffect(() => {
     reportMediaError.current = () => onMediaError(post.id);
   }, [onMediaError, post.id]);
+  // Số giây đệm đổi theo vị trí khi lướt; đọc qua ref lúc gắn để đổi vị trí không gắn lại nguồn (mất bộ đệm).
+  const bufferSecondsRef = useRef(bufferSeconds);
+  const bufferControlRef = useRef<ReelHlsBufferControl | null>(null);
+  useEffect(() => {
+    bufferSecondsRef.current = bufferSeconds;
+    bufferControlRef.current?.setBufferSeconds(bufferSeconds);
+  }, [bufferSeconds]);
   useEffect(() => {
     const video = localVideoRef.current;
     if (!hasVideo || !video || !hlsUrl || !isPlaybackSessionSettled) return;
-    // Trình duyệt phát HLS sẵn: thẻ <video> như cũ. Chrome, Firefox máy tính: hls.js gửi kèm cookie (TF64).
-    return attachReelHlsSource(video, hlsUrl, {
+    // Trình duyệt phát HLS sẵn (Chrome, Edge, Safari): thẻ <video>. Firefox máy tính: hls.js gửi kèm cookie (TF64).
+    const levels = levelsKey ? levelsKey.split(',').map(Number) : [];
+    const release = attachReelHlsSource(video, hlsUrl, {
+      // Trình duyệt tự phát: gắn thẳng mức 720p (hoặc nét nhất có), lỗi thì lùi dần, master cuối.
+      sources: getReelPlaybackSources({ hlsUrl, levels }, REEL_START_SHORT_SIDE),
+      bufferSeconds: bufferSecondsRef.current,
+      onBufferControl: (control) => {
+        bufferControlRef.current = control;
+        control.setBufferSeconds(bufferSecondsRef.current);
+      },
       onAuthError: () => {
         // Chỉ xin lại một lần: lỗi tiếp thì không phải do cookie, báo lỗi như thường.
         if (authRetryCount >= 1) {
@@ -795,7 +816,11 @@ function MediaTrackItem({
       },
       onFatalError: () => reportMediaError.current(),
     });
-  }, [hasVideo, hlsUrl, isPlaybackSessionSettled, authRetryCount, refreshPlaybackSession]);
+    return () => {
+      bufferControlRef.current = null;
+      release();
+    };
+  }, [hasVideo, hlsUrl, levelsKey, isPlaybackSessionSettled, authRetryCount, refreshPlaybackSession]);
 
   // timeupdate chỉ bắn ~4 lần/giây nên thanh tiến độ nhảy bậc; đọc currentTime mỗi khung hình và
   // cập nhật thẳng transform qua ref (không setState) để mượt và không render lại cả viewer.
@@ -861,7 +886,6 @@ function MediaTrackItem({
               playsInline
               loop
               muted={isMuted}
-              onError={() => onMediaError(post.id)}
               onClick={isActive ? onTogglePlay : undefined}
             >
               <track kind="captions" />
@@ -1911,6 +1935,7 @@ export function InspirationImmersiveViewer({
                           post={post}
                           isActive={idx === activeIndex}
                           hasVideo={renderMode === 'video'}
+                          bufferSeconds={getReelBufferSeconds(idx, activeIndex)}
                           hasBackdrop={shouldShowReelBackdrop(idx, activeIndex)}
                           actions={renderReelActions(post, idx === activeIndex)}
                           reelCard={reelMap.get(post.id)}

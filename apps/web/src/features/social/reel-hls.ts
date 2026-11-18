@@ -1,13 +1,28 @@
-import { attachReelVideoSource, releaseReelVideoSource, type ReelVideoSource } from './reel-post';
+import { releaseReelVideoSource, type ReelVideoSource } from './reel-post';
 
 /** Phần của thẻ <video> cần để chọn cách phát và gắn hls.js (test được không cần DOM). */
-export type ReelHlsVideo = ReelVideoSource & Pick<HTMLVideoElement, 'canPlayType'>;
+export type ReelHlsVideo = ReelVideoSource &
+  Pick<HTMLVideoElement, 'canPlayType' | 'addEventListener' | 'removeEventListener'>;
+
+/** Một mức chất lượng trong master playlist (hls.js đọc từ RESOLUTION). */
+export interface ReelHlsLevel {
+  width?: number;
+  height?: number;
+}
 
 /** Phần của hls.js đang dùng, để test thay bằng bản giả. */
 export interface ReelHlsPlayer {
+  /** hls.js đọc lại cấu hình bộ đệm mỗi lần quyết định tải segment, nên đổi lúc đang chạy là có tác dụng. */
+  config: { maxBufferLength: number; maxMaxBufferLength: number };
+  startLevel: number;
   loadSource(url: string): void;
   attachMedia(video: HTMLMediaElement): void;
+  startLoad(startPosition?: number): void;
   on(event: 'hlsError', listener: (event: 'hlsError', data: ReelHlsErrorData) => void): void;
+  on(
+    event: 'hlsManifestParsed',
+    listener: (event: 'hlsManifestParsed', data: { levels: ReelHlsLevel[] }) => void,
+  ): void;
   destroy(): void;
 }
 export interface ReelHlsErrorData {
@@ -15,10 +30,33 @@ export interface ReelHlsErrorData {
   type: string;
   response?: { code?: number };
 }
+export interface ReelHlsConfig {
+  xhrSetup: (xhr: XMLHttpRequest) => void;
+  autoStartLoad: boolean;
+  maxBufferLength: number;
+  maxMaxBufferLength: number;
+  abrEwmaDefaultEstimate: number;
+}
 export interface ReelHlsLibrary {
   isSupported(): boolean;
-  create(config: { xhrSetup: (xhr: XMLHttpRequest) => void }): ReelHlsPlayer;
+  create(config: ReelHlsConfig): ReelHlsPlayer;
 }
+
+/** Đổi số giây đệm trước của một Reel khi nó đổi vị trí (phía trước → đang xem → phía sau). */
+export interface ReelHlsBufferControl {
+  setBufferSeconds(seconds: number): void;
+}
+
+/** Mức bắt đầu: 720p như Reels mobile (cạnh ngắn của video dọc 720×1280). */
+export const REEL_START_SHORT_SIDE = 720;
+/**
+ * Ước lượng băng thông ban đầu cho ABR (mặc định của hls.js là 500 kbps, nên nó chọn 360p rồi mới tăng).
+ * Đo thật được sau segment đầu: mạng chậm thì ABR tự hạ mức.
+ */
+export const REEL_INITIAL_BANDWIDTH_BPS = 5_000_000;
+/** Trình duyệt tự phát: mức đang thử chưa tải được hình đầu sau chừng này thì lùi một mức, như Reels mobile. */
+export const REEL_RENDITION_TIMEOUT_MS = 8_000;
+const DEFAULT_BUFFER_SECONDS = 30;
 
 /** Tải hls.js lúc cần: Safari và Chrome Android phát HLS sẵn, không phải tải thêm thư viện. */
 export async function loadHlsLibrary(): Promise<ReelHlsLibrary> {
@@ -29,7 +67,7 @@ export async function loadHlsLibrary(): Promise<ReelHlsLibrary> {
   };
 }
 
-/** Trình duyệt tự phát HLS bằng thẻ <video> (Safari, Chrome Android). */
+/** Trình duyệt tự phát HLS bằng thẻ <video> (Safari, Chrome Android, Chrome/Edge máy tính bản mới). */
 export function canPlayHlsNatively(video: Pick<HTMLVideoElement, 'canPlayType'>): boolean {
   return video.canPlayType('application/vnd.apple.mpegurl') !== '';
 }
@@ -45,9 +83,67 @@ export function isPlaybackAuthError(data: ReelHlsErrorData): boolean {
 }
 
 /**
- * Gắn nguồn HLS cho video Reel (TF64). Trình duyệt phát sẵn thì dùng thẻ <video> như cũ (tự gửi cookie vì cùng
- * site). Còn lại (Chrome, Firefox máy tính) dùng hls.js, bật withCredentials để XHR gửi cookie CloudFront.
- * Không phát được bằng cả hai thì vẫn gắn src để thẻ <video> báo lỗi như trước.
+ * Chỉ số mức bắt đầu: mức nét nhất có cạnh ngắn không quá `maxShortSide` (video chỉ có 360p, 540p thì lấy 540p).
+ * Mọi mức đều lớn hơn thì lấy mức nhỏ nhất. Playlist không ghi độ phân giải thì trả -1 để hls.js tự chọn.
+ */
+export function pickReelStartLevel(levels: readonly ReelHlsLevel[], maxShortSide = REEL_START_SHORT_SIDE): number {
+  const sized = levels
+    .map((level, index) => ({ index, shortSide: Math.min(level.width ?? 0, level.height ?? 0) }))
+    .filter((level) => level.shortSide > 0);
+  if (sized.length === 0) return -1;
+  const fitting = sized.filter((level) => level.shortSide <= maxShortSide);
+  const pool = fitting.length > 0 ? fitting : sized;
+  const pick = fitting.length > 0 ? Math.max : Math.min;
+  const target = pick(...pool.map((level) => level.shortSide));
+  return pool.find((level) => level.shortSide === target)!.index;
+}
+
+/**
+ * Trình duyệt tự phát HLS tự đo băng thông bằng mức thấp nhất (360p) rồi mới tăng, nên không gắn master mà gắn
+ * thẳng playlist của mức nét nhất (`sources[0]`, thường 720p). Mức đó lỗi hoặc quá REEL_RENDITION_TIMEOUT_MS chưa có
+ * hình thì lùi sang nguồn kế tiếp; nguồn cuối là master. Hết nguồn mà vẫn lỗi thì báo lỗi phát.
+ */
+function attachNativeSources(
+  video: ReelHlsVideo,
+  sources: readonly string[],
+  { onFatalError }: { onFatalError: () => void },
+): () => void {
+  let sourceIndex = 0;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const fallBack = () => {
+    clearTimeout(timeout);
+    if (sourceIndex >= sources.length - 1) {
+      onFatalError();
+      return;
+    }
+    sourceIndex += 1;
+    load();
+  };
+  const onLoadedData = () => clearTimeout(timeout);
+  const load = () => {
+    video.src = sources[sourceIndex] ?? '';
+    if (sourceIndex < sources.length - 1) timeout = setTimeout(fallBack, REEL_RENDITION_TIMEOUT_MS);
+  };
+  video.addEventListener('error', fallBack);
+  video.addEventListener('loadeddata', onLoadedData);
+  load();
+  return () => {
+    clearTimeout(timeout);
+    video.removeEventListener('error', fallBack);
+    video.removeEventListener('loadeddata', onLoadedData);
+    releaseReelVideoSource(video);
+  };
+}
+
+/**
+ * Gắn nguồn HLS cho video Reel (TF64). Trình duyệt phát sẵn thì dùng thẻ <video> (tự gửi cookie vì cùng site),
+ * bắt đầu từ `sources` (mức nét nhất trước, master cuối). Còn lại (Firefox máy tính) dùng hls.js, bật withCredentials
+ * để XHR gửi cookie CloudFront, chọn 720p ngay khi đọc xong master playlist.
+ * Không phát được bằng cả hai thì vẫn gắn src, thẻ <video> lỗi thì báo onFatalError.
+ *
+ * `bufferSeconds` là số giây hls.js đệm trước lúc gắn; `onBufferControl` trả về cách đổi số này khi Reel đổi vị trí.
+ * Trình duyệt tự phát không cho giới hạn bộ đệm: Reel không còn gần bài đang xem thì nhả nguồn (xoá bộ đệm).
+ *
  * Trả về hàm dọn cho useEffect; dọn trước khi hls.js tải xong thì không gắn nữa.
  */
 export function attachReelHlsSource(
@@ -56,38 +152,63 @@ export function attachReelHlsSource(
   {
     onAuthError,
     onFatalError,
+    sources = [url],
+    bufferSeconds = DEFAULT_BUFFER_SECONDS,
+    onBufferControl,
     loadLibrary = loadHlsLibrary,
   }: {
     /** Lỗi có thể do cookie: xin cookie mới rồi gắn lại. */
     onAuthError: () => void;
     /** Lỗi khác làm dừng phát. */
     onFatalError: () => void;
+    /** Nguồn cho trình duyệt tự phát, mức nét nhất trước, master cuối (getReelPlaybackSources). */
+    sources?: readonly string[];
+    bufferSeconds?: number;
+    onBufferControl?: (control: ReelHlsBufferControl) => void;
     loadLibrary?: () => Promise<ReelHlsLibrary>;
   },
 ): () => void {
-  if (canPlayHlsNatively(video)) return attachReelVideoSource(video, url);
+  if (canPlayHlsNatively(video)) {
+    return attachNativeSources(video, sources.length > 0 ? sources : [url], { onFatalError });
+  }
 
   let isReleased = false;
   let player: ReelHlsPlayer | null = null;
+  let releaseNative: (() => void) | null = null;
   void loadLibrary()
     .then((library) => {
       if (isReleased) return;
       if (!library.isSupported()) {
-        video.src = url;
+        releaseNative = attachNativeSources(video, [url], { onFatalError });
         return;
       }
-      player = library.create({
+      const created = library.create({
         xhrSetup: (xhr) => {
           xhr.withCredentials = true;
         },
+        autoStartLoad: false,
+        maxBufferLength: bufferSeconds,
+        maxMaxBufferLength: bufferSeconds,
+        abrEwmaDefaultEstimate: REEL_INITIAL_BANDWIDTH_BPS,
       });
-      player.on('hlsError', (_event, data) => {
+      player = created;
+      created.on('hlsError', (_event, data) => {
         if (!data.fatal) return;
         if (isPlaybackAuthError(data)) onAuthError();
         else onFatalError();
       });
-      player.loadSource(url);
-      player.attachMedia(video as HTMLMediaElement);
+      created.on('hlsManifestParsed', (_event, data) => {
+        created.startLevel = pickReelStartLevel(data.levels);
+        created.startLoad(-1);
+      });
+      onBufferControl?.({
+        setBufferSeconds: (seconds) => {
+          created.config.maxBufferLength = seconds;
+          created.config.maxMaxBufferLength = seconds;
+        },
+      });
+      created.loadSource(url);
+      created.attachMedia(video as HTMLMediaElement);
     })
     .catch(() => {
       if (!isReleased) onFatalError();
@@ -97,6 +218,7 @@ export function attachReelHlsSource(
     isReleased = true;
     player?.destroy();
     player = null;
-    releaseReelVideoSource(video);
+    if (releaseNative) releaseNative();
+    else releaseReelVideoSource(video);
   };
 }

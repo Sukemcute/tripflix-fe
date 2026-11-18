@@ -52,20 +52,36 @@ export function pickReelAfterRemoval(postIds: readonly string[], removedId: stri
 
 /**
  * Mức render của một Reel theo khoảng cách tới bài đang xem, để lướt lâu không nặng dần:
- * - `video`: bài đang xem và bài kế tiếp (tải trước để lướt tới là phát ngay).
- * - `poster`: cách 1–2 bài, kể cả bài vừa xem qua (chỉ ảnh, không tải segment).
+ * - `video`: bài đang xem và 2 bài mỗi phía (N ± 2): 2 bài phía trước tải sẵn để lướt nhanh vẫn phát ngay,
+ *   2 bài phía sau giữ phần đã tải để lướt ngược không tải lại.
+ * - `poster`: cách 3 bài (chỉ ảnh, không tải segment). Rời cửa sổ video là gỡ nguồn, xoá bộ đệm của video đó.
  * - `placeholder`: xa hơn, chỉ còn khung rỗng giữ chiều cao để cuộn và snap đúng vị trí.
  */
 export type ReelRenderMode = 'video' | 'poster' | 'placeholder';
 
+/** Số bài mỗi phía của bài đang xem có thẻ video (tải và giữ bộ đệm). */
+export const REEL_VIDEO_WINDOW = 2;
 /** Số bài mỗi phía của bài đang xem vẫn được render đầy đủ nội dung. */
-export const REEL_RENDER_WINDOW = 2;
+export const REEL_RENDER_WINDOW = REEL_VIDEO_WINDOW + 1;
 
 export function getReelRenderMode(index: number, activeIndex: number): ReelRenderMode {
-  const offset = index - activeIndex;
-  if (offset === 0 || offset === 1) return 'video';
-  if (Math.abs(offset) <= REEL_RENDER_WINDOW) return 'poster';
+  const distance = Math.abs(index - activeIndex);
+  if (distance <= REEL_VIDEO_WINDOW) return 'video';
+  if (distance <= REEL_RENDER_WINDOW) return 'poster';
   return 'placeholder';
+}
+
+/** Giây video đệm trước của bài đang xem, giống Reels mobile. */
+export const REEL_CURRENT_BUFFER_SECONDS = 30;
+/** Bài phía trước chỉ tải sẵn đoạn đầu: đủ để lướt tới là phát ngay mà không tốn dữ liệu cho bài có thể bị bỏ qua. */
+export const REEL_AHEAD_BUFFER_SECONDS = 10;
+/** Bài phía sau giữ phần đã tải, gần như không tải thêm. */
+export const REEL_BEHIND_BUFFER_SECONDS = 4;
+
+/** Số giây hls.js được đệm trước cho một Reel trong cửa sổ video, theo vị trí so với bài đang xem. */
+export function getReelBufferSeconds(index: number, activeIndex: number): number {
+  if (index === activeIndex) return REEL_CURRENT_BUFFER_SECONDS;
+  return index > activeIndex ? REEL_AHEAD_BUFFER_SECONDS : REEL_BEHIND_BUFFER_SECONDS;
 }
 
 /** Nền mờ (filter: blur) tốn GPU: chỉ bật cho bài đang xem và hai bài sát cạnh. */

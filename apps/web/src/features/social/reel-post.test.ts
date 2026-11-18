@@ -2,10 +2,15 @@ import { describe, expect, it, vi } from 'vitest';
 import type { FeedCardDto } from '@tripflix/api-client/core-api/model/index';
 import {
   attachReelVideoSource,
+  getReelBufferSeconds,
   getReelRenderMode,
   pickReelAfterRemoval,
   prependPinnedReelCards,
+  REEL_AHEAD_BUFFER_SECONDS,
+  REEL_BEHIND_BUFFER_SECONDS,
+  REEL_CURRENT_BUFFER_SECONDS,
   REEL_RENDER_WINDOW,
+  REEL_VIDEO_WINDOW,
   shouldShowReelBackdrop,
   toReelPost,
 } from './reel-post';
@@ -74,17 +79,21 @@ describe('pickReelAfterRemoval', () => {
 });
 
 describe('getReelRenderMode', () => {
-  it('bài đang xem và bài kế tiếp có video, bài vừa xem qua chỉ còn poster', () => {
-    expect(getReelRenderMode(5, 5)).toBe('video');
-    expect(getReelRenderMode(6, 5)).toBe('video');
-    expect(getReelRenderMode(4, 5)).toBe('poster');
+  it('bài đang xem và 2 bài mỗi phía (N ± 2) có video để tải sẵn và giữ bộ đệm', () => {
+    for (const index of [3, 4, 5, 6, 7]) expect(getReelRenderMode(index, 5)).toBe('video');
   });
 
-  it('cách 2 bài vẫn render poster, xa hơn chỉ còn khung giữ chỗ', () => {
-    expect(getReelRenderMode(7, 5)).toBe('poster');
-    expect(getReelRenderMode(3, 5)).toBe('poster');
-    expect(getReelRenderMode(8, 5)).toBe('placeholder');
+  it('cách 3 bài chỉ còn poster (đã gỡ video, xoá bộ đệm), xa hơn chỉ còn khung giữ chỗ', () => {
+    expect(getReelRenderMode(8, 5)).toBe('poster');
+    expect(getReelRenderMode(2, 5)).toBe('poster');
+    expect(getReelRenderMode(9, 5)).toBe('placeholder');
     expect(getReelRenderMode(0, 5)).toBe('placeholder');
+  });
+
+  it('video đầu tiên: chỉ có video phía trước', () => {
+    expect(getReelRenderMode(0, 0)).toBe('video');
+    expect(getReelRenderMode(2, 0)).toBe('video');
+    expect(getReelRenderMode(3, 0)).toBe('poster');
   });
 
   it('lướt 100 bài thì số bài render đầy đủ vẫn cố định', () => {
@@ -92,6 +101,26 @@ describe('getReelRenderMode', () => {
       (mode) => mode !== 'placeholder',
     );
     expect(rendered).toHaveLength(2 * REEL_RENDER_WINDOW + 1);
+  });
+
+  it('lướt 100 bài thì số thẻ video luôn tối đa 5 (N ± 2)', () => {
+    for (const active of [0, 1, 50, 99]) {
+      const videos = Array.from({ length: 100 }, (_, index) => getReelRenderMode(index, active)).filter(
+        (mode) => mode === 'video',
+      );
+      expect(videos.length).toBeLessThanOrEqual(2 * REEL_VIDEO_WINDOW + 1);
+    }
+  });
+});
+
+describe('getReelBufferSeconds', () => {
+  it('bài đang xem đệm 30 giây, bài phía trước 10 giây, bài phía sau gần như không tải thêm', () => {
+    expect(getReelBufferSeconds(5, 5)).toBe(REEL_CURRENT_BUFFER_SECONDS);
+    expect(getReelBufferSeconds(6, 5)).toBe(REEL_AHEAD_BUFFER_SECONDS);
+    expect(getReelBufferSeconds(7, 5)).toBe(REEL_AHEAD_BUFFER_SECONDS);
+    expect(getReelBufferSeconds(4, 5)).toBe(REEL_BEHIND_BUFFER_SECONDS);
+    expect(getReelBufferSeconds(3, 5)).toBe(REEL_BEHIND_BUFFER_SECONDS);
+    expect(REEL_AHEAD_BUFFER_SECONDS).toBeLessThan(REEL_CURRENT_BUFFER_SECONDS);
   });
 });
 
