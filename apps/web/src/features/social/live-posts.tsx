@@ -37,6 +37,7 @@ import {
   getPostTitleFromCaption,
   getReelPlaybackSources,
   getReelPosterPrefetchUrls,
+  hasTripPlan,
   selectReelPoster,
   type TripPlanDraft,
 } from '@tripflix/app-core';
@@ -767,14 +768,7 @@ function MediaTrackItem({
   onOpenItinerary,
 }: MediaTrackItemProps) {
   const trip = post.tripAttachment ?? null;
-  const hasItinerary = Boolean(
-    trip &&
-      (trip.destinationName ||
-        trip.hotelName ||
-        trip.daysCount ||
-        trip.estimatedCostPerPerson ||
-        (trip.items && trip.items.length > 0)),
-  );
+  const hasItinerary = hasTripPlan(trip); // Như app: chỉ có điểm đến mà không có lịch từng ngày hay chỗ ở thì không hiện thẻ lịch trình.
 
   const postImages = useMemo(
     () =>
@@ -1773,14 +1767,7 @@ export function InspirationImmersiveViewer({
     },
   });
 
-  const hasItinerary = Boolean(
-    trip &&
-      (trip.destinationName ||
-        trip.hotelName ||
-        trip.daysCount ||
-        trip.estimatedCostPerPerson ||
-        (trip.items && trip.items.length > 0)),
-  );
+  const hasItinerary = hasTripPlan(trip); // Như app: chỉ có điểm đến mà không có lịch từng ngày hay chỗ ở thì không hiện thẻ lịch trình.
   // Sidebar Lịch trình đi theo lựa chọn đóng/mở của người dùng, không theo từng bài: bài không có lịch trình
   // thì hiện trạng thái trống, để khung video không tự co giãn mỗi khi lướt qua bài thiếu lịch trình.
   const showLeftPanel = Boolean(activePost) && isLeftOpen;
