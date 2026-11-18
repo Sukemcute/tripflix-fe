@@ -436,6 +436,7 @@ export * from './tripItemDto';
 export * from './tripItemDtoType';
 export * from './tripItemHotelDto';
 export * from './tripItineraryItemDto';
+export * from './tripItineraryItemDtoCategory';
 export * from './tripPageDto';
 export * from './tripTransportDto';
 export * from './tripTransportDtoMode';

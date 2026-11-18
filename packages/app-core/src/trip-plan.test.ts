@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   applyTripPlanChoices,
   buildTripAttachment,
+  getTripPlanCategory,
+  guessTripPlanCategory,
   buildTripPlanCheckout,
   buildTripDraftFromOrder,
   createTripPlanDraft,
@@ -537,5 +539,36 @@ describe('planNextTripFlight (TF105 tự lên lộ trình)', () => {
       to: '',
       date: '2026-12-01',
     });
+  });
+});
+
+describe('loại điểm gợi ý (TF105)', () => {
+  it('gửi loại người đăng chọn cho điểm gợi ý, không gửi cho khách sạn', () => {
+    const draft = createTripPlanDraft();
+    draft.days[0]!.points = [
+      createTripPlanPoint({ title: 'Cà phê Cộng', category: 'cafe' }),
+      createTripPlanPoint({ title: 'Đi dạo' }),
+      createTripPlanPoint({ kind: 'hotel', title: 'Ana Mandara', hotelId: 'h1', category: 'food' }),
+    ];
+    const items = buildTripAttachment(draft, labels)?.items;
+    expect(items?.[0]).toMatchObject({ title: 'Cà phê Cộng', category: 'cafe' });
+    expect(items?.[1]).not.toHaveProperty('category');
+    expect(items?.[2]).not.toHaveProperty('category');
+  });
+
+  it.each([
+    ['Cà phê ở Cộng', 'cafe'],
+    ['Ăn ở Chợ đêm Phú Quốc', 'food'],
+    ['Quán bún chả', 'food'],
+    ['Ghé Cầu Hôn', 'fun'],
+    ['Trả phòng', 'other'],
+    ['Dăn dò', 'other'],
+  ] as const)('đoán "%s" là %s', (title, category) => {
+    expect(guessTripPlanCategory(title)).toBe(category);
+  });
+
+  it('ưu tiên loại đã lưu, bài cũ thì đoán theo tên', () => {
+    expect(getTripPlanCategory({ title: 'Cà phê', category: 'fun' })).toBe('fun');
+    expect(getTripPlanCategory({ title: 'Cà phê' })).toBe('cafe');
   });
 });

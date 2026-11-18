@@ -776,6 +776,8 @@ export const api = {
   immersiveMediaError: 'Không tải được phương tiện. Vui lòng thử lại.',
   immersivePrevPost: 'Bài trước (Phím lên)',
   immersiveNextPost: 'Bài tiếp theo (Phím xuống)',
+  reelLoadingMore: 'Đang tải thêm video…',
+  reelLoadingNext: 'Đang tải video tiếp theo…',
   immersivePrevSlide: 'Ảnh trước',
   immersiveNextSlide: 'Ảnh tiếp theo',
   immersiveCloseGallery: 'Đóng trình xem ảnh',

@@ -1,5 +1,26 @@
 /** Phương tiện của một ngày trong lộ trình người đăng chia sẻ. */
 export type TripPlanMode = 'flight' | 'bus' | 'train' | 'car' | 'other';
+/** Loại điểm gợi ý (không đặt chỗ) để chọn icon: cà phê, ăn uống, vui chơi, khác (TF105). */
+export type TripPlanCategory = 'cafe' | 'food' | 'fun' | 'other';
+export const TRIP_PLAN_CATEGORIES: readonly TripPlanCategory[] = ['cafe', 'food', 'fun', 'other'];
+
+/** Đoán loại theo tên gợi ý, cho bài đăng cũ chưa ghi loại. */
+export function guessTripPlanCategory(title: string): TripPlanCategory {
+  const text = title.toLowerCase();
+  if (/cà phê|cafe|coffee/.test(text)) return 'cafe';
+  // Ranh giới từ của regex JS không nhận chữ có dấu nên tách chữ "ăn" bằng khoảng trắng.
+  if (/(^|\s)ăn(\s|$)|quán|nhà hàng|chợ|bún|phở|bánh|lẩu|hải sản/.test(text)) return 'food';
+  if (/ghé|tham quan|check-in|lặn|tắm|chơi|công viên|bãi/.test(text)) return 'fun';
+  return 'other';
+}
+
+/** Loại của một điểm gợi ý: dùng loại người đăng chọn, bài cũ chưa có thì đoán theo tên. */
+export function getTripPlanCategory(item: {
+  title: string;
+  category?: TripPlanCategory | null;
+}): TripPlanCategory {
+  return item.category ?? guessTripPlanCategory(item.title);
+}
 
 interface TripPlanTransport {
   mode: TripPlanMode;
@@ -32,6 +53,8 @@ export interface TripPlanPointDraft {
   title: string;
   location: string;
   mode: TripPlanMode | null;
+  /** Loại điểm gợi ý người đăng chọn; null khi chưa chọn (lúc đăng không gửi, app tự đoán theo tên). */
+  category: TripPlanCategory | null;
   fromCode: string;
   toCode: string;
   note: string;
@@ -73,6 +96,7 @@ export function createTripPlanPoint(
     title: '',
     location: '',
     mode: null,
+    category: null,
     fromCode: '',
     toCode: '',
     note: '',
@@ -139,6 +163,7 @@ export function buildTripAttachment(
         time?: string;
         location?: string;
         notes?: string;
+        category?: TripPlanCategory;
         hotel?: TripPlanItemHotel;
         transport?: TripPlanTransport;
       }[] => {
@@ -189,6 +214,7 @@ export function buildTripAttachment(
             ...notes,
             ...roomNote,
             ...hotel,
+            ...(point.kind !== 'hotel' && point.category ? { category: point.category } : {}),
           },
         ];
       },
