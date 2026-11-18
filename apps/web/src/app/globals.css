@@ -17,6 +17,11 @@
   font-display: swap;
 }
 
+html {
+  /* Giữ chiều rộng bố cục khi chuyển giữa trang cuộn ngoài và Cảm hứng. */
+  scrollbar-gutter: stable;
+}
+
 body {
   color: var(--color-ink);
   /* Header margins must not move the entire body when the home hero arrives. */
@@ -63,8 +68,11 @@ h3 {
   font-weight: 700;
   text-wrap: balance;
 }
+:root {
+  --ota-container-width: min(1600px, calc(100% - clamp(48px, 8vw, 160px)));
+}
 .ota-container {
-  width: min(1600px, calc(100% - clamp(48px, 8vw, 160px)));
+  width: var(--ota-container-width);
   margin-inline: auto;
 }
 /* Header giữ viền viên thuốc, nền trong suốt để ảnh/nền trang vẫn liền mạch. */
@@ -72,7 +80,7 @@ h3 {
   position: relative;
   z-index: 40;
   /* Căn hai mép header theo cùng lưới nội dung với banner bên dưới. */
-  width: min(1600px, calc(100% - clamp(48px, 8vw, 160px)));
+  width: var(--ota-container-width);
   margin: 12px auto;
   border: 1px solid rgb(0 124 110 / 24%);
   border-radius: 999px;
@@ -82,13 +90,14 @@ h3 {
 .header-content {
   width: calc(100% - clamp(32px, 4vw, 64px));
   min-height: 80px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 24px;
-  justify-content: space-between;
+  gap: 20px;
 }
 .header-content > a { flex-shrink: 0; }
 .header-brand {
+  justify-self: start;
   position: relative;
   display: block;
   width: 142px;
@@ -114,10 +123,17 @@ h3 {
   width: 142px;
   height: auto;
 }
+.header-content .header-brand img {
+  width: 100%;
+  height: 100%;
+}
 /* Menu header phẳng, không lồng thêm nền viên thuốc vào khung header. */
 .header-content nav {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  justify-self: center;
+  width: min(760px, 56vw);
+  gap: 24px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -127,6 +143,7 @@ h3 {
 .header-content nav a {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 9px 16px;
   border-radius: 999px;
@@ -157,8 +174,8 @@ h3 {
 .header-icon-button {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: var(--header-control-size, 40px);
+  height: var(--header-control-size, 40px);
   padding: 0;
   border: 0;
   border-radius: 999px;
@@ -182,10 +199,12 @@ h3 {
 }
 /* Các nút bên phải đứng riêng, không đặt thêm một viên bao quanh cả cụm. */
 .header-actions {
+  --header-control-size: 40px;
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
+  justify-self: end;
+  margin-left: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -199,8 +218,8 @@ h3 {
 .header-actions > a:not(.header-login) {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: var(--header-control-size, 40px);
+  height: var(--header-control-size, 40px);
   padding: 0;
   border-radius: 999px;
   transition:
@@ -1394,19 +1413,42 @@ body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-
   height: 120px;
   width: 75%;
 }
+@media (max-width: 1359px) {
+  .header-content {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 16px;
+    padding-block: 12px;
+  }
+  .header-brand,
+  .header-actions {
+    grid-row: 1;
+  }
+  .header-actions {
+    grid-column: 2;
+  }
+  .header-content nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: min(760px, 100%);
+    gap: 16px;
+  }
+}
 @media (max-width: 900px) {
+  :root {
+    --ota-container-width: calc(100% - 40px);
+  }
   .ota-container {
-    width: calc(100% - 40px);
+    width: var(--ota-container-width);
   }
   .ota-header {
-    width: calc(100% - 40px);
+    width: var(--ota-container-width);
   }
   .header-content {
-    gap: 24px;
+    gap: 8px 16px;
     min-height: 80px;
   }
   .header-content nav {
-    gap: 2px;
+    gap: 8px;
   }
   .header-content nav a {
     padding-inline: 12px;
@@ -1469,16 +1511,27 @@ body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-
   }
 }
 @media (max-width: 640px) {
+  :root {
+    --ota-container-width: calc(100% - 32px);
+  }
   .ota-container {
-    width: calc(100% - 32px);
+    width: var(--ota-container-width);
   }
   .ota-header {
-    width: calc(100% - 32px);
+    width: var(--ota-container-width);
   }
   .header-content {
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 10px 8px;
     padding-block: 16px;
+  }
+  .header-brand {
+    width: clamp(96px, 30vw, 120px);
+    height: 36px;
+  }
+  .header-actions {
+    --header-control-size: 32px;
+    gap: 4px;
   }
   .header-content img {
     width: 120px;
@@ -1495,7 +1548,9 @@ body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-
     justify-content: space-between;
   }
   .header-content nav a {
-    padding: 8px 8px;
+    padding: 8px 4px;
+    white-space: normal;
+    text-align: center;
   }
   .header-content nav a svg {
     display: none;

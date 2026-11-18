@@ -3,6 +3,7 @@ export { commentControlsApi, useCommentPermissions } from './comment-controls';
 //   import { useHealthControllerCheck } from '@tripflix/api-client/core-api/health/health';
 //   import type { ParseQueryResponse } from '@tripflix/api-client/ai-service/model';
 export { configureHttp, http, httpRaw, HttpError, type HttpConfig, type HttpResponse } from './http';
+export { readPublicAsset } from './public-asset';
 export { ApiSessionProvider, useApiSession } from './session';
 export {
   SessionClient,

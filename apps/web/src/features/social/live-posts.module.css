@@ -60,8 +60,8 @@
   color: var(--iv-text);
   flex: 1;
   width: 100%;
-  height: calc(100dvh - 80px);
-  min-height: 620px;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -340,9 +340,9 @@
   flex: 1;
   min-height: 0;
   width: 100%;
-  max-width: 1760px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 16px 20px;
+  padding: 12px 0;
   display: grid;
   /* Khoảng cách nằm trong cột riêng (cột 2 và 4) để cùng co về 0 khi sidebar đóng. */
   gap: 0;
@@ -2949,15 +2949,37 @@ a.avatarSmall {
 
 @media (max-width: 1439px) {
   .gridThreeCols {
-    grid-template-columns: 310px 20px minmax(0, 1fr) 20px 340px;
+    grid-template-columns: 300px 16px minmax(0, 1fr) 16px 330px;
   }
 
   .gridNoLeft {
-    grid-template-columns: 0px 0px minmax(0, 1fr) 20px 340px;
+    grid-template-columns: 0px 0px minmax(0, 1fr) 16px 330px;
   }
 
   .gridNoRight {
-    grid-template-columns: 310px 20px minmax(0, 1fr) 0px 0px;
+    grid-template-columns: 300px 16px minmax(0, 1fr) 0px 0px;
+  }
+
+  .gridCenterOnly {
+    grid-template-columns: 0px 0px minmax(0, 1fr) 0px 0px;
+  }
+}
+
+@media (max-width: 1199px) {
+  .gridThreeCols {
+    grid-template-columns: 270px 14px minmax(0, 1fr) 14px 290px;
+  }
+
+  .gridNoLeft {
+    grid-template-columns: 0px 0px minmax(0, 1fr) 14px 290px;
+  }
+
+  .gridNoRight {
+    grid-template-columns: 270px 14px minmax(0, 1fr) 0px 0px;
+  }
+
+  .gridCenterOnly {
+    grid-template-columns: 0px 0px minmax(0, 1fr) 0px 0px;
   }
 }
 
@@ -2972,7 +2994,7 @@ a.avatarSmall {
 
 @media (max-width: 1023px) {
   .immersiveRoot {
-    height: calc(100dvh - 72px);
+    height: 100%;
   }
 
   .viewerGrid,
