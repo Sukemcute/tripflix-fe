@@ -385,7 +385,7 @@ export const mobile = {
     hotelTab: 'Khách sạn',
     flightTab: 'Vé máy bay',
     hotelPlaceholder: 'Bạn muốn ở đâu? VD: Đà Lạt',
-    flightPlaceholder: 'Bay đến đâu? VD: Phú Quốc',
+    bookFlight: 'Đặt vé máy bay',
     dealsTitle: 'Ưu đãi hôm nay',
     weekendStaysTitle: 'Cuối tuần này',
     topRatedTitle: 'Được đánh giá cao',
