@@ -6,6 +6,7 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import { moderationApi, useApiSession } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 const actions: Record<string, string> = {
   hide: 'Đã ẩn',
@@ -61,7 +62,7 @@ export function ModerationStatus() {
       <p>
         Xem quyết định đối với nội dung của bạn. Bạn có thể khiếu nại quyết định còn hiệu lực trong 30 ngày.
       </p>
-      {query.isPending && <p>Đang tải…</p>}
+      {query.isPending && <LoadingDots />}
       <ApiErrorNotice error={query.error} />
       {!query.isPending && !query.error && !items.length && <p>Bạn chưa có quyết định kiểm duyệt.</p>}
       {items.map((item) => (
@@ -123,7 +124,7 @@ export function ModerationStatus() {
         </button>
       )}
       <h2>Báo cáo của tôi</h2>
-      {reports.isPending && <p>Đang tải báo cáo…</p>}
+      {reports.isPending && <LoadingDots label="Đang tải báo cáo…" />}
       <ApiErrorNotice error={reports.error} />
       {!reports.isPending && !reports.error && !reports.data?.pages[0]?.items.length && (
         <p>Bạn chưa gửi báo cáo.</p>

@@ -28,6 +28,7 @@ import { getPostImages } from '../post-cover';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getFocusedFeedPosts } from './focused-post';
 import styles from './social-feed.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 export interface SocialFeedViewProps {
   /** Tab đang hiện. Tab được giữ mounted khi ẩn, nên hiện lại cũng là bố cục ban đầu: không chạy hiệu ứng. */
@@ -843,7 +844,7 @@ export function SocialFeedView({
         {/* Loading state */}
         {!isFocusUnavailable && (postsQuery.isPending || isFocusPending) && (
           <div className={styles.emptyFeed}>
-            <span className="small muted">Đang tải bảng tin cảm hứng...</span>
+            <LoadingDots label="Đang tải bảng tin cảm hứng..." />
           </div>
         )}
 
@@ -911,7 +912,7 @@ export function SocialFeedView({
         {/* Infinite Scroll trigger */}
         <div ref={sentinelRef} style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {postsQuery.isFetchingNextPage && (
-            <span className="small muted">Đang tải thêm bài viết...</span>
+            <LoadingDots label="Đang tải thêm bài viết..." />
           )}
         </div>
       </main>

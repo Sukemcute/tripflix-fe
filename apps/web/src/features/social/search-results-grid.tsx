@@ -14,6 +14,7 @@ import { formatSearchCardDate, getSearchCardCaption } from './search-result-card
 import { ExploreAllResults, PlaceResults } from './search-explore-results';
 import { getPlaceKind, SEARCH_RESULT_TYPES, type SearchResultType } from './search-url';
 import styles from './search-results-grid.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 /** Số thẻ khung xám khi đang tải trang đầu: vừa 2 hàng trên màn rộng. */
 const SKELETON_CARD_COUNT = 12;
@@ -227,7 +228,7 @@ function PostResults({
       )}
 
       <div ref={sentinelRef} className={styles.sentinel} aria-hidden="true" />
-      {isFetchingNextPage && <p className={styles.loadingMore}>{vi.api.searchResultsLoadingMore}</p>}
+      {isFetchingNextPage && <p className={styles.loadingMore}><LoadingDots label={vi.api.searchResultsLoadingMore} /></p>}
     </>
   );
 }
