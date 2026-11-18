@@ -61,7 +61,7 @@
 .searchRow {
   display: grid;
   grid-template-columns:
-    minmax(200px, 1.4fr) repeat(2, minmax(150px, 1fr)) minmax(190px, 1.2fr) minmax(85px, 0.5fr)
+    minmax(200px, 1.4fr) repeat(2, minmax(150px, 1fr)) minmax(140px, 0.85fr) minmax(135px, 0.85fr)
     auto;
   align-items: center;
   padding: 4px 6px 4px 10px;
@@ -395,7 +395,7 @@
   }
   .searchRow {
     grid-template-columns:
-      minmax(170px, 1.3fr) repeat(2, minmax(125px, 1fr)) minmax(150px, 1fr) minmax(65px, 0.45fr)
+      minmax(170px, 1.3fr) repeat(2, minmax(125px, 1fr)) minmax(120px, 0.8fr) minmax(110px, 0.8fr)
       auto;
   }
   .panel .field {
