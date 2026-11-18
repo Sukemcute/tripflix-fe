@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { CheckoutError } from './checkout-error';
 import styles from './checkout-form.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.commerce;
 
@@ -59,7 +60,7 @@ export function CancelOrder({ orderId }: { orderId: string }) {
   return (
     <div className={styles.cancelPanel}>
       <strong>{copy.cancelTitle}</strong>
-      {quote.isPending && <p>{vi.api.loading}</p>}
+      {quote.isPending && <p><LoadingDots /></p>}
       <CheckoutError error={quote.error} retry={() => void quote.refetch()} />
       {details && !details.isCancellable && <p role="alert">{copy.cancelBlocked}</p>}
       {details?.isCancellable && (
@@ -82,7 +83,7 @@ export function CancelOrder({ orderId }: { orderId: string }) {
         </button>
         {details?.isCancellable && (
           <button type="button" className="primary-button" onClick={() => cancel.mutate()} disabled={cancel.isPending}>
-            {cancel.isPending ? vi.api.loading : copy.cancelConfirm}
+            {cancel.isPending ? <LoadingDots /> : copy.cancelConfirm}
           </button>
         )}
       </div>

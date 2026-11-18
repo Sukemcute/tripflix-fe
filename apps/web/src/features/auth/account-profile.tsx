@@ -9,6 +9,7 @@ import { useState, type ReactNode } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { SoftDatePicker } from '@/features/shared/soft-date-picker';
 import { SoftSelect } from '@/features/shared/soft-select';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 type Gender = keyof typeof vi.api.genderOptions;
 type FieldName = 'displayName' | 'phone' | 'dateOfBirth' | 'gender' | 'nationality';
@@ -104,7 +105,7 @@ export function ProfileInfoCard({ userId }: { userId: string }) {
   if (profile.isPending)
     return (
       <section className="profile-card" aria-busy="true">
-        <output className="auth-hint">{vi.api.loading}</output>
+        <output className="auth-hint"><LoadingDots /></output>
       </section>
     );
   if (!profile.data)

@@ -17,6 +17,7 @@ import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
 import { ADMIN_URL, isStaffRole } from './account-helpers';
 import { useOpenAdmin } from './admin-handoff';
 import { AvatarEditor } from './avatar-editor';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 // Màn đăng nhập nằm ở login-form.tsx; giữ export ở đây để app/login/page.tsx không phải đổi.
 export { LiveLogin } from './login-form';
@@ -45,7 +46,7 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
     return (
       <main id="content" className="ota-container results-page account-page">
         <section className="account-guest is-loading" aria-busy="true">
-          <output>{vi.api.loading}</output>
+          <output><LoadingDots /></output>
         </section>
       </main>
     );

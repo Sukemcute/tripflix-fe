@@ -25,6 +25,7 @@ import styles from './onboarding.module.css';
 import { readSurveyReturn } from './post-auth';
 import { saveSurveyToAccount } from './survey-account';
 import { readSurveyRecord, writeSurveyRecord } from './survey-storage';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 const subscribeNever = () => () => {};
 type Outcome = 'saved' | 'local';
@@ -109,7 +110,7 @@ export function OnboardingFlow({ returnTo, mode }: { returnTo?: string; mode?: s
       <main id="content" data-onboarding-page className={styles.page}>
         <TopBar />
         <div className={styles.layout} aria-busy="true">
-          <output className={styles.lead}>{vi.api.loading}</output>
+          <output className={styles.lead}><LoadingDots /></output>
         </div>
       </main>
     );
