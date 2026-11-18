@@ -18,6 +18,10 @@
   - Web chưa có trang combo, nên nút `book` của thẻ "Chốt chuyến" hiện thành tối đa hai link dựng từ chính tham số: **Đặt phòng** → `/hotels/{hotelId}?checkIn&checkOut&adults` (trang khách sạn web đọc đúng các tham số này), **Đặt vé** → `/flights?from&to&date&passengers`.
   - Nút "Chọn" trên thẻ chuyến bay gửi action như mobile.
   - Thêm khoá `bookHotel`, `bookFlight` vào `packages/i18n`.
+- **Lộ trình lồng dịch vụ (bổ sung 18/11, theo PR AI `bao/TF31-lo-trinh-kem-dich-vu`):**
+  - `CardLine.service` (`flight`/`stay`): `parseItineraryLine` giữ trường này. Thẻ lộ trình mobile và web làm nổi bật dòng chuyến bay, khách sạn Tripflix (nền `coralTint`, viền `coral`, nhãn "Dịch vụ Tripflix" trong `packages/i18n`).
+  - Web: nút đặt hiện cả trên thẻ lộ trình (trước đó chỉ ở thẻ "Chốt chuyến").
+  - `readTripBuilderSeed` nhận thêm chuyến về (`returnFrom`, `returnTo`, `returnDate`), chỉ khi bay về đúng nơi đi và không trước ngày đi. `trip-builder` mở bản nháp chiều về ngay sau khi khách chọn xong chuyến đi.
 - **Vì sao web trả lời như bản cũ:** ở máy local, web gọi `<API>/ai` qua Traefik tới container Docker `ai-service` build ngày 12/11, chưa có Controller. Đã build lại container từ code AI mới. Trên staging, web gọi AI do `develop` deploy.
 
 ## Đối chiếu "Xong khi"
@@ -31,7 +35,7 @@
 | Ảnh Android và web | Chờ | Bảo chụp |
 
 ## Kết quả kiểm tra
-- `pnpm turbo run lint typecheck test --affected`: **17/17 task**, 0 fail. Theo gói: api-client 274, app-core 228, web 211, admin 29, i18n 2 test pass. Lint 0 lỗi (warning có sẵn ở code ngoài phạm vi).
+- `pnpm turbo run lint typecheck test --affected`: **17/17 task**, 0 fail. Theo gói: api-client 274, app-core 230, web 218, admin 29, i18n 2 test pass. Lint 0 lỗi (warning có sẵn ở code ngoài phạm vi).
 - Mobile chưa có test runner cho phần này; lint và typecheck mobile pass.
 
 ## Cách kiểm lại
