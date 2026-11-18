@@ -1,7 +1,7 @@
 // Chạy với Vitest của api-client và --globals; không thêm dependency cho Mobile.
 import { createElement, type ReactNode } from '../apps/mobile/node_modules/react';
 import { renderToStaticMarkup } from '../apps/web/node_modules/react-dom/server';
-import { ModeratedComment } from '../apps/mobile/src/features/feed/moderated-comment';
+import { HeldComment, ModeratedComment } from '../apps/mobile/src/features/feed/moderated-comment';
 
 vi.mock('../apps/mobile/node_modules/react-native', () => ({
   View: ({ children }: { children: ReactNode }) => createElement('div', null, children),
@@ -13,6 +13,18 @@ vi.mock('../apps/mobile/src/components/mobile-ui', () => ({
 }));
 
 describe('Mobile ModeratedComment', () => {
+  it.each([
+    ['pending', 'Bình luận được bộ lọc của chủ bài giữ lại, chờ chủ bài duyệt.'],
+    ['rejected', 'Chủ bài đã từ chối hiển thị bình luận này.'],
+  ] as const)('held %s: giữ nội dung riêng và chỉ cho xóa', (creatorReview, reason) => {
+    const html = renderToStaticMarkup(createElement(HeldComment, { body: 'Bản đang duyệt', creatorReview, onDelete: vi.fn() }));
+    expect(html).toContain('Bản đang duyệt');
+    expect(html).toContain(reason);
+    expect(html).toContain('Xóa');
+    expect(html).not.toContain('Trả lời');
+    expect(html).not.toContain('Thích');
+    expect(html).not.toContain('Báo cáo');
+  });
   it('hiện câu vi phạm, link tìm hiểu và chỉ cho tác giả xóa; ẩn sửa/thích/trả lời', () => {
     const html = renderToStaticMarkup(createElement(ModeratedComment, { onLearnMore: vi.fn(), onDelete: vi.fn() }));
     expect(html).toContain('Bình luận này vi phạm Tiêu chuẩn cộng đồng');

@@ -1,4 +1,5 @@
 export const api = {
+  commentsDisabled: 'Chủ bài đã tắt bình luận. Bản nháp của bạn được giữ lại.',
   hotels: 'Khách sạn',
   inspiration: 'Cảm hứng',
   // Hộp thư thông báo trên header web (TF46).

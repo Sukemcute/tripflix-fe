@@ -6,13 +6,14 @@ import { Button, Card, copy, Empty, Notice, Screen, Txt, ui } from '@/components
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 import { View } from 'react-native';
 import { LoadingDots } from '@/components/loading-dots';
+import { PostOptionsMenu } from './post-options-menu';
 
 export function LivePostCard({ post }: { post: SocialPostDto }) {
   return (
     <Card>
-      <Txt variant="caption">
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Txt variant="caption" style={{ flex: 1 }}>
         {vi.api.author} · {post.authorName || post.authorId.slice(0, 8)}
-      </Txt>
+      </Txt><PostOptionsMenu postId={post.id} authorId={post.authorId} /></View>
       <Txt variant="heading">{post.title}</Txt>
       <Txt>{post.body}</Txt>
       {post.tripAttachment?.destinationName && <Txt>{post.tripAttachment.destinationName}</Txt>}

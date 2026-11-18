@@ -694,6 +694,7 @@ export const getExploreControllerSearchPostsUrl = () => {
  * Cho tab tìm bài trên app và web Cảm hứng. Công khai. Cùng bộ hiểu câu và chỉ mục với `POST /api/search`.
  *
  * - `postType`: `all` (mặc định), `plan`, `video`, `post`, `article`. Video kèm lộ trình thuộc cả `plan` và `video`; với `all` chỉ trả một lần. `article` = `plan` + `post` nhưng bỏ mọi video, lọc ở server nên trang luôn đủ `limit`.
+ * - `sort`: `relevance` (mặc định, liên quan nhất), `trending` (điểm `hot@v2`), `recent` (mới nhất trước). Chỉ đổi thứ tự trong tập kết quả khớp, không đổi `total` hay `isFallback`.
  * - Mỗi bài có `likes`, `comments`, `createdAt`, `author` để hiện thẻ. Không có trạng thái đã thích/đã lưu của người xem.
  * - Kết quả chính không bao giờ vượt ngân sách trong câu (chi phí mỗi người của lộ trình). Bài bị ẩn hoặc xoá không trả về.
  * - Phân trang: gửi `nextCursor` của trang trước vào `cursor`. Không có kết quả thì `items: []`, `total: 0`.
@@ -1163,6 +1164,9 @@ export const getPostRecommendationsControllerRecommendPostsUrl = (
  * Đăng nhập tuỳ chọn. Gu người dùng tính lại mỗi 10 phút từ cảm xúc, bình luận, chia sẻ, đơn, lượt tìm.
  *
  * - `for_you`: theo gu; khách (không token) nhận `trending`, xem trường `algo`.
+ * - `trending`: bài thịnh hành chung.
+ * - `has_plan`: giống `for_you` (khách nhận `trending`) nhưng chỉ lấy bài có lịch trình.
+ * - `recent`: bài mới đăng gần đây (mới nhất trước, không xếp hạng cá nhân hoá).
  * - Không bỏ bài nào vì lịch sử người xem, chỉ hạ điểm: bài đã tương tác, bài đã gợi ý ở phiên trước (hơn 30 phút, trong 48 giờ, tối đa 100 bài), bài thứ 3 trở đi của cùng tác giả. Gọi lại cùng cursor ra cùng trang.
  * - Người đăng nhập: bài tự đăng trong 1 giờ lên đầu feed của chính họ (`reason.code: own_post`, `source: own`); người khác thấy bài đó như bài thường.
  * - Phân trang: gửi `nextCursor` của trang trước vào `cursor`; trang sau dùng cùng thuật toán với trang đầu.
@@ -1343,8 +1347,8 @@ export const getPostRecommendationsControllerRecommendReelsUrl = (
 };
 
 /**
- * Xếp hạng video bằng discovery (gồm điểm xu hướng và chống lặp cho người đăng nhập) rồi lấy thẻ phát được từ content/feed trong một request.
- * @summary Gợi ý Reels phát được (trending hoặc for_you)
+ * Xếp hạng video bằng discovery (gồm điểm xu hướng, lọc có lịch trình, mới đăng và chống lặp cho người đăng nhập) rồi lấy thẻ phát được từ content/feed trong một request.
+ * @summary Gợi ý Reels phát được (trending, for_you, has_plan hoặc recent)
  */
 export const postRecommendationsControllerRecommendReels = async (
   params?: PostRecommendationsControllerRecommendReelsParams,
@@ -1453,7 +1457,7 @@ export function usePostRecommendationsControllerRecommendReels<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Gợi ý Reels phát được (trending hoặc for_you)
+ * @summary Gợi ý Reels phát được (trending, for_you, has_plan hoặc recent)
  */
 
 export function usePostRecommendationsControllerRecommendReels<

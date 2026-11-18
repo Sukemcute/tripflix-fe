@@ -23,10 +23,10 @@ export function PublishToast() {
   return (
     <output key={notice.id} className={styles.toast} aria-live="polite">
       <svg className={styles.icon} viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-        <path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        {notice.status === 'held' ? <g fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></g> : <path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />}
       </svg>
-      <span className={styles.text}>{isReel ? vi.api.composerPublishedReel : vi.api.composerPublishedPost}</span>
-      {!isReel && (
+      <span className={styles.text}>{notice.status === 'held' ? vi.moderation.heldPost : isReel ? vi.api.composerPublishedReel : vi.api.composerPublishedPost}</span>
+      {!isReel && notice.status !== 'held' && (
         <button
           type="button"
           className={styles.action}

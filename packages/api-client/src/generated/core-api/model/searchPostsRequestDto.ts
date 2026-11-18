@@ -5,12 +5,15 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { SearchPostsRequestDtoPostType } from './searchPostsRequestDtoPostType';
+import type { SearchPostsRequestDtoSort } from './searchPostsRequestDtoSort';
 
 export interface SearchPostsRequestDto {
   /** Câu người dùng gõ (1–200 ký tự) */
   q: string;
   /** all: cả lộ trình, video, bài viết · plan: bài có lộ trình (gồm video kèm lộ trình) · video · post: bài viết thường · article: plan + post, bỏ mọi video (kể cả video kèm lộ trình) */
   postType?: SearchPostsRequestDtoPostType;
+  /** Kiểu sắp xếp kết quả khớp: relevance (liên quan nhất, mặc định), trending (thịnh hành theo hot@v2), recent (mới nhất trước) */
+  sort?: SearchPostsRequestDtoSort;
   /**
    * `nextCursor` của trang trước
    * @nullable

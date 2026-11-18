@@ -12,7 +12,7 @@ import {
   formatCompactCount,
 } from '../live-posts';
 import { getPostImages, POST_COVER_MASCOT } from '../post-cover';
-import { PostOwnerMenu } from '../post-owner-menu';
+import { PostOptionsMenu } from '../post-options-menu';
 import { AdaptivePostMedia } from './adaptive-post-media';
 import styles from './social-feed.module.css';
 
@@ -154,18 +154,7 @@ export function PostCard({
           </div>
         </div>
 
-        {currentUser?.id === post.authorId ? (
-          <PostOwnerMenu post={post} buttonClassName={styles.headerMenuBtn} />
-        ) : (
-          <button
-            type="button"
-            className={styles.headerMenuBtn}
-            data-tooltip="Tùy chọn bài viết"
-            aria-label="Tùy chọn bài viết"
-          >
-            <SocialIcon name="more" size={18} />
-          </button>
-        )}
+        <PostOptionsMenu post={post} isSaved={isSaved} onToggleSave={() => onToggleSave(post.id, !isSaved)} buttonClassName={styles.headerMenuBtn} />
       </header>
 
       {/* 2. Body: Title, Content, Hashtags */}

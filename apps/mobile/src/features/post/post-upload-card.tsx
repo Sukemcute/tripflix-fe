@@ -14,7 +14,7 @@ export function PostUploadCard() {
   const isRunning = job.phase !== 'done' && job.phase !== 'failed';
   const label =
     job.phase === 'done'
-      ? copy.bgDone
+      ? job.moderationStatus === 'held' ? vi.moderation.heldPost : copy.bgDone
       : job.phase === 'failed'
         ? copy.bgFailed
         : t(

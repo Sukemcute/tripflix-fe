@@ -86,7 +86,7 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
   const [isDraggingPoint, setDraggingPoint] = useState(false);
   const uploadAbort = useRef<AbortController | null>(null);
   // Đăng xong thì thay cả form bằng màn báo đã đăng, để không ai bấm đăng lại hay tưởng chưa đăng.
-  const [published, setPublished] = useState<{ id: string; hasVideo: boolean } | null>(null);
+  const [published, setPublished] = useState<{ id: string; hasVideo: boolean; held: boolean } | null>(null);
   // Video đã tải xong thì bài sẽ được tạo dù người dùng rời màn, nên lúc đó không cho huỷ nữa.
   const [isUploadDone, setUploadDone] = useState(false);
   useEffect(
@@ -184,14 +184,14 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
         ? socialApi.updatePost(id, draft)
         : socialApi.createDraft({ ...draft, post_type: assetId ? 'video' : 'vlog' }));
       setId(savedPost.id);
-      if (action === 'publish' && savedPost.status === 'draft') await socialApi.publishPost(savedPost.id);
-      return savedPost;
+      const publication = action === 'publish' && savedPost.status === 'draft' ? await socialApi.publishPost(savedPost.id) : savedPost;
+      return { ...savedPost, status: publication.status };
     },
     onSuccess: async (savedPost, action) => {
       setId(savedPost.id);
       if (action === 'publish') {
         Keyboard.dismiss();
-        setPublished({ id: savedPost.id, hasVideo: savedPost.postType === 'video' });
+        setPublished({ id: savedPost.id, hasVideo: savedPost.postType === 'video', held: savedPost.status === 'held' });
       }
       await client.invalidateQueries({ queryKey: ['social'] });
     },
@@ -257,7 +257,7 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
               size: (video.sizeBytes / 1_000_000).toFixed(1),
             })
           : copy.create.videoHint;
-  if (published) return <PublishedView postId={published.id} hasVideo={published.hasVideo} />;
+  if (published) return <PublishedView postId={published.id} hasVideo={published.hasVideo} held={published.held} />;
   const isSaving = mutation.isPending && mutation.variables === 'save';
   const isPublishing = mutation.isPending && mutation.variables === 'publish';
   const tripAttachment = hasTripPlan ? buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) : null;
@@ -659,7 +659,7 @@ function VideoThumb({ uri }: { uri: string }) {
   );
 }
 
-function PublishedView({ postId, hasVideo }: { postId: string; hasVideo: boolean }) {
+function PublishedView({ postId, hasVideo, held }: { postId: string; hasVideo: boolean; held: boolean }) {
   return (
     <Screen
       title={copy.create.title}
@@ -682,12 +682,12 @@ function PublishedView({ postId, hasVideo }: { postId: string; hasVideo: boolean
       }
     >
       <View style={styles.published} testID="post-published">
-        <Mascot pose="celebrate" size={132} />
+        <Mascot pose={held ? 'curious' : 'celebrate'} size={132} />
         <Txt variant="title" style={styles.publishedTitle} accessibilityRole="header">
-          {copy.create.publishedTitle}
+          {held ? vi.moderation.heldTitle : copy.create.publishedTitle}
         </Txt>
         <Txt style={styles.publishedBody}>
-          {hasVideo ? copy.create.publishedVideoBody : copy.create.publishedBody}
+          {held ? vi.moderation.heldPost : hasVideo ? copy.create.publishedVideoBody : copy.create.publishedBody}
         </Txt>
         <Button tone="text" onPress={() => router.replace('/create')}>
           {copy.create.postAnother}

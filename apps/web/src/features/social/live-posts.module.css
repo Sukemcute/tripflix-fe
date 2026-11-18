@@ -2908,3 +2908,5 @@ a.avatarSmall {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+.accountCardHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.accountCardHeader > p { margin: 0; }

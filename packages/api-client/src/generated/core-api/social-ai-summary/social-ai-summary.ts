@@ -196,6 +196,11 @@ export type postSummaryControllerGetSummaryResponse200 = {
   status: 200;
 };
 
+export type postSummaryControllerGetSummaryResponse204 = {
+  data: void;
+  status: 204;
+};
+
 export type postSummaryControllerGetSummaryResponse400 = {
   data: void;
   status: 400;
@@ -206,7 +211,9 @@ export type postSummaryControllerGetSummaryResponse404 = {
   status: 404;
 };
 
-export type postSummaryControllerGetSummaryResponseSuccess = postSummaryControllerGetSummaryResponse200 & {
+export type postSummaryControllerGetSummaryResponseSuccess = (
+  postSummaryControllerGetSummaryResponse200 | postSummaryControllerGetSummaryResponse204
+) & {
   headers: Headers;
 };
 export type postSummaryControllerGetSummaryResponseError = (

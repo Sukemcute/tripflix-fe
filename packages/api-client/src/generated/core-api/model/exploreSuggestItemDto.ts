@@ -14,6 +14,11 @@ export interface ExploreSuggestItemDto {
   kind: string;
   /** stay: mã khách sạn của commerce · plan/post/video: mã bài */
   refId: string;
+  /**
+   * stay: mã trên URL trang chi tiết (`/hotels/<slug>`) · mục khác: null. Có thể null tới lượt dựng lại chỉ mục kế tiếp (≤10 phút) sau khi deploy; khi đó dùng `refId`
+   * @nullable
+   */
+  slug: string | null;
   title: string;
   /**
    * Nơi của mục

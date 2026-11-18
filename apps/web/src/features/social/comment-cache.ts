@@ -213,7 +213,7 @@ export function addCommentToCache(client: QueryClient, comment: SocialCommentDto
           ...otherPages.map((page) => ({ ...page, total: page.total + 1 })),
         ],
       });
-    } else if (parentCommentId) {
+    } else if (parentCommentId && isCountedComment(comment)) {
       client.setQueryData<CommentPages>(
         queryKey,
         updateCommentPages(data, (entry) =>
