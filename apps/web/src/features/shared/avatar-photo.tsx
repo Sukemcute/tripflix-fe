@@ -59,16 +59,6 @@ export function AvatarPhoto({ userId, src }: { userId?: string | null | undefine
           src={frameOption.overlaySrc}
           alt=""
           aria-hidden="true"
-          style={{
-            position: 'absolute',
-            left: '50%',
-            top: '50%',
-            width: '147%',
-            height: '147%',
-            maxWidth: 'none',
-            transform: 'translate(-50%, -50%)',
-            pointerEvents: 'none',
-          }}
         />
       )}
       {decor.stickers.map((item) => {
