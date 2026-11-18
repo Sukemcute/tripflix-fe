@@ -55,11 +55,14 @@
   gap: 4px;
   max-width: 1280px;
   margin: 0 auto 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
   border-bottom: 1px solid var(--color-border);
 }
 
 .tab {
   position: relative;
+  flex-shrink: 0;
   min-width: 96px;
   padding: 10px 18px 12px;
   border: 0;
@@ -68,6 +71,7 @@
   font: inherit;
   font-size: 0.95rem;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
   transition: color 150ms ease;
 }
@@ -305,27 +309,6 @@
   }
 }
 
-@media (max-width: 640px) {
-  .resultsScroll {
-    padding: 16px 14px 32px;
-  }
-
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px 10px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .thumbImage,
-  .skeletonThumb,
-  .skeletonLine,
-  .skeletonLineShort {
-    animation: none;
-    transition: none;
-  }
-}
-
 /* Tab Tất cả: các vùng kết quả tìm khám phá, tab khách sạn, địa điểm, quán. */
 .understood {
   display: flex;
@@ -359,8 +342,10 @@
 }
 
 .exploreSectionHeader h3 {
+  min-width: 0;
   margin: 0;
   font-size: 18px;
+  overflow-wrap: anywhere;
 }
 
 .exploreTotal {
@@ -371,11 +356,13 @@
 
 .seeAll,
 .loadMore {
+  flex-shrink: 0;
   border: 0;
   background: var(--color-transparent);
   color: var(--color-teal-ink);
   font: inherit;
   font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -423,4 +410,168 @@
 
 a.card {
   text-decoration: none;
+}
+
+/* Tab Người dùng và khối Người dùng trong tab Tất cả. */
+.userGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.userCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-background);
+  color: var(--color-text);
+  text-decoration: none;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.userCard:hover {
+  border-color: var(--color-coral-soft);
+  background: var(--color-warm-mist);
+}
+
+.userCard:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+}
+
+.userCardAvatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.userCardAvatar[data-tone='teal'] {
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+
+.userCardAvatar[data-tone='sun'] {
+  background: var(--color-sun-soft);
+  color: var(--color-navy);
+}
+
+.userCardAvatar[data-tone='navy'] {
+  background: var(--color-surface-muted);
+  color: var(--color-navy);
+}
+
+.userCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.userCardName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.userCardHandle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.userCardAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-teal-ink);
+}
+
+.userCardActionLabel {
+  white-space: nowrap;
+}
+
+.userResultList {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.userResultGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .resultsScroll {
+    padding: 16px 14px 32px;
+  }
+
+  .tab {
+    min-width: auto;
+    padding: 10px 14px 12px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 10px;
+  }
+
+  .userGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .userCardActionLabel {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumbImage,
+  .userCard,
+  .skeletonThumb,
+  .skeletonLine,
+  .skeletonLineShort {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Chỗ giữ bài xem trước của tác giả chưa cuộn tới: đủ cao để chỉ người trong màn hình mới tải. */
+.userPreviewSlot {
+  min-height: 200px;
 }

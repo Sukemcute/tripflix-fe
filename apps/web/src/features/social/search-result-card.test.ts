@@ -88,7 +88,8 @@ describe('tab kết quả trên URL', () => {
 
   it('giá trị lạ thì về Tất cả', () => {
     expect(parseSearchResultType('reels')).toBe('reels');
-    expect(parseSearchResultType('users')).toBe('all');
+    expect(parseSearchResultType('users')).toBe('users');
+    expect(parseSearchResultType('unknown')).toBe('all');
     expect(parseSearchResultType(null)).toBe('all');
   });
 });

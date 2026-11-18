@@ -1,14 +1,31 @@
 'use client';
 
-import { useExploreSearch, usePlaceSearchFeed, type ExploreItemDto, type ExploreUnderstoodDto, type PlaceSearchKind } from '@tripflix/api-client';
+import {
+  HttpError,
+  useAuthorReels,
+  useAuthorVlogs,
+  useExploreSearch,
+  useInfiniteUserSearch,
+  usePlaceSearchFeed,
+  useUserSearch,
+  type ExploreItemDto,
+  type ExploreUnderstoodDto,
+  type PlaceSearchKind,
+} from '@tripflix/api-client';
+import type { UserSearchItemDto } from '@tripflix/api-client/core-api/model/index';
+import { getNameInitials } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { AvatarPhoto } from '@/features/shared/avatar-photo';
+import { LoadingDots } from '@/features/shared/loading-dots';
 import { formatPrice } from '@/features/discovery/trip-card';
-import { SocialIcon, formatCompactCount } from './live-posts';
+import { getAvatarTone } from './avatar-tone';
+import { SocialIcon, formatAuthorDisplay, formatCompactCount } from './live-posts';
+import { buildAuthorExploreItems, deduplicateUsers } from './search-author-items';
 import { getSectionResultType, type SearchResultType } from './search-url';
 import styles from './search-results-grid.module.css';
-import { LoadingDots } from '@/features/shared/loading-dots';
 
 /** Bản đồ của một điểm OSM: toạ độ đúng hơn tên (nhiều quán trùng tên). */
 export function buildMapUrl(location: { lat: number; lng: number }): string {
@@ -17,10 +34,61 @@ export function buildMapUrl(location: { lat: number; lng: number }): string {
 
 const POST_KINDS = new Set(['plan', 'post', 'video']);
 const OSM_ATTRIBUTION = '© OpenStreetMap contributors (ODbL)';
+const USER_ALL_PREVIEW_LIMIT = 6;
+const USER_POSTS_PREVIEW_LIMIT = 5;
 
 interface OpenHandlers {
   onOpenPost: (postId: string) => void;
   onOpenReel: (postId: string, reelIds: string[]) => void;
+}
+
+function UserCard({ user }: { user: UserSearchItemDto }) {
+  const { name, handle } = formatAuthorDisplay(user.id, user.displayName);
+  return (
+    <Link prefetch={false} href={`/u/${encodeURIComponent(user.id)}`} className={styles.userCard}>
+      <span className={styles.userCardAvatar} data-tone={getAvatarTone(name)} aria-hidden="true">
+        {getNameInitials(name) || 'TF'}
+        <AvatarPhoto userId={user.id} />
+      </span>
+      <span className={styles.userCardBody}>
+        <span className={styles.userCardName}>{name}</span>
+        <span className={styles.userCardHandle}>{handle}</span>
+      </span>
+      <span className={styles.userCardAction}>
+        <span className={styles.userCardActionLabel}>{vi.api.tripPlanViewProfile}</span>
+        <SocialIcon name="chevronRight" size={14} />
+      </span>
+    </Link>
+  );
+}
+
+/** Reels + bài viết xem trước của một tác giả; userId undefined thì chưa tải. */
+function useAuthorPreviewItems(userId: string | undefined, authorName: string, excludeRefIds?: ReadonlySet<string>) {
+  const authorReels = useAuthorReels(userId);
+  const authorVlogs = useAuthorVlogs(userId);
+  return buildAuthorExploreItems({
+    reels: authorReels.data?.pages.flatMap((page) => page.items) ?? [],
+    vlogs: authorVlogs.data?.pages.flatMap((page) => page.items) ?? [],
+    authorName,
+    excludeRefIds,
+  });
+}
+
+/** Chỉ tải bài xem trước khi tác giả sắp cuộn tới: tab Người dùng không bắn 10 request ngay khi mở. */
+function UserPostsPreview({ user, ...open }: OpenHandlers & { user: UserSearchItemDto }) {
+  const slotRef = useRef<HTMLDivElement | null>(null);
+  const [isNearViewport, setIsNearViewport] = useState(false);
+  useEffect(() => {
+    const slot = slotRef.current;
+    if (!slot || isNearViewport) return;
+    const observer = new IntersectionObserver(([entry]) => entry?.isIntersecting && setIsNearViewport(true), { rootMargin: '200px' });
+    observer.observe(slot);
+    return () => observer.disconnect();
+  }, [isNearViewport]);
+  const items = useAuthorPreviewItems(isNearViewport ? user.id : undefined, formatAuthorDisplay(user.id, user.displayName).name);
+  if (!isNearViewport) return <div ref={slotRef} className={styles.userPreviewSlot} aria-hidden="true" />;
+  if (items.length === 0) return null;
+  return <ResultList items={items} {...open} />;
 }
 
 /** Tab Tất cả: các vùng theo thứ tự discovery xếp (vùng hợp ý câu tìm lên trước), như trang kết quả tìm bằng câu tự nhiên. */
@@ -30,7 +98,13 @@ export function ExploreAllResults({
   ...open
 }: OpenHandlers & { keyword: string; onSelectType: (type: SearchResultType) => void }) {
   const search = useExploreSearch(keyword);
+  const userSearch = useUserSearch(keyword);
+  const matchedUsers = userSearch.data?.items ?? [];
+  const topUser = matchedUsers[0];
+  const topUserName = topUser ? formatAuthorDisplay(topUser.id, topUser.displayName).name : '';
   const result = search.data;
+  const sectionRefIds = new Set(result?.sections.flatMap((section) => section.items.map((item) => item.refId)) ?? []);
+  const authorItems = useAuthorPreviewItems(topUser?.id, topUserName, sectionRefIds);
   if (search.isError) {
     return (
       <div className={styles.stateBox}>
@@ -41,10 +115,49 @@ export function ExploreAllResults({
   if (!result) return <p className={styles.loadingMore}><LoadingDots /></p>;
   const sections = result.sections.filter((section) => section.total > 0 && section.items.length > 0);
   const fallback = result.fallback?.items ?? [];
-  const shown = [...sections.flatMap((section) => section.items), ...fallback];
+  const isUserSearchPending = userSearch.isSearchable && userSearch.isPending;
+  const visibleFallback = sections.length === 0 && matchedUsers.length === 0 && !isUserSearchPending ? fallback : [];
+  const shown = [...sections.flatMap((section) => section.items), ...visibleFallback];
+
   return (
     <>
       <Understood understood={result.understood} isNearUser={result.nearUser} />
+      {matchedUsers.length > 0 && (
+        <section className={styles.exploreSection} aria-label={vi.api.searchResultsTabUsers}>
+          <header className={styles.exploreSectionHeader}>
+            <h3>
+              {vi.api.searchResultsTabUsers}{' '}
+              <span className={styles.exploreTotal}>
+                {userSearch.data?.hasMore ? `${matchedUsers.length}+` : matchedUsers.length}
+              </span>
+            </h3>
+            <button type="button" className={styles.seeAll} onClick={() => onSelectType('users')}>
+              {vi.api.searchResultsSeeAll}
+            </button>
+          </header>
+          <ul className={styles.userGrid}>
+            {matchedUsers.slice(0, USER_ALL_PREVIEW_LIMIT).map((user) => (
+              <li key={user.id}>
+                <UserCard user={user} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {topUser && authorItems.length > 0 && (
+        <section
+          className={styles.exploreSection}
+          aria-label={t('api.searchResultsAuthorPosts', { name: topUserName })}
+        >
+          <header className={styles.exploreSectionHeader}>
+            <h3>{t('api.searchResultsAuthorPosts', { name: topUserName })}</h3>
+            <Link prefetch={false} href={`/u/${encodeURIComponent(topUser.id)}`} className={styles.seeAll}>
+              {vi.api.tripPlanViewProfile}
+            </Link>
+          </header>
+          <ResultList items={authorItems} {...open} />
+        </section>
+      )}
       {sections.map((section) => {
         const target = getSectionResultType(section.kind);
         return (
@@ -63,14 +176,67 @@ export function ExploreAllResults({
           </section>
         );
       })}
-      {sections.length === 0 && fallback.length > 0 && (
+      {visibleFallback.length > 0 && (
         <section className={styles.exploreSection}>
           <p className={styles.fallbackNote}>{t('api.searchResultsFallback', { query: keyword })}</p>
-          <ResultList items={fallback} {...open} />
+          <ResultList items={visibleFallback} {...open} />
         </section>
       )}
-      {shown.length === 0 && <p className={styles.stateBox}>{t('api.exploreEmpty', { query: keyword })}</p>}
+      {shown.length === 0 && matchedUsers.length === 0 && !isUserSearchPending && (
+        <p className={styles.stateBox}>{t('api.exploreEmpty', { query: keyword })}</p>
+      )}
       <Attribution items={shown} />
+    </>
+  );
+}
+
+/** Tab Người dùng: danh sách người dùng khớp tên và tối đa 6 bài gần nhất của 5 người đầu. */
+export function UserResults({ keyword, ...open }: OpenHandlers & { keyword: string }) {
+  const search = useInfiniteUserSearch(keyword);
+  if (!search.isSearchable) {
+    return <p className={styles.stateBox}>{vi.api.searchResultsUsersShortQuery}</p>;
+  }
+  if (search.isError) {
+    if (search.error instanceof HttpError && search.error.status === 429) {
+      return (
+        <p className={styles.stateBox} role="alert">
+          {vi.api.searchResultsUsersRateLimited}
+        </p>
+      );
+    }
+    return (
+      <div className={styles.stateBox}>
+        <ApiErrorNotice error={search.error} retry={() => void search.refetch()} />
+      </div>
+    );
+  }
+  if (search.isPending) {
+    return <p className={styles.loadingMore}><LoadingDots /></p>;
+  }
+  const users = deduplicateUsers(search.data?.pages.flatMap((page) => page.items) ?? []);
+  if (users.length === 0) {
+    return <p className={styles.stateBox}>{t('api.searchResultsUsersEmpty', { query: keyword })}</p>;
+  }
+  return (
+    <>
+      <ul className={styles.userResultList}>
+        {users.map((user, index) => (
+          <li key={user.id} className={styles.userResultGroup}>
+            <UserCard user={user} />
+            {index < USER_POSTS_PREVIEW_LIMIT && <UserPostsPreview user={user} {...open} />}
+          </li>
+        ))}
+      </ul>
+      {search.hasNextPage && (
+        <button
+          type="button"
+          className={styles.loadMore}
+          disabled={search.isFetchingNextPage}
+          onClick={() => void search.fetchNextPage()}
+        >
+          {search.isFetchingNextPage ? <LoadingDots label={vi.api.searchResultsLoadingMore} /> : vi.api.searchResultsLoadMore}
+        </button>
+      )}
     </>
   );
 }

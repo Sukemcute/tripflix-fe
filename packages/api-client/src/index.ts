@@ -126,6 +126,7 @@ export {
   useExploreSearch,
   usePostSearch,
   useUserSearch,
+  useInfiniteUserSearch,
 } from './explore-search';
 export {
   getPlaceSearchResults,
