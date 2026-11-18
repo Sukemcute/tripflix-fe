@@ -1,44 +1,47 @@
-# TF25 — Reels web tải sẵn N ± 2 video và bắt đầu ở 720p
+# TF25 — Reels web tải trước video, bắt đầu ở mức nét nhất, lướt không lag
 
 - Notion: TF25 · Nhánh: `thanh/TF25-reels-tai-truoc-2-video` · Người làm: Thành (dùng AI: có) · Ngày: 2026-11-18
 
 ## Đã làm
-- **Tải sẵn và giữ N ± 2** (`reel-post.ts`): bài đang xem và 2 bài mỗi phía có thẻ `<video>`. Trước đây chỉ bài đang xem và 1 bài kế tiếp có video, bài N+2 chỉ có ảnh bìa, lướt nhanh 2 bài là phải chờ tải. Cách 3 bài chỉ còn ảnh bìa: rời cửa sổ là gỡ nguồn (`removeAttribute('src')` + `load()`), trình duyệt xoá bộ đệm của video đó, nên lướt lâu bộ nhớ không tăng dần. Số thẻ video luôn tối đa 5.
-- **Bắt đầu ở 720p như Reels mobile** (`reel-hls.ts`):
-  - Chrome, Edge (bản mới tự phát HLS) và Safari: trước đây gắn `master.m3u8`, trình duyệt tự đo băng thông bằng **360p** rồi mới lên mức cao, nên mấy giây đầu mờ và video tải sẵn ở 360p. Giờ gắn thẳng playlist của mức nét nhất ≤ 720p (`getReelPlaybackSources` của `app-core`, mobile đang dùng). Mức đó lỗi hoặc 8 giây chưa có hình thì lùi một mức; nguồn cuối là master. Hết nguồn mới báo lỗi phát.
-  - Firefox (phát bằng hls.js): chờ đọc xong master rồi mới tải, chọn mức ≤ 720p làm mức bắt đầu; ước lượng băng thông ban đầu 5 Mbps thay cho 500 kbps mặc định. Bộ đệm theo vị trí: bài đang xem 30 giây, bài phía trước 10 giây, bài phía sau 4 giây (đổi lúc đang chạy, không gắn lại nguồn).
-- `live-posts.tsx`: truyền danh sách nguồn và số giây đệm cho từng Reel. Bỏ `onError` trên thẻ `<video>`: lỗi giờ báo qua `attachReelHlsSource` để lỗi của mức 720p không hiện lỗi khi còn mức thấp hơn để thử.
+- **Tải trước theo vị trí** (`reel-post.ts`): bài đang xem, 2 bài phía trước và 1 bài phía sau có thẻ `<video>`. Rời cửa sổ là gỡ nguồn (`removeAttribute('src')` + `load()`) để trình duyệt xoá bộ đệm; số thẻ video luôn ≤ 4.
+- **Ưu tiên video đang xem** (như app video ngắn): vừa lướt chỉ tải bài đang xem và bài kế tiếp; bài thứ 2 phía trước chỉ tải khi video đang xem đã chạy (hoặc sau 2 giây).
+- **Không tua thừa**: trước đây đổi bài là `currentTime = 0` kể cả video tải sẵn đang ở đầu; Chrome tua thật và tải lại, mất 1,2–2,8 giây (lỗi có sẵn ở develop). Giờ chỉ tua khi video đã chạy dở.
+- **Bắt đầu ở mức nét nhất ≤ 720p** (`reel-hls.ts`): Chrome bản mới (157) và Safari tự phát HLS, gắn `master.m3u8` thì bắt đầu ở 360p. Giờ gắn thẳng playlist mức nét nhất (`getReelPlaybackSources`, như mobile). Lỗi, hoặc người xem đang chờ (bấm phát chưa có hình, hay đang phát mà đứng chờ tải) quá 8 giây thì lùi một mức, phát tiếp đúng chỗ; nguồn cuối là master. Video tải sẵn ngoài màn hình không bị lùi mức.
+- **Mạng yếu như TikTok**: video đứng chờ tải thì thanh tiến độ có vệt sáng chạy qua; bài chưa có hình hiện vòng chờ (cả khung rỗng khi lướt quá nhanh).
+- **Chặn lướt khi bài kế tiếp chưa có hình**: khung video trượt lên 64px lộ dải dưới có vòng chờ "Đang tải video tiếp theo…", tối đa 3 giây (Safari iPhone không tải trước video, chặn mãi thì kẹt). Hết bài đã tải thì chờ trang sau, về rồi tự sang.
+- hls.js (Firefox): chọn mức ≤ 720p sau khi đọc master; bộ đệm 30/10/4 giây cho bài đang xem/phía trước/phía sau.
 
 ## Đối chiếu "Xong khi"
 | Tiêu chí | Đạt | Bằng chứng |
 |---|---|---|
-| Tải sẵn 2 video phía trước, giữ 2 video phía sau | Đạt | `reel-post.test.ts` "N ± 2 có video"; đo trình duyệt: đứng ở video 3 có thẻ video 1–5 |
-| Rời cửa sổ thì xoá bộ đệm | Đạt | `reel-hls.test.ts` "dọn thì gỡ nguồn"; đo: video 0 bị gỡ khi lướt tới video 3 |
-| Lướt 100 bài, số video cố định | Đạt | `reel-post.test.ts` "số thẻ video luôn tối đa 5" |
-| Bắt đầu ở 720p (mức nét nhất có, ≤ 720p) | Đạt | `reel-hls.test.ts` "gắn thẳng playlist 720p", `pickReelStartLevel`; đo: không còn request 360p hay master |
-| Mạng chậm/lỗi vẫn phát | Đạt | `reel-hls.test.ts` "lỗi thì lùi một mức", "quá 8 giây chưa có hình thì lùi" |
+| Tải trước video phía trước, giữ video phía sau, rời cửa sổ thì xoá bộ đệm | Đạt | `reel-post.test.ts` (`getReelRenderMode`, `shouldLoadReelSource`); `reel-hls.test.ts` "dọn thì gỡ nguồn" |
+| Lướt tới video đã tải sẵn là chạy ngay | Đạt | Đo bên dưới: ~0,5 giây (bằng thời gian cuộn) |
+| Bắt đầu ở mức nét nhất, mạng yếu tự lùi | Đạt | `reel-hls.test.ts` "gắn thẳng playlist 720p", "đứng chờ tải quá 8 giây thì lùi một mức, phát tiếp đúng chỗ" |
+| Mạng yếu có báo đang tải | Đạt | Hạ băng thông giữa chừng: thanh tiến độ bật `data-buffering` lúc đứng, tắt khi chạy lại |
+| Lướt nhanh không vào khung đen | Đạt | `reel-post.test.ts` `canStepToNextReel`; đo: lướt bị chặn khi bài kế chưa có hình |
 
 ## Kết quả kiểm tra
-- `pnpm turbo run lint typecheck test --filter=@tripflix/web`: 3/3 task pass; test `features/social`: 20 file, 144 test pass.
-- `pnpm turbo run lint typecheck test --affected`: 14/17 task pass. `@tripflix/mobile#typecheck` fail do file sinh `apps/mobile/.expo/types/router.d.ts` trên máy cũ (route `/my-trips`, `/user/[id]`…), nhánh này không sửa file mobile nào.
+- `pnpm turbo run lint typecheck test --filter=@tripflix/web`: 3/3 task (lint 0 lỗi, 16 cảnh báo có sẵn).
+- `--affected`: `@tripflix/mobile#typecheck` fail do file sinh `apps/mobile/.expo/types/router.d.ts` cũ trên máy; PR không sửa file mobile.
 
-### Đo bằng Chrome 157 headless qua CDP (như tab Network của F12), `localhost:3100/inspiration?view=reels`, lướt bằng phím ↓, chờ 10 giây mỗi bài
+### Đo lướt Reels (Chrome 157 headless qua CDP, `localhost:3100/inspiration?view=reels`, phím ↓, 8 lần lướt)
+Thời gian từ lúc lướt tới khi video của bài mới bắn `playing`. Mạng tới CloudFront dao động, mỗi cấu hình đo 1–2 lần.
 
-| | Trước | Sau |
+| Bản | Lướt mỗi 1,5 giây | Lướt mỗi 3 giây |
 |---|---|---|
-| Video có thẻ `<video>` khi đứng ở bài N | N, N+1 | N−2 … N+2 |
-| Bài N+2 khi lướt tới | Chưa tải gì, phải chờ | Đã tải sẵn 6 segment (~12 giây) |
-| Request đầu mỗi video | `master.m3u8` → `360p/index.m3u8` → `360p/seg_000.ts` → mới lên 540p | Thẳng `540p/index.m3u8` → `540p/seg_000.ts` |
-| Độ phân giải video tải sẵn | 360×640 | 540×960 (video dev chỉ có tới 540p; video có 720p sẽ lấy 720p) |
-| Lướt tới video đã tải sẵn | — | Không tải lại playlist, phát tiếp từ bộ đệm |
+| develop | trung vị 2.491 ms (chậm nhất 3.567) | trung vị 869 ms (chậm nhất 1.260) |
+| Bản đầu của PR (N ± 2, chưa sửa) | trung vị 6.724 ms, 2/6 lần > 8 giây | — |
+| Bản này | trung vị 505–529 ms; 4/8 lần bị chặn chờ bài kế | trung vị 488–529 ms; 2–3/8 lần bị chặn |
+
+Đánh đổi đo được: gắn `master.m3u8` thay vì mức nét nhất thì lướt mỗi 3 giây không bị chặn lần nào giữa danh sách (trung vị 542 ms) nhưng bắt đầu ở 360p. Trình duyệt tự phát cần lâu hơn để có hình khi tải trước một playlist một mức.
 
 ## Cách kiểm lại
 1. `pnpm --filter @tripflix/web exec vitest run src/features/social/reel-post.test.ts src/features/social/reel-hls.test.ts`
-2. Mở `/inspiration?view=reels`, F12 → Network, lọc `m3u8|ts`: mỗi video bắt đầu bằng `<mức>p/index.m3u8` (không có `360p` trước), và có request của 2 video phía trước.
+2. Mở `/inspiration?view=reels`, F12 → Network, lọc `m3u8|ts`; lướt nhanh bằng phím ↓: video chạy ngay khi cuộn xong, bài kế chưa tải xong thì khung trượt lên có vòng chờ. Network → Slow 3G giữa chừng: thanh tiến độ có vệt sáng.
 
 ## Ảnh / video
 - Không chụp ảnh; số đo ở bảng trên.
 
 ## Ảnh hưởng tới phần của người khác
-- Có: `reel-hls.ts` do anh Phong viết (TF64). Anh Thành đã đồng ý sửa. Giữ nguyên hàm và tham số cũ, chỉ thêm tuỳ chọn (`sources`, `bufferSeconds`, `onBufferControl`).
-- Phát hiện ngoài phạm vi (chưa sửa, báo anh Phong): hls.js gửi cookie bằng XHR bị CORS chặn ở cả CloudFront dev (`Access-Control-Allow-Origin: *`) lẫn `media.tripflix.io.vn` (đo từ `https://tripflix.io.vn`: `MissingAllowOriginHeader`, `WildcardOriginNotAllowed`). Chrome/Safari không bị vì tự phát HLS, nhưng Firefox máy tính hiện không phát được Reels.
+- `reel-hls.ts` của anh Phong (TF64): giữ hàm và tham số cũ, chỉ thêm tuỳ chọn (`sources`, `bufferSeconds`, `onBufferControl`). Đã báo anh Phong.
+- Phát hiện ngoài phạm vi (đã báo anh Phong, chưa sửa): hls.js gửi cookie bị CloudFront chặn CORS ở dev lẫn `media.tripflix.io.vn`, nên Firefox máy tính chưa phát được Reels.
