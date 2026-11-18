@@ -97,4 +97,17 @@ describe('readTripBuilderSeed', () => {
     expect(seed?.hotel).toBeUndefined();
     expect(seed?.flight).toBeUndefined();
   });
+
+  it('seeds the return flight only when it goes back to the origin on or after the outbound day', () => {
+    const back = { returnFrom: 'DAD', returnTo: 'SGN', returnDate: '2026-11-23' };
+    expect(readTripBuilderSeed({ ...params, ...back }, today)?.returnFlight).toEqual({
+      from: 'DAD',
+      to: 'SGN',
+      date: '2026-11-23',
+    });
+    expect(readTripBuilderSeed({ ...params, ...back, returnTo: 'HAN' }, today)?.returnFlight).toBeUndefined();
+    expect(readTripBuilderSeed({ ...params, ...back, returnDate: '2026-11-20' }, today)?.returnFlight).toBeUndefined();
+    const { flightFrom: _from, ...noOutbound } = params;
+    expect(readTripBuilderSeed({ ...noOutbound, ...back }, today)?.returnFlight).toBeUndefined();
+  });
 });

@@ -11,7 +11,12 @@ export const TRIP_BUILDER_SEED_KEYS = [
   'flightFrom',
   'flightTo',
   'flightDate',
+  'returnFrom',
+  'returnTo',
+  'returnDate',
 ] as const;
+
+type SeedFlight = { from: string; to: string; date: string };
 
 export interface TripBuilderSeed {
   destination: { destinationName: string; destinationPlaceId: string };
@@ -19,7 +24,9 @@ export interface TripBuilderSeed {
   dayCount: number;
   startDate?: string;
   hotel?: { hotelId: string; hotelName: string; checkIn: string; nights: number };
-  flight?: { from: string; to: string; date: string };
+  flight?: SeedFlight;
+  /** Chuyến về: mở sau khi khách chọn xong chuyến đi, đi theo luồng chiều về sẵn có. */
+  returnFlight?: SeedFlight;
 }
 
 export function readTripBuilderSeed(params: Record<string, unknown>, today: string): TripBuilderSeed | null {
@@ -36,6 +43,12 @@ export function readTripBuilderSeed(params: Record<string, unknown>, today: stri
       ? value
       : undefined;
   };
+  const leg = (fromKey: string, toKey: string, dateKey: string): SeedFlight | undefined => {
+    const from = read(fromKey);
+    const to = read(toKey);
+    const date = day(dateKey);
+    return /^[A-Z]{3}$/.test(from) && /^[A-Z]{3}$/.test(to) && from !== to && date ? { from, to, date } : undefined;
+  };
   const destinationName = read('destination');
   const adults = count('adults', 9);
   const dayCount = count('days', 30);
@@ -44,11 +57,11 @@ export function readTripBuilderSeed(params: Record<string, unknown>, today: stri
   const hotelId = read('hotelId');
   const hotel =
     hotelId && checkIn && nights ? { hotelId, hotelName: read('hotelName'), checkIn, nights } : undefined;
-  const from = read('flightFrom');
-  const to = read('flightTo');
-  const date = day('flightDate');
-  const flight =
-    /^[A-Z]{3}$/.test(from) && /^[A-Z]{3}$/.test(to) && from !== to && date ? { from, to, date } : undefined;
+  const flight = leg('flightFrom', 'flightTo', 'flightDate');
+  const back = leg('returnFrom', 'returnTo', 'returnDate');
+  // Chuyến về phải quay lại đúng nơi đi và không trước chuyến đi.
+  const returnFlight =
+    back && flight && back.from === flight.to && back.to === flight.from && back.date >= flight.date ? back : undefined;
   const startDate = day('startDate') ?? flight?.date ?? hotel?.checkIn;
   if (!destinationName && !adults && !dayCount && !startDate && !hotel && !flight) return null;
   return {
@@ -58,5 +71,6 @@ export function readTripBuilderSeed(params: Record<string, unknown>, today: stri
     startDate,
     hotel,
     flight,
+    returnFlight,
   };
 }

@@ -11,4 +11,5 @@ export const AwaitingMissing = {
   place: 'place',
   dates: 'dates',
   origin: 'origin',
+  origin_dates: 'origin_dates',
 } as const;

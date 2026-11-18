@@ -4,9 +4,11 @@
  * Tripflix AI Service
  * OpenAPI spec version: 0.1.0
  */
+import type { CardLineService } from './cardLineService';
 
 export interface CardLine {
   detail?: string;
   label: string;
   ref?: string | null;
+  service?: CardLineService;
 }

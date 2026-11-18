@@ -166,7 +166,13 @@ function StopRow({ stop, isLast }: { stop: ItineraryStop; isLast: boolean }) {
         <span className={styles.railDot} />
         {!isLast && <span className={styles.railLine} />}
       </span>
-      <div className={styles.stopBody}>
+      <div className={stop.service ? `${styles.stopBody} ${styles.serviceStop}` : styles.stopBody}>
+        {stop.service && (
+          <span className={styles.serviceBadge}>
+            <AssistantIcon name={stop.service === 'flight' ? 'plane' : 'bed'} size={13} />
+            {copy.tripflixService}
+          </span>
+        )}
         {!!stop.partLabel && (
           <span className={styles.partBadge}>
             {stop.part && <AssistantIcon name={PART_ICONS[stop.part]} size={13} />}
@@ -225,6 +231,7 @@ function ItineraryCard({
       ))}
       <Source card={card} />
       <UndoButton card={card} actions={actions} />
+      <ServerActions card={card} actions={actions} onOpen={onOpen} />
       {!isPlan && (
         <div className={styles.cardActions}>
           {reel && (

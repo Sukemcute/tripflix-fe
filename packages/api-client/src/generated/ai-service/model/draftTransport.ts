@@ -7,6 +7,8 @@
 import type { DraftTransportMode } from './draftTransportMode';
 
 export interface DraftTransport {
+  arriveTime?: string | null;
+  departTime?: string | null;
   fareCode?: string | null;
   flightDate?: string | null;
   flightId?: string | null;

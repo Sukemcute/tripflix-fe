@@ -11,6 +11,8 @@ export interface AssistantCardLine {
   detail?: string;
   /** Lựa chọn bấm được trên thẻ so sánh: gửi lại trong `action.ref`. */
   ref?: string | null;
+  /** Dòng là dịch vụ Tripflix trong lộ trình (chuyến bay, khách sạn): app làm nổi bật. */
+  service?: 'flight' | 'stay' | null;
 }
 
 /** Nút trên thẻ (Chọn, Bỏ điểm, Hoàn tác): AI chạy thẳng phép sửa, không gọi LLM. */

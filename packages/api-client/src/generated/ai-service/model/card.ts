@@ -10,9 +10,11 @@ import type { CardPriceBasis } from './cardPriceBasis';
 
 export interface Card {
   actions?: CardAction[] | null;
+  arriveTime?: string | null;
   checkIn?: string | null;
   checkOut?: string | null;
   currency?: 'VND';
+  departTime?: string | null;
   fareCode?: string | null;
   flightDate?: string | null;
   fromAirport?: string | null;
