@@ -1,5 +1,6 @@
 'use client';
 
+import { TripStopIcon } from '../feed/trip-plan-timeline';
 import { commerceApi, socialApi, useApiSession, usePostSearchFeed } from '@tripflix/api-client';
 import type {
   SocialPostDto,
@@ -385,6 +386,7 @@ function TripStop({
         </div>
       )}
       <p className={styles.stopTitle}>
+        <TripStopIcon item={item} />
         {item.transport && (
           <span className={styles.transport}>
             {TRANSPORT_LABELS[item.transport.mode] ?? vi.api.tripPlanTransportOther}

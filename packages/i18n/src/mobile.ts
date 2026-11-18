@@ -304,6 +304,8 @@ export const mobile = {
       changeHotel: 'Đổi',
       choose: 'Chọn',
       destinationSearch: 'Gõ tên thành phố, tỉnh hoặc điểm đến',
+      costLabel: 'Chi phí ước tính / người (tuỳ chọn)',
+      costPlaceholder: 'VD: 4.500.000',
       destinationPicked: 'Đã chọn điểm đến trong danh sách',
       transportTitle: 'Tên chặng (tuỳ chọn)',
       location: 'Địa điểm',
@@ -647,6 +649,8 @@ export const mobile = {
     imagePickerUnavailable:
       'Chưa mở được thư viện. Nếu dùng bản cài riêng, hãy cài lại bản build có thư viện chọn ảnh.',
     remove: 'Bỏ tệp đã chọn',
+    titleLabel: 'Tiêu đề',
+    titlePlaceholder: 'VD: 3 ngày 2 đêm săn mây Đà Lạt',
     story: 'Kể về chuyến đi của bạn',
     placeholder: 'Chỗ này có gì mà bạn mê thế?',
     attach: 'Gắn lộ trình',

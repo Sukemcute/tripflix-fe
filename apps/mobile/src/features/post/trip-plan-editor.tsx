@@ -159,6 +159,16 @@ export function TripPlanEditor({
         placeId={draft.destinationPlaceId}
         onChange={(destination) => onChange({ ...draft, ...destination })}
       />
+      <Field
+        label={copy.costLabel}
+        placeholder={copy.costPlaceholder}
+        keyboardType="number-pad"
+        value={draft.estimatedCostPerPerson ? draft.estimatedCostPerPerson.toLocaleString('vi-VN') : ''}
+        onChangeText={(value) => {
+          const amount = Number(value.replace(/\D/g, ''));
+          onChange({ ...draft, estimatedCostPerPerson: amount > 0 ? amount : null });
+        }}
+      />
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayTabs}>
         {draft.days.map((_, index) => (

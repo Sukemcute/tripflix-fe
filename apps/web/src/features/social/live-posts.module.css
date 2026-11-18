@@ -2376,15 +2376,6 @@ a.avatarSmall {
   margin: 0;
 }
 
-.composerSectionBadge {
-  font-size: 0.72rem;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--iv-elevated-bg);
-  color: var(--iv-text-muted);
-}
-
 .composerTypeToggle {
   display: flex;
   gap: 6px;
@@ -2598,32 +2589,6 @@ a.avatarSmall {
   color: var(--iv-text-muted);
 }
 
-.composerItineraryContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  background: var(--iv-elevated-bg);
-  border-radius: 14px;
-  padding: 14px;
-  border: 1px solid var(--iv-border);
-}
-
-.itineraryItemCard {
-  background: var(--iv-panel-bg);
-  border-radius: 10px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border: 1px solid var(--iv-border);
-}
-
-.itineraryItemHeader {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .itineraryDaySelect {
   padding: 6px 10px;
   border-radius: 8px;
@@ -2633,29 +2598,6 @@ a.avatarSmall {
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--iv-text);
-}
-
-.addItemBtn {
-  padding: 8px 14px;
-  border: 1px dashed var(--iv-border);
-  border-radius: 10px;
-  background: transparent;
-  color: var(--iv-text);
-  font: inherit;
-  font-size: 0.84rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 180ms ease;
-}
-
-.addItemBtn:hover {
-  background: var(--iv-panel-bg);
-  border-color: var(--iv-accent);
-  color: var(--iv-accent);
 }
 
 .removeItineraryItemBtn {
@@ -2730,11 +2672,6 @@ a.avatarSmall {
 .composerSelect > button {
   background: var(--iv-elevated-bg);
   font-size: 0.88rem;
-}
-
-.itineraryDayField {
-  flex-shrink: 0;
-  width: 116px;
 }
 
 /* Nút ở chân pop-up đăng bài: nút phụ có viền, nút chính màu trơn; không bóng đổ. */
