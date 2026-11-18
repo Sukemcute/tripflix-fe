@@ -9,6 +9,7 @@ import {
   listTripPlanOffers,
   resolveTripPlanOffer,
   getTripPlanTotal,
+  isAssistantPlanId,
   isValidTripPlanPassengers,
   readSoldOutConflict,
   type TripPlanOffer,
@@ -249,7 +250,8 @@ function SelectedTripScreen({
           adults,
           children,
           infants,
-          sourcePostId: postId,
+          // Lộ trình Tripi lập không phải bài đăng nên không ghi làm nguồn đơn.
+          sourcePostId: isAssistantPlanId(postId) ? undefined : postId,
           flights: selectedFlights,
           rooms: selectedRooms,
         }),
