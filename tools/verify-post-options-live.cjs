@@ -34,9 +34,9 @@ async function main() {
   const options = page.getByRole('menu', { name: 'Tùy chọn bài viết', exact: true });
   const trigger = card.getByRole('button', { name: 'Tùy chọn bài viết', exact: true });
   await login(page, 'superadmin@tripflix.local', `/inspiration?open=${postId}`);
-  await page.getByText('Quản lý bình luận', { exact: true }).waitFor();
+  await page.locator('summary').filter({ hasText: /^Quản lý bình luận$/ }).waitFor();
   await trigger.click();
-  await expect(options.getByRole('menuitem')).toHaveCount(4);
+  await expect(options.getByRole('menuitem')).toHaveCount(5);
   await expect(options.getByRole('menuitem', { name: 'Chỉnh sửa bài viết', exact: true })).toBeVisible();
   await expect(options.getByRole('menuitem', { name: /Báo cáo/ })).toHaveCount(0);
   await page.screenshot({ path: path.join(output, 'owner-desktop.png') });
@@ -47,7 +47,7 @@ async function main() {
   await expect(trigger).toBeFocused();
   await page.setViewportSize({ width: 390, height: 844 });
   await trigger.click();
-  await expect(options.getByRole('menuitem')).toHaveCount(4);
+  await expect(options.getByRole('menuitem')).toHaveCount(5);
   const ownerBounds = await options.boundingBox();
   assert.ok(ownerBounds.x >= 0 && ownerBounds.x + ownerBounds.width <= 391);
   await page.screenshot({ path: path.join(output, 'owner-mobile.png') });

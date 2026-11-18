@@ -33,6 +33,9 @@ vi.mock('../apps/mobile/src/components/bottom-sheet', () => ({
 vi.mock('../apps/mobile/src/features/feed/report-button', () => ({
   ReportButton: ({ trigger }: { trigger: (open: () => void) => ReactNode }) => trigger(vi.fn()),
 }));
+vi.mock('../apps/mobile/src/features/feed/creator-comment-controls', () => ({
+  CreatorCommentControls: () => null,
+}));
 
 function render(authorId: string, saved = false) {
   const client = new QueryClient();
@@ -52,7 +55,13 @@ describe('Mobile post options', () => {
   it('bài của mình chỉ có lưu, sửa, quyền xem và xóa; không có báo cáo hay mục chưa hỗ trợ', () => {
     state.user = { id: 'viewer' };
     const html = render('viewer');
-    for (const label of ['Lưu bài viết', 'Chỉnh sửa bài viết', 'Chỉnh sửa quyền xem', 'Xóa bài viết'])
+    for (const label of [
+      'Lưu bài viết',
+      'Quản lý bình luận',
+      'Chỉnh sửa bài viết',
+      'Chỉnh sửa quyền xem',
+      'Xóa bài viết',
+    ])
       expect(html).toContain(label);
     for (const label of ['Báo cáo bài viết', 'Ghim bài viết', 'kho lưu trữ', 'quảng cáo', 'Quan tâm'])
       expect(html).not.toContain(label);

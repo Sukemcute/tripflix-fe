@@ -26,9 +26,12 @@ async function api(url, token, method = 'GET', body, status = 200) {
   return result.status === 204 ? null : result.json();
 }
 async function login(page, email, returnTo) {
-  await page.goto(`${web}/login?returnTo=${encodeURIComponent(returnTo)}`);
-  await page.getByLabel('Email', { exact: true }).fill(email);
-  await page.getByLabel('Mật khẩu', { exact: true }).fill(password);
+  await page.goto(`${web}/login?returnTo=${encodeURIComponent(returnTo)}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await expect.poll(async () => {
+    await page.getByLabel('Email', { exact: true }).fill(email);
+    await page.getByLabel('Mật khẩu', { exact: true }).fill(password);
+    return page.getByRole('button', { name: 'Đăng nhập', exact: true }).isEnabled();
+  }, { timeout: 20000 }).toBe(true);
   const oldMail = new Set(
     (await (await fetch('http://localhost:8025/api/v1/messages')).json()).messages.map(
       (message) => message.ID,
@@ -57,7 +60,7 @@ async function login(page, email, returnTo) {
     await page.getByRole('button', { name: 'Khám phá trước', exact: true }).click();
     await page.waitForURL((url) => url.pathname !== '/onboarding', { timeout: 20000 });
   }
-  await page.goto(web + returnTo);
+  await page.goto(web + returnTo, { waitUntil: 'domcontentloaded', timeout: 60000 });
 }
 async function main() {
   assert.ok(password);
@@ -90,10 +93,10 @@ async function main() {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     const reader = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     await login(page, 'member@tripflix.local', `/inspiration?open=${postId}`);
-    await page.getByText('Quản lý bình luận', { exact: true }).click();
+    await page.locator('summary').filter({ hasText: /^Quản lý bình luận$/ }).click();
     const controls = page
       .locator('details')
-      .filter({ has: page.getByText('Quản lý bình luận', { exact: true }) });
+      .filter({ has: page.locator('summary').filter({ hasText: /^Quản lý bình luận$/ }) });
     await controls.getByLabel('Từ khóa cần lọc', { exact: true }).fill('lọcqa');
     await controls.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
     await controls.getByText('Đã lưu cài đặt bình luận.', { exact: true }).waitFor();
@@ -115,9 +118,9 @@ async function main() {
     await expect(
       reader.getByText('Bình luận được bộ lọc của chủ bài giữ lại, chờ chủ bài duyệt.', { exact: true }),
     ).toBeVisible();
-    await page.getByText('Quản lý bình luận', { exact: true }).click();
+    await page.locator('summary').filter({ hasText: /^Quản lý bình luận$/ }).click();
     await expect(controls.getByLabel('Từ khóa cần lọc', { exact: true })).toBeHidden();
-    await page.getByText('Quản lý bình luận', { exact: true }).click();
+    await page.locator('summary').filter({ hasText: /^Quản lý bình luận$/ }).click();
     await expect(controls.getByText(held.body, { exact: true })).toBeVisible({ timeout: 20000 });
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 1000 });
@@ -127,7 +130,7 @@ async function main() {
           .locator(`[data-feed-post-id="${postId}"]`)
           .getByRole('button', { name: 'Bình luận (0)', exact: true })
           .click();
-        await page.getByText('Quản lý bình luận', { exact: true }).click();
+        await page.locator('summary').filter({ hasText: /^Quản lý bình luận$/ }).click();
       }
       await expect(controls.getByText(held.body, { exact: true })).toBeVisible();
       await controls.scrollIntoViewIfNeeded();
@@ -151,7 +154,7 @@ async function main() {
     await expect(field).toHaveValue('Bản nháp giữ khi chủ bài tắt', { timeout: 20000 });
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(`${web}/inspiration?open=${postId}`);
-    await expect(page.getByText('Quản lý bình luận', { exact: true })).toBeVisible();
+    await expect(page.locator('summary').filter({ hasText: /^Quản lý bình luận$/ })).toBeVisible();
     await page.getByRole('button', { name: 'Đăng bài', exact: true }).first().click();
     const composer = page.getByRole('dialog', { name: 'Đăng bài', exact: true });
     await composer.getByRole('textbox', { name: 'Tiêu đề', exact: true }).fill(marker + '-HELD');

@@ -4,14 +4,24 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { CreatorCommentContextDto } from './creatorCommentContextDto';
+import type { CreatorReviewCommentDtoApprovalBlockReason } from './creatorReviewCommentDtoApprovalBlockReason';
 
 export interface CreatorReviewCommentDto {
   id: string;
   postId: string;
   authorId: string;
   /** @nullable */
+  authorName: string | null;
+  /** @nullable */
   parentCommentId: string | null;
   body: string;
   platformBlocked: boolean;
+  canApprove: boolean;
+  willPublish: boolean;
+  /** @nullable */
+  approvalBlockReason: CreatorReviewCommentDtoApprovalBlockReason;
+  /** @nullable */
+  parentContext: CreatorCommentContextDto | null;
   createdAt: string;
 }

@@ -9,6 +9,7 @@ import { BottomSheet } from '../../components/bottom-sheet';
 import { Button, Icon, IconButton, Txt, type IconName } from '../../components/mobile-ui';
 import { ApiErrorNotice } from '../../components/api-state';
 import { ReportButton } from './report-button';
+import { CreatorCommentControls } from './creator-comment-controls';
 
 export function PostOptionsMenu({
   postId,
@@ -24,7 +25,7 @@ export function PostOptionsMenu({
   const { user } = useApiSession();
   const client = useQueryClient();
   const [visible, setVisible] = useState(false);
-  const [view, setView] = useState<'menu' | 'visibility' | 'delete'>('menu');
+  const [view, setView] = useState<'menu' | 'visibility' | 'delete' | 'comments'>('menu');
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const isMine = !!user && authorId === user.id;
   const detail = useQuery({
@@ -73,13 +74,15 @@ export function PostOptionsMenu({
           )}
           <BottomSheet
             visible={visible}
-            compact
+            compact={view !== 'comments'}
             title={
-              view === 'menu'
-                ? vi.api.postMoreOptions
-                : view === 'visibility'
-                  ? 'Chỉnh sửa quyền xem'
-                  : 'Xóa bài viết?'
+              view === 'comments'
+                ? vi.moderation.creatorSettings
+                : view === 'menu'
+                  ? vi.api.postMoreOptions
+                  : view === 'visibility'
+                    ? 'Chỉnh sửa quyền xem'
+                    : 'Xóa bài viết?'
             }
             onClose={close}
           >
@@ -103,6 +106,12 @@ export function PostOptionsMenu({
                   <View style={styles.separator} />
                   {isMine ? (
                     <>
+                      <Option
+                        icon="chatbubble-ellipses-outline"
+                        title={vi.moderation.creatorSettings}
+                        disabled={disabled}
+                        onPress={() => setView('comments')}
+                      />
                       <Option
                         icon="pencil-outline"
                         title="Chỉnh sửa bài viết"
@@ -144,6 +153,8 @@ export function PostOptionsMenu({
                     />
                   )}
                 </>
+              ) : view === 'comments' ? (
+                <CreatorCommentControls postId={postId} initialOpen />
               ) : view === 'visibility' ? (
                 <>
                   <Txt>Ai có thể xem bài viết này?</Txt>

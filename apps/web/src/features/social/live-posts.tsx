@@ -2600,7 +2600,8 @@ function CommentNode({
 }) {
   const { user } = useApiSession();
   const client = useQueryClient();
-  const [showReplies, setShowReplies] = useState(Boolean(focusedReply));
+  const [showRepliesChoice, setShowReplies] = useState<boolean | null>(null);
+  const showReplies = showRepliesChoice ?? Boolean(focusedReply);
   const isFocused = comment.id === focusCommentId;
   const focusRef = useRef<HTMLLIElement | null>(null);
   useEffect(() => {
@@ -2820,7 +2821,7 @@ function CommentNode({
                       type="button"
                       className={styles.panelCommentActionBtn}
                       aria-expanded={showReplies}
-                      onClick={() => setShowReplies((prev) => !prev)}
+                      onClick={() => setShowReplies(!showReplies)}
                     >
                       {showReplies
                         ? vi.api.commentHideReplies
