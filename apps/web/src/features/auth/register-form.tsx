@@ -15,13 +15,13 @@ import {
 import { t, vi } from '@tripflix/i18n';
 import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useAfterAuth } from '@/features/onboarding/use-after-auth';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { SoftSelect, type SoftSelectOption } from '@/features/shared/soft-select';
 import { AuthErrorNotice, AuthField, PasswordField } from './auth-fields';
 import { DateOfBirthSelect } from './date-of-birth-select';
-import { readDeviceName, readSafeReturnTo, withReturnTo } from './auth-return';
+import { readDeviceName, withReturnTo } from './auth-return';
 import { GoogleButton } from './google-button';
 
 const CODE_ONLY_NATIONALITIES: SoftSelectOption[] = COMMON_NATIONALITIES.map((code) => ({
@@ -72,7 +72,6 @@ function PickerField({ id, label, children }: { id: string; label: string; child
  */
 export function LiveRegister({ returnTo }: { returnTo?: string }) {
   const { session, isReady, error } = useApiSession();
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -85,10 +84,8 @@ export function LiveRegister({ returnTo }: { returnTo?: string }) {
   const [registrationId, setRegistrationId] = useState<string>();
   const nationalityOptions = useNationalityOptions();
   const strength = getRegistrationPasswordStrength(password);
-  const goBack = useCallback(
-    () => router.replace(readSafeReturnTo(returnTo ?? '/account')),
-    [router, returnTo],
-  );
+  // Về trang cũ, hoặc mở khảo sát sở thích nếu hồ sơ chưa làm (SCRUM-160).
+  const goBack = useAfterAuth(returnTo);
 
   const cooldown = useResendCooldown();
   const requestCode = useMutation({

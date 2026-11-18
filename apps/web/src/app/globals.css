@@ -3837,3 +3837,72 @@ body:has([class*="feedPageWrapper"]) #content {
 .profile-link:hover {
   text-decoration: underline;
 }
+
+/* Khảo sát sở thích (SCRUM-160) là trang đứng riêng: ẩn header, footer và skip-link chung của site. */
+body:has(> [data-onboarding-page]) > .ota-header,
+body:has(> [data-onboarding-page]) > footer,
+body:has(> [data-onboarding-page]) > .skip-link {
+  display: none;
+}
+
+/* TF109: ảnh đại diện (AvatarPhoto) phủ lên ô chữ cái đầu, bo tròn theo ô. */
+:has(> .avatar-photo) {
+  position: relative;
+}
+.avatar-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.profile-avatar-editor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.profile-avatar.is-editable {
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.profile-avatar.is-editable:focus-visible {
+  outline: 2px solid var(--color-coral-ink);
+  outline-offset: 8px;
+}
+.profile-avatar.is-editable:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+.profile-avatar-camera {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-coral-ink);
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+.profile-avatar-camera svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.profile-avatar-remove {
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}

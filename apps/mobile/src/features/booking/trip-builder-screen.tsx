@@ -31,7 +31,13 @@ import { DestinationPicker } from '@/features/post/trip-plan-editor';
 import { CommerceError } from './commerce-state';
 import { useTripPicks } from './trip-booking-store';
 import { NO_ADDON_PICKS, TripAddonsSection, type TripAddonPicks } from './trip-addons-section';
-import { ChoiceChip, ProductCard, formatDay, styles as planStyles } from './trip-plan-parts';
+import {
+  ChoiceChip,
+  ProductCard,
+  TripBookingAction,
+  formatDay,
+  styles as planStyles,
+} from './trip-plan-parts';
 
 const copy = vi.mobile.tripBuilder;
 const MAX_ADULTS = 9;
@@ -515,9 +521,9 @@ export function TripBuilderScreen() {
               </Txt>
             )}
           </View>
-          <Button compact icon="flash" disabled={!bookable.length || booking.isPending} onPress={book}>
+          <TripBookingAction disabled={!bookable.length || booking.isPending} onPress={book}>
             {booking.isPending ? copy.booking : copy.book}
-          </Button>
+          </TripBookingAction>
         </View>
       }
     >
@@ -911,8 +917,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   addText: { ...compactType.heading, fontFamily: nativeFonts.semibold },
-  footer: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  total: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.coralInk },
+  footer: { gap: spacing.md },
+  total: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold, color: colors.navy },
   entry: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -91,9 +91,9 @@ class OnboardingPage {
     await ui.snapshot('01-welcome-390');
     await ui.click('Chọn gu của tôi');
     assert(await ui.button('Chọn nhịp chuyến đi').isDisabled(), 'empty interests cannot continue');
-    await ui.choice('Biển & nắng').click();
-    await ui.choice('Thiên nhiên').click();
-    assert((await ui.choice('Biển & nắng').getAttribute('aria-checked')) === 'true');
+    await ui.choice('Biển & đảo').click();
+    await ui.choice('Núi & thiên nhiên').click();
+    assert((await ui.choice('Biển & đảo').getAttribute('aria-checked')) === 'true');
     await ui.snapshot('02-interests-390');
     await ui.click('Chọn nhịp chuyến đi');
     assert(await ui.button('Xem gu của tôi').isDisabled(), 'pace needs a selection');
@@ -101,7 +101,7 @@ class OnboardingPage {
     await ui.snapshot('03-pace-390');
     await ui.click('Quay lại');
     assert(
-      (await ui.choice('Thiên nhiên').getAttribute('aria-checked')) === 'true',
+      (await ui.choice('Núi & thiên nhiên').getAttribute('aria-checked')) === 'true',
       'back preserves choices',
     );
     await ui.click('Chọn nhịp chuyến đi');
@@ -114,7 +114,7 @@ class OnboardingPage {
     await ui.click('Xem gu của tôi');
     await ui.snapshot('04-review-390');
     await ui.click('Sửa trải nghiệm');
-    await ui.choice('Thiên nhiên').click();
+    await ui.choice('Núi & thiên nhiên').click();
     await ui.click('Chọn nhịp chuyến đi');
     await ui.click('Xem gu của tôi');
     await ui.click('Lưu và khám phá');
@@ -131,8 +131,8 @@ class OnboardingPage {
     await ui.goto('/settings');
     await ui.click('Gu du lịch');
     await ui.click('Chọn gu của tôi');
-    await ui.choice('Thiên nhiên').click();
-    assert.equal(await ui.choice('Thiên nhiên').getAttribute('aria-checked'), 'true');
+    await ui.choice('Núi & thiên nhiên').click();
+    assert.equal(await ui.choice('Núi & thiên nhiên').getAttribute('aria-checked'), 'true');
     await ui.click('Quay lại');
     await ui.click('Đóng');
     await ui.visible('Gu du lịch');
@@ -212,7 +212,7 @@ class OnboardingPage {
       await ui.goto('/onboarding');
       await ui.visible('Chọn gu của tôi');
       await ui.click('Chọn gu của tôi');
-      await ui.choice('Phố & văn hoá').click();
+      await ui.choice('Phố cổ & văn hoá').click();
       await ui.click('Chọn nhịp chuyến đi');
       await ui.pace('Đi thật nhiều').click();
       await ui.click('Xem gu của tôi');

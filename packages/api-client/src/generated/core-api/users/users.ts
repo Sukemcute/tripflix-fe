@@ -184,3 +184,138 @@ export function useUserSearchControllerSearch<
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+export type userSearchControllerAvatarResponse302 = {
+  data: void;
+  status: 302;
+};
+
+export type userSearchControllerAvatarResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type userSearchControllerAvatarResponseError = (
+  userSearchControllerAvatarResponse302 | userSearchControllerAvatarResponse404
+) & {
+  headers: Headers;
+};
+
+export type userSearchControllerAvatarResponse = userSearchControllerAvatarResponseError;
+
+export const getUserSearchControllerAvatarUrl = (id: string) => {
+  return `/api/v1/users/${id}/avatar`;
+};
+
+export const userSearchControllerAvatar = async (
+  id: string,
+  options?: Parameters<typeof http>[1],
+): Promise<userSearchControllerAvatarResponse> => {
+  return http<userSearchControllerAvatarResponse>(getUserSearchControllerAvatarUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getUserSearchControllerAvatarQueryKey = (id: string) => {
+  return [`/api/v1/users/${id}/avatar`] as const;
+};
+
+export const getUserSearchControllerAvatarQueryOptions = <
+  TData = Awaited<ReturnType<typeof userSearchControllerAvatar>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerAvatar>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getUserSearchControllerAvatarQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof userSearchControllerAvatar>>> = ({ signal }) =>
+    userSearchControllerAvatar(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof userSearchControllerAvatar>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type UserSearchControllerAvatarQueryResult = NonNullable<
+  Awaited<ReturnType<typeof userSearchControllerAvatar>>
+>;
+export type UserSearchControllerAvatarQueryError = void;
+
+export function useUserSearchControllerAvatar<
+  TData = Awaited<ReturnType<typeof userSearchControllerAvatar>>,
+  TError = void,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerAvatar>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userSearchControllerAvatar>>,
+          TError,
+          Awaited<ReturnType<typeof userSearchControllerAvatar>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useUserSearchControllerAvatar<
+  TData = Awaited<ReturnType<typeof userSearchControllerAvatar>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerAvatar>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userSearchControllerAvatar>>,
+          TError,
+          Awaited<ReturnType<typeof userSearchControllerAvatar>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useUserSearchControllerAvatar<
+  TData = Awaited<ReturnType<typeof userSearchControllerAvatar>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerAvatar>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useUserSearchControllerAvatar<
+  TData = Awaited<ReturnType<typeof userSearchControllerAvatar>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerAvatar>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getUserSearchControllerAvatarQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
