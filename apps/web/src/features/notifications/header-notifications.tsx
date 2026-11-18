@@ -13,11 +13,19 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { useHeaderPopover } from '@/features/shared/use-header-popover';
+import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import { getAvatarTone } from '../social/avatar-tone';
 import { resolveNotificationHref } from './notification-href';
 import { formatNotificationTime, getNotificationKind } from './notification-look';
 
 const TRIPFLIX_ICON = '/brand/tripflix-gmail-avatar-icon.svg';
+
+/** Người tác động gần nhất (bình luận, bài mới của người theo dõi) để hiện ảnh của họ; thông báo khác không có. */
+function getLastActorId(data: Record<string, unknown>): string | null {
+  const actorIds = data.actorIds;
+  const last = Array.isArray(actorIds) ? (actorIds.at(-1) as unknown) : null;
+  return typeof last === 'string' ? last : null;
+}
 const KIND_ICON_PATHS = {
   comment: 'M4 5h16v11H9l-5 4z',
   reaction: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z',
@@ -129,7 +137,10 @@ export function HeaderNotifications() {
                               height={44}
                             />
                           ) : (
-                            <span aria-hidden="true">{item.body.trim().charAt(0).toUpperCase()}</span>
+                            <>
+                              <span aria-hidden="true">{item.body.trim().charAt(0).toUpperCase()}</span>
+                              <AvatarPhoto userId={getLastActorId(item.data)} />
+                            </>
                           )}
                           {kind !== 'tripflix' && (
                             <span className="header-notifications-kind" data-kind={kind} aria-hidden="true">

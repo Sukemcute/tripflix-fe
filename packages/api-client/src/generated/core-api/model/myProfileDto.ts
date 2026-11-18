@@ -29,4 +29,9 @@ export interface MyProfileDto {
    * @nullable
    */
   travelPreferences: TravelPreferencesDto | null;
+  /**
+   * Ảnh đại diện (TF109). null: chưa có, app hiện chữ cái đầu của tên
+   * @nullable
+   */
+  avatarUrl: string | null;
 }
