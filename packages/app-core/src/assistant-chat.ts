@@ -101,3 +101,21 @@ export function buildAssistantHistory(
       ...(message.role === 'assistant' && message.kind ? { kind: message.kind } : {}),
     }));
 }
+
+/**
+ * Khách hết lượt rồi đăng nhập: bỏ lời mời đăng nhập và câu hỏi bị từ chối khỏi khung chat,
+ * trả lại câu đó để app tự gửi lại, các tin trước vẫn giữ nguyên làm ngữ cảnh.
+ * Không có lời mời đăng nhập ở cuối thì trả về null, không đổi gì.
+ */
+export function takeQuestionToResend<M extends AssistantChatMessage & { action?: string }>(
+  messages: readonly M[],
+): { messages: M[]; question: string } | null {
+  const prompt = messages.at(-1);
+  if (!prompt || prompt.role !== 'assistant' || prompt.action !== 'login') return null;
+  const question = messages.at(-2);
+  const isRefused = question?.role === 'user' && question.isLocal === true;
+  return {
+    messages: messages.slice(0, isRefused ? -2 : -1),
+    question: isRefused ? question.text : '',
+  };
+}

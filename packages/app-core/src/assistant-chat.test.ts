@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  takeQuestionToResend,
   ASSISTANT_CHAT_DAYS,
   buildAssistantHistory,
   completeAssistantTurn,
@@ -91,5 +92,29 @@ describe('buildAssistantHistory', () => {
     expect(buildAssistantHistory(settled)).toEqual(buildAssistantHistory([...prior, accepted, nextReply]));
     const raw = serializeAssistantChat('u1', settled, null, NOW);
     expect(parseAssistantChat(raw, 'u1', NOW)?.messages).toEqual([...prior, accepted, nextReply]);
+  });
+});
+
+describe('takeQuestionToResend', () => {
+  const asked = { id: '1', role: 'user' as const, text: 'Đi Đà Lạt' };
+  const answered = { id: '2', role: 'assistant' as const, text: 'Lộ trình đây' };
+  const refused = { id: '3', role: 'user' as const, text: 'Gợi ý chỗ ở', isLocal: true };
+  const prompt = { id: '4', role: 'assistant' as const, text: 'Đăng nhập để chat tiếp', isLocal: true, action: 'login' };
+
+  it('bỏ lời mời và câu bị từ chối, trả câu đó để gửi lại', () => {
+    expect(takeQuestionToResend([asked, answered, refused, prompt])).toEqual({
+      messages: [asked, answered],
+      question: 'Gợi ý chỗ ở',
+    });
+  });
+
+  it('chỉ có lời mời (không có câu bị từ chối): bỏ lời mời, không có gì để gửi', () => {
+    expect(takeQuestionToResend([asked, answered, prompt])).toEqual({ messages: [asked, answered], question: '' });
+  });
+
+  it('cuối không phải lời mời đăng nhập thì không đổi', () => {
+    expect(takeQuestionToResend([asked, answered])).toBeNull();
+    expect(takeQuestionToResend([])).toBeNull();
+    expect(takeQuestionToResend([asked, { ...answered, isLocal: true }])).toBeNull();
   });
 });
