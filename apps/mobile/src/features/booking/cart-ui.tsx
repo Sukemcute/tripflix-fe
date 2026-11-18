@@ -314,7 +314,7 @@ export function CartScreen() {
     return (
       <Screen title={text.cartTitle}>
         <Notice>{text.cartEmpty}</Notice>
-        <Button onPress={() => router.push('/search')}>{text.findHotel}</Button>
+        <Button onPress={() => router.navigate('/(tabs)/explore')}>{text.findHotel}</Button>
       </Screen>
     );
   const discount = calculateBookingCartChildDiscount(cart);
