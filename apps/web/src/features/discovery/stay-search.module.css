@@ -64,7 +64,7 @@
     minmax(200px, 1.4fr) repeat(2, minmax(150px, 1fr)) minmax(140px, 0.85fr) minmax(135px, 0.85fr)
     auto;
   align-items: center;
-  padding: 4px 6px 4px 10px;
+  padding: 4px; /* Đều bốn phía để nền xanh của ô đầu cách viền thanh một khoảng cố định. */
   border: 1px solid #dce9e6;
   border-radius: 999px;
   background: #fbfdfc;
