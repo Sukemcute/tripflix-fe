@@ -67,6 +67,7 @@ export {
   REELS_BY_IDS_PAGE_SIZE,
   reloadReelsFeed,
   sliceReelIdsPage,
+  useRecommendedReelsFeed,
   useReelsByIds,
   useReelsFeed,
   type ReelFeedTab,

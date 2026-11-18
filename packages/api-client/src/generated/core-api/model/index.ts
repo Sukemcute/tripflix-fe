@@ -353,6 +353,7 @@ export * from './searchPlacesResponseDto';
 export * from './searchPlacesResponseDtoFallbackRelaxedItem';
 export * from './searchPostsRequestDto';
 export * from './searchPostsRequestDtoPostType';
+export * from './searchPostsRequestDtoSort';
 export * from './searchPostsResponseDto';
 export * from './searchPostsResponseDtoFallbackRelaxedItem';
 export * from './serviceTokenDto';

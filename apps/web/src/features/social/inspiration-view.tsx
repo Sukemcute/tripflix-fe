@@ -14,13 +14,16 @@ import { pushRecentSearch, readRecentSearches, writeRecentSearches } from './rec
 import {
   buildInspirationHref,
   parseSearchResultType,
+  parseSearchSort,
   SEARCH_OPEN_KIND_PARAM,
   SEARCH_COMMENT_PARAM,
   SEARCH_OPEN_PARAM,
   SEARCH_QUERY_PARAM,
+  SEARCH_SORT_PARAM,
   SEARCH_TYPE_PARAM,
   type InspirationUrlChanges,
   type SearchResultType,
+  type SearchSort,
 } from './search-url';
 import { useIsWideScreen } from './use-wide-screen';
 import { PublishToast } from './composer/publish-toast';
@@ -77,6 +80,8 @@ export function InspirationView() {
   const searchKeyword = rawKeyword ? validateInspirationKeyword(rawKeyword).keyword : '';
   const isSearching = searchKeyword.length > 0;
   const searchResultType = parseSearchResultType(searchParams.get(SEARCH_TYPE_PARAM));
+  // Grid và bài mở từ grid dùng chung kiểu sắp xếp (cùng query tìm), nên cuộn trong bài đúng thứ tự grid đang hiện.
+  const searchSort = parseSearchSort(searchParams.get(SEARCH_SORT_PARAM));
   const isSearchGrid = isSearching && !openPostId;
   // Reel mở từ grid (?kind=reel) xem trong trình xem Reels, lướt trong các Reel của kết quả.
   const isSearchReelOpen = isSearching && Boolean(openPostId) && isOpenReel;
@@ -167,6 +172,9 @@ export function InspirationView() {
     [navigate]
   );
 
+  // Đổi kiểu sắp xếp: replace như đổi tab.
+  const handleChangeSort = useCallback((sort: SearchSort) => navigate({ sort }, 'replace'), [navigate]);
+
   const handleOpenResult = useCallback(
     (postId: string) => {
       hasOpenedFromGridRef.current = true;
@@ -226,6 +234,7 @@ export function InspirationView() {
         <SocialFeedView
           isVisible={isPostsVisible}
           searchKeyword={searchKeyword}
+          searchSort={searchSort}
           focusPostId={openPostId}
           focusCommentId={focusCommentId}
           onBackToResults={isSearching ? handleBackToResults : undefined}
@@ -249,6 +258,8 @@ export function InspirationView() {
             keyword={searchKeyword}
             resultType={searchResultType}
             onChangeResultType={handleChangeResultType}
+            sort={searchSort}
+            onChangeSort={handleChangeSort}
             onOpenPost={handleOpenResult}
             onOpenReel={handleOpenReelResult}
             onClearSearch={() => handleSubmitSearch('')}
