@@ -29,6 +29,7 @@ import { FlightIcon } from './flight-icon';
 import { formatPassengerMix } from './passenger-picker';
 import { toAirportOption } from './flight-search-form';
 import styles from './flights.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.flights;
 const SORT_OPTIONS = [
@@ -441,8 +442,7 @@ function RoundTripSummary({
         .filter(Boolean)
         .join(' · ')
     : isReturnStep
-      ? vi.api.loading
-      : copy.notChosenYet;
+      ? <LoadingDots /> : copy.notChosenYet;
 
   return (
     <section className={styles.roundSummary} aria-label={copy.roundTrip}>
@@ -921,7 +921,7 @@ export function FlightCard({
                   disabled={isLocked || !canBook}
                   onClick={() => fare && onHold(cabin.productId, fare.code)}
                 >
-                  {isHolding ? vi.api.loading : chooseLabel}
+                  {isHolding ? <LoadingDots /> : chooseLabel}
                 </button>
               )}
               {canBook && cabin.remaining != null && (

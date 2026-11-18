@@ -27,6 +27,7 @@ import { CancelOrder } from './cancel-order';
 import { CheckoutError } from './checkout-error';
 import { CheckoutIcon, type CheckoutIconName } from './checkout-icon';
 import styles from './checkout-form.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.commerce;
 type Order = Awaited<ReturnType<typeof commerceApi.getCheckout>>;
@@ -85,7 +86,7 @@ export function CheckoutScreen({ id }: { id: string }) {
   if (!isReady || !user)
     return (
       <main className={`ota-container ${styles.page}`}>
-        <p className="empty-state">{vi.api.loading}</p>
+        <p className="empty-state"><LoadingDots /></p>
       </main>
     );
   return <CheckoutForm key={`${user?.id}:${id}`} id={id} isEnabled={isReady && !!user} />;
@@ -249,7 +250,7 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
   if (query.isPending && isEnabled)
     return (
       <main className={`ota-container ${styles.page}`}>
-        <p>{vi.api.loading}</p>
+        <p><LoadingDots /></p>
       </main>
     );
   if (!order)
@@ -512,7 +513,7 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                     className="primary-button"
                     disabled={payment.isPending || otp.length !== 6}
                   >
-                    {payment.isPending ? vi.api.loading : copy.confirmOtp}
+                    {payment.isPending ? <LoadingDots /> : copy.confirmOtp}
                   </button>
                 </div>
               )}
@@ -552,7 +553,7 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                     disabled={isLocked || newTotal !== undefined || (method === 'card' && !cardNumber.trim())}
                   >
                     <CheckoutIcon name="lock" size={18} />
-                    {payment.isPending ? vi.api.loading : `${copy.pay} ${formatPrice(total)}`}
+                    {payment.isPending ? <LoadingDots /> : `${copy.pay} ${formatPrice(total)}`}
                   </button>
                   <p className={styles.payNote}>
                     <CheckoutIcon name="shield" size={16} />

@@ -1,4 +1,4 @@
-import { getBookableTripPlan, getTripNights } from '@tripflix/app-core';
+import { getBookableTripPlan, getTripNights, getTripPlanCategory } from '@tripflix/app-core';
 import type { TripAttachmentDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { colors } from '@tripflix/tokens';
@@ -7,6 +7,7 @@ import { View } from 'react-native';
 import { BottomSheet } from '@/components/bottom-sheet';
 import { Button, Icon, Row, Txt } from '@/components/mobile-ui';
 import { useAssistant } from '@/features/assistant/assistant-provider';
+import { ACTIVITY_ICONS } from '@/features/booking/activity-card';
 import { saveTripBooking } from '@/features/booking/trip-booking-store';
 import { trackFeedEvent } from './feed-events';
 import { ProductCard, styles } from '@/features/booking/trip-plan-parts';
@@ -42,7 +43,12 @@ export function TripPlanSheet({
     assistant.openDialog(undefined, postId);
   };
   const book = () => {
-    trackFeedEvent({ type: 'booking_click', postId, hotelId: trip.hotelId ?? null, surface: 'reels_trip_plan' });
+    trackFeedEvent({
+      type: 'booking_click',
+      postId,
+      hotelId: trip.hotelId ?? null,
+      surface: 'reels_trip_plan',
+    });
     saveTripBooking({ postId, postTitle, authorName, coverUrl, trip });
     onClose();
     router.navigate('/(tabs)/book');
@@ -123,7 +129,12 @@ export function TripPlanSheet({
                     <Txt style={styles.communityLabel}>{copy.community}</Txt>
                     {community.map((item, index) => (
                       <View key={index} style={styles.stop}>
-                        <Icon name="location-outline" size={14} color={colors.textMuted} />
+                        {/* Icon theo loại người đăng chọn; bài cũ chưa có loại thì đoán theo tên. */}
+                        <Icon
+                          name={ACTIVITY_ICONS[getTripPlanCategory(item)]}
+                          size={14}
+                          color={colors.textMuted}
+                        />
                         <View style={styles.stopText}>
                           <Txt style={styles.description}>
                             {item.time ? `${item.time} · ${item.title}` : item.title}

@@ -22,6 +22,7 @@ import { SearchAdBanner } from './search-ad-banner';
 import { SoftStarIcon } from './soft-star-icon';
 import { PriceRangeSlider } from './price-range-slider';
 import { GuestPicker } from '@/features/hotels/guest-picker';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 // Vừa chiều cao cột lọc + banner, để trang không bị kéo dài khi nhiều kết quả.
 const RESULTS_PAGE_SIZE = 5;
@@ -260,7 +261,7 @@ export function LiveSearchScreen({
                   void search.suggestions.refetch();
                 }}
               />
-              {search.suggestions.isFetching && <output>{vi.api.loading}</output>}
+              {search.suggestions.isFetching && <output><LoadingDots /></output>}
               {search.suggestions.data?.items.length === 0 && <p>{vi.api.noSuggestions}</p>}
               <div className="suggested-queries" aria-label={vi.api.places}>
                 {search.suggestions.data?.items.map((place) => (
@@ -365,7 +366,7 @@ export function LiveSearchScreen({
             disabled={!canSubmit || search.stays.isFetching}
           >
             <StaySearchIcon name="search" />
-            {search.stays.isFetching ? vi.api.loading : vi.api.findStays}
+            {search.stays.isFetching ? <LoadingDots /> : vi.api.findStays}
           </button>
         </div>
         {!isHomepage && (
@@ -538,7 +539,7 @@ export function LiveSearchScreen({
               })}
             </nav>
             {!search.submitted && <p className={listing.state}>{vi.api.choosePlace}</p>}
-            {search.stays.isFetching && <output className={listing.state}>{vi.api.loading}</output>}
+            {search.stays.isFetching && <output className={listing.state}><LoadingDots /></output>}
             <ApiErrorNotice
               error={search.stays.error}
               retry={() => {

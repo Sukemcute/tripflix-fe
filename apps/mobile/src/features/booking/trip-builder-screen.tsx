@@ -6,6 +6,8 @@ import {
   planNextTripFlight,
   TRIP_PLAN_TIME_PATTERN,
   readSoldOutConflict,
+  readTripBuilderSeed,
+  TRIP_BUILDER_SEED_KEYS,
 } from '@tripflix/app-core';
 import {
   createCheckoutOperation,
@@ -18,7 +20,7 @@ import {
 } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
-import { router, type Href } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { DateSingleField } from '@/components/date-sheet';
@@ -81,7 +83,7 @@ type TripItem = BookableItem | ActivityItem;
 /** Giờ nhận, trả phòng thông thường; khách sạn chưa trả giờ riêng nên thẻ dùng giờ này. */
 const HOTEL_CHECK_IN_TIME = '14:00';
 const HOTEL_CHECK_OUT_TIME = '12:00';
-type HotelDraft = { key: string; checkIn: string; nights: number };
+type HotelDraft = { key: string; checkIn: string; nights: number; hotelId?: string; hotelName?: string };
 /** Chuyến bay sắp thêm: chiều đi tới nơi đến, hoặc chiều về từ nơi đến về nhà. */
 type FlightDraft = { key: string; leg: 'outbound' | 'inbound'; from: string; to: string; date: string };
 
@@ -136,7 +138,9 @@ const nextKey = (prefix: string) => `${prefix}${Date.now().toString(36)}-${(keyS
  */
 export function TripBuilderScreen() {
   const { user } = useApiSession();
-  const [initial] = useState(readBuilder);
+  const params = useLocalSearchParams();
+  const [seed] = useState(() => readTripBuilderSeed(params, getFutureDate(0)));
+  const [initial] = useState(() => (seed ? { ...emptyBuilder(), ...seed } : readBuilder()));
   const [destination, setDestination] = useState(initial.destination);
   const [adults, setAdults] = useState(initial.adults);
   const [children, setChildren] = useState(initial.children ?? 0);
@@ -147,10 +151,18 @@ export function TripBuilderScreen() {
   useEffect(() => {
     writeBuilder({ destination, adults, children, infants, dayCount, startDate, items });
   }, [destination, adults, children, infants, dayCount, startDate, items]);
+  useEffect(() => {
+    // State đã nhận seed trước khi ghi đè bản lưu; bỏ params để quay về không áp dụng lại.
+    if (seed) router.setParams(Object.fromEntries(TRIP_BUILDER_SEED_KEYS.map((key) => [key, undefined])));
+  }, [seed]);
   // Khách sạn sắp thêm hoặc đang đổi: chọn ngày nhận và số đêm trước khi sang màn tìm khách sạn.
-  const [hotelDraft, setHotelDraft] = useState<HotelDraft | null>(null);
+  const [hotelDraft, setHotelDraft] = useState<HotelDraft | null>(() =>
+    seed?.hotel ? { key: nextKey(HOTEL_KEY_PREFIX), ...seed.hotel } : null,
+  );
   const [pendingFlightKey, setPendingFlightKey] = useState<string | null>(null);
-  const [flightDraft, setFlightDraft] = useState<FlightDraft | null>(null);
+  const [flightDraft, setFlightDraft] = useState<FlightDraft | null>(() =>
+    seed?.flight ? { key: nextKey('flight:'), leg: 'outbound', ...seed.flight } : null,
+  );
   const routes = useFlightRoutes();
   const place = destination.destinationPlaceId;
   // Nơi đến chọn trong danh sách (Hà Nội) thì chuyến bay đi tới, về từ sân bay ở đó (HAN).
@@ -277,7 +289,22 @@ export function TripBuilderScreen() {
         defaultDate: getFutureDate(14),
       }),
     });
-  const searchHotel = (draft: HotelDraft) =>
+  const searchHotel = (draft: HotelDraft) => {
+    if (draft.hotelId) {
+      savePostHotel(draft.key, { hotelId: draft.hotelId, hotelName: draft.hotelName ?? '' });
+      router.push({
+        pathname: '/hotel-rooms',
+        params: {
+          id: draft.hotelId,
+          pick: 'post',
+          pickKey: draft.key,
+          checkIn: draft.checkIn,
+          checkOut: getTripDayDate(draft.checkIn, draft.nights + 1),
+          adults: String(adults),
+        },
+      });
+      return;
+    }
     router.push({
       pathname: '/search',
       params: {
@@ -289,6 +316,7 @@ export function TripBuilderScreen() {
         adults: String(adults),
       },
     });
+  };
   const searchFlight = (item?: { key: string; from: string; to: string; date: string }) => {
     const key = item?.key ?? nextKey('flight:');
     setPendingFlightKey(key);
@@ -623,7 +651,7 @@ export function TripBuilderScreen() {
 
         {hotelDraft && (
           <View style={styles.draft}>
-            <Txt style={styles.draftTitle}>{copy.hotelDraftTitle}</Txt>
+            <Txt style={styles.draftTitle}>{hotelDraft.hotelName || copy.hotelDraftTitle}</Txt>
             <DateSingleField
               label={copy.checkIn}
               value={hotelDraft.checkIn}

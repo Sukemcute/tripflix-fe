@@ -2,7 +2,8 @@ import { describeDevice } from '@tripflix/app-core';
 
 /** Chỉ quay lại các trang của web, không chuyển hướng sang địa chỉ lạ truyền qua ?returnTo=. */
 export function readSafeReturnTo(returnTo: string): string {
-  return /^\/(?:account(?:\/moderation)?|trips\/[^/?#]+|search|flights|bookings|hotels\/[^/?#]+|checkout\/[^/?#]+)(?:$|[?#])/.test(
+  // Trang chủ và Cảm hứng: khách hết lượt chat Tripi đăng nhập xong quay về đúng trang đang xem (TF31).
+  return /^\/(?:account(?:\/moderation)?|trips\/[^/?#]+|search|flights|bookings|hotels\/[^/?#]+|checkout\/[^/?#]+|inspiration)?(?:$|[?#])/.test(
     returnTo,
   )
     ? returnTo

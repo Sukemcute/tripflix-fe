@@ -8,6 +8,7 @@ import { formatPrice } from '@/features/discovery/trip-card';
 import { SocialIcon, formatCompactCount } from './live-posts';
 import { getSectionResultType, type SearchResultType } from './search-url';
 import styles from './search-results-grid.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 /** Bản đồ của một điểm OSM: toạ độ đúng hơn tên (nhiều quán trùng tên). */
 export function buildMapUrl(location: { lat: number; lng: number }): string {
@@ -37,7 +38,7 @@ export function ExploreAllResults({
       </div>
     );
   }
-  if (!result) return <p className={styles.loadingMore}>{vi.api.loading}</p>;
+  if (!result) return <p className={styles.loadingMore}><LoadingDots /></p>;
   const sections = result.sections.filter((section) => section.total > 0 && section.items.length > 0);
   const fallback = result.fallback?.items ?? [];
   const shown = [...sections.flatMap((section) => section.items), ...fallback];
@@ -86,7 +87,7 @@ export function PlaceResults({ keyword, kind, ...open }: OpenHandlers & { keywor
       </div>
     );
   }
-  if (search.isPending) return <p className={styles.loadingMore}>{vi.api.loading}</p>;
+  if (search.isPending) return <p className={styles.loadingMore}><LoadingDots /></p>;
   if (items.length === 0) return <p className={styles.stateBox}>{t('api.searchResultsEmptyKind', { query: keyword })}</p>;
   return (
     <>
@@ -99,7 +100,7 @@ export function PlaceResults({ keyword, kind, ...open }: OpenHandlers & { keywor
           disabled={search.isFetchingNextPage}
           onClick={() => void search.fetchNextPage()}
         >
-          {search.isFetchingNextPage ? vi.api.searchResultsLoadingMore : vi.api.searchResultsLoadMore}
+          {search.isFetchingNextPage ? <LoadingDots label={vi.api.searchResultsLoadingMore} /> : vi.api.searchResultsLoadMore}
         </button>
       )}
       <Attribution items={items} />

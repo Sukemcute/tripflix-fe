@@ -20,6 +20,7 @@ import { StaySearchIcon } from './stay-search-icon';
 import { WashiTape } from './torn-paper';
 import styles from './ota-home.module.css';
 import { useNearViewport } from './use-near-viewport';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 export function HomeStayPreview() {
   const { ref, isNear } = useNearViewport();
@@ -128,7 +129,7 @@ export function HomeStayPreview() {
           }}
         />
         {query.isPending && (
-          <output className={`${styles.state} ${styles.loadingState}`}>{vi.api.loading}</output>
+          <output className={`${styles.state} ${styles.loadingState}`}><LoadingDots /></output>
         )}
         {query.data?.items.length === 0 && (
           <p className={styles.state}>
@@ -199,7 +200,7 @@ export function HomeStoryPreview() {
         }}
       />
       {query.isPending && (
-        <output className={`${styles.state} ${styles.loadingState}`}>{vi.api.loading}</output>
+        <output className={`${styles.state} ${styles.loadingState}`}><LoadingDots /></output>
       )}
       {posts?.length === 0 && <p className={styles.state}>{vi.api.noPosts}</p>}
       <div className={styles.previewGrid}>

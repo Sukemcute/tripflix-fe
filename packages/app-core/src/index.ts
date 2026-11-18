@@ -10,6 +10,7 @@ export * from './demo-catalog';
 export * from './reels';
 export * from './sheet-list-drag';
 export * from './trip-plan';
+export * from './trip-builder-seed';
 export * from './device-name';
 export * from './registration';
 export * from './checkout-guests';
