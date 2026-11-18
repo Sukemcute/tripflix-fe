@@ -14,10 +14,10 @@ export function AppDownloadBadges() {
         </Link>
         <Link prefetch={false} href="/coming-soon" className={styles.badge} aria-label="Tải Tripflix trên Google Play — sắp ra mắt">
           <svg className={styles.playIcon} viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="#34A853" d="M2.4 1.2v21.6L13.7 12z" />
-            <path fill="#4285F4" d="m2.4 1.2 13.2 7.9L19 5.8c.7-.5.5-1.2-.1-1.5L5.1.5c-1.2-.5-2.2-.2-2.7.7Z" />
-            <path fill="#FBBC04" d="m15.6 14.9-13.2 7.9c.5.9 1.5 1.2 2.7.7L19 17.7c.6-.3.8-1 .1-1.5z" />
-            <path fill="#EA4335" d="m19 5.8-3.4 2 4.1 2.5c1.2.7 1.2 1.7 0 2.4l-4.1 2.4 3.4 2 3.1-1.8c2.2-1.3 2.2-3.4 0-4.7z" />
+            <path fill="#00D7FE" d="M2.3 1.2c-.2.3-.3.7-.3 1.2v19.2c0 .5.1.9.3 1.2L13.5 12z" />
+            <path fill="#00F076" d="m2.3 1.2 13.1 8 3.4-3.4L5.2.4c-1.1-.6-2.2-.3-2.9.8Z" />
+            <path fill="#FF3A44" d="M2.3 22.8c.7 1.1 1.8 1.4 2.9.8l13.6-7.9-3.4-3.4z" />
+            <path fill="#FFBD00" d="m15.4 9.2 4.8 2.9-4.8 2.8-3.2-2.9z" />
           </svg>
           <span className={styles.copy}><small>GET IT ON</small><strong>Google Play</strong></span>
         </Link>
