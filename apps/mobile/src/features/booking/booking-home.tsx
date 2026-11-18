@@ -205,6 +205,7 @@ const layout = StyleSheet.create({
   },
   sectionTitle: { flex: 1 },
   bodyText: { ...compactType.body, fontFamily: nativeFonts.regular, color: colors.ink, lineHeight: 22 },
+  // Nét đứt, nền trong suốt: chỉ là thông báo, không nhầm với thẻ bấm được bên dưới.
   empty: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -212,8 +213,8 @@ const layout = StyleSheet.create({
     padding: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1,
+    borderStyle: 'dashed',
     borderColor: colors.border,
-    backgroundColor: colors.background,
   },
   // Câu trả lời của Tripi nằm trong khung riêng, thụt vào như các thẻ bên dưới.
   reply: {

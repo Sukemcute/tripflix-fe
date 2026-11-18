@@ -703,10 +703,13 @@ export function TripBookingScreen() {
       compact
       background={colors.surface}
     >
-      <View style={{ gap: spacing.lg }}>
+      <View style={{ gap: spacing.xl }}>
         <UpcomingTrips />
-        <TripBuilderEntry />
-        <AskTripiCard />
+        <View style={{ gap: spacing.md }}>
+          <Txt variant="title">{copy.planNewTitle}</Txt>
+          <TripBuilderEntry />
+          <AskTripiCard />
+        </View>
       </View>
     </Screen>
   );

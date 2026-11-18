@@ -204,6 +204,7 @@ export const mobile = {
     featuredEmpty: 'Chưa có lộ trình nổi bật để đặt.',
     upcomingTitle: 'Chuyến sắp tới',
     upcomingAll: 'Xem tất cả',
+    planNewTitle: 'Lên chuyến mới',
     upcomingEmpty: 'Bạn chưa có chuyến nào sắp đi. Chọn một lộ trình ở tab Khám phá hoặc tự lên lộ trình bên dưới.',
     askTripiTitle: 'Nhờ Tripi lên lộ trình',
     askTripiBody: 'Kể Tripi nghe bạn muốn đi đâu, mấy ngày, bao nhiêu tiền. Lộ trình Tripi lập đặt được ngay tại đây.',
