@@ -216,7 +216,13 @@ function StopRow({ stop, isLast }: { stop: ItineraryStop; isLast: boolean }) {
         <View style={[styles.railDot, tone && { backgroundColor: tone.color }]} />
         {!isLast && <View style={styles.railLine} />}
       </View>
-      <View style={styles.stopBody}>
+      <View style={[styles.stopBody, stop.service && styles.serviceStop]}>
+        {stop.service && (
+          <View style={styles.serviceBadge}>
+            <Icon name={stop.service === 'flight' ? 'airplane-outline' : 'bed-outline'} size={13} color={c.coralInk} />
+            <Txt style={styles.serviceText}>{copy.tripflixService}</Txt>
+          </View>
+        )}
         {!!stop.partLabel && (
           <View style={[styles.partBadge, tone && { backgroundColor: tone.background }]}>
             {stop.part && <Icon name={PART_ICONS[stop.part]} size={13} color={tone?.color ?? c.navy} />}
@@ -529,6 +535,17 @@ const styles = StyleSheet.create({
     borderColor: c.coralSoft,
   },
   stopBody: { flex: 1, gap: 3, paddingBottom: s.md },
+  // Chuyến bay, khách sạn Tripflix trong lộ trình: nổi bật để khách thấy phần đặt được.
+  serviceStop: {
+    padding: s.sm,
+    marginBottom: s.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: c.coral,
+    backgroundColor: c.coralTint,
+  },
+  serviceBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  serviceText: { ...chatType.meta, fontFamily: f.semibold, color: c.coralInk },
   partBadge: {
     flexDirection: 'row',
     alignItems: 'center',
