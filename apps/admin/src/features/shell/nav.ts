@@ -26,6 +26,7 @@ export const adminNav: readonly AdminNavItem[] = [
   { href: '/search-jobs', label: 'admin.searchJobs', icon: 'analytics', owner: 'Duy' },
   { href: '/recommend-jobs', label: 'admin.recommendJobs', icon: 'analytics', owner: 'Duy' },
   { href: '/ai-usage', label: 'admin.aiUsage', icon: 'reports', owner: 'Bảo' },
+  { href: '/user-activity', label: 'admin.userActivity', icon: 'users', owner: 'Trang' },
   { href: '/inventory', label: 'admin.inventory', icon: 'inventory', owner: 'Thắng' },
   { href: '/orders', label: 'admin.orders', icon: 'orders', owner: 'Thắng' },
   { href: '/staff', label: 'admin.staff', icon: 'users', owner: 'Dũng' },

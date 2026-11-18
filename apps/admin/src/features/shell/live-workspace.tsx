@@ -16,6 +16,7 @@ import { SearchMonitoring } from '../search-monitoring/search-monitoring';
 import { DiscoveryJobs } from '../discovery-jobs/discovery-jobs';
 import { AnalyticsWorkspace } from '../analytics/analytics-workspace';
 import { AiUsageReport } from '../ai-usage/ai-usage-report';
+import { UserActivityWorkspace } from '../user-activity/user-activity-workspace';
 import { OperationsAlerts, OperationsLog, UnavailableModule } from './operations-pages';
 import { useAdminRealtime } from './use-admin-realtime';
 import { LoadingState } from './operations-ui';
@@ -67,11 +68,12 @@ const descriptions: Partial<Record<MessageKey, string>> = {
   'admin.reports': copy.reportsHint,
   'admin.analytics': vi.analytics.description,
   'admin.aiUsage': vi.aiUsage.description,
+  'admin.userActivity': vi.userActivity.description,
 };
 const groups = [
   { title: copy.operations, paths: ['/', '/moderation', '/alerts', '/audit'] },
   { title: copy.platform, paths: ['/search-monitor', '/search-jobs', '/recommend-jobs'] },
-  { title: copy.management, paths: ['/staff', '/inventory', '/analytics', '/ai-usage', '/orders', '/reports'] },
+  { title: copy.management, paths: ['/staff', '/inventory', '/analytics', '/ai-usage', '/user-activity', '/orders', '/reports'] },
 ];
 
 export function AdminWorkspace({ label }: { label: MessageKey }) {
@@ -303,6 +305,8 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
                 <AnalyticsWorkspace />
               ) : label === 'admin.aiUsage' ? (
                 <AiUsageReport />
+              ) : label === 'admin.userActivity' ? (
+                <UserActivityWorkspace />
               ) : label === 'admin.searchJobs' || label === 'admin.recommendJobs' ? (
                 <DiscoveryJobs key={label} group={label === 'admin.searchJobs' ? 'search' : 'recommend'} />
               ) : label === 'admin.users' || label === 'admin.staff' ? (
