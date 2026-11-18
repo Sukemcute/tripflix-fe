@@ -3,7 +3,7 @@
 // Cùng luồng với apps/mobile/src/features/assistant/assistant-provider.tsx (TF31): gửi, lưu, khôi phục,
 // đổi tài khoản, khách hết lượt rồi đăng nhập. Web chỉ khác chỗ lưu (localStorage) và không có reel đang xem.
 // shortcut: chép logic của mobile vì app-core không được import React; khi có gói hook dùng chung thì gộp lại.
-import { useApiSession, type AssistantAction, type AssistantCard, type AssistantTrip } from '@tripflix/api-client';
+import { readAssistantCards, useApiSession, type AssistantAction, type AssistantCard, type AssistantTrip } from '@tripflix/api-client';
 import {
   completeAssistantTurn,
   parseAssistantChat,
@@ -132,7 +132,8 @@ function useAssistantState(transport: AssistantTransport) {
       for (const message of saved.messages) {
         sequence.current = Math.max(sequence.current, Number(message.id) || 0);
       }
-      setMessages((current) => (current.length ? current : saved.messages));
+      const restored = saved.messages.map((message) => ({ ...message, cards: readAssistantCards(message.cards) }));
+      setMessages((current) => (current.length ? current : restored));
       setTrip((current) => current ?? (saved.trip as AssistantTrip | null));
     } catch {
       setHasStorageError(true);

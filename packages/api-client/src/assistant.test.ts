@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AssistantError, parseSseEvents, sendAssistantMessage } from './assistant';
+import { AssistantError, parseSseEvents, readAssistantCards, sendAssistantMessage } from './assistant';
 import { configureHttp } from './http';
 
 const stream = [
@@ -35,6 +35,36 @@ describe('parseSseEvents', () => {
     expect(parseSseEvents('event: text\r\ndata: {"delta":"a"}\r\n\r\n: ping\n\n')).toEqual([
       { event: 'text', data: { delta: 'a' } },
     ]);
+  });
+});
+
+describe('readAssistantCards', () => {
+  it('filters restored cards and actions the same way as server cards', async () => {
+    const actions = [
+      { type: 'select', label: 'Chọn', ref: 'o1' },
+      { type: 'book', label: 'Đặt', path: '/trip-builder', params: { hotelId: 'h1' } },
+      { type: 'book', label: 'Lạ', path: 'https://evil.test', params: {} },
+      { type: 'book', label: 'Lạ', path: '/checkout', params: {} },
+    ];
+    const server = await cardsAnswer(actions);
+    const restored = readAssistantCards([
+      null,
+      false,
+      [],
+      {
+        ref: 'r1',
+        id: 'booking',
+        kind: 'booking',
+        title: 'Chốt chuyến Đà Nẵng',
+        lines: [{ label: 'Khách sạn A' }],
+        actions,
+      },
+    ]);
+    expect(restored).toEqual(server.cards);
+    expect(restored[0]?.actions).toEqual(actions.slice(0, 2));
+  });
+  it.each([null, undefined, {}, 'invalid'])('ignores non-array stored cards: %j', (value) => {
+    expect(readAssistantCards(value)).toEqual([]);
   });
 });
 

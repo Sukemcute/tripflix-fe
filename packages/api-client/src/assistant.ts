@@ -157,6 +157,11 @@ function readCards(value: unknown): AssistantCard[] {
   });
 }
 
+/** Thẻ khôi phục từ máy dùng cùng bộ lọc với thẻ nhận từ server. */
+export function readAssistantCards(value: unknown): AssistantCard[] {
+  return readCards(value);
+}
+
 export async function sendAssistantMessage(
   request: ChatRequest,
   options: { baseUrl: string; signal?: AbortSignal },

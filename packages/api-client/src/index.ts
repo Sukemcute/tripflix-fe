@@ -181,6 +181,7 @@ export {
 export {
   AssistantError,
   parseSseEvents,
+  readAssistantCards,
   sendAssistantMessage,
   type AssistantAnswer,
   type AssistantAnswerKind,
