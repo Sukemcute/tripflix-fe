@@ -15,14 +15,21 @@ export type AssistantChatMessage = {
   text: string;
   /** Loại câu trả lời (answer, clarify, …); server dùng để không hỏi lại hai lần. */
   kind?: string;
+  cards?: unknown[];
   /** Tin do app tự thêm (mời đăng nhập, báo đang đông): không gửi lên server. */
   isLocal?: boolean;
 };
 
 type SavedChat = { userId: string; savedAt: number; messages: AssistantChatMessage[]; trip: unknown };
 
-function storedMessage({ id, role, text, kind }: AssistantChatMessage): AssistantChatMessage {
-  return { id, role, text, ...(kind === undefined ? {} : { kind }) };
+function storedMessage({ id, role, text, kind, cards }: AssistantChatMessage): AssistantChatMessage {
+  return {
+    id,
+    role,
+    text,
+    ...(kind === undefined ? {} : { kind }),
+    ...(Array.isArray(cards) ? { cards } : {}),
+  };
 }
 
 export function serializeAssistantChat(
@@ -41,14 +48,23 @@ export function serializeAssistantChat(
   };
   if (maxBytes === undefined) return JSON.stringify(saved);
 
-  // SecureStore counts UTF-8 bytes, including multi-byte Vietnamese text and emoji.
+  // Tính theo byte UTF-8, kể cả chữ tiếng Việt và emoji.
   const fits = (value: string) => encodeURIComponent(value).replace(/%[0-9A-F]{2}/g, 'x').length <= maxBytes;
   if (!fits(JSON.stringify({ ...saved, messages: [] }))) saved.trip = null;
   let value = JSON.stringify(saved);
+  const latestAnswer = [...recent].reverse().find((message) => message.role === 'assistant');
+  for (const message of recent) {
+    if (fits(value)) break;
+    if (message === latestAnswer || !message.cards) continue;
+    delete message.cards;
+    value = JSON.stringify(saved);
+  }
   let start = 0;
   while (!fits(value) && start < recent.length) {
     const oldestIsPair = recent[start]?.role === 'user' && recent[start + 1]?.role === 'assistant';
-    start += oldestIsPair ? 2 : 1;
+    const next = start + (oldestIsPair ? 2 : 1);
+    if (latestAnswer?.cards && next > recent.indexOf(latestAnswer)) delete latestAnswer.cards;
+    else start = next;
     value = JSON.stringify({ ...saved, messages: recent.slice(start) });
   }
   return value;

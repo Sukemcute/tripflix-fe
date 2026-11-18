@@ -41,18 +41,69 @@ describe('assistant chat persistence', () => {
     expect(restored?.messages[0]?.text).toBe('m10');
   });
 
-  it('stores text and kind without cards or suggestions and reads existing sessions', () => {
+  it('stores cards with text and kind, leaves out suggestions and reads existing sessions', () => {
     const extended = [
       { ...messages[1]!, cards: [{ id: 'reel-1', details: 'x'.repeat(3000) }], suggestions: ['Xem reel'] },
     ];
     const trip = { v: 1, place: 'Đà Lạt' };
     const raw = serializeAssistantChat('u1', extended, trip, NOW);
-    const expected = { messages: [messages[1]], trip };
+    const expected = { messages: [{ ...messages[1], cards: extended[0]!.cards }], trip };
     expect(JSON.parse(raw)).toMatchObject(expected);
-    expect(raw).not.toContain('cards');
+    expect(parseAssistantChat(raw, 'u1', NOW)).toEqual(expected);
     expect(raw).not.toContain('suggestions');
     const legacy = JSON.stringify({ userId: 'u1', savedAt: NOW, messages: extended, trip });
     expect(parseAssistantChat(legacy, 'u1', NOW)).toEqual(expected);
+  });
+
+  it.each([null, {}, 'invalid', 123])('drops cards that are not an array: %j', (cards) => {
+    const raw = JSON.stringify({ userId: 'u1', savedAt: NOW, messages: [{ ...messages[1], cards }] });
+    expect(parseAssistantChat(raw, 'u1', NOW)?.messages).toEqual([messages[1]]);
+  });
+
+  it('drops old cards before messages and keeps the newest assistant cards', () => {
+    const old = { ...messages[1]!, cards: [{ id: 'old', detail: 'x'.repeat(3000) }] };
+    const latest = { id: '4', role: 'assistant' as const, text: 'Lộ trình đây', cards: [{ id: 'new' }] };
+    const history = [messages[0]!, old, { ...messages[0]!, id: '3' }, latest];
+    const raw = serializeAssistantChat('u1', history, null, NOW, 700);
+    expect(encodeURI(raw).match(/%[0-9A-F]{2}|./g)?.length).toBeLessThanOrEqual(700);
+    expect(parseAssistantChat(raw, 'u1', NOW)?.messages).toEqual([
+      messages[0],
+      messages[1],
+      history[2],
+      latest,
+    ]);
+    expect(old.cards).toHaveLength(1);
+  });
+
+  it('keeps the newest assistant cards longer than old message text', () => {
+    const latest = {
+      id: '4',
+      role: 'assistant' as const,
+      text: 'Lộ trình',
+      cards: [{ id: 'new', detail: 'x'.repeat(150) }],
+    };
+    const history = [
+      { ...messages[0]!, text: 'x'.repeat(3000) },
+      messages[1]!,
+      { ...messages[0]!, id: '3' },
+      latest,
+    ];
+    const raw = serializeAssistantChat('u1', history, null, NOW, 700);
+    expect(parseAssistantChat(raw, 'u1', NOW)?.messages).toEqual(history.slice(-2));
+  });
+
+  it('drops even the newest cards when needed to keep the newest full turn', () => {
+    const latest = {
+      id: '4',
+      role: 'assistant' as const,
+      text: 'Lộ trình',
+      cards: [{ detail: 'x'.repeat(3000) }],
+    };
+    const raw = serializeAssistantChat('u1', [messages[0]!, latest], null, NOW, 400);
+    expect(parseAssistantChat(raw, 'u1', NOW)?.messages).toEqual([
+      messages[0],
+      { id: '4', role: 'assistant', text: 'Lộ trình' },
+    ]);
   });
 
   it('fits long Vietnamese conversations into SecureStore and keeps the newest full turn and trip', () => {
