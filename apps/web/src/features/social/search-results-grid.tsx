@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { t, vi } from '@tripflix/i18n';
 import { useApiSession, usePostSearchFeed } from '@tripflix/api-client';
-import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
+import type { SearchPostsRequestDtoSort, SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import { getAvatarTone } from './avatar-tone';
@@ -14,6 +14,7 @@ import { formatSearchCardDate, getSearchCardCaption } from './search-result-card
 import { ExploreAllResults, PlaceResults } from './search-explore-results';
 import { getPlaceKind, SEARCH_RESULT_TYPES, type SearchResultType } from './search-url';
 import styles from './search-results-grid.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 /** Số thẻ khung xám khi đang tải trang đầu: vừa 2 hàng trên màn rộng. */
 const SKELETON_CARD_COUNT = 12;
@@ -28,10 +29,19 @@ const RESULT_TYPE_LABELS: Record<SearchResultType, string> = {
   reels: vi.api.searchResultsTabReels,
 };
 
+const POST_SORT_OPTIONS: Array<{ value: SearchPostsRequestDtoSort; label: string }> = [
+  { value: 'relevance', label: vi.api.postSortRelevance },
+  { value: 'trending', label: vi.api.postSortTrending },
+  { value: 'recent', label: vi.api.postSortRecent },
+];
+
 export interface SearchResultsGridProps {
   keyword: string;
   resultType: SearchResultType;
   onChangeResultType: (resultType: SearchResultType) => void;
+  /** Kiểu sắp xếp bài, Reels: trang Cảm hứng giữ (URL) để bài mở từ grid cuộn đúng thứ tự này. */
+  sort: SearchPostsRequestDtoSort;
+  onChangeSort: (sort: SearchPostsRequestDtoSort) => void;
   /** Mở bài ở trang Cảm hứng theo id. */
   onOpenPost: (postId: string) => void;
   /** Bấm một Reel: mở trình xem Reels, lướt trong các Reel đang có ở grid (theo thứ tự grid). */
@@ -47,6 +57,8 @@ export function SearchResultsGrid({
   keyword,
   resultType,
   onChangeResultType,
+  sort,
+  onChangeSort,
   onOpenPost,
   onOpenReel,
   onClearSearch,
@@ -57,7 +69,7 @@ export function SearchResultsGrid({
   // Từ khoá hoặc tab mới thì cuộn về đầu grid.
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
-  }, [keyword, resultType]);
+  }, [keyword, resultType, sort]);
 
   return (
     <section ref={scrollRef} className={styles.resultsScroll} aria-label={vi.api.searchResultsAria}>
@@ -89,13 +101,30 @@ export function SearchResultsGrid({
       ) : placeKind ? (
         <PlaceResults keyword={keyword} kind={placeKind} onOpenPost={onOpenPost} onOpenReel={onOpenReel} />
       ) : (
-        <PostResults
-          keyword={keyword}
-          resultType={resultType}
-          scrollRef={scrollRef}
-          onOpenPost={onOpenPost}
-          onOpenReel={onOpenReel}
-        />
+        <>
+          <div className={styles.tabs} role="tablist" aria-label={vi.api.postSortAria}>
+            {POST_SORT_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="tab"
+                aria-selected={option.value === sort}
+                className={styles.tab}
+                onClick={() => onChangeSort(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <PostResults
+            keyword={keyword}
+            resultType={resultType}
+            sort={sort}
+            scrollRef={scrollRef}
+            onOpenPost={onOpenPost}
+            onOpenReel={onOpenReel}
+          />
+        </>
       )}
     </section>
   );
@@ -105,16 +134,18 @@ export function SearchResultsGrid({
 function PostResults({
   keyword,
   resultType,
+  sort,
   scrollRef,
   onOpenPost,
   onOpenReel,
 }: Pick<SearchResultsGridProps, 'keyword' | 'resultType' | 'onOpenPost' | 'onOpenReel'> & {
+  sort: SearchPostsRequestDtoSort;
   scrollRef: RefObject<HTMLDivElement | null>;
 }) {
   const { user } = useApiSession();
   // Reels hỏi thẳng discovery loại video. Bài viết chưa có loại khớp đúng vlog bên discovery nên dùng chung
   // kết quả Tất cả rồi lọc (cùng query với tab Bài viết khi mở bài, không gọi lại).
-  const searchQuery = usePostSearchFeed(keyword, resultType === 'reels' ? 'video' : undefined);
+  const searchQuery = usePostSearchFeed(keyword, resultType === 'reels' ? 'video' : undefined, sort);
   const { hasNextPage, isFetchingNextPage, isPending, fetchNextPage } = searchQuery;
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -227,7 +258,7 @@ function PostResults({
       )}
 
       <div ref={sentinelRef} className={styles.sentinel} aria-hidden="true" />
-      {isFetchingNextPage && <p className={styles.loadingMore}>{vi.api.searchResultsLoadingMore}</p>}
+      {isFetchingNextPage && <p className={styles.loadingMore}><LoadingDots label={vi.api.searchResultsLoadingMore} /></p>}
     </>
   );
 }

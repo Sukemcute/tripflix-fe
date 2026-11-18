@@ -11,4 +11,6 @@ export type PostRecommendationsControllerRecommendPostsMode =
 export const PostRecommendationsControllerRecommendPostsMode = {
   for_you: 'for_you',
   trending: 'trending',
+  has_plan: 'has_plan',
+  recent: 'recent',
 } as const;

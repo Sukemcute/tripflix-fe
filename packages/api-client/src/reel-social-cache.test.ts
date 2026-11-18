@@ -200,3 +200,24 @@ it('removes an unsaved reel from the saved list only, keeping cursors and other 
   expect(read().pages[0]!.items[0]!.postId).toBe('one');
   expect(client.getQueryData(['feed', 'saved', 'other-viewer'])).toBeUndefined();
 });
+
+it('updates Reels recommended by discovery (every mode) like the regular feed', () => {
+  const { client } = setup();
+  const recommended = (postId: string): InfiniteData<FeedPageDto> => ({ pages: [{ items: [card(postId)], nextCursor: null }], pageParams: [undefined] });
+  const trendingKey = ['feed', 'recommended', 'trending', 'viewer'];
+  const hasPlanKey = ['feed', 'recommended', 'has_plan', 'viewer'];
+  const otherViewerKey = ['feed', 'recommended', 'trending', 'someone-else'];
+  client.setQueryData(trendingKey, recommended('one'));
+  client.setQueryData(hasPlanKey, recommended('one'));
+  client.setQueryData(otherViewerKey, recommended('one'));
+
+  updateReelSocialCache(client, 'viewer', 'one', 'like', true);
+
+  for (const key of [trendingKey, hasPlanKey]) {
+    const item = client.getQueryData<InfiniteData<FeedPageDto>>(key)!.pages[0]!.items[0]!;
+    expect(item.viewerState).toMatchObject({ liked: true });
+    expect(item.counts.likes).toBe(6);
+  }
+  // Danh sách của người xem khác không bị đổi.
+  expect(client.getQueryData<InfiniteData<FeedPageDto>>(otherViewerKey)!.pages[0]!.items[0]!.viewerState).toMatchObject({ liked: false });
+});

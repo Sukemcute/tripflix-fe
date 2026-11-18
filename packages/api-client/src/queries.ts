@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { recommendPublicPosts, searchPublicPosts } from './explore-search';
+import type { PostRecommendationsControllerRecommendPostsMode } from './generated/core-api/model';
 import { useApiSession } from './session';
 import { socialApi } from './social';
 
@@ -10,11 +11,12 @@ export function useSocialPosts(
   postType?: 'vlog',
   // 'recommended': khi không có từ khoá, lấy bài gợi ý theo gu của discovery thay cho bài mới nhất.
   publicSource: 'latest' | 'recommended' = 'latest',
-  options: { enabled?: boolean } = {},
+  options: { enabled?: boolean; recommendMode?: PostRecommendationsControllerRecommendPostsMode } = {},
 ) {
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
-  const queryKey = ['social', kind, user?.id, keyword, postType, publicSource];
+  const recommendMode = options.recommendMode ?? 'for_you';
+  const queryKey = ['social', kind, user?.id, keyword, postType, publicSource, ...(publicSource === 'recommended' ? [recommendMode] : [])];
   const isRecommendedFeed = kind === 'public' && !keyword && publicSource === 'recommended';
   return useInfiniteQuery({
     queryKey,
@@ -32,7 +34,7 @@ export function useSocialPosts(
                 postType ? { ...page, items: page.items.filter((post) => post.postType === postType) } : page,
               )
             : isRecommendedFeed
-              ? recommendedPage(client, queryKey, pageParam) ?? recommendPublicPosts(pageParam, signal, postType)
+              ? recommendedPage(client, queryKey, pageParam) ?? recommendPublicPosts(pageParam, signal, postType, recommendMode)
               : socialApi.listPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     select: withoutRepeatedPosts,

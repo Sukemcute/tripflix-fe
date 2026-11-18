@@ -129,30 +129,6 @@
   color: var(--color-background);
 }
 
-/* Tooltip on hover */
-.dockItemBtn[data-tooltip]::before {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: 56px;
-  padding: 6px 12px;
-  background: var(--color-ink);
-  color: var(--color-background);
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 999px;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity 160ms ease, transform 160ms ease;
-  z-index: 60;
-}
-
-.dockItemBtn:hover[data-tooltip]::before {
-  opacity: 1;
-  transform: translateX(0);
-}
-
 /* --------------------------------------------------------------------------
    Drawer tìm kiếm kiểu TikTok: ô tìm dạng viên trơn, danh sách "Tìm gần đây"
    và "Có thể bạn thích" dạng dòng, không khối màu, không đường phân cách.
@@ -2276,10 +2252,6 @@ a.authorAvatar {
     gap: 8px;
     width: 100%;
     justify-content: space-around;
-  }
-
-  .dockItemBtn[data-tooltip]::before {
-    display: none;
   }
 
   .splitViewContainer {

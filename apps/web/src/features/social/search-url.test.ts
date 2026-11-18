@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInspirationHref, buildPostHref, getPlaceKind, getSectionResultType, parseSearchResultType } from './search-url';
+import { buildInspirationHref, buildPostHref, getPlaceKind, getSectionResultType, parseSearchResultType, parseSearchSort } from './search-url';
 
 describe('buildPostHref', () => {
   it('bài viết mở ở trang Cảm hứng, Reel thêm kind=reel', () => {
@@ -52,5 +52,24 @@ describe('tab kết quả tìm kiếm', () => {
   it('giữ tab khi dựng URL, Tất cả thì bỏ tham số', () => {
     expect(buildInspirationHref('/inspiration', 'q=cafe', { resultType: 'cafe' })).toBe('/inspiration?q=cafe&type=cafe');
     expect(buildInspirationHref('/inspiration', 'q=cafe&type=cafe', { resultType: 'all' })).toBe('/inspiration?q=cafe');
+  });
+});
+
+describe('kiểu sắp xếp kết quả (sort)', () => {
+  it('đọc giá trị hợp lệ, lạ hoặc thiếu thì Liên quan nhất', () => {
+    expect(parseSearchSort('recent')).toBe('recent');
+    expect(parseSearchSort('trending')).toBe('trending');
+    expect(parseSearchSort('newest')).toBe('relevance');
+    expect(parseSearchSort(null)).toBe('relevance');
+  });
+
+  it('giữ sort khi mở bài từ grid (bài mở cuộn đúng thứ tự grid), Liên quan nhất thì bỏ tham số', () => {
+    expect(buildInspirationHref('/inspiration', 'q=dalat', { sort: 'recent' })).toBe('/inspiration?q=dalat&sort=recent');
+    expect(buildInspirationHref('/inspiration', 'q=dalat&sort=recent', { openPostId: 'p1' })).toBe('/inspiration?q=dalat&sort=recent&open=p1');
+    expect(buildInspirationHref('/inspiration', 'q=dalat&sort=recent', { sort: 'relevance' })).toBe('/inspiration?q=dalat');
+  });
+
+  it('thoát tìm kiếm thì bỏ sort', () => {
+    expect(buildInspirationHref('/inspiration', 'q=dalat&sort=trending', { keyword: null })).toBe('/inspiration');
   });
 });
