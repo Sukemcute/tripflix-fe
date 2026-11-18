@@ -27,7 +27,7 @@ import { flightsControllerSearch } from '@tripflix/api-client/core-api/flights/f
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router, type Href } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { DateSingleField } from '@/components/date-sheet';
@@ -38,7 +38,6 @@ import { ActivityCard, TimeTag, type ActivityFields } from './activity-card';
 import { CartLink } from './cart-ui';
 import { CommerceError } from './commerce-state';
 import { AskTripiCard, UpcomingTrips } from './booking-home';
-import { FeaturedTrips } from './featured-trips';
 import { TripBuilderEntry } from './trip-builder-screen';
 
 const soldOutOf = (error: unknown) =>
@@ -54,13 +53,7 @@ import {
 
 const copy = vi.mobile.tripPlan;
 
-function SelectedTripScreen({
-  selected,
-  featured,
-}: {
-  selected: SelectedTripBooking;
-  featured: (isDisabled: boolean) => ReactNode;
-}) {
+function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
   const { postId, postTitle, authorName, trip } = selected;
   const { isReady, user } = useApiSession();
   const routes = useFlightRoutes();
@@ -686,7 +679,6 @@ function SelectedTripScreen({
             })}
           </View>
         </View>
-        {featured(booking.isPending)}
       </ScrollView>
     </Screen>
   );
@@ -695,11 +687,8 @@ function SelectedTripScreen({
 /** Mỗi bài được chọn dựng lại trang để bỏ giá, bộ lọc và vị trí cuộn của bài trước. */
 export function TripBookingScreen() {
   const selected = useTripBooking();
-  // Lộ trình nổi bật nằm ở tab Khám phá; trang đang đặt vẫn giữ lưới để đổi sang lộ trình khác.
-  const featured = (isDisabled: boolean) => (
-    <FeaturedTrips excludePostId={selected?.postId} isDisabled={isDisabled} keepOrigin={selected?.origin} />
-  );
-  if (selected) return <SelectedTripScreen key={selected.postId} selected={selected} featured={featured} />;
+  // Lộ trình nổi bật chỉ nằm ở tab Khám phá.
+  if (selected) return <SelectedTripScreen key={selected.postId} selected={selected} />;
   return (
     <Screen
       title={copy.bookingTitle}

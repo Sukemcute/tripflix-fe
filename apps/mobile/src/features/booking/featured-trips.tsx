@@ -23,17 +23,14 @@ export function FeaturedTrips({
   excludePostId,
   isDisabled = false,
   onPicked,
-  keepOrigin,
 }: {
   excludePostId?: string;
   isDisabled?: boolean;
   onPicked?: () => void;
-  keepOrigin?: string;
 }) {
   const feed = useReelsFeed();
   const pathname = usePathname();
-  // Đổi sang lộ trình khác ngay trong màn đặt thì giữ trang gốc của lộ trình trước.
-  const origin = keepOrigin ?? pathname;
+  const origin = pathname;
   const [destination, setDestination] = useState<string | null>(null);
   // Ô tính bằng điểm ảnh theo bề ngang lưới đo được: trên điện thoại ô 48,5% kèm aspectRatio bị co về 0 nên lưới trắng.
   const [gridWidth, setGridWidth] = useState(0);
