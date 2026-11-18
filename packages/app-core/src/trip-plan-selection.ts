@@ -11,6 +11,8 @@ export interface TripPlanSelection {
     /** Loại phòng người đăng chọn; đặt theo lộ trình ưu tiên phòng này nếu còn bán. */
     hotelProductId?: string;
     hotelRatePlanCode?: string;
+    /** Ảnh bìa người đăng tự chọn cho lộ trình khi đăng reel. */
+    posterUrl?: string;
     destinationName?: string;
     daysCount?: number;
     items?: {

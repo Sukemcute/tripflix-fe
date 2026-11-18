@@ -30,9 +30,10 @@ import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { DateSingleField } from '@/components/date-sheet';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
-import { Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { assets, Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { DragSortList } from '@/features/post/drag-sort-list';
 import { ActivityCard, TimeTag, type ActivityFields } from './activity-card';
 import { CartLink } from './cart-ui';
@@ -384,15 +385,21 @@ function SelectedTripScreen({
       >
         <View style={{ gap: spacing.sm }}>
           <View style={layout.cover}>
-            {selected.coverUrl ? (
-              <Image
-                source={selected.coverUrl}
-                contentFit="cover"
-                contentPosition="top"
-                style={StyleSheet.absoluteFill}
-              />
+            {/* Ảnh bìa người đăng tự chọn; không có thì linh vật Tripi (poster video hay có chữ in sẵn). */}
+            {selected.trip.posterUrl ? (
+              <Image source={selected.trip.posterUrl} contentFit="cover" style={StyleSheet.absoluteFill} />
             ) : (
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tealInk }]} />
+              <LinearGradient
+                colors={[colors.seaMist, colors.sunSoft, colors.coralTint]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[StyleSheet.absoluteFill, layout.coverMascot]}
+              >
+                <View style={[layout.coverBubble, layout.coverBubbleLarge]} />
+                <View style={[layout.coverBubble, layout.coverBubbleSmall]} />
+                <View style={[layout.coverBubble, layout.coverBubbleDot]} />
+                <Image source={assets.welcome} contentFit="contain" style={layout.coverMascotImage} />
+              </LinearGradient>
             )}
             <Pressable
               accessibilityRole="button"
@@ -741,6 +748,27 @@ const layout = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.surfaceMuted,
   },
+  coverMascot: { alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
+  // Vòng tròn mờ trang trí sau linh vật cho nền đỡ trống.
+  coverBubble: { position: 'absolute', borderRadius: 999 },
+  coverBubbleLarge: {
+    width: 220,
+    height: 220,
+    top: -70,
+    right: -50,
+    backgroundColor: colors.background,
+    opacity: 0.45,
+  },
+  coverBubbleSmall: {
+    width: 120,
+    height: 120,
+    bottom: -30,
+    left: -20,
+    backgroundColor: colors.teal,
+    opacity: 0.18,
+  },
+  coverBubbleDot: { width: 36, height: 36, top: 40, left: 48, backgroundColor: colors.coral, opacity: 0.35 },
+  coverMascotImage: { width: '70%', height: '92%' },
   coverBack: {
     position: 'absolute',
     top: spacing.sm,
