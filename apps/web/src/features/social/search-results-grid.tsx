@@ -5,6 +5,7 @@ import { t, vi } from '@tripflix/i18n';
 import { useApiSession, usePostSearchFeed } from '@tripflix/api-client';
 import type { SearchPostsRequestDtoSort, SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import { getAvatarTone } from './avatar-tone';
 import { formatAuthorDisplay, formatCompactCount, SocialIcon } from './live-posts';
 import { getPostImages } from './post-cover';
@@ -239,6 +240,7 @@ function PostResults({
                   <span className={styles.meta}>
                     <span className={styles.avatar} data-tone={getAvatarTone(author.name)} aria-hidden="true">
                       {author.name.charAt(0).toUpperCase()}
+                      <AvatarPhoto userId={post.authorId} />
                     </span>
                     <span className={styles.authorName}>{author.name}</span>
                     {dateText && <span className={styles.date}>{dateText}</span>}

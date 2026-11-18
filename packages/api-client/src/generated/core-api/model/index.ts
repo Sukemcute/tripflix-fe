@@ -362,6 +362,7 @@ export * from './serviceTokenDto';
 export * from './serviceTokenDtoTokenType';
 export * from './serviceTokenRequestDto';
 export * from './sessionDto';
+export * from './setAvatarDto';
 export * from './setBookmarkDto';
 export * from './setCommentReactionDto';
 export * from './setCommentReactionDtoType';

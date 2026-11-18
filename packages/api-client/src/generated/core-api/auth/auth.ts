@@ -42,6 +42,7 @@ import type {
   ServiceTokenDto,
   ServiceTokenRequestDto,
   SessionDto,
+  SetAvatarDto,
   TokenPairDto,
   UpdateProfileDto,
   UserDto,
@@ -1359,6 +1360,183 @@ export const useAccountControllerUpdateProfile = <TError = unknown, TContext = u
   TContext
 > => {
   return useMutation(getAccountControllerUpdateProfileMutationOptions(options), queryClient);
+};
+export type accountControllerSetAvatarResponse200 = {
+  data: MyProfileDto;
+  status: 200;
+};
+
+export type accountControllerSetAvatarResponseSuccess = accountControllerSetAvatarResponse200 & {
+  headers: Headers;
+};
+export type accountControllerSetAvatarResponse = accountControllerSetAvatarResponseSuccess;
+
+export const getAccountControllerSetAvatarUrl = () => {
+  return `/api/auth/me/avatar`;
+};
+
+export const accountControllerSetAvatar = async (
+  setAvatarDto: SetAvatarDto,
+  options?: Parameters<typeof http>[1],
+): Promise<accountControllerSetAvatarResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<accountControllerSetAvatarResponse>(getAccountControllerSetAvatarUrl(), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(setAvatarDto),
+  });
+};
+
+export const getAccountControllerSetAvatarMutationKey = () => ['accountControllerSetAvatar'] as const;
+
+export const getAccountControllerSetAvatarMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof accountControllerSetAvatar>>,
+    TError,
+    AccountControllerSetAvatarMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof accountControllerSetAvatar>>,
+  TError,
+  AccountControllerSetAvatarMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAccountControllerSetAvatarMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof accountControllerSetAvatar>>,
+    AccountControllerSetAvatarMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return accountControllerSetAvatar(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AccountControllerSetAvatarMutationResult = NonNullable<
+  Awaited<ReturnType<typeof accountControllerSetAvatar>>
+>;
+export type AccountControllerSetAvatarMutationBody = SetAvatarDto;
+export type AccountControllerSetAvatarMutationError = unknown;
+export type AccountControllerSetAvatarMutationVariables = { data: SetAvatarDto };
+
+export const useAccountControllerSetAvatar = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof accountControllerSetAvatar>>,
+      TError,
+      AccountControllerSetAvatarMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof accountControllerSetAvatar>>,
+  TError,
+  AccountControllerSetAvatarMutationVariables,
+  TContext
+> => {
+  return useMutation(getAccountControllerSetAvatarMutationOptions(options), queryClient);
+};
+export type accountControllerRemoveAvatarResponse200 = {
+  data: MyProfileDto;
+  status: 200;
+};
+
+export type accountControllerRemoveAvatarResponseSuccess = accountControllerRemoveAvatarResponse200 & {
+  headers: Headers;
+};
+export type accountControllerRemoveAvatarResponse = accountControllerRemoveAvatarResponseSuccess;
+
+export const getAccountControllerRemoveAvatarUrl = () => {
+  return `/api/auth/me/avatar`;
+};
+
+export const accountControllerRemoveAvatar = async (
+  options?: Parameters<typeof http>[1],
+): Promise<accountControllerRemoveAvatarResponse> => {
+  return http<accountControllerRemoveAvatarResponse>(getAccountControllerRemoveAvatarUrl(), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getAccountControllerRemoveAvatarMutationKey = () => ['accountControllerRemoveAvatar'] as const;
+
+export const getAccountControllerRemoveAvatarMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof accountControllerRemoveAvatar>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<Awaited<ReturnType<typeof accountControllerRemoveAvatar>>, TError, void, TContext> => {
+  const mutationKey = getAccountControllerRemoveAvatarMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof accountControllerRemoveAvatar>>,
+    void
+  > = () => {
+    return accountControllerRemoveAvatar(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AccountControllerRemoveAvatarMutationResult = NonNullable<
+  Awaited<ReturnType<typeof accountControllerRemoveAvatar>>
+>;
+
+export type AccountControllerRemoveAvatarMutationError = unknown;
+
+export const useAccountControllerRemoveAvatar = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof accountControllerRemoveAvatar>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof accountControllerRemoveAvatar>>, TError, void, TContext> => {
+  return useMutation(getAccountControllerRemoveAvatarMutationOptions(options), queryClient);
 };
 export type accountControllerChangePasswordResponse204 = {
   data: void;

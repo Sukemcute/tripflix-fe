@@ -40,6 +40,7 @@ import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { getAvatarTone } from './avatar-tone';
+import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import { EmojiPicker } from './emoji-picker';
 import { CommentVisibility } from './comment-visibility';
 import { ModeratedComment } from './moderated-comment';
@@ -912,6 +913,7 @@ function MediaTrackItem({
             tabIndex={-1}
           >
             {getInitial(authorInfo.name)}
+            <AvatarPhoto userId={post.authorId} />
           </Link>
           <div className={styles.overlayAuthorMeta}>
             <div className={styles.overlayAuthorNameRow}>
@@ -2363,6 +2365,7 @@ export function RightPanelCommentsSynchronized({
             <div className={styles.avatarSmallWrap}>
               <span className={styles.avatarSmall} data-tone={getAvatarTone(user.displayName)} aria-hidden="true">
                 {getInitial(user.displayName)}
+                <AvatarPhoto src={user.avatarUrl} />
               </span>
               {user.emailVerified && (
                 <span className={styles.composerVerifiedBadge} data-tooltip="Tài khoản đã xác thực">
@@ -2562,6 +2565,7 @@ function CommentNode({
           tabIndex={-1}
         >
           {getInitial(authorDisplay.name)}
+          <AvatarPhoto userId={comment.authorId} />
         </Link>
         <div className={styles.panelCommentContent}>
           <div className={styles.panelCommentMeta}>

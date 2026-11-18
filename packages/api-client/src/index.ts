@@ -32,6 +32,7 @@ export {
 export { getSecondsLeft, useResendCooldown } from './resend-cooldown';
 export { socialApi } from './social';
 export { useFollowAuthor } from './follows';
+export { getAvatarUrl } from './avatar';
 export { getPublicProfileQueryKey, useAuthorReels, useAuthorVlogs, usePublicProfile } from './public-profile';
 export { moderationApi } from './moderation';
 export { removeUnavailablePost } from './remove-unavailable-post';

@@ -5,8 +5,8 @@ import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
 import * as Linking from 'expo-linking';
 import { useEffect, useRef, useState } from 'react';
-import { Button, Notice, Txt, ui } from '@/components/mobile-ui';
-import { ApiErrorNotice } from '@/components/api-state';
+import { Txt, ui } from '@/components/mobile-ui';
+import { AuthButton as Button, AuthNotice as Notice, AuthErrorNotice as ApiErrorNotice } from './auth-ui';
 
 /** Client web của Google: ID token mang aud này, nên BE (GOOGLE_CLIENT_IDS) nhận như token từ web. */
 const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;

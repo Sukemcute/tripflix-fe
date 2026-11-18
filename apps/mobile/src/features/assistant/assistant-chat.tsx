@@ -2,7 +2,6 @@ import { vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, nativeFonts as f, radius, spacing as s } from '@tripflix/tokens';
 import { useCallback, useRef, useState, type ComponentRef, type ReactElement, type ReactNode } from 'react';
 import {
-  ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -23,6 +22,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router, useFocusEffect, useIsFocused } from 'expo-router';
 import Animated, {
   Easing,
+  FadeInDown,
   ReduceMotion,
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -39,9 +39,12 @@ import { SHEET_CLOSE_SPRING } from '@/components/motion';
 import { useSheetListDrag } from '@/components/use-sheet-list-drag';
 import { BUBBLE_MASCOT_SIZE, BUBBLE_SIZE, useAssistant } from './assistant-provider';
 import { AssistantCards } from './assistant-cards';
+import { AssistantThinking, chatType, TripiFace } from './assistant-visuals';
 
 const copy = vi.assistant;
-const COMPOSER_INPUT_PADDING = (mobileLayout.touchTarget - compactType.body.lineHeight) / 2;
+const COMPOSER_INPUT_PADDING = (mobileLayout.touchTarget - chatType.body.lineHeight) / 2;
+// Tin mới trượt nhẹ lên; người dùng chọn giảm chuyển động thì hiện ngay.
+const enter = FadeInDown.duration(260).reduceMotion(ReduceMotion.System);
 
 export function AssistantChat({
   onMinimize,
@@ -82,13 +85,14 @@ export function AssistantChat({
         <View style={styles.header}>
           <View style={styles.avatar}>
             <Mascot size={34} />
+            <View style={[styles.statusDot, chat.isPending && { backgroundColor: c.sun }]} />
           </View>
           <View style={{ flex: 1 }}>
-            <Txt variant="heading" style={compactType.heading}>
+            <Txt variant="heading" style={[chatType.title, { fontFamily: f.bold }]}>
               {copy.name}
             </Txt>
             <Txt variant="caption" style={styles.subtitle}>
-              {copy.subtitle}
+              {chat.isPending ? copy.thinkingOnline : copy.subtitle}
             </Txt>
           </View>
           <IconButton
@@ -136,17 +140,17 @@ export function AssistantChat({
           }}
         >
           {!chat.messages.length ? (
-            <View style={styles.welcome}>
-              <View style={styles.hero}>
-                <Mascot pose="welcome" size={76} />
+            <Animated.View entering={enter} style={styles.welcome}>
+              {/* Lời chào gọn (SCRUM-167): một Tripi, một câu hỏi, ba gợi ý. */}
+              <View style={styles.welcomeHead}>
+                <TripiFace animation="greeting" size={92} />
+                <View style={styles.welcomeBubble}>
+                  <Txt style={styles.welcomeHello}>{copy.greeting}</Txt>
+                  <Txt variant="title" style={styles.title}>
+                    {copy.title}
+                  </Txt>
+                </View>
               </View>
-              <Txt variant="caption" style={styles.eyebrow}>
-                {copy.eyebrow}
-              </Txt>
-              <Txt variant="title" style={styles.title}>
-                {copy.title}
-              </Txt>
-              <Txt style={styles.description}>{copy.body}</Txt>
               <View style={styles.prompts}>
                 {copy.prompts.map((prompt) => (
                   <Pressable
@@ -160,103 +164,112 @@ export function AssistantChat({
                     style={({ pressed }) => [styles.prompt, pressed && { backgroundColor: c.warmMist }]}
                   >
                     <View style={styles.promptIcon}>
-                      <Icon name={prompt.icon as IconName} color={c.coralInk} size={mobileIconSize.control} />
+                      <Icon name={prompt.icon as IconName} color={c.coralInk} size={20} />
                     </View>
                     <View style={styles.promptText}>
-                      <Txt variant="label" style={compactType.body}>
+                      <Txt variant="label" style={styles.promptLabel}>
                         {prompt.label}
                       </Txt>
                       <Txt variant="caption" style={styles.promptCaption}>
                         {prompt.caption}
                       </Txt>
                     </View>
-                    <Icon name="arrow-up-outline" size={mobileIconSize.control} color={c.textMuted} />
+                    <Icon name="arrow-forward" size={18} color={c.coralInk} />
                   </Pressable>
                 ))}
               </View>
-            </View>
+            </Animated.View>
           ) : (
-            chat.messages.map((message) => (
-              <View
-                key={message.id}
-                style={[styles.messageRow, message.role === 'user' && { justifyContent: 'flex-end' }]}
-              >
-                {message.role === 'assistant' && (
-                  <View style={styles.messageAvatar}>
-                    <Mascot size={30} />
-                  </View>
-                )}
-                <View
-                  style={[
-                    styles.message,
-                    message.role === 'user' ? styles.userMessage : styles.assistantMessage,
-                  ]}
-                >
-                  {message.role === 'assistant' && (
-                    <Txt variant="caption" style={styles.author}>
-                      {copy.name}
-                    </Txt>
-                  )}
-                  <Txt selectable style={[compactType.body, message.role === 'user' && styles.userText]}>
-                    {message.text}
-                  </Txt>
-                  {!!message.cards?.length && (
-                    <AssistantCards
-                      cards={message.cards}
-                      onOpen={close}
-                      actions={
-                        message.id === chat.messages.at(-1)?.id && !chat.isPending
-                          ? { act: (label, action) => void chat.act(label, action), canUndo: !!chat.trip?.ops?.length }
-                          : undefined
-                      }
-                    />
-                  )}
-                  {message.action === 'login' && (
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => {
-                        close();
-                        // Phiên chat nằm ở provider gốc nên vẫn còn khi đăng nhập xong quay lại.
-                        router.push({ pathname: '/login', params: { returnTo: '/assistant' } });
-                      }}
-                      style={styles.chip}
+            chat.messages.map((message, index) => {
+              const isAssistant = message.role === 'assistant';
+              const isLatest = message.id === chat.messages.at(-1)?.id;
+              // Avatar chỉ ở tin đầu của một lượt Tripi, tránh lặp mặt Tripi mỗi bong bóng.
+              const startsGroup = isAssistant && chat.messages[index - 1]?.role !== 'assistant';
+              return (
+                <Animated.View key={message.id} entering={enter} style={styles.turn}>
+                  <View style={[styles.messageRow, !isAssistant && { justifyContent: 'flex-end' }]}>
+                    {isAssistant &&
+                      (startsGroup ? (
+                        <TripiFace pose="expr-happy" size={34} />
+                      ) : (
+                        <View style={styles.avatarSpacer} />
+                      ))}
+                    <View
+                      style={[styles.message, isAssistant ? styles.assistantMessage : styles.userMessage]}
                     >
-                      <Txt variant="label" style={styles.chipText}>
-                        {copy.login}
+                      <Txt selectable style={[styles.messageText, !isAssistant && styles.userText]}>
+                        {message.text}
                       </Txt>
-                    </Pressable>
+                    </View>
+                  </View>
+                  {/* Thẻ và gợi ý là khối riêng dưới lời giải thích, không ép vào bong bóng hẹp. */}
+                  {isAssistant && (!!message.cards?.length || message.action === 'login') && (
+                    <View style={styles.attachments}>
+                      {!!message.cards?.length && (
+                        <AssistantCards
+                          cards={message.cards}
+                          onOpen={close}
+                          actions={
+                            isLatest && !chat.isPending
+                              ? {
+                                  act: (label, action) => void chat.act(label, action),
+                                  canUndo: !!chat.trip?.ops?.length,
+                                }
+                              : undefined
+                          }
+                        />
+                      )}
+                      {message.action === 'login' && (
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() => {
+                            close();
+                            // Phiên chat nằm ở provider gốc nên vẫn còn khi đăng nhập xong quay lại.
+                            router.push({ pathname: '/login', params: { returnTo: '/assistant' } });
+                          }}
+                          style={({ pressed }) => [styles.loginButton, pressed && { opacity: 0.85 }]}
+                        >
+                          <Icon name="log-in-outline" size={18} color={c.background} />
+                          <Txt style={styles.loginText}>{copy.login}</Txt>
+                        </Pressable>
+                      )}
+                    </View>
                   )}
-                  {message.id === chat.messages.at(-1)?.id &&
-                    !chat.isPending &&
-                    !!message.suggestions?.length && (
+                  {isAssistant && isLatest && !chat.isPending && !!message.suggestions?.length && (
+                    <View style={styles.attachments}>
+                      <Txt style={styles.suggestionsLabel}>{copy.suggestionsLabel}</Txt>
                       <View style={styles.chips}>
                         {message.suggestions.map((suggestion) => (
                           <Pressable
                             key={suggestion}
                             accessibilityRole="button"
                             onPress={() => void chat.send(suggestion)}
-                            style={styles.chip}
+                            style={({ pressed }) => [
+                              styles.chip,
+                              pressed && { backgroundColor: c.coralTint },
+                            ]}
                           >
+                            <Icon name="sparkles-outline" size={14} color={c.coralInk} />
                             <Txt variant="label" style={styles.chipText}>
                               {suggestion}
                             </Txt>
                           </Pressable>
                         ))}
                       </View>
-                    )}
-                </View>
-              </View>
-            ))
+                    </View>
+                  )}
+                </Animated.View>
+              );
+            })
           )}
           {chat.isPending && (
-            <View accessibilityLiveRegion="polite" style={styles.pending}>
-              <ActivityIndicator size="small" color={c.tealInk} />
-              <Txt style={compactType.body}>{copy.thinking}</Txt>
-            </View>
+            <Animated.View entering={enter}>
+              <AssistantThinking />
+            </Animated.View>
           )}
           {chat.hasError && (
             <View accessibilityRole="alert" style={styles.error}>
-              <Txt style={compactType.body}>{copy.error}</Txt>
+              <Txt style={[chatType.body, { color: c.ink }]}>{copy.error}</Txt>
               <Pressable
                 accessibilityRole="button"
                 onPress={() => void chat.send(chat.messages.at(-1)?.text, true)}
@@ -587,14 +600,25 @@ const styles = StyleSheet.create({
     borderBottomColor: c.border,
   },
   avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: c.warmMist,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  subtitle: { ...compactType.meta, color: c.tealInk },
+  statusDot: {
+    position: 'absolute',
+    right: 0,
+    bottom: 1,
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: c.background,
+    backgroundColor: c.teal,
+  },
+  subtitle: { ...chatType.meta, color: c.tealInk, fontFamily: f.medium },
   preview: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -603,60 +627,88 @@ const styles = StyleSheet.create({
     backgroundColor: c.warmMist,
   },
   previewText: { ...compactType.meta, color: c.coralInk },
-  messages: { padding: s.md, gap: s.md, flexGrow: 1 },
-  welcome: { alignItems: 'center', gap: s.sm },
-  hero: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  messages: { padding: s.lg, gap: s.lg, flexGrow: 1 },
+  welcome: { gap: s.lg, paddingTop: s.sm },
+  welcomeHead: { flexDirection: 'row', alignItems: 'flex-end', gap: s.sm },
+  welcomeBubble: {
+    flex: 1,
+    gap: s.xs,
+    padding: s.lg,
+    borderRadius: 22,
+    borderBottomLeftRadius: 6,
     backgroundColor: c.warmMist,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  eyebrow: { ...compactType.meta, color: c.coralInk, fontFamily: f.semibold, letterSpacing: 1 },
-  title: { ...compactType.title, textAlign: 'center', letterSpacing: 0 },
-  description: { ...compactType.body, textAlign: 'center', color: c.textMuted, maxWidth: 280 },
-  prompts: { width: '100%', gap: s.sm, paddingTop: s.xs },
+  welcomeHello: { ...chatType.small, fontFamily: f.semibold, color: c.coralInk },
+  title: {
+    ...chatType.title,
+    fontSize: 19,
+    lineHeight: 26,
+    fontFamily: f.bold,
+    color: c.navy,
+    letterSpacing: 0,
+  },
+  prompts: { width: '100%', gap: s.sm },
   prompt: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: s.sm,
-    padding: s.sm,
+    gap: s.md,
+    paddingVertical: s.md,
+    paddingHorizontal: s.md,
     borderWidth: 1,
     borderColor: c.border,
-    borderRadius: 16,
+    borderRadius: 18,
+    backgroundColor: c.background,
+    boxShadow: `0 4px 14px -10px ${c.overlay}`,
   },
   promptIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    backgroundColor: c.warmMist,
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: c.coralTint,
     alignItems: 'center',
     justifyContent: 'center',
   },
   promptText: { flex: 1, gap: 2 },
-  promptCaption: { ...compactType.label, color: c.textMuted },
+  promptLabel: { ...chatType.body, fontFamily: f.semibold, color: c.ink },
+  promptCaption: { ...chatType.small, color: c.textMuted },
+  turn: { gap: s.sm },
   messageRow: { flexDirection: 'row', alignItems: 'flex-end', gap: s.sm },
-  messageAvatar: { width: 32, height: 32, backgroundColor: c.warmMist, borderRadius: 16 },
-  message: { maxWidth: '85%', padding: s.sm, borderRadius: 14, gap: s.xs },
-  userMessage: { backgroundColor: c.navy, borderBottomRightRadius: 4 },
-  assistantMessage: { flexShrink: 1, backgroundColor: c.surface, borderBottomLeftRadius: 4 },
+  avatarSpacer: { width: 34 },
+  message: { maxWidth: '82%', paddingVertical: s.md, paddingHorizontal: s.lg, borderRadius: 22 },
+  userMessage: { backgroundColor: c.navy, borderBottomRightRadius: 6 },
+  assistantMessage: { flexShrink: 1, backgroundColor: c.warmMist, borderBottomLeftRadius: 6 },
+  messageText: { ...chatType.body, color: c.ink },
   userText: { color: c.background },
-  author: { ...compactType.meta, color: c.tealInk, fontFamily: f.semibold },
-  pending: { flexDirection: 'row', alignItems: 'center', gap: s.sm, padding: s.md },
-  error: { backgroundColor: c.coralTint, padding: s.md, borderRadius: 16, gap: s.sm },
-  retry: { flexDirection: 'row', alignItems: 'center', gap: s.sm, minHeight: mobileLayout.touchTarget },
-  actionText: { ...compactType.label, color: c.coralInk },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: s.xs },
-  chip: {
-    minHeight: mobileLayout.touchTarget,
-    justifyContent: 'center',
+  attachments: { gap: s.sm, marginLeft: 34 + s.sm },
+  suggestionsLabel: { ...chatType.meta, fontFamily: f.semibold, color: c.textMuted },
+  loginButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
-    paddingHorizontal: s.md,
+    gap: s.sm,
+    minHeight: mobileLayout.touchTarget,
+    paddingHorizontal: s.lg,
     borderRadius: radius.pill,
-    backgroundColor: c.warmMist,
+    backgroundColor: c.coral,
   },
-  chipText: { ...compactType.label, color: c.tealInk },
+  loginText: { ...chatType.small, fontFamily: f.semibold, color: c.background },
+  error: { backgroundColor: c.coralTint, padding: s.lg, borderRadius: 18, gap: s.sm },
+  retry: { flexDirection: 'row', alignItems: 'center', gap: s.sm, minHeight: mobileLayout.touchTarget },
+  actionText: { ...chatType.small, fontFamily: f.semibold, color: c.coralInk },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: s.sm },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: mobileLayout.touchTarget,
+    alignSelf: 'flex-start',
+    paddingHorizontal: s.lg,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: c.coralSoft,
+    backgroundColor: c.background,
+  },
+  chipText: { ...chatType.small, fontFamily: f.semibold, color: c.coralInk },
   composerArea: { borderTopWidth: 1, borderTopColor: c.border, padding: s.md, gap: s.sm },
   composer: {
     flexDirection: 'row',
@@ -678,7 +730,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     fontFamily: f.regular,
     color: c.ink,
-    ...compactType.body,
+    ...chatType.body,
   },
   send: {
     width: mobileLayout.touchTarget,

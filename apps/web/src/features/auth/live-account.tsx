@@ -14,8 +14,9 @@ import { TravelPreferencesCard } from './travel-preferences';
 import { AccountSecurity } from './account-security';
 import { EmailVerificationNotice } from './email-verification-notice';
 import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
-import { ADMIN_URL, getInitial, isStaffRole } from './account-helpers';
+import { ADMIN_URL, isStaffRole } from './account-helpers';
 import { useOpenAdmin } from './admin-handoff';
+import { AvatarEditor } from './avatar-editor';
 
 // Màn đăng nhập nằm ở login-form.tsx; giữ export ở đây để app/login/page.tsx không phải đổi.
 export { LiveLogin } from './login-form';
@@ -53,9 +54,7 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
       <div className="profile-layout">
         <aside className="profile-aside">
           <div className="profile-identity">
-            <span className="profile-avatar" aria-hidden="true">
-              {getInitial(user.displayName)}
-            </span>
+            <AvatarEditor user={user} />
             <h1>{user.displayName}</h1>
             <span className="account-role">{describeRole(user.role)}</span>
           </div>

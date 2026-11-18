@@ -17,3 +17,5 @@ export * from './trip-plan-selection';
 export * from './assistant-chat';
 export * from './mobile-login-return';
 export * from './notification-display';
+export * from './travel-survey';
+export * from './assistant-card-format';

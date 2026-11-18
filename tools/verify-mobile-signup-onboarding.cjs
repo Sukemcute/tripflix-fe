@@ -50,7 +50,7 @@ class SignupPage {
     await this.button('Đăng nhập & tiếp tục').click();
   }
   async selectTaste() {
-    await this.page.getByRole('checkbox', { name: 'Biển & nắng', exact: true }).click();
+    await this.page.getByRole('checkbox', { name: 'Biển & đảo', exact: true }).click();
     await this.button('Chọn nhịp chuyến đi').click();
     await this.page.getByRole('radio', { name: 'Chậm một chút', exact: true }).click();
     await this.button('Xem gu của tôi').click();
@@ -169,12 +169,12 @@ class SignupPage {
       );
       await ui.button('Chọn nhịp chuyến đi').waitFor();
       assert.equal(
-        await page.getByRole('checkbox', { name: 'Thiên nhiên', exact: true }).getAttribute('aria-checked'),
+        await page.getByRole('checkbox', { name: 'Núi & thiên nhiên', exact: true }).getAttribute('aria-checked'),
         'false',
       );
       assert.deepEqual((await ui.stored()).interests, []);
       await ui.snapshot('01-after-signup');
-      await page.getByRole('checkbox', { name: 'Biển & nắng', exact: true }).click();
+      await page.getByRole('checkbox', { name: 'Biển & đảo', exact: true }).click();
       await ui.button('Chọn nhịp chuyến đi').click();
       await page.getByRole('radio', { name: 'Chậm một chút', exact: true }).click();
       await ui.button('Xem gu của tôi').click();
@@ -249,7 +249,7 @@ class SignupPage {
       await ui.login(account.email);
       await ui.button('Chọn nhịp chuyến đi').waitFor();
       assert.equal(
-        await page.getByRole('checkbox', { name: 'Biển & nắng', exact: true }).getAttribute('aria-checked'),
+        await page.getByRole('checkbox', { name: 'Biển & đảo', exact: true }).getAttribute('aria-checked'),
         'false',
       );
       assert.equal(
