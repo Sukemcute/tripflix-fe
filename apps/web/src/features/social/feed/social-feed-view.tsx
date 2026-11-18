@@ -11,7 +11,7 @@ import {
   usePostSearchFeed,
   updateReelSocialCache,
 } from '@tripflix/api-client';
-import type { PostRecommendationsControllerRecommendPostsMode, SocialPostDto } from '@tripflix/api-client/core-api/model/index';
+import type { PostRecommendationsControllerRecommendPostsMode, SearchPostsRequestDtoSort, SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { SocialIcon, ComposerModal, RightPanelCommentsSynchronized } from '../live-posts';
 import { refreshCommentsIfStale } from '../comment-cache';
 import { useHasUserInteracted } from '../use-has-user-interacted';
@@ -35,6 +35,8 @@ export interface SocialFeedViewProps {
   initialKeyword?: string;
   /** Từ khoá đã chốt: tab chỉ hiện các bài viết trong kết quả tìm kiếm (dùng chung query với grid). */
   searchKeyword?: string;
+  /** Kiểu sắp xếp đang chọn ở grid: phải trùng với grid để dùng chung query và cuộn đúng thứ tự. */
+  searchSort?: SearchPostsRequestDtoSort;
   /** Bài mở từ trang chủ hoặc grid kết quả: cuộn sẵn tới bài đó. */
   focusPostId?: string | null;
   /** Bình luận cần nhảy tới trong bài focusPostId (link từ thông báo): mở sẵn panel bình luận. */
@@ -60,6 +62,7 @@ export function SocialFeedView({
   isVisible = true,
   initialKeyword = '',
   searchKeyword,
+  searchSort = 'relevance',
   focusPostId = null,
   focusCommentId,
   onBackToResults,
@@ -111,7 +114,7 @@ export function SocialFeedView({
   // Tab Bài viết chỉ lấy vlog; Reels có luồng riêng (/v1/feed).
   const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended', { recommendMode });
   // Tìm kiếm: cùng query với grid kết quả (search của discovery) nên mở bài từ grid không gọi lại API.
-  const searchQuery = usePostSearchFeed(isSearchMode ? effectiveKeyword : '');
+  const searchQuery = usePostSearchFeed(isSearchMode ? effectiveKeyword : '', undefined, searchSort);
   const postsQuery = isSearchMode ? searchQuery : feedQuery;
   const isDirectFocus = Boolean(focusPostId) && !isSearchMode;
   // Grid tìm kiếm đã giữ dữ liệu trong cache; chỉ link mở thẳng mới cần lấy bài theo ID.

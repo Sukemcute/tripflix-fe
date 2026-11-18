@@ -1,6 +1,7 @@
 /**
  * Tham số URL của trang Cảm hứng: `q` là từ khoá đã chốt, `open` là bài đang mở từ grid kết quả,
- * `type` là tab kết quả (không có là Tất cả), `kind=reel` là bài đang mở là Reel (mở trình xem Reels).
+ * `type` là tab kết quả (không có là Tất cả), `kind=reel` là bài đang mở là Reel (mở trình xem Reels),
+ * `sort` là kiểu sắp xếp bài và Reels trong kết quả (không có là Liên quan nhất).
  */
 export const SEARCH_QUERY_PARAM = 'q';
 export const SEARCH_OPEN_PARAM = 'open';
@@ -8,6 +9,16 @@ export const SEARCH_TYPE_PARAM = 'type';
 export const SEARCH_OPEN_KIND_PARAM = 'kind';
 /** Bình luận cần nhảy tới trong bài đang mở (link từ thông báo). */
 export const SEARCH_COMMENT_PARAM = 'comment';
+export const SEARCH_SORT_PARAM = 'sort';
+
+/** Khớp `sort` của POST /api/search/posts. */
+export const SEARCH_SORTS = ['relevance', 'trending', 'recent'] as const;
+export type SearchSort = (typeof SEARCH_SORTS)[number];
+
+/** Giá trị lạ hoặc thiếu thì về Liên quan nhất. */
+export function parseSearchSort(value: string | null | undefined): SearchSort {
+  return SEARCH_SORTS.find((sort) => sort === value) ?? 'relevance';
+}
 
 export const SEARCH_RESULT_TYPES = ['all', 'hotels', 'places', 'food', 'cafe', 'posts', 'reels'] as const;
 export type SearchResultType = (typeof SEARCH_RESULT_TYPES)[number];
@@ -43,6 +54,8 @@ export interface InspirationUrlChanges {
   isOpenReel?: boolean;
   view?: 'posts' | 'reels';
   resultType?: SearchResultType;
+  /** Kiểu sắp xếp bài trong kết quả; grid và bài mở từ grid dùng chung để cuộn đúng thứ tự đang xem. */
+  sort?: SearchSort;
 }
 
 /**
@@ -62,6 +75,7 @@ export function buildInspirationHref(
     } else {
       params.delete(SEARCH_QUERY_PARAM);
       params.delete(SEARCH_TYPE_PARAM);
+      params.delete(SEARCH_SORT_PARAM);
     }
     params.delete(SEARCH_OPEN_PARAM);
     params.delete(SEARCH_OPEN_KIND_PARAM);
@@ -70,6 +84,10 @@ export function buildInspirationHref(
   if (changes.resultType !== undefined) {
     if (changes.resultType === 'all') params.delete(SEARCH_TYPE_PARAM);
     else params.set(SEARCH_TYPE_PARAM, changes.resultType);
+  }
+  if (changes.sort !== undefined) {
+    if (changes.sort === 'relevance') params.delete(SEARCH_SORT_PARAM);
+    else params.set(SEARCH_SORT_PARAM, changes.sort);
   }
   if (changes.openPostId !== undefined) {
     // Bình luận chỉ thuộc bài đang mở: đổi bài thì bỏ.

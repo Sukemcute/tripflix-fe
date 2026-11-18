@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { t, vi } from '@tripflix/i18n';
 import { useApiSession, usePostSearchFeed } from '@tripflix/api-client';
 import type { SearchPostsRequestDtoSort, SocialPostDto } from '@tripflix/api-client/core-api/model/index';
@@ -38,6 +38,9 @@ export interface SearchResultsGridProps {
   keyword: string;
   resultType: SearchResultType;
   onChangeResultType: (resultType: SearchResultType) => void;
+  /** Kiểu sắp xếp bài, Reels: trang Cảm hứng giữ (URL) để bài mở từ grid cuộn đúng thứ tự này. */
+  sort: SearchPostsRequestDtoSort;
+  onChangeSort: (sort: SearchPostsRequestDtoSort) => void;
   /** Mở bài ở trang Cảm hứng theo id. */
   onOpenPost: (postId: string) => void;
   /** Bấm một Reel: mở trình xem Reels, lướt trong các Reel đang có ở grid (theo thứ tự grid). */
@@ -53,13 +56,14 @@ export function SearchResultsGrid({
   keyword,
   resultType,
   onChangeResultType,
+  sort,
+  onChangeSort,
   onOpenPost,
   onOpenReel,
   onClearSearch,
 }: SearchResultsGridProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const placeKind = getPlaceKind(resultType);
-  const [sort, setSort] = useState<SearchPostsRequestDtoSort>('relevance');
 
   // Từ khoá hoặc tab mới thì cuộn về đầu grid.
   useEffect(() => {
@@ -105,7 +109,7 @@ export function SearchResultsGrid({
                 role="tab"
                 aria-selected={option.value === sort}
                 className={styles.tab}
-                onClick={() => setSort(option.value)}
+                onClick={() => onChangeSort(option.value)}
               >
                 {option.label}
               </button>
