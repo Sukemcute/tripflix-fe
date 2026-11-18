@@ -15,11 +15,13 @@ import { discoveryJobs } from './discovery-jobs';
 import { adminOperations } from './admin-operations';
 import { analytics } from './analytics';
 import { aiUsage } from './ai-usage';
+import { userActivity } from './user-activity';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
   analytics,
   aiUsage,
+  userActivity,
   adminOperations,
   searchMonitoring,
   discoveryJobs,
@@ -56,6 +58,7 @@ export const vi = {
     moderation: 'Kiểm duyệt',
     analytics: 'Số liệu & Giám sát',
     aiUsage: 'Chi phí AI',
+    userActivity: 'Hành vi người dùng',
     searchMonitoring: 'Theo dõi tìm kiếm',
     searchJobs: 'Job tìm kiếm',
     recommendJobs: 'Job gợi ý',
