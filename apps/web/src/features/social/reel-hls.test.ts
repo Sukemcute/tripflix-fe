@@ -35,6 +35,11 @@ function createFakeVideo({ canPlayNative }: { canPlayNative: boolean }) {
     removeEventListener: vi.fn((event: string, listener: () => void) => {
       listeners.get(event)?.delete(listener);
     }),
+    paused: true,
+    readyState: 0,
+    play: vi.fn(async () => {
+      video.paused = false;
+    }),
     /** Giả lập thẻ <video> bắn sự kiện (error, loadeddata). */
     emit: (event: string) => {
       for (const listener of [...(listeners.get(event) ?? [])]) listener();
@@ -108,19 +113,35 @@ describe('attachReelHlsSource', () => {
     expect(handlers.onFatalError).toHaveBeenCalledTimes(1);
   });
 
-  it('trình duyệt tự phát: quá 8 giây chưa có hình thì lùi một mức; có hình rồi thì giữ mức', () => {
+  it('trình duyệt tự phát: bấm phát mà quá 8 giây chưa có hình thì lùi một mức và phát tiếp', () => {
     vi.useFakeTimers();
     try {
       const slow = createFakeVideo({ canPlayNative: true });
       attachReelHlsSource(slow, URL, { ...callbacks(), sources: RENDITIONS, loadLibrary: vi.fn() });
+      slow.paused = false;
+      slow.emit('play');
       vi.advanceTimersByTime(REEL_RENDITION_TIMEOUT_MS);
       expect(slow.src).toBe(RENDITIONS[1]);
+      expect(slow.play).toHaveBeenCalled();
 
       const fast = createFakeVideo({ canPlayNative: true });
       attachReelHlsSource(fast, URL, { ...callbacks(), sources: RENDITIONS, loadLibrary: vi.fn() });
-      fast.emit('loadeddata');
+      fast.emit('play');
+      fast.emit('playing');
       vi.advanceTimersByTime(REEL_RENDITION_TIMEOUT_MS * 2);
       expect(fast.src).toBe(RENDITIONS[0]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('trình duyệt tự phát: video tải sẵn ngoài màn hình (chưa bấm phát) không bị lùi mức dù tải chậm', () => {
+    vi.useFakeTimers();
+    try {
+      const preloading = createFakeVideo({ canPlayNative: true });
+      attachReelHlsSource(preloading, URL, { ...callbacks(), sources: RENDITIONS, loadLibrary: vi.fn() });
+      vi.advanceTimersByTime(REEL_RENDITION_TIMEOUT_MS * 3);
+      expect(preloading.src).toBe(RENDITIONS[0]);
     } finally {
       vi.useRealTimers();
     }

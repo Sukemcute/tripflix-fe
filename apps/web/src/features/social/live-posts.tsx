@@ -54,10 +54,12 @@ import { insertAtSelection } from './emoji-picker-data';
 import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
 import {
+  canStepToNextReel,
   getReelBufferSeconds,
   getReelRenderMode,
   pickReelAfterRemoval,
   prependPinnedReelCards,
+  shouldLoadReelSource,
   shouldShowReelBackdrop,
   toReelPost,
   type ReelPost,
@@ -567,8 +569,12 @@ interface MediaTrackItemProps {
   index: number;
   post: ReelPost;
   isActive: boolean;
-  /** Có thẻ <video> (bài đang xem và 2 bài mỗi phía); bài khác chỉ hiện poster để không tải segment. */
+  /** Có thẻ <video> (bài đang xem, 2 bài phía trước, 1 bài phía sau); bài khác chỉ hiện poster. */
   hasVideo: boolean;
+  /** Được gắn nguồn để tải ngay (shouldLoadReelSource); đã gắn rồi thì giữ tới khi rời cửa sổ video. */
+  canLoadSource: boolean;
+  /** Video của Reel này đã có hình đầu tiên: bài kế tiếp chưa có thì chặn lướt sang. */
+  onFirstFrame: (postId: string) => void;
   /** Số giây hls.js đệm trước: 30 cho bài đang xem, 10 cho bài phía trước, 4 cho bài phía sau. */
   bufferSeconds: number;
   /** Có lớp nền mờ (tốn GPU) – chỉ bài đang xem và hai bài sát cạnh. */
@@ -593,6 +599,11 @@ interface MediaTrackItemProps {
  * Chi co Media Track truot doc ben trong khung 9:16 co dinh (chuan TikTok).
  */
 const NO_REEL_POSTERS = { w360: '', w540: '', w720: '' };
+
+/** Khung rỗng cách bài đang xem tới chừng này bài thì hiện vòng chờ (lướt quá nhanh qua vùng chưa tải). */
+const REEL_PLACEHOLDER_SPINNER_RANGE = 6;
+/** Video đang xem chưa chạy sau chừng này thì vẫn cho tải trước bài thứ 2 (video lỗi, trình duyệt chặn tự phát). */
+const REEL_PRELOAD_FALLBACK_MS = 2_000;
 
 interface ReelEngagement {
   isLiked: boolean;
@@ -709,6 +720,8 @@ function MediaTrackItem({
   post,
   isActive,
   hasVideo,
+  canLoadSource,
+  onFirstFrame,
   bufferSeconds,
   hasBackdrop,
   reelCard,
@@ -765,6 +778,7 @@ function MediaTrackItem({
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const progressFillRef = useRef<HTMLDivElement | null>(null);
+  const progressTrackRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!isActive && localVideoRef.current) {
@@ -794,9 +808,25 @@ function MediaTrackItem({
     bufferSecondsRef.current = bufferSeconds;
     bufferControlRef.current?.setBufferSeconds(bufferSeconds);
   }, [bufferSeconds]);
+  // Đã được phép tải một lần thì giữ nguồn tới khi rời cửa sổ video (bài vừa xem xong vẫn giữ bộ đệm).
+  const [isSourceLatched, setSourceLatched] = useState(false);
+  const shouldAttachSource = hasVideo && (canLoadSource || isSourceLatched);
+  if (shouldAttachSource !== isSourceLatched) setSourceLatched(shouldAttachSource);
+  // Nguồn nào đã có hình đầu tiên; đổi nguồn hoặc gỡ nguồn thì không còn khớp nên tự hiện lại vòng chờ.
+  const [firstFrameUrl, setFirstFrameUrl] = useState<string | null>(null);
+  const hasFirstFrame = shouldAttachSource && firstFrameUrl === hlsUrl;
+  const reportFirstFrame = useRef(() => onFirstFrame(post.id));
+  useEffect(() => {
+    reportFirstFrame.current = () => onFirstFrame(post.id);
+  }, [onFirstFrame, post.id]);
   useEffect(() => {
     const video = localVideoRef.current;
-    if (!hasVideo || !video || !hlsUrl || !isPlaybackSessionSettled) return;
+    if (!shouldAttachSource || !video || !hlsUrl || !isPlaybackSessionSettled) return;
+    const onLoadedData = () => {
+      setFirstFrameUrl(hlsUrl);
+      reportFirstFrame.current();
+    };
+    video.addEventListener('loadeddata', onLoadedData);
     // Trình duyệt phát HLS sẵn (Chrome, Edge, Safari): thẻ <video>. Firefox máy tính: hls.js gửi kèm cookie (TF64).
     const levels = levelsKey ? levelsKey.split(',').map(Number) : [];
     const release = attachReelHlsSource(video, hlsUrl, {
@@ -818,21 +848,34 @@ function MediaTrackItem({
       onFatalError: () => reportMediaError.current(),
     });
     return () => {
+      video.removeEventListener('loadeddata', onLoadedData);
       bufferControlRef.current = null;
       release();
     };
-  }, [hasVideo, hlsUrl, levelsKey, isPlaybackSessionSettled, authRetryCount, refreshPlaybackSession]);
+  }, [shouldAttachSource, hlsUrl, levelsKey, isPlaybackSessionSettled, authRetryCount, refreshPlaybackSession]);
 
   // timeupdate chỉ bắn ~4 lần/giây nên thanh tiến độ nhảy bậc; đọc currentTime mỗi khung hình và
   // cập nhật thẳng transform qua ref (không setState) để mượt và không render lại cả viewer.
   useEffect(() => {
     if (!isActive) return;
     const frame = { id: 0 };
+    // Video đang phát mà thời gian không chạy quá chừng này (mạng yếu, đang tải) thì thanh tiến độ hiện vệt sáng.
+    const stallMs = 400;
+    let lastTime = -1;
+    let lastAdvanceAt = performance.now();
     const tick = () => {
       const video = localVideoRef.current;
       const fill = progressFillRef.current;
       if (video && fill && video.duration > 0) {
         fill.style.transform = `scaleX(${Math.min(1, video.currentTime / video.duration)})`;
+      }
+      const track = progressTrackRef.current;
+      if (video && track) {
+        const now = performance.now();
+        if (video.paused || video.currentTime !== lastTime) lastAdvanceAt = now;
+        lastTime = video.currentTime;
+        const isBuffering = !video.paused && now - lastAdvanceAt > stallMs;
+        if (track.hasAttribute('data-buffering') !== isBuffering) track.toggleAttribute('data-buffering', isBuffering);
       }
       frame.id = window.requestAnimationFrame(tick);
     };
@@ -902,6 +945,12 @@ function MediaTrackItem({
             />
           )}
 
+          {hasVideo && !hasFirstFrame && (
+            <span className={styles.reelLoadingOverlay} aria-hidden="true">
+              <span className={styles.reelLoadingSpinner} />
+            </span>
+          )}
+
           {isActive && (
             <>
               <button
@@ -915,7 +964,7 @@ function MediaTrackItem({
               >
                 <SocialIcon name={isPlaying ? 'play' : 'pause'} size={26} />
               </button>
-              <div className={styles.progressBarTrack} aria-hidden="true">
+              <div ref={progressTrackRef} className={styles.progressBarTrack} aria-hidden="true">
                 <div ref={progressFillRef} className={styles.progressBarFill} />
               </div>
             </>
@@ -1127,6 +1176,18 @@ export function InspirationImmersiveViewer({
   }, [activePostId]);
   const [showPlayFlash, setShowPlayFlash] = useState(false);
   const [mediaErrorPostId, setMediaErrorPostId] = useState<string | null>(null);
+  // Bài có video đã chạy (sự kiện playing): tới lúc đó mới tải trước bài thứ 2 phía trước (shouldLoadReelSource).
+  const [playingPostId, setPlayingPostId] = useState<string | null>(null);
+  // Bài đã có hình đầu tiên: lướt sang bài chưa có thì chặn một lúc (canStepToNextReel).
+  const readyPostIdsRef = useRef(new Set<string>());
+  const markReelReady = useCallback((postId: string) => {
+    readyPostIdsRef.current.add(postId);
+  }, []);
+  // Lúc bắt đầu chặn lướt vì bài kế tiếp chưa có hình; đang chặn thì hiện "Đang tải video tiếp theo".
+  const nextBlockedSinceRef = useRef<number | null>(null);
+  const [isNextBlocked, setNextBlocked] = useState(false);
+  // Đã bấm sang bài kế khi đang ở bài cuối và trang sau đang tải: tải xong thì tự sang.
+  const isNextPendingRef = useRef(false);
   const [captionExpandedPostId, setCaptionExpandedPostId] = useState<string | null>(null);
 
   // Optimistic states per postId
@@ -1287,10 +1348,26 @@ export function InspirationImmersiveViewer({
 
     const videoEl = videoRef.current;
     if (videoEl) {
-      videoEl.currentTime = 0;
+      // Chỉ tua khi video đã chạy dở (lướt ngược lại): video tải sẵn đang ở đầu, tua về 0 vẫn làm trình duyệt
+      // tua thật và tải lại (đo được 1,2–2,8 giây chờ).
+      if (videoEl.currentTime > 0.1) videoEl.currentTime = 0;
       attemptPlayVideo();
     }
   }, [activePost?.id, attemptPlayVideo]);
+
+  // Ưu tiên video đang xem: chạy rồi (hoặc chờ quá REEL_PRELOAD_FALLBACK_MS) mới tải trước bài thứ 2 phía trước.
+  useEffect(() => {
+    const postId = activePost?.id;
+    const videoEl = videoRef.current;
+    if (!postId) return;
+    const markPlaying = () => setPlayingPostId(postId);
+    const fallback = setTimeout(markPlaying, REEL_PRELOAD_FALLBACK_MS);
+    videoEl?.addEventListener('playing', markPlaying);
+    return () => {
+      clearTimeout(fallback);
+      videoEl?.removeEventListener('playing', markPlaying);
+    };
+  }, [activePost?.id]);
 
 
 
@@ -1403,11 +1480,24 @@ export function InspirationImmersiveViewer({
 
       if (direction === 1) {
         if (nextTarget < posts.length) {
+          const nextId = posts[nextTarget]?.id ?? '';
+          // Bài không có video (đang xử lý) hoặc đã lỗi thì không chờ hình.
+          const isNextReady =
+            readyPostIdsRef.current.has(nextId) || !reelMap.get(nextId)?.video || mediaErrorPostId === nextId;
+          if (!canStepToNextReel({ isNextReady, blockedSinceMs: nextBlockedSinceRef.current, nowMs: now })) {
+            nextBlockedSinceRef.current ??= now;
+            setNextBlocked(true);
+            return;
+          }
+          nextBlockedSinceRef.current = null;
+          setNextBlocked(false);
           navCooldownRef.current = now + 450;
           goToIndex(nextTarget, true);
-        } else if (postsQuery.hasNextPage && !postsQuery.isFetchingNextPage) {
+        } else if (postsQuery.hasNextPage) {
+          // Hết bài đã tải: đứng yên như lúc hết video, hiện vòng chờ, trang sau về thì tự sang.
+          isNextPendingRef.current = true;
           navCooldownRef.current = now + 450;
-          void postsQuery.fetchNextPage();
+          if (!postsQuery.isFetchingNextPage) void postsQuery.fetchNextPage();
         }
       } else {
         if (nextTarget >= 0) {
@@ -1416,8 +1506,30 @@ export function InspirationImmersiveViewer({
         }
       }
     },
-    [posts.length, postsQuery, goToIndex],
+    [posts, postsQuery, goToIndex, reelMap, mediaErrorPostId],
   );
+
+  // Đang chặn vì bài kế tiếp chưa có hình: có hình rồi thì bỏ thông báo chờ (lướt lại là sang được).
+  useEffect(() => {
+    if (!isNextBlocked) return;
+    const nextId = posts[targetIndexRef.current + 1]?.id;
+    const timer = setInterval(() => {
+      if (nextId && !readyPostIdsRef.current.has(nextId)) return;
+      clearInterval(timer);
+      nextBlockedSinceRef.current = null;
+      setNextBlocked(false);
+    }, 200);
+    return () => clearInterval(timer);
+  }, [isNextBlocked, posts]);
+
+  // Đã bấm sang bài kế ở bài cuối: trang sau về thì tự sang bài mới.
+  useEffect(() => {
+    if (!isNextPendingRef.current || activeIndex < 0 || activeIndex >= posts.length - 1) return;
+    isNextPendingRef.current = false;
+    goToIndex(activeIndex + 1, true);
+  }, [posts.length, activeIndex, goToIndex]);
+
+  const isLoadingMoreReels = activeIndex >= posts.length - 1 && postsQuery.isFetchingNextPage;
 
   // Dong bo targetIndexRef theo activeIndex khi da settled hoac chon bai tu ngoai
   useEffect(() => {
@@ -1924,7 +2036,11 @@ export function InspirationImmersiveViewer({
                             data-index={idx}
                             data-post-id={post.id}
                             aria-hidden="true"
-                          />
+                          >
+                            {Math.abs(idx - activeIndex) <= REEL_PLACEHOLDER_SPINNER_RANGE && (
+                              <span className={styles.reelLoadingSpinner} />
+                            )}
+                          </div>
                         );
                       }
                       return (
@@ -1937,6 +2053,8 @@ export function InspirationImmersiveViewer({
                           post={post}
                           isActive={idx === activeIndex}
                           hasVideo={renderMode === 'video'}
+                          canLoadSource={shouldLoadReelSource(idx, activeIndex, playingPostId === activePost?.id)}
+                          onFirstFrame={markReelReady}
                           bufferSeconds={getReelBufferSeconds(idx, activeIndex)}
                           hasBackdrop={shouldShowReelBackdrop(idx, activeIndex)}
                           actions={renderReelActions(post, idx === activeIndex)}
@@ -1962,6 +2080,12 @@ export function InspirationImmersiveViewer({
                       );
                     })}
                   </div>
+                  {(isLoadingMoreReels || isNextBlocked) && (
+                    <output className={styles.reelMoreLoading}>
+                      <span className={styles.reelLoadingSpinnerSmall} aria-hidden="true" />
+                      {isLoadingMoreReels ? vi.api.reelLoadingMore : vi.api.reelLoadingNext}
+                    </output>
+                  )}
                   {isPostNotFound && (
                     <div className={styles.postUnavailableOverlay} role="alert">
                       <div className={styles.postUnavailableIcon} aria-hidden="true">

@@ -52,23 +52,56 @@ export function pickReelAfterRemoval(postIds: readonly string[], removedId: stri
 
 /**
  * Mức render của một Reel theo khoảng cách tới bài đang xem, để lướt lâu không nặng dần:
- * - `video`: bài đang xem và 2 bài mỗi phía (N ± 2): 2 bài phía trước tải sẵn để lướt nhanh vẫn phát ngay,
- *   2 bài phía sau giữ phần đã tải để lướt ngược không tải lại.
- * - `poster`: cách 3 bài (chỉ ảnh, không tải segment). Rời cửa sổ video là gỡ nguồn, xoá bộ đệm của video đó.
+ * - `video`: bài đang xem, 2 bài phía trước (tải sẵn để lướt nhanh vẫn phát ngay) và 1 bài phía sau (giữ phần đã
+ *   tải để lướt ngược không tải lại).
+ * - `poster`: ngoài cửa sổ video tới 3 bài (chỉ ảnh, không tải segment). Rời cửa sổ video là gỡ nguồn, xoá bộ đệm.
  * - `placeholder`: xa hơn, chỉ còn khung rỗng giữ chiều cao để cuộn và snap đúng vị trí.
  */
 export type ReelRenderMode = 'video' | 'poster' | 'placeholder';
 
-/** Số bài mỗi phía của bài đang xem có thẻ video (tải và giữ bộ đệm). */
-export const REEL_VIDEO_WINDOW = 2;
+/** Số bài phía trước bài đang xem có thẻ video. */
+export const REEL_AHEAD_VIDEO_COUNT = 2;
+/** Số bài phía sau bài đang xem còn giữ thẻ video: 5 video cùng tải làm video đang xem chậm chạy (đo được). */
+export const REEL_BEHIND_VIDEO_COUNT = 1;
 /** Số bài mỗi phía của bài đang xem vẫn được render đầy đủ nội dung. */
-export const REEL_RENDER_WINDOW = REEL_VIDEO_WINDOW + 1;
+export const REEL_RENDER_WINDOW = 3;
 
 export function getReelRenderMode(index: number, activeIndex: number): ReelRenderMode {
-  const distance = Math.abs(index - activeIndex);
-  if (distance <= REEL_VIDEO_WINDOW) return 'video';
-  if (distance <= REEL_RENDER_WINDOW) return 'poster';
+  const offset = index - activeIndex;
+  if (offset >= -REEL_BEHIND_VIDEO_COUNT && offset <= REEL_AHEAD_VIDEO_COUNT) return 'video';
+  if (Math.abs(offset) <= REEL_RENDER_WINDOW) return 'poster';
   return 'placeholder';
+}
+
+/**
+ * Bài nào được gắn nguồn ngay (ưu tiên video đang xem, như app video ngắn): bài đang xem và bài kế tiếp luôn được;
+ * bài thứ 2 phía trước chỉ tải khi video đang xem đã chạy, để lúc vừa lướt không có quá 2 video tranh băng thông.
+ * Bài phía sau đã được gắn từ lúc còn là bài đang xem nên không cần tải lại.
+ */
+export function shouldLoadReelSource(index: number, activeIndex: number, isActivePlaying: boolean): boolean {
+  const offset = index - activeIndex;
+  if (offset === 0 || offset === 1) return true;
+  return isActivePlaying && offset >= -REEL_BEHIND_VIDEO_COUNT && offset <= REEL_AHEAD_VIDEO_COUNT;
+}
+
+/** Thời gian chặn lướt tối đa khi bài kế tiếp chưa có hình: Safari iPhone không tải trước video, chặn mãi thì kẹt. */
+export const REEL_NEXT_NOT_READY_BLOCK_MS = 3_000;
+
+/**
+ * Có cho lướt sang bài kế tiếp không. Bài kế tiếp chưa có hình đầu tiên thì chặn (giống lúc hết video) để người
+ * xem không lướt vào khung đen; chặn tối đa REEL_NEXT_NOT_READY_BLOCK_MS tính từ lần lướt đầu bị chặn.
+ */
+export function canStepToNextReel({
+  isNextReady,
+  blockedSinceMs,
+  nowMs,
+}: {
+  isNextReady: boolean;
+  blockedSinceMs: number | null;
+  nowMs: number;
+}): boolean {
+  if (isNextReady) return true;
+  return blockedSinceMs !== null && nowMs - blockedSinceMs >= REEL_NEXT_NOT_READY_BLOCK_MS;
 }
 
 /** Giây video đệm trước của bài đang xem, giống Reels mobile. */

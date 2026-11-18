@@ -1367,6 +1367,81 @@
   will-change: transform;
 }
 
+/* Video đứng chờ tải (mạng yếu): vệt sáng chạy qua thanh tiến độ như TikTok, biết là đang tải chứ không bị treo. */
+.progressBarTrack[data-buffering]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: color-mix(in srgb, var(--color-background) 70%, transparent);
+  animation: reel-buffering-sweep 1s ease-in-out infinite;
+}
+
+@keyframes reel-buffering-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+/* Video chưa có hình đầu tiên: vòng chờ giữa khung, thấy được cả lúc đang vuốt sang bài chưa tải xong. */
+.reelLoadingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.reelLoadingSpinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid var(--color-overlay);
+  border-top-color: var(--color-background);
+  animation: reelPendingSpin 0.9s linear infinite;
+}
+
+/* Hết bài đã tải hoặc bài kế tiếp chưa có hình: thông báo nhỏ ở đáy khung, không lướt được tới khi tải xong. */
+.reelMoreLoading {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--color-overlay-heavy);
+  color: var(--color-background);
+  font-size: 13px;
+  font-weight: 600;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.reelLoadingSpinnerSmall {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--color-overlay);
+  border-top-color: var(--color-background);
+  animation: reelPendingSpin 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressBarTrack[data-buffering]::after,
+  .reelLoadingSpinner,
+  .reelLoadingSpinnerSmall {
+    animation: none;
+  }
+}
+
 /* --- Vertical Action Bar & Post Navigation (Right of Media Stage) --- */
 
 .stageSideDock {

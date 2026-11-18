@@ -2,15 +2,19 @@ import { describe, expect, it, vi } from 'vitest';
 import type { FeedCardDto } from '@tripflix/api-client/core-api/model/index';
 import {
   attachReelVideoSource,
+  canStepToNextReel,
   getReelBufferSeconds,
   getReelRenderMode,
   pickReelAfterRemoval,
   prependPinnedReelCards,
   REEL_AHEAD_BUFFER_SECONDS,
+  REEL_AHEAD_VIDEO_COUNT,
   REEL_BEHIND_BUFFER_SECONDS,
+  REEL_BEHIND_VIDEO_COUNT,
   REEL_CURRENT_BUFFER_SECONDS,
+  REEL_NEXT_NOT_READY_BLOCK_MS,
   REEL_RENDER_WINDOW,
-  REEL_VIDEO_WINDOW,
+  shouldLoadReelSource,
   shouldShowReelBackdrop,
   toReelPost,
 } from './reel-post';
@@ -79,11 +83,12 @@ describe('pickReelAfterRemoval', () => {
 });
 
 describe('getReelRenderMode', () => {
-  it('bài đang xem và 2 bài mỗi phía (N ± 2) có video để tải sẵn và giữ bộ đệm', () => {
-    for (const index of [3, 4, 5, 6, 7]) expect(getReelRenderMode(index, 5)).toBe('video');
+  it('bài đang xem, 2 bài phía trước và 1 bài phía sau có video', () => {
+    for (const index of [4, 5, 6, 7]) expect(getReelRenderMode(index, 5)).toBe('video');
   });
 
-  it('cách 3 bài chỉ còn poster (đã gỡ video, xoá bộ đệm), xa hơn chỉ còn khung giữ chỗ', () => {
+  it('bài thứ 2 phía sau đã gỡ video (xoá bộ đệm), chỉ còn poster; xa hơn 3 bài chỉ còn khung giữ chỗ', () => {
+    expect(getReelRenderMode(3, 5)).toBe('poster');
     expect(getReelRenderMode(8, 5)).toBe('poster');
     expect(getReelRenderMode(2, 5)).toBe('poster');
     expect(getReelRenderMode(9, 5)).toBe('placeholder');
@@ -103,13 +108,39 @@ describe('getReelRenderMode', () => {
     expect(rendered).toHaveLength(2 * REEL_RENDER_WINDOW + 1);
   });
 
-  it('lướt 100 bài thì số thẻ video luôn tối đa 5 (N ± 2)', () => {
+  it('lướt 100 bài thì số thẻ video luôn tối đa 4', () => {
     for (const active of [0, 1, 50, 99]) {
       const videos = Array.from({ length: 100 }, (_, index) => getReelRenderMode(index, active)).filter(
         (mode) => mode === 'video',
       );
-      expect(videos.length).toBeLessThanOrEqual(2 * REEL_VIDEO_WINDOW + 1);
+      expect(videos.length).toBeLessThanOrEqual(REEL_BEHIND_VIDEO_COUNT + 1 + REEL_AHEAD_VIDEO_COUNT);
     }
+  });
+});
+
+describe('shouldLoadReelSource', () => {
+  it('vừa lướt tới (video đang xem chưa chạy): chỉ tải bài đang xem và bài kế tiếp', () => {
+    expect([4, 5, 6, 7].map((index) => shouldLoadReelSource(index, 5, false))).toEqual([false, true, true, false]);
+  });
+
+  it('video đang xem đã chạy: tải thêm bài thứ 2 phía trước; bài phía sau giữ nguồn đã gắn', () => {
+    expect([4, 5, 6, 7].map((index) => shouldLoadReelSource(index, 5, true))).toEqual([true, true, true, true]);
+    expect(shouldLoadReelSource(8, 5, true)).toBe(false);
+    expect(shouldLoadReelSource(3, 5, true)).toBe(false);
+  });
+});
+
+describe('canStepToNextReel', () => {
+  it('bài kế tiếp đã có hình thì sang ngay', () => {
+    expect(canStepToNextReel({ isNextReady: true, blockedSinceMs: null, nowMs: 0 })).toBe(true);
+  });
+
+  it('bài kế tiếp chưa có hình thì chặn, nhưng chặn quá 3 giây thì cho sang để không kẹt (Safari không tải trước)', () => {
+    expect(canStepToNextReel({ isNextReady: false, blockedSinceMs: null, nowMs: 1_000 })).toBe(false);
+    expect(canStepToNextReel({ isNextReady: false, blockedSinceMs: 1_000, nowMs: 2_500 })).toBe(false);
+    expect(
+      canStepToNextReel({ isNextReady: false, blockedSinceMs: 1_000, nowMs: 1_000 + REEL_NEXT_NOT_READY_BLOCK_MS }),
+    ).toBe(true);
   });
 });
 

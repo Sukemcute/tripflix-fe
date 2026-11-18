@@ -2,7 +2,10 @@ import { releaseReelVideoSource, type ReelVideoSource } from './reel-post';
 
 /** Phần của thẻ <video> cần để chọn cách phát và gắn hls.js (test được không cần DOM). */
 export type ReelHlsVideo = ReelVideoSource &
-  Pick<HTMLVideoElement, 'canPlayType' | 'addEventListener' | 'removeEventListener'>;
+  Pick<HTMLVideoElement, 'canPlayType' | 'addEventListener' | 'removeEventListener' | 'play' | 'paused' | 'readyState'>;
+
+/** HTMLMediaElement.HAVE_FUTURE_DATA: đủ dữ liệu để chạy tiếp ngay (hằng số của DOM, không có trong Node khi test). */
+const HAVE_FUTURE_DATA = 3;
 
 /** Một mức chất lượng trong master playlist (hls.js đọc từ RESOLUTION). */
 export interface ReelHlsLevel {
@@ -100,8 +103,9 @@ export function pickReelStartLevel(levels: readonly ReelHlsLevel[], maxShortSide
 
 /**
  * Trình duyệt tự phát HLS tự đo băng thông bằng mức thấp nhất (360p) rồi mới tăng, nên không gắn master mà gắn
- * thẳng playlist của mức nét nhất (`sources[0]`, thường 720p). Mức đó lỗi hoặc quá REEL_RENDITION_TIMEOUT_MS chưa có
- * hình thì lùi sang nguồn kế tiếp; nguồn cuối là master. Hết nguồn mà vẫn lỗi thì báo lỗi phát.
+ * thẳng playlist của mức nét nhất (`sources[0]`, thường 720p). Mức đó lỗi, hoặc người xem bấm phát mà quá
+ * REEL_RENDITION_TIMEOUT_MS chưa có hình, thì lùi sang nguồn kế tiếp; nguồn cuối là master. Hết nguồn mà vẫn lỗi thì
+ * báo lỗi phát.
  */
 function attachNativeSources(
   video: ReelHlsVideo,
@@ -116,21 +120,30 @@ function attachNativeSources(
       onFatalError();
       return;
     }
+    const shouldResume = !video.paused;
     sourceIndex += 1;
-    load();
-  };
-  const onLoadedData = () => clearTimeout(timeout);
-  const load = () => {
     video.src = sources[sourceIndex] ?? '';
-    if (sourceIndex < sources.length - 1) timeout = setTimeout(fallBack, REEL_RENDITION_TIMEOUT_MS);
+    if (shouldResume) void video.play().catch(() => {});
   };
+  // Chỉ hẹn giờ khi người xem đang chờ video này (đã bấm phát mà chưa có hình). Video tải sẵn ngoài màn hình
+  // không hẹn giờ: trình duyệt có thể hoãn tải chúng, lùi mức lúc đó chỉ làm tải lại từ đầu.
+  const armTimeout = () => {
+    clearTimeout(timeout);
+    if (video.readyState >= HAVE_FUTURE_DATA || sourceIndex >= sources.length - 1) return;
+    timeout = setTimeout(fallBack, REEL_RENDITION_TIMEOUT_MS);
+  };
+  const disarmTimeout = () => clearTimeout(timeout);
   video.addEventListener('error', fallBack);
-  video.addEventListener('loadeddata', onLoadedData);
-  load();
+  video.addEventListener('play', armTimeout);
+  video.addEventListener('playing', disarmTimeout);
+  video.addEventListener('pause', disarmTimeout);
+  video.src = sources[0] ?? '';
   return () => {
     clearTimeout(timeout);
     video.removeEventListener('error', fallBack);
-    video.removeEventListener('loadeddata', onLoadedData);
+    video.removeEventListener('play', armTimeout);
+    video.removeEventListener('playing', disarmTimeout);
+    video.removeEventListener('pause', disarmTimeout);
     releaseReelVideoSource(video);
   };
 }
