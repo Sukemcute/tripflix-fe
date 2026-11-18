@@ -24,16 +24,15 @@ import { t, vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ApiErrorNotice } from '@/components/api-state';
 import { DateSingleField } from '@/components/date-sheet';
 import {
   Badge,
   Button,
   Card,
-  Chip,
+  Icon,
   Notice,
-  PriceRow,
   Row,
   Screen,
   Sheet,
@@ -45,8 +44,12 @@ import {
 import { saveTripPick, type TripBookingOffer } from '@/features/booking/trip-booking-store';
 import { CommerceError } from '@/features/booking/commerce-state';
 import { LoadingDots } from '@/components/loading-dots';
+import { compactType } from '@/components/mobile-scale';
 import {
   AirportField,
+  FlightAirlineMark,
+  formatFlightDuration,
+  AirportPickerList,
   FlightDateStrip,
   FlightHero,
   FlightSortChips,
@@ -327,22 +330,18 @@ export function FlightSearchScreen() {
       )}
       {picker && picker !== 'passengers' && (
         <Sheet title={choices[picker].label} visible onClose={() => setPicker(undefined)}>
-          {choices[picker].options.map(({ value, label }) => (
-            <Chip
-              key={value}
-              selected={draft[picker] === value}
-              onPress={() => {
-                setDraft((previous) => ({
-                  ...previous,
-                  ...(picker === 'from' && previous.from !== value ? { to: '' } : {}),
-                  [picker]: value,
-                }));
-                setPicker(undefined);
-              }}
-            >
-              {label}
-            </Chip>
-          ))}
+          <AirportPickerList
+            options={choices[picker].options}
+            selected={draft[picker]}
+            onSelect={(value) => {
+              setDraft((previous) => ({
+                ...previous,
+                ...(picker === 'from' && previous.from !== value ? { to: '' } : {}),
+                [picker]: value,
+              }));
+              setPicker(undefined);
+            }}
+          />
         </Sheet>
       )}
       {search && (
@@ -447,6 +446,7 @@ function FlightResults({
               isHolding={isHolding && holdKey === first.flightKey}
               isSignedIn={isSignedIn}
               passengerMix={getFlightPassengerMix(search)}
+              date={search.date}
               error={holdKey === first.flightKey ? holdError : null}
               onChoose={(productId, fareCode) => {
                 const cabin = [first, ...otherCabins].find((offer) => offer.productId === productId);
@@ -493,7 +493,9 @@ function FlightCard({
   onChoose,
   error,
   tags,
+  date,
 }: {
+  date: string;
   tags: { label: string; tone: 'coral' | 'teal' }[];
   passengerMix: FlightPassengerMix;
   flight: FlightOfferDto;
@@ -522,28 +524,35 @@ function FlightCard({
     ...cabins.flatMap((offer) => (offer.isAvailable && offer.priceFrom != null ? [offer.priceFrom] : [])),
   );
   return (
-    <Card style={isPicked ? { borderColor: colors.teal, borderWidth: 2 } : undefined}>
+    <Card
+      style={[
+        isOpen && ticketStyles.card,
+        isPicked ? { borderColor: colors.teal, borderWidth: 2 } : undefined,
+      ]}
+    >
       {isPicked && (
         <Txt variant="label" style={{ color: colors.tealInk }}>
           {vi.mobile.tripPlan.picked}
         </Txt>
       )}
-      <FlightTimeline
-        airline={flight.airline}
-        airlineCode={flight.airlineCode}
-        baggage={[
-          fare?.carryOnKg != null ? t('flights.carryOn', { kg: fare.carryOnKg }) : '',
-          fare?.checkedKg != null ? t('flights.checked', { kg: fare.checkedKg }) : '',
-        ].filter(Boolean)}
-        flightNumber={flight.flightNumber}
-        cabinName={cabin.cabinName}
-        fromAirport={flight.fromAirport}
-        toAirport={flight.toAirport}
-        departTime={flight.departTime}
-        arriveTime={flight.arriveTime}
-        durationMinutes={getFlightDurationMinutes(flight)}
-        tags={tags}
-      />
+      {!isOpen && (
+        <FlightTimeline
+          airline={flight.airline}
+          airlineCode={flight.airlineCode}
+          baggage={[
+            fare?.carryOnKg != null ? t('flights.carryOn', { kg: fare.carryOnKg }) : '',
+            fare?.checkedKg != null ? t('flights.checked', { kg: fare.checkedKg }) : '',
+          ].filter(Boolean)}
+          flightNumber={flight.flightNumber}
+          cabinName={cabin.cabinName}
+          fromAirport={flight.fromAirport}
+          toAirport={flight.toAirport}
+          departTime={flight.departTime}
+          arriveTime={flight.arriveTime}
+          durationMinutes={getFlightDurationMinutes(flight)}
+          tags={tags}
+        />
+      )}
       {!isOpen && (
         <View style={cardStyles.summary}>
           <View style={{ flex: 1 }}>
@@ -578,89 +587,260 @@ function FlightCard({
       )}
       {isOpen && (
         <>
-          <Txt variant="label">{copy.cabin}</Txt>
-          <Row style={{ gap: spacing.xs, flexWrap: 'wrap' }}>
-            {cabins.map((offer) => (
-              <Chip
-                key={offer.productId}
-                selected={offer.productId === cabin.productId}
-                onPress={() => {
-                  if (isLocked) return;
-                  setProductId(offer.productId);
-                  setFareCode('');
-                }}
-              >
-                {offer.cabinName}
-                {!offer.isAvailable && ' · ' + getReason(offer)}
-              </Chip>
+          {/* Dải đầu tấm vé như web: logo hãng, loại vé, thu gọn. */}
+          <View style={ticketStyles.band}>
+            <View style={ticketStyles.logoPill}>
+              <FlightAirlineMark airline={flight.airline} airlineCode={flight.airlineCode} />
+            </View>
+            <Txt style={ticketStyles.bandTag} numberOfLines={1}>
+              {(copy.oneWay + ' · ' + cabin.cabinName).toUpperCase()}
+            </Txt>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setIsOpen(false)}
+              style={({ pressed }) => [ticketStyles.collapse, pressed && { opacity: 0.7 }]}
+            >
+              <Txt style={ticketStyles.collapseText}>{copy.close}</Txt>
+              <Icon name="chevron-up" size={14} color={colors.background} />
+            </Pressable>
+          </View>
+          <View style={ticketStyles.zigzag} aria-hidden>
+            {Array.from({ length: 40 }, (_, index) => (
+              <View key={index} style={ticketStyles.tooth} />
             ))}
-          </Row>
-          {cabin.isAvailable && cabin.fares.length > 0 && (
-            <>
-              <Txt variant="label">{copy.fare}</Txt>
-              <Row style={{ gap: spacing.xs, flexWrap: 'wrap' }}>
-                {cabin.fares.map((option) => (
-                  <Chip
-                    key={option.code}
-                    selected={option.code === fare?.code}
-                    onPress={() => {
-                      if (!isLocked) setFareCode(option.code);
-                    }}
-                  >
-                    {option.name}
-                  </Chip>
-                ))}
-              </Row>
-            </>
-          )}
-          {canBook ? (
-            <>
-              <PriceRow total label={vi.commerce.total} amount={money(totalPrice)} />
-              <Txt variant="small" style={ui.muted}>
-                {t('flights.perPassenger', { price: money(unitPrice) })}
-                {passengerMix.children > 0 && fare.childPrice != null
-                  ? ' · ' + copy.passengerTypes.child.label + ' ' + money(fare.childPrice)
-                  : ''}
-                {passengerMix.infants > 0 && fare.infantPrice != null
-                  ? ' · ' + copy.passengerTypes.infant.label + ' ' + money(fare.infantPrice)
-                  : ''}
+          </View>
+          <View style={ticketStyles.section}>
+            {isPicked && (
+              <Txt variant="label" style={{ color: colors.tealInk }}>
+                {vi.mobile.tripPlan.picked}
               </Txt>
-              {isTripPick && (fare.carryOnKg != null || fare.checkedKg != null) && (
+            )}
+            <Row style={{ alignItems: 'flex-start', gap: spacing.sm }}>
+              <View>
+                <Txt style={ticketStyles.code}>{flight.fromAirport}</Txt>
                 <Txt variant="small" style={ui.muted}>
-                  {[
-                    fare.carryOnKg != null ? t('mobile.tripPlan.carryOn', { kg: fare.carryOnKg }) : '',
-                    fare.checkedKg != null ? t('mobile.tripPlan.checkedBaggage', { kg: fare.checkedKg }) : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
+                  {airportCity(flight.fromAirport)}
                 </Txt>
-              )}
-              {cabin.remaining != null && (
-                <Txt variant="small">{t('flights.remaining', { count: cabin.remaining })}</Txt>
-              )}
-              <Txt variant="small">
-                {fare.isRefundable && fare.freeCancelDays > 0
-                  ? t('flights.freeCancel', { count: fare.freeCancelDays })
-                  : fare.isRefundable
-                    ? vi.commerce.refundable
-                    : vi.commerce.nonRefundable}
+                <Txt style={ticketStyles.time}>{flight.departTime?.slice(0, 5) ?? '--:--'}</Txt>
+              </View>
+              <View style={[ui.flex, { alignItems: 'center', gap: 2, paddingTop: spacing.sm }]}>
+                {getFlightDurationMinutes(flight) != null && (
+                  <Txt variant="small" style={{ fontFamily: nativeFonts.semibold }}>
+                    {formatFlightDuration(getFlightDurationMinutes(flight)!)}
+                  </Txt>
+                )}
+                <View style={ticketStyles.planeDot}>
+                  <Icon name="airplane" size={14} color={colors.coral} />
+                </View>
+                <Txt variant="small" style={{ color: colors.tealInk, fontFamily: nativeFonts.semibold }}>
+                  {copy.direct}
+                </Txt>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Txt style={ticketStyles.code}>{flight.toAirport}</Txt>
+                <Txt variant="small" style={ui.muted}>
+                  {airportCity(flight.toAirport)}
+                </Txt>
+                <Txt style={ticketStyles.time}>{flight.arriveTime?.slice(0, 5) ?? '--:--'}</Txt>
+              </View>
+            </Row>
+            <View style={ticketStyles.facts}>
+              {[
+                [copy.factFlight, flight.flightNumber ?? flight.flightKey],
+                [copy.factDate, formatDate(date)],
+                [copy.factDepart, flight.departTime?.slice(0, 5) ?? '--:--'],
+                [copy.cabin, cabin.cabinName],
+                [
+                  copy.factPassengers,
+                  String(passengerMix.adults + passengerMix.children + passengerMix.infants),
+                ],
+              ].map(([label, value]) => (
+                <View key={label} style={ticketStyles.fact}>
+                  <Txt style={ticketStyles.factLabel}>{label!.toUpperCase()}</Txt>
+                  <Txt style={ticketStyles.factValue}>{value}</Txt>
+                </View>
+              ))}
+            </View>
+          </View>
+          <View style={ticketStyles.section}>
+            <Txt style={ticketStyles.sectionTitle}>{copy.pickCabin}</Txt>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: spacing.sm }}
+            >
+              {cabins.map((offer) => {
+                const isSelected = offer.productId === cabin.productId;
+                return (
+                  <Pressable
+                    key={offer.productId}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: isSelected }}
+                    disabled={isLocked}
+                    onPress={() => {
+                      setProductId(offer.productId);
+                      setFareCode('');
+                    }}
+                    style={[ticketStyles.cabinTab, isSelected && ticketStyles.cabinTabSelected]}
+                  >
+                    <Row style={{ gap: 4, alignItems: 'center' }}>
+                      <Icon
+                        name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+                        size={16}
+                        color={isSelected ? colors.tealInk : colors.textMuted}
+                      />
+                      <Txt style={ticketStyles.cabinName}>{offer.cabinName}</Txt>
+                    </Row>
+                    <Txt variant="small" style={ui.muted}>
+                      {offer.isAvailable && offer.priceFrom != null
+                        ? money(offer.priceFrom)
+                        : getReason(offer)}
+                    </Txt>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            {cabin.isAvailable && cabin.fares.length > 0 && (
+              <>
+                <Txt style={ticketStyles.sectionTitle}>{copy.pickFare}</Txt>
+                <View style={ticketStyles.fares}>
+                  {cabin.fares.map((option, index) => {
+                    const isSelected = option.code === fare?.code;
+                    return (
+                      <Pressable
+                        key={option.code}
+                        accessibilityRole="radio"
+                        accessibilityState={{ checked: isSelected }}
+                        disabled={isLocked}
+                        onPress={() => setFareCode(option.code)}
+                        style={[
+                          ticketStyles.fare,
+                          index > 0 && ticketStyles.fareDivider,
+                          isSelected && ticketStyles.fareSelected,
+                        ]}
+                      >
+                        <View style={[ticketStyles.radio, isSelected && ticketStyles.radioOn]}>
+                          {isSelected && <View style={ticketStyles.radioDot} />}
+                        </View>
+                        <View style={[ui.flex, { gap: 4 }]}>
+                          <Txt style={ticketStyles.fareName}>{option.name}</Txt>
+                          <Txt
+                            style={[
+                              ticketStyles.fareNote,
+                              !option.isRefundable && { color: colors.textMuted },
+                            ]}
+                          >
+                            {option.isRefundable && option.freeCancelDays > 0
+                              ? t('flights.freeCancel', { count: option.freeCancelDays })
+                              : option.isRefundable
+                                ? vi.commerce.refundable
+                                : vi.commerce.nonRefundable}
+                          </Txt>
+                          <Row style={{ gap: 4, flexWrap: 'wrap' }}>
+                            {option.carryOnKg != null && (
+                              <Txt style={ticketStyles.chip}>
+                                {t('flights.carryOn', { kg: option.carryOnKg })}
+                              </Txt>
+                            )}
+                            {option.checkedKg != null && (
+                              <Txt style={ticketStyles.chip}>
+                                {t('flights.checked', { kg: option.checkedKg })}
+                              </Txt>
+                            )}
+                          </Row>
+                        </View>
+                        {option.pricePerPerson != null && (
+                          <Txt style={ticketStyles.farePrice}>{money(option.pricePerPerson)}</Txt>
+                        )}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+          </View>
+          {/* Đường xé vé: nét đứt với hai lỗ khuyết hai bên như tấm vé trên web. */}
+          <View style={ticketStyles.perforation} aria-hidden>
+            <View style={[ticketStyles.notch, { left: -10 }]} />
+            <View style={ticketStyles.perforationLine} />
+            <View style={[ticketStyles.notch, { right: -10 }]} />
+          </View>
+          <View style={ticketStyles.stub}>
+            {canBook ? (
+              <>
+                <Txt variant="small" style={ui.muted}>
+                  {vi.commerce.total}
+                </Txt>
+                <Txt style={ticketStyles.total}>
+                  {money(totalPrice).replace('đ', '')}
+                  <Txt style={ticketStyles.currency}> VNĐ</Txt>
+                </Txt>
+                <Txt variant="small" style={ui.muted}>
+                  {t('flights.perPassenger', { price: money(unitPrice) })} · {copy.taxIncluded}
+                  {passengerMix.children > 0 && fare.childPrice != null
+                    ? ' · ' + copy.passengerTypes.child.label + ' ' + money(fare.childPrice)
+                    : ''}
+                  {passengerMix.infants > 0 && fare.infantPrice != null
+                    ? ' · ' + copy.passengerTypes.infant.label + ' ' + money(fare.infantPrice)
+                    : ''}
+                </Txt>
+                <View style={ticketStyles.stubRows}>
+                  <Row style={{ justifyContent: 'space-between' }}>
+                    <Txt variant="small" style={ui.muted}>
+                      {copy.fare}
+                    </Txt>
+                    <Txt variant="small" style={{ fontFamily: nativeFonts.semibold }}>
+                      {fare.name.split(' · ')[0]}
+                    </Txt>
+                  </Row>
+                  <Row style={{ justifyContent: 'space-between' }}>
+                    <Txt variant="small" style={ui.muted}>
+                      {copy.factRefund}
+                    </Txt>
+                    <Txt variant="small" style={{ fontFamily: nativeFonts.semibold }}>
+                      {fare.isRefundable
+                        ? fare.freeCancelDays > 0
+                          ? t('flights.refundBefore', { count: fare.freeCancelDays })
+                          : copy.refundable
+                        : copy.noRefund}
+                    </Txt>
+                  </Row>
+                </View>
+              </>
+            ) : (
+              <Notice tone="warning">{getReason(cabin)}</Notice>
+            )}
+            <Button
+              disabled={!canBook || isLocked}
+              onPress={() => fare && onChoose(cabin.productId, fare.code)}
+            >
+              {isHolding
+                ? vi.api.loading
+                : isTripPick
+                  ? vi.mobile.tripPlan.pickFlight
+                  : canBook && !isSignedIn
+                    ? vi.commerce.login
+                    : copy.choose}
+            </Button>
+            {cabin.remaining != null && (
+              <Txt variant="small" style={[ui.muted, { textAlign: 'center' }]}>
+                {t('flights.remaining', { count: cabin.remaining })}
               </Txt>
-            </>
-          ) : (
-            <Notice tone="warning">{getReason(cabin)}</Notice>
-          )}
-          <Button
-            disabled={!canBook || isLocked}
-            onPress={() => fare && onChoose(cabin.productId, fare.code)}
-          >
-            {isHolding
-              ? vi.api.loading
-              : isTripPick
-                ? vi.mobile.tripPlan.pickFlight
-                : canBook && !isSignedIn
-                  ? vi.commerce.login
-                  : copy.choose}
-          </Button>
+            )}
+            <View style={ticketStyles.barcode} aria-hidden>
+              {BARCODE.map((width, index) => (
+                <View
+                  key={index}
+                  style={{
+                    width,
+                    alignSelf: 'stretch',
+                    backgroundColor: index % 2 ? 'transparent' : colors.ink,
+                  }}
+                />
+              ))}
+            </View>
+            <Txt style={ticketStyles.barcodeText}>{flight.flightNumber ?? flight.flightKey}</Txt>
+          </View>
         </>
       )}
       <CommerceError error={error} />
@@ -680,3 +860,154 @@ const cardStyles = StyleSheet.create({
   },
   price: { fontSize: 22, lineHeight: 28, fontFamily: nativeFonts.bold, color: colors.ink },
 });
+
+/** Tên thành phố của sân bay ("Hà Nội · Nội Bài" → "Hà Nội"). */
+const airportCity = (code: string) => (airportNames[code] ?? code).split(' · ')[0];
+
+const ticketStyles = StyleSheet.create({
+  card: { padding: 0, gap: 0, overflow: 'hidden' },
+  band: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.tealInk,
+  },
+  logoPill: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.md,
+    backgroundColor: colors.background,
+  },
+  bandTag: {
+    flex: 1,
+    ...compactType.label,
+    fontFamily: nativeFonts.semibold,
+    color: colors.background,
+    letterSpacing: 0.6,
+  },
+  collapse: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.background,
+  },
+  collapseText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.background },
+  section: { gap: spacing.md, padding: spacing.md },
+  zigzag: { flexDirection: 'row', height: 6, marginTop: -3, overflow: 'hidden' },
+  tooth: {
+    width: 10,
+    height: 10,
+    marginTop: -6,
+    backgroundColor: colors.tealInk,
+    transform: [{ rotate: '45deg' }],
+  },
+  perforation: { height: 20, justifyContent: 'center' },
+  perforationLine: {
+    marginHorizontal: spacing.md,
+    borderTopWidth: 2,
+    borderStyle: 'dashed',
+    borderTopColor: colors.border,
+  },
+  notch: {
+    position: 'absolute',
+    top: 0,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  fareNote: { ...compactType.label, fontFamily: nativeFonts.regular, color: colors.tealInk },
+  currency: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.textMuted },
+  barcode: { flexDirection: 'row', height: 36, alignSelf: 'center', marginTop: spacing.sm },
+  barcodeText: { ...compactType.label, textAlign: 'center', color: colors.textMuted, letterSpacing: 2 },
+  code: { fontSize: 32, lineHeight: 38, fontFamily: nativeFonts.bold, color: colors.ink },
+  time: { fontSize: 20, lineHeight: 26, fontFamily: nativeFonts.bold, color: colors.tealInk },
+  planeDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.coralTint,
+  },
+  facts: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: spacing.sm,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  fact: { width: '33.33%', gap: 2 },
+  factLabel: {
+    ...compactType.label,
+    fontFamily: nativeFonts.semibold,
+    color: colors.textMuted,
+    letterSpacing: 0.4,
+  },
+  factValue: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
+  sectionTitle: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.textMuted },
+  // Ô có viền, chọn thì nền xanh và dấu tích: nhìn ra là lựa chọn, không phải thông tin cố định của vé.
+  cabinTab: {
+    gap: 2,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  cabinTabSelected: { borderColor: colors.tealInk, backgroundColor: colors.seaMist },
+  cabinName: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
+  fares: { borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  fare: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md },
+  fareDivider: { borderTopWidth: 1, borderTopColor: colors.border },
+  fareSelected: { backgroundColor: colors.seaMist, borderLeftWidth: 3, borderLeftColor: colors.tealInk },
+  radio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioOn: { borderColor: colors.tealInk },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.tealInk },
+  fareName: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
+  chip: {
+    ...compactType.label,
+    fontSize: 11,
+    fontFamily: nativeFonts.semibold,
+    color: colors.tealInk,
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 1,
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+  },
+  farePrice: { ...compactType.body, fontFamily: nativeFonts.bold, color: colors.coralInk },
+  stub: { gap: spacing.xs, padding: spacing.md, paddingTop: spacing.xs },
+  total: { fontSize: 26, lineHeight: 32, fontFamily: nativeFonts.bold, color: colors.ink },
+  stubRows: {
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+});
+
+/** Độ rộng vạch và khe của mã vạch trang trí ở cuống vé. */
+const BARCODE = [
+  2, 1, 1, 2, 3, 1, 1, 1, 2, 2, 1, 3, 1, 1, 2, 1, 3, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 2, 1, 1, 2, 2, 3, 1, 1, 2,
+  1, 1, 2, 1, 3, 1, 2, 2, 1, 1, 2, 3, 1, 1, 2, 1, 1, 2, 2, 1, 3, 1, 1, 2,
+];

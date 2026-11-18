@@ -1059,7 +1059,9 @@
 }
 
 .stripLine {
+  /* Trên nền ô ngày (đang chọn, rê chuột) nhưng dưới chấm giá, để nền ô không che mất đường. */
   position: absolute;
+  z-index: 1;
   right: 0;
   bottom: 6px;
   left: 0;
@@ -1079,7 +1081,6 @@
 
 .stripDays li {
   position: relative;
-  z-index: 1;
 }
 
 .stripDays a {
@@ -1113,6 +1114,7 @@
 
 .stripDot {
   position: absolute;
+  z-index: 2;
   left: 50%;
   width: 7px;
   height: 7px;
