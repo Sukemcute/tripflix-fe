@@ -58,6 +58,8 @@ export const assistant = {
   bookTrip: 'Đặt theo lộ trình',
   bookHotel: 'Đặt phòng',
   bookFlight: 'Đặt vé',
+  /** Nhãn trên dòng chuyến bay, khách sạn Tripflix lồng trong lộ trình. */
+  tripflixService: 'Dịch vụ Tripflix',
   choose: 'Chọn',
   undo: 'Hoàn tác',
   // Thiết kế lại khung chat mobile (SCRUM-167): chỉ thêm khoá, các khoá cũ giữ nguyên.

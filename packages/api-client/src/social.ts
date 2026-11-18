@@ -49,7 +49,7 @@ export const socialApi = {
     return (await posts.postsControllerDeletePost(encodeURIComponent(id))).data;
   },
   async publishPost(id: string) {
-    return (await posts.postsControllerPublishPost(encodeURIComponent(id))).data;
+    return readEntity((await posts.postsControllerPublishPost(encodeURIComponent(id))).data, ['id', 'status']);
   },
   async sharePost(id: string) {
     return (await posts.postsControllerTrackShare(encodeURIComponent(id))).data;

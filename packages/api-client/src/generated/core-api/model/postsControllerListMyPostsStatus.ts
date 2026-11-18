@@ -12,4 +12,5 @@ export const PostsControllerListMyPostsStatus = {
   all: 'all',
   draft: 'draft',
   published: 'published',
+  held: 'held',
 } as const;

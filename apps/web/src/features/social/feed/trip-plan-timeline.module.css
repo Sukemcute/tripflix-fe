@@ -1,0 +1,172 @@
+/* Lịch trình từng ngày, bố cục và màu như sheet "Xem lộ trình" của reel trên app. */
+
+.timeline {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding-bottom: 20px;
+}
+
+.day:last-child {
+  padding-bottom: 4px;
+}
+
+.rail {
+  position: absolute;
+  top: 18px;
+  bottom: 0;
+  left: 4px;
+  width: 2px;
+  border-radius: 1px;
+  background-color: var(--iv-border, var(--color-border));
+}
+
+.dayDot {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  flex: none;
+  margin-top: 6px;
+  border-radius: 999px;
+  background-color: var(--color-coral);
+  box-shadow: 0 0 0 2px var(--color-coral-tint);
+}
+
+.dayContent {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+}
+
+.dayLabel {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--iv-text, var(--color-ink));
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1.5px solid var(--iv-border, var(--color-border));
+  background-color: var(--iv-elevated-bg, var(--color-background));
+}
+
+.cardIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  padding: 9px;
+  border-radius: 12px;
+  color: var(--color-background);
+}
+
+.cardIconFlight {
+  background-color: var(--color-teal);
+}
+
+.cardIconHotel {
+  background-color: var(--color-coral);
+}
+
+.cardBody {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.cardTitle {
+  overflow: hidden;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--iv-text, var(--color-ink));
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.muted {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--iv-text-muted, var(--color-text-muted));
+}
+
+.suggestions {
+  display: grid;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.suggestionsLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle, var(--color-text-muted));
+}
+
+.stops {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stop {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+}
+
+.stopIcon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 2px;
+  color: var(--iv-text-muted, var(--color-text-muted));
+}
+
+.stopText {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
+.description {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: var(--iv-text, var(--color-ink));
+}
+
+.stopIconSmall {
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  border-radius: 9px;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.stopIconSoft {
+  background-color: var(--color-teal-soft);
+  color: var(--color-teal-ink);
+}

@@ -4,10 +4,12 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { SocialCommentDtoCreatorReview } from './socialCommentDtoCreatorReview';
 import type { SocialCommentDtoModerationState } from './socialCommentDtoModerationState';
 import type { SocialCommentDtoStatus } from './socialCommentDtoStatus';
 
 export interface SocialCommentDto {
+  creatorReview?: SocialCommentDtoCreatorReview;
   status?: SocialCommentDtoStatus;
   /**
    * Trạng thái kiểm duyệt hiển thị cho tác giả

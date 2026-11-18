@@ -1,4 +1,4 @@
-import { useApiSession, type AssistantAction, type AssistantCard, type AssistantTrip } from '@tripflix/api-client';
+import { readAssistantCards, useApiSession, type AssistantAction, type AssistantCard, type AssistantTrip } from '@tripflix/api-client';
 import {
   completeAssistantTurn,
   parseAssistantChat,
@@ -146,7 +146,8 @@ function useAssistantState(transport?: AssistantTransport) {
         for (const message of saved.messages) {
           sequence.current = Math.max(sequence.current, Number(message.id) || 0);
         }
-        setMessages((current) => (current.length ? current : saved.messages));
+        const restored = saved.messages.map((message) => ({ ...message, cards: readAssistantCards(message.cards) }));
+        setMessages((current) => (current.length ? current : restored));
         setTrip((current) => current ?? (saved.trip as AssistantTrip | null));
       })
       .catch(() => {

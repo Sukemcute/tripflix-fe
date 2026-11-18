@@ -163,6 +163,8 @@ export function TripBuilderScreen() {
   const [flightDraft, setFlightDraft] = useState<FlightDraft | null>(() =>
     seed?.flight ? { key: nextKey('flight:'), leg: 'outbound', ...seed.flight } : null,
   );
+  // Chuyến về Tripi gợi ý: mở bản nháp chiều về khi khách chọn xong chuyến đi.
+  const [pendingReturn, setPendingReturn] = useState(seed?.returnFlight ?? null);
   const routes = useFlightRoutes();
   const place = destination.destinationPlaceId;
   // Nơi đến chọn trong danh sách (Hà Nội) thì chuyến bay đi tới, về từ sân bay ở đó (HAN).
@@ -214,7 +216,11 @@ export function TripBuilderScreen() {
     };
     setItems((current) => placeByTime(current, card));
     setPendingFlightKey(null);
-  }, [picks, pendingFlightKey]);
+    if (pendingReturn && offer.to === pendingReturn.from) {
+      setFlightDraft({ key: nextKey('flight:'), leg: 'inbound', ...pendingReturn });
+      setPendingReturn(null);
+    }
+  }, [picks, pendingFlightKey, pendingReturn]);
 
   const sorted = [...items].sort((a, b) => itemDate(a).localeCompare(itemDate(b)));
   const lastHotel = sorted.filter((item): item is HotelItem => item.kind === 'hotel').at(-1);

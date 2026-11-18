@@ -9,6 +9,7 @@ import {
   updateReelSocialCache,
   uploadChunkToPresignedUrl,
   useApiSession,
+  useCommentPermissions,
   usePlaybackSession,
   useRecommendedReelsFeed,
   useReelsByIds,
@@ -27,11 +28,21 @@ import type {
   SocialCommentDto,
   SocialPostDto,
   TripAttachmentDto,
-  TripItineraryItemDto,
   UpdatePostDto,
 } from '@tripflix/api-client/core-api/model/index';
 import { commentsControllerSetCommentReaction } from '@tripflix/api-client/core-api/social-comments/social-comments';
-import { getReelPlaybackSources, getReelPosterPrefetchUrls, selectReelPoster } from '@tripflix/app-core';
+import {
+  buildTripAttachment,
+  buildTripDraftFromAttachment,
+  createTripPlanDraft,
+  getPostTitleFromCaption,
+  getReelPlaybackSources,
+  getReelPosterPrefetchUrls,
+  hasTripPlan,
+  selectReelPoster,
+  type TripPlanDraft,
+} from '@tripflix/app-core';
+import { ComposerTripPlanEditor } from './composer/trip-plan-editor';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -43,6 +54,7 @@ import { getAvatarTone } from './avatar-tone';
 import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import { EmojiPicker } from './emoji-picker';
 import { CommentVisibility } from './comment-visibility';
+import { CreatorCommentControls } from './creator-comment-controls';
 import { ModeratedComment } from './moderated-comment';
 import {
   addCommentToCache,
@@ -79,7 +91,7 @@ import { SoftSelect } from '@/features/shared/soft-select';
 import { addPublishedPostToFeeds, publishNoticeStore } from './composer/published-post';
 import { calculateUploadPercent, parseStoredHashtags, pickDroppedVideo } from './composer/composer-inputs';
 import { ShareMenu, type ShareMenuHandle } from './share-menu';
-import { PostOwnerMenu } from './post-owner-menu';
+import { PostOptionsMenu } from './post-options-menu';
 import { buildPostHref } from './search-url';
 import { LoadingDots } from '@/features/shared/loading-dots';
 
@@ -527,17 +539,18 @@ function AccountPostGrid({
                     />
                   </div>
                 )}
-                <p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.api.posts}</p>
+                <div className={styles.accountCardHeader}><p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.api.posts}</p><PostOptionsMenu post={post} buttonClassName={styles.iconGhostBtn} /></div>
                 <h3>
-                  <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })}>{post.title}</Link>
+                  {post.status === 'held' ? post.title : <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })}>{post.title}</Link>}
                 </h3>
+                {post.status === 'held' && <p role="status" className="small muted">{vi.moderation.heldPost}</p>}
                 <p className={styles.postBodyClamped}>{post.body}</p>
                 <p className="small muted">
                   {post.reactionTotal} {vi.api.like} · {post.commentCount} {vi.api.comments}
                 </p>
-                <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })} className="secondary-button">
+                {post.status !== 'held' && <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })} className="secondary-button">
                   {vi.api.detail}
-                </Link>
+                </Link>}
               </div>
             </article>
           );
@@ -758,14 +771,7 @@ function MediaTrackItem({
   onOpenItinerary,
 }: MediaTrackItemProps) {
   const trip = post.tripAttachment ?? null;
-  const hasItinerary = Boolean(
-    trip &&
-      (trip.destinationName ||
-        trip.hotelName ||
-        trip.daysCount ||
-        trip.estimatedCostPerPerson ||
-        (trip.items && trip.items.length > 0)),
-  );
+  const hasItinerary = hasTripPlan(trip); // Như app: chỉ có điểm đến mà không có lịch từng ngày hay chỗ ở thì không hiện thẻ lịch trình.
 
   const postImages = useMemo(
     () =>
@@ -1043,19 +1049,20 @@ function MediaTrackItem({
                 />
               </span>
               <div className={styles.overlayTripText}>
+                {/* Tên thẻ là tiêu đề bài (thiếu thì lấy đầu nội dung), không lấy tên khách sạn đầu tiên. */}
                 <span className={styles.overlayTripTitle}>
-                  {trip.hotelName ?? trip.destinationName ?? post.title}
+                  {post.title.trim() || getPostTitleFromCaption(post.body ?? '')}
                 </span>
                 <span className={styles.overlayTripSub}>
                   {[
                     vi.api.immersiveTabSchedule,
-                    trip.items?.length
-                      ? t('api.immersiveStopsCount', { count: trip.items.length })
-                      : trip.daysCount
-                        ? t('api.postTripDaysBadge', { count: trip.daysCount })
+                    trip.daysCount
+                      ? t('api.postTripDaysBadge', { count: trip.daysCount })
+                      : trip.items?.length
+                        ? t('api.immersiveStopsCount', { count: trip.items.length })
                         : null,
                     trip.estimatedCostPerPerson
-                      ? `~${trip.estimatedCostPerPerson.toLocaleString('vi-VN')}d/nguoi`
+                      ? t('api.postTripApproxCost', { cost: trip.estimatedCostPerPerson.toLocaleString('vi-VN') })
                       : null,
                   ]
                     .filter(Boolean)
@@ -1763,14 +1770,7 @@ export function InspirationImmersiveViewer({
     },
   });
 
-  const hasItinerary = Boolean(
-    trip &&
-      (trip.destinationName ||
-        trip.hotelName ||
-        trip.daysCount ||
-        trip.estimatedCostPerPerson ||
-        (trip.items && trip.items.length > 0)),
-  );
+  const hasItinerary = hasTripPlan(trip); // Như app: chỉ có điểm đến mà không có lịch từng ngày hay chỗ ở thì không hiện thẻ lịch trình.
   // Sidebar Lịch trình đi theo lựa chọn đóng/mở của người dùng, không theo từng bài: bài không có lịch trình
   // thì hiện trạng thái trống, để khung video không tự co giãn mỗi khi lướt qua bài thiếu lịch trình.
   const showLeftPanel = Boolean(activePost) && isLeftOpen;
@@ -2056,9 +2056,10 @@ export function InspirationImmersiveViewer({
                       </div>
                     )}
 
-                    {activePost.authorId === user?.id && (
+                    {activePost && (
                       <div className={styles.stageTopControls}>
-                        <PostOwnerMenu post={activePost} buttonClassName={styles.stageCircleBtn} />
+                        <PostOptionsMenu key={activePost.id} post={activePost} isSaved={getReelEngagement(activePost).isSaved}
+                          onToggleSave={() => { if (!user) { window.location.href = loginReturnHref; return; } engagementMutation.mutate({ postId: activePost.id, type: 'save', nextSelected: !getReelEngagement(activePost).isSaved }); }} buttonClassName={styles.stageCircleBtn} />
                       </div>
                     )}
                   </>
@@ -2302,6 +2303,7 @@ export function RightPanelCommentsSynchronized({
   focusCommentId?: string;
 }) {
   const { user, isReady, session } = useApiSession();
+  const permissions = useCommentPermissions(post.id);
   const client = useQueryClient();
   const initialDraft = getCommentDraft(post.id);
   const [pendingComments, setPendingComments] = useState<readonly PostCommentsChange[]>([]);
@@ -2370,7 +2372,6 @@ export function RightPanelCommentsSynchronized({
         const code = errObj?.response?.data?.code || errObj?.body?.code || '';
         const isUnverified =
           code === 'email_unverified' ||
-          errObj?.status === 403 ||
           Boolean(errObj?.message?.includes('email_unverified'));
         if (isUnverified && session) {
           try {
@@ -2413,6 +2414,7 @@ export function RightPanelCommentsSynchronized({
         ref={scrollContainerRef}
         className={styles.rightScrollArea}
       >
+        {permissions.data?.canManage && <CreatorCommentControls postId={post.id} />}
         {pendingForPost.length > 0 && (
           <button type="button" aria-live="polite" className={styles.utilityBtn}
             style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--color-surface)' }} onClick={() => {
@@ -2488,7 +2490,7 @@ export function RightPanelCommentsSynchronized({
             </button>
           </div>
         )}
-        {user ? (
+        {permissions.data?.enabled === false ? <p role="status" className="small muted">{vi.moderation.commentsDisabled}</p> : user ? (
           <form
             className={styles.panelComposerForm}
             onSubmit={(event) => {
@@ -2586,6 +2588,8 @@ function CommentNode({
     authorName?: string | null;
     replyToName?: string | null;
     moderationState?: 'hidden' | null;
+    status?: SocialCommentDto['status'];
+    creatorReview?: SocialCommentDto['creatorReview'];
   };
   isReply?: boolean;
   loginHref: string;
@@ -2683,6 +2687,16 @@ function CommentNode({
       </li>
     );
   }
+
+  if (comment.status === 'held') return (
+    <li ref={focusRef} id={`comment-${comment.id}`} className={styles.panelCommentItem}>
+      <strong>{authorDisplay.name} · {vi.moderation.heldTitle}</strong>
+      <p className={styles.panelCommentText}>{comment.body}</p>
+      <p className="small muted">{comment.creatorReview === 'pending' ? vi.moderation.creatorHeld : comment.creatorReview === 'rejected' ? vi.moderation.creatorRejected : vi.moderation.heldComment}</p>
+      <ApiErrorNotice error={commentMutation.error} />
+      {isMine && <button type="button" className={styles.panelCommentActionBtn} disabled={commentMutation.isPending} onClick={() => commentMutation.mutate('delete')}>{vi.api.remove}</button>}
+    </li>
+  );
 
   return (
     <li
@@ -2878,14 +2892,6 @@ function CommentNode({
   );
 }
 
-interface ItineraryItemState {
-  id: string;
-  day: number;
-  title: string;
-  location: string;
-  notes: string;
-}
-
 export interface ComposerModalProps {
   onClose: () => void;
   initialView?: 'compose' | 'drafts';
@@ -2898,8 +2904,6 @@ const VISIBILITY_OPTIONS = [
   { value: 'public', label: 'Công khai với mọi người' },
   { value: 'private', label: 'Chỉ mình tôi' },
 ];
-
-const ITINERARY_DAY_OPTIONS = Array.from({ length: 15 }, (_, i) => ({ value: String(i + 1), label: `Ngày ${i + 1}` }));
 
 export function ComposerModal({
   onClose,
@@ -2960,14 +2964,7 @@ export function ComposerModal({
 
   // Lịch trình chuyến đi (Trip Attachment)
   const [enableItinerary, setEnableItinerary] = useState(false);
-  const [destinationName, setDestinationName] = useState('');
-  const [hotelName, setHotelName] = useState('');
-  const [daysCount, setDaysCount] = useState<string>('');
-  const [estimatedCost, setEstimatedCost] = useState<string>('');
-  const [priceDisclaimer, setPriceDisclaimer] = useState('');
-  const [itineraryItems, setItineraryItems] = useState<ItineraryItemState[]>([
-    { id: '1', day: 1, title: '', location: '', notes: '' },
-  ]);
+  const [tripDraft, setTripDraft] = useState<TripPlanDraft>(createTripPlanDraft);
 
   // Nạp dữ liệu bản nháp vào form để tiếp tục sửa
   const handleLoadDraft = useCallback((draft: SocialPostDto) => {
@@ -2991,36 +2988,10 @@ export function ComposerModal({
 
     if (draft.tripAttachment) {
       setEnableItinerary(true);
-      setDestinationName(draft.tripAttachment.destinationName || '');
-      setHotelName(draft.tripAttachment.hotelName || '');
-      setDaysCount(draft.tripAttachment.daysCount ? String(draft.tripAttachment.daysCount) : '');
-      setEstimatedCost(
-        draft.tripAttachment.estimatedCostPerPerson
-          ? String(draft.tripAttachment.estimatedCostPerPerson)
-          : '',
-      );
-      setPriceDisclaimer(draft.tripAttachment.priceDisclaimer || '');
-      if (draft.tripAttachment.items && draft.tripAttachment.items.length > 0) {
-        setItineraryItems(
-          draft.tripAttachment.items.map((it, idx) => ({
-            id: String(idx + 1),
-            day: it.day,
-            title: it.title,
-            location: it.location || '',
-            notes: it.notes || '',
-          })),
-        );
-      } else {
-        setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
-      }
+      setTripDraft(buildTripDraftFromAttachment(draft.tripAttachment, vi.mobile.tripPlan.modes));
     } else {
       setEnableItinerary(false);
-      setDestinationName('');
-      setHotelName('');
-      setDaysCount('');
-      setEstimatedCost('');
-      setPriceDisclaimer('');
-      setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+      setTripDraft(createTripPlanDraft());
     }
 
     setViewMode('compose');
@@ -3045,12 +3016,7 @@ export function ComposerModal({
       fileInputRef.current.value = '';
     }
     setEnableItinerary(false);
-    setDestinationName('');
-    setHotelName('');
-    setDaysCount('');
-    setEstimatedCost('');
-    setPriceDisclaimer('');
-    setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+    setTripDraft(createTripPlanDraft());
     setUploadError(null);
     setSaveSuccessMsg(null);
     setViewMode('compose');
@@ -3141,33 +3107,6 @@ export function ComposerModal({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
-
-  const handleAddItem = () => {
-    const lastDay = itineraryItems.length > 0 ? itineraryItems[itineraryItems.length - 1]!.day : 1;
-    const newId = Math.random().toString(36).substring(2, 9);
-    setItineraryItems((prev) => [
-      ...prev,
-      { id: newId, day: lastDay, title: '', location: '', notes: '' },
-    ]);
-  };
-
-  const handleRemoveItem = (id: string) => {
-    if (itineraryItems.length <= 1) {
-      setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
-      return;
-    }
-    setItineraryItems((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const handleUpdateItem = (
-    id: string,
-    field: 'day' | 'title' | 'location' | 'notes',
-    value: string | number,
-  ) => {
-    setItineraryItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
-    );
   };
 
   const uploadVideoMultipart = async (file: File, durationSec: number): Promise<string> => {
@@ -3271,30 +3210,12 @@ export function ComposerModal({
       const parsedTags = hashtags;
 
       let tripAttachment: TripAttachmentDto | undefined = undefined;
-      if (enableItinerary && destinationName.trim()) {
-        const filteredItems: TripItineraryItemDto[] = itineraryItems
-          .filter((item) => item.title.trim().length > 0)
-          .map((item) => ({
-            day: Number(item.day) || 1,
-            title: item.title.trim(),
-            ...(item.location.trim() ? { location: item.location.trim() } : {}),
-            ...(item.notes.trim() ? { notes: item.notes.trim() } : {}),
-          }));
-
-        const parsedDays = parseInt(daysCount, 10);
-        const parsedCost = parseInt(estimatedCost.replace(/\D/g, ''), 10);
-
-        tripAttachment = {
-          destinationName: destinationName.trim(),
-          ...(hotelName.trim() ? { hotelName: hotelName.trim() } : {}),
-          ...(!Number.isNaN(parsedDays) && parsedDays > 0 ? { daysCount: parsedDays } : {}),
-          ...(!Number.isNaN(parsedCost) && parsedCost > 0 ? { estimatedCostPerPerson: parsedCost } : {}),
-          ...(priceDisclaimer.trim() ? { priceDisclaimer: priceDisclaimer.trim() } : {}),
-          ...(filteredItems.length > 0 ? { items: filteredItems } : {}),
-        };
+      if (enableItinerary) {
+        tripAttachment = buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) ?? undefined;
       }
 
       let currentId = editingDraftId;
+      let savedStatus: string = 'draft';
 
       if (currentId) {
         const patchPayload: UpdatePostDto = {
@@ -3306,7 +3227,7 @@ export function ComposerModal({
           ...imageMedia,
           ...(tripAttachment ? { trip_attachment: tripAttachment } : {}),
         };
-        await socialApi.updatePost(currentId, patchPayload);
+        savedStatus = (await socialApi.updatePost(currentId, patchPayload)).status;
       } else {
         const draftPayload = {
           post_type: postType,
@@ -3323,11 +3244,8 @@ export function ComposerModal({
         setEditingDraftId(draft.id);
       }
 
-      if (shouldPublish && currentId) {
-        await socialApi.publishPost(currentId);
-      }
-
-      return { id: currentId, published: shouldPublish, postType };
+      const publication = shouldPublish && currentId && savedStatus === 'draft' ? await socialApi.publishPost(currentId) : null;
+      return { id: currentId, published: shouldPublish, postType, status: publication?.status ?? savedStatus };
     },
     onSuccess: async (data) => {
       await client.invalidateQueries({ queryKey: ['social'] });
@@ -3336,7 +3254,7 @@ export function ComposerModal({
         const detail = await socialApi.getPost(data.id).catch(() => null);
         if (detail) addPublishedPostToFeeds(client, detail.post);
         if (data.postType === 'video') void client.invalidateQueries({ queryKey: ['feed'] });
-        publishNoticeStore.show(data.id, data.postType);
+        publishNoticeStore.show(data.id, data.postType, data.status === 'held' ? 'held' : 'published');
         onClose();
       } else {
         setSaveSuccessMsg('Đã lưu bản nháp thành công.');
@@ -3729,125 +3647,7 @@ export function ComposerModal({
           </label>
 
           {enableItinerary && (
-            <div className={styles.composerItineraryContainer}>
-              <div className={styles.composerMetaRow}>
-                <input
-                  className={styles.composerInput}
-                  aria-label="Điểm đến chuyến đi"
-                  placeholder="Điểm đến (VD: Đà Lạt, Phú Quốc...)"
-                  value={destinationName}
-                  disabled={isFormBusy}
-                  onChange={(e) => setDestinationName(e.target.value)}
-                />
-                <input
-                  className={styles.composerInput}
-                  aria-label="Khách sạn / Resort"
-                  placeholder="Khách sạn (VD: Terracotta Resort...)"
-                  value={hotelName}
-                  disabled={isFormBusy}
-                  onChange={(e) => setHotelName(e.target.value)}
-                />
-              </div>
-
-              <div className={styles.composerMetaRow}>
-                <input
-                  className={styles.composerInput}
-                  type="number"
-                  min={1}
-                  max={30}
-                  aria-label="Số ngày đi"
-                  placeholder="Số ngày (VD: 3)"
-                  value={daysCount}
-                  disabled={isFormBusy}
-                  onChange={(e) => setDaysCount(e.target.value)}
-                />
-                <input
-                  className={styles.composerInput}
-                  aria-label="Chi phí dự tính"
-                  placeholder="Chi phí / người (VD: 3.500.000 VNĐ)"
-                  value={estimatedCost}
-                  disabled={isFormBusy}
-                  onChange={(e) => setEstimatedCost(e.target.value)}
-                />
-              </div>
-
-              <input
-                className={styles.composerInput}
-                aria-label="Ghi chú chi phí"
-                placeholder="Ghi chú chi phí (VD: Giá tham khảo bao gồm vé máy bay và phòng)"
-                value={priceDisclaimer}
-                disabled={isFormBusy}
-                onChange={(e) => setPriceDisclaimer(e.target.value)}
-              />
-
-              <div className={styles.composerSectionHeader} style={{ marginTop: '4px' }}>
-                <h5 className={styles.composerSectionTitle}>Các hoạt động theo ngày</h5>
-                <span className={styles.composerSectionBadge}>{itineraryItems.length} hoạt động</span>
-              </div>
-
-              {itineraryItems.map((item, index) => (
-                <div key={item.id} className={styles.itineraryItemCard}>
-                  <div className={styles.itineraryItemHeader}>
-                    <SoftSelect
-                      className={`${styles.composerSelect} ${styles.itineraryDayField}`}
-                      value={String(item.day)}
-                      options={ITINERARY_DAY_OPTIONS}
-                      onChange={(day) => handleUpdateItem(item.id, 'day', Number(day))}
-                      aria-label={`Ngày của hoạt động ${index + 1}`}
-                      disabled={isFormBusy}
-                    />
-
-                    <input
-                      className={styles.composerInput}
-                      style={{ flex: 1 }}
-                      placeholder="Tên hoạt động (VD: Đón bình minh Cầu Gỗ)"
-                      value={item.title}
-                      disabled={isFormBusy}
-                      onChange={(e) => handleUpdateItem(item.id, 'title', e.target.value)}
-                      required={enableItinerary && index === 0}
-                    />
-
-                    <button
-                      type="button"
-                      className={styles.removeItineraryItemBtn}
-                      onClick={() => handleRemoveItem(item.id)}
-                      disabled={isFormBusy}
-                      data-tooltip="Xóa hoạt động này"
-                      aria-label="Xóa hoạt động"
-                    >
-                      <SocialIcon name="trash" size={15} />
-                    </button>
-                  </div>
-
-                  <div className={styles.composerMetaRow}>
-                    <input
-                      className={styles.composerInput}
-                      placeholder="Địa điểm / Toạ độ (VD: Đồi chè Cầu Đất)"
-                      value={item.location}
-                      disabled={isFormBusy}
-                      onChange={(e) => handleUpdateItem(item.id, 'location', e.target.value)}
-                    />
-                    <input
-                      className={styles.composerInput}
-                      placeholder="Ghi chú / Mẹo (VD: Nên đến trước 5h30 để săn mây)"
-                      value={item.notes}
-                      disabled={isFormBusy}
-                      onChange={(e) => handleUpdateItem(item.id, 'notes', e.target.value)}
-                    />
-                  </div>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                className={styles.addItemBtn}
-                disabled={isFormBusy}
-                onClick={handleAddItem}
-              >
-                <SocialIcon name="plus" size={15} />
-                <span>Thêm hoạt động tiếp theo</span>
-              </button>
-            </div>
+            <ComposerTripPlanEditor draft={tripDraft} onChange={setTripDraft} disabled={isFormBusy} />
           )}
         </div>
 

@@ -11,6 +11,7 @@ type ApiErrorKind =
   | 'network'
   | 'expired'
   | 'forbidden'
+  | 'commentsDisabled'
   | 'emailUnverified'
   | 'missing'
   | 'conflict'
@@ -39,6 +40,7 @@ export function getApiErrorKind(error: unknown): ApiErrorKind {
   if (!(error instanceof HttpError)) return 'error';
   const body = error.body as { code?: unknown } | null;
   if (error.status === 403 && body?.code === 'email_unverified') return 'emailUnverified';
+  if (error.status === 403 && body?.code === 'comments_disabled') return 'commentsDisabled';
   return HTTP_ERROR_KINDS[error.status] ?? 'error';
 }
 

@@ -1,5 +1,6 @@
-import { feedApi, type AssistantAction, type AssistantCard } from '@tripflix/api-client';
+import { feedApi, getFutureDate, type AssistantAction, type AssistantCard } from '@tripflix/api-client';
 import {
+  buildAssistantTripSelection,
   groupItineraryLines,
   parseWeatherLine,
   type DayPart,
@@ -14,6 +15,7 @@ import { router } from 'expo-router';
 import { Fragment, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Icon, money, Txt, type IconName } from '@/components/mobile-ui';
+import { saveTripBooking } from '@/features/booking/trip-booking-store';
 import { chatType } from './assistant-visuals';
 
 const copy = vi.assistant;
@@ -147,7 +149,20 @@ function ServerActions({
               actions?.act(action.label, { type: 'select', ref: action.ref });
             } else if (action.type === 'book' && action.path === '/trip-builder') {
               onOpen();
-              router.push({ pathname: '/trip-builder', params: action.params ?? {} });
+              // Kế hoạch Tripi đã chốt sang thẳng Đặt theo lộ trình với đủ điểm từng ngày; thẻ khác vẫn mở Tự lên lộ trình.
+              const selection =
+                card.kind === 'itinerary'
+                  ? buildAssistantTripSelection(card, action.params ?? {}, {
+                      authorName: copy.name,
+                      today: getFutureDate(0),
+                    })
+                  : null;
+              if (selection) {
+                saveTripBooking(selection);
+                router.navigate('/(tabs)/book');
+              } else {
+                router.push({ pathname: '/trip-builder', params: action.params ?? {} });
+              }
             }
           }}
         >
@@ -216,7 +231,13 @@ function StopRow({ stop, isLast }: { stop: ItineraryStop; isLast: boolean }) {
         <View style={[styles.railDot, tone && { backgroundColor: tone.color }]} />
         {!isLast && <View style={styles.railLine} />}
       </View>
-      <View style={styles.stopBody}>
+      <View style={[styles.stopBody, stop.service && styles.serviceStop]}>
+        {stop.service && (
+          <View style={styles.serviceBadge}>
+            <Icon name={stop.service === 'flight' ? 'airplane-outline' : 'bed-outline'} size={13} color={c.coralInk} />
+            <Txt style={styles.serviceText}>{copy.tripflixService}</Txt>
+          </View>
+        )}
         {!!stop.partLabel && (
           <View style={[styles.partBadge, tone && { backgroundColor: tone.background }]}>
             {stop.part && <Icon name={PART_ICONS[stop.part]} size={13} color={tone?.color ?? c.navy} />}
@@ -529,6 +550,17 @@ const styles = StyleSheet.create({
     borderColor: c.coralSoft,
   },
   stopBody: { flex: 1, gap: 3, paddingBottom: s.md },
+  // Chuyến bay, khách sạn Tripflix trong lộ trình: nổi bật để khách thấy phần đặt được.
+  serviceStop: {
+    padding: s.sm,
+    marginBottom: s.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: c.coral,
+    backgroundColor: c.coralTint,
+  },
+  serviceBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  serviceText: { ...chatType.meta, fontFamily: f.semibold, color: c.coralInk },
   partBadge: {
     flexDirection: 'row',
     alignItems: 'center',

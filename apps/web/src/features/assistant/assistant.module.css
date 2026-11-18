@@ -606,6 +606,22 @@
   gap: 3px;
   padding-bottom: 12px;
 }
+/* Chuyến bay, khách sạn Tripflix trong lộ trình: nổi bật để khách thấy phần đặt được. */
+.serviceStop {
+  margin-bottom: 8px;
+  padding: 8px;
+  border: 1px solid var(--color-coral);
+  border-radius: 10px;
+  background: var(--color-coral-tint);
+}
+.serviceBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-coral-ink);
+}
 .partBadge {
   display: inline-flex;
   align-items: center;
