@@ -18,6 +18,7 @@ import { SocialIcon, formatCompactCount } from '../live-posts';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from '../post-cover';
 import { buildPostHref } from '../search-url';
 import { ShareMenu, type ShareMenuHandle } from '../share-menu';
+import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import {
   assignStopThumbnails,
   buildPlaceMapUrl,
@@ -254,6 +255,7 @@ function TripHeader({
       <div className={styles.authorRow}>
         <span className={styles.avatar} aria-hidden="true">
           {initial}
+          <AvatarPhoto userId={post.authorId} />
         </span>
         <div className={styles.authorText}>
           <Link prefetch={false} href={`/u/${encodeURIComponent(post.authorId)}`} className={styles.authorName}>
@@ -587,6 +589,7 @@ function AuthorCard({ post }: { post: SocialPostDto }) {
     <section className={styles.authorCard} aria-label={vi.api.tripPlanAuthorTitle}>
       <span className={`${styles.avatar} ${styles.avatarLarge}`} aria-hidden="true">
         {(post.authorName ?? '?').trim().charAt(0).toUpperCase()}
+        <AvatarPhoto userId={post.authorId} />
       </span>
       <div className={styles.authorText}>
         <span className={styles.statLabel}>{vi.api.tripPlanAuthorTitle}</span>

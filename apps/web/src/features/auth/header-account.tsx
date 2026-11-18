@@ -5,6 +5,7 @@ import { vi } from '@tripflix/i18n';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import { useHeaderPopover } from '@/features/shared/use-header-popover';
 import { ADMIN_URL, getInitial, isStaffRole } from './account-helpers';
 import { useOpenAdmin } from './admin-handoff';
@@ -90,6 +91,7 @@ export function HeaderAccount() {
       >
         <span className="header-account-avatar" aria-hidden="true">
           {getInitial(user.displayName)}
+          <AvatarPhoto src={user.avatarUrl} />
         </span>
       </button>
       {isOpen && (
@@ -97,6 +99,7 @@ export function HeaderAccount() {
           <div className="header-account-who">
             <span className="header-account-avatar is-large" aria-hidden="true">
               {getInitial(user.displayName)}
+              <AvatarPhoto src={user.avatarUrl} />
             </span>
             <div>
               <strong title={user.displayName}>{user.displayName}</strong>
