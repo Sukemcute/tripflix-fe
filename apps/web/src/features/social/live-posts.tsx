@@ -9,6 +9,7 @@ import {
   updateReelSocialCache,
   uploadChunkToPresignedUrl,
   useApiSession,
+  useCommentPermissions,
   usePlaybackSession,
   useRecommendedReelsFeed,
   useReelsByIds,
@@ -53,6 +54,7 @@ import { getAvatarTone } from './avatar-tone';
 import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import { EmojiPicker } from './emoji-picker';
 import { CommentVisibility } from './comment-visibility';
+import { CreatorCommentControls } from './creator-comment-controls';
 import { ModeratedComment } from './moderated-comment';
 import {
   addCommentToCache,
@@ -89,7 +91,7 @@ import { SoftSelect } from '@/features/shared/soft-select';
 import { addPublishedPostToFeeds, publishNoticeStore } from './composer/published-post';
 import { calculateUploadPercent, parseStoredHashtags, pickDroppedVideo } from './composer/composer-inputs';
 import { ShareMenu, type ShareMenuHandle } from './share-menu';
-import { PostOwnerMenu } from './post-owner-menu';
+import { PostOptionsMenu } from './post-options-menu';
 import { buildPostHref } from './search-url';
 import { LoadingDots } from '@/features/shared/loading-dots';
 
@@ -537,17 +539,18 @@ function AccountPostGrid({
                     />
                   </div>
                 )}
-                <p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.api.posts}</p>
+                <div className={styles.accountCardHeader}><p className="eyebrow">{post.tripAttachment?.destinationName ?? vi.api.posts}</p><PostOptionsMenu post={post} buttonClassName={styles.iconGhostBtn} /></div>
                 <h3>
-                  <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })}>{post.title}</Link>
+                  {post.status === 'held' ? post.title : <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })}>{post.title}</Link>}
                 </h3>
+                {post.status === 'held' && <p role="status" className="small muted">{vi.moderation.heldPost}</p>}
                 <p className={styles.postBodyClamped}>{post.body}</p>
                 <p className="small muted">
                   {post.reactionTotal} {vi.api.like} · {post.commentCount} {vi.api.comments}
                 </p>
-                <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })} className="secondary-button">
+                {post.status !== 'held' && <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })} className="secondary-button">
                   {vi.api.detail}
-                </Link>
+                </Link>}
               </div>
             </article>
           );
@@ -2053,9 +2056,10 @@ export function InspirationImmersiveViewer({
                       </div>
                     )}
 
-                    {activePost.authorId === user?.id && (
+                    {activePost && (
                       <div className={styles.stageTopControls}>
-                        <PostOwnerMenu post={activePost} buttonClassName={styles.stageCircleBtn} />
+                        <PostOptionsMenu key={activePost.id} post={activePost} isSaved={getReelEngagement(activePost).isSaved}
+                          onToggleSave={() => { if (!user) { window.location.href = loginReturnHref; return; } engagementMutation.mutate({ postId: activePost.id, type: 'save', nextSelected: !getReelEngagement(activePost).isSaved }); }} buttonClassName={styles.stageCircleBtn} />
                       </div>
                     )}
                   </>
@@ -2299,6 +2303,7 @@ export function RightPanelCommentsSynchronized({
   focusCommentId?: string;
 }) {
   const { user, isReady, session } = useApiSession();
+  const permissions = useCommentPermissions(post.id);
   const client = useQueryClient();
   const initialDraft = getCommentDraft(post.id);
   const [pendingComments, setPendingComments] = useState<readonly PostCommentsChange[]>([]);
@@ -2367,7 +2372,6 @@ export function RightPanelCommentsSynchronized({
         const code = errObj?.response?.data?.code || errObj?.body?.code || '';
         const isUnverified =
           code === 'email_unverified' ||
-          errObj?.status === 403 ||
           Boolean(errObj?.message?.includes('email_unverified'));
         if (isUnverified && session) {
           try {
@@ -2410,6 +2414,7 @@ export function RightPanelCommentsSynchronized({
         ref={scrollContainerRef}
         className={styles.rightScrollArea}
       >
+        {permissions.data?.canManage && <CreatorCommentControls postId={post.id} />}
         {pendingForPost.length > 0 && (
           <button type="button" aria-live="polite" className={styles.utilityBtn}
             style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--color-surface)' }} onClick={() => {
@@ -2485,7 +2490,7 @@ export function RightPanelCommentsSynchronized({
             </button>
           </div>
         )}
-        {user ? (
+        {permissions.data?.enabled === false ? <p role="status" className="small muted">{vi.moderation.commentsDisabled}</p> : user ? (
           <form
             className={styles.panelComposerForm}
             onSubmit={(event) => {
@@ -2583,6 +2588,8 @@ function CommentNode({
     authorName?: string | null;
     replyToName?: string | null;
     moderationState?: 'hidden' | null;
+    status?: SocialCommentDto['status'];
+    creatorReview?: SocialCommentDto['creatorReview'];
   };
   isReply?: boolean;
   loginHref: string;
@@ -2680,6 +2687,16 @@ function CommentNode({
       </li>
     );
   }
+
+  if (comment.status === 'held') return (
+    <li ref={focusRef} id={`comment-${comment.id}`} className={styles.panelCommentItem}>
+      <strong>{authorDisplay.name} · {vi.moderation.heldTitle}</strong>
+      <p className={styles.panelCommentText}>{comment.body}</p>
+      <p className="small muted">{comment.creatorReview === 'pending' ? vi.moderation.creatorHeld : comment.creatorReview === 'rejected' ? vi.moderation.creatorRejected : vi.moderation.heldComment}</p>
+      <ApiErrorNotice error={commentMutation.error} />
+      {isMine && <button type="button" className={styles.panelCommentActionBtn} disabled={commentMutation.isPending} onClick={() => commentMutation.mutate('delete')}>{vi.api.remove}</button>}
+    </li>
+  );
 
   return (
     <li
@@ -3198,6 +3215,7 @@ export function ComposerModal({
       }
 
       let currentId = editingDraftId;
+      let savedStatus: string = 'draft';
 
       if (currentId) {
         const patchPayload: UpdatePostDto = {
@@ -3209,7 +3227,7 @@ export function ComposerModal({
           ...imageMedia,
           ...(tripAttachment ? { trip_attachment: tripAttachment } : {}),
         };
-        await socialApi.updatePost(currentId, patchPayload);
+        savedStatus = (await socialApi.updatePost(currentId, patchPayload)).status;
       } else {
         const draftPayload = {
           post_type: postType,
@@ -3226,11 +3244,8 @@ export function ComposerModal({
         setEditingDraftId(draft.id);
       }
 
-      if (shouldPublish && currentId) {
-        await socialApi.publishPost(currentId);
-      }
-
-      return { id: currentId, published: shouldPublish, postType };
+      const publication = shouldPublish && currentId && savedStatus === 'draft' ? await socialApi.publishPost(currentId) : null;
+      return { id: currentId, published: shouldPublish, postType, status: publication?.status ?? savedStatus };
     },
     onSuccess: async (data) => {
       await client.invalidateQueries({ queryKey: ['social'] });
@@ -3239,7 +3254,7 @@ export function ComposerModal({
         const detail = await socialApi.getPost(data.id).catch(() => null);
         if (detail) addPublishedPostToFeeds(client, detail.post);
         if (data.postType === 'video') void client.invalidateQueries({ queryKey: ['feed'] });
-        publishNoticeStore.show(data.id, data.postType);
+        publishNoticeStore.show(data.id, data.postType, data.status === 'held' ? 'held' : 'published');
         onClose();
       } else {
         setSaveSuccessMsg('Đã lưu bản nháp thành công.');

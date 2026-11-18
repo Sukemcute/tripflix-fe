@@ -42,6 +42,7 @@ import { ReelCommentsPanel } from './reel-comments-panel';
 import { SEEK_BAR_ZONE } from './reel-seek-bar';
 import type { ReelItem } from './reel-types';
 import { TripPlanSheet } from './trip-plan-sheet';
+import { PostOptionsMenu } from './post-options-menu';
 
 const copy = vi.mobile.reels;
 const number = (value: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value);
@@ -359,6 +360,8 @@ export function ReelSocialOverlay({
             if (!mutation.isPending) mutation.mutate({ type: 'share' });
           }}
         />
+        {postId && item.social && <PostOptionsMenu postId={postId} authorId={item.social.author.id}
+          trigger={open => <RailAction icon="ellipsis-horizontal" iconSize={railIconSize} label={vi.api.postMoreOptions} onPress={open} />} />}
       </Animated.View>
       <Animated.View
         style={[styles.caption, { width: Math.round(screenWidth * 0.75) - spacing.md }, chromeStyle]}

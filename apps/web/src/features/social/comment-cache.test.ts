@@ -184,6 +184,13 @@ describe('comment-cache', () => {
     expect(postCounts(client).feed).toBe(5);
   });
 
+  it('trả lời held không tăng số trả lời công khai của bình luận gốc', () => {
+    const client = seedClient();
+    addCommentToCache(client, makeComment('r-held', { parentCommentId: 'c3', status: 'held' }));
+    expect(rootList(client).pages[0]!.items[0]!.replyCount).toBe(2);
+    expect(postCounts(client).detail).toBe(5);
+  });
+
   it('gửi trùng (đã có trong cache) thì không chèn hai lần', () => {
     const client = seedClient();
 

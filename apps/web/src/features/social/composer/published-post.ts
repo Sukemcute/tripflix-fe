@@ -27,15 +27,15 @@ export function addPublishedPostToFeeds(client: QueryClient, post: SocialPostDto
   );
 }
 
-type PublishNotice = { id: number; postId: string; postType: 'vlog' | 'video' } | null;
+type PublishNotice = { id: number; postId: string; postType: 'vlog' | 'video'; status: 'published' | 'held' } | null;
 
 let notice: PublishNotice = null;
 const listeners = new Set<() => void>();
 
 /** Thông báo "đã đăng" sống ngoài pop-up đăng bài: pop-up đóng ngay sau khi đăng, thông báo vẫn hiện. */
 export const publishNoticeStore = {
-  show(postId: string, postType: 'vlog' | 'video') {
-    notice = { id: Date.now(), postId, postType };
+  show(postId: string, postType: 'vlog' | 'video', status: 'published' | 'held' = 'published') {
+    notice = { id: Date.now(), postId, postType, status };
     listeners.forEach((listener) => listener());
   },
   hide() {

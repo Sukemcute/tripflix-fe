@@ -1,11 +1,13 @@
 import {
   HttpError,
+  socialApi,
   useApiSession,
   useAuthorReels,
   useAuthorVlogs,
   useFollowAuthor,
   usePublicProfile,
 } from '@tripflix/api-client';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { PostUploadCard } from '@/features/post/post-upload-card';
 import { formatProfileCount, getNameInitials } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
@@ -14,7 +16,7 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
-import { Button, copy, Icon, IconButton, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
+import { Button, Card, copy, Icon, IconButton, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { LoadingDots } from '@/components/loading-dots';
@@ -52,7 +54,7 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
   const profile = usePublicProfile(id);
   const isMine = !!user && user.id === id;
   const follow = useFollowAuthor(isMine ? undefined : id);
-  const [tab, setTab] = useState<'videos' | 'posts'>('videos');
+  const [tab, setTab] = useState<'videos' | 'posts' | 'held'>('videos');
   const isMissing = profile.error instanceof HttpError && profile.error.status === 404;
   const name = profile.data?.displayName ?? '';
   const stats = profile.data
@@ -113,7 +115,7 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
       {profile.data && (
         <>
           <View style={styles.tabs} accessibilityRole="tablist">
-            {(['videos', 'posts'] as const).map((key) => (
+            {(['videos', 'posts', ...(isMine ? ['held' as const] : [])] as const).map((key) => (
               <Pressable
                 key={key}
                 accessibilityRole="tab"
@@ -122,12 +124,22 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
                 style={[styles.tab, tab === key && styles.tabActive]}
               >
                 <Txt variant="label" style={tab !== key && ui.muted}>
-                  {key === 'videos' ? vi.api.profileVideos : vi.api.profilePosts}
+                  {key === 'held'
+                    ? vi.moderation.heldTitle
+                    : key === 'videos'
+                      ? vi.api.profileVideos
+                      : vi.api.profilePosts}
                 </Txt>
               </Pressable>
             ))}
           </View>
-          {tab === 'videos' ? <ReelGrid userId={id} /> : <VlogGrid userId={id} />}
+          {tab === 'held' && isMine ? (
+            <HeldPosts userId={id} />
+          ) : tab === 'videos' ? (
+            <ReelGrid userId={id} />
+          ) : (
+            <VlogGrid userId={id} />
+          )}
         </>
       )}
     </Screen>
@@ -185,6 +197,37 @@ function VlogGrid({ userId }: { userId: string }) {
             label={post.title}
             onPress={() => router.push({ pathname: '/trip/[slug]', params: { slug: post.id } })}
           />
+        ))}
+      </View>
+    </GridState>
+  );
+}
+
+function HeldPosts({ userId }: { userId: string }) {
+  const posts = useInfiniteQuery({
+    queryKey: ['social', 'my-posts', userId, 'held'],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }) =>
+      socialApi.listMyPosts({ status: 'held', cursor: pageParam, limit: 20 }, signal),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    refetchInterval: 10000,
+  });
+  const items = posts.data?.pages.flatMap((page) => page.items) ?? [];
+  return (
+    <GridState query={posts} isEmpty={!items.length} emptyText={vi.moderation.heldPostsEmpty}>
+      <View style={{ gap: s.md }}>
+        {items.map((post) => (
+          <Card key={post.id} style={{ gap: s.sm }}>
+            <Txt variant="label">{post.title}</Txt>
+            <Txt variant="caption">{vi.moderation.heldPost}</Txt>
+            <Txt numberOfLines={3}>{post.body}</Txt>
+            <Button
+              tone="secondary"
+              onPress={() => router.push({ pathname: '/trip/[slug]', params: { slug: post.id } })}
+            >
+              {vi.api.detail}
+            </Button>
+          </Card>
         ))}
       </View>
     </GridState>

@@ -20,6 +20,7 @@ export * from './social-admin-moderation/social-admin-moderation';
 export * from './social-ai-summary/social-ai-summary';
 export * from './social-ai-summary-internal/social-ai-summary-internal';
 export * from './social-bookmarks/social-bookmarks';
+export * from './social-comment-controls/social-comment-controls';
 export * from './social-comments/social-comments';
 export * from './social-follows/social-follows';
 export * from './social-posts/social-posts';

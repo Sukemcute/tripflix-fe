@@ -1,4 +1,5 @@
 export const api = {
+  commentsDisabled: 'Chủ bài đã tắt bình luận. Bản nháp của bạn được giữ lại.',
   composerTripDragHint: 'Kéo để đổi thứ tự, hoặc bấm rồi dùng phím mũi tên lên/xuống',
   composerTripTimeError: 'Nhập giờ dạng HH:mm (00:00–23:59).',
   composerTripRoom: 'Loại phòng',

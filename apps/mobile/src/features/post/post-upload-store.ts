@@ -17,6 +17,7 @@ export interface PostUploadJob {
   /** 0–100 của cả quá trình. */
   percent: number;
   postId?: string;
+  moderationStatus?: 'published' | 'held';
 }
 
 interface JobInput {
@@ -90,9 +91,9 @@ async function run(id: number) {
       ? socialApi.updatePost(job.postId, draft)
       : socialApi.createDraft({ ...draft, post_type: assetId ? 'video' : 'vlog' }));
     job.postId = saved.id;
-    if (saved.status === 'draft') await socialApi.publishPost(saved.id);
+    const publication = saved.status === 'draft' ? await socialApi.publishPost(saved.id) : saved;
     if (!isCurrent()) return;
-    update({ phase: 'done', percent: 100, postId: saved.id });
+    update({ phase: 'done', percent: 100, postId: saved.id, moderationStatus: publication.status === 'held' ? 'held' : 'published' });
     // Làm mới danh sách bài và lưới reel trên trang cá nhân.
     await Promise.all([
       job.client.invalidateQueries({ queryKey: ['social'] }),

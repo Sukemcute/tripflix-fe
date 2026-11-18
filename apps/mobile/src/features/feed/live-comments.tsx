@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { socialApi, useApiSession, usePostCommentsRealtime } from '@tripflix/api-client';
+import { socialApi, useApiSession, usePostCommentsRealtime, useCommentPermissions } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
@@ -12,7 +12,8 @@ import { ReelCommentComposer } from './reel-comment-composer';
 import { CommunitySummary } from './post-summary';
 import { ReportButton } from './report-button';
 import { LoadingDots } from '@/components/loading-dots';
-import { ModeratedComment } from './moderated-comment';
+import { HeldComment, ModeratedComment } from './moderated-comment';
+import { CreatorCommentControls } from './creator-comment-controls';
 
 const REPORT_HIT_SLOP = { top: 6, bottom: 6, left: 15, right: 15 };
 const COMPACT_REPORT_HIT_SLOP = { top: 6, bottom: 6, left: 4, right: 4 };
@@ -119,6 +120,7 @@ export function LiveComments({
     }
     if (replyTarget && hiddenIds.has(replyTarget.id)) setReplyTarget(undefined);
   }, [query.data, editing, replyTarget]);
+  const permissions = useCommentPermissions(postId);
   const mutation = useMutation({
     mutationFn: async (action: 'save' | string) =>
       action !== 'save'
@@ -144,6 +146,7 @@ export function LiveComments({
   });
   const content = (
     <>
+      {!parentCommentId && permissions.data?.canManage && <CreatorCommentControls postId={postId} />}
       {showSummary && !parentCommentId && <CommunitySummary key={postId} postId={postId} />}
       <ApiErrorNotice
         error={query.error}
@@ -163,6 +166,8 @@ export function LiveComments({
               onDelete={comment.authorId === user?.id ? () => mutation.mutate(comment.id) : undefined}
               isDeleting={mutation.isPending} />;
           }
+          if (comment.status === 'held') return <HeldComment key={comment.id} body={comment.body} creatorReview={comment.creatorReview}
+            onDelete={comment.authorId === user?.id ? () => mutation.mutate(comment.id) : undefined} isDeleting={mutation.isPending} />;
           const authorName =
             comment.authorId === user?.id
               ? user.displayName
@@ -341,7 +346,7 @@ export function LiveComments({
       {!(compact && parentCommentId && !editing) && (
         <View style={renderContent ? styles.composer : compact ? undefined : styles.inlineComposer}>
           <ApiErrorNotice error={mutation.error} />
-          {user ? (
+          {permissions.data?.enabled === false && !editing ? <Txt>{vi.moderation.commentsDisabled}</Txt> : user ? (
             <>
               {compact ? (
                 <>

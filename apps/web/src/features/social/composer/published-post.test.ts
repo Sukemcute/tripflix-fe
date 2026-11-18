@@ -57,6 +57,14 @@ describe('bài vừa đăng hiện ngay trên feed', () => {
 });
 
 describe('thông báo đã đăng', () => {
+  it('giữ trạng thái held từ server và không đưa bài held vào feed công khai', () => {
+    const { client, keys, ids } = seed();
+    addPublishedPostToFeeds(client, makePost({ status: 'held' }));
+    expect(ids(keys.recommended)[0]).toEqual(['old-1', 'old-2']);
+    publishNoticeStore.show('p-held', 'vlog', 'held');
+    expect(publishNoticeStore.get()).toMatchObject({ postId: 'p-held', status: 'held' });
+    publishNoticeStore.hide();
+  });
   it('báo cho nơi đang nghe khi hiện và khi ẩn', () => {
     const listener = vi.fn();
     const unsubscribe = publishNoticeStore.subscribe(listener);
