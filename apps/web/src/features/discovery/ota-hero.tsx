@@ -138,7 +138,6 @@ export function OtaHero() {
               <span className={styles.titleFirst}>{SLOGAN_FIRST},</span>{' '}
               <span className={styles.titleSecond}>{SLOGAN_SECOND}</span>
             </h1>
-
           </div>
         </div>
       </div>

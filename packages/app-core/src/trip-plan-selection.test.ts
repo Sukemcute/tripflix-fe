@@ -25,6 +25,11 @@ describe('parseTripPlanSelection', () => {
   it.each([null, 42, true, {}, []])('bỏ ảnh bìa sai kiểu: %s', (coverUrl) => {
     expect(parseTripPlanSelection(JSON.stringify({ ...selected, coverUrl }))).toBeNull();
   });
+  it('giữ trang mở lộ trình và bỏ giá trị sai kiểu', () => {
+    const withOrigin = { ...selected, origin: '/explore' };
+    expect(parseTripPlanSelection(JSON.stringify(withOrigin))).toEqual(withOrigin);
+    expect(parseTripPlanSelection(JSON.stringify({ ...selected, origin: 1 }))).toBeNull();
+  });
   it('giữ thông tin bài và lịch trình để khôi phục lựa chọn', () => {
     expect(parseTripPlanSelection(JSON.stringify(selected))).toEqual(selected);
     const flightOnly = { ...selected, trip: { items: [selected.trip.items[0]] } };

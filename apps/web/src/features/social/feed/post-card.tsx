@@ -14,6 +14,7 @@ import {
 import { getPostImages, POST_COVER_MASCOT } from '../post-cover';
 import { PostOptionsMenu } from '../post-options-menu';
 import { AdaptivePostMedia } from './adaptive-post-media';
+import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import styles from './social-feed.module.css';
 
 /** Hiện tối đa 3 hashtag trên thẻ bài, phần còn lại gộp thành "+N" (rê chuột xem đủ). */
@@ -21,7 +22,7 @@ const VISIBLE_HASHTAGS = 3;
 
 export interface PostCardProps {
   post: SocialPostDto;
-  currentUser: { id: string; displayName: string } | null;
+  currentUser: { id: string; displayName: string; avatarUrl?: string | null } | null;
   isLiked: boolean;
   isSaved: boolean;
   isCommentActive: boolean;
@@ -127,6 +128,10 @@ export function PostCard({
             tabIndex={-1}
           >
             {authorInfo.name.charAt(0).toUpperCase()}
+            <AvatarPhoto
+              userId={post.authorId}
+              src={currentUser?.id === post.authorId ? currentUser.avatarUrl : undefined}
+            />
           </Link>
           <div className={styles.authorMeta}>
             <div className={styles.authorNameRow}>

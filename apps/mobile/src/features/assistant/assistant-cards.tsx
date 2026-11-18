@@ -11,7 +11,7 @@ import { t, vi } from '@tripflix/i18n';
 import { colors as c, nativeFonts as f, radius, spacing as s } from '@tripflix/tokens';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { Fragment, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Icon, money, Txt, type IconName } from '@/components/mobile-ui';
@@ -127,6 +127,7 @@ function ServerActions({
   actions?: CardActions;
   onOpen: () => void;
 }) {
+  const pathname = usePathname();
   const buttons = card.actions?.filter((action) => {
     if (action.type === 'book') return action.path === '/trip-builder';
     // Giữ nút Chọn theo dòng so sánh, không lặp lại action cùng ref ở chân thẻ.
@@ -158,7 +159,7 @@ function ServerActions({
                     })
                   : null;
               if (selection) {
-                saveTripBooking(selection);
+                saveTripBooking({ ...selection, origin: pathname });
                 router.navigate('/(tabs)/book');
               } else {
                 router.push({ pathname: '/trip-builder', params: action.params ?? {} });

@@ -3848,8 +3848,10 @@ body:has(> [data-onboarding-page]) > .skip-link {
 }
 
 /* TF109: ảnh đại diện (AvatarPhoto) phủ lên ô chữ cái đầu, bo tròn theo ô. Ô cha phải có position: relative
-   (đặt sẵn ở từng class avatar; không dùng :has() vì trình duyệt cũ bỏ qua và ảnh tràn ra khung ngoài). */
-.avatar-photo {
+   (đặt sẵn ở từng class avatar; không dùng :has() vì trình duyệt cũ bỏ qua và ảnh tràn ra khung ngoài).
+   Ghi kèm .header-content để thắng độ ưu tiên của `.header-content img { width: 142px }`. */
+img.avatar-photo,
+.header-content img.avatar-photo {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -3858,7 +3860,8 @@ body:has(> [data-onboarding-page]) > .skip-link {
   border-radius: inherit;
 }
 /* Lớp khung thú & phụ kiện bọc NGOÀI vòng tròn avatar (kiểu Discord Avatar Decorations): tràn ra ~23% quanh vòng tròn. */
-.avatar-outer-deco {
+img.avatar-outer-deco,
+.header-content img.avatar-outer-deco {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -3872,7 +3875,8 @@ body:has(> [data-onboarding-page]) > .skip-link {
   user-select: none;
   filter: drop-shadow(0 4px 8px var(--color-overlay));
 }
-.avatar-outer-sticker {
+img.avatar-outer-sticker,
+.header-content img.avatar-outer-sticker {
   position: absolute;
   z-index: 3;
   max-width: none;

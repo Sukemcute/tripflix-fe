@@ -1,0 +1,96 @@
+.section {
+  min-width: 0;
+}
+
+.section h2 {
+  margin: 0 0 10px;
+  color: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.badges {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  width: 100%;
+  max-width: 176px;
+  min-height: 48px;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 10px;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: 9px;
+  background: #08090b;
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 3px 10px rgb(0 22 32 / 18%);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.badge:hover,
+.badge:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgb(0 22 32 / 28%);
+}
+
+.appleIcon,
+.playIcon {
+  width: 24px;
+  height: 26px;
+  flex: 0 0 auto;
+}
+
+.downloadIcon {
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+}
+
+.copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.copy small {
+  margin-bottom: 3px;
+  font-size: 0.52rem;
+  font-weight: 500;
+  letter-spacing: 0.015em;
+}
+
+.copy strong {
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+@media (max-width: 1000px) {
+  .section {
+    grid-column: 1 / -1;
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    width: 176px;
+  }
+}
+
+@media (max-width: 600px) {
+  .section {
+    grid-column: 1 / -1;
+  }
+}

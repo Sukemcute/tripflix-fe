@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { OTA_DESTINATIONS, getDestinationHref } from '@/features/discovery/ota-destinations';
 import { TripiMascot } from '@/features/mascot/tripi-mascot';
+import { AppDownloadBadges } from '@/features/discovery/app-download-badges';
 import styles from '@/features/discovery/ota-shell.module.css';
 
 export function OtaFooter() {
@@ -50,6 +51,7 @@ export function OtaFooter() {
             </Link>
           ))}
         </nav>
+        <AppDownloadBadges />
         <div className={styles.footerPostcard} data-water-card>
           <div>
             <span className={styles.footerTag}>{vi.ota.footerTag}</span>
