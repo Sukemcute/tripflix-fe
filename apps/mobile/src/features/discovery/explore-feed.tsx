@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getAvailableStays, getFutureDate, useApiSession, useFlightRoutes } from '@tripflix/api-client';
 import { homeRecommendationsControllerRecommendForHome } from '@tripflix/api-client/core-api/discovery/discovery';
-import { findPlaceAirport, getNextWeekendDates } from '@tripflix/app-core';
+import { findPlaceFlightRoute, getNextWeekendDates } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
@@ -45,9 +45,9 @@ export function ExploreFeed() {
       setHotelQuery(value.length >= 2 ? value : '');
       return;
     }
-    // Vé máy bay: đoán sân bay đến theo tên nơi gõ, không đoán được thì mở màn vé để chọn tay.
-    const to = value ? findPlaceAirport(routes.data ?? [], value) : null;
-    router.push({ pathname: '/flights', params: to ? { to } : {} });
+    // Vé máy bay: đoán sân bay đến theo tên gõ và điểm đi có nhiều chuyến nhất tới đó; không đoán được thì mở màn vé chọn tay.
+    const route = value ? findPlaceFlightRoute(routes.data ?? [], value) : null;
+    router.push({ pathname: '/flights', params: route ?? {} });
   };
   const clear = () => {
     setInput('');
