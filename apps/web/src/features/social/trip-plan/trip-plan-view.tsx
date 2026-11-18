@@ -7,7 +7,7 @@ import type {
   TripAttachmentDto,
   TripItineraryItemDto,
 } from '@tripflix/api-client/core-api/model/index';
-import { getTripNights, getTripPlanStays, type TripPlanStay } from '@tripflix/app-core';
+import { getBookableTripPlan, getTripNights, getTripPlanStays, type TripPlanStay } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
@@ -172,7 +172,7 @@ export function TripPlanView({ postId }: { postId: string }) {
                 </ul>
               </section>
             )}
-            <CostBreakdown trip={trip} stays={stays} hotelsById={hotelsById} />
+            <CostBreakdown trip={trip} postId={post.id} stays={stays} hotelsById={hotelsById} />
           </aside>
         </div>
 
@@ -539,10 +539,12 @@ function StayImage({ url, name }: { url: string | null; name: string }) {
  */
 function CostBreakdown({
   trip,
+  postId,
   stays,
   hotelsById,
 }: {
   trip: TripAttachmentDto;
+  postId: string;
   stays: TripPlanStay[];
   hotelsById: Map<string, HotelDetail>;
 }) {
@@ -582,6 +584,15 @@ function CostBreakdown({
         </div>
       ) : null}
       <p className={styles.muted}>{trip.priceDisclaimer?.trim() || vi.api.tripPlanCostNote}</p>
+      {getBookableTripPlan(trip) && (
+        <Link
+          prefetch={false}
+          className={styles.costBookingButton}
+          href={`/coming-soon?postId=${encodeURIComponent(postId)}`}
+        >
+          Tải app để đặt combo <span aria-hidden="true">↗</span>
+        </Link>
+      )}
     </section>
   );
 }

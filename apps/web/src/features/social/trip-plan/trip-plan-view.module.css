@@ -711,3 +711,25 @@
     animation: none;
   }
 }
+
+.costBookingButton {
+  display: inline-flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--color-coral);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  transition: filter 160ms ease, transform 160ms ease;
+}
+
+.costBookingButton:hover {
+  filter: brightness(0.96);
+  transform: translateY(-1px);
+}
