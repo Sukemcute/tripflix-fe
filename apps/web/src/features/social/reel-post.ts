@@ -87,6 +87,29 @@ export function shouldLoadReelSource(index: number, activeIndex: number, isActiv
 /** Thời gian chặn lướt tối đa khi bài kế tiếp chưa có hình: Safari iPhone không tải trước video, chặn mãi thì kẹt. */
 export const REEL_NEXT_NOT_READY_BLOCK_MS = 3_000;
 
+/** Mốc thời gian trên thanh tua như TikTok: 17 → "0:17", 65 → "1:05". Giá trị lạ (NaN, âm) coi như 0. */
+export function formatReelTime(seconds: number): string {
+  const total = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/** Bước tua bằng phím ← / → trên thanh tua. */
+export const REEL_SEEK_KEY_STEP_SECONDS = 5;
+
+/**
+ * Mốc tua khi bấm phím trên thanh tua: ← / → lùi, tiến REEL_SEEK_KEY_STEP_SECONDS giây, Home / End về đầu, cuối;
+ * giữ trong [0, duration]. Phím khác (kể cả ↑ / ↓ để chuyển bài) trả null: thanh tua không xử lý.
+ */
+export function getReelKeySeekTarget(key: string, currentTime: number, duration: number): number | null {
+  const end = Number.isFinite(duration) && duration > 0 ? duration : 0;
+  const clamp = (seconds: number) => Math.min(end, Math.max(0, seconds));
+  if (key === 'ArrowRight') return clamp(currentTime + REEL_SEEK_KEY_STEP_SECONDS);
+  if (key === 'ArrowLeft') return clamp(currentTime - REEL_SEEK_KEY_STEP_SECONDS);
+  if (key === 'Home') return 0;
+  if (key === 'End') return end;
+  return null;
+}
+
 /**
  * Có cho lướt sang bài kế tiếp không. Bài kế tiếp chưa có hình đầu tiên thì chặn (giống lúc hết video) để người
  * xem không lướt vào khung đen; chặn tối đa REEL_NEXT_NOT_READY_BLOCK_MS tính từ lần lướt đầu bị chặn.
