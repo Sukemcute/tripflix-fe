@@ -1347,17 +1347,130 @@
   text-overflow: ellipsis;
 }
 
-/* Video Progress Bar */
+/* Video Progress Bar: thanh nhìn mảnh 4px nhưng vùng bấm/kéo cao 20px cho dễ trúng chuột (ReelSeekBar). */
+.progressBar {
+  position: absolute;
+  inset: auto 24px 6px 24px;
+  height: 20px;
+  z-index: 5;
+}
 
 .progressBarTrack {
   position: absolute;
-  inset: auto 24px 14px 24px;
+  inset: 8px 0 auto 0;
   height: 4px;
   border-radius: 999px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.22);
-  z-index: 5;
+  pointer-events: none;
+  transition: height 120ms ease, top 120ms ease;
+}
+
+/* Rê chuột hoặc đang kéo: thanh dày lên, hiện nút tròn ở vị trí đang xem. */
+.progressBar:hover .progressBarTrack,
+.progressBar[data-scrubbing] .progressBarTrack {
+  top: 7px;
+  height: 6px;
+}
+
+/* Thẻ range trong suốt phủ lên thanh: nhận bấm, kéo, bàn phím; chỉ nút tròn là nhìn thấy (khi rê chuột/kéo). */
+.progressBarInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
   cursor: pointer;
+  appearance: none;
+  touch-action: none;
+}
+
+/* CSS chung viền xanh mọi input khi focus (cho ô nhập chữ); thanh tua không cần, Tab tới thì có viền trắng bên dưới. */
+.progressBarInput:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.progressBarInput:focus-visible {
+  outline: 2px solid var(--color-background);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+.progressBarInput::-webkit-slider-runnable-track {
+  height: 100%;
+  background: transparent;
+}
+
+.progressBarInput::-moz-range-track {
+  height: 100%;
+  background: transparent;
+}
+
+.progressBarInput::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-background);
+  opacity: 0;
+  appearance: none;
+  transition: opacity 120ms ease;
+}
+
+.progressBarInput::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-background);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.progressBar:hover .progressBarInput::-webkit-slider-thumb,
+.progressBar[data-scrubbing] .progressBarInput::-webkit-slider-thumb,
+.progressBarInput:focus-visible::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+.progressBar:hover .progressBarInput::-moz-range-thumb,
+.progressBar[data-scrubbing] .progressBarInput::-moz-range-thumb,
+.progressBarInput:focus-visible::-moz-range-thumb {
+  opacity: 1;
+}
+
+/* Đang kéo: mốc "0:17 / 0:23" phía trên thanh như TikTok, mốc đang kéo tới đậm hơn. */
+.seekTimeLabel {
+  position: absolute;
+  left: 50%;
+  bottom: 32px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--color-overlay-heavy);
+  color: color-mix(in srgb, var(--color-background) 72%, transparent);
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.seekTimeCurrent {
+  color: var(--color-background);
+  font-weight: 700;
+}
+
+.stageBottomOverlay {
+  transition: opacity 150ms ease;
+}
+
+.stageBottomOverlay[data-hidden] {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .progressBarFill {
@@ -2998,4 +3111,13 @@ a.avatarSmall {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressBarTrack,
+  .stageBottomOverlay,
+  .progressBarInput::-webkit-slider-thumb,
+  .progressBarInput::-moz-range-thumb {
+    transition: none;
+  }
 }

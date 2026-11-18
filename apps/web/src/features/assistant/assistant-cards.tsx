@@ -13,7 +13,7 @@ import { formatVnd } from '@tripflix/utils';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { getAssistantCardHref } from './assistant-card-href';
+import { getAssistantBookingLinks, getAssistantCardHref } from './assistant-card-href';
 import { AssistantIcon, type AssistantIconName } from './assistant-icon';
 import styles from './assistant.module.css';
 
@@ -45,7 +45,15 @@ function useFeedReels(postIds: string[]) {
 }
 
 const ROW_ICONS: Record<string, AssistantIconName> = { stay: 'bed', flight: 'plane', post: 'news', plan: 'map' };
-const INFO_KINDS = new Set(['weather', 'checklist', 'itinerary', 'summary', 'compare', 'transport']);
+const INFO_KINDS = new Set([
+  'weather',
+  'checklist',
+  'itinerary',
+  'summary',
+  'compare',
+  'transport',
+  'booking',
+]);
 const INFO_ICONS: Record<string, AssistantIconName> = {
   weather: 'sun',
   checklist: 'checklist',
@@ -101,6 +109,46 @@ function UndoButton({ card, actions }: { card: AssistantCard; actions?: CardActi
       <button type="button" className={styles.cardAction} onClick={() => actions.act(copy.undo, { type: 'undo' })}>
         {copy.undo}
       </button>
+    </div>
+  );
+}
+
+function ServerActions({
+  card,
+  actions,
+  onOpen,
+}: {
+  card: AssistantCard;
+  actions?: CardActions;
+  onOpen: () => void;
+}) {
+  const selects = actions
+    ? (card.actions ?? []).filter(
+        (action) =>
+          action.type === 'select' &&
+          action.ref &&
+          !(card.kind === 'compare' && card.lines?.some((line) => line.ref === action.ref)),
+      )
+    : [];
+  const links = (card.actions ?? []).flatMap(getAssistantBookingLinks);
+  if (!selects.length && !links.length) return null;
+  return (
+    <div className={styles.cardActions}>
+      {selects.map((action) => (
+        <button
+          key={action.ref}
+          type="button"
+          className={styles.cardActionPrimary}
+          onClick={() => actions?.act(action.label, { type: 'select', ref: action.ref! })}
+        >
+          {action.label}
+        </button>
+      ))}
+      {links.map((link) => (
+        <Link key={link.href} href={link.href} onClick={onOpen} className={styles.cardActionPrimary}>
+          {link.label}
+        </Link>
+      ))}
     </div>
   );
 }
@@ -232,7 +280,15 @@ function WeatherCard({ card }: { card: AssistantCard }) {
 }
 
 /** Checklist, so sánh, tóm tắt, di chuyển: danh sách dòng gọn, dòng so sánh có nút Chọn. */
-function ListCard({ card, actions }: { card: AssistantCard; actions?: CardActions }) {
+function ListCard({
+  card,
+  actions,
+  onOpen,
+}: {
+  card: AssistantCard;
+  actions?: CardActions;
+  onOpen: () => void;
+}) {
   const isChecklist = card.kind === 'checklist';
   return (
     <div className={styles.card}>
@@ -264,6 +320,7 @@ function ListCard({ card, actions }: { card: AssistantCard; actions?: CardAction
       </ul>
       <Source card={card} />
       <UndoButton card={card} actions={actions} />
+      <ServerActions card={card} actions={actions} onOpen={onOpen} />
     </div>
   );
 }
@@ -271,7 +328,7 @@ function ListCard({ card, actions }: { card: AssistantCard; actions?: CardAction
 function infoCard(card: AssistantCard, reel: Reel | undefined, onOpen: () => void, actions?: CardActions): ReactNode {
   if (card.kind === 'itinerary') return <ItineraryCard card={card} reel={reel} onOpen={onOpen} actions={actions} />;
   if (card.kind === 'weather') return <WeatherCard card={card} />;
-  return <ListCard card={card} actions={actions} />;
+  return <ListCard card={card} actions={actions} onOpen={onOpen} />;
 }
 
 /** Thẻ Tripi tìm được: video thành hàng thẻ dọc như Reels; lộ trình, thời tiết, danh sách, phòng/vé là khối riêng. */
@@ -318,20 +375,23 @@ export function AssistantCards({
         <div key={card.ref}>{infoCard(card, reels[card.id], onOpen, actions)}</div>
       ))}
       {others.map((card) => (
-        <Link key={card.ref} href={getAssistantCardHref(card)} onClick={onOpen} className={styles.rowCard}>
-          <span className={styles.cardIcon}>
-            <AssistantIcon name={ROW_ICONS[card.kind] ?? 'map'} />
-          </span>
-          <span className={styles.grow}>
-            <span className={styles.rowTitle}>{card.title}</span>
-            {card.priceFrom !== null && (
-              <span className={styles.price}>
-                {copy.priceFrom} {formatVnd(card.priceFrom)}
-              </span>
-            )}
-          </span>
-          <AssistantIcon name="chevron" size={18} />
-        </Link>
+        <div key={card.ref}>
+          <Link href={getAssistantCardHref(card)} onClick={onOpen} className={styles.rowCard}>
+            <span className={styles.cardIcon}>
+              <AssistantIcon name={ROW_ICONS[card.kind] ?? 'map'} />
+            </span>
+            <span className={styles.grow}>
+              <span className={styles.rowTitle}>{card.title}</span>
+              {card.priceFrom !== null && (
+                <span className={styles.price}>
+                  {copy.priceFrom} {formatVnd(card.priceFrom)}
+                </span>
+              )}
+            </span>
+            <AssistantIcon name="chevron" size={18} />
+          </Link>
+          <ServerActions card={card} actions={actions} onOpen={onOpen} />
+        </div>
       ))}
     </div>
   );
