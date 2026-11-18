@@ -10,6 +10,7 @@ import {
   uploadChunkToPresignedUrl,
   useApiSession,
   usePlaybackSession,
+  useRecommendedReelsFeed,
   useReelsByIds,
   useReelsFeed,
   useSocialPosts,
@@ -22,14 +23,25 @@ import {
 } from '@tripflix/api-client/core-api/media/media';
 import type {
   FeedCardDto,
+  PostRecommendationsControllerRecommendReelsMode,
   SocialCommentDto,
   SocialPostDto,
   TripAttachmentDto,
-  TripItineraryItemDto,
   UpdatePostDto,
 } from '@tripflix/api-client/core-api/model/index';
 import { commentsControllerSetCommentReaction } from '@tripflix/api-client/core-api/social-comments/social-comments';
-import { getReelPlaybackSources, getReelPosterPrefetchUrls, selectReelPoster } from '@tripflix/app-core';
+import {
+  buildTripAttachment,
+  buildTripDraftFromAttachment,
+  createTripPlanDraft,
+  getPostTitleFromCaption,
+  getReelPlaybackSources,
+  getReelPosterPrefetchUrls,
+  hasTripPlan,
+  selectReelPoster,
+  type TripPlanDraft,
+} from '@tripflix/app-core';
+import { ComposerTripPlanEditor } from './composer/trip-plan-editor';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -756,14 +768,7 @@ function MediaTrackItem({
   onOpenItinerary,
 }: MediaTrackItemProps) {
   const trip = post.tripAttachment ?? null;
-  const hasItinerary = Boolean(
-    trip &&
-      (trip.destinationName ||
-        trip.hotelName ||
-        trip.daysCount ||
-        trip.estimatedCostPerPerson ||
-        (trip.items && trip.items.length > 0)),
-  );
+  const hasItinerary = hasTripPlan(trip); // Như app: chỉ có điểm đến mà không có lịch từng ngày hay chỗ ở thì không hiện thẻ lịch trình.
 
   const postImages = useMemo(
     () =>
@@ -1041,19 +1046,20 @@ function MediaTrackItem({
                 />
               </span>
               <div className={styles.overlayTripText}>
+                {/* Tên thẻ là tiêu đề bài (thiếu thì lấy đầu nội dung), không lấy tên khách sạn đầu tiên. */}
                 <span className={styles.overlayTripTitle}>
-                  {trip.hotelName ?? trip.destinationName ?? post.title}
+                  {post.title.trim() || getPostTitleFromCaption(post.body ?? '')}
                 </span>
                 <span className={styles.overlayTripSub}>
                   {[
                     vi.api.immersiveTabSchedule,
-                    trip.items?.length
-                      ? t('api.immersiveStopsCount', { count: trip.items.length })
-                      : trip.daysCount
-                        ? t('api.postTripDaysBadge', { count: trip.daysCount })
+                    trip.daysCount
+                      ? t('api.postTripDaysBadge', { count: trip.daysCount })
+                      : trip.items?.length
+                        ? t('api.immersiveStopsCount', { count: trip.items.length })
                         : null,
                     trip.estimatedCostPerPerson
-                      ? `~${trip.estimatedCostPerPerson.toLocaleString('vi-VN')}d/nguoi`
+                      ? t('api.postTripApproxCost', { cost: trip.estimatedCostPerPerson.toLocaleString('vi-VN') })
                       : null,
                   ]
                     .filter(Boolean)
@@ -1193,7 +1199,13 @@ export function InspirationImmersiveViewer({
   const isSavedMode = filterMode === 'saved';
   // Tìm kiếm không chạy ở đây: nhấn Enter thì trang Cảm hứng hiện grid kết quả (search của discovery).
   const isSearchReels = searchReelIds !== undefined;
-  const feedQuery = useReelsFeed({ enabled: isReady && !isSearchReels, isSavedOnly: isSavedMode });
+  const [reelsMode, setReelsMode] = useState<PostRecommendationsControllerRecommendReelsMode>('trending');
+  const savedFeedQuery = useReelsFeed({ enabled: isReady && !isSearchReels && isSavedMode, isSavedOnly: true });
+  const recommendedReelsQuery = useRecommendedReelsFeed({
+    enabled: isReady && !isSearchReels && !isSavedMode,
+    mode: reelsMode,
+  });
+  const feedQuery = isSavedMode ? savedFeedQuery : recommendedReelsQuery;
   // Cookie video xin cùng lúc với feed; từng Reel dùng lại kết quả này (cùng query), video đầu không chờ thêm.
   usePlaybackSession();
   const searchReelsQuery = useReelsByIds(searchReelIds ?? [], { enabled: isSearchReels });
@@ -1755,14 +1767,7 @@ export function InspirationImmersiveViewer({
     },
   });
 
-  const hasItinerary = Boolean(
-    trip &&
-      (trip.destinationName ||
-        trip.hotelName ||
-        trip.daysCount ||
-        trip.estimatedCostPerPerson ||
-        (trip.items && trip.items.length > 0)),
-  );
+  const hasItinerary = hasTripPlan(trip); // Như app: chỉ có điểm đến mà không có lịch từng ngày hay chỗ ở thì không hiện thẻ lịch trình.
   // Sidebar Lịch trình đi theo lựa chọn đóng/mở của người dùng, không theo từng bài: bài không có lịch trình
   // thì hiện trạng thái trống, để khung video không tự co giãn mỗi khi lướt qua bài thiếu lịch trình.
   const showLeftPanel = Boolean(activePost) && isLeftOpen;
@@ -1906,6 +1911,62 @@ export function InspirationImmersiveViewer({
                 <SocialIcon name="chevronLeft" size={16} />
                 {vi.api.searchResultsBack}
               </button>
+            )}
+            {!isSearchReels && !isSavedMode && (
+              <div
+                role="tablist"
+                aria-label={vi.api.recommendModeAria}
+                style={{
+                  position: 'absolute',
+                  top: 14,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  zIndex: 25,
+                  display: 'flex',
+                  gap: 6,
+                  // Màn hẹp (375px) 4 chip rộng hơn khung: giữ trong khung và cuộn ngang thay vì tràn hai mép.
+                  maxWidth: 'calc(100% - 24px)',
+                  overflowX: 'auto',
+                  scrollbarWidth: 'none',
+                  padding: '4px 6px',
+                  borderRadius: 999,
+                  background: 'rgba(15, 23, 42, 0.55)',
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                {(
+                  [
+                    { value: 'trending', label: vi.api.recommendModeTrending },
+                    { value: 'for_you', label: vi.api.recommendModeForYou },
+                    { value: 'has_plan', label: vi.api.recommendModeHasPlan },
+                    { value: 'recent', label: vi.api.recommendModeRecent },
+                  ] as const
+                ).map((option) => {
+                  const selected = option.value === reelsMode;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="tab"
+                      aria-selected={selected}
+                      onClick={() => setReelsMode(option.value)}
+                      style={{
+                        border: 'none',
+                        borderRadius: 999,
+                        padding: '5px 12px',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        background: selected ? '#ffffff' : 'transparent',
+                        color: selected ? '#0f172a' : '#f8fafc',
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
             )}
             {filterMode === 'saved' && !user ? (
               <div className={`empty-state ${styles.centerEmptyBox}`}>
@@ -2814,14 +2875,6 @@ function CommentNode({
   );
 }
 
-interface ItineraryItemState {
-  id: string;
-  day: number;
-  title: string;
-  location: string;
-  notes: string;
-}
-
 export interface ComposerModalProps {
   onClose: () => void;
   initialView?: 'compose' | 'drafts';
@@ -2834,8 +2887,6 @@ const VISIBILITY_OPTIONS = [
   { value: 'public', label: 'Công khai với mọi người' },
   { value: 'private', label: 'Chỉ mình tôi' },
 ];
-
-const ITINERARY_DAY_OPTIONS = Array.from({ length: 15 }, (_, i) => ({ value: String(i + 1), label: `Ngày ${i + 1}` }));
 
 export function ComposerModal({
   onClose,
@@ -2896,14 +2947,7 @@ export function ComposerModal({
 
   // Lịch trình chuyến đi (Trip Attachment)
   const [enableItinerary, setEnableItinerary] = useState(false);
-  const [destinationName, setDestinationName] = useState('');
-  const [hotelName, setHotelName] = useState('');
-  const [daysCount, setDaysCount] = useState<string>('');
-  const [estimatedCost, setEstimatedCost] = useState<string>('');
-  const [priceDisclaimer, setPriceDisclaimer] = useState('');
-  const [itineraryItems, setItineraryItems] = useState<ItineraryItemState[]>([
-    { id: '1', day: 1, title: '', location: '', notes: '' },
-  ]);
+  const [tripDraft, setTripDraft] = useState<TripPlanDraft>(createTripPlanDraft);
 
   // Nạp dữ liệu bản nháp vào form để tiếp tục sửa
   const handleLoadDraft = useCallback((draft: SocialPostDto) => {
@@ -2927,36 +2971,10 @@ export function ComposerModal({
 
     if (draft.tripAttachment) {
       setEnableItinerary(true);
-      setDestinationName(draft.tripAttachment.destinationName || '');
-      setHotelName(draft.tripAttachment.hotelName || '');
-      setDaysCount(draft.tripAttachment.daysCount ? String(draft.tripAttachment.daysCount) : '');
-      setEstimatedCost(
-        draft.tripAttachment.estimatedCostPerPerson
-          ? String(draft.tripAttachment.estimatedCostPerPerson)
-          : '',
-      );
-      setPriceDisclaimer(draft.tripAttachment.priceDisclaimer || '');
-      if (draft.tripAttachment.items && draft.tripAttachment.items.length > 0) {
-        setItineraryItems(
-          draft.tripAttachment.items.map((it, idx) => ({
-            id: String(idx + 1),
-            day: it.day,
-            title: it.title,
-            location: it.location || '',
-            notes: it.notes || '',
-          })),
-        );
-      } else {
-        setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
-      }
+      setTripDraft(buildTripDraftFromAttachment(draft.tripAttachment, vi.mobile.tripPlan.modes));
     } else {
       setEnableItinerary(false);
-      setDestinationName('');
-      setHotelName('');
-      setDaysCount('');
-      setEstimatedCost('');
-      setPriceDisclaimer('');
-      setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+      setTripDraft(createTripPlanDraft());
     }
 
     setViewMode('compose');
@@ -2981,12 +2999,7 @@ export function ComposerModal({
       fileInputRef.current.value = '';
     }
     setEnableItinerary(false);
-    setDestinationName('');
-    setHotelName('');
-    setDaysCount('');
-    setEstimatedCost('');
-    setPriceDisclaimer('');
-    setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
+    setTripDraft(createTripPlanDraft());
     setUploadError(null);
     setSaveSuccessMsg(null);
     setViewMode('compose');
@@ -3077,33 +3090,6 @@ export function ComposerModal({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
-
-  const handleAddItem = () => {
-    const lastDay = itineraryItems.length > 0 ? itineraryItems[itineraryItems.length - 1]!.day : 1;
-    const newId = Math.random().toString(36).substring(2, 9);
-    setItineraryItems((prev) => [
-      ...prev,
-      { id: newId, day: lastDay, title: '', location: '', notes: '' },
-    ]);
-  };
-
-  const handleRemoveItem = (id: string) => {
-    if (itineraryItems.length <= 1) {
-      setItineraryItems([{ id: '1', day: 1, title: '', location: '', notes: '' }]);
-      return;
-    }
-    setItineraryItems((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const handleUpdateItem = (
-    id: string,
-    field: 'day' | 'title' | 'location' | 'notes',
-    value: string | number,
-  ) => {
-    setItineraryItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
-    );
   };
 
   const uploadVideoMultipart = async (file: File, durationSec: number): Promise<string> => {
@@ -3207,27 +3193,8 @@ export function ComposerModal({
       const parsedTags = hashtags;
 
       let tripAttachment: TripAttachmentDto | undefined = undefined;
-      if (enableItinerary && destinationName.trim()) {
-        const filteredItems: TripItineraryItemDto[] = itineraryItems
-          .filter((item) => item.title.trim().length > 0)
-          .map((item) => ({
-            day: Number(item.day) || 1,
-            title: item.title.trim(),
-            ...(item.location.trim() ? { location: item.location.trim() } : {}),
-            ...(item.notes.trim() ? { notes: item.notes.trim() } : {}),
-          }));
-
-        const parsedDays = parseInt(daysCount, 10);
-        const parsedCost = parseInt(estimatedCost.replace(/\D/g, ''), 10);
-
-        tripAttachment = {
-          destinationName: destinationName.trim(),
-          ...(hotelName.trim() ? { hotelName: hotelName.trim() } : {}),
-          ...(!Number.isNaN(parsedDays) && parsedDays > 0 ? { daysCount: parsedDays } : {}),
-          ...(!Number.isNaN(parsedCost) && parsedCost > 0 ? { estimatedCostPerPerson: parsedCost } : {}),
-          ...(priceDisclaimer.trim() ? { priceDisclaimer: priceDisclaimer.trim() } : {}),
-          ...(filteredItems.length > 0 ? { items: filteredItems } : {}),
-        };
+      if (enableItinerary) {
+        tripAttachment = buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) ?? undefined;
       }
 
       let currentId = editingDraftId;
@@ -3665,125 +3632,7 @@ export function ComposerModal({
           </label>
 
           {enableItinerary && (
-            <div className={styles.composerItineraryContainer}>
-              <div className={styles.composerMetaRow}>
-                <input
-                  className={styles.composerInput}
-                  aria-label="Điểm đến chuyến đi"
-                  placeholder="Điểm đến (VD: Đà Lạt, Phú Quốc...)"
-                  value={destinationName}
-                  disabled={isFormBusy}
-                  onChange={(e) => setDestinationName(e.target.value)}
-                />
-                <input
-                  className={styles.composerInput}
-                  aria-label="Khách sạn / Resort"
-                  placeholder="Khách sạn (VD: Terracotta Resort...)"
-                  value={hotelName}
-                  disabled={isFormBusy}
-                  onChange={(e) => setHotelName(e.target.value)}
-                />
-              </div>
-
-              <div className={styles.composerMetaRow}>
-                <input
-                  className={styles.composerInput}
-                  type="number"
-                  min={1}
-                  max={30}
-                  aria-label="Số ngày đi"
-                  placeholder="Số ngày (VD: 3)"
-                  value={daysCount}
-                  disabled={isFormBusy}
-                  onChange={(e) => setDaysCount(e.target.value)}
-                />
-                <input
-                  className={styles.composerInput}
-                  aria-label="Chi phí dự tính"
-                  placeholder="Chi phí / người (VD: 3.500.000 VNĐ)"
-                  value={estimatedCost}
-                  disabled={isFormBusy}
-                  onChange={(e) => setEstimatedCost(e.target.value)}
-                />
-              </div>
-
-              <input
-                className={styles.composerInput}
-                aria-label="Ghi chú chi phí"
-                placeholder="Ghi chú chi phí (VD: Giá tham khảo bao gồm vé máy bay và phòng)"
-                value={priceDisclaimer}
-                disabled={isFormBusy}
-                onChange={(e) => setPriceDisclaimer(e.target.value)}
-              />
-
-              <div className={styles.composerSectionHeader} style={{ marginTop: '4px' }}>
-                <h5 className={styles.composerSectionTitle}>Các hoạt động theo ngày</h5>
-                <span className={styles.composerSectionBadge}>{itineraryItems.length} hoạt động</span>
-              </div>
-
-              {itineraryItems.map((item, index) => (
-                <div key={item.id} className={styles.itineraryItemCard}>
-                  <div className={styles.itineraryItemHeader}>
-                    <SoftSelect
-                      className={`${styles.composerSelect} ${styles.itineraryDayField}`}
-                      value={String(item.day)}
-                      options={ITINERARY_DAY_OPTIONS}
-                      onChange={(day) => handleUpdateItem(item.id, 'day', Number(day))}
-                      aria-label={`Ngày của hoạt động ${index + 1}`}
-                      disabled={isFormBusy}
-                    />
-
-                    <input
-                      className={styles.composerInput}
-                      style={{ flex: 1 }}
-                      placeholder="Tên hoạt động (VD: Đón bình minh Cầu Gỗ)"
-                      value={item.title}
-                      disabled={isFormBusy}
-                      onChange={(e) => handleUpdateItem(item.id, 'title', e.target.value)}
-                      required={enableItinerary && index === 0}
-                    />
-
-                    <button
-                      type="button"
-                      className={styles.removeItineraryItemBtn}
-                      onClick={() => handleRemoveItem(item.id)}
-                      disabled={isFormBusy}
-                      data-tooltip="Xóa hoạt động này"
-                      aria-label="Xóa hoạt động"
-                    >
-                      <SocialIcon name="trash" size={15} />
-                    </button>
-                  </div>
-
-                  <div className={styles.composerMetaRow}>
-                    <input
-                      className={styles.composerInput}
-                      placeholder="Địa điểm / Toạ độ (VD: Đồi chè Cầu Đất)"
-                      value={item.location}
-                      disabled={isFormBusy}
-                      onChange={(e) => handleUpdateItem(item.id, 'location', e.target.value)}
-                    />
-                    <input
-                      className={styles.composerInput}
-                      placeholder="Ghi chú / Mẹo (VD: Nên đến trước 5h30 để săn mây)"
-                      value={item.notes}
-                      disabled={isFormBusy}
-                      onChange={(e) => handleUpdateItem(item.id, 'notes', e.target.value)}
-                    />
-                  </div>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                className={styles.addItemBtn}
-                disabled={isFormBusy}
-                onClick={handleAddItem}
-              >
-                <SocialIcon name="plus" size={15} />
-                <span>Thêm hoạt động tiếp theo</span>
-              </button>
-            </div>
+            <ComposerTripPlanEditor draft={tripDraft} onChange={setTripDraft} disabled={isFormBusy} />
           )}
         </div>
 

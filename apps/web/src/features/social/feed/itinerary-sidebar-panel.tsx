@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { TripAttachmentDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { SocialIcon } from '../live-posts';
-import { getPostCover, POST_COVER_MASCOT } from '../post-cover';
+import { POST_COVER_MASCOT } from '../post-cover';
 import styles from './social-feed.module.css';
+import { TripPlanTimeline } from './trip-plan-timeline';
 
 export interface ItinerarySidebarPanelProps {
   className?: string;
@@ -27,7 +28,8 @@ export interface ItinerarySidebarPanelProps {
   onSelectSuggestedTrip?: () => void;
 }
 
-type ItineraryTab = 'schedule' | 'destinations' | 'cost';
+// Tab Điểm đến đã bỏ: điểm đến của từng ngày nằm ngay trong Lịch trình như sheet trên app.
+type ItineraryTab = 'schedule' | 'cost';
 
 export function ItinerarySidebarPanel({
   className = '',
@@ -42,43 +44,6 @@ export function ItinerarySidebarPanel({
   onSelectSuggestedTrip,
 }: ItinerarySidebarPanelProps) {
   const [activeTab, setActiveTab] = useState<ItineraryTab>('schedule');
-
-  // Nhom cac diem dung theo ngay (Ngay 1, Ngay 2...)
-  const groupedDays = useMemo(() => {
-    const items = trip?.items ?? [];
-    const byDay = new Map<number, typeof items>();
-    for (const item of items) {
-      const list = byDay.get(item.day) ?? [];
-      list.push(item);
-      byDay.set(item.day, list);
-    }
-    return Array.from(byDay.entries()).sort(([a], [b]) => a - b);
-  }, [trip?.items]);
-
-  // Danh sach diem den (POIs) de hien thi trong tab Diem den
-  const itineraryPois = useMemo(() => {
-    if (!trip) return [];
-    const seen = new Set<string>();
-    const list: { name: string; sub?: string }[] = [];
-
-    if (trip.hotelName?.trim()) {
-      seen.add(trip.hotelName.trim().toLowerCase());
-      list.push({ name: trip.hotelName.trim(), sub: 'Khách sạn lưu trú' });
-    }
-    if (trip.destinationName?.trim() && !seen.has(trip.destinationName.trim().toLowerCase())) {
-      seen.add(trip.destinationName.trim().toLowerCase());
-      list.push({ name: trip.destinationName.trim(), sub: 'Điểm đến chính' });
-    }
-    for (const item of trip.items ?? []) {
-      const name = item.location?.trim() || item.title.trim();
-      const key = name.toLowerCase();
-      if (!seen.has(key)) {
-        seen.add(key);
-        list.push({ name, sub: item.location ? item.title : undefined });
-      }
-    }
-    return list;
-  }, [trip]);
 
   if (!isOpen) return null;
 
@@ -119,9 +84,7 @@ export function ItinerarySidebarPanel({
                 unoptimized={Boolean(coverImage?.startsWith('http'))}
               />
               <div className={styles.itineraryHeroOverlay}>
-                <h3 className={styles.itineraryTripTitle}>
-                  {trip.hotelName ?? trip.destinationName ?? postTitle}
-                </h3>
+                <h3 className={styles.itineraryTripTitle}>{postTitle}</h3>
                 {(trip.destinationName || hashtags.length > 0) && (
                   <p className={styles.itineraryTripTags}>
                     {[trip.destinationName, ...hashtags.slice(0, 2)].filter(Boolean).join(' · ')}
@@ -167,7 +130,7 @@ export function ItinerarySidebarPanel({
             </Link>
           </div>
 
-          {/* 3 Tabs chuyen doi */}
+          {/* Tab Lịch trình và Chi phí */}
           <div className={styles.itineraryTabsRow} role="tablist">
             <button
               type="button"
@@ -179,17 +142,6 @@ export function ItinerarySidebarPanel({
               onClick={() => setActiveTab('schedule')}
             >
               {vi.api.immersiveTabSchedule}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'destinations'}
-              className={`${styles.itineraryTabItem} ${
-                activeTab === 'destinations' ? styles.itineraryTabItemActive : ''
-              }`}
-              onClick={() => setActiveTab('destinations')}
-            >
-              {t('api.immersiveTabDestinations', { count: itineraryPois.length })}
             </button>
             <button
               type="button"
@@ -206,84 +158,12 @@ export function ItinerarySidebarPanel({
 
           {/* Body cuon doc lap */}
           <div className={styles.itineraryScrollBody}>
-            {activeTab === 'schedule' && (
-              <>
-                {groupedDays.length === 0 ? (
-                  <p className={styles.itineraryEmptyText}>{vi.api.immersiveNoTimelineItems}</p>
-                ) : (
-                  <div className={styles.itineraryTimeline}>
-                    {groupedDays.map(([dayNumber, dayItems]) => (
-                      <div key={dayNumber} className={styles.itineraryDayBlock}>
-                        <div className={styles.itineraryDayHeader}>
-                          <span className={styles.itineraryDayDot} aria-hidden="true">
-                            {dayNumber}
-                          </span>
-                          <h4 className={styles.itineraryDayTitle}>
-                            {t('api.immersiveDayHeading', { day: dayNumber })}
-                          </h4>
-                        </div>
-                        <ol className={styles.itineraryStopsList}>
-                          {dayItems.map((stop, stopIdx) => {
-                            const stopCover = getPostCover(
-                              stop.location ?? trip.destinationName,
-                              stop.title
-                            );
-                            return (
-                              <li key={stopIdx} className={styles.itineraryStopCard}>
-                                {stopCover && (
-                                  <div className={styles.itineraryStopThumb}>
-                                    <Image src={stopCover} alt="" fill sizes="44px" />
-                                  </div>
-                                )}
-                                <span className={styles.itineraryStopPin}>
-                                  <SocialIcon name="pin" size={13} />
-                                </span>
-                                <div className={styles.itineraryStopInfo}>
-                                  <span className={styles.itineraryStopName}>{stop.title}</span>
-                                  {(stop.location || stop.notes) && (
-                                    <span className={styles.itineraryStopMeta}>
-                                      {[stop.location, stop.notes].filter(Boolean).join(' · ')}
-                                    </span>
-                                  )}
-                                </div>
-                              </li>
-                            );
-                          })}
-                        </ol>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
-            {activeTab === 'destinations' && (
-              <>
-                {itineraryPois.length === 0 ? (
-                  <p className={styles.itineraryEmptyText}>{vi.api.immersiveNoDestinations}</p>
-                ) : (
-                  <ul className={styles.itineraryPoiList}>
-                    {itineraryPois.map((poi) => (
-                      <li key={poi.name}>
-                        <Link
-                          prefetch={false}
-                          href={`/search?q=${encodeURIComponent(poi.name)}`}
-                          className={styles.itineraryPoiLink}
-                        >
-                          <span>
-                            {poi.name}
-                            {poi.sub && (
-                              <span className={styles.itineraryPoiSub}> · {poi.sub}</span>
-                            )}
-                          </span>
-                          <SocialIcon name="arrowUpRight" size={15} />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            )}
+            {activeTab === 'schedule' &&
+              ((trip.items?.length ?? 0) > 0 || trip.hotelId ? (
+                <TripPlanTimeline trip={trip} />
+              ) : (
+                <p className={styles.itineraryEmptyText}>{vi.api.immersiveNoTimelineItems}</p>
+              ))}
 
             {activeTab === 'cost' && (
               <div className={styles.itineraryCostContainer}>

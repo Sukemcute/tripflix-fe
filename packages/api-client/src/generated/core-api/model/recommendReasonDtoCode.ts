@@ -13,4 +13,5 @@ export const RecommendReasonDtoCode = {
   trending: 'trending',
   explore: 'explore',
   own_post: 'own_post',
+  recent: 'recent',
 } as const;

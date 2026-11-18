@@ -1,11 +1,15 @@
 import { useInfiniteQuery, type InfiniteData, type QueryClient } from '@tanstack/react-query';
+import { postRecommendationsControllerRecommendReels } from './generated/core-api/discovery/discovery';
 import { feedControllerGetFeed } from './generated/core-api/feed/feed';
+import type { FeedCardDto, PostRecommendationsControllerRecommendReelsMode, ReelRecommendationsDto } from './generated/core-api/model';
 import { FeedControllerGetFeedTab } from './generated/core-api/model/feedControllerGetFeedTab';
-import { readPage } from './response';
+import { readEntity, readPage } from './response';
 import { useApiSession } from './session';
 
 export type ReelFeedTab = FeedControllerGetFeedTab;
 export const REEL_FEED_TABS = Object.values(FeedControllerGetFeedTab);
+/** Tiền tố key của Reels gợi ý (useRecommendedReelsFeed): ['feed', 'recommended', mode, userId]. */
+export const RECOMMENDED_REELS_KEY = ['feed', 'recommended'] as const;
 
 /** BE nhận tối đa 20 id mỗi lần gọi /v1/feed?post_ids=. */
 export const REELS_BY_IDS_PAGE_SIZE = 20;
@@ -87,4 +91,36 @@ export async function reloadReelsFeed(queryClient: QueryClient, tab: ReelFeedTab
     data ? { pages: data.pages.slice(0, 1), pageParams: data.pageParams.slice(0, 1) } : data,
   );
   await queryClient.refetchQueries({ queryKey: ['feed', tab], type: 'active' });
+}
+
+/**
+ * Reels gợi ý từ discovery (`GET /api/recommendations/reels`): hỗ trợ 4 mode `trending | for_you | has_plan | recent`.
+ * Key nằm dưới tiền tố `feed` (RECOMMENDED_REELS_KEY) để cập nhật tim, lưu, số bình luận của Reels tự áp dụng cho danh sách này.
+ */
+export function useRecommendedReelsFeed({
+  enabled = true,
+  mode = 'trending',
+}: { enabled?: boolean; mode?: PostRecommendationsControllerRecommendReelsMode } = {}) {
+  const { user, isReady } = useApiSession();
+  return useInfiniteQuery({
+    queryKey: [...RECOMMENDED_REELS_KEY, mode, user?.id],
+    enabled: isReady && enabled,
+    initialPageParam: undefined as string | undefined,
+    queryFn: async ({ pageParam, signal }) => {
+      const response = await postRecommendationsControllerRecommendReels(
+        { mode, limit: 10, ...(pageParam ? { cursor: pageParam } : {}) },
+        { signal },
+      );
+      const page = readEntity(response.data, ['items', 'algo', 'nextCursor']) as ReelRecommendationsDto;
+      return {
+        items: page.items.map((item) => item.card as unknown as FeedCardDto),
+        nextCursor: page.nextCursor,
+      };
+    },
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 }

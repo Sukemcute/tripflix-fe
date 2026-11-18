@@ -7,6 +7,7 @@ import {
 import { userSearchControllerSearch } from './generated/core-api/users/users';
 import type {
   ExploreResponseDto,
+  PostRecommendationsControllerRecommendPostsMode,
   PostRecommendationsDto,
   SearchPostsRequestDto,
   SearchPostsResponseDto,
@@ -78,9 +79,14 @@ export async function searchPublicPosts(keyword: string, cursor?: string, signal
  * Bài gợi ý theo gu (GET /api/recommendations/posts; khách nhận "đang thịnh hành"), rồi lấy chi tiết từng bài
  * như searchPublicPosts để trả cùng dạng trang với socialApi.listPosts.
  */
-export async function recommendPublicPosts(cursor?: string, signal?: AbortSignal, postType?: 'vlog') {
+export async function recommendPublicPosts(
+  cursor?: string,
+  signal?: AbortSignal,
+  postType?: 'vlog',
+  mode: PostRecommendationsControllerRecommendPostsMode = 'for_you',
+) {
   const response = await postRecommendationsControllerRecommendPosts(
-    { mode: 'for_you', limit: RECOMMEND_PAGE_SIZE, ...(cursor ? { cursor } : {}), ...(postType ? { postType } : {}) },
+    { mode, limit: RECOMMEND_PAGE_SIZE, ...(cursor ? { cursor } : {}), ...(postType ? { postType } : {}) },
     { signal },
   );
   const page = readEntity(response.data, ['items', 'algo', 'nextCursor']) as PostRecommendationsDto;
@@ -99,19 +105,21 @@ export async function recommendPublicPosts(cursor?: string, signal?: AbortSignal
 export function usePostSearch(params: {
   q: string;
   postType?: SearchPostsRequestDto['postType'];
+  sort?: SearchPostsRequestDto['sort'];
   cursor?: string | null;
   limit?: number;
 }) {
   const { isReady } = useApiSession();
   const query = params.q.trim();
   return useQuery({
-    queryKey: ['discovery', 'posts', query, params.postType ?? 'all', params.cursor ?? null, params.limit ?? 20],
+    queryKey: ['discovery', 'posts', query, params.postType ?? 'all', params.sort ?? 'relevance', params.cursor ?? null, params.limit ?? 20],
     enabled: isReady && query.length > 0,
     queryFn: ({ signal }) =>
       getPostSearchResults(
         {
           q: query,
           postType: params.postType,
+          sort: params.sort,
           cursor: params.cursor,
           limit: params.limit,
         },

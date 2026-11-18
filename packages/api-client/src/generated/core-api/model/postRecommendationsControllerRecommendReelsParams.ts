@@ -10,5 +10,6 @@ export type PostRecommendationsControllerRecommendReelsParams = {
   cursor?: unknown;
   /** 1–20, mặc định 10 */
   limit?: unknown;
+  /** Kiểu gợi ý: for_you, trending, has_plan (có lịch trình), recent (mới đăng) */
   mode?: PostRecommendationsControllerRecommendReelsMode;
 };
