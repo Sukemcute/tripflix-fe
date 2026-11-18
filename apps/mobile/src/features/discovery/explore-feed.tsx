@@ -1,5 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { getAvailableStays, getFutureDate, useApiSession, useFlightRoutes } from '@tripflix/api-client';
+import {
+  getAvailableStays,
+  getExploreResults,
+  getFutureDate,
+  useApiSession,
+  useFlightRoutes,
+} from '@tripflix/api-client';
 import { homeRecommendationsControllerRecommendForHome } from '@tripflix/api-client/core-api/discovery/discovery';
 import { findPlaceFlightRoute, getNextWeekendDates } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
@@ -39,14 +45,25 @@ export function ExploreFeed() {
   const [input, setInput] = useState('');
   const [hotelQuery, setHotelQuery] = useState('');
   const routes = useFlightRoutes();
-  const submit = () => {
+  const [isResolving, setIsResolving] = useState(false);
+  const submit = async () => {
     const value = input.trim();
-    if (kind === 'hotel') {
-      setHotelQuery(value.length >= 2 ? value : '');
+    if (value.length < 2 || isResolving) {
+      if (kind === 'flight' && !value) router.push('/flights');
       return;
     }
-    // Vé máy bay: đoán sân bay đến theo tên gõ và điểm đi có nhiều chuyến nhất tới đó; không đoán được thì mở màn vé chọn tay.
-    const route = value ? findPlaceFlightRoute(routes.data ?? [], value) : null;
+    // Hiểu câu gõ bằng tìm kiếm của discovery (sửa lỗi gõ: "hà lội" → Hà Nội); lỗi mạng thì dùng nguyên chữ gõ.
+    setIsResolving(true);
+    const place = await getExploreResults(value)
+      .then((result) => result.understood?.place?.trim() || value)
+      .catch(() => value)
+      .finally(() => setIsResolving(false));
+    if (kind === 'hotel') {
+      setHotelQuery(place);
+      return;
+    }
+    // Vé máy bay: sân bay đến theo nơi đã hiểu, điểm đi có nhiều chuyến nhất tới đó; không đoán được thì mở màn vé chọn tay.
+    const route = findPlaceFlightRoute(routes.data ?? [], place);
     router.push({ pathname: '/flights', params: route ?? {} });
   };
   const clear = () => {
@@ -91,17 +108,18 @@ export function ExploreFeed() {
             placeholder={kind === 'hotel' ? text.hotelPlaceholder : text.flightPlaceholder}
             placeholderTextColor={colors.textMuted}
             returnKeyType="search"
-            onSubmitEditing={submit}
+            onSubmitEditing={() => void submit()}
             accessibilityLabel={kind === 'hotel' ? text.hotelPlaceholder : text.flightPlaceholder}
             style={styles.searchInput}
           />
           {input.length > 0 && (
             <IconButton name="close-circle-outline" label={text.clearSearch} onPress={clear} />
           )}
-          <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={submit} />
+          <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={() => void submit()} />
         </View>
       </View>
 
+      {isResolving && <LoadingDots />}
       {hotelQuery ? (
         <HotelSearchResults q={hotelQuery} />
       ) : (
