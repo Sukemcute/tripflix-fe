@@ -283,18 +283,18 @@ function RateQty({
       accessibilityRole="button"
       accessibilityLabel={`${sign === '+' ? text.cartIncrease : text.cartDecrease}: ${booking.ratePlanName}`}
       disabled={!isEnabled}
+      accessibilityState={{ disabled: !isEnabled }}
       onPress={() => selectQty(next)}
       style={{
-        width: 28,
-        height: 28,
-        borderRadius: radius.pill,
+        width: 44,
+        height: 44,
+        borderRadius: radius.sm,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.coralSoft,
-        opacity: isEnabled ? 1 : 0.5,
+        backgroundColor: colors.background,
       }}
     >
-      <Txt variant="label" style={{ color: colors.background }}>
+      <Txt style={{ color: isEnabled ? colors.tealInk : colors.textSubtle, fontSize: 18, lineHeight: 26 }}>
         {sign}
       </Txt>
     </Pressable>
@@ -306,16 +306,24 @@ function RateQty({
           accessibilityRole="button"
           accessibilityLabel={`${hotelText.pickRate} ${booking.ratePlanName}`}
           disabled={isDisabled}
+          accessibilityState={{ disabled: isDisabled }}
           onPress={() => selectQty(1)}
           style={{
             alignItems: 'center',
             paddingVertical: 12,
-            borderRadius: radius.pill,
-            backgroundColor: colors.coral,
-            opacity: isDisabled ? 0.5 : 1,
+            minHeight: 48,
+            borderRadius: radius.sm,
+            backgroundColor: isDisabled ? colors.surfaceMuted : colors.coralInk,
           }}
         >
-          <Txt variant="label" style={{ color: colors.background }}>
+          <Txt
+            style={{
+              color: isDisabled ? colors.textMuted : colors.background,
+              fontSize: 15,
+              lineHeight: 24,
+              fontFamily: nativeFonts.semibold,
+            }}
+          >
             {hotelText.pickRate}
           </Txt>
         </Pressable>
@@ -325,13 +333,13 @@ function RateQty({
             gap: spacing.sm,
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: 6,
-            borderRadius: radius.pill,
-            backgroundColor: colors.coral,
+            padding: 4,
+            borderRadius: radius.sm,
+            backgroundColor: colors.surfaceMuted,
           }}
         >
           {pillButton('−', !isDisabled, qty - 1)}
-          <Txt variant="label" style={{ color: colors.background }}>
+          <Txt style={{ color: colors.navy, fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.semibold }}>
             {qty} {text.cartRooms}
           </Txt>
           {pillButton('+', !isDisabled && qty < booking.maxQty, qty + 1)}
@@ -346,9 +354,7 @@ function CheckLine({ children, tone = colors.ink }: { children: string; tone?: s
   return (
     <Row style={{ gap: 6, alignItems: 'flex-start' }}>
       <Icon name="checkmark" size={15} color={tone === colors.ink ? colors.teal : tone} />
-      <Txt variant="small" style={{ flex: 1, color: tone, lineHeight: 19 }}>
-        {children}
-      </Txt>
+      <Txt style={{ flex: 1, color: tone, fontSize: 14, lineHeight: 23 }}>{children}</Txt>
     </Row>
   );
 }
@@ -396,13 +402,16 @@ function RateRow({
       style={{
         padding: spacing.md,
         gap: spacing.md,
-        borderRadius: radius.lg,
-        borderWidth: isSelected ? 2 : 1,
-        borderColor: isSelected ? colors.coral : colors.border,
-        backgroundColor: isSelected ? colors.coralTint : colors.background,
+        borderRadius: radius.sm,
+        backgroundColor: isSelected ? colors.seaMist : colors.surface,
       }}
     >
-      <Txt variant="label">{rate.name}</Txt>
+      <Row style={{ alignItems: 'flex-start', gap: spacing.sm }}>
+        <Txt style={{ flex: 1, fontSize: 16, lineHeight: 25, fontFamily: nativeFonts.semibold }}>
+          {rate.name}
+        </Txt>
+        {isSelected && <Icon name="checkmark-circle" size={22} color={colors.tealInk} />}
+      </Row>
       <View style={{ gap: 6 }}>
         <CheckLine tone={rate.isRefundable ? colors.tealInk : colors.textMuted}>{policy}</CheckLine>
         {rate.perks.map((perk) => (
@@ -410,7 +419,9 @@ function RateRow({
         ))}
       </View>
       {/* Giá một hàng riêng: bên trái % giảm + giá gạch, bên phải giá mỗi đêm. */}
-      <Row style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <Row
+        style={{ justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: spacing.md }}
+      >
         <View style={{ gap: 2 }}>
           {hasSaving && (
             <View
@@ -438,15 +449,18 @@ function RateRow({
           </Txt>
         ) : (
           <View style={{ alignItems: 'flex-end' }}>
-            <Txt variant="heading" style={{ color: colors.coralInk }}>
+            <Txt
+              style={{ fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy }}
+            >
               {money(perNight)}
             </Txt>
             <Txt variant="small" style={ui.muted}>
-              {hotelText.perNightShort}
+              {hotelText.perNight}
             </Txt>
           </View>
         )}
       </Row>
+      <Txt style={roomStyles.secondary}>{t('hotel.stayNights', { count: nights })}</Txt>
       {stayTotal !== null && !fitsParty && (
         <Txt variant="small" style={ui.muted}>
           {hotelText.cannotFitParty}
@@ -458,9 +472,13 @@ function RateRow({
         </Txt>
       )}
       {room.isAvailable && pricePerRoom !== null && (
-        <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.md }}>
+        <View>
           {onPick ? (
-            <Button disabled={isDisabled} onPress={() => onPick(rate.code)}>
+            <Button
+              style={{ borderRadius: radius.sm, backgroundColor: colors.coralInk, minHeight: 48 }}
+              disabled={isDisabled}
+              onPress={() => onPick(rate.code)}
+            >
               {isSelected ? vi.mobile.tripPlan.picked : hotelText.pickRate}
             </Button>
           ) : (
@@ -488,13 +506,13 @@ function RateRow({
   );
 }
 
-const AMENITY_PREVIEW = 6;
+const AMENITY_PREVIEW = 3;
 
 function Fact({ icon, children }: { icon: Parameters<typeof Icon>[0]['name']; children: string }) {
   return (
     <Row style={{ gap: 4, alignItems: 'center' }}>
       <Icon name={icon} size={15} color={colors.textMuted} />
-      <Txt variant="small">{children}</Txt>
+      <Txt style={roomStyles.secondary}>{children}</Txt>
     </Row>
   );
 }
@@ -518,14 +536,28 @@ export function RoomCard({
   pickedRatePlanCode?: string;
 }) {
   const [isAmenityOpen, setAmenityOpen] = useState(false);
+  const [isRatesOpen, setRatesOpen] = useState(false);
+  const selection = useBookingSelection();
+  const firstRate = room.ratePlans.find((rate) => rate.totalPrice !== null) ?? room.ratePlans[0];
+  const selectedRates = room.ratePlans.filter(
+    (rate) =>
+      rate.code === pickedRatePlanCode ||
+      selection.items.some((item) => item.productId === room.productId && item.ratePlanCode === rate.code),
+  );
+  const shownRates = isRatesOpen
+    ? room.ratePlans
+    : selectedRates.length
+      ? selectedRates
+      : firstRate
+        ? [firstRate]
+        : [];
+  const hiddenRates = room.ratePlans.length - shownRates.length;
   const amenities = isAmenityOpen ? room.amenities : room.amenities.slice(0, AMENITY_PREVIEW);
   const hiddenAmenities = room.amenities.length - AMENITY_PREVIEW;
   return (
     <View
       style={{
-        borderRadius: radius.lg * 1.5,
-        borderWidth: 1,
-        borderColor: colors.border,
+        borderRadius: radius.md,
         backgroundColor: colors.background,
         overflow: 'hidden',
       }}
@@ -533,7 +565,7 @@ export function RoomCard({
       <PhotoGallery images={room.images} name={room.name} ratio={16 / 10} rounded={0} />
       <View style={{ padding: spacing.md, gap: spacing.md }}>
         <View style={{ gap: spacing.sm }}>
-          <Txt variant="heading">{room.name}</Txt>
+          <Txt style={roomStyles.title}>{room.name}</Txt>
           <Row style={{ flexWrap: 'wrap', columnGap: spacing.md, rowGap: 4 }}>
             {room.areaM2 !== null && room.areaM2 !== undefined && (
               <Fact icon="resize-outline">{`${room.areaM2} m²`}</Fact>
@@ -547,17 +579,20 @@ export function RoomCard({
           <View style={{ gap: spacing.sm }}>
             <Row style={{ flexWrap: 'wrap', columnGap: spacing.md, rowGap: 6 }}>
               {amenities.map((amenity) => (
-                <Row key={amenity} style={{ gap: 4, alignItems: 'center', width: '46%' }}>
+                <Row key={amenity} style={{ gap: spacing.sm, alignItems: 'flex-start', width: '100%' }}>
                   <Icon name="checkmark-circle-outline" size={15} color={colors.teal} />
-                  <Txt variant="small" numberOfLines={1} style={{ flexShrink: 1, color: colors.textMuted }}>
-                    {amenity}
-                  </Txt>
+                  <Txt style={[roomStyles.secondary, { flex: 1 }]}>{amenity}</Txt>
                 </Row>
               ))}
             </Row>
             {hiddenAmenities > 0 && (
-              <Pressable accessibilityRole="button" onPress={() => setAmenityOpen((open) => !open)}>
-                <Txt variant="small" style={{ color: colors.tealInk, fontWeight: '600' }}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: isAmenityOpen }}
+                onPress={() => setAmenityOpen((open) => !open)}
+                style={roomStyles.toggle}
+              >
+                <Txt style={roomStyles.toggleText}>
                   {isAmenityOpen ? hotelText.showLess : t('hotel.moreAmenities', { count: hiddenAmenities })}
                 </Txt>
               </Pressable>
@@ -582,7 +617,7 @@ export function RoomCard({
         {!room.isAvailable && (
           <Notice tone="warning">{room.reason ? text.reasons[room.reason] : text.unavailable}</Notice>
         )}
-        {room.ratePlans.map((rate) => (
+        {shownRates.map((rate) => (
           <RateRow
             key={rate.code}
             hotel={hotel}
@@ -595,7 +630,43 @@ export function RoomCard({
             isDisabled={isDisabled}
           />
         ))}
+        {(hiddenRates > 0 || (isRatesOpen && room.ratePlans.length > 1)) && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: isRatesOpen }}
+            onPress={() => setRatesOpen((open) => !open)}
+            style={roomStyles.toggle}
+          >
+            <Txt style={roomStyles.toggleText}>
+              {isRatesOpen ? hotelText.collapseRatePlans : t('hotel.moreRatePlans', { count: hiddenRates })}
+            </Txt>
+            <Icon name={isRatesOpen ? 'chevron-up' : 'chevron-down'} size={18} color={colors.tealInk} />
+          </Pressable>
+        )}
       </View>
     </View>
   );
 }
+
+const roomStyles = StyleSheet.create({
+  title: { fontSize: 18, lineHeight: 28, fontFamily: nativeFonts.semibold, color: colors.navy },
+  secondary: { fontSize: 14, lineHeight: 23, color: colors.textMuted },
+  toggle: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceMuted,
+    alignSelf: 'flex-start',
+  },
+  toggleText: {
+    fontSize: 14,
+    lineHeight: 23,
+    color: colors.tealInk,
+    fontFamily: nativeFonts.semibold,
+    flexShrink: 1,
+  },
+});

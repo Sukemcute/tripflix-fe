@@ -150,6 +150,7 @@ export const commerce = {
   cartIncrease: 'Thêm một phòng',
   cartDecrease: 'Bớt một phòng',
   cartRemove: 'Xoá',
+  cartLinePeriod: '{rooms} phòng · {nights} đêm',
   cartChecking: 'Đang kiểm tra phòng và giá trong giỏ…',
   cartSoldOut: 'Phòng này đã hết cho ngày bạn chọn.',
   cartNotEnough: 'Chỉ còn {remaining} phòng loại này.',
