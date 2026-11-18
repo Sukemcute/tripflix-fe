@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { commerceApi, getFutureDate, useApiSession } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
@@ -8,7 +8,8 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { LoadingDots } from '@/components/loading-dots';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { Badge, Button, formatDate, Icon, money, Row, Txt, ui } from '@/components/mobile-ui';
-import { useAssistant } from '@/features/assistant/assistant-provider';
+import { AssistantCards } from '@/features/assistant/assistant-cards';
+import { askTripiOnce } from '@/features/assistant/assistant-transport';
 import { styles } from './trip-plan-parts';
 
 const copy = vi.mobile.tripPlan;
@@ -72,38 +73,54 @@ export function UpcomingTrips() {
   );
 }
 
-/** Ô gõ nhanh để Tripi lập lộ trình; nút Đặt trên kế hoạch Tripi chốt sẽ đưa lộ trình về đây. */
+/**
+ * Ô lên lộ trình nhanh: hỏi Tripi một lượt rồi hiện lịch từng ngày ngay bên dưới, không mở khung chat.
+ * Nút Đặt trên thẻ lịch đưa lộ trình vào màn Đặt theo lộ trình của tab này.
+ */
 export function AskTripiCard() {
-  const assistant = useAssistant();
   const [text, setText] = useState('');
+  const plan = useMutation({
+    retry: false,
+    mutationFn: (message: string) => askTripiOnce(message),
+  });
   const ask = () => {
-    assistant.setDraft(text.trim() || copy.askTripiPlaceholder.replace(/^VD:\s*/, ''));
-    assistant.openDialog();
-    setText('');
+    const message = text.trim();
+    if (!message || plan.isPending) return;
+    plan.mutate(message);
   };
+  const reply = plan.data;
+  const cards = reply?.cards ?? [];
   return (
-    <View style={layout.ask}>
-      <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
-        <Icon name="sparkles" size={mobileIconSize.control} color={colors.coralInk} />
-        <Txt variant="heading" style={ui.flex}>
-          {copy.askTripiTitle}
-        </Txt>
-      </Row>
-      <Txt style={styles.muted}>{copy.askTripiBody}</Txt>
-      <TextInput
-        value={text}
-        onChangeText={setText}
-        maxLength={200}
-        placeholder={copy.askTripiPlaceholder}
-        placeholderTextColor={colors.textMuted}
-        returnKeyType="send"
-        onSubmitEditing={ask}
-        accessibilityLabel={copy.askTripiTitle}
-        style={layout.askInput}
-      />
-      <Button icon="sparkles-outline" onPress={ask}>
-        {copy.askTripiSend}
-      </Button>
+    <View style={{ gap: spacing.md }}>
+      <View style={layout.ask}>
+        <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
+          <Icon name="sparkles" size={mobileIconSize.control} color={colors.coralInk} />
+          <Txt variant="heading" style={ui.flex}>
+            {copy.askTripiTitle}
+          </Txt>
+        </Row>
+        <Txt style={styles.muted}>{copy.askTripiBody}</Txt>
+        <TextInput
+          value={text}
+          onChangeText={setText}
+          maxLength={200}
+          placeholder={copy.askTripiPlaceholder}
+          placeholderTextColor={colors.textMuted}
+          returnKeyType="send"
+          onSubmitEditing={ask}
+          editable={!plan.isPending}
+          accessibilityLabel={copy.askTripiTitle}
+          style={layout.askInput}
+        />
+        <Button icon="sparkles-outline" disabled={!text.trim() || plan.isPending} onPress={ask}>
+          {copy.askTripiSend}
+        </Button>
+      </View>
+      {plan.isPending && <LoadingDots />}
+      {plan.isError && <Txt style={styles.muted}>{vi.assistant.error}</Txt>}
+      {/* Tripi hỏi lại hoặc từ chối thì hiện câu trả lời để khách sửa yêu cầu rồi hỏi tiếp. */}
+      {!!reply?.text && !plan.isPending && <Txt>{reply.text}</Txt>}
+      {cards.length > 0 && !plan.isPending && <AssistantCards cards={cards} onOpen={() => undefined} />}
     </View>
   );
 }

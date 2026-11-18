@@ -65,3 +65,34 @@ export const assistantTransport: AssistantTransport = async (messages, signal, c
     throw error;
   }
 };
+
+/**
+ * Hỏi Tripi một lượt ngoài khung chat (ô lên lộ trình ở tab Đặt): cuộc trò chuyện riêng, không lẫn vào chat đang mở.
+ * Bị từ chối (hết lượt khách, đang bận…) thì trả câu của app thay cho lỗi.
+ */
+export async function askTripiOnce(message: string, signal?: AbortSignal): Promise<AssistantReply> {
+  try {
+    const answer = await sendAssistantMessage(
+      {
+        conversationId: newConversationId(),
+        message,
+        history: [],
+        contextPostId: null,
+        action: null,
+        trip: null,
+      },
+      { baseUrl: AI_BASE_URL, signal },
+    );
+    return {
+      text: answer.text,
+      cards: answer.cards,
+      kind: answer.kind,
+      suggestions: answer.suggestions,
+      trip: answer.trip,
+    };
+  } catch (error) {
+    const reply = refusedReply(error);
+    if (reply) return reply;
+    throw error;
+  }
+}
