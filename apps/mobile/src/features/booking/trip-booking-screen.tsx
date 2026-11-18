@@ -41,7 +41,7 @@ import { TripBuilderEntry } from './trip-builder-screen';
 
 const soldOutOf = (error: unknown) =>
   error instanceof HttpError && error.status === 409 ? readSoldOutConflict(error.body) : null;
-import { ChoiceChip, ProductCard, TripBookingAction, formatDay, styles } from './trip-plan-parts';
+import { ChoiceChip, ProductCard, formatDay, styles } from './trip-plan-parts';
 import {
   saveTripBooking,
   useTripBooking,
@@ -169,9 +169,6 @@ function SelectedTripScreen({
                 departTime: flight.departTime,
                 cabinName: flight.cabinName,
                 fareName: fare.name,
-                policy: fare.isRefundable
-                  ? t('flights.freeCancel', { count: fare.freeCancelDays })
-                  : vi.hotel.nonRefundable,
               };
             },
           );
@@ -203,16 +200,7 @@ function SelectedTripScreen({
         ).map((offer) => {
           const room = detail.rooms.find((candidate) => candidate.productId === offer.productId)!;
           const rate = room.ratePlans.find((candidate) => candidate.code === offer.ratePlanCode)!;
-          return {
-            ...offer,
-            checkIn: stayIn,
-            checkOut: stayOut,
-            roomName: room.name,
-            rateName: rate.name,
-            policy: rate.isRefundable
-              ? t('hotel.freeCancel', { days: rate.freeCancelDays })
-              : vi.hotel.nonRefundable,
-          };
+          return { ...offer, checkIn: stayIn, checkOut: stayOut, roomName: room.name, rateName: rate.name };
         });
         return { hotelName: detail.name, city: detail.city ?? detail.province.name, offers };
       },
@@ -296,16 +284,10 @@ function SelectedTripScreen({
         tone="hotel"
         icon="bed"
         title={hotelName}
-        detail={[
-          t('mobile.tripPlan.hotelTitle', { nights: stay.nights }),
-          room && `${formatDay(stay.checkIn)} → ${formatDay(stay.checkOut)}`,
-          room?.roomName,
-          room?.rateName,
-        ]
+        detail={[t('mobile.tripPlan.hotelTitle', { nights: stay.nights }), room?.roomName, room?.rateName]
           .filter(Boolean)
           .join(' · ')}
         price={query.isFetching ? '…' : room ? money(room.totalPrice) : undefined}
-        policy={room?.policy}
         status={
           query.isError
             ? copy.quoteFailed
@@ -379,18 +361,16 @@ function SelectedTripScreen({
                 ' · ' +
                 t('mobile.tripPlan.passengerSummary', passengers)}
             </Txt>
-            <Txt accessibilityLabel={copy.comboTotal} style={styles.total}>
-              {money(total)}
-            </Txt>
+            <Txt style={styles.total}>{money(total)}</Txt>
             {adults + children > 0 && total > 0 && (
               <Txt style={styles.muted}>
                 {t('mobile.tripPlan.perGuest', { amount: money(Math.round(total / (adults + children))) })}
               </Txt>
             )}
           </View>
-          <TripBookingAction disabled={!canBook || booking.isPending} onPress={book}>
+          <Button compact icon="flash" disabled={!canBook || booking.isPending} onPress={book}>
             {booking.isPending ? copy.booking : copy.bookNow}
-          </TripBookingAction>
+          </Button>
         </View>
       }
     >
@@ -556,7 +536,9 @@ function SelectedTripScreen({
                   .filter((item) => item.day === day && !!item.transport)
                   .map((item) => ({ day, title: item.title, mode: item.transport!.mode }));
               return (
-                <View key={day} style={[styles.day, layout.fullWidthDay]}>
+                <View key={day} style={styles.day}>
+                  {day < days && <View style={styles.rail} />}
+                  <View style={styles.dayDot} />
                   <View style={styles.dayContent}>
                     <Txt style={styles.dayLabel}>
                       {isDateValid
@@ -584,14 +566,12 @@ function SelectedTripScreen({
                                   flight.flightNumber,
                                   flight.departTime?.slice(0, 5),
                                   flight.cabinName,
-                                  flight.fareName !== flight.cabinName ? flight.fareName : undefined,
                                 ]
                                   .filter(Boolean)
                                   .join(' · ')
                               : copy.flightTitle
                           }
                           price={query.isFetching ? '…' : flight ? money(flight.totalPrice) : undefined}
-                          policy={flight?.policy}
                           status={
                             query.isError
                               ? copy.quoteFailed
@@ -847,7 +827,6 @@ function BookingHeader() {
 }
 
 const layout = StyleSheet.create({
-  fullWidthDay: { flexDirection: 'column' },
   header: {
     justifyContent: 'space-between',
     alignItems: 'center',
