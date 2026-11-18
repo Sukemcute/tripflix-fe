@@ -1,29 +1,9 @@
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
-import { vi } from '@tripflix/i18n';
-import { type ReactNode, type PropsWithChildren } from 'react';
+import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { compactType } from '@/components/mobile-scale';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
 const DAY_DOT = 10;
-
-export function TripBookingAction({
-  children,
-  onPress,
-  disabled,
-}: PropsWithChildren<{ onPress: () => void; disabled: boolean }>) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [styles.bookButton, disabled && styles.bookDisabled, pressed && styles.pressed]}
-    >
-      <Txt style={[styles.bookLabel, disabled && styles.bookDisabledLabel]}>{children}</Txt>
-      <Icon name="arrow-forward" size={20} color={disabled ? colors.textMuted : colors.background} />
-    </Pressable>
-  );
-}
 export function formatDay(date: string) {
   return new Date(`${date}T00:00:00Z`).toLocaleDateString('vi-VN', {
     weekday: 'short',
@@ -41,7 +21,6 @@ export function ProductCard({
   detail,
   price,
   status,
-  policy,
   actionLabel,
   isActionOpen,
   onAction,
@@ -63,26 +42,21 @@ export function ProductCard({
   detail?: string;
   price?: string;
   status?: string;
-  policy?: string;
   actionLabel?: string;
   isActionOpen?: boolean;
   onAction?: () => void;
   children?: ReactNode;
 }) {
-  const ink = colors.tealInk;
+  const accent = tone === 'flight' ? colors.teal : colors.coral;
+  const ink = tone === 'flight' ? colors.tealInk : colors.coralInk;
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.background }]}>
       <View style={styles.cardRow}>
-        <Icon name={icon} size={20} color={colors.textMuted} />
-        <Txt style={[styles.cardDetail, styles.cardBody]}>
-          {tone === 'flight' ? vi.mobile.tripPlan.flightTitle : vi.mobile.tripPlan.stayTitle}
-        </Txt>
         {onToggle && (
           <Pressable
             accessibilityRole="checkbox"
             accessibilityLabel={title}
             accessibilityState={{ checked: !!isSelected, disabled: !!isDisabled }}
-            aria-checked={!!isSelected}
             disabled={isDisabled}
             onPress={onToggle}
             style={styles.selectionToggle}
@@ -94,31 +68,33 @@ export function ProductCard({
             />
           </Pressable>
         )}
-      </View>
-      <Txt style={styles.cardTitle}>{title}</Txt>
-      {!!detail && <Txt style={styles.cardDetail}>{detail}</Txt>}
-      {!!policy && <Txt style={styles.cardDetail}>{policy}</Txt>}
-      {!!price && (
-        <View style={styles.cardPrice}>
-          <Txt style={styles.cardDetail}>{vi.mobile.tripPlan.serviceTotal}</Txt>
-          <Txt style={styles.price}>{price}</Txt>
-        </View>
-      )}
-      {!!status && (
-        <Txt accessibilityLiveRegion="polite" style={styles.cardStatus}>
-          {status}
-        </Txt>
-      )}
-      {onExpand && (
         <Pressable
-          accessibilityRole="button"
+          accessibilityRole={onExpand ? 'button' : undefined}
+          accessibilityLabel={title}
+          disabled={!onExpand}
           onPress={onExpand}
-          style={({ pressed }) => [styles.cardAction, pressed && styles.pressed]}
+          style={[styles.cardRow, styles.cardBody]}
         >
-          <Txt style={styles.cardActionText}>{vi.mobile.tripPlan.viewAndChange}</Txt>
-          <Icon name="arrow-forward" size={18} color={ink} />
+          <View style={[styles.cardIcon, { backgroundColor: accent }]}>
+            <Icon name={icon} size={18} color={colors.background} />
+          </View>
+          <View style={styles.cardBody}>
+            <Txt style={styles.cardTitle} numberOfLines={2}>
+              {title}
+            </Txt>
+            {!!detail && (
+              <Txt style={styles.cardDetail} numberOfLines={2}>
+                {detail}
+              </Txt>
+            )}
+          </View>
+          {onExpand && <Icon name="chevron-forward" size={16} color={ink} />}
+          <View style={styles.cardPrice}>
+            {price ? <Txt style={[styles.price, { color: ink }]}>{price}</Txt> : null}
+            {!!status && <Txt style={styles.cardStatus}>{status}</Txt>}
+          </View>
         </Pressable>
-      )}
+      </View>
       {!!actionLabel && onAction && (
         <Pressable
           accessibilityRole="button"
@@ -206,9 +182,9 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  passengers: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  passenger: { gap: spacing.sm, flexGrow: 1, flexBasis: 100, minWidth: 100 },
-  muted: { fontSize: 13, lineHeight: 21, color: colors.textMuted },
+  passengers: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  passenger: { gap: spacing.xs },
+  muted: { ...compactType.meta, color: colors.textMuted },
   pressed: { opacity: 0.7 },
   hero: { gap: spacing.xs, marginBottom: spacing.md },
   heroChips: { gap: spacing.xs, flexWrap: 'wrap' },
@@ -236,16 +212,15 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: mobileLayout.touchTarget,
-    justifyContent: 'space-between',
     backgroundColor: colors.background,
     borderRadius: mobileLayout.inputRadius,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  label: { fontSize: 14, lineHeight: 22, fontFamily: nativeFonts.semibold },
+  label: { ...compactType.label, fontFamily: nativeFonts.semibold },
   status: { ...compactType.meta, color: colors.coralInk },
   timeline: { gap: 0 },
-  day: { flexDirection: 'row', gap: spacing.md, paddingBottom: spacing.xl },
+  day: { flexDirection: 'row', gap: spacing.md, paddingBottom: spacing.lg },
   rail: {
     position: 'absolute',
     left: DAY_DOT / 2 - 1,
@@ -265,80 +240,64 @@ export const styles = StyleSheet.create({
     borderColor: colors.coralTint,
   },
   dayContent: { flex: 1, minWidth: 0, gap: spacing.sm },
-  dayLabel: { fontSize: 16, lineHeight: 25, fontFamily: nativeFonts.semibold, color: colors.navy },
-  card: { borderRadius: radius.md, padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background },
+  dayLabel: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.ink },
+  card: { borderWidth: 1.5, borderRadius: radius.lg, padding: spacing.sm, gap: spacing.sm },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  cardIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   cardBody: { flex: 1, minWidth: 0 },
-  cardTitle: { fontSize: 18, lineHeight: 28, fontFamily: nativeFonts.semibold, color: colors.navy },
-  cardDetail: { fontSize: 14, lineHeight: 23, color: colors.textMuted },
-  cardPrice: { gap: spacing.xs },
-  price: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy },
-  cardStatus: { fontSize: 14, lineHeight: 23, color: colors.coralInk },
+  otaBadge: {
+    ...compactType.meta,
+    fontFamily: nativeFonts.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  cardTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.ink },
+  cardDetail: { ...compactType.meta, color: colors.textMuted },
+  cardPrice: { alignItems: 'flex-end', maxWidth: 110 },
+  price: { ...compactType.heading, fontFamily: nativeFonts.semibold },
+  cardStatus: { ...compactType.meta, color: colors.danger, textAlign: 'right' },
   cardAction: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    gap: spacing.sm,
-    minHeight: 48,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceMuted,
+    gap: 4,
+    minHeight: 28,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.background,
   },
-  cardActionText: {
-    fontSize: 14,
-    lineHeight: 23,
-    fontFamily: nativeFonts.semibold,
-    color: colors.tealInk,
-    flexShrink: 1,
-  },
+  cardActionText: { ...compactType.label, fontFamily: nativeFonts.semibold },
   chooser: { gap: spacing.xs },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   choice: {
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    minHeight: mobileLayout.touchTarget,
-    justifyContent: 'center',
-    borderRadius: radius.sm,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.background,
   },
   choiceSelected: { backgroundColor: colors.ink, borderColor: colors.ink },
-  choiceText: { fontSize: 14, lineHeight: 22, color: colors.ink },
+  choiceText: { ...compactType.label, color: colors.ink },
   choiceTextSelected: { color: colors.background, fontFamily: nativeFonts.semibold },
   community: { gap: spacing.xs, paddingTop: 2 },
   communityLabel: {
-    fontSize: 13,
-    lineHeight: 21,
+    ...compactType.meta,
     fontFamily: nativeFonts.semibold,
-    color: colors.textMuted,
+    color: colors.textSubtle,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   stop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs },
   stopText: { flex: 1, gap: 1 },
   description: { ...compactType.body, color: colors.ink },
-  totalRow: { gap: spacing.md },
-  total: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.semibold, color: colors.navy },
-  bookButton: {
-    minHeight: 52,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-    borderRadius: radius.sm,
-    backgroundColor: colors.coralInk,
-  },
-  bookLabel: {
-    fontSize: 15,
-    lineHeight: 24,
-    fontFamily: nativeFonts.semibold,
-    color: colors.background,
-    flexShrink: 1,
-    textAlign: 'center',
-  },
-  bookDisabled: { backgroundColor: colors.surfaceMuted },
-  bookDisabledLabel: { color: colors.textMuted },
+  totalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  total: { ...compactType.title, fontFamily: nativeFonts.semibold, color: colors.coralInk },
   actions: { gap: spacing.sm, justifyContent: 'flex-end', flexWrap: 'wrap' },
 });
