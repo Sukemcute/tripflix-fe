@@ -25,6 +25,10 @@ import type {
   ObservabilityDto,
   TraceDetailDto,
   TraceListDto,
+  UserActivityControllerDetailParams,
+  UserActivityControllerListParams,
+  UserActivityDetailResponseDto,
+  UserActivityListResponseDto,
 } from '../model';
 
 import { http } from '../../../http';
@@ -642,6 +646,341 @@ export function useObservabilityControllerGetTrace<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getObservabilityControllerGetTraceQueryOptions(traceId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type userActivityControllerListResponse200 = {
+  data: UserActivityListResponseDto;
+  status: 200;
+};
+
+export type userActivityControllerListResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type userActivityControllerListResponseSuccess = userActivityControllerListResponse200 & {
+  headers: Headers;
+};
+export type userActivityControllerListResponseError = userActivityControllerListResponse400 & {
+  headers: Headers;
+};
+
+export type userActivityControllerListResponse =
+  userActivityControllerListResponseSuccess | userActivityControllerListResponseError;
+
+export const getUserActivityControllerListUrl = (params?: UserActivityControllerListParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/analytics/user-activity?${stringifiedParams}`
+    : `/api/analytics/user-activity`;
+};
+
+/**
+ * Ngày theo giờ Việt Nam, gồm cả from và to. Mặc định 7 ngày tới hôm nay, tối đa 90 ngày. Sắp theo hoạt động gần nhất.
+ * @summary Danh sách người dùng có hoạt động trong khoảng, kèm số lượt thích, bình luận, chia sẻ, xem, chat
+ */
+export const userActivityControllerList = async (
+  params?: UserActivityControllerListParams,
+  options?: Parameters<typeof http>[1],
+): Promise<userActivityControllerListResponse> => {
+  return http<userActivityControllerListResponse>(getUserActivityControllerListUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getUserActivityControllerListQueryKey = (params?: UserActivityControllerListParams) => {
+  return [`/api/analytics/user-activity`, ...(params ? [params] : [])] as const;
+};
+
+export const getUserActivityControllerListQueryOptions = <
+  TData = Awaited<ReturnType<typeof userActivityControllerList>>,
+  TError = void,
+>(
+  params?: UserActivityControllerListParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerList>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getUserActivityControllerListQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof userActivityControllerList>>> = ({ signal }) =>
+    userActivityControllerList(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof userActivityControllerList>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type UserActivityControllerListQueryResult = NonNullable<
+  Awaited<ReturnType<typeof userActivityControllerList>>
+>;
+export type UserActivityControllerListQueryError = void;
+
+export function useUserActivityControllerList<
+  TData = Awaited<ReturnType<typeof userActivityControllerList>>,
+  TError = void,
+>(
+  params: undefined | UserActivityControllerListParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerList>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userActivityControllerList>>,
+          TError,
+          Awaited<ReturnType<typeof userActivityControllerList>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useUserActivityControllerList<
+  TData = Awaited<ReturnType<typeof userActivityControllerList>>,
+  TError = void,
+>(
+  params?: UserActivityControllerListParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerList>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userActivityControllerList>>,
+          TError,
+          Awaited<ReturnType<typeof userActivityControllerList>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useUserActivityControllerList<
+  TData = Awaited<ReturnType<typeof userActivityControllerList>>,
+  TError = void,
+>(
+  params?: UserActivityControllerListParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerList>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Danh sách người dùng có hoạt động trong khoảng, kèm số lượt thích, bình luận, chia sẻ, xem, chat
+ */
+
+export function useUserActivityControllerList<
+  TData = Awaited<ReturnType<typeof userActivityControllerList>>,
+  TError = void,
+>(
+  params?: UserActivityControllerListParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerList>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getUserActivityControllerListQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type userActivityControllerDetailResponse200 = {
+  data: UserActivityDetailResponseDto;
+  status: 200;
+};
+
+export type userActivityControllerDetailResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type userActivityControllerDetailResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type userActivityControllerDetailResponseSuccess = userActivityControllerDetailResponse200 & {
+  headers: Headers;
+};
+export type userActivityControllerDetailResponseError = (
+  userActivityControllerDetailResponse400 | userActivityControllerDetailResponse404
+) & {
+  headers: Headers;
+};
+
+export type userActivityControllerDetailResponse =
+  userActivityControllerDetailResponseSuccess | userActivityControllerDetailResponseError;
+
+export const getUserActivityControllerDetailUrl = (
+  userId: string,
+  params?: UserActivityControllerDetailParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/analytics/user-activity/${userId}?${stringifiedParams}`
+    : `/api/analytics/user-activity/${userId}`;
+};
+
+/**
+ * @summary Chi tiết hành vi một người dùng: tên, email đăng ký, số lượt trong khoảng và 50 sự kiện gần nhất
+ */
+export const userActivityControllerDetail = async (
+  userId: string,
+  params?: UserActivityControllerDetailParams,
+  options?: Parameters<typeof http>[1],
+): Promise<userActivityControllerDetailResponse> => {
+  return http<userActivityControllerDetailResponse>(getUserActivityControllerDetailUrl(userId, params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getUserActivityControllerDetailQueryKey = (
+  userId: string,
+  params?: UserActivityControllerDetailParams,
+) => {
+  return [`/api/analytics/user-activity/${userId}`, ...(params ? [params] : [])] as const;
+};
+
+export const getUserActivityControllerDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof userActivityControllerDetail>>,
+  TError = void,
+>(
+  userId: string,
+  params?: UserActivityControllerDetailParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerDetail>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getUserActivityControllerDetailQueryKey(userId, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof userActivityControllerDetail>>> = ({ signal }) =>
+    userActivityControllerDetail(userId, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: userId !== null && userId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerDetail>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type UserActivityControllerDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof userActivityControllerDetail>>
+>;
+export type UserActivityControllerDetailQueryError = void;
+
+export function useUserActivityControllerDetail<
+  TData = Awaited<ReturnType<typeof userActivityControllerDetail>>,
+  TError = void,
+>(
+  userId: string,
+  params: undefined | UserActivityControllerDetailParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerDetail>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userActivityControllerDetail>>,
+          TError,
+          Awaited<ReturnType<typeof userActivityControllerDetail>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useUserActivityControllerDetail<
+  TData = Awaited<ReturnType<typeof userActivityControllerDetail>>,
+  TError = void,
+>(
+  userId: string,
+  params?: UserActivityControllerDetailParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerDetail>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userActivityControllerDetail>>,
+          TError,
+          Awaited<ReturnType<typeof userActivityControllerDetail>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useUserActivityControllerDetail<
+  TData = Awaited<ReturnType<typeof userActivityControllerDetail>>,
+  TError = void,
+>(
+  userId: string,
+  params?: UserActivityControllerDetailParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerDetail>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Chi tiết hành vi một người dùng: tên, email đăng ký, số lượt trong khoảng và 50 sự kiện gần nhất
+ */
+
+export function useUserActivityControllerDetail<
+  TData = Awaited<ReturnType<typeof userActivityControllerDetail>>,
+  TError = void,
+>(
+  userId: string,
+  params?: UserActivityControllerDetailParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerDetail>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getUserActivityControllerDetailQueryOptions(userId, params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
