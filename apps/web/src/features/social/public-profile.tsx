@@ -6,6 +6,7 @@ import { vi } from '@tripflix/i18n';
 import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import { SocialIcon, formatAuthorDisplay } from './live-posts';
 import { buildInspirationHref, buildPostHref } from './search-url';
 import grid from './search-results-grid.module.css';
@@ -49,6 +50,7 @@ export function PublicProfile({ userId }: { userId: string }) {
       <header className={styles.header}>
         <span className={styles.avatar} aria-hidden="true">
           {getNameInitials(displayName) || 'TF'}
+          <AvatarPhoto userId={userId} />
         </span>
         <div className={styles.info}>
           <div className={styles.nameBlock}>
