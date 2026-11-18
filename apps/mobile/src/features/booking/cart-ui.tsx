@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { createCheckoutOperation, useApiSession } from '@tripflix/api-client';
+import { createCheckoutOperation, useApiSession, type TripAddonRequest } from '@tripflix/api-client';
 import {
   calculateBookingCartChildDiscount,
   calculateBookingCartTotal,
@@ -35,6 +35,7 @@ import {
 } from '@/components/mobile-ui';
 import { CartLineIssue, useBookingCartCheck } from './cart-check';
 import { CommerceError } from './commerce-state';
+import { NO_ADDON_PICKS, TripAddonsSection, type TripAddonPicks } from './trip-addons-section';
 import { saveBookingCart, saveBookingSelection, useBookingCart, useBookingSelection } from './cart-store';
 
 const text = vi.commerce;
@@ -99,13 +100,33 @@ export function CartWarnings({ cart }: { cart: BookingCart }) {
   ));
 }
 
-/** Giữ chỗ các phòng truyền vào, xoá chúng khỏi nơi lưu rồi sang thanh toán. */
-function useHoldCart(cart: BookingCart, saveCart: (cart: BookingCart) => void) {
+/**
+ * Giữ chỗ các phòng truyền vào cùng vé chọn từ gợi ý (TF39) trong một đơn, xoá giỏ rồi sang thanh toán.
+ * Không nhét thêm vé vào đơn đã giữ được, nên vé gợi ý phải đi chung lần POST /checkout này.
+ */
+function useHoldCart(
+  cart: BookingCart,
+  saveCart: (cart: BookingCart) => void,
+  addonFlights: readonly { productId: string; ratePlanCode: string; date: string }[] = [],
+) {
   // Giữ một operation để bấm lại sau lỗi mạng gửi đúng Idempotency-Key cũ.
   const [createCheckout] = useState(createCheckoutOperation);
   return useMutation({
     retry: false,
-    mutationFn: () => createCheckout(createBookingCartRequest(cart)),
+    mutationFn: () => {
+      const request = createBookingCartRequest(cart);
+      return createCheckout({
+        ...request,
+        items: [
+          ...request.items,
+          ...addonFlights.map((flight) => ({
+            productId: flight.productId,
+            checkIn: flight.date,
+            ratePlanCode: flight.ratePlanCode,
+          })),
+        ],
+      });
+    },
     onSuccess: (order) => {
       saveCart(EMPTY_BOOKING_CART);
       router.push({ pathname: '/checkout', params: { id: order.orderId } });
@@ -263,7 +284,31 @@ export function SelectionBar({ returnTo }: { returnTo: string }) {
 export function CartScreen() {
   const cart = useBookingCart();
   const { user, isReady } = useApiSession();
-  const hold = useHoldCart(cart, saveBookingCart);
+  // Gợi ý vé khứ hồi cho các phòng trong giỏ (TF39), chọn thì giữ chỗ chung một đơn.
+  const [addonFrom, setAddonFrom] = useState<string | null>(null);
+  const addonRequest: TripAddonRequest | null = cart.items.length
+    ? {
+        items: cart.items.map((line) => ({
+          type: 'hotel' as const,
+          hotelId: line.propertyId,
+          checkIn: line.checkIn,
+          checkOut: line.checkOut,
+        })),
+        adults: cart.adults,
+        ...(addonFrom ? { fromAirport: addonFrom } : {}),
+      }
+    : null;
+  const addonKey = JSON.stringify(addonRequest);
+  const [addonState, setAddonState] = useState<{ key: string; picks: TripAddonPicks }>({
+    key: addonKey,
+    picks: NO_ADDON_PICKS,
+  });
+  const addonPicks = addonState.key === addonKey ? addonState.picks : NO_ADDON_PICKS;
+  const addonFlights = [addonPicks.outbound, addonPicks.inbound].flatMap((flight) =>
+    flight ? [flight] : [],
+  );
+  const addonTotal = addonFlights.reduce((sum, flight) => sum + flight.totalPrice, 0);
+  const hold = useHoldCart(cart, saveBookingCart, addonFlights);
   const check = useBookingCartCheck(cart, hold.error);
   if (!cart.items.length)
     return (
@@ -282,7 +327,14 @@ export function CartScreen() {
       footer={
         <>
           {discount > 0 && <PriceRow label={text.cartChildSurcharge} amount={money(discount)} />}
-          <PriceRow total label={text.cartSubtotal} amount={money(calculateBookingCartTotal(cart))} />
+          {addonTotal > 0 && (
+            <PriceRow label={vi.mobile.tripAddons.flightsLabel} amount={money(addonTotal)} />
+          )}
+          <PriceRow
+            total
+            label={text.cartSubtotal}
+            amount={money(calculateBookingCartTotal(cart) + addonTotal)}
+          />
           {isReady && !user ? (
             <Button
               icon="arrow-forward"
@@ -347,6 +399,13 @@ export function CartScreen() {
           </Card>
         );
       })}
+      {/* Gợi ý vé khứ hồi trước khi giữ chỗ (TF39); vé chọn được giữ chung đơn với các phòng. */}
+      <TripAddonsSection
+        request={addonRequest}
+        picks={addonPicks}
+        onChangePicks={(picks) => setAddonState({ key: addonKey, picks })}
+        onChangeFrom={setAddonFrom}
+      />
       {/* Cảnh báo và lỗi nằm trong phần cuộn để thanh đáy chỉ còn tổng tiền và nút đặt, không che nửa màn hình. */}
       <CartWarnings cart={cart} />
       {hasIssues ? <Notice tone="error">{text.cartFixIssues}</Notice> : <CommerceError error={hold.error} />}
