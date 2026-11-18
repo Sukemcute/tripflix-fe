@@ -1,5 +1,6 @@
-import { feedApi, type AssistantAction, type AssistantCard } from '@tripflix/api-client';
+import { feedApi, getFutureDate, type AssistantAction, type AssistantCard } from '@tripflix/api-client';
 import {
+  buildAssistantTripSelection,
   groupItineraryLines,
   parseWeatherLine,
   type DayPart,
@@ -14,6 +15,7 @@ import { router } from 'expo-router';
 import { Fragment, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Icon, money, Txt, type IconName } from '@/components/mobile-ui';
+import { saveTripBooking } from '@/features/booking/trip-booking-store';
 import { chatType } from './assistant-visuals';
 
 const copy = vi.assistant;
@@ -147,7 +149,20 @@ function ServerActions({
               actions?.act(action.label, { type: 'select', ref: action.ref });
             } else if (action.type === 'book' && action.path === '/trip-builder') {
               onOpen();
-              router.push({ pathname: '/trip-builder', params: action.params ?? {} });
+              // Kế hoạch Tripi đã chốt sang thẳng Đặt theo lộ trình với đủ điểm từng ngày; thẻ khác vẫn mở Tự lên lộ trình.
+              const selection =
+                card.kind === 'itinerary'
+                  ? buildAssistantTripSelection(card, action.params ?? {}, {
+                      authorName: copy.name,
+                      today: getFutureDate(0),
+                    })
+                  : null;
+              if (selection) {
+                saveTripBooking(selection);
+                router.navigate('/(tabs)/book');
+              } else {
+                router.push({ pathname: '/trip-builder', params: action.params ?? {} });
+              }
             }
           }}
         >
