@@ -18,7 +18,10 @@ describe('mô tả hoạt động', () => {
   });
 
   it('lượt chat hiện câu hỏi, kèm ghi chú khi Tripi lỗi hoặc người dùng bấm nút', () => {
-    const chat = (detail: Record<string, unknown>) => ({ kind: 'chat', detail: { question: 'tour Huế 2 ngày', ...detail } });
+    const chat = (detail: Record<string, unknown>) => ({
+      kind: 'chat',
+      detail: { question: 'tour Huế 2 ngày', ...detail },
+    });
     expect(chatQuestion(chat({}))).toBe('tour Huế 2 ngày');
     expect(describeEvent(chat({ answerKind: 'answer', isAction: false }))).toBe('tour Huế 2 ngày');
     expect(describeEvent(chat({ answerKind: 'error' }))).toBe('tour Huế 2 ngày · Tripi trả lời lỗi');
