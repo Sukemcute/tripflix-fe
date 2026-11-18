@@ -75,6 +75,7 @@ import { calculateUploadPercent, parseStoredHashtags, pickDroppedVideo } from '.
 import { ShareMenu, type ShareMenuHandle } from './share-menu';
 import { PostOwnerMenu } from './post-owner-menu';
 import { buildPostHref } from './search-url';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 type FeedFilterMode = 'all' | 'withTrip' | 'saved';
 
@@ -484,7 +485,7 @@ function AccountPostGrid({
   const { isReady, user } = useApiSession();
   const query = useSocialPosts(kind, keyword);
   const posts = query.data?.pages.flatMap((page) => page.items);
-  if (!isReady) return <output>{vi.api.loading}</output>;
+  if (!isReady) return <output><LoadingDots /></output>;
   if (!user) return <Link prefetch={false} href="/login">{vi.api.loginRequired}</Link>;
   return (
     <>
@@ -494,7 +495,7 @@ function AccountPostGrid({
           void query.refetch();
         }}
       />
-      {query.isPending && <output>{vi.api.loading}</output>}
+      {query.isPending && <output><LoadingDots /></output>}
       {posts?.length === 0 && (
         <p className="empty-state">
           {kind === 'bookmarks'
@@ -1750,7 +1751,7 @@ export function InspirationImmersiveViewer({
   }, []);
 
   if (!isReady) {
-    return <output className="empty-state">{vi.api.loading}</output>;
+    return <output className="empty-state"><LoadingDots /></output>;
   }
 
   return (
@@ -1797,7 +1798,7 @@ export function InspirationImmersiveViewer({
                 </Link>
               </div>
             ) : isReelListPending ? (
-              <output className="empty-state">{vi.api.loading}</output>
+              <output className="empty-state"><LoadingDots /></output>
             ) : postsQuery.error ? (
               <div className={styles.centerEmptyBox}>
                 <ApiErrorNotice

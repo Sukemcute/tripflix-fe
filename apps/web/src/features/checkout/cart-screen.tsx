@@ -19,6 +19,7 @@ import { saveBookingCart, useBookingCart } from './cart-store';
 import styles from './cart.module.css';
 import { CartWarnings } from './cart-warnings';
 import { useHoldCart } from './use-hold-cart';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.commerce;
 const formatDate = (date: string) => date.split('-').reverse().join('/');
@@ -39,7 +40,7 @@ export function CartScreen() {
   if (!isReady || !user) {
     return (
       <main className={`ota-container ${styles.page}`}>
-        <p className="empty-state">{vi.api.loading}</p>
+        <p className="empty-state"><LoadingDots /></p>
       </main>
     );
   }
@@ -143,7 +144,7 @@ export function CartScreen() {
               disabled={!isReady || hold.isPending || underCapacity.length > 0}
               onClick={() => hold.mutate()}
             >
-              {hold.isPending ? vi.api.loading : copy.cartBook}
+              {hold.isPending ? <LoadingDots /> : copy.cartBook}
             </button>
           ) : (
             <Link className="secondary-button" href="/search" style={{ textAlign: 'center' }}>

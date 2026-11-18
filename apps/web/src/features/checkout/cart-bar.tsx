@@ -19,6 +19,7 @@ import { saveBookingCart, saveBookingSelection, useBookingCart, useBookingSelect
 import styles from './cart.module.css';
 import { CartWarnings } from './cart-warnings';
 import { useHoldCart } from './use-hold-cart';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.commerce;
 const formatDate = (date: string) => date.split('-').reverse().slice(0, 2).join('/');
@@ -130,7 +131,7 @@ export function CartBar() {
                 disabled={!isReady || hold.isPending || isBlocked}
                 onClick={() => hold.mutate()}
               >
-                {hold.isPending ? vi.api.loading : copy.cartBook}
+                {hold.isPending ? <LoadingDots /> : copy.cartBook}
               </button>
             )}
           </div>

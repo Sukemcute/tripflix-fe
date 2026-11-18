@@ -120,6 +120,7 @@
 }
 
 .avatar {
+  position: relative;
   display: grid;
   place-items: center;
   flex-shrink: 0;
