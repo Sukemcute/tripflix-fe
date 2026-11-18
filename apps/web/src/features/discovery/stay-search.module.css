@@ -156,6 +156,10 @@
 .placeField {
   position: relative;
 }
+/* Ô đầu nằm sát đầu tròn của thanh: bo tròn bên trái để nền xanh khi rê chuột ôm theo thanh. */
+.panel .placeField {
+  border-radius: 999px 12px 12px 999px;
+}
 .suggestions {
   position: fixed;
   inset: auto;
@@ -420,6 +424,7 @@
   }
   .panel .placeField {
     grid-column: 1 / -1;
+    border-radius: 12px;
     border-right: 0;
     border-bottom: 1px solid #e4ecea;
     padding-block: 14px;
