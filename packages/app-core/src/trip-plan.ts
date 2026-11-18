@@ -789,6 +789,29 @@ export function findPlaceAirport(
 }
 
 /**
+ * Chặng bay tới một nơi gõ bằng tên (ô tìm vé ở Khám phá): sân bay đến khớp tên, sân bay đi là nơi có nhiều chuyến
+ * nhất tới đó để màn vé đủ điểm đi, điểm đến mà không bắt nhập lại. Không khớp thì null.
+ */
+export function findPlaceFlightRoute(
+  routes: readonly {
+    airport: string;
+    destinations: readonly { code: string; name: string; flightCount?: number }[];
+  }[],
+  placeName: string,
+): { from: string; to: string } | null {
+  const to = findPlaceAirport(routes, placeName);
+  if (!to) return null;
+  let best: { from: string; count: number } | null = null;
+  for (const route of routes) {
+    const destination = route.destinations.find((item) => item.code === to);
+    if (!destination || route.airport === to) continue;
+    const count = destination.flightCount ?? 0;
+    if (!best || count > best.count) best = { from: route.airport, count };
+  }
+  return best ? { from: best.from, to } : null;
+}
+
+/**
  * Chặng của chuyến bay sắp thêm khi tự lên lộ trình (TF105). Đã có chiều đi tới nơi đến mà chưa có chiều về thì là chiều
  * về (bay ngày trả phòng cuối, không có khách sạn thì sau chiều đi 2 ngày); còn lại là chiều đi từ nhà tới nơi đến,
  * bay ngày nhận phòng đầu. Nơi đến chưa có sân bay thì để trống để người dùng tự chọn.

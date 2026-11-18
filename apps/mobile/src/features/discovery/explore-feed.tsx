@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { getAvailableStays, getFutureDate, useApiSession, useFlightRoutes } from '@tripflix/api-client';
+import { getAvailableStays, getExploreResults, getFutureDate, useApiSession } from '@tripflix/api-client';
 import { homeRecommendationsControllerRecommendForHome } from '@tripflix/api-client/core-api/discovery/discovery';
-import { findPlaceAirport, getNextWeekendDates } from '@tripflix/app-core';
+import { getNextWeekendDates } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
@@ -10,10 +10,10 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { LoadingDots } from '@/components/loading-dots';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
-import { Chip, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { Button, Chip, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { NotificationBell } from '@/features/account/notification-bell';
 import { FeaturedTrips } from '@/features/booking/featured-trips';
-import { HotelSearchResults } from './hotel-search-results';
+import { ExploreHotelResults } from './explore-hotel-results';
 
 const text = vi.mobile.explore;
 type SearchKind = 'hotel' | 'flight';
@@ -38,16 +38,17 @@ export function ExploreFeed() {
   const [kind, setKind] = useState<SearchKind>('hotel');
   const [input, setInput] = useState('');
   const [hotelQuery, setHotelQuery] = useState('');
-  const routes = useFlightRoutes();
-  const submit = () => {
+  const [isResolving, setIsResolving] = useState(false);
+  const submit = async () => {
     const value = input.trim();
-    if (kind === 'hotel') {
-      setHotelQuery(value.length >= 2 ? value : '');
-      return;
-    }
-    // Vé máy bay: đoán sân bay đến theo tên nơi gõ, không đoán được thì mở màn vé để chọn tay.
-    const to = value ? findPlaceAirport(routes.data ?? [], value) : null;
-    router.push({ pathname: '/flights', params: to ? { to } : {} });
+    if (value.length < 2 || isResolving) return;
+    // Hiểu câu gõ bằng tìm kiếm của discovery (sửa lỗi gõ: "nha trag" → Nha Trang); lỗi mạng thì dùng nguyên chữ gõ.
+    setIsResolving(true);
+    const place = await getExploreResults(value)
+      .then((result) => result.understood?.place?.trim() || value)
+      .catch(() => value)
+      .finally(() => setIsResolving(false));
+    setHotelQuery(place);
   };
   const clear = () => {
     setInput('');
@@ -78,32 +79,36 @@ export function ExploreFeed() {
             </Chip>
           ))}
         </Row>
-        <View style={styles.searchBar}>
-          <Icon
-            name={kind === 'hotel' ? 'bed-outline' : 'airplane-outline'}
-            color={colors.textMuted}
-            size={mobileIconSize.control}
-          />
-          <TextInput
-            value={input}
-            onChangeText={setInput}
-            maxLength={100}
-            placeholder={kind === 'hotel' ? text.hotelPlaceholder : text.flightPlaceholder}
-            placeholderTextColor={colors.textMuted}
-            returnKeyType="search"
-            onSubmitEditing={submit}
-            accessibilityLabel={kind === 'hotel' ? text.hotelPlaceholder : text.flightPlaceholder}
-            style={styles.searchInput}
-          />
-          {input.length > 0 && (
-            <IconButton name="close-circle-outline" label={text.clearSearch} onPress={clear} />
-          )}
-          <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={submit} />
-        </View>
+        {kind === 'hotel' ? (
+          <View style={styles.searchBar}>
+            <Icon name="bed-outline" color={colors.textMuted} size={mobileIconSize.control} />
+            <TextInput
+              value={input}
+              onChangeText={setInput}
+              maxLength={100}
+              placeholder={text.hotelPlaceholder}
+              placeholderTextColor={colors.textMuted}
+              returnKeyType="search"
+              onSubmitEditing={() => void submit()}
+              accessibilityLabel={text.hotelPlaceholder}
+              style={styles.searchInput}
+            />
+            {input.length > 0 && (
+              <IconButton name="close-circle-outline" label={text.clearSearch} onPress={clear} />
+            )}
+            <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={() => void submit()} />
+          </View>
+        ) : (
+          // Vé máy bay chọn sân bay theo danh sách ở màn vé nên không cần ô gõ (tránh gõ tên nơi không có sân bay).
+          <Button icon="airplane-outline" onPress={() => router.push('/flights')}>
+            {text.bookFlight}
+          </Button>
+        )}
       </View>
 
+      {isResolving && <LoadingDots />}
       {hotelQuery ? (
-        <HotelSearchResults q={hotelQuery} />
+        <ExploreHotelResults key={hotelQuery} q={hotelQuery} />
       ) : (
         <>
           <View style={{ gap: spacing.xs }}>

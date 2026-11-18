@@ -16,6 +16,7 @@ import {
   getTripPlanStays,
   findTripOutboundFlight,
   findPlaceAirport,
+  findPlaceFlightRoute,
   planNextTripFlight,
   pickTripFlightDestination,
   getTripDayDate,
@@ -503,6 +504,25 @@ describe('findPlaceAirport (TF105 tự lên lộ trình)', () => {
     expect(findPlaceAirport(routes, 'nha trang')).toBe('CXR');
     expect(findPlaceAirport(routes, 'Huế')).toBeNull();
     expect(findPlaceAirport(routes, '')).toBeNull();
+  });
+});
+
+describe('findPlaceFlightRoute (ô tìm vé ở Khám phá)', () => {
+  const routes = [
+    { airport: 'DAD', destinations: [{ code: 'HAN', name: 'Hà Nội', flightCount: 2 }] },
+    {
+      airport: 'SGN',
+      destinations: [
+        { code: 'HAN', name: 'Hà Nội', flightCount: 4 },
+        { code: 'PQC', name: 'Phú Quốc', flightCount: 3 },
+      ],
+    },
+    { airport: 'HAN', destinations: [{ code: 'SGN', name: 'Sài Gòn', flightCount: 1 }] },
+  ];
+  it('chọn điểm đi có nhiều chuyến nhất tới nơi gõ', () => {
+    expect(findPlaceFlightRoute(routes, 'hà nội')).toEqual({ from: 'SGN', to: 'HAN' });
+    expect(findPlaceFlightRoute(routes, 'Phú Quốc')).toEqual({ from: 'SGN', to: 'PQC' });
+    expect(findPlaceFlightRoute(routes, 'Huế')).toBeNull();
   });
 });
 

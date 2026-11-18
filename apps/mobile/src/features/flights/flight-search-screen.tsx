@@ -14,18 +14,24 @@ import {
   type FlightSearch,
 } from '@tripflix/api-client';
 import type { FlightOfferDto } from '@tripflix/api-client/core-api/model/index';
+import {
+  getFlightDurationMinutes,
+  pickFlightHighlights,
+  sortFlightGroups,
+  type FlightSort,
+} from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, spacing } from '@tripflix/tokens';
+import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ApiErrorNotice } from '@/components/api-state';
 import { DateSingleField } from '@/components/date-sheet';
 import {
+  Badge,
   Button,
   Card,
   Chip,
-  Icon,
   Notice,
   PriceRow,
   Row,
@@ -39,6 +45,15 @@ import {
 import { saveTripPick, type TripBookingOffer } from '@/features/booking/trip-booking-store';
 import { CommerceError } from '@/features/booking/commerce-state';
 import { LoadingDots } from '@/components/loading-dots';
+import {
+  AirportField,
+  FlightDateStrip,
+  FlightHero,
+  FlightSortChips,
+  FlightTimeline,
+  InfoField,
+  SwapAirportsButton,
+} from './flight-ui';
 
 const copy = vi.flights;
 const airportNames: Readonly<Record<string, string>> = copy.airports;
@@ -201,34 +216,48 @@ export function FlightSearchScreen() {
 
   return (
     <Screen title={isTripPick ? tripCopy.pickFlightTitle : copy.title}>
-      <Txt variant="title">{isTripPick ? tripCopy.pickFlightTitle : copy.title}</Txt>
-      <Txt style={ui.muted}>
-        {isRouteLocked
-          ? tripCopy.pickNotice
-          : isTripPick
-            ? vi.mobile.tripBuilder.pickFlightNotice
-            : copy.intro}
-      </Txt>
+      {isTripPick ? (
+        <>
+          <Txt variant="title">{tripCopy.pickFlightTitle}</Txt>
+          <Txt style={ui.muted}>
+            {isRouteLocked ? tripCopy.pickNotice : vi.mobile.tripBuilder.pickFlightNotice}
+          </Txt>
+        </>
+      ) : (
+        <FlightHero />
+      )}
       <Card>
-        {(['from', 'to'] as const).map((key) => {
-          const { label, options } = choices[key];
-          const selection = options.find(({ value }) => value === draft[key]);
-          return (
-            <View key={key} style={{ gap: spacing.xs }}>
-              <Txt variant="label">{label}</Txt>
-              <Button
-                tone="secondary"
-                icon="chevron-down"
-                disabled={isRouteLocked || isLocked || !options.length}
+        <View style={{ gap: spacing.sm }}>
+          {(['from', 'to'] as const).map((key) => {
+            const { label, options } = choices[key];
+            const selection = options.find(({ value }) => value === draft[key]);
+            const code = selection?.value ?? (isRouteLocked ? draft[key] : undefined);
+            return (
+              <AirportField
+                key={key}
+                icon={key === 'from' ? 'airplane-outline' : 'location-outline'}
+                label={label}
+                code={code || undefined}
+                name={selection?.label.split(' · ').slice(1).join(' · ')}
+                placeholder={key === 'to' && !draft.from ? copy.selectOriginFirst : copy.selectAirport}
+                isDisabled={isRouteLocked || isLocked || !options.length}
                 onPress={() => setPicker(key)}
-              >
-                {selection?.label ??
-                  (isRouteLocked ? draft[key] : undefined) ??
-                  (key === 'to' && !draft.from ? copy.selectOriginFirst : copy.selectAirport)}
-              </Button>
-            </View>
-          );
-        })}
+              />
+            );
+          })}
+          <SwapAirportsButton
+            isDisabled={isRouteLocked || isLocked || !draft.from || !draft.to}
+            onPress={() =>
+              setDraft((previous) => {
+                // Chỉ đổi được khi có chuyến chiều ngược lại; không có thì bỏ trống sân bay đến để chọn lại.
+                const hasReturn = routes.data
+                  ?.find(({ airport }) => airport === previous.to)
+                  ?.destinations.some(({ code }) => code === previous.from);
+                return { ...previous, from: previous.to, to: hasReturn ? previous.from : '' };
+              })
+            }
+          />
+        </View>
         <DateSingleField
           label={copy.date}
           value={draft.date}
@@ -236,17 +265,13 @@ export function FlightSearchScreen() {
           isDisabled={isRouteLocked || isLocked}
           onChange={(date) => setDraft((previous) => ({ ...previous, date }))}
         />
-        <View style={{ gap: spacing.xs }}>
-          <Txt variant="label">{copy.adults}</Txt>
-          <Button
-            tone="secondary"
-            icon="chevron-down"
-            disabled={isTripPick || isLocked}
-            onPress={() => setPicker('passengers')}
-          >
-            {formatPassengerMix(draftMix)}
-          </Button>
-        </View>
+        <InfoField
+          icon="people-outline"
+          label={copy.adults}
+          value={formatPassengerMix(draftMix)}
+          isDisabled={isTripPick || isLocked}
+          onPress={() => setPicker('passengers')}
+        />
         <Button
           icon="search-outline"
           disabled={isRouteLocked || isLocked || !destinations.some(({ value }) => value === draft.to)}
@@ -330,6 +355,11 @@ export function FlightSearchScreen() {
           isSignedIn={!!user}
           isTripPick={isTripPick}
           onChoose={chooseFlight}
+          canChangeDate={!isRouteLocked && !isLocked}
+          onChangeDate={(date) => {
+            setDraft((previous) => ({ ...previous, date }));
+            router.setParams({ date, productId: undefined, ratePlanCode: undefined });
+          }}
           holdKey={hold.variables?.flightKey}
           holdError={hold.error}
           isHolding={hold.isPending}
@@ -350,7 +380,11 @@ function FlightResults({
   holdKey,
   holdError,
   isHolding,
+  canChangeDate,
+  onChangeDate,
 }: {
+  canChangeDate: boolean;
+  onChangeDate: (date: string) => void;
   search: FlightSearch;
   initialProductId: string;
   initialFareCode: string;
@@ -363,22 +397,47 @@ function FlightResults({
   isHolding: boolean;
 }) {
   const query = useFlightOffers(search);
+  const [sort, setSort] = useState<FlightSort>('recommended');
+  const groups = sortFlightGroups(query.data ?? [], sort);
+  const highlights = pickFlightHighlights(groups);
+  const mix = getFlightPassengerMix(search);
   return (
     <>
-      <View style={{ gap: spacing.xs }}>
-        <Txt variant="heading">{t('flights.results', { from: search.from, to: search.to })}</Txt>
-        <Txt variant="small" style={ui.muted}>
-          {formatDate(search.date)} · {formatPassengerMix(getFlightPassengerMix(search))}
-        </Txt>
+      <View style={{ gap: spacing.sm }}>
+        <Txt variant="title">{t('flights.results', { from: search.from, to: search.to })}</Txt>
+        <Row style={{ gap: spacing.xs, flexWrap: 'wrap' }}>
+          <Badge icon="calendar-outline">{formatDate(search.date)}</Badge>
+          <Badge icon="people-outline">{formatPassengerMix(mix)}</Badge>
+          {!!query.data?.length && (
+            <Badge tone="sun">{t('flights.resultsCount', { count: query.data.length })}</Badge>
+          )}
+        </Row>
       </View>
+      {canChangeDate && (
+        <FlightDateStrip
+          from={search.from}
+          to={search.to}
+          date={search.date}
+          passengers={mix.adults}
+          childCount={mix.children}
+          infants={mix.infants}
+          minDate={getFlightToday()}
+          onChange={onChangeDate}
+        />
+      )}
+      {(query.data?.length ?? 0) > 1 && <FlightSortChips value={sort} onChange={setSort} />}
       {query.isPending && <LoadingDots />}
       <ApiErrorNotice error={query.error} retry={() => void query.refetch()} />
       {query.data?.length === 0 && <Notice>{copy.empty}</Notice>}
-      {query.data?.map(
-        ([first, ...otherCabins]) =>
+      {groups.map(
+        ([first, ...otherCabins], index) =>
           first && (
             <FlightCard
               key={first.flightKey}
+              tags={[
+                ...(highlights.cheapest === index ? [{ label: copy.cheapest, tone: 'coral' as const }] : []),
+                ...(highlights.fastest === index ? [{ label: copy.fastest, tone: 'teal' as const }] : []),
+              ]}
               flight={first}
               cabins={[first, ...otherCabins]}
               initialProductId={initialProductId}
@@ -433,7 +492,9 @@ function FlightCard({
   passengerMix,
   onChoose,
   error,
+  tags,
 }: {
+  tags: { label: string; tone: 'coral' | 'teal' }[];
   passengerMix: FlightPassengerMix;
   flight: FlightOfferDto;
   cabins: FlightOfferDto[];
@@ -454,9 +515,12 @@ function FlightCard({
   const totalPrice = fare?.totalPrice;
   const unitPrice = fare?.pricePerPerson;
   const canBook = cabin.isAvailable && fare !== undefined && totalPrice != null && unitPrice != null;
-  const timeLabel = (airport: string, time: string | null) =>
-    time ? airport + ' · ' + time.slice(0, 5) : airport;
   const isPicked = isTripPick && cabin.productId === initialProductId && fare?.code === initialFareCode;
+  // Như web: thẻ gọn chỉ có giá "từ" và nút Chọn vé; bấm mới mở hạng ghế, gói vé. Quay lại chuyến đã chọn thì mở sẵn.
+  const [isOpen, setIsOpen] = useState(!!initialCabin);
+  const lowestPrice = Math.min(
+    ...cabins.flatMap((offer) => (offer.isAvailable && offer.priceFrom != null ? [offer.priceFrom] : [])),
+  );
   return (
     <Card style={isPicked ? { borderColor: colors.teal, borderWidth: 2 } : undefined}>
       {isPicked && (
@@ -464,96 +528,155 @@ function FlightCard({
           {vi.mobile.tripPlan.picked}
         </Txt>
       )}
-      <Txt variant="small" style={ui.muted}>
-        {flight.airline ? flight.airline + ' · ' + flight.flightKey : flight.flightKey}
-      </Txt>
-      <Txt variant="heading">{flight.name}</Txt>
-      <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <Txt variant="label">{timeLabel(flight.fromAirport, flight.departTime)}</Txt>
-        <Icon name="airplane-outline" color={colors.tealInk} size={18} />
-        <Txt variant="label">{timeLabel(flight.toAirport, flight.arriveTime)}</Txt>
-      </Row>
-      <Txt variant="label">{copy.cabin}</Txt>
-      <Row style={{ gap: spacing.xs, flexWrap: 'wrap' }}>
-        {cabins.map((offer) => (
-          <Chip
-            key={offer.productId}
-            selected={offer.productId === cabin.productId}
-            onPress={() => {
-              if (isLocked) return;
-              setProductId(offer.productId);
-              setFareCode('');
-            }}
+      <FlightTimeline
+        airline={flight.airline}
+        airlineCode={flight.airlineCode}
+        baggage={[
+          fare?.carryOnKg != null ? t('flights.carryOn', { kg: fare.carryOnKg }) : '',
+          fare?.checkedKg != null ? t('flights.checked', { kg: fare.checkedKg }) : '',
+        ].filter(Boolean)}
+        flightNumber={flight.flightNumber}
+        cabinName={cabin.cabinName}
+        fromAirport={flight.fromAirport}
+        toAirport={flight.toAirport}
+        departTime={flight.departTime}
+        arriveTime={flight.arriveTime}
+        durationMinutes={getFlightDurationMinutes(flight)}
+        tags={tags}
+      />
+      {!isOpen && (
+        <View style={cardStyles.summary}>
+          <View style={{ flex: 1 }}>
+            {Number.isFinite(lowestPrice) ? (
+              <>
+                <Txt variant="small" style={ui.muted}>
+                  {copy.priceFrom}
+                </Txt>
+                <Txt style={cardStyles.price}>
+                  {money(lowestPrice)}
+                  <Txt variant="small" style={ui.muted}>
+                    {copy.perGuestSuffix}
+                  </Txt>
+                </Txt>
+                <Txt variant="small" style={ui.muted}>
+                  {copy.taxIncluded}
+                </Txt>
+              </>
+            ) : (
+              <Txt variant="small">{getReason(flight)}</Txt>
+            )}
+          </View>
+          <Button
+            compact
+            icon="chevron-down"
+            disabled={!Number.isFinite(lowestPrice)}
+            onPress={() => setIsOpen(true)}
           >
-            {offer.cabinName}
-            {!offer.isAvailable && ' · ' + getReason(offer)}
-          </Chip>
-        ))}
-      </Row>
-      {cabin.isAvailable && cabin.fares.length > 0 && (
+            {copy.chooseFare}
+          </Button>
+        </View>
+      )}
+      {isOpen && (
         <>
-          <Txt variant="label">{copy.fare}</Txt>
+          <Txt variant="label">{copy.cabin}</Txt>
           <Row style={{ gap: spacing.xs, flexWrap: 'wrap' }}>
-            {cabin.fares.map((option) => (
+            {cabins.map((offer) => (
               <Chip
-                key={option.code}
-                selected={option.code === fare?.code}
+                key={offer.productId}
+                selected={offer.productId === cabin.productId}
                 onPress={() => {
-                  if (!isLocked) setFareCode(option.code);
+                  if (isLocked) return;
+                  setProductId(offer.productId);
+                  setFareCode('');
                 }}
               >
-                {option.name}
+                {offer.cabinName}
+                {!offer.isAvailable && ' · ' + getReason(offer)}
               </Chip>
             ))}
           </Row>
+          {cabin.isAvailable && cabin.fares.length > 0 && (
+            <>
+              <Txt variant="label">{copy.fare}</Txt>
+              <Row style={{ gap: spacing.xs, flexWrap: 'wrap' }}>
+                {cabin.fares.map((option) => (
+                  <Chip
+                    key={option.code}
+                    selected={option.code === fare?.code}
+                    onPress={() => {
+                      if (!isLocked) setFareCode(option.code);
+                    }}
+                  >
+                    {option.name}
+                  </Chip>
+                ))}
+              </Row>
+            </>
+          )}
+          {canBook ? (
+            <>
+              <PriceRow total label={vi.commerce.total} amount={money(totalPrice)} />
+              <Txt variant="small" style={ui.muted}>
+                {t('flights.perPassenger', { price: money(unitPrice) })}
+                {passengerMix.children > 0 && fare.childPrice != null
+                  ? ' · ' + copy.passengerTypes.child.label + ' ' + money(fare.childPrice)
+                  : ''}
+                {passengerMix.infants > 0 && fare.infantPrice != null
+                  ? ' · ' + copy.passengerTypes.infant.label + ' ' + money(fare.infantPrice)
+                  : ''}
+              </Txt>
+              {isTripPick && (fare.carryOnKg != null || fare.checkedKg != null) && (
+                <Txt variant="small" style={ui.muted}>
+                  {[
+                    fare.carryOnKg != null ? t('mobile.tripPlan.carryOn', { kg: fare.carryOnKg }) : '',
+                    fare.checkedKg != null ? t('mobile.tripPlan.checkedBaggage', { kg: fare.checkedKg }) : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </Txt>
+              )}
+              {cabin.remaining != null && (
+                <Txt variant="small">{t('flights.remaining', { count: cabin.remaining })}</Txt>
+              )}
+              <Txt variant="small">
+                {fare.isRefundable && fare.freeCancelDays > 0
+                  ? t('flights.freeCancel', { count: fare.freeCancelDays })
+                  : fare.isRefundable
+                    ? vi.commerce.refundable
+                    : vi.commerce.nonRefundable}
+              </Txt>
+            </>
+          ) : (
+            <Notice tone="warning">{getReason(cabin)}</Notice>
+          )}
+          <Button
+            disabled={!canBook || isLocked}
+            onPress={() => fare && onChoose(cabin.productId, fare.code)}
+          >
+            {isHolding
+              ? vi.api.loading
+              : isTripPick
+                ? vi.mobile.tripPlan.pickFlight
+                : canBook && !isSignedIn
+                  ? vi.commerce.login
+                  : copy.choose}
+          </Button>
         </>
       )}
-      {canBook ? (
-        <>
-          <PriceRow total label={vi.commerce.total} amount={money(totalPrice)} />
-          <Txt variant="small" style={ui.muted}>
-            {t('flights.perPassenger', { price: money(unitPrice) })}
-            {passengerMix.children > 0 && fare.childPrice != null
-              ? ' · ' + copy.passengerTypes.child.label + ' ' + money(fare.childPrice)
-              : ''}
-            {passengerMix.infants > 0 && fare.infantPrice != null
-              ? ' · ' + copy.passengerTypes.infant.label + ' ' + money(fare.infantPrice)
-              : ''}
-          </Txt>
-          {isTripPick && (fare.carryOnKg != null || fare.checkedKg != null) && (
-            <Txt variant="small" style={ui.muted}>
-              {[
-                fare.carryOnKg != null ? t('mobile.tripPlan.carryOn', { kg: fare.carryOnKg }) : '',
-                fare.checkedKg != null ? t('mobile.tripPlan.checkedBaggage', { kg: fare.checkedKg }) : '',
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </Txt>
-          )}
-          {cabin.remaining != null && (
-            <Txt variant="small">{t('flights.remaining', { count: cabin.remaining })}</Txt>
-          )}
-          <Txt variant="small">
-            {fare.isRefundable && fare.freeCancelDays > 0
-              ? t('flights.freeCancel', { count: fare.freeCancelDays })
-              : fare.isRefundable
-                ? vi.commerce.refundable
-                : vi.commerce.nonRefundable}
-          </Txt>
-        </>
-      ) : (
-        <Notice tone="warning">{getReason(cabin)}</Notice>
-      )}
-      <Button disabled={!canBook || isLocked} onPress={() => fare && onChoose(cabin.productId, fare.code)}>
-        {isHolding
-          ? vi.api.loading
-          : isTripPick
-            ? vi.mobile.tripPlan.pickFlight
-            : canBook && !isSignedIn
-              ? vi.commerce.login
-              : copy.choose}
-      </Button>
       <CommerceError error={error} />
     </Card>
   );
 }
+
+const cardStyles = StyleSheet.create({
+  summary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    marginHorizontal: -spacing.xs,
+    borderRadius: radius.lg,
+    backgroundColor: colors.coralTint,
+  },
+  price: { fontSize: 22, lineHeight: 28, fontFamily: nativeFonts.bold, color: colors.ink },
+});

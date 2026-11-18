@@ -84,6 +84,8 @@ export const flights = {
   stops: '{count} điểm dừng',
   taxIncluded: 'Đã gồm thuế, phí',
   priceFrom: 'từ',
+  chooseFare: 'Chọn vé',
+  perGuestSuffix: ' /khách',
   perPerson: '/khách',
   open: 'Chọn vé',
   close: 'Thu gọn',
