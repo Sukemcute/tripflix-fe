@@ -5,12 +5,19 @@ import { commentControlsApi } from '@tripflix/api-client';
 import type { CommentSettingsDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
 import { colors, spacing } from '@tripflix/tokens';
-import { Button, Card, Field, Txt } from '@/components/mobile-ui';
-import { ApiErrorNotice } from '@/components/api-state';
+import { Button, Card, Field, Txt } from '../../components/mobile-ui';
+import { ApiErrorNotice } from '../../components/api-state';
 
 const text = vi.moderation;
-export function CreatorCommentControls({ postId }: { postId: string }) {
-  const [open, setOpen] = useState(false);
+export function CreatorCommentControls({
+  postId,
+  initialOpen = false,
+}: {
+  postId: string;
+  initialOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(initialOpen);
+  const [notice, setNotice] = useState('');
   const client = useQueryClient();
   const settings = useQuery({
     queryKey: ['creator-comments', postId, 'settings'],
@@ -29,7 +36,16 @@ export function CreatorCommentControls({ postId }: { postId: string }) {
   const decide = useMutation({
     mutationFn: ({ id, action }: { id: string; action: 'approve' | 'reject' }) =>
       commentControlsApi.decide(id, action),
-    onSuccess: async () => {
+    onMutate: () => setNotice(''),
+    onError: () => client.invalidateQueries({ queryKey: ['creator-comments', postId, 'queue'] }),
+    onSuccess: async (data, command) => {
+      setNotice(
+        command.action === 'reject'
+          ? text.creatorRejectSuccess
+          : data.status === 'visible'
+            ? text.creatorPublished
+            : text.creatorApprovedWaiting,
+      );
       await Promise.all([
         client.invalidateQueries({ queryKey: ['creator-comments', postId, 'queue'] }),
         client.invalidateQueries({ queryKey: ['social'] }),
@@ -46,6 +62,7 @@ export function CreatorCommentControls({ postId }: { postId: string }) {
         <Card style={{ gap: spacing.md }}>
           <Txt variant="caption">{text.creatorSettingsHint}</Txt>
           <ApiErrorNotice error={settings.error ?? queue.error ?? decide.error} />
+          {!!notice && <Txt accessibilityLiveRegion="polite">{notice}</Txt>}
           {settings.isPending && <Txt>{vi.api.loading}</Txt>}
           {settings.data && <SettingsForm key={postId} initial={settings.data} postId={postId} />}
           <Txt variant="heading">{text.creatorQueue}</Txt>
@@ -54,10 +71,41 @@ export function CreatorCommentControls({ postId }: { postId: string }) {
           {items.map((item) => (
             <Card key={item.id} style={{ gap: spacing.sm }}>
               <Txt variant="caption">
-                {item.authorId.slice(0, 8)} · {new Date(item.createdAt).toLocaleString('vi-VN')}
+                {item.authorName || `@${item.authorId.slice(0, 8)}`} ·{' '}
+                {new Date(item.createdAt).toLocaleString('vi-VN')}
               </Txt>
+              {item.parentContext && (
+                <View
+                  style={{
+                    borderLeftWidth: 3,
+                    borderLeftColor: colors.border,
+                    padding: spacing.sm,
+                    backgroundColor: colors.surfaceMuted,
+                    gap: spacing.xs,
+                  }}
+                >
+                  <Txt variant="caption">
+                    {item.parentContext.kind === 'reply'
+                      ? text.creatorReplyContext
+                      : text.creatorThreadContext}
+                    {item.parentContext.authorName ? ` · ${item.parentContext.authorName}` : ''}
+                  </Txt>
+                  <Txt>
+                    {item.parentContext.unavailable
+                      ? text.creatorContextUnavailable
+                      : item.parentContext.body}
+                  </Txt>
+                </View>
+              )}
               <Txt>{item.body || text.platformBlocked}</Txt>
               {item.platformBlocked && !!item.body && <Txt variant="caption">{text.platformBlocked}</Txt>}
+              {!!item.approvalBlockReason && (
+                <Txt>
+                  {item.approvalBlockReason === 'parent_unavailable'
+                    ? text.creatorWaitParent
+                    : text.creatorWaitPost}
+                </Txt>
+              )}
               <Button
                 tone="secondary"
                 disabled={decide.isPending}
@@ -66,10 +114,12 @@ export function CreatorCommentControls({ postId }: { postId: string }) {
                 {text.creatorReject}
               </Button>
               <Button
-                disabled={decide.isPending}
+                disabled={decide.isPending || item.canApprove === false}
                 onPress={() => decide.mutate({ id: item.id, action: 'approve' })}
               >
-                {text.creatorApprove}
+                {item.willPublish === false || item.platformBlocked
+                  ? text.creatorApproveFiltered
+                  : text.creatorApprove}
               </Button>
             </Card>
           ))}

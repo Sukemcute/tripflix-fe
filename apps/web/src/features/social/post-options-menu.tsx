@@ -10,9 +10,10 @@ import { SocialIcon } from './live-posts';
 import { ReportContentDialog } from './report-content-dialog';
 import { SEARCH_OPEN_PARAM } from './search-url';
 import styles from './post-options-menu.module.css';
+import { CreatorCommentControls } from './creator-comment-controls';
 
 type Post = { id: string; authorId: string; title: string; body: string };
-type Editor = 'content' | 'visibility' | 'delete';
+type Editor = 'content' | 'visibility' | 'delete' | 'comments';
 
 export function PostOptionsMenu({
   post,
@@ -138,6 +139,11 @@ export function PostOptionsMenu({
         {isMine ? (
           <>
             <hr />
+            <MenuItem
+              icon={<SocialIcon name="comment" size={22} />}
+              title={vi.moderation.creatorSettings}
+              onClick={() => edit('comments')}
+            />
             <MenuItem
               icon={<OptionIcon name="edit" />}
               title="Chỉnh sửa bài viết"
@@ -268,17 +274,19 @@ function PostEditorDialog({ post, view, onClose }: { post: Post; view: Editor; o
   const dialog = useRef<HTMLDialogElement>(null);
   const { user } = useApiSession();
   const title =
-    view === 'content'
-      ? 'Chỉnh sửa bài viết'
-      : view === 'visibility'
-        ? 'Chỉnh sửa quyền xem'
-        : 'Xóa bài viết?';
+    view === 'comments'
+      ? vi.moderation.creatorSettings
+      : view === 'content'
+        ? 'Chỉnh sửa bài viết'
+        : view === 'visibility'
+          ? 'Chỉnh sửa quyền xem'
+          : 'Xóa bài viết?';
   const id = useId();
   const detail = useQuery({
     queryKey: ['social', 'post', post.id, user?.id],
     queryFn: ({ signal }) => socialApi.getPost(post.id, signal),
     staleTime: 0,
-    enabled: view !== 'delete',
+    enabled: view === 'content' || view === 'visibility',
   });
   useEffect(() => {
     dialog.current?.showModal();
@@ -298,9 +306,19 @@ function PostEditorDialog({ post, view, onClose }: { post: Post; view: Editor; o
       </header>
       <div className={styles.content}>
         <ApiErrorNotice error={detail.error} retry={() => void detail.refetch()} />
-        {view !== 'delete' && !detail.data && detail.isFetching && <output>{vi.api.loading}</output>}
-        {(view === 'delete' || detail.data) && (
-          <EditorForm post={detail.data?.post ?? post} view={view} onClose={() => dialog.current?.close()} />
+        {view === 'comments' ? (
+          <CreatorCommentControls postId={post.id} initialOpen />
+        ) : (
+          <>
+            {view !== 'delete' && !detail.data && detail.isFetching && <output>{vi.api.loading}</output>}
+            {(view === 'delete' || detail.data) && (
+              <EditorForm
+                post={detail.data?.post ?? post}
+                view={view}
+                onClose={() => dialog.current?.close()}
+              />
+            )}
+          </>
         )}
       </div>
     </dialog>
@@ -313,7 +331,7 @@ function EditorForm({
   onClose,
 }: {
   post: Post & { visibility?: string };
-  view: Editor;
+  view: Exclude<Editor, 'comments'>;
   onClose: () => void;
 }) {
   const client = useQueryClient();

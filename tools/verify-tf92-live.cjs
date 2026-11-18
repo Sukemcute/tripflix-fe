@@ -1,0 +1,101 @@
+// Local seeded accounts only. No mocked API, tokens or OTP written to evidence.
+const { chromium } = require(process.env.PLAYWRIGHT_PACKAGE || 'playwright');
+const { expect } = require((process.env.PLAYWRIGHT_PACKAGE || 'playwright') + '/test');
+const { api, login } = require('./verify-creator-comment-controls-live.cjs');
+const { mkdir, writeFile } = require('node:fs/promises');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const output = path.resolve('../../outputs/tf92-acceptance');
+let owner, writer, staff, postId, browser;
+const comments = token => api(`/v1/posts/${postId}/comments`, token);
+const queue = () => api(`/v1/posts/${postId}/filtered-comments`, owner);
+const inbox = async token => {
+  const response = await fetch('http://localhost:8080/notifications?limit=50', { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(20000) });
+  assert.equal(response.status, 200);
+  return response.json();
+};
+const action = (id, value) => api(`/v1/admin/moderation/comments/${id}/actions`, staff, 'POST', { action: value, reasonCode: 'OTHER' }, 201);
+const add = (token, body, parent) => api(`/v1/posts/${postId}/comments`, token, 'POST', { body, ...(parent ? { parent_comment_id: parent } : {}) }, 201);
+async function main() {
+  await mkdir(output, { recursive: true });
+  const password = process.env.CREATOR_QA_PASSWORD?.trim(); assert.ok(password);
+  owner = (await api('/auth/login', null, 'POST', { email: 'member@tripflix.local', password })).accessToken;
+  staff = (await api('/auth/login', null, 'POST', { email: 'moderator@tripflix.local', password })).accessToken;
+  writer = (await api('/auth/login', null, 'POST', { email: 'superadmin@tripflix.local', password })).accessToken;
+  postId = (await api('/v1/posts', owner, 'POST', { post_type: 'vlog', title: 'TF92-QA-' + Date.now(), body: 'Kiểm tra ngữ cảnh và thông báo trả lời.' }, 201)).id;
+  await api(`/v1/posts/${postId}/publish`, owner, 'POST', undefined, 201);
+  const root = await add(owner, 'Bình luận gốc A');
+  const target = await add(staff, 'Bình luận B được trả lời', root.id);
+  browser = await chromium.launch({ channel: 'msedge', headless: true });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  const author = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await login(page, 'member@tripflix.local', `/inspiration?open=${postId}`);
+  await page.locator('details > summary').filter({ hasText: /^Quản lý bình luận$/ }).first().waitFor();
+  await page.locator(`[data-post-id="${postId}"]`).getByRole('button', { name: 'Tùy chọn bài viết', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Quản lý bình luận', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Quản lý bình luận', exact: true });
+  await dialog.getByLabel('Từ khóa cần lọc', { exact: true }).fill('lọcqa');
+  await dialog.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
+  await expect(dialog.getByText('Đã lưu cài đặt bình luận.', { exact: true })).toBeVisible();
+  const first = await add(writer, 'lọcqa trả lời đúng B', target.id);
+  assert.equal(first.status, 'held');
+  assert.equal(first.replyToCommentId, target.id);
+  assert.equal((await api(`/v1/posts/${postId}`, owner)).post.commentCount, 2);
+  await expect(dialog.getByText(first.body, { exact: true })).toBeVisible({ timeout: 20000 });
+  await expect(dialog.getByText('Bình luận B được trả lời', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('Quản trị viên', { exact: false })).toBeVisible();
+  await login(author, 'superadmin@tripflix.local', `/inspiration?open=${postId}&comment=${first.id}`);
+  await expect(author.getByText('Bình luận được bộ lọc của chủ bài giữ lại, chờ chủ bài duyệt.', { exact: true })).toBeVisible({ timeout: 15000 });
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const bounds = await dialog.boundingBox(); assert.ok(bounds && bounds.x >= 0 && bounds.x + bounds.width <= width + 1);
+    await page.screenshot({ path: path.join(output, `creator-context-${width}.png`) });
+  }
+  await dialog.getByRole('button', { name: 'Cho hiển thị', exact: true }).click();
+  await expect(dialog.getByText('Đã cho hiển thị bình luận.', { exact: true })).toBeVisible();
+  await expect.poll(async () => (await inbox(staff)).items.filter(row => row.data.commentId === first.id && row.type === 'comment.replied').length, { timeout: 30000 }).toBe(1);
+  const ownerRows = (await inbox(owner)).items.filter(row => row.data.commentId === first.id);
+  assert.ok(ownerRows.some(row => row.type === 'comment.created'));
+  assert.ok(ownerRows.every(row => row.type !== 'comment.replied'));
+  await api(`/v1/comments/${first.id}/creator-decisions`, owner, 'POST', { decision: 'approve' });
+  assert.equal((await api(`/v1/posts/${postId}`, owner)).post.commentCount, 3);
+  assert.equal((await inbox(staff)).items.filter(row => row.data.commentId === first.id && row.type === 'comment.replied').length, 1);
+
+  const platform = await add(writer, 'lọcqa tao biết nhà mày ở đâu', target.id);
+  await expect.poll(async () => (await queue()).items.find(row => row.id === platform.id)?.platformBlocked, { timeout: 20000 }).toBe(true);
+  await expect(dialog.getByRole('button', { name: 'Chấp nhận qua bộ lọc', exact: true })).toBeVisible({ timeout: 20000 });
+  await dialog.getByRole('button', { name: 'Chấp nhận qua bộ lọc', exact: true }).click();
+  await expect(dialog.getByText('Đã chấp nhận qua bộ lọc của bạn. Bình luận vẫn chờ nền tảng kiểm duyệt.', { exact: true })).toBeVisible();
+  assert.ok(!(await comments(null)).items.some(row => row.id === platform.id));
+  assert.equal((await inbox(staff)).items.filter(row => row.data.commentId === platform.id && row.type === 'comment.replied').length, 0);
+  await action(platform.id, 'restore');
+  await expect.poll(async () => (await inbox(staff)).items.filter(row => row.data.commentId === platform.id && row.type === 'comment.replied').length, { timeout: 30000 }).toBe(1);
+  assert.ok((await inbox(owner)).items.filter(row => row.data.commentId === platform.id).every(row => row.type !== 'comment.replied'));
+
+  const hiddenContext = await add(writer, 'lọcqa ngữ cảnh riêng tư', target.id);
+  await action(target.id, 'hide');
+  await expect.poll(async () => (await queue()).items.find(row => row.id === hiddenContext.id)?.parentContext?.body, { timeout: 15000 }).toBe(null);
+  await expect(dialog.getByText('Bình luận liên quan đã bị ẩn, gỡ hoặc xóa.', { exact: true })).toBeVisible({ timeout: 20000 });
+  await expect(dialog.getByText('Bình luận B được trả lời', { exact: true })).toBeHidden();
+  await action(root.id, 'hide');
+  await expect(dialog.getByRole('button', { name: 'Chấp nhận qua bộ lọc', exact: true })).toBeDisabled({ timeout: 20000 });
+  await api(`/v1/comments/${hiddenContext.id}/creator-decisions`, owner, 'POST', { decision: 'approve' }, 409);
+  await page.screenshot({ path: path.join(output, 'creator-parent-blocked.png') });
+  await dialog.getByRole('button', { name: 'Từ chối', exact: true }).click();
+  await expect(dialog.getByText('Đã từ chối hiển thị bình luận.', { exact: true })).toBeVisible();
+  await action(root.id, 'restore');
+  await dialog.getByLabel('Cho phép bình luận', { exact: true }).uncheck();
+  await dialog.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
+  await expect.poll(async () => (await api(`/v1/posts/${postId}/comment-settings`, owner)).enabled).toBe(false);
+  await api(`/v1/posts/${postId}/comments`, writer, 'POST', { body: 'Không được đăng' }, 403);
+  await dialog.getByLabel('Cho phép bình luận', { exact: true }).check();
+  await dialog.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
+  await expect.poll(async () => (await api(`/v1/posts/${postId}/comment-settings`, owner)).enabled).toBe(true);
+  const result = { result: 'passed', api: 'real', checks: ['owner menu settings', 'reply context + author name', 'held author deep link', '1440/390 dialog', 'creator approval exact recipient', 'duplicate approval count + inbox', 'platform hold safe approval label', 'platform restore exact recipient', 'hidden context redaction', 'unavailable parent UI + server guard', 'reject + disabled comments'] };
+  await writeFile(path.join(output, 'result.json'), JSON.stringify(result, null, 2));
+  process.stdout.write('TF92 live Web/API/notification acceptance passed\n');
+}
+main().catch(async error => {
+  if (browser) for (const [i, context] of browser.contexts().entries()) for (const [j, page] of context.pages().entries()) await page.screenshot({ path: path.join(output, `failure-${i}-${j}.png`) }).catch(() => {});
+  process.stderr.write(String(error.stack || error)); process.exitCode = 1;
+}).finally(async () => { await browser?.close(); if (owner && postId) await api(`/v1/posts/${postId}`, owner, 'DELETE').catch(() => {}); });

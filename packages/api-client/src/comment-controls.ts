@@ -33,7 +33,11 @@ export const commentControlsApi = {
     ]);
   },
   async decide(id: string, decision: 'approve' | 'reject') {
-    return commentControlsControllerDecide(id, { decision });
+    return readEntity((await commentControlsControllerDecide(id, { decision })).data, [
+      'id',
+      'creatorReview',
+      'status',
+    ]);
   },
 };
 

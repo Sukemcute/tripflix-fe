@@ -8,8 +8,15 @@ import { ApiErrorNotice } from '@/features/shared/api-state';
 import styles from './creator-comment-controls.module.css';
 
 const text = vi.moderation;
-export function CreatorCommentControls({ postId }: { postId: string }) {
-  const [open, setOpen] = useState(false);
+export function CreatorCommentControls({
+  postId,
+  initialOpen = false,
+}: {
+  postId: string;
+  initialOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(initialOpen);
+  const [notice, setNotice] = useState('');
   const client = useQueryClient();
   const settings = useQuery({
     queryKey: ['creator-comments', postId, 'settings'],
@@ -28,7 +35,16 @@ export function CreatorCommentControls({ postId }: { postId: string }) {
   const decide = useMutation({
     mutationFn: ({ id, action }: { id: string; action: 'approve' | 'reject' }) =>
       commentControlsApi.decide(id, action),
-    onSuccess: async () => {
+    onMutate: () => setNotice(''),
+    onError: () => client.invalidateQueries({ queryKey: ['creator-comments', postId, 'queue'] }),
+    onSuccess: async (data, command) => {
+      setNotice(
+        command.action === 'reject'
+          ? text.creatorRejectSuccess
+          : data.status === 'visible'
+            ? text.creatorPublished
+            : text.creatorApprovedWaiting,
+      );
       await Promise.all([
         client.invalidateQueries({ queryKey: ['creator-comments', postId, 'queue'] }),
         client.invalidateQueries({ queryKey: ['social'] }),
@@ -37,12 +53,13 @@ export function CreatorCommentControls({ postId }: { postId: string }) {
   });
   const items = queue.data?.pages.flatMap((page) => page.items) ?? [];
   return (
-    <details className={styles.panel} onToggle={(event) => setOpen(event.currentTarget.open)}>
+    <details open={open} className={styles.panel} onToggle={(event) => setOpen(event.currentTarget.open)}>
       <summary>{text.creatorSettings}</summary>
       {open && (
         <div className={styles.body}>
           <p>{text.creatorSettingsHint}</p>
           <ApiErrorNotice error={settings.error ?? queue.error ?? decide.error} />
+          {notice && <output className={styles.notice}>{notice}</output>}
           {settings.isPending && <output>{vi.api.loading}</output>}
           {settings.data && <SettingsForm key={postId} postId={postId} initial={settings.data} />}
           <h3>{text.creatorQueue}</h3>
@@ -51,10 +68,33 @@ export function CreatorCommentControls({ postId }: { postId: string }) {
           {items.map((item) => (
             <article key={item.id} className={styles.comment}>
               <span className={styles.meta}>
-                {item.authorId.slice(0, 8)} · {new Date(item.createdAt).toLocaleString('vi-VN')}
+                {item.authorName || `@${item.authorId.slice(0, 8)}`} ·{' '}
+                {new Date(item.createdAt).toLocaleString('vi-VN')}
               </span>
+              {item.parentContext && (
+                <blockquote className={styles.context}>
+                  <span className={styles.meta}>
+                    {item.parentContext.kind === 'reply'
+                      ? text.creatorReplyContext
+                      : text.creatorThreadContext}
+                    {item.parentContext.authorName ? ` · ${item.parentContext.authorName}` : ''}
+                  </span>
+                  <p>
+                    {item.parentContext.unavailable
+                      ? text.creatorContextUnavailable
+                      : item.parentContext.body}
+                  </p>
+                </blockquote>
+              )}
               <p>{item.body || text.platformBlocked}</p>
               {item.platformBlocked && item.body && <p>{text.platformBlocked}</p>}
+              {item.approvalBlockReason && (
+                <p>
+                  {item.approvalBlockReason === 'parent_unavailable'
+                    ? text.creatorWaitParent
+                    : text.creatorWaitPost}
+                </p>
+              )}
               <div className={styles.actions}>
                 <button
                   type="button"
@@ -67,10 +107,12 @@ export function CreatorCommentControls({ postId }: { postId: string }) {
                 <button
                   type="button"
                   className="primary-button"
-                  disabled={decide.isPending}
+                  disabled={decide.isPending || item.canApprove === false}
                   onClick={() => decide.mutate({ id: item.id, action: 'approve' })}
                 >
-                  {text.creatorApprove}
+                  {item.willPublish === false || item.platformBlocked
+                    ? text.creatorApproveFiltered
+                    : text.creatorApprove}
                 </button>
               </div>
             </article>
