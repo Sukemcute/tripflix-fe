@@ -10,14 +10,12 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { LoadingDots } from '@/components/loading-dots';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
-import { assets, Badge, Chip, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { Chip, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { NotificationBell } from '@/features/account/notification-bell';
 import { FeaturedTrips } from '@/features/booking/featured-trips';
 import { HotelSearchResults } from './hotel-search-results';
 
-const copy = vi.mobile;
 const text = vi.mobile.explore;
-type Category = 'all' | 'sea' | 'weekend';
 type SearchKind = 'hotel' | 'flight';
 /** Số tỉnh lấy từ gợi ý trang chủ để tìm phòng cuối tuần và khách sạn đánh giá cao. */
 const PLACE_LIMIT = 2;
@@ -37,7 +35,6 @@ interface HotelTile {
  * gợi ý khách sạn theo ưu đãi, cuối tuần, đánh giá và lộ trình nổi bật đặt được.
  */
 export function ExploreFeed() {
-  const [category, setCategory] = useState<Category>('all');
   const [kind, setKind] = useState<SearchKind>('hotel');
   const [input, setInput] = useState('');
   const [hotelQuery, setHotelQuery] = useState('');
@@ -115,81 +112,11 @@ export function ExploreFeed() {
             </Txt>
             <Txt variant="title">{text.browseTitle}</Txt>
           </View>
-          <Row style={styles.categories}>
-            <Chip selected={category === 'all'} onPress={() => setCategory('all')}>
-              {copy.notifications.all}
-            </Chip>
-            <Chip selected={category === 'sea'} onPress={() => setCategory('sea')}>
-              {text.sea}
-            </Chip>
-            <Chip selected={category === 'weekend'} onPress={() => setCategory('weekend')}>
-              {text.weekend}
-            </Chip>
-          </Row>
-          <Highlights category={category} />
           <HotelSuggestions />
           <FeaturedTrips onPicked={() => router.navigate('/(tabs)/book')} />
         </>
       )}
     </Screen>
-  );
-}
-
-function Highlights({ category }: { category: Category }) {
-  const isWeekend = category === 'weekend';
-  const destinations = [
-    { name: text.nhaTrang, image: assets.beach },
-    category === 'sea'
-      ? { name: text.haLong, image: assets.vietnam }
-      : { name: text.hoiAn, image: assets.hoiAn },
-  ];
-  const openSearch = (q?: string) => router.push({ pathname: '/search', params: q ? { q } : {} });
-  const featured = destinations[isWeekend ? 1 : 0]!;
-  return (
-    <>
-      <Pressable accessibilityRole="button" onPress={() => openSearch(featured.name)} style={styles.hero}>
-        <Image
-          source={isWeekend ? featured.image : assets.vietnam}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-        />
-        <View style={styles.heroShade} />
-        <Badge tone="sun" icon="sunny-outline">
-          {text.mood}
-        </Badge>
-        <View style={{ gap: spacing.sm }}>
-          <Txt variant="title" style={styles.heroTitle}>
-            {isWeekend ? text.weekendHero : text.beachHero}
-          </Txt>
-          <Row>
-            <Txt variant="caption" style={styles.heroBody}>
-              {text.liveHeroBody}
-            </Txt>
-            <View style={styles.heroArrow}>
-              <Icon name="arrow-forward" color={colors.background} size={mobileIconSize.control} />
-            </View>
-          </Row>
-        </View>
-      </Pressable>
-      <View style={{ gap: spacing.md }}>
-        <Txt variant="heading">
-          {isWeekend ? text.weekendTitle : category === 'sea' ? text.beachTitle : text.curatedTitle}
-        </Txt>
-        <View style={styles.destinations}>
-          {(isWeekend ? [...destinations].reverse() : destinations).map((destination) => (
-            <Pressable
-              key={destination.name}
-              accessibilityRole="button"
-              onPress={() => openSearch(destination.name)}
-              style={styles.destination}
-            >
-              <Image source={destination.image} style={styles.destinationImage} contentFit="cover" />
-              <Txt variant="label">{destination.name}</Txt>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-    </>
   );
 }
 
@@ -366,31 +293,6 @@ const styles = StyleSheet.create({
     color: colors.ink,
     ...compactType.body,
   },
-  categories: { flexWrap: 'wrap', gap: spacing.sm },
-  hero: {
-    minHeight: 235,
-    borderRadius: mobileLayout.cardRadius,
-    overflow: 'hidden',
-    padding: spacing.lg,
-    justifyContent: 'space-between',
-    gap: spacing.xl,
-    backgroundColor: colors.ink,
-  },
-  heroShade: { ...StyleSheet.absoluteFill, backgroundColor: colors.overlay },
-  heroTitle: { ...compactType.title, color: colors.background },
-  heroBody: { flex: 1, color: colors.background, fontFamily: nativeFonts.semibold },
-  heroArrow: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  destinations: { flexDirection: 'row', gap: spacing.md },
-  destination: { flex: 1, minWidth: 0, gap: spacing.sm },
-  destinationImage: { width: '100%', height: 124, borderRadius: radius.lg, backgroundColor: colors.seaMist },
   hotelRow: { gap: spacing.sm },
   hotel: {
     width: 180,
