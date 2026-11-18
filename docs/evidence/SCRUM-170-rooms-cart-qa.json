@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "baseline": false,
+  "checks": [
+    "375px: collapsed rates, selected rate stays visible, amenities expand, 44px quantity targets, quantity max, total updates, single/multiple cart lines and remove-to-empty",
+    "390px: collapsed rates, selected rate stays visible, amenities expand, 44px quantity targets, quantity max, total updates, single/multiple cart lines and remove-to-empty",
+    "430px: collapsed rates, selected rate stays visible, amenities expand, 44px quantity targets, quantity max, total updates, single/multiple cart lines and remove-to-empty"
+  ],
+  "pageErrors": [],
+  "apiFixtures": true,
+  "nativeTested": false
+}
