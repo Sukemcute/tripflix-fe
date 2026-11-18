@@ -8,6 +8,8 @@ import { useApiSession } from './session';
 
 export type ReelFeedTab = FeedControllerGetFeedTab;
 export const REEL_FEED_TABS = Object.values(FeedControllerGetFeedTab);
+/** Tiền tố key của Reels gợi ý (useRecommendedReelsFeed): ['feed', 'recommended', mode, userId]. */
+export const RECOMMENDED_REELS_KEY = ['feed', 'recommended'] as const;
 
 /** BE nhận tối đa 20 id mỗi lần gọi /v1/feed?post_ids=. */
 export const REELS_BY_IDS_PAGE_SIZE = 20;
@@ -91,14 +93,17 @@ export async function reloadReelsFeed(queryClient: QueryClient, tab: ReelFeedTab
   await queryClient.refetchQueries({ queryKey: ['feed', tab], type: 'active' });
 }
 
-/** Reels gợi ý từ discovery (`GET /api/recommendations/reels`): hỗ trợ 4 mode `trending | for_you | has_plan | recent`. */
+/**
+ * Reels gợi ý từ discovery (`GET /api/recommendations/reels`): hỗ trợ 4 mode `trending | for_you | has_plan | recent`.
+ * Key nằm dưới tiền tố `feed` (RECOMMENDED_REELS_KEY) để cập nhật tim, lưu, số bình luận của Reels tự áp dụng cho danh sách này.
+ */
 export function useRecommendedReelsFeed({
   enabled = true,
   mode = 'trending',
 }: { enabled?: boolean; mode?: PostRecommendationsControllerRecommendReelsMode } = {}) {
   const { user, isReady } = useApiSession();
   return useInfiniteQuery({
-    queryKey: ['discovery', 'recommendations', 'reels', mode, user?.id],
+    queryKey: [...RECOMMENDED_REELS_KEY, mode, user?.id],
     enabled: isReady && enabled,
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam, signal }) => {
