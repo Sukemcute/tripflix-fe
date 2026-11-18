@@ -14,7 +14,21 @@ describe('lộ trình Tripi', () => {
         place: null,
         distanceKm: 1.2,
         minutes: 5,
+        service: null,
       },
+    });
+  });
+
+  it('đọc dòng dịch vụ Tripflix lồng trong lộ trình (chuyến bay, khách sạn)', () => {
+    const days = groupItineraryLines([
+      { label: 'Ngày 1 · ✈ Bay SGN → DLI 14:30–16:10', detail: 'Bay TP.HCM – Đà Lạt 14:30', service: 'flight' },
+      { label: 'Ngày 1 · Nhận phòng D. House', detail: '21/11', service: 'stay' },
+      { label: 'Ngày 1 · chiều', detail: 'Chùa Tàu · khoảng 1 km, 2 phút' },
+    ]);
+    expect(days[0]?.stops.map((stop) => stop.service)).toEqual(['flight', 'stay', null]);
+    expect(days[0]?.stops[0]).toMatchObject({
+      partLabel: '✈ Bay SGN → DLI 14:30–16:10',
+      title: 'Bay TP.HCM – Đà Lạt 14:30',
     });
   });
 
@@ -26,6 +40,7 @@ describe('lộ trình Tripi', () => {
       place: 'Bãi Dài',
       distanceKm: null,
       minutes: null,
+      service: null,
     });
   });
 

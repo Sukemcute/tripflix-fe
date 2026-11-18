@@ -13,6 +13,8 @@ export interface ItineraryStop {
   place: string | null;
   distanceKm: number | null;
   minutes: number | null;
+  /** Dịch vụ Tripflix (chuyến bay, khách sạn) lồng trong lộ trình; null là điểm thường. */
+  service: 'flight' | 'stay' | null;
 }
 
 export interface ItineraryDay {
@@ -24,6 +26,7 @@ export interface ItineraryDay {
 export interface ItineraryLineInput {
   label: string;
   detail?: string | null;
+  service?: 'flight' | 'stay' | null;
 }
 
 const PARTS: [RegExp, DayPart][] = [
@@ -72,6 +75,7 @@ export function parseItineraryLine(line: ItineraryLineInput): { day: number | nu
       place: texts.slice(1).join(' · ') || null,
       distanceKm: leg?.distanceKm ?? null,
       minutes: leg?.minutes ?? null,
+      service: line.service === 'flight' || line.service === 'stay' ? line.service : null,
     },
   };
 }

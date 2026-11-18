@@ -13,6 +13,7 @@ export * from './cardAction';
 export * from './cardActionParams';
 export * from './cardActionType';
 export * from './cardLine';
+export * from './cardLineService';
 export * from './cardPriceBasis';
 export * from './cardRef';
 export * from './chatRequest';

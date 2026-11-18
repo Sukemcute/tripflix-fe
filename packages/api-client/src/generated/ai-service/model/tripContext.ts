@@ -59,6 +59,7 @@ export interface TripContext {
   place?: string;
   priceMaxPerNight?: number | null;
   reelId?: string | null;
+  returnTransport?: DraftTransport | null;
   stay?: DraftChoice | null;
   transport?: DraftTransport | null;
   v?: TripContextV;
