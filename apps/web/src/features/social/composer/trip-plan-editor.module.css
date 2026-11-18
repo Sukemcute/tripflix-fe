@@ -1,0 +1,483 @@
+/* Trình soạn lộ trình khi đăng bài trên web: cùng bố cục, cùng hai tầng chọn loại điểm như app. */
+
+.root {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--iv-text, var(--color-text));
+}
+
+.section,
+.field,
+.list,
+.day,
+.hotelChoice,
+.pointForm {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.label,
+.levelLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--iv-text, var(--color-text));
+}
+
+.levelLabel {
+  font-weight: 500;
+  color: var(--iv-text-muted, var(--color-text-muted));
+}
+
+.muted {
+  font-size: 0.78rem;
+  color: var(--iv-text-muted, var(--color-text-muted));
+}
+
+.notice {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  background-color: var(--color-surface-muted);
+}
+
+.error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-danger);
+}
+
+.grow {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+  text-align: left;
+}
+
+.ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--iv-border, var(--color-border));
+  background-color: var(--iv-elevated-bg, var(--color-background));
+  color: inherit;
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 1px;
+}
+
+.inputError {
+  border-color: var(--color-danger);
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.timeField {
+  width: 96px;
+  flex: none;
+}
+
+/* Lấy từ chuyến đã đặt / Tự nhập */
+.segment {
+  display: flex;
+  padding: 3px;
+  border-radius: 12px;
+  background-color: var(--color-surface-muted);
+}
+
+.segmentItem {
+  flex: 1;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.segmentActive {
+  background-color: var(--color-teal-ink);
+  color: var(--color-background);
+  font-weight: 600;
+}
+
+.tripCard,
+.option,
+.hotelPicked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--iv-border, var(--color-border));
+  background-color: var(--iv-elevated-bg, var(--color-background));
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.tripCard,
+.option {
+  cursor: pointer;
+}
+
+.tripCard:hover,
+.option:hover {
+  background-color: var(--iv-hover-bg, var(--color-surface));
+}
+
+.tripCardPicked {
+  border-color: var(--color-teal-ink);
+}
+
+.tripIcon,
+.iconHotel {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 10px;
+  background-color: var(--color-teal-soft);
+  color: var(--color-teal-ink);
+}
+
+.iconHotel {
+  background-color: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+
+.tripIconPicked {
+  background-color: var(--color-teal-ink);
+  color: var(--color-background);
+}
+
+.options {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.picked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--color-teal-ink);
+}
+
+/* Poster */
+.posterRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.poster {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 80px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 10px;
+  background-color: var(--color-teal-soft);
+  color: var(--color-teal-ink);
+}
+
+.posterImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.posterActions,
+.chips,
+.dayTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dayTabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.chip {
+  flex: none;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--iv-border, var(--color-border));
+  background-color: var(--iv-elevated-bg, var(--color-background));
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.chipActive {
+  border-color: var(--color-ink);
+  background-color: var(--color-ink);
+  color: var(--color-background);
+  font-weight: 600;
+}
+
+/* Một ngày */
+.day {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--iv-border, var(--color-border));
+}
+
+.dayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dayActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.textButton {
+  justify-self: start;
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--color-coral-ink);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.iconButton,
+.handle {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--iv-text-muted, var(--color-text-muted));
+  cursor: pointer;
+}
+
+.iconButton:hover,
+.handle:hover {
+  background-color: var(--iv-hover-bg, var(--color-surface));
+}
+
+.handle {
+  cursor: grab;
+}
+
+.handle:active {
+  cursor: grabbing;
+}
+
+.points {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dragging {
+  opacity: 0.45;
+}
+
+.dropBefore {
+  box-shadow: 0 -3px 0 var(--color-teal-ink);
+  border-radius: 12px;
+}
+
+.dropAfter {
+  box-shadow: 0 3px 0 var(--color-teal-ink);
+  border-radius: 12px;
+}
+
+/* Một điểm */
+.point {
+  border-radius: 12px;
+  border: 1px solid var(--iv-border, var(--color-border));
+  background-color: var(--iv-elevated-bg, var(--color-background));
+}
+
+.pointOpen {
+  border-color: var(--color-teal-ink);
+}
+
+.pointHead {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+}
+
+.pointBody {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.time {
+  width: 42px;
+  flex: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--iv-text-muted, var(--color-text-muted));
+}
+
+.iconBookable {
+  display: inline-flex;
+  color: var(--color-teal-ink);
+}
+
+.iconMuted {
+  display: inline-flex;
+  color: var(--iv-text-muted, var(--color-text-muted));
+}
+
+.tagBookable {
+  font-size: 0.78rem;
+  color: var(--color-teal-ink);
+}
+
+.pointForm {
+  padding: 0 12px 12px;
+}
+
+/* Tầng 1: loại điểm */
+.kindRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.kindOption {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border-radius: 12px;
+  border: 1px solid var(--iv-border, var(--color-border));
+  background-color: var(--iv-elevated-bg, var(--color-background));
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kindOptionSelected {
+  border-color: var(--color-ink);
+  background-color: var(--color-ink);
+  color: var(--color-background);
+}
+
+/* Tầng 2: loại gợi ý, nhỏ và nhạt hơn để không nhầm với tầng 1 */
+.subPanel {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  background-color: var(--color-surface);
+}
+
+.subChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.subChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--iv-border, var(--color-border));
+  background-color: var(--color-background);
+  color: var(--iv-text-muted, var(--color-text-muted));
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.subChipSelected {
+  border-color: var(--color-teal-ink);
+  background-color: var(--color-teal-soft);
+  color: var(--color-teal-ink);
+}
+
+.segmentItem:focus-visible,
+.chip:focus-visible,
+.kindOption:focus-visible,
+.subChip:focus-visible,
+.handle:focus-visible,
+.iconButton:focus-visible,
+.pointBody:focus-visible,
+.option:focus-visible,
+.tripCard:focus-visible,
+.textButton:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .day {
+    padding: 10px;
+  }
+
+  .kindOption {
+    font-size: 0.78rem;
+  }
+}

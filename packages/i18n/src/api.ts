@@ -1,4 +1,7 @@
 export const api = {
+  composerTripDragHint: 'Kéo để đổi thứ tự, hoặc bấm rồi dùng phím mũi tên lên/xuống',
+  composerTripTimeError: 'Nhập giờ dạng HH:mm (00:00–23:59).',
+  composerTripRoom: 'Loại phòng',
   hotels: 'Khách sạn',
   inspiration: 'Cảm hứng',
   // Hộp thư thông báo trên header web (TF46).
