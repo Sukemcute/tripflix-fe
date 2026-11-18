@@ -5,12 +5,16 @@ export interface TripPlanSelection {
   postTitle: string;
   authorName: string;
   coverUrl?: string;
+  /** Trang mở lộ trình ("/" là Reels, "/explore"): nút quay lại về đúng trang đó. */
+  origin?: string;
   trip: {
     hotelId?: string;
     hotelName?: string;
     /** Loại phòng người đăng chọn; đặt theo lộ trình ưu tiên phòng này nếu còn bán. */
     hotelProductId?: string;
     hotelRatePlanCode?: string;
+    /** Ảnh bìa người đăng tự chọn cho lộ trình khi đăng reel. */
+    posterUrl?: string;
     destinationName?: string;
     daysCount?: number;
     items?: {
@@ -38,7 +42,8 @@ export function parseTripPlanSelection(raw: string | null): TripPlanSelection | 
       !selected.postId ||
       typeof selected.postTitle !== 'string' ||
       typeof selected.authorName !== 'string' ||
-      (selected.coverUrl !== undefined && typeof selected.coverUrl !== 'string')
+      (selected.coverUrl !== undefined && typeof selected.coverUrl !== 'string') ||
+      (selected.origin !== undefined && typeof selected.origin !== 'string')
     )
       return null;
     const trip = selected.trip;

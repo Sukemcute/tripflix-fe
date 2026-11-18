@@ -2,7 +2,7 @@ import { getBookableTripPlan, getTripNights, getTripPlanCategory } from '@tripfl
 import type { TripAttachmentDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { colors } from '@tripflix/tokens';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { View } from 'react-native';
 import { BottomSheet } from '@/components/bottom-sheet';
 import { Button, Icon, Row, Txt } from '@/components/mobile-ui';
@@ -33,6 +33,7 @@ export function TripPlanSheet({
   trip: TripAttachmentDto;
 }) {
   const assistant = useAssistant();
+  const pathname = usePathname();
   const items = trip.items ?? [];
   const days = Math.max(trip.daysCount ?? 0, ...items.map((item) => item.day), 1);
   const nights = getTripNights(days);
@@ -49,7 +50,7 @@ export function TripPlanSheet({
       hotelId: trip.hotelId ?? null,
       surface: 'reels_trip_plan',
     });
-    saveTripBooking({ postId, postTitle, authorName, coverUrl, trip });
+    saveTripBooking({ postId, postTitle, authorName, coverUrl, trip, origin: pathname });
     onClose();
     router.navigate('/(tabs)/book');
   };
