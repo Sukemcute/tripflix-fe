@@ -8,7 +8,7 @@ import {
   isValidTripPlanPassengers,
 } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { colors, spacing } from '@tripflix/tokens';
+import { colors, radius, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { DateRangeField } from '@/components/date-sheet';
@@ -128,23 +128,40 @@ export function HotelRoomsScreen() {
         style={{
           padding: spacing.md,
           gap: spacing.md,
-          borderRadius: 20,
-          backgroundColor: colors.seaMist,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
         }}
       >
         <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
-            <Txt variant="label">
-              {formatDay(stay.checkIn)} → {formatDay(stay.checkOut)} · {nights} {text.nights}
+            <Row style={{ flexWrap: 'wrap', gap: spacing.md }}>
+              {[
+                { label: hotelText.checkIn, value: stay.checkIn },
+                { label: hotelText.checkOut, value: stay.checkOut },
+              ].map((date) => (
+                <View key={date.label} style={{ gap: spacing.xs }}>
+                  <Txt style={{ fontSize: 13, lineHeight: 22, color: colors.textMuted }}>{date.label}</Txt>
+                  <Txt style={{ fontSize: 14, lineHeight: 23, color: colors.navy }}>
+                    {formatDay(date.value)}
+                  </Txt>
+                </View>
+              ))}
+            </Row>
+            <Txt style={{ fontSize: 13, lineHeight: 22, color: colors.textMuted }}>
+              {nights} {text.nights}
             </Txt>
-            <Txt variant="small" style={ui.muted}>
+            <Txt style={{ fontSize: 13, lineHeight: 22, color: colors.textMuted }}>
               {stay.adults} {hotelText.adultsLabel.toLowerCase()}
               {stay.children ? ` · ${stay.children} ${hotelText.childrenLabel.toLowerCase()}` : ''}
               {stay.infants ? ` · ${stay.infants} ${hotelText.infantsLabel.toLowerCase()}` : ''}
             </Txt>
           </View>
           {!isTripPick && (
-            <Button tone="text" onPress={() => setEditing((value) => !value)}>
+            <Button
+              style={{ borderRadius: radius.sm, minHeight: 44 }}
+              tone="text"
+              onPress={() => setEditing((value) => !value)}
+            >
               {isEditing ? hotelText.showLess : hotelText.changeStay}
             </Button>
           )}
