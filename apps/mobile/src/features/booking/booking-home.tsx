@@ -45,13 +45,22 @@ export function UpcomingTrips() {
   return (
     <View style={{ gap: spacing.sm }}>
       <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <Txt variant="heading">{copy.upcomingTitle}</Txt>
+        <Txt variant="title" style={layout.sectionTitle}>
+          {copy.upcomingTitle}
+        </Txt>
         <Button tone="text" icon="arrow-forward" onPress={() => router.push('/my-trips')}>
           {copy.upcomingAll}
         </Button>
       </Row>
       {query.isPending && <LoadingDots />}
-      {!query.isPending && trips.length === 0 && <Txt style={styles.muted}>{copy.upcomingEmpty}</Txt>}
+      {!query.isPending && trips.length === 0 && (
+        <View style={layout.empty}>
+          <View style={layout.tripIcon}>
+            <Icon name="airplane-outline" size={22} color={colors.tealInk} />
+          </View>
+          <Txt style={[layout.bodyText, ui.flex]}>{copy.upcomingEmpty}</Txt>
+        </View>
+      )}
       {trips.map((trip) => (
         <Pressable
           key={trip.orderId}
@@ -153,7 +162,12 @@ export function AskTripiCard() {
       {latest && !turn.isPending && (
         <>
           {/* Tripi hỏi lại hoặc từ chối thì khách trả lời ngay ở ô trên. */}
-          {!!latest.text && <Txt>{latest.text}</Txt>}
+          {!!latest.text && (
+            <Row style={layout.reply}>
+              <Icon name="sparkles" size={18} color={colors.coralInk} />
+              <Txt style={[layout.bodyText, ui.flex]}>{latest.text}</Txt>
+            </Row>
+          )}
           {!!latest.cards?.length && (
             <AssistantCards
               cards={latest.cards}
@@ -188,6 +202,28 @@ const layout = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.seaMist,
+  },
+  sectionTitle: { flex: 1 },
+  bodyText: { ...compactType.body, fontFamily: nativeFonts.regular, color: colors.ink, lineHeight: 22 },
+  empty: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  // Câu trả lời của Tripi nằm trong khung riêng, thụt vào như các thẻ bên dưới.
+  reply: {
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   tripTitle: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
   ask: {
