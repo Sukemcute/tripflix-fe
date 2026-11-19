@@ -607,7 +607,7 @@ interface MediaTrackItemProps {
   index: number;
   post: ReelPost;
   isActive: boolean;
-  /** Có thẻ <video> (bài đang xem, 2 bài phía trước, 1 bài phía sau); bài khác chỉ hiện poster. */
+  /** Có thẻ <video> (bài đang xem, 2 bài phía trước, 2 bài phía sau); bài khác chỉ hiện poster. */
   hasVideo: boolean;
   /** Được gắn nguồn để tải ngay (shouldLoadReelSource); đã gắn rồi thì giữ tới khi rời cửa sổ video. */
   canLoadSource: boolean;
