@@ -156,4 +156,34 @@ describe('tích hợp ReplyQuote trong live-posts.tsx', () => {
     expect(source).toContain('scrollToQuotedComment');
     expect(source).toContain('data-comment-id={comment.id}');
   });
+
+  it('CSS khung trích dẫn và cột bình luận có min-width: 0 và cắt ba chấm khi chữ dài', () => {
+    const quoteCss = readFileSync(resolve(here, 'reply-quote.module.css'), 'utf8');
+    const postsCss = readFileSync(resolve(here, 'live-posts.module.css'), 'utf8');
+
+    const quoteCardBlock = quoteCss.match(/\.quoteCard\s*\{[^}]*\}/)?.[0] ?? '';
+    expect(quoteCardBlock).toContain('min-width: 0');
+    expect(quoteCardBlock).toContain('max-width: 100%');
+    expect(quoteCardBlock).toContain('box-sizing: border-box');
+    expect(quoteCardBlock).toContain('overflow: hidden');
+
+    for (const selector of ['quoteTitle', 'quoteExcerpt']) {
+      const block = quoteCss.match(new RegExp(`\\.${selector}\\s*\\{[^}]*\\}`))?.[0] ?? '';
+      expect(block).toContain('min-width: 0');
+      expect(block).toContain('white-space: nowrap');
+      expect(block).toContain('overflow: hidden');
+      expect(block).toContain('text-overflow: ellipsis');
+    }
+
+    for (const selector of [
+      'panelCommentList',
+      'panelCommentItem',
+      'panelCommentRow',
+      'panelCommentContent',
+      'panelReplyWrapper',
+    ]) {
+      const block = postsCss.match(new RegExp(`\\.${selector}\\s*\\{[^}]*\\}`))?.[0] ?? '';
+      expect(block).toContain('min-width: 0');
+    }
+  });
 });
