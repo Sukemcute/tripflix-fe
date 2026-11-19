@@ -38,20 +38,22 @@ export function CheckoutSummary({ order, total }: { order: CheckoutDto; total?: 
               ? text.refundable
               : text.nonRefundable;
         return (
-          <View key={item.id} style={styles.service}>
+          <View key={item.id} style={[styles.service, isFlight ? styles.flight : styles.stay]}>
             <Row style={styles.identity}>
-              <Icon name={isFlight ? 'airplane-outline' : 'bed-outline'} size={20} color={colors.textMuted} />
-              <Txt style={styles.serviceTitle}>{title}</Txt>
+              <Icon name={isFlight ? 'airplane-outline' : 'bed-outline'} size={20} color={colors.ink} />
+              <Txt style={[styles.serviceTitle, isFlight && styles.route]}>{title}</Txt>
             </Row>
             {!isFlight && <Txt style={styles.body}>{item.productName}</Txt>}
-            <Txt style={styles.secondary}>
-              {isFlight ? formatDate(item.date) : `${formatDate(item.date)} → ${formatDate(item.dateTo)}`}
-            </Txt>
-            <Txt style={styles.secondary}>
-              {isFlight
-                ? t('commerce.checkoutFlightQuantity', { count: item.qty })
-                : t('commerce.checkoutRoomQuantity', { count: item.qty, nights: item.nights })}
-            </Txt>
+            <Row style={styles.metaRow}>
+              <Txt style={[styles.secondary, styles.date]}>
+                {isFlight ? formatDate(item.date) : `${formatDate(item.date)} → ${formatDate(item.dateTo)}`}
+              </Txt>
+              <Txt style={styles.secondary}>
+                {isFlight
+                  ? t('commerce.checkoutFlightQuantity', { count: item.qty })
+                  : t('commerce.checkoutRoomQuantity', { count: item.qty, nights: item.nights })}
+              </Txt>
+            </Row>
             {isExpanded && (
               <View style={styles.details}>
                 {isFlight && title !== item.productName && <Txt style={styles.body}>{item.productName}</Txt>}
@@ -72,10 +74,10 @@ export function CheckoutSummary({ order, total }: { order: CheckoutDto; total?: 
         <Txt style={styles.toggleLabel}>
           {isExpanded ? text.checkoutCollapseSummary : text.checkoutExpandSummary}
         </Txt>
-        <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.tealInk} />
+        <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.background} />
       </Pressable>
       {hasRooms && (
-        <View style={styles.details}>
+        <View style={styles.fees}>
           <Txt style={styles.body}>{text.checkoutPropertyFees}</Txt>
           <Txt style={styles.secondary}>{text.checkoutPropertyFeesUnknown}</Txt>
         </View>
@@ -92,31 +94,34 @@ export function CheckoutSummary({ order, total }: { order: CheckoutDto; total?: 
 
 const styles = StyleSheet.create({
   panel: {
-    backgroundColor: colors.background,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    gap: spacing.xl,
+    gap: spacing.md,
   },
   group: { gap: spacing.sm },
-  title: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy },
-  service: { gap: spacing.sm },
+  title: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold, color: colors.navy },
+  service: { gap: spacing.sm, padding: spacing.lg, borderRadius: radius.md },
+  flight: { backgroundColor: colors.sunSoft },
+  stay: { backgroundColor: colors.seaMist },
   identity: { alignItems: 'flex-start', gap: spacing.sm },
   serviceTitle: {
     flex: 1,
-    fontSize: 16,
-    lineHeight: 25,
+    fontSize: 18,
+    lineHeight: 28,
     fontFamily: nativeFonts.semibold,
     color: colors.navy,
   },
-  body: { fontSize: 14, lineHeight: 23, color: colors.navy },
-  secondary: { fontSize: 13, lineHeight: 22, color: colors.textMuted },
-  details: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.sm, backgroundColor: colors.surface },
+  route: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold },
+  body: { fontSize: 15, lineHeight: 24, color: colors.navy },
+  secondary: { fontSize: 13, lineHeight: 22, color: colors.ink },
+  metaRow: { gap: spacing.sm, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start' },
+  date: { flexShrink: 1 },
+  details: { gap: spacing.sm, paddingTop: spacing.sm },
+  fees: { gap: spacing.xs, padding: spacing.md, borderRadius: radius.sm, backgroundColor: colors.coralTint },
   linePrice: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy },
   toggle: {
-    minHeight: 44,
+    minHeight: 48,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.navy,
     borderRadius: radius.sm,
     flexDirection: 'row',
     alignItems: 'center',
@@ -126,7 +131,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     lineHeight: 23,
-    color: colors.tealInk,
+    color: colors.background,
     fontFamily: nativeFonts.semibold,
   },
   pressed: { opacity: 0.75 },

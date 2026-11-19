@@ -191,6 +191,26 @@ class CheckoutPage {
         await page.getByText(propertyB, { exact: true }).waitFor();
         await page.getByText('HAN → CXR', { exact: true }).waitFor();
         await page.getByText('CXR → HAN', { exact: true }).waitFor();
+        const serviceSurface = await page.getByText(propertyA, { exact: true }).evaluate((node) => {
+          let parent = node.parentElement;
+          while (parent && getComputedStyle(parent).borderTopLeftRadius !== '10px')
+            parent = parent.parentElement;
+          return parent
+            ? {
+                background: getComputedStyle(parent).backgroundColor,
+                border: getComputedStyle(parent).borderTopWidth,
+              }
+            : null;
+        });
+        assert(
+          serviceSurface &&
+            serviceSurface.background !== 'rgb(255, 255, 255)' &&
+            serviceSurface.border === '0px',
+        );
+        assert(await ui.button('Thanh toán').isDisabled());
+        await page
+          .getByText('Điền thông tin bên dưới và đồng ý điều kiện trước khi thanh toán.', { exact: true })
+          .waitFor();
         assert.equal(
           await page.getByText('12.500.000đ', { exact: true }).count(),
           1,
@@ -273,6 +293,10 @@ class CheckoutPage {
           assert.equal(await ui.button('Thanh toán').count(), 0);
           await ui.snapshot('expired-order');
           await ui.noOverflow();
+          await page.setViewportSize({ width: 844, height: 390 });
+          await page.getByText('Hết thời hạn giữ chỗ', { exact: false }).count();
+          await ui.noOverflow();
+          await ui.snapshot('landscape-expired-preview');
         }
         checks.push(
           `${width}px: two hotels/two flight legs identifiable, summary expand/collapse, total not duplicated, method switch, inline errors block requests, filled hotel-only form preserves guest/payment payload, OTP and expired state`,
