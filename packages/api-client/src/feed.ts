@@ -3,6 +3,7 @@ import { postRecommendationsControllerRecommendReels } from './generated/core-ap
 import { feedControllerGetFeed } from './generated/core-api/feed/feed';
 import type { FeedCardDto, PostRecommendationsControllerRecommendReelsMode, ReelRecommendationsDto } from './generated/core-api/model';
 import { FeedControllerGetFeedTab } from './generated/core-api/model/feedControllerGetFeedTab';
+import { useResetOnReturn } from './reset-on-return';
 import { readEntity, readPage } from './response';
 import { useApiSession } from './session';
 
@@ -100,10 +101,18 @@ export async function reloadReelsFeed(queryClient: QueryClient, tab: ReelFeedTab
 export function useRecommendedReelsFeed({
   enabled = true,
   mode = 'trending',
-}: { enabled?: boolean; mode?: PostRecommendationsControllerRecommendReelsMode } = {}) {
+  refreshOnReturn = false,
+}: {
+  enabled?: boolean;
+  mode?: PostRecommendationsControllerRecommendReelsMode;
+  /** Quay lại trang thì bỏ danh sách cũ, gọi lại gợi ý (useResetOnReturn). */
+  refreshOnReturn?: boolean;
+} = {}) {
   const { user, isReady } = useApiSession();
+  const queryKey = [...RECOMMENDED_REELS_KEY, mode, user?.id];
+  useResetOnReturn(queryKey, refreshOnReturn && isReady && enabled);
   return useInfiniteQuery({
-    queryKey: [...RECOMMENDED_REELS_KEY, mode, user?.id],
+    queryKey,
     enabled: isReady && enabled,
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam, signal }) => {

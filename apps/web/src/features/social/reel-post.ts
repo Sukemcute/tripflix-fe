@@ -222,13 +222,13 @@ export function releaseReelVideoSource(video: ReelVideoSource): void {
 }
 
 /**
- * Mở Reel từ link chia sẻ: Reel đó lên đầu, lướt tiếp là bảng tin Reels như thường (bỏ bản trùng nếu bảng tin
- * cũng có Reel đó).
+ * Mở Reel từ link chia sẻ: Reel đó lên đầu, lướt tiếp là bảng tin Reels như thường. Mỗi Reel chỉ giữ lần xuất hiện
+ * đầu: bảng tin gợi ý phân trang bằng offset, khi job gợi ý (10 phút) chạy giữa hai trang thì thứ hạng đổi và trang
+ * sau có thể lặp bài của trang trước (React báo trùng key, lướt nhảy về bài cũ).
  */
 export function prependPinnedReelCards<T extends { postId: string }>(pinnedCards: readonly T[], feedCards: readonly T[]): T[] {
-  if (pinnedCards.length === 0) return [...feedCards];
-  const pinnedIds = new Set(pinnedCards.map((card) => card.postId));
-  return [...pinnedCards, ...feedCards.filter((card) => !pinnedIds.has(card.postId))];
+  const seen = new Set<string>();
+  return [...pinnedCards, ...feedCards].filter((card) => !seen.has(card.postId) && Boolean(seen.add(card.postId)));
 }
 
 /** Trạng thái và số đếm tương tác của một Reel trên cột thao tác bên phải. */
