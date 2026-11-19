@@ -20,6 +20,7 @@ import {
   REEL_NEXT_NOT_READY_BLOCK_MS,
   REEL_RENDER_WINDOW,
   shouldLoadReelSource,
+  startReelOnPostChange,
   shouldShowReelBackdrop,
   toReelPost,
 } from './reel-post';
@@ -398,5 +399,32 @@ describe('computeReelEngagement & reuseReelEngagement', () => {
 
     expect(likedP1).not.toBe(firstP1);
     expect(sameP2).toBe(firstP2);
+  });
+});
+
+
+describe('startReelOnPostChange', () => {
+  it('keeps playback position and does not replay on mute changes, but restarts on a new post', () => {
+    const video = { currentTime: 12, muted: true };
+    const play = vi.fn();
+    video.muted = false;
+    startReelOnPostChange(video, 'post-1', 'post-1', play);
+    expect(video.currentTime).toBe(12);
+    expect(play).not.toHaveBeenCalled();
+    video.muted = true;
+    startReelOnPostChange(video, 'post-1', 'post-1', play);
+    expect(video.currentTime).toBe(12);
+    expect(play).not.toHaveBeenCalled();
+    startReelOnPostChange(video, 'post-1', 'post-2', play);
+    expect(video.currentTime).toBe(0);
+    expect(play).toHaveBeenCalledOnce();
+  });
+
+  it('starts a new post without seeking if already at the beginning', () => {
+    const video = { currentTime: 0.05 };
+    const play = vi.fn();
+    startReelOnPostChange(video, undefined, 'post-1', play);
+    expect(video.currentTime).toBe(0.05);
+    expect(play).toHaveBeenCalledOnce();
   });
 });

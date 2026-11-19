@@ -88,6 +88,7 @@ import {
   pruneReadyReelIds,
   reuseReelEngagement,
   shouldLoadReelSource,
+  startReelOnPostChange,
   shouldShowReelBackdrop,
   toReelPost,
   type ReelEngagement,
@@ -1236,6 +1237,10 @@ export function InspirationImmersiveViewer({
 
   // Media player session states
   const [isMuted, setMuted] = useState(true);
+  const isMutedRef = useRef(isMuted);
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
   const [volume, setVolume] = useState(0.8);
   const [isPlaying, setPlaying] = useState(true);
   const centerPanelRef = useRef<HTMLElement | null>(null);
@@ -1439,7 +1444,7 @@ export function InspirationImmersiveViewer({
   const attemptPlayVideo = useCallback(() => {
     const el = videoRef.current;
     if (!el) return;
-    el.muted = isMuted;
+    el.muted = isMutedRef.current;
     const playPromise = el.play();
     if (playPromise !== undefined) {
       playPromise
@@ -1459,7 +1464,9 @@ export function InspirationImmersiveViewer({
             });
         });
     }
-  }, [isMuted]);
+  }, []);
+
+  const playbackPostIdRef = useRef<string | null | undefined>(undefined);
 
   // Khi chuyển bài (activePost?.id thay đổi):
   // 1. Reset scroll của danh sách bình luận về đầu
@@ -1469,13 +1476,13 @@ export function InspirationImmersiveViewer({
       rightScrollRef.current.scrollTop = 0;
     }
 
-    const videoEl = videoRef.current;
-    if (videoEl) {
-      // Chỉ tua khi video đã chạy dở (lướt ngược lại): video tải sẵn đang ở đầu, tua về 0 vẫn làm trình duyệt
-      // tua thật và tải lại (đo được 1,2–2,8 giây chờ).
-      if (videoEl.currentTime > 0.1) videoEl.currentTime = 0;
-      attemptPlayVideo();
-    }
+    const postId = activePost?.id;
+    startReelOnPostChange(videoRef.current, playbackPostIdRef.current, postId, attemptPlayVideo);
+    playbackPostIdRef.current = postId;
+    return () => {
+      // Strict Mode dọn nguồn rồi chạy lại effect, nên cần cho phép phát lại sau lần dọn đó.
+      playbackPostIdRef.current = undefined;
+    };
   }, [activePost?.id, attemptPlayVideo]);
 
   // Ưu tiên video đang xem: chạy rồi (hoặc chờ quá REEL_PRELOAD_FALLBACK_MS) mới tải trước bài thứ 2 phía trước.
