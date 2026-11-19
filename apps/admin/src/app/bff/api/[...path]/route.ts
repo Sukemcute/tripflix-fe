@@ -125,7 +125,7 @@ function allowed(path: string, method: string) {
   if (method === 'GET' && /^\/api\/analytics\/ai-usage\/(?:timeseries|users)$/.test(path)) return true;
   if (method === 'GET' && /^\/api\/analytics\/ai-traces(?:\/[0-9a-f-]{36})?$/i.test(path)) return true;
   // Hành vi người dùng (SCRUM-177): API tự chặn người không phải superadmin.
-  if (method === 'GET' && /^\/api\/analytics\/user-activity(?:\/[0-9a-f-]{36})?$/i.test(path)) return true;
+  if (method === 'GET' && /^\/api\/analytics\/user-activity(?:\/(?:overview|[0-9a-f-]{36}))?$/i.test(path)) return true;
   if (method === 'GET' && /^\/api\/analytics\/observability(?:\/traces(?:\/[a-f0-9]{32})?)?$/i.test(path)) return true;
   if (path.startsWith('/api/admin/') || path.startsWith('/api/v1/admin/')) return true;
   if (method === 'GET') return path === '/api/auth/me' || path === '/api/recommendations/home';
