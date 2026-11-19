@@ -8,9 +8,9 @@ import { vi, t } from '@tripflix/i18n';
 import {
   SocialIcon,
   formatAuthorDisplay,
-  formatDateVi,
   formatCompactCount,
 } from '../live-posts';
+import { RelativeTime } from '../relative-time-label';
 import { getPostImages, POST_COVER_MASCOT } from '../post-cover';
 import { PostOptionsMenu } from '../post-options-menu';
 import { AdaptivePostMedia } from './adaptive-post-media';
@@ -151,7 +151,7 @@ export function PostCard({
               )}
             </div>
             <div className={styles.authorSubRow}>
-              <time dateTime={post.createdAt}>{formatDateVi(post.createdAt)}</time>
+              <RelativeTime value={post.createdAt} />
               {trip?.destinationName && (
                 <>
                   <span className={styles.authorDot}>·</span>
