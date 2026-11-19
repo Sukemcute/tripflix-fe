@@ -17,7 +17,7 @@ export function appendReply(data: InfiniteData<CommentPage> | undefined, reply: 
   })) };
 }
 
-/** A submitted reply can also arrive in a later server page. Keep one copy in chronological order. */
+/** Reply vừa gửi có thể xuất hiện ở trang tải sau. Giữ một bản theo thứ tự cũ đến mới. */
 export function commentItems(data: InfiniteData<CommentPage> | undefined, isReply: boolean) {
   const items = [...new Map(data?.pages.flatMap((page) => page.items).map((item) => [item.id, item])).values()];
   return isReply ? items.sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)) : items;

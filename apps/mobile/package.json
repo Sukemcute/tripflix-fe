@@ -9,6 +9,7 @@
     "web": "expo start --web",
     "lint": "oxlint -c ../../.oxlintrc.json src",
     "typecheck": "tsc --noEmit",
+    "test": "node --test \"src/**/*.test.mjs\"",
     "build:apk": "eas build --platform android --profile preview"
   },
   "dependencies": {

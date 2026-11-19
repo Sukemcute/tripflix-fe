@@ -854,6 +854,8 @@ export const api = {
   immersiveReplyingTo: 'Đang trả lời {name}',
   immersiveCancelReply: 'Hủy trả lời',
   commentReplyQuoteTitle: 'Trả lời {name}',
+  commentReplyQuoteAccessibilityLabel: 'Trả lời {name}: {excerpt}',
+  commentReplyQuoteAccessibilityHint: 'Cuộn đến bình luận được trích dẫn nếu bình luận đã tải.',
   commentQuoteUnavailable: 'Bình luận không còn hiển thị',
   // Trang cá nhân công khai (TF47)
   personalPage: 'Trang cá nhân',

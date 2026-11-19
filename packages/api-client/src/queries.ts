@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { recommendPublicPosts, searchPublicPosts } from './explore-search';
 import type { PostRecommendationsControllerRecommendPostsMode } from './generated/core-api/model';
+import { useResetOnReturn } from './reset-on-return';
 import { useApiSession } from './session';
 import { socialApi } from './social';
 
@@ -11,13 +12,19 @@ export function useSocialPosts(
   postType?: 'vlog',
   // 'recommended': khi không có từ khoá, lấy bài gợi ý theo gu của discovery thay cho bài mới nhất.
   publicSource: 'latest' | 'recommended' = 'latest',
-  options: { enabled?: boolean; recommendMode?: PostRecommendationsControllerRecommendPostsMode } = {},
+  options: {
+    enabled?: boolean;
+    recommendMode?: PostRecommendationsControllerRecommendPostsMode;
+    /** Bài gợi ý: quay lại trang thì bỏ danh sách cũ, gọi lại (useResetOnReturn). */
+    refreshOnReturn?: boolean;
+  } = {},
 ) {
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
   const recommendMode = options.recommendMode ?? 'for_you';
   const queryKey = ['social', kind, user?.id, keyword, postType, publicSource, ...(publicSource === 'recommended' ? [recommendMode] : [])];
   const isRecommendedFeed = kind === 'public' && !keyword && publicSource === 'recommended';
+  useResetOnReturn(queryKey, Boolean(options.refreshOnReturn) && isRecommendedFeed && isReady && (options.enabled ?? true));
   return useInfiniteQuery({
     queryKey,
     initialPageParam: undefined as string | undefined,

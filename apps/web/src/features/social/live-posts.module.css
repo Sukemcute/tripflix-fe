@@ -906,107 +906,197 @@
   border-radius: 0;
 }
 
-/* In-Stage Image Gallery Overlay (object-fit: contain) */
+/* Khung xem ảnh bài viết cố định kèm dải thumbnail (top layer qua <dialog>.showModal(), đồng bộ kiểu trang khách sạn) */
 
 .galleryStageOverlay {
-  position: absolute;
+  --gallery-line: var(--color-border);
+  --gallery-padding: clamp(0.75rem, 2vw, 1.125rem);
+  --gallery-max-width: 60rem;
+  --gallery-max-height: 44rem;
+  --gallery-thumb-strip-width: 28rem;
   inset: 0;
-  z-index: 6;
-  background: rgb(11 12 15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: min(var(--gallery-max-width), calc(100% - 2 * var(--gallery-padding)));
+  height: min(var(--gallery-max-height), calc(100dvh - 2 * var(--gallery-padding)));
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--gallery-line);
+  border-radius: 18px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  box-shadow: 0 24px 64px var(--color-overlay);
 }
 
-.galleryTopBar {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  right: 14px;
-  z-index: 7;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  pointer-events: none;
+.galleryStageOverlay:not([open]) {
+  display: none;
 }
 
-.galleryCountPill {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(15, 17, 22, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: rgb(255 255 255);
-  font-size: 0.8rem;
-  font-weight: 700;
+.galleryStageOverlay::backdrop {
+  background: var(--color-overlay);
 }
 
-.galleryCloseBtn {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(15, 17, 22, 0.75);
-  color: rgb(255 255 255);
-  cursor: pointer;
-  transition: background-color 160ms ease;
+.galleryStageOverlay button:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
 }
 
-.galleryCloseBtn:hover {
-  background: rgba(255, 90, 60, 0.85);
-}
-
-.galleryContainFrame {
-  position: relative;
-  width: 100%;
+.galleryViewer {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
   height: 100%;
+  padding: var(--gallery-padding);
+  box-sizing: border-box;
+}
+
+.galleryHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.galleryHeaderText {
+  min-width: 0;
+}
+
+.galleryHeaderTitle {
+  display: block;
+  overflow: hidden;
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.galleryCountOutput {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.galleryStage {
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--color-surface);
 }
 
 .galleryContainImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   object-fit: contain;
 }
 
-.gallerySlideNavBtn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 7;
-  display: inline-flex;
+.galleryNavigation {
+  display: grid;
+  grid-template-columns: auto minmax(0, auto) auto;
   align-items: center;
   justify-content: center;
+  gap: 12px;
+}
+
+.galleryControl {
+  display: grid;
   width: 40px;
   height: 40px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(15, 17, 22, 0.68);
-  color: rgb(255 255 255);
+  place-items: center;
+  border: 1px solid var(--gallery-line);
+  border-radius: 50%;
+  background: var(--color-background);
+  color: inherit;
   cursor: pointer;
   transition:
-    background-color 160ms ease,
-    opacity 160ms ease;
+    background-color 220ms,
+    border-color 220ms,
+    opacity 160ms;
 }
 
-.gallerySlideNavBtn:hover:not(:disabled) {
-  background: rgba(15, 17, 22, 0.92);
+.galleryControl svg {
+  width: 18px;
+  height: 18px;
 }
 
-.gallerySlideNavBtn:disabled {
-  opacity: 0.32;
+.galleryControl:hover:not(:disabled) {
+  background: var(--color-surface);
+  border-color: var(--color-teal-ink);
+}
+
+.galleryControl:disabled {
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
-.gallerySlidePrev {
-  left: 12px;
+.galleryThumbnails {
+  display: flex;
+  gap: 8px;
+  max-width: var(--gallery-thumb-strip-width);
+  overflow-x: auto;
+  padding: 4px;
+  scrollbar-width: thin;
 }
 
-.gallerySlideNext {
-  right: 12px;
+.galleryThumbBtn {
+  position: relative;
+  display: grid;
+  flex: 0 0 64px;
+  height: 48px;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 220ms;
+}
+
+.galleryThumbBtn:is(:hover, :focus-visible, [aria-current]) {
+  opacity: 1;
+}
+
+.galleryThumbBtn[aria-current] {
+  border-color: var(--color-coral-ink);
+}
+
+.galleryThumbImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 640px) {
+  .galleryStageOverlay {
+    height: fit-content;
+    max-height: calc(100dvh - 2 * var(--gallery-padding));
+  }
+
+  .galleryViewer {
+    height: auto;
+  }
+
+  .galleryContainImg {
+    height: auto;
+    max-height: calc(100dvh - 11rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .galleryControl,
+  .galleryThumbBtn {
+    transition: none;
+  }
 }
 
 /* Top-Left Volume Control + Slider & Top-Right Hover Controls (More / Fullscreen) */
