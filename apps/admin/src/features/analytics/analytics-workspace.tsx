@@ -196,11 +196,6 @@ export function AnalyticsWorkspace() {
   return (
     <div className={styles.root}>
       <header className={styles.heading}>
-        <div>
-          <span className={styles.eyebrow}>{copy.eyebrow}</span>
-          <h1>{copy.title}</h1>
-          <p>{copy.description}</p>
-        </div>
         <button
           className={styles.refresh}
           onClick={refresh}

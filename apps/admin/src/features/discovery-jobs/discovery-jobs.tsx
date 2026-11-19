@@ -75,10 +75,7 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
   const data = jobs.isError ? undefined : jobs.data;
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="admin-eyebrow">{copy.eyebrow}</p>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <span className="admin-badge">
           {data ? t('discoveryJobs.checkedAt', { time: formatAt(data.checkedAt) }) : vi.api.loading}
         </span>

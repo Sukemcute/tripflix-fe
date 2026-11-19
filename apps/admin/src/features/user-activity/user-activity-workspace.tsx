@@ -53,12 +53,7 @@ export function UserActivityWorkspace() {
 
   return (
     <>
-      <div className="admin-page-heading">
-        <div>
-          <p className="admin-eyebrow">{copy.eyebrow}</p>
-          <h1>{copy.title}</h1>
-          <p>{copy.description}</p>
-        </div>
+      <div className="flex justify-end">
         <span className="admin-badge">{copy.autoRefresh}</span>
       </div>
 
