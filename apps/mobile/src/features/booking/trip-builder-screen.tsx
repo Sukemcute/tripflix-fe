@@ -32,6 +32,7 @@ import { clearPostHotelPick, savePostHotel, usePostHotelPick } from '@/features/
 import { DestinationPicker } from '@/features/post/trip-plan-editor';
 import { CommerceError } from './commerce-state';
 import { useTripPicks } from './trip-booking-store';
+import { SaveItineraryButton } from '@/features/itinerary/save-itinerary-button';
 import { NO_ADDON_PICKS, TripAddonsSection, type TripAddonPicks } from './trip-addons-section';
 import { ChoiceChip, ProductCard, formatDay, styles as planStyles } from './trip-plan-parts';
 
@@ -228,6 +229,31 @@ export function TripBuilderScreen() {
   const total = bookable.reduce((sum, item) => sum + item.totalPrice, 0);
   const flights = sorted.filter((item): item is FlightItem => item.kind === 'flight');
 
+  // TF105: lưu theo Ngày 1..N; server đổi ngày thật thành ngày thứ mấy và bỏ giá.
+  const saveRequest = () =>
+    items.length
+      ? {
+          source: 'builder' as const,
+          builder: {
+            destinationName: destination.destinationName || undefined,
+            destinationPlaceId: destination.destinationPlaceId || undefined,
+            startDate,
+            dayCount,
+            items: items.map((item) =>
+              item.kind === 'activity'
+                ? {
+                    kind: item.kind,
+                    date: item.date,
+                    title: item.title,
+                    category: item.category,
+                    ...(item.time && { time: item.time }),
+                    ...(item.detail && { detail: item.detail }),
+                  }
+                : item,
+            ),
+          },
+        }
+      : null;
   const [addonFrom, setAddonFrom] = useState<string | null>(null);
   const addonRequest: TripAddonRequest | null = bookable.length
     ? {
@@ -549,6 +575,7 @@ export function TripBuilderScreen() {
               </Txt>
             )}
           </View>
+          <SaveItineraryButton request={saveRequest} />
           <Button compact icon="flash" disabled={!bookable.length || booking.isPending} onPress={book}>
             {booking.isPending ? copy.booking : copy.book}
           </Button>

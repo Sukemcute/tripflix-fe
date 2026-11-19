@@ -214,6 +214,7 @@ export function AssistantChat({
                               ? {
                                   act: (label, action) => void chat.act(label, action),
                                   canUndo: !!chat.trip?.ops?.length,
+                                  trip: chat.trip,
                                 }
                               : undefined
                           }

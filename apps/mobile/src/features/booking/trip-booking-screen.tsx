@@ -37,7 +37,8 @@ import { DragSortList } from '@/features/post/drag-sort-list';
 import { ActivityCard, TimeTag, type ActivityFields } from './activity-card';
 import { CartLink } from './cart-ui';
 import { CommerceError } from './commerce-state';
-import { AskTripiCard, UpcomingTrips } from './booking-home';
+import { AskTripiCard } from './booking-home';
+import { SavedItinerariesSection } from '@/features/itinerary/saved-itinerary-screens';
 import { TripBuilderEntry } from './trip-builder-screen';
 
 const soldOutOf = (error: unknown) =>
@@ -698,7 +699,7 @@ export function TripBookingScreen() {
       background={colors.surface}
     >
       <View style={{ gap: spacing.xl }}>
-        <UpcomingTrips />
+        <SavedItinerariesSection />
         <View style={{ gap: spacing.md }}>
           <Txt variant="title">{copy.planNewTitle}</Txt>
           <TripBuilderEntry />

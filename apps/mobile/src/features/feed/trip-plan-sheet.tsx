@@ -9,6 +9,7 @@ import { Button, Icon, Row, Txt } from '@/components/mobile-ui';
 import { useAssistant } from '@/features/assistant/assistant-provider';
 import { ACTIVITY_ICONS } from '@/features/booking/activity-card';
 import { saveTripBooking } from '@/features/booking/trip-booking-store';
+import { SaveItineraryButton } from '@/features/itinerary/save-itinerary-button';
 import { trackFeedEvent } from './feed-events';
 import { ProductCard, styles } from '@/features/booking/trip-plan-parts';
 
@@ -65,6 +66,7 @@ export function TripPlanSheet({
           <Button compact tone="secondary" icon="sparkles-outline" onPress={askTripi}>
             {copy.askTripi}
           </Button>
+          <SaveItineraryButton request={() => ({ source: 'reel', postId })} />
           {plan && (
             <Button compact icon="bag-handle-outline" onPress={book}>
               {copy.bookTrip}
