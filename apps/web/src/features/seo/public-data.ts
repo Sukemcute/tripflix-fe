@@ -19,8 +19,13 @@ export const findPublicHotel = cache((slug: string) =>
   readOrNull((signal) => seoApi.getHotel(slug, { baseUrl: getServerApiUrl(), signal })),
 );
 
-export const findPublicPost = cache((postId: string) =>
-  readOrNull((signal) => seoApi.getPost(postId, { baseUrl: getServerApiUrl(), signal })),
+/** Chi tiết bài (post, viewerContext, shareUrl). Metadata và prefetch trang lộ trình dùng chung một lần gọi (TF113). */
+export const findPublicPostDetail = cache((postId: string) =>
+  readOrNull((signal) => seoApi.getPostDetail(postId, { baseUrl: getServerApiUrl(), signal })),
+);
+
+export const findPublicPost = cache(
+  async (postId: string) => (await findPublicPostDetail(postId))?.post ?? null,
 );
 
 export const findPublicProfile = cache((userId: string) =>
