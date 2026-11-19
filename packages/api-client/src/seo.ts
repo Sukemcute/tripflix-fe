@@ -2,6 +2,7 @@
 // Mỗi request mang baseUrl riêng và không gắn token, nên không đụng cấu hình configureHttp của phiên người dùng.
 import { followsControllerGetProfile } from './generated/core-api/social-follows/social-follows';
 import { hotelsControllerGetHotel } from './generated/core-api/hotels/hotels';
+import { feedControllerGetFeed } from './generated/core-api/feed/feed';
 import {
   postsControllerGetPostDetail,
   postsControllerListPublicPosts,
@@ -44,5 +45,25 @@ export const seoApi = {
   async listPosts(cursor: string | undefined, options: SeoRequestOptions): Promise<SocialPostPageDto> {
     const response = await postsControllerListPublicPosts({ limit: 50, cursor }, toRequest(options));
     return readPage(response.data);
+  },
+  /**
+   * Tác giả có ít nhất một bài hoặc Reels công khai. Reels không nằm trong danh sách bài, nên kiểm tra thêm
+   * bảng tin Reels lọc theo tác giả. Chỉ đọc 1 mục mỗi nguồn để nhẹ cho API.
+   */
+  async hasPublicContent(authorId: string, options: SeoRequestOptions): Promise<boolean> {
+    const posts = readPage(
+      (await postsControllerListPublicPosts({ author_id: authorId, limit: 1 }, toRequest(options))).data,
+    );
+    if (
+      posts.items.some(
+        (post) => post.visibility === 'public' && post.status === 'published' && !post.deletedAt,
+      )
+    ) {
+      return true;
+    }
+    const reels = readPage(
+      (await feedControllerGetFeed({ author_id: authorId, limit: 1 }, toRequest(options))).data,
+    );
+    return reels.items.length > 0;
   },
 };
