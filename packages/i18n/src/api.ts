@@ -843,6 +843,7 @@ export const api = {
   immersiveReplyingTo: 'Đang trả lời {name}',
   immersiveCancelReply: 'Hủy trả lời',
   // Trang cá nhân công khai (TF47)
+  personalPage: 'Trang cá nhân',
   profileFollowers: 'Người theo dõi',
   profileFollowing: 'Đang theo dõi',
   profileLikes: 'Lượt thích',
