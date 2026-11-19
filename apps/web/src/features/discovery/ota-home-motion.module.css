@@ -71,6 +71,20 @@
   will-change: transform;
 }
 
+.inspirationBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.inspirationBackdrop img {
+  object-fit: cover;
+  /* Phóng nhẹ để mép mờ của blur không lộ viền sáng. */
+  transform: scale(1.08);
+  filter: blur(12px) brightness(0.5);
+}
+
 .waterContent {
   position: relative;
   z-index: 1;
