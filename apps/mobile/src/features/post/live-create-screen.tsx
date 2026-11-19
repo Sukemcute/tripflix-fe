@@ -7,7 +7,7 @@ import {
   POST_MEDIA_LIMITS,
   type TripPlanDraft,
 } from '@tripflix/app-core';
-import { socialApi, uploadVideo, useApiSession } from '@tripflix/api-client';
+import { itineraryApi, SAVED_ITINERARIES_QUERY_KEY, socialApi, uploadVideo, useApiSession } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
@@ -39,7 +39,7 @@ import { LoadingDots } from '@/components/loading-dots';
 
 export function LiveCreateScreen() {
   const { user, isReady } = useApiSession();
-  const { postId } = useLocalSearchParams<{ postId?: string }>();
+  const { postId, itineraryId } = useLocalSearchParams<{ postId?: string; itineraryId?: string }>();
   const query = useQuery({
     queryKey: ['social', 'edit', postId, user?.id],
     enabled: isReady && !!user && !!postId,
@@ -58,9 +58,24 @@ export function LiveCreateScreen() {
         {query.isPending && <LoadingDots />}
       </Screen>
     );
-  return <DraftEditor key={postId ?? 'new'} post={query.data?.post} />;
+  return (
+    <DraftEditor
+      key={postId ?? 'new'}
+      post={query.data?.post}
+      itineraryId={postId ? undefined : itineraryId}
+      userId={user.id}
+    />
+  );
 }
-function DraftEditor({ post }: { post?: SocialPostDto }) {
+function DraftEditor({
+  post,
+  itineraryId,
+  userId,
+}: {
+  post?: SocialPostDto;
+  itineraryId?: string;
+  userId: string;
+}) {
   const client = useQueryClient();
   const [id, setId] = useState(post?.id);
   // Tiêu đề riêng như web; để trống thì lấy dòng đầu caption (core bắt buộc có tiêu đề).
@@ -103,6 +118,53 @@ function DraftEditor({ post }: { post?: SocialPostDto }) {
     },
     [],
   );
+
+  const sharedItinerary = useQuery({
+    queryKey: [...SAVED_ITINERARIES_QUERY_KEY, userId, 'share-to-reels', itineraryId],
+    enabled: !!itineraryId,
+    queryFn: ({ signal }) => itineraryApi.get(itineraryId!, signal),
+  });
+  const handledItinerary = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!itineraryId) {
+      handledItinerary.current = undefined;
+      return;
+    }
+    if (handledItinerary.current === itineraryId) return;
+    const itinerary = sharedItinerary.data;
+    if (!itinerary && !sharedItinerary.isError) return;
+
+    handledItinerary.current = itineraryId;
+    router.setParams({ itineraryId: undefined });
+    const shareCopy = vi.mobile.savedItinerary;
+    if (!itinerary) {
+      Alert.alert(shareCopy.shareFailed);
+      return;
+    }
+    const apply = () => {
+      setTripDraft(buildTripDraftFromAttachment({
+        destinationName: itinerary.destinationName,
+        destinationPlaceId: itinerary.destinationPlaceId,
+        daysCount: itinerary.daysCount,
+        items: itinerary.items.map((item) => ({
+          ...item,
+          notes: !item.time && item.slot
+            ? [shareCopy.slots[item.slot], item.notes].filter(Boolean).join(' · ')
+            : item.notes,
+        })),
+      }, vi.mobile.tripPlan.modes));
+      setHasTripPlan(true);
+      setTitle((current) => current.trim() ? current : itinerary.title);
+    };
+    if (hasTripPlan) {
+      Alert.alert(shareCopy.replaceDraftTitle, shareCopy.replaceDraftBody, [
+        { text: shareCopy.cancel, style: 'cancel' },
+        { text: shareCopy.replaceDraftAction, onPress: apply },
+      ]);
+    } else {
+      apply();
+    }
+  }, [hasTripPlan, itineraryId, sharedItinerary.data, sharedItinerary.isError]);
 
   function selectVideo(next: PickedVideo | null) {
     compression.current?.dispose();

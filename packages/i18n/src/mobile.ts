@@ -179,6 +179,13 @@ export const mobile = {
   },
   /** TF105: lộ trình khách lưu theo Ngày 1..N, chọn ngày đi lúc đặt. */
   savedItinerary: {
+    sourceReelsTitle: 'Reels từ lộ trình',
+    sourceReelUnavailable: 'Reel gốc không còn khả dụng.',
+    shareToReels: 'Chia sẻ lên Reels',
+    replaceDraftTitle: 'Thay lộ trình đang soạn?',
+    replaceDraftBody: 'Video và nội dung bài viết hiện tại sẽ được giữ lại.',
+    replaceDraftAction: 'Thay lộ trình',
+    shareFailed: 'Không tải được lộ trình để chia sẻ. Vui lòng thử lại.',
     save: 'Lưu lộ trình',
     saved: 'Đã lưu',
     saveFailed: 'Chưa lưu được, thử lại',

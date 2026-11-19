@@ -478,6 +478,7 @@ export function ReelsFeed({
   initialLayout = { width: 0, height: 0 },
   targetId,
   onTargetShown,
+  onActiveIndexChange,
   isSample = false,
   onHiddenChange,
   onExitSample,
@@ -491,6 +492,7 @@ export function ReelsFeed({
   initialLayout?: { width: number; height: number };
   targetId?: string;
   onTargetShown?: () => void;
+  onActiveIndexChange?: (index: number) => void;
   isSample?: boolean;
   onHiddenChange?: (isHidden: boolean) => void;
   onExitSample?: () => void;
@@ -516,6 +518,9 @@ export function ReelsFeed({
   const [retry, setRetry] = useState<{ id: string; attempt: number } | null>(null);
   const [hasComments, setHasComments] = useState(false);
   const currentIndex = Math.min(activeIndex, Math.max(0, items.length - 1));
+  useEffect(() => {
+    onActiveIndexChange?.(currentIndex);
+  }, [currentIndex, onActiveIndexChange]);
   const visibleIndex = Math.min(focusedIndex, Math.max(0, items.length - 1));
   const hideHeader = heldId !== null && heldId === items[visibleIndex]?.id;
   const isOffline = network.isConnected === false || network.isInternetReachable === false;
