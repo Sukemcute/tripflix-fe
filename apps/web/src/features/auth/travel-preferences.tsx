@@ -119,7 +119,6 @@ export function TravelPreferencesCard({ userId }: { userId: string }) {
       <header className="profile-card-header">
         <div>
           <h2 id="travel-title">{vi.api.travelTitle}</h2>
-          <p className="auth-hint">{vi.api.travelHint}</p>
         </div>
         <Link prefetch={false} className="secondary-button" href={surveyHref('/account', 'edit')}>
           {vi.api.onboardingRedo}
