@@ -3,6 +3,10 @@
   flex-direction: column;
   gap: 2px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
   margin: 0 0 4px;
   padding: 6px 10px;
   border: 0;
@@ -26,14 +30,21 @@
 }
 
 .quoteTitle {
+  min-width: 0;
+  max-width: 100%;
   font-size: 0.74rem;
   font-weight: 600;
   line-height: 1.3;
   color: var(--color-navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .quoteExcerpt {
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
   font-size: 0.78rem;
   line-height: 1.35;
   color: var(--color-text-muted);
@@ -44,6 +55,7 @@
 
 .quoteUnavailable {
   margin: 0;
+  min-width: 0;
   font-size: 0.78rem;
   line-height: 1.35;
   font-style: italic;
