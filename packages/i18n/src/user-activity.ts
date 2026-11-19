@@ -38,10 +38,6 @@ export const userActivity = {
     posts: 'Bài đã đăng',
   },
   overview: {
-    title: 'Tổng quan toàn hệ thống',
-    newPosts: 'Bài đăng mới',
-    postsHint: 'Chỉ tính bài đăng từ khi bắt đầu theo dõi, chưa có số liệu trước đó.',
-    sharesHint: 'Chỉ tính lượt chia sẻ của người đã đăng nhập.',
     chart: 'Người hoạt động và bài đăng theo ngày',
     chartEmpty: 'Chưa có hoạt động nào trong khoảng này.',
     series: { activeUsers: 'Người hoạt động', posts: 'Bài đăng mới' },

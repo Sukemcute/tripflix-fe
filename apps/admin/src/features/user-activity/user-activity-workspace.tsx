@@ -10,7 +10,7 @@ import { t, vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import { AdminApiError } from '../shell/api-state';
 import { UserActivityDialog } from './user-activity-dialog';
-import { UserActivityOverview } from './user-activity-overview';
+import { UserActivityChart } from './user-activity-overview';
 import { UserAiUsage } from './user-ai-usage';
 import { EmptyState, LoadingState, Metric, Panel } from '../shell/operations-ui';
 import {
@@ -77,7 +77,7 @@ export function UserActivityWorkspace() {
         <span className="admin-badge">{copy.autoRefresh}</span>
       </div>
 
-      <UserActivityOverview range={range} days={days} />
+      <UserActivityChart range={range} days={days} />
 
       {list.isError && <AdminApiError error={list.error} retry={() => void list.refetch()} />}
 

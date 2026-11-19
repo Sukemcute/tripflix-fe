@@ -7,10 +7,12 @@ import { vi } from '@tripflix/i18n';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { AdminApiError } from '../shell/api-state';
 import { EmptyState, LoadingState, Metric, Panel } from '../shell/operations-ui';
+import { SystemSummary } from './system-summary';
 import { ThroughputPanel } from './throughput-panel';
 const copy = vi.adminOperations;
 
-export function AdminOverview() {
+/** Trang đầu: số tổng toàn hệ thống (chỉ superadmin) rồi tới phần kiểm duyệt cho mọi nhân sự. */
+export function AdminOverview({ isSuperadmin = false }: { isSuperadmin?: boolean }) {
   const stats = useQuery({
     queryKey: ['moderation', 'stats'],
     queryFn: ({ signal }) => moderationApi.stats(signal),
@@ -40,6 +42,12 @@ export function AdminOverview() {
     : [];
   return (
     <div className="space-y-6">
+      {isSuperadmin && (
+        <>
+          <SystemSummary />
+          <h2 className="pt-2 text-lg font-bold text-navy">{copy.systemSummary.moderationTitle}</h2>
+        </>
+      )}
       <AdminApiError error={stats.error} retry={() => void stats.refetch()} />
       <section aria-label={copy.snapshot} className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Metric
