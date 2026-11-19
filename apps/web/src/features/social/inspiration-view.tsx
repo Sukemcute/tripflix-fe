@@ -26,6 +26,7 @@ import {
   type SearchSort,
 } from './search-url';
 import { useIsWideScreen } from './use-wide-screen';
+import { COMPOSE_PARAM, readComposeType, removeComposeParam, type ComposeType } from '@/features/shell/mobile-tabs';
 import { PublishToast } from './composer/publish-toast';
 import { TooltipLayer } from './feed/tooltip-layer';
 import styles from './feed/social-feed.module.css';
@@ -210,6 +211,22 @@ export function InspirationView() {
     },
     [activeView]
   );
+
+  // Nút ⊕ của thanh đáy điện thoại (TF98) mở khung soạn bài qua ?compose=; bỏ tham số ngay (replace) để Back hay
+  // F5 không mở lại. Chưa đăng nhập thì ⊕ đã đi qua trang đăng nhập, ở đây chỉ bỏ tham số.
+  const composeRequest = isReady ? readComposeType(searchParams.get(COMPOSE_PARAM)) : null;
+  const [lastComposeRequest, setLastComposeRequest] = useState<ComposeType | null>(null);
+  if (composeRequest !== lastComposeRequest) {
+    setLastComposeRequest(composeRequest);
+    if (composeRequest && user) {
+      setComposerPostType(composeRequest);
+      setComposerDraftId(null);
+      setIsComposerOpen(true);
+    }
+  }
+  useEffect(() => {
+    if (composeRequest) router.replace(removeComposeParam(pathname, searchParams.toString()), { scroll: false });
+  }, [composeRequest, router, pathname, searchParams]);
 
   return (
     <div ref={pageRef} className={`${styles.feedPageWrapper} ${isReels ? styles.feedPageWrapperReels : ''}`}>
