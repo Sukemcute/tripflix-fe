@@ -127,9 +127,12 @@ export function buildTripPlanFallbackMetadata(postId: string): Metadata {
   };
 }
 
-export function buildProfileMetadata(profile: PublicProfileDto): Metadata {
+export function buildProfileMetadata(
+  profile: PublicProfileDto,
+  options?: { hasPublicPosts?: boolean | null },
+): Metadata {
   const name = profile.displayName.trim() || vi.seo.profileFallbackTitle;
-  return buildPageMetadata({
+  const metadata = buildPageMetadata({
     title: t('seo.profileTitle', { name }),
     description: t('seo.profileDescription', {
       name,
@@ -139,6 +142,11 @@ export function buildProfileMetadata(profile: PublicProfileDto): Metadata {
     images: [],
     type: 'profile',
   });
+  // Hồ sơ chưa có bài công khai (hoặc lỗi/timeout khi kiểm bài nên chưa xác minh được) -> noindex nhưng giữ OG chia sẻ (TF25).
+  if (options && options.hasPublicPosts !== true) {
+    return { ...metadata, robots: NOINDEX_ROBOTS };
+  }
+  return metadata;
 }
 
 export function buildProfileFallbackMetadata(userId: string): Metadata {
