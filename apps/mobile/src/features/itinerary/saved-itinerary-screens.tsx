@@ -207,9 +207,18 @@ export function SavedItineraryScreen() {
     <Screen
       title={itinerary.title}
       footer={
-        <Button icon="bag-handle-outline" onPress={book}>
-          {copy.book}
-        </Button>
+        <View style={{ gap: spacing.sm }}>
+          <Button
+            tone="secondary"
+            icon="share-social-outline"
+            onPress={() => router.navigate({ pathname: '/create', params: { itineraryId: itinerary.id } })}
+          >
+            {copy.shareToReels}
+          </Button>
+          <Button icon="bag-handle-outline" onPress={book}>
+            {copy.book}
+          </Button>
+        </View>
       }
     >
       <View style={{ gap: spacing.md }}>
@@ -240,7 +249,7 @@ export function SavedItineraryScreen() {
             tone="secondary"
             icon="play-circle-outline"
             onPress={() =>
-              router.push({ pathname: '/trip-plans/[postId]', params: { postId: itinerary.sourcePostId! } })
+              router.push({ pathname: '/saved-itinerary-reels', params: { reel: itinerary.sourcePostId! } })
             }
           >
             {copy.openReel}
