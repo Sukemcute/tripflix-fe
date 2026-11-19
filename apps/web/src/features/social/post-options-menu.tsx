@@ -59,11 +59,15 @@ export function PostOptionsMenu({
   useCloseOnScroll(open, popup);
   const close = () => popup.current?.hidePopover();
   const restoreFocus = () => trigger.current?.focus();
+  // Popover "auto" tự đóng ngay khi nhấn chuột xuống nút, nên phải nhớ trạng thái lúc nhấn để click đó chỉ đóng menu.
+  const wasOpenOnPress = useRef(false);
   const toggle = () => {
     const panel = popup.current;
     const button = trigger.current;
+    const wasOpen = wasOpenOnPress.current;
+    wasOpenOnPress.current = false;
     if (!panel || !button) return;
-    if (panel.matches(':popover-open')) {
+    if (wasOpen || panel.matches(':popover-open')) {
       close();
       return;
     }
@@ -87,6 +91,9 @@ export function PostOptionsMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={id}
+        onPointerDown={() => {
+          wasOpenOnPress.current = !!popup.current?.matches(':popover-open');
+        }}
         onClick={toggle}
       >
         <SocialIcon name="more" size={18} />
