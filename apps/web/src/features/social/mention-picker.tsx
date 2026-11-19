@@ -22,6 +22,59 @@ export interface MentionPickerProps {
   keepOpenRef?: React.RefObject<HTMLElement | null>;
 }
 
+export interface MentionKeyDownContext {
+  users: readonly MentionUserItem[];
+  activeIndex: number;
+  onSelect: (user: MentionUserItem) => void;
+  onClose: () => void;
+  updateActiveIndex: (next: number | ((prev: number) => number)) => void;
+}
+
+/**
+ * Xử lý phím điều hướng khi bảng gợi ý đang mở: ↑ ↓ di chuyển, Enter hoặc Tab chèn người đang chọn, Esc đóng bảng.
+ * Trả về true nếu sự kiện đã được xử lý và chặn mặc định.
+ */
+export function handleMentionPickerKeyDown(
+  event: Pick<KeyboardEvent, 'key' | 'shiftKey' | 'isComposing' | 'preventDefault' | 'stopPropagation'>,
+  { users, activeIndex, onSelect, onClose, updateActiveIndex }: MentionKeyDownContext,
+): boolean {
+  if (event.isComposing) return false;
+
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    onClose();
+    return true;
+  }
+
+  if (!users.length) return false;
+
+  const safeIndex = Math.min(Math.max(activeIndex, 0), users.length - 1);
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    updateActiveIndex((prev) => (prev + 1) % users.length);
+    return true;
+  }
+
+  if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    updateActiveIndex((prev) => (prev - 1 + users.length) % users.length);
+    return true;
+  }
+
+  if (event.key === 'Enter' || (event.key === 'Tab' && !event.shiftKey)) {
+    const selected = users[safeIndex];
+    if (selected) {
+      event.preventDefault();
+      event.stopPropagation();
+      onSelect(selected);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /** Chữ cái đầu của tên làm avatar fallback */
 function getInitial(displayName: string): string {
   return Array.from(displayName.trim())[0]?.toUpperCase() ?? '·';
@@ -88,31 +141,16 @@ export function MentionPicker({
     };
   }, [onClose, keepOpenRef]);
 
-  // Điều khiển bàn phím ↑ ↓ Enter Esc trong lúc con trỏ vẫn ở ô nhập
+  // Điều khiển bàn phím ↑ ↓ Enter Tab Esc trong lúc con trỏ vẫn ở ô nhập
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-        return;
-      }
-
-      if (!users.length) return;
-
-      if (event.key === 'ArrowDown') {
-        event.preventDefault();
-        updateActiveIndex((prev) => (prev + 1) % users.length);
-      } else if (event.key === 'ArrowUp') {
-        event.preventDefault();
-        updateActiveIndex((prev) => (prev - 1 + users.length) % users.length);
-      } else if (event.key === 'Enter') {
-        const selected = users[activeIndex];
-        if (selected) {
-          event.preventDefault();
-          event.stopPropagation();
-          onSelect(selected);
-        }
-      }
+      handleMentionPickerKeyDown(event, {
+        users,
+        activeIndex,
+        onSelect,
+        onClose,
+        updateActiveIndex,
+      });
     }
 
     document.addEventListener('keydown', handleKeyDown, true);

@@ -2143,7 +2143,7 @@ a.avatarSmall {
 
 .commentMentionLink {
   color: var(--color-coral-ink);
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   cursor: pointer;
 }
@@ -2265,6 +2265,70 @@ a.avatarSmall {
      bên ngoài đã báo trạng thái focus nên tắt để không lộ khung chữ nhật bên trong. */
   outline: none;
   box-shadow: none;
+}
+
+/* Lớp phủ mirror cho ô đăng bình luận: giữ nguyên font/cỡ chữ/metrics để caret không lệch khi tô đậm @mention */
+.composerInputOverlayWrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+}
+
+.composerInputMirror,
+.panelComposerInputOverlay {
+  box-sizing: border-box;
+  width: 100%;
+  height: 38px;
+  min-height: 38px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 400;
+  line-height: 38px;
+  letter-spacing: normal;
+  font-kerning: normal;
+  white-space: pre;
+}
+
+.composerInputMirror {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  color: var(--color-ink);
+}
+
+.composerMirrorTail {
+  display: inline-block;
+  width: 4px;
+}
+
+.panelComposerInputOverlay {
+  position: relative;
+  z-index: 1;
+  display: block;
+  background: var(--color-transparent);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--color-ink);
+}
+
+.panelComposerInputOverlay::placeholder {
+  color: var(--color-text-muted);
+  -webkit-text-fill-color: var(--color-text-muted);
+  opacity: 1;
+}
+
+/* Giữ nguyên font-weight và bề rộng ký tự để không làm lệch con trỏ; mô phỏng in đậm bằng nét viền + bóng ngang 0px blur */
+.mentionMirrorTag {
+  color: var(--color-coral-ink);
+  font-weight: inherit;
+  -webkit-text-stroke: 0.45px currentColor;
+  text-shadow: 0.35px 0 0 currentColor;
 }
 
 .panelEmojiBtn {
@@ -2662,6 +2726,63 @@ a.avatarSmall {
   color: var(--iv-text);
   font: inherit;
   font-size: 0.88rem;
+}
+
+/* Lớp phủ mirror cho khung sửa bình luận (textarea đa dòng) */
+.editTextareaOverlayWrap {
+  position: relative;
+  border-radius: 12px;
+  background-color: var(--iv-elevated-bg);
+}
+
+.editTextareaMirror,
+.editTextareaOverlay {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+  word-spacing: normal;
+  font-kerning: normal;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.editTextareaMirror {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--color-transparent);
+  color: var(--iv-text);
+  scrollbar-color: transparent transparent;
+}
+
+.editTextareaOverlay {
+  position: relative;
+  z-index: 1;
+  display: block;
+  border-color: var(--iv-border);
+  background-color: var(--color-transparent);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--iv-text);
+  resize: vertical;
+}
+
+.editTextareaOverlay::placeholder {
+  color: var(--iv-text-muted);
+  -webkit-text-fill-color: var(--iv-text-muted);
+  opacity: 1;
 }
 
 .composerMetaRow {

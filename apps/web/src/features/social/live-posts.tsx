@@ -2336,7 +2336,20 @@ export function RightPanelCommentsSynchronized({
   const [isEmojiOpen, setEmojiOpen] = useState(false);
   // Cả viên thuốc nhập (ô chữ và nút emoji) tính là bên trong bảng emoji: bấm vào để gõ không đóng bảng.
   const composerFieldRef = useRef<HTMLDivElement | null>(null);
+  const composerMirrorRef = useRef<HTMLDivElement | null>(null);
   const closeEmojiPicker = useCallback(() => setEmojiOpen(false), []);
+  const syncComposerScroll = useCallback(() => {
+    const input = composerInputRef.current;
+    const mirror = composerMirrorRef.current;
+    if (!input || !mirror) return;
+    mirror.scrollLeft = input.scrollLeft;
+  }, [composerInputRef]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(syncComposerScroll);
+    return () => window.cancelAnimationFrame(frame);
+  }, [body, mentions, syncComposerScroll]);
+
   const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(
     initialDraft?.replyTarget ?? null,
   );
@@ -2563,25 +2576,38 @@ export function RightPanelCommentsSynchronized({
               )}
             </div>
             <div ref={composerFieldRef} className={styles.panelComposerField}>
-              <input
-                ref={composerInputRef}
-                className={styles.panelComposerInput}
-                aria-label={vi.api.commentInputPlaceholder}
-                placeholder={vi.api.commentInputPlaceholder}
-                value={body}
-                maxLength={10000}
-                onChange={(event) => handleBodyChange(event.target.value)}
-                onKeyUp={() => {
-                  const cursor = composerInputRef.current?.selectionStart ?? body.length;
-                  const query = getMentionQueryAtCursor(body, cursor, mentions);
-                  setMentionQuery(query);
-                }}
-                onClick={() => {
-                  const cursor = composerInputRef.current?.selectionStart ?? body.length;
-                  const query = getMentionQueryAtCursor(body, cursor, mentions);
-                  setMentionQuery(query);
-                }}
-              />
+              <div className={styles.composerInputOverlayWrap}>
+                <div
+                  ref={composerMirrorRef}
+                  aria-hidden="true"
+                  className={styles.composerInputMirror}
+                >
+                  {renderMentionMirrorContent(body, mentions, false)}
+                </div>
+                <input
+                  ref={composerInputRef}
+                  className={`${styles.panelComposerInput} ${styles.panelComposerInputOverlay}`}
+                  aria-label={vi.api.commentInputPlaceholder}
+                  placeholder={vi.api.commentInputPlaceholder}
+                  value={body}
+                  maxLength={10000}
+                  onChange={(event) => handleBodyChange(event.target.value)}
+                  onScroll={syncComposerScroll}
+                  onSelect={syncComposerScroll}
+                  onKeyUp={() => {
+                    syncComposerScroll();
+                    const cursor = composerInputRef.current?.selectionStart ?? body.length;
+                    const query = getMentionQueryAtCursor(body, cursor, mentions);
+                    setMentionQuery(query);
+                  }}
+                  onClick={() => {
+                    syncComposerScroll();
+                    const cursor = composerInputRef.current?.selectionStart ?? body.length;
+                    const query = getMentionQueryAtCursor(body, cursor, mentions);
+                    setMentionQuery(query);
+                  }}
+                />
+              </div>
               <button
                 type="button"
                 className={`${styles.panelEmojiBtn} ${isEmojiOpen ? styles.panelEmojiBtnActive : ''}`}
@@ -2629,6 +2655,30 @@ export function RightPanelCommentsSynchronized({
           </Link>
         )}
       </div>
+    </>
+  );
+}
+
+/** Render nội dung cho lớp phủ mirror trong ô soạn bình luận (tô đậm màu coral các đoạn tag). */
+function renderMentionMirrorContent(
+  text: string,
+  mentions: readonly CommentMention[],
+  multiline: boolean,
+) {
+  if (!text) return null;
+  return (
+    <>
+      {parseCommentSegments(text, mentions).map((segment, index) =>
+        segment.type === 'mention' ? (
+          <span key={index} className={styles.mentionMirrorTag}>
+            {segment.text}
+          </span>
+        ) : (
+          <Fragment key={index}>{segment.text}</Fragment>
+        ),
+      )}
+      {multiline && text.endsWith('\n') ? '\u200b' : null}
+      {!multiline ? <span className={styles.composerMirrorTail} /> : null}
     </>
   );
 }
@@ -2683,8 +2733,23 @@ function CommentNode({
   const [editMentions, setEditMentions] = useState<CommentMention[]>(comment.mentions ?? []);
   const [editMentionQuery, setEditMentionQuery] = useState<MentionQuery | null>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const editMirrorRef = useRef<HTMLDivElement | null>(null);
   const editFieldRef = useRef<HTMLDivElement | null>(null);
   const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
+
+  const syncEditScroll = useCallback(() => {
+    const textarea = editTextareaRef.current;
+    const mirror = editMirrorRef.current;
+    if (!textarea || !mirror) return;
+    mirror.scrollTop = textarea.scrollTop;
+    mirror.scrollLeft = textarea.scrollLeft;
+  }, []);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    const frame = window.requestAnimationFrame(syncEditScroll);
+    return () => window.cancelAnimationFrame(frame);
+  }, [isEditing, editBody, editMentions, syncEditScroll]);
 
   const handleEditBodyChange = (value: string) => {
     const cursor = editTextareaRef.current?.selectionStart ?? value.length;
@@ -2873,24 +2938,37 @@ function CommentNode({
               }}
             >
               <div ref={editFieldRef} style={{ position: 'relative' }}>
-                <textarea
-                  ref={editTextareaRef}
-                  className={styles.composerTextarea}
-                  aria-label={vi.api.edit}
-                  rows={2}
-                  value={editBody}
-                  onChange={(event) => handleEditBodyChange(event.target.value)}
-                  onKeyUp={() => {
-                    const cursor = editTextareaRef.current?.selectionStart ?? editBody.length;
-                    const query = getMentionQueryAtCursor(editBody, cursor, editMentions);
-                    setEditMentionQuery(query);
-                  }}
-                  onClick={() => {
-                    const cursor = editTextareaRef.current?.selectionStart ?? editBody.length;
-                    const query = getMentionQueryAtCursor(editBody, cursor, editMentions);
-                    setEditMentionQuery(query);
-                  }}
-                />
+                <div className={styles.editTextareaOverlayWrap}>
+                  <div
+                    ref={editMirrorRef}
+                    aria-hidden="true"
+                    className={styles.editTextareaMirror}
+                  >
+                    {renderMentionMirrorContent(editBody, editMentions, true)}
+                  </div>
+                  <textarea
+                    ref={editTextareaRef}
+                    className={`${styles.composerTextarea} ${styles.editTextareaOverlay}`}
+                    aria-label={vi.api.edit}
+                    rows={2}
+                    value={editBody}
+                    onChange={(event) => handleEditBodyChange(event.target.value)}
+                    onScroll={syncEditScroll}
+                    onSelect={syncEditScroll}
+                    onKeyUp={() => {
+                      syncEditScroll();
+                      const cursor = editTextareaRef.current?.selectionStart ?? editBody.length;
+                      const query = getMentionQueryAtCursor(editBody, cursor, editMentions);
+                      setEditMentionQuery(query);
+                    }}
+                    onClick={() => {
+                      syncEditScroll();
+                      const cursor = editTextareaRef.current?.selectionStart ?? editBody.length;
+                      const query = getMentionQueryAtCursor(editBody, cursor, editMentions);
+                      setEditMentionQuery(query);
+                    }}
+                  />
+                </div>
                 {editMentionQuery && (
                   <MentionPicker
                     query={editMentionQuery.query}

@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi as vitestVi } from 'vitest';
 import * as apiClient from '@tripflix/api-client';
-import { MentionPicker } from './mention-picker';
+import { MentionPicker, handleMentionPickerKeyDown } from './mention-picker';
 
 describe('MentionPicker', () => {
   it('hiện gợi ý gõ ít nhất 2 ký tự khi query quá ngắn', () => {
@@ -64,5 +64,79 @@ describe('MentionPicker', () => {
     expect(html).toContain('Huy Thành');
     expect(html).toContain('Tuấn Anh');
     expect(html).toContain('data-tone=');
+  });
+
+  describe('handleMentionPickerKeyDown (Tab / Enter / Esc)', () => {
+    const users = [
+      { id: 'u1', displayName: 'Huy Thành' },
+      { id: 'u2', displayName: 'Tuấn Anh' },
+    ];
+
+    it('bấm Tab khi có người đang chọn sẽ chèn tag giống Enter và chặn chuyển focus', () => {
+      const onSelect = vitestVi.fn();
+      const onClose = vitestVi.fn();
+      const updateActiveIndex = vitestVi.fn();
+      const preventDefault = vitestVi.fn();
+      const stopPropagation = vitestVi.fn();
+
+      const handled = handleMentionPickerKeyDown(
+        { key: 'Tab', shiftKey: false, isComposing: false, preventDefault, stopPropagation },
+        { users, activeIndex: 1, onSelect, onClose, updateActiveIndex },
+      );
+
+      expect(handled).toBe(true);
+      expect(preventDefault).toHaveBeenCalledTimes(1);
+      expect(stopPropagation).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith({ id: 'u2', displayName: 'Tuấn Anh' });
+    });
+
+    it('bấm Enter chèn đúng người đang có vệt chọn', () => {
+      const onSelect = vitestVi.fn();
+      const preventDefault = vitestVi.fn();
+      const stopPropagation = vitestVi.fn();
+
+      const handled = handleMentionPickerKeyDown(
+        { key: 'Enter', shiftKey: false, isComposing: false, preventDefault, stopPropagation },
+        { users, activeIndex: 0, onSelect, onClose: vitestVi.fn(), updateActiveIndex: vitestVi.fn() },
+      );
+
+      expect(handled).toBe(true);
+      expect(preventDefault).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith({ id: 'u1', displayName: 'Huy Thành' });
+    });
+
+    it('khi danh sách rỗng hoặc bấm Shift+Tab thì không chặn Tab để chuyển focus bình thường', () => {
+      const onSelect = vitestVi.fn();
+      const preventDefaultEmpty = vitestVi.fn();
+      const handledEmpty = handleMentionPickerKeyDown(
+        {
+          key: 'Tab',
+          shiftKey: false,
+          isComposing: false,
+          preventDefault: preventDefaultEmpty,
+          stopPropagation: vitestVi.fn(),
+        },
+        { users: [], activeIndex: 0, onSelect, onClose: vitestVi.fn(), updateActiveIndex: vitestVi.fn() },
+      );
+
+      expect(handledEmpty).toBe(false);
+      expect(preventDefaultEmpty).not.toHaveBeenCalled();
+
+      const preventDefaultShift = vitestVi.fn();
+      const handledShiftTab = handleMentionPickerKeyDown(
+        {
+          key: 'Tab',
+          shiftKey: true,
+          isComposing: false,
+          preventDefault: preventDefaultShift,
+          stopPropagation: vitestVi.fn(),
+        },
+        { users, activeIndex: 0, onSelect, onClose: vitestVi.fn(), updateActiveIndex: vitestVi.fn() },
+      );
+
+      expect(handledShiftTab).toBe(false);
+      expect(preventDefaultShift).not.toHaveBeenCalled();
+      expect(onSelect).not.toHaveBeenCalled();
+    });
   });
 });

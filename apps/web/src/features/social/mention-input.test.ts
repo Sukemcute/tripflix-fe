@@ -238,6 +238,23 @@ describe('mention-input', () => {
         { type: 'mention', text: '@Thành', userId: 'u1' },
       ]);
     });
+
+    it('dùng cho mirror: giữ nguyên từng ký tự (khoảng trắng liên tiếp, xuống dòng cuối, emoji UTF-16)', () => {
+      const body = '  😀 @Huy Thành\n  nhắn   @Tuấn Anh\n';
+      const mentions: CommentMention[] = [
+        { userId: 'u1', offset: 5, length: 10 },
+        { userId: 'u2', offset: 25, length: 9 },
+      ];
+      const segments = parseCommentSegments(body, mentions);
+      expect(segments).toEqual([
+        { type: 'text', text: '  😀 ' },
+        { type: 'mention', text: '@Huy Thành', userId: 'u1' },
+        { type: 'text', text: '\n  nhắn   ' },
+        { type: 'mention', text: '@Tuấn Anh', userId: 'u2' },
+        { type: 'text', text: '\n' },
+      ]);
+      expect(segments.map((s) => s.text).join('')).toBe(body);
+    });
   });
 
   describe('UTF-16 và prepareCommentSubmission', () => {
