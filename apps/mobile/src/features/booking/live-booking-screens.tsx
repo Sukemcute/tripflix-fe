@@ -146,6 +146,7 @@ export function CommerceCheckoutScreen() {
   return <CheckoutForm key={`${user.id}:${id}`} />;
 }
 function CheckoutForm() {
+  const { user } = useApiSession();
   const { id = '' } = useLocalSearchParams<{ id?: string }>();
   const { operations } = useCommerce();
   const client = useQueryClient();
@@ -168,6 +169,7 @@ function CheckoutForm() {
   const [message, setMessage] = useState('');
   const [validation, setValidation] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [copiedContact, setCopiedContact] = useState(false);
   const [today] = useState(() => toLocalIsoDate(new Date()));
   const [newTotal, setNewTotal] = useState<number>();
   const [acceptedTotal, setAcceptedTotal] = useState<number>();
@@ -334,6 +336,28 @@ function CheckoutForm() {
       await query.refetch();
     },
     onError: (error) => {
+      if (
+        error instanceof HttpError &&
+        error.status === 400 &&
+        error.body &&
+        typeof error.body === 'object' &&
+        'errors' in error.body &&
+        Array.isArray(error.body.errors)
+      ) {
+        const entries = error.body.errors.filter(
+          (entry): entry is { field: string; message: string } =>
+            !!entry &&
+            typeof entry === 'object' &&
+            typeof entry.field === 'string' &&
+            typeof entry.message === 'string' &&
+            (/^contact\.(fullName|phone|email)$/.test(entry.field) ||
+              /^guests\[\d+\]\.(fullName|birthdate)$/.test(entry.field)),
+        );
+        setFieldErrors((previous) => ({
+          ...previous,
+          ...Object.fromEntries(entries.map((entry) => [entry.field, entry.message])),
+        }));
+      }
       const isDefinitive = error instanceof HttpError && error.status < 500 && error.status !== 409;
       if (isDefinitive) operations.uncertain.delete(id);
       setUnknown(operations.uncertain.has(id));
@@ -376,6 +400,27 @@ function CheckoutForm() {
       },
     }));
   const canPay = !!order && !isExpired && !challenge && order.status === 'pending';
+  const validateField = (field: string, guestPatch?: { index: number; birthdate: string }) => {
+    if (!order) return;
+    const passengers = Array.from({ length: order.passengersRequired }, (_, index) => ({
+      fullName: guests[index]?.fullName ?? '',
+      birthdate: guestPatch?.index === index ? guestPatch.birthdate : (guests[index]?.birthdate ?? ''),
+    }));
+    const errors = findCheckoutFieldErrors({
+      contact: { fullName: name, phone, email },
+      guests: passengers,
+      passengerTypes: order.passengerTypes,
+      travelDates: findTravelDates(order.items),
+      stayDate: findStayDate(order.items),
+      today,
+    });
+    setFieldErrors((previous) => {
+      const next = { ...previous };
+      if (errors[field]) next[field] = describeFieldError(field, errors[field]);
+      else delete next[field];
+      return next;
+    });
+  };
   const payTotal = order ? (acceptedTotal ?? order.total) : 0;
   const isPayDisabled =
     isLocked || !hasConsent || newTotal !== undefined || (method === 0 && !cardNumber.trim());
@@ -443,28 +488,52 @@ function CheckoutForm() {
           ) : isPayingVnpay ? null : (
             <>
               <FormCard title={text.contact} icon="person-outline">
+                <Txt style={checkoutStyles.meta}>{text.checkoutGuests.requiredHint}</Txt>
+                <Button
+                  tone="secondary"
+                  style={checkoutStyles.copyButton}
+                  disabled={isLocked || !!challenge}
+                  onPress={() => {
+                    setName((previous) => previous || user?.displayName || '');
+                    setPhone((previous) => previous || user?.phone || '');
+                    setEmail((previous) => previous || user?.email || '');
+                    setFieldErrors((previous) => {
+                      const next = { ...previous };
+                      if (!name && user?.displayName) delete next['contact.fullName'];
+                      if (!phone && user?.phone) delete next['contact.phone'];
+                      if (!email && user?.email) delete next['contact.email'];
+                      return next;
+                    });
+                  }}
+                >
+                  {text.checkoutGuests.useAccount}
+                </Button>
+                <Txt style={checkoutStyles.meta}>{text.checkoutGuests.accountHint}</Txt>
                 <Field
-                  label={text.name}
+                  label={text.checkoutGuests.contactName}
                   value={name}
                   editable={!isLocked && !challenge}
                   onChangeText={setName}
+                  onBlur={() => validateField('contact.fullName')}
                   autoComplete="name"
                   error={fieldErrors['contact.fullName']}
                 />
                 <Field
-                  label={text.phone}
+                  label={text.checkoutGuests.contactPhone}
                   value={phone}
                   editable={!isLocked && !challenge}
                   onChangeText={setPhone}
+                  onBlur={() => validateField('contact.phone')}
                   keyboardType="phone-pad"
                   error={fieldErrors['contact.phone']}
                   autoComplete="tel"
                 />
                 <Field
-                  label={text.email}
+                  label={text.checkoutGuests.contactEmail}
                   value={email}
                   editable={!isLocked && !challenge}
                   onChangeText={setEmail}
+                  onBlur={() => validateField('contact.email')}
                   keyboardType="email-address"
                   error={fieldErrors['contact.email']}
                   autoCapitalize="none"
@@ -483,20 +552,75 @@ function CheckoutForm() {
                       : undefined
                   }
                 >
+                  <Txt style={checkoutStyles.meta}>{text.checkoutGuests.nameHint}</Txt>
+                  {index === 0 && (
+                    <View style={checkoutStyles.copyGroup}>
+                      <Button
+                        tone="secondary"
+                        style={checkoutStyles.copyButton}
+                        disabled={isLocked || !!challenge || !name.trim()}
+                        onPress={() => {
+                          editGuest(0, 'fullName', name.trim());
+                          setCopiedContact(true);
+                          setFieldErrors((previous) => {
+                            const next = { ...previous };
+                            delete next['guests[0].fullName'];
+                            return next;
+                          });
+                        }}
+                      >
+                        {text.checkoutGuests.useContact}
+                      </Button>
+                      <Txt style={checkoutStyles.meta}>{text.checkoutGuests.copyHint}</Txt>
+                      {copiedContact && (
+                        <Txt accessibilityLiveRegion="polite" style={checkoutStyles.meta}>
+                          {text.checkoutGuests.copied}
+                        </Txt>
+                      )}
+                      <Button
+                        tone="secondary"
+                        style={checkoutStyles.copyButton}
+                        disabled={isLocked || !!challenge}
+                        onPress={() => {
+                          setGuests((previous) => ({
+                            ...previous,
+                            0: {
+                              fullName: previous[0]?.fullName || user?.displayName || '',
+                              birthdate: previous[0]?.birthdate || user?.dateOfBirth?.slice(0, 10) || '',
+                            },
+                          }));
+                          setFieldErrors((previous) => {
+                            const next = { ...previous };
+                            if (!guests[0]?.fullName && user?.displayName) delete next['guests[0].fullName'];
+                            if (!guests[0]?.birthdate && user?.dateOfBirth)
+                              delete next['guests[0].birthdate'];
+                            return next;
+                          });
+                        }}
+                      >
+                        {text.checkoutGuests.usePassengerAccount}
+                      </Button>
+                      <Txt style={checkoutStyles.meta}>{text.checkoutGuests.passengerAccountHint}</Txt>
+                    </View>
+                  )}
                   <Field
-                    label={text.name}
+                    label={t('commerce.checkoutGuests.passengerName', { number: index + 1 })}
                     value={guests[index]?.fullName ?? ''}
                     editable={!isLocked && !challenge}
                     onChangeText={(value) => editGuest(index, 'fullName', value)}
+                    onBlur={() => validateField(`guests[${index}].fullName`)}
                     error={fieldErrors[`guests[${index}].fullName`]}
                   />
                   <DateSingleField
-                    label={text.birthdate}
+                    label={t('commerce.checkoutGuests.passengerBirthdate', { number: index + 1 })}
                     value={guests[index]?.birthdate ?? ''}
                     min="1900-01-01"
                     max={today}
                     isDisabled={isLocked || !!challenge}
-                    onChange={(value) => editGuest(index, 'birthdate', value)}
+                    onChange={(value) => {
+                      editGuest(index, 'birthdate', value);
+                      validateField(`guests[${index}].birthdate`, { index, birthdate: value });
+                    }}
                     error={fieldErrors[`guests[${index}].birthdate`]}
                   />
                 </FormCard>
@@ -738,6 +862,13 @@ function FormCard({
 }
 
 const checkoutStyles = StyleSheet.create({
+  copyButton: { borderRadius: radius.sm, minHeight: 48, backgroundColor: colors.seaMist, borderWidth: 0 },
+  copyGroup: {
+    padding: spacing.md,
+    gap: spacing.sm,
+    backgroundColor: colors.sunSoft,
+    borderRadius: radius.sm,
+  },
   input: {
     borderRadius: radius.sm,
     minHeight: 52,
