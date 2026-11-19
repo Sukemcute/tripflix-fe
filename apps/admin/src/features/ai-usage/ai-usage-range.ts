@@ -1,4 +1,4 @@
-export const AI_USAGE_RANGES = [7, 30, 90] as const;
+export const AI_USAGE_RANGES = [1, 7, 30, 90] as const;
 export type AiUsageRangeDays = (typeof AI_USAGE_RANGES)[number];
 
 const DAY_MS = 86_400_000;
