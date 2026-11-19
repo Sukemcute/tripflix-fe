@@ -3924,7 +3924,6 @@ img.avatar-outer-deco,
   object-fit: contain;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 4px 8px var(--color-overlay));
 }
 img.avatar-outer-sticker,
 .header-content img.avatar-outer-sticker {
