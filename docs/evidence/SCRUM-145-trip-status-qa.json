@@ -22,7 +22,8 @@
       "countdown": true,
       "navigation": true,
       "overflow": false,
-      "edgeCasesAndLargeText": false
+      "edgeCasesAndLargeText": false,
+      "landscapeTabletReducedMotion": false
     },
     {
       "width": 390,
@@ -44,7 +45,8 @@
       "countdown": true,
       "navigation": true,
       "overflow": false,
-      "edgeCasesAndLargeText": true
+      "edgeCasesAndLargeText": true,
+      "landscapeTabletReducedMotion": true
     },
     {
       "width": 430,
@@ -66,7 +68,8 @@
       "countdown": true,
       "navigation": true,
       "overflow": false,
-      "edgeCasesAndLargeText": false
+      "edgeCasesAndLargeText": false,
+      "landscapeTabletReducedMotion": false
     }
   ],
   "errors": [],
