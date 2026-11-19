@@ -1726,24 +1726,22 @@ a.authorAvatar {
   width: 100%;
   box-sizing: border-box;
   margin-top: 14px;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  background: var(--color-surface-muted);
+  border: 0;
   border-radius: 14px;
   padding: 10px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  transition: all 180ms ease;
+  transition: background-color 180ms ease;
   text-decoration: none;
   user-select: none;
   text-align: left;
 }
 
 .postAttachedTrip:hover {
-  background: #F1F5F9;
-  border-color: color-mix(in srgb, var(--color-coral) 40%, transparent);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-text) 4%, transparent);
+  background: var(--color-sea-mist);
 }
 
 .postAttachedTrip:focus-visible {
