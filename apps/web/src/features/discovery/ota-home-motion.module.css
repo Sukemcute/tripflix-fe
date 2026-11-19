@@ -86,22 +86,6 @@
   transform: scale(1.08);
   filter: blur(12px) brightness(0.35);
 }
-/* Một tấm kính sáng sau cả cụm cột: khe giữa các ô nằm trên kính thay vì lộ nền tối. */
-.waterContent :global([class*='feedPageWrapper']) {
-  position: relative;
-  isolation: isolate;
-}
-.waterContent :global([class*='feedPageWrapper'])::before {
-  content: '';
-  position: absolute;
-  inset: 0 -12px;
-  z-index: -1;
-  border: 1px solid rgb(255 255 255 / 40%);
-  border-radius: 28px;
-  background: color-mix(in srgb, var(--color-background) 86%, transparent);
-  backdrop-filter: blur(20px);
-  pointer-events: none;
-}
 /* Header trong suốt chữ trắng như trang chủ khi đứng trên nền ảnh tối (html thêm độ ưu tiên hơn rule nền trắng của Cảm hứng). */
 :global(html) :global(body):has(.inspirationBackdrop) :global(.ota-header) {
   border-color: rgb(255 255 255 / 48%);
