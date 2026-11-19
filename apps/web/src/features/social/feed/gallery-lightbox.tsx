@@ -5,24 +5,9 @@ import { type ReactNode, useEffect, useRef } from 'react';
 import { vi } from '@tripflix/i18n';
 import reelsStyles from '../live-posts.module.css';
 
-export interface GalleryBoxRect {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-}
-
-export interface GalleryBounds {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-}
-
-export interface GalleryImageElementLike {
-  getBoundingClientRect: () => GalleryBoxRect;
-  naturalWidth: number;
-  naturalHeight: number;
+export interface GalleryImageItem {
+  src: string;
+  alt?: string;
 }
 
 export interface GalleryDialogLike {
@@ -31,80 +16,31 @@ export interface GalleryDialogLike {
   close: () => void;
 }
 
-export interface GalleryTargetLike {
-  closest?: (selector: string) => unknown;
+/** Giới hạn chỉ số ảnh trong [0, total - 1]; trả 0 nếu danh sách rỗng hoặc giá trị không hợp lệ. */
+export function clampGalleryIndex(index: number, total: number): number {
+  if (total <= 0 || !Number.isFinite(index)) return 0;
+  return Math.max(0, Math.min(total - 1, Math.trunc(index)));
+}
+
+/** Tính chỉ số kế tiếp khi bấm nút trước/sau hoặc nhấn mũi tên trái/phải. */
+export function stepGalleryIndex(currentIndex: number, delta: number, total: number): number {
+  return clampGalleryIndex(clampGalleryIndex(currentIndex, total) + delta, total);
 }
 
 /**
- * Tính hình chữ nhật phần ảnh thật sự hiển thị bên trong phần tử dùng `object-fit: contain`
- * (loại trừ viền trống hai bên hoặc trên dưới khi tỉ lệ ảnh khác tỉ lệ khung).
+ * Đóng hộp thoại khi người dùng bấm đúng ra phần nền tối (`::backdrop`, nơi `event.target === dialog`),
+ * không đóng khi bấm vào bất kỳ thành phần nào bên trong khung xem ảnh hay kích hoạt bằng bàn phím.
  */
-export function getContainImageRect(
-  box: GalleryBoxRect,
-  naturalWidth: number,
-  naturalHeight: number,
-): GalleryBounds {
-  if (box.width <= 0 || box.height <= 0 || naturalWidth <= 0 || naturalHeight <= 0) {
-    return {
-      left: box.left,
-      top: box.top,
-      right: box.left + box.width,
-      bottom: box.top + box.height,
-    };
-  }
-  const scale = Math.min(box.width / naturalWidth, box.height / naturalHeight);
-  const renderedWidth = naturalWidth * scale;
-  const renderedHeight = naturalHeight * scale;
-  const offsetX = (box.width - renderedWidth) / 2;
-  const offsetY = (box.height - renderedHeight) / 2;
-  return {
-    left: box.left + offsetX,
-    top: box.top + offsetY,
-    right: box.left + offsetX + renderedWidth,
-    bottom: box.top + offsetY + renderedHeight,
-  };
-}
-
-/** Kiểm tra toạ độ con trỏ có nằm trong vùng ảnh thật (không phải viền trống xung quanh) hay không. */
-export function isPointInsideContainImage(
-  point: { x: number; y: number },
-  box: GalleryBoxRect,
-  naturalWidth: number,
-  naturalHeight: number,
-): boolean {
-  const bounds = getContainImageRect(box, naturalWidth, naturalHeight);
-  return point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom;
-}
-
-/** Quyết định có đóng khung xem ảnh khi click hay không: mọi nơi ngoài ảnh thật và nút điều khiển đều đóng. */
-export function shouldCloseGalleryFromClick({
+export function shouldCloseGalleryBackdropClick({
   target,
-  clientX,
-  clientY,
+  dialog,
   detail = 1,
-  imageEl,
 }: {
-  target: EventTarget | GalleryTargetLike | null;
-  clientX: number;
-  clientY: number;
+  target: EventTarget | null;
+  dialog: EventTarget | null;
   detail?: number;
-  imageEl: GalleryImageElementLike | null;
 }): boolean {
-  // Nhấn phím Enter/Space kích hoạt click có detail === 0: không coi là bấm nền.
-  if (detail === 0) return false;
-  const elementTarget = target as GalleryTargetLike | null;
-  if (typeof elementTarget?.closest === 'function') {
-    if (elementTarget.closest('[data-gallery-keep-open="true"]')) return false;
-    // Nút đóng tự gọi onClose ở handler riêng.
-    if (elementTarget.closest('[data-gallery-close="true"]')) return false;
-  }
-  if (!imageEl || target !== (imageEl as unknown)) return true;
-  return !isPointInsideContainImage(
-    { x: clientX, y: clientY },
-    imageEl.getBoundingClientRect(),
-    imageEl.naturalWidth,
-    imageEl.naturalHeight,
-  );
+  return detail !== 0 && dialog !== null && target === dialog;
 }
 
 /** Đồng bộ trạng thái `<dialog>` top layer theo boolean `isOpen`. */
@@ -119,13 +55,11 @@ export function syncGalleryDialogState(dialog: GalleryDialogLike | null, isOpen:
 
 export interface GalleryLightboxProps {
   isOpen: boolean;
-  label: string;
-  imageSrc?: string;
+  title: string;
+  images: readonly GalleryImageItem[];
   currentIndex: number;
-  total: number;
   onClose: () => void;
-  onPrev: () => void;
-  onNext: () => void;
+  onSelectIndex: (index: number) => void;
   closeIcon?: ReactNode;
   prevIcon?: ReactNode;
   nextIcon?: ReactNode;
@@ -133,20 +67,23 @@ export interface GalleryLightboxProps {
 
 export function GalleryLightbox({
   isOpen,
-  label,
-  imageSrc,
+  title,
+  images,
   currentIndex,
-  total,
   onClose,
-  onPrev,
-  onNext,
+  onSelectIndex,
   closeIcon,
   prevIcon,
   nextIcon,
 }: GalleryLightboxProps) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
+  const activeThumbRef = useRef<HTMLButtonElement | null>(null);
   const onCloseRef = useRef(onClose);
+
+  const total = images.length;
+  const safeIndex = clampGalleryIndex(currentIndex, total);
+  const activeImage = images[safeIndex];
+  const displayTitle = title.trim() || vi.hotel.gallery;
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -174,12 +111,10 @@ export function GalleryLightbox({
 
     const handleClick = (event: MouseEvent) => {
       if (
-        shouldCloseGalleryFromClick({
+        shouldCloseGalleryBackdropClick({
           target: event.target,
-          clientX: event.clientX,
-          clientY: event.clientY,
+          dialog,
           detail: event.detail,
-          imageEl: imgRef.current,
         })
       ) {
         onCloseRef.current();
@@ -207,76 +142,110 @@ export function GalleryLightbox({
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen && dialogRef.current?.open) {
+      activeThumbRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  }, [isOpen, safeIndex]);
+
   return (
     <dialog
       ref={dialogRef}
       className={reelsStyles.galleryStageOverlay}
       aria-modal="true"
-      aria-label={label}
+      aria-label={`${vi.hotel.gallery}: ${displayTitle}`}
       onCancel={(event) => {
         event.preventDefault();
         onClose();
       }}
       onClose={onClose}
     >
-      {isOpen && imageSrc && (
-        <div className={reelsStyles.galleryFrame}>
-          <div className={reelsStyles.galleryTopBar}>
-            <span className={reelsStyles.galleryCountPill} data-gallery-keep-open="true">
-              {currentIndex + 1} / {total}
-            </span>
+      {isOpen && activeImage && (
+        <div className={reelsStyles.galleryViewer}>
+          <header className={reelsStyles.galleryHeader}>
+            <div className={reelsStyles.galleryHeaderText}>
+              <strong className={reelsStyles.galleryHeaderTitle}>{displayTitle}</strong>
+              <output className={reelsStyles.galleryCountOutput}>
+                {safeIndex + 1} / {total}
+              </output>
+            </div>
             <button
               type="button"
-              className={reelsStyles.galleryCloseBtn}
-              data-gallery-close="true"
+              className={reelsStyles.galleryControl}
               aria-label={vi.api.immersiveCloseGallery}
               data-tooltip={vi.api.immersiveCloseGallery}
               onClick={onClose}
             >
               {closeIcon ?? '×'}
             </button>
-          </div>
+          </header>
 
-          <div className={reelsStyles.galleryContainFrame}>
+          <div className={reelsStyles.galleryStage}>
             <Image
-              ref={imgRef}
-              key={imageSrc}
-              src={imageSrc}
-              alt={label}
-              width={0}
-              height={0}
-              sizes="(max-width: 767px) 92vw, 960px"
+              key={activeImage.src}
+              src={activeImage.src}
+              alt={activeImage.alt ?? `${displayTitle} · ${vi.hotel.photo} ${safeIndex + 1}`}
+              width={1000}
+              height={700}
+              sizes="(max-width: 768px) 100vw, 60vw"
               className={reelsStyles.galleryContainImg}
               priority
-              unoptimized={imageSrc.startsWith('http')}
+              unoptimized={activeImage.src.startsWith('http')}
             />
           </div>
 
           {total > 1 && (
-            <>
+            <div className={reelsStyles.galleryNavigation}>
               <button
                 type="button"
-                className={`${reelsStyles.gallerySlideNavBtn} ${reelsStyles.gallerySlidePrev}`}
-                data-gallery-keep-open="true"
-                disabled={currentIndex <= 0}
+                className={reelsStyles.galleryControl}
+                disabled={safeIndex <= 0}
                 aria-label={vi.api.immersivePrevSlide}
                 data-tooltip={vi.api.immersivePrevSlide}
-                onClick={onPrev}
+                onClick={() => onSelectIndex(stepGalleryIndex(safeIndex, -1, total))}
               >
                 {prevIcon ?? '‹'}
               </button>
+
+              <div className={reelsStyles.galleryThumbnails}>
+                {images.map((item, position) => {
+                  const isActive = position === safeIndex;
+                  return (
+                    <button
+                      type="button"
+                      key={`${item.src}-${position}`}
+                      ref={isActive ? activeThumbRef : undefined}
+                      className={reelsStyles.galleryThumbBtn}
+                      aria-label={`${vi.hotel.photo} ${position + 1}`}
+                      aria-current={isActive ? 'true' : undefined}
+                      onClick={() => onSelectIndex(position)}
+                    >
+                      <span aria-hidden="true">{position + 1}</span>
+                      <Image
+                        src={item.src}
+                        alt=""
+                        width={128}
+                        height={96}
+                        sizes="64px"
+                        className={reelsStyles.galleryThumbImg}
+                        unoptimized={item.src.startsWith('http')}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+
               <button
                 type="button"
-                className={`${reelsStyles.gallerySlideNavBtn} ${reelsStyles.gallerySlideNext}`}
-                data-gallery-keep-open="true"
-                disabled={currentIndex >= total - 1}
+                className={reelsStyles.galleryControl}
+                disabled={safeIndex >= total - 1}
                 aria-label={vi.api.immersiveNextSlide}
                 data-tooltip={vi.api.immersiveNextSlide}
-                onClick={onNext}
+                onClick={() => onSelectIndex(stepGalleryIndex(safeIndex, 1, total))}
               >
                 {nextIcon ?? '›'}
               </button>
-            </>
+            </div>
           )}
         </div>
       )}

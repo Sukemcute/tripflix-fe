@@ -23,7 +23,7 @@ import { type FeedNavFilter } from './floating-nav-rail';
 import { ItinerarySidebarPanel } from './itinerary-sidebar-panel';
 import { PostCard } from './post-card';
 import { FeedHighlightFrame } from './feed-highlight-frame';
-import { GalleryLightbox } from './gallery-lightbox';
+import { GalleryLightbox, stepGalleryIndex } from './gallery-lightbox';
 import { ShareMenu, type ShareMenuHandle } from '../share-menu';
 import { getPostImages } from '../post-cover';
 import { ApiErrorNotice } from '@/features/shared/api-state';
@@ -221,13 +221,13 @@ export function SocialFeedView({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        setGalleryState((prev) => (prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null));
+        setGalleryState((prev) =>
+          prev ? { ...prev, index: stepGalleryIndex(prev.index, -1, activeGalleryImages.length) } : null,
+        );
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         setGalleryState((prev) =>
-          prev
-            ? { ...prev, index: Math.min(activeGalleryImages.length - 1, prev.index + 1) }
-            : null,
+          prev ? { ...prev, index: stepGalleryIndex(prev.index, 1, activeGalleryImages.length) } : null,
         );
       }
     };
@@ -1051,22 +1051,14 @@ export function SocialFeedView({
         />
       )}
 
-      {/* 4. In-Feed Image Gallery Lightbox Modal (top layer via dialog.showModal) */}
+      {/* 4. In-Feed Image Gallery Lightbox Modal (khung cố định + thumbnail như trang khách sạn, top layer qua dialog.showModal) */}
       <GalleryLightbox
-        isOpen={Boolean(galleryState && activeGalleryPost && activeGalleryImages[galleryState.index])}
-        label={activeGalleryPost?.title ?? vi.api.immersiveCloseGallery}
-        imageSrc={galleryState ? activeGalleryImages[galleryState.index]?.src : undefined}
+        isOpen={Boolean(galleryState && activeGalleryPost && activeGalleryImages.length > 0)}
+        title={activeGalleryPost?.title ?? vi.hotel.gallery}
+        images={activeGalleryImages}
         currentIndex={galleryState?.index ?? 0}
-        total={activeGalleryImages.length}
         onClose={closeGallery}
-        onPrev={() =>
-          setGalleryState((prev) => (prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null))
-        }
-        onNext={() =>
-          setGalleryState((prev) =>
-            prev ? { ...prev, index: Math.min(activeGalleryImages.length - 1, prev.index + 1) } : null,
-          )
-        }
+        onSelectIndex={(index) => setGalleryState((prev) => (prev ? { ...prev, index } : null))}
         closeIcon={<SocialIcon name="close" size={18} />}
         prevIcon={<SocialIcon name="chevronLeft" size={20} />}
         nextIcon={<SocialIcon name="chevronRight" size={20} />}

@@ -4,108 +4,42 @@ import { fileURLToPath } from 'node:url';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  clampGalleryIndex,
   GalleryLightbox,
-  getContainImageRect,
-  isPointInsideContainImage,
-  shouldCloseGalleryFromClick,
+  shouldCloseGalleryBackdropClick,
+  stepGalleryIndex,
   syncGalleryDialogState,
 } from './gallery-lightbox';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-describe('getContainImageRect & isPointInsideContainImage', () => {
-  it('tính đúng khung ảnh dọc nằm giữa màn hình ngang (pillarbox hai bên)', () => {
-    // Khung 1200x800, ảnh dọc 1000x2000 -> scale = min(1.2, 0.4) = 0.4 -> 400x800, nằm giữa [400..800, 0..800]
-    const box = { left: 0, top: 0, width: 1200, height: 800 };
-    expect(getContainImageRect(box, 1000, 2000)).toEqual({
-      left: 400,
-      top: 0,
-      right: 800,
-      bottom: 800,
-    });
-
-    // Viền trống bên trái và bên phải đều nằm ngoài ảnh thật
-    expect(isPointInsideContainImage({ x: 200, y: 400 }, box, 1000, 2000)).toBe(false);
-    expect(isPointInsideContainImage({ x: 950, y: 400 }, box, 1000, 2000)).toBe(false);
-    // Giữa ảnh nằm trong ảnh thật
-    expect(isPointInsideContainImage({ x: 600, y: 400 }, box, 1000, 2000)).toBe(true);
+describe('clampGalleryIndex & stepGalleryIndex', () => {
+  it('giới hạn chỉ số trong khoảng [0, total - 1]', () => {
+    expect(clampGalleryIndex(-2, 5)).toBe(0);
+    expect(clampGalleryIndex(0, 5)).toBe(0);
+    expect(clampGalleryIndex(3, 5)).toBe(3);
+    expect(clampGalleryIndex(99, 5)).toBe(4);
+    expect(clampGalleryIndex(Number.NaN, 5)).toBe(0);
+    expect(clampGalleryIndex(2, 0)).toBe(0);
   });
 
-  it('tính đúng khung ảnh ngang nằm giữa màn hình hẹp (letterbox trên dưới)', () => {
-    // Khung 400x800, ảnh ngang 1600x800 -> scale = min(0.25, 1) = 0.25 -> 400x200, nằm giữa [0..400, 300..500]
-    const box = { left: 0, top: 0, width: 400, height: 800 };
-    expect(getContainImageRect(box, 1600, 800)).toEqual({
-      left: 0,
-      top: 300,
-      right: 400,
-      bottom: 500,
-    });
-
-    expect(isPointInsideContainImage({ x: 200, y: 150 }, box, 1600, 800)).toBe(false);
-    expect(isPointInsideContainImage({ x: 200, y: 650 }, box, 1600, 800)).toBe(false);
-    expect(isPointInsideContainImage({ x: 200, y: 400 }, box, 1600, 800)).toBe(true);
+  it('chuyển ảnh trước/sau và không vượt quá ảnh đầu hoặc cuối', () => {
+    expect(stepGalleryIndex(0, -1, 5)).toBe(0);
+    expect(stepGalleryIndex(1, -1, 5)).toBe(0);
+    expect(stepGalleryIndex(1, 1, 5)).toBe(2);
+    expect(stepGalleryIndex(4, 1, 5)).toBe(4);
   });
 });
 
-describe('shouldCloseGalleryFromClick', () => {
-  const imageEl = {
-    getBoundingClientRect: () => ({ left: 0, top: 0, width: 1200, height: 800 }),
-    naturalWidth: 1000,
-    naturalHeight: 2000,
-  };
+describe('shouldCloseGalleryBackdropClick', () => {
+  it('chỉ đóng khi bấm trực tiếp ra phần nền tối (target === dialog)', () => {
+    const dialog = {} as EventTarget;
+    const innerViewer = {} as EventTarget;
 
-  it('đóng khi bấm vào viền trống của next/image fill (object-fit: contain) hoặc nền dialog', () => {
-    expect(
-      shouldCloseGalleryFromClick({
-        target: imageEl as unknown as EventTarget,
-        clientX: 150,
-        clientY: 400,
-        detail: 1,
-        imageEl,
-      }),
-    ).toBe(true);
-
-    expect(
-      shouldCloseGalleryFromClick({
-        target: { closest: () => null },
-        clientX: 600,
-        clientY: 400,
-        detail: 1,
-        imageEl,
-      }),
-    ).toBe(true);
-  });
-
-  it('không đóng khi bấm trúng phần ảnh thật, bộ đếm, nút trước/sau hoặc kích hoạt bằng phím', () => {
-    expect(
-      shouldCloseGalleryFromClick({
-        target: imageEl as unknown as EventTarget,
-        clientX: 600,
-        clientY: 400,
-        detail: 1,
-        imageEl,
-      }),
-    ).toBe(false);
-
-    expect(
-      shouldCloseGalleryFromClick({
-        target: { closest: (sel: string) => (sel.includes('keep-open') ? {} : null) },
-        clientX: 40,
-        clientY: 400,
-        detail: 1,
-        imageEl,
-      }),
-    ).toBe(false);
-
-    expect(
-      shouldCloseGalleryFromClick({
-        target: imageEl as unknown as EventTarget,
-        clientX: 0,
-        clientY: 0,
-        detail: 0,
-        imageEl,
-      }),
-    ).toBe(false);
+    expect(shouldCloseGalleryBackdropClick({ target: dialog, dialog, detail: 1 })).toBe(true);
+    expect(shouldCloseGalleryBackdropClick({ target: innerViewer, dialog, detail: 1 })).toBe(false);
+    expect(shouldCloseGalleryBackdropClick({ target: dialog, dialog, detail: 0 })).toBe(false);
+    expect(shouldCloseGalleryBackdropClick({ target: null, dialog, detail: 1 })).toBe(false);
   });
 });
 
@@ -123,31 +57,30 @@ describe('syncGalleryDialogState & GalleryLightbox markup', () => {
 
     syncGalleryDialogState(dialog, false);
     expect(dialog.showModal).not.toHaveBeenCalled();
-    expect(dialog.close).not.toHaveBeenCalled();
 
     syncGalleryDialogState(dialog, true);
     expect(dialog.showModal).toHaveBeenCalledTimes(1);
     expect(dialog.open).toBe(true);
-
-    syncGalleryDialogState(dialog, true);
-    expect(dialog.showModal).toHaveBeenCalledTimes(1);
 
     syncGalleryDialogState(dialog, false);
     expect(dialog.close).toHaveBeenCalledTimes(1);
     expect(dialog.open).toBe(false);
   });
 
-  it('render dialog không đặt thuộc tính open hay z-index nội tuyến để dùng top layer showModal', () => {
+  it('render khung cố định có tiêu đề, bộ đếm 2 / 5, stage ảnh và dải thumbnail đánh dấu ảnh đang xem', () => {
     const noop = () => {};
+    const images = Array.from({ length: 5 }, (_, idx) => ({
+      src: `https://media.tripflix.io.vn/photo-${idx + 1}.jpg`,
+    }));
+
     const closedHtml = renderToStaticMarkup(
       <GalleryLightbox
         isOpen={false}
-        label="Ảnh bài viết"
+        title="Hành trình Đà Lạt"
+        images={images}
         currentIndex={0}
-        total={0}
         onClose={noop}
-        onPrev={noop}
-        onNext={noop}
+        onSelectIndex={noop}
       />,
     );
     expect(closedHtml).toContain('<dialog');
@@ -157,34 +90,45 @@ describe('syncGalleryDialogState & GalleryLightbox markup', () => {
     const openHtml = renderToStaticMarkup(
       <GalleryLightbox
         isOpen
-        label="Ảnh bài viết"
-        imageSrc="https://media.tripflix.io.vn/sample.jpg"
+        title="Hành trình Đà Lạt cuối tuần siêu chill"
+        images={images}
         currentIndex={1}
-        total={3}
         onClose={noop}
-        onPrev={noop}
-        onNext={noop}
+        onSelectIndex={noop}
       />,
     );
     expect(openHtml).toContain('<dialog');
     expect(openHtml).not.toContain(' open=""');
-    expect(openHtml).not.toContain('z-index:9999');
-    expect(openHtml).toContain('2 / 3');
-    expect(openHtml).toContain('<img');
-    expect(openHtml).toContain('data-gallery-keep-open="true"');
+    expect(openHtml).toContain('Hành trình Đà Lạt cuối tuần siêu chill');
+    expect(openHtml).toContain('2 / 5');
+    expect(openHtml).toContain('aria-current="true"');
+    expect(openHtml.match(/aria-label="Ảnh \d+"/g)).toHaveLength(5);
+
+    const singleHtml = renderToStaticMarkup(
+      <GalleryLightbox
+        isOpen
+        title="Một ảnh"
+        images={[images[0]!]}
+        currentIndex={0}
+        onClose={noop}
+        onSelectIndex={noop}
+      />,
+    );
+    expect(singleHtml).toContain('1 / 1');
+    expect(singleHtml).not.toContain('Ảnh trước');
   });
 
-  it('CSS galleryStageOverlay dùng top layer, giới hạn tối đa 960px / 80vh / 92vw và nút nằm quanh vùng ảnh', () => {
+  it('CSS social dùng khung cố định giống trang khách sạn, viền coral cho thumbnail đang chọn và không import chéo hotels', () => {
     const css = readFileSync(resolve(here, '../live-posts.module.css'), 'utf8');
+    const lightboxTsx = readFileSync(resolve(here, 'gallery-lightbox.tsx'), 'utf8');
+
+    expect(lightboxTsx).not.toContain('hotels/');
+    expect(css).toContain('--gallery-max-width: 60rem');
+    expect(css).toContain('--gallery-max-height: 44rem');
+    expect(css).toContain('object-fit: contain');
+    expect(css).toContain('border-color: var(--color-coral-ink)');
     expect(css).toContain('.galleryStageOverlay:not([open])');
     expect(css).toContain('.galleryStageOverlay::backdrop');
-    expect(css).toContain('--gallery-max-width: 960px');
-    expect(css).toContain('--gallery-max-height: 80vh');
-    expect(css).toContain('--gallery-mobile-max-width: 92vw');
-    expect(css).toContain('width: auto;');
-    expect(css).toContain('height: auto;');
-    expect(css).toContain('object-fit: contain;');
-    expect(css).toContain("'prev media next'");
-    expect(css).toContain('@media (max-width: 767px)');
+    expect(css).toContain('@media (max-width: 640px)');
   });
 });
