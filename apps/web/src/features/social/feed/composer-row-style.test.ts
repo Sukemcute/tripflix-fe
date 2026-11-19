@@ -27,8 +27,18 @@ describe('composer action row CSS on narrow screens', () => {
     const block = readNarrowRowBlock();
     expect(block).toMatch(/\.composerActionGroup\s*\{[^}]*min-width:\s*0/);
     expect(block).toMatch(/\.composerSubmitBtn\s*\{[^}]*flex-shrink:\s*0/);
-    const label = block.match(/\.composerTagBtn > span:last-child\s*\{([^}]*)\}/)?.[1] ?? '';
+    const label = block.match(/\.composerActionGroup > \.composerTagBtn > span:last-child\s*\{([^}]*)\}/)?.[1] ?? '';
     expect(label).toMatch(/clip-path:\s*inset\(50%\)/);
     expect(label).not.toMatch(/display:\s*none/);
+  });
+
+  it('leaves the recommend tabs alone even though they reuse .composerTagBtn', () => {
+    const block = readNarrowRowBlock().replace(/\/\*[\s\S]*?\*\//g, '');
+    const selectors = [...block.matchAll(/([^{}]+)\{/g)].map((match) => (match[1] ?? '').trim());
+    const tagButtonSelectors = selectors.filter((selector) => selector.includes('.composerTagBtn'));
+    expect(tagButtonSelectors.length).toBeGreaterThan(0);
+    for (const selector of tagButtonSelectors) {
+      expect(selector.startsWith('.composerActionGroup > .composerTagBtn')).toBe(true);
+    }
   });
 });

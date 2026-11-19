@@ -1519,12 +1519,13 @@
     gap: 4px;
   }
 
-  .composerTagBtn {
+  /* Chỉ nút trong hàng đăng bài: tab gợi ý (.recommendModeTabs) cũng dùng class .composerTagBtn. */
+  .composerActionGroup > .composerTagBtn {
     position: relative;
     padding: 8px;
   }
 
-  .composerTagBtn > span:last-child {
+  .composerActionGroup > .composerTagBtn > span:last-child {
     position: absolute;
     width: 1px;
     height: 1px;
