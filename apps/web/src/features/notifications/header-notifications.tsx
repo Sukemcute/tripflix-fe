@@ -17,7 +17,7 @@ import { AvatarPhoto } from '@/features/shared/avatar-photo';
 import { getAvatarTone } from '../social/avatar-tone';
 import { resolveNotificationHref } from './notification-href';
 import { formatNotificationTime, getNotificationKind } from './notification-look';
-import { LoadingDots } from '@/features/shared/loading-dots';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 
 const TRIPFLIX_ICON = '/brand/tripflix-gmail-avatar-icon.svg';
 
@@ -101,7 +101,7 @@ export function HeaderNotifications() {
             <strong>{vi.api.notificationsTitle}</strong>
           </div>
           {notifications.isPending && (
-            <output className="header-notifications-status"><LoadingDots label={vi.api.notificationsLoading} /></output>
+            <LoadingDots isBlock label={vi.api.notificationsLoading} />
           )}
           <ApiErrorNotice error={notifications.error} retry={() => void notifications.refetch()} />
           <ApiErrorNotice
@@ -213,7 +213,7 @@ export function HeaderNotifications() {
               disabled={notifications.isFetching}
               onClick={() => void notifications.fetchNextPage()}
             >
-              {notifications.isFetchingNextPage ? <LoadingDots label={vi.api.notificationsLoading} /> : vi.api.next}
+              <BusyLabel isBusy={notifications.isFetchingNextPage} label={vi.api.notificationsLoading}>{vi.api.next}</BusyLabel>
             </button>
           )}
           {notifications.isSuccess && items.length === 0 && (

@@ -154,7 +154,7 @@ export function HotelScreen({
       )}
       {!hotel && !query.error && (
         <div className={styles.skeleton}>
-          <output><LoadingDots label={copy.loading} /></output>
+          <LoadingDots isBlock label={copy.loading} />
           <div />
           <div />
         </div>
@@ -314,10 +314,9 @@ export function HotelScreen({
                 {copy.changeStayDetails}
               </Link>
             </div>
-            {query.isFetching && <output><LoadingDots label={vi.common.loading} /></output>}
             {!hotel.isAvailable && <p className={styles.notice}>{copy.unavailable}</p>}
             {!hotel.rooms.length && <p className="empty-state">{copy.noRooms}</p>}
-            <div aria-busy={query.isFetching}>
+            <div className={styles.rooms} aria-busy={query.isFetching}>
               {hotel.rooms.map((room) => (
                 <article className={styles.room} key={room.productId}>
                   <div className={styles.roomInfo}>

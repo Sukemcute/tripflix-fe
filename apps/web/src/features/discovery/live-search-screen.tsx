@@ -22,7 +22,7 @@ import { SearchAdBanner } from './search-ad-banner';
 import { SoftStarIcon } from './soft-star-icon';
 import { PriceRangeSlider } from './price-range-slider';
 import { GuestPicker } from '@/features/hotels/guest-picker';
-import { LoadingDots } from '@/features/shared/loading-dots';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 
 // Vừa chiều cao cột lọc + banner, để trang không bị kéo dài khi nhiều kết quả.
 const RESULTS_PAGE_SIZE = 5;
@@ -366,7 +366,7 @@ export function LiveSearchScreen({
             disabled={!canSubmit || search.stays.isFetching}
           >
             <StaySearchIcon name="search" />
-            {search.stays.isFetching ? <LoadingDots /> : vi.api.findStays}
+            <BusyLabel isBusy={search.stays.isFetching}>{vi.api.findStays}</BusyLabel>
           </button>
         </div>
         {!isHomepage && (
@@ -539,7 +539,7 @@ export function LiveSearchScreen({
               })}
             </nav>
             {!search.submitted && <p className={listing.state}>{vi.api.choosePlace}</p>}
-            {search.stays.isFetching && <output className={listing.state}><LoadingDots /></output>}
+            {search.stays.isPending && search.stays.isFetching && <LoadingDots isBlock />}
             <ApiErrorNotice
               error={search.stays.error}
               retry={() => {

@@ -29,7 +29,7 @@ import { FlightIcon } from './flight-icon';
 import { formatPassengerMix } from './passenger-picker';
 import { toAirportOption } from './flight-search-form';
 import styles from './flights.module.css';
-import { LoadingDots } from '@/features/shared/loading-dots';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.flights;
 const SORT_OPTIONS = [
@@ -921,7 +921,7 @@ export function FlightCard({
                   disabled={isLocked || !canBook}
                   onClick={() => fare && onHold(cabin.productId, fare.code)}
                 >
-                  {isHolding ? <LoadingDots /> : chooseLabel}
+                  <BusyLabel isBusy={isHolding}>{chooseLabel}</BusyLabel>
                 </button>
               )}
               {canBook && cabin.remaining != null && (

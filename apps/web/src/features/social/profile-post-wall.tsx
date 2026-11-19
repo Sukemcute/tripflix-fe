@@ -7,7 +7,7 @@ import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
 import { useRouter } from 'next/navigation';
 import { ApiErrorNotice } from '@/features/shared/api-state';
-import { LoadingDots } from '@/features/shared/loading-dots';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 import { PostCard } from './feed/post-card';
 import { RightPanelCommentsSynchronized } from './live-posts';
 import { ShareMenu, type ShareMenuHandle } from './share-menu';
@@ -135,7 +135,7 @@ function PostWall({
           disabled={posts.isFetchingNextPage}
           onClick={() => void posts.fetchNextPage()}
         >
-          {posts.isFetchingNextPage ? <LoadingDots /> : vi.api.profileLoadMore}
+          <BusyLabel isBusy={posts.isFetchingNextPage}>{vi.api.profileLoadMore}</BusyLabel>
         </button>
       )}
       <ShareMenu ref={share} side="above" onShared={(id) => interact(id, 'share')} />
