@@ -46,7 +46,9 @@ import { ComposerTripPlanEditor } from './composer/trip-plan-editor';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import { createPortal } from 'react-dom';
+import { getPanelCloseTimeoutMs, shouldCompletePanelClose } from '@/features/assistant/panel-motion';
 import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
@@ -88,6 +90,7 @@ import {
   pruneReadyReelIds,
   reuseReelEngagement,
   shouldLoadReelSource,
+  startReelOnPostChange,
   shouldShowReelBackdrop,
   toReelPost,
   type ReelEngagement,
@@ -1236,6 +1239,10 @@ export function InspirationImmersiveViewer({
 
   // Media player session states
   const [isMuted, setMuted] = useState(true);
+  const isMutedRef = useRef(isMuted);
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
   const [volume, setVolume] = useState(0.8);
   const [isPlaying, setPlaying] = useState(true);
   const centerPanelRef = useRef<HTMLElement | null>(null);
@@ -1439,7 +1446,7 @@ export function InspirationImmersiveViewer({
   const attemptPlayVideo = useCallback(() => {
     const el = videoRef.current;
     if (!el) return;
-    el.muted = isMuted;
+    el.muted = isMutedRef.current;
     const playPromise = el.play();
     if (playPromise !== undefined) {
       playPromise
@@ -1459,7 +1466,9 @@ export function InspirationImmersiveViewer({
             });
         });
     }
-  }, [isMuted]);
+  }, []);
+
+  const playbackPostIdRef = useRef<string | null | undefined>(undefined);
 
   // Khi chuyển bài (activePost?.id thay đổi):
   // 1. Reset scroll của danh sách bình luận về đầu
@@ -1469,13 +1478,13 @@ export function InspirationImmersiveViewer({
       rightScrollRef.current.scrollTop = 0;
     }
 
-    const videoEl = videoRef.current;
-    if (videoEl) {
-      // Chỉ tua khi video đã chạy dở (lướt ngược lại): video tải sẵn đang ở đầu, tua về 0 vẫn làm trình duyệt
-      // tua thật và tải lại (đo được 1,2–2,8 giây chờ).
-      if (videoEl.currentTime > 0.1) videoEl.currentTime = 0;
-      attemptPlayVideo();
-    }
+    const postId = activePost?.id;
+    startReelOnPostChange(videoRef.current, playbackPostIdRef.current, postId, attemptPlayVideo);
+    playbackPostIdRef.current = postId;
+    return () => {
+      // Strict Mode dọn nguồn rồi chạy lại effect, nên cần cho phép phát lại sau lần dọn đó.
+      playbackPostIdRef.current = undefined;
+    };
   }, [activePost?.id, attemptPlayVideo]);
 
   // Ưu tiên video đang xem: chạy rồi (hoặc chờ quá REEL_PRELOAD_FALLBACK_MS) mới tải trước bài thứ 2 phía trước.
@@ -2263,6 +2272,7 @@ export function InspirationImmersiveViewer({
                               max={1}
                               step={0.05}
                               value={isMuted ? 0 : volume}
+                              style={{ '--volume-progress': `${(isMuted ? 0 : volume) * 100}%` } as React.CSSProperties}
                               aria-label={vi.api.immersiveMuteVideo}
                               className={styles.volumeRangeInput}
                               onChange={(event) => {
@@ -3434,6 +3444,15 @@ export function ComposerModal({
   const client = useQueryClient();
   const { user } = useApiSession();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+  const requestClose = () => setIsClosing(true);
+
+  useEffect(() => {
+    if (!isClosing) return;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const timeout = window.setTimeout(onClose, getPanelCloseTimeoutMs(reducedMotion));
+    return () => window.clearTimeout(timeout);
+  }, [isClosing, onClose]);
 
   // Chế độ xem: 'compose' (soạn thảo) hoặc 'drafts' (danh sách bản nháp)
   const [viewMode, setViewMode] = useState<'compose' | 'drafts'>(initialView);
@@ -3775,7 +3794,7 @@ export function ComposerModal({
         if (detail) addPublishedPostToFeeds(client, detail.post);
         if (data.postType === 'video') void client.invalidateQueries({ queryKey: ['feed'] });
         publishNoticeStore.show(data.id, data.postType, data.status === 'held' ? 'held' : 'published');
-        onClose();
+        requestClose();
       } else {
         setSaveSuccessMsg('Đã lưu bản nháp thành công.');
       }
@@ -3794,12 +3813,27 @@ export function ComposerModal({
   });
 
   const isFormBusy = saveMutation.isPending || isUploading;
+  const pressedBackdrop = useRef(false);
+  const backdropEvents = {
+    'data-closing': isClosing || undefined,
+    onAnimationEnd(event: React.AnimationEvent<HTMLDialogElement>) {
+      if (shouldCompletePanelClose(event.target, event.currentTarget, isClosing)) onClose();
+    },
+    onPointerDown(event: PointerEvent<HTMLDialogElement>) {
+      pressedBackdrop.current = event.target === event.currentTarget;
+    },
+    onClick(event: MouseEvent<HTMLDialogElement>) {
+      if (pressedBackdrop.current && event.target === event.currentTarget && !isFormBusy) requestClose();
+      pressedBackdrop.current = false;
+    },
+  };
+  if (typeof document === 'undefined') return null;
 
   // View danh sách các bản nháp
   if (viewMode === 'drafts') {
-    return (
-      <dialog open className={styles.modalBackdrop} aria-label="Bản nháp của bạn">
-        <div className={styles.composerModalCard}>
+    return createPortal(
+      <dialog open className={styles.modalBackdrop} aria-label="Bản nháp của bạn" {...backdropEvents}>
+        <div className={styles.composerModalCard} inert={isClosing}>
           <div className={styles.panelHeaderBar}>
             <div className={styles.draftsHeaderTitle}>
               <button
@@ -3825,7 +3859,7 @@ export function ComposerModal({
                 type="button"
                 className={styles.iconGhostBtn}
                 aria-label={vi.api.cancel}
-                onClick={onClose}
+                onClick={requestClose}
               >
                 <SocialIcon name="close" size={18} />
               </button>
@@ -3896,15 +3930,17 @@ export function ComposerModal({
           </div>
 
         </div>
-      </dialog>
+      </dialog>,
+      document.body,
     );
   }
 
   // View soạn thảo bài viết
-  return (
-    <dialog open className={styles.modalBackdrop} aria-label={vi.api.feedCreatePostCta}>
+  return createPortal(
+    <dialog open className={styles.modalBackdrop} aria-label={vi.api.feedCreatePostCta} {...backdropEvents}>
       <form
         className={styles.composerModalCard}
+        inert={isClosing}
         onSubmit={(event) => {
           event.preventDefault();
           if (isFormBusy) return;
@@ -3931,7 +3967,7 @@ export function ComposerModal({
               className={styles.iconGhostBtn}
               aria-label={vi.api.cancel}
               disabled={isFormBusy}
-              onClick={onClose}
+              onClick={requestClose}
             >
               <SocialIcon name="close" size={18} />
             </button>
@@ -4185,7 +4221,7 @@ export function ComposerModal({
           <button
             type="button"
             className={styles.utilityBtn}
-            onClick={onClose}
+            onClick={requestClose}
             disabled={isFormBusy}
           >
             {vi.api.cancel}
@@ -4216,6 +4252,7 @@ export function ComposerModal({
           </button>
         </div>
       </form>
-    </dialog>
+    </dialog>,
+    document.body,
   );
 }

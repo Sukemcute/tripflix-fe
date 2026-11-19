@@ -17,9 +17,13 @@
   font-display: swap;
 }
 
-html {
-  /* Giữ chiều rộng bố cục khi chuyển giữa trang cuộn ngoài và Cảm hứng. */
-  scrollbar-gutter: stable;
+* {
+  scrollbar-width: none;
+  scrollbar-gutter: auto;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }
 
 body {
@@ -127,17 +131,12 @@ h3 {
   width: 100%;
   height: 100%;
 }
-/* Menu header phẳng, không lồng thêm nền viên thuốc vào khung header. */
 .header-content nav {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   justify-self: center;
-  width: min(760px, 56vw);
-  gap: 24px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+  width: min(680px, 56vw);
+  gap: 6px;
   font-size: 14px;
 }
 .header-content nav a {
@@ -146,14 +145,11 @@ h3 {
   justify-content: center;
   gap: 8px;
   padding: 9px 16px;
-  border-radius: 999px;
+  border-radius: 10px;
   color: var(--color-ink);
   font-weight: 600;
   white-space: nowrap;
-  transition:
-    background 0.1s,
-    color 0.1s,
-    transform 0.08s;
+  transition: background 160ms ease, color 160ms ease;
 }
 .header-content nav a svg {
   flex: none;
@@ -164,11 +160,8 @@ h3 {
   stroke-linejoin: round;
 }
 .header-content nav a:hover {
-  background: transparent;
+  background: var(--color-surface-muted);
   color: var(--color-teal-ink);
-}
-.header-content nav a:active {
-  transform: scale(0.95);
 }
 /* Nút tròn chỉ có icon trên header (chuông thông báo). */
 .header-icon-button {
@@ -319,8 +312,6 @@ h3 {
   max-height: min(460px, 65vh);
   overflow-y: auto;
   padding: 0 8px 8px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
 }
 .header-notifications-section h3 {
   margin: 0;
@@ -634,9 +625,10 @@ body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-
   color: #fff;
   text-shadow: 0 1px 5px rgb(0 35 45 / 58%);
 }
-body:has(> [data-living-home] [data-home-hero]) .header-content nav a[aria-current='page'] {
-  background: rgb(255 255 255 / 20%);
-  box-shadow: none;
+body:has(> [data-living-home] [data-home-hero]) .header-content nav {
+  --nav-tray-fill: rgb(255 255 255 / 7%);
+  --nav-indicator-fill: rgb(255 255 255 / 17%);
+  --nav-current-color: #fff;
 }
 body:has(> [data-living-home] [data-home-hero]) .header-content nav a:hover,
 body:has(> [data-living-home] [data-home-hero]) .header-icon-button:is(:hover, :focus-visible, [aria-expanded='true']),
@@ -1413,8 +1405,7 @@ body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-
   .header-content nav {
     grid-column: 1 / -1;
     grid-row: 2;
-    width: min(760px, 100%);
-    gap: 16px;
+    width: min(680px, 100%);
   }
 }
 @media (max-width: 900px) {
@@ -1430,9 +1421,6 @@ body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-
   .header-content {
     gap: 8px 16px;
     min-height: 80px;
-  }
-  .header-content nav {
-    gap: 8px;
   }
   .header-content nav a {
     padding-inline: 12px;
@@ -3331,12 +3319,11 @@ body:has([class*="feedPageWrapper"]) #content {
 .profile-layout {
   display: grid;
   grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-  gap: 28px;
+  gap: 24px 28px;
   align-items: start;
 }
 .profile-aside {
-  position: sticky;
-  top: 24px;
+  grid-column: 1;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -3344,7 +3331,18 @@ body:has([class*="feedPageWrapper"]) #content {
   border: 1px solid var(--color-border);
   border-radius: 28px;
   background: var(--color-background);
-  box-shadow: 0 24px 48px -36px var(--color-overlay);
+}
+.profile-main,
+.profile-notice,
+.profile-travel {
+  grid-column: 2;
+  min-width: 0;
+}
+.profile-layout:has(> .profile-travel) > :is(.profile-aside, .profile-main) {
+  align-self: stretch;
+}
+.profile-main > .profile-card {
+  flex: 1;
 }
 .profile-identity {
   display: flex;
@@ -3436,7 +3434,20 @@ body:has([class*="feedPageWrapper"]) #content {
   border: 1px solid var(--color-border);
   border-radius: 28px;
   background: var(--color-background);
-  box-shadow: 0 24px 48px -40px var(--color-overlay);
+}
+.account-page :is(.profile-aside, .profile-card) {
+  box-shadow: 0 0 18px rgb(23 36 44 / 6%);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.account-page :is(.profile-aside, .profile-card):focus-within {
+  border-color: var(--color-teal-soft);
+  box-shadow: 0 0 22px rgb(0 108 99 / 11%);
+}
+@media (hover: hover) {
+  .account-page :is(.profile-aside, .profile-card):hover {
+    border-color: var(--color-teal-soft);
+    box-shadow: 0 0 22px rgb(0 108 99 / 11%);
+  }
 }
 .profile-card h2 {
   margin-bottom: 6px;
@@ -3726,9 +3737,11 @@ body:has([class*="feedPageWrapper"]) #content {
     gap: 20px;
   }
   .profile-aside {
-    position: static;
     min-width: 0;
     padding: 20px;
+  }
+  .profile-layout > :is(.profile-main, .profile-notice, .profile-travel) {
+    grid-column: 1;
   }
   .profile-identity {
     flex-direction: row;

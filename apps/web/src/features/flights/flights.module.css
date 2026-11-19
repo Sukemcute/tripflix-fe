@@ -2529,9 +2529,13 @@
 
   .banner {
     grid-template-columns: minmax(0, 1fr);
-    align-content: start;
-    min-height: 0;
+    grid-template-rows: 1fr auto;
+    min-height: 440px;
     padding: 32px 20px 0;
+  }
+
+  .bannerCopy {
+    align-self: start;
   }
 
   .banner::before {
@@ -2558,7 +2562,7 @@
 
   .feature {
     position: relative;
-    margin: 96px -20px 0;
+    margin: 88px -20px 0;
     padding: 12px;
     border-top-right-radius: var(--cutout);
   }
@@ -2578,6 +2582,7 @@
 
   .featureCard {
     width: auto;
+    min-height: 112px;
   }
 
   .row {

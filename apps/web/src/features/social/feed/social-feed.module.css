@@ -30,12 +30,30 @@
 
 .recommendModeTabs {
   /* Lớp kính mờ giữ chữ tab dễ đọc trên mặt nước của trang Cảm hứng. */
-  width: fit-content;
-  max-width: 100%;
-  padding: 4px;
-  border-radius: 14px;
+  --tabs-radius: 14px;
+  --tabs-inset: 4px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: var(--tabs-inset);
+  border-radius: var(--tabs-radius);
   background: var(--water-glass, transparent);
   backdrop-filter: blur(10px);
+}
+
+.recommendModeTabs .composerTagBtn {
+  justify-content: center;
+  min-height: 40px;
+  padding-inline: 6px;
+  border-radius: calc(var(--tabs-radius) - var(--tabs-inset));
+  text-align: center;
+}
+
+@container (max-width: 420px) {
+  .recommendModeTabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .feedViewSlot {
@@ -1270,6 +1288,7 @@
 }
 
 .mainFeedColumn {
+  container-type: inline-size;
   position: relative;
   z-index: 1;
   height: 100%;

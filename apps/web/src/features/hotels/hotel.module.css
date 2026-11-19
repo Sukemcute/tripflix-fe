@@ -221,7 +221,6 @@
   max-width: 28rem;
   overflow-x: auto;
   padding: 4px;
-  scrollbar-width: thin;
 }
 .photoThumbnails button {
   position: relative;

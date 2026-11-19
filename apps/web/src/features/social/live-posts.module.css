@@ -1187,6 +1187,7 @@
 
 .volumeSliderWrap {
   width: 0;
+  height: 12px;
   opacity: 0;
   overflow: hidden;
   display: flex;
@@ -1210,8 +1211,47 @@
   width: 66px;
   height: 4px;
   margin: 0;
-  accent-color: rgb(255 255 255);
+  appearance: none;
+  background: transparent;
   cursor: pointer;
+}
+
+.volumeRangeInput::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--color-background) var(--volume-progress), color-mix(in srgb, var(--color-background) 30%, transparent) var(--volume-progress));
+}
+
+.volumeRangeInput::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-coral);
+  box-shadow: none;
+}
+
+.volumeRangeInput::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-background) 30%, transparent);
+}
+
+.volumeRangeInput::-moz-range-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-background);
+}
+
+.volumeRangeInput::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-coral);
+  box-shadow: none;
 }
 
 .stageTopControls {
@@ -2547,13 +2587,39 @@ a.avatarSmall {
   gap: 16px;
 }
 
-.composerModalCard::-webkit-scrollbar {
-  width: 6px;
+@media (prefers-reduced-motion: no-preference) {
+  .modalBackdrop {
+    animation: composer-fade 180ms ease-out both;
+  }
+
+  .modalBackdrop > .composerModalCard {
+    animation: composer-slide 180ms ease-out both;
+  }
+
+  .modalBackdrop[data-closing] {
+    animation-name: composer-fade-out;
+  }
+
+  .modalBackdrop[data-closing] > .composerModalCard {
+    animation-name: composer-slide-out;
+  }
 }
 
-.composerModalCard::-webkit-scrollbar-thumb {
-  background: var(--iv-border);
-  border-radius: 999px;
+@keyframes composer-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes composer-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes composer-slide {
+  from { translate: 0 -6px; }
+}
+
+@keyframes composer-slide-out {
+  to { translate: 0 -6px; }
 }
 
 .composerSection {

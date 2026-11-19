@@ -17,7 +17,7 @@ export default function HomeScreen({ queryError }: { queryError?: string }) {
         )}
         <InspirationView />
       </div>
-      {/* Cùng ảnh nền Hạ Long với trang chủ, làm mờ và tối để phần nội dung nổi lên. */}
+      {/* Cùng ảnh nền Hạ Long với trang chủ, làm mờ để phần nội dung nổi lên. */}
       <div className={styles.inspirationBackdrop} aria-hidden="true">
         <picture>
           <source media="(max-width: 640px)" srcSet="/brand/hero-layered-v1/ha-long-960.webp" />

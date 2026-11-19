@@ -711,7 +711,6 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
   function splash(point: Point) {
     addRipple(point);
     disturbance = { x: point.x, y: point.y, age: 0 };
-    controls.setAttribute('data-ripple-used', '');
   }
 
   function feed(point: Point) {
@@ -726,7 +725,6 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
       });
     }
     addRipple(point, 72);
-    controls.setAttribute('data-food-used', '');
   }
 
   function draw(now: number) {
@@ -1019,17 +1017,14 @@ export function LivingBackground() {
   return (
     <>
       <canvas ref={canvasRef} className={styles.water} width={1} height={1} aria-hidden="true" />
-      <span className={styles.caption} aria-hidden="true">Việt Nam, một ngày dạo chơi.</span>
       <button
         ref={controlsRef}
         type="button"
         className={styles.waterControls}
-        aria-label="Tương tác với mặt nước"
         aria-keyshortcuts="Enter Space"
         aria-describedby="water-keys"
       >
-        <span className={styles.rippleHint} aria-hidden="true">chạm vào nước</span>
-        <span className={styles.foodHint} aria-hidden="true">giữ để thả mồi</span>
+        Tương tác với mặt nước
         <span id="water-keys" className="sr-only">Enter để tạo gợn sóng. Phím cách để thả mồi.</span>
       </button>
       <span ref={hoverRef} className={styles.waterReadout} aria-hidden="true" hidden />
