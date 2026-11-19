@@ -103,6 +103,7 @@ import { ReelSeekBar } from './reel-seek-bar';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
+import { RelativeTime } from './relative-time-label';
 import styles from './live-posts.module.css';
 import { PostImagePicker } from './composer/post-image-picker';
 import { usePostImages } from './composer/use-post-images';
@@ -3137,7 +3138,7 @@ function CommentNode({
               <span className={styles.authorRoleTag}>{vi.api.immersiveAuthorBadge}</span>
             )}
             <span aria-hidden="true">·</span>
-            <span>{formatDateVi(comment.createdAt)}</span>
+            <RelativeTime value={comment.createdAt} />
             {comment.isEdited && <span>({vi.api.commentEdited})</span>}
           </div>
 
