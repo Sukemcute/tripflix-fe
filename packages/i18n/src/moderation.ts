@@ -3,7 +3,7 @@ export const moderation = {
     videoTitle: 'Khung hình video',
     samplingTitle: 'Trích khung hình video',
     samplingNote:
-      'Kiểm tra các khung hình lấy mẫu, không phải mọi khung hình. Nội dung giữa các mốc vẫn có thể bị bỏ sót; chưa kiểm tra OCR hoặc âm thanh.',
+      'Kiểm tra các khung hình lấy mẫu, không phải mọi khung hình. Nội dung giữa các mốc vẫn có thể bị bỏ sót; chữ chỉ được đọc trên ảnh bìa video, không xử lý âm thanh.',
     coverageTitle: 'Phạm vi lấy mẫu video',
     framesChecked: 'khung hình đã có kết quả',
     maxGap: 'Khoảng cách mẫu lớn nhất',
@@ -19,7 +19,11 @@ export const moderation = {
     caption: 'Caption',
     image: 'Ảnh',
     poster: 'Poster video',
-    posterNote: 'Chỉ kiểm tra ảnh poster, chưa quét các khung hình hoặc âm thanh trong video.',
+    posterNote: 'Kết quả kiểm tra hình ảnh poster; phần chữ trên ảnh bìa có kết quả OCR riêng.',
+    coverOcr: 'Chữ trên ảnh bìa video',
+    coverOcrNote:
+      'Chỉ đọc chữ hiển thị trên ảnh bìa video. Không đọc chữ ở các khung hình khác hoặc âm thanh.',
+    noCoverText: 'Không đọc được chữ nào trên ảnh bìa.',
     loading: 'Đang tải kết quả quét…',
     refresh: 'Làm mới',
     retry: 'Thử quét lại',
@@ -56,6 +60,7 @@ export const moderation = {
       extraction_timeout: 'Worker trích khung hình chưa phản hồi sau các lần thử.',
       video_too_long: 'Video vượt phạm vi kiểm tra tối đa 5 phút.',
       source_too_large: 'File nguồn vượt giới hạn 1 GB cho lượt trích khung hình.',
+      ocr_unavailable: 'Chưa đọc được chữ trên ảnh bìa. Có thể thử lại.',
     },
     categories: {
       sexual: 'Nội dung tình dục',

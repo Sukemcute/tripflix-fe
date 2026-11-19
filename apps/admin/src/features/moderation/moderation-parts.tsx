@@ -193,13 +193,15 @@ export function ModerationPartsEvidence({
       <div className={styles.grid}>
         {data.items.map((part, index) => {
           const title =
-            part.modality === 'video_frame'
-              ? `${text.videoTitle} · ${frameTimestamp(part.timestampMs ?? 0)}`
-              : part.modality === 'video_sampling'
-                ? text.samplingTitle
-                : part.kind === 'caption'
-                  ? text.caption
-                  : `${part.mediaKind === 'video' ? text.poster : text.image} ${data.items.slice(0, index + 1).filter((p) => p.kind === 'image').length}`;
+            part.modality === 'video_cover_ocr'
+              ? text.coverOcr
+              : part.modality === 'video_frame'
+                ? `${text.videoTitle} · ${frameTimestamp(part.timestampMs ?? 0)}`
+                : part.modality === 'video_sampling'
+                  ? text.samplingTitle
+                  : part.kind === 'caption'
+                    ? text.caption
+                    : `${part.mediaKind === 'video' ? text.poster : text.image} ${data.items.slice(0, index + 1).filter((p) => p.kind === 'image').length}`;
           const flags = Object.entries(part.categories).filter(([, flagged]) => flagged);
           return (
             <article
@@ -234,9 +236,18 @@ export function ModerationPartsEvidence({
                   <p className={styles.asset}>
                     {text.asset}: <code>{part.assetId}</code>
                   </p>
+                  {part.modality === 'video_cover_ocr' && (
+                    <>
+                      <p className={styles.note}>{text.coverOcrNote}</p>
+                      {(part.status === 'passed' || part.status === 'flagged') && (
+                        <p className={styles.body}>{part.text?.trim() || text.noCoverText}</p>
+                      )}
+                    </>
+                  )}
                   {part.mediaKind === 'video' &&
                     part.modality !== 'video_frame' &&
-                    part.modality !== 'video_sampling' && <p className={styles.note}>{text.posterNote}</p>}
+                    part.modality !== 'video_sampling' &&
+                    part.modality !== 'video_cover_ocr' && <p className={styles.note}>{text.posterNote}</p>}
                   {part.modality === 'video_frame' && part.playbackUrl && (
                     <button
                       type="button"

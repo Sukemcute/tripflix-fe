@@ -14,4 +14,5 @@ export const ModerationPartDtoModality = {
   video_poster: 'video_poster',
   video_frame: 'video_frame',
   video_sampling: 'video_sampling',
+  video_cover_ocr: 'video_cover_ocr',
 } as const;
