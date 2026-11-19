@@ -6,6 +6,7 @@
  */
 import type { CheckoutItemDto } from './checkoutItemDto';
 import type { TripDtoStatus } from './tripDtoStatus';
+import type { TripDtoTripStatus } from './tripDtoTripStatus';
 
 export interface TripDto {
   orderId: string;
@@ -35,5 +36,10 @@ export interface TripDto {
    * @nullable
    */
   endDate: string | null;
+  /**
+   * Chỉ đơn đã thanh toán: completed khi hôm nay (giờ Việt Nam) đã qua ngày trả phòng / ngày bay cuối, hiện "Đã đi". Đơn huỷ, hoàn tiền, chưa trả là null
+   * @nullable
+   */
+  tripStatus: TripDtoTripStatus;
   items: CheckoutItemDto[];
 }
