@@ -56,7 +56,8 @@
   --iv-control-bg: var(--color-background);
   --iv-shadow: 0 8px 28px -12px rgba(24, 36, 43, 0.12);
 
-  background: var(--iv-page-bg);
+  /* Trong suốt để mặt nước tĩnh của trang Cảm hứng hiện quanh khung Reels bo góc. */
+  background: transparent;
   color: var(--iv-text);
   flex: 1;
   width: 100%;
