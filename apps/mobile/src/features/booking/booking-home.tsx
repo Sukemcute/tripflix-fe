@@ -82,7 +82,9 @@ export function UpcomingTrips() {
               </Txt>
             )}
           </View>
-          <Badge tone={trip.status === 'paid' ? 'teal' : 'sun'}>{vi.commerce.status[trip.status]}</Badge>
+          <Badge tone={trip.status === 'paid' ? 'teal' : 'sun'}>
+            {trip.tripStatus === 'completed' ? vi.commerce.tripCompleted : vi.commerce.status[trip.status]}
+          </Badge>
         </Pressable>
       ))}
     </View>
