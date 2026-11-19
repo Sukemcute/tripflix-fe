@@ -6,7 +6,7 @@ import { Image } from 'expo-image';
 import { VideoView, type VideoPlayer } from 'expo-video';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import {
   GestureDetector,
   useCompetingGestures,
@@ -196,12 +196,11 @@ export function ReelSlide({
   const nextHeart = useRef(0);
   const [likeRequest, setLikeRequest] = useState(0);
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
   const commentsProgress = useSharedValue(0);
   const commentsVideo = layoutReelCommentsVideo({
     aspect: item.playback.aspect,
     slideWidth: width,
-    windowHeight,
+    windowHeight: height,
     topInset: insets.top + spacing.sm,
   });
   const stageStyle = useAnimatedStyle(() => {
@@ -335,6 +334,7 @@ export function ReelSlide({
         isSample={isSample}
         isHidden={isActive && isHidden}
         commentsProgress={commentsProgress}
+        viewportHeight={height}
         likeRequest={likeRequest}
         onCommentsVisibilityChange={onCommentsVisibilityChange}
       />

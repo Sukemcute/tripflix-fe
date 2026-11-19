@@ -1,10 +1,10 @@
 import { getReelCommentsSheetHeight } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
-import { router } from 'expo-router';
+import { router, useIsFocused } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useCallback, useEffect, useRef, type ComponentRef, type ReactNode } from 'react';
-import { Keyboard, Modal, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useCallback, useEffect, useEffectEvent, useRef, type ComponentRef, type ReactNode } from 'react';
+import { BackHandler, Keyboard, Modal, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import {
   GestureDetector,
   GestureHandlerRootView,
@@ -40,6 +40,8 @@ export function ReelCommentsPanel({
   onSend,
   onClose,
   hasBackdrop = false,
+  inline = false,
+  viewportHeight,
   loginReturnTo = '/(tabs)',
   showSummary = false,
   focusCommentId,
@@ -57,6 +59,10 @@ export function ReelCommentsPanel({
   onClose: () => void;
   /** Over a video the sheet needs no dimming; over a white page it would otherwise blend in. */
   hasBackdrop?: boolean;
+  /** Reels keep the sheet in their screen so it participates in stack navigation. */
+  inline?: boolean;
+  /** Actual reel bounds, excluding navigation below the screen. */
+  viewportHeight?: number;
   loginReturnTo?: string;
   /** Chỉ reel bật; trang chi tiết bài dùng chung khung này nhưng không có AI summary. */
   showSummary?: boolean;
@@ -65,15 +71,22 @@ export function ReelCommentsPanel({
   focusThreadId?: string;
 }) {
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  const isFocused = useIsFocused();
+  const { height: windowHeight } = useWindowDimensions();
+  const height = inline ? Math.min(viewportHeight ?? windowHeight, windowHeight) : windowHeight;
+  const viewportBottomGap = inline ? Math.max(0, windowHeight - height) : 0;
   const sheetHeight = getReelCommentsSheetHeight(height);
   const translateY = useSharedValue(height);
   const startOffset = useSharedValue(0);
   const closing = useSharedValue(false);
+  const afterClose = useRef<(() => void) | undefined>(undefined);
   const canDrag = useDerivedValue(() => !closing.get());
   const finishClose = () => {
     Keyboard.dismiss();
     onClose();
+    const navigate = afterClose.current;
+    afterClose.current = undefined;
+    if (navigate) requestAnimationFrame(navigate);
   };
   // Every way of closing shares this path, so the modal only unmounts once the sheet has left.
   const animateOut = (velocity: number) => {
@@ -90,6 +103,15 @@ export function ReelCommentsPanel({
     Keyboard.dismiss();
     animateOut(0);
   };
+  const onHardwareBack = useEffectEvent(() => {
+    close();
+    return true;
+  });
+  useEffect(() => {
+    if (!inline || !visible || !isFocused) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => onHardwareBack());
+    return () => subscription.remove();
+  }, [inline, visible, isFocused]);
   const move = (event: PanGestureActiveEvent) => {
     'worklet';
     translateY.set(Math.max(0, startOffset.get() + event.translationY));
@@ -139,13 +161,14 @@ export function ReelCommentsPanel({
   // Khung đứng yên; chỉ phần đáy dãn theo bàn phím từng khung hình, nên ô nhập nằm ngay trên bàn phím
   // còn danh sách bình luận thấp lại. Lúc bàn phím mở, nó đã che thanh Home nên không cần đệm cho thanh đó.
   const keyboard = useAnimatedKeyboard();
-  const restingPadding = Math.max(insets.bottom, spacing.sm);
+  // An inline reel ends above the tab bar, which already contains the bottom safe area.
+  const restingPadding = inline ? spacing.sm : Math.max(insets.bottom, spacing.sm);
   const title = t('mobile.reelComments.title', {
     count: new Intl.NumberFormat('vi-VN').format(commentCount ?? comments.length),
   });
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.get() }],
-    paddingBottom: Math.max(keyboard.height.get() + spacing.sm, restingPadding),
+    paddingBottom: Math.max(keyboard.height.get() - viewportBottomGap + spacing.sm, restingPadding),
   }));
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: interpolate(translateY.get(), [0, sheetHeight], [1, 0], Extrapolation.CLAMP),
@@ -179,9 +202,8 @@ export function ReelCommentsPanel({
     </GestureDetector>
   );
   if (!visible) return null;
-  return (
-    <Modal transparent visible animationType="none" onRequestClose={close}>
-      <GestureHandlerRootView style={styles.root}>
+  const panel = (
+      <GestureHandlerRootView style={inline ? styles.inlineRoot : styles.root}>
         {hasBackdrop && <Animated.View pointerEvents="none" style={[styles.backdrop, backdropStyle]} />}
         <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />
         <View pointerEvents="box-none" style={styles.keyboard}>
@@ -214,6 +236,17 @@ export function ReelCommentsPanel({
                 onLoginRequired={() => {
                   close();
                   router.push({ pathname: '/login', params: { returnTo: loginReturnTo } });
+                }}
+                onOpenProfile={(authorId) => {
+                  if (closing.get()) return;
+                  const openProfile = () => router.push({ pathname: '/user/[id]', params: { id: authorId } });
+                  if (inline) {
+                    Keyboard.dismiss();
+                    openProfile();
+                  } else {
+                    afterClose.current = openProfile;
+                    close();
+                  }
                 }}
                 onModerationDetails={() => {
                   close();
@@ -254,12 +287,15 @@ export function ReelCommentsPanel({
           </Animated.View>
         </View>
       </GestureHandlerRootView>
-    </Modal>
+  );
+  return inline ? panel : (
+    <Modal transparent visible animationType="none" onRequestClose={close}>{panel}</Modal>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  inlineRoot: { ...StyleSheet.absoluteFill, zIndex: 10 },
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: colors.overlay },
   keyboard: { flex: 1, justifyContent: 'flex-end' },
   sheet: {

@@ -140,6 +140,7 @@ export function ReelSocialOverlay({
   isSample,
   isHidden = false,
   commentsProgress,
+  viewportHeight,
   likeRequest = 0,
   onCommentsVisibilityChange,
 }: {
@@ -148,6 +149,7 @@ export function ReelSocialOverlay({
   isSample: boolean;
   isHidden?: boolean;
   commentsProgress: SharedValue<number>;
+  viewportHeight: number;
   /** Tăng lên mỗi lần nhấn đúp video: thả tim nếu chưa thả, đã thả thì giữ nguyên. */
   likeRequest?: number;
   onCommentsVisibilityChange: (visible: boolean) => void;
@@ -527,6 +529,8 @@ export function ReelSocialOverlay({
         />
       )}
       <ReelCommentsPanel
+        inline
+        viewportHeight={viewportHeight}
         visible={hasComments}
         openProgress={commentsProgress}
         postId={postId}
