@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import Image from 'next/image';
 import { useQueryClient, useMutation, useQuery, type InfiniteData } from '@tanstack/react-query';
 import { vi, t } from '@tripflix/i18n';
 import {
@@ -24,6 +23,7 @@ import { type FeedNavFilter } from './floating-nav-rail';
 import { ItinerarySidebarPanel } from './itinerary-sidebar-panel';
 import { PostCard } from './post-card';
 import { FeedHighlightFrame } from './feed-highlight-frame';
+import { GalleryLightbox } from './gallery-lightbox';
 import { ShareMenu, type ShareMenuHandle } from '../share-menu';
 import { getPostImages } from '../post-cover';
 import { ApiErrorNotice } from '@/features/shared/api-state';
@@ -219,10 +219,7 @@ export function SocialFeedView({
   useEffect(() => {
     if (!galleryState) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        setGalleryState(null);
-      } else if (e.key === 'ArrowLeft') {
+      if (e.key === 'ArrowLeft') {
         e.preventDefault();
         setGalleryState((prev) => (prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null));
       } else if (e.key === 'ArrowRight') {
@@ -237,6 +234,10 @@ export function SocialFeedView({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [galleryState, activeGalleryImages.length]);
+
+  const closeGallery = useCallback(() => {
+    setGalleryState(null);
+  }, []);
 
   // Active post for comment thread (dong bo style Reels)
   const activeCommentPost = useMemo(() => {
@@ -748,7 +749,12 @@ export function SocialFeedView({
 
       {/* 2. Center Column: Main Social Feed (Cuộn mượt độc lập) */}
       <FeedHighlightFrame scrollRef={mainFeedRef} postId={isRightOpen ? activeCommentPost?.id : undefined} isVisible={isVisible}>
-      <main ref={mainFeedRef} className={styles.mainFeedColumn} aria-label="Bảng tin du lịch">
+      <main
+        ref={mainFeedRef}
+        className={styles.mainFeedColumn}
+        style={galleryState ? { overflow: 'hidden' } : undefined}
+        aria-label="Bảng tin du lịch"
+      >
         {isSearchMode && onBackToResults && (
           <div className={styles.searchBackBar}>
             <button type="button" className={styles.searchBackButton} onClick={onBackToResults}>
@@ -1045,93 +1051,26 @@ export function SocialFeedView({
         />
       )}
 
-      {/* 4. In-Feed Image Gallery Lightbox Modal */}
-      {galleryState && activeGalleryPost && activeGalleryImages[galleryState.index] && (() => {
-        const currentImg = activeGalleryImages[galleryState.index];
-        if (!currentImg) return null;
-        return (
-          <dialog
-            open
-            className={reelsStyles.galleryStageOverlay}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 9999,
-              margin: 0,
-              padding: 0,
-              border: 'none',
-              width: '100%',
-              height: '100%',
-              maxWidth: 'none',
-              maxHeight: 'none',
-              background: 'color-mix(in srgb, var(--color-ink) 92%, transparent)',
-            }}
-            aria-modal="true"
-            aria-label={activeGalleryPost.title}
-          >
-            <div className={reelsStyles.galleryTopBar}>
-              <span className={reelsStyles.galleryCountPill}>
-                {galleryState.index + 1} / {activeGalleryImages.length}
-              </span>
-              <button
-                type="button"
-                className={reelsStyles.galleryCloseBtn}
-                aria-label={vi.api.immersiveCloseGallery}
-                data-tooltip={vi.api.immersiveCloseGallery}
-                onClick={() => setGalleryState(null)}
-              >
-                <SocialIcon name="close" size={18} />
-              </button>
-            </div>
-
-            <div className={reelsStyles.galleryContainFrame}>
-              <Image
-                key={currentImg.src}
-                src={currentImg.src}
-                alt={activeGalleryPost.title}
-                fill
-                className={reelsStyles.galleryContainImg}
-                sizes="100vw"
-                priority
-                unoptimized={currentImg.src.startsWith('http')}
-              />
-            </div>
-
-            {activeGalleryImages.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  className={`${reelsStyles.gallerySlideNavBtn} ${reelsStyles.gallerySlidePrev}`}
-                  disabled={galleryState.index <= 0}
-                  aria-label={vi.api.immersivePrevSlide}
-                  data-tooltip={vi.api.immersivePrevSlide}
-                  onClick={() =>
-                    setGalleryState((prev) =>
-                      prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null,
-                    )
-                  }
-                >
-                  <SocialIcon name="chevronLeft" size={20} />
-                </button>
-                <button
-                  type="button"
-                  className={`${reelsStyles.gallerySlideNavBtn} ${reelsStyles.gallerySlideNext}`}
-                  disabled={galleryState.index >= activeGalleryImages.length - 1}
-                  aria-label={vi.api.immersiveNextSlide}
-                  data-tooltip={vi.api.immersiveNextSlide}
-                  onClick={() =>
-                    setGalleryState((prev) =>
-                      prev ? { ...prev, index: Math.min(activeGalleryImages.length - 1, prev.index + 1) } : null,
-                    )
-                  }
-                >
-                  <SocialIcon name="chevronRight" size={20} />
-                </button>
-              </>
-            )}
-          </dialog>
-        );
-      })()}
+      {/* 4. In-Feed Image Gallery Lightbox Modal (top layer via dialog.showModal) */}
+      <GalleryLightbox
+        isOpen={Boolean(galleryState && activeGalleryPost && activeGalleryImages[galleryState.index])}
+        label={activeGalleryPost?.title ?? vi.api.immersiveCloseGallery}
+        imageSrc={galleryState ? activeGalleryImages[galleryState.index]?.src : undefined}
+        currentIndex={galleryState?.index ?? 0}
+        total={activeGalleryImages.length}
+        onClose={closeGallery}
+        onPrev={() =>
+          setGalleryState((prev) => (prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null))
+        }
+        onNext={() =>
+          setGalleryState((prev) =>
+            prev ? { ...prev, index: Math.min(activeGalleryImages.length - 1, prev.index + 1) } : null,
+          )
+        }
+        closeIcon={<SocialIcon name="close" size={18} />}
+        prevIcon={<SocialIcon name="chevronLeft" size={20} />}
+        nextIcon={<SocialIcon name="chevronRight" size={20} />}
+      />
 
       <ShareMenu ref={shareMenuRef} side="above" onShared={handleShared} />
     </div>

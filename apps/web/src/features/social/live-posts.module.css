@@ -906,27 +906,60 @@
   border-radius: 0;
 }
 
-/* In-Stage Image Gallery Overlay (object-fit: contain) */
+/* In-Stage Image Gallery Overlay (top layer qua <dialog>.showModal(), giới hạn khung vừa phải) */
 
 .galleryStageOverlay {
-  position: absolute;
+  --gallery-max-width: 960px;
+  --gallery-max-height: 80vh;
+  --gallery-mobile-max-width: 92vw;
+  --gallery-control-gap: 12px;
+  position: fixed;
   inset: 0;
-  z-index: 6;
-  background: rgb(11 12 15);
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 16px;
+  box-sizing: border-box;
+  border: 0;
+  background: var(--color-transparent);
+  overscroll-behavior: contain;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.galleryStageOverlay:not([open]) {
+  display: none;
+}
+
+.galleryStageOverlay::backdrop {
+  background: color-mix(in srgb, var(--color-ink) 92%, transparent);
+}
+
+.galleryFrame {
+  display: grid;
+  grid-template-columns: auto minmax(0, auto) auto;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    '. top .'
+    'prev media next';
+  align-items: center;
+  justify-items: center;
+  gap: var(--gallery-control-gap);
+  max-width: 100%;
+  max-height: 100%;
+}
+
 .galleryTopBar {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  right: 14px;
-  z-index: 7;
+  grid-area: top;
+  width: 100%;
+  min-width: fit-content;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--gallery-control-gap);
   pointer-events: none;
 }
 
@@ -963,20 +996,25 @@
 }
 
 .galleryContainFrame {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  grid-area: media;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .galleryContainImg {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(var(--gallery-max-width), calc(100vw - 144px));
+  max-height: var(--gallery-max-height);
   object-fit: contain;
+  border-radius: 12px;
 }
 
 .gallerySlideNavBtn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 7;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1002,11 +1040,35 @@
 }
 
 .gallerySlidePrev {
-  left: 12px;
+  grid-area: prev;
 }
 
 .gallerySlideNext {
-  right: 12px;
+  grid-area: next;
+}
+
+@media (max-width: 767px) {
+  .galleryFrame {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      'top top'
+      'media media'
+      'prev next';
+  }
+
+  .galleryContainImg {
+    max-width: var(--gallery-mobile-max-width);
+    max-height: min(var(--gallery-max-height), calc(100dvh - 132px));
+  }
+
+  .gallerySlidePrev {
+    justify-self: end;
+  }
+
+  .gallerySlideNext {
+    justify-self: start;
+  }
 }
 
 /* Top-Left Volume Control + Slider & Top-Right Hover Controls (More / Fullscreen) */
