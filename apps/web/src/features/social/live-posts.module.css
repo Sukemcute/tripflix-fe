@@ -2141,6 +2141,19 @@ a.avatarSmall {
   word-break: break-word;
 }
 
+.commentMentionLink {
+  color: var(--color-coral-ink);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.commentMentionLink:hover,
+.commentMentionLink:focus-visible {
+  color: var(--color-coral-ink);
+  text-decoration: none;
+}
+
 .panelCommentActions {
   display: flex;
   align-items: center;
