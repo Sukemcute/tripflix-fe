@@ -6,6 +6,7 @@ export * from './admin-search-vocab-gaps/admin-search-vocab-gaps';
 export * from './analytics/analytics';
 export * from './auth/auth';
 export * from './checkout/checkout';
+export * from './content-saved-itineraries/content-saved-itineraries';
 export * from './discovery/discovery';
 export * from './feed/feed';
 export * from './flights/flights';
