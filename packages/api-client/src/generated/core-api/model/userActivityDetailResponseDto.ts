@@ -6,6 +6,7 @@
  */
 import type { UserActivityCountsDto } from './userActivityCountsDto';
 import type { UserActivityEventDto } from './userActivityEventDto';
+import type { UserProfileStatsDto } from './userProfileStatsDto';
 
 export interface UserActivityDetailResponseDto {
   userId: string;
@@ -14,6 +15,8 @@ export interface UserActivityDetailResponseDto {
   email: string;
   /** Ngày đăng ký */
   createdAt: string;
+  /** Số liệu hồ sơ từ trước tới nay */
+  profile: UserProfileStatsDto;
   counts: UserActivityCountsDto;
   /** 50 sự kiện gần nhất trong khoảng */
   recentEvents: UserActivityEventDto[];
