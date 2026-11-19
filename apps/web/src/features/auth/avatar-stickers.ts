@@ -50,7 +50,7 @@ export const MAX_STICKER_SCALE = 2.4;
 export const MIN_NORM_POS = -0.18;
 export const MAX_NORM_POS = 1.18;
 
-export const AVATAR_DECOR_EVENT = 'tripflix:avatar-decor-updated';
+// Bản cũ chỉ lưu trong máy (trước khi có API); chỉ còn đọc để chuyển lên server một lần.
 const STORAGE_KEY = 'tripflix:avatar-decor:v1';
 
 function toSvgDataUrl(svgBody: string, viewBox = '0 0 120 120'): string {
@@ -485,15 +485,17 @@ export function loadUserAvatarDecor(userId?: string | null): StoredAvatarDecor {
   }
 }
 
-export function saveUserAvatarDecor(userId: string, decor: StoredAvatarDecor): void {
+/** Bỏ bản trang trí cũ trong máy sau khi đã chuyển lên server (TF109). */
+export function clearLegacyAvatarDecor(userId: string): void {
   if (typeof window === 'undefined') return;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    const map = raw ? (JSON.parse(raw) as Record<string, StoredAvatarDecor>) : {};
-    map[userId] = decor;
-    map.active = decor;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
-    window.dispatchEvent(new CustomEvent(AVATAR_DECOR_EVENT, { detail: { userId, decor } }));
+    if (!raw) return;
+    const map = JSON.parse(raw) as Record<string, StoredAvatarDecor>;
+    delete map[userId];
+    delete map.active;
+    if (Object.keys(map).length === 0) window.localStorage.removeItem(STORAGE_KEY);
+    else window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
   } catch {
     // Bỏ qua nếu trình duyệt chặn localStorage.
   }
