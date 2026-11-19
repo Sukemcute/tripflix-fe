@@ -93,7 +93,7 @@ export const api = {
     'Bạn chưa đăng nhập: sở thích lưu trên trình duyệt này và sẽ được lưu vào tài khoản sau khi bạn đăng nhập.',
   onboardingLocalSaved: 'Đã lưu sở thích trên trình duyệt này. Đăng nhập để lưu vào tài khoản.',
   onboardingStorageError: 'Không lưu được trên trình duyệt này. Lựa chọn vẫn còn trong phiên này.',
-  onboardingRedo: 'Làm lại khảo sát',
+  onboardingRedo: 'Làm khảo sát',
   onboardingWelcomeAccent: 'gu của bạn',
   onboardingInterestsAccent: 'xách ba lô',
   onboardingPaceAccent: 'nhịp nào',
