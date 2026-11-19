@@ -9,6 +9,7 @@ import {
   adminModerationControllerFailedScans,
   adminModerationControllerRetryScan,
   adminModerationControllerStats,
+  adminModerationControllerReviewLease,
 } from './generated/core-api/moderation-admin/moderation-admin';
 import {
   reportsControllerReportPost,
@@ -26,6 +27,12 @@ import type {
 import { readEntity } from './response';
 
 export const moderationApi = {
+  async reviewLease(id: string, action: 'claim' | 'renew' | 'release', leaseId?: string) {
+    return readEntity(
+      (await adminModerationControllerReviewLease(encodeURIComponent(id), { action, leaseId })).data,
+      ['id', 'assigneeId', 'leaseId', 'leaseExpiresAt'],
+    );
+  },
   async stats(signal?: AbortSignal) {
     return readEntity((await adminModerationControllerStats({ signal })).data, [
       'pendingTotal',

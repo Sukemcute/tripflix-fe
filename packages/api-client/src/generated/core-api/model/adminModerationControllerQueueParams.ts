@@ -4,7 +4,9 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { AdminModerationControllerQueueAssignment } from './adminModerationControllerQueueAssignment';
 import type { AdminModerationControllerQueueReasonCode } from './adminModerationControllerQueueReasonCode';
+import type { AdminModerationControllerQueueSla } from './adminModerationControllerQueueSla';
 import type { AdminModerationControllerQueueSource } from './adminModerationControllerQueueSource';
 import type { AdminModerationControllerQueueStatus } from './adminModerationControllerQueueStatus';
 import type { AdminModerationControllerQueueTargetType } from './adminModerationControllerQueueTargetType';
@@ -19,4 +21,8 @@ export type AdminModerationControllerQueueParams = {
   limit?: number;
   /** Vị trí bắt đầu trang, lấy từ nextCursor */
   cursor?: string;
+  assignment?: AdminModerationControllerQueueAssignment;
+  sla?: AdminModerationControllerQueueSla;
+  /** @maxLength 160 */
+  search?: string;
 };

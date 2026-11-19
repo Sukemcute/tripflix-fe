@@ -4,14 +4,25 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { ModerationAuthorDto } from './moderationAuthorDto';
 import type { ModerationDetailDtoFlags } from './moderationDetailDtoFlags';
 import type { ModerationDetailDtoStatus } from './moderationDetailDtoStatus';
 import type { ModerationDetailDtoTargetType } from './moderationDetailDtoTargetType';
 import type { ModerationLogDto } from './moderationLogDto';
+import type { ModerationParentCommentDto } from './moderationParentCommentDto';
+import type { ModerationPostContextDto } from './moderationPostContextDto';
 import type { ModerationReportDto } from './moderationReportDto';
 import type { ModerationTargetDto } from './moderationTargetDto';
+import type { ReviewAuditDto } from './reviewAuditDto';
 
 export interface ModerationDetailDto {
+  /** @nullable */
+  assigneeId: string | null;
+  /** @nullable */
+  leaseId: string | null;
+  /** @nullable */
+  leaseExpiresAt: string | null;
+  dueAt: string;
   id: string;
   targetType: ModerationDetailDtoTargetType;
   targetId: string;
@@ -32,6 +43,16 @@ export interface ModerationDetailDto {
    * @nullable
    */
   targetPreview?: string | null;
+  /** @nullable */
+  postContext: ModerationPostContextDto | null;
+  /** @nullable */
+  parentComment: ModerationParentCommentDto | null;
+  /**
+   * Thông tin tài khoản tác giả, chỉ trả trong chi tiết dành cho staff.
+   * @nullable
+   */
+  author: ModerationAuthorDto | null;
+  reviewAudit: ReviewAuditDto[];
   /** @nullable */
   target: ModerationTargetDto | null;
   reports: ModerationReportDto[];
