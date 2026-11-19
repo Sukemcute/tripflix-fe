@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { t, vi } from '@tripflix/i18n';
-import { validateInspirationKeyword } from '@/features/discovery/inspiration-keyword';
+import { validateInspirationKeyword } from '../../discovery/inspiration-keyword';
 import { SocialIcon } from '../live-posts';
 import { readRecentSearches, removeRecentSearch, writeRecentSearches } from '../recent-searches';
 import type { FeedNavFilter } from './floating-nav-rail';
@@ -159,6 +159,16 @@ export function InstagramLeftDock({
             <SocialIcon name="video" size={21} />
           </button>
 
+          {/* Tạo bài: Reels mở composer video, tab Bài viết mở composer bài viết */}
+          <button
+            type="button"
+            className={`${styles.dockItemBtn} ${styles.dockCreateBtn}`}
+            aria-label={vi.api.dockCreatePost}
+            onClick={() => onOpenComposer(activeView === 'reels' ? 'video' : 'vlog')}
+          >
+            <SocialIcon name="plus" size={20} />
+          </button>
+
           <button
             type="button"
             className={getItemClass(activeFilter === 'following' && activeView === 'posts')}
@@ -181,16 +191,6 @@ export function InstagramLeftDock({
             }}
           >
             <SocialIcon name="bookmark" size={20} />
-          </button>
-
-          {/* Tạo bài: Reels mở composer video, tab Bài viết mở composer bài viết */}
-          <button
-            type="button"
-            className={`${styles.dockItemBtn} ${styles.dockCreateBtn}`}
-            aria-label={vi.api.dockCreatePost}
-            onClick={() => onOpenComposer(activeView === 'reels' ? 'video' : 'vlog')}
-          >
-            <SocialIcon name="plus" size={20} />
           </button>
         </div>
       </aside>

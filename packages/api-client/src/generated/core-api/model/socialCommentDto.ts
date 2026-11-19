@@ -33,10 +33,20 @@ export interface SocialCommentDto {
   /** @nullable */
   parentCommentId: string | null;
   /**
+   * ID bình luận hoặc phản hồi được trả lời trực tiếp
+   * @nullable
+   */
+  replyToCommentId: string | null;
+  /**
    * Tên hiển thị của người được trả lời
    * @nullable
    */
   replyToName?: string | null;
+  /**
+   * Đoạn trích tối đa 120 ký tự của câu được trả lời; null nếu câu đó không còn công khai
+   * @nullable
+   */
+  replyToExcerpt: string | null;
   body: string;
   isEdited: boolean;
   /** Số lượt thích bình luận */
