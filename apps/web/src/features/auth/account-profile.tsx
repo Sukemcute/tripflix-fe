@@ -140,7 +140,7 @@ export function ProfileInfoCard({ userId }: { userId: string }) {
         {!isEditing && (
           <button
             type="button"
-            className="primary-button profile-edit"
+            className="secondary-button profile-edit"
             onClick={() => {
               save.reset();
               setDraft(toDraft(data));
@@ -256,14 +256,6 @@ export function ProfileInfoCard({ userId }: { userId: string }) {
             <path d="M8 11V8a4 4 0 0 1 8 0v3" />
           </svg>
         </div>
-
-        <p className="profile-note">
-          <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 11v5M12 8h.01" />
-          </svg>
-          {vi.api.emailLocked}
-        </p>
 
         {save.error && Object.keys(fieldErrors).length === 0 && <ApiErrorNotice error={save.error} />}
         {save.isSuccess && !isEditing && <output className="auth-success">{vi.api.profileSaved}</output>}

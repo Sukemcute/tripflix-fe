@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { CommentMentionDto } from './commentMentionDto';
 
 export interface CreateCommentDto {
   /**
@@ -11,6 +12,11 @@ export interface CreateCommentDto {
    * @maxLength 2000
    */
   body: string;
+  /**
+   * Tag trong body gửi lên; mặc định []
+   * @maxItems 10
+   */
+  mentions?: CommentMentionDto[];
   /** ID bình luận cha nếu là phản hồi */
   parent_comment_id?: string;
 }

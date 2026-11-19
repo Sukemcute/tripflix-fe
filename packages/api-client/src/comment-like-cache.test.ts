@@ -12,6 +12,7 @@ const comment = (id: string, patch: Partial<SocialCommentDto> = {}): SocialComme
   authorId: 'author',
   parentCommentId: null,
   body: 'Hay quá',
+  mentions: [],
   isEdited: false,
   likeCount: 2,
   isLiked: false,

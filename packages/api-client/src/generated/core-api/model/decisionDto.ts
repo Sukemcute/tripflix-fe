@@ -11,5 +11,6 @@ export interface DecisionDto {
   reasonCode: DecisionDtoReasonCode;
   /** @maxLength 500 */
   reasonDetail?: string;
+  leaseId?: string;
   action: DecisionDtoAction;
 }
