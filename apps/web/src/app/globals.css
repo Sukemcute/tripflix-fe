@@ -4658,6 +4658,7 @@ img.avatar-outer-sticker,
 }
 /* Ba chấm đang tải (LoadingDots). */
 .loading-dots {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4690,6 +4691,26 @@ img.avatar-outer-sticker,
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+/* Tải cả trang/cả vùng: luôn căn giữa, chiều cao cố định. */
+.loading-dots-block {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 160px;
+}
+/* Trong nút: chữ và chấm chồng cùng một ô, nút giữ nguyên kích thước. */
+.loading-dots-slot {
+  display: inline-grid;
+  place-items: center;
+}
+.loading-dots-slot > * {
+  grid-area: 1 / 1;
+}
+.loading-dots-slot-hidden {
+  visibility: hidden;
 }
 @keyframes loading-dots-bounce {
   0%,

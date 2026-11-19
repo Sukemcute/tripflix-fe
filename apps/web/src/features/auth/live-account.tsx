@@ -41,7 +41,7 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
     return (
       <main id="content" className="ota-container results-page account-page">
         <section className="account-guest is-loading" aria-busy="true">
-          <output><LoadingDots /></output>
+          <LoadingDots isBlock />
         </section>
       </main>
     );

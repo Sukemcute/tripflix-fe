@@ -105,7 +105,7 @@ export function ProfileInfoCard({ userId }: { userId: string }) {
   if (profile.isPending)
     return (
       <section className="profile-card" aria-busy="true">
-        <output className="auth-hint"><LoadingDots /></output>
+        <LoadingDots isBlock />
       </section>
     );
   if (!profile.data)
