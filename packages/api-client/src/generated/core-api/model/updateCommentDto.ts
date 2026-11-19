@@ -4,8 +4,14 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { CommentMentionDto } from './commentMentionDto';
 
 export interface UpdateCommentDto {
+  /**
+   * Bỏ qua để giữ và kiểm lại tag cũ; [] để xóa tag
+   * @maxItems 10
+   */
+  mentions?: CommentMentionDto[];
   /**
    * Nội dung mới (tối đa 2.000 ký tự)
    * @maxLength 2000

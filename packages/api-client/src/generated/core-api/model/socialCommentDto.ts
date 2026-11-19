@@ -4,11 +4,17 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { CommentMentionDto } from './commentMentionDto';
 import type { SocialCommentDtoCreatorReview } from './socialCommentDtoCreatorReview';
 import type { SocialCommentDtoModerationState } from './socialCommentDtoModerationState';
 import type { SocialCommentDtoStatus } from './socialCommentDtoStatus';
 
 export interface SocialCommentDto {
+  /**
+   * Tag theo UTF-16; [] nếu không có hoặc nội dung bị che
+   * @maxItems 10
+   */
+  mentions: CommentMentionDto[];
   creatorReview?: SocialCommentDtoCreatorReview;
   status?: SocialCommentDtoStatus;
   /**

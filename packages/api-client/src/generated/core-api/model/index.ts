@@ -107,6 +107,7 @@ export * from './checkoutRefundDtoMethod';
 export * from './checkoutRefundDtoStatus';
 export * from './checkoutRequestDto';
 export * from './commentControlsControllerQueueParams';
+export * from './commentMentionDto';
 export * from './commentPermissionsDto';
 export * from './commentsControllerListCommentsParams';
 export * from './commentsControllerSampleCommentsParams';

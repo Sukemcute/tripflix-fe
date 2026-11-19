@@ -89,6 +89,7 @@ function makeComment(id: string, overrides: Partial<SocialCommentDto> = {}): Soc
     authorName: 'An',
     parentCommentId: null,
     body: `bình luận ${id}`,
+    mentions: [],
     isEdited: false,
     likeCount: 0,
     isLiked: false,
