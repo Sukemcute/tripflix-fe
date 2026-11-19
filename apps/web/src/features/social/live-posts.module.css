@@ -2024,12 +2024,16 @@ a.avatarSmall {
   margin: 0;
   padding: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+  min-width: 0;
 }
 
 .panelCommentItem {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+  min-width: 0;
   /* Chỉ hiện dần khi tải xong, không trượt. */
   animation: commentFadeIn 200ms ease-out both;
 }
@@ -2061,6 +2065,7 @@ a.avatarSmall {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  min-width: 0;
 }
 
 .avatarSmall {
@@ -2130,6 +2135,7 @@ a.avatarSmall {
   flex: 1;
   min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
 }
 
@@ -2216,8 +2222,10 @@ a.avatarSmall {
   padding-left: 14px;
   border-left: 1.5px solid var(--iv-border);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   margin-top: 6px;
+  min-width: 0;
 }
 
 /* Sticky Comment Composer at bottom of Right Panel */
