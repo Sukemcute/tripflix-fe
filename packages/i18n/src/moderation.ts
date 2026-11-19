@@ -1,5 +1,17 @@
 export const moderation = {
   parts: {
+    videoTitle: 'Khung hình video',
+    samplingTitle: 'Trích khung hình video',
+    samplingNote:
+      'Kiểm tra các khung hình lấy mẫu, không phải mọi khung hình. Nội dung giữa các mốc vẫn có thể bị bỏ sót; chưa kiểm tra OCR hoặc âm thanh.',
+    coverageTitle: 'Phạm vi lấy mẫu video',
+    framesChecked: 'khung hình đã có kết quả',
+    maxGap: 'Khoảng cách mẫu lớn nhất',
+    duration: 'Thời lượng',
+    seconds: 'giây',
+    viewAt: 'Xem video tại',
+    playbackFailed:
+      'Không phát được video trong trình duyệt này. Có thể tiếp tục đối chiếu ảnh khung hình bên dưới.',
     title: 'Kết quả quét caption và ảnh',
     imageReview: 'Ảnh cần xem xét',
     captionNote: 'Gồm tiêu đề, nội dung và hashtag của bài.',
@@ -39,6 +51,11 @@ export const moderation = {
       media_failed: 'Media tải lên hoặc xử lý thất bại.',
       media_not_ready: 'Media chưa xử lý xong. Hệ thống sẽ kiểm tra lại.',
       worker_interrupted: 'Lượt xử lý bị gián đoạn. Cần lên lịch thử lại.',
+      frames_not_ready: 'Đang chờ worker trích khung hình. Chưa có kết quả kiểm tra video.',
+      extraction_failed: 'Không trích được khung hình. Cần thử lại; video chưa được kết luận an toàn.',
+      extraction_timeout: 'Worker trích khung hình chưa phản hồi sau các lần thử.',
+      video_too_long: 'Video vượt phạm vi kiểm tra tối đa 5 phút.',
+      source_too_large: 'File nguồn vượt giới hạn 1 GB cho lượt trích khung hình.',
     },
     categories: {
       sexual: 'Nội dung tình dục',

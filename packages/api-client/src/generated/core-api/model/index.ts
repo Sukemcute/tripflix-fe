@@ -271,6 +271,7 @@ export * from './moderationPartDto';
 export * from './moderationPartDtoCategories';
 export * from './moderationPartDtoKind';
 export * from './moderationPartDtoMediaKind';
+export * from './moderationPartDtoModality';
 export * from './moderationPartDtoScores';
 export * from './moderationPartDtoStatus';
 export * from './moderationPartRetryDto';
