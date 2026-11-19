@@ -6,6 +6,10 @@
  */
 
 export interface ModerationStatsDto {
+  unassigned: number;
+  assignedToMe: number;
+  overdue: number;
+  dueSoon: number;
   /** Hồ sơ chờ duyệt, cùng điều kiện với queue view=pending */
   pendingTotal: number;
   /** Hồ sơ chờ duyệt có severity ≥ urgentSeverity */
