@@ -14,7 +14,10 @@ const REFRESH_MS = 30_000;
 const count = new Intl.NumberFormat('vi-VN');
 const axisProps = { fontSize: 10, stroke: 'var(--color-text-muted)', tickLine: false } as const;
 
-/** Tổng quan toàn hệ thống ở đầu trang hành vi: số người hoạt động, bài đăng, chia sẻ... và hoạt động theo ngày (SCRUM-181). */
+/**
+ * Tổng quan toàn hệ thống ở đầu trang: số người hoạt động, bài đăng mới, chia sẻ và biểu đồ theo ngày (SCRUM-181).
+ * Lượt chat, bình luận, xem chỉ hiện trong chi tiết từng người.
+ */
 export function UserActivityOverview({
   range,
   days,
@@ -41,14 +44,10 @@ export function UserActivityOverview({
   return (
     <section className="mb-6 space-y-4" aria-label={copy.overview.title}>
       {overview.isError && <AdminApiError error={overview.error} retry={() => void overview.refetch()} />}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Metric label={copy.activeUsers} value={totals?.activeUsers} />
-        <Metric label={copy.totals.posts} value={totals?.posts} hint={copy.overview.postsHint} />
+        <Metric label={copy.overview.newPosts} value={totals?.posts} hint={copy.overview.postsHint} />
         <Metric label={copy.totals.shares} value={totals?.shares} hint={copy.overview.sharesHint} />
-        <Metric label={copy.totals.chats} value={totals?.chats} />
-        <Metric label={copy.totals.reactions} value={totals?.reactions} />
-        <Metric label={copy.totals.comments} value={totals?.comments} />
-        <Metric label={copy.totals.views} value={totals?.views} />
       </div>
 
       {days > 1 && (
@@ -66,14 +65,17 @@ export function UserActivityOverview({
                   <YAxis {...axisProps} axisLine={false} allowDecimals={false} />
                   <Tooltip cursor={{ fill: 'var(--color-surface)' }} formatter={(value) => count.format(Number(value))} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="posts" name={copy.overview.series.posts} stackId="day" fill="var(--color-navy)" isAnimationActive={false} />
-                  <Bar dataKey="shares" name={copy.overview.series.shares} stackId="day" fill="var(--color-teal)" isAnimationActive={false} />
-                  <Bar dataKey="chats" name={copy.overview.series.chats} stackId="day" fill="var(--color-warning)" isAnimationActive={false} />
                   <Bar
-                    dataKey="comments"
-                    name={copy.overview.series.comments}
-                    stackId="day"
-                    fill="var(--color-danger)"
+                    dataKey="activeUsers"
+                    name={copy.overview.series.activeUsers}
+                    fill="var(--color-teal)"
+                    radius={[4, 4, 0, 0]}
+                    isAnimationActive={false}
+                  />
+                  <Bar
+                    dataKey="posts"
+                    name={copy.overview.series.posts}
+                    fill="var(--color-navy)"
                     radius={[4, 4, 0, 0]}
                     isAnimationActive={false}
                   />
