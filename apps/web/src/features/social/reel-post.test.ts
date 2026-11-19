@@ -10,6 +10,7 @@ import {
   getReelRenderMode,
   pickReelAfterRemoval,
   prependPinnedReelCards,
+  pruneReadyReelIds,
   reuseReelEngagement,
   REEL_AHEAD_BUFFER_SECONDS,
   REEL_AHEAD_VIDEO_COUNT,
@@ -201,6 +202,34 @@ describe('canStepToNextReel', () => {
     expect(
       canStepToNextReel({ isNextReady: false, blockedSinceMs: 1_000, nowMs: 1_000 + REEL_NEXT_NOT_READY_BLOCK_MS }),
     ).toBe(true);
+  });
+});
+
+describe('pruneReadyReelIds', () => {
+  const ids = Array.from({ length: 10 }, (_, index) => `p${index}`);
+
+  it('bài rời cửa sổ video (đã nhả nguồn) rồi quay lại thì không còn được coi là có hình (lỗi cũ: lướt vào vòng chờ)', () => {
+    // Đang xem p5: p4..p7 có video và đều đã có hình.
+    let ready = new Set(['p4', 'p5', 'p6', 'p7']);
+    // Lướt lui về p2: cửa sổ video là p1..p4, p5..p7 bị gỡ thẻ video.
+    ready = pruneReadyReelIds(ready, ids, 2);
+    expect([...ready]).toEqual(['p4']);
+    // Lướt tới p4: p5 lại là bài kế tiếp nhưng đang tải lại, chưa có hình nên phải bị chặn.
+    ready = pruneReadyReelIds(ready, ids, 4);
+    expect(ready.has('p5')).toBe(false);
+    expect(canStepToNextReel({ isNextReady: ready.has('p5'), blockedSinceMs: null, nowMs: 0 })).toBe(false);
+  });
+
+  it('bài còn trong cửa sổ video giữ trạng thái đã có hình', () => {
+    const ready = pruneReadyReelIds(new Set(['p2', 'p3', 'p4', 'p5']), ids, 3);
+    expect(ready).toEqual(new Set(['p2', 'p3', 'p4', 'p5']));
+  });
+
+  it('bài bị bỏ khỏi danh sách (bỏ lưu) cũng bị bỏ; không sửa Set cũ', () => {
+    const before = new Set(['p3', 'p4']);
+    const ready = pruneReadyReelIds(before, ids.filter((id) => id !== 'p4'), 3);
+    expect(ready).toEqual(new Set(['p3']));
+    expect(before).toEqual(new Set(['p3', 'p4']));
   });
 });
 
