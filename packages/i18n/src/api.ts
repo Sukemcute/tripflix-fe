@@ -18,8 +18,6 @@ export const api = {
   notificationsUnreadCount: '{count} thông báo chưa đọc',
   notificationsUnread: 'Chưa đọc',
   notificationsEmpty: 'Chưa có thông báo nào',
-  notificationsEmptyHint:
-    'Khi có người thích, bình luận bài viết hoặc đơn đặt chỗ của bạn thay đổi, thông báo sẽ hiện ở đây.',
   otaKicker: 'Biển xanh  |  Phố cổ  |  Thiên nhiên',
   otaTitle: 'Chạm cảm hứng.\nChọn một nơi ở.\nBắt đầu hành trình.',
   otaIntro: 'Từ một nơi muốn đến, tìm một chốn muốn ở. Khách sạn, trải nghiệm và hành trình đúng gu bạn.',

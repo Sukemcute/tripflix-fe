@@ -225,7 +225,6 @@ export function HeaderNotifications() {
                 </svg>
               </span>
               <strong>{vi.api.notificationsEmpty}</strong>
-              <p>{vi.api.notificationsEmptyHint}</p>
             </div>
           )}
         </div>
