@@ -10,6 +10,7 @@ import { ApiErrorNotice } from '@/components/api-state';
 import { LoadingDots } from '@/components/loading-dots';
 import { compactType } from '@/components/mobile-scale';
 import { Button, Icon, Row, Txt } from '@/components/mobile-ui';
+import { SaveItineraryButton } from '@/features/itinerary/save-itinerary-button';
 import { saveTripBooking } from './trip-booking-store';
 import { ChoiceChip, styles } from './trip-plan-parts';
 
@@ -86,49 +87,51 @@ export function FeaturedTrips({
           const poster =
             trip.posterUrl || post.video.posters.w540 || post.video.posters.w360 || post.video.posters.w720;
           return (
-            <Pressable
-              key={post.postId}
-              accessibilityRole="button"
-              accessibilityLabel={post.title}
-              disabled={isDisabled}
-              onPress={() => {
-                saveTripBooking({
-                  postId: post.postId,
-                  postTitle: post.title,
-                  authorName: post.author.name ?? copy.communityAuthor,
-                  coverUrl: poster,
-                  trip,
-                  origin,
-                });
-                onPicked?.();
-              }}
-              style={({ pressed }) => [layout.reel, tileSize, pressed && styles.pressed]}
-            >
-              {poster ? (
-                <Image source={poster} contentFit="cover" style={StyleSheet.absoluteFill} />
-              ) : (
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tealInk }]} />
-              )}
-              <View style={layout.reelBadge}>
-                <Txt style={layout.reelBadgeText}>{t('mobile.tripPlan.dayCount', { days })}</Txt>
-              </View>
-              <View style={layout.reelText}>
-                <Txt style={layout.reelTitle} numberOfLines={2}>
-                  {post.title}
-                </Txt>
-                <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
-                  {!!trip.destinationName && (
-                    <Txt style={layout.reelMeta} numberOfLines={1}>
-                      {trip.destinationName}
-                    </Txt>
-                  )}
-                  {plan.flights.length > 0 && (
-                    <Icon name="airplane-outline" size={13} color={colors.background} />
-                  )}
-                  {plan.hotels.length > 0 && <Icon name="bed-outline" size={13} color={colors.background} />}
-                </Row>
-              </View>
-            </Pressable>
+            <View key={post.postId} style={[layout.tile, tileSize && { width: tileSize.width }]}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={post.title}
+                disabled={isDisabled}
+                onPress={() => {
+                  saveTripBooking({
+                    postId: post.postId,
+                    postTitle: post.title,
+                    authorName: post.author.name ?? copy.communityAuthor,
+                    coverUrl: poster,
+                    trip,
+                    origin,
+                  });
+                  onPicked?.();
+                }}
+                style={({ pressed }) => [layout.reel, tileSize && { height: tileSize.height }, pressed && styles.pressed]}
+              >
+                {poster ? (
+                  <Image source={poster} contentFit="cover" style={StyleSheet.absoluteFill} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tealInk }]} />
+                )}
+                <View style={layout.reelBadge}>
+                  <Txt style={layout.reelBadgeText}>{t('mobile.tripPlan.dayCount', { days })}</Txt>
+                </View>
+                <View style={layout.reelText}>
+                  <Txt style={layout.reelTitle} numberOfLines={2}>
+                    {post.title}
+                  </Txt>
+                  <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
+                    {!!trip.destinationName && (
+                      <Txt style={layout.reelMeta} numberOfLines={1}>
+                        {trip.destinationName}
+                      </Txt>
+                    )}
+                    {plan.flights.length > 0 && (
+                      <Icon name="airplane-outline" size={13} color={colors.background} />
+                    )}
+                    {plan.hotels.length > 0 && <Icon name="bed-outline" size={13} color={colors.background} />}
+                  </Row>
+                </View>
+              </Pressable>
+              <SaveItineraryButton request={() => ({ source: 'reel', postId: post.postId })} />
+            </View>
           );
         })}
       </View>
@@ -150,8 +153,9 @@ export function FeaturedTrips({
 const layout = StyleSheet.create({
   filters: { gap: spacing.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  tile: { width: '48.5%', gap: spacing.xs },
   reel: {
-    width: '48.5%',
+    width: '100%',
     aspectRatio: 3 / 4.2,
     borderRadius: radius.lg,
     overflow: 'hidden',
