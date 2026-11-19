@@ -833,6 +833,14 @@ export const MediaTrackItem = memo(function MediaTrackItem({
     viewerDisplayName,
   );
 
+  const trimmedBody = post.body?.trim() ?? '';
+  const trimmedTitle = post.title?.trim() ?? '';
+  const titleStem = trimmedTitle.replace(/…$/, '');
+  const isTitleInBody = Boolean(trimmedTitle && trimmedBody && trimmedBody.startsWith(titleStem));
+  const captionTotalLength = isTitleInBody
+    ? trimmedBody.length
+    : trimmedTitle.length + (trimmedBody ? trimmedBody.length + 3 : 0);
+
   const attachItemRef = useCallback(
     (el: HTMLDivElement | null) => {
       registerItemRef(index, el);
@@ -1077,9 +1085,17 @@ export const MediaTrackItem = memo(function MediaTrackItem({
                 !isCaptionExpanded ? styles.overlayCaptionClamped : ''
               }`}
             >
-              <strong>{post.title}</strong> — {post.body}
+              {isTitleInBody ? (
+                trimmedBody
+              ) : (
+                <>
+                  {trimmedTitle && <strong>{trimmedTitle}</strong>}
+                  {trimmedTitle && trimmedBody ? ' — ' : ''}
+                  {trimmedBody}
+                </>
+              )}
             </p>
-            {post.body.length > 80 && (
+            {captionTotalLength > 80 && (
               <button
                 type="button"
                 className={styles.overlayExpandBtn}
