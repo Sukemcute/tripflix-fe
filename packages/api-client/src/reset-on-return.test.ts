@@ -30,6 +30,17 @@ describe('useResetOnReturn', () => {
     expect(client.resetQueries).toHaveBeenCalledWith({ queryKey: ['feed', 'recommended', 'for_you'], exact: true });
   });
 
+  it('tab được giữ mount (Bài viết): mỗi lần ẩn rồi hiện lại thì tải lại', () => {
+    client.getQueryData.mockReturnValue({ pages: [] });
+    client.resetQueries.mockClear();
+    mount();
+    render(['social', 'public'], true);
+    render(['social', 'public'], false);
+    render(['social', 'public'], true);
+    render(['social', 'public'], true);
+    expect(client.resetQueries).toHaveBeenCalledTimes(2);
+  });
+
   it('lần đầu vào trang (chưa có cache) hoặc chưa sẵn sàng: không làm gì thêm', () => {
     client.resetQueries.mockClear();
     client.getQueryData.mockReturnValue(undefined);
