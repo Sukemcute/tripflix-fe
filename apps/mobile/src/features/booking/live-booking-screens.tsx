@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode, type ComponentProps } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { commerceApi, createCancelVnpayOperation, HttpError, useApiSession } from '@tripflix/api-client';
 import type { PayResultDto } from '@tripflix/api-client/core-api/model/index';
@@ -12,8 +12,8 @@ import {
 import { t, vi, type MessageKey } from '@tripflix/i18n';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
-import { AppState, Pressable, StyleSheet, View } from 'react-native';
+import { colors, radius, spacing } from '@tripflix/tokens';
+import { AppState, Pressable, View } from 'react-native';
 import { RequireAccount } from '@/components/api-state';
 import { DateSingleField } from '@/components/date-sheet';
 import {
@@ -21,7 +21,7 @@ import {
   Button,
   Card,
   copy,
-  Field as BaseField,
+  Field,
   formatDate,
   Icon,
   type IconName,
@@ -30,6 +30,7 @@ import {
   PriceRow,
   Row,
   Screen,
+  Segments,
   Txt,
   ui,
 } from '@/components/mobile-ui';
@@ -38,12 +39,8 @@ import { useCommerce } from './commerce-provider';
 import { CancelHold, CancelOrder, OrderCancelledScreen } from './order-cancel';
 import { PaymentSuccessScreen } from './payment-success';
 import { LoadingDots } from '@/components/loading-dots';
-import { CheckoutSummary } from './checkout-summary';
 
 const text = vi.commerce;
-function Field(props: ComponentProps<typeof BaseField>) {
-  return <BaseField {...props} style={[checkoutStyles.input, props.style]} />;
-}
 const BIRTHDATE_MESSAGES: Partial<Record<GuestFieldError, MessageKey>> = {
   required: 'commerce.fieldErrors.birthdateRequired',
   futureDate: 'commerce.fieldErrors.birthdateFuture',
@@ -384,17 +381,19 @@ function CheckoutForm() {
       background={colors.surface}
       footer={
         canPay ? (
-          <View style={{ gap: spacing.md }}>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'center', gap: spacing.md }}>
             <View>
               <Txt variant="small" style={ui.muted}>
-                {text.checkoutPayable}
+                {text.total}
               </Txt>
-              <Txt style={checkoutStyles.total}>{money(payTotal)}</Txt>
+              <Txt variant="heading" style={{ color: colors.coralInk }}>
+                {money(payTotal)}
+              </Txt>
             </View>
-            <Button disabled={isPayDisabled} onPress={() => payment.mutate('pay')} style={checkoutStyles.pay}>
+            <Button disabled={isPayDisabled} onPress={() => payment.mutate('pay')} style={{ flex: 1 }}>
               {payment.isPending ? vi.api.loading : text.pay}
             </Button>
-          </View>
+          </Row>
         ) : undefined
       }
     >
@@ -414,7 +413,7 @@ function CheckoutForm() {
                 alignItems: 'center',
                 paddingHorizontal: spacing.md,
                 paddingVertical: spacing.sm,
-                borderRadius: radius.sm,
+                borderRadius: radius.pill,
                 backgroundColor: colors.coralTint,
               }}
             >
@@ -422,7 +421,7 @@ function CheckoutForm() {
               <HoldTimer expiresAt={order.holdExpiresAt} />
             </Row>
           )}
-          <CheckoutSummary order={order} total={canPay ? undefined : payTotal} />
+          <CheckoutSummary order={order} total={payTotal} />
           {isExpired ? (
             <>
               <Notice tone="error">{order.status === 'cancelled' ? text.holdCancelled : text.expired}</Notice>
@@ -492,19 +491,7 @@ function CheckoutForm() {
               {!challenge && (
                 <FormCard title={text.paymentMethod} icon="card-outline">
                   {!isLocked && (
-                    <Row style={{ gap: spacing.sm, flexWrap: 'wrap' }}>
-                      {[text.card, text.vnpay].map((label, index) => (
-                        <Pressable
-                          key={label}
-                          accessibilityRole="tab"
-                          accessibilityState={{ selected: method === index }}
-                          onPress={() => setMethod(index)}
-                          style={[checkoutStyles.method, method === index && checkoutStyles.selectedMethod]}
-                        >
-                          <Txt style={checkoutStyles.methodLabel}>{label}</Txt>
-                        </Pressable>
-                      ))}
-                    </Row>
+                    <Segments options={[text.card, text.vnpay]} selected={method} onSelect={setMethod} />
                   )}
                   {method === 0 ? (
                     <>
@@ -531,15 +518,16 @@ function CheckoutForm() {
                               style={{
                                 paddingHorizontal: spacing.md,
                                 paddingVertical: spacing.sm,
-                                borderRadius: radius.sm,
-                                minHeight: 44,
-                                backgroundColor: isActive ? colors.seaMist : colors.surface,
+                                borderRadius: radius.pill,
+                                borderWidth: 1,
+                                borderColor: isActive ? colors.tealInk : colors.border,
+                                backgroundColor: isActive ? colors.seaMist : colors.background,
                               }}
                             >
                               <Txt variant="small" style={{ fontWeight: '600', color: colors.ink }}>
                                 {card.label}
                               </Txt>
-                              <Txt variant="small" style={[ui.muted, { fontSize: 12 }]}>
+                              <Txt variant="small" style={[ui.muted, { fontSize: 11 }]}>
                                 •••• {card.number.slice(-4)}
                               </Txt>
                             </Pressable>
@@ -568,10 +556,9 @@ function CheckoutForm() {
                 <Pressable
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: hasConsent, disabled: isLocked }}
-                  aria-checked={hasConsent}
                   disabled={isLocked}
                   onPress={() => setConsent(!hasConsent)}
-                  style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start', minHeight: 44 }}
+                  style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' }}
                 >
                   <View
                     style={{
@@ -582,15 +569,15 @@ function CheckoutForm() {
                       borderWidth: 2,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      borderColor: hasConsent ? colors.coralInk : colors.textSubtle,
-                      backgroundColor: hasConsent ? colors.coralInk : colors.background,
+                      borderColor: hasConsent ? colors.coral : colors.textSubtle,
+                      backgroundColor: hasConsent ? colors.coral : colors.background,
                     }}
                   >
                     {hasConsent && <Icon name="checkmark" size={15} color={colors.background} />}
                   </View>
                   <View style={{ flex: 1 }}>
                     <Txt variant="small">{text.policy}</Txt>
-                    <Txt variant="small" style={[ui.muted, { fontSize: 13 }]}>
+                    <Txt variant="small" style={[ui.muted, { fontSize: 11 }]}>
                       {text.policyVersion}: {order.policyVersion}
                     </Txt>
                   </View>
@@ -624,7 +611,6 @@ function CheckoutForm() {
                     maxLength={6}
                   />
                   <Button
-                    style={checkoutStyles.pay}
                     disabled={payment.isPending || isUnknown || otp.length !== 6}
                     onPress={() => payment.mutate('otp')}
                   >
@@ -634,10 +620,8 @@ function CheckoutForm() {
               )}
             </>
           )}
-          {((order.status === 'paying' && !challenge) || operations.uncertain.has(id)) && (
-            <Notice>{text.waiting}</Notice>
-          )}
-          {!!message && !(challenge && message === text.otpHint) && <Notice>{message}</Notice>}
+          {(order.status === 'paying' || operations.uncertain.has(id)) && <Notice>{text.waiting}</Notice>}
+          {!!message && <Notice>{message}</Notice>}
           {(!!paymentUrl || isPayingVnpay) && (
             <>
               {!!paymentUrl && (
@@ -698,22 +682,24 @@ function FormCard({
   children: ReactNode;
 }) {
   return (
-    <View style={checkoutStyles.form}>
+    <View
+      style={{ padding: spacing.md, gap: spacing.md, borderRadius: 20, backgroundColor: colors.background }}
+    >
       <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
         <View
           style={{
-            width: 24,
-            height: 28,
+            width: 32,
+            height: 32,
+            borderRadius: radius.pill,
             alignItems: 'center',
             justifyContent: 'center',
+            backgroundColor: colors.seaMist,
           }}
         >
-          <Icon name={icon} size={20} color={colors.tealInk} />
+          <Icon name={icon} size={16} color={colors.tealInk} />
         </View>
         <View style={{ flex: 1 }}>
-          <Txt accessibilityRole="header" style={checkoutStyles.formTitle}>
-            {title}
-          </Txt>
+          <Txt variant="label">{title}</Txt>
           {subtitle && (
             <Txt variant="small" style={ui.muted}>
               {subtitle}
@@ -726,31 +712,75 @@ function FormCard({
   );
 }
 
-const checkoutStyles = StyleSheet.create({
-  input: { borderRadius: radius.sm, fontSize: 15, lineHeight: 24, minHeight: 52 },
-  form: {
-    padding: spacing.lg,
-    gap: spacing.lg,
-    marginTop: spacing.sm,
-    borderRadius: radius.md,
-    backgroundColor: colors.background,
-  },
-  formTitle: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy },
-  total: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.semibold, color: colors.navy },
-  pay: { minHeight: 52, borderRadius: radius.sm, backgroundColor: colors.coralInk },
-  method: {
-    minHeight: 48,
-    flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.sm,
-  },
-  selectedMethod: { backgroundColor: colors.seaMist },
-  methodLabel: { fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.semibold, color: colors.tealInk },
-});
+/** Tóm tắt đơn gọn: mỗi mục một khối, tổng tiền chỉ một lần. */
+function CheckoutSummary({
+  order,
+  total,
+}: {
+  order: NonNullable<ReturnType<typeof useCommerceOrder>['data']>;
+  total: number;
+}) {
+  return (
+    <View
+      style={{ padding: spacing.md, gap: spacing.md, borderRadius: 20, backgroundColor: colors.background }}
+    >
+      {order.items.map((item) => (
+        <View key={item.id} style={{ gap: 4 }}>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.md }}>
+            <Txt variant="label" style={{ flex: 1 }}>
+              {item.productName}
+            </Txt>
+            <Txt variant="label">{money(item.lineTotal)}</Txt>
+          </Row>
+          <Row style={{ gap: 6 }}>
+            <Icon name="calendar-outline" size={14} color={colors.textMuted} />
+            <Txt variant="small" style={ui.muted}>
+              {item.productType === 'flight'
+                ? formatDate(item.date)
+                : `${formatDate(item.date)} → ${formatDate(item.dateTo)}`}
+            </Txt>
+          </Row>
+          <Txt variant="small" style={ui.muted}>
+            {item.qty} × {item.ratePlanName}
+          </Txt>
+          <View
+            style={{
+              alignSelf: 'flex-start',
+              marginTop: 2,
+              paddingHorizontal: spacing.sm,
+              paddingVertical: 2,
+              borderRadius: radius.pill,
+              backgroundColor: item.isRefundable ? colors.seaMist : colors.surfaceMuted,
+            }}
+          >
+            <Txt variant="small" style={{ color: item.isRefundable ? colors.tealInk : colors.textMuted }}>
+              {item.isRefundable && item.freeCancelUntil
+                ? `${text.freeCancel}: ${formatDate(item.freeCancelUntil.slice(0, 10))}`
+                : item.isRefundable
+                  ? text.refundable
+                  : text.nonRefundable}
+            </Txt>
+          </View>
+        </View>
+      ))}
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingTop: spacing.md,
+          borderTopWidth: 1,
+          borderStyle: 'dashed',
+          borderTopColor: colors.border,
+        }}
+      >
+        <Txt variant="label">{text.total}</Txt>
+        <Txt variant="heading" style={{ color: colors.coralInk }}>
+          {money(total)}
+        </Txt>
+      </View>
+    </View>
+  );
+}
 export function OrderSummary({ order }: { order: NonNullable<ReturnType<typeof useCommerceOrder>['data']> }) {
   return (
     <>
