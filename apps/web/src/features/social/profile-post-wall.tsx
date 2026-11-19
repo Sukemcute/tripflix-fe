@@ -103,7 +103,6 @@ function PostWall({
       {!items.length && (
         <div className={styles.empty}>
           <h3>{isSavedWall ? vi.api.profileNoSavedPosts : vi.api.profileNoPosts}</h3>
-          <p>{isSavedWall ? vi.api.profileSavedPostsHint : vi.api.profileEmptyWall}</p>
         </div>
       )}
       {items.map((post) => (

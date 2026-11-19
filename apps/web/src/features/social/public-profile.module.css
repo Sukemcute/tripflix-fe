@@ -129,31 +129,8 @@
   border-radius: 3px 3px 0 0;
   background: var(--color-teal-ink);
 }
-.layout {
-  max-width: 820px;
-  margin: 0 auto;
-}
-
 .content {
   min-width: 0;
-}
-.contentHeading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 0 0 16px;
-  padding: 0 2px;
-}
-.contentHeading h2 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 800;
-}
-.contentHeading > span {
-  color: var(--color-text-muted);
-  font-size: 0.73rem;
 }
 .wall {
   display: grid;
@@ -204,10 +181,6 @@
 .empty h3 {
   font-size: 1rem;
   color: var(--color-ink);
-}
-.empty p {
-  font-size: 0.82rem;
-  line-height: 1.7;
 }
 .videoGrid {
   display: grid;

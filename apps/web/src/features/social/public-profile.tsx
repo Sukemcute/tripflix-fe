@@ -148,32 +148,20 @@ export function PublicProfile({ userId }: { userId: string }) {
           ))}
         </div>
       </header>
-      <div className={styles.layout}>
-        <section
-          id="profile-content"
-          role="tabpanel"
-          aria-labelledby={`profile-tab-${activeTab}`}
-          className={styles.content}
-        >
-          <div className={styles.contentHeading}>
-            <h2>
-              {activeTab === 'posts'
-                ? vi.api.profileWallTitle
-                : activeTab === 'videos'
-                  ? vi.api.profileVideos
-                  : vi.api.bookmarks}
-            </h2>
-            {activeTab === 'videos' && <span>{vi.api.profileVideoHint}</span>}
-          </div>
-          {activeTab === 'videos' ? (
-            <ReelGrid key={userId} userId={userId} />
-          ) : activeTab === 'posts' ? (
-            <ProfilePostWall key={userId} userId={userId} />
-          ) : (
-            <SavedProfileContent key={userId} userId={userId} />
-          )}
-        </section>
-      </div>
+      <section
+        id="profile-content"
+        role="tabpanel"
+        aria-labelledby={`profile-tab-${activeTab}`}
+        className={styles.content}
+      >
+        {activeTab === 'videos' ? (
+          <ReelGrid key={userId} userId={userId} />
+        ) : activeTab === 'posts' ? (
+          <ProfilePostWall key={userId} userId={userId} />
+        ) : (
+          <SavedProfileContent key={userId} userId={userId} />
+        )}
+      </section>
     </main>
   );
 }
@@ -267,7 +255,12 @@ function GridState({
       </p>
     );
   if (query.error) return <ApiErrorNotice error={query.error} retry={() => void query.refetch()} />;
-  if (isEmpty) return <p className={grid.stateBox}>{emptyText}</p>;
+  if (isEmpty)
+    return (
+      <div className={styles.empty}>
+        <h3>{emptyText}</h3>
+      </div>
+    );
   return (
     <>
       <ul className={styles.videoGrid}>{children}</ul>
