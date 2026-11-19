@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { AvatarDecorDto } from './avatarDecorDto';
 import type { MyProfileDtoGender } from './myProfileDtoGender';
 import type { MyProfileDtoRole } from './myProfileDtoRole';
 import type { TravelPreferencesDto } from './travelPreferencesDto';
@@ -34,4 +35,9 @@ export interface MyProfileDto {
    * @nullable
    */
   avatarUrl: string | null;
+  /**
+   * Khung và phụ kiện quanh ảnh đại diện (TF109). null: chưa trang trí
+   * @nullable
+   */
+  avatarDecor: AvatarDecorDto | null;
 }

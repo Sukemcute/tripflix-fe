@@ -17,7 +17,11 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { UserSearchControllerSearchParams, UserSearchResponseDto } from '../model';
+import type {
+  AvatarDecorResponseDto,
+  UserSearchControllerSearchParams,
+  UserSearchResponseDto,
+} from '../model';
 
 import { http } from '../../../http';
 
@@ -312,6 +316,143 @@ export function useUserSearchControllerAvatar<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getUserSearchControllerAvatarQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type userSearchControllerAvatarDecorResponse200 = {
+  data: AvatarDecorResponseDto;
+  status: 200;
+};
+
+export type userSearchControllerAvatarDecorResponseSuccess = userSearchControllerAvatarDecorResponse200 & {
+  headers: Headers;
+};
+export type userSearchControllerAvatarDecorResponse = userSearchControllerAvatarDecorResponseSuccess;
+
+export const getUserSearchControllerAvatarDecorUrl = (id: string) => {
+  return `/api/v1/users/${id}/avatar-decor`;
+};
+
+export const userSearchControllerAvatarDecor = async (
+  id: string,
+  options?: Parameters<typeof http>[1],
+): Promise<userSearchControllerAvatarDecorResponse> => {
+  return http<userSearchControllerAvatarDecorResponse>(getUserSearchControllerAvatarDecorUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getUserSearchControllerAvatarDecorQueryKey = (id: string) => {
+  return [`/api/v1/users/${id}/avatar-decor`] as const;
+};
+
+export const getUserSearchControllerAvatarDecorQueryOptions = <
+  TData = Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getUserSearchControllerAvatarDecorQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>> = ({ signal }) =>
+    userSearchControllerAvatarDecor(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type UserSearchControllerAvatarDecorQueryResult = NonNullable<
+  Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>
+>;
+export type UserSearchControllerAvatarDecorQueryError = unknown;
+
+export function useUserSearchControllerAvatarDecor<
+  TData = Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>,
+  TError = unknown,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>,
+          TError,
+          Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useUserSearchControllerAvatarDecor<
+  TData = Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>,
+          TError,
+          Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useUserSearchControllerAvatarDecor<
+  TData = Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useUserSearchControllerAvatarDecor<
+  TData = Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof userSearchControllerAvatarDecor>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getUserSearchControllerAvatarDecorQueryOptions(id, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

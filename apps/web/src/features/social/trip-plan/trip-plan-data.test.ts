@@ -1,6 +1,8 @@
 import type { TripItineraryItemDto } from '@tripflix/api-client/core-api/model/index';
 import { describe, expect, it } from 'vitest';
 import {
+  addStayStops,
+  getTransportPrefixRoute,
   assignStopThumbnails,
   buildPlaceMapUrl,
   countTripStops,
@@ -136,5 +138,36 @@ describe('ảnh nhỏ từng điểm dừng', () => {
       'bien',
     ]);
     expect(assignStopThumbnails([null], [])).toEqual([null]);
+  });
+});
+
+describe('addStayStops', () => {
+  const describeStay = ({ nights }: { nights: number }) => `${nights} đêm`;
+  it('chèn khách sạn cấp chuyến vào ngày nhận phòng, sau chặng bay', () => {
+    const days = [
+      {
+        day: 1,
+        items: [
+          { day: 1, title: 'Bay HAN → DLI', transport: { mode: 'flight' as const, fromAirport: 'HAN', toAirport: 'DLI' } },
+          { day: 1, title: 'Hồ Xuân Hương' },
+        ],
+      },
+      { day: 2, items: [{ day: 2, title: 'Cầu Đất' }] },
+    ];
+    const result = addStayStops(days, [{ day: 1, nights: 2, hotelId: 'h1', hotelName: 'Dalat Palace' }], describeStay);
+    expect(result[0]?.items.map((item) => item.title)).toEqual(['Bay HAN → DLI', 'Dalat Palace', 'Hồ Xuân Hương']);
+    expect(result[0]?.items[1]).toMatchObject({ location: '2 đêm', hotel: { hotelId: 'h1' } });
+    expect(result[1]?.items).toHaveLength(1);
+  });
+  it('không chèn lại khi ngày đã có điểm cùng khách sạn', () => {
+    const days = [{ day: 1, items: [{ day: 1, title: 'KS', hotel: { hotelId: 'h1' } }] }];
+    expect(addStayStops(days, [{ day: 1, nights: 1, hotelId: 'h1' }], describeStay)[0]?.items).toHaveLength(1);
+  });
+});
+
+describe('getTransportPrefixRoute', () => {
+  it('bỏ chặng khi tiêu đề đã ghi', () => {
+    expect(getTransportPrefixRoute('Bay HAN → DLI', 'HAN → DLI')).toBeNull();
+    expect(getTransportPrefixRoute('Chuyến sáng', 'HAN → DLI')).toBe('HAN → DLI');
   });
 });

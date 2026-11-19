@@ -11,6 +11,7 @@ import { AdminApiError } from './api-state';
 import { StaffManagement } from '../staff/staff-management';
 import { ModerationWorkspace } from '../moderation/moderation-workspace';
 import { InventoryCalendar } from '../inventory/inventory-calendar';
+import { OrdersWorkspace } from '../orders/orders-workspace';
 import { AdminOverview } from '../overview/admin-overview';
 import { SearchMonitoring } from '../search-monitoring/search-monitoring';
 import { DiscoveryJobs } from '../discovery-jobs/discovery-jobs';
@@ -63,6 +64,7 @@ const descriptions: Partial<Record<MessageKey, string>> = {
   'admin.staff': copy.staffHint,
   'admin.users': copy.staffHint,
   'admin.inventory': copy.calendarHint,
+  'admin.orders': vi.adminOrders.description,
   'admin.audit': copy.logHint,
   'admin.alerts': copy.alertsHint,
   'admin.reports': copy.reportsHint,
@@ -313,6 +315,8 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
                 <StaffManagement />
               ) : label === 'admin.inventory' ? (
                 <InventoryCalendar />
+              ) : label === 'admin.orders' ? (
+                <OrdersWorkspace />
               ) : label === 'admin.alerts' ? (
                 <OperationsAlerts />
               ) : label === 'admin.audit' || label === 'admin.reports' ? (

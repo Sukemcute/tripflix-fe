@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AvatarPhoto } from '@/features/shared/avatar-photo';
-import { SocialIcon, formatAuthorDisplay } from './live-posts';
+import { PublicPosts, SocialIcon, formatAuthorDisplay } from './live-posts';
 import { buildInspirationHref, buildPostHref } from './search-url';
 import grid from './search-results-grid.module.css';
 import styles from './public-profile.module.css';
@@ -19,7 +19,9 @@ export function PublicProfile({ userId }: { userId: string }) {
   const profile = usePublicProfile(userId);
   const isMine = !!user && user.id === userId;
   const follow = useFollowAuthor(isMine ? undefined : userId);
-  const [tab, setTab] = useState<'videos' | 'posts'>('videos');
+  const [tab, setTab] = useState<'videos' | 'posts' | 'bookmarks'>('videos');
+  const activeTab = tab === 'bookmarks' && !isMine ? 'videos' : tab;
+  const tabs = isMine ? (['videos', 'posts', 'bookmarks'] as const) : (['videos', 'posts'] as const);
 
   if (profile.error instanceof HttpError && profile.error.status === 404) {
     return (
@@ -89,20 +91,22 @@ export function PublicProfile({ userId }: { userId: string }) {
       </header>
 
       <div className={grid.tabs} role="tablist">
-        {(['videos', 'posts'] as const).map((key) => (
+        {tabs.map((key) => (
           <button
             key={key}
             type="button"
             role="tab"
-            aria-selected={tab === key}
+            aria-selected={activeTab === key}
             className={grid.tab}
             onClick={() => setTab(key)}
           >
-            {key === 'videos' ? vi.api.profileVideos : vi.api.profilePosts}
+            {key === 'videos' ? vi.api.profileVideos : key === 'posts' ? vi.api.profilePosts : vi.api.bookmarks}
           </button>
         ))}
       </div>
-      {tab === 'videos' ? <ReelGrid userId={userId} /> : <VlogGrid userId={userId} />}
+      {activeTab === 'videos' ? <ReelGrid userId={userId} /> : activeTab === 'posts' ? <VlogGrid userId={userId} /> : (
+        <PublicPosts key={userId} kind="bookmarks" />
+      )}
     </main>
   );
 }

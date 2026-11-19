@@ -7,6 +7,7 @@ import { vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import { AdminApiError } from '../shell/api-state';
 import { EmptyState, Panel } from '../shell/operations-ui';
+import type { AdminProduct } from '../orders/orders-types';
 
 interface CalendarRequest {
   kind: 'room' | 'flight';
@@ -32,7 +33,21 @@ export function InventoryCalendar() {
   const [id, setId] = useState('');
   const [from, setFrom] = useState(getFutureDate(1));
   const [to, setTo] = useState(getFutureDate(7));
+  const [productSearch, setProductSearch] = useState('');
   const [requested, setRequested] = useState<CalendarRequest | null>(null);
+  // TF43: chọn mã từ danh sách thay vì gõ tay kiểu H1--STD.
+  const products = useQuery({
+    queryKey: ['admin-products', kind, productSearch.trim()],
+    queryFn: async ({ signal }) =>
+      (
+        (
+          await calendar.adminOrdersControllerProducts(
+            { kind, q: productSearch.trim() || undefined, limit: 50 },
+            { signal },
+          )
+        ).data as unknown as { items: AdminProduct[] }
+      ).items,
+  });
   const [patch, setPatch] = useState<Record<string, string>>({});
   const query = useQuery({
     queryKey: ['calendar', requested],
@@ -93,14 +108,41 @@ export function InventoryCalendar() {
         >
           <label>
             {vi.api.inventory}
-            <select value={kind} onChange={(event) => setKind(event.target.value as typeof kind)}>
+            <select
+              value={kind}
+              onChange={(event) => {
+                setKind(event.target.value as typeof kind);
+                setId('');
+              }}
+            >
               <option value="room">{vi.api.roomType}</option>
               <option value="flight">{vi.api.flight}</option>
             </select>
           </label>
           <label>
-            {vi.api.resourceId}
-            <input required value={id} maxLength={100} onChange={(event) => setId(event.target.value)} />
+            {vi.adminOrders.productSearch}
+            <input
+              type="search"
+              value={productSearch}
+              maxLength={100}
+              onChange={(event) => setProductSearch(event.target.value)}
+            />
+          </label>
+          <label>
+            {vi.adminOrders.productPick}
+            <select required value={id} onChange={(event) => setId(event.target.value)}>
+              <option value="">
+                {products.data?.length === 0
+                  ? vi.adminOrders.productEmpty
+                  : vi.adminOrders.productPickPlaceholder}
+              </option>
+              {products.data?.map((product) => (
+                <option key={product.id} value={product.id}>
+                  {product.parentName ? `${product.parentName} · ` : ''}
+                  {product.name} ({product.place})
+                </option>
+              ))}
+            </select>
           </label>
           <label>
             {vi.api.from}

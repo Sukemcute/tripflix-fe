@@ -7,6 +7,7 @@ import {
   clampStickerScale,
   createPlacedSticker,
   findStickerPreset,
+  fitStickerInStage,
   snapStickerToOuterRim,
 } from './avatar-stickers';
 
@@ -45,7 +46,9 @@ describe('khung bọc ngoài & phụ kiện tràn viền trên avatar', () => {
       'tripi-hood',
       'tropical-wreath',
     ]);
-    expect(AVATAR_FRAMES.filter((frame) => frame.id !== 'none').every((frame) => Boolean(frame.overlaySrc))).toBe(true);
+    expect(
+      AVATAR_FRAMES.filter((frame) => frame.id !== 'none').every((frame) => Boolean(frame.overlaySrc)),
+    ).toBe(true);
   });
 
   it('tạo sticker mới ở vị trí mặc định của mẫu và cho phép đẩy ra viền ngoài khung tròn', () => {
@@ -67,5 +70,16 @@ describe('khung bọc ngoài & phụ kiện tràn viền trên avatar', () => {
     expect(clampStickerScale(0.1)).toBe(0.5);
     expect(clampStickerScale(5)).toBe(2.4);
   });
-});
 
+  it('phụ kiện kéo hay phóng to không tràn ra khỏi vùng chỉnh', () => {
+    const sticker = { ...createPlacedSticker('camera', 0, 's1'), x: -1, y: 2 };
+    // Vùng chỉnh 360px, khung tròn 240px ở giữa (đệm 60px), phụ kiện 80px: tâm chỉ đi được từ -20px tới 260px.
+    const fitted = fitStickerInStage(sticker, 80, 240, 360);
+    expect(fitted.x * 240).toBeCloseTo(-20);
+    expect(fitted.y * 240).toBeCloseTo(260);
+    // Phụ kiện to hơn vùng chỉnh thì đặt giữa.
+    const huge = fitStickerInStage(sticker, 500, 240, 360);
+    expect(huge.x).toBeCloseTo(0.5);
+    expect(huge.y).toBeCloseTo(0.5);
+  });
+});
