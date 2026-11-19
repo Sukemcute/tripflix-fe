@@ -7,10 +7,20 @@
 import type { ModerationPartDtoCategories } from './moderationPartDtoCategories';
 import type { ModerationPartDtoKind } from './moderationPartDtoKind';
 import type { ModerationPartDtoMediaKind } from './moderationPartDtoMediaKind';
+import type { ModerationPartDtoModality } from './moderationPartDtoModality';
 import type { ModerationPartDtoScores } from './moderationPartDtoScores';
 import type { ModerationPartDtoStatus } from './moderationPartDtoStatus';
 
 export interface ModerationPartDto {
+  modality?: ModerationPartDtoModality;
+  /** @nullable */
+  timestampMs?: number | null;
+  /** @nullable */
+  sampleDurationMs?: number | null;
+  /** @nullable */
+  sampleCount?: number | null;
+  /** @nullable */
+  playbackUrl?: string | null;
   /** @nullable */
   id: string | null;
   kind: ModerationPartDtoKind;

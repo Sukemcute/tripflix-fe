@@ -113,6 +113,9 @@ importers:
       '@tripflix/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      hls.js:
+        specifier: 'catalog:'
+        version: 1.7.4
       next:
         specifier: 'catalog:'
         version: 16.4.5(@types/node@24.19.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
