@@ -1,0 +1,74 @@
+{
+  "passed": true,
+  "previewOnly": true,
+  "checks": [
+    {
+      "width": 375,
+      "states": [
+        "pending",
+        "paying",
+        "paid",
+        "completed",
+        "expired",
+        "cancelled",
+        "refunded",
+        "processing",
+        "needs_review",
+        "refund_error",
+        "empty",
+        "error",
+        "pagination"
+      ],
+      "countdown": true,
+      "navigation": true,
+      "overflow": false,
+      "edgeCasesAndLargeText": false
+    },
+    {
+      "width": 390,
+      "states": [
+        "pending",
+        "paying",
+        "paid",
+        "completed",
+        "expired",
+        "cancelled",
+        "refunded",
+        "processing",
+        "needs_review",
+        "refund_error",
+        "empty",
+        "error",
+        "pagination"
+      ],
+      "countdown": true,
+      "navigation": true,
+      "overflow": false,
+      "edgeCasesAndLargeText": true
+    },
+    {
+      "width": 430,
+      "states": [
+        "pending",
+        "paying",
+        "paid",
+        "completed",
+        "expired",
+        "cancelled",
+        "refunded",
+        "processing",
+        "needs_review",
+        "refund_error",
+        "empty",
+        "error",
+        "pagination"
+      ],
+      "countdown": true,
+      "navigation": true,
+      "overflow": false,
+      "edgeCasesAndLargeText": false
+    }
+  ],
+  "errors": [],
+  "writes": []
+}
