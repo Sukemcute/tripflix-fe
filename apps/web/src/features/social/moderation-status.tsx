@@ -150,7 +150,7 @@ export function ModerationStatus() {
           aria-labelledby="moderation-tab-decisions"
           className={styles.list}
         >
-          {query.isPending && <LoadingDots />}
+          {query.isPending && <LoadingDots isBlock />}
           <ApiErrorNotice error={query.error} />
           {!query.isPending && !query.error && !items.length && <EmptyState>{text.empty}</EmptyState>}
           {items.map((item) => {
@@ -263,7 +263,7 @@ export function ModerationStatus() {
           aria-labelledby="moderation-tab-reports"
           className={styles.list}
         >
-          {reports.isPending && <LoadingDots label={text.loadingReports} />}
+          {reports.isPending && <LoadingDots isBlock label={text.loadingReports} />}
           <ApiErrorNotice error={reports.error} />
           {!reports.isPending && !reports.error && !reportItems.length && (
             <EmptyState>{text.emptyReports}</EmptyState>

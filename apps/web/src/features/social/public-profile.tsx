@@ -19,7 +19,7 @@ import { SocialIcon, formatAuthorDisplay } from './live-posts';
 import { buildInspirationHref } from './search-url';
 import grid from './search-results-grid.module.css';
 import styles from './public-profile.module.css';
-import { LoadingDots } from '@/features/shared/loading-dots';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 import { ProfilePostWall, SavedPostWall } from './profile-post-wall';
 import { ProfileComposer } from './profile-composer';
 
@@ -127,13 +127,9 @@ export function PublicProfile({ userId }: { userId: string }) {
                     onClick={follow.toggle}
                     disabled={!follow.canToggle}
                   >
-                    {follow.isLoading || follow.isUpdating ? (
-                      <LoadingDots />
-                    ) : follow.isFollowing ? (
-                      vi.api.unfollowAuthor
-                    ) : (
-                      vi.api.followAuthor
-                    )}
+                    <BusyLabel isBusy={follow.isLoading || follow.isUpdating}>
+                      {follow.isFollowing ? vi.api.unfollowAuthor : vi.api.followAuthor}
+                    </BusyLabel>
                   </button>
                 ) : (
                   <Link
@@ -348,7 +344,7 @@ function GridState({
           disabled={query.isFetchingNextPage}
           onClick={() => void query.fetchNextPage()}
         >
-          {query.isFetchingNextPage ? <LoadingDots /> : vi.api.profileLoadMore}
+          <BusyLabel isBusy={query.isFetchingNextPage}>{vi.api.profileLoadMore}</BusyLabel>
         </button>
       )}
     </>

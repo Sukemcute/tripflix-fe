@@ -116,7 +116,7 @@ import { calculateUploadPercent, parseStoredHashtags, pickDroppedVideo } from '.
 import { ShareMenu, type ShareMenuHandle } from './share-menu';
 import { PostOptionsMenu } from './post-options-menu';
 import { buildPostHref } from './search-url';
-import { LoadingDots } from '@/features/shared/loading-dots';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 
 type FeedFilterMode = 'all' | 'withTrip' | 'saved';
 
@@ -526,7 +526,7 @@ function AccountPostGrid({
   const { isReady, user } = useApiSession();
   const query = useSocialPosts(kind, keyword);
   const posts = query.data?.pages.flatMap((page) => page.items);
-  if (!isReady) return <output><LoadingDots /></output>;
+  if (!isReady) return <LoadingDots isBlock />;
   if (!user) return <Link prefetch={false} href="/login">{vi.api.loginRequired}</Link>;
   return (
     <>
@@ -536,7 +536,7 @@ function AccountPostGrid({
           void query.refetch();
         }}
       />
-      {query.isPending && <output><LoadingDots /></output>}
+      {query.isPending && <LoadingDots isBlock />}
       {posts?.length === 0 && (
         <p className="empty-state">
           {kind === 'bookmarks'
@@ -4210,11 +4210,9 @@ export function ComposerModal({
               (postType === 'video' && !videoFile && !existingMediaId)
             }
           >
-            {isUploading
-              ? <LoadingDots label="Đang tải video..." />
-              : saveMutation.isPending && saveMutation.variables?.shouldPublish
-                ? vi.api.saving
-                : 'Đăng bài viết'}
+            <BusyLabel isBusy={isUploading} label="Đang tải video...">
+              {saveMutation.isPending && saveMutation.variables?.shouldPublish ? vi.api.saving : 'Đăng bài viết'}
+            </BusyLabel>
           </button>
         </div>
       </form>

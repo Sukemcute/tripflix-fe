@@ -653,6 +653,8 @@ export function ReelsFeed({
           keyExtractor={(item) => item.id}
           pagingEnabled
           scrollEnabled={!hasComments}
+          // The inline comments composer must receive the first tap while its keyboard is open.
+          keyboardShouldPersistTaps="handled"
           disableIntervalMomentum
           decelerationRate="fast"
           showsVerticalScrollIndicator={false}
