@@ -1220,6 +1220,16 @@ export function InspirationImmersiveViewer({
     mode: reelsMode,
   });
   const feedQuery = isSavedMode ? savedFeedQuery : recommendedReelsQuery;
+  // Đổi chip: danh sách cũ vẫn hiện (làm mờ) tới khi danh sách mới về, nên khung và thanh chip đứng yên khi mạng chậm.
+  const isSwitchingReelsMode = !isSavedMode && recommendedReelsQuery.isPlaceholderData;
+  const shownReelsModeRef = useRef(reelsMode);
+  useEffect(() => {
+    if (isSwitchingReelsMode || shownReelsModeRef.current === reelsMode) return;
+    // Danh sách mới đã về (hoặc có sẵn trong cache): về Reel đầu tiên.
+    shownReelsModeRef.current = reelsMode;
+    setActivePostId(null);
+    trackScrollRef.current?.scrollTo({ top: 0 });
+  }, [reelsMode, isSwitchingReelsMode]);
   // Cookie video xin cùng lúc với feed; từng Reel dùng lại kết quả này (cùng query), video đầu không chờ thêm.
   usePlaybackSession();
   const searchReelsQuery = useReelsByIds(searchReelIds ?? [], { enabled: isSearchReels });
@@ -2081,6 +2091,8 @@ export function InspirationImmersiveViewer({
                     className={styles.mediaTrack}
                     onScroll={handleTrackScroll}
                     tabIndex={-1}
+                    aria-busy={isSwitchingReelsMode || undefined}
+                    style={{ opacity: isSwitchingReelsMode ? 0.5 : 1, transition: 'opacity 150ms' }}
                   >
                     {posts.map((post, idx) => {
                       const renderMode = getReelRenderMode(idx, activeIndex);

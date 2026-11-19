@@ -1,4 +1,4 @@
-import { useInfiniteQuery, type InfiniteData, type QueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, type InfiniteData, type QueryClient } from '@tanstack/react-query';
 import { postRecommendationsControllerRecommendReels } from './generated/core-api/discovery/discovery';
 import { feedControllerGetFeed } from './generated/core-api/feed/feed';
 import type { FeedCardDto, PostRecommendationsControllerRecommendReelsMode, ReelRecommendationsDto } from './generated/core-api/model';
@@ -118,6 +118,8 @@ export function useRecommendedReelsFeed({
       };
     },
     getNextPageParam: (page) => page.nextCursor ?? undefined,
+    // Đổi kiểu gợi ý: giữ danh sách cũ trong lúc tải danh sách mới (isPlaceholderData) để khung Reels không bị thay bằng dấu chờ rồi nhảy.
+    placeholderData: keepPreviousData,
     staleTime: Infinity,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
