@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { commerceApi, useApiSession } from '@tripflix/api-client';
@@ -7,8 +7,21 @@ import { holdCountdown } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ApiErrorNotice } from '@/components/api-state';
-import { Button, copy, Empty, formatDate, Icon, money, Screen, Txt, ui } from '@/components/mobile-ui';
+import {
+  assets,
+  Button,
+  copy,
+  Empty,
+  formatDate,
+  Icon,
+  money,
+  Screen,
+  Txt,
+  ui,
+} from '@/components/mobile-ui';
 import { CommerceError, useRefreshOnOpen } from './commerce-state';
 import { NotificationBell } from '@/features/account/notification-bell';
 import { LoadingDots } from '@/components/loading-dots';
@@ -34,37 +47,54 @@ function getTripTab(trip: TripDto, now: Date) {
 export function CommerceTripsScreen() {
   const { user, isReady, error, session } = useApiSession();
   const [tab, setTab] = useState(0);
+  const introduction = (
+    <View style={styles.intro}>
+      <View style={styles.hero}>
+        <Image
+          source={assets.sea}
+          contentFit="cover"
+          accessible={false}
+          aria-hidden
+          style={styles.heroPhoto}
+        />
+        <LinearGradient
+          colors={[colors.sun, colors.sun, colors.transparent]}
+          locations={[0, 0.48, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+        <Txt style={styles.heroEyebrow}>{labels.heroEyebrow}</Txt>
+        <Txt style={styles.title} accessibilityRole="header">
+          {labels.title}
+        </Txt>
+      </View>
+      <Txt style={styles.body}>{labels.body}</Txt>
+      <View style={styles.tabs}>
+        {tabs.map((label, index) => (
+          <Pressable
+            key={label}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: tab === index }}
+            onPress={() => setTab(index)}
+            style={({ pressed }) => [styles.tab, tab === index && styles.selectedTab, pressed && ui.pressed]}
+          >
+            <Txt style={[styles.tabLabel, tab === index && styles.selectedLabel]}>{label}</Txt>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
   return (
     <Screen
       compact
-      background={colors.surface}
+      background={colors.background}
       title={copy.profile.myTrips}
       scroll={!user}
       right={<NotificationBell />}
     >
-      <View style={styles.intro}>
-        <Txt style={styles.title} accessibilityRole="header">
-          {labels.title}
-        </Txt>
-        <Txt style={styles.body}>{labels.body}</Txt>
-        <View style={styles.tabs}>
-          {tabs.map((label, index) => (
-            <Pressable
-              key={label}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: tab === index }}
-              onPress={() => setTab(index)}
-              style={({ pressed }) => [
-                styles.tab,
-                tab === index && styles.selectedTab,
-                pressed && ui.pressed,
-              ]}
-            >
-              <Txt style={[styles.tabLabel, tab === index && styles.selectedLabel]}>{label}</Txt>
-            </Pressable>
-          ))}
-        </View>
-      </View>
+      {!user && introduction}
       <ApiErrorNotice
         error={error}
         retry={() => {
@@ -74,7 +104,7 @@ export function CommerceTripsScreen() {
       {!isReady ? (
         <LoadingDots />
       ) : user ? (
-        <BookedTrips key={user.id} tab={tab} />
+        <BookedTrips key={user.id} tab={tab} introduction={introduction} />
       ) : (
         <View style={ui.flex}>
           <Empty
@@ -89,7 +119,7 @@ export function CommerceTripsScreen() {
     </Screen>
   );
 }
-function BookedTrips({ tab }: { tab: number }) {
+function BookedTrips({ tab, introduction }: { tab: number; introduction: ReactNode }) {
   const { user } = useApiSession();
   const client = useQueryClient();
   const [now, setNow] = useState(() => new Date());
@@ -130,6 +160,7 @@ function BookedTrips({ tab }: { tab: number }) {
       }
       ListHeaderComponent={
         <>
+          {introduction}
           <CommerceError
             error={query.error}
             retry={() => {
@@ -243,23 +274,32 @@ function TripCard({ trip, now }: { trip: TripDto; now: Date }) {
               ? labels.viewCancelled
               : copy.trips.viewOrder;
   return (
-    <View testID={`trip-${trip.orderId}`} style={styles.card}>
-      <View
-        style={[
-          styles.status,
-          isPaid || refund?.status === 'refunded'
-            ? styles.success
-            : status === 'pending' || status === 'paying'
-              ? styles.waiting
-              : styles.neutral,
-        ]}
-      >
+    <View
+      testID={`trip-${trip.orderId}`}
+      style={[
+        styles.card,
+        isPaid || refund?.status === 'refunded'
+          ? styles.confirmedCard
+          : status === 'pending'
+            ? styles.pendingCard
+            : status === 'paying'
+              ? styles.payingCard
+              : styles.closedCard,
+      ]}
+    >
+      <View style={styles.status}>
         <Txt style={[styles.statusText, (isPaid || refund?.status === 'refunded') && styles.successText]}>
           {statusLabel}
         </Txt>
       </View>
       <View style={styles.group}>
-        <Txt style={styles.cardTitle} accessibilityRole="header">
+        <Txt
+          style={[
+            styles.cardTitle,
+            firstFlight?.fromAirport && firstFlight.toAirport ? styles.routeTitle : undefined,
+          ]}
+          accessibilityRole="header"
+        >
           {title}
         </Txt>
         {firstFlight && !!stays[0] && <Txt style={styles.body}>{stays[0]}</Txt>}
@@ -283,10 +323,15 @@ function TripCard({ trip, now }: { trip: TripDto; now: Date }) {
       </View>
       {canContinue && (
         <View style={styles.hold}>
-          <Txt style={styles.secondary}>{labels.remaining}</Txt>
-          <Txt style={styles.countdown}>
-            {Math.floor(countdown.secondsLeft / 60)}:{String(countdown.secondsLeft % 60).padStart(2, '0')}
-          </Txt>
+          <View style={styles.holdTop}>
+            <View style={styles.timerLabel}>
+              <Icon name="time-outline" size={20} color={colors.ink} />
+              <Txt style={[styles.secondary, styles.timerText]}>{labels.remaining}</Txt>
+            </View>
+            <Txt style={styles.countdown}>
+              {Math.floor(countdown.secondsLeft / 60)}:{String(countdown.secondsLeft % 60).padStart(2, '0')}
+            </Txt>
+          </View>
           <Txt style={styles.secondary}>
             {t('commerce.tripList.deadline', {
               time: new Date(trip.holdExpiresAt).toLocaleString('vi-VN', {
@@ -299,7 +344,7 @@ function TripCard({ trip, now }: { trip: TripDto; now: Date }) {
               }),
             })}
           </Txt>
-          <Txt style={styles.body}>{labels.pendingHint}</Txt>
+          <Txt style={styles.secondary}>{labels.pendingHint}</Txt>
         </View>
       )}
       {status === 'pending' && !validDeadline && <Txt style={styles.secondary}>{labels.unknownDeadline}</Txt>}
@@ -345,8 +390,8 @@ function TripCard({ trip, now }: { trip: TripDto; now: Date }) {
           router.push({ pathname: canContinue ? '/checkout' : '/booking/[id]', params: { id: trip.orderId } })
         }
       >
-        <Txt style={[styles.actionLabel, canContinue && styles.payLabel]}>{action}</Txt>
-        <Icon name="arrow-forward" size={20} color={canContinue ? colors.background : colors.ink} />
+        <Txt style={styles.actionLabel}>{action}</Txt>
+        <Icon name="arrow-forward" size={20} color={colors.background} />
       </Pressable>
     </View>
   );
@@ -354,39 +399,78 @@ function TripCard({ trip, now }: { trip: TripDto; now: Date }) {
 
 const styles = StyleSheet.create({
   intro: { gap: spacing.md, paddingBottom: spacing.lg },
-  title: { fontSize: 28, lineHeight: 38, fontFamily: nativeFonts.semibold, color: colors.navy },
-  body: { fontSize: 15, lineHeight: 24, color: colors.ink },
-  secondary: { fontSize: 13, lineHeight: 22, color: colors.textMuted },
-  tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
+  hero: {
+    minHeight: 156,
+    padding: spacing.lg,
+    gap: spacing.sm,
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    backgroundColor: colors.sun,
+  },
+  heroPhoto: { position: 'absolute', top: 0, right: 0, bottom: 0, width: '60%' },
+  heroEyebrow: {
+    fontSize: 12,
+    lineHeight: 20,
+    letterSpacing: 1.5,
+    fontFamily: nativeFonts.semibold,
+    color: colors.navy,
+    maxWidth: '60%',
+  },
+  title: {
+    fontSize: 30,
+    lineHeight: 40,
+    fontFamily: nativeFonts.bold,
+    color: colors.navy,
+    maxWidth: '60%',
+  },
+  body: { fontSize: 16, lineHeight: 25, color: colors.ink },
+  secondary: { fontSize: 13, lineHeight: 22, color: colors.ink },
+  tabs: { flexDirection: 'row', gap: spacing.sm },
   tab: {
-    flexBasis: '47%',
-    flexGrow: 1,
+    flex: 1,
     minHeight: 48,
-    padding: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: radius.sm,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surfaceMuted,
   },
-  selectedTab: { backgroundColor: colors.seaMist },
-  tabLabel: { fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.medium, color: colors.textMuted },
-  selectedLabel: { color: colors.tealInk, fontFamily: nativeFonts.semibold },
-  card: { borderRadius: radius.md, padding: spacing.lg, gap: spacing.lg, backgroundColor: colors.background },
+  selectedTab: { backgroundColor: colors.coralInk },
+  tabLabel: {
+    fontSize: 13,
+    lineHeight: 22,
+    fontFamily: nativeFonts.medium,
+    color: colors.ink,
+    textAlign: 'center',
+  },
+  selectedLabel: { color: colors.background, fontFamily: nativeFonts.semibold },
+  card: { borderRadius: radius.md, padding: spacing.lg, gap: spacing.lg },
+  pendingCard: { backgroundColor: colors.coralTint },
+  payingCard: { backgroundColor: colors.sunSoft },
+  confirmedCard: { backgroundColor: colors.seaMist },
+  closedCard: { backgroundColor: colors.surfaceMuted },
   group: { gap: spacing.xs },
   status: {
     alignSelf: 'flex-start',
-    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
   },
   statusText: { fontSize: 13, lineHeight: 22, fontFamily: nativeFonts.semibold, color: colors.ink },
-  success: { backgroundColor: colors.seaMist },
   successText: { color: colors.tealInk },
-  waiting: { backgroundColor: colors.sunSoft },
-  neutral: { backgroundColor: colors.surfaceMuted },
   cardTitle: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy },
+  routeTitle: { fontSize: 32, lineHeight: 42, fontFamily: nativeFonts.bold },
   dateRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', marginTop: spacing.sm },
-  hold: { gap: spacing.xs, backgroundColor: colors.sunSoft, padding: spacing.md, borderRadius: radius.sm },
+  hold: { gap: spacing.xs },
+  holdTop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+  },
+  timerLabel: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', flexShrink: 1 },
+  timerText: { flexShrink: 1 },
   countdown: {
     fontSize: 24,
     lineHeight: 34,
@@ -406,14 +490,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   payButton: { backgroundColor: colors.coralInk },
-  viewButton: { backgroundColor: colors.surfaceMuted },
+  viewButton: { backgroundColor: colors.navy },
   actionLabel: {
     flexShrink: 1,
     fontSize: 15,
     lineHeight: 24,
     fontFamily: nativeFonts.semibold,
-    color: colors.ink,
+    color: colors.background,
     textAlign: 'center',
   },
-  payLabel: { color: colors.background },
 });

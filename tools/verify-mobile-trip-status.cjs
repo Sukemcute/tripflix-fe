@@ -238,6 +238,28 @@ class TripsPage {
         assert(beforeTime, 'countdown is visible');
         const beforeSeconds = Number(beforeTime[1]) * 60 + Number(beforeTime[2]);
         assert(beforeSeconds > 540 && beforeSeconds <= 600);
+        const cardColors = await ui
+          .card('pending')
+          .evaluate((node) => ({
+            background: getComputedStyle(node).backgroundColor,
+            radius: getComputedStyle(node).borderTopLeftRadius,
+            border: getComputedStyle(node).borderTopWidth,
+          }));
+        assert.notEqual(
+          cardColors.background,
+          'rgb(255, 255, 255)',
+          'pending card has a distinct brand surface',
+        );
+        assert.equal(cardColors.radius, '10px');
+        assert.equal(cardColors.border, '0px');
+        const tabBoxes = await page
+          .getByRole('tab')
+          .evaluateAll((nodes) => nodes.map((n) => n.getBoundingClientRect().toJSON()));
+        assert(tabBoxes.every((box) => box.height >= 48));
+        assert(
+          tabBoxes.every((box) => box.y === tabBoxes[0].y),
+          'filters share one row',
+        );
         assert.equal(await ui.card('paid').count(), 0);
         await ui.snapshot(`after-trips-${width}`);
         await page.clock.runFor(2000);
@@ -360,6 +382,23 @@ class TripsPage {
             .scrollIntoViewIfNeeded();
           assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
           await ui.snapshot('large-text-browser-preview');
+          await page.setViewportSize({ width: 844, height: 390 });
+          await page.reload();
+          await ui.tab('Sắp đi').click();
+          const landscapeAction = ui
+            .card('hotel-only')
+            .getByRole('button', { name: 'Xem thông tin đặt chỗ', exact: true });
+          await landscapeAction.scrollIntoViewIfNeeded();
+          const box = await landscapeAction.boundingBox();
+          assert(box.y >= 0 && box.y + box.height <= 390, 'landscape CTA is reachable above viewport edge');
+          await ui.snapshot('landscape-browser-preview');
+          await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
+          await page.setViewportSize({ width: 768, height: 1024 });
+          await page.reload();
+          await ui.tab('Sắp đi').click();
+          await ui.card('hotel-only').waitFor();
+          assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+          await ui.snapshot('tablet-reduced-motion-dark-system');
         }
         checks.push({
           width,
@@ -382,6 +421,7 @@ class TripsPage {
           navigation: true,
           overflow: false,
           edgeCasesAndLargeText: width === 390,
+          landscapeTabletReducedMotion: width === 390,
         });
       }
       await context.close();

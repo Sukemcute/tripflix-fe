@@ -208,7 +208,8 @@ export const commerce = {
   moreItems: '+{count} mục khác',
   tripList: {
     title: 'Chuyến đi của bạn',
-    body: 'Theo dõi đơn đang đặt, thông tin chuyến đi và các khoản hoàn tiền.',
+    body: 'Đơn đặt chỗ, vé và những chuyến sắp đi.',
+    heroEyebrow: 'ĐI & KHÁM PHÁ',
     actionTab: 'Cần xử lý',
     upcomingTab: 'Sắp đi',
     completedTab: 'Đã đi',
