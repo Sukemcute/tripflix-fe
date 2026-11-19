@@ -9,7 +9,7 @@
 - `apps/web`:
   - `src/lib/site.ts`: `NEXT_PUBLIC_SITE_URL` (mặc định `https://tripflix.io.vn`), `API_INTERNAL_URL` cho server gọi API; cập nhật `.env.example`.
   - Layout gốc: `metadataBase`, tiêu đề và mô tả mặc định, Open Graph, Twitter card, ảnh chia sẻ `public/brand/og-default.jpg` (1200×630, cắt từ ảnh hero có sẵn). Không đặt canonical/og:url ở layout vì trang con sẽ kế thừa; trang chủ tự khai canonical `/`.
-  - `generateMetadata` cho `/hotels/[id]`, `/trip-plans/[postId]`, `/u/[id]`: tiêu đề, mô tả (cắt ≤160 ký tự ở ranh giới từ), ảnh, canonical theo dữ liệu thật; API lỗi thì dùng metadata dự phòng. React `cache` gộp lần gọi của metadata và JSON-LD trong một request, timeout 4 giây.
+  - `generateMetadata` cho `/hotels/[id]`, `/trip-plans/[postId]`, `/u/[id]`: tiêu đề, mô tả (cắt ≤160 ký tự ở ranh giới từ), ảnh, canonical theo dữ liệu thật; API lỗi thì dùng metadata dự phòng. React `cache` gộp lần gọi của metadata và JSON-LD trong một request, timeout 2 giây (sau review).
   - Canonical khách sạn theo **id** (`/hotels/P-h-nt-01`), không theo slug: link nội bộ (tìm kiếm, lộ trình) và sitemap đều dùng id.
   - `sitemap.ts` (dynamic, vì lúc build Docker chưa có API): trang cố định, khách sạn trong chuyến đi, lộ trình, hồ sơ tác giả. Đọc tối đa 20 trang × 50 bài; hồ sơ được kiểm tra mở được (tác giả dữ liệu mẫu không có tài khoản trả 404) rồi mới đưa vào.
   - `robots.txt` thêm dòng `Sitemap`, giữ nguyên danh sách chặn của TF64.
@@ -40,6 +40,18 @@
   - `/search?q=nha`, `/login`: `noindex, follow`.
   - `/hotels/khong-ton-tai`: metadata dự phòng, trang vẫn render.
   - `/sitemap.xml`: 25 URL (5 cố định, 8 khách sạn, 10 lộ trình, 2 hồ sơ); hồ sơ tác giả seed trả 404 đã bị loại.
+
+## Sửa theo review của Thành (PR #293)
+
+1. **Metadata dự phòng có noindex**: ba hàm `build*FallbackMetadata` thêm `robots: noindex, follow`. Trang không tồn tại, không công khai hoặc API lỗi không lên kết quả tìm kiếm; lần crawl sau đọc được dữ liệu thì trang index lại. Test: `metadata dự phòng của cả ba loại trang đều noindex`.
+2. **Sitemap có cache và giới hạn tải**: kết quả đầy đủ được cache 1 giờ bằng `unstable_cache` (tag `seo-sitemap`). Kết quả thiếu do API lỗi không cache, nhưng vẫn trả phần đã đọc được. Kiểm tra hồ sơ tối đa 100, chạy 4 request cùng lúc; timeout mỗi request 3 giây. Hồ sơ trả 404 bị loại, còn lỗi khác thì đánh dấu kết quả thiếu.
+3. **JSON-LD không chặn render**: `HotelStructuredData` được bọc `<Suspense fallback={null}>`, timeout tra dữ liệu hạ từ 4 xuống 2 giây.
+- Nhẹ: breadcrumb bỏ mục `/search` (trang noindex), còn Trang chủ → Khách sạn. Thêm test U+2028/2029 và test `public-data` (trả dữ liệu, lỗi API, quá timeout). Bỏ 2 khoá i18n không dùng.
+
+Kiểm lại:
+- `pnpm turbo run lint typecheck test` (web, api-client, i18n): 9/9 task pass; web 46 file, 334 test.
+- `next build` + `next start` với core-api local: `/sitemap.xml` lần đầu 0,21 giây, lần 2 và 3 khoảng 0,006 giây (đọc cache), 25 URL. Trang khách sạn vẫn có JSON-LD và breadcrumb 2 mục. `/hotels/khong-ton-tai` và `/u/<tác giả seed>` có `noindex, follow`.
+- API không tới được (`API_INTERNAL_URL=http://localhost:1`): `/sitemap.xml` trả 200 với 5 trang cố định. Chạy lại với API đúng trên cùng thư mục cache: trả ngay 25 URL, tức kết quả thiếu không bị cache.
 
 ## Cách kiểm lại
 
