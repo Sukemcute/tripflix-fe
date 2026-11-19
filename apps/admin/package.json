@@ -19,6 +19,7 @@
     "@tripflix/tokens": "workspace:*",
     "@tripflix/ui-web": "workspace:*",
     "@tripflix/utils": "workspace:*",
+    "hls.js": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

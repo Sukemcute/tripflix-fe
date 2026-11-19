@@ -67,6 +67,8 @@ export const commerce = {
   checkoutRoomQuantity: '{count} phòng · {nights} đêm',
   checkoutFlightQuantity: '{count} vé',
   checkoutPayable: 'Số tiền thanh toán',
+  checkoutConsentHint: 'Điền thông tin bên dưới và đồng ý điều kiện trước khi thanh toán.',
+  checkoutMethodHint: 'Chọn phương thức và điền thông tin thanh toán bên dưới.',
   checkoutPropertyFees: 'Khoản thu tại nơi lưu trú',
   checkoutPropertyFeesUnknown:
     'Chưa có thông tin xác nhận trong đơn. Vui lòng đối chiếu chính sách của chỗ nghỉ.',
