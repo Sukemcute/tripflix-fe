@@ -86,6 +86,11 @@
   transform: scale(1.08);
   filter: blur(12px) brightness(0.35);
 }
+/* Trên nền ảnh tối, khung bình luận và lịch trình để trắng đặc thay vì kính mờ. */
+.waterContent :is(:global([class*='rightPanelInFeed']), :global([class*='itineraryInFeed'])) {
+  background: var(--color-background);
+  backdrop-filter: none;
+}
 /* Header trong suốt chữ trắng như trang chủ khi đứng trên nền ảnh tối (html thêm độ ưu tiên hơn rule nền trắng của Cảm hứng). */
 :global(html) :global(body):has(.inspirationBackdrop) :global(.ota-header) {
   border-color: rgb(255 255 255 / 48%);
