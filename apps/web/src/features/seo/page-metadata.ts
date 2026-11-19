@@ -8,6 +8,9 @@ import type { Metadata } from 'next';
 
 const BRAND_SUFFIX = ' | Tripflix';
 
+/** Trang không nên lên kết quả tìm kiếm (form, trang tạm, kết quả lọc) nhưng link bên trong vẫn được theo. */
+export const NOINDEX_ROBOTS: Metadata['robots'] = { index: false, follow: true };
+
 /** Ảnh chia sẻ mặc định (public/brand/og-default.jpg, cắt từ ảnh hero) khi trang không có ảnh riêng. */
 export const DEFAULT_OG_IMAGE = {
   url: '/brand/og-default.jpg',
@@ -94,9 +97,14 @@ export function buildHotelMetadata(hotel: HotelDetailDto): Metadata {
   return buildPageMetadata({ title, description, path: hotelPath(hotel.id), images });
 }
 
+/**
+ * Metadata khi không đọc được dữ liệu (không tồn tại, không công khai, API lỗi): noindex để trang lỗi trả 200
+ * không lên kết quả tìm kiếm; lần crawl sau đọc được dữ liệu thì trang được index lại.
+ */
 export function buildHotelFallbackMetadata(slug: string): Metadata {
   return {
     title: `${vi.seo.hotelFallbackTitle}${BRAND_SUFFIX}`,
+    robots: NOINDEX_ROBOTS,
     alternates: { canonical: hotelPath(slug) },
   };
 }
@@ -114,6 +122,7 @@ export function buildTripPlanMetadata(post: SocialPostDto): Metadata {
 export function buildTripPlanFallbackMetadata(postId: string): Metadata {
   return {
     title: `${vi.seo.tripPlanFallbackTitle}${BRAND_SUFFIX}`,
+    robots: NOINDEX_ROBOTS,
     alternates: { canonical: tripPlanPath(postId) },
   };
 }
@@ -135,9 +144,7 @@ export function buildProfileMetadata(profile: PublicProfileDto): Metadata {
 export function buildProfileFallbackMetadata(userId: string): Metadata {
   return {
     title: `${vi.seo.profileFallbackTitle}${BRAND_SUFFIX}`,
+    robots: NOINDEX_ROBOTS,
     alternates: { canonical: profilePath(userId) },
   };
 }
-
-/** Trang không nên lên kết quả tìm kiếm (form, trang tạm, kết quả lọc) nhưng link bên trong vẫn được theo. */
-export const NOINDEX_ROBOTS: Metadata['robots'] = { index: false, follow: true };

@@ -17,11 +17,39 @@ export const STATIC_SITEMAP_PATHS: ReadonlyArray<{ path: string; priority: numbe
 export const MAX_POST_PAGES = 20;
 
 /** Số hồ sơ tác giả tối đa kiểm tra cho một lần dựng sitemap. */
-export const MAX_PROFILE_CHECKS = 200;
+export const MAX_PROFILE_CHECKS = 100;
+
+/** Số request kiểm tra hồ sơ chạy cùng lúc, để một lần dựng sitemap không dồn tải lên API. */
+export const PROFILE_CHECK_CONCURRENCY = 4;
+
+export interface SitemapResult {
+  entries: MetadataRoute.Sitemap;
+  /** false khi có lần gọi API lỗi: kết quả thiếu, không nên cache. */
+  isComplete: boolean;
+}
 
 export type LoadPostPage = (cursor: string | undefined) => Promise<SocialPostPageDto>;
 /** Trả true khi hồ sơ công khai mở được; tác giả của dữ liệu mẫu có thể không có tài khoản thật. */
 export type HasPublicProfile = (userId: string) => Promise<boolean>;
+
+/** Chạy `task` cho từng phần tử, tối đa `limit` việc cùng lúc, giữ đúng thứ tự kết quả. */
+export async function mapWithConcurrency<Input, Output>(
+  inputs: readonly Input[],
+  limit: number,
+  task: (input: Input) => Promise<Output>,
+): Promise<Output[]> {
+  const results = new Array<Output>(inputs.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < inputs.length) {
+      const index = next;
+      next += 1;
+      results[index] = await task(inputs[index]!);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, inputs.length) }, worker));
+  return results;
+}
 
 function laterDate(current: Date | undefined, value: string | null | undefined): Date | undefined {
   if (!value) return current;
@@ -32,13 +60,14 @@ function laterDate(current: Date | undefined, value: string | null | undefined):
 
 /**
  * Dựng sitemap từ trang cố định và bài công khai: lộ trình của bài có chuyến đi, khách sạn trong chuyến đi,
- * hồ sơ tác giả. Lỗi API giữa chừng thì giữ phần đã đọc được, không làm hỏng cả sitemap.
+ * hồ sơ tác giả. Lỗi API giữa chừng thì giữ phần đã đọc được và báo `isComplete: false`.
  */
 export async function collectSitemapEntries(
   loadPostPage: LoadPostPage,
   hasPublicProfile: HasPublicProfile,
   toAbsoluteUrl: (path: string) => string,
-): Promise<MetadataRoute.Sitemap> {
+): Promise<SitemapResult> {
+  let isComplete = true;
   const tripPlans = new Map<string, Date | undefined>();
   const hotels = new Map<string, Date | undefined>();
   const profiles = new Map<string, Date | undefined>();
@@ -51,6 +80,7 @@ export async function collectSitemapEntries(
     try {
       postPage = await loadPostPage(cursor);
     } catch {
+      isComplete = false;
       break;
     }
     for (const post of postPage.items) {
@@ -66,10 +96,12 @@ export async function collectSitemapEntries(
 
   // Chỉ đưa hồ sơ mở được vào sitemap, để không chỉ máy tìm kiếm tới trang 404.
   const authorIds = [...profiles.keys()];
-  const reachable = await Promise.all(
-    authorIds.map((userId, index) =>
-      index < MAX_PROFILE_CHECKS ? hasPublicProfile(userId).catch(() => false) : Promise.resolve(false),
-    ),
+  const checkedIds = authorIds.slice(0, MAX_PROFILE_CHECKS);
+  const reachable = await mapWithConcurrency(checkedIds, PROFILE_CHECK_CONCURRENCY, (userId) =>
+    hasPublicProfile(userId).catch(() => {
+      isComplete = false;
+      return false;
+    }),
   );
   authorIds.forEach((userId, index) => {
     if (!reachable[index]) profiles.delete(userId);
@@ -87,7 +119,7 @@ export async function collectSitemapEntries(
       priority,
     }));
 
-  return [
+  const entries: MetadataRoute.Sitemap = [
     ...STATIC_SITEMAP_PATHS.map(({ path, priority }) => ({
       url: toAbsoluteUrl(path),
       changeFrequency: 'daily' as const,
@@ -97,4 +129,5 @@ export async function collectSitemapEntries(
     ...toEntries(tripPlans, tripPlanPath, 0.7),
     ...toEntries(profiles, profilePath, 0.4),
   ];
+  return { entries, isComplete };
 }

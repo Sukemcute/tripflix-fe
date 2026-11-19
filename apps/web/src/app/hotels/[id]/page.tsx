@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { HotelScreen } from '@/features/hotels/hotel-screen';
 import { buildHotelJsonLd, serializeJsonLd } from '@/features/seo/hotel-json-ld';
 import { buildHotelFallbackMetadata, buildHotelMetadata } from '@/features/seo/page-metadata';
@@ -12,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return hotel ? buildHotelMetadata(hotel) : buildHotelFallbackMetadata(id);
 }
 
-/** JSON-LD Hotel + BreadcrumbList cho máy tìm kiếm; không có dữ liệu thì bỏ qua. */
+/** JSON-LD Hotel + BreadcrumbList cho máy tìm kiếm; không có dữ liệu thì bỏ qua. Đặt trong Suspense để API chậm không chặn trang. */
 async function HotelStructuredData({ id }: { id: string }) {
   const hotel = await findPublicHotel(id);
   if (!hotel) return null;
@@ -37,7 +38,9 @@ export default async function HotelPage({
   const from = read('from');
   return (
     <>
-      <HotelStructuredData id={id} />
+      <Suspense fallback={null}>
+        <HotelStructuredData id={id} />
+      </Suspense>
       <HotelScreen
         key={id}
         id={id}

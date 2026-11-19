@@ -4,7 +4,10 @@ import { hotelPath } from './page-metadata';
 
 type JsonLd = Record<string, unknown>;
 
-/** Dữ liệu có cấu trúc schema.org cho trang khách sạn: Hotel và BreadcrumbList (TF112). */
+/**
+ * Dữ liệu có cấu trúc schema.org cho trang khách sạn: Hotel và BreadcrumbList (TF112). Breadcrumb chỉ có trang chủ
+ * và khách sạn vì chưa có trang danh sách khách sạn được index (/search là noindex).
+ */
 export function buildHotelJsonLd(hotel: HotelDetailDto, toAbsoluteUrl: (path: string) => string): JsonLd[] {
   const url = toAbsoluteUrl(hotelPath(hotel.id));
   const images = hotel.images.length ? hotel.images : hotel.thumbnail ? [hotel.thumbnail] : [];
@@ -58,8 +61,7 @@ export function buildHotelJsonLd(hotel: HotelDetailDto, toAbsoluteUrl: (path: st
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: vi.seo.home, item: toAbsoluteUrl('/') },
-      { '@type': 'ListItem', position: 2, name: vi.seo.hotels, item: toAbsoluteUrl('/search') },
-      { '@type': 'ListItem', position: 3, name: hotel.name, item: url },
+      { '@type': 'ListItem', position: 2, name: hotel.name, item: url },
     ],
   };
   return [hotelLd, breadcrumbLd];

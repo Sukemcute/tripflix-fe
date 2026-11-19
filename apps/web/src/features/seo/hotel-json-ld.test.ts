@@ -36,12 +36,12 @@ describe('buildHotelJsonLd', () => {
     expect(hotel).not.toHaveProperty('starRating');
   });
 
-  it('breadcrumb đi từ trang chủ tới khách sạn', () => {
+  it('breadcrumb đi thẳng từ trang chủ tới khách sạn, không qua trang noindex', () => {
     const [, breadcrumb] = buildHotelJsonLd(makeHotel(), absolute);
     const items = (breadcrumb as { itemListElement: Array<{ position: number; item: string }> })
       .itemListElement;
-    expect(items.map((item) => item.position)).toEqual([1, 2, 3]);
-    expect(items[2]!.item).toBe('https://tripflix.io.vn/hotels/hotel-1');
+    expect(items.map((item) => item.position)).toEqual([1, 2]);
+    expect(items[1]!.item).toBe('https://tripflix.io.vn/hotels/hotel-1');
   });
 });
 
@@ -50,5 +50,14 @@ describe('serializeJsonLd', () => {
     const json = serializeJsonLd({ name: '</script><script>alert(1)</script>' });
     expect(json).not.toContain('</script>');
     expect(JSON.parse(json)).toEqual({ name: '</script><script>alert(1)</script>' });
+  });
+
+  it('escape ký tự xuống dòng JS U+2028 và U+2029', () => {
+    const name = `A${String.fromCharCode(0x2028)}B${String.fromCharCode(0x2029)}C`;
+    const json = serializeJsonLd({ name });
+    expect(json).not.toContain(String.fromCharCode(0x2028));
+    expect(json).not.toContain(String.fromCharCode(0x2029));
+    expect(json).toContain('\\u2028');
+    expect(JSON.parse(json)).toEqual({ name });
   });
 });

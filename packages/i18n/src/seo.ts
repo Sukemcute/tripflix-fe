@@ -5,8 +5,6 @@ export const seo = {
     'Xem chuyến đi thật của người trẻ qua video và lộ trình chi tiết, rồi đặt phòng khách sạn, vé máy bay theo đúng hành trình đó trên Tripflix.',
   ogImageAlt: 'Tripflix · Thấy là thích, nhích là đi',
   home: 'Trang chủ',
-  hotels: 'Khách sạn',
-  tripPlans: 'Lộ trình',
   hotelTitle: '{name} · Giá tốt, đặt phòng nhanh',
   hotelTitleWithPlace: '{name}, {place} · Giá tốt, đặt phòng nhanh',
   hotelDescription: 'Xem ảnh, tiện nghi, đánh giá và giá phòng {name}. Đặt phòng nhanh trên Tripflix.',

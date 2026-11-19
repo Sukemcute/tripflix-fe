@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   buildHotelFallbackMetadata,
   buildHotelMetadata,
+  buildProfileFallbackMetadata,
   buildProfileMetadata,
+  buildTripPlanFallbackMetadata,
   buildTripPlanMetadata,
   DEFAULT_OG_IMAGE,
+  NOINDEX_ROBOTS,
   toMetaDescription,
 } from './page-metadata';
 import { makeHotel, makePost } from './seo-fixtures';
@@ -53,6 +56,20 @@ describe('buildHotelMetadata', () => {
 
   it('metadata dự phòng vẫn có canonical khi API lỗi', () => {
     expect(buildHotelFallbackMetadata('abc').alternates?.canonical).toBe('/hotels/abc');
+  });
+
+  it('metadata dự phòng của cả ba loại trang đều noindex', () => {
+    for (const metadata of [
+      buildHotelFallbackMetadata('h'),
+      buildTripPlanFallbackMetadata('p'),
+      buildProfileFallbackMetadata('u'),
+    ]) {
+      expect(metadata.robots).toEqual(NOINDEX_ROBOTS);
+    }
+  });
+
+  it('metadata đọc được dữ liệu thì không noindex', () => {
+    expect(buildHotelMetadata(makeHotel()).robots).toBeUndefined();
   });
 });
 
