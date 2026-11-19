@@ -9,8 +9,12 @@ import { withReturnTo } from '@/features/auth/auth-return';
 import { AssistantCards } from './assistant-cards';
 import { AssistantIcon, type AssistantIconName } from './assistant-icon';
 import { useAssistant } from './assistant-provider';
-import { GENIE_CLOSE_MS } from './genie-motion';
-import { useGenieMotion } from './use-genie-motion';
+import {
+  getPanelCloseTimeoutMs,
+  getPanelVisibility,
+  reducePanelPresence,
+  shouldCompletePanelClose,
+} from './panel-motion';
 import styles from './assistant.module.css';
 
 const copy = vi.assistant;
@@ -75,15 +79,6 @@ function AssistantPanel({
       const top = isMobile ? 0 : Math.max(12, Math.min(Math.ceil(headerEl.getBoundingClientRect().bottom) + 8, window.innerHeight - 160));
       panelEl.style.setProperty('--panel-top', `${top}px`);
       panelEl.style.setProperty('--panel-max-height', `${Math.max(0, window.innerHeight - top - 16)}px`);
-      const trigger = document.getElementById('header-assistant-button');
-      if (trigger) {
-        const triggerRect = trigger.getBoundingClientRect();
-        // offsetLeft không đổi trong lúc cửa sổ đang co giãn theo animation.
-        const originX = triggerRect.left + triggerRect.width / 2 - panelEl.offsetLeft;
-        const originY = triggerRect.top + triggerRect.height / 2 - top;
-        panelEl.style.setProperty('--panel-origin-x', `${originX}px`);
-        panelEl.style.setProperty('--panel-origin-y', `${originY}px`);
-      }
     };
     updateAnchor();
     const observer = new ResizeObserver(updateAnchor);
@@ -101,12 +96,12 @@ function AssistantPanel({
     list.current?.scrollTo({ top: list.current.scrollHeight });
   }, [chat.messages.length, chat.isPending, chat.hasError]);
 
-  useGenieMotion(panel, isClosing, onClosed);
-
   // Lỗi không khoá ô nhập: người dùng sửa câu rồi gửi lại, hoặc bấm "Thử gửi lại".
   const isDisabled = !chat.draft.trim() || chat.isPending;
 
-  useEffect(() => input.current?.focus({ preventScroll: true }), []);
+  useEffect(() => {
+    if (!isClosing) input.current?.focus({ preventScroll: true });
+  }, [isClosing]);
 
   const handleClose = () => {
     chat.close();
@@ -123,6 +118,11 @@ function AssistantPanel({
       aria-label={copy.name}
       aria-hidden={isClosing || undefined}
       inert={Boolean(isClosing)}
+      onAnimationEnd={(event) => {
+        if (shouldCompletePanelClose(event.target, event.currentTarget, isClosing)) {
+          onClosed();
+        }
+      }}
       onKeyDown={(event) => {
         if (event.key !== 'Escape') return;
         if (isConfirming) setIsConfirming(false);
@@ -340,7 +340,7 @@ function AssistantPanel({
 }
 
 /**
- * Khung chat Tripi ở gốc (TF31): chỉ hiển thị panel với hiệu ứng mở từ header / thu về khi đóng.
+ * Khung chat Tripi ở gốc (TF31): giữ panel qua `isExiting` để chạy hết animation đóng (fade + trượt nhẹ) rồi mới gỡ.
  * Giữ nguyên phiên chat và tiến trình stream ngay cả khi đóng mở khung.
  */
 export function AssistantWidget() {
@@ -350,18 +350,21 @@ export function AssistantWidget() {
   const [lastIsOpen, setLastIsOpen] = useState(isOpen);
   const [isExiting, setIsExiting] = useState(false);
   if (lastIsOpen !== isOpen) {
-    setLastIsOpen(isOpen);
-    setIsExiting(!isOpen);
+    const next = reducePanelPresence({ lastIsOpen, isExiting }, isOpen);
+    setLastIsOpen(next.lastIsOpen);
+    setIsExiting(next.isExiting);
   }
-  const isClosing = !isOpen && isExiting;
-  const rendered = isOpen || isExiting;
+  const { isClosing, rendered } = getPanelVisibility(isOpen, isExiting);
 
-  // Bộ hẹn giờ dự phòng khi onAnimationEnd không kích hoạt
+  // Bộ hẹn giờ dự phòng khi onAnimationEnd không kích hoạt hoặc khi giảm chuyển động
   useEffect(() => {
     if (!isClosing) return;
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const timer = setTimeout(() => {
       setIsExiting(false);
-    }, GENIE_CLOSE_MS + 1400);
+    }, getPanelCloseTimeoutMs(Boolean(prefersReducedMotion)));
     return () => clearTimeout(timer);
   }, [isClosing]);
 

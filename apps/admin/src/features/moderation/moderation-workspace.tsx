@@ -18,6 +18,12 @@ import riskStyles from './risk-level.module.css';
 import { CaseContextTags } from './case-context-tags';
 import operations from './moderation-operations.module.css';
 import { useFreshIds } from './use-fresh-ids';
+import { ReviewLeasePanel, ReviewStatus, useReviewTime } from './review-lease-panel';
+import { canDecideReview } from './review-lease-state';
+import reviewStyles from './review-queue.module.css';
+import { ModerationAuthor } from './moderation-author';
+import { ModerationContext } from './moderation-context';
+const reviewText = vi.moderation.review;
 
 const text = vi.moderation;
 const copyOps = vi.adminOperations;
@@ -35,7 +41,7 @@ const destination: Record<DecisionDto['action'], QueueView> = {
 
 async function applyDecision(item: ModerationCaseDto, body: DecisionDto): Promise<void> {
   if (item.status === 'pending') {
-    await moderationApi.decide(item.id, body);
+    await moderationApi.decide(item.id, { ...body, leaseId: item.leaseId ?? undefined });
   } else if (item.targetType === 'comment') {
     await moderationApi.commentAction(item.targetId, body);
   } else if (body.action !== 'dismiss') {
@@ -97,11 +103,13 @@ function RiskTags({ item }: { item: ModerationCaseDto }) {
 }
 
 export function ModerationWorkspace() {
+  const { user } = useApiSession();
+  const [queueSla, setQueueSla] = useState<'all' | 'overdue' | 'due_soon'>('all');
   const [tab, setTab] = useState<QueueView | 'log' | 'posts' | 'appeals' | 'scans'>('pending');
 
   // Số liệu đếm ở server (TF89): không cắt theo 100 dòng đầu như khi đếm ở FE.
   const stats = useQuery({
-    queryKey: ['moderation', 'stats'],
+    queryKey: ['moderation', 'stats', user?.id],
     queryFn: ({ signal }) => moderationApi.stats(signal),
     refetchInterval: refreshInterval,
   });
@@ -204,6 +212,46 @@ export function ModerationWorkspace() {
         </div>
       </div>
 
+      {summary && (
+        <section className={reviewStyles.summary} aria-label={reviewText.operations}>
+          <h2>{reviewText.operations}</h2>
+          <div className={reviewStyles.actions}>
+            <span>
+              {reviewText.unassigned}
+              <strong>{summary.unassigned}</strong> · {reviewText.mine}
+              <strong>{summary.assignedToMe}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setQueueSla('overdue');
+                setTab('pending');
+              }}
+            >
+              {reviewText.overdue}
+              <strong>{summary.overdue}</strong>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setQueueSla('due_soon');
+                setTab('pending');
+              }}
+            >
+              {reviewText.dueSoon}
+              <strong>{summary.dueSoon}</strong>
+            </button>
+            <button type="button" onClick={() => setTab('scans')}>
+              {reviewText.failedScans}
+              <strong>{summary.failedScans}</strong>
+            </button>
+          </div>
+          {(summary.overdue > 0 || summary.failedScans > 0) && (
+            <output className={reviewStyles.alert}>{reviewText.alert}</output>
+          )}
+          <p>{reviewText.policy}</p>
+        </section>
+      )}
       {tab === 'scans' ? (
         <FailedScans />
       ) : tab === 'appeals' ? (
@@ -214,8 +262,9 @@ export function ModerationWorkspace() {
         <PostModeration />
       ) : (
         <ModerationQueue
-          key={tab}
+          key={`${tab}-${queueSla}`}
           view={tab}
+          initialSla={queueSla}
           onDecision={(action) => setTab((current) => (current === tab ? destination[action] : current))}
         />
       )}
@@ -442,19 +491,29 @@ function FailedScans() {
 
 function ModerationQueue({
   view,
+  initialSla,
   onDecision,
 }: {
   view: QueueView;
+  initialSla: 'all' | 'overdue' | 'due_soon';
   onDecision: (action: DecisionDto['action']) => void;
 }) {
   const client = useQueryClient();
   const [subCategory, setSubCategory] = useState<'all' | 'post' | 'comment' | 'report'>('all');
+  const { user } = useApiSession();
+  const now = useReviewTime();
+  const [assignment, setAssignment] = useState<'all' | 'unassigned' | 'mine'>('all');
+  const [sla, setSla] = useState<'all' | 'overdue' | 'due_soon'>(initialSla);
+  const [searchQuery, setSearchQuery] = useState('');
   const filters: AdminModerationControllerQueueParams = {
+    assignment: view === 'pending' ? assignment : undefined,
+    sla: view === 'pending' ? sla : undefined,
+    search: searchQuery || undefined,
     view,
     targetType: subCategory === 'comment' || subCategory === 'post' ? subCategory : undefined,
     source: subCategory === 'report' ? 'report' : undefined,
   };
-  const [searchQuery, setSearchQuery] = useState('');
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeDossierId, setActiveDossierId] = useState<string | null>(null);
   const [bulkReason, setBulkReason] = useState<DecisionDto['reasonCode'] | ''>('');
@@ -464,7 +523,7 @@ function ModerationQueue({
   }>();
 
   const query = useInfiniteQuery({
-    queryKey: ['moderation', 'queue', filters],
+    queryKey: ['moderation', 'queue', user?.id, filters],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) => moderationApi.queue({ ...filters, cursor: pageParam }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
@@ -482,23 +541,15 @@ function ModerationQueue({
   );
   const freshIds = useFreshIds(loadedIds);
 
-  // Lọc theo subcategory và ô tìm kiếm
-  const filteredItems = rawItems.filter((item) => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matchId = item.id.toLowerCase().includes(q) || item.targetId.toLowerCase().includes(q);
-      const matchAuthor = (item.authorId ?? '').toLowerCase().includes(q);
-      if (!matchId && !matchAuthor && !item.targetPreview?.toLowerCase().includes(q)) return false;
-    }
-    return true;
-  });
+  const filteredItems = rawItems;
   const selectedItems = filteredItems.filter((item) => selectedIds.includes(item.id));
   const bulk = useMutation({
     mutationFn: async ({ items, body }: { items: ModerationCaseDto[]; body: DecisionDto }) => {
       const failed: { id: string; error: unknown }[] = [];
       for (const item of items) {
         try {
-          await applyDecision(item, body);
+          const owned = item.status === 'pending' ? await moderationApi.reviewLease(item.id, 'claim') : item;
+          await applyDecision(owned, body);
         } catch (error) {
           failed.push({ id: item.id, error });
         }
@@ -553,7 +604,8 @@ function ModerationQueue({
             type="text"
             className="mod-search-input"
             id="moderation-search"
-            placeholder="Tìm trên các hồ sơ đã tải"
+            placeholder={reviewText.search}
+            maxLength={160}
             value={searchQuery}
             disabled={bulk.isPending}
             onChange={(e) => {
@@ -577,6 +629,38 @@ function ModerationQueue({
         )}
       </div>
 
+      {view === 'pending' && (
+        <div className={reviewStyles.filters}>
+          <label>
+            {reviewText.assignment}
+            <select
+              value={assignment}
+              onChange={(event) => {
+                setSelectedIds([]);
+                setAssignment(event.target.value as typeof assignment);
+              }}
+            >
+              <option value="all">{reviewText.allAssignments}</option>
+              <option value="unassigned">{reviewText.unassigned}</option>
+              <option value="mine">{reviewText.mine}</option>
+            </select>
+          </label>
+          <label>
+            {reviewText.deadline}
+            <select
+              value={sla}
+              onChange={(event) => {
+                setSelectedIds([]);
+                setSla(event.target.value as typeof sla);
+              }}
+            >
+              <option value="all">{reviewText.allDeadlines}</option>
+              <option value="overdue">{reviewText.overdue}</option>
+              <option value="due_soon">{reviewText.dueSoon}</option>
+            </select>
+          </label>
+        </div>
+      )}
       {/* Chia Layout: Subnav Menu bên trái + Bảng Danh sách bên phải */}
       <div className="mod-split-layout">
         {/* Subnav Trái */}
@@ -723,6 +807,7 @@ function ModerationQueue({
                     <th title="Điểm ưu tiên hồ sơ từ chính sách Core, thang 0–100. AI gắn cờ đóng góp 60 điểm.">
                       Điểm ưu tiên
                     </th>
+                    {view === 'pending' && <th>{reviewText.assignment} / SLA</th>}
                     <th style={{ textAlign: 'right' }}>Hành động</th>
                   </tr>
                 </thead>
@@ -792,6 +877,11 @@ function ModerationQueue({
                             {item.severity}
                           </span>
                         </td>
+                        {view === 'pending' && (
+                          <td>
+                            <ReviewStatus item={item} actorId={user?.id} now={now} />
+                          </td>
+                        )}
                         <td style={{ textAlign: 'right' }}>
                           <button
                             type="button"
@@ -862,6 +952,8 @@ function CaseDetailModal({
   onDecision: (action: DecisionDto['action']) => void;
 }) {
   const client = useQueryClient();
+  const { user } = useApiSession();
+  const now = useReviewTime();
   const dialogRef = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -873,15 +965,20 @@ function CaseDetailModal({
   const [notes, setNotes] = useState('');
 
   const detail = useQuery({
-    queryKey: ['moderation', 'detail', id],
+    queryKey: ['moderation', 'detail', id, user?.id],
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchInterval: 10000,
     queryFn: ({ signal }) => moderationApi.detail(id, signal),
   });
 
   const decision = useMutation({
     mutationFn: (action: DecisionDto['action']) => {
-      if (!reasonCode || !detail.data) throw new Error(text.chooseReason);
+      if (!reasonCode || !detail.data || !canDecideReview(detail.data, user?.id, now))
+        throw new Error(text.chooseReason);
       return applyDecision(detail.data, { action, reasonCode, reasonDetail: notes.trim() || undefined });
     },
+    onError: () => client.invalidateQueries({ queryKey: ['moderation'] }),
     onSuccess: async (_, action) => {
       await Promise.all([
         client.invalidateQueries({ queryKey: ['moderation'] }),
@@ -894,6 +991,7 @@ function CaseDetailModal({
   });
 
   const item = detail.data;
+  const canDecide = !!item && canDecideReview(item, user?.id, now);
 
   return (
     <div className="mod-modal-overlay">
@@ -940,6 +1038,16 @@ function CaseDetailModal({
 
         {/* Modal Body */}
         <div className="mod-modal-body">
+          {item && <ReviewLeasePanel item={item} />}
+          {item?.targetType === 'comment' && modalTab === 'info' && (
+            <ModerationContext
+              postId={item.postId}
+              commentId={item.targetId}
+              post={item.postContext}
+              parent={item.parentComment}
+              commentStatus={item.target?.status}
+            />
+          )}
           <AdminApiError error={detail.error} />
           {detail.isPending && (
             <div style={{ padding: 32, textAlign: 'center' }}>
@@ -965,7 +1073,7 @@ function CaseDetailModal({
                 <h3 className="mod-post-title">{item.target?.text || 'Không có nội dung văn bản'}</h3>
                 <div className="mod-post-author-row">
                   <span>
-                    {text.author}: {item.authorId ? item.authorId.slice(0, 8) : '—'}
+                    {text.author}: {item.author?.displayName || text.authorDetails.accountUnavailable}
                   </span>
                   <span>•</span>
                   <span>Hồ sơ tạo {date(item.createdAt)}</span>
@@ -984,6 +1092,8 @@ function CaseDetailModal({
                   kết luận vi phạm.
                 </p>
               </div>
+
+              <ModerationAuthor authorId={item.authorId} author={item.author} targetType={item.targetType} />
 
               {/* Lưới Thông Số Kỹ Thuật (ID, Lượt xem, Báo cáo, Lý do) */}
               <div className="mod-meta-grid">
@@ -1083,6 +1193,15 @@ function CaseDetailModal({
           {item && modalTab === 'history' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <LogTable items={item.actions} />
+              <h3>{reviewText.audit}</h3>
+              {(item.reviewAudit ?? []).map((entry) => (
+                <p key={entry.id}>
+                  <time dateTime={entry.createdAt}>{date(entry.createdAt)}</time> · #
+                  {entry.actorId.slice(0, 8)} ·{' '}
+                  {reviewText[entry.action as 'claim' | 'renew' | 'release' | 'evidence_view'] ??
+                    entry.action}
+                </p>
+              ))}
             </div>
           )}
         </div>
@@ -1096,7 +1215,7 @@ function CaseDetailModal({
             <button
               type="button"
               className="btn-decision investigate"
-              disabled={decision.isPending || !reasonCode}
+              disabled={decision.isPending || !reasonCode || !canDecide}
               onClick={() => decision.mutate('dismiss')}
             >
               {item.target?.status === 'held' ? vi.api.moderationReleaseHeld : 'Đóng hồ sơ'}
@@ -1106,7 +1225,7 @@ function CaseDetailModal({
             <button
               type="button"
               className="btn-decision hide"
-              disabled={decision.isPending || !reasonCode}
+              disabled={decision.isPending || !reasonCode || !canDecide}
               onClick={() => decision.mutate('hide')}
             >
               Ẩn (Tạm thời)
@@ -1118,7 +1237,7 @@ function CaseDetailModal({
               <button
                 type="button"
                 className="btn-decision restore"
-                disabled={decision.isPending || !reasonCode}
+                disabled={decision.isPending || !reasonCode || !canDecide}
                 onClick={() => decision.mutate('restore')}
               >
                 {item.target.status === 'held' ? vi.api.moderationReleaseHeld : 'Khôi phục'}
@@ -1128,7 +1247,7 @@ function CaseDetailModal({
             <button
               type="button"
               className="btn-decision remove"
-              disabled={decision.isPending || !reasonCode}
+              disabled={decision.isPending || !reasonCode || !canDecide}
               onClick={() => {
                 if (window.confirm('Gỡ nội dung này khỏi giao diện người dùng?')) decision.mutate('remove');
               }}

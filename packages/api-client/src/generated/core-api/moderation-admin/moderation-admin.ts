@@ -30,11 +30,13 @@ import type {
   AppealQueuePageDto,
   DecisionDto,
   FailedScanPageDto,
+  ModerationCaseDto,
   ModerationDecisionResultDto,
   ModerationDetailDto,
   ModerationLogPageDto,
   ModerationQueuePageDto,
   ModerationStatsDto,
+  ReviewLeaseDto,
   ScanRetryDto,
 } from '../model';
 
@@ -995,6 +997,116 @@ export function useAdminModerationControllerDetail<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export type adminModerationControllerReviewLeaseResponse201 = {
+  data: ModerationCaseDto;
+  status: 201;
+};
+
+export type adminModerationControllerReviewLeaseResponseSuccess =
+  adminModerationControllerReviewLeaseResponse201 & {
+    headers: Headers;
+  };
+export type adminModerationControllerReviewLeaseResponse =
+  adminModerationControllerReviewLeaseResponseSuccess;
+
+export const getAdminModerationControllerReviewLeaseUrl = (id: string) => {
+  return `/api/v1/admin/moderation/queue/${id}/lease`;
+};
+
+export const adminModerationControllerReviewLease = async (
+  id: string,
+  reviewLeaseDto: ReviewLeaseDto,
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationControllerReviewLeaseResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<adminModerationControllerReviewLeaseResponse>(getAdminModerationControllerReviewLeaseUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(reviewLeaseDto),
+  });
+};
+
+export const getAdminModerationControllerReviewLeaseMutationKey = () =>
+  ['adminModerationControllerReviewLease'] as const;
+
+export const getAdminModerationControllerReviewLeaseMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminModerationControllerReviewLease>>,
+    TError,
+    AdminModerationControllerReviewLeaseMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminModerationControllerReviewLease>>,
+  TError,
+  AdminModerationControllerReviewLeaseMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminModerationControllerReviewLeaseMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminModerationControllerReviewLease>>,
+    AdminModerationControllerReviewLeaseMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminModerationControllerReviewLease(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminModerationControllerReviewLeaseMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationControllerReviewLease>>
+>;
+export type AdminModerationControllerReviewLeaseMutationBody = ReviewLeaseDto;
+export type AdminModerationControllerReviewLeaseMutationError = unknown;
+export type AdminModerationControllerReviewLeaseMutationVariables = { id: string; data: ReviewLeaseDto };
+
+export const useAdminModerationControllerReviewLease = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminModerationControllerReviewLease>>,
+      TError,
+      AdminModerationControllerReviewLeaseMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminModerationControllerReviewLease>>,
+  TError,
+  AdminModerationControllerReviewLeaseMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminModerationControllerReviewLeaseMutationOptions(options), queryClient);
+};
 export type adminModerationControllerDecisionResponse201 = {
   data: ModerationDecisionResultDto;
   status: 201;
