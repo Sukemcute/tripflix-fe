@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "baseline": false,
+  "checks": [
+    "375px: two hotels/two flight legs, blur validation, account fill preserves edits, contact copied once to guest 1, guest 2 independent, dates and server field rejection preserve inputs/no pay, summary/method/required validation, hotel-only guest/payment payload, OTP/expired",
+    "390px: two hotels/two flight legs, blur validation, account fill preserves edits, contact copied once to guest 1, guest 2 independent, dates and server field rejection preserve inputs/no pay, summary/method/required validation, hotel-only guest/payment payload, OTP/expired",
+    "430px: two hotels/two flight legs, blur validation, account fill preserves edits, contact copied once to guest 1, guest 2 independent, dates and server field rejection preserve inputs/no pay, summary/method/required validation, hotel-only guest/payment payload, OTP/expired"
+  ],
+  "pageErrors": [],
+  "apiFixtures": true,
+  "nativeOrRealPaymentTested": false
+}
