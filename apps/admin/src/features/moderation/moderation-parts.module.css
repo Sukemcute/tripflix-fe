@@ -5,6 +5,39 @@
   border-radius: 12px;
   min-width: 0;
 }
+.coverage {
+  margin-block: 16px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.coverage h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+.coverage p {
+  margin: 0 0 10px;
+  color: var(--color-text-muted);
+}
+.coverageRow {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
+.playback {
+  margin-block: 16px;
+  font-size: 13px;
+}
+.playback video {
+  width: 100%;
+  max-height: 320px;
+  background: var(--color-surface);
+  border-radius: 8px;
+}
 .header {
   display: flex;
   align-items: flex-start;

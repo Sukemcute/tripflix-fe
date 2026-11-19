@@ -11,9 +11,9 @@ const BRAND_SUFFIX = ' | Tripflix';
 /** Trang không nên lên kết quả tìm kiếm (form, trang tạm, kết quả lọc) nhưng link bên trong vẫn được theo. */
 export const NOINDEX_ROBOTS: Metadata['robots'] = { index: false, follow: true };
 
-/** Ảnh chia sẻ mặc định (public/brand/og-default.jpg, cắt từ ảnh hero) khi trang không có ảnh riêng. */
+/** Ảnh chia sẻ mặc định khi trang không khai báo ảnh riêng. */
 export const DEFAULT_OG_IMAGE = {
-  url: '/brand/og-default.jpg',
+  url: '/brand/tripflix-social-preview.png',
   width: 1200,
   height: 630,
   alt: vi.seo.ogImageAlt,
