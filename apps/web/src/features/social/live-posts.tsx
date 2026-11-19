@@ -807,11 +807,13 @@ export const MediaTrackItem = memo(function MediaTrackItem({
   const trip = post.tripAttachment ?? null;
   const hasItinerary = hasTripPlan(trip); // Như app: chỉ có điểm đến mà không có lịch từng ngày hay chỗ ở thì không hiện thẻ lịch trình.
 
+  const videoInfo = post.video ?? reelCard?.video;
+
   const postImages = useMemo(
     () =>
       getPostImages({
         mediaIds: post.mediaIds,
-        posterUrl: reelCard ? selectReelPoster(reelCard.video.posters, 720) : undefined,
+        posterUrl: videoInfo ? selectReelPoster(videoInfo.posters, 720) : undefined,
         destinationName: trip?.destinationName,
         hotelName: trip?.hotelName,
         title: post.title,
@@ -819,13 +821,13 @@ export const MediaTrackItem = memo(function MediaTrackItem({
         hashtags: post.hashtags,
         itineraryItems: trip?.items,
       }),
-    [post, reelCard, trip],
+    [post, videoInfo, trip],
   );
 
   const coverImage = postImages[0]?.src;
   // Giống Reels mobile: khi chưa tới lượt phát chỉ hiện poster thật của video, không dùng ảnh minh hoạ
   // theo điểm đến (trông như ảnh bài viết rồi mới "biến" thành video khi lướt nhanh bằng touchpad).
-  const reelPoster = reelCard ? selectReelPoster(reelCard.video.posters, 720) : undefined;
+  const reelPoster = videoInfo ? selectReelPoster(videoInfo.posters, 720) : undefined;
   const authorInfo = formatAuthorDisplay(
     post.authorId,
     post.authorName ?? reelCard?.author.name,
@@ -870,9 +872,9 @@ export const MediaTrackItem = memo(function MediaTrackItem({
 
   // Gắn nguồn ở đây (không qua prop src) để lần dọn của Strict Mode không làm video mất nguồn; lướt ra xa thì
   // nhả nguồn để ngắt tải segment ngay (xem attachReelVideoSource).
-  const hlsUrl = reelCard?.video.hlsUrl;
+  const hlsUrl = videoInfo?.hlsUrl;
   // Các mức có sẵn của video (360, 540, 720…), dạng chuỗi để effect gắn nguồn không chạy lại khi thẻ đổi tham chiếu.
-  const levelsKey = reelCard?.video.levels.join(',') ?? '';
+  const levelsKey = videoInfo?.levels.join(',') ?? '';
   // Chờ API đặt cookie video (Set-Cookie cho tên miền media, TF82) rồi mới gắn nguồn; thẻ <video> tự gửi cookie
   // khi tải playlist và segment. Gắn sớm hơn thì CloudFront trả 403 khi đã bật khoá video.
   const { isSettled: isPlaybackSessionSettled, refresh: refreshPlaybackSession } = usePlaybackSession();
@@ -950,16 +952,16 @@ export const MediaTrackItem = memo(function MediaTrackItem({
       data-post-id={post.id}
       aria-hidden={!isActive}
     >
-      {hasBackdrop && reelCard && (
+      {hasBackdrop && videoInfo && (
         <div
           className={styles.mediaBackdropBlur}
           // Ảnh đằng nào cũng bị làm mờ nên dùng poster nhỏ nhất: giải mã nhanh, tốn ít bộ nhớ hơn.
-          style={{ backgroundImage: `url(${selectReelPoster(reelCard.video.posters, 360)})` }}
+          style={{ backgroundImage: `url(${selectReelPoster(videoInfo.posters, 360)})` }}
         />
       )}
 
       {/* Media Content: Reels luôn là video; chưa có link phát hoặc phát lỗi thì hiện khung chờ như Reels mobile */}
-      {!reelCard?.video || isMediaError ? (
+      {!videoInfo || isMediaError ? (
         <output className={styles.reelPendingStage}>
           {isMediaError ? (
             <>
@@ -996,9 +998,9 @@ export const MediaTrackItem = memo(function MediaTrackItem({
                 }
               }}
               className={`${styles.mediaVideoElement} ${
-                reelCard.video.aspect === '16:9' ? styles.mediaVideoLandscape : ''
+                videoInfo.aspect === '16:9' ? styles.mediaVideoLandscape : ''
               }`}
-              poster={selectReelPoster(reelCard.video.posters, 720)}
+              poster={selectReelPoster(videoInfo.posters, 720)}
               preload="auto"
               playsInline
               loop
@@ -1070,7 +1072,7 @@ export const MediaTrackItem = memo(function MediaTrackItem({
           </div>
         </div>
 
-        {Boolean(postImages.length > 0 || reelCard?.video) && (
+        {Boolean(postImages.length > 0 || videoInfo) && (
           <div className={styles.overlayCaptionBox}>
             <p
               className={`${styles.overlayCaptionText} ${
@@ -1373,7 +1375,9 @@ export function InspirationImmersiveViewer({
   useEffect(() => {
     if (activeIndex < 0) return;
     // Giữ đúng vị trí trong posts; bài chưa có thẻ feed dùng bộ poster rỗng, helper tự bỏ URL rỗng.
-    const posterSets = posts.map((item) => reelMap.get(item.id)?.video.posters ?? NO_REEL_POSTERS);
+    const posterSets = posts.map(
+      (item) => item.video?.posters ?? reelMap.get(item.id)?.video.posters ?? NO_REEL_POSTERS,
+    );
     for (const url of getReelPosterPrefetchUrls(posterSets, activeIndex, 720)) {
       const preload = new window.Image();
       preload.src = url;
@@ -1402,10 +1406,11 @@ export function InspirationImmersiveViewer({
 
   const trip = activePost?.tripAttachment ?? null;
   const reelCard = activePost ? reelMap.get(activePost.id) : undefined;
+  const activeVideo = activePost?.video ?? reelCard?.video;
   const postImages = activePost
     ? getPostImages({
         mediaIds: activePost.mediaIds,
-        posterUrl: reelCard ? selectReelPoster(reelCard.video.posters, 720) : undefined,
+        posterUrl: activeVideo ? selectReelPoster(activeVideo.posters, 720) : undefined,
         destinationName: trip?.destinationName,
         hotelName: trip?.hotelName,
         title: activePost.title,
@@ -2238,7 +2243,7 @@ export function InspirationImmersiveViewer({
                   {reelsModeTabs}
                   {/* Top-Left Volume + Slider & Top-Right Hover Controls (More / Fullscreen) */}
                   <>
-                    {reelCard?.video && activePost.postType === 'video' && !isMediaError && (
+                    {activeVideo && activePost.postType === 'video' && !isMediaError && (
                       <div
                         className={`${styles.stageTopLeftControls} ${onBackToResults ? styles.stageTopLeftControlsBelowBack : ''}`}
                       >

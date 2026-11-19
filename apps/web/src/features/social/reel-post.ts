@@ -17,6 +17,7 @@ export type ReelPost = Pick<
   | 'commentCount'
   | 'bookmarkCount'
   | 'shareCount'
+  | 'video'
 >;
 
 const defaultReelPostCache = new WeakMap<FeedCardDto, ReelPost>();
@@ -49,9 +50,31 @@ export function toReelPost(
     commentCount: card.counts.comments,
     bookmarkCount: card.counts.saves,
     shareCount: card.counts.shares,
+    video: card.video,
   };
   cache.set(card, post);
   return post;
+}
+
+/** Chuyển SocialPostDto (đã có video từ backend) sang ReelPost. */
+export function socialPostToReelPost(post: SocialPostDto): ReelPost {
+  return {
+    id: post.id,
+    authorId: post.authorId,
+    authorName: post.authorName,
+    postType: 'video',
+    title: post.title,
+    body: post.body,
+    hashtags: post.hashtags,
+    mediaIds: post.mediaIds,
+    tripAttachment: post.tripAttachment,
+    isVerified: post.isVerified,
+    reactionTotal: post.reactionTotal,
+    commentCount: post.commentCount,
+    bookmarkCount: post.bookmarkCount,
+    shareCount: post.shareCount,
+    video: post.video ?? null,
+  };
 }
 
 /**
