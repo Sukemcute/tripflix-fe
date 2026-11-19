@@ -13,7 +13,6 @@ import {
 } from '@tripflix/api-client/core-api/analytics/analytics';
 import { vi } from '@tripflix/i18n';
 import { AiKpi } from '../ai-usage/ai-kpi';
-import { count } from '../ai-usage/ai-usage-format';
 import { formatUsd } from '../ai-usage/ai-usage-range';
 import type { AnomalyList } from '../orders/orders-types';
 import { AdminApiError } from '../shell/api-state';
@@ -22,6 +21,7 @@ import { userActivityRange } from '../user-activity/user-activity-format';
 import {
   countFailedRuns,
   formatErrorRate,
+  formatRequests,
   SUMMARY_RANGES,
   sumAnomalies,
   type SummaryRangeDays,
@@ -29,6 +29,8 @@ import {
 
 const copy = vi.adminOperations.systemSummary;
 const REFRESH_MS = 60_000;
+/** Số lớn rút gọn như tab Chi phí AI (1.9M, 55.2K) để vừa thẻ. */
+const compact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
 
 /**
  * Số tổng của từng phần trên trang Tổng quan (SCRUM-181), chỉ superadmin. Mỗi nhóm tải riêng nên một API lỗi
@@ -128,7 +130,7 @@ function AiGroup({ range }: { range: { from: string; to: string } }) {
         <AiKpi
           label={copy.ai.tokens}
           value={
-            total ? `${count.format(total.inputTokens)} / ${count.format(total.outputTokens)}` : undefined
+            total ? `${compact.format(total.inputTokens)} / ${compact.format(total.outputTokens)}` : undefined
           }
         />
       </div>
@@ -149,9 +151,9 @@ function SystemGroup() {
     <Group title={copy.system.title} href="/analytics">
       <AdminApiError error={overview.error} retry={() => void overview.refetch()} />
       <div className="grid gap-3 sm:grid-cols-2">
-        <Metric
+        <AiKpi
           label={copy.system.requests}
-          value={summary?.requests ?? undefined}
+          value={formatRequests(summary?.requests)}
           hint={copy.system.last24h}
         />
         <AiKpi
