@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { vi } from '@tripflix/i18n';
 import { LiveSearchScreen } from '@/features/discovery/live-search-screen';
@@ -5,6 +6,9 @@ import { OtaHero } from '@/features/discovery/ota-hero';
 import { OtaHomeMotion } from '@/features/discovery/ota-home-motion';
 import { OtaHomeSections } from '@/features/discovery/ota-home-sections';
 import searchStyles from '@/features/discovery/stay-search.module.css';
+
+// Trang chủ dùng title, mô tả và ảnh chia sẻ mặc định của layout; chỉ khai canonical cho riêng trang này (TF112).
+export const metadata: Metadata = { alternates: { canonical: '/' } };
 
 export default function HomePage() {
   return (

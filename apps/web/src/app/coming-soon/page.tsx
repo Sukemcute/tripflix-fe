@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { TripiMascot } from '@/features/mascot/tripi-mascot';
+import { NOINDEX_ROBOTS } from '@/features/seo/page-metadata';
 import styles from './coming-soon.module.css';
 
 export const metadata: Metadata = {
   title: 'Tripflix sắp ra mắt ứng dụng',
   description: 'Ứng dụng Tripflix đang chờ duyệt trên cửa hàng ứng dụng.',
+  robots: NOINDEX_ROBOTS,
 };
 
 export default async function ComingSoonPage({
