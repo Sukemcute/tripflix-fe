@@ -6,15 +6,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
-import { BookingsList } from '@/features/checkout/bookings-screen';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { ProfileInfoCard } from './account-profile';
 import { TravelPreferencesCard } from './travel-preferences';
 import { AccountSecurity } from './account-security';
 import { EmailVerificationNotice } from './email-verification-notice';
 import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
-import { ADMIN_URL, isStaffRole } from './account-helpers';
-import { useOpenAdmin } from './admin-handoff';
 import { AvatarEditor } from './avatar-editor';
 import { LoadingDots } from '@/features/shared/loading-dots';
 
@@ -29,7 +26,6 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
   const { user, isReady, session } = useApiSession();
   const router = useRouter();
   const [tab, setTab] = useState<AccountTab>(initialTab);
-  const openAdmin = useOpenAdmin();
   const logout = useMutation({
     mutationFn: () => session.logout(),
     onSuccess: () => router.push('/'),
@@ -70,19 +66,6 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
                 {TAB_LABELS[kind]}
               </button>
             ))}
-            {ADMIN_URL && isStaffRole(user.role) && (
-              <a
-                href={ADMIN_URL}
-                aria-disabled={openAdmin.isPending}
-                onClick={(event) => {
-                  event.preventDefault();
-                  if (!openAdmin.isPending) openAdmin.mutate();
-                }}
-              >
-                <NavIcon name="admin" />
-                {vi.api.openAdmin}
-              </a>
-            )}
             <button
               type="button"
               className="is-logout"
@@ -93,7 +76,7 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
               {vi.api.logout}
             </button>
           </nav>
-          <ApiErrorNotice error={logout.error ?? openAdmin.error} />
+          <ApiErrorNotice error={logout.error} />
         </aside>
         <div className="profile-main">
           {user.emailVerified === false && <EmailVerificationNotice key={`verify-${user.id}`} />}
@@ -104,10 +87,6 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
             </div>
           ) : tab === 'security' ? (
             <AccountSecurity key={user.id} userId={user.id} />
-          ) : tab === 'bookings' ? (
-            <AccountSection id="account-bookings" title={TAB_LABELS[tab]} hint={vi.commerce.bookedHint}>
-              <BookingsList />
-            </AccountSection>
           ) : null}
         </div>
       </div>
@@ -115,38 +94,12 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
   );
 }
 
-/** Khung một mục trong trang tài khoản, cùng kiểu với "Thông tin cá nhân": tiêu đề, dòng mô tả, rồi nội dung. */
-function AccountSection({
-  id,
-  title,
-  hint,
-  children,
-}: {
-  id: string;
-  title: string;
-  hint: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="profile-card" aria-labelledby={`${id}-title`}>
-      <header className="profile-card-header">
-        <div>
-          <h2 id={`${id}-title`}>{title}</h2>
-          <p className="auth-hint">{hint}</p>
-        </div>
-      </header>
-      {children}
-    </section>
-  );
-}
-
 const TAB_LABELS: Record<AccountTab, string> = {
   profile: vi.api.profileInfoTitle,
   security: vi.api.accountNavSecurity,
-  bookings: vi.commerce.booked,
 };
 
-const NAV_ICONS: Record<AccountTab | 'admin' | 'logout', ReactNode> = {
+const NAV_ICONS: Record<AccountTab | 'logout', ReactNode> = {
   profile: (
     <>
       <circle cx="12" cy="8" r="4" />
@@ -157,20 +110,6 @@ const NAV_ICONS: Record<AccountTab | 'admin' | 'logout', ReactNode> = {
     <>
       <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z" />
       <path d="m9 12 2 2 4-4" />
-    </>
-  ),
-  bookings: (
-    <>
-      <rect x="3" y="7" width="18" height="13" rx="2" />
-      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18" />
-    </>
-  ),
-  admin: (
-    <>
-      <rect x="3" y="3" width="7" height="7" rx="1.5" />
-      <rect x="14" y="3" width="7" height="7" rx="1.5" />
-      <rect x="3" y="14" width="7" height="7" rx="1.5" />
-      <rect x="14" y="14" width="7" height="7" rx="1.5" />
     </>
   ),
   logout: (
