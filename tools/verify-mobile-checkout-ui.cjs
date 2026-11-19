@@ -110,6 +110,7 @@ class CheckoutPage {
         hasTouch: true,
       });
       let hotelOnly = false,
+        rejectGuests = false,
         expired = false,
         status = 'pending';
       const requests = [];
@@ -124,6 +125,7 @@ class CheckoutPage {
               id: 'qa-member',
               email: 'an@example.test',
               displayName: 'Nguyễn An',
+              phone: '0901234567',
               role: 'member',
               emailVerified: true,
               dateOfBirth: '1995-01-01',
@@ -148,6 +150,14 @@ class CheckoutPage {
         }
         if (path === '/api/checkout/qa-order/guests') {
           requests.push({ path, body: req.postDataJSON() });
+          if (rejectGuests)
+            return r.fulfill({
+              status: 400,
+              json: {
+                message: 'Kiểm tra thông tin hành khách.',
+                errors: [{ field: 'guests[1].fullName', message: 'Tên hành khách 2 cần khớp giấy tờ.' }],
+              },
+            });
           return r.fulfill({ json: {} });
         }
         if (path === '/api/checkout/qa-order/pay') {
@@ -187,6 +197,16 @@ class CheckoutPage {
       await ui.snapshot(`${baseline ? 'before' : 'after'}-checkout-${width}`);
       await ui.noOverflow();
       if (!baseline) {
+        assert.equal(
+          await page.getByText('Nhập họ tên người liên hệ.', { exact: true }).count(),
+          0,
+          'untouched form has no required errors',
+        );
+        await page.getByLabel('Email người liên hệ (tuỳ chọn)', { exact: true }).fill('sai-email');
+        await page.getByLabel('Họ và tên người liên hệ *', { exact: true }).click();
+        await page.getByText('Email chưa đúng định dạng.', { exact: true }).waitFor();
+        assert.equal(await page.getByText('Nhập họ tên hành khách 1.', { exact: true }).count(), 0);
+        await ui.goto();
         await page.getByText(propertyA, { exact: true }).waitFor();
         await page.getByText(propertyB, { exact: true }).waitFor();
         await page.getByText('HAN → CXR', { exact: true }).waitFor();
@@ -246,11 +266,68 @@ class CheckoutPage {
         );
         assert.equal(requests.length, 0, 'invalid form never sends guest/payment request');
         await ui.snapshot(`form-errors-${width}`);
+        await page.getByLabel('Họ và tên người liên hệ *', { exact: true }).fill('Trần Liên Hệ');
+        await ui.button('Dùng thông tin tài khoản').click();
+        await page.getByLabel('Họ và tên người liên hệ *', { exact: true }).scrollIntoViewIfNeeded();
+        await ui.snapshot(`account-fill-${width}`);
+        assert.equal(
+          await page.getByLabel('Họ và tên người liên hệ *', { exact: true }).inputValue(),
+          'Trần Liên Hệ',
+        );
+        assert.equal(
+          await page.getByLabel('Số điện thoại người liên hệ *', { exact: true }).inputValue(),
+          '0901234567',
+        );
+        await page.getByLabel('Email người liên hệ (tuỳ chọn)', { exact: true }).fill('sai-email');
+        await page.getByLabel('Họ và tên người liên hệ *', { exact: true }).click();
+        await page.getByText('Email chưa đúng định dạng.', { exact: true }).waitFor();
+        await page.getByLabel('Email người liên hệ (tuỳ chọn)', { exact: true }).fill('an@example.test');
+        await page.getByLabel('Họ và tên hành khách 2 *', { exact: true }).fill('Lê Khách Hai');
+        await ui.button('Người liên hệ là hành khách 1 · chép tên').click();
+        await ui.button('Dùng hồ sơ của tôi cho hành khách 1').click();
+        await page.getByLabel('Họ và tên hành khách 1 *', { exact: true }).scrollIntoViewIfNeeded();
+        await ui.snapshot(`guest-one-copy-${width}`);
+        assert.equal(
+          await page.getByLabel('Họ và tên hành khách 1 *', { exact: true }).inputValue(),
+          'Trần Liên Hệ',
+        );
+        await page.getByLabel('Họ và tên người liên hệ *', { exact: true }).fill('Tên Liên Hệ Đã Sửa');
+        assert.equal(
+          await page.getByLabel('Họ và tên hành khách 1 *', { exact: true }).inputValue(),
+          'Trần Liên Hệ',
+        );
+        assert.equal(
+          await page.getByLabel('Họ và tên hành khách 2 *', { exact: true }).inputValue(),
+          'Lê Khách Hai',
+        );
+        await page.getByRole('button', { name: /^Ngày sinh hành khách 2 \*/ }).click();
+        await ui.button('Chọn năm và tháng').click();
+        await ui.button('1995').click();
+        await ui.button('Tháng 1').click();
+        await ui.button('02/01/1995').click();
+        await page
+          .getByRole('button', { name: /Chọn ngày|Xong|Xác nhận/ })
+          .last()
+          .click();
+        rejectGuests = true;
+        await ui.button('Thanh toán').click();
+        await page.getByText('Tên hành khách 2 cần khớp giấy tờ.', { exact: true }).waitFor();
+        assert.equal(requests.length, 1, 'rejected guests must not start payment');
+        assert.equal(requests[0].body.guests[0].birthdate, '1995-01-01');
+        assert.equal(requests[0].body.guests[1].birthdate, '1995-01-02');
+        assert.equal(
+          await page.getByLabel('Họ và tên hành khách 2 *', { exact: true }).inputValue(),
+          'Lê Khách Hai',
+        );
+        await page.getByText('Tên hành khách 2 cần khớp giấy tờ.', { exact: true }).scrollIntoViewIfNeeded();
+        await ui.snapshot(`server-guest-errors-${width}`);
+        requests.length = 0;
+        rejectGuests = false;
         hotelOnly = true;
         await ui.goto();
-        await page.getByLabel('Họ và tên', { exact: true }).fill('Nguyễn An');
-        await page.getByLabel('Số điện thoại', { exact: true }).fill('0901234567');
-        await page.getByLabel('Email (tuỳ chọn)', { exact: true }).fill('an@example.test');
+        await page.getByLabel('Họ và tên người liên hệ *', { exact: true }).fill('Nguyễn An');
+        await page.getByLabel('Số điện thoại người liên hệ *', { exact: true }).fill('0901234567');
+        await page.getByLabel('Email người liên hệ (tuỳ chọn)', { exact: true }).fill('an@example.test');
         await page.getByRole('checkbox').click();
         await page.getByRole('button', { name: /Thẻ kiểm thử OTP/ }).click();
         await ui.snapshot(`filled-form-${width}`);
@@ -299,7 +376,7 @@ class CheckoutPage {
           await ui.snapshot('landscape-expired-preview');
         }
         checks.push(
-          `${width}px: two hotels/two flight legs identifiable, summary expand/collapse, total not duplicated, method switch, inline errors block requests, filled hotel-only form preserves guest/payment payload, OTP and expired state`,
+          `${width}px: two hotels/two flight legs, blur validation, account fill preserves edits, contact copied once to guest 1, guest 2 independent, dates and server field rejection preserve inputs/no pay, summary/method/required validation, hotel-only guest/payment payload, OTP/expired`,
         );
       }
       await context.close();
