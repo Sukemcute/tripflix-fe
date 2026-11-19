@@ -202,6 +202,10 @@ export const commerce = {
     cancelled: 'Đã huỷ',
     expired: 'Hết hạn',
   },
+  /** TF37: đơn đã thanh toán và đã qua ngày cuối chuyến (tripStatus = completed). */
+  tripCompleted: 'Đã đi',
+  /** Thẻ đơn ở danh sách chỉ hiện vài mục đầu; phần còn lại xem ở chi tiết đơn. */
+  moreItems: '+{count} mục khác',
   reasons: {
     NOT_ON_SALE: 'Ngày này chưa mở bán',
     STOP_SELL: 'Đã ngừng bán',

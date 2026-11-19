@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { commerceApi, getFutureDate, useApiSession } from '@tripflix/api-client';
+import { commerceApi, useApiSession } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
@@ -81,12 +81,12 @@ function BookedTrips({ tab }: { tab: number }) {
     staleTime: 0,
   });
   useRefreshOnOpen(query.refetch);
-  const today = getFutureDate(0);
   const trips = query.data?.pages
     .flatMap((page) => page.trips)
     .filter((trip) => {
       if (trip.status === 'cancelled' || trip.status === 'expired') return tab === 2;
-      if (trip.status === 'paid' && trip.endDate && trip.endDate.slice(0, 10) < today) return tab === 1;
+      // TF37: server tính theo giờ Việt Nam, không theo giờ máy.
+      if (trip.tripStatus === 'completed') return tab === 1;
       return tab === 0;
     });
   return (
@@ -141,7 +141,7 @@ function BookedTrips({ tab }: { tab: number }) {
       renderItem={({ item: trip }) => (
         <Card>
           <Badge icon="bag-handle-outline" tone={trip.status === 'paid' ? 'teal' : 'sun'}>
-            {text.status[trip.status]}
+            {trip.tripStatus === 'completed' ? text.tripCompleted : text.status[trip.status]}
           </Badge>
           <Txt variant="heading">{trip.items.map((item) => item.productName).join(' · ')}</Txt>
           {trip.startDate && trip.endDate && (
