@@ -53,6 +53,14 @@ Kiểm lại:
 - `next build` + `next start` với core-api local: `/sitemap.xml` lần đầu 0,21 giây, lần 2 và 3 khoảng 0,006 giây (đọc cache), 25 URL. Trang khách sạn vẫn có JSON-LD và breadcrumb 2 mục. `/hotels/khong-ton-tai` và `/u/<tác giả seed>` có `noindex, follow`.
 - API không tới được (`API_INTERNAL_URL=http://localhost:1`): `/sitemap.xml` trả 200 với 5 trang cố định. Chạy lại với API đúng trên cùng thư mục cache: trả ngay 25 URL, tức kết quả thiếu không bị cache.
 
+## Kiểm tra trên production và tắt sao đánh giá (2026-11-19, nhánh `trang/TF112-tat-sao-danh-gia`)
+
+- Google Search Console: xác minh miền `tripflix.io.vn` bằng bản ghi DNS TXT (Tenten); sitemap "Đã xử lý thành công", 618 trang được khám phá.
+- Rich Results Test `/hotels/P-osm-can-tho-050`: 4 mục hợp lệ (Breadcrumbs, Local businesses, Organization, Review snippets), không có lỗi; cảnh báo nhẹ là thiếu trường tuỳ chọn.
+- validator.schema.org: Hotel và BreadcrumbList, 0 lỗi, 0 cảnh báo.
+- Facebook Sharing Debugger: HTTP 200, ảnh khách sạn, tiêu đề và mô tả đúng; cảnh báo `fb:app_id` bỏ qua được.
+- **Tắt `aggregateRating`** trong JSON-LD: điểm đánh giá khách sạn hiện là dữ liệu mẫu nạp sẵn, không phải đánh giá người dùng viết trên Tripflix. Google coi sao từ đánh giá không thật là structured data spam (có thể bị xử phạt thủ công). Bật lại khi có đánh giá thật. Test: `không khai aggregateRating dù khách sạn có điểm đánh giá (dữ liệu mẫu)`. `pnpm turbo run lint typecheck test --filter=./apps/web`: 3/3 task, 49 file, 361 test pass.
+
 ## Cách kiểm lại
 
 1. Chạy core-api local (gateway `http://localhost:8080`), rồi `cd apps/web && npx next dev -p 3111`.

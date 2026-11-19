@@ -14,13 +14,12 @@ describe('buildHotelJsonLd', () => {
       address: { addressLocality: 'Nha Trang', addressRegion: 'Khánh Hòa', addressCountry: 'VN' },
       geo: { latitude: 12.2185, longitude: 109.2465 },
       starRating: { ratingValue: 5 },
-      aggregateRating: { ratingValue: 4.6, reviewCount: 128, bestRating: 5 },
       priceRange: 'từ 2.150.000 VND',
       checkinTime: '14:00',
     });
   });
 
-  it('bỏ aggregateRating khi chưa có đánh giá và bỏ trường rỗng', () => {
+  it('bỏ trường rỗng', () => {
     const [hotel] = buildHotelJsonLd(
       makeHotel({
         rating: { average: 0, count: 0, source: null },
@@ -30,7 +29,6 @@ describe('buildHotelJsonLd', () => {
       }),
       absolute,
     );
-    expect(hotel).not.toHaveProperty('aggregateRating');
     expect(hotel).not.toHaveProperty('geo');
     expect(hotel).not.toHaveProperty('priceRange');
     expect(hotel).not.toHaveProperty('starRating');
@@ -42,6 +40,17 @@ describe('buildHotelJsonLd', () => {
       .itemListElement;
     expect(items.map((item) => item.position)).toEqual([1, 2]);
     expect(items[1]!.item).toBe('https://tripflix.io.vn/hotels/hotel-1');
+  });
+});
+
+describe('buildHotelJsonLd · sao đánh giá', () => {
+  it('không khai aggregateRating dù khách sạn có điểm đánh giá (dữ liệu mẫu)', () => {
+    const [hotel] = buildHotelJsonLd(
+      makeHotel({ rating: { average: 4.6, count: 128, source: null } }),
+      absolute,
+    );
+    expect(hotel).not.toHaveProperty('aggregateRating');
+    expect(hotel).not.toHaveProperty('review');
   });
 });
 

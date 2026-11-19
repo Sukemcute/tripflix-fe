@@ -30,17 +30,8 @@ export function buildHotelJsonLd(hotel: HotelDetailDto, toAbsoluteUrl: (path: st
       ? { geo: { '@type': 'GeoCoordinates', latitude: hotel.location.lat, longitude: hotel.location.lng } }
       : {}),
     ...(hotel.stars ? { starRating: { '@type': 'Rating', ratingValue: hotel.stars } } : {}),
-    ...(hotel.rating && hotel.rating.count > 0
-      ? {
-          aggregateRating: {
-            '@type': 'AggregateRating',
-            ratingValue: hotel.rating.average,
-            reviewCount: hotel.rating.count,
-            bestRating: 5,
-            worstRating: 1,
-          },
-        }
-      : {}),
+    // Không khai aggregateRating: điểm đánh giá hiện là dữ liệu mẫu nạp sẵn, không phải đánh giá người dùng viết
+    // trên Tripflix. Google coi sao từ đánh giá không thật là structured data spam. Bật lại khi có đánh giá thật.
     ...(hotel.priceFrom
       ? { priceRange: t('seo.priceRangeFrom', { price: hotel.priceFrom.toLocaleString('vi-VN') }) }
       : {}),
