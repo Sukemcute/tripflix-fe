@@ -19,8 +19,20 @@ export type ReelPost = Pick<
   | 'shareCount'
 >;
 
-export function toReelPost(card: FeedCardDto): ReelPost {
-  return {
+const defaultReelPostCache = new WeakMap<FeedCardDto, ReelPost>();
+
+/**
+ * Chuyển thẻ feed sang `ReelPost` và giữ nguyên tham chiếu khi `card` không đổi (cache theo WeakMap),
+ * để thao tác trên một Reel (ví dụ bấm tim) không tạo mới `ReelPost` của các Reel khác.
+ */
+export function toReelPost(
+  card: FeedCardDto,
+  cache: WeakMap<FeedCardDto, ReelPost> = defaultReelPostCache,
+): ReelPost {
+  const cached = cache.get(card);
+  if (cached) return cached;
+
+  const post: ReelPost = {
     id: card.postId,
     authorId: card.author.id,
     authorName: card.author.name,
@@ -38,6 +50,8 @@ export function toReelPost(card: FeedCardDto): ReelPost {
     bookmarkCount: card.counts.saves,
     shareCount: card.counts.shares,
   };
+  cache.set(card, post);
+  return post;
 }
 
 /**

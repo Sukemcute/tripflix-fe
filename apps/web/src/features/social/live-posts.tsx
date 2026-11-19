@@ -1268,10 +1268,12 @@ export function InspirationImmersiveViewer({
 
   const reelMap = useMemo(() => new Map(reelCards.map((card) => [card.postId, card])), [reelCards]);
 
+  const [reelPostCache] = useState(() => new WeakMap<FeedCardDto, ReelPost>());
+
   // Reels chỉ gồm bài dạng video; bài viết (vlog) không bao giờ hiện ở đây.
   const rawPosts = useMemo<ReelPost[]>(
-    () => reelCards.map(toReelPost),
-    [reelCards],
+    () => reelCards.map((card) => toReelPost(card, reelPostCache)),
+    [reelCards, reelPostCache],
   );
 
   const posts = useMemo(() => {

@@ -67,6 +67,26 @@ describe('toReelPost', () => {
     const { tripAttachment: _omitted, ...withoutTrip } = card;
     expect(toReelPost(withoutTrip).tripAttachment).toBeNull();
   });
+
+  it('cùng thẻ feed thì trả về đúng cùng object ReelPost; thẻ đổi tham chiếu thì trả object mới', () => {
+    const cache = new WeakMap<FeedCardDto, ReturnType<typeof toReelPost>>();
+    const otherCard: FeedCardDto = { ...card, postId: 'post-2' };
+
+    const first = toReelPost(card, cache);
+    const second = toReelPost(card, cache);
+    const untouched = toReelPost(otherCard, cache);
+    expect(second).toBe(first);
+    expect(toReelPost(card)).toBe(toReelPost(card));
+
+    const updatedCard: FeedCardDto = {
+      ...card,
+      counts: { ...card.counts, likes: card.counts.likes + 1 },
+    };
+    const updated = toReelPost(updatedCard, cache);
+    expect(updated).not.toBe(first);
+    expect(updated.reactionTotal).toBe(6);
+    expect(toReelPost(otherCard, cache)).toBe(untouched);
+  });
 });
 
 describe('pickReelAfterRemoval', () => {
