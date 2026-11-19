@@ -1227,6 +1227,12 @@
   border-radius: var(--feed-frame-radius);
 }
 
+/* Tab Bài viết chỉ dùng viền của thẻ; không vẽ khung/bóng nổi theo focus hoặc bài đang mở bình luận (TF25). */
+.clippedPostHighlight,
+.hoveredPostShadow {
+  display: none;
+}
+
 .clippedPostHighlight {
   position: absolute;
   z-index: 3;
@@ -1474,30 +1480,37 @@
    -------------------------------------------------------------------------- */
 .postCard {
   background: #FFFFFF;
-  border: 1px solid #E2E8F0;
+  border: 1px solid var(--color-transparent);
   border-radius: 16px;
   padding: 20px 22px;
   margin-bottom: 20px;
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text) 4%, transparent);
-  transition: border-color 200ms ease, box-shadow 200ms ease;
-}
-
-.postCard:hover,
-.postCard:focus-within {
-  border-color: #CBD5E1;
   box-shadow: none;
+  transition: border-color 200ms ease;
 }
 
 .postCard.postCardActiveComment,
-.postCard.postCardActiveComment:hover {
-  border-color: color-mix(in srgb, var(--color-coral) 50%, transparent);
-  transition: box-shadow 200ms ease;
+.postCard.postCardActiveComment[data-highlight-framed] {
+  border-color: var(--color-transparent);
 }
 
-/* Một viền duy nhất, vẽ ngoài vùng cuộn để không bị mặt nạ bo góc cắt mất. */
-.postCard.postCardActiveComment[data-highlight-framed],
+.postCard:hover,
+.postCard.postCardActiveComment:hover,
 .postCard.postCardActiveComment[data-highlight-framed]:hover {
-  border-color: transparent;
+  border-color: var(--color-border);
+}
+
+.postCard :is(button, a):focus:not(:focus-visible) {
+  outline: none;
+}
+
+.postCard :is(button, a):focus-visible {
+  outline: 2px solid var(--color-text-muted);
+  outline-offset: 2px;
+}
+
+/* Khung ảnh cắt overflow: đặt dấu focus vào trong để bàn phím vẫn thấy rõ (TF25). */
+.postCard :is(.mediaSingleImg, .mediaCell):focus-visible {
+  outline-offset: -3px;
 }
 
 /* Post Header */
