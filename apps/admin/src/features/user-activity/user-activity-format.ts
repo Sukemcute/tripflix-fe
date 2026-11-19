@@ -14,6 +14,30 @@ export function userActivityRange(days: UserActivityRangeDays, now: number): { f
   return { from: vnDate(now - (days - 1) * DAY_MS), to: vnDate(now) };
 }
 
+export interface DailyActivity {
+  date: string;
+  reactions: number;
+  comments: number;
+  shares: number;
+  views: number;
+  chats: number;
+  posts: number;
+}
+
+/**
+ * API chỉ trả ngày có hoạt động; điền ngày trống bằng 0 để biểu đồ liền mạch.
+ * `from` và `to` là ngày dạng YYYY-MM-DD theo giờ Việt Nam, gồm cả hai đầu.
+ */
+export function fillDays(daily: readonly DailyActivity[], from: string, to: string): DailyActivity[] {
+  const byDate = new Map(daily.map((day) => [day.date, day]));
+  const days: DailyActivity[] = [];
+  for (let at = Date.parse(`${from}T00:00:00Z`); at <= Date.parse(`${to}T00:00:00Z`); at += DAY_MS) {
+    const date = new Date(at).toISOString().slice(0, 10);
+    days.push(byDate.get(date) ?? { date, reactions: 0, comments: 0, shares: 0, views: 0, chats: 0, posts: 0 });
+  }
+  return days;
+}
+
 export interface ActivityEventLike {
   kind: string;
   detail: Record<string, unknown>;
