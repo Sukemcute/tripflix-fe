@@ -5,7 +5,7 @@
 ## Đã làm
 - **Header một hàng dưới 768px** (`apps/web/src/features/shell/mobile-header.css`, import trong `app/layout.tsx` sau `globals.css`): thanh phẳng full-width cao 56px (+1px viền), dính trên cùng; ẩn menu 4 mục và giỏ hàng; nút chữ "Đăng nhập" thành nút tròn 36px icon người (chữ vẫn trong link nên trình đọc màn hình đọc "Đăng nhập"); giữ Tripi, chuông, avatar. Trang chủ dùng nền đặc + logo tối vì header dính trôi qua nội dung trắng. Thêm `export const viewport` với `viewportFit: 'cover'` cho `env(safe-area-inset-*)`. Không sửa `header-account.tsx`, `ota-navigation.tsx`, `cart-link.tsx`.
 - **Tự ẩn header khi cuộn** (`features/shell/header-auto-hide.tsx`, logic thuần `header-visibility.ts`): cuộn xuống > 8px thì ẩn, lên > 8px thì hiện; không ẩn khi chưa qua chiều cao header, khi menu trong header mở hoặc focus ở trong header; đổi trang thì hiện lại. Attribute `data-header-hidden` gắn trong effect nên không lệch hydration. Cảm hứng khoá cuộn body nên header luôn hiện ở đó.
-- **Hàng nút ô đăng bài** (`features/social/feed/social-feed.module.css`): `.composerBottomRow` thành container; khi hàng hẹp hơn 480px nhóm nút được co, chữ nút chỉ ẩn với mắt (giữ cho trình đọc màn hình, tooltip giữ nguyên), nút Đăng không co. Ô đăng bài trang cá nhân (`profile-composer.tsx`) dùng chung class nên cũng hết tràn.
+- **Hàng nút ô đăng bài** (`features/social/feed/social-feed.module.css`): `.composerBottomRow` thành container; khi hàng hẹp hơn 480px nhóm nút được co, chữ nút chỉ ẩn với mắt (giữ cho trình đọc màn hình, tooltip giữ nguyên), nút Đăng không co. Selector giới hạn trong `.composerActionGroup` vì tab gợi ý ("Dành cho bạn/Thịnh hành") dùng lại class `.composerTagBtn`. Ô đăng bài trang cá nhân (`profile-composer.tsx`) dùng chung class nên cũng hết tràn.
 - **Reels không mở sẵn bình luận** (`features/social/live-posts.tsx`): dưới 1024px panel bình luận là bottom sheet che hết video; nay mặc định mở theo `useIsWideScreen()` (như bảng tin Bài viết), giữ lựa chọn của người dùng, vào từ thông báo bình luận (`focusCommentId`) vẫn mở sẵn. Thêm `resolvePanelOpen` trong `use-wide-screen.ts`.
 
 ## Đối chiếu "Xong khi"
@@ -21,7 +21,7 @@
 
 ## Kết quả kiểm tra
 - `pnpm turbo run lint typecheck test --affected --continue`:
-  - `@tripflix/web` lint: 0 lỗi, 28 cảnh báo (bằng trước khi sửa); typecheck pass; test 61 file / 429 test pass (có `instagram-left-dock.test.tsx`).
+  - `@tripflix/web` lint: 0 lỗi, 28 cảnh báo (bằng trước khi sửa); typecheck pass; test 61 file / 430 test pass (có `instagram-left-dock.test.tsx`).
   - `@tripflix/mobile#test` fail: `ERR_UNKNOWN_FILE_EXTENSION ".ts"` vì Node trên máy là v22.17.1 (repo yêu cầu ≥ 22.22). Không liên quan TF98, `apps/mobile` không bị sửa.
 - Đo bằng Chrome headless + `Emulation.setDeviceMetricsOverride` (mobile: true), dev server cổng 3110, chưa đăng nhập, 390×844, 360×800, 320×640, 768×1024 cho `/`, `/search`, `/flights`, `/inspiration`, `/inspiration?view=reels`, `/u/<id>`, `/login`: không trang nào cuộn ngang, không phần tử tương tác nào vượt mép phải.
 
