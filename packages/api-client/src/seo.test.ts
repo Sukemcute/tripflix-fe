@@ -104,6 +104,15 @@ describe('seoApi', () => {
     });
   });
 
+  it('listAuthorVlogs gọi đúng tham số author_id và post_type=vlog, ẩn danh', async () => {
+    const fetch = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json({ items: [], nextCursor: null, hasMore: false }));
+    await seoApi.listAuthorVlogs('u1', options);
+    expect(fetch.mock.calls[0]![0]).toBe('http://core-api.internal/api/v1/posts?author_id=u1&post_type=vlog');
+    expect(new Headers(fetch.mock.calls[0]![1]?.headers).get('authorization')).toBeNull();
+  });
+
   it('rejects a malformed page', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(json({ nope: true }));
     await expect(seoApi.listPosts(undefined, options)).rejects.toThrow('Unexpected API page');

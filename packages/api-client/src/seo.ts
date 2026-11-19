@@ -47,6 +47,17 @@ export const seoApi = {
     return readPage(response.data);
   },
   /**
+   * Trang 1 vlog công khai của tác giả, đúng tham số mà useAuthorVlogs gọi ở client (TF113).
+   * Dùng để đưa vào cache trước khi trang hồ sơ hiển thị, không đổi dữ liệu.
+   */
+  async listAuthorVlogs(authorId: string, options: SeoRequestOptions): Promise<SocialPostPageDto> {
+    const response = await postsControllerListPublicPosts(
+      { author_id: authorId, post_type: 'vlog' },
+      toRequest(options),
+    );
+    return readPage(response.data);
+  },
+  /**
    * Tác giả có ít nhất một bài hoặc Reels công khai. Reels không nằm trong danh sách bài, nên kiểm tra thêm
    * bảng tin Reels lọc theo tác giả. Chỉ đọc 1 mục mỗi nguồn để nhẹ cho API.
    */
