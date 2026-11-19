@@ -11,6 +11,7 @@ describe('robots.txt', () => {
           disallow: ['/api/', '/account', '/auth', '/bookings', '/cart', '/checkout', '/payments'],
         },
       ],
+      sitemap: 'https://tripflix.io.vn/sitemap.xml',
     });
   });
 });
