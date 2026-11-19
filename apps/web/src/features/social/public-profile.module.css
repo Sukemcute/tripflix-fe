@@ -245,7 +245,8 @@
   overflow-wrap: anywhere;
 }
 .introList strong {
-  color: var(--color-ink);
+  color: inherit;
+  font-weight: inherit;
 }
 .seeAll {
   padding: 4px 6px;
