@@ -85,6 +85,7 @@ import {
   getReelRenderMode,
   pickReelAfterRemoval,
   prependPinnedReelCards,
+  pruneReadyReelIds,
   reuseReelEngagement,
   shouldLoadReelSource,
   shouldShowReelBackdrop,
@@ -1350,6 +1351,15 @@ export function InspirationImmersiveViewer({
     const found = posts.findIndex((item) => item.id === activePostId);
     return found >= 0 ? found : 0;
   }, [posts, activePostId]);
+
+  // Bài ra khỏi cửa sổ video đã bị nhả nguồn: bỏ khỏi tập "đã có hình" để quay lại thì navigateStep chặn đúng.
+  useEffect(() => {
+    readyPostIdsRef.current = pruneReadyReelIds(
+      readyPostIdsRef.current,
+      posts.map((item) => item.id),
+      activeIndex,
+    );
+  }, [posts, activeIndex]);
 
   // Giống Reels mobile: tải trước poster của 3 Reel kế tiếp để lướt tới là có hình ngay.
   useEffect(() => {

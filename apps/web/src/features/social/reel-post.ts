@@ -98,6 +98,23 @@ export function shouldLoadReelSource(index: number, activeIndex: number, isActiv
   return isActivePlaying && offset >= -REEL_BEHIND_VIDEO_COUNT && offset <= REEL_AHEAD_VIDEO_COUNT;
 }
 
+/**
+ * Bỏ khỏi tập "đã có hình đầu tiên" các bài đã ra khỏi cửa sổ video (getReelRenderMode khác `video`): thẻ <video>
+ * của chúng đã bị gỡ, nguồn và bộ đệm bị nhả, nên quay lại phải tải lại từ đầu. Giữ lại thì canStepToNextReel không
+ * chặn, người xem lướt vào vòng chờ. Bài bị bỏ khỏi danh sách cũng bị bỏ. Trả Set mới, không sửa Set cũ.
+ */
+export function pruneReadyReelIds(
+  readyIds: ReadonlySet<string>,
+  postIds: readonly string[],
+  activeIndex: number,
+): Set<string> {
+  const kept = new Set<string>();
+  postIds.forEach((postId, index) => {
+    if (readyIds.has(postId) && getReelRenderMode(index, activeIndex) === 'video') kept.add(postId);
+  });
+  return kept;
+}
+
 /** Thời gian chặn lướt tối đa khi bài kế tiếp chưa có hình: Safari iPhone không tải trước video, chặn mãi thì kẹt. */
 export const REEL_NEXT_NOT_READY_BLOCK_MS = 3_000;
 
