@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { BookingsList } from '@/features/checkout/bookings-screen';
 import { ApiErrorNotice } from '@/features/shared/api-state';
-import { PublicPosts } from '@/features/social/live-posts';
 import { ProfileInfoCard } from './account-profile';
 import { TravelPreferencesCard } from './travel-preferences';
 import { AccountSecurity } from './account-security';
@@ -109,15 +108,7 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
             <AccountSection id="account-bookings" title={TAB_LABELS[tab]} hint={vi.commerce.bookedHint}>
               <BookingsList />
             </AccountSection>
-          ) : (
-            <AccountSection
-              id={`account-${tab}`}
-              title={TAB_LABELS[tab]}
-              hint={tab === 'mine' ? vi.api.myPostsHint : vi.api.bookmarksHint}
-            >
-              <PublicPosts kind={tab} />
-            </AccountSection>
-          )}
+          ) : null}
         </div>
       </div>
     </main>
@@ -153,8 +144,6 @@ const TAB_LABELS: Record<AccountTab, string> = {
   profile: vi.api.profileInfoTitle,
   security: vi.api.accountNavSecurity,
   bookings: vi.commerce.booked,
-  mine: vi.api.myPosts,
-  bookmarks: vi.api.bookmarks,
 };
 
 const NAV_ICONS: Record<AccountTab | 'admin' | 'logout', ReactNode> = {
@@ -176,13 +165,6 @@ const NAV_ICONS: Record<AccountTab | 'admin' | 'logout', ReactNode> = {
       <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18" />
     </>
   ),
-  mine: (
-    <>
-      <rect x="4" y="3" width="16" height="18" rx="2" />
-      <path d="M8 8h8M8 12h8M8 16h5" />
-    </>
-  ),
-  bookmarks: <path d="M6 3h12v18l-6-4-6 4V3Z" />,
   admin: (
     <>
       <rect x="3" y="3" width="7" height="7" rx="1.5" />
