@@ -13,6 +13,7 @@ import { moderation } from './moderation';
 import { searchMonitoring } from './search-monitoring';
 import { discoveryJobs } from './discovery-jobs';
 import { adminOperations } from './admin-operations';
+import { adminOrders } from './admin-orders';
 import { analytics } from './analytics';
 import { aiUsage } from './ai-usage';
 import { userActivity } from './user-activity';
@@ -23,6 +24,7 @@ export const vi = {
   aiUsage,
   userActivity,
   adminOperations,
+  adminOrders,
   searchMonitoring,
   discoveryJobs,
   assistant,
