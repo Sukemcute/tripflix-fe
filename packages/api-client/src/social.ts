@@ -12,6 +12,7 @@ import type {
   PostsControllerListMyPostsParams,
   AdminPostsControllerListAdminPostsParams,
   CreateModerationActionDto,
+  CommentMentionDto,
 } from './generated/core-api/model';
 import { readEntity, readPage } from './response';
 
@@ -78,16 +79,22 @@ export const socialApi = {
       (await comments.commentsControllerListComments(encodeURIComponent(postId), { focusCommentId }, { signal })).data,
     );
   },
-  async addComment(id: string, body: string, parentCommentId?: string) {
+  async addComment(id: string, body: string, parentCommentId?: string, mentions?: CommentMentionDto[]) {
     return (
       await comments.commentsControllerCreateComment(encodeURIComponent(id), {
         body,
         parent_comment_id: parentCommentId,
+        ...(mentions !== undefined ? { mentions } : {}),
       })
     ).data;
   },
-  async editComment(id: string, body: string) {
-    return (await comments.commentsControllerEditComment(encodeURIComponent(id), { body })).data;
+  async editComment(id: string, body: string, mentions?: CommentMentionDto[]) {
+    return (
+      await comments.commentsControllerEditComment(encodeURIComponent(id), {
+        body,
+        ...(mentions !== undefined ? { mentions } : {}),
+      })
+    ).data;
   },
   async deleteComment(id: string) {
     return (await comments.commentsControllerDeleteComment(encodeURIComponent(id))).data;

@@ -4,10 +4,13 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { CommentMentionDto } from './commentMentionDto';
 import type { CreatorCommentContextDto } from './creatorCommentContextDto';
 import type { CreatorReviewCommentDtoApprovalBlockReason } from './creatorReviewCommentDtoApprovalBlockReason';
 
 export interface CreatorReviewCommentDto {
+  /** @maxItems 10 */
+  mentions: CommentMentionDto[];
   id: string;
   postId: string;
   authorId: string;

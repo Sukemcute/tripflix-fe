@@ -37,6 +37,35 @@ it('sends snake_case comment parent fields and retains errors for the UI to retr
     parent_comment_id: 'parent-1',
   });
 });
+it('sends mentions on addComment and editComment (including empty [] to remove tags)', async () => {
+  configureHttp({ baseUrl: 'http://api' });
+  const mention = { userId: '018d9f00-0000-7000-8000-000000000002', offset: 3, length: 10 };
+  const fetchMock = vi
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValueOnce(json(201, { id: 'c1', body: '😀 @Nguyễn An', mentions: [mention] }))
+    .mockResolvedValueOnce(json(200, { id: 'c1', body: 'Mời @Nguyễn An xem', mentions: [{ ...mention, offset: 4 }] }))
+    .mockResolvedValueOnce(json(200, { id: 'c1', body: 'Bỏ tag', mentions: [] }));
+
+  await socialApi.addComment('post-1', '😀 @Nguyễn An', undefined, [mention]);
+  expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({
+    body: '😀 @Nguyễn An',
+    mentions: [mention],
+  });
+
+  const edited = { ...mention, offset: 4 };
+  await socialApi.editComment('c1', 'Mời @Nguyễn An xem', [edited]);
+  expect(fetchMock.mock.calls[1]?.[1]?.method).toBe('PATCH');
+  expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toEqual({
+    body: 'Mời @Nguyễn An xem',
+    mentions: [edited],
+  });
+
+  await socialApi.editComment('c1', 'Bỏ tag', []);
+  expect(JSON.parse(String(fetchMock.mock.calls[2]?.[1]?.body))).toEqual({
+    body: 'Bỏ tag',
+    mentions: [],
+  });
+});
 it('passes pagination cursors unchanged and rejects malformed pages', async () => {
   configureHttp({ baseUrl: '' });
   const fetchMock = vi

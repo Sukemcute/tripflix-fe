@@ -3,6 +3,7 @@ import {
   getMentionQueryAtCursor,
   insertMentionTag,
   parseCommentSegments,
+  prepareCommentSubmission,
   updateMentionsOnTextChange,
   validateMentions,
   type CommentMention,
@@ -236,6 +237,44 @@ describe('mention-input', () => {
       expect(parseCommentSegments(body, mentions)).toEqual([
         { type: 'mention', text: '@Thành', userId: 'u1' },
       ]);
+    });
+  });
+
+  describe('UTF-16 và prepareCommentSubmission', () => {
+    it('tính offset/length chuẩn UTF-16 code units khi có emoji trước tag', () => {
+      // '😀 ' dài 3 UTF-16 code units (emoji = 2 + space = 1) -> '@' ở index 3, cursor sau '@' là 4
+      const text = '😀 @';
+      const inserted = insertMentionTag(text, 4, { id: 'u1', displayName: 'Nguyễn An' });
+      expect(inserted.newText).toBe('😀 @Nguyễn An ');
+      expect(inserted.newMentions).toEqual([{ userId: 'u1', offset: 3, length: 10 }]);
+      expect(inserted.newText.slice(3, 13)).toBe('@Nguyễn An');
+
+      // Chèn thêm emoji '🎉' (+2 UTF-16 code units) vào trước tag
+      const edited = '🎉' + inserted.newText;
+      const updated = updateMentionsOnTextChange(inserted.newText, edited, inserted.newMentions, 2);
+      expect(updated).toEqual([{ userId: 'u1', offset: 5, length: 10 }]);
+      expect(edited.slice(5, 15)).toBe('@Nguyễn An');
+    });
+
+    it('loại bỏ mention có độ dài cắt đôi cặp surrogate (UTF-16)', () => {
+      const text = 'Chào @An😀';
+      // '@An' dài 3, '😀' nằm tại index 8..10 -> length 4 cắt đôi surrogate tại index 9
+      const mentions: CommentMention[] = [{ userId: 'u1', offset: 5, length: 4 }];
+      expect(validateMentions(text, mentions)).toEqual([]);
+      expect(validateMentions(text, [{ userId: 'u1', offset: 5, length: 5 }])).toEqual([
+        { userId: 'u1', offset: 5, length: 5 },
+      ]);
+    });
+
+    it('prepareCommentSubmission trim khoảng trắng đầu/cuối và dịch offset tương ứng', () => {
+      const rawBody = '  Chào @Nguyễn An nhé  ';
+      const rawMentions: CommentMention[] = [{ userId: 'u1', offset: 7, length: 10 }];
+      const prepared = prepareCommentSubmission(rawBody, rawMentions);
+      expect(prepared).toEqual({
+        body: 'Chào @Nguyễn An nhé',
+        mentions: [{ userId: 'u1', offset: 5, length: 10 }],
+      });
+      expect(prepared.body.slice(5, 15)).toBe('@Nguyễn An');
     });
   });
 });

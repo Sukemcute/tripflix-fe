@@ -59,6 +59,7 @@ import {
   insertMentionTag,
   parseCommentSegments,
   updateMentionsOnTextChange,
+  validateMentions,
   type CommentMention,
   type MentionQuery,
 } from './mention-input';
@@ -2401,7 +2402,7 @@ export function RightPanelCommentsSynchronized({
       try {
         return await createCommentWithMentions({
           postId: post.id,
-          body: body.trim(),
+          body,
           parentCommentId: replyTarget?.id,
           mentions,
         });
@@ -2421,7 +2422,7 @@ export function RightPanelCommentsSynchronized({
             await session.refreshUser();
             return await createCommentWithMentions({
               postId: post.id,
-              body: body.trim(),
+              body,
               parentCommentId: replyTarget?.id,
               mentions,
             });
@@ -2755,7 +2756,7 @@ function CommentNode({
       if (action === 'delete') return socialApi.deleteComment(comment.id);
       return editCommentWithMentions({
         commentId: comment.id,
-        body: editBody.trim(),
+        body: editBody,
         mentions: editMentions,
       });
     },
@@ -2766,7 +2767,12 @@ function CommentNode({
       }
       setEditing(false);
       setEditMentionQuery(null);
-      replaceCommentInCache(client, updatedComment as SocialCommentDto);
+      if (updatedComment && 'id' in updatedComment) {
+        const canonical = updatedComment as SocialCommentDto;
+        setEditBody(canonical.body);
+        setEditMentions(canonical.mentions ?? []);
+        replaceCommentInCache(client, canonical);
+      }
     },
   });
 
@@ -2996,7 +3002,7 @@ function CommentNode({
                     disabled={commentMutation.isPending}
                     onClick={() => {
                       setEditBody(comment.body);
-                      setEditMentions(comment.mentions ?? []);
+                      setEditMentions(validateMentions(comment.body, comment.mentions ?? []));
                       setEditMentionQuery(null);
                       setEditing(true);
                     }}

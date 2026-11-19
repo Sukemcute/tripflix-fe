@@ -81,8 +81,16 @@ export function getMentionQueryAtCursor(
   return { query, atIndex };
 }
 
+/** Kiểm tra vị trí chỉ số UTF-16 có cắt đôi cặp surrogate (emoji/ký tự bổ sung) hay không. */
+function splitsSurrogatePair(text: string, index: number): boolean {
+  if (index <= 0 || index >= text.length) return false;
+  const prev = text.charCodeAt(index - 1);
+  const next = text.charCodeAt(index);
+  return prev >= 0xd800 && prev <= 0xdbff && next >= 0xdc00 && next <= 0xdfff;
+}
+
 /**
- * Sắp xếp, kiểm tra tính hợp lệ và loại bỏ các mention bị chồng lấn / quá 10.
+ * Sắp xếp, kiểm tra tính hợp lệ theo UTF-16 code units và loại bỏ các mention bị chồng lấn / quá 10.
  */
 export function validateMentions(
   text: string,
@@ -90,17 +98,18 @@ export function validateMentions(
 ): CommentMention[] {
   if (!mentions.length) return [];
 
-  // Lọc các mention có toạ độ hợp lệ và bắt đầu bằng '@'
+  // Lọc các mention có toạ độ nguyên UTF-16 hợp lệ, bắt đầu bằng '@' và không cắt đôi surrogate pair
   const valid = mentions.filter(
     (m) =>
       typeof m.userId === 'string' &&
       m.userId.trim().length > 0 &&
-      typeof m.offset === 'number' &&
-      typeof m.length === 'number' &&
+      Number.isInteger(m.offset) &&
+      Number.isInteger(m.length) &&
       m.offset >= 0 &&
       m.length > 1 &&
       m.offset + m.length <= text.length &&
-      text[m.offset] === '@',
+      text[m.offset] === '@' &&
+      !splitsSurrogatePair(text, m.offset + m.length),
   );
 
   // Sắp xếp theo offset tăng dần
@@ -117,6 +126,33 @@ export function validateMentions(
   }
 
   return result.slice(0, MAX_COMMENT_MENTIONS);
+}
+
+/**
+ * Chuẩn hoá body (trim khoảng trắng đầu/cuối) đồng thời dịch offset của các tag theo phần đầu bị bỏ
+ * để offset/length UTF-16 khớp chính xác với nội dung gửi lên BE.
+ */
+export function prepareCommentSubmission(
+  body: string,
+  mentions: readonly CommentMention[] = [],
+): { body: string; mentions: CommentMention[] } {
+  const trimmedStart = body.trimStart();
+  const leadingTrim = body.length - trimmedStart.length;
+  const trimmedBody = trimmedStart.trimEnd();
+
+  if (!mentions.length) {
+    return { body: trimmedBody, mentions: [] };
+  }
+
+  const shifted = mentions.map((m) => ({
+    ...m,
+    offset: m.offset - leadingTrim,
+  }));
+
+  return {
+    body: trimmedBody,
+    mentions: validateMentions(trimmedBody, shifted),
+  };
 }
 
 /**
