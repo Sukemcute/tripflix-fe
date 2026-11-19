@@ -47,6 +47,7 @@ export function CaseContextTags({ item, visibility }: { item: ModerationCaseDto;
           Chờ xác minh
         </li>
       )}
+      {item.flags.imageReviewOnly === true && <li className={`${styles.tag} ${styles.ai}`} title={vi.moderation.parts.policy}>{vi.moderation.parts.imageReview}</li>}
       {visibility === 'held' && <li className={`${styles.tag} ${styles.pending}`}>{vi.api.moderationHeld}</li>}
       {removed ? (
         <li className={`${styles.tag} ${styles.critical}`}>Đã gỡ</li>

@@ -23,6 +23,7 @@ import { canDecideReview } from './review-lease-state';
 import reviewStyles from './review-queue.module.css';
 import { ModerationAuthor } from './moderation-author';
 import { ModerationContext } from './moderation-context';
+import { ModerationParts } from './moderation-parts';
 const reviewText = vi.moderation.review;
 
 const text = vi.moderation;
@@ -453,12 +454,13 @@ function FailedScans() {
             <article key={item.eventId} className={operations.scan}>
               <div className={operations.scanInfo}>
                 <div className={operations.scanTitle}>
-                  <h3>{item.targetType === 'post' ? 'Bài viết' : 'Bình luận'}</h3>
+                  <h3>{item.partKind === 'image' ? text.parts.image : item.partKind === 'caption' ? text.parts.caption : item.targetType === 'post' ? 'Bài viết' : 'Bình luận'}</h3>
                   <span className={operations.failed}>Hết lượt tự thử</span>
                 </div>
                 <p className={operations.identifier}>
                   ID nội dung: <code>{item.targetId}</code>
                 </p>
+                {item.assetId && <p className={operations.identifier}>{text.parts.asset}: <code>{item.assetId}</code></p>}
                 <p className={operations.meta}>
                   {item.attempts} lần thử · Cập nhật {date(item.updatedAt)}
                 </p>
@@ -1039,6 +1041,7 @@ function CaseDetailModal({
         {/* Modal Body */}
         <div className="mod-modal-body">
           {item && <ReviewLeasePanel item={item} />}
+          {item?.targetType === 'post' && modalTab === 'info' && <ModerationParts postId={item.targetId} />}
           {item?.targetType === 'comment' && modalTab === 'info' && (
             <ModerationContext
               postId={item.postId}

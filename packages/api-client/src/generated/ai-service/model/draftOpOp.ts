@@ -10,4 +10,5 @@ export type DraftOpOp = (typeof DraftOpOp)[keyof typeof DraftOpOp];
 export const DraftOpOp = {
   set_stay: 'set_stay',
   remove_stop: 'remove_stop',
+  move_stop: 'move_stop',
 } as const;

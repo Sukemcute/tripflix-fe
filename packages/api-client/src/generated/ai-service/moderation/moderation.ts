@@ -12,7 +12,13 @@ import type {
   UseMutationResult,
 } from '@tanstack/react-query';
 
-import type { HTTPValidationError, ModerateRequest, ModerateResponse } from '../model';
+import type {
+  HTTPValidationError,
+  ModeratePartsRequest,
+  ModeratePartsResponse,
+  ModerateRequest,
+  ModerateResponse,
+} from '../model';
 
 import { http } from '../../../http';
 
@@ -139,4 +145,132 @@ export const useModerateModeratePost = <TError = HTTPValidationError, TContext =
   TContext
 > => {
   return useMutation(getModerateModeratePostMutationOptions(options), queryClient);
+};
+export type moderateSeparatePartsModeratePartsPostResponse200 = {
+  data: ModeratePartsResponse;
+  status: 200;
+};
+
+export type moderateSeparatePartsModeratePartsPostResponse422 = {
+  data: HTTPValidationError;
+  status: 422;
+};
+
+export type moderateSeparatePartsModeratePartsPostResponseSuccess =
+  moderateSeparatePartsModeratePartsPostResponse200 & {
+    headers: Headers;
+  };
+export type moderateSeparatePartsModeratePartsPostResponseError =
+  moderateSeparatePartsModeratePartsPostResponse422 & {
+    headers: Headers;
+  };
+
+export type moderateSeparatePartsModeratePartsPostResponse =
+  moderateSeparatePartsModeratePartsPostResponseSuccess | moderateSeparatePartsModeratePartsPostResponseError;
+
+export const getModerateSeparatePartsModeratePartsPostUrl = () => {
+  return `/moderate/parts`;
+};
+
+/**
+ * @summary Moderate Separate Parts
+ */
+export const moderateSeparatePartsModeratePartsPost = async (
+  moderatePartsRequest: ModeratePartsRequest,
+  options?: Parameters<typeof http>[1],
+): Promise<moderateSeparatePartsModeratePartsPostResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<moderateSeparatePartsModeratePartsPostResponse>(
+    getModerateSeparatePartsModeratePartsPostUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+      body: JSON.stringify(moderatePartsRequest),
+    },
+  );
+};
+
+export const getModerateSeparatePartsModeratePartsPostMutationKey = () =>
+  ['moderateSeparatePartsModeratePartsPost'] as const;
+
+export const getModerateSeparatePartsModeratePartsPostMutationOptions = <
+  TError = HTTPValidationError,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof moderateSeparatePartsModeratePartsPost>>,
+    TError,
+    ModerateSeparatePartsModeratePartsPostMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof moderateSeparatePartsModeratePartsPost>>,
+  TError,
+  ModerateSeparatePartsModeratePartsPostMutationVariables,
+  TContext
+> => {
+  const mutationKey = getModerateSeparatePartsModeratePartsPostMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof moderateSeparatePartsModeratePartsPost>>,
+    ModerateSeparatePartsModeratePartsPostMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return moderateSeparatePartsModeratePartsPost(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ModerateSeparatePartsModeratePartsPostMutationResult = NonNullable<
+  Awaited<ReturnType<typeof moderateSeparatePartsModeratePartsPost>>
+>;
+export type ModerateSeparatePartsModeratePartsPostMutationBody = ModeratePartsRequest;
+export type ModerateSeparatePartsModeratePartsPostMutationError = HTTPValidationError;
+export type ModerateSeparatePartsModeratePartsPostMutationVariables = { data: ModeratePartsRequest };
+
+/**
+ * @summary Moderate Separate Parts
+ */
+export const useModerateSeparatePartsModeratePartsPost = <TError = HTTPValidationError, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof moderateSeparatePartsModeratePartsPost>>,
+      TError,
+      ModerateSeparatePartsModeratePartsPostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof moderateSeparatePartsModeratePartsPost>>,
+  TError,
+  ModerateSeparatePartsModeratePartsPostMutationVariables,
+  TContext
+> => {
+  return useMutation(getModerateSeparatePartsModeratePartsPostMutationOptions(options), queryClient);
 };

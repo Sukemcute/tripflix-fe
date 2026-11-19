@@ -10,6 +10,8 @@ import {
   adminModerationControllerRetryScan,
   adminModerationControllerStats,
   adminModerationControllerReviewLease,
+  adminModerationControllerPostParts,
+  adminModerationControllerRetryPart,
 } from './generated/core-api/moderation-admin/moderation-admin';
 import {
   reportsControllerReportPost,
@@ -27,6 +29,15 @@ import type {
 import { readEntity } from './response';
 
 export const moderationApi = {
+  async parts(postId: string, signal?: AbortSignal) {
+    return readEntity(
+      (await adminModerationControllerPostParts(encodeURIComponent(postId), { signal })).data,
+      ['items', 'contentVersion', 'imagePolicy'],
+    );
+  },
+  async retryPart(id: string) {
+    return adminModerationControllerRetryPart(encodeURIComponent(id));
+  },
   async reviewLease(id: string, action: 'claim' | 'renew' | 'release', leaseId?: string) {
     return readEntity(
       (await adminModerationControllerReviewLease(encodeURIComponent(id), { action, leaseId })).data,
