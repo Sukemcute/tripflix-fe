@@ -876,6 +876,7 @@ export function SocialFeedView({
           <div
             role="tablist"
             aria-label={vi.api.recommendModeAria}
+            className={styles.recommendModeTabs}
             style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}
           >
             {RECOMMEND_MODE_OPTIONS.map((option) => {

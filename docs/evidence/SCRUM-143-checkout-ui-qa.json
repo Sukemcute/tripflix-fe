@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "baseline": false,
+  "checks": [
+    "375px: two hotels/two flight legs identifiable, summary expand/collapse, total not duplicated, method switch, inline errors block requests, filled hotel-only form preserves guest/payment payload, OTP and expired state",
+    "390px: two hotels/two flight legs identifiable, summary expand/collapse, total not duplicated, method switch, inline errors block requests, filled hotel-only form preserves guest/payment payload, OTP and expired state",
+    "430px: two hotels/two flight legs identifiable, summary expand/collapse, total not duplicated, method switch, inline errors block requests, filled hotel-only form preserves guest/payment payload, OTP and expired state"
+  ],
+  "pageErrors": [],
+  "apiFixtures": true,
+  "nativeOrRealPaymentTested": false
+}

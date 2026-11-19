@@ -1,14 +1,10 @@
 'use client';
 
-import { getAvatarUrl } from '@tripflix/api-client';
-import { useEffect, useState } from 'react';
-import {
-  AVATAR_DECOR_EVENT,
-  findFrameOption,
-  findStickerPreset,
-  loadUserAvatarDecor,
-  type StoredAvatarDecor,
-} from '@/features/auth/avatar-stickers';
+import { getAvatarUrl, useApiSession } from '@tripflix/api-client';
+import * as users from '@tripflix/api-client/core-api/users/users';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { findFrameOption, findStickerPreset, type AvatarFrameId } from '@/features/auth/avatar-stickers';
 
 const EDITOR_CIRCLE_PX = 240;
 
@@ -16,24 +12,30 @@ const EDITOR_CIRCLE_PX = 240;
  * Ảnh đại diện (TF109) đặt chồng lên ô chữ cái đầu sẵn có, kèm lớp khung thú & phụ kiện bọc NGOÀI vòng tròn
  * (kiểu Discord Avatar Decorations) không bị cắt bởi border-radius của ảnh.
  */
-export function AvatarPhoto({ userId, src }: { userId?: string | null | undefined; src?: string | null | undefined }) {
+export function AvatarPhoto({
+  userId,
+  src,
+}: {
+  userId?: string | null | undefined;
+  src?: string | null | undefined;
+}) {
   const url = src === undefined ? (userId ? getAvatarUrl(userId) : null) : src;
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const [decor, setDecor] = useState<StoredAvatarDecor>({ frameId: 'none', stickers: [] });
-
-  useEffect(() => {
-    const sync = () => setDecor(loadUserAvatarDecor(userId));
-    sync();
-    window.addEventListener(AVATAR_DECOR_EVENT, sync);
-    window.addEventListener('storage', sync);
-    return () => {
-      window.removeEventListener(AVATAR_DECOR_EVENT, sync);
-      window.removeEventListener('storage', sync);
-    };
-  }, [userId]);
+  const { user: me } = useApiSession();
+  // Của chính mình (không truyền userId hoặc trùng id): lấy từ hồ sơ đã có, đổi xong hiện ngay. userId null: không rõ ai.
+  const isMe = userId === undefined || userId === me?.id;
+  const othersDecor = useQuery({
+    queryKey: users.getUserSearchControllerAvatarDecorQueryKey(userId ?? ''),
+    queryFn: async ({ signal }) =>
+      (await users.userSearchControllerAvatarDecor(userId!, { signal })).data.avatarDecor,
+    enabled: Boolean(userId) && !isMe,
+    // Server cache 5 phút; mọi avatar của cùng một người dùng chung một lần gọi.
+    staleTime: 5 * 60_000,
+  });
+  const decor = (isMe ? me?.avatarDecor : othersDecor.data) ?? { frameId: 'none', stickers: [] };
 
   const hasPhoto = Boolean(url && failedUrl !== url);
-  const frameOption = findFrameOption(decor.frameId);
+  const frameOption = findFrameOption(decor.frameId as AvatarFrameId);
   const hasOuterOverlay = Boolean(frameOption?.overlaySrc) || decor.stickers.length > 0;
 
   if (!hasPhoto && !hasOuterOverlay) return null;
@@ -54,12 +56,7 @@ export function AvatarPhoto({ userId, src }: { userId?: string | null | undefine
       )}
       {frameOption?.overlaySrc && (
         // oxlint-disable-next-line nextjs/no-img-element -- khung SVG data URL bọc bên ngoài vòng tròn avatar
-        <img
-          className="avatar-outer-deco"
-          src={frameOption.overlaySrc}
-          alt=""
-          aria-hidden="true"
-        />
+        <img className="avatar-outer-deco" src={frameOption.overlaySrc} alt="" aria-hidden="true" />
       )}
       {decor.stickers.map((item) => {
         const preset = findStickerPreset(item.presetId);

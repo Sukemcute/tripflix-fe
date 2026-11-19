@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import type { CommerceHotel } from '@tripflix/api-client';
 import {
   addBookingCartItem,
@@ -10,9 +10,9 @@ import {
   type BookingCartItem,
 } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, radius, spacing } from '@tripflix/tokens';
+import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Icon, money, Notice, Row, Txt, ui } from '@/components/mobile-ui';
 import { saveBookingSelection, useBookingSelection } from './cart-store';
 
@@ -34,19 +34,22 @@ export function PhotoGallery({
   rounded = radius.md,
   counterBottom = spacing.sm,
   height,
+  isLoading = false,
 }: {
   images: string[];
   name: string;
   ratio?: number;
   rounded?: number;
-  /** Ảnh đầu trang bị thẻ thông tin đè lên đáy nên đẩy bộ đếm lên cao hơn. */
+  /** Khoảng cách bộ điều khiển ảnh tới đáy khung. */
   counterBottom?: number;
-  /** Chiều cao cố định thay cho tỉ lệ (ảnh đầu trang co giãn cho vừa màn hình). */
+  /** Chiều cao cố định thay cho tỉ lệ. */
   height?: number;
+  isLoading?: boolean;
 }) {
   // Đo đúng bề rộng khung rồi cho ảnh vừa khung, ảnh to nhỏ khác nhau vẫn đều.
   const [frameWidth, setFrameWidth] = useState(0);
   const [index, setIndex] = useState(0);
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const slideWidth = Math.max(frameWidth, 1);
   const slideHeight = height ?? Math.round(slideWidth / ratio);
   // Khung luôn giữ tỉ lệ và luôn đo bề rộng, kể cả lúc chưa có ảnh, để ảnh tới sau vẫn hiện đúng cỡ.
@@ -57,55 +60,190 @@ export function PhotoGallery({
         ...(height ? { height } : { aspectRatio: ratio }),
         borderRadius: rounded,
         overflow: 'hidden',
-        backgroundColor: colors.seaMist,
+        backgroundColor: colors.surfaceMuted,
       }}
     >
       {!images.length && (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="image-outline" size={40} color={colors.tealInk} />
+        <View style={galleryStyles.placeholder}>
+          <Icon name="image-outline" size={28} color={colors.textMuted} />
+          <Txt style={galleryStyles.placeholderText}>
+            {isLoading ? hotelText.photoLoading : hotelText.noPhotos}
+          </Txt>
         </View>
       )}
       {frameWidth > 0 && images.length > 0 && (
         <ScrollView
+          ref={scroll}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onScroll={(event) => setIndex(Math.round(event.nativeEvent.contentOffset.x / slideWidth))}
+          onScroll={(event) =>
+            setIndex(
+              Math.max(
+                0,
+                Math.min(images.length - 1, Math.round(event.nativeEvent.contentOffset.x / slideWidth)),
+              ),
+            )
+          }
           scrollEventThrottle={64}
-          style={{ borderRadius: rounded }}
+          style={{ flex: 1 }}
         >
-          {images.map((uri) => (
-            <Image
-              key={uri}
-              source={uri}
-              style={{ width: slideWidth, height: slideHeight }}
-              contentPosition="center"
-              contentFit="cover"
-              accessibilityLabel={name}
+          {images.map((uri, position) => (
+            <GalleryPhoto
+              key={`${uri}:${position}`}
+              uri={uri}
+              width={slideWidth}
+              height={slideHeight}
+              isActive={position === index}
+              bottomInset={images.length > 1 ? counterBottom + 44 + spacing.sm : spacing.lg}
+              label={`${name}. ${t('hotel.photoPosition', { current: position + 1, total: images.length })}`}
             />
           ))}
         </ScrollView>
       )}
       {images.length > 1 && (
-        <View
-          style={{
-            position: 'absolute',
-            right: spacing.sm,
-            bottom: counterBottom,
-            paddingHorizontal: spacing.sm,
-            paddingVertical: 2,
-            borderRadius: radius.pill,
-            backgroundColor: colors.overlayHeavy,
-          }}
-        >
-          <Txt variant="small" style={{ color: colors.background }}>
-            {index + 1}/{images.length}
-          </Txt>
+        <View style={[galleryStyles.pager, { bottom: counterBottom }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={hotelText.previous}
+            accessibilityState={{ disabled: index === 0 }}
+            disabled={index === 0}
+            onPress={() => scroll.current?.scrollTo({ x: (index - 1) * slideWidth, animated: true })}
+            style={({ pressed }) => [galleryStyles.control, (pressed || index === 0) && galleryStyles.dim]}
+          >
+            <Icon name="chevron-back" size={20} color={colors.background} />
+          </Pressable>
+          <View style={galleryStyles.counter}>
+            <Txt
+              accessibilityLabel={t('hotel.photoPosition', { current: index + 1, total: images.length })}
+              style={galleryStyles.counterText}
+            >
+              {index + 1} / {images.length}
+            </Txt>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={hotelText.next}
+            accessibilityState={{ disabled: index === images.length - 1 }}
+            disabled={index === images.length - 1}
+            onPress={() => scroll.current?.scrollTo({ x: (index + 1) * slideWidth, animated: true })}
+            style={({ pressed }) => [
+              galleryStyles.control,
+              (pressed || index === images.length - 1) && galleryStyles.dim,
+            ]}
+          >
+            <Icon name="chevron-forward" size={20} color={colors.background} />
+          </Pressable>
         </View>
       )}
     </View>
   );
 }
+
+function GalleryPhoto({
+  uri,
+  width,
+  height,
+  label,
+  isActive,
+  bottomInset,
+}: {
+  uri: string;
+  width: number;
+  height: number;
+  label: string;
+  isActive: boolean;
+  bottomInset: number;
+}) {
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [attempt, setAttempt] = useState(0);
+  return (
+    <View
+      style={{ width, height }}
+      aria-hidden={!isActive}
+      accessibilityElementsHidden={!isActive}
+      importantForAccessibility={isActive ? 'auto' : 'no-hide-descendants'}
+    >
+      <Image
+        key={attempt}
+        source={uri}
+        style={StyleSheet.absoluteFill}
+        contentPosition="center"
+        contentFit="cover"
+        accessibilityLabel={label}
+        onLoad={() => setStatus('loaded')}
+        onError={() => setStatus('error')}
+      />
+      {status !== 'loaded' && (
+        <View style={[galleryStyles.placeholder, StyleSheet.absoluteFill, { paddingBottom: bottomInset }]}>
+          <Icon name="image-outline" size={28} color={colors.textMuted} />
+          <Txt accessibilityLiveRegion="polite" style={galleryStyles.placeholderText}>
+            {status === 'error' ? hotelText.imageUnavailable : hotelText.photoLoading}
+          </Txt>
+          {status === 'error' && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setStatus('loading');
+                setAttempt((current) => current + 1);
+              }}
+              style={({ pressed }) => [galleryStyles.retry, pressed && galleryStyles.dim]}
+            >
+              <Txt style={galleryStyles.retryText}>{hotelText.retryPhoto}</Txt>
+            </Pressable>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const galleryStyles = StyleSheet.create({
+  placeholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceMuted,
+    padding: spacing.lg,
+  },
+  placeholderText: { fontSize: 14, lineHeight: 23, color: colors.textMuted, textAlign: 'center' },
+  pager: {
+    position: 'absolute',
+    left: spacing.sm,
+    right: spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  control: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    backgroundColor: colors.overlayHeavy,
+  },
+  counter: {
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    backgroundColor: colors.overlayHeavy,
+  },
+  counterText: { color: colors.background, fontSize: 13, lineHeight: 22, fontFamily: nativeFonts.semibold },
+  retry: {
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  retryText: { fontSize: 14, lineHeight: 23, color: colors.tealInk, fontFamily: nativeFonts.semibold },
+  dim: { opacity: 0.6 },
+});
 
 /** Nút "Chọn" của một gói giá; đã chọn thì thành bộ đếm phòng màu cam (giống bản thiết kế). */
 function RateQty({
@@ -145,18 +283,18 @@ function RateQty({
       accessibilityRole="button"
       accessibilityLabel={`${sign === '+' ? text.cartIncrease : text.cartDecrease}: ${booking.ratePlanName}`}
       disabled={!isEnabled}
+      accessibilityState={{ disabled: !isEnabled }}
       onPress={() => selectQty(next)}
       style={{
-        width: 28,
-        height: 28,
-        borderRadius: radius.pill,
+        width: 44,
+        height: 44,
+        borderRadius: radius.sm,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.coralSoft,
-        opacity: isEnabled ? 1 : 0.5,
+        backgroundColor: colors.background,
       }}
     >
-      <Txt variant="label" style={{ color: colors.background }}>
+      <Txt style={{ color: isEnabled ? colors.tealInk : colors.textSubtle, fontSize: 18, lineHeight: 26 }}>
         {sign}
       </Txt>
     </Pressable>
@@ -168,16 +306,24 @@ function RateQty({
           accessibilityRole="button"
           accessibilityLabel={`${hotelText.pickRate} ${booking.ratePlanName}`}
           disabled={isDisabled}
+          accessibilityState={{ disabled: isDisabled }}
           onPress={() => selectQty(1)}
           style={{
             alignItems: 'center',
             paddingVertical: 12,
-            borderRadius: radius.pill,
-            backgroundColor: colors.coral,
-            opacity: isDisabled ? 0.5 : 1,
+            minHeight: 48,
+            borderRadius: radius.sm,
+            backgroundColor: isDisabled ? colors.surfaceMuted : colors.coralInk,
           }}
         >
-          <Txt variant="label" style={{ color: colors.background }}>
+          <Txt
+            style={{
+              color: isDisabled ? colors.textMuted : colors.background,
+              fontSize: 15,
+              lineHeight: 24,
+              fontFamily: nativeFonts.semibold,
+            }}
+          >
             {hotelText.pickRate}
           </Txt>
         </Pressable>
@@ -187,13 +333,13 @@ function RateQty({
             gap: spacing.sm,
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: 6,
-            borderRadius: radius.pill,
-            backgroundColor: colors.coral,
+            padding: 4,
+            borderRadius: radius.sm,
+            backgroundColor: colors.surfaceMuted,
           }}
         >
           {pillButton('−', !isDisabled, qty - 1)}
-          <Txt variant="label" style={{ color: colors.background }}>
+          <Txt style={{ color: colors.navy, fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.semibold }}>
             {qty} {text.cartRooms}
           </Txt>
           {pillButton('+', !isDisabled && qty < booking.maxQty, qty + 1)}
@@ -208,9 +354,7 @@ function CheckLine({ children, tone = colors.ink }: { children: string; tone?: s
   return (
     <Row style={{ gap: 6, alignItems: 'flex-start' }}>
       <Icon name="checkmark" size={15} color={tone === colors.ink ? colors.teal : tone} />
-      <Txt variant="small" style={{ flex: 1, color: tone, lineHeight: 19 }}>
-        {children}
-      </Txt>
+      <Txt style={{ flex: 1, color: tone, fontSize: 14, lineHeight: 23 }}>{children}</Txt>
     </Row>
   );
 }
@@ -258,13 +402,16 @@ function RateRow({
       style={{
         padding: spacing.md,
         gap: spacing.md,
-        borderRadius: radius.lg,
-        borderWidth: isSelected ? 2 : 1,
-        borderColor: isSelected ? colors.coral : colors.border,
-        backgroundColor: isSelected ? colors.coralTint : colors.background,
+        borderRadius: radius.sm,
+        backgroundColor: isSelected ? colors.seaMist : colors.surface,
       }}
     >
-      <Txt variant="label">{rate.name}</Txt>
+      <Row style={{ alignItems: 'flex-start', gap: spacing.sm }}>
+        <Txt style={{ flex: 1, fontSize: 16, lineHeight: 25, fontFamily: nativeFonts.semibold }}>
+          {rate.name}
+        </Txt>
+        {isSelected && <Icon name="checkmark-circle" size={22} color={colors.tealInk} />}
+      </Row>
       <View style={{ gap: 6 }}>
         <CheckLine tone={rate.isRefundable ? colors.tealInk : colors.textMuted}>{policy}</CheckLine>
         {rate.perks.map((perk) => (
@@ -272,7 +419,9 @@ function RateRow({
         ))}
       </View>
       {/* Giá một hàng riêng: bên trái % giảm + giá gạch, bên phải giá mỗi đêm. */}
-      <Row style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <Row
+        style={{ justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: spacing.md }}
+      >
         <View style={{ gap: 2 }}>
           {hasSaving && (
             <View
@@ -300,15 +449,18 @@ function RateRow({
           </Txt>
         ) : (
           <View style={{ alignItems: 'flex-end' }}>
-            <Txt variant="heading" style={{ color: colors.coralInk }}>
+            <Txt
+              style={{ fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy }}
+            >
               {money(perNight)}
             </Txt>
             <Txt variant="small" style={ui.muted}>
-              {hotelText.perNightShort}
+              {hotelText.perNight}
             </Txt>
           </View>
         )}
       </Row>
+      <Txt style={roomStyles.secondary}>{t('hotel.stayNights', { count: nights })}</Txt>
       {stayTotal !== null && !fitsParty && (
         <Txt variant="small" style={ui.muted}>
           {hotelText.cannotFitParty}
@@ -320,9 +472,13 @@ function RateRow({
         </Txt>
       )}
       {room.isAvailable && pricePerRoom !== null && (
-        <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.md }}>
+        <View>
           {onPick ? (
-            <Button disabled={isDisabled} onPress={() => onPick(rate.code)}>
+            <Button
+              style={{ borderRadius: radius.sm, backgroundColor: colors.coralInk, minHeight: 48 }}
+              disabled={isDisabled}
+              onPress={() => onPick(rate.code)}
+            >
               {isSelected ? vi.mobile.tripPlan.picked : hotelText.pickRate}
             </Button>
           ) : (
@@ -350,13 +506,13 @@ function RateRow({
   );
 }
 
-const AMENITY_PREVIEW = 6;
+const AMENITY_PREVIEW = 3;
 
 function Fact({ icon, children }: { icon: Parameters<typeof Icon>[0]['name']; children: string }) {
   return (
     <Row style={{ gap: 4, alignItems: 'center' }}>
       <Icon name={icon} size={15} color={colors.textMuted} />
-      <Txt variant="small">{children}</Txt>
+      <Txt style={roomStyles.secondary}>{children}</Txt>
     </Row>
   );
 }
@@ -380,14 +536,28 @@ export function RoomCard({
   pickedRatePlanCode?: string;
 }) {
   const [isAmenityOpen, setAmenityOpen] = useState(false);
+  const [isRatesOpen, setRatesOpen] = useState(false);
+  const selection = useBookingSelection();
+  const firstRate = room.ratePlans.find((rate) => rate.totalPrice !== null) ?? room.ratePlans[0];
+  const selectedRates = room.ratePlans.filter(
+    (rate) =>
+      rate.code === pickedRatePlanCode ||
+      selection.items.some((item) => item.productId === room.productId && item.ratePlanCode === rate.code),
+  );
+  const shownRates = isRatesOpen
+    ? room.ratePlans
+    : selectedRates.length
+      ? selectedRates
+      : firstRate
+        ? [firstRate]
+        : [];
+  const hiddenRates = room.ratePlans.length - shownRates.length;
   const amenities = isAmenityOpen ? room.amenities : room.amenities.slice(0, AMENITY_PREVIEW);
   const hiddenAmenities = room.amenities.length - AMENITY_PREVIEW;
   return (
     <View
       style={{
-        borderRadius: radius.lg * 1.5,
-        borderWidth: 1,
-        borderColor: colors.border,
+        borderRadius: radius.md,
         backgroundColor: colors.background,
         overflow: 'hidden',
       }}
@@ -395,7 +565,7 @@ export function RoomCard({
       <PhotoGallery images={room.images} name={room.name} ratio={16 / 10} rounded={0} />
       <View style={{ padding: spacing.md, gap: spacing.md }}>
         <View style={{ gap: spacing.sm }}>
-          <Txt variant="heading">{room.name}</Txt>
+          <Txt style={roomStyles.title}>{room.name}</Txt>
           <Row style={{ flexWrap: 'wrap', columnGap: spacing.md, rowGap: 4 }}>
             {room.areaM2 !== null && room.areaM2 !== undefined && (
               <Fact icon="resize-outline">{`${room.areaM2} m²`}</Fact>
@@ -409,17 +579,20 @@ export function RoomCard({
           <View style={{ gap: spacing.sm }}>
             <Row style={{ flexWrap: 'wrap', columnGap: spacing.md, rowGap: 6 }}>
               {amenities.map((amenity) => (
-                <Row key={amenity} style={{ gap: 4, alignItems: 'center', width: '46%' }}>
+                <Row key={amenity} style={{ gap: spacing.sm, alignItems: 'flex-start', width: '100%' }}>
                   <Icon name="checkmark-circle-outline" size={15} color={colors.teal} />
-                  <Txt variant="small" numberOfLines={1} style={{ flexShrink: 1, color: colors.textMuted }}>
-                    {amenity}
-                  </Txt>
+                  <Txt style={[roomStyles.secondary, { flex: 1 }]}>{amenity}</Txt>
                 </Row>
               ))}
             </Row>
             {hiddenAmenities > 0 && (
-              <Pressable accessibilityRole="button" onPress={() => setAmenityOpen((open) => !open)}>
-                <Txt variant="small" style={{ color: colors.tealInk, fontWeight: '600' }}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: isAmenityOpen }}
+                onPress={() => setAmenityOpen((open) => !open)}
+                style={roomStyles.toggle}
+              >
+                <Txt style={roomStyles.toggleText}>
                   {isAmenityOpen ? hotelText.showLess : t('hotel.moreAmenities', { count: hiddenAmenities })}
                 </Txt>
               </Pressable>
@@ -444,7 +617,7 @@ export function RoomCard({
         {!room.isAvailable && (
           <Notice tone="warning">{room.reason ? text.reasons[room.reason] : text.unavailable}</Notice>
         )}
-        {room.ratePlans.map((rate) => (
+        {shownRates.map((rate) => (
           <RateRow
             key={rate.code}
             hotel={hotel}
@@ -457,7 +630,43 @@ export function RoomCard({
             isDisabled={isDisabled}
           />
         ))}
+        {(hiddenRates > 0 || (isRatesOpen && room.ratePlans.length > 1)) && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: isRatesOpen }}
+            onPress={() => setRatesOpen((open) => !open)}
+            style={roomStyles.toggle}
+          >
+            <Txt style={roomStyles.toggleText}>
+              {isRatesOpen ? hotelText.collapseRatePlans : t('hotel.moreRatePlans', { count: hiddenRates })}
+            </Txt>
+            <Icon name={isRatesOpen ? 'chevron-up' : 'chevron-down'} size={18} color={colors.tealInk} />
+          </Pressable>
+        )}
       </View>
     </View>
   );
 }
+
+const roomStyles = StyleSheet.create({
+  title: { fontSize: 18, lineHeight: 28, fontFamily: nativeFonts.semibold, color: colors.navy },
+  secondary: { fontSize: 14, lineHeight: 23, color: colors.textMuted },
+  toggle: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceMuted,
+    alignSelf: 'flex-start',
+  },
+  toggleText: {
+    fontSize: 14,
+    lineHeight: 23,
+    color: colors.tealInk,
+    fontFamily: nativeFonts.semibold,
+    flexShrink: 1,
+  },
+});

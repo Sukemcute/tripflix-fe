@@ -24,6 +24,9 @@ import type {
   AdminCalendarControllerGetFlightCalendarParams,
   AdminCalendarControllerGetRoomCalendarParams,
   AdminFlightDayDto,
+  AdminOrdersControllerAnomaliesParams,
+  AdminOrdersControllerProductsParams,
+  AdminOrdersControllerSearchParams,
   AdminRoomDayDto,
   UpdateCalendarResultDto,
   UpdateFlightCalendarDto,
@@ -758,6 +761,570 @@ export function useAdminMetricsControllerGetMetrics<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getAdminMetricsControllerGetMetricsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type adminOrdersControllerSearchResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type adminOrdersControllerSearchResponseSuccess = adminOrdersControllerSearchResponse200 & {
+  headers: Headers;
+};
+export type adminOrdersControllerSearchResponse = adminOrdersControllerSearchResponseSuccess;
+
+export const getAdminOrdersControllerSearchUrl = (params?: AdminOrdersControllerSearchParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/commerce/orders?${stringifiedParams}`
+    : `/api/admin/commerce/orders`;
+};
+
+export const adminOrdersControllerSearch = async (
+  params?: AdminOrdersControllerSearchParams,
+  options?: Parameters<typeof http>[1],
+): Promise<adminOrdersControllerSearchResponse> => {
+  return http<adminOrdersControllerSearchResponse>(getAdminOrdersControllerSearchUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAdminOrdersControllerSearchQueryKey = (params?: AdminOrdersControllerSearchParams) => {
+  return [`/api/admin/commerce/orders`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminOrdersControllerSearchQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminOrdersControllerSearch>>,
+  TError = unknown,
+>(
+  params?: AdminOrdersControllerSearchParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerSearch>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminOrdersControllerSearchQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminOrdersControllerSearch>>> = ({ signal }) =>
+    adminOrdersControllerSearch(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminOrdersControllerSearch>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminOrdersControllerSearchQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminOrdersControllerSearch>>
+>;
+export type AdminOrdersControllerSearchQueryError = unknown;
+
+export function useAdminOrdersControllerSearch<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerSearch>>,
+  TError = unknown,
+>(
+  params: undefined | AdminOrdersControllerSearchParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerSearch>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminOrdersControllerSearch>>,
+          TError,
+          Awaited<ReturnType<typeof adminOrdersControllerSearch>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminOrdersControllerSearch<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerSearch>>,
+  TError = unknown,
+>(
+  params?: AdminOrdersControllerSearchParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerSearch>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminOrdersControllerSearch>>,
+          TError,
+          Awaited<ReturnType<typeof adminOrdersControllerSearch>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminOrdersControllerSearch<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerSearch>>,
+  TError = unknown,
+>(
+  params?: AdminOrdersControllerSearchParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerSearch>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useAdminOrdersControllerSearch<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerSearch>>,
+  TError = unknown,
+>(
+  params?: AdminOrdersControllerSearchParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerSearch>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminOrdersControllerSearchQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type adminOrdersControllerProductsResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type adminOrdersControllerProductsResponseSuccess = adminOrdersControllerProductsResponse200 & {
+  headers: Headers;
+};
+export type adminOrdersControllerProductsResponse = adminOrdersControllerProductsResponseSuccess;
+
+export const getAdminOrdersControllerProductsUrl = (params: AdminOrdersControllerProductsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/commerce/products?${stringifiedParams}`
+    : `/api/admin/commerce/products`;
+};
+
+export const adminOrdersControllerProducts = async (
+  params: AdminOrdersControllerProductsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<adminOrdersControllerProductsResponse> => {
+  return http<adminOrdersControllerProductsResponse>(getAdminOrdersControllerProductsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAdminOrdersControllerProductsQueryKey = (params?: AdminOrdersControllerProductsParams) => {
+  return [`/api/admin/commerce/products`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminOrdersControllerProductsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminOrdersControllerProducts>>,
+  TError = unknown,
+>(
+  params: AdminOrdersControllerProductsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerProducts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminOrdersControllerProductsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminOrdersControllerProducts>>> = ({ signal }) =>
+    adminOrdersControllerProducts(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminOrdersControllerProducts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminOrdersControllerProductsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminOrdersControllerProducts>>
+>;
+export type AdminOrdersControllerProductsQueryError = unknown;
+
+export function useAdminOrdersControllerProducts<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerProducts>>,
+  TError = unknown,
+>(
+  params: AdminOrdersControllerProductsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerProducts>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminOrdersControllerProducts>>,
+          TError,
+          Awaited<ReturnType<typeof adminOrdersControllerProducts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminOrdersControllerProducts<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerProducts>>,
+  TError = unknown,
+>(
+  params: AdminOrdersControllerProductsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerProducts>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminOrdersControllerProducts>>,
+          TError,
+          Awaited<ReturnType<typeof adminOrdersControllerProducts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminOrdersControllerProducts<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerProducts>>,
+  TError = unknown,
+>(
+  params: AdminOrdersControllerProductsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerProducts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useAdminOrdersControllerProducts<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerProducts>>,
+  TError = unknown,
+>(
+  params: AdminOrdersControllerProductsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerProducts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminOrdersControllerProductsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type adminOrdersControllerDetailResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type adminOrdersControllerDetailResponseSuccess = adminOrdersControllerDetailResponse200 & {
+  headers: Headers;
+};
+export type adminOrdersControllerDetailResponse = adminOrdersControllerDetailResponseSuccess;
+
+export const getAdminOrdersControllerDetailUrl = (id: string) => {
+  return `/api/admin/commerce/orders/${id}`;
+};
+
+export const adminOrdersControllerDetail = async (
+  id: string,
+  options?: Parameters<typeof http>[1],
+): Promise<adminOrdersControllerDetailResponse> => {
+  return http<adminOrdersControllerDetailResponse>(getAdminOrdersControllerDetailUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAdminOrdersControllerDetailQueryKey = (id: string) => {
+  return [`/api/admin/commerce/orders/${id}`] as const;
+};
+
+export const getAdminOrdersControllerDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminOrdersControllerDetail>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerDetail>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminOrdersControllerDetailQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminOrdersControllerDetail>>> = ({ signal }) =>
+    adminOrdersControllerDetail(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminOrdersControllerDetail>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminOrdersControllerDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminOrdersControllerDetail>>
+>;
+export type AdminOrdersControllerDetailQueryError = unknown;
+
+export function useAdminOrdersControllerDetail<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerDetail>>,
+  TError = unknown,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerDetail>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminOrdersControllerDetail>>,
+          TError,
+          Awaited<ReturnType<typeof adminOrdersControllerDetail>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminOrdersControllerDetail<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerDetail>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerDetail>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminOrdersControllerDetail>>,
+          TError,
+          Awaited<ReturnType<typeof adminOrdersControllerDetail>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminOrdersControllerDetail<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerDetail>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerDetail>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useAdminOrdersControllerDetail<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerDetail>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerDetail>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminOrdersControllerDetailQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type adminOrdersControllerAnomaliesResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type adminOrdersControllerAnomaliesResponseSuccess = adminOrdersControllerAnomaliesResponse200 & {
+  headers: Headers;
+};
+export type adminOrdersControllerAnomaliesResponse = adminOrdersControllerAnomaliesResponseSuccess;
+
+export const getAdminOrdersControllerAnomaliesUrl = (params?: AdminOrdersControllerAnomaliesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/commerce/anomalies?${stringifiedParams}`
+    : `/api/admin/commerce/anomalies`;
+};
+
+export const adminOrdersControllerAnomalies = async (
+  params?: AdminOrdersControllerAnomaliesParams,
+  options?: Parameters<typeof http>[1],
+): Promise<adminOrdersControllerAnomaliesResponse> => {
+  return http<adminOrdersControllerAnomaliesResponse>(getAdminOrdersControllerAnomaliesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAdminOrdersControllerAnomaliesQueryKey = (params?: AdminOrdersControllerAnomaliesParams) => {
+  return [`/api/admin/commerce/anomalies`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminOrdersControllerAnomaliesQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>,
+  TError = unknown,
+>(
+  params?: AdminOrdersControllerAnomaliesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminOrdersControllerAnomaliesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>> = ({ signal }) =>
+    adminOrdersControllerAnomalies(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminOrdersControllerAnomaliesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>
+>;
+export type AdminOrdersControllerAnomaliesQueryError = unknown;
+
+export function useAdminOrdersControllerAnomalies<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>,
+  TError = unknown,
+>(
+  params: undefined | AdminOrdersControllerAnomaliesParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>,
+          TError,
+          Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminOrdersControllerAnomalies<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>,
+  TError = unknown,
+>(
+  params?: AdminOrdersControllerAnomaliesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>,
+          TError,
+          Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminOrdersControllerAnomalies<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>,
+  TError = unknown,
+>(
+  params?: AdminOrdersControllerAnomaliesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useAdminOrdersControllerAnomalies<
+  TData = Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>,
+  TError = unknown,
+>(
+  params?: AdminOrdersControllerAnomaliesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminOrdersControllerAnomalies>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminOrdersControllerAnomaliesQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

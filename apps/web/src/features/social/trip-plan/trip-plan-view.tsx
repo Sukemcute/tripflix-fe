@@ -32,6 +32,8 @@ import {
   groupTripDays,
   listFlightRoutes,
   pickSimilarTrips,
+  addStayStops,
+  getTransportPrefixRoute,
 } from './trip-plan-data';
 import styles from './trip-plan-view.module.css';
 
@@ -152,6 +154,7 @@ export function TripPlanView({ postId }: { postId: string }) {
                 destination={destination}
                 tipAuthor={tipAuthor}
                 hotelsById={hotelsById}
+                stays={stays}
                 imagePool={getTripImages(post)}
               />
             </section>
@@ -292,15 +295,22 @@ function TripSchedule({
   destination,
   tipAuthor,
   hotelsById,
+  stays,
   imagePool,
 }: {
   trip: TripAttachmentDto;
   destination?: string;
   tipAuthor: string;
   hotelsById: Map<string, HotelDetail>;
+  stays: TripPlanStay[];
   imagePool: string[];
 }) {
-  const days = groupTripDays(trip);
+  const days = addStayStops(
+    groupTripDays(trip),
+    stays,
+    ({ nights }) => t('mobile.tripPlan.hotelTitle', { nights }),
+    trip.hotelName,
+  );
   if (days.length === 0) return <p className={styles.muted}>{vi.api.tripPlanEmptyDays}</p>;
   // Ảnh từng điểm theo đúng thứ tự hiện; chặng di chuyển không có ảnh.
   const places = days.flatMap(({ items }) => items).filter((item) => !item.transport);
@@ -345,7 +355,10 @@ function TripStop({
   hotel?: HotelDetail;
   thumbnail: string | null;
 }) {
-  const route = formatTransportRoute(item.transport);
+  const fullRoute = formatTransportRoute(item.transport);
+  const route = getTransportPrefixRoute(item.title, fullRoute);
+  // Tiêu đề đã là "Bay HAN → DLI" thì bỏ hẳn tiền tố phương tiện, chỉ còn icon + tiêu đề.
+  const showTransportPrefix = !!item.transport && !(fullRoute && !route);
   const mapUrl = item.transport
     ? null
     : hotel?.location
@@ -387,7 +400,7 @@ function TripStop({
       )}
       <p className={styles.stopTitle}>
         <TripStopIcon item={item} />
-        {item.transport && (
+        {showTransportPrefix && item.transport && (
           <span className={styles.transport}>
             {TRANSPORT_LABELS[item.transport.mode] ?? vi.api.tripPlanTransportOther}
             {route ? ` ${route}` : ''} ·{' '}

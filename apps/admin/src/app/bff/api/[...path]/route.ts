@@ -121,6 +121,9 @@ function upstream(
 
 function allowed(path: string, method: string) {
   if (method === 'GET' && path === '/api/analytics/ai-usage') return true;
+  // Chi phí AI theo thời gian, người dùng và trace (SCRUM-179): API tự chặn người không phải superadmin.
+  if (method === 'GET' && /^\/api\/analytics\/ai-usage\/(?:timeseries|users)$/.test(path)) return true;
+  if (method === 'GET' && /^\/api\/analytics\/ai-traces(?:\/[0-9a-f-]{36})?$/i.test(path)) return true;
   // Hành vi người dùng (SCRUM-177): API tự chặn người không phải superadmin.
   if (method === 'GET' && /^\/api\/analytics\/user-activity(?:\/[0-9a-f-]{36})?$/i.test(path)) return true;
   if (method === 'GET' && /^\/api\/analytics\/observability(?:\/traces(?:\/[a-f0-9]{32})?)?$/i.test(path)) return true;

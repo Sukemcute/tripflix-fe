@@ -16,7 +16,8 @@
   min-height: 0;
   width: var(--ota-container-width, min(1600px, calc(100% - clamp(48px, 8vw, 160px))));
   margin-inline: auto;
-  background: #F8FAFC;
+  /* Trong suốt để lộ mặt nước tĩnh của trang Cảm hứng (LivingBackground). */
+  background: transparent;
   color: #141B3D;
   font-family: inherit;
   position: relative;
@@ -25,6 +26,16 @@
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
+}
+
+.recommendModeTabs {
+  /* Lớp kính mờ giữ chữ tab dễ đọc trên mặt nước của trang Cảm hứng. */
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--water-glass, transparent);
+  backdrop-filter: blur(10px);
 }
 
 .feedViewSlot {

@@ -9,6 +9,8 @@ import type { UserActivityListItemDto } from '@tripflix/api-client/core-api/mode
 import { t, vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import { AdminApiError } from '../shell/api-state';
+import { UserActivityDialog } from './user-activity-dialog';
+import { UserAiUsage } from './user-ai-usage';
 import { EmptyState, LoadingState, Metric, Panel } from '../shell/operations-ui';
 import {
   chatQuestion,
@@ -158,12 +160,20 @@ export function UserActivityWorkspace() {
         )}
       </Panel>
 
-      {selected && <UserActivityDetail user={selected} range={range} />}
+      {selected && <UserActivityDetail user={selected} range={range} onClose={() => setSelected(null)} />}
     </>
   );
 }
 
-function UserActivityDetail({ user, range }: { user: UserActivityListItemDto; range: { from: string; to: string } }) {
+function UserActivityDetail({
+  user,
+  range,
+  onClose,
+}: {
+  user: UserActivityListItemDto;
+  range: { from: string; to: string };
+  onClose: () => void;
+}) {
   const detail = useQuery({
     queryKey: ['admin', 'user-activity', user.userId, range],
     queryFn: async ({ signal }) => (await userActivityControllerDetail(user.userId, range, { signal })).data,
@@ -178,63 +188,69 @@ function UserActivityDetail({ user, range }: { user: UserActivityListItemDto; ra
   });
 
   return (
-    <div className="mt-6">
-      <Panel
-        title={t('userActivity.detailTitle', { name })}
-        description={data ? `${data.email} · ${copy.registeredAt}: ${formatDateTime(data.createdAt)}` : undefined}
-      >
-        {detail.isError && <AdminApiError error={detail.error} retry={() => void detail.refetch()} />}
-        {detail.isPending ? (
-          <LoadingState />
-        ) : data ? (
-          <div className="space-y-6 p-5">
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-              <Metric label={copy.totals.reactions} value={data.counts.reactions} />
-              <Metric label={copy.totals.comments} value={data.counts.comments} />
-              <Metric label={copy.totals.shares} value={data.counts.shares} />
-              <Metric label={copy.totals.views} value={data.counts.views} />
-              <Metric label={copy.totals.chats} value={data.counts.chats} />
-            </div>
-
-            <section aria-label={copy.chatQuestions}>
-              <h3 className="mb-3 text-sm font-bold text-navy">{copy.chatQuestions}</h3>
-              {questions.length === 0 ? (
-                <p className="text-xs text-text-muted">{copy.chatEmpty}</p>
-              ) : (
-                <ul className="space-y-2">
-                  {questions.map((item) => (
-                    <li key={item.id} className="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-ink">
-                      <span className="mr-3 text-xs text-text-muted">{formatDateTime(item.occurredAt)}</span>
-                      {item.question}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section aria-label={copy.recentEvents}>
-              <h3 className="mb-3 text-sm font-bold text-navy">{copy.recentEvents}</h3>
-              {data.recentEvents.length === 0 ? (
-                <p className="text-xs text-text-muted">{copy.recentEmpty}</p>
-              ) : (
-                <div className="admin-table-scroll">
-                  <table className="ops-table" aria-label={copy.recentEvents}>
-                    <tbody>
-                      {data.recentEvents.map((event) => (
-                        <tr key={event.id}>
-                          <td className="whitespace-nowrap">{formatDateTime(event.occurredAt)}</td>
-                          <td className="font-semibold">{kindLabel(event.kind)}</td>
-                          <td>{describeEvent(event)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
+    <UserActivityDialog
+      title={t('userActivity.detailTitle', { name })}
+      description={
+        data ? `${data.email} · ${copy.registeredAt}: ${formatDateTime(data.createdAt)}` : undefined
+      }
+      onClose={onClose}
+    >
+      {detail.isError && <AdminApiError error={detail.error} retry={() => void detail.refetch()} />}
+      {detail.isPending ? (
+        <LoadingState />
+      ) : data ? (
+        <div className="space-y-6 p-5">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <Metric label={copy.totals.reactions} value={data.counts.reactions} />
+            <Metric label={copy.totals.comments} value={data.counts.comments} />
+            <Metric label={copy.totals.shares} value={data.counts.shares} />
+            <Metric label={copy.totals.views} value={data.counts.views} />
+            <Metric label={copy.totals.chats} value={data.counts.chats} />
           </div>
-        ) : null}
-      </Panel>
-    </div>
+
+          <section aria-label={copy.chatQuestions}>
+            <h3 className="mb-3 text-sm font-bold text-navy">{copy.chatQuestions}</h3>
+            {questions.length === 0 ? (
+              <p className="text-xs text-text-muted">{copy.chatEmpty}</p>
+            ) : (
+              <ul className="space-y-2">
+                {questions.map((item) => (
+                  <li
+                    key={item.id}
+                    className="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-ink"
+                  >
+                    <span className="mr-3 text-xs text-text-muted">{formatDateTime(item.occurredAt)}</span>
+                    {item.question}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <UserAiUsage userId={user.userId} range={range} />
+
+          <section aria-label={copy.recentEvents}>
+            <h3 className="mb-3 text-sm font-bold text-navy">{copy.recentEvents}</h3>
+            {data.recentEvents.length === 0 ? (
+              <p className="text-xs text-text-muted">{copy.recentEmpty}</p>
+            ) : (
+              <div className="admin-table-scroll">
+                <table className="ops-table" aria-label={copy.recentEvents}>
+                  <tbody>
+                    {data.recentEvents.map((event) => (
+                      <tr key={event.id}>
+                        <td className="whitespace-nowrap">{formatDateTime(event.occurredAt)}</td>
+                        <td className="font-semibold">{kindLabel(event.kind)}</td>
+                        <td>{describeEvent(event)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        </div>
+      ) : null}
+    </UserActivityDialog>
   );
 }

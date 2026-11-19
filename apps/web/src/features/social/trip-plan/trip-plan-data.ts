@@ -132,3 +132,38 @@ export function assignStopThumbnails(preferred: readonly (string | null | undefi
     return pick;
   });
 }
+
+/**
+ * Chèn chặng ở vào ngày nhận phòng giống sheet lộ trình ở feed: bài cũ chỉ có khách sạn ở cấp chuyến nên không có
+ * điểm nào trong `items` mang `hotel`. Đặt sau các chặng di chuyển của ngày đó; ngày đã có điểm cùng khách sạn thì
+ * bỏ qua để không hiện hai lần.
+ */
+export function addStayStops(
+  days: readonly TripDay[],
+  stays: readonly { day: number; nights: number; hotelId: string; hotelName?: string }[],
+  describe: (stay: { nights: number }) => string,
+  fallbackName?: string,
+): TripDay[] {
+  return days.map(({ day, items }) => {
+    const missing = stays.filter(
+      (stay) => stay.day === day && !items.some((item) => item.hotel?.hotelId === stay.hotelId),
+    );
+    if (missing.length === 0) return { day, items };
+    const stops: TripItineraryItemDto[] = missing.map((stay) => ({
+      day,
+      title: stay.hotelName ?? fallbackName ?? stay.hotelId,
+      location: describe(stay),
+      hotel: { hotelId: stay.hotelId },
+    }));
+    const firstPlace = items.findIndex((item) => !item.transport);
+    const at = firstPlace === -1 ? items.length : firstPlace;
+    return { day, items: [...items.slice(0, at), ...stops, ...items.slice(at)] };
+  });
+}
+
+/** Phần "HAN → DLI" đứng trước tiêu đề; tiêu đề đã ghi chặng đó ("Bay HAN → DLI") thì không lặp lại. */
+export function getTransportPrefixRoute(title: string | undefined, route: string | null): string | null {
+  if (!route) return null;
+  const compact = (value: string) => value.replace(/\s+/g, '').toLowerCase();
+  return title && compact(title).includes(compact(route)) ? null : route;
+}

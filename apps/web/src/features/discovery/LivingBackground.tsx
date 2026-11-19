@@ -316,7 +316,12 @@ function drawBoat(
   ctx.restore();
 }
 
-function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hover: HTMLSpanElement) {
+function mountWater(
+  canvas: HTMLCanvasElement,
+  controls: HTMLButtonElement | null,
+  hover: HTMLSpanElement,
+  { isStatic }: { isStatic: boolean },
+) {
   const home = canvas.closest<HTMLElement>('main');
   const ctx = canvas.getContext('2d', { alpha: false });
   if (!ctx || !home) return;
@@ -325,6 +330,8 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
   const caustics = document.createElement('canvas');
   const floor = caustics.getContext('2d');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  // Static mode reuses the reduced-motion path: one still frame of the first act, redrawn only on resize.
+  const isReduced = () => isStatic || reducedMotion.matches;
   const listeners = new AbortController();
   const passive = { passive: true, signal: listeners.signal };
   const brand = getComputedStyle(home);
@@ -345,7 +352,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
   let maxScroll = 1;
   let introEnd = 0;
   let active = false;
-  let camera = window.scrollY;
+  let camera = isStatic ? 0 : window.scrollY;
   let scrollTarget = camera;
   let wake = 0;
   let previous = 0;
@@ -391,7 +398,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
 
   function measureScroll() {
     maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-    scrollTarget = window.scrollY;
+    scrollTarget = isStatic ? 0 : window.scrollY;
     // Suspense replaces the initial search placeholder; do not keep that detached node.
     const search = home!.querySelector('#ota-search');
     introEnd = search ? search.getBoundingClientRect().bottom + scrollTarget : 0;
@@ -422,14 +429,14 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
 
   function waterPosition(seed: number, rate: number) {
     const span = height + 240;
-    const y = noise(seed) * span - (reducedMotion.matches ? 0 : camera * rate);
+    const y = noise(seed) * span - (isReduced() ? 0 : camera * rate);
     return ((y % span) + span) % span - 120;
   }
 
   function drawFloor(light: number) {
     if (!floor || !floorPixels) return;
     const rate = small ? 4 : 5;
-    const tick = reducedMotion.matches ? 0 : Math.floor(time * rate);
+    const tick = isReduced() ? 0 : Math.floor(time * rate);
     if (floorTick !== tick) {
       floorTick = tick;
       const clock = tick / rate;
@@ -487,7 +494,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
         brush.beginPath();
         brush.moveTo(0, 0);
         for (let y = 0; y <= height + 20; y += 20) {
-          const depth = reducedMotion.matches ? y : y + camera * 0.77;
+          const depth = isReduced() ? y : y + camera * 0.77;
           const shore = span * (0.036 + Math.sin(depth * 0.009 + side) * 0.029 + Math.sin(depth * 0.023) * 0.012);
           brush.lineTo(shore, y);
         }
@@ -711,7 +718,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
   function splash(point: Point) {
     addRipple(point);
     disturbance = { x: point.x, y: point.y, age: 0 };
-    controls.setAttribute('data-ripple-used', '');
+    controls?.setAttribute('data-ripple-used', '');
   }
 
   function feed(point: Point) {
@@ -726,7 +733,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
       });
     }
     addRipple(point, 72);
-    controls.setAttribute('data-food-used', '');
+    controls?.setAttribute('data-food-used', '');
   }
 
   function draw(now: number) {
@@ -736,7 +743,7 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
       requestFrame();
       return;
     }
-    const reduced = reducedMotion.matches;
+    const reduced = isReduced();
     const dt = previous ? Math.min((now - previous) / 1000, 0.064) : 1 / 60;
     previous = now;
     entrance += dt;
@@ -963,32 +970,34 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
   }
 
   window.addEventListener('resize', resize, passive);
-  window.addEventListener('scroll', () => {
-    scrollTarget = window.scrollY;
-    updateWaterVisibility();
-    if (press && Math.abs(scrollTarget - press.scroll) > 8) clearPress();
-    if (pointer) clearPointer();
-    requestFrame();
-  }, passive);
-  window.addEventListener('pointerdown', down, passive);
-  window.addEventListener('pointermove', move, passive);
-  window.addEventListener('pointerup', up, passive);
-  window.addEventListener('pointercancel', clearPress, passive);
-  window.addEventListener('pointerout', (event) => {
-    if (!event.relatedTarget) {
-      clearPointer();
-      clearPress();
-    }
-  }, passive);
-  window.addEventListener('blur', () => {
-    clearPointer();
-    clearPress();
-  }, passive);
   document.addEventListener('visibilitychange', visibility, passive);
   reducedMotion.addEventListener('change', requestFrame, passive);
   rower.addEventListener('load', requestFrame, passive);
-  controls.addEventListener('keydown', keyboard, { signal: listeners.signal });
-  controls.addEventListener('click', () => splash({ x: width * 0.62, y: height * 0.58 }), passive);
+  if (!isStatic) {
+    window.addEventListener('scroll', () => {
+      scrollTarget = window.scrollY;
+      updateWaterVisibility();
+      if (press && Math.abs(scrollTarget - press.scroll) > 8) clearPress();
+      if (pointer) clearPointer();
+      requestFrame();
+    }, passive);
+    window.addEventListener('pointerdown', down, passive);
+    window.addEventListener('pointermove', move, passive);
+    window.addEventListener('pointerup', up, passive);
+    window.addEventListener('pointercancel', clearPress, passive);
+    window.addEventListener('pointerout', (event) => {
+      if (!event.relatedTarget) {
+        clearPointer();
+        clearPress();
+      }
+    }, passive);
+    window.addEventListener('blur', () => {
+      clearPointer();
+      clearPress();
+    }, passive);
+    controls?.addEventListener('keydown', keyboard, { signal: listeners.signal });
+    controls?.addEventListener('click', () => splash({ x: width * 0.62, y: height * 0.58 }), passive);
+  }
   const observer = new ResizeObserver(measureScroll);
   observer.observe(document.body);
   resize();
@@ -1004,7 +1013,8 @@ function mountWater(canvas: HTMLCanvasElement, controls: HTMLButtonElement, hove
   };
 }
 
-export function LivingBackground() {
+/** `isStatic`: a still, non-interactive backdrop that ignores scroll and pointer (used by Cảm hứng). */
+export function LivingBackground({ isStatic = false }: { isStatic?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controlsRef = useRef<HTMLButtonElement>(null);
   const hoverRef = useRef<HTMLSpanElement>(null);
@@ -1013,25 +1023,29 @@ export function LivingBackground() {
     const canvas = canvasRef.current;
     const controls = controlsRef.current;
     const hover = hoverRef.current;
-    if (canvas && controls && hover) return mountWater(canvas, controls, hover);
-  }, []);
+    if (canvas && hover && (controls || isStatic)) return mountWater(canvas, controls, hover, { isStatic });
+  }, [isStatic]);
 
   return (
     <>
       <canvas ref={canvasRef} className={styles.water} width={1} height={1} aria-hidden="true" />
-      <span className={styles.caption} aria-hidden="true">Việt Nam, một ngày dạo chơi.</span>
-      <button
-        ref={controlsRef}
-        type="button"
-        className={styles.waterControls}
-        aria-label="Tương tác với mặt nước"
-        aria-keyshortcuts="Enter Space"
-        aria-describedby="water-keys"
-      >
-        <span className={styles.rippleHint} aria-hidden="true">chạm vào nước</span>
-        <span className={styles.foodHint} aria-hidden="true">giữ để thả mồi</span>
-        <span id="water-keys" className="sr-only">Enter để tạo gợn sóng. Phím cách để thả mồi.</span>
-      </button>
+      {!isStatic && (
+        <>
+          <span className={styles.caption} aria-hidden="true">Việt Nam, một ngày dạo chơi.</span>
+          <button
+            ref={controlsRef}
+            type="button"
+            className={styles.waterControls}
+            aria-label="Tương tác với mặt nước"
+            aria-keyshortcuts="Enter Space"
+            aria-describedby="water-keys"
+          >
+            <span className={styles.rippleHint} aria-hidden="true">chạm vào nước</span>
+            <span className={styles.foodHint} aria-hidden="true">giữ để thả mồi</span>
+            <span id="water-keys" className="sr-only">Enter để tạo gợn sóng. Phím cách để thả mồi.</span>
+          </button>
+        </>
+      )}
       <span ref={hoverRef} className={styles.waterReadout} aria-hidden="true" hidden />
     </>
   );
