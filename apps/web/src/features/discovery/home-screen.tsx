@@ -1,5 +1,5 @@
 import { InspirationView } from '@/features/social/inspiration-view';
-import { LivingBackground } from './LivingBackground';
+import Image from 'next/image';
 import styles from './ota-home-motion.module.css';
 
 /** Trang Cam hung: Giao dien Adaptive Split View cho Bai viet va Immersive 3-Panel Viewer cho Reels. */
@@ -17,8 +17,13 @@ export default function HomeScreen({ queryError }: { queryError?: string }) {
         )}
         <InspirationView />
       </div>
-      {/* Cùng mặt nước với trang chủ nhưng đứng yên: không cuộn, không theo chuột. */}
-      <LivingBackground isStatic />
+      {/* Cùng ảnh nền Hạ Long với trang chủ, làm mờ và tối để phần nội dung nổi lên. */}
+      <div className={styles.inspirationBackdrop} aria-hidden="true">
+        <picture>
+          <source media="(max-width: 640px)" srcSet="/brand/hero-layered-v1/ha-long-960.webp" />
+          <Image src="/brand/hero-layered-v1/ha-long-1600.webp" alt="" fill unoptimized />
+        </picture>
+      </div>
     </main>
   );
 }

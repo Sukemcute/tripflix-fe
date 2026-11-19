@@ -20,6 +20,7 @@ import grid from './search-results-grid.module.css';
 import styles from './public-profile.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
 import { ProfilePostWall, SavedPostWall } from './profile-post-wall';
+import { ProfileComposer } from './profile-composer';
 
 /** Trang cá nhân công khai (TF47): mở khi bấm tên hoặc avatar một người. */
 export function PublicProfile({ userId }: { userId: string }) {
@@ -52,11 +53,12 @@ export function PublicProfile({ userId }: { userId: string }) {
     );
   }
   const { displayName, followerCount, followingCount, likeCount } = profile.data;
+  const { handle } = formatAuthorDisplay(userId, displayName);
   const stats = [
-    { value: followingCount, label: vi.api.profileFollowing },
-    { value: followerCount, label: vi.api.profileFollowers },
-    { value: likeCount, label: vi.api.profileLikes },
-  ];
+    { value: followingCount, label: vi.api.profileFollowing, icon: 'users' },
+    { value: followerCount, label: vi.api.profileFollowers, icon: 'users' },
+    { value: likeCount, label: vi.api.profileLikes, icon: 'heart' },
+  ] as const;
 
   return (
     <main className={styles.page}>
@@ -71,8 +73,9 @@ export function PublicProfile({ userId }: { userId: string }) {
               <h1 className={styles.name}>{displayName}</h1>
               {/* Tên tài khoản chỉ hiện ở trang cá nhân (bài viết, Reels đã bỏ). Chưa có trường username thật nên tạo
                 từ tên hiển thị như các chỗ khác (formatAuthorDisplay). */}
-              <p className={styles.handle}>{formatAuthorDisplay(userId, displayName).handle}</p>
+              <p className={styles.handle}>{handle}</p>
             </div>
+            {/* Chỉ hiện ở màn hẹp: giữ thiết kế mobile cũ, không có thẻ Giới thiệu. */}
             <ul className={styles.stats}>
               {stats.map((item) => (
                 <li key={item.label}>
@@ -149,32 +152,76 @@ export function PublicProfile({ userId }: { userId: string }) {
         </div>
       </header>
       <div className={styles.layout}>
+        <aside className={styles.sidebar}>
+          <section className={styles.card} aria-labelledby="profile-intro-title">
+            <h2 id="profile-intro-title" className={styles.cardTitle}>
+              {vi.api.profileIntro}
+            </h2>
+            <ul className={styles.introList}>
+              {stats.map((item) => (
+                <li key={item.label}>
+                  <SocialIcon name={item.icon} size={18} />
+                  <span>
+                    <strong>{formatProfileCount(item.value)}</strong> {item.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <VideoPreview userId={userId} onShowAll={() => setTab('videos')} />
+        </aside>
         <section
           id="profile-content"
           role="tabpanel"
           aria-labelledby={`profile-tab-${activeTab}`}
           className={styles.content}
         >
-          <div className={styles.contentHeading}>
-            <h2>
-              {activeTab === 'posts'
-                ? vi.api.profileWallTitle
-                : activeTab === 'videos'
-                  ? vi.api.profileVideos
-                  : vi.api.bookmarks}
-            </h2>
-            {activeTab === 'videos' && <span>{vi.api.profileVideoHint}</span>}
-          </div>
           {activeTab === 'videos' ? (
             <ReelGrid key={userId} userId={userId} />
           ) : activeTab === 'posts' ? (
-            <ProfilePostWall key={userId} userId={userId} />
+            <>
+              {isMine && <ProfileComposer className={styles.composer} />}
+              <ProfilePostWall key={userId} userId={userId} />
+            </>
           ) : (
             <SavedProfileContent key={userId} userId={userId} />
           )}
         </section>
       </div>
     </main>
+  );
+}
+
+/** Ô video nhỏ ở cột trái, như phần ảnh nổi bật của trang cá nhân. Không có video thì ẩn. */
+function VideoPreview({ userId, onShowAll }: { userId: string; onShowAll: () => void }) {
+  const reels = useAuthorReels(userId);
+  const items = reels.data?.pages[0]?.items.slice(0, 6) ?? [];
+  if (!items.length) return null;
+  return (
+    <section className={styles.card} aria-labelledby="profile-video-preview-title">
+      <div className={styles.cardHeading}>
+        <h2 id="profile-video-preview-title" className={styles.cardTitle}>
+          {vi.api.profileVideos}
+        </h2>
+        <button type="button" className={styles.seeAll} onClick={onShowAll}>
+          {vi.api.profileSeeAll}
+        </button>
+      </div>
+      <ul className={styles.previewGrid}>
+        {items.map((reel) => (
+          <li key={reel.postId}>
+            <Link
+              prefetch={false}
+              href={buildInspirationHref('/inspiration', '', { openPostId: reel.postId, isOpenReel: true })}
+              className={styles.previewThumb}
+              aria-label={reel.title}
+            >
+              <span className={grid.thumbImage} style={{ backgroundImage: `url(${reel.video.posters.w360})` }} />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -267,7 +314,12 @@ function GridState({
       </p>
     );
   if (query.error) return <ApiErrorNotice error={query.error} retry={() => void query.refetch()} />;
-  if (isEmpty) return <p className={grid.stateBox}>{emptyText}</p>;
+  if (isEmpty)
+    return (
+      <div className={styles.empty}>
+        <h3>{emptyText}</h3>
+      </div>
+    );
   return (
     <>
       <ul className={styles.videoGrid}>{children}</ul>
