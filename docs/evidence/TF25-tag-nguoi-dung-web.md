@@ -29,20 +29,21 @@
   - `editCommentWithMentions` luôn gửi mảng `mentions` hiện tại (gửi `[]` nếu không còn tag) để BE xoá tag cũ thay vì giữ/kiểm lại tag cũ gây lỗi 400.
 - **`apps/web/src/features/social/mention-picker.tsx` + `mention-picker.module.css`**:
   - Bảng gợi ý tag người dùng hiển thị phía trên ô nhập bình luận, tìm kiếm qua `useUserSearch` (`GET /v1/users/search`).
-  - Điều khiển bằng bàn phím ↑ ↓ Enter Esc; click dùng `onMouseDown` giữ focus tại ô nhập.
+  - Điều khiển bằng bàn phím ↑ ↓ Enter Tab Esc (`handleMentionPickerKeyDown`): khi bảng gợi ý mở và có người đang được chọn, bấm `Enter` hoặc `Tab` đều chèn tag người đó; khi bảng đóng hoặc không có danh sách người dùng, `Tab` hoạt động chuyển focus bình thường; click dùng `onMouseDown` giữ focus tại ô nhập.
   - Thiết kế gọn gàng kiểu TikTok / Facebook: không neon, không glow, không blur, không gradient, không đổ bóng màu.
 - **`apps/web/src/features/social/live-posts.tsx` + `live-posts.module.css`**:
   - Gắn `MentionPicker` và xử lý `mentions` vào `RightPanelCommentsSynchronized` (dùng chung Reels & Bài viết) và `CommentNode` (khung sửa bình luận).
+  - Lớp phủ mirror (`renderMentionMirrorContent`, `.composerInputMirror`, `.editTextareaMirror`) phía sau cả ô đăng bình luận lẫn khung sửa bình luận: giữ nguyên `font-weight: 400`, `font-size`, `line-height`, `padding`, `letter-spacing`, `white-space` và đồng bộ `scrollTop` / `scrollLeft` theo ô nhập; chữ trong ô nhập trong suốt (`caret-color` vẫn hiện), đoạn tag dùng `.mentionMirrorTag` màu coral đậm (`-webkit-text-stroke: 0.45px currentColor; text-shadow: 0.35px 0 0 currentColor`, không đổi bề rộng ký tự để caret không lệch trên dòng dài).
   - Khi mở khung sửa bình luận, nạp `comment.mentions` đã kiểm hợp lệ vào state chỉnh sửa.
   - Sau khi đăng/sửa xong, dùng `body` và `mentions` từ response BE làm bản chuẩn (cập nhật cache React Query qua `addCommentToCache` / `replaceCommentInCache` và đồng bộ state sửa).
-  - Hiển thị tag bằng `.commentMentionLink` màu coral đậm (`var(--color-coral-ink)`), click mở `/u/{userId}`, không gạch chân và không đổi màu khi hover; dữ liệu cũ không có `mentions` vẫn hiển thị văn bản thường.
+  - Hiển thị tag đã gửi trong bình luận bằng `.commentMentionLink` màu coral đậm (`var(--color-coral-ink)`, `font-weight: 700`), click mở `/u/{userId}`, không gạch chân và không đổi màu khi hover; dữ liệu cũ không có `mentions` vẫn hiển thị văn bản thường.
 - **`packages/i18n/src/api.ts`**:
   - Thêm chuỗi giao diện tiếng Việt (`mentionPickerTitle`, `mentionSearchPrompt`, `mentionSearching`, `mentionNoResults`).
 
 ### 3. Unit tests bổ sung
-- `apps/web/src/features/social/mention-input.test.ts` (28 tests): thêm test UTF-16 với emoji/surrogate pair và `prepareCommentSubmission`.
+- `apps/web/src/features/social/mention-input.test.ts` (29 tests): thêm test UTF-16 với emoji/surrogate pair, `prepareCommentSubmission` và `parseCommentSegments` cho mirror (khoảng trắng liên tiếp, xuống dòng cuối, emoji).
 - `apps/web/src/features/social/comment-service.test.ts` (4 tests): kiểm tra `createCommentWithMentions` gửi mentions đã trim + UTF-16, luồng sửa giữ tag (dịch offset khi sửa chữ trước tag), luồng sửa bỏ tag (luôn gửi `mentions: []`) và cập nhật bản chuẩn từ response BE vào cache.
-- `apps/web/src/features/social/mention-picker.test.tsx` (4 tests).
+- `apps/web/src/features/social/mention-picker.test.tsx` (7 tests): thêm test cho `Tab` chèn tag giống `Enter`, `Shift+Tab` và khi danh sách rỗng để `Tab` chuyển focus bình thường.
 
 ## Đối chiếu "Xong khi"
 | Tiêu chí | Đạt | Bằng chứng |
@@ -53,6 +54,8 @@
 | Sửa bình luận luôn gửi `mentions` (`[]` khi bỏ tag), nạp `comment.mentions` khi mở sửa | Đạt | `live-posts.tsx`, `comment-service.ts`, `comment-service.test.ts` |
 | Sau đăng/sửa dùng `body` và `mentions` response làm bản chuẩn | Đạt | `live-posts.tsx` (`addCommentToCache`, `replaceCommentInCache`), `comment-service.test.ts` |
 | Offset/length theo UTF-16, test đầy đủ | Đạt | `mention-input.ts`, `mention-input.test.ts`, `comment-service.test.ts` |
+| Tag in đậm ngay trong ô soạn/sửa (mirror overlay không lệch caret) & tag hiển thị in đậm | Đạt | `live-posts.tsx`, `live-posts.module.css`, `mention-input.test.ts` |
+| Phím `Tab` chèn tag khi bảng mở có người chọn, bình thường khi đóng | Đạt | `mention-picker.tsx`, `mention-picker.test.tsx` (7/7 tests pass) |
 | Chạy lint, typecheck, test `@tripflix/web` và `@tripflix/api-client` pass | Đạt | Xem mục Kết quả kiểm tra |
 
 ## Kết quả kiểm tra
@@ -64,7 +67,7 @@
   - `@tripflix/web`:
     - `lint`: 0 errors, 27 cảnh báo có sẵn (0 cảnh báo mới)
     - `typecheck`: 0 errors (`next typegen && tsc --noEmit`)
-    - `test`: **41/41 test files pass (285 tests pass)**
+    - `test`: **41/41 test files pass (289 tests pass)**
 - Kiểm tra `core-api` đang chạy tại `http://localhost:3000`:
   - `GET /health`: 200 OK (`db.content: true`).
   - `GET /api/v1/users/search?q=an`: 200 OK, trả về danh sách user kèm UUID và `displayName`.
