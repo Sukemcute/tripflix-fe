@@ -1,11 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { makePost } from './seo-fixtures';
 
-const { getHotel, listPublicPosts, reactCache, resetReactCache } = vi.hoisted(() => {
+const { getHotel, hasPublicContent, reactCache, resetReactCache } = vi.hoisted(() => {
   const caches: Map<string, unknown>[] = [];
   return {
     getHotel: vi.fn(),
-    listPublicPosts: vi.fn(),
+    hasPublicContent: vi.fn(),
     resetReactCache: () => {
       for (const map of caches) map.clear();
     },
@@ -23,17 +22,14 @@ const { getHotel, listPublicPosts, reactCache, resetReactCache } = vi.hoisted(()
 
 vi.mock('react', () => ({ cache: reactCache }));
 vi.mock('@tripflix/api-client/seo', () => ({
-  seoApi: { getHotel, getPost: vi.fn(), getProfile: vi.fn() },
-}));
-vi.mock('@tripflix/api-client/core-api/social-posts/social-posts', () => ({
-  postsControllerListPublicPosts: listPublicPosts,
+  seoApi: { getHotel, getPost: vi.fn(), getProfile: vi.fn(), hasPublicContent },
 }));
 
 import { findPublicHotel, hasPublicProfilePosts, LOOKUP_TIMEOUT_MS } from './public-data';
 
 afterEach(() => {
   getHotel.mockReset();
-  listPublicPosts.mockReset();
+  hasPublicContent.mockReset();
   resetReactCache();
   vi.unstubAllEnvs();
   vi.useRealTimers();
@@ -66,37 +62,37 @@ describe('findPublic*', () => {
     await vi.advanceTimersByTimeAsync(LOOKUP_TIMEOUT_MS + 10);
     expect(await pending).toBeNull();
   });
+});
 
-  it('hasPublicProfilePosts gọi ẩn danh với limit=1, trả true khi có bài công khai và không gọi trùng qua cache()', async () => {
+describe('hasPublicProfilePosts (bài hoặc Reels)', () => {
+  it('gọi seoApi.hasPublicContent với baseUrl và signal, không gọi lại trong cùng request', async () => {
     vi.stubEnv('API_INTERNAL_URL', 'http://gateway:8080');
-    listPublicPosts.mockResolvedValueOnce({ status: 200, data: { items: [makePost()], nextCursor: null, hasMore: false } });
+    hasPublicContent.mockResolvedValueOnce(true);
 
     expect(await hasPublicProfilePosts('u1')).toBe(true);
     expect(await hasPublicProfilePosts('u1')).toBe(true);
-    expect(listPublicPosts).toHaveBeenCalledTimes(1);
+    expect(hasPublicContent).toHaveBeenCalledTimes(1);
 
-    const [params, options] = listPublicPosts.mock.calls[0]!;
-    expect(params).toEqual({ author_id: 'u1', limit: 1 });
-    expect(options).toMatchObject({
-      baseUrl: 'http://gateway:8080',
-      skipAuthorization: true,
-      skipAuthRefresh: true,
-    });
+    const [userId, options] = hasPublicContent.mock.calls[0]!;
+    expect(userId).toBe('u1');
+    expect(options.baseUrl).toBe('http://gateway:8080');
     expect(options.signal).toBeInstanceOf(AbortSignal);
   });
 
-  it('hasPublicProfilePosts trả false khi hồ sơ chưa có bài công khai', async () => {
-    listPublicPosts.mockResolvedValueOnce({ status: 200, data: { items: [], nextCursor: null, hasMore: false } });
+  it('trả false khi hồ sơ chưa có bài hoặc Reels công khai', async () => {
+    hasPublicContent.mockResolvedValueOnce(false);
     expect(await hasPublicProfilePosts('u-empty')).toBe(false);
   });
 
-  it('hasPublicProfilePosts trả null khi API lỗi hoặc quá timeout để chuyển về noindex an toàn', async () => {
-    listPublicPosts.mockRejectedValueOnce(new Error('HTTP 503'));
+  it('trả null khi API lỗi, để noindex an toàn', async () => {
+    hasPublicContent.mockRejectedValueOnce(new Error('HTTP 503'));
     expect(await hasPublicProfilePosts('u-err')).toBeNull();
+  });
 
+  it('trả null khi kiểm tra quá timeout, để noindex an toàn', async () => {
     vi.useFakeTimers();
-    listPublicPosts.mockImplementationOnce(
-      (_params: unknown, options: { signal: AbortSignal }) =>
+    hasPublicContent.mockImplementationOnce(
+      (_userId: string, options: { signal: AbortSignal }) =>
         new Promise((_resolve, reject) => {
           options.signal.addEventListener('abort', () => reject(options.signal.reason));
         }),
