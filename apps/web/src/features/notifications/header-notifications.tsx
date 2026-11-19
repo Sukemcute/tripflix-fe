@@ -4,7 +4,6 @@ import {
   useNotifications,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
-  useNotificationsRealtime,
 } from '@tripflix/api-client';
 import { isSameLocalDay } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
@@ -18,6 +17,7 @@ import { getAvatarTone } from '../social/avatar-tone';
 import { resolveNotificationHref } from './notification-href';
 import { formatNotificationTime, getNotificationKind } from './notification-look';
 import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
+import { EnableWebNotifications } from './web-notifications';
 
 const TRIPFLIX_ICON = '/brand/tripflix-gmail-avatar-icon.svg';
 
@@ -41,8 +41,6 @@ export function HeaderNotifications() {
   const { user, isReady } = useApiSession();
   const { isOpen, root, toggle, setOpen } = useHeaderPopover();
   const notifications = useNotifications();
-  // Có thông báo mới thì tải lại ngay qua /ws; lượt tải 30 giây vẫn giữ để phòng mất kết nối.
-  useNotificationsRealtime();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const unreadCount = notifications.data?.pages[0]?.unreadCount ?? 0;
@@ -97,6 +95,7 @@ export function HeaderNotifications() {
       </button>
       {isOpen && (
         <div id="header-notifications-panel" className="header-popover header-notifications-panel">
+          <EnableWebNotifications />
           <div className="header-notifications-head">
             <strong>{vi.api.notificationsTitle}</strong>
           </div>

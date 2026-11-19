@@ -7,6 +7,10 @@ export const api = {
   inspiration: 'Cảm hứng',
   // Hộp thư thông báo trên header web (TF46).
   notificationsTitle: 'Thông báo',
+  notificationsDismiss: 'Đóng thông báo',
+  notificationsSoundNeedsActivation: 'Âm báo chưa sẵn sàng.',
+  notificationsSoundActivate: 'Bật tiếng Tripi',
+  notificationsEnable: 'Bật thông báo trên máy này',
   notificationsToday: 'Hôm nay',
   notificationsEarlier: 'Trước đó',
   notificationsJustNow: 'Vừa xong',
