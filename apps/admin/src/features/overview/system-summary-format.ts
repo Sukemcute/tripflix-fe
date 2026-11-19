@@ -28,3 +28,14 @@ export function formatErrorRate(rate: number | null | undefined): string | undef
   if (rate === undefined) return undefined;
   return rate === null ? '—' : `${percent.format(rate * 100)}%`;
 }
+
+const whole = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
+
+/**
+ * Số request lấy từ Prometheus là số thực (increase nội suy), nên làm tròn; chưa tải thì undefined,
+ * chưa có số liệu thì gạch ngang.
+ */
+export function formatRequests(requests: number | null | undefined): string | undefined {
+  if (requests === undefined) return undefined;
+  return requests === null ? '—' : whole.format(Math.round(requests));
+}

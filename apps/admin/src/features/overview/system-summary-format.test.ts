@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countFailedRuns, formatErrorRate, sumAnomalies } from './system-summary-format';
+import { countFailedRuns, formatErrorRate, formatRequests, sumAnomalies } from './system-summary-format';
 
 describe('sumAnomalies', () => {
   it('cộng số của mọi loại, bỏ qua loại không có', () => {
@@ -33,5 +33,17 @@ describe('formatErrorRate', () => {
   it('chưa tải thì undefined, chưa có số liệu thì gạch ngang', () => {
     expect(formatErrorRate(undefined)).toBeUndefined();
     expect(formatErrorRate(null)).toBe('—');
+  });
+});
+
+describe('formatRequests', () => {
+  it('làm tròn số thực từ Prometheus, không hiện phần lẻ', () => {
+    expect(formatRequests(60599.036)).toBe('60.599');
+    expect(formatRequests(0.4)).toBe('0');
+  });
+
+  it('chưa tải thì undefined, chưa có số liệu thì gạch ngang', () => {
+    expect(formatRequests(undefined)).toBeUndefined();
+    expect(formatRequests(null)).toBe('—');
   });
 });
