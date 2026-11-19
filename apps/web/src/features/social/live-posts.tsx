@@ -2270,6 +2270,7 @@ export function InspirationImmersiveViewer({
                               max={1}
                               step={0.05}
                               value={isMuted ? 0 : volume}
+                              style={{ '--volume-progress': `${(isMuted ? 0 : volume) * 100}%` } as React.CSSProperties}
                               aria-label={vi.api.immersiveMuteVideo}
                               className={styles.volumeRangeInput}
                               onChange={(event) => {

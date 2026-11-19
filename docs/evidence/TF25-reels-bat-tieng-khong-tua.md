@@ -24,7 +24,8 @@
 
 ## Ảnh / video
 
-- Không thay đổi giao diện; chưa có video kiểm thử thủ công.
+- Bản sửa lỗi tua không thay đổi giao diện; chưa có video kiểm thử thủ công.
+- Bổ sung giao diện thumb âm lượng: đã xem mẫu thanh độc lập bằng Chromium headless, chưa chụp được màn hình Reels trong ứng dụng. Cần kiểm tra thực tế Chrome/Edge và Firefox, gồm kéo, phím và hai đầu thanh.
 
 ## Ảnh hưởng tới phần của người khác
 
