@@ -110,7 +110,7 @@ export function OnboardingFlow({ returnTo, mode }: { returnTo?: string; mode?: s
       <main id="content" data-onboarding-page className={styles.page}>
         <TopBar />
         <div className={styles.layout} aria-busy="true">
-          <output className={styles.lead}><LoadingDots /></output>
+          <LoadingDots isBlock />
         </div>
       </main>
     );

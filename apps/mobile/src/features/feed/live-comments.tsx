@@ -1,8 +1,8 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { socialApi, useApiSession, usePostCommentsRealtime, useCommentPermissions } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
-import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode, type RefObject, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Button, Card, Field, Icon, Notice, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
@@ -14,6 +14,8 @@ import { ReportButton } from './report-button';
 import { LoadingDots } from '@/components/loading-dots';
 import { HeldComment, ModeratedComment } from './moderated-comment';
 import { CreatorCommentControls } from './creator-comment-controls';
+import { ReplyQuote } from './reply-quote';
+import { appendReply, commentItems, shouldShowReplyQuote } from './reply-quote-state';
 
 const REPORT_HIT_SLOP = { top: 6, bottom: 6, left: 15, right: 15 };
 const COMPACT_REPORT_HIT_SLOP = { top: 6, bottom: 6, left: 4, right: 4 };
@@ -61,6 +63,9 @@ export function LiveComments({
   focusCommentId,
   focusThreadId,
   onModerationDetails,
+  onOpenProfile,
+  quoteRoot,
+  onReply,
 }: {
   postId: string;
   parentCommentId?: string;
@@ -77,9 +82,19 @@ export function LiveComments({
   focusCommentId?: string;
   focusThreadId?: string;
   onModerationDetails?: () => void;
+  onOpenProfile?: (authorId: string) => void;
+  /** View chung để đo vị trí trả lời trong luồng lồng nhau. */
+  quoteRoot?: RefObject<ComponentRef<typeof View> | null>;
+  onReply?: (target: { id: string; name: string; threadId: string }) => void;
 }) {
   const { user } = useApiSession();
   const client = useQueryClient();
+  const ownQuoteRoot = useRef<ComponentRef<typeof View>>(null);
+  const measurementRoot = quoteRoot ?? ownQuoteRoot;
+  const commentViews = useRef(new Map<string, ComponentRef<typeof View>>());
+  const [highlightedQuote, setHighlightedQuote] = useState<string>();
+  const highlightTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(highlightTimer.current), []);
   usePostCommentsRealtime(postId, !parentCommentId);
   const [body, setBody] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
@@ -87,7 +102,7 @@ export function LiveComments({
   // Chỉ cuộn tới bình luận từ thông báo một lần, sau đó người dùng tự cuộn.
   const hasRevealedFocus = useRef(false);
   // Trả lời đi qua ô nhập chính ở đáy khung, như TikTok: không mở ô nhập thứ hai trong danh sách.
-  const [replyTarget, setReplyTarget] = useState<{ id: string; name: string }>();
+  const [replyTarget, setReplyTarget] = useState<{ id: string; name: string; threadId: string }>();
   const [focusRequest, setFocusRequest] = useState(0);
   const { height: windowHeight } = useWindowDimensions();
   // Vị trí từng bình luận trong danh sách, đo khi hiện ra.
@@ -120,6 +135,19 @@ export function LiveComments({
     }
     if (replyTarget && hiddenIds.has(replyTarget.id)) setReplyTarget(undefined);
   }, [query.data, editing, replyTarget]);
+  const jumpToQuote = (id: string) => {
+    const target = commentViews.current.get(id);
+    const root = measurementRoot.current;
+    if (!target || !root || !onRevealComment) return;
+    target.measureLayout(root, (_x, y) => {
+      // Tải lại hoặc đóng luồng có thể làm bình luận đích biến mất trong lúc đo.
+      if (commentViews.current.get(id) !== target) return;
+      onRevealComment(Math.max(0, y - spacing.sm));
+      clearTimeout(highlightTimer.current);
+      setHighlightedQuote(id);
+      highlightTimer.current = setTimeout(() => setHighlightedQuote(undefined), 1_500);
+    }, () => {});
+  };
   const permissions = useCommentPermissions(postId);
   const mutation = useMutation({
     mutationFn: async (action: 'save' | string) =>
@@ -128,16 +156,25 @@ export function LiveComments({
         : editing
           ? socialApi.editComment(editing, body.trim())
           : socialApi.addComment(postId, body.trim(), replyTarget?.id ?? parentCommentId),
-    onSuccess: async (_, action) => {
+    onSuccess: async (result, action) => {
+      const createdReply = action === 'save' && !editing && result && 'parentCommentId' in result && result.parentCommentId ? result : undefined;
+      if (createdReply) {
+        client.setQueriesData<InfiniteData<Awaited<ReturnType<typeof socialApi.listComments>>>>({
+          queryKey: ['social', 'comments', postId, createdReply.parentCommentId],
+          predicate: (query) => query.queryKey[4] === user?.id,
+        }, (data) => appendReply(data, createdReply));
+      }
       if (action === 'save') {
         setBody('');
         setEditing(null);
         // Mở sẵn chuỗi trả lời để người gửi thấy trả lời của mình.
-        if (replyTarget && !parentCommentId) setReplying(replyTarget.id);
+        if (replyTarget && !parentCommentId) setReplying(replyTarget.threadId);
         setReplyTarget(undefined);
       }
       await Promise.all([
-        client.invalidateQueries({ queryKey: ['social', 'comments', postId] }),
+        // Giữ reply vừa gửi trên màn hình khi các trang sau chưa tải.
+        client.invalidateQueries({ queryKey: ['social', 'comments', postId], refetchType: createdReply ? 'none' : 'active' }),
+        ...(createdReply ? [client.refetchQueries({ queryKey: ['social', 'comments', postId, undefined], type: 'active' })] : []),
         client.invalidateQueries({ queryKey: ['social', 'post', postId] }),
         client.invalidateQueries({ queryKey: ['social', 'summary', postId] }),
         client.invalidateQueries({ queryKey: ['feed'], refetchType: 'none' }),
@@ -157,9 +194,7 @@ export function LiveComments({
       {query.isPending && <LoadingDots />}
       {/* Trả lời trống thì không cần lời mời bình luận; chỉ danh sách gốc mới hiện. */}
       {!parentCommentId && query.data?.pages[0]?.items.length === 0 && <Notice>{vi.api.noComments}</Notice>}
-      {query.data?.pages
-        .flatMap((page) => page.items)
-        .map((comment) => {
+      {commentItems(query.data, !!parentCommentId).map((comment) => {
           if (comment.moderationState === 'hidden') {
             return <ModeratedComment key={comment.id}
               onLearnMore={onModerationDetails ?? (() => router.push('/moderation-status'))}
@@ -186,6 +221,11 @@ export function LiveComments({
           return (
             <View
               key={comment.id}
+              collapsable={false}
+              ref={(view) => {
+                if (view) commentViews.current.set(comment.id, view);
+                else commentViews.current.delete(comment.id);
+              }}
               style={compact ? styles.comment : undefined}
               onLayout={(event) => {
                 const { y } = event.nativeEvent.layout;
@@ -202,16 +242,21 @@ export function LiveComments({
                   <Icon name="person-outline" size={parentCommentId ? 12 : 14} color={colors.textMuted} />
                 </View>
               )}
-              <Card style={[compact && styles.commentBody, comment.id === focusCommentId && styles.focused]}>
+              <Card style={[compact && styles.commentBody, (comment.id === focusCommentId || comment.id === highlightedQuote) && styles.focused]}>
                 <Txt
                   variant="caption"
                   style={compact && styles.author}
                   accessibilityRole="link"
-                  onPress={() => router.push({ pathname: '/user/[id]', params: { id: comment.authorId } })}
+                  onPress={() => onOpenProfile ? onOpenProfile(comment.authorId) : router.push({ pathname: '/user/[id]', params: { id: comment.authorId } })}
                 >
-                  {authorName}{comment.replyToName && ` ↳ ${comment.replyToName}`}
+                  {authorName}
                   {!compact && ` · ${new Date(comment.createdAt).toLocaleDateString('vi-VN')}`}
                 </Txt>
+                {shouldShowReplyQuote(comment) && comment.replyToCommentId && (
+                  <ReplyQuote replyToCommentId={comment.replyToCommentId}
+                    replyToName={comment.replyToName} replyToExcerpt={comment.replyToExcerpt}
+                    onJump={jumpToQuote} />
+                )}
                 <Txt style={compact && styles.message}>{comment.body}</Txt>
                 {!compact && likeButton}
                 <View style={compact ? styles.actions : undefined}>
@@ -246,9 +291,13 @@ export function LiveComments({
                       compact={compact}
                       onPress={() => {
                         if (!user) return goToLogin();
-                        setEditing(null);
-                        setReplyTarget({ id: comment.id, name: authorName });
-                        setFocusRequest((value) => value + 1);
+                        const target = { id: comment.id, name: authorName, threadId: comment.parentCommentId ?? comment.id };
+                        if (onReply) onReply(target);
+                        else {
+                          setEditing(null);
+                          setReplyTarget(target);
+                          setFocusRequest((value) => value + 1);
+                        }
                       }}
                     >
                       {vi.api.reply}
@@ -292,11 +341,19 @@ export function LiveComments({
                     <LiveComments
                       postId={postId}
                       parentCommentId={comment.id}
+                      quoteRoot={measurementRoot}
+                      onReply={compact ? (target) => {
+                        setEditing(null);
+                        setReplyTarget(target);
+                        setFocusRequest((value) => value + 1);
+                      } : undefined}
+                      onRevealComment={onRevealComment}
                       focusCommentId={focusCommentId}
                       showHeading={!compact}
                       compact={compact}
                       onLoginRequired={onLoginRequired}
                       onModerationDetails={onModerationDetails}
+                      onOpenProfile={onOpenProfile}
                     />
                   </View>
                 )}
@@ -341,7 +398,11 @@ export function LiveComments({
   return (
     <>
       {showHeading && <Txt variant="heading">{vi.api.comments}</Txt>}
-      {renderContent ? renderContent(content) : content}
+      {renderContent ? renderContent(
+        <View ref={ownQuoteRoot} collapsable={false} style={compact && styles.content}>{content}</View>,
+      ) : quoteRoot ? content : (
+        <View ref={ownQuoteRoot} collapsable={false} style={compact && styles.content}>{content}</View>
+      )}
       {/* Trả lời trong khung reels gửi từ ô nhập chính; ô nhập ở đây chỉ còn để sửa trả lời của mình. */}
       {!(compact && parentCommentId && !editing) && (
         <View style={renderContent ? styles.composer : compact ? undefined : styles.inlineComposer}>
@@ -435,6 +496,7 @@ export function LiveComments({
 }
 
 const styles = StyleSheet.create({
+  content: { gap: spacing.sm },
   focused: { backgroundColor: colors.sunSoft, borderRadius: 12 },
   inlineComposer: { gap: spacing.lg },
   composer: {

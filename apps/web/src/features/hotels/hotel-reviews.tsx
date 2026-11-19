@@ -138,7 +138,7 @@ export function HotelReviews({ id }: { id: string }) {
           void query.refetch();
         }}
       />
-      {query.isFetching && <output><LoadingDots label={copy.loadingReviews} /></output>}
+      {query.isPending && <LoadingDots isBlock label={copy.loadingReviews} />}
       {query.data?.items.length === 0 && (
         <div className="empty-state">
           <p>{summary?.count ? copy.noMatchingReviews : copy.noReviews}</p>

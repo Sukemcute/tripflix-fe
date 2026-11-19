@@ -19,7 +19,7 @@ import { saveBookingCart, useBookingCart } from './cart-store';
 import styles from './cart.module.css';
 import { CartWarnings } from './cart-warnings';
 import { useHoldCart } from './use-hold-cart';
-import { LoadingDots } from '@/features/shared/loading-dots';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.commerce;
 const formatDate = (date: string) => date.split('-').reverse().join('/');
@@ -40,7 +40,7 @@ export function CartScreen() {
   if (!isReady || !user) {
     return (
       <main className={`ota-container ${styles.page}`}>
-        <p className="empty-state"><LoadingDots /></p>
+        <LoadingDots isBlock />
       </main>
     );
   }
@@ -53,11 +53,9 @@ export function CartScreen() {
 
   return (
     <main className={`ota-container ${styles.page}`}>
-      <h1>{copy.cartTitle}</h1>
-      <p className="muted">
-        {hasItems
-          ? `${countBookingCartGuests(cart)} ${copy.guests} · ${copy.cartNoHold}`
-          : '0 phòng · Chưa có đặt chỗ nào'}
+      <h1 className={styles.title}>{copy.cartTitle}</h1>
+      <p className={styles.subtitle}>
+        {hasItems ? `${countBookingCartGuests(cart)} ${copy.guests} · ${copy.cartNoHold}` : copy.cartEmptyCount}
       </p>
       <div className={styles.layout}>
         {hasItems ? (
@@ -109,10 +107,8 @@ export function CartScreen() {
                 <circle cx="17" cy="19.5" r="1.4" />
               </svg>
             </div>
-            <h2 style={{ fontSize: '18px', margin: '0 0 8px' }}>{copy.cartEmpty}</h2>
-            <p className="small muted" style={{ margin: '0 0 20px', maxWidth: '360px' }}>
-              Bạn chưa thêm phòng hoặc dịch vụ nào vào giỏ. Hãy bắt đầu chọn khách sạn để chuẩn bị cho chuyến đi nhé!
-            </p>
+            <h2>{copy.cartEmpty}</h2>
+            <p>{copy.cartEmptyHint}</p>
             <Link className="primary-button" href="/search">
               {copy.findHotel}
             </Link>
@@ -120,7 +116,7 @@ export function CartScreen() {
         )}
 
         <aside className={styles.summary}>
-          <h2 style={{ fontSize: '16px', margin: '0 0 4px', fontWeight: 700 }}>Tóm tắt đơn hàng</h2>
+          <h2>{copy.cartSummaryTitle}</h2>
           {surcharge > 0 && (
             <p className={styles.surcharge}>
               <span>{copy.cartChildSurcharge}</span>
@@ -144,12 +140,10 @@ export function CartScreen() {
               disabled={!isReady || hold.isPending || underCapacity.length > 0}
               onClick={() => hold.mutate()}
             >
-              {hold.isPending ? <LoadingDots /> : copy.cartBook}
+              <BusyLabel isBusy={hold.isPending}>{copy.cartBook}</BusyLabel>
             </button>
           ) : (
-            <Link className="secondary-button" href="/search" style={{ textAlign: 'center' }}>
-              {copy.findHotel}
-            </Link>
+            <p className={styles.summaryHint}>{copy.cartSummaryEmpty}</p>
           )}
         </aside>
       </div>

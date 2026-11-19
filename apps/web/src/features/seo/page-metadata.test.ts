@@ -91,16 +91,42 @@ describe('buildTripPlanMetadata', () => {
 });
 
 describe('buildProfileMetadata', () => {
-  it('ghi tên và số người theo dõi', () => {
-    const metadata = buildProfileMetadata({
-      id: 'user 1',
-      displayName: 'Mai',
-      followerCount: 1200,
-      followingCount: 3,
-      likeCount: 9,
-    });
+  const sampleProfile = {
+    id: 'user 1',
+    displayName: 'Mai',
+    followerCount: 1200,
+    followingCount: 3,
+    likeCount: 9,
+  };
+
+  it('ghi tên và số người theo dõi, cho index khi có ít nhất 1 bài công khai', () => {
+    const metadata = buildProfileMetadata(sampleProfile, { hasPublicPosts: true });
     expect(metadata.title).toBe('Mai trên Tripflix | Tripflix');
     expect(metadata.description).toContain('1.200 người theo dõi');
     expect(metadata.alternates?.canonical).toBe('/u/user%201');
+    expect(metadata.robots).toBeUndefined();
+    expect(metadata.openGraph).toMatchObject({
+      type: 'profile',
+      title: 'Mai trên Tripflix',
+    });
+  });
+
+  it('đặt noindex khi hồ sơ chưa có bài công khai nhưng vẫn giữ Open Graph để chia sẻ', () => {
+    const metadata = buildProfileMetadata(sampleProfile, { hasPublicPosts: false });
+    expect(metadata.robots).toEqual(NOINDEX_ROBOTS);
+    expect(metadata.openGraph).toMatchObject({
+      type: 'profile',
+      title: 'Mai trên Tripflix',
+      url: '/u/user%201',
+    });
+  });
+
+  it('đặt noindex an toàn khi không kiểm tra được bài công khai (lỗi/timeout) và vẫn giữ Open Graph', () => {
+    const metadata = buildProfileMetadata(sampleProfile, { hasPublicPosts: null });
+    expect(metadata.robots).toEqual(NOINDEX_ROBOTS);
+    expect(metadata.openGraph).toMatchObject({
+      type: 'profile',
+      title: 'Mai trên Tripflix',
+    });
   });
 });

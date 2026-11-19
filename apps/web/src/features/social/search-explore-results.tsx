@@ -19,7 +19,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AvatarPhoto } from '@/features/shared/avatar-photo';
-import { LoadingDots } from '@/features/shared/loading-dots';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { getAvatarTone } from './avatar-tone';
 import { SocialIcon, formatAuthorDisplay, formatCompactCount } from './live-posts';
@@ -234,7 +234,7 @@ export function UserResults({ keyword, ...open }: OpenHandlers & { keyword: stri
           disabled={search.isFetchingNextPage}
           onClick={() => void search.fetchNextPage()}
         >
-          {search.isFetchingNextPage ? <LoadingDots label={vi.api.searchResultsLoadingMore} /> : vi.api.searchResultsLoadMore}
+          <BusyLabel isBusy={search.isFetchingNextPage} label={vi.api.searchResultsLoadingMore}>{vi.api.searchResultsLoadMore}</BusyLabel>
         </button>
       )}
     </>
@@ -266,7 +266,7 @@ export function PlaceResults({ keyword, kind, ...open }: OpenHandlers & { keywor
           disabled={search.isFetchingNextPage}
           onClick={() => void search.fetchNextPage()}
         >
-          {search.isFetchingNextPage ? <LoadingDots label={vi.api.searchResultsLoadingMore} /> : vi.api.searchResultsLoadMore}
+          <BusyLabel isBusy={search.isFetchingNextPage} label={vi.api.searchResultsLoadingMore}>{vi.api.searchResultsLoadMore}</BusyLabel>
         </button>
       )}
       <Attribution items={items} />

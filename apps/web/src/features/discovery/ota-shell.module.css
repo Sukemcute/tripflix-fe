@@ -1,31 +1,41 @@
-/* Phần ruột của mục menu (icon + chữ) không tạo hộp riêng, để icon và chữ vẫn xếp theo kiểu của thẻ a. */
+.nav {
+  position: relative;
+  isolation: isolate;
+  padding: 3px;
+  border-radius: 13px;
+  background: var(--nav-tray-fill, #f5f8f8);
+}
+
 .navItem {
   display: contents;
 }
-/* Mục vừa bấm khi trang đích còn đang tải: nền cam nhạt nhấp nháy, mục cũ vẫn giữ màu cam tới khi trang mới hiện. */
-.nav a:has(.navItem[data-pending]) {
-  background: var(--color-coral-tint);
-  color: var(--color-coral-ink);
-  animation: navPending 0.9s ease-in-out infinite alternate;
-}
-@keyframes navPending {
-  to {
-    background: color-mix(in srgb, var(--color-coral-ink) 18%, var(--color-background));
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .nav a:has(.navItem[data-pending]) {
-    animation: none;
-  }
-}
-/* Mục đang mở dùng cùng dáng viên thuốc với trạng thái hover. */
-.nav a[aria-current='page'],
-.nav a[aria-current='page']:hover {
-  background: var(--color-sea-mist);
-  color: var(--color-teal-ink);
+
+.nav a:is([aria-current='page'], :has(.navItem[data-pending])) {
+  color: var(--nav-current-color, var(--color-teal-ink));
   font-weight: 700;
-  border-radius: 999px;
-  box-shadow: none;
+}
+
+.nav:not(:has(.navIndicator:not([hidden]))) a[aria-current='page'] {
+  background: var(--nav-indicator-fill, var(--color-sea-mist));
+}
+
+.nav:has(.navIndicator:not([hidden])) a:is([aria-current='page'], :has(.navItem[data-pending])):hover {
+  background: transparent;
+}
+
+.navIndicator {
+  position: absolute;
+  inset-block: 3px;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 10px;
+  background: var(--nav-indicator-fill, #e9f5f2);
+  transition: left 280ms cubic-bezier(.22, .7, .25, 1) 90ms,
+    right 280ms cubic-bezier(.22, .7, .25, 1);
+}
+
+.navIndicator[data-direction='left'] {
+  transition-delay: 0ms, 90ms;
 }
 :global(body:has([class*='immersiveRoot'])) .footer {
   display: none;

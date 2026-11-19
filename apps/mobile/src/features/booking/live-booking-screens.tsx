@@ -38,6 +38,7 @@ import { useCommerce } from './commerce-provider';
 import { CancelHold, CancelOrder, OrderCancelledScreen } from './order-cancel';
 import { PaymentSuccessScreen } from './payment-success';
 import { LoadingDots } from '@/components/loading-dots';
+
 import { CheckoutSummary } from './checkout-summary';
 
 const text = vi.commerce;
@@ -381,17 +382,28 @@ function CheckoutForm() {
   return (
     <Screen
       title={text.checkout}
-      background={colors.surface}
+      background={colors.background}
       footer={
         canPay ? (
-          <View style={{ gap: spacing.md }}>
-            <View>
-              <Txt variant="small" style={ui.muted}>
-                {text.checkoutPayable}
-              </Txt>
+          <View style={checkoutStyles.footer}>
+            <Row style={{ justifyContent: 'space-between', gap: spacing.md, flexWrap: 'wrap' }}>
+              <Txt style={checkoutStyles.meta}>{text.checkoutPayable}</Txt>
               <Txt style={checkoutStyles.total}>{money(payTotal)}</Txt>
-            </View>
-            <Button disabled={isPayDisabled} onPress={() => payment.mutate('pay')} style={checkoutStyles.pay}>
+            </Row>
+            {isPayDisabled && !isLocked && (
+              <Txt style={checkoutStyles.meta}>
+                {newTotal !== undefined
+                  ? text.acceptPrice
+                  : !hasConsent
+                    ? text.checkoutConsentHint
+                    : text.checkoutMethodHint}
+              </Txt>
+            )}
+            <Button
+              disabled={isPayDisabled}
+              onPress={() => payment.mutate('pay')}
+              style={[checkoutStyles.pay, isPayDisabled && checkoutStyles.disabledPay]}
+            >
               {payment.isPending ? vi.api.loading : text.pay}
             </Button>
           </View>
@@ -499,9 +511,20 @@ function CheckoutForm() {
                           accessibilityRole="tab"
                           accessibilityState={{ selected: method === index }}
                           onPress={() => setMethod(index)}
-                          style={[checkoutStyles.method, method === index && checkoutStyles.selectedMethod]}
+                          style={({ pressed }) => [
+                            checkoutStyles.method,
+                            method === index && checkoutStyles.selectedMethod,
+                            pressed && ui.pressed,
+                          ]}
                         >
-                          <Txt style={checkoutStyles.methodLabel}>{label}</Txt>
+                          <Txt
+                            style={[
+                              checkoutStyles.methodLabel,
+                              method === index && checkoutStyles.selectedLabel,
+                            ]}
+                          >
+                            {label}
+                          </Txt>
                         </Pressable>
                       ))}
                     </Row>
@@ -532,14 +555,15 @@ function CheckoutForm() {
                                 paddingHorizontal: spacing.md,
                                 paddingVertical: spacing.sm,
                                 borderRadius: radius.sm,
-                                minHeight: 44,
-                                backgroundColor: isActive ? colors.seaMist : colors.surface,
+                                borderWidth: 1,
+                                borderColor: isActive ? colors.tealInk : colors.border,
+                                backgroundColor: isActive ? colors.seaMist : colors.background,
                               }}
                             >
                               <Txt variant="small" style={{ fontWeight: '600', color: colors.ink }}>
                                 {card.label}
                               </Txt>
-                              <Txt variant="small" style={[ui.muted, { fontSize: 12 }]}>
+                              <Txt variant="small" style={[ui.muted, { fontSize: 11 }]}>
                                 •••• {card.number.slice(-4)}
                               </Txt>
                             </Pressable>
@@ -571,7 +595,7 @@ function CheckoutForm() {
                   aria-checked={hasConsent}
                   disabled={isLocked}
                   onPress={() => setConsent(!hasConsent)}
-                  style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start', minHeight: 44 }}
+                  style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' }}
                 >
                   <View
                     style={{
@@ -582,15 +606,15 @@ function CheckoutForm() {
                       borderWidth: 2,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      borderColor: hasConsent ? colors.coralInk : colors.textSubtle,
-                      backgroundColor: hasConsent ? colors.coralInk : colors.background,
+                      borderColor: hasConsent ? colors.coral : colors.textSubtle,
+                      backgroundColor: hasConsent ? colors.coral : colors.background,
                     }}
                   >
                     {hasConsent && <Icon name="checkmark" size={15} color={colors.background} />}
                   </View>
                   <View style={{ flex: 1 }}>
                     <Txt variant="small">{text.policy}</Txt>
-                    <Txt variant="small" style={[ui.muted, { fontSize: 13 }]}>
+                    <Txt variant="small" style={[ui.muted, { fontSize: 11 }]}>
                       {text.policyVersion}: {order.policyVersion}
                     </Txt>
                   </View>
@@ -685,7 +709,7 @@ function CheckoutForm() {
   );
 }
 
-/** Thẻ trắng có tiêu đề + biểu tượng, gom từng phần của màn thanh toán cho gọn. */
+/** Group fields without nesting another white card inside the checkout. */
 function FormCard({
   title,
   subtitle,
@@ -700,25 +724,12 @@ function FormCard({
   return (
     <View style={checkoutStyles.form}>
       <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
-        <View
-          style={{
-            width: 24,
-            height: 28,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Icon name={icon} size={20} color={colors.tealInk} />
-        </View>
+        <Icon name={icon} size={22} color={colors.tealInk} />
         <View style={{ flex: 1 }}>
           <Txt accessibilityRole="header" style={checkoutStyles.formTitle}>
             {title}
           </Txt>
-          {subtitle && (
-            <Txt variant="small" style={ui.muted}>
-              {subtitle}
-            </Txt>
-          )}
+          {subtitle && <Txt style={checkoutStyles.meta}>{subtitle}</Txt>}
         </View>
       </Row>
       {children}
@@ -727,30 +738,39 @@ function FormCard({
 }
 
 const checkoutStyles = StyleSheet.create({
-  input: { borderRadius: radius.sm, fontSize: 15, lineHeight: 24, minHeight: 52 },
-  form: {
-    padding: spacing.lg,
-    gap: spacing.lg,
-    marginTop: spacing.sm,
-    borderRadius: radius.md,
+  input: {
+    borderRadius: radius.sm,
+    minHeight: 52,
+    fontSize: 16,
+    lineHeight: 25,
     backgroundColor: colors.background,
   },
-  formTitle: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy },
-  total: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.semibold, color: colors.navy },
+  footer: { gap: spacing.sm },
+  total: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold, color: colors.navy },
+  meta: { fontSize: 13, lineHeight: 22, color: colors.ink },
   pay: { minHeight: 52, borderRadius: radius.sm, backgroundColor: colors.coralInk },
+  disabledPay: { backgroundColor: colors.navy, opacity: 0.8 },
+  form: {
+    gap: spacing.lg,
+    padding: spacing.lg,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMuted,
+  },
+  formTitle: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: colors.navy },
   method: {
     minHeight: 48,
     flexGrow: 1,
+    padding: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.surface,
     borderRadius: radius.sm,
+    backgroundColor: colors.background,
   },
-  selectedMethod: { backgroundColor: colors.seaMist },
-  methodLabel: { fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.semibold, color: colors.tealInk },
+  selectedMethod: { backgroundColor: colors.navy },
+  methodLabel: { fontSize: 15, lineHeight: 24, color: colors.ink, fontFamily: nativeFonts.semibold },
+  selectedLabel: { color: colors.background },
 });
+
 export function OrderSummary({ order }: { order: NonNullable<ReturnType<typeof useCommerceOrder>['data']> }) {
   return (
     <>

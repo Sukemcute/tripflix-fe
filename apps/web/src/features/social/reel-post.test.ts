@@ -10,6 +10,7 @@ import {
   getReelRenderMode,
   pickReelAfterRemoval,
   prependPinnedReelCards,
+  pruneReadyReelIds,
   reuseReelEngagement,
   REEL_AHEAD_BUFFER_SECONDS,
   REEL_AHEAD_VIDEO_COUNT,
@@ -19,6 +20,7 @@ import {
   REEL_NEXT_NOT_READY_BLOCK_MS,
   REEL_RENDER_WINDOW,
   shouldLoadReelSource,
+  startReelOnPostChange,
   shouldShowReelBackdrop,
   toReelPost,
 } from './reel-post';
@@ -107,14 +109,13 @@ describe('pickReelAfterRemoval', () => {
 });
 
 describe('getReelRenderMode', () => {
-  it('bài đang xem, 2 bài phía trước và 1 bài phía sau có video', () => {
-    for (const index of [4, 5, 6, 7]) expect(getReelRenderMode(index, 5)).toBe('video');
+  it('bài đang xem, 2 bài phía trước và 2 bài phía sau có video', () => {
+    for (const index of [3, 4, 5, 6, 7]) expect(getReelRenderMode(index, 5)).toBe('video');
   });
 
-  it('bài thứ 2 phía sau đã gỡ video (xoá bộ đệm), chỉ còn poster; xa hơn 3 bài chỉ còn khung giữ chỗ', () => {
-    expect(getReelRenderMode(3, 5)).toBe('poster');
-    expect(getReelRenderMode(8, 5)).toBe('poster');
+  it('bài thứ 3 phía sau và phía trước chỉ còn poster (đã gỡ video, xoá bộ đệm); xa hơn chỉ còn khung giữ chỗ', () => {
     expect(getReelRenderMode(2, 5)).toBe('poster');
+    expect(getReelRenderMode(8, 5)).toBe('poster');
     expect(getReelRenderMode(9, 5)).toBe('placeholder');
     expect(getReelRenderMode(0, 5)).toBe('placeholder');
   });
@@ -132,25 +133,39 @@ describe('getReelRenderMode', () => {
     expect(rendered).toHaveLength(2 * REEL_RENDER_WINDOW + 1);
   });
 
-  it('lướt 100 bài thì số thẻ video luôn tối đa 4', () => {
+  it('lướt 100 bài thì số thẻ video luôn tối đa 5', () => {
     for (const active of [0, 1, 50, 99]) {
       const videos = Array.from({ length: 100 }, (_, index) => getReelRenderMode(index, active)).filter(
         (mode) => mode === 'video',
       );
       expect(videos.length).toBeLessThanOrEqual(REEL_BEHIND_VIDEO_COUNT + 1 + REEL_AHEAD_VIDEO_COUNT);
+      expect(videos.length).toBeLessThanOrEqual(5);
     }
   });
 });
 
 describe('shouldLoadReelSource', () => {
   it('vừa lướt tới (video đang xem chưa chạy): chỉ tải bài đang xem và bài kế tiếp', () => {
-    expect([4, 5, 6, 7].map((index) => shouldLoadReelSource(index, 5, false))).toEqual([false, true, true, false]);
+    expect([3, 4, 5, 6, 7].map((index) => shouldLoadReelSource(index, 5, false))).toEqual([
+      false,
+      false,
+      true,
+      true,
+      false,
+    ]);
   });
 
   it('video đang xem đã chạy: tải thêm bài thứ 2 phía trước; bài phía sau giữ nguồn đã gắn', () => {
     expect([4, 5, 6, 7].map((index) => shouldLoadReelSource(index, 5, true))).toEqual([true, true, true, true]);
     expect(shouldLoadReelSource(8, 5, true)).toBe(false);
     expect(shouldLoadReelSource(3, 5, true)).toBe(false);
+  });
+
+  it('bài thứ 2 phía sau có thẻ video nhưng không được gắn nguồn mới: chỉ giữ nguồn đã gắn lúc còn là bài đang xem', () => {
+    expect(getReelRenderMode(3, 5)).toBe('video');
+    expect(shouldLoadReelSource(3, 5, true)).toBe(false);
+    const loading = Array.from({ length: 100 }, (_, index) => shouldLoadReelSource(index, 50, true)).filter(Boolean);
+    expect(loading).toHaveLength(4);
   });
 });
 
@@ -204,13 +219,43 @@ describe('canStepToNextReel', () => {
   });
 });
 
+describe('pruneReadyReelIds', () => {
+  const ids = Array.from({ length: 10 }, (_, index) => `p${index}`);
+
+  it('bài rời cửa sổ video (đã nhả nguồn) rồi quay lại thì không còn được coi là có hình (lỗi cũ: lướt vào vòng chờ)', () => {
+    // Đang xem p5: p4..p7 có video và đều đã có hình.
+    let ready = new Set(['p4', 'p5', 'p6', 'p7']);
+    // Lướt lui về p2: cửa sổ video là p1..p4, p5..p7 bị gỡ thẻ video.
+    ready = pruneReadyReelIds(ready, ids, 2);
+    expect([...ready]).toEqual(['p4']);
+    // Lướt tới p4: p5 lại là bài kế tiếp nhưng đang tải lại, chưa có hình nên phải bị chặn.
+    ready = pruneReadyReelIds(ready, ids, 4);
+    expect(ready.has('p5')).toBe(false);
+    expect(canStepToNextReel({ isNextReady: ready.has('p5'), blockedSinceMs: null, nowMs: 0 })).toBe(false);
+  });
+
+  it('bài còn trong cửa sổ video giữ trạng thái đã có hình', () => {
+    const ready = pruneReadyReelIds(new Set(['p2', 'p3', 'p4', 'p5']), ids, 3);
+    expect(ready).toEqual(new Set(['p2', 'p3', 'p4', 'p5']));
+  });
+
+  it('bài bị bỏ khỏi danh sách (bỏ lưu) cũng bị bỏ; không sửa Set cũ', () => {
+    const before = new Set(['p3', 'p4']);
+    const ready = pruneReadyReelIds(before, ids.filter((id) => id !== 'p4'), 3);
+    expect(ready).toEqual(new Set(['p3']));
+    expect(before).toEqual(new Set(['p3', 'p4']));
+  });
+});
+
 describe('getReelBufferSeconds', () => {
   it('bài đang xem đệm 30 giây, bài phía trước 10 giây, bài phía sau gần như không tải thêm', () => {
     expect(getReelBufferSeconds(5, 5)).toBe(REEL_CURRENT_BUFFER_SECONDS);
     expect(getReelBufferSeconds(6, 5)).toBe(REEL_AHEAD_BUFFER_SECONDS);
     expect(getReelBufferSeconds(7, 5)).toBe(REEL_AHEAD_BUFFER_SECONDS);
     expect(getReelBufferSeconds(4, 5)).toBe(REEL_BEHIND_BUFFER_SECONDS);
+    // Bài thứ 2 phía sau (vẫn có thẻ video) cũng chỉ giữ bộ đệm, không về mức của bài đang xem hay phía trước.
     expect(getReelBufferSeconds(3, 5)).toBe(REEL_BEHIND_BUFFER_SECONDS);
+    expect(getReelRenderMode(3, 5)).toBe('video');
     expect(REEL_AHEAD_BUFFER_SECONDS).toBeLessThan(REEL_CURRENT_BUFFER_SECONDS);
   });
 });
@@ -359,5 +404,32 @@ describe('computeReelEngagement & reuseReelEngagement', () => {
 
     expect(likedP1).not.toBe(firstP1);
     expect(sameP2).toBe(firstP2);
+  });
+});
+
+
+describe('startReelOnPostChange', () => {
+  it('keeps playback position and does not replay on mute changes, but restarts on a new post', () => {
+    const video = { currentTime: 12, muted: true };
+    const play = vi.fn();
+    video.muted = false;
+    startReelOnPostChange(video, 'post-1', 'post-1', play);
+    expect(video.currentTime).toBe(12);
+    expect(play).not.toHaveBeenCalled();
+    video.muted = true;
+    startReelOnPostChange(video, 'post-1', 'post-1', play);
+    expect(video.currentTime).toBe(12);
+    expect(play).not.toHaveBeenCalled();
+    startReelOnPostChange(video, 'post-1', 'post-2', play);
+    expect(video.currentTime).toBe(0);
+    expect(play).toHaveBeenCalledOnce();
+  });
+
+  it('starts a new post without seeking if already at the beginning', () => {
+    const video = { currentTime: 0.05 };
+    const play = vi.fn();
+    startReelOnPostChange(video, undefined, 'post-1', play);
+    expect(video.currentTime).toBe(0.05);
+    expect(play).toHaveBeenCalledOnce();
   });
 });

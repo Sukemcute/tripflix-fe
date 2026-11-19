@@ -66,8 +66,9 @@ export function pickReelAfterRemoval(postIds: readonly string[], removedId: stri
 
 /**
  * Mức render của một Reel theo khoảng cách tới bài đang xem, để lướt lâu không nặng dần:
- * - `video`: bài đang xem, 2 bài phía trước (tải sẵn để lướt nhanh vẫn phát ngay) và 1 bài phía sau (giữ phần đã
- *   tải để lướt ngược không tải lại).
+ * - `video`: bài đang xem, 2 bài phía trước (tải sẵn để lướt nhanh vẫn phát ngay) và 2 bài phía sau (giữ phần đã
+ *   tải để lướt ngược không tải lại). Tối đa 5 thẻ video, nhưng không quá 4 bài được gắn nguồn mới
+ *   (shouldLoadReelSource).
  * - `poster`: ngoài cửa sổ video tới 3 bài (chỉ ảnh, không tải segment). Rời cửa sổ video là gỡ nguồn, xoá bộ đệm.
  * - `placeholder`: xa hơn, chỉ còn khung rỗng giữ chiều cao để cuộn và snap đúng vị trí.
  */
@@ -75,8 +76,16 @@ export type ReelRenderMode = 'video' | 'poster' | 'placeholder';
 
 /** Số bài phía trước bài đang xem có thẻ video. */
 export const REEL_AHEAD_VIDEO_COUNT = 2;
-/** Số bài phía sau bài đang xem còn giữ thẻ video: 5 video cùng tải làm video đang xem chậm chạy (đo được). */
-export const REEL_BEHIND_VIDEO_COUNT = 1;
+/**
+ * Số bài phía sau bài đang xem còn giữ thẻ video. Bài phía sau đã được gắn nguồn từ lúc còn là bài đang xem nên chỉ
+ * giữ bộ đệm, gần như không tải thêm (REEL_BEHIND_BUFFER_SECONDS); lướt ngược 2 bài vẫn phát ngay.
+ */
+export const REEL_BEHIND_VIDEO_COUNT = 2;
+/**
+ * Số bài phía sau được gắn nguồn mới (khi nhảy tới một bài chưa từng xem): 5 video cùng tải làm video đang xem chậm
+ * chạy (đo được), nên bài thứ 2 phía sau chỉ giữ nguồn đã có chứ không tải mới.
+ */
+const REEL_BEHIND_LOAD_COUNT = 1;
 /** Số bài mỗi phía của bài đang xem vẫn được render đầy đủ nội dung. */
 export const REEL_RENDER_WINDOW = 3;
 
@@ -89,17 +98,46 @@ export function getReelRenderMode(index: number, activeIndex: number): ReelRende
 
 /**
  * Bài nào được gắn nguồn ngay (ưu tiên video đang xem, như app video ngắn): bài đang xem và bài kế tiếp luôn được;
- * bài thứ 2 phía trước chỉ tải khi video đang xem đã chạy, để lúc vừa lướt không có quá 2 video tranh băng thông.
- * Bài phía sau đã được gắn từ lúc còn là bài đang xem nên không cần tải lại.
+ * bài thứ 2 phía trước và bài ngay phía sau chỉ tải khi video đang xem đã chạy, để lúc vừa lướt không có quá 2 video
+ * tranh băng thông. Bài phía sau thường đã được gắn từ lúc còn là bài đang xem và giữ nguồn tới khi rời cửa sổ video;
+ * bài thứ 2 phía sau không được gắn mới (REEL_BEHIND_LOAD_COUNT).
  */
 export function shouldLoadReelSource(index: number, activeIndex: number, isActivePlaying: boolean): boolean {
   const offset = index - activeIndex;
   if (offset === 0 || offset === 1) return true;
-  return isActivePlaying && offset >= -REEL_BEHIND_VIDEO_COUNT && offset <= REEL_AHEAD_VIDEO_COUNT;
+  return isActivePlaying && offset >= -REEL_BEHIND_LOAD_COUNT && offset <= REEL_AHEAD_VIDEO_COUNT;
+}
+
+/**
+ * Bỏ khỏi tập "đã có hình đầu tiên" các bài đã ra khỏi cửa sổ video (getReelRenderMode khác `video`): thẻ <video>
+ * của chúng đã bị gỡ, nguồn và bộ đệm bị nhả, nên quay lại phải tải lại từ đầu. Giữ lại thì canStepToNextReel không
+ * chặn, người xem lướt vào vòng chờ. Bài bị bỏ khỏi danh sách cũng bị bỏ. Trả Set mới, không sửa Set cũ.
+ */
+export function pruneReadyReelIds(
+  readyIds: ReadonlySet<string>,
+  postIds: readonly string[],
+  activeIndex: number,
+): Set<string> {
+  const kept = new Set<string>();
+  postIds.forEach((postId, index) => {
+    if (readyIds.has(postId) && getReelRenderMode(index, activeIndex) === 'video') kept.add(postId);
+  });
+  return kept;
 }
 
 /** Thời gian chặn lướt tối đa khi bài kế tiếp chưa có hình: Safari iPhone không tải trước video, chặn mãi thì kẹt. */
 export const REEL_NEXT_NOT_READY_BLOCK_MS = 3_000;
+
+export function startReelOnPostChange(
+  video: Pick<HTMLVideoElement, 'currentTime'> | null,
+  previousPostId: string | null | undefined,
+  postId: string | null | undefined,
+  play: () => void,
+): void {
+  if (!video || !postId || postId === previousPostId) return;
+  if (video.currentTime > 0.1) video.currentTime = 0;
+  play();
+}
 
 /** Mốc thời gian trên thanh tua như TikTok: 17 → "0:17", 65 → "1:05". Giá trị lạ (NaN, âm) coi như 0. */
 export function formatReelTime(seconds: number): string {

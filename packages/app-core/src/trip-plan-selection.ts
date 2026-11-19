@@ -7,6 +7,7 @@ export interface TripPlanSelection {
   coverUrl?: string;
   /** Trang mở lộ trình ("/" là Reels, "/explore"): nút quay lại về đúng trang đó. */
   origin?: string;
+  fromFeatured?: boolean;
   trip: {
     hotelId?: string;
     hotelName?: string;
@@ -43,6 +44,7 @@ export function parseTripPlanSelection(raw: string | null): TripPlanSelection | 
       typeof selected.postTitle !== 'string' ||
       typeof selected.authorName !== 'string' ||
       (selected.coverUrl !== undefined && typeof selected.coverUrl !== 'string') ||
+      (selected.fromFeatured !== undefined && typeof selected.fromFeatured !== 'boolean') ||
       (selected.origin !== undefined && typeof selected.origin !== 'string')
     )
       return null;

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { CheckoutError } from './checkout-error';
 import styles from './checkout.module.css';
-import { LoadingDots } from '@/features/shared/loading-dots';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.commerce;
 /** Đơn nhiều mục không kéo dài thẻ (và cả hàng thẻ): chỉ hiện chừng này mục, còn lại xem ở chi tiết đơn. */
@@ -29,7 +29,7 @@ export function BookingsScreen() {
   if (!isReady || !user) {
     return (
       <main className={`ota-container ${styles.page}`}>
-        <p className="empty-state"><LoadingDots /></p>
+        <LoadingDots isBlock />
       </main>
     );
   }
@@ -56,7 +56,7 @@ export function BookingsList() {
 
   return (
     <>
-      {query.isPending && !!user && <p><LoadingDots /></p>}
+      {query.isPending && !!user && <LoadingDots isBlock />}
       <CheckoutError error={query.error} retry={() => void query.refetch()} />
       {query.isSuccess && !trips.length && (
         <div className="account-empty">
@@ -119,7 +119,7 @@ export function BookingsList() {
           disabled={query.isFetchingNextPage}
           onClick={() => void query.fetchNextPage()}
         >
-          {query.isFetchingNextPage ? <LoadingDots /> : vi.api.next}
+          <BusyLabel isBusy={query.isFetchingNextPage}>{vi.api.next}</BusyLabel>
         </button>
       )}
     </>

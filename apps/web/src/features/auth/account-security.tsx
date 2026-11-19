@@ -158,7 +158,7 @@ function DevicesPanel({ userId }: { userId: string }) {
         }}
       />
       <ApiErrorNotice error={action.error} />
-      {devices.isPending && <p className="auth-hint"><LoadingDots /></p>}
+      {devices.isPending && <LoadingDots isBlock />}
       {devices.data?.length === 0 && <p className="auth-hint">{vi.api.noDevices}</p>}
       <ul className="device-list" id="account-device-list">
         {visibleDevices.map((device) => (

@@ -41,13 +41,18 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
     return (
       <main id="content" className="ota-container results-page account-page">
         <section className="account-guest is-loading" aria-busy="true">
-          <output><LoadingDots /></output>
+          <LoadingDots isBlock />
         </section>
       </main>
     );
   return (
     <main id="content" className="ota-container results-page account-page">
       <div className="profile-layout">
+        {user.emailVerified === false && (
+          <div className="profile-notice">
+            <EmailVerificationNotice key={`verify-${user.id}`} />
+          </div>
+        )}
         <aside className="profile-aside">
           <div className="profile-identity">
             <AvatarEditor user={user} />
@@ -79,16 +84,17 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
           <ApiErrorNotice error={logout.error} />
         </aside>
         <div className="profile-main">
-          {user.emailVerified === false && <EmailVerificationNotice key={`verify-${user.id}`} />}
           {tab === 'profile' ? (
-            <div className="profile-stack">
-              <ProfileInfoCard key={user.id} userId={user.id} />
-              <TravelPreferencesCard key={`travel-${user.id}`} userId={user.id} />
-            </div>
+            <ProfileInfoCard key={user.id} userId={user.id} />
           ) : tab === 'security' ? (
             <AccountSecurity key={user.id} userId={user.id} />
           ) : null}
         </div>
+        {tab === 'profile' && (
+          <div className="profile-travel">
+            <TravelPreferencesCard key={`travel-${user.id}`} userId={user.id} />
+          </div>
+        )}
       </div>
     </main>
   );
