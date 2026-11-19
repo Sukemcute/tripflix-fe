@@ -51,6 +51,9 @@
 .heading > div {
   min-width: 0;
 }
+.heading {
+  justify-content: flex-end;
+}
 .eyebrow {
   font-size: 10px;
   letter-spacing: 0.15em;

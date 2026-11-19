@@ -88,6 +88,8 @@ function makeComment(id: string, overrides: Partial<SocialCommentDto> = {}): Soc
     authorId: USER_ID,
     authorName: 'An',
     parentCommentId: null,
+    replyToCommentId: null,
+    replyToExcerpt: null,
     body: `bình luận ${id}`,
     mentions: [],
     isEdited: false,
@@ -120,7 +122,7 @@ function seedClient() {
   );
   client.setQueryData(
     repliesKey('c3'),
-    makePages([[makeComment('r2', { parentCommentId: 'c3' }), makeComment('r1', { parentCommentId: 'c3' })]], 2),
+    makePages([[makeComment('r1', { parentCommentId: 'c3' })], [makeComment('r2', { parentCommentId: 'c3' })]], 2),
   );
   client.setQueryData(detailKey, { post: { id: POST_ID, commentCount: 5 }, viewerContext: {}, shareUrl: '' });
   client.setQueryData(postListKey, {
@@ -153,7 +155,7 @@ describe('comment-cache', () => {
     expect(ids(rootList(client))).toEqual([['c4', 'c3', 'c2'], ['c1']]);
     expect(totals(rootList(client))).toEqual([4, 4]);
     expect(rootList(client).pages[0]!.items[0]!.replyCount).toBe(0);
-    expect(ids(client.getQueryData<CommentPages>(repliesKey('c3'))!)).toEqual([['r2', 'r1']]);
+    expect(ids(client.getQueryData<CommentPages>(repliesKey('c3'))!)).toEqual([['r1'], ['r2']]);
     expect(postCounts(client)).toEqual({
       detail: 6,
       list: [
@@ -164,12 +166,13 @@ describe('comment-cache', () => {
     });
   });
 
-  it('gửi trả lời: chèn vào danh sách trả lời của bình luận gốc và cộng replyCount của nó', () => {
+  it('gửi trả lời: nối vào cuối trang cuối danh sách trả lời (thứ tự cũ trước ASC) và cộng replyCount của bình luận gốc', () => {
     const client = seedClient();
 
     addCommentToCache(client, makeComment('r3', { parentCommentId: 'c3' }));
 
-    expect(ids(client.getQueryData<CommentPages>(repliesKey('c3'))!)).toEqual([['r3', 'r2', 'r1']]);
+    expect(ids(client.getQueryData<CommentPages>(repliesKey('c3'))!)).toEqual([['r1'], ['r2', 'r3']]);
+    expect(totals(client.getQueryData<CommentPages>(repliesKey('c3'))!)).toEqual([3, 3]);
     expect(ids(rootList(client))).toEqual([['c3', 'c2'], ['c1']]);
     expect(rootList(client).pages[0]!.items[0]!.replyCount).toBe(3);
     expect(postCounts(client).detail).toBe(6);
@@ -241,7 +244,7 @@ describe('comment-cache', () => {
 
     removeCommentFromCache(client, POST_ID, 'r1');
 
-    expect(ids(client.getQueryData<CommentPages>(repliesKey('c3'))!)).toEqual([['r2']]);
+    expect(ids(client.getQueryData<CommentPages>(repliesKey('c3'))!)).toEqual([[], ['r2']]);
     expect(rootList(client).pages[0]!.items[0]!.replyCount).toBe(1);
     expect(postCounts(client).detail).toBe(4);
   });
@@ -260,7 +263,7 @@ describe('comment-cache', () => {
 
     setCommentReactionInCache(client, POST_ID, { commentId: 'r1', isLiked: true, likeCount: 7 });
 
-    const reply = client.getQueryData<CommentPages>(repliesKey('c3'))!.pages[0]!.items[1]!;
+    const reply = client.getQueryData<CommentPages>(repliesKey('c3'))!.pages[0]!.items[0]!;
     expect(reply).toMatchObject({ id: 'r1', isLiked: true, likeCount: 7 });
     expect(client.getQueryState(repliesKey('c3'))!.isInvalidated).toBe(false);
     expect(client.getQueryState(rootListKey)!.isInvalidated).toBe(false);

@@ -26,28 +26,39 @@
 }
 
 /* --------------------------------------------------------------------------
-   1. Sóng sáng Shimmer-Sweep 200% quét lướt qua lại liên tục
+   1. Sóng sáng Shimmer chạy trong từng khối con (avatar, thanh chữ), đồng bộ qua background-attachment: fixed
    -------------------------------------------------------------------------- */
-/* Thanh xám tĩnh; một vệt sáng duy nhất trượt qua cả khung bằng transform (GPU tự xử lý),
-   thay cho mỗi thanh tự chạy background-position (vẽ lại từng khung hình). */
 .shimmerSweep {
-  background: var(--color-surface-muted);
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-surface-muted);
+  background-image: linear-gradient(
+    90deg,
+    var(--color-surface-muted) 0%,
+    var(--color-surface-muted) 35%,
+    color-mix(in srgb, var(--color-background) 65%, var(--color-surface-muted)) 50%,
+    var(--color-surface-muted) 65%,
+    var(--color-surface-muted) 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 200vw 100%;
+  background-attachment: fixed;
+  animation: shimmer-sweep 1.6s ease-in-out infinite;
 }
 
-@keyframes shimmer-slide {
+@keyframes shimmer-sweep {
   from {
-    transform: translateX(-100%);
+    background-position: 120% 0;
   }
   to {
-    transform: translateX(100%);
+    background-position: -20% 0;
   }
 }
 
 /* --------------------------------------------------------------------------
-   2. Danh sách hàng Placeholder dàn đều 100% từ trên xuống đáy
+   2. Danh sách hàng Placeholder dàn đều 100% từ trên xuống đáy (khung chứa trong suốt, không shimmer)
    -------------------------------------------------------------------------- */
 .skeletonRowsWrapper {
-  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -58,8 +69,6 @@
   gap: 14px;
   overflow: hidden;
   opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.28s ease-out, transform 0.28s ease-out;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -106,25 +115,9 @@
   border-radius: 4px;
 }
 
-.skeletonRowsWrapper::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    var(--color-transparent) 0%,
-    color-mix(in srgb, var(--color-background) 70%, transparent) 50%,
-    var(--color-transparent) 100%
-  );
-  transform: translateX(-100%);
-  animation: shimmer-slide 1.6s ease-in-out infinite;
-  pointer-events: none;
-  will-change: transform;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .skeletonRowsWrapper::after {
+  .shimmerSweep {
     animation: none;
-    display: none;
+    background-image: none;
   }
 }

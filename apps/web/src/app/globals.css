@@ -466,11 +466,6 @@ h3 {
 .header-notifications-empty strong {
   font-size: 14px;
 }
-.header-notifications-empty p {
-  color: var(--color-text-muted);
-  font-size: 13px;
-  line-height: 1.6;
-}
 .header-notifications-empty-icon {
   display: grid;
   place-items: center;

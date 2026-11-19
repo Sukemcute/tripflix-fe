@@ -12,10 +12,31 @@ import { Providers } from './providers';
 import { OtaNavigation } from '@/features/discovery/ota-navigation';
 import { OtaFooter } from '@/features/discovery/ota-footer';
 import { ButtonRipple } from '@/features/shared/button-ripple';
+import { DEFAULT_OG_IMAGE } from '@/features/seo/page-metadata';
+import { getSiteUrl } from '@/lib/site';
 
+// Metadata mặc định cho mọi trang (TF112): metadataBase biến link tương đối (canonical, ảnh) thành tuyệt đối.
+// Trang con tự đặt title đầy đủ, nên không dùng title.template để tránh lặp "| Tripflix". Canonical và og:url
+// không đặt ở đây vì mọi trang con sẽ kế thừa; trang nào cần thì tự khai.
 export const metadata: Metadata = {
-  title: t('app.name'),
-  description: t('app.slogan'),
+  metadataBase: new URL(getSiteUrl()),
+  title: vi.seo.defaultTitle,
+  description: vi.seo.defaultDescription,
+  applicationName: t('app.name'),
+  openGraph: {
+    type: 'website',
+    siteName: t('app.name'),
+    locale: 'vi_VN',
+    title: vi.seo.defaultTitle,
+    description: vi.seo.defaultDescription,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: vi.seo.defaultTitle,
+    description: vi.seo.defaultDescription,
+    images: [DEFAULT_OG_IMAGE.url],
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

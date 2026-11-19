@@ -24,6 +24,8 @@ function makeCommentDto(overrides: Partial<SocialCommentDto> = {}): SocialCommen
     postId: 'p1',
     authorId: 'u-author',
     parentCommentId: null,
+    replyToCommentId: null,
+    replyToExcerpt: null,
     body: 'Chào @Nguyễn An',
     mentions: [{ userId: '018d9f00-0000-7000-8000-000000000002', offset: 5, length: 10 }],
     isEdited: false,

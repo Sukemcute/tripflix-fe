@@ -6,6 +6,7 @@ import type {
 } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import type { ReactNode } from 'react';
+import { ModerationParts } from './moderation-parts';
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3100';
 
@@ -80,20 +81,7 @@ export function ModerationPostDetail({
           </div>
         </header>
 
-        {post.media_ids.length > 0 && (
-          <section className="my-5 rounded-lg border border-border bg-surface p-4 text-xs">
-            <p className="font-bold">{t('api.moderationMediaCount', { count: post.media_ids.length })}</p>
-            <p className="mt-2 text-text-muted">{vi.adminOperations.noMedia}</p>
-            <ul className="mt-2 space-y-1 text-[10px] text-text-muted">
-              {post.media_ids.map((id) => (
-                <li key={id}>
-                  <code>{id}</code>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
+        <ModerationParts postId={post.id} />
         {post.body.trim() ? (
           <p className="admin-post-body">{post.body}</p>
         ) : (

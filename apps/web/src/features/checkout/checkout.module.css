@@ -372,17 +372,29 @@
 .trips {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  /* Mọi hàng cao bằng hàng cao nhất: thẻ đơn đều nhau trên cả trang (thẻ đã giới hạn tối đa 2 mục nên không quá cao). */
+  grid-auto-rows: 1fr;
   gap: 16px;
   margin-bottom: 20px;
 }
 .trip {
-  display: grid;
+  /* Thẻ cao bằng nhau theo hàng: xếp nội dung từ trên xuống, tổng tiền dồn đáy, không giãn đều khoảng trống. */
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 20px;
   background: var(--color-background);
   color: inherit;
+}
+.trip p.moreItems {
+  font-weight: 600;
+  color: var(--color-teal-ink);
+}
+.trip p.total {
+  margin-top: auto;
+  padding-top: 14px;
 }
 .trip:hover {
   border-color: var(--color-teal-ink);

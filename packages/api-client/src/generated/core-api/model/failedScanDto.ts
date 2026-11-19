@@ -6,6 +6,10 @@
  */
 
 export interface FailedScanDto {
+  /** @nullable */
+  partKind?: string | null;
+  /** @nullable */
+  assetId?: string | null;
   eventId: string;
   targetType: string;
   targetId: string;

@@ -784,7 +784,9 @@ function CheckoutSummary({
 export function OrderSummary({ order }: { order: NonNullable<ReturnType<typeof useCommerceOrder>['data']> }) {
   return (
     <>
-      <Txt variant="heading">{text.status[order.status]}</Txt>
+      <Txt variant="heading">
+        {order.tripStatus === 'completed' ? text.tripCompleted : text.status[order.status]}
+      </Txt>
       {order.items.map((item) => (
         <Card key={item.id}>
           <Txt variant="heading">{item.productName}</Txt>

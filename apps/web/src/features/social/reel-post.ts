@@ -19,8 +19,20 @@ export type ReelPost = Pick<
   | 'shareCount'
 >;
 
-export function toReelPost(card: FeedCardDto): ReelPost {
-  return {
+const defaultReelPostCache = new WeakMap<FeedCardDto, ReelPost>();
+
+/**
+ * Chuyển thẻ feed sang `ReelPost` và giữ nguyên tham chiếu khi `card` không đổi (cache theo WeakMap),
+ * để thao tác trên một Reel (ví dụ bấm tim) không tạo mới `ReelPost` của các Reel khác.
+ */
+export function toReelPost(
+  card: FeedCardDto,
+  cache: WeakMap<FeedCardDto, ReelPost> = defaultReelPostCache,
+): ReelPost {
+  const cached = cache.get(card);
+  if (cached) return cached;
+
+  const post: ReelPost = {
     id: card.postId,
     authorId: card.author.id,
     authorName: card.author.name,
@@ -38,6 +50,8 @@ export function toReelPost(card: FeedCardDto): ReelPost {
     bookmarkCount: card.counts.saves,
     shareCount: card.counts.shares,
   };
+  cache.set(card, post);
+  return post;
 }
 
 /**
@@ -177,4 +191,66 @@ export function prependPinnedReelCards<T extends { postId: string }>(pinnedCards
   if (pinnedCards.length === 0) return [...feedCards];
   const pinnedIds = new Set(pinnedCards.map((card) => card.postId));
   return [...pinnedCards, ...feedCards.filter((card) => !pinnedIds.has(card.postId))];
+}
+
+/** Trạng thái và số đếm tương tác của một Reel trên cột thao tác bên phải. */
+export interface ReelEngagement {
+  isLiked: boolean;
+  isSaved: boolean;
+  likes: number;
+  saves: number;
+  comments: number;
+  shares: number;
+}
+
+/** Tính số đếm hiển thị theo dữ liệu máy chủ cộng/trừ thao tác lạc quan tại máy. */
+export function computeReelEngagement(params: {
+  post: Pick<ReelPost, 'reactionTotal' | 'bookmarkCount' | 'commentCount' | 'shareCount'>;
+  detailPost?: Pick<SocialPostDto, 'reactionTotal' | 'bookmarkCount' | 'commentCount' | 'shareCount'>;
+  serverLiked: boolean;
+  serverSaved: boolean;
+  optimisticLiked?: boolean;
+  optimisticSaved?: boolean;
+}): ReelEngagement {
+  const isLiked = params.optimisticLiked ?? params.serverLiked;
+  const isSaved = params.optimisticSaved ?? params.serverSaved;
+  return {
+    isLiked,
+    isSaved,
+    likes: Math.max(
+      0,
+      (params.detailPost?.reactionTotal ?? params.post.reactionTotal) + Number(isLiked) - Number(params.serverLiked),
+    ),
+    saves: Math.max(
+      0,
+      (params.detailPost?.bookmarkCount ?? params.post.bookmarkCount) + Number(isSaved) - Number(params.serverSaved),
+    ),
+    comments: params.detailPost?.commentCount ?? params.post.commentCount,
+    shares: params.detailPost?.shareCount ?? params.post.shareCount,
+  };
+}
+
+/**
+ * Giữ nguyên tham chiếu object `ReelEngagement` cũ nếu cả 6 giá trị chưa đổi,
+ * giúp `React.memo(MediaTrackItem)` và `React.memo(ReelActionRail)` bỏ qua các Reel không bị bấm.
+ */
+export function reuseReelEngagement(
+  cache: Map<string, ReelEngagement>,
+  postId: string,
+  next: ReelEngagement,
+): ReelEngagement {
+  const prev = cache.get(postId);
+  if (
+    prev &&
+    prev.isLiked === next.isLiked &&
+    prev.isSaved === next.isSaved &&
+    prev.likes === next.likes &&
+    prev.saves === next.saves &&
+    prev.comments === next.comments &&
+    prev.shares === next.shares
+  ) {
+    return prev;
+  }
+  cache.set(postId, next);
+  return next;
 }

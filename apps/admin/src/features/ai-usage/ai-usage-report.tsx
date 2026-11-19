@@ -29,13 +29,6 @@ export function AiUsageReport() {
 
   return (
     <>
-      <div className="admin-page-heading">
-        <div>
-          <p className="admin-eyebrow">{copy.eyebrow}</p>
-          <h1>{copy.title}</h1>
-          <p>{copy.description}</p>
-        </div>
-      </div>
       <form className="admin-filters" onSubmit={(event) => event.preventDefault()}>
         <label>
           {copy.range}

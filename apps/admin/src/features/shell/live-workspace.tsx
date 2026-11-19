@@ -298,7 +298,7 @@ export function AdminWorkspace({ label }: { label: MessageKey }) {
           ) : profile.data ? (
             <>
               {label === 'admin.overview' ? (
-                <AdminOverview />
+                <AdminOverview isSuperadmin={user.role === 'superadmin'} />
               ) : label === 'admin.moderation' ? (
                 <ModerationWorkspace />
               ) : label === 'admin.searchMonitoring' ? (

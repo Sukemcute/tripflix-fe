@@ -736,7 +736,9 @@ function OrderSummary({
       <div className={styles.summaryHead}>
         <span className={styles.summaryTitle}>{copy.summaryTitle}</span>
         <span className={styles.status} data-status={order.status}>
-          {copy.status[order.status as keyof typeof copy.status] ?? order.status}
+          {order.tripStatus === 'completed'
+            ? copy.tripCompleted
+            : (copy.status[order.status as keyof typeof copy.status] ?? order.status)}
         </span>
       </div>
       {order.status === 'pending' && <HoldTimer expiresAt={order.holdExpiresAt} />}

@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { UserProfileStatsDto } from './userProfileStatsDto';
 
 export interface UserActivityListItemDto {
   /** Lượt thích (đặt hoặc đổi cảm xúc) */
@@ -14,6 +15,8 @@ export interface UserActivityListItemDto {
   views: number;
   /** Lượt chat với Tripi */
   chats: number;
+  /** Bài đã đăng (tính từ lúc bắt đầu ghi sự kiện đăng bài) */
+  posts: number;
   /** @nullable */
   lastActiveAt: string | null;
   userId: string;
@@ -27,4 +30,6 @@ export interface UserActivityListItemDto {
    * @nullable
    */
   email: string | null;
+  /** Số liệu hồ sơ từ trước tới nay, không theo khoảng thời gian */
+  profile: UserProfileStatsDto;
 }

@@ -34,8 +34,10 @@ import type {
   TraceListDto,
   UserActivityControllerDetailParams,
   UserActivityControllerListParams,
+  UserActivityControllerOverviewParams,
   UserActivityDetailResponseDto,
   UserActivityListResponseDto,
+  UserActivityOverviewResponseDto,
 } from '../model';
 
 import { http } from '../../../http';
@@ -699,7 +701,7 @@ export const getUserActivityControllerListUrl = (params?: UserActivityController
 
 /**
  * Ngày theo giờ Việt Nam, gồm cả from và to. Mặc định 7 ngày tới hôm nay, tối đa 90 ngày. Sắp theo hoạt động gần nhất.
- * @summary Danh sách người dùng có hoạt động trong khoảng, kèm số lượt thích, bình luận, chia sẻ, xem, chat
+ * @summary Danh sách người dùng có hoạt động trong khoảng, kèm số liệu hồ sơ (theo dõi, lượt thích, bài đăng) và số lượt trong khoảng
  */
 export const userActivityControllerList = async (
   params?: UserActivityControllerListParams,
@@ -794,7 +796,7 @@ export function useUserActivityControllerList<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Danh sách người dùng có hoạt động trong khoảng, kèm số lượt thích, bình luận, chia sẻ, xem, chat
+ * @summary Danh sách người dùng có hoạt động trong khoảng, kèm số liệu hồ sơ (theo dõi, lượt thích, bài đăng) và số lượt trong khoảng
  */
 
 export function useUserActivityControllerList<
@@ -809,6 +811,172 @@ export function useUserActivityControllerList<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getUserActivityControllerListQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type userActivityControllerOverviewResponse200 = {
+  data: UserActivityOverviewResponseDto;
+  status: 200;
+};
+
+export type userActivityControllerOverviewResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type userActivityControllerOverviewResponseSuccess = userActivityControllerOverviewResponse200 & {
+  headers: Headers;
+};
+export type userActivityControllerOverviewResponseError = userActivityControllerOverviewResponse400 & {
+  headers: Headers;
+};
+
+export type userActivityControllerOverviewResponse =
+  userActivityControllerOverviewResponseSuccess | userActivityControllerOverviewResponseError;
+
+export const getUserActivityControllerOverviewUrl = (params?: UserActivityControllerOverviewParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/analytics/user-activity/overview?${stringifiedParams}`
+    : `/api/analytics/user-activity/overview`;
+};
+
+/**
+ * Ngày theo giờ Việt Nam, gồm cả from và to. Mặc định 7 ngày tới hôm nay, tối đa 90 ngày.
+ * @summary Tổng quan hành vi toàn hệ thống: số người hoạt động, bài đăng, chia sẻ, thích, bình luận, xem, chat và số lượt theo ngày
+ */
+export const userActivityControllerOverview = async (
+  params?: UserActivityControllerOverviewParams,
+  options?: Parameters<typeof http>[1],
+): Promise<userActivityControllerOverviewResponse> => {
+  return http<userActivityControllerOverviewResponse>(getUserActivityControllerOverviewUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getUserActivityControllerOverviewQueryKey = (params?: UserActivityControllerOverviewParams) => {
+  return [`/api/analytics/user-activity/overview`, ...(params ? [params] : [])] as const;
+};
+
+export const getUserActivityControllerOverviewQueryOptions = <
+  TData = Awaited<ReturnType<typeof userActivityControllerOverview>>,
+  TError = void,
+>(
+  params?: UserActivityControllerOverviewParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerOverview>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getUserActivityControllerOverviewQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof userActivityControllerOverview>>> = ({ signal }) =>
+    userActivityControllerOverview(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof userActivityControllerOverview>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type UserActivityControllerOverviewQueryResult = NonNullable<
+  Awaited<ReturnType<typeof userActivityControllerOverview>>
+>;
+export type UserActivityControllerOverviewQueryError = void;
+
+export function useUserActivityControllerOverview<
+  TData = Awaited<ReturnType<typeof userActivityControllerOverview>>,
+  TError = void,
+>(
+  params: undefined | UserActivityControllerOverviewParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerOverview>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userActivityControllerOverview>>,
+          TError,
+          Awaited<ReturnType<typeof userActivityControllerOverview>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useUserActivityControllerOverview<
+  TData = Awaited<ReturnType<typeof userActivityControllerOverview>>,
+  TError = void,
+>(
+  params?: UserActivityControllerOverviewParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerOverview>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof userActivityControllerOverview>>,
+          TError,
+          Awaited<ReturnType<typeof userActivityControllerOverview>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useUserActivityControllerOverview<
+  TData = Awaited<ReturnType<typeof userActivityControllerOverview>>,
+  TError = void,
+>(
+  params?: UserActivityControllerOverviewParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerOverview>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Tổng quan hành vi toàn hệ thống: số người hoạt động, bài đăng, chia sẻ, thích, bình luận, xem, chat và số lượt theo ngày
+ */
+
+export function useUserActivityControllerOverview<
+  TData = Awaited<ReturnType<typeof userActivityControllerOverview>>,
+  TError = void,
+>(
+  params?: UserActivityControllerOverviewParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof userActivityControllerOverview>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getUserActivityControllerOverviewQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

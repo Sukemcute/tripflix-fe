@@ -135,6 +135,8 @@
 }
 
 .dockCreateBtn {
+  /* Nằm giữa dock: cách hai icon bên cạnh rộng hơn vài px làm điểm nhấn. */
+  margin-block: 4px;
   background: var(--color-coral);
   color: var(--color-background);
 }
@@ -2356,6 +2358,11 @@ a.authorAvatar {
     gap: 8px;
     width: 100%;
     justify-content: space-around;
+  }
+
+  .dockCreateBtn {
+    margin-block: 0;
+    margin-inline: 4px;
   }
 
   .splitViewContainer {

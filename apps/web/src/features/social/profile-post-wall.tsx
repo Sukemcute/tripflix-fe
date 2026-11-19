@@ -5,7 +5,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { socialApi, useApiSession, useAuthorVlogs, useSocialPosts } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { LoadingDots } from '@/features/shared/loading-dots';
@@ -103,7 +102,6 @@ function PostWall({
       {!items.length && (
         <div className={styles.empty}>
           <h3>{isSavedWall ? vi.api.profileNoSavedPosts : vi.api.profileNoPosts}</h3>
-          <p>{isSavedWall ? vi.api.profileSavedPostsHint : vi.api.profileEmptyWall}</p>
         </div>
       )}
       {items.map((post) => (
@@ -126,9 +124,6 @@ function PostWall({
             onOpenGallery={(id) => router.push(buildPostHref(id))}
             onOpenTag={(tag) => router.push(`/inspiration?q=${encodeURIComponent(tag)}`)}
           />
-          <Link prefetch={false} className={styles.permalink} href={buildPostHref(post.id)}>
-            {vi.api.profileOpenPost} <span aria-hidden="true">↗</span>
-          </Link>
           {commentPostId === post.id && <WallComments key={post.id} post={post} loginHref={loginHref} />}
         </div>
       ))}

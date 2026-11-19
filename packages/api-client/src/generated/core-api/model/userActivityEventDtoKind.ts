@@ -14,4 +14,5 @@ export const UserActivityEventDtoKind = {
   share: 'share',
   view: 'view',
   chat: 'chat',
+  post: 'post',
 } as const;

@@ -6,6 +6,7 @@
  */
 import type { CheckoutDtoPassengerTypesItem } from './checkoutDtoPassengerTypesItem';
 import type { CheckoutDtoStatus } from './checkoutDtoStatus';
+import type { CheckoutDtoTripStatus } from './checkoutDtoTripStatus';
 import type { CheckoutItemDto } from './checkoutItemDto';
 import type { CheckoutRefundDto } from './checkoutRefundDto';
 
@@ -34,4 +35,9 @@ export interface CheckoutDto {
   /** Loại của từng hành khách cần nhập, đúng thứ tự guests; tuổi kiểm theo chặng: người lớn từ 12 tuổi ở chặng đầu, trẻ em tối đa 11 tuổi ở chặng đầu và đủ 2 tuổi ở chặng cuối, em bé dưới 2 tuổi tới chặng cuối */
   passengerTypes: CheckoutDtoPassengerTypesItem[];
   policyVersion: string;
+  /**
+   * Chỉ đơn đã thanh toán: completed khi hôm nay (giờ Việt Nam) đã qua ngày trả phòng / ngày bay cuối, hiện "Đã đi". Đơn huỷ, hoàn tiền, chưa trả là null
+   * @nullable
+   */
+  tripStatus: CheckoutDtoTripStatus;
 }
