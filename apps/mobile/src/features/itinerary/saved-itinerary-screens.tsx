@@ -7,8 +7,9 @@ import { colors, radius, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { LoadingDots } from '@/components/loading-dots';
-import { Badge, Button, Card, Empty, Icon, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { Badge, Button, Empty, Icon, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ACTIVITY_ICONS } from '@/features/booking/activity-card';
+import { styles as timeline } from '@/features/booking/trip-plan-parts';
 import { saveTripBooking } from '@/features/booking/trip-booking-store';
 
 const copy = vi.mobile.savedItinerary;
@@ -114,7 +115,6 @@ function StopRow({ item, onRemove }: { item: SavedItineraryItemDto; onRemove: ()
         : 'location-outline';
   const when = item.time ?? (item.slot ? copy.slots[item.slot] : null);
   const detail = [
-    when,
     item.location,
     item.nights ? t('mobile.savedItinerary.nights', { nights: item.nights }) : null,
   ]
@@ -122,23 +122,29 @@ function StopRow({ item, onRemove }: { item: SavedItineraryItemDto; onRemove: ()
     .join(' · ');
   return (
     <Row style={layout.stop}>
-      <Icon name={icon} size={18} color={colors.ink} />
-      <View style={ui.flex}>
-        <Txt>{item.title}</Txt>
-        {!!detail && (
-          <Txt variant="small" style={ui.muted}>
-            {detail}
-          </Txt>
-        )}
-      </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={copy.removeStop}
-        hitSlop={8}
-        onPress={onRemove}
-      >
-        <Icon name="close" size={18} color={colors.textMuted} />
-      </Pressable>
+      {!!when && (
+        <Txt variant="label" style={layout.stopTime}>{when}</Txt>
+      )}
+      <Row style={layout.stopCard}>
+        <View style={[layout.stopIcon, item.hotel && layout.hotelIcon]}>
+          <Icon name={icon} size={18} color={item.hotel ? colors.background : colors.ink} />
+        </View>
+        <View style={layout.stopBody}>
+          <Txt variant="label">{item.title}</Txt>
+          {!!detail && (
+            <Txt variant="small" style={ui.muted}>{detail}</Txt>
+          )}
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={copy.removeStop}
+          hitSlop={8}
+          onPress={onRemove}
+          style={layout.removeStop}
+        >
+          <Icon name="close" size={18} color={colors.ink} />
+        </Pressable>
+      </Row>
     </Row>
   );
 }
@@ -206,6 +212,7 @@ export function SavedItineraryScreen() {
   return (
     <Screen
       title={itinerary.title}
+      background={colors.surfaceMuted}
       footer={
         <View style={{ gap: spacing.sm }}>
           <Button
@@ -231,19 +238,23 @@ export function SavedItineraryScreen() {
         <Txt variant="small" style={ui.muted}>
           {copy.bookHint}
         </Txt>
-        {days.map(({ day, items }) => (
-          <Card key={day} style={{ gap: spacing.sm }}>
-            <Txt variant="heading">{t('mobile.savedItinerary.day', { day })}</Txt>
-            {items.length === 0 && (
-              <Txt variant="small" style={ui.muted}>
-                {copy.emptyDay}
-              </Txt>
-            )}
-            {items.map(({ index, ...item }) => (
-              <StopRow key={index} item={item} onRemove={() => removeStop(index)} />
-            ))}
-          </Card>
-        ))}
+        <View style={timeline.timeline}>
+          {days.map(({ day, items }, dayIndex) => (
+            <View key={day} style={timeline.day}>
+              {dayIndex < days.length - 1 && <View style={timeline.rail} />}
+              <View style={timeline.dayDot} />
+              <View style={timeline.dayContent}>
+                <Txt style={timeline.dayLabel}>{t('mobile.savedItinerary.day', { day })}</Txt>
+                {items.length === 0 && (
+                  <Txt variant="small" style={ui.muted}>{copy.emptyDay}</Txt>
+                )}
+                {items.map(({ index, ...item }) => (
+                  <StopRow key={index} item={item} onRemove={() => removeStop(index)} />
+                ))}
+              </View>
+            </View>
+          ))}
+        </View>
         {!!itinerary.sourcePostId && (
           <Button
             tone="secondary"
@@ -283,5 +294,28 @@ const layout = StyleSheet.create({
     backgroundColor: colors.seaMist,
   },
   rowTitle: { fontWeight: '700' },
-  stop: { gap: spacing.sm, alignItems: 'center' },
+  stop: { gap: spacing.sm, alignItems: 'flex-start' },
+  stopTime: { width: 49, paddingTop: spacing.md },
+  stopCard: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.sm,
+    alignItems: 'center',
+    padding: spacing.sm,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  stopIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceMuted,
+  },
+  hotelIcon: { backgroundColor: colors.coral },
+  stopBody: { flex: 1, minWidth: 0, gap: 2 },
+  removeStop: { padding: spacing.xs },
 });
