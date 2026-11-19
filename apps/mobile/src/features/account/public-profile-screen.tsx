@@ -11,15 +11,16 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { PostUploadCard } from '@/features/post/post-upload-card';
 import { formatProfileCount, getNameInitials } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { colors as c, mobileLayout, nativeFonts, spacing as s } from '@tripflix/tokens';
+import { colors as c, mobileLayout, nativeFonts, radius, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import { Button, Card, copy, Icon, IconButton, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
-import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
+import { ApiErrorNotice } from '@/components/api-state';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { LoadingDots } from '@/components/loading-dots';
+import { OwnProfileHeading, ProfileHub } from './profile-hub';
 
 const GRID_COLUMNS = 3;
 const GRID_GAP = 1;
@@ -30,10 +31,36 @@ export function PublicProfileScreen() {
   return <ProfileView id={id} />;
 }
 
-/** Tab Tôi (TF47B): trang cá nhân của chính mình, bánh răng mở menu cài đặt; chưa đăng nhập thì bắt đăng nhập. */
+/** Tab Tôi: hồ sơ và tác vụ cá nhân; khách có đường đăng nhập với returnTo. */
 export function MyProfileScreen() {
-  const { user, isReady } = useApiSession();
-  if (!isReady || !user) return <RequireAccount />;
+  const { user, isReady, error, session } = useApiSession();
+  if (!isReady)
+    return (
+      <Screen title={copy.tabs.profile} back={false}>
+        <LoadingDots />
+      </Screen>
+    );
+  if (!user)
+    return (
+      <Screen title={copy.tabs.profile} back={false}>
+        <OwnProfileHeading name={copy.profile.hub.guestTitle} isGuest />
+        <Txt style={ownStyles.body}>{copy.profile.hub.guestBody}</Txt>
+        <Pressable
+          accessibilityRole="button"
+          style={({ pressed }) => [ownStyles.login, pressed && ui.pressed]}
+          onPress={() => router.push({ pathname: '/login', params: { returnTo: '/(tabs)/me' } })}
+        >
+          <Txt style={ownStyles.loginText}>{copy.profile.login}</Txt>
+        </Pressable>
+        <ApiErrorNotice
+          error={error}
+          retry={() => {
+            void session.initialize();
+          }}
+        />
+        <ProfileHub />
+      </Screen>
+    );
   return (
     <ProfileView
       id={user.id}
@@ -72,58 +99,82 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
       ) : (
         <ApiErrorNotice error={profile.error} retry={() => void profile.refetch()} />
       )}
-      {profile.data && (
-        <View style={styles.header}>
-          <View style={styles.avatar}>
-            <Txt variant="title" style={styles.avatarText}>
-              {getNameInitials(name) || 'TF'}
-            </Txt>
+      {profile.data &&
+        (isMine ? (
+          <OwnProfileHeading name={name} stats={stats} />
+        ) : (
+          <View style={styles.header}>
+            <View style={styles.avatar}>
+              <Txt variant="title" style={styles.avatarText}>
+                {getNameInitials(name) || 'TF'}
+              </Txt>
+            </View>
+            <Txt variant="title">{name}</Txt>
+            <View style={styles.stats}>
+              {stats.map((item) => (
+                <View key={item.label} style={styles.stat}>
+                  <Txt variant="label">{formatProfileCount(item.value)}</Txt>
+                  <Txt variant="caption" style={ui.muted}>
+                    {item.label}
+                  </Txt>
+                </View>
+              ))}
+            </View>
+            {isReady && !isMine && (
+              <Button
+                tone={follow.isFollowing ? 'secondary' : 'primary'}
+                compact
+                disabled={!!user && !follow.canToggle}
+                onPress={() => {
+                  if (user) follow.toggle();
+                  else router.push({ pathname: '/login', params: { returnTo: `/user/${id}` } });
+                }}
+              >
+                {follow.isLoading || follow.isUpdating
+                  ? vi.api.loading
+                  : follow.isFollowing
+                    ? vi.api.unfollowAuthor
+                    : vi.api.followAuthor}
+              </Button>
+            )}
+            <ApiErrorNotice error={follow.error} retry={() => void follow.retry()} />
           </View>
-          <Txt variant="title">{name}</Txt>
-          <View style={styles.stats}>
-            {stats.map((item) => (
-              <View key={item.label} style={styles.stat}>
-                <Txt variant="label">{formatProfileCount(item.value)}</Txt>
-                <Txt variant="caption" style={ui.muted}>
-                  {item.label}
-                </Txt>
-              </View>
-            ))}
-          </View>
-          {isReady && !isMine && (
-            <Button
-              tone={follow.isFollowing ? 'secondary' : 'primary'}
-              compact
-              disabled={!!user && !follow.canToggle}
-              onPress={() => {
-                if (user) follow.toggle();
-                else router.push({ pathname: '/login', params: { returnTo: `/user/${id}` } });
-              }}
-            >
-              {follow.isLoading || follow.isUpdating
-                ? vi.api.loading
-                : follow.isFollowing
-                  ? vi.api.unfollowAuthor
-                  : vi.api.followAuthor}
-            </Button>
-          )}
-          <ApiErrorNotice error={follow.error} retry={() => void follow.retry()} />
-        </View>
-      )}
+        ))}
       {/* Bài đang đăng nền hiện ngay trên lưới bài của chính mình, giống TikTok (TF105). */}
       {isMine && <PostUploadCard />}
+      {isMine && <ProfileHub />}
       {profile.data && (
         <>
-          <View style={styles.tabs} accessibilityRole="tablist">
+          {isMine && (
+            <Txt style={ownStyles.section} accessibilityRole="header">
+              {copy.profile.hub.posts}
+            </Txt>
+          )}
+          <View
+            style={isMine ? ownStyles.tabs : styles.tabs}
+            accessibilityRole="tablist"
+            accessibilityLabel={isMine ? copy.profile.hub.posts : undefined}
+          >
             {(['videos', 'posts', ...(isMine ? ['held' as const] : [])] as const).map((key) => (
               <Pressable
                 key={key}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: tab === key }}
                 onPress={() => setTab(key)}
-                style={[styles.tab, tab === key && styles.tabActive]}
+                style={
+                  isMine
+                    ? [ownStyles.tab, tab === key && ownStyles.selectedTab]
+                    : [styles.tab, tab === key && styles.tabActive]
+                }
               >
-                <Txt variant="label" style={tab !== key && ui.muted}>
+                <Txt
+                  variant="label"
+                  style={
+                    isMine
+                      ? [ownStyles.tabText, tab === key && ownStyles.selectedText]
+                      : tab !== key && ui.muted
+                  }
+                >
                   {key === 'held'
                     ? vi.moderation.heldTitle
                     : key === 'videos'
@@ -217,12 +268,13 @@ function HeldPosts({ userId }: { userId: string }) {
     <GridState query={posts} isEmpty={!items.length} emptyText={vi.moderation.heldPostsEmpty}>
       <View style={{ gap: s.md }}>
         {items.map((post) => (
-          <Card key={post.id} style={{ gap: s.sm }}>
+          <Card key={post.id} style={ownStyles.heldCard}>
             <Txt variant="label">{post.title}</Txt>
             <Txt variant="caption">{vi.moderation.heldPost}</Txt>
             <Txt numberOfLines={3}>{post.body}</Txt>
             <Button
               tone="secondary"
+              style={ownStyles.detailButton}
               onPress={() => router.push({ pathname: '/trip/[slug]', params: { slug: post.id } })}
             >
               {vi.api.detail}
@@ -371,4 +423,33 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
   state: { paddingVertical: s.xl },
+});
+
+const ownStyles = StyleSheet.create({
+  heldCard: { gap: s.sm, borderRadius: radius.md, borderWidth: 0, backgroundColor: c.sunSoft },
+  detailButton: { borderRadius: radius.sm, minHeight: 48 },
+  body: { fontSize: 16, lineHeight: 25, color: c.ink },
+  login: {
+    minHeight: 52,
+    borderRadius: radius.sm,
+    backgroundColor: c.coralInk,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: s.md,
+  },
+  loginText: { fontSize: 15, lineHeight: 24, fontFamily: nativeFonts.semibold, color: c.background },
+  section: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: c.navy },
+  tabs: { flexDirection: 'row', gap: s.sm },
+  tab: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: radius.sm,
+    padding: s.sm,
+    backgroundColor: c.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedTab: { backgroundColor: c.coralInk },
+  tabText: { fontSize: 14, lineHeight: 23, color: c.ink, textAlign: 'center' },
+  selectedText: { color: c.background },
 });

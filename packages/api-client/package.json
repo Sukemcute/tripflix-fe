@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./flight-search": "./src/flight-search.ts",
+    "./seo": "./src/seo.ts",
     "./core-api/*": "./src/generated/core-api/*.ts",
     "./ai-service/*": "./src/generated/ai-service/*.ts"
   },

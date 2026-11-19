@@ -4,151 +4,92 @@ import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import type { UserDto } from '@tripflix/api-client/core-api/model/index';
 import { DISPLAY_NAME_MAX, NEW_PASSWORD_MAX } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { colors as c, mobileLayout, nativeFonts, spacing as s } from '@tripflix/tokens';
+import { colors as c, nativeFonts, radius, spacing as s } from '@tripflix/tokens';
 import { Redirect, router, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import {
-  Button,
-  Card,
-  copy,
-  Field,
-  Icon,
-  IconButton,
-  Logo,
-  Notice,
-  Screen,
-  Sheet,
-  Txt,
-  ui,
-} from '@/components/mobile-ui';
+import { Button, Card, copy, Field, Icon, Notice, Screen, Sheet, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount, UnavailableScreen } from '@/components/api-state';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { LoadingDots } from '@/components/loading-dots';
 
 const profile = copy.profile;
 
 /** Menu cài đặt (TF47B): mở từ nút bánh răng trên trang cá nhân ở tab Tôi. */
 export function LiveProfileScreen() {
-  const { user, isReady, error, session } = useApiSession();
+  const { user, error, session } = useApiSession();
   const [help, setHelp] = useState(false);
-  const login = () => router.push({ pathname: '/login', params: { returnTo: '/(tabs)/me' } });
-  const links = [
-    { label: profile.myTrips, icon: 'bag-handle-outline', onPress: () => router.navigate('/my-trips') },
-    { label: profile.savedTrips, icon: 'bookmark-outline', onPress: () => router.push('/saved') },
+  const text = profile.hub;
+  const groups = [
     {
-      label: 'Trạng thái kiểm duyệt',
-      icon: 'shield-checkmark-outline',
-      onPress: () => router.push('/moderation-status' as Href),
+      title: text.accountGroup,
+      tone: c.seaMist,
+      items: [
+        {
+          label: profile.settings,
+          icon: 'person-outline',
+          onPress: () =>
+            router.push(
+              user ? '/account-settings' : { pathname: '/login', params: { returnTo: '/account-settings' } },
+            ),
+        },
+        {
+          label: text.preferences,
+          icon: 'compass-outline',
+          onPress: () => router.push({ pathname: '/onboarding', params: { mode: 'edit' } }),
+        },
+      ],
     },
     {
-      label: profile.create,
-      icon: 'create-outline',
-      onPress: () => router.push(user ? '/create' : { pathname: '/login', params: { returnTo: '/create' } }),
+      title: text.activityGroup,
+      tone: c.sunSoft,
+      items: [
+        {
+          label: copy.common.notification,
+          icon: 'notifications-outline',
+          onPress: () => router.push('/notifications'),
+        },
+        {
+          label: text.moderation,
+          icon: 'shield-checkmark-outline',
+          onPress: () => router.push('/moderation-status' as Href),
+        },
+        { label: profile.help, icon: 'help-buoy-outline', onPress: () => setHelp(true) },
+      ],
     },
-    {
-      label: copy.common.notification,
-      icon: 'notifications-outline',
-      onPress: () => router.push('/notifications'),
-    },
-    {
-      label: 'Gu du lịch',
-      icon: 'compass-outline',
-      onPress: () => router.push({ pathname: '/onboarding', params: { mode: 'edit' } }),
-    },
-    { label: profile.help, icon: 'help-buoy-outline', onPress: () => setHelp(true) },
   ] as const;
-  const stats = [
-    { label: copy.tabs.trips, icon: 'bag-handle-outline', onPress: links[0].onPress },
-    { label: profile.saved, icon: 'bookmark-outline', onPress: links[1].onPress },
-  ] as const;
-  const initials = user?.displayName
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => Array.from(part)[0])
-    .join('')
-    .toLocaleUpperCase('vi-VN');
-
   return (
-    <Screen compact title={profile.menu} padded={false}>
-      <View>
-        <View style={styles.cover}>
-          <Logo />
-          <IconButton
-            name="settings-outline"
-            label={profile.settings}
-            light
-            onPress={() =>
-              router.push(
-                user
-                  ? '/account-settings'
-                  : {
-                      pathname: '/login',
-                      params: { returnTo: '/account-settings' },
-                    },
-              )
-            }
-          />
-        </View>
-        <View style={styles.profileBody}>
-          <View style={styles.avatar}>
-            <Txt variant="title" style={styles.avatarText}>
-              {initials || 'TF'}
-            </Txt>
-          </View>
-          <Txt variant="title" style={styles.profileName}>
-            {isReady ? (user?.displayName ?? profile.guest) : vi.api.loading}
+    <Screen compact title={profile.menu}>
+      <Txt style={styles.title} accessibilityRole="header">
+        {profile.menu}
+      </Txt>
+      <Txt style={styles.body}>{text.settingsBody}</Txt>
+      <ApiErrorNotice
+        error={error}
+        retry={() => {
+          void session.initialize();
+        }}
+      />
+      {groups.map((group) => (
+        <View key={group.title} style={[styles.menuGroup, { backgroundColor: group.tone }]}>
+          <Txt style={styles.groupTitle} accessibilityRole="header">
+            {group.title}
           </Txt>
-          {isReady && (
-            <Txt variant="small" style={ui.muted}>
-              {user?.email ?? profile.body}
-            </Txt>
-          )}
-          {isReady && !user && (
-            <Button onPress={login} style={styles.signIn}>
-              {profile.login}
-            </Button>
-          )}
-          <ApiErrorNotice
-            error={error}
-            retry={() => {
-              void session.initialize();
-            }}
-          />
-          <View style={styles.stats}>
-            {stats.map((item, index) => (
-              <Pressable
-                key={item.label}
-                accessibilityRole="button"
-                onPress={item.onPress}
-                style={[styles.stat, index < stats.length - 1 && styles.statDivider]}
-              >
-                <Icon name={item.icon} />
-                <Txt variant="caption" style={[ui.center, ui.muted]}>
-                  {item.label}
-                </Txt>
-              </Pressable>
-            ))}
-          </View>
-          {links.map((item) => (
-            <Pressable key={item.label} accessibilityRole="button" onPress={item.onPress} style={styles.menu}>
-              <View style={styles.menuIcon}>
-                <Icon name={item.icon} color={c.tealInk} />
-              </View>
-              <Txt variant="small" style={ui.flex}>
-                {item.label}
-              </Txt>
-              <Icon name="chevron-forward" size={mobileIconSize.inline} color={c.textMuted} />
+          {group.items.map((item) => (
+            <Pressable
+              key={item.label}
+              accessibilityRole="button"
+              onPress={item.onPress}
+              style={({ pressed }) => [styles.menu, pressed && ui.pressed]}
+            >
+              <Icon name={item.icon} size={22} color={c.ink} />
+              <Txt style={styles.menuLabel}>{item.label}</Txt>
+              <Icon name="chevron-forward" size={18} color={c.ink} />
             </Pressable>
           ))}
-          <Txt variant="caption" style={[ui.center, ui.muted, styles.tagline]}>
-            {vi.app.slogan}.
-          </Txt>
         </View>
-      </View>
+      ))}
       <Sheet title={profile.help} visible={help} onClose={() => setHelp(false)}>
-        <Txt variant="small">{profile.liveHelpBody}</Txt>
+        <Txt style={styles.body}>{profile.liveHelpBody}</Txt>
       </Sheet>
     </Screen>
   );
@@ -266,49 +207,10 @@ export function LiveTripsScreen() {
 }
 
 const styles = StyleSheet.create({
-  cover: {
-    height: 120,
-    backgroundColor: c.seaMist,
-    padding: mobileLayout.gutter,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  profileBody: { paddingHorizontal: mobileLayout.gutter },
-  avatar: {
-    marginTop: -39,
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 4,
-    borderColor: c.background,
-    backgroundColor: c.sunSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { ...compactType.title, fontFamily: nativeFonts.bold },
-  profileName: { marginTop: s.md, marginBottom: s.xs },
-  signIn: { marginTop: s.lg },
-  stats: { flexDirection: 'row', marginVertical: s.xl },
-  stat: {
-    flex: 1,
-    gap: s.xs,
-    minHeight: mobileLayout.touchTarget,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: s.xs,
-  },
-  statDivider: {
-    borderRightColor: c.border,
-    borderRightWidth: StyleSheet.hairlineWidth,
-  },
-  menu: { flexDirection: 'row', alignItems: 'center', gap: s.md, paddingVertical: s.md, minHeight: 60 },
-  menuIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: c.seaMist,
-  },
-  tagline: { marginTop: s.xl },
+  title: { fontSize: 28, lineHeight: 38, fontFamily: nativeFonts.bold, color: c.navy },
+  body: { fontSize: 16, lineHeight: 25, color: c.ink },
+  menuGroup: { padding: s.lg, gap: s.sm, borderRadius: radius.md },
+  groupTitle: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: c.navy },
+  menu: { flexDirection: 'row', alignItems: 'center', gap: s.md, paddingVertical: s.md, minHeight: 56 },
+  menuLabel: { flex: 1, fontSize: 16, lineHeight: 25, color: c.ink },
 });

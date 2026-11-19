@@ -5,8 +5,10 @@ import styles from '@/features/discovery/hotel-listing.module.css';
 import { vi } from '@tripflix/i18n';
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import { NOINDEX_ROBOTS } from '@/features/seo/page-metadata';
 
-export const metadata: Metadata = { title: `${vi.ota.listingTitle} | Tripflix` };
+// Kết quả lọc theo tham số URL: vô số biến thể trùng nội dung, không cho lên kết quả tìm kiếm (TF112).
+export const metadata: Metadata = { title: `${vi.ota.listingTitle} | Tripflix`, robots: NOINDEX_ROBOTS };
 
 export default async function SearchPage({
   searchParams,

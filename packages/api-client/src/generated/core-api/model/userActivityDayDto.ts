@@ -8,6 +8,8 @@
 export interface UserActivityDayDto {
   /** Ngày theo giờ Việt Nam */
   date: string;
+  /** Số người khác nhau có hoạt động trong ngày */
+  activeUsers: number;
   reactions: number;
   comments: number;
   shares: number;

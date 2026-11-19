@@ -537,6 +537,7 @@ export * from './userActivityOverviewResponseDto';
 export * from './userActivityTotalsDto';
 export * from './userDto';
 export * from './userDtoRole';
+export * from './userProfileStatsDto';
 export * from './userSearchControllerSearchParams';
 export * from './userSearchItemDto';
 export * from './userSearchResponseDto';

@@ -1,0 +1,68 @@
+{
+  "passed": true,
+  "previewOnly": true,
+  "checks": [
+    {
+      "width": 375,
+      "navigation": true,
+      "pendingDraftEmptyErrorGuestPublic": true,
+      "states": [
+        "member",
+        "guest",
+        "pending",
+        "paying",
+        "expired",
+        "draft",
+        "empty",
+        "orders_error",
+        "draft_error",
+        "long_name",
+        "public_profile"
+      ],
+      "landscapeLargeTextTabletReducedMotion": false,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "navigation": true,
+      "pendingDraftEmptyErrorGuestPublic": true,
+      "states": [
+        "member",
+        "guest",
+        "pending",
+        "paying",
+        "expired",
+        "draft",
+        "empty",
+        "orders_error",
+        "draft_error",
+        "long_name",
+        "public_profile"
+      ],
+      "landscapeLargeTextTabletReducedMotion": true,
+      "overflow": false
+    },
+    {
+      "width": 430,
+      "navigation": true,
+      "pendingDraftEmptyErrorGuestPublic": true,
+      "states": [
+        "member",
+        "guest",
+        "pending",
+        "paying",
+        "expired",
+        "draft",
+        "empty",
+        "orders_error",
+        "draft_error",
+        "long_name",
+        "public_profile"
+      ],
+      "landscapeLargeTextTabletReducedMotion": false,
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "writes": []
+}
