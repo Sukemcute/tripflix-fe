@@ -34,6 +34,9 @@ export interface PostCardProps {
   onOpenTag?: (tag: string) => void;
   onViewItinerary?: (postId: string) => void;
   onOpenGallery?: (postId: string, imageIndex: number) => void;
+  /** Wall cá nhân chỉ hiện ảnh tác giả thực sự đính kèm. */
+  showSuggestedImages?: boolean;
+  defaultExpanded?: boolean;
 }
 
 export function PostCard({
@@ -49,8 +52,10 @@ export function PostCard({
   onOpenTag,
   onViewItinerary,
   onOpenGallery,
+  showSuggestedImages = true,
+  defaultExpanded = false,
 }: PostCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [isClamped, setIsClamped] = useState(false);
   const contentRef = useRef<HTMLParagraphElement | null>(null);
 
@@ -87,6 +92,7 @@ export function PostCard({
   );
 
   const postImages = useMemo(() => {
+    if (!showSuggestedImages) return (post.images ?? []).map((image) => ({ src: image.url }));
     return getPostImages({
       uploadedImageUrls: post.images?.map((image) => image.url),
       mediaIds: post.mediaIds,
@@ -97,7 +103,7 @@ export function PostCard({
       hashtags: post.hashtags,
       itineraryItems: trip?.items,
     });
-  }, [post, trip]);
+  }, [post, trip, showSuggestedImages]);
 
   const coverImage = postImages[0]?.src;
 
