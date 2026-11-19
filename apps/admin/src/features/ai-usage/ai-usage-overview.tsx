@@ -19,7 +19,7 @@ import { formatUsd } from './ai-usage-range';
 const copy = vi.aiUsage;
 const GROUPS = Object.keys(copy.groups) as AiUsageControllerGetAiUsageGroupBy[];
 const REFRESH_MS = 30_000;
-const compact = new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 });
+const compact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
 
 /** Tên nhóm cho người đọc: tính năng dịch sang tiếng Việt, ngày và model giữ nguyên. */
 const groupLabel = (groupBy: AiUsageControllerGetAiUsageGroupBy, key: string) =>

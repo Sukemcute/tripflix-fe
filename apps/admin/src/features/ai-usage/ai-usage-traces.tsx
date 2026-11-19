@@ -153,7 +153,7 @@ export function AiUsageTraces({
                         {item.turnId ? (
                           <button
                             type="button"
-                            className="rounded-md border border-border px-3 py-1 text-xs font-semibold text-teal-ink hover:bg-teal-soft"
+                            className="whitespace-nowrap rounded-md border border-border px-3 py-1 text-xs font-semibold text-teal-ink hover:bg-teal-soft"
                             onClick={() => setSelected(item.turnId)}
                           >
                             {copy.viewDetail}
