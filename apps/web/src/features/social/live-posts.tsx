@@ -103,6 +103,7 @@ import { ReelSeekBar } from './reel-seek-bar';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
+import { ReplyQuote, scrollToQuotedComment, shouldShowReplyQuote } from './reply-quote';
 import styles from './live-posts.module.css';
 import { PostImagePicker } from './composer/post-image-picker';
 import { usePostImages } from './composer/use-post-images';
@@ -2617,6 +2618,13 @@ export function RightPanelCommentsSynchronized({
     }
   };
 
+  const handleJumpToComment = useCallback(
+    (targetCommentId: string) => {
+      scrollToQuotedComment(scrollContainerRef.current, targetCommentId);
+    },
+    [scrollContainerRef],
+  );
+
   const query = useInfiniteQuery({
     queryKey: ['social', 'comments', post.id, undefined, user?.id],
     initialPageParam: undefined as string | undefined,
@@ -2733,6 +2741,7 @@ export function RightPanelCommentsSynchronized({
               comment={comment}
               loginHref={loginHref}
               onReplySelect={(target) => handleReplySelect(target)}
+              onJumpToComment={handleJumpToComment}
               focusCommentId={focusCommentId}
               focusedReply={focusedReply?.parentCommentId === comment.id ? focusedReply : undefined}
             />
@@ -2905,6 +2914,7 @@ function CommentNode({
   isReply = false,
   loginHref,
   onReplySelect,
+  onJumpToComment,
   focusCommentId,
   focusedReply,
 }: {
@@ -2920,7 +2930,10 @@ function CommentNode({
     likeCount: number;
     isLiked: boolean;
     authorName?: string | null;
+    parentCommentId?: string | null;
+    replyToCommentId?: string | null;
     replyToName?: string | null;
+    replyToExcerpt?: string | null;
     moderationState?: 'hidden' | null;
     status?: SocialCommentDto['status'];
     creatorReview?: SocialCommentDto['creatorReview'];
@@ -2929,6 +2942,7 @@ function CommentNode({
   isReply?: boolean;
   loginHref: string;
   onReplySelect: (target: { id: string; authorName: string }) => void;
+  onJumpToComment?: (commentId: string) => void;
   focusCommentId?: string;
   /** Trả lời được nhắc tới trong thông báo: luôn hiện dù chưa nằm trong trang trả lời đã tải. */
   focusedReply?: SocialCommentDto;
@@ -2938,6 +2952,13 @@ function CommentNode({
   const [showRepliesChoice, setShowReplies] = useState<boolean | null>(null);
   const showReplies = showRepliesChoice ?? Boolean(focusedReply);
   const isFocused = comment.id === focusCommentId;
+  const quotedCommentId = shouldShowReplyQuote({
+    isReply,
+    parentCommentId: comment.parentCommentId,
+    replyToCommentId: comment.replyToCommentId,
+  })
+    ? comment.replyToCommentId
+    : null;
   const focusRef = useRef<HTMLLIElement | null>(null);
   useEffect(() => {
     if (isFocused) focusRef.current?.scrollIntoView({ block: 'center' });
@@ -3063,7 +3084,12 @@ function CommentNode({
 
   if (comment.moderationState === 'hidden') {
     return (
-      <li ref={focusRef} id={`comment-${comment.id}`} className={styles.panelCommentItem}>
+      <li
+        ref={focusRef}
+        id={`comment-${comment.id}`}
+        data-comment-id={comment.id}
+        className={styles.panelCommentItem}
+      >
         <ModeratedComment />
         <ApiErrorNotice error={commentMutation.error} />
         {isMine && (
@@ -3077,8 +3103,21 @@ function CommentNode({
   }
 
   if (comment.status === 'held') return (
-    <li ref={focusRef} id={`comment-${comment.id}`} className={styles.panelCommentItem}>
+    <li
+      ref={focusRef}
+      id={`comment-${comment.id}`}
+      data-comment-id={comment.id}
+      className={styles.panelCommentItem}
+    >
       <strong>{authorDisplay.name} · {vi.moderation.heldTitle}</strong>
+      {quotedCommentId && (
+        <ReplyQuote
+          replyToCommentId={quotedCommentId}
+          replyToName={comment.replyToName}
+          replyToExcerpt={comment.replyToExcerpt ?? null}
+          onJump={onJumpToComment}
+        />
+      )}
       <p className={styles.panelCommentText}>
         {parseCommentSegments(comment.body, comment.mentions).map((segment, index) =>
           segment.type === 'mention' && segment.userId ? (
@@ -3105,6 +3144,7 @@ function CommentNode({
     <li
       ref={focusRef}
       id={`comment-${comment.id}`}
+      data-comment-id={comment.id}
       className={`${styles.panelCommentItem} ${isFocused ? styles.panelCommentFocused : ''}`}
     >
       <CommentVisibility commentId={comment.id} isMine={isMine} loginHref={loginHref} className={styles.panelCommentRow}>
@@ -3125,7 +3165,6 @@ function CommentNode({
               <Link prefetch={false} className={styles.profileLink} href={`/u/${comment.authorId}`}>
                 {authorDisplay.name}
               </Link>
-              {comment.replyToName && ` ↳ ${comment.replyToName}`}
             </span>
             {isAuthorVerified && (
               <span className={styles.commentVerifiedIcon} data-tooltip="Tài khoản đã xác minh">
@@ -3215,22 +3254,32 @@ function CommentNode({
               </div>
             </form>
           ) : (
-            <p className={styles.panelCommentText}>
-              {parseCommentSegments(comment.body, comment.mentions).map((segment, index) =>
-                segment.type === 'mention' && segment.userId ? (
-                  <Link
-                    key={index}
-                    prefetch={false}
-                    href={`/u/${segment.userId}`}
-                    className={styles.commentMentionLink}
-                  >
-                    {segment.text}
-                  </Link>
-                ) : (
-                  <Fragment key={index}>{segment.text}</Fragment>
-                ),
+            <>
+              {quotedCommentId && (
+                <ReplyQuote
+                  replyToCommentId={quotedCommentId}
+                  replyToName={comment.replyToName}
+                  replyToExcerpt={comment.replyToExcerpt ?? null}
+                  onJump={onJumpToComment}
+                />
               )}
-            </p>
+              <p className={styles.panelCommentText}>
+                {parseCommentSegments(comment.body, comment.mentions).map((segment, index) =>
+                  segment.type === 'mention' && segment.userId ? (
+                    <Link
+                      key={index}
+                      prefetch={false}
+                      href={`/u/${segment.userId}`}
+                      className={styles.commentMentionLink}
+                    >
+                      {segment.text}
+                    </Link>
+                  ) : (
+                    <Fragment key={index}>{segment.text}</Fragment>
+                  ),
+                )}
+              </p>
+            </>
           )}
 
           {!isEditing && (
@@ -3327,6 +3376,7 @@ function CommentNode({
                     isReply
                     loginHref={loginHref}
                     onReplySelect={onReplySelect}
+                    onJumpToComment={onJumpToComment}
                     focusCommentId={focusCommentId}
                   />
                 ))}

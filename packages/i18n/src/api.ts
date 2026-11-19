@@ -846,6 +846,8 @@ export const api = {
   immersiveFeaturedComments: 'Bình luận nổi bật',
   immersiveReplyingTo: 'Đang trả lời {name}',
   immersiveCancelReply: 'Hủy trả lời',
+  commentReplyQuoteTitle: 'Trả lời {name}',
+  commentQuoteUnavailable: 'Bình luận không còn hiển thị',
   // Trang cá nhân công khai (TF47)
   personalPage: 'Trang cá nhân',
   settingsMenu: 'Cài đặt',
