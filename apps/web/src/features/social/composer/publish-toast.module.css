@@ -73,3 +73,10 @@
     animation: none;
   }
 }
+
+/* Điện thoại: nằm trên thanh điều hướng đáy (features/shell, TF98). */
+@media (max-width: 767px) {
+  .toast {
+    bottom: calc(var(--mobile-tab-bar-space, 0px) + 12px);
+  }
+}

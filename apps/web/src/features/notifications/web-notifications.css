@@ -136,3 +136,9 @@
     bottom: 88px;
   }
 }
+/* Điện thoại: không thấp hơn thanh điều hướng đáy (features/shell, TF98); giữ mốc 88px cũ khi thanh đáy thấp hơn. */
+@media (max-width: 767px) {
+  .notification-toasts {
+    bottom: max(88px, calc(var(--mobile-tab-bar-space, 0px) + 16px));
+  }
+}
