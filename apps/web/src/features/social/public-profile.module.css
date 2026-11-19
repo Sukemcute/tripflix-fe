@@ -14,7 +14,7 @@
 
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 26px;
   padding: 32px 32px 24px;
 }
@@ -56,6 +56,23 @@
   color: var(--color-text-muted);
   font-size: 0.82rem;
   overflow-wrap: anywhere;
+}
+/* Số liệu nằm trong thẻ Giới thiệu ở màn rộng; màn hẹp hiện lại ở đây như thiết kế cũ. */
+.stats {
+  display: none;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+.stats strong {
+  display: inline-block;
+  margin-right: 3px;
+  color: var(--color-ink);
+  font-size: 0.95rem;
 }
 .actions {
   position: absolute;
@@ -279,10 +296,14 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .sidebar {
-    position: static;
-  }
-  .videoPreview {
     display: none;
+  }
+  .header {
+    align-items: flex-start;
+  }
+  .stats {
+    display: flex;
+    gap: 14px;
   }
   .videoGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -315,6 +336,14 @@
   }
   .name {
     font-size: 1.2rem;
+  }
+  .stats {
+    margin: 14px 0 0;
+    gap: 8px 14px;
+    font-size: 0.66rem;
+  }
+  .stats strong {
+    font-size: 0.8rem;
   }
   .handle {
     font-size: 0.7rem;

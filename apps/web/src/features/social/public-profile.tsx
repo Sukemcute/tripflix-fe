@@ -74,6 +74,14 @@ export function PublicProfile({ userId }: { userId: string }) {
                 từ tên hiển thị như các chỗ khác (formatAuthorDisplay). */}
               <p className={styles.handle}>{handle}</p>
             </div>
+            {/* Chỉ hiện ở màn hẹp: giữ thiết kế mobile cũ, không có thẻ Giới thiệu. */}
+            <ul className={styles.stats}>
+              {stats.map((item) => (
+                <li key={item.label}>
+                  <strong>{formatProfileCount(item.value)}</strong> {item.label}
+                </li>
+              ))}
+            </ul>
             <div className={styles.actions}>
               {isMine && (
                 <Link prefetch={false} className="secondary-button" href="/account">
@@ -149,10 +157,6 @@ export function PublicProfile({ userId }: { userId: string }) {
               {vi.api.profileIntro}
             </h2>
             <ul className={styles.introList}>
-              <li>
-                <SocialIcon name="info" size={18} />
-                <span>{handle}</span>
-              </li>
               {stats.map((item) => (
                 <li key={item.label}>
                   <SocialIcon name={item.icon} size={18} />
@@ -190,7 +194,7 @@ function VideoPreview({ userId, onShowAll }: { userId: string; onShowAll: () => 
   const items = reels.data?.pages[0]?.items.slice(0, 6) ?? [];
   if (!items.length) return null;
   return (
-    <section className={`${styles.card} ${styles.videoPreview}`} aria-labelledby="profile-video-preview-title">
+    <section className={styles.card} aria-labelledby="profile-video-preview-title">
       <div className={styles.cardHeading}>
         <h2 id="profile-video-preview-title" className={styles.cardTitle}>
           {vi.api.profileVideos}
