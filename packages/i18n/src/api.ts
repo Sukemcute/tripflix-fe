@@ -870,5 +870,4 @@ export const api = {
   profileNoSavedVideos: 'Chưa có video đã lưu.',
   profileLoadMore: 'Xem thêm',
   profileIntro: 'Giới thiệu',
-  profileSeeAll: 'Xem tất cả',
 } as const;
