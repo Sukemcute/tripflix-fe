@@ -20,6 +20,7 @@ import grid from './search-results-grid.module.css';
 import styles from './public-profile.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
 import { ProfilePostWall, SavedPostWall } from './profile-post-wall';
+import { ProfileComposer } from './profile-composer';
 
 /** Trang cá nhân công khai (TF47): mở khi bấm tên hoặc avatar một người. */
 export function PublicProfile({ userId }: { userId: string }) {
@@ -178,7 +179,10 @@ export function PublicProfile({ userId }: { userId: string }) {
           {activeTab === 'videos' ? (
             <ReelGrid key={userId} userId={userId} />
           ) : activeTab === 'posts' ? (
-            <ProfilePostWall key={userId} userId={userId} />
+            <>
+              {isMine && <ProfileComposer className={styles.composer} />}
+              <ProfilePostWall key={userId} userId={userId} />
+            </>
           ) : (
             <SavedProfileContent key={userId} userId={userId} />
           )}

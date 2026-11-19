@@ -863,7 +863,6 @@ export const api = {
   profileSavedKind: 'Loại nội dung đã lưu',
   profileNoSavedPosts: 'Chưa có bài viết đã lưu.',
   profileNoSavedVideos: 'Chưa có video đã lưu.',
-  profileOpenPost: 'Xem chi tiết bài viết',
   profileLoadMore: 'Xem thêm',
   profileIntro: 'Giới thiệu',
   profileSeeAll: 'Xem tất cả',

@@ -145,21 +145,6 @@
   border-radius: 18px;
   box-shadow: 0 4px 20px color-mix(in srgb, var(--color-ink) 3%, transparent);
 }
-.permalink {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 6px;
-  width: fit-content;
-  margin: 10px 6px 0 auto;
-  color: var(--color-text-muted);
-  font-size: 0.72rem;
-  text-decoration: none;
-}
-.permalink:hover {
-  color: var(--color-teal-ink);
-  text-decoration: underline;
-}
 .comments {
   display: flex;
   flex-direction: column;
@@ -295,7 +280,8 @@
   .layout {
     grid-template-columns: minmax(0, 1fr);
   }
-  .sidebar {
+  .sidebar,
+  .composer {
     display: none;
   }
   .header {
