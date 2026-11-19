@@ -21,12 +21,15 @@ import {
   createPlacedSticker,
   findFrameOption,
   findStickerPreset,
+  clearLegacyAvatarDecor,
   loadUserAvatarDecor,
-  saveUserAvatarDecor,
   snapStickerToOuterRim,
   type AvatarFrameId,
   type PlacedSticker,
+  type StoredAvatarDecor,
 } from './avatar-stickers';
+
+const isEmptyDecor = (decor: StoredAvatarDecor) => decor.frameId === 'none' && decor.stickers.length === 0;
 
 /** Cạnh ảnh sau khi cắt: đủ nét cho avatar 96px trên màn hình mật độ cao. */
 const AVATAR_EDGE_PX = 512;
@@ -70,16 +73,33 @@ export function AvatarEditor({ user }: { user: MyProfileDto }) {
       await session.reloadUser();
     },
   });
+  const saveDecor = useMutation({
+    mutationFn: async (decor: StoredAvatarDecor) => {
+      if (isEmptyDecor(decor)) await auth.accountControllerRemoveAvatarDecor();
+      else await auth.accountControllerSetAvatarDecor(decor);
+      await session.reloadUser();
+    },
+  });
+  // Bản trang trí cũ chỉ nằm trong máy (trước khi có API): chuyển lên server một lần để người khác cũng thấy.
+  const hasServerDecor = user.avatarDecor !== null;
+  const { mutate: migrateDecor } = saveDecor;
+  useEffect(() => {
+    if (hasServerDecor) return;
+    const legacy = loadUserAvatarDecor(user.id);
+    if (isEmptyDecor(legacy)) return;
+    migrateDecor(legacy, { onSuccess: () => clearLegacyAvatarDecor(user.id) });
+  }, [hasServerDecor, user.id, migrateDecor]);
   const isBusy = change.isPending || remove.isPending;
   const error = hasTypeError
     ? vi.api.avatarWrongType
-    : change.isError || remove.isError
+    : change.isError || remove.isError || saveDecor.isError
       ? vi.api.avatarFailed
       : null;
   const resetErrors = () => {
     setTypeError(false);
     change.reset();
     remove.reset();
+    saveDecor.reset();
   };
 
   return (
@@ -183,6 +203,7 @@ export function AvatarEditor({ user }: { user: MyProfileDto }) {
             setIsDecorDialogOpen(false);
           }}
           onSavePhoto={(blob) => change.mutate(blob)}
+          onSaveDecor={(decor) => saveDecor.mutate(decor)}
         />
       )}
       {error && (
@@ -204,12 +225,14 @@ function AvatarCropDialog({
   onPickAnother,
   onClose,
   onSavePhoto,
+  onSaveDecor,
 }: {
   user: MyProfileDto;
   pickedSrc: string | null;
   onPickAnother: () => void;
   onClose: () => void;
   onSavePhoto: (blob: Blob) => void;
+  onSaveDecor: (decor: StoredAvatarDecor) => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const image = useRef<HTMLImageElement>(null);
@@ -224,7 +247,10 @@ function AvatarCropDialog({
   } | null>(null);
   const nextStickerCounter = useRef(1);
 
-  const initialDecor = loadUserAvatarDecor(user.id);
+  const initialDecor: StoredAvatarDecor = {
+    frameId: (user.avatarDecor?.frameId ?? 'none') as AvatarFrameId,
+    stickers: user.avatarDecor?.stickers ?? [],
+  };
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [view, setView] = useState<CropView | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -314,7 +340,8 @@ function AvatarCropDialog({
 
   const handleSave = () => {
     if (isSaving) return;
-    saveUserAvatarDecor(user.id, { frameId, stickers });
+    if (JSON.stringify({ frameId, stickers }) !== JSON.stringify(initialDecor))
+      onSaveDecor({ frameId, stickers });
 
     const shouldUploadPhoto = canCrop && (isNewPhoto || isViewChanged);
     if (!shouldUploadPhoto) {
