@@ -43,9 +43,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi">
       <body className="min-h-dvh bg-background text-text antialiased">
-        <a href="#content" className="skip-link">
-          {vi.demo.common.explore}
-        </a>
         <Providers>
           <ButtonRipple />
           <header className="ota-header" id="top">
