@@ -89,6 +89,12 @@ import {
   toReelPost,
   type ReelPost,
 } from './reel-post';
+import {
+  createReactionBatcher,
+  invalidateAfterReelEngagement,
+  resolveMediaErrorOnPostChange,
+  type ReelReactionKind,
+} from './reel-reaction-batch';
 import { attachReelHlsSource, REEL_START_SHORT_SIDE, type ReelHlsBufferControl } from './reel-hls';
 import { ReelSeekBar } from './reel-seek-bar';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
@@ -615,6 +621,7 @@ interface MediaTrackItemProps {
   showPlayFlash: boolean;
   mediaErrorPostId: string | null;
   onMediaError: (postId: string) => void;
+  onRetryMedia: (postId: string) => void;
   onTogglePlay: () => void;
   captionExpandedPostId: string | null;
   onToggleCaption: (postId: string) => void;
@@ -775,6 +782,7 @@ function MediaTrackItem({
   showPlayFlash,
   mediaErrorPostId,
   onMediaError,
+  onRetryMedia,
   onTogglePlay,
   captionExpandedPostId,
   onToggleCaption,
@@ -831,6 +839,8 @@ function MediaTrackItem({
   const { isSettled: isPlaybackSessionSettled, refresh: refreshPlaybackSession } = usePlaybackSession();
   // Số lần đã xin cookie mới vì lỗi 403 cho Reel này; tăng lên là gắn lại nguồn với cookie mới.
   const [authRetryCount, setAuthRetryCount] = useState(0);
+  // Tăng lên khi người xem bấm Thử lại ở màn lỗi video để gắn lại nguồn phát.
+  const [retryNonce, setRetryNonce] = useState(0);
   // Hàm của cha đổi mỗi lần render; giữ bản mới nhất trong ref để effect gắn nguồn không chạy lại vì nó.
   const reportMediaError = useRef(() => onMediaError(post.id));
   useEffect(() => {
@@ -856,7 +866,7 @@ function MediaTrackItem({
   }, [onFirstFrame, post.id]);
   useEffect(() => {
     const video = localVideoRef.current;
-    if (!shouldAttachSource || !video || !hlsUrl || !isPlaybackSessionSettled) return;
+    if (!shouldAttachSource || isMediaError || !video || !hlsUrl || !isPlaybackSessionSettled) return;
     const onLoadedData = () => {
       setFirstFrameUrl(hlsUrl);
       reportFirstFrame.current();
@@ -890,7 +900,7 @@ function MediaTrackItem({
       bufferControlRef.current = null;
       release();
     };
-  }, [shouldAttachSource, hlsUrl, levelsKey, isPlaybackSessionSettled, authRetryCount, refreshPlaybackSession]);
+  }, [shouldAttachSource, isMediaError, hlsUrl, levelsKey, isPlaybackSessionSettled, authRetryCount, retryNonce, refreshPlaybackSession]);
 
 
   return (
@@ -913,7 +923,21 @@ function MediaTrackItem({
       {!reelCard?.video || isMediaError ? (
         <output className={styles.reelPendingStage}>
           {isMediaError ? (
-            <span className={styles.reelPendingText}>{vi.api.immersiveMediaError}</span>
+            <>
+              <span className={styles.reelPendingText}>{vi.api.immersiveMediaError}</span>
+              <button
+                type="button"
+                className={styles.reelRetryBtn}
+                onClick={() => {
+                  setFirstFrameUrl(null);
+                  setAuthRetryCount(0);
+                  setRetryNonce((count) => count + 1);
+                  onRetryMedia(post.id);
+                }}
+              >
+                {vi.api.retry}
+              </button>
+            </>
           ) : (
             <span className={styles.reelPendingSpinner} aria-label={vi.api.loading} />
           )}
@@ -1283,7 +1307,15 @@ export function InspirationImmersiveViewer({
   }, [posts, reelMap, activeIndex]);
 
   const activePost = activeIndex >= 0 ? posts[activeIndex] ?? null : null;
-  const isMediaError = Boolean(activePost && mediaErrorPostId === activePost.id);
+  const nextMediaErrorPostId = resolveMediaErrorOnPostChange(mediaErrorPostId, activePost?.id);
+  if (nextMediaErrorPostId !== mediaErrorPostId) {
+    setMediaErrorPostId(nextMediaErrorPostId);
+  }
+  const isMediaError = Boolean(activePost && nextMediaErrorPostId === activePost.id);
+
+  const handleRetryMedia = useCallback((postId: string) => {
+    setMediaErrorPostId((current) => (current === postId ? null : current));
+  }, []);
 
   const trip = activePost?.tripAttachment ?? null;
   const reelCard = activePost ? reelMap.get(activePost.id) : undefined;
@@ -1693,12 +1725,53 @@ export function InspirationImmersiveViewer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [navigateStep]);
 
-  // Optimistic mutation cho Like / Save / Share với rollback khi lỗi
+  const isMountedRef = useRef(true);
+  const clearOptimisticState = useCallback((postId: string, type: ReelReactionKind) => {
+    if (!isMountedRef.current) return;
+    if (type === 'like') {
+      setOptimisticLikes((prev) => {
+        if (!(postId in prev)) return prev;
+        const next = { ...prev };
+        delete next[postId];
+        return next;
+      });
+      return;
+    }
+    setOptimisticSaves((prev) => {
+      if (!(postId in prev)) return prev;
+      const next = { ...prev };
+      delete next[postId];
+      return next;
+    });
+  }, []);
+
+  const reactionBatcherRef = useRef<ReturnType<typeof createReactionBatcher> | null>(null);
+  const engagementMutateRef = useRef<(payload: {
+    postId: string;
+    type: 'like' | 'save' | 'share';
+    nextSelected?: boolean;
+    rollbackCache?: () => void;
+  }) => void>(() => {});
+
+  const getReactionBatcher = useCallback(() => {
+    if (!reactionBatcherRef.current) {
+      reactionBatcherRef.current = createReactionBatcher({
+        onCommit: (commit) => engagementMutateRef.current(commit),
+        onSkip: ({ postId, type }) => clearOptimisticState(postId, type),
+      });
+    }
+    return reactionBatcherRef.current;
+  }, [clearOptimisticState]);
+
+  // Optimistic mutation cho Like / Save / Share chạy tuần tự theo scope và chỉ xoá optimistic khi hết lượt chờ
   const engagementMutation = useMutation({
+    mutationKey: ['reel-engagement'],
+    scope: { id: 'reel-engagement' },
     mutationFn: async (payload: {
       postId: string;
       type: 'like' | 'save' | 'share';
       nextSelected?: boolean;
+      rollbackCache?: () => void;
     }) => {
       if (payload.type === 'like') {
         return socialApi.setReaction(payload.postId, payload.nextSelected ? 'like' : null);
@@ -1709,42 +1782,11 @@ export function InspirationImmersiveViewer({
       // Menu chia sẻ đã lo link và kênh; tới đây là người dùng đã chia sẻ thật, chỉ ghi nhận lượt.
       return socialApi.sharePost(payload.postId);
     },
-    onMutate: async (payload) => {
-      if (payload.type === 'like' && payload.nextSelected !== undefined) {
-        const previous = optimisticLikes[payload.postId];
-        setOptimisticLikes((prev) => ({ ...prev, [payload.postId]: payload.nextSelected! }));
-        const rollbackCache = user
-          ? updateReelSocialCache(client, user.id, payload.postId, 'like', payload.nextSelected)
-          : undefined;
-        return { previous, rollbackCache };
-      }
-      if (payload.type === 'save' && payload.nextSelected !== undefined) {
-        const previous = optimisticSaves[payload.postId];
-        setOptimisticSaves((prev) => ({ ...prev, [payload.postId]: payload.nextSelected! }));
-        const rollbackCache = user
-          ? updateReelSocialCache(client, user.id, payload.postId, 'save', payload.nextSelected)
-          : undefined;
-        return { previous, rollbackCache };
-      }
-      return {};
-    },
-    onError: (_, payload, context) => {
-      context?.rollbackCache?.();
-      if (payload.type === 'like') {
-        setOptimisticLikes((prev) => {
-          const next = { ...prev };
-          if (context?.previous === undefined) delete next[payload.postId];
-          else next[payload.postId] = context.previous;
-          return next;
-        });
-      }
-      if (payload.type === 'save') {
-        setOptimisticSaves((prev) => {
-          const next = { ...prev };
-          if (context?.previous === undefined) delete next[payload.postId];
-          else next[payload.postId] = context.previous;
-          return next;
-        });
+    onError: (_, payload) => {
+      if (payload.type === 'like' || payload.type === 'save') {
+        if (!getReactionBatcher().shouldRollbackOnError(payload.postId, payload.type)) return;
+        payload.rollbackCache?.();
+        clearOptimisticState(payload.postId, payload.type);
       }
     },
     onSuccess: (_, payload) => {
@@ -1763,23 +1805,40 @@ export function InspirationImmersiveViewer({
         removeReelFromSavedFeedCache(client, user.id, payload.postId);
       }
     },
-    onSettled: async (_, __, payload) => {
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ['social'] }),
-        client.invalidateQueries({ queryKey: ['feed'], refetchType: 'none' }),
-      ]);
-      setOptimisticLikes((prev) => {
-        const next = { ...prev };
-        delete next[payload.postId];
-        return next;
-      });
-      setOptimisticSaves((prev) => {
-        const next = { ...prev };
-        delete next[payload.postId];
-        return next;
-      });
+    onSettled: async (_data, error, payload) => {
+      if (payload.type === 'share') {
+        if (!getReactionBatcher().hasPendingForPost(payload.postId)) {
+          await invalidateAfterReelEngagement(client, payload.postId);
+        }
+        return;
+      }
+      const { shouldClearOptimistic, shouldInvalidatePost } = getReactionBatcher().markSettled(
+        payload.postId,
+        payload.type,
+        !error,
+        payload.nextSelected,
+      );
+      if (shouldInvalidatePost) {
+        await invalidateAfterReelEngagement(client, payload.postId);
+      }
+      if (shouldClearOptimistic) {
+        clearOptimisticState(payload.postId, payload.type);
+      }
     },
   });
+
+  useEffect(() => {
+    engagementMutateRef.current = engagementMutation.mutate;
+  }, [engagementMutation.mutate]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    const batcher = getReactionBatcher();
+    return () => {
+      isMountedRef.current = false;
+      batcher.flushAll();
+    };
+  }, [getReactionBatcher]);
 
   const hasItinerary = hasTripPlan(trip); // Như app: chỉ có điểm đến mà không có lịch từng ngày hay chỗ ở thì không hiện thẻ lịch trình.
   // Sidebar Lịch trình đi theo lựa chọn đóng/mở của người dùng, không theo từng bài: bài không có lịch trình
@@ -1804,8 +1863,7 @@ export function InspirationImmersiveViewer({
   const activePostDetail =
     postDetailQuery.data?.post.id === activePost?.id ? postDetailQuery.data : undefined;
 
-  /** Trạng thái và số đếm tương tác của một Reel: bài đang xem theo chi tiết mới nhất, bài khác theo thẻ feed. */
-  function getReelEngagement(post: ReelPost): ReelEngagement {
+  function getReelServerState(post: ReelPost) {
     const detail = activePostDetail?.post.id === post.id ? activePostDetail : undefined;
     const card = reelMap.get(post.id);
     const serverLiked = detail
@@ -1814,6 +1872,12 @@ export function InspirationImmersiveViewer({
     const serverSaved = detail
       ? detail.viewerContext.isBookmarked
       : filterMode === 'saved' || Boolean(card?.viewerState?.saved);
+    return { detail, serverLiked, serverSaved };
+  }
+
+  /** Trạng thái và số đếm tương tác của một Reel: bài đang xem theo chi tiết mới nhất, bài khác theo thẻ feed. */
+  function getReelEngagement(post: ReelPost): ReelEngagement {
+    const { detail, serverLiked, serverSaved } = getReelServerState(post);
     const isLiked = optimisticLikes[post.id] ?? serverLiked;
     const isSaved = optimisticSaves[post.id] ?? serverSaved;
     return {
@@ -1830,6 +1894,34 @@ export function InspirationImmersiveViewer({
       comments: detail?.post.commentCount ?? post.commentCount,
       shares: detail?.post.shareCount ?? post.shareCount,
     };
+  }
+
+  function triggerToggleReaction(post: ReelPost, type: ReelReactionKind) {
+    const { serverLiked, serverSaved } = getReelServerState(post);
+    const serverSelected = type === 'like' ? serverLiked : serverSaved;
+    const currentSelected =
+      type === 'like'
+        ? (optimisticLikes[post.id] ?? serverLiked)
+        : (optimisticSaves[post.id] ?? serverSaved);
+    const nextSelected = !currentSelected;
+
+    if (type === 'like') {
+      setOptimisticLikes((prev) => ({ ...prev, [post.id]: nextSelected }));
+    } else {
+      setOptimisticSaves((prev) => ({ ...prev, [post.id]: nextSelected }));
+    }
+
+    const rollbackCache = user
+      ? updateReelSocialCache(client, user.id, post.id, type, nextSelected)
+      : undefined;
+
+    getReactionBatcher().schedule({
+      postId: post.id,
+      type,
+      nextSelected,
+      serverSelected,
+      rollbackCache,
+    });
   }
 
   const displayComments = activePost ? getReelEngagement(activePost).comments : 0;
@@ -1858,12 +1950,8 @@ export function InspirationImmersiveViewer({
         isSignedIn={Boolean(user)}
         loginHref={loginReturnHref}
         isCommentOpen={isRightOpen && isActiveItem}
-        onToggleLike={() =>
-          engagementMutation.mutate({ postId: post.id, type: 'like', nextSelected: !engagement.isLiked })
-        }
-        onToggleSave={() =>
-          engagementMutation.mutate({ postId: post.id, type: 'save', nextSelected: !engagement.isSaved })
-        }
+        onToggleLike={() => triggerToggleReaction(post, 'like')}
+        onToggleSave={() => triggerToggleReaction(post, 'save')}
         onShare={(anchor) =>
           shareMenuRef.current?.toggle(anchor, { postId: post.id, postType: post.postType, title: post.title })
         }
@@ -2070,7 +2158,7 @@ export function InspirationImmersiveViewer({
                     {activePost && (
                       <div className={styles.stageTopControls}>
                         <PostOptionsMenu key={activePost.id} post={activePost} isSaved={getReelEngagement(activePost).isSaved}
-                          onToggleSave={() => { if (!user) { window.location.href = loginReturnHref; return; } engagementMutation.mutate({ postId: activePost.id, type: 'save', nextSelected: !getReelEngagement(activePost).isSaved }); }} buttonClassName={styles.stageCircleBtn} />
+                          onToggleSave={() => { if (!user) { window.location.href = loginReturnHref; return; } triggerToggleReaction(activePost, 'save'); }} buttonClassName={styles.stageCircleBtn} />
                       </div>
                     )}
                   </>
@@ -2126,6 +2214,7 @@ export function InspirationImmersiveViewer({
                           showPlayFlash={showPlayFlash}
                           mediaErrorPostId={mediaErrorPostId}
                           onMediaError={(pId) => setMediaErrorPostId(pId)}
+                          onRetryMedia={handleRetryMedia}
                           onTogglePlay={togglePlayPause}
                           captionExpandedPostId={captionExpandedPostId}
                           onToggleCaption={(pId) =>
