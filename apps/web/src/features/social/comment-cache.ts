@@ -191,7 +191,7 @@ function markSummaryStale(client: QueryClient, postId: string) {
   void client.invalidateQueries({ queryKey: ['social', 'summary', postId], refetchType: 'none' });
 }
 
-/** Bình luận vừa gửi: chèn lên đầu đúng danh sách (gốc hoặc trả lời), cộng số trả lời của bình luận gốc và số bình luận của bài. */
+/** Bình luận vừa gửi: chèn đúng thứ tự danh sách (gốc mới nhất lên đầu, trả lời cũ nhất trước nên nối cuối trang cuối), cộng số trả lời và tổng bình luận. */
 export function addCommentToCache(client: QueryClient, comment: SocialCommentDto) {
   const parentCommentId = comment.parentCommentId ?? undefined;
   // Bình luận mới chưa có trả lời; BE không trả replyCount khi vừa tạo.
@@ -205,14 +205,27 @@ export function addCommentToCache(client: QueryClient, comment: SocialCommentDto
 
     if (listParentId === parentCommentId) {
       if (data.pages.some((page) => page.items.some((entry) => entry.id === comment.id))) continue;
-      const [firstPage, ...otherPages] = data.pages;
-      client.setQueryData<CommentPages>(queryKey, {
-        ...data,
-        pages: [
-          { ...firstPage!, items: [added, ...firstPage!.items], total: firstPage!.total + 1 },
-          ...otherPages.map((page) => ({ ...page, total: page.total + 1 })),
-        ],
-      });
+      if (parentCommentId) {
+        // Danh sách trả lời sắp xếp ASC (cũ trước): nối trả lời mới vào cuối trang cuối đã tải.
+        const lastIndex = data.pages.length - 1;
+        client.setQueryData<CommentPages>(queryKey, {
+          ...data,
+          pages: data.pages.map((page, index) => ({
+            ...page,
+            items: index === lastIndex ? [...page.items, added] : page.items,
+            total: page.total + 1,
+          })),
+        });
+      } else {
+        const [firstPage, ...otherPages] = data.pages;
+        client.setQueryData<CommentPages>(queryKey, {
+          ...data,
+          pages: [
+            { ...firstPage!, items: [added, ...firstPage!.items], total: firstPage!.total + 1 },
+            ...otherPages.map((page) => ({ ...page, total: page.total + 1 })),
+          ],
+        });
+      }
     } else if (parentCommentId && isCountedComment(comment)) {
       client.setQueryData<CommentPages>(
         queryKey,
@@ -244,7 +257,18 @@ export function replaceCommentInCache(client: QueryClient, comment: SocialCommen
   }
 
   updateCachedComments(client, comment.postId, (entry) =>
-    entry.id === comment.id ? { ...entry, ...comment, replyCount: comment.replyCount ?? entry.replyCount } : entry,
+    entry.id === comment.id
+      ? {
+          ...entry,
+          ...comment,
+          replyCount: comment.replyCount ?? entry.replyCount,
+          replyToCommentId:
+            comment.replyToCommentId !== undefined ? comment.replyToCommentId : entry.replyToCommentId,
+          replyToName: comment.replyToName !== undefined ? comment.replyToName : entry.replyToName,
+          replyToExcerpt:
+            comment.replyToExcerpt !== undefined ? comment.replyToExcerpt : entry.replyToExcerpt,
+        }
+      : entry,
   );
   markSummaryStale(client, comment.postId);
 }

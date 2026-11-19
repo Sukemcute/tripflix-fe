@@ -11,6 +11,8 @@ const comment = (id: string, patch: Partial<SocialCommentDto> = {}): SocialComme
   postId: 'post',
   authorId: 'author',
   parentCommentId: null,
+  replyToCommentId: null,
+  replyToExcerpt: null,
   body: 'Hay quá',
   mentions: [],
   isEdited: false,

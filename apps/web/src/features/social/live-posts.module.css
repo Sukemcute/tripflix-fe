@@ -2041,6 +2041,13 @@ a.avatarSmall {
   box-shadow: 0 0 0 6px var(--color-sea-mist);
 }
 
+/* Nhấn vào khung trích dẫn cuộn tới bình luận gốc: nổi nhẹ 1.5s bằng token nền dịu, không neon/glow. */
+.panelCommentItem[data-quote-highlighted='true'] > :first-child {
+  border-radius: 12px;
+  background: var(--color-sea-mist);
+  transition: background-color 180ms ease-out;
+}
+
 @keyframes commentFadeIn {
   from {
     opacity: 0;
