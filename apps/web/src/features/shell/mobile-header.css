@@ -124,3 +124,18 @@
     transition: none;
   }
 }
+
+/*
+ * Chỗ cho thanh đáy (mobile-tab-bar.tsx). Biến chỉ có khi thanh đáy được render, nên trang ẩn thanh đáy và desktop
+ * dùng giá trị dự phòng 0px trong mọi calc(var(--mobile-tab-bar-space, 0px) …).
+ */
+@media (max-width: 767px) {
+  body:has([data-mobile-tab-bar]) {
+    --mobile-tab-bar-height: 56px;
+    --mobile-tab-bar-space: calc(56px + env(safe-area-inset-bottom));
+  }
+  /* Footer và cuối trang không bị thanh đáy che. Cảm hứng tự chừa chỗ trong khung riêng (social-feed.module.css). */
+  body:has([data-mobile-tab-bar]):not(:has(.auth-fullscreen, [class*='feedPageWrapper'])) {
+    padding-bottom: var(--mobile-tab-bar-space);
+  }
+}

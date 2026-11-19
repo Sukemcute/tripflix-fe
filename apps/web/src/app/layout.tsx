@@ -14,6 +14,7 @@ import { Providers } from './providers';
 import { OtaNavigation } from '@/features/discovery/ota-navigation';
 import { OtaFooter } from '@/features/discovery/ota-footer';
 import { HeaderAutoHide } from '@/features/shell/header-auto-hide';
+import { MobileTabBar } from '@/features/shell/mobile-tab-bar';
 import { ButtonRipple } from '@/features/shared/button-ripple';
 import { DEFAULT_OG_IMAGE } from '@/features/seo/page-metadata';
 import { getSiteUrl } from '@/lib/site';
@@ -89,6 +90,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <HeaderAutoHide />
           {children}
           <OtaFooter />
+          <MobileTabBar />
         </Providers>
       </body>
     </html>
