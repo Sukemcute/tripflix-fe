@@ -83,7 +83,7 @@ export function LiveComments({
   focusThreadId?: string;
   onModerationDetails?: () => void;
   onOpenProfile?: (authorId: string) => void;
-  /** Shared native ancestor for measuring replies inside nested threads. */
+  /** View chung để đo vị trí trả lời trong luồng lồng nhau. */
   quoteRoot?: RefObject<ComponentRef<typeof View> | null>;
   onReply?: (target: { id: string; name: string; threadId: string }) => void;
 }) {
@@ -140,7 +140,7 @@ export function LiveComments({
     const root = measurementRoot.current;
     if (!target || !root || !onRevealComment) return;
     target.measureLayout(root, (_x, y) => {
-      // A refresh or closing the thread may remove the target during measurement.
+      // Tải lại hoặc đóng luồng có thể làm bình luận đích biến mất trong lúc đo.
       if (commentViews.current.get(id) !== target) return;
       onRevealComment(Math.max(0, y - spacing.sm));
       clearTimeout(highlightTimer.current);
@@ -172,7 +172,7 @@ export function LiveComments({
         setReplyTarget(undefined);
       }
       await Promise.all([
-        // Keep the appended reply visible even when later reply pages are not loaded yet.
+        // Giữ reply vừa gửi trên màn hình khi các trang sau chưa tải.
         client.invalidateQueries({ queryKey: ['social', 'comments', postId], refetchType: createdReply ? 'none' : 'active' }),
         ...(createdReply ? [client.refetchQueries({ queryKey: ['social', 'comments', postId, undefined], type: 'active' })] : []),
         client.invalidateQueries({ queryKey: ['social', 'post', postId] }),
