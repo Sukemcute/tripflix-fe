@@ -2497,13 +2497,39 @@ a.avatarSmall {
   gap: 16px;
 }
 
-.composerModalCard::-webkit-scrollbar {
-  width: 6px;
+@media (prefers-reduced-motion: no-preference) {
+  .modalBackdrop {
+    animation: composer-fade 180ms ease-out both;
+  }
+
+  .modalBackdrop > .composerModalCard {
+    animation: composer-slide 180ms ease-out both;
+  }
+
+  .modalBackdrop[data-closing] {
+    animation-name: composer-fade-out;
+  }
+
+  .modalBackdrop[data-closing] > .composerModalCard {
+    animation-name: composer-slide-out;
+  }
 }
 
-.composerModalCard::-webkit-scrollbar-thumb {
-  background: var(--iv-border);
-  border-radius: 999px;
+@keyframes composer-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes composer-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes composer-slide {
+  from { translate: 0 -6px; }
+}
+
+@keyframes composer-slide-out {
+  to { translate: 0 -6px; }
 }
 
 .composerSection {
