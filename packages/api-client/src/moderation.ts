@@ -27,8 +27,36 @@ import type {
   ReportDto,
 } from './generated/core-api/model';
 import { readEntity } from './response';
+import { http } from './http';
+
+export type CoverOcrFilter = 'all' | 'flagged' | 'failed' | 'in_progress' | 'passed';
+export interface CoverOcrItem {
+  id: string;
+  postId: string;
+  postTitle: string;
+  authorId: string;
+  assetId: string;
+  status: string;
+  attempts: number;
+  extractedText: string | null;
+  errorCode: string | null;
+  updatedAt: string;
+}
+export interface CoverOcrPage {
+  counts: { all: number; flagged: number; failed: number; inProgress: number; passed: number };
+  items: CoverOcrItem[];
+  nextCursor: string | null;
+}
 
 export const moderationApi = {
+  async coverOcr(status: CoverOcrFilter = 'all', cursor = 0, signal?: AbortSignal): Promise<CoverOcrPage> {
+    const query = new URLSearchParams({ status, limit: '20', cursor: String(cursor) });
+    const response = await http<{ data: CoverOcrPage }>(
+      `/api/v1/admin/moderation/cover-ocr?${query}`,
+      { signal },
+    );
+    return readEntity(response.data, ['counts', 'items', 'nextCursor']);
+  },
   async parts(postId: string, signal?: AbortSignal) {
     return readEntity(
       (await adminModerationControllerPostParts(encodeURIComponent(postId), { signal })).data,

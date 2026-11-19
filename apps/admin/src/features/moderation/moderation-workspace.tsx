@@ -24,6 +24,7 @@ import reviewStyles from './review-queue.module.css';
 import { ModerationAuthor } from './moderation-author';
 import { ModerationContext } from './moderation-context';
 import { ModerationParts } from './moderation-parts';
+import { CoverOcrMonitor } from './cover-ocr-monitor';
 const reviewText = vi.moderation.review;
 
 const text = vi.moderation;
@@ -106,7 +107,7 @@ function RiskTags({ item }: { item: ModerationCaseDto }) {
 export function ModerationWorkspace() {
   const { user } = useApiSession();
   const [queueSla, setQueueSla] = useState<'all' | 'overdue' | 'due_soon'>('all');
-  const [tab, setTab] = useState<QueueView | 'log' | 'posts' | 'appeals' | 'scans'>('pending');
+  const [tab, setTab] = useState<QueueView | 'log' | 'posts' | 'appeals' | 'scans' | 'cover-ocr'>('pending');
 
   // Số liệu đếm ở server (TF89): không cắt theo 100 dòng đầu như khi đếm ở FE.
   const stats = useQuery({
@@ -198,6 +199,13 @@ export function ModerationWorkspace() {
           </button>
           <button
             type="button"
+            className={`mod-tab-btn ${tab === 'cover-ocr' ? 'is-active' : ''}`}
+            onClick={() => setTab('cover-ocr')}
+          >
+            OCR ảnh bìa
+          </button>
+          <button
+            type="button"
             className={`mod-tab-btn ${tab === 'log' ? 'is-active' : ''}`}
             onClick={() => setTab('log')}
           >
@@ -253,7 +261,9 @@ export function ModerationWorkspace() {
           <p>{reviewText.policy}</p>
         </section>
       )}
-      {tab === 'scans' ? (
+      {tab === 'cover-ocr' ? (
+        <CoverOcrMonitor />
+      ) : tab === 'scans' ? (
         <FailedScans />
       ) : tab === 'appeals' ? (
         <AppealQueue />

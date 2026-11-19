@@ -37,6 +37,7 @@ export { useFollowAuthor } from './follows';
 export { getAvatarUrl } from './avatar';
 export { getPublicProfileQueryKey, useAuthorReels, useAuthorVlogs, usePublicProfile } from './public-profile';
 export { moderationApi } from './moderation';
+export type { CoverOcrFilter, CoverOcrItem, CoverOcrPage } from './moderation';
 export { removeUnavailablePost } from './remove-unavailable-post';
 export { useSocialPosts } from './queries';
 export {
