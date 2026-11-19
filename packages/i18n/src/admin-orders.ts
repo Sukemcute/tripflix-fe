@@ -48,7 +48,7 @@ export const adminOrders = {
     paid_amount_mismatch: 'Số tiền trừ thành công khác tổng đơn.',
     stuck_payment: 'Khoản trừ chờ cổng quá 30 phút hoặc đã chuyển người xử lý. Đối soát với cổng thanh toán.',
     refund_needs_review:
-      'Khoản hoàn chờ người xử lý hoặc quá một ngày chưa xong. Hoàn tay trên cổng rồi đánh dấu.',
+      'Khoản hoàn chờ người xử lý hoặc quá một ngày chưa xong. Hoàn tay trên cổng thanh toán.',
   },
   open: 'Xem đơn',
   close: 'Đóng',
