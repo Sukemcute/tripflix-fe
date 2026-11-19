@@ -1,4 +1,4 @@
-import { feedApi, getFutureDate, type AssistantAction, type AssistantCard } from '@tripflix/api-client';
+import { feedApi, getFutureDate, type AssistantAction, type AssistantCard, type AssistantTrip } from '@tripflix/api-client';
 import {
   buildAssistantTripSelection,
   groupItineraryLines,
@@ -16,6 +16,7 @@ import { Fragment, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Icon, money, Txt, type IconName } from '@/components/mobile-ui';
 import { saveTripBooking } from '@/features/booking/trip-booking-store';
+import { SaveItineraryButton } from '@/features/itinerary/save-itinerary-button';
 import { chatType } from './assistant-visuals';
 
 const copy = vi.assistant;
@@ -116,7 +117,7 @@ const SKY_ICONS: Record<WeatherSky, IconName> = {
 };
 
 /** Nút của thẻ kế hoạch: chỉ có trên câu trả lời mới nhất, vì lựa chọn cũ không còn hiệu lực. */
-type CardActions = { act: (label: string, action: AssistantAction) => void; canUndo: boolean };
+type CardActions = { act: (label: string, action: AssistantAction) => void; canUndo: boolean; trip?: AssistantTrip | null };
 
 function ServerActions({
   card,
@@ -138,10 +139,13 @@ function ServerActions({
       !(card.kind === 'compare' && card.lines?.some((line) => line.ref === action.ref))
     );
   });
-  if (!buttons?.length) return null;
+  // TF105: lộ trình Tripi vừa lên (có ngày) thì lưu được, cạnh nút Đặt; chỉ thẻ mới nhất có trip.
+  const canSave = card.kind === 'itinerary' && !!actions?.trip?.days?.length;
+  if (!buttons?.length && !canSave) return null;
   return (
     <View style={styles.actions}>
-      {buttons.map((action, index) => (
+      {canSave && <SaveItineraryButton request={() => (actions?.trip ? { source: 'tripi', trip: actions.trip as Record<string, unknown> } : null)} />}
+      {buttons?.map((action, index) => (
         <Button
           key={`${card.ref}-action-${index}`}
           compact

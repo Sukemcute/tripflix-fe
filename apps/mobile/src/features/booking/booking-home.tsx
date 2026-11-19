@@ -187,6 +187,7 @@ export function AskTripiCard() {
               actions={{
                 act: (label, action) => turn.mutate({ message: label, action }),
                 canUndo: messages.length > 2,
+                trip,
               }}
             />
           )}
