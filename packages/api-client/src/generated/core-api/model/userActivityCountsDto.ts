@@ -14,6 +14,8 @@ export interface UserActivityCountsDto {
   views: number;
   /** Lượt chat với Tripi */
   chats: number;
+  /** Bài đã đăng (tính từ lúc bắt đầu ghi sự kiện đăng bài) */
+  posts: number;
   /** @nullable */
   lastActiveAt: string | null;
 }
