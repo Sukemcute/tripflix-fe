@@ -4,13 +4,7 @@ import { colors } from '@tripflix/tokens';
 export type AvatarStickerCategory = 'accessories' | 'travel';
 
 export type AvatarFrameId =
-  | 'none'
-  | 'fox-hat'
-  | 'rose-pink'
-  | 'rose-blue'
-  | 'midnight-sorceress'
-  | 'tripi-hood'
-  | 'tropical-wreath';
+  'none' | 'fox-hat' | 'rose-pink' | 'rose-blue' | 'midnight-sorceress' | 'tripi-hood' | 'tropical-wreath';
 
 export interface AvatarStickerPreset {
   id: string;
@@ -418,11 +412,32 @@ export function clampStickerNorm(value: number): number {
   return Math.min(MAX_NORM_POS, Math.max(MIN_NORM_POS, value));
 }
 
+/**
+ * Giữ cả hộp phụ kiện nằm trong vùng chỉnh (cạnh `stagePx`, khung tròn `framePx` nằm giữa), không đè ra tiêu đề hay nút.
+ * Toạ độ chuẩn hoá theo khung tròn: 0..1 là trong vòng tròn.
+ */
+export function fitStickerInStage(
+  sticker: PlacedSticker,
+  sizePx: number,
+  framePx: number,
+  stagePx: number,
+): PlacedSticker {
+  const pad = Math.max(0, (stagePx - framePx) / 2);
+  const half = Math.min(sizePx, stagePx) / 2;
+  const fit = (value: number) =>
+    Math.min((framePx + pad - half) / framePx, Math.max((half - pad) / framePx, value));
+  return { ...sticker, x: fit(sticker.x), y: fit(sticker.y) };
+}
+
 export function clampStickerScale(scale: number): number {
   return Math.min(MAX_STICKER_SCALE, Math.max(MIN_STICKER_SCALE, scale));
 }
 
-export function createPlacedSticker(presetId: string, existingCount: number, instanceId: string): PlacedSticker {
+export function createPlacedSticker(
+  presetId: string,
+  existingCount: number,
+  instanceId: string,
+): PlacedSticker {
   const preset = findStickerPreset(presetId);
   const offset = (existingCount % 4) * 0.035;
   return {

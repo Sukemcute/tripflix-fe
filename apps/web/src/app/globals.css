@@ -4076,15 +4076,42 @@ img.avatar-outer-sticker,
   position: fixed;
   inset: 0;
   margin: auto;
-  width: min(480px, calc(100vw - 24px));
+  width: min(880px, calc(100vw - 24px));
   max-height: calc(100dvh - 24px);
   overflow-y: auto;
+  scrollbar-width: none;
   padding: 22px;
   border: 1px solid var(--color-border);
   border-radius: 26px;
   background: var(--color-background);
   color: var(--color-text);
   box-shadow: 0 32px 64px -24px var(--color-overlay-heavy);
+}
+.avatar-crop::-webkit-scrollbar {
+  display: none;
+}
+/* Máy tính: ảnh bên trái, khung & phụ kiện bên phải để vừa một màn hình, không cần cuộn hộp. */
+.avatar-crop-body {
+  display: grid;
+  gap: 16px;
+}
+.avatar-crop-side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+@media (min-width: 760px) {
+  .avatar-crop-body {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+  .avatar-crop-side .avatar-decor-section:first-child {
+    margin-top: 0;
+  }
+  .avatar-crop-side .avatar-frame-tray,
+  .avatar-crop-side .avatar-sticker-tray {
+    max-height: min(320px, calc(100dvh - 330px));
+  }
 }
 .avatar-crop::backdrop {
   background: var(--color-overlay-heavy);
@@ -4102,12 +4129,6 @@ img.avatar-outer-sticker,
   color: var(--color-ink);
   font-size: 19px;
   line-height: 1.25;
-}
-.avatar-crop-subtitle {
-  margin: 4px 0 0;
-  color: var(--color-text-muted);
-  font-size: 13px;
-  line-height: 1.4;
 }
 .avatar-crop-close {
   flex: none;
@@ -4145,16 +4166,17 @@ img.avatar-outer-sticker,
   padding: 16px 14px 14px;
   border: 1px solid var(--color-border);
   border-radius: 20px;
+  overflow: hidden;
   background: radial-gradient(circle at 50% 42%, var(--color-navy) 0%, var(--color-ink) 100%);
 }
-/* Vùng đệm 336x336 quanh hình tròn 240px để tai cáo, gấu bông, sừng và phụ kiện tràn ra ngoài hình tròn. */
+/* Vùng đệm 360x360 quanh hình tròn 240px để tai cáo, gấu bông, sừng và phụ kiện tràn ra ngoài hình tròn. */
 .avatar-crop-stage-outer {
   position: relative;
   display: grid;
   place-items: center;
-  width: 332px;
-  height: 332px;
+  width: 360px;
   max-width: 100%;
+  aspect-ratio: 1;
   touch-action: none;
   user-select: none;
 }
@@ -4173,6 +4195,28 @@ img.avatar-outer-sticker,
 .avatar-crop-frame:active,
 .avatar-crop-frame.is-dragging {
   cursor: grabbing;
+}
+/* Ảnh gốc mờ ngoài vòng tròn, trùng toạ độ với ảnh trong vòng để thấy phần bị cắt. */
+.avatar-crop-ghost {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.4;
+  filter: blur(1.5px);
+  pointer-events: none;
+}
+.avatar-crop-ghost > div {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+}
+.avatar-crop-ghost img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  transform-origin: 0 0;
 }
 .avatar-crop-photo {
   position: absolute;
@@ -4265,12 +4309,6 @@ img.avatar-outer-sticker,
   border: 1px solid var(--color-border);
   border-radius: 14px;
   background: var(--color-background);
-}
-.avatar-decor-bar-hint {
-  padding-left: 6px;
-  color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: 500;
 }
 .avatar-zoom-step {
   flex: none;
@@ -4598,10 +4636,6 @@ img.avatar-outer-sticker,
   font-size: 12px;
   font-weight: 600;
 }
-.avatar-crop-hint {
-  margin: 10px 0 0;
-  text-align: center;
-}
 .avatar-crop-actions {
   display: flex;
   justify-content: flex-end;
@@ -4616,7 +4650,6 @@ img.avatar-outer-sticker,
   }
   .avatar-crop-stage-outer {
     width: 296px;
-    height: 296px;
   }
   .avatar-sticker-tray {
     grid-template-columns: repeat(3, minmax(0, 1fr));

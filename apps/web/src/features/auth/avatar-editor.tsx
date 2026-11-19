@@ -16,7 +16,7 @@ import {
   AVATAR_STICKER_PRESETS,
   MAX_STICKER_SCALE,
   MIN_STICKER_SCALE,
-  clampStickerNorm,
+  fitStickerInStage,
   clampStickerScale,
   createPlacedSticker,
   findFrameOption,
@@ -34,12 +34,19 @@ const AVATAR_EDGE_PX = 512;
 const FRAME_PX = 240;
 
 /**
- * Avatar ở cột trái trang tài khoản (TF109): bấm mở menu Đổi ảnh / Khung & phụ kiện ngoài / Xóa ảnh.
+ * Avatar ở cột trái trang tài khoản (TF109): bấm mở menu Chỉnh sửa / Xóa ảnh. Chỉnh sửa mở một hộp chung
+ * để cắt, phóng to ảnh, chọn ảnh khác và gắn khung, phụ kiện.
  * Hỗ trợ gắn khung thú bông và phụ kiện bọc tràn ra bên ngoài hình tròn avatar (kiểu Discord Avatar Decorations).
  */
 export function AvatarEditor({ user }: { user: MyProfileDto }) {
   const { session } = useApiSession();
-  const { isOpen: isMenuOpen, root: menuRoot, toggle: menuToggle, setOpen: setMenuOpen, close: closeMenu } = useHeaderPopover();
+  const {
+    isOpen: isMenuOpen,
+    root: menuRoot,
+    toggle: menuToggle,
+    setOpen: setMenuOpen,
+    close: closeMenu,
+  } = useHeaderPopover();
   const input = useRef<HTMLInputElement>(null);
   const [pickedUrl, setPickedUrl] = useState<string | null>(null);
   const [isDecorDialogOpen, setIsDecorDialogOpen] = useState(false);
@@ -64,7 +71,11 @@ export function AvatarEditor({ user }: { user: MyProfileDto }) {
     },
   });
   const isBusy = change.isPending || remove.isPending;
-  const error = hasTypeError ? vi.api.avatarWrongType : change.isError || remove.isError ? vi.api.avatarFailed : null;
+  const error = hasTypeError
+    ? vi.api.avatarWrongType
+    : change.isError || remove.isError
+      ? vi.api.avatarFailed
+      : null;
   const resetErrors = () => {
     setTypeError(false);
     change.reset();
@@ -106,31 +117,15 @@ export function AvatarEditor({ user }: { user: MyProfileDto }) {
             className="profile-avatar-menu-item"
             onClick={() => {
               closeMenu();
-              input.current?.click();
-            }}
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
-              <rect x="3.5" y="5" width="17" height="14" rx="3" />
-              <circle cx="9" cy="10" r="1.6" />
-              <path d="m6.5 16 4-3.8 3 2.8 2.5-2.2 2.5 3.2" />
-            </svg>
-            <span>{vi.api.avatarPick}</span>
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="profile-avatar-menu-item"
-            onClick={() => {
-              closeMenu();
               resetErrors();
               setIsDecorDialogOpen(true);
             }}
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
-              <circle cx="12" cy="12" r="6.5" />
-              <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" />
+              <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z" />
+              <path d="m13.5 6.5 4 4" />
             </svg>
-            <span>{vi.api.avatarDecorateOuter}</span>
+            <span>{vi.api.avatarEdit}</span>
           </button>
           {user.avatarUrl && (
             <>
@@ -171,17 +166,16 @@ export function AvatarEditor({ user }: { user: MyProfileDto }) {
             setTypeError(true);
             return;
           }
-          setIsDecorDialogOpen(false);
           setPickedUrl((prev) => {
             if (prev) URL.revokeObjectURL(prev);
             return URL.createObjectURL(file);
           });
         }}
       />
-      {(pickedUrl || isDecorDialogOpen) && (
+      {isDecorDialogOpen && (
         <AvatarCropDialog
           user={user}
-          src={pickedUrl}
+          pickedSrc={pickedUrl}
           onPickAnother={() => input.current?.click()}
           onClose={() => {
             if (pickedUrl) URL.revokeObjectURL(pickedUrl);
@@ -201,26 +195,25 @@ export function AvatarEditor({ user }: { user: MyProfileDto }) {
 }
 
 /**
- * Hộp chỉnh ảnh đại diện & khung bọc ngoài:
- * - Khi có `src`: vừa cắt ảnh mới vừa chọn khung thú / phụ kiện bọc ngoài vòng tròn.
- * - Khi `src === null`: trang trí khung thú & phụ kiện bọc ngoài ngay trên avatar hiện tại.
+ * Hộp chỉnh ảnh đại diện: cắt, phóng to ảnh (ảnh mới chọn hoặc ảnh đang dùng), chọn ảnh khác, gắn khung bọc ngoài
+ * và phụ kiện. Phần ảnh nằm ngoài vòng tròn hiện mờ để dễ căn. Chỉ tải ảnh lên lại khi ảnh mới hoặc đã cắt lại.
  */
 function AvatarCropDialog({
   user,
-  src,
+  pickedSrc,
   onPickAnother,
   onClose,
   onSavePhoto,
 }: {
   user: MyProfileDto;
-  src: string | null;
+  pickedSrc: string | null;
   onPickAnother: () => void;
   onClose: () => void;
   onSavePhoto: (blob: Blob) => void;
 }) {
-  const isCropMode = src !== null;
   const dialog = useRef<HTMLDialogElement>(null);
   const image = useRef<HTMLImageElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
   const photoDrag = useRef<{ pointerX: number; pointerY: number; view: CropView } | null>(null);
   const stickerDrag = useRef<{
     pointerX: number;
@@ -235,12 +228,19 @@ function AvatarCropDialog({
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [view, setView] = useState<CropView | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [isViewChanged, setIsViewChanged] = useState(false);
+  // Ảnh đang dùng ở CDN khác gốc: nếu không cho đọc qua CORS thì canvas bị khoá, chỉ chỉnh được khung & phụ kiện.
+  const [isCorsBlocked, setIsCorsBlocked] = useState(false);
   const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
   const [activeTab, setActiveTab] = useState<'frames' | 'stickers'>('frames');
   const [frameId, setFrameId] = useState<AvatarFrameId>(initialDecor.frameId);
   const [stickers, setStickers] = useState<PlacedSticker[]>(initialDecor.stickers);
   const [activeStickerId, setActiveStickerId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  const photoSrc = pickedSrc ?? user.avatarUrl ?? null;
+  const isNewPhoto = pickedSrc !== null;
+  const canCrop = photoSrc !== null && !(isCorsBlocked && !isNewPhoto);
 
   useEffect(() => {
     if (dialog.current && !dialog.current.open) {
@@ -251,9 +251,17 @@ function AvatarCropDialog({
   const activeSticker = stickers.find((item) => item.instanceId === activeStickerId) ?? null;
   const activeFrameOption = findFrameOption(frameId);
 
+  /** Giữ phụ kiện trong vùng chỉnh, đo theo cỡ thật (trên điện thoại vùng chỉnh nhỏ hơn). */
+  const fitSticker = (item: PlacedSticker): PlacedSticker => {
+    const preset = findStickerPreset(item.presetId);
+    const stagePx = stage.current?.clientWidth ?? FRAME_PX;
+    return preset ? fitStickerInStage(item, preset.baseSizePx * item.scale, FRAME_PX, stagePx) : item;
+  };
+
   const applyZoom = (nextZoom: number) => {
     const clamped = Math.min(MAX_ZOOM, Math.max(1, Number(nextZoom.toFixed(2))));
     setZoom(clamped);
+    setIsViewChanged(true);
     if (view && imageSize) {
       setView(zoomView(view, clamped, FRAME_PX, imageSize.width, imageSize.height));
     }
@@ -261,7 +269,7 @@ function AvatarCropDialog({
 
   const addSticker = (presetId: string) => {
     const instanceId = `sticker-${Date.now()}-${nextStickerCounter.current++}`;
-    const created = createPlacedSticker(presetId, stickers.length, instanceId);
+    const created = fitSticker(createPlacedSticker(presetId, stickers.length, instanceId));
     setStickers((prev) => [...prev, created]);
     setActiveStickerId(instanceId);
   };
@@ -269,7 +277,7 @@ function AvatarCropDialog({
   const updateActiveSticker = (patch: Partial<PlacedSticker>) => {
     if (!activeStickerId) return;
     setStickers((prev) =>
-      prev.map((item) => (item.instanceId === activeStickerId ? { ...item, ...patch } : item)),
+      prev.map((item) => (item.instanceId === activeStickerId ? fitSticker({ ...item, ...patch }) : item)),
     );
   };
 
@@ -282,10 +290,12 @@ function AvatarCropDialog({
   const moveStagePointer = (event: ReactPointerEvent) => {
     if (stickerDrag.current) {
       const { pointerX, pointerY, instanceId, startX, startY } = stickerDrag.current;
-      const nextX = clampStickerNorm(startX + (event.clientX - pointerX) / FRAME_PX);
-      const nextY = clampStickerNorm(startY + (event.clientY - pointerY) / FRAME_PX);
+      const nextX = startX + (event.clientX - pointerX) / FRAME_PX;
+      const nextY = startY + (event.clientY - pointerY) / FRAME_PX;
       setStickers((prev) =>
-        prev.map((item) => (item.instanceId === instanceId ? { ...item, x: nextX, y: nextY } : item)),
+        prev.map((item) =>
+          item.instanceId === instanceId ? fitSticker({ ...item, x: nextX, y: nextY }) : item,
+        ),
       );
       return;
     }
@@ -293,6 +303,7 @@ function AvatarCropDialog({
     const { pointerX, pointerY, view: start } = photoDrag.current;
     const next = { ...start, x: start.x + event.clientX - pointerX, y: start.y + event.clientY - pointerY };
     setView(clampView(next, FRAME_PX, imageSize.width, imageSize.height));
+    setIsViewChanged(true);
   };
 
   const stopStagePointer = () => {
@@ -305,7 +316,8 @@ function AvatarCropDialog({
     if (isSaving) return;
     saveUserAvatarDecor(user.id, { frameId, stickers });
 
-    if (!isCropMode) {
+    const shouldUploadPhoto = canCrop && (isNewPhoto || isViewChanged);
+    if (!shouldUploadPhoto) {
       dialog.current?.close();
       return;
     }
@@ -335,15 +347,19 @@ function AvatarCropDialog({
 
   const countByPreset = (presetId: string) => stickers.filter((item) => item.presetId === presetId).length;
 
+  const photoStyle =
+    view && imageSize
+      ? {
+          width: imageSize.width * view.scale,
+          height: imageSize.height * view.scale,
+          transform: `translate(${view.x}px, ${view.y}px)`,
+        }
+      : { visibility: 'hidden' as const };
+
   return (
     <dialog ref={dialog} className="avatar-crop" aria-labelledby="avatar-crop-title" onClose={onClose}>
       <div className="avatar-crop-header">
-        <div>
-          <h2 id="avatar-crop-title">{isCropMode ? vi.api.avatarCropTitle : vi.api.avatarDecorTitle}</h2>
-          <p className="avatar-crop-subtitle">
-            {isCropMode ? vi.api.avatarCropSubtitle : vi.api.avatarDecorSubtitle}
-          </p>
-        </div>
+        <h2 id="avatar-crop-title">{vi.api.avatarCropTitle}</h2>
         <button
           type="button"
           className="avatar-crop-close"
@@ -356,346 +372,347 @@ function AvatarCropDialog({
         </button>
       </div>
 
-      <div className="avatar-crop-stage-wrap">
-        {/* Khung ngoài rộng hơn hình tròn 240px để phần tai cáo, gấu bông, sừng và phụ kiện tràn ra bên ngoài hình tròn */}
-        <div
-          className="avatar-crop-stage-outer"
-          onPointerMove={moveStagePointer}
-          onPointerUp={stopStagePointer}
-          onPointerCancel={stopStagePointer}
-        >
+      <div className="avatar-crop-body">
+        <div className="avatar-crop-stage-wrap">
+          {/* Vùng chỉnh rộng hơn vòng tròn để khung thú và phụ kiện tràn ra ngoài; phụ kiện không ra khỏi vùng này. */}
           <div
-            className={`avatar-crop-frame${isDraggingPhoto ? ' is-dragging' : ''}`}
-            style={{ width: FRAME_PX, height: FRAME_PX }}
-            onPointerDown={(event) => {
-              setActiveStickerId(null);
-              if (!isCropMode || !view) return;
-              event.currentTarget.setPointerCapture(event.pointerId);
-              photoDrag.current = { pointerX: event.clientX, pointerY: event.clientY, view };
-              setIsDraggingPhoto(true);
-            }}
+            ref={stage}
+            className="avatar-crop-stage-outer"
+            onPointerMove={moveStagePointer}
+            onPointerUp={stopStagePointer}
+            onPointerCancel={stopStagePointer}
           >
-            {isCropMode && src ? (
-              // oxlint-disable-next-line nextjs/no-img-element -- ảnh vừa chọn là blob URL, next/image không dùng được
-              <img
-                ref={image}
-                className="avatar-crop-photo"
-                src={src}
-                alt=""
-                draggable={false}
-                onLoad={(event) => {
-                  const { naturalWidth: width, naturalHeight: height } = event.currentTarget;
-                  setImageSize({ width, height });
-                  setView(initialView(FRAME_PX, width, height));
-                  setZoom(1);
-                }}
-                style={
-                  view && imageSize
-                    ? {
-                        width: imageSize.width * view.scale,
-                        height: imageSize.height * view.scale,
-                        transform: `translate(${view.x}px, ${view.y}px)`,
-                      }
-                    : { visibility: 'hidden' }
-                }
-              />
-            ) : (
-              <div className="avatar-decor-existing-preview">
-                <span aria-hidden="true">{getInitial(user.displayName)}</span>
-                {user.avatarUrl && (
-                  // oxlint-disable-next-line nextjs/no-img-element -- ảnh đại diện hiện tại của người dùng
-                  <img
-                    className="avatar-photo"
-                    src={user.avatarUrl}
-                    alt=""
-                    referrerPolicy="no-referrer"
-                  />
-                )}
+            {canCrop && photoSrc && (
+              // Ảnh gốc mờ phía sau, trùng vị trí với ảnh trong vòng tròn, để thấy phần đang bị cắt bỏ.
+              <div className="avatar-crop-ghost" aria-hidden="true">
+                <div style={{ width: FRAME_PX, height: FRAME_PX }}>
+                  {/* oxlint-disable-next-line nextjs/no-img-element -- blob URL hoặc ảnh CDN, next/image không dùng được */}
+                  <img src={photoSrc} alt="" draggable={false} style={photoStyle} />
+                </div>
               </div>
             )}
-            <span className="avatar-crop-grid" aria-hidden="true" />
-            <span className="avatar-crop-mask" aria-hidden="true" />
-          </div>
-
-          {/* Lớp bọc NGOÀI hình tròn: khung thú (Fox Hat, Rose Bearer, Midnight Sorceress...) và phụ kiện tràn viền */}
-          <div className="avatar-crop-outer-layer" style={{ width: FRAME_PX, height: FRAME_PX }}>
-            {activeFrameOption?.overlaySrc && (
-              // oxlint-disable-next-line nextjs/no-img-element -- khung trang trí bọc bên ngoài hình tròn avatar
-              <img
-                className="avatar-outer-deco"
-                src={activeFrameOption.overlaySrc}
-                alt=""
-                aria-hidden="true"
-              />
-            )}
-
-            {stickers.map((item) => {
-              const preset = findStickerPreset(item.presetId);
-              if (!preset) return null;
-              const sizePx = preset.baseSizePx * item.scale;
-              const isSelected = item.instanceId === activeStickerId;
-              return (
-                <button
-                  key={item.instanceId}
-                  type="button"
-                  aria-label={preset.label}
-                  className={`avatar-crop-sticker${isSelected ? ' is-selected' : ''}`}
-                  style={{
-                    width: sizePx,
-                    height: sizePx,
-                    left: item.x * FRAME_PX,
-                    top: item.y * FRAME_PX,
-                    transform: `translate(-50%, -50%) rotate(${item.rotationDeg}deg) scaleX(${item.isFlipped ? -1 : 1})`,
-                  }}
-                  onPointerDown={(event) => {
-                    event.stopPropagation();
-                    setActiveStickerId(item.instanceId);
-                    const stageEl = event.currentTarget.closest('.avatar-crop-stage-outer');
-                    if (stageEl instanceof HTMLElement) {
-                      stageEl.setPointerCapture(event.pointerId);
-                    }
-                    stickerDrag.current = {
-                      pointerX: event.clientX,
-                      pointerY: event.clientY,
-                      instanceId: item.instanceId,
-                      startX: item.x,
-                      startY: item.y,
-                    };
-                  }}
-                >
-                  {/* oxlint-disable-next-line nextjs/no-img-element -- sticker tràn viền ngoài khung tròn */}
-                  <img src={preset.src} alt="" draggable={false} />
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="avatar-crop-zoom-bar">
-          {isCropMode ? (
-            <>
-              <button
-                type="button"
-                className="avatar-zoom-step"
-                aria-label={vi.api.avatarZoomOut}
-                disabled={!view || zoom <= 1}
-                onClick={() => applyZoom(zoom - 0.25)}
-              >
-                <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
-                  <path d="M5 12h14" />
-                </svg>
-              </button>
-              <label className="avatar-crop-zoom">
-                <span className="sr-only">{vi.api.avatarZoom}</span>
-                <input
-                  type="range"
-                  min={1}
-                  max={MAX_ZOOM}
-                  step={0.01}
-                  value={zoom}
-                  disabled={!view}
-                  onChange={(event) => applyZoom(Number(event.target.value))}
-                />
-              </label>
-              <button
-                type="button"
-                className="avatar-zoom-step"
-                aria-label={vi.api.avatarZoomIn}
-                disabled={!view || zoom >= MAX_ZOOM}
-                onClick={() => applyZoom(zoom + 0.25)}
-              >
-                <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-              </button>
-              <span className="avatar-zoom-badge">{Math.round(zoom * 100)}%</span>
-            </>
-          ) : (
-            <span className="avatar-decor-bar-hint">{vi.api.avatarStickerHint}</span>
-          )}
-          <button type="button" className="avatar-reselect-btn" onClick={onPickAnother}>
-            {vi.api.avatarPickAnother}
-          </button>
-        </div>
-      </div>
-
-      {activeSticker && (
-        <div className="avatar-sticker-controls">
-          <label className="avatar-sticker-scale">
-            <span>{vi.api.avatarStickerSize}</span>
-            <input
-              type="range"
-              min={MIN_STICKER_SCALE}
-              max={MAX_STICKER_SCALE}
-              step={0.05}
-              value={activeSticker.scale}
-              onChange={(event) =>
-                updateActiveSticker({ scale: clampStickerScale(Number(event.target.value)) })
-              }
-            />
-          </label>
-          <div className="avatar-sticker-tool-btns">
-            <button
-              type="button"
-              className="avatar-tool-pill"
-              onClick={() => updateActiveSticker(snapStickerToOuterRim(activeSticker))}
-            >
-              {vi.api.avatarStickerPlaceOuter}
-            </button>
-            <button
-              type="button"
-              className="avatar-tool-btn"
-              title={vi.api.avatarStickerRotateLeft}
-              aria-label={vi.api.avatarStickerRotateLeft}
-              onClick={() => updateActiveSticker({ rotationDeg: activeSticker.rotationDeg - 15 })}
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
-                <path d="M4 9V4h5" />
-                <path d="M4 9a8 8 0 1 1 2.3 5.7" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="avatar-tool-btn"
-              title={vi.api.avatarStickerRotateRight}
-              aria-label={vi.api.avatarStickerRotateRight}
-              onClick={() => updateActiveSticker({ rotationDeg: activeSticker.rotationDeg + 15 })}
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
-                <path d="M20 9V4h-5" />
-                <path d="M20 9a8 8 0 1 0-2.3 5.7" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className={`avatar-tool-btn${activeSticker.isFlipped ? ' is-active' : ''}`}
-              title={vi.api.avatarStickerFlip}
-              aria-label={vi.api.avatarStickerFlip}
-              onClick={() => updateActiveSticker({ isFlipped: !activeSticker.isFlipped })}
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
-                <path d="M12 4v16" strokeDasharray="2 2" />
-                <path d="m8 8-4 4 4 4M16 8l4 4-4 4" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="avatar-tool-btn is-danger"
-              title={vi.api.avatarStickerDelete}
-              aria-label={vi.api.avatarStickerDelete}
-              onClick={removeActiveSticker}
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
-                <path d="M5 7h14M9 7V5h6v2M7 7l1 12h8l1-12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="avatar-decor-section">
-        <div className="avatar-decor-tabs">
-          <div className="avatar-decor-tab-list" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'frames'}
-              className={`avatar-decor-tab${activeTab === 'frames' ? ' is-active' : ''}`}
-              onClick={() => setActiveTab('frames')}
-            >
-              {vi.api.avatarTabFrames}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'stickers'}
-              className={`avatar-decor-tab${activeTab === 'stickers' ? ' is-active' : ''}`}
-              onClick={() => setActiveTab('stickers')}
-            >
-              {vi.api.avatarTabStickers}
-            </button>
-          </div>
-          {(stickers.length > 0 || frameId !== 'none') && (
-            <button
-              type="button"
-              className="avatar-decor-clear"
-              onClick={() => {
-                setFrameId('none');
-                setStickers([]);
+            <div
+              className={`avatar-crop-frame${isDraggingPhoto ? ' is-dragging' : ''}`}
+              style={{ width: FRAME_PX, height: FRAME_PX }}
+              onPointerDown={(event) => {
                 setActiveStickerId(null);
+                if (!canCrop || !view) return;
+                event.currentTarget.setPointerCapture(event.pointerId);
+                photoDrag.current = { pointerX: event.clientX, pointerY: event.clientY, view };
+                setIsDraggingPhoto(true);
               }}
             >
-              {vi.api.avatarStickerClearAll}
+              {canCrop && photoSrc ? (
+                // oxlint-disable-next-line nextjs/no-img-element -- blob URL hoặc ảnh CDN, next/image không dùng được
+                <img
+                  key={photoSrc}
+                  ref={image}
+                  className="avatar-crop-photo"
+                  src={photoSrc}
+                  alt=""
+                  draggable={false}
+                  crossOrigin={isNewPhoto ? undefined : 'anonymous'}
+                  referrerPolicy="no-referrer"
+                  onError={() => {
+                    if (!isNewPhoto) setIsCorsBlocked(true);
+                  }}
+                  onLoad={(event) => {
+                    const { naturalWidth: width, naturalHeight: height } = event.currentTarget;
+                    setImageSize({ width, height });
+                    setView(initialView(FRAME_PX, width, height));
+                    setZoom(1);
+                    setIsViewChanged(false);
+                  }}
+                  style={photoStyle}
+                />
+              ) : (
+                <div className="avatar-decor-existing-preview">
+                  <span aria-hidden="true">{getInitial(user.displayName)}</span>
+                  {photoSrc && (
+                    // oxlint-disable-next-line nextjs/no-img-element -- ảnh đại diện hiện tại của người dùng
+                    <img className="avatar-photo" src={photoSrc} alt="" referrerPolicy="no-referrer" />
+                  )}
+                </div>
+              )}
+              <span className="avatar-crop-grid" aria-hidden="true" />
+              <span className="avatar-crop-mask" aria-hidden="true" />
+            </div>
+
+            {/* Lớp bọc NGOÀI hình tròn: khung thú và phụ kiện tràn viền */}
+            <div className="avatar-crop-outer-layer" style={{ width: FRAME_PX, height: FRAME_PX }}>
+              {activeFrameOption?.overlaySrc && (
+                // oxlint-disable-next-line nextjs/no-img-element -- khung trang trí bọc bên ngoài hình tròn avatar
+                <img
+                  className="avatar-outer-deco"
+                  src={activeFrameOption.overlaySrc}
+                  alt=""
+                  aria-hidden="true"
+                />
+              )}
+
+              {stickers.map((item) => {
+                const preset = findStickerPreset(item.presetId);
+                if (!preset) return null;
+                const sizePx = preset.baseSizePx * item.scale;
+                const isSelected = item.instanceId === activeStickerId;
+                return (
+                  <button
+                    key={item.instanceId}
+                    type="button"
+                    aria-label={preset.label}
+                    className={`avatar-crop-sticker${isSelected ? ' is-selected' : ''}`}
+                    style={{
+                      width: sizePx,
+                      height: sizePx,
+                      left: item.x * FRAME_PX,
+                      top: item.y * FRAME_PX,
+                      transform: `translate(-50%, -50%) rotate(${item.rotationDeg}deg) scaleX(${item.isFlipped ? -1 : 1})`,
+                    }}
+                    onPointerDown={(event) => {
+                      event.stopPropagation();
+                      setActiveStickerId(item.instanceId);
+                      stage.current?.setPointerCapture(event.pointerId);
+                      stickerDrag.current = {
+                        pointerX: event.clientX,
+                        pointerY: event.clientY,
+                        instanceId: item.instanceId,
+                        startX: item.x,
+                        startY: item.y,
+                      };
+                    }}
+                  >
+                    {/* oxlint-disable-next-line nextjs/no-img-element -- sticker tràn viền ngoài khung tròn */}
+                    <img src={preset.src} alt="" draggable={false} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="avatar-crop-zoom-bar">
+            {canCrop && (
+              <>
+                <button
+                  type="button"
+                  className="avatar-zoom-step"
+                  aria-label={vi.api.avatarZoomOut}
+                  disabled={!view || zoom <= 1}
+                  onClick={() => applyZoom(zoom - 0.25)}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M5 12h14" />
+                  </svg>
+                </button>
+                <label className="avatar-crop-zoom">
+                  <span className="sr-only">{vi.api.avatarZoom}</span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={MAX_ZOOM}
+                    step={0.01}
+                    value={zoom}
+                    disabled={!view}
+                    onChange={(event) => applyZoom(Number(event.target.value))}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="avatar-zoom-step"
+                  aria-label={vi.api.avatarZoomIn}
+                  disabled={!view || zoom >= MAX_ZOOM}
+                  onClick={() => applyZoom(zoom + 0.25)}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </button>
+                <span className="avatar-zoom-badge">{Math.round(zoom * 100)}%</span>
+              </>
+            )}
+            <button type="button" className="avatar-reselect-btn" onClick={onPickAnother}>
+              {vi.api.avatarPickAnother}
             </button>
-          )}
+          </div>
         </div>
 
-        {activeTab === 'frames' ? (
-          <div className="avatar-frame-tray">
-            {AVATAR_FRAMES.map((frame) => {
-              const isSelected = frame.id === frameId;
-              return (
+        <div className="avatar-crop-side">
+          {activeSticker && (
+            <div className="avatar-sticker-controls">
+              <label className="avatar-sticker-scale">
+                <span>{vi.api.avatarStickerSize}</span>
+                <input
+                  type="range"
+                  min={MIN_STICKER_SCALE}
+                  max={MAX_STICKER_SCALE}
+                  step={0.05}
+                  value={activeSticker.scale}
+                  onChange={(event) =>
+                    updateActiveSticker({ scale: clampStickerScale(Number(event.target.value)) })
+                  }
+                />
+              </label>
+              <div className="avatar-sticker-tool-btns">
                 <button
-                  key={frame.id}
                   type="button"
-                  className={`avatar-frame-card${isSelected ? ' is-selected' : ''}`}
-                  onClick={() => setFrameId(frame.id)}
+                  className="avatar-tool-pill"
+                  onClick={() => updateActiveSticker(snapStickerToOuterRim(activeSticker))}
                 >
-                  <span className="avatar-frame-card-stage">
-                    <span className="avatar-frame-card-circle" />
-                    {frame.overlaySrc && (
-                      // oxlint-disable-next-line nextjs/no-img-element -- preview khung bọc ngoài vòng tròn kiểu Discord
-                      <img
-                        className="avatar-frame-card-deco"
-                        src={frame.overlaySrc}
-                        alt=""
-                        aria-hidden="true"
-                      />
-                    )}
-                  </span>
-                  <span className="avatar-frame-card-label">{frame.label}</span>
+                  {vi.api.avatarStickerPlaceOuter}
                 </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="avatar-sticker-tray">
-            {AVATAR_STICKER_PRESETS.map((preset) => {
-              const count = countByPreset(preset.id);
-              return (
                 <button
-                  key={preset.id}
                   type="button"
-                  className={`avatar-sticker-chip${count > 0 ? ' is-added' : ''}`}
-                  onClick={() => addSticker(preset.id)}
+                  className="avatar-tool-btn"
+                  title={vi.api.avatarStickerRotateLeft}
+                  aria-label={vi.api.avatarStickerRotateLeft}
+                  onClick={() => updateActiveSticker({ rotationDeg: activeSticker.rotationDeg - 15 })}
                 >
-                  <span className="avatar-sticker-chip-thumb">
-                    {/* oxlint-disable-next-line nextjs/no-img-element -- thumbnail sticker SVG/PNG trong khay chọn */}
-                    <img src={preset.src} alt="" />
-                  </span>
-                  <span className="avatar-sticker-chip-label">{preset.label}</span>
-                  {count > 0 && <span className="avatar-sticker-chip-count">{count}</span>}
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M4 9V4h5" />
+                    <path d="M4 9a8 8 0 1 1 2.3 5.7" />
+                  </svg>
                 </button>
-              );
-            })}
+                <button
+                  type="button"
+                  className="avatar-tool-btn"
+                  title={vi.api.avatarStickerRotateRight}
+                  aria-label={vi.api.avatarStickerRotateRight}
+                  onClick={() => updateActiveSticker({ rotationDeg: activeSticker.rotationDeg + 15 })}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M20 9V4h-5" />
+                    <path d="M20 9a8 8 0 1 0-2.3 5.7" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className={`avatar-tool-btn${activeSticker.isFlipped ? ' is-active' : ''}`}
+                  title={vi.api.avatarStickerFlip}
+                  aria-label={vi.api.avatarStickerFlip}
+                  onClick={() => updateActiveSticker({ isFlipped: !activeSticker.isFlipped })}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M12 4v16" strokeDasharray="2 2" />
+                    <path d="m8 8-4 4 4 4M16 8l4 4-4 4" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className="avatar-tool-btn is-danger"
+                  title={vi.api.avatarStickerDelete}
+                  aria-label={vi.api.avatarStickerDelete}
+                  onClick={removeActiveSticker}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M5 7h14M9 7V5h6v2M7 7l1 12h8l1-12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="avatar-decor-section">
+            <div className="avatar-decor-tabs">
+              <div className="avatar-decor-tab-list" role="tablist">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'frames'}
+                  className={`avatar-decor-tab${activeTab === 'frames' ? ' is-active' : ''}`}
+                  onClick={() => setActiveTab('frames')}
+                >
+                  {vi.api.avatarTabFrames}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'stickers'}
+                  className={`avatar-decor-tab${activeTab === 'stickers' ? ' is-active' : ''}`}
+                  onClick={() => setActiveTab('stickers')}
+                >
+                  {vi.api.avatarTabStickers}
+                </button>
+              </div>
+              {(stickers.length > 0 || frameId !== 'none') && (
+                <button
+                  type="button"
+                  className="avatar-decor-clear"
+                  onClick={() => {
+                    setFrameId('none');
+                    setStickers([]);
+                    setActiveStickerId(null);
+                  }}
+                >
+                  {vi.api.avatarStickerClearAll}
+                </button>
+              )}
+            </div>
+
+            {activeTab === 'frames' ? (
+              <div className="avatar-frame-tray">
+                {AVATAR_FRAMES.map((frame) => {
+                  const isSelected = frame.id === frameId;
+                  return (
+                    <button
+                      key={frame.id}
+                      type="button"
+                      className={`avatar-frame-card${isSelected ? ' is-selected' : ''}`}
+                      onClick={() => setFrameId(frame.id)}
+                    >
+                      <span className="avatar-frame-card-stage">
+                        <span className="avatar-frame-card-circle" />
+                        {frame.overlaySrc && (
+                          // oxlint-disable-next-line nextjs/no-img-element -- preview khung bọc ngoài vòng tròn
+                          <img
+                            className="avatar-frame-card-deco"
+                            src={frame.overlaySrc}
+                            alt=""
+                            aria-hidden="true"
+                          />
+                        )}
+                      </span>
+                      <span className="avatar-frame-card-label">{frame.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="avatar-sticker-tray">
+                {AVATAR_STICKER_PRESETS.map((preset) => {
+                  const count = countByPreset(preset.id);
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className={`avatar-sticker-chip${count > 0 ? ' is-added' : ''}`}
+                      onClick={() => addSticker(preset.id)}
+                    >
+                      <span className="avatar-sticker-chip-thumb">
+                        {/* oxlint-disable-next-line nextjs/no-img-element -- thumbnail sticker SVG/PNG trong khay chọn */}
+                        <img src={preset.src} alt="" />
+                      </span>
+                      <span className="avatar-sticker-chip-label">{preset.label}</span>
+                      {count > 0 && <span className="avatar-sticker-chip-count">{count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <p className="auth-hint avatar-crop-hint">{vi.api.avatarCropHint}</p>
-
-      <div className="avatar-crop-actions">
-        <button type="button" className="secondary-button" onClick={() => dialog.current?.close()}>
-          {vi.api.cancel}
-        </button>
-        <button
-          type="button"
-          className="primary-button"
-          disabled={(isCropMode && !view) || isSaving}
-          onClick={handleSave}
-        >
-          {isCropMode ? vi.api.avatarSave : vi.api.avatarDecorSave}
-        </button>
+          <div className="avatar-crop-actions">
+            <button type="button" className="secondary-button" onClick={() => dialog.current?.close()}>
+              {vi.api.cancel}
+            </button>
+            <button
+              type="button"
+              className="primary-button"
+              disabled={(isNewPhoto && !view) || isSaving}
+              onClick={handleSave}
+            >
+              {vi.api.avatarSave}
+            </button>
+          </div>
+        </div>
       </div>
     </dialog>
   );
