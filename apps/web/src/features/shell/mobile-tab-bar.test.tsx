@@ -24,7 +24,8 @@ function readItems(html: string) {
     tag,
     label: attributes.match(/aria-label="([^"]+)"/)?.[1] ?? inner.replace(/<[^>]+>/g, ''),
     href: attributes.match(/href="([^"]+)"/)?.[1],
-    isCurrent: attributes.includes('aria-current="page"'),
+    // Mục Đặt chỗ là nút mở bảng nên đánh dấu bằng class; các mục link dùng aria-current.
+    isCurrent: attributes.includes('aria-current="page"') || /class="[^"]*tabActive/.test(attributes),
   }));
 }
 
@@ -39,7 +40,9 @@ describe('MobileTabBar', () => {
     expect(html).toContain('aria-label="Điều hướng chính"');
     const items = readItems(html);
     expect(items.map((item) => item.label)).toEqual(['Trang chủ', 'Đặt chỗ', 'Đăng bài mới', 'Cảm hứng', 'Tôi']);
+    expect(items[1]).toMatchObject({ tag: 'button' });
     expect(items[2]?.tag).toBe('button');
+    expect(html).toContain('aria-controls="mobile-booking-sheet"');
   });
 
   it.each([

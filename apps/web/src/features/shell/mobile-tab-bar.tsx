@@ -3,6 +3,7 @@ import { useApiSession } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { BookingSheet } from './booking-sheet';
 import { MobileTabIcon } from './mobile-tab-icons';
 import { buildComposeHref, buildMeHref, findActiveMobileTab, isMobileTabBarHidden } from './mobile-tabs';
 import styles from './mobile-tab-bar.module.css';
@@ -27,15 +28,7 @@ export function MobileTabBar() {
         <MobileTabIcon name="home" />
         <span>{vi.shell.tabHome}</span>
       </Link>
-      <Link
-        prefetch={false}
-        href="/search"
-        className={tabClass(activeTab === 'booking')}
-        aria-current={activeTab === 'booking' ? 'page' : undefined}
-      >
-        <MobileTabIcon name="booking" />
-        <span>{vi.shell.tabBooking}</span>
-      </Link>
+      <BookingSheet isActive={activeTab === 'booking'} />
       <button
         type="button"
         className={styles.createButton}
