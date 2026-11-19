@@ -9,6 +9,8 @@ vi.mock('@tanstack/react-query', () => ({
   useInfiniteQuery: vi.fn().mockReturnValue({}),
 }));
 
+vi.mock('./reset-on-return', () => ({ useResetOnReturn: vi.fn() }));
+
 vi.mock('./session', () => ({
   useApiSession: vi.fn().mockReturnValue({ isReady: true, user: null }),
 }));

@@ -1286,6 +1286,7 @@ export function InspirationImmersiveViewer({
   const recommendedReelsQuery = useRecommendedReelsFeed({
     enabled: isReady && !isSearchReels && !isSavedMode,
     mode: reelsMode,
+    refreshOnReturn: true,
   });
   const feedQuery = isSavedMode ? savedFeedQuery : recommendedReelsQuery;
   // Đổi chip: danh sách cũ vẫn hiện (làm mờ) tới khi danh sách mới về, nên khung và thanh chip đứng yên khi mạng chậm.
