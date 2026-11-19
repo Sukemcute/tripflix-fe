@@ -81,7 +81,7 @@ export function CommerceCartScreen() {
     return (
       <Screen title={text.review}>
         <Notice>{text.emptyCart}</Notice>
-        <Button onPress={() => router.push('/search')}>{text.findHotel}</Button>
+        <Button onPress={() => router.navigate('/(tabs)/explore')}>{text.findHotel}</Button>
       </Screen>
     );
   const item = draft.request.items[0]!;
@@ -136,7 +136,7 @@ export function CommerceCheckoutScreen() {
     return (
       <Screen title={text.checkout}>
         <Notice>{text.emptyCart}</Notice>
-        <Button onPress={() => router.push('/search')}>{text.findHotel}</Button>
+        <Button onPress={() => router.navigate('/(tabs)/explore')}>{text.findHotel}</Button>
       </Screen>
     );
   return <CheckoutForm key={`${user.id}:${id}`} />;
@@ -425,7 +425,7 @@ function CheckoutForm() {
           {isExpired ? (
             <>
               <Notice tone="error">{order.status === 'cancelled' ? text.holdCancelled : text.expired}</Notice>
-              <Button onPress={() => router.push('/search')}>{text.findHotel}</Button>
+              <Button onPress={() => router.navigate('/(tabs)/explore')}>{text.findHotel}</Button>
             </>
           ) : isPayingVnpay ? null : (
             <>
