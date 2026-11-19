@@ -10,6 +10,7 @@ import { t, vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import { AdminApiError } from '../shell/api-state';
 import { UserActivityDialog } from './user-activity-dialog';
+import { UserActivityOverview } from './user-activity-overview';
 import { UserAiUsage } from './user-ai-usage';
 import { EmptyState, LoadingState, Metric, Panel } from '../shell/operations-ui';
 import {
@@ -53,12 +54,7 @@ export function UserActivityWorkspace() {
 
   return (
     <>
-      <div className="admin-page-heading">
-        <div>
-          <p className="admin-eyebrow">{copy.eyebrow}</p>
-          <h1>{copy.title}</h1>
-          <p>{copy.description}</p>
-        </div>
+      <div className="flex justify-end">
         <span className="admin-badge">{copy.autoRefresh}</span>
       </div>
 
@@ -82,9 +78,7 @@ export function UserActivityWorkspace() {
         </label>
       </form>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label={copy.activeUsers} value={data?.total} />
-      </div>
+      <UserActivityOverview range={range} days={days} />
 
       {list.isError && <AdminApiError error={list.error} retry={() => void list.refetch()} />}
 
@@ -106,6 +100,7 @@ export function UserActivityWorkspace() {
                     <th scope="col">{copy.columns.shares}</th>
                     <th scope="col">{copy.columns.views}</th>
                     <th scope="col">{copy.columns.chats}</th>
+                    <th scope="col">{copy.columns.posts}</th>
                     <th scope="col">{copy.columns.lastActiveAt}</th>
                     <th scope="col">
                       <span className="sr-only">{copy.viewDetail}</span>
@@ -122,6 +117,7 @@ export function UserActivityWorkspace() {
                       <td className="tabular-nums">{count.format(item.shares)}</td>
                       <td className="tabular-nums">{count.format(item.views)}</td>
                       <td className="tabular-nums">{count.format(item.chats)}</td>
+                      <td className="tabular-nums">{count.format(item.posts)}</td>
                       <td>{formatDateTime(item.lastActiveAt)}</td>
                       <td>
                         <button
@@ -200,12 +196,13 @@ function UserActivityDetail({
         <LoadingState />
       ) : data ? (
         <div className="space-y-6 p-5">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
             <Metric label={copy.totals.reactions} value={data.counts.reactions} />
             <Metric label={copy.totals.comments} value={data.counts.comments} />
             <Metric label={copy.totals.shares} value={data.counts.shares} />
             <Metric label={copy.totals.views} value={data.counts.views} />
             <Metric label={copy.totals.chats} value={data.counts.chats} />
+            <Metric label={copy.totals.posts} value={data.counts.posts} />
           </div>
 
           <section aria-label={copy.chatQuestions}>

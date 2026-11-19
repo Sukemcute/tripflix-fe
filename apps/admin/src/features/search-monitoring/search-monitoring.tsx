@@ -214,10 +214,6 @@ export function SearchMonitoring() {
   return (
     <div className={styles.root}>
       <header className={styles.heading}>
-        <div>
-          <h2>{copy.eyebrow}</h2>
-          <p>{copy.description}</p>
-        </div>
         <span className="admin-badge">{isMonitoring ? copy.trends.active : copy.readOnly}</span>
       </header>
       <nav className={styles.tabs} aria-label={copy.title}>

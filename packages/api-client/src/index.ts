@@ -200,3 +200,4 @@ export {
   type TripAddons,
   type TripAddonStay,
 } from './trip-addons';
+export { itineraryApi, SAVED_ITINERARIES_QUERY_KEY } from './saved-itineraries';

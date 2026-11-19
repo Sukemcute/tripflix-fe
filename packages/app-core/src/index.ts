@@ -23,3 +23,4 @@ export * from './mobile-login-return';
 export * from './notification-display';
 export * from './travel-survey';
 export * from './assistant-card-format';
+export * from './saved-itinerary';

@@ -11,6 +11,8 @@ import styles from './checkout.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.commerce;
+/** Đơn nhiều mục không kéo dài thẻ (và cả hàng thẻ): chỉ hiện chừng này mục, còn lại xem ở chi tiết đơn. */
+const MAX_ITEMS_PER_CARD = 2;
 const formatDate = (date: string) => date.split('-').reverse().join('/');
 
 /** Chuyến đi của tôi: mọi đơn của người đang đăng nhập, mới đặt trước. */
@@ -80,11 +82,13 @@ export function BookingsList() {
           <Link prefetch={false} key={trip.orderId} href={`/checkout/${trip.orderId}`} className={styles.trip}>
             <div className={styles.summaryHead}>
               <span className={styles.status} data-status={trip.status}>
-                {copy.status[trip.status as keyof typeof copy.status] ?? trip.status}
+                {trip.tripStatus === 'completed'
+                  ? copy.tripCompleted
+                  : (copy.status[trip.status as keyof typeof copy.status] ?? trip.status)}
               </span>
               {trip.confirmationCode && <code>{trip.confirmationCode}</code>}
             </div>
-            {trip.items.map((item) => (
+            {trip.items.slice(0, MAX_ITEMS_PER_CARD).map((item) => (
               <div key={item.id}>
                 {item.propertyName && <p className={styles.property}>{item.propertyName}</p>}
                 <h2>{item.productName}</h2>
@@ -96,6 +100,11 @@ export function BookingsList() {
                 </p>
               </div>
             ))}
+            {trip.items.length > MAX_ITEMS_PER_CARD && (
+              <p className={styles.moreItems}>
+                {t('commerce.moreItems', { count: trip.items.length - MAX_ITEMS_PER_CARD })}
+              </p>
+            )}
             <p className={styles.total}>
               <span>{copy.total}</span>
               <strong>{formatPrice(trip.total)}</strong>
