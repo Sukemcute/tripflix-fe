@@ -10,6 +10,7 @@ import { t, vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import { AdminApiError } from '../shell/api-state';
 import { UserActivityDialog } from './user-activity-dialog';
+import { UserAiUsage } from './user-ai-usage';
 import { EmptyState, LoadingState, Metric, Panel } from '../shell/operations-ui';
 import {
   chatQuestion,
@@ -225,6 +226,8 @@ function UserActivityDetail({
               </ul>
             )}
           </section>
+
+          <UserAiUsage userId={user.userId} range={range} />
 
           <section aria-label={copy.recentEvents}>
             <h3 className="mb-3 text-sm font-bold text-navy">{copy.recentEvents}</h3>

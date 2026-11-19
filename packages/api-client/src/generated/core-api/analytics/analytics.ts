@@ -18,8 +18,15 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AiInsightsControllerTimeseriesParams,
+  AiInsightsControllerTracesParams,
+  AiInsightsControllerUsersParams,
+  AiTimeseriesResponseDto,
+  AiTraceDetailResponseDto,
+  AiTraceListResponseDto,
   AiUsageControllerGetAiUsageParams,
   AiUsageResponseDto,
+  AiUserUsageResponseDto,
   ObservabilityControllerGetOverviewParams,
   ObservabilityControllerListTracesParams,
   ObservabilityDto,
@@ -981,6 +988,637 @@ export function useUserActivityControllerDetail<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getUserActivityControllerDetailQueryOptions(userId, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type aiInsightsControllerTimeseriesResponse200 = {
+  data: AiTimeseriesResponseDto;
+  status: 200;
+};
+
+export type aiInsightsControllerTimeseriesResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type aiInsightsControllerTimeseriesResponseSuccess = aiInsightsControllerTimeseriesResponse200 & {
+  headers: Headers;
+};
+export type aiInsightsControllerTimeseriesResponseError = aiInsightsControllerTimeseriesResponse400 & {
+  headers: Headers;
+};
+
+export type aiInsightsControllerTimeseriesResponse =
+  aiInsightsControllerTimeseriesResponseSuccess | aiInsightsControllerTimeseriesResponseError;
+
+export const getAiInsightsControllerTimeseriesUrl = (params?: AiInsightsControllerTimeseriesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/analytics/ai-usage/timeseries?${stringifiedParams}`
+    : `/api/analytics/ai-usage/timeseries`;
+};
+
+/**
+ * Ngày theo giờ Việt Nam, gồm cả from và to. Mặc định 7 ngày, tối đa 92 ngày. Bucket giờ chỉ cho tối đa 8 ngày.
+ * @summary Lưu lượng AI theo thời gian: lần gọi, token, chi phí theo giờ hoặc ngày
+ */
+export const aiInsightsControllerTimeseries = async (
+  params?: AiInsightsControllerTimeseriesParams,
+  options?: Parameters<typeof http>[1],
+): Promise<aiInsightsControllerTimeseriesResponse> => {
+  return http<aiInsightsControllerTimeseriesResponse>(getAiInsightsControllerTimeseriesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAiInsightsControllerTimeseriesQueryKey = (params?: AiInsightsControllerTimeseriesParams) => {
+  return [`/api/analytics/ai-usage/timeseries`, ...(params ? [params] : [])] as const;
+};
+
+export const getAiInsightsControllerTimeseriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>,
+  TError = void,
+>(
+  params?: AiInsightsControllerTimeseriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAiInsightsControllerTimeseriesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>> = ({ signal }) =>
+    aiInsightsControllerTimeseries(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AiInsightsControllerTimeseriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>
+>;
+export type AiInsightsControllerTimeseriesQueryError = void;
+
+export function useAiInsightsControllerTimeseries<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>,
+  TError = void,
+>(
+  params: undefined | AiInsightsControllerTimeseriesParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>,
+          TError,
+          Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAiInsightsControllerTimeseries<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>,
+  TError = void,
+>(
+  params?: AiInsightsControllerTimeseriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>,
+          TError,
+          Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAiInsightsControllerTimeseries<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>,
+  TError = void,
+>(
+  params?: AiInsightsControllerTimeseriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Lưu lượng AI theo thời gian: lần gọi, token, chi phí theo giờ hoặc ngày
+ */
+
+export function useAiInsightsControllerTimeseries<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>,
+  TError = void,
+>(
+  params?: AiInsightsControllerTimeseriesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTimeseries>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAiInsightsControllerTimeseriesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type aiInsightsControllerUsersResponse200 = {
+  data: AiUserUsageResponseDto;
+  status: 200;
+};
+
+export type aiInsightsControllerUsersResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type aiInsightsControllerUsersResponseSuccess = aiInsightsControllerUsersResponse200 & {
+  headers: Headers;
+};
+export type aiInsightsControllerUsersResponseError = aiInsightsControllerUsersResponse400 & {
+  headers: Headers;
+};
+
+export type aiInsightsControllerUsersResponse =
+  aiInsightsControllerUsersResponseSuccess | aiInsightsControllerUsersResponseError;
+
+export const getAiInsightsControllerUsersUrl = (params?: AiInsightsControllerUsersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/analytics/ai-usage/users?${stringifiedParams}`
+    : `/api/analytics/ai-usage/users`;
+};
+
+/**
+ * Chỉ tính lượt gọi đã gắn với người dùng (chat của người đã đăng nhập, từ bản ai-service mới). Truyền userId để xem một người.
+ * @summary Người dùng xếp theo chi phí AI: lần gọi, cuộc trò chuyện, token, chi phí, kèm tên và email
+ */
+export const aiInsightsControllerUsers = async (
+  params?: AiInsightsControllerUsersParams,
+  options?: Parameters<typeof http>[1],
+): Promise<aiInsightsControllerUsersResponse> => {
+  return http<aiInsightsControllerUsersResponse>(getAiInsightsControllerUsersUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAiInsightsControllerUsersQueryKey = (params?: AiInsightsControllerUsersParams) => {
+  return [`/api/analytics/ai-usage/users`, ...(params ? [params] : [])] as const;
+};
+
+export const getAiInsightsControllerUsersQueryOptions = <
+  TData = Awaited<ReturnType<typeof aiInsightsControllerUsers>>,
+  TError = void,
+>(
+  params?: AiInsightsControllerUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAiInsightsControllerUsersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof aiInsightsControllerUsers>>> = ({ signal }) =>
+    aiInsightsControllerUsers(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof aiInsightsControllerUsers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AiInsightsControllerUsersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof aiInsightsControllerUsers>>
+>;
+export type AiInsightsControllerUsersQueryError = void;
+
+export function useAiInsightsControllerUsers<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerUsers>>,
+  TError = void,
+>(
+  params: undefined | AiInsightsControllerUsersParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerUsers>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof aiInsightsControllerUsers>>,
+          TError,
+          Awaited<ReturnType<typeof aiInsightsControllerUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAiInsightsControllerUsers<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerUsers>>,
+  TError = void,
+>(
+  params?: AiInsightsControllerUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerUsers>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof aiInsightsControllerUsers>>,
+          TError,
+          Awaited<ReturnType<typeof aiInsightsControllerUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAiInsightsControllerUsers<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerUsers>>,
+  TError = void,
+>(
+  params?: AiInsightsControllerUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Người dùng xếp theo chi phí AI: lần gọi, cuộc trò chuyện, token, chi phí, kèm tên và email
+ */
+
+export function useAiInsightsControllerUsers<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerUsers>>,
+  TError = void,
+>(
+  params?: AiInsightsControllerUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAiInsightsControllerUsersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type aiInsightsControllerTracesResponse200 = {
+  data: AiTraceListResponseDto;
+  status: 200;
+};
+
+export type aiInsightsControllerTracesResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type aiInsightsControllerTracesResponseSuccess = aiInsightsControllerTracesResponse200 & {
+  headers: Headers;
+};
+export type aiInsightsControllerTracesResponseError = aiInsightsControllerTracesResponse400 & {
+  headers: Headers;
+};
+
+export type aiInsightsControllerTracesResponse =
+  aiInsightsControllerTracesResponseSuccess | aiInsightsControllerTracesResponseError;
+
+export const getAiInsightsControllerTracesUrl = (params?: AiInsightsControllerTracesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/analytics/ai-traces?${stringifiedParams}`
+    : `/api/analytics/ai-traces`;
+};
+
+/**
+ * Lọc theo người dùng, kết quả (answerKind) và chi phí tối thiểu. Lượt chat cũ chưa có turnId vẫn hiện nhưng token bằng 0.
+ * @summary Danh sách lượt chat Tripi: câu hỏi đã che, kết quả, thời gian, token và chi phí
+ */
+export const aiInsightsControllerTraces = async (
+  params?: AiInsightsControllerTracesParams,
+  options?: Parameters<typeof http>[1],
+): Promise<aiInsightsControllerTracesResponse> => {
+  return http<aiInsightsControllerTracesResponse>(getAiInsightsControllerTracesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAiInsightsControllerTracesQueryKey = (params?: AiInsightsControllerTracesParams) => {
+  return [`/api/analytics/ai-traces`, ...(params ? [params] : [])] as const;
+};
+
+export const getAiInsightsControllerTracesQueryOptions = <
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTraces>>,
+  TError = void,
+>(
+  params?: AiInsightsControllerTracesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTraces>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAiInsightsControllerTracesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof aiInsightsControllerTraces>>> = ({ signal }) =>
+    aiInsightsControllerTraces(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof aiInsightsControllerTraces>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AiInsightsControllerTracesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof aiInsightsControllerTraces>>
+>;
+export type AiInsightsControllerTracesQueryError = void;
+
+export function useAiInsightsControllerTraces<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTraces>>,
+  TError = void,
+>(
+  params: undefined | AiInsightsControllerTracesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTraces>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof aiInsightsControllerTraces>>,
+          TError,
+          Awaited<ReturnType<typeof aiInsightsControllerTraces>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAiInsightsControllerTraces<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTraces>>,
+  TError = void,
+>(
+  params?: AiInsightsControllerTracesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTraces>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof aiInsightsControllerTraces>>,
+          TError,
+          Awaited<ReturnType<typeof aiInsightsControllerTraces>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAiInsightsControllerTraces<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTraces>>,
+  TError = void,
+>(
+  params?: AiInsightsControllerTracesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTraces>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Danh sách lượt chat Tripi: câu hỏi đã che, kết quả, thời gian, token và chi phí
+ */
+
+export function useAiInsightsControllerTraces<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTraces>>,
+  TError = void,
+>(
+  params?: AiInsightsControllerTracesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTraces>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAiInsightsControllerTracesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type aiInsightsControllerTraceResponse200 = {
+  data: AiTraceDetailResponseDto;
+  status: 200;
+};
+
+export type aiInsightsControllerTraceResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type aiInsightsControllerTraceResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type aiInsightsControllerTraceResponseSuccess = aiInsightsControllerTraceResponse200 & {
+  headers: Headers;
+};
+export type aiInsightsControllerTraceResponseError = (
+  aiInsightsControllerTraceResponse400 | aiInsightsControllerTraceResponse404
+) & {
+  headers: Headers;
+};
+
+export type aiInsightsControllerTraceResponse =
+  aiInsightsControllerTraceResponseSuccess | aiInsightsControllerTraceResponseError;
+
+export const getAiInsightsControllerTraceUrl = (turnId: string) => {
+  return `/api/analytics/ai-traces/${turnId}`;
+};
+
+/**
+ * @summary Chi tiết một lượt chat: các bước gọi LLM với model, token, chi phí, thời gian
+ */
+export const aiInsightsControllerTrace = async (
+  turnId: string,
+  options?: Parameters<typeof http>[1],
+): Promise<aiInsightsControllerTraceResponse> => {
+  return http<aiInsightsControllerTraceResponse>(getAiInsightsControllerTraceUrl(turnId), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAiInsightsControllerTraceQueryKey = (turnId: string) => {
+  return [`/api/analytics/ai-traces/${turnId}`] as const;
+};
+
+export const getAiInsightsControllerTraceQueryOptions = <
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTrace>>,
+  TError = void,
+>(
+  turnId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTrace>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAiInsightsControllerTraceQueryKey(turnId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof aiInsightsControllerTrace>>> = ({ signal }) =>
+    aiInsightsControllerTrace(turnId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: turnId !== null && turnId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTrace>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type AiInsightsControllerTraceQueryResult = NonNullable<
+  Awaited<ReturnType<typeof aiInsightsControllerTrace>>
+>;
+export type AiInsightsControllerTraceQueryError = void;
+
+export function useAiInsightsControllerTrace<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTrace>>,
+  TError = void,
+>(
+  turnId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTrace>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof aiInsightsControllerTrace>>,
+          TError,
+          Awaited<ReturnType<typeof aiInsightsControllerTrace>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAiInsightsControllerTrace<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTrace>>,
+  TError = void,
+>(
+  turnId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTrace>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof aiInsightsControllerTrace>>,
+          TError,
+          Awaited<ReturnType<typeof aiInsightsControllerTrace>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAiInsightsControllerTrace<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTrace>>,
+  TError = void,
+>(
+  turnId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTrace>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Chi tiết một lượt chat: các bước gọi LLM với model, token, chi phí, thời gian
+ */
+
+export function useAiInsightsControllerTrace<
+  TData = Awaited<ReturnType<typeof aiInsightsControllerTrace>>,
+  TError = void,
+>(
+  turnId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof aiInsightsControllerTrace>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAiInsightsControllerTraceQueryOptions(turnId, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
