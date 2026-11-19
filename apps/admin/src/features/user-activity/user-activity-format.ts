@@ -16,6 +16,7 @@ export function userActivityRange(days: UserActivityRangeDays, now: number): { f
 
 export interface DailyActivity {
   date: string;
+  activeUsers: number;
   reactions: number;
   comments: number;
   shares: number;
@@ -33,7 +34,18 @@ export function fillDays(daily: readonly DailyActivity[], from: string, to: stri
   const days: DailyActivity[] = [];
   for (let at = Date.parse(`${from}T00:00:00Z`); at <= Date.parse(`${to}T00:00:00Z`); at += DAY_MS) {
     const date = new Date(at).toISOString().slice(0, 10);
-    days.push(byDate.get(date) ?? { date, reactions: 0, comments: 0, shares: 0, views: 0, chats: 0, posts: 0 });
+    days.push(
+      byDate.get(date) ?? {
+        date,
+        activeUsers: 0,
+        reactions: 0,
+        comments: 0,
+        shares: 0,
+        views: 0,
+        chats: 0,
+        posts: 0,
+      },
+    );
   }
   return days;
 }

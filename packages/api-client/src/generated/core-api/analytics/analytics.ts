@@ -701,7 +701,7 @@ export const getUserActivityControllerListUrl = (params?: UserActivityController
 
 /**
  * Ngày theo giờ Việt Nam, gồm cả from và to. Mặc định 7 ngày tới hôm nay, tối đa 90 ngày. Sắp theo hoạt động gần nhất.
- * @summary Danh sách người dùng có hoạt động trong khoảng, kèm số lượt thích, bình luận, chia sẻ, xem, chat
+ * @summary Danh sách người dùng có hoạt động trong khoảng, kèm số liệu hồ sơ (theo dõi, lượt thích, bài đăng) và số lượt trong khoảng
  */
 export const userActivityControllerList = async (
   params?: UserActivityControllerListParams,
@@ -796,7 +796,7 @@ export function useUserActivityControllerList<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Danh sách người dùng có hoạt động trong khoảng, kèm số lượt thích, bình luận, chia sẻ, xem, chat
+ * @summary Danh sách người dùng có hoạt động trong khoảng, kèm số liệu hồ sơ (theo dõi, lượt thích, bài đăng) và số lượt trong khoảng
  */
 
 export function useUserActivityControllerList<

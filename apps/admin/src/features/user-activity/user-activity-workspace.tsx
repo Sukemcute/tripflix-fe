@@ -10,7 +10,7 @@ import { t, vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import { AdminApiError } from '../shell/api-state';
 import { UserActivityDialog } from './user-activity-dialog';
-import { UserActivityOverview } from './user-activity-overview';
+import { UserActivityChart } from './user-activity-overview';
 import { UserAiUsage } from './user-ai-usage';
 import { EmptyState, LoadingState, Metric, Panel } from '../shell/operations-ui';
 import {
@@ -54,35 +54,34 @@ export function UserActivityWorkspace() {
 
   return (
     <>
-      <div className="flex justify-end">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <form className="admin-filters" style={{ padding: 0 }} onSubmit={(event) => event.preventDefault()}>
+          <label>
+            {copy.range}
+            <select
+              value={days}
+              onChange={(event) => {
+                setDays(Number(event.target.value) as UserActivityRangeDays);
+                setPage(1);
+                setSelected(null);
+              }}
+            >
+              {USER_ACTIVITY_RANGES.map((value) => (
+                <option key={value} value={value}>
+                  {copy.ranges[value]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </form>
         <span className="admin-badge">{copy.autoRefresh}</span>
       </div>
 
-      <form className="admin-filters" onSubmit={(event) => event.preventDefault()}>
-        <label>
-          {copy.range}
-          <select
-            value={days}
-            onChange={(event) => {
-              setDays(Number(event.target.value) as UserActivityRangeDays);
-              setPage(1);
-              setSelected(null);
-            }}
-          >
-            {USER_ACTIVITY_RANGES.map((value) => (
-              <option key={value} value={value}>
-                {copy.ranges[value]}
-              </option>
-            ))}
-          </select>
-        </label>
-      </form>
-
-      <UserActivityOverview range={range} days={days} />
+      <UserActivityChart range={range} days={days} />
 
       {list.isError && <AdminApiError error={list.error} retry={() => void list.refetch()} />}
 
-      <Panel title={copy.title} description={copy.retention}>
+      <Panel title={copy.listTitle} description={copy.listDescription}>
         {list.isPending ? (
           <LoadingState />
         ) : !data || data.items.length === 0 ? (
@@ -90,16 +89,14 @@ export function UserActivityWorkspace() {
         ) : (
           <>
             <div className="admin-table-scroll">
-              <table className="ops-table" aria-label={copy.title}>
+              <table className="ops-table" aria-label={copy.listTitle}>
                 <thead>
                   <tr>
                     <th scope="col">{copy.columns.user}</th>
                     <th scope="col">{copy.columns.email}</th>
-                    <th scope="col">{copy.columns.reactions}</th>
-                    <th scope="col">{copy.columns.comments}</th>
-                    <th scope="col">{copy.columns.shares}</th>
-                    <th scope="col">{copy.columns.views}</th>
-                    <th scope="col">{copy.columns.chats}</th>
+                    <th scope="col">{copy.columns.followers}</th>
+                    <th scope="col">{copy.columns.following}</th>
+                    <th scope="col">{copy.columns.likes}</th>
                     <th scope="col">{copy.columns.posts}</th>
                     <th scope="col">{copy.columns.lastActiveAt}</th>
                     <th scope="col">
@@ -112,12 +109,10 @@ export function UserActivityWorkspace() {
                     <tr key={item.userId} aria-selected={selected?.userId === item.userId}>
                       <td className="font-semibold text-navy">{item.displayName ?? copy.deletedAccount}</td>
                       <td>{item.email ?? '—'}</td>
-                      <td className="tabular-nums">{count.format(item.reactions)}</td>
-                      <td className="tabular-nums">{count.format(item.comments)}</td>
-                      <td className="tabular-nums">{count.format(item.shares)}</td>
-                      <td className="tabular-nums">{count.format(item.views)}</td>
-                      <td className="tabular-nums">{count.format(item.chats)}</td>
-                      <td className="tabular-nums">{count.format(item.posts)}</td>
+                      <td className="tabular-nums">{count.format(item.profile.followerCount)}</td>
+                      <td className="tabular-nums">{count.format(item.profile.followingCount)}</td>
+                      <td className="tabular-nums">{count.format(item.profile.likeCount)}</td>
+                      <td className="tabular-nums">{count.format(item.profile.postCount)}</td>
                       <td>{formatDateTime(item.lastActiveAt)}</td>
                       <td>
                         <button
@@ -196,17 +191,32 @@ function UserActivityDetail({
         <LoadingState />
       ) : data ? (
         <div className="space-y-6 p-5">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-            <Metric label={copy.totals.reactions} value={data.counts.reactions} />
-            <Metric label={copy.totals.comments} value={data.counts.comments} />
-            <Metric label={copy.totals.shares} value={data.counts.shares} />
-            <Metric label={copy.totals.views} value={data.counts.views} />
-            <Metric label={copy.totals.chats} value={data.counts.chats} />
-            <Metric label={copy.totals.posts} value={data.counts.posts} />
-          </div>
+          <section aria-label={copy.profile.title}>
+            <h3 className="mb-1 text-sm font-bold text-navy">{copy.profile.title}</h3>
+            <p className="mb-3 text-xs text-text-muted">{copy.profile.hint}</p>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <Metric label={copy.profile.followers} value={data.profile.followerCount} />
+              <Metric label={copy.profile.following} value={data.profile.followingCount} />
+              <Metric label={copy.profile.likes} value={data.profile.likeCount} />
+              <Metric label={copy.profile.posts} value={data.profile.postCount} />
+            </div>
+          </section>
+
+          <section aria-label={copy.activityInRange}>
+            <h3 className="mb-3 text-sm font-bold text-navy">{copy.activityInRange}</h3>
+            <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-6">
+              <Metric label={copy.totals.reactions} value={data.counts.reactions} />
+              <Metric label={copy.totals.comments} value={data.counts.comments} />
+              <Metric label={copy.totals.shares} value={data.counts.shares} />
+              <Metric label={copy.totals.views} value={data.counts.views} hint={copy.viewsHint} />
+              <Metric label={copy.totals.chats} value={data.counts.chats} />
+              <Metric label={copy.totals.posts} value={data.counts.posts} />
+            </div>
+          </section>
 
           <section aria-label={copy.chatQuestions}>
-            <h3 className="mb-3 text-sm font-bold text-navy">{copy.chatQuestions}</h3>
+            <h3 className="mb-1 text-sm font-bold text-navy">{copy.chatQuestions}</h3>
+            <p className="mb-3 text-xs text-text-muted">{copy.retention}</p>
             {questions.length === 0 ? (
               <p className="text-xs text-text-muted">{copy.chatEmpty}</p>
             ) : (

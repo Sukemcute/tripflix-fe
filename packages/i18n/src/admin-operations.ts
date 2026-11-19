@@ -133,4 +133,34 @@ export const adminOperations = {
   loginRestricted: 'Dành cho nhân sự được cấp quyền',
   loginWelcome: 'Đăng nhập quản trị',
   loginAccount: 'Sử dụng tài khoản nhân sự Tripflix để tiếp tục.',
+  /** Khối số tổng toàn hệ thống trên trang Tổng quan, chỉ superadmin (SCRUM-181). */
+  systemSummary: {
+    title: 'Toàn hệ thống',
+    moderationTitle: 'Kiểm duyệt',
+    description: 'Số tổng của từng phần. Bấm Xem chi tiết để mở tab tương ứng.',
+    range: 'Khoảng thời gian',
+    ranges: { '1': 'Hôm nay', '7': '7 ngày', '30': '30 ngày' },
+    viewDetail: 'Xem chi tiết',
+    users: {
+      title: 'Người dùng',
+      activeUsers: 'Người có hoạt động',
+      newPosts: 'Bài đăng mới',
+      postsHint: 'Chỉ tính bài đăng từ khi bắt đầu theo dõi.',
+      shares: 'Chia sẻ',
+      sharesHint: 'Lượt chia sẻ của người đã đăng nhập.',
+    },
+    ai: { title: 'Chi phí AI', cost: 'Chi phí (USD)', calls: 'Lần gọi LLM', tokens: 'Token vào / ra' },
+    system: {
+      title: 'Hệ thống',
+      requests: 'Số request',
+      errorRate: 'Tỉ lệ lỗi',
+      last24h: '24 giờ qua, không theo khoảng đã chọn.',
+    },
+    orders: { title: 'Đơn hàng', anomalies: 'Đơn bất thường', current: 'Đang tồn tại, chưa xử lý xong.' },
+    jobs: {
+      title: 'Job nền',
+      failedRuns: 'Lượt chạy lỗi',
+      recent: 'Trong các lượt chạy gần nhất của job tìm kiếm và gợi ý.',
+    },
+  },
 } as const;

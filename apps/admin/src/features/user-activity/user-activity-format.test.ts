@@ -40,13 +40,23 @@ describe('mô tả hoạt động', () => {
 });
 
 describe('fillDays', () => {
-  const day = (date: string, posts: number) => ({ date, reactions: 0, comments: 0, shares: 0, views: 0, chats: 0, posts });
+  const day = (date: string, posts: number) => ({
+    date,
+    activeUsers: posts,
+    reactions: 0,
+    comments: 0,
+    shares: 0,
+    views: 0,
+    chats: 0,
+    posts,
+  });
 
   it('điền ngày trống bằng 0, giữ ngày có số liệu, đủ cả hai đầu', () => {
     const days = fillDays([day('2026-11-18', 3)], '2026-11-16', '2026-11-19');
 
     expect(days.map((item) => item.date)).toEqual(['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19']);
     expect(days.map((item) => item.posts)).toEqual([0, 0, 3, 0]);
+    expect(days.map((item) => item.activeUsers)).toEqual([0, 0, 3, 0]);
   });
 
   it('một ngày thì đúng một dòng', () => {
