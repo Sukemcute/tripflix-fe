@@ -128,6 +128,17 @@ export function pruneReadyReelIds(
 /** Thời gian chặn lướt tối đa khi bài kế tiếp chưa có hình: Safari iPhone không tải trước video, chặn mãi thì kẹt. */
 export const REEL_NEXT_NOT_READY_BLOCK_MS = 3_000;
 
+export function startReelOnPostChange(
+  video: Pick<HTMLVideoElement, 'currentTime'> | null,
+  previousPostId: string | null | undefined,
+  postId: string | null | undefined,
+  play: () => void,
+): void {
+  if (!video || !postId || postId === previousPostId) return;
+  if (video.currentTime > 0.1) video.currentTime = 0;
+  play();
+}
+
 /** Mốc thời gian trên thanh tua như TikTok: 17 → "0:17", 65 → "1:05". Giá trị lạ (NaN, âm) coi như 0. */
 export function formatReelTime(seconds: number): string {
   const total = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
