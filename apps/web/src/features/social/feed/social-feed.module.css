@@ -2375,46 +2375,52 @@ a.authorAvatar {
 }
 
 @media (max-width: 767px) {
+  /* Mở dưới hàng dock, dừng trên thanh đáy chung (features/shell). */
   .dockSearchDrawer {
     position: fixed;
-    top: calc(var(--feed-header-height, 151px) + 12px);
+    top: calc(var(--feed-header-height, 151px) + 64px);
     left: 12px;
     right: 12px;
-    bottom: 68px;
+    bottom: calc(var(--mobile-tab-bar-space, 0px) + 12px);
     width: auto;
   }
 
+  /* Chừa chỗ cho thanh đáy chung thay cho dock đáy riêng trước đây. */
   .feedPageWrapper,
   .feedPageWrapperReels {
     padding-left: 0;
-    padding-bottom: 56px;
+    padding-bottom: var(--mobile-tab-bar-space, 0px);
   }
 
+  /* Điện thoại: dock thành hàng ngang trên cùng khung Cảm hứng (TF98), không còn là thanh đáy thứ hai. */
   .instagramDock {
-    position: fixed;
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: relative;
+    inset: auto;
+    flex: none;
     width: 100%;
-    height: 56px;
-    border-radius: 20px 20px 0 0;
+    height: 44px;
+    margin-top: 8px;
+    padding: 0 8px;
+    border-radius: 14px;
     flex-direction: row;
-    padding: 0 16px;
-    border-right: none;
-    border-top: 1px solid #E2E8F0;
+    overflow-x: auto;
   }
 
   .dockCenterGroup {
     flex-direction: row;
-    gap: 8px;
+    gap: 4px;
     width: 100%;
     justify-content: space-around;
   }
 
+  .dockItemBtn {
+    flex: none;
+    height: 36px;
+  }
+
+  /* Đăng bài đã có nút ⊕ ở thanh đáy chung. */
   .dockCreateBtn {
-    margin-block: 0;
-    margin-inline: 4px;
+    display: none;
   }
 
   .splitViewContainer {
