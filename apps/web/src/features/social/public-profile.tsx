@@ -4,6 +4,7 @@ import {
   HttpError,
   useApiSession,
   useAuthorReels,
+  useAuthorVlogs,
   useFollowAuthor,
   usePublicProfile,
   useReelsFeed,
@@ -28,6 +29,12 @@ export function PublicProfile({ userId }: { userId: string }) {
   const profile = usePublicProfile(userId);
   const isMine = !!user && user.id === userId;
   const follow = useFollowAuthor(isMine ? undefined : userId);
+  // Hồ sơ chưa có cờ xác minh; tick xanh nằm trên bài, nên lấy từ bài đã tải (cùng cache với tường bài và lưới video).
+  const vlogs = useAuthorVlogs(userId);
+  const reels = useAuthorReels(userId);
+  const isVerified =
+    !!vlogs.data?.pages.some((page) => page.items.some((post) => post.isVerified)) ||
+    !!reels.data?.pages.some((page) => page.items.some((reel) => reel.isVerified));
   const [tab, setTab] = useState<'videos' | 'posts' | 'bookmarks'>('posts');
   const activeTab = tab === 'bookmarks' && !isMine ? 'posts' : tab;
   const tabs = isMine ? (['posts', 'videos', 'bookmarks'] as const) : (['posts', 'videos'] as const);
@@ -70,7 +77,18 @@ export function PublicProfile({ userId }: { userId: string }) {
           </span>
           <div className={styles.info}>
             <div className={styles.nameBlock}>
-              <h1 className={styles.name}>{displayName}</h1>
+              <h1 className={styles.name}>
+                {displayName}
+                {isVerified && (
+                  <span
+                    className={styles.verified}
+                    data-tooltip={vi.api.postVerifiedAccountTitle}
+                    aria-label={vi.api.postVerifiedBadge}
+                  >
+                    <SocialIcon name="verified" size={22} />
+                  </span>
+                )}
+              </h1>
               {/* Tên tài khoản chỉ hiện ở trang cá nhân (bài viết, Reels đã bỏ). Chưa có trường username thật nên tạo
                 từ tên hiển thị như các chỗ khác (formatAuthorDisplay). */}
               <p className={styles.handle}>{handle}</p>

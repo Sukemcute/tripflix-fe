@@ -48,6 +48,12 @@
   letter-spacing: -0.035em;
   overflow-wrap: anywhere;
 }
+.verified {
+  display: inline-flex;
+  margin-left: 6px;
+  vertical-align: -0.12em;
+  color: var(--color-coral);
+}
 .nameBlock {
   padding-right: 164px;
 }
