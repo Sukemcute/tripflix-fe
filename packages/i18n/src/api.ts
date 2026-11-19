@@ -844,6 +844,8 @@ export const api = {
   immersiveCancelReply: 'Hủy trả lời',
   // Trang cá nhân công khai (TF47)
   personalPage: 'Trang cá nhân',
+  settingsMenu: 'Cài đặt',
+  bookedTripsMenu: 'Chuyến đi đã đặt',
   profileFollowers: 'Người theo dõi',
   profileFollowing: 'Đang theo dõi',
   profileLikes: 'Lượt thích',

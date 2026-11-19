@@ -136,7 +136,6 @@ export function ProfileInfoCard({ userId }: { userId: string }) {
       <header className="profile-card-header">
         <div>
           <h2 id="profile-info-title">{vi.api.profileInfoTitle}</h2>
-          <p className="auth-hint">{vi.api.profileInfoHint}</p>
         </div>
         {!isEditing && (
           <button

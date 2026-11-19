@@ -12,11 +12,17 @@ import { useOpenAdmin } from './admin-handoff';
 
 /**
  * Góc phải header: chưa đăng nhập thì link "Đăng nhập"; đã đăng nhập thì avatar tròn (chữ cái đầu của tên) mở menu
- * (Tài khoản, Chuyến đã đặt, Trang cá nhân, Trang quản trị cho nhân viên, Đăng xuất). Tên đầy đủ nằm trong menu
+ * (Trang quản trị cho nhân viên, Trang cá nhân, Chuyến đã đặt, Cài đặt, Đăng xuất). Tên đầy đủ nằm trong menu
  * và aria-label. Menu là nhóm link bật/tắt (disclosure), chỉ render khi mở.
  */
 // Icon nét mảnh 18px cho các mục menu tài khoản, cùng kiểu icon menu header (TF06P).
 const MENU_ICONS = {
+  settings: (
+    <>
+      <path d="m9 3-.7 2.2-2 .9-2.1-.5-1.5 2.6 1.5 1.7v2.2l-1.5 1.7 1.5 2.6 2.1-.5 2 .9L9 19h3l.7-2.2 2-.9 2.1.5 1.5-2.6-1.5-1.7V9.9l1.5-1.7-1.5-2.6-2.1.5-2-.9L12 3Z" />
+      <circle cx="10.5" cy="11" r="3" />
+    </>
+  ),
   account: (
     <>
       <circle cx="12" cy="8" r="3.5" />
@@ -100,24 +106,6 @@ export function HeaderAccount() {
             </div>
           </div>
           <ul>
-            <li>
-              <Link prefetch={false} href="/account" onClick={closeMenu}>
-                <MenuIcon name="account" />
-                {vi.api.account}
-              </Link>
-            </li>
-            <li>
-              <Link prefetch={false} href="/account?tab=bookings" onClick={closeMenu}>
-                <MenuIcon name="bookings" />
-                {vi.commerce.booked}
-              </Link>
-            </li>
-            <li>
-              <Link prefetch={false} href={`/u/${encodeURIComponent(user.id)}`} onClick={closeMenu}>
-                <MenuIcon name="account" />
-                {vi.api.personalPage}
-              </Link>
-            </li>
             {ADMIN_URL && isStaffRole(user.role) && (
               <li>
                 <a
@@ -133,6 +121,24 @@ export function HeaderAccount() {
                 </a>
               </li>
             )}
+            <li>
+              <Link prefetch={false} href={`/u/${encodeURIComponent(user.id)}`} onClick={closeMenu}>
+                <MenuIcon name="account" />
+                {vi.api.personalPage}
+              </Link>
+            </li>
+            <li>
+              <Link prefetch={false} href="/bookings" onClick={closeMenu}>
+                <MenuIcon name="bookings" />
+                {vi.api.bookedTripsMenu}
+              </Link>
+            </li>
+            <li>
+              <Link prefetch={false} href="/account" onClick={closeMenu}>
+                <MenuIcon name="settings" />
+                {vi.api.settingsMenu}
+              </Link>
+            </li>
           </ul>
           <ApiErrorNotice error={logout.error ?? openAdmin.error} />
           <button
