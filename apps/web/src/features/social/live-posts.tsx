@@ -109,6 +109,7 @@ import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
 import { ReplyQuote, scrollToQuotedComment, shouldShowReplyQuote } from './reply-quote';
 import { RelativeTime } from './relative-time-label';
+import { resolvePanelOpen, useIsWideScreen } from './use-wide-screen';
 import styles from './live-posts.module.css';
 import { PostImagePicker } from './composer/post-image-picker';
 import { usePostImages } from './composer/use-post-images';
@@ -1234,7 +1235,11 @@ export function InspirationImmersiveViewer({
     },
     [onToggleItinerary, isLeftOpen]
   );
-  const [isRightOpen, setRightOpen] = useState(true);
+  // Bình luận mở sẵn chỉ trên màn rộng; màn hẹp panel là bottom sheet che hết video (TF98). Server render coi như
+  // đóng để không lệch hydration; mở từ thông báo bình luận (focusCommentId) thì vẫn mở sẵn.
+  const isWideScreen = useIsWideScreen();
+  const [rightOpenChoice, setRightOpen] = useState<boolean | null>(focusCommentId ? true : null);
+  const isRightOpen = resolvePanelOpen(rightOpenChoice, isWideScreen);
   const [isComposerModalOpen, setComposerModalOpen] = useState(false);
 
   // Media player session states
@@ -2073,14 +2078,14 @@ export function InspirationImmersiveViewer({
     if (activePostRef.current?.id !== postId) {
       setActivePostId(postId);
     }
-    setRightOpen((wasOpen) => {
-      if (!wasOpen) {
+    setRightOpen((choice) => {
+      if (!resolvePanelOpen(choice, isWideScreen)) {
         setTimeout(() => commentInputRef.current?.focus(), 120);
         return true;
       }
       return false;
     });
-  }, []);
+  }, [isWideScreen]);
 
   // Đảm bảo loại bỏ thuộc tính data-theme còn sót lại, giữ mặc định Light Mode
   useEffect(() => {
