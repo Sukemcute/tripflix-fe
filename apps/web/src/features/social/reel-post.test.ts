@@ -269,6 +269,11 @@ describe('prependPinnedReelCards', () => {
     ]);
   });
 
+  it('bảng tin có bài lặp giữa các trang thì chỉ giữ lần đầu (không trùng key)', () => {
+    expect(prependPinnedReelCards([], [card('a'), card('b'), card('a'), card('c'), card('b')]).map((c) => c.postId)).toEqual(['a', 'b', 'c']);
+    expect(prependPinnedReelCards([card('b')], [card('a'), card('a'), card('b')]).map((c) => c.postId)).toEqual(['b', 'a']);
+  });
+
   it('không có Reel ghim (link hỏng, bài bị ẩn) thì là bảng tin như thường', () => {
     expect(prependPinnedReelCards([], [card('a'), card('c')]).map((c) => c.postId)).toEqual(['a', 'c']);
   });
