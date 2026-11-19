@@ -104,6 +104,19 @@ describe('seoApi', () => {
     });
   });
 
+  it('getPostDetail trả đủ post, viewerContext, shareUrl như socialApi.getPost', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      json({
+        post: { id: 'p1', title: 'Đà Lạt' },
+        viewerContext: { myReaction: null },
+        shareUrl: 'https://x/p1',
+      }),
+    );
+    const detail = await seoApi.getPostDetail('p1', options);
+    expect(Object.keys(detail).sort()).toEqual(['post', 'shareUrl', 'viewerContext']);
+    expect(detail.shareUrl).toBe('https://x/p1');
+  });
+
   it('listAuthorVlogs gọi đúng tham số author_id và post_type=vlog, ẩn danh', async () => {
     const fetch = vi
       .spyOn(globalThis, 'fetch')

@@ -4,3 +4,7 @@ export const publicProfileQueryKey = (userId: string | undefined) => ['social', 
 
 export const authorVlogsQueryKey = (userId: string | undefined) =>
   ['social', 'author', userId, 'vlog'] as const;
+
+// Chi tiết bài lộ trình. Có user trong khoá nên người đã đăng nhập không đọc nhầm dữ liệu ẩn danh (TF113).
+export const tripPlanPostQueryKey = (postId: string, userId: string | undefined) =>
+  ['social', 'post', postId, userId] as const;

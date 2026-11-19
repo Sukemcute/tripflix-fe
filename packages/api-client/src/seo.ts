@@ -10,6 +10,7 @@ import {
 import type {
   HotelDetailDto,
   PublicProfileDto,
+  SocialPostDetailDto,
   SocialPostDto,
   SocialPostPageDto,
 } from './generated/core-api/model';
@@ -33,6 +34,11 @@ export const seoApi = {
   async getHotel(slug: string, options: SeoRequestOptions): Promise<HotelDetailDto> {
     const response = await hotelsControllerGetHotel(encodeURIComponent(slug), {}, toRequest(options));
     return readEntity(response.data, ['id', 'slug', 'name']);
+  },
+  /** Chi tiết bài đúng hình dạng socialApi.getPost (post, viewerContext, shareUrl), dùng để prefetch trang lộ trình (TF113). */
+  async getPostDetail(id: string, options: SeoRequestOptions): Promise<SocialPostDetailDto> {
+    const response = await postsControllerGetPostDetail(encodeURIComponent(id), toRequest(options));
+    return readEntity(response.data, ['post', 'viewerContext', 'shareUrl']);
   },
   async getPost(id: string, options: SeoRequestOptions): Promise<SocialPostDto> {
     const response = await postsControllerGetPostDetail(encodeURIComponent(id), toRequest(options));
