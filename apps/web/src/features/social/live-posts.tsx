@@ -46,7 +46,7 @@ import { ComposerTripPlanEditor } from './composer/trip-plan-editor';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getInitial } from '@/features/auth/account-helpers';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
@@ -80,13 +80,16 @@ import { useHasUserInteracted } from './use-has-user-interacted';
 import { useSettledFlag } from './use-settled-flag';
 import {
   canStepToNextReel,
+  computeReelEngagement,
   getReelBufferSeconds,
   getReelRenderMode,
   pickReelAfterRemoval,
   prependPinnedReelCards,
+  reuseReelEngagement,
   shouldLoadReelSource,
   shouldShowReelBackdrop,
   toReelPost,
+  type ReelEngagement,
   type ReelPost,
 } from './reel-post';
 import {
@@ -597,9 +600,7 @@ function AccountPostGrid({
  * - Mặc định Light Mode + nút chuyển đổi Light / Dark Mode.
  */
 interface MediaTrackItemProps {
-  itemRef?: (el: HTMLDivElement | null) => void;
-  /** Cột Thích/Bình luận/Lưu/Chia sẻ của riêng Reel này, cuộn cùng video như TikTok. */
-  actions?: React.ReactNode;
+  registerItemRef: (index: number, el: HTMLDivElement | null) => void;
   index: number;
   post: ReelPost;
   isActive: boolean;
@@ -613,17 +614,26 @@ interface MediaTrackItemProps {
   bufferSeconds: number;
   /** Có lớp nền mờ (tốn GPU) – chỉ bài đang xem và hai bài sát cạnh. */
   hasBackdrop: boolean;
+  engagement: ReelEngagement;
+  isSignedIn: boolean;
+  loginHref: string;
+  isCommentOpen: boolean;
+  onToggleLike: (postId: string) => void;
+  onToggleSave: (postId: string) => void;
+  onShare: (postId: string, anchor: HTMLElement) => void;
+  onToggleComments: (postId: string) => void;
   reelCard?: FeedCardDto;
-  user: { id: string; displayName: string } | null;
+  viewerUserId?: string;
+  viewerDisplayName?: string;
   videoRef?: React.RefObject<HTMLVideoElement | null>;
   isMuted: boolean;
   isPlaying: boolean;
   showPlayFlash: boolean;
-  mediaErrorPostId: string | null;
+  isMediaError: boolean;
   onMediaError: (postId: string) => void;
   onRetryMedia: (postId: string) => void;
   onTogglePlay: () => void;
-  captionExpandedPostId: string | null;
+  isCaptionExpanded: boolean;
   onToggleCaption: (postId: string) => void;
   onOpenTag: (tag: string) => void;
   onOpenItinerary: (postId: string) => void;
@@ -655,15 +665,6 @@ const HAVE_CURRENT_DATA = 2;
 /** Video đang xem chưa chạy sau chừng này thì vẫn cho tải trước bài thứ 2 (video lỗi, trình duyệt chặn tự phát). */
 const REEL_PRELOAD_FALLBACK_MS = 2_000;
 
-interface ReelEngagement {
-  isLiked: boolean;
-  isSaved: boolean;
-  likes: number;
-  saves: number;
-  comments: number;
-  shares: number;
-}
-
 interface ReelActionRailProps {
   engagement: ReelEngagement;
   isSignedIn: boolean;
@@ -676,7 +677,7 @@ interface ReelActionRailProps {
   onToggleComments: () => void;
 }
 
-function ReelActionRail({
+export const ReelActionRail = memo(function ReelActionRail({
   engagement,
   isSignedIn,
   loginHref,
@@ -761,11 +762,10 @@ function ReelActionRail({
       </div>
     </div>
   );
-}
+});
 
-function MediaTrackItem({
-  itemRef,
-  actions,
+export const MediaTrackItem = memo(function MediaTrackItem({
+  registerItemRef,
   index,
   post,
   isActive,
@@ -774,17 +774,26 @@ function MediaTrackItem({
   onFirstFrame,
   bufferSeconds,
   hasBackdrop,
+  engagement,
+  isSignedIn,
+  loginHref,
+  isCommentOpen,
+  onToggleLike,
+  onToggleSave,
+  onShare,
+  onToggleComments,
   reelCard,
-  user,
+  viewerUserId,
+  viewerDisplayName,
   videoRef,
   isMuted,
   isPlaying,
   showPlayFlash,
-  mediaErrorPostId,
+  isMediaError,
   onMediaError,
   onRetryMedia,
   onTogglePlay,
-  captionExpandedPostId,
+  isCaptionExpanded,
   onToggleCaption,
   onOpenTag,
   onOpenItinerary,
@@ -811,14 +820,38 @@ function MediaTrackItem({
   // Giống Reels mobile: khi chưa tới lượt phát chỉ hiện poster thật của video, không dùng ảnh minh hoạ
   // theo điểm đến (trông như ảnh bài viết rồi mới "biến" thành video khi lướt nhanh bằng touchpad).
   const reelPoster = reelCard ? selectReelPoster(reelCard.video.posters, 720) : undefined;
-  const isMediaError = mediaErrorPostId === post.id;
-  const isCaptionExpanded = captionExpandedPostId === post.id;
   const authorInfo = formatAuthorDisplay(
     post.authorId,
     post.authorName ?? reelCard?.author.name,
-    user?.id,
-    user?.displayName,
+    viewerUserId,
+    viewerDisplayName,
   );
+
+  const attachItemRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      registerItemRef(index, el);
+    },
+    [registerItemRef, index],
+  );
+
+  const handleToggleLike = useCallback(() => {
+    onToggleLike(post.id);
+  }, [onToggleLike, post.id]);
+
+  const handleToggleSave = useCallback(() => {
+    onToggleSave(post.id);
+  }, [onToggleSave, post.id]);
+
+  const handleShareClick = useCallback(
+    (anchor: HTMLElement) => {
+      onShare(post.id, anchor);
+    },
+    [onShare, post.id],
+  );
+
+  const handleToggleCommentsClick = useCallback(() => {
+    onToggleComments(post.id);
+  }, [onToggleComments, post.id]);
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const [isScrubbing, setScrubbing] = useState(false);
@@ -905,7 +938,7 @@ function MediaTrackItem({
 
   return (
     <div
-      ref={itemRef}
+      ref={attachItemRef}
       className={styles.mediaItem}
       data-index={index}
       data-post-id={post.id}
@@ -1110,10 +1143,19 @@ function MediaTrackItem({
         )}
       </div>
 
-      {actions}
+      <ReelActionRail
+        engagement={engagement}
+        isSignedIn={isSignedIn}
+        loginHref={loginHref}
+        isCommentOpen={isCommentOpen}
+        onToggleLike={handleToggleLike}
+        onToggleSave={handleToggleSave}
+        onShare={handleShareClick}
+        onToggleComments={handleToggleCommentsClick}
+      />
     </div>
   );
-}
+});
 
 /**
  * Phan biet con lan chuot vat ly (Mouse Wheel) va ban di cam ung (Touchpad).
@@ -1309,6 +1351,15 @@ export function InspirationImmersiveViewer({
   }, [posts, reelMap, activeIndex]);
 
   const activePost = activeIndex >= 0 ? posts[activeIndex] ?? null : null;
+  const postMap = useMemo(() => new Map(posts.map((item) => [item.id, item])), [posts]);
+  const postMapRef = useRef(postMap);
+  useEffect(() => {
+    postMapRef.current = postMap;
+  }, [postMap]);
+  const activePostRef = useRef<ReelPost | null>(activePost);
+  useEffect(() => {
+    activePostRef.current = activePost;
+  }, [activePost]);
   const nextMediaErrorPostId = resolveMediaErrorOnPostChange(mediaErrorPostId, activePost?.id);
   if (nextMediaErrorPostId !== mediaErrorPostId) {
     setMediaErrorPostId(nextMediaErrorPostId);
@@ -1865,60 +1916,62 @@ export function InspirationImmersiveViewer({
   const activePostDetail =
     postDetailQuery.data?.post.id === activePost?.id ? postDetailQuery.data : undefined;
 
-  function getReelServerState(post: ReelPost) {
-    const detail = activePostDetail?.post.id === post.id ? activePostDetail : undefined;
-    const card = reelMap.get(post.id);
-    const serverLiked = detail
-      ? detail.viewerContext.myReaction !== null
-      : Boolean(card?.viewerState?.liked);
-    const serverSaved = detail
-      ? detail.viewerContext.isBookmarked
-      : filterMode === 'saved' || Boolean(card?.viewerState?.saved);
-    return { detail, serverLiked, serverSaved };
-  }
+  const getReelServerState = useCallback(
+    (postId: string) => {
+      const detail = activePostDetail?.post.id === postId ? activePostDetail : undefined;
+      const card = reelMap.get(postId);
+      const serverLiked = detail
+        ? detail.viewerContext.myReaction !== null
+        : Boolean(card?.viewerState?.liked);
+      const serverSaved = detail
+        ? detail.viewerContext.isBookmarked
+        : filterMode === 'saved' || Boolean(card?.viewerState?.saved);
+      return { detail, serverLiked, serverSaved };
+    },
+    [activePostDetail, reelMap, filterMode],
+  );
 
-  /** Trạng thái và số đếm tương tác của một Reel: bài đang xem theo chi tiết mới nhất, bài khác theo thẻ feed. */
-  function getReelEngagement(post: ReelPost): ReelEngagement {
-    const { detail, serverLiked, serverSaved } = getReelServerState(post);
-    const isLiked = optimisticLikes[post.id] ?? serverLiked;
-    const isSaved = optimisticSaves[post.id] ?? serverSaved;
-    return {
-      isLiked,
-      isSaved,
-      likes: Math.max(
-        0,
-        (detail?.post.reactionTotal ?? post.reactionTotal) + Number(isLiked) - Number(serverLiked),
-      ),
-      saves: Math.max(
-        0,
-        (detail?.post.bookmarkCount ?? post.bookmarkCount) + Number(isSaved) - Number(serverSaved),
-      ),
-      comments: detail?.post.commentCount ?? post.commentCount,
-      shares: detail?.post.shareCount ?? post.shareCount,
-    };
-  }
+  const [engagementCache] = useState(() => new Map<string, ReelEngagement>());
 
-  function triggerToggleReaction(post: ReelPost, type: ReelReactionKind) {
-    const { serverLiked, serverSaved } = getReelServerState(post);
+  /** Trạng thái và số đếm tương tác của từng Reel, giữ nguyên tham chiếu cũ khi số đếm không đổi. */
+  const engagementByPostId = useMemo(() => {
+    const map = new Map<string, ReelEngagement>();
+    for (const post of posts) {
+      const { detail, serverLiked, serverSaved } = getReelServerState(post.id);
+      const computed = computeReelEngagement({
+        post,
+        detailPost: detail?.post,
+        serverLiked,
+        serverSaved,
+        optimisticLiked: optimisticLikes[post.id],
+        optimisticSaved: optimisticSaves[post.id],
+      });
+      map.set(post.id, reuseReelEngagement(engagementCache, post.id, computed));
+    }
+    return map;
+  }, [posts, getReelServerState, optimisticLikes, optimisticSaves, engagementCache]);
+
+  function triggerToggleReaction(postId: string, type: ReelReactionKind) {
+    const { serverLiked, serverSaved } = getReelServerState(postId);
     const serverSelected = type === 'like' ? serverLiked : serverSaved;
     const currentSelected =
       type === 'like'
-        ? (optimisticLikes[post.id] ?? serverLiked)
-        : (optimisticSaves[post.id] ?? serverSaved);
+        ? (optimisticLikes[postId] ?? serverLiked)
+        : (optimisticSaves[postId] ?? serverSaved);
     const nextSelected = !currentSelected;
 
     if (type === 'like') {
-      setOptimisticLikes((prev) => ({ ...prev, [post.id]: nextSelected }));
+      setOptimisticLikes((prev) => ({ ...prev, [postId]: nextSelected }));
     } else {
-      setOptimisticSaves((prev) => ({ ...prev, [post.id]: nextSelected }));
+      setOptimisticSaves((prev) => ({ ...prev, [postId]: nextSelected }));
     }
 
     const rollbackCache = user
-      ? updateReelSocialCache(client, user.id, post.id, type, nextSelected)
+      ? updateReelSocialCache(client, user.id, postId, type, nextSelected)
       : undefined;
 
     getReactionBatcher().schedule({
-      postId: post.id,
+      postId,
       type,
       nextSelected,
       serverSelected,
@@ -1926,44 +1979,76 @@ export function InspirationImmersiveViewer({
     });
   }
 
-  const displayComments = activePost ? getReelEngagement(activePost).comments : 0;
+  const triggerToggleReactionRef = useRef(triggerToggleReaction);
+  useEffect(() => {
+    triggerToggleReactionRef.current = triggerToggleReaction;
+  });
 
-
-
+  const displayComments = activePost
+    ? (engagementByPostId.get(activePost.id)?.comments ?? activePost.commentCount)
+    : 0;
 
   const loginReturnHref = '/login?returnTo=%2Finspiration';
 
-  function handleCommentButtonClick() {
-    if (!isRightOpen) {
-      setRightOpen(true);
-      setTimeout(() => commentInputRef.current?.focus(), 120);
-      return;
-    }
-    setRightOpen(false);
-  }
+  const registerItemRef = useCallback((index: number, el: HTMLDivElement | null) => {
+    mediaItemRefs.current[index] = el;
+  }, []);
+
+  const handleMediaError = useCallback((postId: string) => {
+    setMediaErrorPostId(postId);
+  }, []);
+
+  const handleToggleCaption = useCallback((postId: string) => {
+    setCaptionExpandedPostId((prev) => (prev === postId ? null : postId));
+  }, []);
+
+  const handleOpenTag = useCallback(
+    (tag: string) => {
+      onSearchKeywordChange?.(tag);
+    },
+    [onSearchKeywordChange],
+  );
+
+  const handleOpenItinerary = useCallback(
+    (postId: string) => {
+      if (activePostIdRef.current !== postId) setActivePostId(postId);
+      setLeftOpen(true);
+    },
+    [setLeftOpen],
+  );
+
+  const handleToggleLike = useCallback((postId: string) => {
+    triggerToggleReactionRef.current(postId, 'like');
+  }, []);
+
+  const handleToggleSave = useCallback((postId: string) => {
+    triggerToggleReactionRef.current(postId, 'save');
+  }, []);
 
   const shareMenuRef = useRef<ShareMenuHandle | null>(null);
 
-  function renderReelActions(post: ReelPost, isActiveItem: boolean) {
-    const engagement = getReelEngagement(post);
-    return (
-      <ReelActionRail
-        engagement={engagement}
-        isSignedIn={Boolean(user)}
-        loginHref={loginReturnHref}
-        isCommentOpen={isRightOpen && isActiveItem}
-        onToggleLike={() => triggerToggleReaction(post, 'like')}
-        onToggleSave={() => triggerToggleReaction(post, 'save')}
-        onShare={(anchor) =>
-          shareMenuRef.current?.toggle(anchor, { postId: post.id, postType: post.postType, title: post.title })
-        }
-        onToggleComments={() => {
-          if (!isActiveItem) setActivePostId(post.id);
-          handleCommentButtonClick();
-        }}
-      />
-    );
-  }
+  const handleShareReel = useCallback((postId: string, anchor: HTMLElement) => {
+    const post = postMapRef.current.get(postId);
+    if (!post) return;
+    shareMenuRef.current?.toggle(anchor, {
+      postId: post.id,
+      postType: post.postType,
+      title: post.title,
+    });
+  }, []);
+
+  const handleToggleReelComments = useCallback((postId: string) => {
+    if (activePostRef.current?.id !== postId) {
+      setActivePostId(postId);
+    }
+    setRightOpen((wasOpen) => {
+      if (!wasOpen) {
+        setTimeout(() => commentInputRef.current?.focus(), 120);
+        return true;
+      }
+      return false;
+    });
+  }, []);
 
   // Đảm bảo loại bỏ thuộc tính data-theme còn sót lại, giữ mặc định Light Mode
   useEffect(() => {
@@ -2159,8 +2244,8 @@ export function InspirationImmersiveViewer({
 
                     {activePost && (
                       <div className={styles.stageTopControls}>
-                        <PostOptionsMenu key={activePost.id} post={activePost} isSaved={getReelEngagement(activePost).isSaved}
-                          onToggleSave={() => { if (!user) { window.location.href = loginReturnHref; return; } triggerToggleReaction(activePost, 'save'); }} buttonClassName={styles.stageCircleBtn} />
+                        <PostOptionsMenu key={activePost.id} post={activePost} isSaved={engagementByPostId.get(activePost.id)?.isSaved ?? false}
+                          onToggleSave={() => { if (!user) { window.location.href = loginReturnHref; return; } triggerToggleReaction(activePost.id, 'save'); }} buttonClassName={styles.stageCircleBtn} />
                       </div>
                     )}
                   </>
@@ -2193,40 +2278,49 @@ export function InspirationImmersiveViewer({
                           </div>
                         );
                       }
+                      const isActiveItem = idx === activeIndex;
+                      const engagement =
+                        engagementByPostId.get(post.id) ??
+                        computeReelEngagement({
+                          post,
+                          serverLiked: Boolean(reelMap.get(post.id)?.viewerState?.liked),
+                          serverSaved: filterMode === 'saved' || Boolean(reelMap.get(post.id)?.viewerState?.saved),
+                        });
                       return (
                         <MediaTrackItem
                           key={post.id}
-                          itemRef={(el) => {
-                            mediaItemRefs.current[idx] = el;
-                          }}
+                          registerItemRef={registerItemRef}
                           index={idx}
                           post={post}
-                          isActive={idx === activeIndex}
+                          isActive={isActiveItem}
                           hasVideo={renderMode === 'video'}
                           canLoadSource={shouldLoadReelSource(idx, activeIndex, playingPostId === activePost?.id)}
                           onFirstFrame={markReelReady}
                           bufferSeconds={getReelBufferSeconds(idx, activeIndex)}
                           hasBackdrop={shouldShowReelBackdrop(idx, activeIndex)}
-                          actions={renderReelActions(post, idx === activeIndex)}
+                          engagement={engagement}
+                          isSignedIn={Boolean(user)}
+                          loginHref={loginReturnHref}
+                          isCommentOpen={isRightOpen && isActiveItem}
+                          onToggleLike={handleToggleLike}
+                          onToggleSave={handleToggleSave}
+                          onShare={handleShareReel}
+                          onToggleComments={handleToggleReelComments}
                           reelCard={reelMap.get(post.id)}
-                          user={user}
-                          videoRef={idx === activeIndex ? videoRef : undefined}
-                          isMuted={isMuted}
-                          isPlaying={isPlaying}
-                          showPlayFlash={showPlayFlash}
-                          mediaErrorPostId={mediaErrorPostId}
-                          onMediaError={(pId) => setMediaErrorPostId(pId)}
+                          viewerUserId={user?.id}
+                          viewerDisplayName={user?.displayName}
+                          videoRef={isActiveItem ? videoRef : undefined}
+                          isMuted={isActiveItem ? isMuted : true}
+                          isPlaying={isActiveItem ? isPlaying : false}
+                          showPlayFlash={isActiveItem ? showPlayFlash : false}
+                          isMediaError={mediaErrorPostId === post.id}
+                          onMediaError={handleMediaError}
                           onRetryMedia={handleRetryMedia}
                           onTogglePlay={togglePlayPause}
-                          captionExpandedPostId={captionExpandedPostId}
-                          onToggleCaption={(pId) =>
-                            setCaptionExpandedPostId((prev) => (prev === pId ? null : pId))
-                          }
-                          onOpenTag={(tag) => onSearchKeywordChange?.(tag)}
-                          onOpenItinerary={(pId) => {
-                            if (activePostId !== pId) setActivePostId(pId);
-                            setLeftOpen(true);
-                          }}
+                          isCaptionExpanded={captionExpandedPostId === post.id}
+                          onToggleCaption={handleToggleCaption}
+                          onOpenTag={handleOpenTag}
+                          onOpenItinerary={handleOpenItinerary}
                         />
                       );
                     })}

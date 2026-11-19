@@ -3,12 +3,14 @@ import type { FeedCardDto } from '@tripflix/api-client/core-api/model/index';
 import {
   attachReelVideoSource,
   canStepToNextReel,
+  computeReelEngagement,
   formatReelTime,
   getReelKeySeekTarget,
   getReelBufferSeconds,
   getReelRenderMode,
   pickReelAfterRemoval,
   prependPinnedReelCards,
+  reuseReelEngagement,
   REEL_AHEAD_BUFFER_SECONDS,
   REEL_AHEAD_VIDEO_COUNT,
   REEL_BEHIND_BUFFER_SECONDS,
@@ -269,5 +271,88 @@ describe('prependPinnedReelCards', () => {
 
   it('không có Reel ghim (link hỏng, bài bị ẩn) thì là bảng tin như thường', () => {
     expect(prependPinnedReelCards([], [card('a'), card('c')]).map((c) => c.postId)).toEqual(['a', 'c']);
+  });
+});
+
+describe('computeReelEngagement & reuseReelEngagement', () => {
+  it('tính đúng số đếm theo chi tiết bài viết và trạng thái lạc quan khi bấm tim/lưu', () => {
+    const post = toReelPost(card);
+    expect(
+      computeReelEngagement({
+        post,
+        serverLiked: false,
+        serverSaved: false,
+        optimisticLiked: true,
+      }),
+    ).toEqual({
+      isLiked: true,
+      isSaved: false,
+      likes: 6,
+      saves: 3,
+      comments: 4,
+      shares: 2,
+    });
+
+    expect(
+      computeReelEngagement({
+        post,
+        detailPost: {
+          reactionTotal: 10,
+          bookmarkCount: 7,
+          commentCount: 9,
+          shareCount: 1,
+        },
+        serverLiked: true,
+        serverSaved: true,
+        optimisticLiked: false,
+      }),
+    ).toEqual({
+      isLiked: false,
+      isSaved: true,
+      likes: 9,
+      saves: 7,
+      comments: 9,
+      shares: 1,
+    });
+  });
+
+  it('giữ nguyên tham chiếu object ReelEngagement khi cả 6 giá trị chưa đổi; chỉ đổi bài bị bấm', () => {
+    const cache = new Map<string, ReturnType<typeof computeReelEngagement>>();
+    const firstP1 = reuseReelEngagement(cache, 'p1', {
+      isLiked: false,
+      isSaved: false,
+      likes: 5,
+      saves: 3,
+      comments: 4,
+      shares: 2,
+    });
+    const firstP2 = reuseReelEngagement(cache, 'p2', {
+      isLiked: false,
+      isSaved: false,
+      likes: 8,
+      saves: 1,
+      comments: 2,
+      shares: 0,
+    });
+
+    const likedP1 = reuseReelEngagement(cache, 'p1', {
+      isLiked: true,
+      isSaved: false,
+      likes: 6,
+      saves: 3,
+      comments: 4,
+      shares: 2,
+    });
+    const sameP2 = reuseReelEngagement(cache, 'p2', {
+      isLiked: false,
+      isSaved: false,
+      likes: 8,
+      saves: 1,
+      comments: 2,
+      shares: 0,
+    });
+
+    expect(likedP1).not.toBe(firstP1);
+    expect(sameP2).toBe(firstP2);
   });
 });
