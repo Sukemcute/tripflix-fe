@@ -1,9 +1,11 @@
 import { t, vi } from '@tripflix/i18n';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import './globals.css';
+// Sau globals.css để header điện thoại (TF98) thắng các rule header cũ.
+import '@/features/shell/mobile-header.css';
 import { HeaderAccount } from '@/features/auth/header-account';
 import { AssistantHeaderButton } from '@/features/assistant/assistant-widget';
 import { CartLink } from '@/features/checkout/cart-link';
@@ -37,6 +39,13 @@ export const metadata: Metadata = {
     description: vi.seo.defaultDescription,
     images: [DEFAULT_OG_IMAGE.url],
   },
+};
+
+// viewport-fit=cover để env(safe-area-inset-*) có giá trị trên iPhone (header dính, thanh đáy sau này).
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
