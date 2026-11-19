@@ -27,6 +27,11 @@ export const findPublicProfile = cache((userId: string) =>
   readOrNull((signal) => seoApi.getProfile(userId, { baseUrl: getServerApiUrl(), signal })),
 );
 
+/** Trang 1 vlog của tác giả, đưa vào cache React Query trước khi render hồ sơ (TF113). */
+export const findPublicAuthorVlogs = cache((userId: string) =>
+  readOrNull((signal) => seoApi.listAuthorVlogs(userId, { baseUrl: getServerApiUrl(), signal })),
+);
+
 /**
  * Tác giả có bài hoặc Reels công khai nào không (ẩn danh). Lỗi hoặc timeout trả null để trang noindex an toàn (TF25).
  * Việc đọc API nằm trong seoApi.hasPublicContent.
