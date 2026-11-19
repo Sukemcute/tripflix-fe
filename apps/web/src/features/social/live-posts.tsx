@@ -1286,6 +1286,16 @@ export function InspirationImmersiveViewer({
     mode: reelsMode,
   });
   const feedQuery = isSavedMode ? savedFeedQuery : recommendedReelsQuery;
+  // Đổi chip: danh sách cũ vẫn hiện (làm mờ) tới khi danh sách mới về, nên khung và thanh chip đứng yên khi mạng chậm.
+  const isSwitchingReelsMode = !isSavedMode && recommendedReelsQuery.isPlaceholderData;
+  const shownReelsModeRef = useRef(reelsMode);
+  useEffect(() => {
+    if (isSwitchingReelsMode || shownReelsModeRef.current === reelsMode) return;
+    // Danh sách mới đã về (hoặc có sẵn trong cache): về Reel đầu tiên.
+    shownReelsModeRef.current = reelsMode;
+    setActivePostId(null);
+    trackScrollRef.current?.scrollTo({ top: 0 });
+  }, [reelsMode, isSwitchingReelsMode]);
   // Cookie video xin cùng lúc với feed; từng Reel dùng lại kết quả này (cùng query), video đầu không chờ thêm.
   usePlaybackSession();
   const searchReelsQuery = useReelsByIds(searchReelIds ?? [], { enabled: isSearchReels });
@@ -2065,6 +2075,77 @@ export function InspirationImmersiveViewer({
     return <output className="empty-state"><LoadingDots /></output>;
   }
 
+  // Thanh chip nằm trong khung video (khung 9:16 có thể hẹp hơn cột giữa); chưa có khung (đang tải, lỗi) thì đặt ở cột giữa.
+  const hasStageFrame = !(filterMode === 'saved' && !user) && !isReelListPending && !postsQuery.error && Boolean(activePost);
+  const reelsModeTabs =
+    !isSearchReels && !isSavedMode ? (
+      // Dải rộng bằng khung (trừ lề 8px) làm mốc container query: chữ và khoảng đệm chip co theo bề rộng khung.
+      <div
+        style={{
+          position: 'absolute',
+          top: 14,
+          left: 8,
+          right: 8,
+          zIndex: 25,
+          display: 'flex',
+          justifyContent: 'center',
+          containerType: 'inline-size',
+          pointerEvents: 'none',
+        }}
+      >
+        <div
+          role="tablist"
+          aria-label={vi.api.recommendModeAria}
+          style={{
+            display: 'flex',
+            gap: 'clamp(2px, 1cqi, 6px)',
+            // Khung quá hẹp mà chip đã co hết cỡ: cuộn ngang thay vì tràn ra ngoài khung.
+            maxWidth: '100%',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            pointerEvents: 'auto',
+            padding: '4px clamp(3px, 1.5cqi, 6px)',
+            borderRadius: 999,
+            background: 'rgba(15, 23, 42, 0.55)',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          {(
+            [
+              { value: 'trending', label: vi.api.recommendModeTrending },
+              { value: 'for_you', label: vi.api.recommendModeForYou },
+              { value: 'has_plan', label: vi.api.recommendModeHasPlan },
+              { value: 'recent', label: vi.api.recommendModeRecent },
+            ] as const
+          ).map((option) => {
+            const selected = option.value === reelsMode;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                onClick={() => setReelsMode(option.value)}
+                style={{
+                  border: 'none',
+                  borderRadius: 999,
+                  padding: '5px clamp(4px, 1.6cqi, 12px)',
+                  fontSize: 'clamp(10.5px, 3.2cqi, 12px)',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  background: selected ? '#ffffff' : 'transparent',
+                  color: selected ? '#0f172a' : '#f8fafc',
+                }}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    ) : null;
+
   return (
     <div className={styles.immersiveRoot}>
       {/* Nội dung chính: 3 Panel Đồng bộ theo activePost */}
@@ -2101,62 +2182,7 @@ export function InspirationImmersiveViewer({
                 {vi.api.searchResultsBack}
               </button>
             )}
-            {!isSearchReels && !isSavedMode && (
-              <div
-                role="tablist"
-                aria-label={vi.api.recommendModeAria}
-                style={{
-                  position: 'absolute',
-                  top: 14,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  zIndex: 25,
-                  display: 'flex',
-                  gap: 6,
-                  // Màn hẹp (375px) 4 chip rộng hơn khung: giữ trong khung và cuộn ngang thay vì tràn hai mép.
-                  maxWidth: 'calc(100% - 24px)',
-                  overflowX: 'auto',
-                  scrollbarWidth: 'none',
-                  padding: '4px 6px',
-                  borderRadius: 999,
-                  background: 'rgba(15, 23, 42, 0.55)',
-                  backdropFilter: 'blur(8px)',
-                }}
-              >
-                {(
-                  [
-                    { value: 'trending', label: vi.api.recommendModeTrending },
-                    { value: 'for_you', label: vi.api.recommendModeForYou },
-                    { value: 'has_plan', label: vi.api.recommendModeHasPlan },
-                    { value: 'recent', label: vi.api.recommendModeRecent },
-                  ] as const
-                ).map((option) => {
-                  const selected = option.value === reelsMode;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      role="tab"
-                      aria-selected={selected}
-                      onClick={() => setReelsMode(option.value)}
-                      style={{
-                        border: 'none',
-                        borderRadius: 999,
-                        padding: '5px 12px',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                        background: selected ? '#ffffff' : 'transparent',
-                        color: selected ? '#0f172a' : '#f8fafc',
-                      }}
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            {!hasStageFrame && reelsModeTabs}
             {filterMode === 'saved' && !user ? (
               <div className={`empty-state ${styles.centerEmptyBox}`}>
                 <p>{vi.api.loginRequired}</p>
@@ -2187,6 +2213,7 @@ export function InspirationImmersiveViewer({
                   // Đang chờ bài kế tiếp hoặc trang sau: khung video trượt lên, lộ dải dưới có vòng chờ (như TikTok).
                   data-next-loading={isLoadingMoreReels || isNextBlocked ? true : undefined}
                 >
+                  {reelsModeTabs}
                   {/* Top-Left Volume + Slider & Top-Right Hover Controls (More / Fullscreen) */}
                   <>
                     {reelCard?.video && activePost.postType === 'video' && !isMediaError && (
@@ -2256,6 +2283,8 @@ export function InspirationImmersiveViewer({
                     className={styles.mediaTrack}
                     onScroll={handleTrackScroll}
                     tabIndex={-1}
+                    aria-busy={isSwitchingReelsMode || undefined}
+                    style={{ opacity: isSwitchingReelsMode ? 0.5 : 1, transition: 'opacity 150ms' }}
                   >
                     {posts.map((post, idx) => {
                       const renderMode = getReelRenderMode(idx, activeIndex);
