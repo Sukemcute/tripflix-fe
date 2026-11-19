@@ -27,7 +27,7 @@ import { flightsControllerSearch } from '@tripflix/api-client/core-api/flights/f
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router, type Href } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { DateSingleField } from '@/components/date-sheet';
@@ -38,6 +38,7 @@ import { ActivityCard, TimeTag, type ActivityFields } from './activity-card';
 import { CartLink } from './cart-ui';
 import { CommerceError } from './commerce-state';
 import { AskTripiCard } from './booking-home';
+import { SaveItineraryButton } from '@/features/itinerary/save-itinerary-button';
 import { SavedItinerariesSection } from '@/features/itinerary/saved-itinerary-screens';
 import { TripBuilderEntry } from './trip-builder-screen';
 
@@ -347,7 +348,7 @@ function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
       scroll={false}
       padded={false}
       footer={
-        <View style={styles.totalRow}>
+        <View style={selected.fromFeatured ? { gap: spacing.sm } : styles.totalRow}>
           <View style={{ flex: 1 }}>
             <Txt style={styles.muted}>
               {t('mobile.tripPlan.pickedCount', {
@@ -364,9 +365,18 @@ function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
               </Txt>
             )}
           </View>
-          <Button compact icon="flash" disabled={!canBook || booking.isPending} onPress={book}>
-            {booking.isPending ? copy.booking : copy.bookNow}
-          </Button>
+          {selected.fromFeatured ? (
+            <Row style={{ gap: spacing.sm, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <SaveItineraryButton request={() => ({ source: 'reel', postId })} />
+              <Button compact icon="flash" disabled={!canBook || booking.isPending} onPress={book}>
+                {booking.isPending ? copy.booking : copy.bookNow}
+              </Button>
+            </Row>
+          ) : (
+            <Button compact icon="flash" disabled={!canBook || booking.isPending} onPress={book}>
+              {booking.isPending ? copy.booking : copy.bookNow}
+            </Button>
+          )}
         </View>
       }
     >
@@ -531,11 +541,146 @@ function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
               const flightLegs = (plan?.flights ?? [])
                 .map((leg, legIndex) => ({ leg, legIndex }))
                 .filter(({ leg }) => leg.day === day);
-              const selfArranged =
-                basePlan?.selfArranged.filter((leg) => leg.day === day) ??
-                items
-                  .filter((item) => item.day === day && !!item.transport)
-                  .map((item) => ({ day, title: item.title, mode: item.transport!.mode }));
+              const dayItems = items.filter((item) => item.day === day);
+              const selfArranged = dayItems.filter(
+                ({ transport }) =>
+                  transport &&
+                  (transport.mode !== 'flight' ||
+                    !(basePlan?.flights ?? []).some(
+                      (leg) =>
+                        leg.day === day &&
+                        leg.from === transport.fromAirport &&
+                        leg.to === transport.toAirport,
+                    )),
+              );
+              const flightRows = flightLegs.map(({ leg, legIndex }) => {
+                const flight = flightQuotes[legIndex];
+                const query = flightQueries[legIndex]!;
+                const id = 'f' + legIndex;
+                const isOutbound = legIndex === 0;
+                const original = basePlan?.flights[legIndex] ?? leg;
+                const point = dayItems.find(
+                  ({ transport }) =>
+                    transport?.mode === 'flight' &&
+                    transport.fromAirport === original.from &&
+                    transport.toAirport === original.to,
+                );
+                return {
+                  key: id,
+                  time: flight?.departTime?.slice(0, 5) ?? point?.time ?? '',
+                  content: (
+                    <ProductCard
+                      key={`f${legIndex}`}
+                      tone="flight"
+                      icon="airplane"
+                      title={`${leg.from} → ${leg.to}`}
+                      detail={
+                        flight
+                          ? [
+                              formatDay(flight.date),
+                              flight.flightNumber,
+                              flight.departTime?.slice(0, 5),
+                              flight.cabinName,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')
+                          : copy.flightTitle
+                      }
+                      price={query.isFetching ? '…' : flight ? money(flight.totalPrice) : undefined}
+                      status={
+                        query.isError
+                          ? copy.quoteFailed
+                          : (query.isSuccess && !flight) ||
+                              (!!flight && flight.productId === soldOutProductId)
+                            ? copy.soldOutItem
+                            : undefined
+                      }
+                      isSelected={!!flight && !current.excluded.includes(id)}
+                      isDisabled={!flight || booking.isPending}
+                      onToggle={() => toggle(id)}
+                      onExpand={
+                        booking.isPending || !isDateValid || !isPassengerValid
+                          ? undefined
+                          : () =>
+                              router.push({
+                                pathname: '/flights',
+                                params: {
+                                  from: leg.from,
+                                  to: leg.to,
+                                  date: getTripDayDate(startDate, leg.day),
+                                  passengers: String(adults),
+                                  children: String(children),
+                                  infants: String(infants),
+                                  pick: 'trip',
+                                  pickId: id,
+                                  pickKey: selectionKey,
+                                  productId: flight?.productId,
+                                  ratePlanCode: flight?.ratePlanCode,
+                                },
+                              })
+                      }
+                      actionLabel={isOutbound && origins.length > 1 ? copy.changeOrigin : undefined}
+                      isActionOpen={isOutbound && openChooser === 'origin'}
+                      onAction={
+                        booking.isPending
+                          ? undefined
+                          : () => setOpenChooser((open) => (open === 'origin' ? null : 'origin'))
+                      }
+                    >
+                      <View style={styles.chooser}>
+                        <Txt style={styles.muted}>{copy.departFrom}</Txt>
+                        <View style={styles.choices}>
+                          {origins.map((code) => (
+                            <ChoiceChip
+                              key={code}
+                              label={code}
+                              isDisabled={booking.isPending}
+                              isSelected={code === (homeAirport ?? basePlan?.flights[0]?.from)}
+                              onPress={() => {
+                                setHomeAirport(code === basePlan?.flights[0]?.from ? undefined : code);
+                                setOpenChooser(null);
+                              }}
+                            />
+                          ))}
+                        </View>
+                      </View>
+                    </ProductCard>
+                  ),
+                };
+              });
+              const fixedRows = [
+                ...flightRows,
+                ...stays.flatMap((stay, index) => {
+                  if (stay.day !== day) return [];
+                  const original = basePlan?.hotels[index] ?? stay;
+                  const point = dayItems.find(({ hotel }) => hotel?.hotelId === original.hotelId);
+                  return [{ key: stay.id, time: point?.time ?? '14:00', content: hotelCard(index) }];
+                }),
+                ...selfArranged.map((item, index) => ({
+                  key: `self${index}`,
+                  time: item.time ?? '',
+                  content: (
+                    <View style={styles.stop}>
+                      <Icon name="bus-outline" size={14} color={colors.textMuted} />
+                      <Txt style={styles.muted}>
+                        {[item.time, item.title, copy.selfArranged].filter(Boolean).join(' · ')}
+                      </Txt>
+                    </View>
+                  ),
+                })),
+              ].sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+              const activities = suggestionsOf(day);
+              const rows: (
+                | { key: string; kind: 'fixed'; content: ReactNode }
+                | { key: string; kind: 'activity'; item: (typeof activities)[number] }
+              )[] = activities.map((item) => ({ key: item.key, kind: 'activity', item }));
+              for (const row of fixedRows) {
+                const before = rows.findIndex(
+                  (entry) =>
+                    entry.kind === 'activity' && (entry.item.time || '99:99') >= (row.time || '99:99'),
+                );
+                rows.splice(before === -1 ? rows.length : before, 0, { ...row, kind: 'fixed' });
+              }
               return (
                 <View key={day} style={styles.day}>
                   {day < days && <View style={styles.rail} />}
@@ -549,126 +694,44 @@ function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
                           })
                         : t('mobile.tripPlan.day', { day })}
                     </Txt>
-                    {flightLegs.map(({ leg, legIndex }) => {
-                      const flight = flightQuotes[legIndex];
-                      const query = flightQueries[legIndex]!;
-                      const id = 'f' + legIndex;
-                      const isOutbound = legIndex === 0;
-                      return (
-                        <ProductCard
-                          key={`f${legIndex}`}
-                          tone="flight"
-                          icon="airplane"
-                          title={`${leg.from} → ${leg.to}`}
-                          detail={
-                            flight
-                              ? [
-                                  formatDay(flight.date),
-                                  flight.flightNumber,
-                                  flight.departTime?.slice(0, 5),
-                                  flight.cabinName,
-                                ]
-                                  .filter(Boolean)
-                                  .join(' · ')
-                              : copy.flightTitle
-                          }
-                          price={query.isFetching ? '…' : flight ? money(flight.totalPrice) : undefined}
-                          status={
-                            query.isError
-                              ? copy.quoteFailed
-                              : (query.isSuccess && !flight) ||
-                                  (!!flight && flight.productId === soldOutProductId)
-                                ? copy.soldOutItem
-                                : undefined
-                          }
-                          isSelected={!!flight && !current.excluded.includes(id)}
-                          isDisabled={!flight || booking.isPending}
-                          onToggle={() => toggle(id)}
-                          onExpand={
-                            booking.isPending || !isDateValid || !isPassengerValid
-                              ? undefined
-                              : () =>
-                                  router.push({
-                                    pathname: '/flights',
-                                    params: {
-                                      from: leg.from,
-                                      to: leg.to,
-                                      date: getTripDayDate(startDate, leg.day),
-                                      passengers: String(adults),
-                                      children: String(children),
-                                      infants: String(infants),
-                                      pick: 'trip',
-                                      pickId: id,
-                                      pickKey: selectionKey,
-                                      productId: flight?.productId,
-                                      ratePlanCode: flight?.ratePlanCode,
-                                    },
-                                  })
-                          }
-                          actionLabel={isOutbound && origins.length > 1 ? copy.changeOrigin : undefined}
-                          isActionOpen={isOutbound && openChooser === 'origin'}
-                          onAction={
-                            booking.isPending
-                              ? undefined
-                              : () => setOpenChooser((open) => (open === 'origin' ? null : 'origin'))
-                          }
-                        >
-                          <View style={styles.chooser}>
-                            <Txt style={styles.muted}>{copy.departFrom}</Txt>
-                            <View style={styles.choices}>
-                              {origins.map((code) => (
-                                <ChoiceChip
-                                  key={code}
-                                  label={code}
-                                  isDisabled={booking.isPending}
-                                  isSelected={code === (homeAirport ?? basePlan?.flights[0]?.from)}
-                                  onPress={() => {
-                                    setHomeAirport(code === basePlan?.flights[0]?.from ? undefined : code);
-                                    setOpenChooser(null);
-                                  }}
-                                />
-                              ))}
-                            </View>
-                          </View>
-                        </ProductCard>
-                      );
-                    })}
-                    {stays.map((stay, index) => (stay.day === day ? hotelCard(index) : null))}
-                    {selfArranged.map((leg, index) => (
-                      <View key={'self' + index} style={styles.stop}>
-                        <Icon name="bus-outline" size={14} color={colors.textMuted} />
-                        <Txt style={styles.muted}>
-                          {[leg.title ?? copy.modes[leg.mode], copy.selfArranged].join(' · ')}
-                        </Txt>
-                      </View>
-                    ))}
                     <View style={styles.community}>
                       <Txt style={styles.communityLabel}>{copy.community}</Txt>
                       <DragSortList
-                        items={suggestionsOf(day)}
-                        onMove={(from, to) => moveSuggestion(day, from, to)}
+                        items={rows}
+                        onMove={(from, to) => {
+                          if (rows[from]?.kind !== 'activity') return;
+                          const activityIndex = (index: number) =>
+                            rows.slice(0, index).filter((row) => row.kind === 'activity').length;
+                          const target =
+                            activityIndex(to) - (to > from && rows[to]?.kind === 'fixed' ? 1 : 0);
+                          moveSuggestion(day, activityIndex(from), Math.max(0, target));
+                        }}
                         onDragChange={setDragging}
-                        renderItem={(item, _index, handle) => (
-                          <Row key={item.key} style={localStyles.timedRow}>
-                            <TimeTag time={item.time} onAdd={() => setOpenSuggestion(item.key)} />
-                            <View style={ui.flex}>
-                              <ActivityCard
-                                item={item}
-                                handle={handle}
-                                isOpen={openSuggestion === item.key}
-                                onToggle={() =>
-                                  setOpenSuggestion(openSuggestion === item.key ? null : item.key)
-                                }
-                                onChange={(patch) => updateSuggestion(item.key, patch)}
-                                onRemove={() =>
-                                  setSuggestions((current) =>
-                                    current.filter((other) => other.key !== item.key),
-                                  )
-                                }
-                              />
-                            </View>
-                          </Row>
-                        )}
+                        renderItem={(row, _index, handle) => {
+                          if (row.kind === 'fixed') return row.content;
+                          const { item } = row;
+                          return (
+                            <Row key={item.key} style={localStyles.timedRow}>
+                              <TimeTag time={item.time} onAdd={() => setOpenSuggestion(item.key)} />
+                              <View style={ui.flex}>
+                                <ActivityCard
+                                  item={item}
+                                  handle={handle}
+                                  isOpen={openSuggestion === item.key}
+                                  onToggle={() =>
+                                    setOpenSuggestion(openSuggestion === item.key ? null : item.key)
+                                  }
+                                  onChange={(patch) => updateSuggestion(item.key, patch)}
+                                  onRemove={() =>
+                                    setSuggestions((current) =>
+                                      current.filter((other) => other.key !== item.key),
+                                    )
+                                  }
+                                />
+                              </View>
+                            </Row>
+                          );
+                        }}
                       />
                       <Button tone="text" icon="add" onPress={() => addSuggestion(day)}>
                         {copy.addSuggestion}
