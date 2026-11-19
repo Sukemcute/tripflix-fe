@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { useQueryClient, useMutation, useQuery, type InfiniteData } from '@tanstack/react-query';
 import { vi, t } from '@tripflix/i18n';
@@ -877,7 +878,6 @@ export function SocialFeedView({
             role="tablist"
             aria-label={vi.api.recommendModeAria}
             className={styles.recommendModeTabs}
-            style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}
           >
             {RECOMMEND_MODE_OPTIONS.map((option) => {
               const selected = option.value === recommendMode;
@@ -1049,7 +1049,7 @@ export function SocialFeedView({
       {galleryState && activeGalleryPost && activeGalleryImages[galleryState.index] && (() => {
         const currentImg = activeGalleryImages[galleryState.index];
         if (!currentImg) return null;
-        return (
+        return createPortal(
           <dialog
             open
             className={reelsStyles.galleryStageOverlay}
@@ -1129,7 +1129,8 @@ export function SocialFeedView({
                 </button>
               </>
             )}
-          </dialog>
+          </dialog>,
+          document.body,
         );
       })()}
 

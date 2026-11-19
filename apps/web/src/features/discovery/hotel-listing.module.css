@@ -1,121 +1,60 @@
-.page {
-  padding-block: clamp(20px, 3vw, 44px) clamp(32px, 5vw, 64px);
+main.page {
+  padding-block-end: clamp(32px, 5vw, 64px);
 }
-.banner {
-  display: grid;
-  inline-size: 100%;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  min-height: 224px;
-  margin-bottom: 18px;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: 24px;
-  background: linear-gradient(112deg, var(--color-surface), var(--color-sea-mist));
+.page .banner {
+  margin-bottom: 20px;
+  border: 0;
+  border-end-end-radius: 0;
+  background: #d6eae7;
 }
-.bannerCopy {
-  padding: clamp(24px, 3.3vw, 48px);
+
+.page .banner::before {
+  background: linear-gradient(118deg, rgb(252 255 253 / 79%), rgb(239 249 245 / 44%));
+  backdrop-filter: blur(48px) saturate(1.35);
+  mask-image: linear-gradient(
+    90deg,
+    #000 23%,
+    rgb(0 0 0 / 88%) 38%,
+    rgb(0 0 0 / 55%) 55%,
+    rgb(0 0 0 / 22%) 72%,
+    transparent 90%
+  );
 }
-.banner h1 {
-  margin: 8px 0;
-  font-size: clamp(32px, 4.7vw, 58px);
-  line-height: 1.15;
-  letter-spacing: -0.05em;
+
+.page .bannerCopy :is(h1, p),
+.page .bannerSteps li,
+.page .bannerSteps li[aria-current='step'] {
+  color: #151515;
 }
-.bannerCopy > p:last-child {
-  max-width: 48ch;
-  margin-bottom: 0;
-  color: var(--color-text-muted);
-  font-size: 14px;
-  line-height: 1.65;
+
+.page .bannerMedia {
+  inset: 0;
+  mask-image: none;
 }
-.heroArt {
-  position: relative;
-  align-self: stretch;
+
+.page .bannerMedia img {
+  object-position: center 54%;
 }
-.heroPhoto {
-  position: absolute;
-  inset: 0 0 0 12%;
-  border-start-start-radius: 112px;
-  border-end-start-radius: 24px;
-  overflow: hidden;
-  background: var(--color-teal-soft);
+
+.page .bannerFeature,
+.page .bannerFeatureCard {
+  border: 0;
+  box-shadow: none;
 }
-.heroPhoto img {
-  object-fit: cover;
-  object-position: center 62%;
-}
-.tripiSpot {
-  position: absolute;
-  left: 0;
-  bottom: 12px;
-  display: grid;
-  place-items: center;
-  width: clamp(116px, 14vw, 196px);
-  aspect-ratio: 1;
-  isolation: isolate;
-}
-.tripiSpot::before {
-  content: '';
-  position: absolute;
-  inset: 12%;
-  z-index: -1;
-  border: 1px dashed var(--color-teal-ink);
-  border-radius: 50%;
-  background: var(--color-sea-mist);
-}
-.tripiSpot img {
-  width: 100%;
-  height: auto;
-  filter: drop-shadow(0 9px 12px var(--color-overlay));
-}
-@media (prefers-reduced-motion: no-preference) {
-  .heroPhoto img {
-    animation: stay-photo-settle 2880ms ease-out;
-  }
-  .tripiSpot img {
-    animation: tripi-greet 2640ms ease-in-out 240ms;
+
+@media (min-width: 761px) {
+  .page .bannerFeature {
+    /* Cho nền trắng tràn qua mép cắt để ảnh không hở một đường mảnh ở góc. */
+    right: -2px;
+    bottom: -2px;
+    padding-right: 2px;
+    padding-bottom: 2px;
   }
 }
-@keyframes stay-photo-settle {
-  from {
-    transform: scale(1.045);
-  }
-  to {
-    transform: scale(1);
-  }
-}
-@keyframes tripi-greet {
-  0%,
-  100% {
-    transform: translateY(0) rotate(0);
-  }
-  30% {
-    transform: translateY(-10px) rotate(-6deg);
-  }
-  65% {
-    transform: translateY(-3px) rotate(4deg);
-  }
-}
-@media (max-width: 640px) {
-  .banner {
-    grid-template-columns: 1fr;
-    border-radius: 18px;
-  }
-  .bannerCopy {
-    padding: 22px 20px 14px;
-  }
-  .heroArt {
-    min-height: 116px;
-  }
-  .heroPhoto {
-    inset-inline-start: 20%;
-    border-start-start-radius: 72px;
-    border-end-start-radius: 16px;
-  }
-  .tripiSpot {
-    left: 8px;
-    bottom: 0;
+
+@media (max-width: 760px) {
+  .page .banner::before {
+    mask-image: linear-gradient(180deg, #000 30%, rgb(0 0 0 / 75%) 47%, rgb(0 0 0 / 30%) 68%, transparent 88%);
   }
 }
 .page .searchPanel {

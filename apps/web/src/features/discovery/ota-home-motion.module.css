@@ -77,42 +77,24 @@
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  /* Nền tối trong lúc ảnh chưa tải, tránh chớp sáng. */
-  background: var(--color-ink);
+  background: #e7f5f1;
+}
+.inspirationBackdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgb(240 250 249 / 20%), rgb(230 246 244 / 30%));
 }
 .inspirationBackdrop img {
   object-fit: cover;
   /* Phóng nhẹ để mép mờ của blur không lộ viền sáng. */
   transform: scale(1.08);
-  filter: blur(12px) brightness(0.35);
+  filter: blur(8px);
 }
-/* Trên nền ảnh tối, khung bình luận và lịch trình để trắng đặc thay vì kính mờ. */
+/* Khung bình luận và lịch trình dùng nền trắng đặc trên trang Cảm hứng. */
 .waterContent :is(:global([class*='rightPanelInFeed']), :global([class*='itineraryInFeed'])) {
   background: var(--color-background);
   backdrop-filter: none;
-}
-/* Header trong suốt chữ trắng như trang chủ khi đứng trên nền ảnh tối (html thêm độ ưu tiên hơn rule nền trắng của Cảm hứng). */
-:global(html) :global(body):has(.inspirationBackdrop) :global(.ota-header) {
-  border-color: rgb(255 255 255 / 48%);
-  background: transparent;
-}
-:global(html) :global(body):has(.inspirationBackdrop) :global(.header-logo-dark) {
-  display: none;
-}
-:global(html) :global(body):has(.inspirationBackdrop) :global(.header-logo-light) {
-  display: block;
-}
-:global(html) :global(body):has(.inspirationBackdrop) :is(:global(.header-content nav a), :global(.header-icon-button), :global(.header-actions > a:not(.header-login))) {
-  color: #fff;
-  text-shadow: 0 1px 5px rgb(0 35 45 / 58%);
-}
-:global(html) :global(body):has(.inspirationBackdrop) :global(.header-content nav a[aria-current='page']) {
-  background: rgb(255 255 255 / 20%);
-  box-shadow: none;
-}
-:global(html) :global(body):has(.inspirationBackdrop) :is(:global(.header-content nav a:hover), :global(.header-icon-button:hover)) {
-  color: #fff;
-  background: rgb(255 255 255 / 14%);
 }
 
 .waterContent {
@@ -140,11 +122,10 @@
   }
 }
 
-.layeredCanvas:not([data-water-visible]) :is(.water, .caption, .waterControls, .waterReadout) {
+.layeredCanvas:not([data-water-visible]) :is(.water, .waterControls, .waterReadout) {
   visibility: hidden;
 }
 
-.caption,
 .waterControls,
 .waterReadout {
   position: fixed;
@@ -155,80 +136,20 @@
   backdrop-filter: var(--home-backdrop, blur(14px));
 }
 
-.caption {
-  inset: auto max(8px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) auto;
-  padding: 7px 4px;
-  border-radius: 9px;
-  writing-mode: vertical-rl;
-  font: italic 12px Georgia, serif;
-  opacity: 0.78;
-  pointer-events: none;
-}
-
 .waterControls {
   inset: auto auto max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
-  display: flex;
-  align-items: center;
-  gap: 8px;
   padding: 6px 10px;
   border: 1px solid rgb(255 255 255 / 38%);
   border-radius: 999px;
   font: italic 12px Georgia, serif;
+  opacity: 0;
   pointer-events: none;
 }
 
 .waterControls:focus-visible {
+  opacity: 1;
   outline: 2px solid var(--water-ink);
   outline-offset: -3px;
-}
-
-.rippleHint,
-.foodHint {
-  display: inline-flex;
-  gap: 5px;
-  align-items: center;
-  transition: opacity 400ms ease;
-}
-
-.rippleHint::before,
-.foodHint::before {
-  content: '';
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-}
-
-.foodHint::before {
-  width: 5px;
-  height: 5px;
-  background: currentColor;
-  box-shadow: 0 0 0 2px var(--water-panel), 0 0 0 3px currentColor;
-  margin-inline: 2px;
-}
-
-.waterControls:not([data-ripple-used], [data-food-used]) .foodHint {
-  border-inline-start: 1px solid currentColor;
-  padding-inline-start: 8px;
-}
-
-.waterControls[data-ripple-used] .rippleHint,
-.waterControls[data-food-used] .foodHint {
-  opacity: 0;
-  width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.waterControls[data-ripple-used][data-food-used]:not(:focus-visible) {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.waterControls:focus-visible :is(.rippleHint, .foodHint) {
-  width: auto;
-  opacity: 1;
 }
 
 .waterReadout {
@@ -250,9 +171,4 @@
     top: 16px;
   }
 
-  .caption {
-    font-size: 11px;
-    right: 3px;
-    padding-inline: 3px;
-  }
 }
