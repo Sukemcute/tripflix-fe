@@ -186,7 +186,6 @@ export function PublicProfile({ userId }: { userId: string }) {
               ))}
             </ul>
           </section>
-          <VideoPreview userId={userId} onShowAll={() => setTab('videos')} />
         </aside>
         <section
           id="profile-content"
@@ -207,39 +206,6 @@ export function PublicProfile({ userId }: { userId: string }) {
         </section>
       </div>
     </main>
-  );
-}
-
-/** Ô video nhỏ ở cột trái, như phần ảnh nổi bật của trang cá nhân. Không có video thì ẩn. */
-function VideoPreview({ userId, onShowAll }: { userId: string; onShowAll: () => void }) {
-  const reels = useAuthorReels(userId);
-  const items = reels.data?.pages[0]?.items.slice(0, 6) ?? [];
-  if (!items.length) return null;
-  return (
-    <section className={styles.card} aria-labelledby="profile-video-preview-title">
-      <div className={styles.cardHeading}>
-        <h2 id="profile-video-preview-title" className={styles.cardTitle}>
-          {vi.api.profileVideos}
-        </h2>
-        <button type="button" className={styles.seeAll} onClick={onShowAll}>
-          {vi.api.profileSeeAll}
-        </button>
-      </div>
-      <ul className={styles.previewGrid}>
-        {items.map((reel) => (
-          <li key={reel.postId}>
-            <Link
-              prefetch={false}
-              href={buildInspirationHref('/inspiration', '', { openPostId: reel.postId, isOpenReel: true })}
-              className={styles.previewThumb}
-              aria-label={reel.title}
-            >
-              <span className={grid.thumbImage} style={{ backgroundImage: `url(${reel.video.posters.w360})` }} />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
   );
 }
 
