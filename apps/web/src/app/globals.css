@@ -1376,17 +1376,6 @@ body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-
   line-height: 1.9;
   color: var(--color-teal-ink);
 }
-.skip-link {
-  position: fixed;
-  top: -100px;
-  left: 20px;
-  padding: 12px;
-  background: var(--color-background);
-  z-index: 20;
-}
-.skip-link:focus-visible {
-  top: 10px;
-}
 .page-loading {
   padding-block: 48px;
   /* Keep the footer below the viewport while a streamed route is pending. */
@@ -3890,10 +3879,9 @@ body:has([class*="feedPageWrapper"]) #content {
   text-decoration: underline;
 }
 
-/* Khảo sát sở thích (SCRUM-160) là trang đứng riêng: ẩn header, footer và skip-link chung của site. */
+/* Khảo sát sở thích (SCRUM-160) là trang đứng riêng: ẩn header và footer chung của site. */
 body:has(> [data-onboarding-page]) > .ota-header,
-body:has(> [data-onboarding-page]) > footer,
-body:has(> [data-onboarding-page]) > .skip-link {
+body:has(> [data-onboarding-page]) > footer {
   display: none;
 }
 
