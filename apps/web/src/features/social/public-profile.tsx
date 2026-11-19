@@ -52,11 +52,12 @@ export function PublicProfile({ userId }: { userId: string }) {
     );
   }
   const { displayName, followerCount, followingCount, likeCount } = profile.data;
+  const { handle } = formatAuthorDisplay(userId, displayName);
   const stats = [
-    { value: followingCount, label: vi.api.profileFollowing },
-    { value: followerCount, label: vi.api.profileFollowers },
-    { value: likeCount, label: vi.api.profileLikes },
-  ];
+    { value: followingCount, label: vi.api.profileFollowing, icon: 'users' },
+    { value: followerCount, label: vi.api.profileFollowers, icon: 'users' },
+    { value: likeCount, label: vi.api.profileLikes, icon: 'heart' },
+  ] as const;
 
   return (
     <main className={styles.page}>
@@ -71,15 +72,8 @@ export function PublicProfile({ userId }: { userId: string }) {
               <h1 className={styles.name}>{displayName}</h1>
               {/* Tên tài khoản chỉ hiện ở trang cá nhân (bài viết, Reels đã bỏ). Chưa có trường username thật nên tạo
                 từ tên hiển thị như các chỗ khác (formatAuthorDisplay). */}
-              <p className={styles.handle}>{formatAuthorDisplay(userId, displayName).handle}</p>
+              <p className={styles.handle}>{handle}</p>
             </div>
-            <ul className={styles.stats}>
-              {stats.map((item) => (
-                <li key={item.label}>
-                  <strong>{formatProfileCount(item.value)}</strong> {item.label}
-                </li>
-              ))}
-            </ul>
             <div className={styles.actions}>
               {isMine && (
                 <Link prefetch={false} className="secondary-button" href="/account">
@@ -148,21 +142,78 @@ export function PublicProfile({ userId }: { userId: string }) {
           ))}
         </div>
       </header>
-      <section
-        id="profile-content"
-        role="tabpanel"
-        aria-labelledby={`profile-tab-${activeTab}`}
-        className={styles.content}
-      >
-        {activeTab === 'videos' ? (
-          <ReelGrid key={userId} userId={userId} />
-        ) : activeTab === 'posts' ? (
-          <ProfilePostWall key={userId} userId={userId} />
-        ) : (
-          <SavedProfileContent key={userId} userId={userId} />
-        )}
-      </section>
+      <div className={styles.layout}>
+        <aside className={styles.sidebar}>
+          <section className={styles.card} aria-labelledby="profile-intro-title">
+            <h2 id="profile-intro-title" className={styles.cardTitle}>
+              {vi.api.profileIntro}
+            </h2>
+            <ul className={styles.introList}>
+              <li>
+                <SocialIcon name="info" size={18} />
+                <span>{handle}</span>
+              </li>
+              {stats.map((item) => (
+                <li key={item.label}>
+                  <SocialIcon name={item.icon} size={18} />
+                  <span>
+                    <strong>{formatProfileCount(item.value)}</strong> {item.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <VideoPreview userId={userId} onShowAll={() => setTab('videos')} />
+        </aside>
+        <section
+          id="profile-content"
+          role="tabpanel"
+          aria-labelledby={`profile-tab-${activeTab}`}
+          className={styles.content}
+        >
+          {activeTab === 'videos' ? (
+            <ReelGrid key={userId} userId={userId} />
+          ) : activeTab === 'posts' ? (
+            <ProfilePostWall key={userId} userId={userId} />
+          ) : (
+            <SavedProfileContent key={userId} userId={userId} />
+          )}
+        </section>
+      </div>
     </main>
+  );
+}
+
+/** Ô video nhỏ ở cột trái, như phần ảnh nổi bật của trang cá nhân. Không có video thì ẩn. */
+function VideoPreview({ userId, onShowAll }: { userId: string; onShowAll: () => void }) {
+  const reels = useAuthorReels(userId);
+  const items = reels.data?.pages[0]?.items.slice(0, 6) ?? [];
+  if (!items.length) return null;
+  return (
+    <section className={`${styles.card} ${styles.videoPreview}`} aria-labelledby="profile-video-preview-title">
+      <div className={styles.cardHeading}>
+        <h2 id="profile-video-preview-title" className={styles.cardTitle}>
+          {vi.api.profileVideos}
+        </h2>
+        <button type="button" className={styles.seeAll} onClick={onShowAll}>
+          {vi.api.profileSeeAll}
+        </button>
+      </div>
+      <ul className={styles.previewGrid}>
+        {items.map((reel) => (
+          <li key={reel.postId}>
+            <Link
+              prefetch={false}
+              href={buildInspirationHref('/inspiration', '', { openPostId: reel.postId, isOpenReel: true })}
+              className={styles.previewThumb}
+              aria-label={reel.title}
+            >
+              <span className={grid.thumbImage} style={{ backgroundImage: `url(${reel.video.posters.w360})` }} />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
