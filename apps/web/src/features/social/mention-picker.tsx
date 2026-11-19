@@ -183,7 +183,7 @@ export function MentionPicker({
                 key={user.id}
                 ref={isSelected ? activeItemRef : null}
                 type="button"
-                aria-selected={isSelected}
+                aria-current={isSelected ? 'true' : undefined}
                 className={`${styles.userItem} ${isSelected ? styles.userItemActive : ''}`}
                 onMouseDown={keepInputFocus}
                 onMouseEnter={() => updateActiveIndex(index)}
