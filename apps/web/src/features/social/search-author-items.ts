@@ -30,6 +30,11 @@ function getReelThumbnail(reel: FeedCardDto): string | null {
   return reel.video.posters.w360 || reel.tripAttachment?.posterUrl || null;
 }
 
+/** Poster của Reel từ chi tiết bài (cùng nguồn trang cá nhân dùng), không có thì ảnh bìa lịch trình. */
+function getPostVideoPoster(post: SocialPostDto): string | undefined {
+  return post.video?.posters.w360 || post.tripAttachment?.posterUrl || undefined;
+}
+
 /** Ảnh bìa bài viết khi discovery chưa trả thumbnail: ảnh đầu tác giả tải lên, không có thì ảnh minh hoạ theo điểm đến. */
 export function getVlogCover(post: SocialPostDto): string | undefined {
   return getPostImages({
@@ -149,7 +154,8 @@ export function socialPostToGridCard(
     isReel,
     captionText: caption.text,
     tags: caption.tags,
-    cover: thumbnail ?? (isReel ? undefined : getVlogCover(post)),
+    // Discovery chưa có thumbnail cho video: dùng poster của Reel như trang cá nhân.
+    cover: thumbnail || (isReel ? getPostVideoPoster(post) : getVlogCover(post)),
     likes: post.reactionTotal,
     authorId: post.authorId,
     authorName: resolveAuthorName(post.authorName, fallbackAuthorName),
