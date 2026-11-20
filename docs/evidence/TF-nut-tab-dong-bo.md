@@ -44,3 +44,11 @@
 - `pnpm turbo run lint typecheck test --filter=./apps/web --force`: `oxlint` **27 warnings, 0 errors**; `next typegen && tsc --noEmit` **0 errors**; `vitest run` **85 files passed (85), 551 tests passed (551)** (đã cập nhật `segmented-tabs-style.test.ts` kiểm tra cả Đợt 2).
 - CDP cổng `3220` (`1440×900` và `390×844`): chụp `/flights`, `/search`, `/` vào `D:\HCMUT\vinAI\vsf\ota-tripflix\tripflix\.orchestrator\nut-tab\dot2\` (`before-*` và `after-*`; đã tắt dev server khi xong). Xác nhận `[Một chiều] [Khứ hồi]` trên `/flights` và `[Nha Trang] [Hội An] [Đà Nẵng]` trên `/` hiển thị đúng thanh segmented mới trên cả desktop và mobile.
 - **Việc cần báo đồng đội:** báo **Duy** (chip Reels ở `live-posts.tsx`, Đợt 1) và **Trang / Thắng** (`flight-search-form.tsx`, `ota-home-previews.tsx`, Đợt 2) đã đồng bộ sang `segmented-tabs.module.css`.
+
+### 4. Bổ sung: Đồng nhất nền trắng đặc giữa cột Lịch trình/Bình luận ở Bài viết và Reels
+- **Nguyên nhân chênh nền cũ:** `ota-home-motion.module.css:95–98` (commit `ab91f83`) chỉ ghi đè `background: var(--color-background)` cho `:is([class*='rightPanelInFeed'], [class*='itineraryInFeed'])`, bỏ sót `itineraryInReels` và `.rightPanel` của Reels, trong khi `.itinerarySidebar` (`social-feed.module.css:436`) và `.rightPanel` (`live-posts.module.css:1961`) vẫn dùng `color-mix(in srgb, var(--color-background) 88%, transparent)`.
+- **Cách sửa từ một nguồn duy nhất (không thêm `!important`):**
+  - Đặt trực tiếp `background: var(--color-background)` trên `.itinerarySidebar` (`social-feed.module.css:436`) và `.rightPanel` (`live-posts.module.css:1961`) — áp dụng chung cho cả tab Bài viết lẫn tab Reels.
+  - Gỡ rule ghi đè cục bộ `rightPanelInFeed` / `itineraryInFeed` ở `ota-home-motion.module.css` để không còn tách nguồn CSS giữa Bài viết và Reels.
+- **Kiểm chứng:**
+  - CDP `CSS.getMatchedStylesForNode` trên cổng `3210` xác nhận `aside[aria-label="Lịch trình chuyến đi"]` chỉ còn đúng 1 rule nền từ `.itinerarySidebar` (`background: var(--color-background)` → `rgb(255, 255, 255)`). Trên cổng `3210`, tab Reels bị CORS chặn API nên `activePost` chưa có (`showLeftPanel = false`), vì vậy ảnh Reels tại `after-compare-reels-1440.png` chưa dựng panel thật; đồng bộ nền của Reels qua CSS dùng chung `.itinerarySidebar` và `.rightPanel` đã được kiểm tra bằng test cấu trúc CSS trong `segmented-tabs-style.test.ts`.
