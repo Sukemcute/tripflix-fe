@@ -6,11 +6,13 @@
  */
 
 export interface AiUsageRowDto {
-  /** Tính năng (chat, summary, moderation), ngày YYYY-MM-DD hoặc tên model */
+  /** Tính năng, ngày YYYY-MM-DD hoặc tên model */
   key: string;
   calls: number;
   inputTokens: number;
   outputTokens: number;
   /** USD, ước tính theo bảng giá ai-service */
   costUsd: number;
+  /** Lượt OCR không có token usage từ provider; chi phí thực chưa biết */
+  unpricedCalls: number;
 }
