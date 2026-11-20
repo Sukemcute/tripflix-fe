@@ -1024,10 +1024,6 @@
   transition: grid-template-columns 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.splitViewNoRight {
-  grid-template-columns: 340px 20px minmax(0, 1fr) 0px 0px;
-}
-
 /* Từ 1200px trở lên tab Bài viết luôn ghim cột Lịch trình bên trái, ẩn nút thu gọn mà không sửa ItinerarySidebarPanel. */
 .splitViewPinnedLeft .itineraryCollapseBtn {
   display: none;
@@ -2284,7 +2280,7 @@ a.authorAvatar {
 /* --------------------------------------------------------------------------
    Responsive Breakpoints
    -------------------------------------------------------------------------- */
-/* Từ 1200px trở lên tab Bài viết cố định cột Lịch trình bên trái (không dùng trạng thái đóng trái). */
+/* Từ 1200px trở lên tab Bài viết cố định cả hai cột bên (luôn 3 cột, không dùng trạng thái đóng trái/phải). */
 @media (min-width: 1200px) {
   .splitViewContainer .itineraryCollapseBtn {
     display: none;
@@ -2296,10 +2292,6 @@ a.authorAvatar {
 @media (max-width: 1439px) {
   .splitViewContainer {
     grid-template-columns: clamp(240px, 21vw, 300px) 16px minmax(0, 1fr) 16px clamp(260px, 23vw, 330px);
-  }
-
-  .splitViewNoRight {
-    grid-template-columns: clamp(240px, 21vw, 300px) 16px minmax(0, 1fr) 0px 0px;
   }
 }
 
