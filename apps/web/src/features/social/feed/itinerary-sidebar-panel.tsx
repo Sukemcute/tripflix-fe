@@ -7,6 +7,7 @@ import type { TripAttachmentDto } from '@tripflix/api-client/core-api/model/inde
 import { t, vi } from '@tripflix/i18n';
 import { SocialIcon } from '../live-posts';
 import { POST_COVER_MASCOT } from '../post-cover';
+import segmentedTabs from '../../shared/segmented-tabs.module.css';
 import styles from './social-feed.module.css';
 import { TripPlanTimeline } from './trip-plan-timeline';
 
@@ -131,14 +132,12 @@ export function ItinerarySidebarPanel({
           </div>
 
           {/* Tab Lịch trình và Chi phí */}
-          <div className={styles.itineraryTabsRow} role="tablist">
+          <div className={`${segmentedTabs.tabs} ${styles.itineraryTabsRow}`} role="tablist">
             <button
               type="button"
               role="tab"
               aria-selected={activeTab === 'schedule'}
-              className={`${styles.itineraryTabItem} ${
-                activeTab === 'schedule' ? styles.itineraryTabItemActive : ''
-              }`}
+              className={`${segmentedTabs.tab} ${segmentedTabs.tabCompact}`}
               onClick={() => setActiveTab('schedule')}
             >
               {vi.api.immersiveTabSchedule}
@@ -147,9 +146,7 @@ export function ItinerarySidebarPanel({
               type="button"
               role="tab"
               aria-selected={activeTab === 'cost'}
-              className={`${styles.itineraryTabItem} ${
-                activeTab === 'cost' ? styles.itineraryTabItemActive : ''
-              }`}
+              className={`${segmentedTabs.tab} ${segmentedTabs.tabCompact}`}
               onClick={() => setActiveTab('cost')}
             >
               {vi.api.immersiveTabCost}

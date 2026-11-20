@@ -28,6 +28,7 @@ import { ShareMenu, type ShareMenuHandle } from '../share-menu';
 import { getPostImages } from '../post-cover';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AvatarPhoto } from '@/features/shared/avatar-photo';
+import segmentedTabs from '../../shared/segmented-tabs.module.css';
 import { getFocusedFeedPosts } from './focused-post';
 import styles from './social-feed.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
@@ -883,7 +884,7 @@ export function SocialFeedView({
           <div
             role="tablist"
             aria-label={vi.api.recommendModeAria}
-            className={styles.recommendModeTabs}
+            className={`${segmentedTabs.tabs} ${segmentedTabs.tabsGlass} ${styles.recommendModeTabs}`}
           >
             {RECOMMEND_MODE_OPTIONS.map((option) => {
               const selected = option.value === recommendMode;
@@ -893,12 +894,7 @@ export function SocialFeedView({
                   type="button"
                   role="tab"
                   aria-selected={selected}
-                  className={styles.composerTagBtn}
-                  style={
-                    selected
-                      ? { background: 'var(--tf-color-ink, #111827)', color: '#fff', borderColor: 'transparent' }
-                      : undefined
-                  }
+                  className={segmentedTabs.tab}
                   onClick={() => setRecommendMode(option.value)}
                 >
                   {option.label}

@@ -29,29 +29,12 @@
 }
 
 .recommendModeTabs {
-  /* Lớp kính mờ giữ chữ tab dễ đọc trên mặt nước của trang Cảm hứng. */
-  --tabs-radius: 14px;
-  --tabs-inset: 4px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
   margin-bottom: 12px;
-  padding: var(--tabs-inset);
-  border-radius: var(--tabs-radius);
-  background: var(--water-glass, transparent);
-  backdrop-filter: blur(10px);
-}
-
-.recommendModeTabs .composerTagBtn {
-  justify-content: center;
-  min-height: 40px;
-  padding-inline: 6px;
-  border-radius: calc(var(--tabs-radius) - var(--tabs-inset));
-  text-align: center;
 }
 
 @container (max-width: 420px) {
   .recommendModeTabs {
+    grid-auto-flow: row;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -634,40 +617,9 @@
   background: var(--color-coral-ink);
 }
 
-/* Tabs dạng viên thuốc */
+/* Khoảng cách hàng tab Lịch trình / Chi phí (style chi tiết lấy từ segmented-tabs.module.css) */
 .itineraryTabsRow {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   margin: 0 14px 4px;
-  padding: 4px;
-  border-radius: 999px;
-  background: var(--color-surface-muted);
-}
-
-.itineraryTabItem {
-  flex: 1;
-  padding: 7px 4px;
-  border: none;
-  border-radius: 999px;
-  background: var(--color-transparent);
-  color: var(--color-text-muted);
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  text-align: center;
-  transition: all 180ms ease;
-  white-space: nowrap;
-}
-
-.itineraryTabItem:hover {
-  color: var(--color-navy);
-}
-
-.itineraryTabItemActive {
-  background: var(--color-background) !important;
-  color: var(--color-navy) !important;
-  box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--color-ink) 25%, transparent);
 }
 
 /* Vùng cuộn */
