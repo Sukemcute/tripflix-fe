@@ -878,4 +878,12 @@ export const api = {
   profileNoSavedVideos: 'Chưa có video đã lưu.',
   profileLoadMore: 'Xem thêm',
   profileIntro: 'Giới thiệu',
+  // Cột Lịch trình (trạng thái trống & chi phí ước tính)
+  immersiveEstimatedCostNote:
+    'Chi phí ước tính trung bình cho 1 người, bao gồm lưu trú và các điểm vui chơi gợi ý.',
+  itineraryNoTripTitle: 'Bài này chưa gắn lịch trình',
+  itineraryNoTripDesc: 'Chia sẻ ảnh và cảm nhận chuyến đi.',
+  itineraryBrowseTripPosts: 'Xem các bài có lịch trình',
+  itinerarySuggestedHeading: 'Lịch trình liên quan',
+  itinerarySuggestedAction: 'Xem lịch trình này',
 } as const;
