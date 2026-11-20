@@ -207,6 +207,7 @@ export function AssistantChat({
                     <View style={styles.attachments}>
                       {!!message.cards?.length && (
                         <AssistantCards
+                          bookingTrip={chat.trip}
                           cards={message.cards}
                           onOpen={close}
                           actions={

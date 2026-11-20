@@ -104,11 +104,13 @@ import {
 } from './reel-reaction-batch';
 import { attachReelHlsSource, REEL_START_SHORT_SIDE, type ReelHlsBufferControl } from './reel-hls';
 import { ReelSeekBar } from './reel-seek-bar';
+import { getReelStageState } from './reel-stage-state';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import { ReelCommentSummary } from './post-summary';
 import { CommentSkeletonList } from './comment-skeleton';
 import { ReplyQuote, scrollToQuotedComment, shouldShowReplyQuote } from './reply-quote';
 import { RelativeTime } from './relative-time-label';
+import { resolvePanelOpen, useIsWideScreen } from './use-wide-screen';
 import styles from './live-posts.module.css';
 import { PostImagePicker } from './composer/post-image-picker';
 import { usePostImages } from './composer/use-post-images';
@@ -1252,7 +1254,11 @@ export function InspirationImmersiveViewer({
     },
     [onToggleItinerary, isLeftOpen]
   );
-  const [isRightOpen, setRightOpen] = useState(true);
+  // Bình luận mở sẵn chỉ trên màn rộng; màn hẹp panel là bottom sheet che hết video (TF98). Server render coi như
+  // đóng để không lệch hydration; mở từ thông báo bình luận (focusCommentId) thì vẫn mở sẵn.
+  const isWideScreen = useIsWideScreen();
+  const [rightOpenChoice, setRightOpen] = useState<boolean | null>(focusCommentId ? true : null);
+  const isRightOpen = resolvePanelOpen(rightOpenChoice, isWideScreen);
   const [isComposerModalOpen, setComposerModalOpen] = useState(false);
 
   // Media player session states
@@ -1315,7 +1321,7 @@ export function InspirationImmersiveViewer({
     refreshOnReturn: true,
   });
   const feedQuery = isSavedMode ? savedFeedQuery : recommendedReelsQuery;
-  // Đổi chip: danh sách cũ vẫn hiện (làm mờ) tới khi danh sách mới về, nên khung và thanh chip đứng yên khi mạng chậm.
+  // Đổi chip: đánh dấu dữ liệu tạm để giữ khung chờ tới khi danh sách mới về.
   const isSwitchingReelsMode = !isSavedMode && recommendedReelsQuery.isPlaceholderData;
   const shownReelsModeRef = useRef(reelsMode);
   useEffect(() => {
@@ -1951,6 +1957,10 @@ export function InspirationImmersiveViewer({
   // thì hiện trạng thái trống, để khung video không tự co giãn mỗi khi lướt qua bài thiếu lịch trình.
   const showLeftPanel = Boolean(activePost) && isLeftOpen;
   const showRightPanel = Boolean(activePost) && isRightOpen;
+  // Giữ chỗ cho hai sidebar trong lúc chưa có bài, để khung và chip không đổi vị trí khi bài đầu về.
+  const shouldReserveStageLayout = !isSearchReels && !isSavedMode && !activePost;
+  const hasLeftColumn = showLeftPanel || (shouldReserveStageLayout && isLeftOpen);
+  const hasRightColumn = showRightPanel || (shouldReserveStageLayout && isRightOpen);
 
   // Chưa thao tác thì đổi bố cục ngay (biết màn rộng, tải xong bài), chỉ chạy hiệu ứng khi người dùng bấm đóng/mở.
   const hasUserInteracted = useHasUserInteracted();
@@ -1958,11 +1968,11 @@ export function InspirationImmersiveViewer({
   const isLayoutSettled = useSettledFlag(Boolean(activePost));
   const isLayoutAnimated = hasUserInteracted && isLayoutSettled;
   const gridLayoutClass =
-    showLeftPanel && showRightPanel
+    hasLeftColumn && hasRightColumn
       ? styles.gridThreeCols
-      : !showLeftPanel && showRightPanel
+      : !hasLeftColumn && hasRightColumn
         ? styles.gridNoLeft
-        : showLeftPanel && !showRightPanel
+        : hasLeftColumn && !hasRightColumn
           ? styles.gridNoRight
           : styles.gridCenterOnly;
 
@@ -2094,14 +2104,14 @@ export function InspirationImmersiveViewer({
     if (activePostRef.current?.id !== postId) {
       setActivePostId(postId);
     }
-    setRightOpen((wasOpen) => {
-      if (!wasOpen) {
+    setRightOpen((choice) => {
+      if (!resolvePanelOpen(choice, isWideScreen)) {
         setTimeout(() => commentInputRef.current?.focus(), 120);
         return true;
       }
       return false;
     });
-  }, []);
+  }, [isWideScreen]);
 
   // Đảm bảo loại bỏ thuộc tính data-theme còn sót lại, giữ mặc định Light Mode
   useEffect(() => {
@@ -2114,12 +2124,18 @@ export function InspirationImmersiveViewer({
     }
   }, []);
 
-  if (!isReady) {
+  if (!isReady && (isSearchReels || isSavedMode)) {
     return <output className="empty-state"><LoadingDots /></output>;
   }
 
-  // Thanh chip nằm trong khung video (khung 9:16 có thể hẹp hơn cột giữa); chưa có khung (đang tải, lỗi) thì đặt ở cột giữa.
-  const hasStageFrame = !(filterMode === 'saved' && !user) && !isReelListPending && !postsQuery.error && Boolean(activePost);
+  const reelStageState = getReelStageState({
+    isSessionReady: isReady,
+    isListPending: isReelListPending,
+    isSwitchingMode: isSwitchingReelsMode,
+    hasError: Boolean(postsQuery.error),
+    hasPost: Boolean(activePost),
+  });
+  const showReelPlaceholder = !isSearchReels && !isSavedMode && reelStageState !== 'ready';
   const reelsModeTabs =
     !isSearchReels && !isSavedMode ? (
       // Dải rộng bằng khung (trừ lề 8px) làm mốc container query: chữ và khoảng đệm chip co theo bề rộng khung.
@@ -2225,8 +2241,24 @@ export function InspirationImmersiveViewer({
                 {vi.api.searchResultsBack}
               </button>
             )}
-            {!hasStageFrame && reelsModeTabs}
-            {filterMode === 'saved' && !user ? (
+            {showReelPlaceholder ? (
+              <div
+                className={`${styles.mediaStageFrame} ${styles.reelStagePlaceholder}`}
+                aria-busy={reelStageState === 'loading' || undefined}
+                data-loading={reelStageState === 'loading' || undefined}
+              >
+                {reelsModeTabs}
+                <div className={styles.reelStagePlaceholderContent}>
+                  {reelStageState === 'loading' ? (
+                    <output><LoadingDots /></output>
+                  ) : reelStageState === 'error' ? (
+                    <ApiErrorNotice error={postsQuery.error} retry={() => { void postsQuery.refetch(); }} />
+                  ) : (
+                    <p>{vi.api.noPosts}</p>
+                  )}
+                </div>
+              </div>
+            ) : filterMode === 'saved' && !user ? (
               <div className={`empty-state ${styles.centerEmptyBox}`}>
                 <p>{vi.api.loginRequired}</p>
                 <Link prefetch={false} href={loginReturnHref} className={styles.createPostBtn}>

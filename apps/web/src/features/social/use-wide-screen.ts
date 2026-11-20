@@ -20,3 +20,11 @@ function readWideScreen(): boolean {
 export function useIsWideScreen(): boolean {
   return useSyncExternalStore(subscribeWideScreen, readWideScreen, () => false);
 }
+
+/**
+ * Panel cạnh nội dung có đang mở không: người dùng đã bấm mở/đóng thì theo lựa chọn đó; chưa bấm thì mở sẵn
+ * chỉ trên màn rộng (màn hẹp panel là bottom sheet, mở sẵn sẽ che hết nội dung).
+ */
+export function resolvePanelOpen(choice: boolean | null, isWideScreen: boolean): boolean {
+  return choice ?? isWideScreen;
+}

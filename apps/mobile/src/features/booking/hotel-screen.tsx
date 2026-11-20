@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { commerceApi, getFutureDate, useApiSession } from '@tripflix/api-client';
+import { isValidAssistantStay } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import * as Linking from 'expo-linking';
@@ -44,18 +45,31 @@ export function CommerceHotelScreen() {
     adults?: string;
     children?: string;
     infants?: string;
+    fromTripi?: string;
   }>();
   const { isReady, user } = useApiSession();
   const { width, height } = useWindowDimensions();
   const today = getFutureDate(0);
+  const isTripi = params.fromTripi === '1';
   const stay = {
-    checkIn: params.checkIn && params.checkIn >= today ? params.checkIn : getFutureDate(1),
-    checkOut: params.checkOut ?? getFutureDate(3),
-    adults: Number(params.adults ?? 2) || 2,
+    checkIn: isTripi
+      ? (params.checkIn ?? '')
+      : params.checkIn && params.checkIn >= today
+        ? params.checkIn
+        : getFutureDate(1),
+    checkOut: params.checkOut ?? (isTripi ? '' : getFutureDate(3)),
+    adults: isTripi ? Number(params.adults) : Number(params.adults ?? 2) || 2,
   };
+  const isStayValid =
+    !isTripi ||
+    isValidAssistantStay(
+      { ...stay, children: Number(params.children), infants: Number(params.infants) },
+      today,
+    );
+  const editStay = () => router.push({ pathname: '/tripi-stay', params: { ...params, name: hotel?.name } });
   const query = useQuery({
     queryKey: ['commerce', 'hotel', params.id, stay],
-    enabled: isReady && !!params.id,
+    enabled: isReady && !!params.id && isStayValid,
     queryFn: ({ signal }) => commerceApi.getHotel(params.id!, stay, signal),
   });
   const hotel = query.data;
@@ -70,11 +84,12 @@ export function CommerceHotelScreen() {
         adults: String(stay.adults),
         children: params.children ?? '0',
         infants: params.infants ?? '0',
+        ...(isTripi ? { fromTripi: '1' } : {}),
       },
     });
   const photos = hotel ? (hotel.images.length ? hotel.images : hotel.thumbnail ? [hotel.thumbnail] : []) : [];
   const footer =
-    hotel?.priceFrom != null ? (
+    hotel?.priceFrom != null && isStayValid ? (
       <View style={styles.footer}>
         <Row style={styles.priceRow}>
           <Txt style={styles.secondary}>{hotelText.from}</Txt>
@@ -102,7 +117,7 @@ export function CommerceHotelScreen() {
             name={hotel?.name ?? text.hotel}
             rounded={0}
             height={heroHeight}
-            isLoading={!!params.id && query.isPending}
+            isLoading={!!params.id && isStayValid && query.isPending}
           />
           <Row style={styles.toolbar}>
             <FloatingButton
@@ -117,6 +132,30 @@ export function CommerceHotelScreen() {
           </Row>
         </View>
         <View style={styles.identity}>
+          {isTripi && (
+            <View style={styles.tripContext}>
+              <Txt style={styles.mapLabel}>{vi.assistant.stayReview.confirmed}</Txt>
+              {isStayValid ? (
+                <Txt style={styles.address}>
+                  {stay.checkIn.split('-').reverse().join('/')} →{' '}
+                  {stay.checkOut.split('-').reverse().join('/')} · {stay.adults}{' '}
+                  {hotelText.adultsLabel.toLowerCase()}
+                  {Number(params.children) > 0
+                    ? ` · ${params.children} ${hotelText.childrenLabel.toLowerCase()}`
+                    : ''}
+                  {Number(params.infants) > 0
+                    ? ` · ${params.infants} ${hotelText.infantsLabel.toLowerCase()}`
+                    : ''}
+                </Txt>
+              ) : (
+                <Notice tone="error">{vi.assistant.stayReview.invalidStay}</Notice>
+              )}
+              <Pressable accessibilityRole="button" onPress={editStay} style={styles.map}>
+                <Icon name="calendar-outline" size={18} color={colors.tealInk} />
+                <Txt style={styles.mapLabel}>{vi.assistant.stayReview.edit}</Txt>
+              </Pressable>
+            </View>
+          )}
           {!params.id && <Notice>{text.noHotel}</Notice>}
           {hotel && (
             <>
@@ -178,7 +217,9 @@ export function CommerceHotelScreen() {
               void query.refetch();
             }}
           />
-          {query.isPending && !!params.id && <Txt style={styles.loading}>{hotelText.loading}</Txt>}
+          {query.isPending && !!params.id && isStayValid && (
+            <Txt style={styles.loading}>{hotelText.loading}</Txt>
+          )}
           {hotel && <HotelInfoSections hotel={hotel} />}
           {params.id && <HotelReviewsSection id={params.id} />}
         </View>
@@ -188,6 +229,7 @@ export function CommerceHotelScreen() {
 }
 
 const styles = StyleSheet.create({
+  tripContext: { backgroundColor: colors.seaMist, borderRadius: 8, padding: spacing.md, gap: spacing.sm },
   content: { paddingBottom: spacing.xl },
   identity: { padding: mobileLayout.gutter, gap: spacing.md, backgroundColor: colors.background },
   province: { fontSize: 13, lineHeight: 22, color: colors.tealInk, fontFamily: nativeFonts.semibold },

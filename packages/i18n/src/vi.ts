@@ -19,10 +19,12 @@ import { analytics } from './analytics';
 import { aiUsage } from './ai-usage';
 import { userActivity } from './user-activity';
 import { seo } from './seo';
+import { shell } from './shell';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
   seo,
+  shell,
   analytics,
   aiUsage,
   userActivity,

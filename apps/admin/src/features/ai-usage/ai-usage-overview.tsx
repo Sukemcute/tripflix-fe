@@ -70,6 +70,12 @@ export function AiUsageOverview({ range, days }: { range: { from: string; to: st
           { id: 'in', label: copy.kpi.inputTokens, value: total ? compact.format(total.inputTokens) : undefined },
           { id: 'out', label: copy.kpi.outputTokens, value: total ? compact.format(total.outputTokens) : undefined },
           { id: 'users', label: copy.kpi.users, value: users.data ? count.format(users.data.total) : undefined },
+          {
+            id: 'unpriced',
+            label: copy.kpi.unpricedCalls,
+            value: total ? count.format(total.unpricedCalls ?? 0) : undefined,
+            hint: total?.unpricedCalls ? 'Chi phí thực cần đối chiếu nhà cung cấp.' : undefined,
+          },
         ]}
       />
 
@@ -175,6 +181,7 @@ export function AiUsageOverview({ range, days }: { range: { from: string; to: st
                   <th scope="col">{copy.columns.inputTokens}</th>
                   <th scope="col">{copy.columns.outputTokens}</th>
                   <th scope="col">{copy.columns.costUsd}</th>
+                  <th scope="col">{copy.columns.unpricedCalls}</th>
                 </tr>
               </thead>
               <tbody>
@@ -185,6 +192,7 @@ export function AiUsageOverview({ range, days }: { range: { from: string; to: st
                     <td className="tabular-nums">{count.format(row.inputTokens)}</td>
                     <td className="tabular-nums">{count.format(row.outputTokens)}</td>
                     <td className="tabular-nums">{formatUsd(row.costUsd)}</td>
+                    <td className="tabular-nums">{count.format(row.unpricedCalls ?? 0)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -195,6 +203,7 @@ export function AiUsageOverview({ range, days }: { range: { from: string; to: st
                   <td className="tabular-nums">{count.format(usage.data.total.inputTokens)}</td>
                   <td className="tabular-nums">{count.format(usage.data.total.outputTokens)}</td>
                   <td className="tabular-nums">{formatUsd(usage.data.total.costUsd)}</td>
+                  <td className="tabular-nums">{count.format(usage.data.total.unpricedCalls ?? 0)}</td>
                 </tr>
               </tfoot>
             </table>
