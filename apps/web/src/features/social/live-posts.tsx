@@ -46,7 +46,7 @@ import { ComposerTripPlanEditor } from './composer/trip-plan-editor';
 import { t, vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, useImperativeHandle, type MouseEvent, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { getPanelCloseTimeoutMs, shouldCompletePanelClose } from '@/features/assistant/panel-motion';
 import { getInitial } from '@/features/auth/account-helpers';
@@ -104,6 +104,7 @@ import {
 } from './reel-reaction-batch';
 import { attachReelHlsSource, REEL_START_SHORT_SIDE, type ReelHlsBufferControl } from './reel-hls';
 import { ReelSeekBar } from './reel-seek-bar';
+import { commentDraftStore, isMentionNavigationKey, sameMentionQuery, type CommentDraft } from './comment-draft-store';
 import { getReelStageState } from './reel-stage-state';
 import { ItinerarySidebarPanel } from './feed/itinerary-sidebar-panel';
 import { ReelCommentSummary } from './post-summary';
@@ -2542,42 +2543,6 @@ export function InspirationImmersiveViewer({
   );
 }
 
-interface CommentDraft {
-  body: string;
-  replyTarget: { id: string; authorName: string } | null;
-  mentions?: CommentMention[];
-}
-
-const COMMENT_DRAFTS_STORAGE_KEY = 'tripflix.comment_drafts';
-
-function getCommentDraft(postId: string): CommentDraft | undefined {
-  if (typeof window === 'undefined') return undefined;
-  try {
-    const raw = sessionStorage.getItem(COMMENT_DRAFTS_STORAGE_KEY);
-    if (!raw) return undefined;
-    const map = JSON.parse(raw) as Record<string, CommentDraft>;
-    return map[postId];
-  } catch {
-    return undefined;
-  }
-}
-
-function saveCommentDraft(postId: string, draft: CommentDraft | null) {
-  if (typeof window === 'undefined') return;
-  try {
-    const raw = sessionStorage.getItem(COMMENT_DRAFTS_STORAGE_KEY);
-    const map = (raw ? JSON.parse(raw) : {}) as Record<string, CommentDraft>;
-    if (draft && (draft.body.trim() || draft.replyTarget || (draft.mentions && draft.mentions.length > 0))) {
-      map[postId] = draft;
-    } else {
-      delete map[postId];
-    }
-    sessionStorage.setItem(COMMENT_DRAFTS_STORAGE_KEY, JSON.stringify(map));
-  } catch {
-    // Ignore storage errors
-  }
-}
-
 /**
  * Luồng bình luận cha–con đồng bộ theo postId ở Right Panel,
  * đi kèm Sticky Comment Composer cố định ở đáy Right Panel.
@@ -2607,7 +2572,6 @@ export function RightPanelCommentsSynchronized({
   const { user, isReady, session } = useApiSession();
   const permissions = useCommentPermissions(post.id);
   const client = useQueryClient();
-  const initialDraft = getCommentDraft(post.id);
   const [pendingComments, setPendingComments] = useState<readonly PostCommentsChange[]>([]);
   useEffect(() => watchPostComments(post.id, (changes) => {
     const pending = changes.filter((change) => change.kind === 'created' && !change.parentCommentId &&
@@ -2620,78 +2584,10 @@ export function RightPanelCommentsSynchronized({
     if (immediate.length) void reloadPostComments(client, post.id, immediate);
   }), [client, post.id, user?.id, scrollContainerRef]);
   const pendingForPost = pendingComments.filter((change) => change.postId === post.id);
-  const [body, setBody] = useState(initialDraft?.body ?? '');
-  const [mentions, setMentions] = useState<CommentMention[]>(initialDraft?.mentions ?? []);
-  const [mentionQuery, setMentionQuery] = useState<MentionQuery | null>(null);
-  const [isEmojiOpen, setEmojiOpen] = useState(false);
-  // Cả viên thuốc nhập (ô chữ và nút emoji) tính là bên trong bảng emoji: bấm vào để gõ không đóng bảng.
-  const composerFieldRef = useRef<HTMLDivElement | null>(null);
-  const composerMirrorRef = useRef<HTMLDivElement | null>(null);
-  const closeEmojiPicker = useCallback(() => setEmojiOpen(false), []);
-  const syncComposerScroll = useCallback(() => {
-    const input = composerInputRef.current;
-    const mirror = composerMirrorRef.current;
-    if (!input || !mirror) return;
-    mirror.scrollLeft = input.scrollLeft;
-  }, [composerInputRef]);
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(syncComposerScroll);
-    return () => window.cancelAnimationFrame(frame);
-  }, [body, mentions, syncComposerScroll]);
-
-  const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(
-    initialDraft?.replyTarget ?? null,
-  );
-
-  const handleBodyChange = (value: string) => {
-    const cursor = composerInputRef.current?.selectionStart ?? value.length;
-    const nextMentions = updateMentionsOnTextChange(body, value, mentions, cursor);
-    setMentions(nextMentions);
-    setBody(value);
-    saveCommentDraft(post.id, { body: value, replyTarget, mentions: nextMentions });
-
-    const query = getMentionQueryAtCursor(value, cursor, nextMentions);
-    setMentionQuery(query);
-    if (query) setEmojiOpen(false);
-  };
-
-  /** Chèn emoji đúng chỗ con trỏ rồi trả focus về ô nhập để gõ tiếp. */
-  const handleInsertEmoji = (emoji: string) => {
-    const input = composerInputRef.current;
-    const next = insertAtSelection(body, input?.selectionStart ?? null, input?.selectionEnd ?? null, emoji);
-    const cursor = next.caret;
-    const nextMentions = updateMentionsOnTextChange(body, next.value, mentions, cursor);
-    setMentions(nextMentions);
-    setBody(next.value);
-    saveCommentDraft(post.id, { body: next.value, replyTarget, mentions: nextMentions });
-    window.requestAnimationFrame(() => {
-      input?.focus();
-      input?.setSelectionRange(next.caret, next.caret);
-    });
-  };
-
-  const handleSelectMention = (selectedUser: MentionUserItem) => {
-    const input = composerInputRef.current;
-    const cursor = input?.selectionStart ?? body.length;
-    const result = insertMentionTag(body, cursor, selectedUser, mentions);
-    setBody(result.newText);
-    setMentions(result.newMentions);
-    saveCommentDraft(post.id, { body: result.newText, replyTarget, mentions: result.newMentions });
-    setMentionQuery(null);
-    window.requestAnimationFrame(() => {
-      input?.focus();
-      input?.setSelectionRange(result.newCursor, result.newCursor);
-    });
-  };
-
-  const handleReplySelect = (target: { id: string; authorName: string } | null) => {
-    setReplyTarget(target);
-    saveCommentDraft(post.id, { body, replyTarget: target, mentions });
-    if (target) {
-      composerInputRef.current?.focus();
-    }
-  };
+  const composerHandleRef = useRef<CommentComposerHandle | null>(null);
+  const handleReplySelect = useCallback((target: { id: string; authorName: string } | null) => {
+    composerHandleRef.current?.setReplyTarget(target);
+  }, []);
 
   const handleJumpToComment = useCallback(
     (targetCommentId: string) => {
@@ -2708,7 +2604,7 @@ export function RightPanelCommentsSynchronized({
   });
 
   const addMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ body, replyTarget, mentions }: CommentDraft) => {
       try {
         return await createCommentWithMentions({
           postId: post.id,
@@ -2744,14 +2640,13 @@ export function RightPanelCommentsSynchronized({
       }
     },
     onSuccess: (createdComment) => {
-      saveCommentDraft(post.id, null);
-      setBody('');
-      setMentions([]);
-      setMentionQuery(null);
-      setReplyTarget(null);
       if (createdComment) addCommentToCache(client, createdComment);
     },
   });
+  const submitComment = addMutation.mutate;
+  const handleSubmitDraft = useCallback((draft: CommentDraft, onSuccess: () => void) => {
+    submitComment(draft, { onSuccess });
+  }, [submitComment]);
 
   const focusedThread = useQuery({
     queryKey: ['social', 'comment-thread', post.id, focusCommentId, user?.id],
@@ -2815,7 +2710,7 @@ export function RightPanelCommentsSynchronized({
               postIsVerified={post.isVerified}
               comment={comment}
               loginHref={loginHref}
-              onReplySelect={(target) => handleReplySelect(target)}
+              onReplySelect={handleReplySelect}
               onJumpToComment={handleJumpToComment}
               focusCommentId={focusCommentId}
               focusedReply={focusedReply?.parentCommentId === comment.id ? focusedReply : undefined}
@@ -2838,6 +2733,130 @@ export function RightPanelCommentsSynchronized({
       </div>
 
       {/* Sticky Comment Composer cố định ở đáy Right Panel */}
+      <CommentComposer
+        key={post.id}
+        ref={composerHandleRef}
+        postId={post.id}
+        user={user}
+        isReady={isReady}
+        isEnabled={permissions.data?.enabled !== false}
+        loginHref={loginHref}
+        composerInputRef={composerInputRef}
+        isSubmitting={addMutation.isPending}
+        onSubmit={handleSubmitDraft}
+      />
+    </>
+  );
+}
+
+interface CommentComposerHandle {
+  setReplyTarget: (target: { id: string; authorName: string } | null) => void;
+}
+
+export function CommentComposer({ ref, postId, user, isReady, isEnabled, loginHref, composerInputRef, isSubmitting, onSubmit }: {
+  ref: React.Ref<CommentComposerHandle>;
+  postId: string;
+  user: ReturnType<typeof useApiSession>['user'];
+  isReady: boolean;
+  isEnabled: boolean;
+  loginHref: string;
+  composerInputRef: React.RefObject<HTMLInputElement | null>;
+  isSubmitting: boolean;
+  onSubmit: (draft: CommentDraft, onSuccess: () => void) => void;
+}) {
+  const [initialDraft] = useState(() => commentDraftStore.get(postId));
+  const [body, setBody] = useState(initialDraft?.body ?? '');
+  const [mentions, setMentions] = useState<CommentMention[]>(initialDraft?.mentions ?? []);
+  const [mentionQuery, setMentionQuery] = useState<MentionQuery | null>(null);
+  const [isEmojiOpen, setEmojiOpen] = useState(false);
+  // Cả viên thuốc nhập (ô chữ và nút emoji) tính là bên trong bảng emoji: bấm vào để gõ không đóng bảng.
+  const composerFieldRef = useRef<HTMLDivElement | null>(null);
+  const composerMirrorRef = useRef<HTMLDivElement | null>(null);
+  const closeEmojiPicker = useCallback(() => setEmojiOpen(false), []);
+  const syncComposerScroll = useCallback(() => {
+    const input = composerInputRef.current;
+    const mirror = composerMirrorRef.current;
+    if (!input || !mirror) return;
+    mirror.scrollLeft = input.scrollLeft;
+  }, [composerInputRef]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(syncComposerScroll);
+    return () => window.cancelAnimationFrame(frame);
+  }, [body, mentions, syncComposerScroll]);
+
+  const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(
+    initialDraft?.replyTarget ?? null,
+  );
+  const composerDraftRef = useRef({ body, mentions, replyTarget });
+  useEffect(() => {
+    composerDraftRef.current = { body, mentions, replyTarget };
+  }, [body, mentions, replyTarget]);
+
+  const handleBodyChange = (value: string) => {
+    const cursor = composerInputRef.current?.selectionStart ?? value.length;
+    const nextMentions = updateMentionsOnTextChange(body, value, mentions, cursor);
+    setMentions(nextMentions);
+    setBody(value);
+    commentDraftStore.save(postId, { body: value, replyTarget, mentions: nextMentions });
+
+    const query = getMentionQueryAtCursor(value, cursor, nextMentions);
+    setMentionQuery((previous) => sameMentionQuery(previous, query) ? previous : query);
+    if (query) setEmojiOpen(false);
+  };
+
+  /** Chèn emoji đúng chỗ con trỏ rồi trả focus về ô nhập để gõ tiếp. */
+  const handleInsertEmoji = useCallback((emoji: string) => {
+    const { body, mentions, replyTarget } = composerDraftRef.current;
+    const input = composerInputRef.current;
+    const next = insertAtSelection(body, input?.selectionStart ?? null, input?.selectionEnd ?? null, emoji);
+    const cursor = next.caret;
+    const nextMentions = updateMentionsOnTextChange(body, next.value, mentions, cursor);
+    setMentions(nextMentions);
+    setBody(next.value);
+    commentDraftStore.save(postId, { body: next.value, replyTarget, mentions: nextMentions });
+    window.requestAnimationFrame(() => {
+      input?.focus();
+      input?.setSelectionRange(next.caret, next.caret);
+    });
+  }, [postId, composerInputRef]);
+
+  const handleSelectMention = useCallback((selectedUser: MentionUserItem) => {
+    const { body, mentions, replyTarget } = composerDraftRef.current;
+    const input = composerInputRef.current;
+    const cursor = input?.selectionStart ?? body.length;
+    const result = insertMentionTag(body, cursor, selectedUser, mentions);
+    setBody(result.newText);
+    setMentions(result.newMentions);
+    commentDraftStore.save(postId, { body: result.newText, replyTarget, mentions: result.newMentions });
+    setMentionQuery(null);
+    window.requestAnimationFrame(() => {
+      input?.focus();
+      input?.setSelectionRange(result.newCursor, result.newCursor);
+    });
+  }, [postId, composerInputRef]);
+
+  const handleReplySelect = useCallback((target: { id: string; authorName: string } | null) => {
+    const { body, mentions } = composerDraftRef.current;
+    setReplyTarget(target);
+    commentDraftStore.save(postId, { body, replyTarget: target, mentions });
+    if (target) {
+      composerInputRef.current?.focus();
+    }
+  }, [postId, composerInputRef]);
+
+
+  useImperativeHandle(ref, () => ({ setReplyTarget: handleReplySelect }), [handleReplySelect]);
+  const closeMentionPicker = useCallback(() => setMentionQuery(null), []);
+  useEffect(() => {
+    window.addEventListener('pagehide', commentDraftStore.flush);
+    return () => {
+      window.removeEventListener('pagehide', commentDraftStore.flush);
+      commentDraftStore.flush();
+    };
+  }, []);
+
+  return (
       <div className={styles.stickyComposerBox}>
         {replyTarget && (
           <div className={styles.replyingBanner}>
@@ -2852,13 +2871,20 @@ export function RightPanelCommentsSynchronized({
             </button>
           </div>
         )}
-        {permissions.data?.enabled === false ? <p role="status" className="small muted">{vi.moderation.commentsDisabled}</p> : user ? (
+        {!isEnabled ? <p role="status" className="small muted">{vi.moderation.commentsDisabled}</p> : user ? (
           <form
             className={styles.panelComposerForm}
             onSubmit={(event) => {
               event.preventDefault();
               if (!body.trim()) return;
-              addMutation.mutate();
+              onSubmit({ body, mentions, replyTarget }, () => {
+                commentDraftStore.save(postId, null);
+                commentDraftStore.flush();
+                setBody('');
+                setMentions([]);
+                setMentionQuery(null);
+                setReplyTarget(null);
+              });
             }}
           >
             <div className={styles.avatarSmallWrap}>
@@ -2892,17 +2918,19 @@ export function RightPanelCommentsSynchronized({
                   onChange={(event) => handleBodyChange(event.target.value)}
                   onScroll={syncComposerScroll}
                   onSelect={syncComposerScroll}
-                  onKeyUp={() => {
+                  onBlur={commentDraftStore.flush}
+                  onKeyUp={(event) => {
                     syncComposerScroll();
+                    if (isMentionNavigationKey(event.key) && (mentionQuery || ['Enter', 'Tab', 'Escape'].includes(event.key))) return;
                     const cursor = composerInputRef.current?.selectionStart ?? body.length;
                     const query = getMentionQueryAtCursor(body, cursor, mentions);
-                    setMentionQuery(query);
+                    setMentionQuery((previous) => sameMentionQuery(previous, query) ? previous : query);
                   }}
                   onClick={() => {
                     syncComposerScroll();
                     const cursor = composerInputRef.current?.selectionStart ?? body.length;
                     const query = getMentionQueryAtCursor(body, cursor, mentions);
-                    setMentionQuery(query);
+                    setMentionQuery((previous) => sameMentionQuery(previous, query) ? previous : query);
                   }}
                 />
               </div>
@@ -2930,7 +2958,7 @@ export function RightPanelCommentsSynchronized({
                   query={mentionQuery.query}
                   keepOpenRef={composerFieldRef}
                   onSelect={handleSelectMention}
-                  onClose={() => setMentionQuery(null)}
+                  onClose={closeMentionPicker}
                 />
               )}
             </div>
@@ -2938,7 +2966,7 @@ export function RightPanelCommentsSynchronized({
               type="submit"
               className={styles.panelSendBtn}
               aria-label={vi.api.send}
-              disabled={addMutation.isPending || !body.trim()}
+              disabled={isSubmitting || !body.trim()}
             >
               <SocialIcon name="send" size={15} />
             </button>
@@ -2953,7 +2981,6 @@ export function RightPanelCommentsSynchronized({
           </Link>
         )}
       </div>
-    </>
   );
 }
 
@@ -2981,7 +3008,7 @@ function renderMentionMirrorContent(
   );
 }
 
-function CommentNode({
+const CommentNode = memo(function CommentNodeImpl({
   postId,
   postAuthorId,
   postIsVerified,
@@ -3045,6 +3072,13 @@ function CommentNode({
   const editTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const editMirrorRef = useRef<HTMLDivElement | null>(null);
   const editFieldRef = useRef<HTMLDivElement | null>(null);
+  const editDraftKey = `edit:${postId}:${comment.id}`;
+  const editDraftRef = useRef({ body: editBody, mentions: editMentions });
+  useEffect(() => {
+    editDraftRef.current = { body: editBody, mentions: editMentions };
+  }, [editBody, editMentions]);
+  useEffect(() => () => commentDraftStore.flush(), []);
+  const closeEditMentionPicker = useCallback(() => setEditMentionQuery(null), []);
   const [optimisticLiked, setOptimisticLiked] = useState<boolean | null>(null);
 
   const syncEditScroll = useCallback(() => {
@@ -3066,23 +3100,26 @@ function CommentNode({
     const nextMentions = updateMentionsOnTextChange(editBody, value, editMentions, cursor);
     setEditMentions(nextMentions);
     setEditBody(value);
+    commentDraftStore.save(editDraftKey, { body: value, replyTarget: null, mentions: nextMentions });
 
     const query = getMentionQueryAtCursor(value, cursor, nextMentions);
-    setEditMentionQuery(query);
+    setEditMentionQuery((previous) => sameMentionQuery(previous, query) ? previous : query);
   };
 
-  const handleSelectEditMention = (selectedUser: MentionUserItem) => {
+  const handleSelectEditMention = useCallback((selectedUser: MentionUserItem) => {
+    const { body: editBody, mentions: editMentions } = editDraftRef.current;
     const textarea = editTextareaRef.current;
     const cursor = textarea?.selectionStart ?? editBody.length;
     const result = insertMentionTag(editBody, cursor, selectedUser, editMentions);
     setEditBody(result.newText);
     setEditMentions(result.newMentions);
+    commentDraftStore.save(editDraftKey, { body: result.newText, replyTarget: null, mentions: result.newMentions });
     setEditMentionQuery(null);
     window.requestAnimationFrame(() => {
       textarea?.focus();
       textarea?.setSelectionRange(result.newCursor, result.newCursor);
     });
-  };
+  }, [editDraftKey]);
 
   const isMine = comment.authorId === user?.id;
   const isPostAuthor = comment.authorId === postAuthorId;
@@ -3141,6 +3178,8 @@ function CommentNode({
         return;
       }
       setEditing(false);
+      commentDraftStore.save(editDraftKey, null);
+      commentDraftStore.flush();
       setEditMentionQuery(null);
       if (updatedComment && 'id' in updatedComment) {
         const canonical = updatedComment as SocialCommentDto;
@@ -3283,17 +3322,19 @@ function CommentNode({
                     onChange={(event) => handleEditBodyChange(event.target.value)}
                     onScroll={syncEditScroll}
                     onSelect={syncEditScroll}
-                    onKeyUp={() => {
+                    onBlur={commentDraftStore.flush}
+                    onKeyUp={(event) => {
                       syncEditScroll();
+                      if (isMentionNavigationKey(event.key) && (editMentionQuery || ['Enter', 'Tab', 'Escape'].includes(event.key))) return;
                       const cursor = editTextareaRef.current?.selectionStart ?? editBody.length;
                       const query = getMentionQueryAtCursor(editBody, cursor, editMentions);
-                      setEditMentionQuery(query);
+                      setEditMentionQuery((previous) => sameMentionQuery(previous, query) ? previous : query);
                     }}
                     onClick={() => {
                       syncEditScroll();
                       const cursor = editTextareaRef.current?.selectionStart ?? editBody.length;
                       const query = getMentionQueryAtCursor(editBody, cursor, editMentions);
-                      setEditMentionQuery(query);
+                      setEditMentionQuery((previous) => sameMentionQuery(previous, query) ? previous : query);
                     }}
                   />
                 </div>
@@ -3302,7 +3343,7 @@ function CommentNode({
                     query={editMentionQuery.query}
                     keepOpenRef={editFieldRef}
                     onSelect={handleSelectEditMention}
-                    onClose={() => setEditMentionQuery(null)}
+                    onClose={closeEditMentionPicker}
                   />
                 )}
               </div>
@@ -3319,6 +3360,8 @@ function CommentNode({
                   className={styles.panelCommentActionBtn}
                   onClick={() => {
                     setEditing(false);
+                    commentDraftStore.save(editDraftKey, null);
+                    commentDraftStore.flush();
                     setEditMentionQuery(null);
                     setEditBody(comment.body);
                     setEditMentions(comment.mentions ?? []);
@@ -3417,8 +3460,9 @@ function CommentNode({
                     className={styles.panelCommentActionBtn}
                     disabled={commentMutation.isPending}
                     onClick={() => {
-                      setEditBody(comment.body);
-                      setEditMentions(validateMentions(comment.body, comment.mentions ?? []));
+                      const draft = commentDraftStore.get(editDraftKey);
+                      setEditBody(draft?.body ?? comment.body);
+                      setEditMentions(validateMentions(draft?.body ?? comment.body, draft?.mentions ?? comment.mentions ?? []));
                       setEditMentionQuery(null);
                       setEditing(true);
                     }}
@@ -3474,7 +3518,7 @@ function CommentNode({
       </CommentVisibility>
     </li>
   );
-}
+});
 
 export interface ComposerModalProps {
   onClose: () => void;
