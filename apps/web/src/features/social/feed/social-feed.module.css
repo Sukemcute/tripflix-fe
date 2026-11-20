@@ -2353,7 +2353,8 @@ a.authorAvatar {
   .itineraryInFeed,
   .rightPanelInFeed {
     position: fixed !important;
-    inset: auto 0 0 0 !important;
+    /* Đứng trên thanh điều hướng đáy (<768px) để ô nhập bình luận không bị che; trên 768px biến bằng 0. */
+    inset: auto 0 var(--mobile-tab-bar-space, 0px) 0 !important;
     width: 100% !important;
     height: 78dvh !important;
     max-height: 78dvh !important;
