@@ -29,29 +29,12 @@
 }
 
 .recommendModeTabs {
-  /* Lớp kính mờ giữ chữ tab dễ đọc trên mặt nước của trang Cảm hứng. */
-  --tabs-radius: 14px;
-  --tabs-inset: 4px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
   margin-bottom: 12px;
-  padding: var(--tabs-inset);
-  border-radius: var(--tabs-radius);
-  background: var(--water-glass, transparent);
-  backdrop-filter: blur(10px);
-}
-
-.recommendModeTabs .composerTagBtn {
-  justify-content: center;
-  min-height: 40px;
-  padding-inline: 6px;
-  border-radius: calc(var(--tabs-radius) - var(--tabs-inset));
-  text-align: center;
 }
 
 @container (max-width: 420px) {
   .recommendModeTabs {
+    grid-auto-flow: row;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -450,7 +433,7 @@
   height: 100%;
   max-height: none;
   min-height: 0;
-  background: color-mix(in srgb, var(--color-background) 88%, transparent);
+  background: var(--color-background);
   border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
   border-radius: 22px;
   box-shadow: 0 18px 48px -26px color-mix(in srgb, var(--color-ink) 40%, transparent);
@@ -634,40 +617,9 @@
   background: var(--color-coral-ink);
 }
 
-/* Tabs dạng viên thuốc */
+/* Khoảng cách hàng tab Lịch trình / Chi phí (style chi tiết lấy từ segmented-tabs.module.css) */
 .itineraryTabsRow {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   margin: 0 14px 4px;
-  padding: 4px;
-  border-radius: 999px;
-  background: var(--color-surface-muted);
-}
-
-.itineraryTabItem {
-  flex: 1;
-  padding: 7px 4px;
-  border: none;
-  border-radius: 999px;
-  background: var(--color-transparent);
-  color: var(--color-text-muted);
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  text-align: center;
-  transition: all 180ms ease;
-  white-space: nowrap;
-}
-
-.itineraryTabItem:hover {
-  color: var(--color-navy);
-}
-
-.itineraryTabItemActive {
-  background: var(--color-background) !important;
-  color: var(--color-navy) !important;
-  box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--color-ink) 25%, transparent);
 }
 
 /* Vùng cuộn */
@@ -1070,10 +1022,6 @@
   align-items: stretch;
   overflow: hidden;
   transition: grid-template-columns 260ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.splitViewNoRight {
-  grid-template-columns: 340px 20px minmax(0, 1fr) 0px 0px;
 }
 
 /* Từ 1200px trở lên tab Bài viết luôn ghim cột Lịch trình bên trái, ẩn nút thu gọn mà không sửa ItinerarySidebarPanel. */
@@ -2332,7 +2280,7 @@ a.authorAvatar {
 /* --------------------------------------------------------------------------
    Responsive Breakpoints
    -------------------------------------------------------------------------- */
-/* Từ 1200px trở lên tab Bài viết cố định cột Lịch trình bên trái (không dùng trạng thái đóng trái). */
+/* Từ 1200px trở lên tab Bài viết cố định cả hai cột bên (luôn 3 cột, không dùng trạng thái đóng trái/phải). */
 @media (min-width: 1200px) {
   .splitViewContainer .itineraryCollapseBtn {
     display: none;
@@ -2344,10 +2292,6 @@ a.authorAvatar {
 @media (max-width: 1439px) {
   .splitViewContainer {
     grid-template-columns: clamp(240px, 21vw, 300px) 16px minmax(0, 1fr) 16px clamp(260px, 23vw, 330px);
-  }
-
-  .splitViewNoRight {
-    grid-template-columns: clamp(240px, 21vw, 300px) 16px minmax(0, 1fr) 0px 0px;
   }
 }
 

@@ -54,6 +54,7 @@ import { ApiErrorNotice } from '@/features/shared/api-state';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from './post-cover';
 import { getAvatarTone } from './avatar-tone';
 import { AvatarPhoto } from '@/features/shared/avatar-photo';
+import segmentedTabs from '../shared/segmented-tabs.module.css';
 import { EmojiPicker } from './emoji-picker';
 import { MentionPicker, type MentionUserItem } from './mention-picker';
 import {
@@ -2140,35 +2141,11 @@ export function InspirationImmersiveViewer({
   const reelsModeTabs =
     !isSearchReels && !isSavedMode ? (
       // Dải rộng bằng khung (trừ lề 8px) làm mốc container query: chữ và khoảng đệm chip co theo bề rộng khung.
-      <div
-        style={{
-          position: 'absolute',
-          top: 14,
-          left: 8,
-          right: 8,
-          zIndex: 25,
-          display: 'flex',
-          justifyContent: 'center',
-          containerType: 'inline-size',
-          pointerEvents: 'none',
-        }}
-      >
+      <div className={segmentedTabs.tabsDarkAnchor}>
         <div
           role="tablist"
           aria-label={vi.api.recommendModeAria}
-          style={{
-            display: 'flex',
-            gap: 'clamp(2px, 1cqi, 6px)',
-            // Khung quá hẹp mà chip đã co hết cỡ: cuộn ngang thay vì tràn ra ngoài khung.
-            maxWidth: '100%',
-            overflowX: 'auto',
-            scrollbarWidth: 'none',
-            pointerEvents: 'auto',
-            padding: '4px clamp(3px, 1.5cqi, 6px)',
-            borderRadius: 999,
-            background: 'rgba(15, 23, 42, 0.55)',
-            backdropFilter: 'blur(8px)',
-          }}
+          className={`${segmentedTabs.tabs} ${segmentedTabs.tabsDark}`}
         >
           {(
             [
@@ -2185,18 +2162,8 @@ export function InspirationImmersiveViewer({
                 type="button"
                 role="tab"
                 aria-selected={selected}
+                className={segmentedTabs.tab}
                 onClick={() => setReelsMode(option.value)}
-                style={{
-                  border: 'none',
-                  borderRadius: 999,
-                  padding: '5px clamp(4px, 1.6cqi, 12px)',
-                  fontSize: 'clamp(10.5px, 3.2cqi, 12px)',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  background: selected ? '#ffffff' : 'transparent',
-                  color: selected ? '#0f172a' : '#f8fafc',
-                }}
               >
                 {option.label}
               </button>

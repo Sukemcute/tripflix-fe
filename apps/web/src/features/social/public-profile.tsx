@@ -19,6 +19,7 @@ import { SocialIcon, formatAuthorDisplay } from './live-posts';
 import { buildInspirationHref } from './search-url';
 import grid from './search-results-grid.module.css';
 import styles from './public-profile.module.css';
+import segmentedTabs from '../shared/segmented-tabs.module.css';
 import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 import { ProfilePostWall, SavedPostWall } from './profile-post-wall';
 import { ProfileComposer } from './profile-composer';
@@ -144,7 +145,7 @@ export function PublicProfile({ userId }: { userId: string }) {
           </div>
         </div>
 
-        <div className={styles.tabs} role="tablist">
+        <div className={`${segmentedTabs.tabs} ${segmentedTabs.tabsAuto} ${styles.tabs}`} role="tablist">
           {tabs.map((key) => (
             <button
               key={key}
@@ -153,7 +154,7 @@ export function PublicProfile({ userId }: { userId: string }) {
               id={`profile-tab-${key}`}
               aria-controls="profile-content"
               aria-selected={activeTab === key}
-              className={styles.tab}
+              className={segmentedTabs.tab}
               onClick={() => setTab(key)}
             >
               {key === 'videos'
@@ -209,11 +210,16 @@ function SavedProfileContent({ userId }: { userId: string }) {
   const [kind, setKind] = useState<'posts' | 'videos'>('posts');
   return (
     <>
-      <div className={styles.savedFilters} role="group" aria-label={vi.api.profileSavedKind}>
+      <div
+        className={`${segmentedTabs.tabs} ${segmentedTabs.tabsAuto} ${styles.savedFilters}`}
+        role="group"
+        aria-label={vi.api.profileSavedKind}
+      >
         {(['posts', 'videos'] as const).map((value) => (
           <button
             key={value}
             type="button"
+            className={segmentedTabs.tab}
             aria-pressed={kind === value}
             aria-controls="saved-profile-content"
             onClick={() => setKind(value)}

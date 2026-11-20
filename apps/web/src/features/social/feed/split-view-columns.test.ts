@@ -24,17 +24,15 @@ function readSideTracks(columns: string): [string, string] {
 }
 
 describe('Bài viết: cột bên trên laptop', () => {
-  it('từ 1200px trở lên chỉ còn mở cả hai cột hoặc đóng cột Bình luận (ẩn nút thu Lịch trình)', () => {
-    expect(readColumns(null, '.splitViewNoLeft')).toBe('');
-    expect(readColumns(null, '.splitViewCenterOnly')).toBe('');
-    expect(readColumns('max-width: 1439px', '.splitViewNoLeft')).toBe('');
-    expect(readColumns('max-width: 1439px', '.splitViewCenterOnly')).toBe('');
-
-    for (const selector of ['.splitViewContainer', '.splitViewNoRight']) {
-      const columns = readColumns('max-width: 1439px', selector);
-      expect(columns).toContain('minmax(0, 1fr)');
-      for (const track of readSideTracks(columns)) expect(track).toMatch(/^(clamp\(\d+px, \d+vw, \d+px\)|0px)$/);
+  it('từ 1200px trở lên luôn giữ 3 cột (bỏ .splitViewNoLeft, .splitViewNoRight, .splitViewCenterOnly)', () => {
+    for (const selector of ['.splitViewNoLeft', '.splitViewNoRight', '.splitViewCenterOnly']) {
+      expect(readColumns(null, selector)).toBe('');
+      expect(readColumns('max-width: 1439px', selector)).toBe('');
     }
+
+    const columns = readColumns('max-width: 1439px', '.splitViewContainer');
+    expect(columns).toContain('minmax(0, 1fr)');
+    for (const track of readSideTracks(columns)) expect(track).toMatch(/^(clamp\(\d+px, \d+vw, \d+px\)|0px)$/);
 
     const pinnedScope = readColumns('min-width: 1200px', '.splitViewContainer');
     expect(pinnedScope).toBe('');

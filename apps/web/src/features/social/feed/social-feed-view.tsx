@@ -17,6 +17,7 @@ import { useHasUserInteracted } from '../use-has-user-interacted';
 import { useSettledFlag } from '../use-settled-flag';
 import { usePresence } from '../use-presence';
 import { useIsPinnedItineraryScreen, useIsWideScreen } from '../use-wide-screen';
+import { resolveFeedRightOpen, shouldCloseCommentOnToggle } from './itinerary-pin';
 import { nextScrollTarget, stepScrollTowards, wheelDeltaToPixels } from './smooth-wheel-scroll';
 import reelsStyles from '../live-posts.module.css';
 import { type FeedNavFilter } from './floating-nav-rail';
@@ -28,6 +29,7 @@ import { ShareMenu, type ShareMenuHandle } from '../share-menu';
 import { getPostImages } from '../post-cover';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AvatarPhoto } from '@/features/shared/avatar-photo';
+import segmentedTabs from '../../shared/segmented-tabs.module.css';
 import { getFocusedFeedPosts } from './focused-post';
 import styles from './social-feed.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
@@ -104,9 +106,10 @@ export function SocialFeedView({
   const handleCloseComposer = onCloseComposer ?? (() => setLocalIsComposerOpen(false));
 
   // Layout states
-  // Màn rộng mở sẵn panel bình luận; người dùng đóng/mở thì giữ lựa chọn đó. Server render coi như đóng để không lệch hydration.
+  // Màn >= 1200px ghim luôn cả hai cột; 1024..1199px mở sẵn và cho phép đóng/mở; server render coi như đóng để không lệch hydration.
   const [rightOpenChoice, setIsRightOpen] = useState<boolean | null>(focusCommentId ? true : null);
-  const isRightOpen = rightOpenChoice ?? isWideScreen;
+  const isRightPinned = isItineraryPinned;
+  const isRightOpen = resolveFeedRightOpen(rightOpenChoice, isWideScreen, isRightPinned);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [activeFocusedPostId, setActiveFocusedPostId] = useState<string | null>(null);
   const [galleryState, setGalleryState] = useState<{ postId: string; index: number } | null>(null);
@@ -701,13 +704,20 @@ export function SocialFeedView({
   const handleToggleComment = useCallback(
     (postId: string) => {
       const currentActiveId = activeCommentPostId ?? activeCommentPost?.id;
-      if (isRightOpen && currentActiveId === postId) {
-        // Neu dang mo dung bai viet nay -> Dong lai
+      if (
+        shouldCloseCommentOnToggle({
+          isRightOpen,
+          currentActivePostId: currentActiveId,
+          targetPostId: postId,
+          isPinned: isRightPinned,
+        })
+      ) {
+        // Neu dang mo dung bai viet nay (man < 1200px) -> Dong lai
         setIsRightOpen(false);
         return;
       }
 
-      // Neu dang dong hoac dang mo bai khac -> Mo panel va tai moi binh luan
+      // Neu dang dong, mo bai khac hoac dang ghim (>= 1200px) -> Chon bai va mo / giu mo panel
       setActiveCommentPostId(postId);
       setIsRightOpen(true);
       refreshCommentsIfStale(client, postId);
@@ -715,7 +725,7 @@ export function SocialFeedView({
         commentInputRef.current?.focus();
       }, 80);
     },
-    [client, isRightOpen, activeCommentPostId, activeCommentPost?.id]
+    [client, isRightOpen, activeCommentPostId, activeCommentPost?.id, isRightPinned]
   );
 
   // Layout container class selection
@@ -745,6 +755,7 @@ export function SocialFeedView({
         isLayoutAnimated ? '' : styles.layoutStatic
       }`}
       data-itinerary-pinned={isItineraryPinned ? 'true' : undefined}
+      data-comment-pinned={isRightPinned ? 'true' : undefined}
     >
       {/* 1. Left Column: Itinerary Sidebar Panel (Nằm ngay bên phải của Dock, cố định vững vàng) */}
       {leftPresence.isRendered && (
@@ -903,7 +914,7 @@ export function SocialFeedView({
           <div
             role="tablist"
             aria-label={vi.api.recommendModeAria}
-            className={styles.recommendModeTabs}
+            className={`${segmentedTabs.tabs} ${segmentedTabs.tabsGlass} ${styles.recommendModeTabs}`}
           >
             {RECOMMEND_MODE_OPTIONS.map((option) => {
               const selected = option.value === recommendMode;
@@ -913,12 +924,7 @@ export function SocialFeedView({
                   type="button"
                   role="tab"
                   aria-selected={selected}
-                  className={styles.composerTagBtn}
-                  style={
-                    selected
-                      ? { background: 'var(--tf-color-ink, #111827)', color: '#fff', borderColor: 'transparent' }
-                      : undefined
-                  }
+                  className={segmentedTabs.tab}
                   onClick={() => setRecommendMode(option.value)}
                 >
                   {option.label}
@@ -983,6 +989,7 @@ export function SocialFeedView({
               onToggleLike={handleLikeToggle}
               onToggleSave={handleSaveToggle}
               onToggleComment={handleToggleComment}
+              hideCommentButton={isRightPinned}
               onShare={handleShare}
               onViewItinerary={(postId) => {
                 setActiveFocusedPostId(postId);
@@ -1024,17 +1031,19 @@ export function SocialFeedView({
               </span>
             </h2>
 
-            <button
-              type="button"
-              className={reelsStyles.iconGhostBtn}
-              aria-label={vi.api.commentPanelClose}
-              data-tooltip={vi.api.commentPanelClose}
-              onClick={() => {
-                setIsRightOpen(false);
-              }}
-            >
-              <SocialIcon name="close" size={17} />
-            </button>
+            {!isRightPinned && (
+              <button
+                type="button"
+                className={reelsStyles.iconGhostBtn}
+                aria-label={vi.api.commentPanelClose}
+                data-tooltip={vi.api.commentPanelClose}
+                onClick={() => {
+                  setIsRightOpen(false);
+                }}
+              >
+                <SocialIcon name="close" size={17} />
+              </button>
+            )}
           </div>
 
           {activeCommentPost ? (

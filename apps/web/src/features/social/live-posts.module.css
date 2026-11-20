@@ -1958,7 +1958,7 @@
 
 .rightPanel {
   min-width: 0;
-  background: color-mix(in srgb, var(--color-background) 88%, transparent);
+  background: var(--color-background);
   border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
   border-radius: 22px;
   box-shadow: 0 18px 48px -26px color-mix(in srgb, var(--color-ink) 40%, transparent);

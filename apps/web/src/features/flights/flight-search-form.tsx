@@ -8,6 +8,7 @@ import { AirportPicker, type AirportOption } from './airport-picker';
 import { DatePicker } from './date-picker';
 import { FlightIcon } from './flight-icon';
 import { PassengerPicker } from './passenger-picker';
+import segmentedTabs from '../shared/segmented-tabs.module.css';
 import styles from './flights.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
 
@@ -69,7 +70,7 @@ export function FlightSearchForm({
   return (
     <form action="/flights" method="get" className={styles.searchPanel}>
       <div className={styles.searchHeading}>
-        <fieldset className={styles.tripTabs}>
+        <fieldset className={`${segmentedTabs.tabs} ${segmentedTabs.tabsAuto} ${styles.tripTabs}`}>
           <legend className={styles.srOnly}>{copy.tripTypeLabel}</legend>
           {(
             [
@@ -80,6 +81,7 @@ export function FlightSearchForm({
             <button
               key={value}
               type="button"
+              className={`${segmentedTabs.tab} ${segmentedTabs.tabCompact}`}
               aria-pressed={tripType === value}
               onClick={() => setTripType(value)}
             >
