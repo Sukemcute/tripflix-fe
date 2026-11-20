@@ -1,6 +1,13 @@
-import { feedApi, getFutureDate, type AssistantAction, type AssistantCard, type AssistantTrip } from '@tripflix/api-client';
+import {
+  feedApi,
+  getFutureDate,
+  type AssistantAction,
+  type AssistantCard,
+  type AssistantTrip,
+} from '@tripflix/api-client';
 import {
   buildAssistantTripSelection,
+  resolveAssistantStayContext,
   groupItineraryLines,
   parseWeatherLine,
   type DayPart,
@@ -53,10 +60,22 @@ function openReel(card: AssistantCard, isInFeed: boolean, onOpen: () => void) {
   router.navigate({ pathname: '/(tabs)', params: { reel: card.id } });
 }
 
-function openCard(card: AssistantCard, onOpen: () => void) {
+function openCard(card: AssistantCard, onOpen: () => void, bookingTrip?: AssistantTrip | null) {
   onOpen();
-  if (card.kind === 'stay') router.push({ pathname: '/hotel/[id]', params: { id: card.id } });
-  else if (card.kind === 'flight') {
+  if (card.kind === 'stay') {
+    const stay = resolveAssistantStayContext(card, bookingTrip);
+    router.push({
+      pathname: '/tripi-stay',
+      params: {
+        id: card.id,
+        name: card.title,
+        ...stay,
+        adults: String(stay.adults),
+        children: String(stay.children),
+        infants: String(stay.infants),
+      },
+    });
+  } else if (card.kind === 'flight') {
     // Màn chọn vé có sẵn tự tìm lại theo tuyến, ngày, số khách; giá và chỗ luôn lấy mới từ core.
     router.push({
       pathname: '/flights',
@@ -117,7 +136,11 @@ const SKY_ICONS: Record<WeatherSky, IconName> = {
 };
 
 /** Nút của thẻ kế hoạch: chỉ có trên câu trả lời mới nhất, vì lựa chọn cũ không còn hiệu lực. */
-type CardActions = { act: (label: string, action: AssistantAction) => void; canUndo: boolean; trip?: AssistantTrip | null };
+type CardActions = {
+  act: (label: string, action: AssistantAction) => void;
+  canUndo: boolean;
+  trip?: AssistantTrip | null;
+};
 
 function ServerActions({
   card,
@@ -144,7 +167,13 @@ function ServerActions({
   if (!buttons?.length && !canSave) return null;
   return (
     <View style={styles.actions}>
-      {canSave && <SaveItineraryButton request={() => (actions?.trip ? { source: 'tripi', trip: actions.trip as Record<string, unknown> } : null)} />}
+      {canSave && (
+        <SaveItineraryButton
+          request={() =>
+            actions?.trip ? { source: 'tripi', trip: actions.trip as Record<string, unknown> } : null
+          }
+        />
+      )}
       {buttons?.map((action, index) => (
         <Button
           key={`${card.ref}-action-${index}`}
@@ -239,7 +268,11 @@ function StopRow({ stop, isLast }: { stop: ItineraryStop; isLast: boolean }) {
       <View style={[styles.stopBody, stop.service && styles.serviceStop]}>
         {stop.service && (
           <View style={styles.serviceBadge}>
-            <Icon name={stop.service === 'flight' ? 'airplane-outline' : 'bed-outline'} size={13} color={c.coralInk} />
+            <Icon
+              name={stop.service === 'flight' ? 'airplane-outline' : 'bed-outline'}
+              size={13}
+              color={c.coralInk}
+            />
             <Txt style={styles.serviceText}>{copy.tripflixService}</Txt>
           </View>
         )}
@@ -439,10 +472,12 @@ export function AssistantCards({
   cards,
   onOpen,
   actions,
+  bookingTrip,
 }: {
   cards: AssistantCard[];
   onOpen: () => void;
   actions?: CardActions;
+  bookingTrip?: AssistantTrip | null;
 }) {
   const videos = cards.filter((card) => card.kind === 'video');
   const infos = cards.filter((card) => INFO_KINDS.has(card.kind));
@@ -474,7 +509,7 @@ export function AssistantCards({
         <Fragment key={card.ref}>
           <Pressable
             accessibilityRole="button"
-            onPress={() => openCard(card, onOpen)}
+            onPress={() => openCard(card, onOpen, bookingTrip)}
             style={({ pressed }) => [styles.card, styles.row, pressed && styles.pressed]}
           >
             <View style={styles.cardIcon}>

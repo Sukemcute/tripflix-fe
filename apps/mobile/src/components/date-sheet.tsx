@@ -472,11 +472,13 @@ function DateBox({
   value,
   isActive,
   onPress,
+  cornerRadius = mobileLayout.cardRadius,
 }: {
   label: string;
   value: string;
   isActive?: boolean;
   onPress: () => void;
+  cornerRadius?: number;
 }) {
   return (
     <Pressable
@@ -490,7 +492,7 @@ function DateBox({
         justifyContent: 'space-between',
         gap: spacing.xs,
         padding: spacing.md,
-        borderRadius: mobileLayout.cardRadius,
+        borderRadius: cornerRadius,
         borderWidth: isActive ? 2 : 1,
         borderColor: isActive ? colors.tealInk : colors.border,
         backgroundColor: colors.background,
@@ -515,6 +517,7 @@ export function DateRangeField({
   end,
   min,
   onChange,
+  cornerRadius,
 }: {
   startLabel: string;
   endLabel: string;
@@ -522,13 +525,19 @@ export function DateRangeField({
   end: string;
   min?: string;
   onChange: (range: { start: string; end: string }) => void;
+  cornerRadius?: number;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <>
       <Row style={{ gap: spacing.sm }}>
-        <DateBox label={startLabel} value={start} onPress={() => setIsOpen(true)} />
-        <DateBox label={endLabel} value={end} onPress={() => setIsOpen(true)} />
+        <DateBox
+          label={startLabel}
+          value={start}
+          cornerRadius={cornerRadius}
+          onPress={() => setIsOpen(true)}
+        />
+        <DateBox label={endLabel} value={end} cornerRadius={cornerRadius} onPress={() => setIsOpen(true)} />
       </Row>
       {isOpen && (
         <DateSheet

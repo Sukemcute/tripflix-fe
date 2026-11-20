@@ -6,6 +6,7 @@ import {
   countRoomsForGuests,
   isValidTripDate,
   isValidTripPlanPassengers,
+  isValidAssistantStay,
 } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { colors, radius, spacing } from '@tripflix/tokens';
@@ -39,34 +40,38 @@ export function HotelRoomsScreen() {
     adults?: string;
     children?: string;
     infants?: string;
+    fromTripi?: string;
   }>();
   // 'post': chọn phòng cho điểm khách sạn khi soạn lộ trình (TF105); dùng chung giao diện chọn của đặt lộ trình.
   const isPostPick = params.pick === 'post';
   const isTripPick = params.pick === 'trip' || isPostPick;
+  const isTripi = params.fromTripi === '1';
   const { isReady } = useApiSession();
   const today = getFutureDate(0);
   const [dates, setDates] = useState({
-    checkIn: isTripPick
-      ? (params.checkIn ?? '')
-      : params.checkIn && params.checkIn >= today
-        ? params.checkIn
-        : getFutureDate(1),
-    checkOut: params.checkOut ?? getFutureDate(3),
+    checkIn:
+      isTripPick || isTripi
+        ? (params.checkIn ?? '')
+        : params.checkIn && params.checkIn >= today
+          ? params.checkIn
+          : getFutureDate(1),
+    checkOut: params.checkOut ?? (isTripi ? '' : getFutureDate(3)),
   });
   const [guests, setGuests] = useState<Guests>({
-    adults: Number(params.adults ?? 2) || 2,
-    children: Number(params.children ?? 0) || 0,
-    infants: Number(params.infants ?? 0) || 0,
+    adults: isTripi ? Number(params.adults) : Number(params.adults ?? 2) || 2,
+    children: isTripi ? Number(params.children) : Number(params.children ?? 0) || 0,
+    infants: isTripi ? Number(params.infants) : Number(params.infants ?? 0) || 0,
   });
   const [stay, setStay] = useState({ ...dates, ...guests });
-  const [isEditing, setEditing] = useState(false);
+  const [isEditing, setEditing] = useState(isTripi && !isValidAssistantStay(stay, today));
   const selection = useBookingSelection();
-  const valid =
-    isValidTripDate(dates.checkIn, today) &&
-    dates.checkOut > dates.checkIn &&
-    (isTripPick
-      ? isValidTripPlanPassengers(guests, MAX_GUESTS)
-      : guests.adults >= 1 && countBookingCartGuests(guests) <= MAX_GUESTS);
+  const valid = isTripi
+    ? isValidAssistantStay({ ...dates, ...guests }, today)
+    : isValidTripDate(dates.checkIn, today) &&
+      dates.checkOut > dates.checkIn &&
+      (isTripPick
+        ? isValidTripPlanPassengers(guests, MAX_GUESTS)
+        : guests.adults >= 1 && countBookingCartGuests(guests) <= MAX_GUESTS);
   const isUnchanged =
     dates.checkIn === stay.checkIn &&
     dates.checkOut === stay.checkOut &&
@@ -75,7 +80,7 @@ export function HotelRoomsScreen() {
     guests.infants === stay.infants;
   const query = useQuery({
     queryKey: ['commerce', 'hotel', params.id, stay],
-    enabled: isReady && !!params.id,
+    enabled: isReady && !!params.id && (!isTripi || isValidAssistantStay(stay, today)),
     queryFn: ({ signal }) =>
       commerceApi.getHotel(
         params.id!,
@@ -85,6 +90,17 @@ export function HotelRoomsScreen() {
     placeholderData: keepPreviousData,
   });
   const hotel = query.data;
+  const returnTo = isTripi
+    ? `/hotel-rooms?${new URLSearchParams({
+        id: params.id ?? '',
+        fromTripi: '1',
+        checkIn: stay.checkIn,
+        checkOut: stay.checkOut,
+        adults: String(stay.adults),
+        children: String(stay.children),
+        infants: String(stay.infants),
+      }).toString()}`
+    : `/hotel-rooms?id=${params.id ?? ''}`;
   const canAdd = countBookingCartGuests(guests) < MAX_GUESTS;
   const nights = Math.max(1, Math.round((Date.parse(stay.checkOut) - Date.parse(stay.checkIn)) / 86_400_000));
   const formatDay = (iso: string) => iso.split('-').reverse().slice(0, 2).join('/');
@@ -113,8 +129,8 @@ export function HotelRoomsScreen() {
       title={hotel?.name ?? hotelText.rooms}
       right={isTripPick ? undefined : <CartLink />}
       footer={
-        !isTripPick && selection.items.length ? (
-          <SelectionBar returnTo={`/hotel-rooms?id=${params.id ?? ''}`} />
+        !isTripPick && selection.items.length && (!isTripi || (valid && isUnchanged)) ? (
+          <SelectionBar returnTo={returnTo} />
         ) : undefined
       }
     >
@@ -212,6 +228,7 @@ export function HotelRoomsScreen() {
           rooms={countRoomsForGuests({ ...stay, maxGuests: room.maxGuests })}
           isDisabled={
             query.isFetching ||
+            (isTripi && (!valid || !isUnchanged)) ||
             (isTripPick &&
               (!params.pickKey || (!isPostPick && !params.pickId) || !valid || !hotel.isAvailable))
           }
