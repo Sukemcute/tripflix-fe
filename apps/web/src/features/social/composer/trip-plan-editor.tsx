@@ -31,6 +31,7 @@ import {
 import { suggestControllerSuggest } from '@tripflix/api-client/core-api/discovery/discovery';
 import { t, vi } from '@tripflix/i18n';
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useDebouncedValue } from '../../shared/use-debounced-value';
 import styles from './trip-plan-editor.module.css';
 
 /** Dùng đúng chữ của trình soạn trên app để hai nơi giống nhau. */
@@ -335,19 +336,10 @@ function PosterPicker({
 const normalizeName = (value: string) =>
   value.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase().trim();
 
-function useDebounced(value: string): string {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [value]);
-  return debounced;
-}
-
 /** Gợi ý tìm kiếm của discovery (/api/suggest) theo một loại: nơi hoặc khách sạn. */
 function useSuggest(type: 'place' | 'hotel', text: string) {
   const { isReady } = useApiSession();
-  const query = useDebounced(text.trim());
+  const query = useDebouncedValue(text.trim(), SEARCH_DEBOUNCE_MS);
   const result = useQuery({
     queryKey: ['discovery', 'suggest', type, query],
     enabled: isReady && query.length >= 2,

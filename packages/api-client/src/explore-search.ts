@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   exploreControllerSearch,
   exploreControllerSearchPosts,
@@ -134,10 +134,12 @@ export async function searchUsers(q: string, page = 1, signal?: AbortSignal): Pr
   return readEntity(response.data, ['items', 'page', 'hasMore']) as UserSearchResponseDto;
 }
 
-/** Chuẩn hoá và kiểm tra từ khoá tìm người dùng (2–50 ký tự hiển thị sau NFKC, không ký tự điều khiển). */
+export const USER_SEARCH_STALE_TIME_MS = 60_000;
+
+/** Chuẩn hoá, hạ thường theo tiếng Việt và kiểm tra từ khoá tìm người dùng (2–50 ký tự hiển thị sau NFKC, không ký tự điều khiển). */
 export function normalizeUserSearchQuery(q: string): { query: string; isSearchable: boolean } {
-  const query = q.normalize('NFKC').replace(/\s+/gu, ' ').trim();
-  const folded = query.toLowerCase().normalize('NFD').replace(/[\p{M}\s]/gu, '');
+  const query = q.normalize('NFKC').replace(/\s+/gu, ' ').trim().toLocaleLowerCase('vi');
+  const folded = query.normalize('NFD').replace(/[\p{M}\s]/gu, '');
   const isSearchable = query.length <= 50 && folded.length >= 2 && !/\p{C}/u.test(query);
   return { query, isSearchable };
 }
@@ -148,6 +150,8 @@ export function useUserSearch(q: string) {
   const result = useQuery({
     queryKey: ['discovery', 'users', query],
     enabled: isReady && isSearchable,
+    staleTime: USER_SEARCH_STALE_TIME_MS,
+    placeholderData: keepPreviousData,
     retry: false,
     queryFn: ({ signal }) => searchUsers(query, 1, signal),
   });

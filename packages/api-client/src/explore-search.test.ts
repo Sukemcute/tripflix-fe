@@ -13,9 +13,11 @@ const hooks = vi.hoisted(() => ({
   session: vi.fn(),
   query: vi.fn(),
   infiniteQuery: vi.fn(),
+  keepPreviousData: vi.fn(),
 }));
 vi.mock('./session', () => ({ useApiSession: hooks.session }));
 vi.mock('@tanstack/react-query', () => ({
+  keepPreviousData: hooks.keepPreviousData,
   useQuery: hooks.query,
   useInfiniteQuery: hooks.infiniteQuery,
 }));
@@ -104,9 +106,11 @@ describe('explore search API', () => {
 });
 
 describe('normalizeUserSearchQuery', () => {
-  it('normalizes NFKC and collapses/trims whitespace', () => {
+  it('normalizes NFKC, lowercases in vi locale, and collapses/trims whitespace', () => {
     expect(normalizeUserSearchQuery('  \uFF42\u1EA3\uFF4F  ')).toEqual({ query: 'bảo', isSearchable: true });
     expect(normalizeUserSearchQuery('  nguyễn   văn   an  ')).toEqual({ query: 'nguyễn văn an', isSearchable: true });
+    expect(normalizeUserSearchQuery('  NGUYỄN   Văn   An  ')).toEqual({ query: 'nguyễn văn an', isSearchable: true });
+    expect(normalizeUserSearchQuery('Đà Lạt')).toEqual({ query: 'đà lạt', isSearchable: true });
     expect(normalizeUserSearchQuery('  \uFF41  ')).toEqual({ query: 'a', isSearchable: false });
   });
 
@@ -174,16 +178,26 @@ describe('useUserSearch & useInfiniteUserSearch', () => {
     expect(options.getNextPageParam({ items: [], page: 5, hasMore: false })).toBeUndefined();
   });
 
-  it('shares normalization logic in useUserSearch', () => {
+  it('shares normalization logic in useUserSearch with case-insensitive key, staleTime 60s and keepPreviousData', () => {
     hooks.query.mockReturnValue({ data: undefined });
-    const result = useUserSearch('  a  ');
+    const shortResult = useUserSearch('  A  ');
     expect(hooks.query).toHaveBeenCalledWith(
       expect.objectContaining({
         queryKey: ['discovery', 'users', 'a'],
         enabled: false,
+        staleTime: 60_000,
+        placeholderData: hooks.keepPreviousData,
         retry: false,
       }),
     );
-    expect(result.isSearchable).toBe(false);
+    expect(shortResult.isSearchable).toBe(false);
+
+    useUserSearch('Nguyen');
+    useUserSearch('nguyen');
+    expect(hooks.query.mock.calls[1]![0].queryKey).toEqual(['discovery', 'users', 'nguyen']);
+    expect(hooks.query.mock.calls[2]![0].queryKey).toEqual(['discovery', 'users', 'nguyen']);
+
+    useInfiniteUserSearch('Nguyen');
+    expect(hooks.infiniteQuery.mock.lastCall![0].queryKey).toEqual(['discovery', 'users', 'infinite', 'nguyen']);
   });
 });
