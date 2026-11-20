@@ -26,7 +26,7 @@ vi.mock('./moderation-parts', () => ({ ModerationParts: () => null }));
 it('hiển thị tổng quan OCR, bài gắn cờ và chữ đã đọc', () => {
   const html = renderToStaticMarkup(<CoverOcrMonitor />);
   expect(html).toContain('OCR ảnh bìa video');
-  expect(html).toMatch(/Đang xử lý<strong[^>]*>1<\/strong>/);
+  expect(html).toMatch(/Đang xử lý<span[^>]*>1<\/span>/);
   expect(html).toContain('Video thử nghiệm');
   expect(html).toContain('Chữ cần xem lại');
   expect(html).toContain('Cần xem xét');

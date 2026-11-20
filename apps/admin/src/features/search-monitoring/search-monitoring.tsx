@@ -11,6 +11,9 @@ import type {
   SearchPostsRequestDto,
 } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
+import { AdminButton } from '@/ui/button';
+import { StatusBadge } from '@/ui/status-badge';
+import { TabPanel, Tabs } from '@/ui/tabs';
 import { AdminApiError } from '../shell/api-state';
 import { IconTrending } from '../shell/admin-icons';
 import { SearchTrends, type SearchObservation } from './search-trends';
@@ -212,23 +215,25 @@ export function SearchMonitoring() {
   }
 
   return (
-    <div className={styles.root}>
-      <header className={styles.heading}>
-        <span className="admin-badge">{isMonitoring ? copy.trends.active : copy.readOnly}</span>
-      </header>
-      <nav className={styles.tabs} aria-label={copy.title}>
-        {(Object.keys(copy.tabs) as (keyof typeof copy.tabs)[]).map((key) => (
-          <button
-            key={key}
-            type="button"
-            aria-current={tab === key ? 'page' : undefined}
-            onClick={() => setTab(key)}
-          >
-            {copy.tabs[key]}
-          </button>
-        ))}
-      </nav>
+    <div className="min-w-0 space-y-4">
+      <Tabs
+        label={copy.title}
+        idPrefix="search-monitor"
+        active={tab}
+        onChange={setTab}
+        tabs={(Object.keys(copy.tabs) as (keyof typeof copy.tabs)[]).map((key) => ({
+          id: key,
+          label: copy.tabs[key],
+        }))}
+      />
+      <p className="text-[13px] text-text-muted">
+        <StatusBadge tone={isMonitoring ? 'success' : 'neutral'}>
+          {isMonitoring ? copy.trends.active : copy.readOnly}
+        </StatusBadge>
+      </p>
 
+      <TabPanel idPrefix="search-monitor" active={tab}>
+      <div className={styles.root}>
       {tab === 'trends' && (
         <SearchTrends
           query={request?.body.q ?? null}
@@ -303,10 +308,10 @@ export function SearchMonitoring() {
                     </label>
                   </>
                 )}
-                <button className="admin-primary" type="submit" disabled={search.isFetching}>
+                <AdminButton variant="primary" type="submit" disabled={search.isFetching}>
                   {search.isFetching ? copy.running : copy.run}
                   <IconTrending aria-hidden="true" />
-                </button>
+                </AdminButton>
               </div>
               {endpoint === 'explore' && (
                 <details className={styles.location}>
@@ -380,9 +385,9 @@ export function SearchMonitoring() {
                     <code>{result.endpoint === 'explore' ? '/api/search' : '/api/search/posts'}</code>
                   </p>
                 </div>
-                <button className="admin-secondary" onClick={downloadResult}>
+                <AdminButton onClick={downloadResult}>
                   {copy.export}
-                </button>
+                </AdminButton>
               </header>
               <div className={styles.metrics} aria-live="polite">
                 <div>
@@ -515,8 +520,7 @@ export function SearchMonitoring() {
                     <ResultTable items={result.data.items} offset={Number(result.request.body.cursor ?? 0)} />
                   )}
                   <div className={styles.pagination}>
-                    <button
-                      className="admin-secondary"
+                    <AdminButton
                       disabled={search.isFetching || !result.request.body.cursor}
                       onClick={() => {
                         setIsMonitoring(false);
@@ -527,9 +531,8 @@ export function SearchMonitoring() {
                       }}
                     >
                       {copy.first}
-                    </button>
-                    <button
-                      className="admin-secondary"
+                    </AdminButton>
+                    <AdminButton
                       disabled={search.isFetching || result.data.nextCursor === null}
                       onClick={() => {
                         setIsMonitoring(false);
@@ -540,7 +543,7 @@ export function SearchMonitoring() {
                       }}
                     >
                       {copy.next}
-                    </button>
+                    </AdminButton>
                   </div>
                   <p className={styles.hint}>{copy.paginationHelp}</p>
                 </section>
@@ -566,9 +569,9 @@ export function SearchMonitoring() {
                   <h3>{entry.title}</h3>
                   <code>{entry.query}</code>
                   <p>{entry.note}</p>
-                  <button className="admin-secondary" onClick={() => useExample(entry.query)}>
+                  <AdminButton onClick={() => useExample(entry.query)}>
                     {copy.tryCase}
-                  </button>
+                  </AdminButton>
                 </div>
               </article>
             ))}
@@ -626,6 +629,8 @@ export function SearchMonitoring() {
           </section>
         </>
       )}
+      </div>
+      </TabPanel>
     </div>
   );
 }

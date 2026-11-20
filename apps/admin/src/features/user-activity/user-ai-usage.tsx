@@ -6,7 +6,7 @@ import {
   aiInsightsControllerUsers,
 } from '@tripflix/api-client/core-api/analytics/analytics';
 import { vi } from '@tripflix/i18n';
-import { AiKpi } from '../ai-usage/ai-kpi';
+import { MetricStrip } from '@/ui/metric-strip';
 import { answerKindLabel, count, formatDateTime, formatLatency } from '../ai-usage/ai-usage-format';
 import { formatUsd } from '../ai-usage/ai-usage-range';
 import { AdminApiError } from '../shell/api-state';
@@ -35,7 +35,7 @@ export function UserAiUsage({ userId, range }: { userId: string; range: { from: 
 
   return (
     <section aria-label={copy.title}>
-      <h3 className="mb-3 text-sm font-bold text-navy">{copy.title}</h3>
+      <h3 className="mb-3 text-sm font-semibold">{copy.title}</h3>
       {usage.isError && <AdminApiError error={usage.error} retry={() => void usage.refetch()} />}
       {turns.isError && <AdminApiError error={turns.error} retry={() => void turns.refetch()} />}
       {usage.isPending || turns.isPending ? (
@@ -44,19 +44,21 @@ export function UserAiUsage({ userId, range }: { userId: string; range: { from: 
         !usage.isError && !turns.isError && <p className="text-xs text-text-muted">{copy.empty}</p>
       ) : (
         <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <AiKpi label={copy.conversations} value={summary ? count.format(summary.conversations) : '0'} />
-            <AiKpi label={copy.calls} value={summary ? count.format(summary.calls) : '0'} />
-            <AiKpi
-              label={copy.tokens}
-              value={
-                summary
+          <MetricStrip
+            label={copy.title}
+            items={[
+              { id: 'conversations', label: copy.conversations, value: summary ? count.format(summary.conversations) : '0' },
+              { id: 'calls', label: copy.calls, value: summary ? count.format(summary.calls) : '0' },
+              {
+                id: 'tokens',
+                label: copy.tokens,
+                value: summary
                   ? `${count.format(summary.inputTokens)} / ${count.format(summary.outputTokens)}`
-                  : '0 / 0'
-              }
-            />
-            <AiKpi label={copy.cost} value={formatUsd(summary?.costUsd ?? 0)} />
-          </div>
+                  : '0 / 0',
+              },
+              { id: 'cost', label: copy.cost, value: formatUsd(summary?.costUsd ?? 0) },
+            ]}
+          />
           {items.length > 0 && (
             <div>
               <h4 className="mb-2 text-xs font-bold text-text-muted">{copy.recentTurns}</h4>

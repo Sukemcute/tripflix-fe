@@ -2,19 +2,20 @@
 
 import { vi } from '@tripflix/i18n';
 import { useState } from 'react';
+import { FilterToolbar, SelectField } from '@/ui/filter-toolbar';
+import { TabPanel, Tabs } from '@/ui/tabs';
 import { AiUsageOverview } from './ai-usage-overview';
-import { AiUsageTabs, type AiUsageTabItem } from './ai-usage-tabs';
 import { AiUsageTraces } from './ai-usage-traces';
 import { AiUsageUsers } from './ai-usage-users';
 import { AI_USAGE_RANGES, aiUsageRange, type AiUsageRangeDays } from './ai-usage-range';
 
 const copy = vi.aiUsage;
 type TabId = 'overview' | 'users' | 'traces';
-const TABS: readonly AiUsageTabItem<TabId>[] = [
+const TABS = [
   { id: 'overview', label: copy.tabs.overview },
   { id: 'users', label: copy.tabs.users },
   { id: 'traces', label: copy.tabs.traces },
-];
+] as const;
 
 /**
  * Chi phí và trace AI (TF95, SCRUM-179): tổng quan lưu lượng, người dùng tốn nhiều nhất, trace từng lượt chat.
@@ -28,20 +29,17 @@ export function AiUsageReport() {
   const range = aiUsageRange(days, openedAt);
 
   return (
-    <>
-      <form className="admin-filters" onSubmit={(event) => event.preventDefault()}>
-        <label>
-          {copy.range}
-          <select value={days} onChange={(event) => setDays(Number(event.target.value) as AiUsageRangeDays)}>
-            {AI_USAGE_RANGES.map((value) => (
-              <option key={value} value={value}>
-                {copy.ranges[value]}
-              </option>
-            ))}
-          </select>
-        </label>
-      </form>
-      <AiUsageTabs label={copy.tabsLabel} tabs={TABS} active={tab} onChange={setTab}>
+    <div className="space-y-4">
+      <FilterToolbar>
+        <SelectField
+          label={copy.range}
+          value={String(days)}
+          options={AI_USAGE_RANGES.map((value) => ({ value: String(value), label: copy.ranges[value] }))}
+          onChange={(value) => setDays(Number(value) as AiUsageRangeDays)}
+        />
+      </FilterToolbar>
+      <Tabs label={copy.tabsLabel} idPrefix="ai-usage" tabs={TABS} active={tab} onChange={setTab} />
+      <TabPanel idPrefix="ai-usage" active={tab}>
         {tab === 'overview' && <AiUsageOverview key={days} range={range} days={days} />}
         {tab === 'users' && (
           <AiUsageUsers
@@ -61,7 +59,7 @@ export function AiUsageReport() {
             onClearUser={() => setTraceUser(null)}
           />
         )}
-      </AiUsageTabs>
-    </>
+      </TabPanel>
+    </div>
   );
 }

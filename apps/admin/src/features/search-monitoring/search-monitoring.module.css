@@ -3,25 +3,23 @@
 }
 .root {
   display: grid;
-  gap: 20px;
+  gap: 16px;
   min-width: 0;
-  max-width: 1440px;
-  margin-inline: auto;
 }
 .root h1 {
   font-size: clamp(22px, 2.5vw, 30px);
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: -0.035em;
   margin: 4px 0 8px;
 }
 .root h2 {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   margin: 0 0 8px;
 }
 .root h3 {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   margin: 0 0 8px;
 }
 .root p {
@@ -65,7 +63,7 @@
   white-space: nowrap;
   padding: 12px 0;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--color-text-muted);
   border-bottom: 3px solid transparent;
 }
@@ -77,8 +75,8 @@
   min-width: 0;
   background: var(--color-background);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 24px;
+  border-radius: 8px;
+  padding: 16px;
 }
 .panel > p {
   margin-bottom: 16px;
@@ -102,12 +100,12 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--color-background);
   overflow: hidden;
 }
 .monitorMetrics > div {
-  padding: 20px 24px;
+  padding: 12px 16px;
   border-right: 1px solid var(--color-border);
 }
 .monitorMetrics > div:last-child {
@@ -122,10 +120,10 @@
 }
 .monitorMetrics strong {
   display: block;
-  margin-top: 12px;
-  font-size: 36px;
-  line-height: 1;
-  letter-spacing: -0.04em;
+  margin-top: 4px;
+  font-size: 24px;
+  line-height: 32px;
+  letter-spacing: 0;
 }
 .monitorMetrics i,
 .outcomeLegend i {
@@ -294,7 +292,7 @@
   padding-block: 6px;
 }
 .outcomeLegend dd {
-  font-weight: 700;
+  font-weight: 600;
 }
 @media (max-width: 1100px) {
   .monitorCharts,
@@ -317,7 +315,7 @@
     border-bottom: 0;
   }
   .monitorMetrics strong {
-    font-size: 30px;
+    font-size: 24px;
   }
 }
 .jobLogs {
@@ -371,7 +369,7 @@
   color: var(--health-color);
   background: color-mix(in srgb, var(--health-color) 10%, var(--color-background));
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 .healthBadge:is([data-status='healthy'], [data-status='succeeded']),
 .healthPoint[data-status='healthy'] {
@@ -393,7 +391,7 @@
   display: grid;
   gap: 8px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   min-width: 0;
 }
 .root input,
@@ -401,8 +399,8 @@
   width: 100%;
   min-width: 0;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
-  min-height: 44px;
+  border-radius: 8px;
+  min-height: 36px;
   padding: 10px 12px;
   background: var(--color-background);
   color: var(--color-ink);
@@ -497,7 +495,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   background: var(--color-background);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 8px;
 }
 .metrics > div {
   padding: 20px 24px;
@@ -512,7 +510,7 @@
   color: var(--color-text-muted);
 }
 .metrics strong {
-  font-size: 30px;
+  font-size: 24px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.04em;
@@ -621,7 +619,7 @@
 }
 .position {
   color: var(--color-text-muted);
-  font-weight: 700;
+  font-weight: 600;
 }
 .number {
   white-space: nowrap;
@@ -730,7 +728,7 @@
 .root .trendQuery {
   margin: 16px 0 0;
   color: var(--color-ink);
-  font-weight: 700;
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
 .metrics .trendTime {
@@ -852,7 +850,7 @@
   }
   .panel {
     padding: 16px;
-    border-radius: 10px;
+    border-radius: 8px;
   }
   .tabs {
     gap: 20px;
@@ -870,7 +868,7 @@
     border-top: 1px solid var(--color-border);
   }
   .metrics strong {
-    font-size: 26px;
+    font-size: 22px;
   }
   .understood {
     gap: 20px 12px;
