@@ -189,15 +189,22 @@
   padding: 0 28px;
   border: 0;
   border-radius: 14px;
+  overflow: hidden;
   background: linear-gradient(135deg, var(--color-teal-ink), var(--color-teal));
   color: white;
   font-size: 15px;
   font-weight: 700;
   white-space: nowrap;
   box-shadow: 0 12px 24px -12px rgb(0 108 99 / 70%);
+  cursor: pointer;
+  transition: filter 256ms;
 }
 .panel .submit:hover:not(:disabled) {
   filter: brightness(1.06);
+}
+.panel .submit:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
 }
 .panel .submit:disabled {
   opacity: 0.55;
