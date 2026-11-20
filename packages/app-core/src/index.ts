@@ -25,3 +25,4 @@ export * from './travel-survey';
 export * from './assistant-card-format';
 export * from './saved-itinerary';
 export * from './assistant-stay-context';
+export * from './post-draft-recovery';
