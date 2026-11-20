@@ -331,6 +331,7 @@ export * from './postRecommendationItemDtoSource';
 export * from './postRecommendationsControllerRecommendPostsMode';
 export * from './postRecommendationsControllerRecommendPostsParams';
 export * from './postRecommendationsControllerRecommendPostsPostType';
+export * from './postRecommendationsControllerRecommendReelsFresh';
 export * from './postRecommendationsControllerRecommendReelsMode';
 export * from './postRecommendationsControllerRecommendReelsParams';
 export * from './postRecommendationsDto';

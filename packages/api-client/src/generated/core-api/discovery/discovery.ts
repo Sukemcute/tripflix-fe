@@ -1347,8 +1347,14 @@ export const getPostRecommendationsControllerRecommendReelsUrl = (
 };
 
 /**
- * Xếp hạng video bằng discovery (gồm điểm xu hướng, lọc có lịch trình, mới đăng và chống lặp cho người đăng nhập) rồi lấy thẻ phát được từ content/feed trong một request.
- * @summary Gợi ý Reels phát được (trending, for_you, has_plan hoặc recent)
+ * Lấy thẻ phát được từ content/feed trong cùng request.
+ *
+ * - `trending`: đúng thứ tự Hot của feed như tab "Đang hot" (FeedFacade.listTopHot, TF111), `algo: feed_hot`.
+ * - `for_you`, `has_plan`, `recent`: xếp hạng bằng discovery như `/recommendations/posts`.
+ * - `mixed`: feed Reels mặc định, cứ 4 ô thì ô thứ 4 là Hot của feed (`source: hot`), 3 ô còn lại là `for_you`; một nguồn hết thì nguồn kia lấp. Khách nhận phần `for_you` là trending của discovery.
+ * - Phân trang: gửi `nextCursor` vào `cursor`; trang sau giữ mode của trang đầu.
+ * - `fresh=true` (trang đầu, khi người xem tự tải lại): bài đã gợi ý cho người này, kể cả vừa gợi ý, bị đẩy xuống để tải lại không ra y hệt trang cũ. Mặc định chỉ bài gợi ý cách hơn 30 phút bị đẩy xuống. Bỏ qua khi có `cursor` hoặc khách.
+ * @summary Gợi ý Reels phát được (trending, for_you, has_plan, recent hoặc mixed)
  */
 export const postRecommendationsControllerRecommendReels = async (
   params?: PostRecommendationsControllerRecommendReelsParams,
@@ -1457,7 +1463,7 @@ export function usePostRecommendationsControllerRecommendReels<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Gợi ý Reels phát được (trending, for_you, has_plan hoặc recent)
+ * @summary Gợi ý Reels phát được (trending, for_you, has_plan, recent hoặc mixed)
  */
 
 export function usePostRecommendationsControllerRecommendReels<

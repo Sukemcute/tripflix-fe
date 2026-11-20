@@ -66,8 +66,10 @@ export {
 } from './feed-events';
 export {
   feedApi,
+  RECOMMENDED_REELS_KEY,
   REEL_FEED_TABS,
   REELS_BY_IDS_PAGE_SIZE,
+  reloadRecommendedReels,
   reloadReelsFeed,
   sliceReelIdsPage,
   useRecommendedReelsFeed,

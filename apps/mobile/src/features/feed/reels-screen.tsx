@@ -6,8 +6,7 @@ import {
   selectReelPoster,
   shouldRefreshPlaybackForReel,
 } from '@tripflix/app-core';
-import { reloadReelsFeed, usePlaybackSession, useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
-import { useQueryClient } from '@tanstack/react-query';
+import { usePlaybackSession, type ReelFeedTab } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
@@ -46,6 +45,7 @@ import type { ReelItem } from './reel-types';
 import { useReelsLaunch } from './reels-launch';
 import { REEL_TABS, REELS_TAB_BAR_HEIGHT, ReelsTabBar, type ReelTab } from './reels-tab-bar';
 import { usePlayerPool } from './use-player-pool';
+import { useReelsTabFeed } from './use-reels-tab-feed';
 
 const copy = vi.mobile.reels;
 const TAB_EDGE_RESISTANCE = 0.25;
@@ -107,8 +107,8 @@ export function ReelsScreen() {
   const [swapCount, setSwapCount] = useState(0);
   const [contentSize, setContentSize] = useState({ width: 0, height: 0 });
   // Loaded up front so a swipe finds its list and first poster ready instead of a dark wait.
-  const forYouFeed = useReelsFeed({ tab: 'for_you' });
-  const hotFeed = useReelsFeed({ tab: 'hot' });
+  const forYouFeed = useReelsTabFeed('for_you').feed;
+  const hotFeed = useReelsTabFeed('hot').feed;
   // Cookie video xin cùng lúc với feed; ReelsFeed dùng lại kết quả này (cùng query), video đầu không chờ thêm.
   usePlaybackSession();
   const forYouPlaybacks = useMemo(() => readPlaybacks(forYouFeed.data), [forYouFeed.data]);
@@ -278,7 +278,7 @@ export function ReelsScreen() {
   );
 }
 
-type FeedPages = ReturnType<typeof useReelsFeed>['data'];
+type FeedPages = ReturnType<typeof useReelsTabFeed>['feed']['data'];
 
 function readPlaybacks(feedPages: FeedPages): ReelItem['playback'][] {
   return (feedPages?.pages.flatMap((page) => page.items) ?? []).flatMap((card) =>
@@ -352,23 +352,22 @@ function ReelsTabFeed({
   onOpenSample: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const feed = useReelsFeed({ tab });
-  const queryClient = useQueryClient();
+  const { feed, reload } = useReelsTabFeed(tab);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [scrollToTopCount, setScrollToTopCount] = useState(0);
   const refreshInFlight = useRef(false);
-  // Trang đầu mới có thứ tự mới (BE chọn seed ngẫu nhiên mỗi lần), nên chỉ tải lại trang đầu.
+  // Trang đầu mới có thứ tự mới (feed chọn seed mới, discovery mở phiên mới), nên chỉ tải lại trang đầu.
   const refreshFeed = useCallback(async () => {
     if (refreshInFlight.current) return;
     refreshInFlight.current = true;
     setIsRefreshing(true);
     try {
-      await reloadReelsFeed(queryClient, tab);
+      await reload();
     } finally {
       refreshInFlight.current = false;
       setIsRefreshing(false);
     }
-  }, [queryClient, tab]);
+  }, [reload]);
   const lastReloadCount = useRef(reloadCount);
   useEffect(() => {
     if (reloadCount === lastReloadCount.current) return;

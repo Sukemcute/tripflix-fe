@@ -95,6 +95,28 @@ export async function reloadReelsFeed(queryClient: QueryClient, tab: ReelFeedTab
 }
 
 /**
+ * Tải lại Reels gợi ý của một mode từ đầu, như reloadReelsFeed: chỉ gọi lại trang đầu.
+ * Trang đầu không có cursor nên discovery mở phiên mới và đẩy bài đã gợi ý ở phiên trước xuống.
+ */
+/** Mode vừa được người xem tự tải lại: lần gọi trang đầu kế tiếp gửi fresh=true để discovery mở phiên mới. */
+const freshRecommendedModes = new Set<PostRecommendationsControllerRecommendReelsMode>();
+
+/** Trang đầu có cần gửi fresh không; đọc xong thì xoá, để lần tải sau quay về phiên bình thường. */
+export function takeRecommendedFresh(mode: PostRecommendationsControllerRecommendReelsMode) {
+  return freshRecommendedModes.delete(mode);
+}
+
+export async function reloadRecommendedReels(queryClient: QueryClient, mode: PostRecommendationsControllerRecommendReelsMode) {
+  freshRecommendedModes.add(mode);
+  type RecommendedData = InfiniteData<{ items: FeedCardDto[]; nextCursor: string | null | undefined }, string | undefined>;
+  const queryKey = [...RECOMMENDED_REELS_KEY, mode];
+  queryClient.setQueriesData<RecommendedData>({ queryKey }, (data) =>
+    data ? { pages: data.pages.slice(0, 1), pageParams: data.pageParams.slice(0, 1) } : data,
+  );
+  await queryClient.refetchQueries({ queryKey, type: 'active' });
+}
+
+/**
  * Reels gợi ý từ discovery (`GET /api/recommendations/reels`): hỗ trợ 4 mode `trending | for_you | has_plan | recent`.
  * Key nằm dưới tiền tố `feed` (RECOMMENDED_REELS_KEY) để cập nhật tim, lưu, số bình luận của Reels tự áp dụng cho danh sách này.
  */
@@ -117,7 +139,7 @@ export function useRecommendedReelsFeed({
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam, signal }) => {
       const response = await postRecommendationsControllerRecommendReels(
-        { mode, limit: 10, ...(pageParam ? { cursor: pageParam } : {}) },
+        { mode, limit: 10, ...(pageParam ? { cursor: pageParam } : takeRecommendedFresh(mode) ? { fresh: 'true' as const } : {}) },
         { signal },
       );
       const page = readEntity(response.data, ['items', 'algo', 'nextCursor']) as ReelRecommendationsDto;
