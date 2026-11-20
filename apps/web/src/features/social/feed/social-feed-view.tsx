@@ -989,6 +989,7 @@ export function SocialFeedView({
               onToggleLike={handleLikeToggle}
               onToggleSave={handleSaveToggle}
               onToggleComment={handleToggleComment}
+              hideCommentButton={isRightPinned}
               onShare={handleShare}
               onViewItinerary={(postId) => {
                 setActiveFocusedPostId(postId);

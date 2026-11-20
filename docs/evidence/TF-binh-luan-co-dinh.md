@@ -57,3 +57,7 @@
 ## Ảnh hưởng tới phần của người khác
 
 - Không: chỉ sửa các file thuộc tab Cảm hứng (`apps/web/src/features/social/feed/`) của anh Thành; không sửa `live-posts.tsx` hay `itinerary-sidebar-panel.tsx`.
+
+## Bổ sung: bỏ nút bình luận trên thẻ bài khi cột Bình luận cố định
+- `post-card.tsx`: prop `hideCommentButton` (mặc định `false`, trang cá nhân giữ nút). `social-feed-view.tsx` truyền `hideCommentButton={isRightPinned}`: tab Bài viết từ 1200px không còn nút bình luận vì cột Bình luận luôn hiện và tự theo bài đang đọc. Dưới 1200px vẫn có nút để mở cột.
+- Test `post-card-comment-button.test.ts`. Web: lint 27 cảnh báo, typecheck pass, 569 test pass.
