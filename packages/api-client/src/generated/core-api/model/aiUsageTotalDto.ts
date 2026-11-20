@@ -10,4 +10,5 @@ export interface AiUsageTotalDto {
   inputTokens: number;
   outputTokens: number;
   costUsd: number;
+  unpricedCalls: number;
 }

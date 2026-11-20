@@ -61,12 +61,13 @@ export function AiUsageOverview({ range, days }: { range: { from: string; to: st
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <AiKpi label={copy.kpi.cost} value={total ? formatUsd(total.costUsd) : undefined} />
         <AiKpi label={copy.kpi.calls} value={total ? count.format(total.calls) : undefined} />
         <AiKpi label={copy.kpi.inputTokens} value={total ? compact.format(total.inputTokens) : undefined} />
         <AiKpi label={copy.kpi.outputTokens} value={total ? compact.format(total.outputTokens) : undefined} />
         <AiKpi label={copy.kpi.users} value={users.data ? count.format(users.data.total) : undefined} />
+        <AiKpi label={copy.kpi.unpricedCalls} value={total ? count.format(total.unpricedCalls ?? 0) : undefined} hint={total?.unpricedCalls ? 'Chi phí thực cần đối chiếu nhà cung cấp.' : undefined} />
       </div>
 
       {series.isError && <AdminApiError error={series.error} retry={() => void series.refetch()} />}
@@ -179,6 +180,7 @@ export function AiUsageOverview({ range, days }: { range: { from: string; to: st
                   <th scope="col">{copy.columns.inputTokens}</th>
                   <th scope="col">{copy.columns.outputTokens}</th>
                   <th scope="col">{copy.columns.costUsd}</th>
+                  <th scope="col">{copy.columns.unpricedCalls}</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,6 +191,7 @@ export function AiUsageOverview({ range, days }: { range: { from: string; to: st
                     <td className="tabular-nums">{count.format(row.inputTokens)}</td>
                     <td className="tabular-nums">{count.format(row.outputTokens)}</td>
                     <td className="tabular-nums">{formatUsd(row.costUsd)}</td>
+                    <td className="tabular-nums">{count.format(row.unpricedCalls ?? 0)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -199,6 +202,7 @@ export function AiUsageOverview({ range, days }: { range: { from: string; to: st
                   <td className="tabular-nums">{count.format(usage.data.total.inputTokens)}</td>
                   <td className="tabular-nums">{count.format(usage.data.total.outputTokens)}</td>
                   <td className="tabular-nums">{formatUsd(usage.data.total.costUsd)}</td>
+                  <td className="tabular-nums">{count.format(usage.data.total.unpricedCalls ?? 0)}</td>
                 </tr>
               </tfoot>
             </table>
