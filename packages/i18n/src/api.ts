@@ -886,4 +886,11 @@ export const api = {
   itineraryBrowseTripPosts: 'Xem các bài có lịch trình',
   itinerarySuggestedHeading: 'Lịch trình liên quan',
   itinerarySuggestedAction: 'Xem lịch trình này',
+  // Thu phóng & phóng to khung xem ảnh
+  imageZoomIn: 'Phóng to ảnh',
+  imageZoomOut: 'Thu nhỏ ảnh',
+  imageZoomReset: 'Đặt lại thu phóng về 100%',
+  imageZoomLevel: 'Mức thu phóng {percent}%',
+  imageExpandViewer: 'Phóng to khung xem',
+  imageShrinkViewer: 'Thu nhỏ khung xem',
 } as const;
