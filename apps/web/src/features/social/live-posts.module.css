@@ -982,6 +982,22 @@
   background: var(--color-overlay);
 }
 
+.galleryStageOverlay:fullscreen {
+  width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  border: 0;
+  border-radius: 0;
+}
+
+.galleryStageOverlay:fullscreen .galleryViewer {
+  height: 100dvh;
+}
+
+.galleryStageOverlay:fullscreen .galleryContainImg {
+  max-height: none;
+}
+
 .galleryStageOverlay button:focus-visible {
   outline: 2px solid var(--color-teal-ink);
   outline-offset: 2px;
@@ -1005,6 +1021,13 @@
 
 .galleryHeaderText {
   min-width: 0;
+}
+
+.galleryHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .galleryHeaderTitle {

@@ -3,6 +3,12 @@
 import Image from 'next/image';
 import { type ReactNode, useEffect, useRef } from 'react';
 import { vi } from '@tripflix/i18n';
+import { isOptimizedImageUrl } from '../../../lib/remote-images';
+import {
+  ImageViewerControls,
+  ImageZoomSurface,
+} from '../../shared/image-viewer-controls';
+import { useImageZoom } from '../../shared/use-image-zoom';
 import reelsStyles from '../live-posts.module.css';
 
 export interface GalleryImageItem {
@@ -77,6 +83,7 @@ export function GalleryLightbox({
   nextIcon,
 }: GalleryLightboxProps) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
   const activeThumbRef = useRef<HTMLButtonElement | null>(null);
   const onCloseRef = useRef(onClose);
 
@@ -84,6 +91,12 @@ export function GalleryLightbox({
   const safeIndex = clampGalleryIndex(currentIndex, total);
   const activeImage = images[safeIndex];
   const displayTitle = title.trim() || vi.hotel.gallery;
+  const zoom = useImageZoom({
+    isOpen: Boolean(isOpen && activeImage),
+    slideKey: `${safeIndex}:${activeImage?.src ?? ''}`,
+    dialogRef,
+    stageRef,
+  });
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -156,6 +169,7 @@ export function GalleryLightbox({
       aria-label={`${vi.hotel.gallery}: ${displayTitle}`}
       onCancel={(event) => {
         event.preventDefault();
+        if (zoom.shouldPreventEscCancel()) return;
         onClose();
       }}
       onClose={onClose}
@@ -169,30 +183,42 @@ export function GalleryLightbox({
                 {safeIndex + 1} / {total}
               </output>
             </div>
-            <button
-              type="button"
-              className={reelsStyles.galleryControl}
-              aria-label={vi.api.immersiveCloseGallery}
-              data-tooltip={vi.api.immersiveCloseGallery}
-              onClick={onClose}
-            >
-              {closeIcon ?? '×'}
-            </button>
+            <div className={reelsStyles.galleryHeaderActions}>
+              <ImageViewerControls
+                scale={zoom.scale}
+                onZoomIn={zoom.zoomIn}
+                onZoomOut={zoom.zoomOut}
+                onResetZoom={zoom.resetZoom}
+                canFullscreen={zoom.canFullscreen}
+                isFullscreen={zoom.isFullscreen}
+                onToggleFullscreen={zoom.toggleFullscreen}
+              />
+              <button
+                type="button"
+                className={reelsStyles.galleryControl}
+                aria-label={vi.api.immersiveCloseGallery}
+                data-tooltip={vi.api.immersiveCloseGallery}
+                onClick={onClose}
+              >
+                {closeIcon ?? '×'}
+              </button>
+            </div>
           </header>
 
-          <div className={reelsStyles.galleryStage}>
+          <ImageZoomSurface stageRef={stageRef} stageClassName={reelsStyles.galleryStage} zoom={zoom}>
             <Image
               key={activeImage.src}
               src={activeImage.src}
               alt={activeImage.alt ?? `${displayTitle} · ${vi.hotel.photo} ${safeIndex + 1}`}
-              width={1000}
-              height={700}
-              sizes="(max-width: 768px) 100vw, 60vw"
+              width={zoom.isZoomed ? 2000 : 1000}
+              height={zoom.isZoomed ? 1400 : 700}
+              sizes={zoom.isZoomed ? '100vw' : '(max-width: 768px) 100vw, 60vw'}
               className={reelsStyles.galleryContainImg}
+              draggable={false}
               priority
-              unoptimized={activeImage.src.startsWith('http')}
+              unoptimized={activeImage.src.startsWith('http') && !isOptimizedImageUrl(activeImage.src)}
             />
-          </div>
+          </ImageZoomSurface>
 
           {total > 1 && (
             <div className={reelsStyles.galleryNavigation}>

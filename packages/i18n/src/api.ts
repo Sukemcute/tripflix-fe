@@ -876,4 +876,11 @@ export const api = {
   profileNoSavedVideos: 'Chưa có video đã lưu.',
   profileLoadMore: 'Xem thêm',
   profileIntro: 'Giới thiệu',
+  // Thu phóng & toàn màn hình khung xem ảnh
+  imageZoomIn: 'Phóng to ảnh',
+  imageZoomOut: 'Thu nhỏ ảnh',
+  imageZoomReset: 'Đặt lại thu phóng về 100%',
+  imageZoomLevel: 'Mức thu phóng {percent}%',
+  imageEnterFullscreen: 'Xem toàn màn hình',
+  imageExitFullscreen: 'Thoát toàn màn hình',
 } as const;
