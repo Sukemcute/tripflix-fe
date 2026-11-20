@@ -13,11 +13,11 @@ export function useUrlParams() {
   const params = useSearchParams();
   const pathname = usePathname();
   const update = useCallback(
-    (patch: ParamPatch, options: { push?: boolean } = {}) => {
+    (patch: ParamPatch, options: { push?: boolean; state?: Record<string, unknown> } = {}) => {
       const search = applyParamPatch(window.location.search, patch);
       const url = search ? `${pathname}?${search}` : pathname;
-      if (options.push) window.history.pushState(null, '', url);
-      else window.history.replaceState(null, '', url);
+      if (options.push) window.history.pushState(options.state ?? null, '', url);
+      else window.history.replaceState(options.state ?? null, '', url);
     },
     [pathname],
   );

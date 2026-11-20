@@ -10,6 +10,8 @@ import {
 } from '@tripflix/api-client/core-api/analytics/analytics';
 import type { TelemetrySourceDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
+import { DetailDrawer } from '@/ui/detail-drawer';
+import { buildDrawerNavigation, useDetailParam } from '@/ui/use-detail-param';
 import { AdminApiError } from '../shell/api-state';
 import { IconRefresh } from '../shell/admin-icons';
 import { MetricChart, formatMetric, formatTime } from './metric-chart';
@@ -48,7 +50,17 @@ function SourceNotice({
   );
 }
 
-function TraceDetail({ traceId, onClose }: { traceId: string; onClose: () => void }) {
+function TraceDrawer({
+  traceId,
+  ids,
+  onOpen,
+  onClose,
+}: {
+  traceId: string;
+  ids: readonly string[];
+  onOpen: (id: string) => void;
+  onClose: () => void;
+}) {
   const trace = useQuery({
     queryKey: ['analytics', 'trace', traceId],
     queryFn: async ({ signal }) => (await observabilityControllerGetTrace(traceId, { signal })).data,
@@ -58,19 +70,19 @@ function TraceDetail({ traceId, onClose }: { traceId: string; onClose: () => voi
   const start = Math.min(...spans.map((span) => span.startedAt));
   const duration = Math.max(...spans.map((span) => span.startedAt + span.durationMs)) - start;
   return (
-    <section className={styles.panel} aria-label={copy.detail}>
-      <header className={styles.panelHeading}>
-        <div>
-          <h2>{copy.detail}</h2>
-          <code className={styles.traceId}>{traceId}</code>
-          <p>
-            {spans.length} {copy.spans} · {ms(Number.isFinite(duration) ? duration : null)}
-          </p>
-        </div>
-        <button onClick={onClose} className={styles.button}>
-          {copy.close}
-        </button>
-      </header>
+    <DetailDrawer
+      size="xwide"
+      title={copy.detail}
+      subtitle={
+        <>
+          <code className="font-mono">{traceId}</code>
+          {spans.length > 0 && ` · ${spans.length} ${copy.spans} · ${ms(Number.isFinite(duration) ? duration : null)}`}
+        </>
+      }
+      navigation={buildDrawerNavigation(ids, traceId, onOpen)}
+      scrollKey={traceId}
+      onClose={onClose}
+    >
       {trace.isPending && <output className={styles.empty}>{copy.loading}</output>}
       {trace.error instanceof HttpError && trace.error.status === 404 ? (
         <p role="alert" className={styles.empty}>
@@ -115,7 +127,7 @@ function TraceDetail({ traceId, onClose }: { traceId: string; onClose: () => voi
           ))}
         </div>
       )}
-    </section>
+    </DetailDrawer>
   );
 }
 
@@ -129,7 +141,12 @@ export function AnalyticsWorkspace() {
   const [minDurationMs, setMinDurationMs] = useState(0);
   const [traceInput, setTraceInput] = useState('');
   const [traceValidation, setTraceValidation] = useState('');
-  const [selectedTrace, setSelectedTrace] = useState<string | null>(null);
+  const {
+    openId: selectedTrace,
+    open: openTrace,
+    close: closeTrace,
+    clear: clearTrace,
+  } = useDetailParam();
   const interval = autoRefresh ? 30_000 : false;
   const overview = useQuery({
     queryKey: ['analytics', 'overview', range, service],
@@ -191,7 +208,7 @@ export function AnalyticsWorkspace() {
       return;
     }
     setTraceValidation('');
-    setSelectedTrace(id);
+    openTrace(id);
   };
   return (
     <div className={styles.root}>
@@ -214,7 +231,7 @@ export function AnalyticsWorkspace() {
               value={range}
               onChange={(event) => {
                 setRange(event.target.value as Range);
-                setSelectedTrace(null);
+                clearTrace();
               }}
             >
               {Object.entries(copy.ranges).map(([key, label]) => (
@@ -231,7 +248,7 @@ export function AnalyticsWorkspace() {
               value={service}
               onChange={(event) => {
                 setService(event.target.value);
-                setSelectedTrace(null);
+                clearTrace();
               }}
             >
               <option value="">{copy.allServices}</option>
@@ -498,7 +515,7 @@ export function AnalyticsWorkspace() {
                   {tracesData?.traces.map((entry) => (
                     <tr key={entry.traceId}>
                       <td>
-                        <button className={styles.traceLink} onClick={() => setSelectedTrace(entry.traceId)}>
+                        <button className={styles.traceLink} onClick={() => openTrace(entry.traceId)}>
                           {entry.operation || entry.traceId.slice(0, 12)}
                         </button>
                       </td>
@@ -521,7 +538,12 @@ export function AnalyticsWorkspace() {
             )}
           </section>
           {selectedTrace && (
-            <TraceDetail key={selectedTrace} traceId={selectedTrace} onClose={() => setSelectedTrace(null)} />
+            <TraceDrawer
+              traceId={selectedTrace}
+              ids={tracesData?.traces.map((entry) => entry.traceId) ?? []}
+              onOpen={openTrace}
+              onClose={closeTrace}
+            />
           )}
         </>
       )}

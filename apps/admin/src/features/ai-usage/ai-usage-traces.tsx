@@ -4,9 +4,10 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { aiInsightsControllerTraces } from '@tripflix/api-client/core-api/analytics/analytics';
 import { t, vi } from '@tripflix/i18n';
 import { useState } from 'react';
+import { useDetailParam } from '@/ui/use-detail-param';
 import { AdminApiError } from '../shell/api-state';
 import { EmptyState, LoadingState, Panel } from '../shell/operations-ui';
-import { AiTraceDialog } from './ai-trace-dialog';
+import { AiTraceDrawer } from './ai-trace-drawer';
 import { ANSWER_KINDS, answerKindLabel, count, formatDateTime, formatLatency } from './ai-usage-format';
 import { formatUsd } from './ai-usage-range';
 
@@ -28,7 +29,7 @@ export function AiUsageTraces({
   const [page, setPage] = useState(1);
   const [answerKind, setAnswerKind] = useState('all');
   const [minCost, setMinCost] = useState<keyof typeof copy.minCosts>('0');
-  const [selected, setSelected] = useState<string | null>(null);
+  const { openId, open, close } = useDetailParam();
   const params = {
     ...range,
     page,
@@ -154,7 +155,7 @@ export function AiUsageTraces({
                           <button
                             type="button"
                             className="whitespace-nowrap rounded-md border border-border px-3 py-1 text-xs font-semibold text-teal-ink hover:bg-teal-soft"
-                            onClick={() => setSelected(item.turnId)}
+                            onClick={() => open(String(item.turnId))}
                           >
                             {copy.viewDetail}
                           </button>
@@ -192,7 +193,14 @@ export function AiUsageTraces({
         )}
       </Panel>
 
-      {selected && <AiTraceDialog turnId={selected} onClose={() => setSelected(null)} />}
+      {openId && (
+        <AiTraceDrawer
+          turnId={openId}
+          ids={(data?.items ?? []).flatMap((item) => (item.turnId ? [item.turnId] : []))}
+          onOpen={open}
+          onClose={close}
+        />
+      )}
     </>
   );
 }

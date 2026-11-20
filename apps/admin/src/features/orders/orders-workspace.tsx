@@ -2,7 +2,6 @@
 import * as adminCommerce from '@tripflix/api-client/core-api/admin-commerce/admin-commerce';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
-import { useState } from 'react';
 import { DataTable, type DataColumn } from '@/ui/data-table';
 import { FilterToolbar, SearchField, SelectField } from '@/ui/filter-toolbar';
 import { MetricStrip } from '@/ui/metric-strip';
@@ -11,16 +10,16 @@ import { EmptyState } from '@/ui/states';
 import { StatusBadge, type StatusTone } from '@/ui/status-badge';
 import { TabPanel, Tabs } from '@/ui/tabs';
 import { readEnumParam } from '@/ui/url-params';
+import { useDetailParam } from '@/ui/use-detail-param';
 import { useUrlParams } from '@/ui/use-url-params';
 import { AdminApiError } from '../shell/api-state';
-import { LoadingState, Panel } from '../shell/operations-ui';
+import { OrderDrawer } from './order-drawer';
 import { formatDateTime, formatMoney, getStatusLabel, summarizeAnomaly } from './orders-format';
 import {
   ANOMALY_KINDS,
   ORDER_STATUSES,
   type AdminOrder,
   type AnomalyList,
-  type OrderDetail,
   type OrderPage,
 } from './orders-types';
 
@@ -38,14 +37,16 @@ const statusTone = (status: string): StatusTone =>
 export function OrdersWorkspace() {
   const { params, update } = useUrlParams();
   const tab = readEnumParam(params.get('tab'), TAB_IDS, 'anomalies');
-  const [openOrderId, setOpenOrderId] = useState<string | null>(null);
+  const { openId, open, close, clear } = useDetailParam();
   return (
     <div className="space-y-4">
       <Tabs
         label={vi.admin.orders}
         idPrefix="orders"
         active={tab}
-        onChange={(next) => update({ tab: next === 'anomalies' ? null : next, kind: null, q: null, status: null })}
+        onChange={(next) =>
+          update({ tab: next === 'anomalies' ? null : next, kind: null, q: null, status: null, id: null })
+        }
         tabs={[
           { id: 'anomalies', label: copy.tabAnomalies },
           { id: 'search', label: copy.tabSearch },
@@ -53,17 +54,23 @@ export function OrdersWorkspace() {
       />
       <TabPanel idPrefix="orders" active={tab}>
         {tab === 'anomalies' ? (
-          <AnomalyPanel onOpen={setOpenOrderId} />
+          <AnomalyPanel openId={openId} onOpen={open} onClose={close} onClear={clear} />
         ) : (
-          <SearchPanel onOpen={setOpenOrderId} />
+          <SearchPanel openId={openId} onOpen={open} onClose={close} onClear={clear} />
         )}
       </TabPanel>
-      {openOrderId && <OrderDetailPanel id={openOrderId} onClose={() => setOpenOrderId(null)} />}
     </div>
   );
 }
 
-function AnomalyPanel({ onOpen }: { onOpen: (id: string) => void }) {
+interface PanelProps {
+  openId: string | null;
+  onOpen: (id: string) => void;
+  onClose: () => void;
+  onClear: () => void;
+}
+
+function AnomalyPanel({ openId, onOpen, onClose, onClear }: PanelProps) {
   const { params, update } = useUrlParams();
   const kind = readEnumParam(params.get('kind'), KIND_FILTERS, '');
   const all = useQuery({
@@ -111,7 +118,10 @@ function AnomalyPanel({ onOpen }: { onOpen: (id: string) => void }) {
           value: all.data?.counts[value] ?? (all.isPending ? undefined : 0),
           isUrgent: true,
           isActive: kind === value,
-          onClick: () => update({ kind: kind === value ? null : value }),
+          onClick: () => {
+            update({ kind: kind === value ? null : value });
+            onClear();
+          },
         }))}
       />
       {kind && <p className="text-[13px] text-text-muted">{copy.kindHints[kind]}</p>}
@@ -122,14 +132,23 @@ function AnomalyPanel({ onOpen }: { onOpen: (id: string) => void }) {
         rows={items}
         getRowId={(anomaly) => `${anomaly.kind}-${anomaly.orderId}`}
         onRowOpen={(anomaly) => onOpen(anomaly.orderId)}
+        isRowSelected={(anomaly) => anomaly.orderId === openId}
         isLoading={all.isPending}
         empty={!all.error && <EmptyState title={copy.noAnomalies} />}
       />
+      {openId && (
+        <OrderDrawer
+          id={openId}
+          ids={[...new Set(items.map((anomaly) => anomaly.orderId))]}
+          onOpen={onOpen}
+          onClose={onClose}
+        />
+      )}
     </div>
   );
 }
 
-function SearchPanel({ onOpen }: { onOpen: (id: string) => void }) {
+function SearchPanel({ openId, onOpen, onClose, onClear }: PanelProps) {
   const { params, update } = useUrlParams();
   const q = params.get('q') ?? '';
   const status = readEnumParam(params.get('status'), STATUS_FILTERS, '');
@@ -175,7 +194,13 @@ function SearchPanel({ onOpen }: { onOpen: (id: string) => void }) {
   ];
   return (
     <div className="space-y-3">
-      <FilterToolbar hasActiveFilters={!!(q || status)} onReset={() => update({ q: null, status: null })}>
+      <FilterToolbar
+        hasActiveFilters={!!(q || status)}
+        onReset={() => {
+          update({ q: null, status: null });
+          onClear();
+        }}
+      >
         <SearchField
           label={copy.searchLabel}
           placeholder={copy.searchPlaceholder}
@@ -198,6 +223,7 @@ function SearchPanel({ onOpen }: { onOpen: (id: string) => void }) {
         rows={orders}
         getRowId={(order) => order.id}
         onRowOpen={(order) => onOpen(order.id)}
+        selectedId={openId}
         isLoading={pages.isPending}
         empty={!pages.error && <EmptyState title={copy.noOrders} />}
       />
@@ -209,138 +235,9 @@ function SearchPanel({ onOpen }: { onOpen: (id: string) => void }) {
           onLoadMore={() => void pages.fetchNextPage()}
         />
       )}
-    </div>
-  );
-}
-
-function OrderDetailPanel({ id, onClose }: { id: string; onClose: () => void }) {
-  const detail = useQuery({
-    queryKey: ['admin-order', id],
-    queryFn: async ({ signal }) =>
-      (await adminCommerce.adminOrdersControllerDetail(id, { signal })).data as unknown as OrderDetail,
-  });
-  const data = detail.data;
-  return (
-    <Panel
-      title={`${copy.detailTitle} ${data?.order.confirmationCode ?? ''}`}
-      action={
-        <button className="admin-secondary" onClick={onClose}>
-          {copy.close}
-        </button>
-      }
-    >
-      <AdminApiError error={detail.error} retry={() => void detail.refetch()} />
-      {detail.isPending && <LoadingState />}
-      {data && (
-        <div className="grid gap-5 p-5 text-sm">
-          <dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            <Field label={copy.orderId} value={data.order.id} />
-            <Field label={copy.userId} value={data.order.userId} />
-            <Field label={copy.columns.status} value={getStatusLabel(data.order.status)} />
-            <Field label={copy.columns.total} value={formatMoney(data.order.total)} />
-            <Field label={copy.columns.createdAt} value={formatDateTime(data.order.createdAt)} />
-            <Field label={copy.paidAt} value={formatDateTime(data.order.paidAt)} />
-            <Field
-              label={copy.columns.contact}
-              value={
-                [data.order.contactName, data.order.contactPhone, data.order.contactEmail]
-                  .filter(Boolean)
-                  .join(' · ') || '—'
-              }
-            />
-          </dl>
-          <Section
-            title={copy.anomaliesOfOrder}
-            rows={data.anomalies.map((a) => [
-              copy.kinds[a.kind],
-              summarizeAnomaly(a.kind, a.detail),
-              copy.kindHints[a.kind],
-            ])}
-          />
-          <Section
-            title={copy.items}
-            rows={data.items.map((item) => [
-              item.productName,
-              `${item.date}${item.productType === 'room' ? ` · ${item.nights} ${copy.nights}` : ''} · x${item.qty}`,
-              formatMoney(item.lineTotal),
-              item.confirmationCode ?? '—',
-            ])}
-          />
-          <Section
-            title={copy.guests}
-            rows={data.guests.map((guest) => [
-              guest.fullName,
-              guest.passengerType ?? '',
-              guest.birthdate ?? '',
-            ])}
-          />
-          <Section
-            title={copy.payments}
-            rows={data.payments.map((p) => [
-              p.gateway,
-              p.status,
-              formatMoney(p.amount),
-              p.gatewayRef ?? p.failureCode ?? '',
-              p.needsReview ? copy.needsReview : '',
-              formatDateTime(p.createdAt),
-            ])}
-          />
-          <Section
-            title={copy.refunds}
-            rows={data.refunds.map((r) => [
-              r.reason,
-              r.status,
-              formatMoney(r.amount),
-              r.gatewayRef ?? '',
-              r.needsReview ? copy.needsReview : '',
-              formatDateTime(r.createdAt),
-            ])}
-          />
-          <Section
-            title={copy.history}
-            rows={data.history.map((h) => [
-              `${h.fromStatus ? getStatusLabel(h.fromStatus) : '—'} → ${getStatusLabel(h.toStatus)}`,
-              h.source ?? '',
-              h.requestId ?? '',
-              formatDateTime(h.createdAt),
-            ])}
-          />
-        </div>
+      {openId && (
+        <OrderDrawer id={openId} ids={orders.map((order) => order.id)} onOpen={onOpen} onClose={onClose} />
       )}
-    </Panel>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-xs text-text-muted">{label}</dt>
-      <dd className="break-all font-medium">{value}</dd>
     </div>
-  );
-}
-
-function Section({ title, rows }: { title: string; rows: string[][] }) {
-  return (
-    <section>
-      <h3 className="mb-2 text-sm font-bold">{title}</h3>
-      {rows.length === 0 ? (
-        <p className="text-xs text-text-muted">{copy.none}</p>
-      ) : (
-        <div className="admin-table-scroll">
-          <table>
-            <tbody>
-              {rows.map((row, index) => (
-                <tr key={index}>
-                  {row.map((cell, cellIndex) => (
-                    <td key={cellIndex}>{cell}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
   );
 }

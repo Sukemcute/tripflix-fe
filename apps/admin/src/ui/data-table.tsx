@@ -32,6 +32,8 @@ export interface DataTableProps<Row> {
   /** Có thì cả hàng bấm được để mở chi tiết; ô đầu là nút thật cho bàn phím và trình đọc màn hình. */
   onRowOpen?: (row: Row) => void;
   selectedId?: string | null;
+  /** Khi nhiều dòng cùng thuộc một hồ sơ: quyết định dòng nào được tô chọn (thay cho selectedId). */
+  isRowSelected?: (row: Row) => boolean;
   isLoading?: boolean;
   loadingRows?: number;
   /** Hiển thị khi không có dòng nào và không đang tải. */
@@ -50,6 +52,7 @@ export function DataTable<Row>({
   getRowId,
   onRowOpen,
   selectedId,
+  isRowSelected,
   isLoading = false,
   loadingRows = 6,
   empty,
@@ -109,7 +112,7 @@ export function DataTable<Row>({
               ))}
             {rows.map((row) => {
               const id = getRowId(row);
-              const isSelected = selectedId === id;
+              const isSelected = isRowSelected ? isRowSelected(row) : selectedId === id;
               return (
                 <tr
                   key={id}

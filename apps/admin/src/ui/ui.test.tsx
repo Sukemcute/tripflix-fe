@@ -2,10 +2,13 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { DataTable, type DataColumn } from './data-table';
+import { DetailDrawer } from './detail-drawer';
+import { getNeighbors } from './detail-navigation';
 import { MetricStrip } from './metric-strip';
 import { Pagination } from './pagination';
 import { StatusBadge } from './status-badge';
 import { Tabs } from './tabs';
+import { buildDrawerNavigation } from './use-detail-param';
 vi.stubGlobal('React', React);
 
 interface Row {
@@ -142,5 +145,71 @@ describe('StatusBadge', () => {
     expect(normal).toContain('aria-hidden="true"');
     const urgent = renderToStaticMarkup(<StatusBadge tone="urgent">Khẩn cấp</StatusBadge>);
     expect(urgent).not.toContain('aria-hidden');
+  });
+});
+
+describe('getNeighbors', () => {
+  const ids = ['a', 'b', 'c'];
+
+  it('hồ sơ ở giữa có cả trước và sau', () => {
+    expect(getNeighbors(ids, 'b')).toEqual({ position: 2, total: 3, previousId: 'a', nextId: 'c' });
+  });
+
+  it('đầu danh sách không có trước, cuối danh sách không có sau', () => {
+    expect(getNeighbors(ids, 'a').previousId).toBeUndefined();
+    expect(getNeighbors(ids, 'c').nextId).toBeUndefined();
+  });
+
+  it('hồ sơ không nằm trong danh sách đang hiển thị thì không có điều hướng', () => {
+    expect(getNeighbors(ids, 'x')).toEqual({ position: 0, total: 3 });
+    expect(buildDrawerNavigation(ids, 'x', () => undefined)).toBeUndefined();
+  });
+
+  it('buildDrawerNavigation đặt nhãn vị trí và chỉ có nút còn đi được', () => {
+    const opened: string[] = [];
+    const navigation = buildDrawerNavigation(ids, 'a', (id) => opened.push(id));
+    expect(navigation?.position).toBe('1 / 3');
+    expect(navigation?.onPrevious).toBeUndefined();
+    navigation?.onNext?.();
+    expect(opened).toEqual(['b']);
+  });
+});
+
+describe('DetailDrawer', () => {
+  it('có tiêu đề, trạng thái, nút điều hướng, tab và thanh hành động dính', () => {
+    const html = renderToStaticMarkup(
+      <DetailDrawer
+        title="Đơn ABC123"
+        subtitle="mã phụ"
+        status={<StatusBadge tone="success">Đã trả</StatusBadge>}
+        navigation={{ position: '2 / 3', onPrevious: () => undefined }}
+        tabs={<span>tab-slot</span>}
+        footer={<button type="button">Lưu</button>}
+        onClose={() => undefined}
+      >
+        <p>Nội dung</p>
+      </DetailDrawer>,
+    );
+    expect(html).toContain('<dialog');
+    expect(html).toContain('aria-labelledby');
+    expect(html).toContain('Đơn ABC123');
+    expect(html).toContain('Đã trả');
+    expect(html).toContain('2 / 3');
+    expect(html).toContain('aria-label="Hồ sơ trước"');
+    expect(html).toMatch(/aria-label="Hồ sơ sau"[^>]*disabled=""|disabled=""[^>]*aria-label="Hồ sơ sau"/);
+    expect(html).toContain('aria-label="Đóng chi tiết"');
+    expect(html).toContain('tab-slot');
+    expect(html).toContain('<footer');
+    expect(html).toContain('Nội dung');
+  });
+
+  it('không có navigation, footer thì không vẽ nút chuyển hồ sơ và thanh hành động', () => {
+    const html = renderToStaticMarkup(
+      <DetailDrawer title="X" onClose={() => undefined}>
+        <p>y</p>
+      </DetailDrawer>,
+    );
+    expect(html).not.toContain('Hồ sơ trước');
+    expect(html).not.toContain('<footer');
   });
 });

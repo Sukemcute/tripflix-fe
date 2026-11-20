@@ -49,6 +49,8 @@ export const userActivity = {
   next: 'Trang sau',
   viewDetail: 'Xem chi tiết',
   detailTitle: 'Hành vi của {name}',
+  detailTabs: { overview: 'Tổng quan', activity: 'Hoạt động', ai: 'Dùng AI' },
+  eventColumns: { time: 'Thời điểm', kind: 'Loại', detail: 'Nội dung' },
   registeredAt: 'Ngày đăng ký',
   recentEvents: 'Hoạt động gần đây',
   recentEmpty: 'Chưa có hoạt động trong khoảng này.',

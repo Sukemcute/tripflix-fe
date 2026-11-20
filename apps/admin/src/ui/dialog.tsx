@@ -83,6 +83,7 @@ export function ConfirmDialog({
   description,
   children,
   confirmLabel,
+  cancelLabel = vi.adminOperations.cancel,
   tone = 'primary',
   isPending = false,
   onConfirm,
@@ -92,6 +93,7 @@ export function ConfirmDialog({
   description?: string;
   children?: ReactNode;
   confirmLabel: string;
+  cancelLabel?: string;
   tone?: 'primary' | 'danger';
   isPending?: boolean;
   onConfirm: () => void;
@@ -107,7 +109,7 @@ export function ConfirmDialog({
       footer={
         <>
           <AdminButton disabled={isPending} onClick={onClose}>
-            {vi.adminOperations.cancel}
+            {cancelLabel}
           </AdminButton>
           <AdminButton variant={tone === 'danger' ? 'danger' : 'primary'} disabled={isPending} onClick={onConfirm}>
             {isPending ? vi.adminOperations.saving : confirmLabel}
