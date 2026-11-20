@@ -3412,7 +3412,8 @@ a.avatarSmall {
   /* Lịch trình mở thành bottom sheet như panel bình luận, thay vì bị ẩn hẳn. */
   .itineraryInReels {
     position: fixed !important;
-    inset: auto 0 0 0 !important;
+    /* Đứng trên thanh điều hướng đáy (<768px); trên 768px biến bằng 0. */
+    inset: auto 0 var(--mobile-tab-bar-space, 0px) 0 !important;
     height: 78dvh !important;
     max-height: 78dvh !important;
     border-radius: 22px 22px 0 0 !important;
@@ -3435,7 +3436,8 @@ a.avatarSmall {
   .leftPanel,
   .rightPanel {
     position: fixed;
-    inset: auto 0 0 0;
+    /* Đứng trên thanh điều hướng đáy (<768px) để ô nhập bình luận không bị che. */
+    inset: auto 0 var(--mobile-tab-bar-space, 0px) 0;
     height: 78dvh;
     border-radius: 22px 22px 0 0;
     z-index: 60;
