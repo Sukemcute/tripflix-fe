@@ -1,7 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi as vitestVi } from 'vitest';
 import * as apiClient from '@tripflix/api-client';
-import { MentionPicker, handleMentionPickerKeyDown } from './mention-picker';
+import {
+  MentionPicker,
+  handleMentionPickerKeyDown,
+  resolveMentionPickerState,
+} from './mention-picker';
 
 afterEach(() => {
   vitestVi.restoreAllMocks();
@@ -208,6 +212,51 @@ describe('MentionPicker', () => {
       expect(handledShiftTab).toBe(false);
       expect(preventDefaultShift).not.toHaveBeenCalled();
       expect(onSelect).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resolveMentionPickerState khi chờ debounce 1 giây', () => {
+    it('chưa có kết quả cũ mà đang chờ debounce thì hiện trạng thái đang tìm (kể cả khi query cũ rỗng hoặc lỗi)', () => {
+      expect(
+        resolveMentionPickerState({
+          isSearchable: true,
+          isDebouncing: true,
+          hasUsers: false,
+          isLoading: false,
+          isFetching: false,
+          isPlaceholderData: false,
+          isError: false,
+          isRateLimited: false,
+        }),
+      ).toEqual({ status: 'searching', isRefreshingExistingList: false });
+
+      expect(
+        resolveMentionPickerState({
+          isSearchable: true,
+          isDebouncing: true,
+          hasUsers: false,
+          isLoading: false,
+          isFetching: false,
+          isPlaceholderData: false,
+          isError: true,
+          isRateLimited: false,
+        }),
+      ).toEqual({ status: 'searching', isRefreshingExistingList: false });
+    });
+
+    it('đã có kết quả cũ mà đang chờ debounce thì giữ danh sách cũ làm mờ nhẹ', () => {
+      expect(
+        resolveMentionPickerState({
+          isSearchable: true,
+          isDebouncing: true,
+          hasUsers: true,
+          isLoading: false,
+          isFetching: false,
+          isPlaceholderData: false,
+          isError: false,
+          isRateLimited: false,
+        }),
+      ).toEqual({ status: 'list', isRefreshingExistingList: true });
     });
   });
 });

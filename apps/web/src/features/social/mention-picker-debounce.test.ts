@@ -45,13 +45,20 @@ function runTypingSession(keystrokes: readonly string[], intervalMs: number) {
 }
 
 describe('MentionPicker debounce giảm gọi searchUsers', () => {
-  it('gõ 5 phím nhanh liên tiếp chỉ gọi searchUsers 1 lần sau 250ms', async () => {
+  it('dùng độ trễ 1000ms cho MENTION_SEARCH_DEBOUNCE_MS', () => {
+    expect(MENTION_SEARCH_DEBOUNCE_MS).toBe(1000);
+  });
+
+  it('gõ 5 phím nhanh liên tiếp chỉ gọi searchUsers 1 lần sau 1000ms', async () => {
     vitestVi.useFakeTimers();
     const { fetchSpy } = runTypingSession(['ng', 'ngu', 'nguy', 'nguye', 'nguyen'], 50);
 
     expect(fetchSpy).not.toHaveBeenCalled();
 
-    await vitestVi.advanceTimersByTimeAsync(MENTION_SEARCH_DEBOUNCE_MS);
+    await vitestVi.advanceTimersByTimeAsync(999);
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    await vitestVi.advanceTimersByTimeAsync(1);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const calledUrl = new URL(String(fetchSpy.mock.calls[0]![0]));
     expect(calledUrl.searchParams.get('q')).toBe('nguyen');
