@@ -759,6 +759,12 @@ export function SocialFeedView({
           coverImage={activeItineraryCover}
           isOpen={leftPresence.isRendered}
           onClose={handleCloseItinerary}
+          // Chỉ có ý nghĩa khi đang hiện tab gợi ý (không tìm kiếm, không ở "Đã lưu").
+          onBrowseTripPosts={
+            !isSearchMode && activeFilter !== 'saved' && recommendMode !== 'has_plan'
+              ? () => setRecommendMode('has_plan')
+              : undefined
+          }
         />
       )}
 
