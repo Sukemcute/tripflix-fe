@@ -68,4 +68,15 @@ describe('segmented-tabs shared CSS & wave 1 migration', () => {
     expect(tripPlanView).toContain('styles.actionButton');
     expect(tripPlanView).not.toContain('role="tablist"');
   });
+
+  it('uses solid var(--color-background) at single source for itinerarySidebar and rightPanel across Feed & Reels', () => {
+    const socialFeedCss = readFeature('social/feed/social-feed.module.css');
+    const livePostsCss = readFeature('social/live-posts.module.css');
+    const otaMotionCss = readFeature('discovery/ota-home-motion.module.css');
+
+    expect(socialFeedCss).toMatch(/\.itinerarySidebar\s*\{[^}]*background:\s*var\(--color-background\);/);
+    expect(livePostsCss).toMatch(/\.rightPanel\s*\{[^}]*background:\s*var\(--color-background\);/);
+    expect(otaMotionCss).not.toContain('itineraryInFeed');
+    expect(otaMotionCss).not.toContain('rightPanelInFeed');
+  });
 });
