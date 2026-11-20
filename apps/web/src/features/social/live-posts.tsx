@@ -152,6 +152,7 @@ export type SocialIconName =
   | 'info'
   | 'close'
   | 'send'
+  | 'sendUp'
   | 'play'
   | 'pause'
   | 'volumeOn'
@@ -272,6 +273,13 @@ export function SocialIcon({ name, size = 18 }: { name: SocialIconName; size?: n
       return (
         <svg {...common}>
           <path d="m18 15-6-6-6 6" />
+        </svg>
+      );
+    case 'sendUp':
+      // Mũi tên gửi giống nút gửi của Tripi (assistant-icon arrowUp) để hai ô nhập đồng bộ.
+      return (
+        <svg {...common}>
+          <path d="M12 19V5M6 11l6-6 6 6" />
         </svg>
       );
     case 'arrowDown':
@@ -2935,7 +2943,7 @@ export function CommentComposer({ ref, postId, user, isReady, isEnabled, loginHr
               aria-label={vi.api.send}
               disabled={isSubmitting || !body.trim()}
             >
-              <SocialIcon name="send" size={15} />
+              <SocialIcon name="sendUp" size={18} />
             </button>
           </form>
         ) : !isReady ? (

@@ -142,7 +142,7 @@ function AssistantPanel({
           type="button"
           className={styles.iconButton}
           aria-label={copy.reset}
-          title={copy.reset}
+          data-tooltip={copy.reset}
           onClick={() => {
             if (chat.messages.length || chat.draft.trim()) setIsConfirming(true);
             else input.current?.focus();
@@ -154,7 +154,7 @@ function AssistantPanel({
           type="button"
           className={styles.iconButton}
           aria-label={copy.minimize}
-          title={copy.minimize}
+          data-tooltip={copy.minimize}
           onClick={handleClose}
         >
           <AssistantIcon name="minimize" />
@@ -421,7 +421,7 @@ export function AssistantHeaderButton() {
       aria-controls="tripi-assistant-panel"
       aria-haspopup="dialog"
       aria-label={label}
-      title={copy.name}
+      data-tooltip={copy.name}
       onClick={() => {
         if (chat.isOpen) {
           chat.close();

@@ -29,7 +29,6 @@ import { useIsPinnedItineraryScreen, useIsWideScreen } from './use-wide-screen';
 import { resolveTabItineraryOpen } from './feed/itinerary-pin';
 import { COMPOSE_PARAM, readComposeType, removeComposeParam, type ComposeType } from '@/features/shell/mobile-tabs';
 import { PublishToast } from './composer/publish-toast';
-import { TooltipLayer } from './feed/tooltip-layer';
 import styles from './feed/social-feed.module.css';
 
 const InspirationImmersiveViewer = dynamic(
@@ -338,7 +337,6 @@ export function InspirationView() {
         />
       )}
       <PublishToast />
-      <TooltipLayer />
     </div>
   );
 }
