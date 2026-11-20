@@ -20,3 +20,13 @@ describe('Chú thích nút Tripi dùng chú thích chung của web', () => {
     expect(providers).toContain('<TooltipLayer />');
   });
 });
+
+describe('Nút gửi bình luận dùng mũi tên giống nút gửi Tripi', () => {
+  it('SocialIcon sendUp cùng path với AssistantIcon arrowUp và được dùng ở nút gửi bình luận', () => {
+    const livePosts = readFileSync(resolve(here, '../social/live-posts.tsx'), 'utf8');
+    const assistantIcon = readFileSync(resolve(here, 'assistant-icon.tsx'), 'utf8');
+    expect(assistantIcon).toContain("arrowUp: 'M12 19V5M6 11l6-6 6 6'");
+    expect(livePosts).toContain('<path d="M12 19V5M6 11l6-6 6 6" />');
+    expect(livePosts).toContain('<SocialIcon name="sendUp" size={18} />');
+  });
+});

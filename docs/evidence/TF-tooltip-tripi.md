@@ -15,3 +15,6 @@
 
 ## Ảnh hưởng tới phần của người khác
 - `assistant-widget.tsx` (Bảo): chỉ đổi thuộc tính `title` → `data-tooltip` của 3 nút.
+
+## Bổ sung: icon nút gửi bình luận
+- `live-posts.tsx`: thêm `SocialIcon` `sendUp` (cùng path mũi tên lên của nút gửi Tripi, `assistant-icon.tsx` `arrowUp`), nút gửi bình luận dùng `sendUp` cỡ 18 thay máy bay giấy `send`. Test trong `assistant-tooltip.test.ts`. Web: 577 test pass.
