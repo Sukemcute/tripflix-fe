@@ -16,7 +16,7 @@ import { refreshCommentsIfStale } from '../comment-cache';
 import { useHasUserInteracted } from '../use-has-user-interacted';
 import { useSettledFlag } from '../use-settled-flag';
 import { usePresence } from '../use-presence';
-import { useIsWideScreen } from '../use-wide-screen';
+import { useIsPinnedItineraryScreen, useIsWideScreen } from '../use-wide-screen';
 import { nextScrollTarget, stepScrollTowards, wheelDeltaToPixels } from './smooth-wheel-scroll';
 import reelsStyles from '../live-posts.module.css';
 import { type FeedNavFilter } from './floating-nav-rail';
@@ -47,6 +47,7 @@ export interface SocialFeedViewProps {
   focusCommentId?: string;
   onBackToResults?: () => void;
   isItineraryOpen?: boolean;
+  isItineraryPinned?: boolean;
   onOpenItinerary?: () => void;
   onCloseItinerary?: () => void;
   filterMode?: FeedNavFilter;
@@ -71,6 +72,7 @@ export function SocialFeedView({
   focusCommentId,
   onBackToResults,
   isItineraryOpen: propIsItineraryOpen,
+  isItineraryPinned: propIsItineraryPinned,
   onOpenItinerary,
   onCloseItinerary,
   filterMode: propFilterMode,
@@ -85,10 +87,18 @@ export function SocialFeedView({
   const activeFilter = propFilterMode ?? 'all';
   const [recommendMode, setRecommendMode] = useState<PostRecommendationsControllerRecommendPostsMode>('for_you');
 
+  const isWideScreen = useIsWideScreen();
+  const isPinnedScreen = useIsPinnedItineraryScreen();
+  const isItineraryPinned = propIsItineraryPinned ?? isPinnedScreen;
+
   const [localIsItineraryOpen, setLocalIsItineraryOpen] = useState(true);
-  const isItineraryOpen = propIsItineraryOpen ?? localIsItineraryOpen;
+  const isItineraryOpen = isItineraryPinned || (propIsItineraryOpen ?? localIsItineraryOpen);
   const handleOpenItinerary = onOpenItinerary ?? (() => setLocalIsItineraryOpen(true));
-  const handleCloseItinerary = onCloseItinerary ?? (() => setLocalIsItineraryOpen(false));
+  const handleCloseItinerary = () => {
+    if (isItineraryPinned) return;
+    if (onCloseItinerary) onCloseItinerary();
+    else setLocalIsItineraryOpen(false);
+  };
 
   const [localIsComposerOpen, setLocalIsComposerOpen] = useState(false);
   const handleOpenComposer = onOpenComposer ?? (() => setLocalIsComposerOpen(true));
@@ -96,7 +106,6 @@ export function SocialFeedView({
 
   // Layout states
   // Màn rộng mở sẵn panel bình luận; người dùng đóng/mở thì giữ lựa chọn đó. Server render coi như đóng để không lệch hydration.
-  const isWideScreen = useIsWideScreen();
   const [rightOpenChoice, setIsRightOpen] = useState<boolean | null>(focusCommentId ? true : null);
   const isRightOpen = rightOpenChoice ?? isWideScreen;
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
@@ -732,7 +741,12 @@ export function SocialFeedView({
       : `${styles.splitViewContainer} ${styles.splitViewCenterOnly}`;
 
   return (
-    <div className={`${containerClassName} ${isLayoutAnimated ? '' : styles.layoutStatic}`}>
+    <div
+      className={`${containerClassName} ${isItineraryPinned ? styles.splitViewPinnedLeft : ''} ${
+        isLayoutAnimated ? '' : styles.layoutStatic
+      }`}
+      data-itinerary-pinned={isItineraryPinned ? 'true' : undefined}
+    >
       {/* 1. Left Column: Itinerary Sidebar Panel (Nằm ngay bên phải của Dock, cố định vững vàng) */}
       {leftPresence.isRendered && (
         <ItinerarySidebarPanel
@@ -746,6 +760,12 @@ export function SocialFeedView({
           coverImage={activeItineraryCover}
           isOpen={leftPresence.isRendered}
           onClose={handleCloseItinerary}
+          // Chỉ có ý nghĩa khi đang hiện tab gợi ý (không tìm kiếm, không ở "Đã lưu").
+          onBrowseTripPosts={
+            !isSearchMode && activeFilter !== 'saved' && recommendMode !== 'has_plan'
+              ? () => setRecommendMode('has_plan')
+              : undefined
+          }
         />
       )}
 

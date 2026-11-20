@@ -24,9 +24,28 @@ function readSideTracks(columns: string): [string, string] {
 }
 
 describe('Bài viết: cột bên trên laptop', () => {
-  it.each(['max-width: 1439px', 'max-width: 1199px'])('co theo bề ngang màn ở mốc %s, không còn số cứng', (media) => {
-    for (const selector of ['.splitViewContainer', '.splitViewNoLeft', '.splitViewNoRight']) {
-      const columns = readColumns(media, selector);
+  it('từ 1200px trở lên chỉ còn mở cả hai cột hoặc đóng cột Bình luận (ẩn nút thu Lịch trình)', () => {
+    expect(readColumns(null, '.splitViewNoLeft')).toBe('');
+    expect(readColumns(null, '.splitViewCenterOnly')).toBe('');
+    expect(readColumns('max-width: 1439px', '.splitViewNoLeft')).toBe('');
+    expect(readColumns('max-width: 1439px', '.splitViewCenterOnly')).toBe('');
+
+    for (const selector of ['.splitViewContainer', '.splitViewNoRight']) {
+      const columns = readColumns('max-width: 1439px', selector);
+      expect(columns).toContain('minmax(0, 1fr)');
+      for (const track of readSideTracks(columns)) expect(track).toMatch(/^(clamp\(\d+px, \d+vw, \d+px\)|0px)$/);
+    }
+
+    const pinnedScope = readColumns('min-width: 1200px', '.splitViewContainer');
+    expect(pinnedScope).toBe('');
+    expect(css.split('@media (min-width: 1200px)')[1]?.split('@media')[0] ?? '').toMatch(
+      /\.splitViewContainer\s+\.itineraryCollapseBtn\s*\{[^}]*display:\s*none;/,
+    );
+  });
+
+  it('dưới 1200px (max-width: 1199px) vẫn giữ đủ các trạng thái đóng trái / đóng phải', () => {
+    for (const selector of ['.splitViewContainer', '.splitViewNoLeft', '.splitViewNoRight', '.splitViewCenterOnly']) {
+      const columns = readColumns('max-width: 1199px', selector);
       expect(columns).toContain('minmax(0, 1fr)');
       for (const track of readSideTracks(columns)) expect(track).toMatch(/^(clamp\(\d+px, \d+vw, \d+px\)|0px)$/);
     }
