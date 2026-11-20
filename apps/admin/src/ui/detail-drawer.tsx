@@ -68,7 +68,7 @@ export interface DetailDrawerProps {
  * Drawer chi tiết bên phải: xem một hồ sơ mà không rời danh sách.
  * - ≥1024px: không-modal, phủ lên phần phải của trang (danh sách giữ nguyên vị trí cuộn, vẫn bấm được hàng khác).
  * - <1024px: modal toàn màn hình, có bẫy focus.
- * Esc đóng (bỏ qua khi một hộp thoại modal khác đang mở hoặc đang thao tác ô chọn); đóng xong trả focus về phần tử đã mở nó.
+ * Esc đóng (bỏ qua khi một hộp thoại modal khác đang mở; Esc đang đóng danh sách của ô chọn native do trình duyệt xử lý riêng); đóng xong trả focus về phần tử đã mở nó.
  * J/K chuyển hồ sơ sau/trước khi có `navigation`. Có `isDirty` thì đóng/chuyển hồ sơ qua hộp xác nhận.
  */
 export function DetailDrawer({
@@ -141,8 +141,9 @@ export function DetailDrawer({
       if (event.key === 'Escape') {
         if (!isDesktop) return; // chế độ modal: sự kiện cancel của <dialog> lo
         if (document.querySelector('dialog:modal')) return;
-        if (target?.tagName === 'SELECT') return;
         if (isTyping && !ref.current?.contains(target)) return;
+        // preventDefault: nếu hộp xác nhận vừa mở (modal), Esc này không được đóng luôn hộp đó.
+        event.preventDefault();
         requestClose();
         return;
       }

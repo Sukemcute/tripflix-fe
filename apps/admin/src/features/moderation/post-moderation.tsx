@@ -2,45 +2,91 @@
 import { socialApi } from '@tripflix/api-client';
 import type {
   AdminPostsControllerListAdminPostsStatus,
+  AdminSocialPostDto,
   CreateModerationActionDtoAction,
 } from '@tripflix/api-client/core-api/model/index';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
+import { AdminButton } from '@/ui/button';
+import { DataTable, type DataColumn } from '@/ui/data-table';
+import { DetailDrawer } from '@/ui/detail-drawer';
+import { FilterToolbar, SelectField } from '@/ui/filter-toolbar';
+import { LoadMore } from '@/ui/pagination';
+import { EmptyState, LoadingState } from '@/ui/states';
+import { StatusBadge } from '@/ui/status-badge';
+import { readEnumParam } from '@/ui/url-params';
+import { buildDrawerNavigation, useDetailParam } from '@/ui/use-detail-param';
+import { useUrlParams } from '@/ui/use-url-params';
 import { AdminApiError } from '../shell/api-state';
-import { ModerationPostDetail } from './moderation-post-detail';
-import styles from './post-moderation.module.css';
+import {
+  ALLOWED_POST_ACTIONS,
+  POST_ACTIONS,
+  ModerationPostDetail,
+  postStatusLabel,
+  postStatusTone,
+  type PostStatus,
+} from './moderation-post-detail';
 
+const copy = vi.moderationConsole.postsTab;
+const STATUSES = ['draft', 'published', 'held', 'hidden', 'removed', 'deleted'] as const;
+const STATUS_FILTERS = ['', ...STATUSES] as const;
+
+const columns: DataColumn<AdminSocialPostDto>[] = [
+  {
+    id: 'title',
+    header: copy.columns.title,
+    openLabel: (post) => `${vi.api.detail}: ${post.title}`,
+    cell: (post) => (
+      <>
+        <span className="block">{post.title}</span>
+        <span className="block text-xs text-text-muted">
+          {post.post_type === 'video' ? copy.video : copy.vlog}
+        </span>
+      </>
+    ),
+  },
+  { id: 'author', header: copy.columns.author, hideBelow: 'sm', cell: (post) => post.author.display_name },
+  {
+    id: 'status',
+    header: copy.columns.status,
+    cell: (post) => <StatusBadge tone={postStatusTone(post.status)}>{postStatusLabel(post.status)}</StatusBadge>,
+  },
+  {
+    id: 'created',
+    header: copy.columns.created,
+    hideBelow: 'md',
+    cell: (post) => <span className="whitespace-nowrap">{new Date(post.created_at).toLocaleDateString('vi-VN')}</span>,
+  },
+];
+
+/** Danh sách bài viết để kiểm duyệt; bấm một bài mở drawer chi tiết + xử lý (`?id=`). */
 export function PostModeration() {
   const client = useQueryClient();
-  const [status, setStatus] = useState<AdminPostsControllerListAdminPostsStatus | ''>('');
-  const [selected, setSelected] = useState('');
-  const [reason, setReason] = useState('');
-  const detailRef = useRef<HTMLElement>(null);
+  const { params, update } = useUrlParams();
+  const { openId, open, close } = useDetailParam();
+  const status = readEnumParam(params.get('status'), STATUS_FILTERS, '');
+  const [form, setForm] = useState({ postId: '', reason: '' });
+  const reason = form.postId === openId ? form.reason : '';
+
   const query = useInfiniteQuery({
     queryKey: ['admin-posts', status],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) =>
-      socialApi.listAdminPosts({ cursor: pageParam, status: status || undefined }, signal),
+      socialApi.listAdminPosts({ cursor: pageParam, status: (status || undefined) as AdminPostsControllerListAdminPostsStatus | undefined }, signal),
     getNextPageParam: (page) => page.next_cursor ?? undefined,
     refetchInterval: 30_000,
   });
   const detail = useQuery({
-    queryKey: ['admin-posts', 'detail', selected],
-    enabled: !!selected,
-    queryFn: ({ signal }) => socialApi.getAdminPost(selected, signal),
+    queryKey: ['admin-posts', 'detail', openId],
+    enabled: !!openId,
+    queryFn: ({ signal }) => socialApi.getAdminPost(openId ?? '', signal),
   });
-  // Bấm "Xem chi tiết" ở bảng thì cuộn tới khung bài khi bài đã tải xong (cuộn sớm hơn thì khung còn trống, bị lệch).
-  // Chỉ cuộn một lần cho mỗi bài: tải lại sau khi ẩn/khôi phục không làm trang nhảy.
-  const loadedId = detail.data?.id;
-  useEffect(() => {
-    if (loadedId) detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [loadedId]);
   const mutation = useMutation({
     mutationFn: (action: CreateModerationActionDtoAction) =>
-      socialApi.moderatePost(selected, { action, reason_code: reason.trim() }),
+      socialApi.moderatePost(openId ?? '', { action, reason_code: reason.trim() }),
     onSuccess: async () => {
-      setReason('');
+      setForm({ postId: '', reason: '' });
       await Promise.all([
         client.invalidateQueries({ queryKey: ['admin-posts'] }),
         client.invalidateQueries({ queryKey: ['social'] }),
@@ -49,178 +95,112 @@ export function PostModeration() {
     },
   });
   const posts = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const post = detail.data;
+  const postStatus = post?.status as PostStatus | undefined;
+  const isLocked = postStatus === 'deleted' || postStatus === 'draft';
+
   return (
-    <section className={`admin-data ${styles.root}`} aria-label="Quản lý bài viết">
-      <header className={styles.heading}>
-        <div>
-          <h2>Quản lý bài viết</h2>
-          <p>Xem nội dung, kiểm tra lý do và xử lý bài viết trong cùng một nơi.</p>
-        </div>
-        <span className={styles.count}>{posts.length} bài đã tải</span>
-      </header>
-      <div className={`admin-filters ${styles.filters}`}>
-        <label>
-          {vi.api.status}
-          <select
-            value={status}
-            onChange={(event) => {
-              setStatus(event.target.value as typeof status);
-              setSelected('');
-              mutation.reset();
-            }}
-          >
-            <option value="">{vi.api.all}</option>
-            {(['draft', 'published', 'held', 'hidden', 'removed', 'deleted'] as const).map((value) => (
-              <option key={value} value={value}>
-                {value === 'held' ? vi.api.moderationHeld : vi.api[value]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          className="admin-secondary"
-          type="button"
-          disabled={query.isFetching}
-          onClick={() => {
-            void query.refetch();
-          }}
-        >
-          {query.isRefetching ? 'Đang làm mới…' : vi.api.refresh}
-        </button>
-      </div>
-      <AdminApiError
-        error={query.error}
-        retry={() => {
-          void query.refetch();
+    <div className="space-y-3">
+      <FilterToolbar
+        hasActiveFilters={!!status}
+        onReset={() => {
+          update({ status: null, id: null });
         }}
+        actions={
+          <AdminButton disabled={query.isFetching} onClick={() => void query.refetch()}>
+            {query.isRefetching ? copy.refreshing : copy.refresh}
+          </AdminButton>
+        }
+      >
+        <SelectField
+          label={copy.statusLabel}
+          value={status}
+          allLabel={vi.api.all}
+          options={STATUSES.map((value) => ({ value, label: postStatusLabel(value) }))}
+          onChange={(value) => {
+            mutation.reset();
+            update({ status: value, id: null });
+          }}
+        />
+      </FilterToolbar>
+      <AdminApiError error={query.error} retry={() => void query.refetch()} />
+      <DataTable
+        label={copy.table}
+        columns={columns}
+        rows={posts}
+        getRowId={(item) => item.id}
+        onRowOpen={(item) => {
+          mutation.reset();
+          open(item.id);
+        }}
+        selectedId={openId}
+        isLoading={query.isPending}
+        empty={!query.error && <EmptyState title={copy.empty} description={copy.emptyHint} />}
       />
-      {query.isPending && <output className={styles.loading}>{vi.api.loading}</output>}
-      <section className="admin-table-scroll" aria-label="Danh sách bài viết">
-        <table className={styles.table} aria-busy={query.isPending}>
-          <caption className={styles.srOnly}>Danh sách bài viết theo trạng thái đã chọn</caption>
-          <colgroup>
-            <col className={styles.titleColumn} />
-            <col className={styles.authorColumn} />
-            <col className={styles.statusColumn} />
-            <col className={styles.actionColumn} />
-          </colgroup>
-          <thead>
-            <tr>
-              <th scope="col">{vi.api.title}</th>
-              <th scope="col">{vi.api.author}</th>
-              <th scope="col">{vi.api.status}</th>
-              <th scope="col">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!query.isPending && !query.error && !posts.length && (
-              <tr>
-                <td colSpan={4} className={styles.empty}>
-                  <strong>Không có bài viết ở trạng thái này</strong>
-                  <p>Thử chọn trạng thái khác hoặc làm mới danh sách.</p>
-                </td>
-              </tr>
-            )}
-            {posts.map((post) => (
-              <tr key={post.id} data-selected={selected === post.id}>
-                <td>
-                  <span className={styles.postTitle}>{post.title}</span>
-                  <span className={styles.metadata}>
-                    {post.post_type === 'video' ? 'Video / Reel' : 'Vlog'}
-                    <span aria-hidden="true"> · </span>
-                    {new Date(post.created_at).toLocaleDateString('vi-VN')}
-                  </span>
-                </td>
-                <td aria-label={post.author.display_name}>
-                  <div className={styles.author}>
-                    <span className={styles.avatar} aria-hidden="true">
-                      {Array.from(post.author.display_name.trim())[0]?.toUpperCase() || 'T'}
-                    </span>
-                    <span>{post.author.display_name}</span>
-                  </div>
-                </td>
-                <td>
-                  <span className={styles.status} data-status={post.status}>
-                    <span className={styles.dot} aria-hidden="true" />
-                    {post.status === 'held'
-                      ? vi.api.moderationHeld
-                      : (vi.api[post.status as AdminPostsControllerListAdminPostsStatus] ?? post.status)}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    className={styles.detailButton}
-                    aria-expanded={selected === post.id}
-                    aria-controls={selected === post.id ? 'moderation-selected-post' : undefined}
-                    onClick={() => {
-                      setSelected(post.id);
-                      setReason('');
-                      mutation.reset();
-                    }}
-                  >
-                    {vi.api.detail}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-      <footer className={styles.footer}>
-        <span>
-          Đã tải {posts.length} bài viết{query.hasNextPage ? ' · Còn bài viết khác' : ''}
-        </span>
-        {query.hasNextPage && (
-          <button
-            type="button"
-            className="admin-secondary"
-            disabled={query.isFetchingNextPage}
-            onClick={() => {
-              void query.fetchNextPage();
-            }}
-          >
-            {query.isFetchingNextPage ? 'Đang tải…' : 'Tải thêm bài viết'}
-          </button>
-        )}
-      </footer>
-      {selected && (
-        <section
-          id="moderation-selected-post"
-          ref={detailRef}
-          className="admin-post-review"
-          aria-label={vi.api.moderationPostLabel}
-        >
-          <div className="admin-post-review-bar">
-            <p className="admin-eyebrow">{vi.api.moderationPostLabel}</p>
-            <button type="button" className="admin-secondary" onClick={() => setSelected('')}>
-              {vi.api.close}
-            </button>
-          </div>
-          <AdminApiError
-            error={detail.error}
-            retry={() => {
-              void detail.refetch();
-            }}
-          />
-          {detail.isPending && <output>{vi.api.loading}</output>}
-          {detail.data && (
-            <ModerationPostDetail
-              post={detail.data}
-              reason={reason}
-              onReasonChange={setReason}
-              onAction={(action) => mutation.mutate(action)}
-              isPending={mutation.isPending}
-              notice={
-                <>
-                  <AdminApiError error={mutation.error} />
-                  {mutation.isSuccess && <output className="admin-post-saved">{vi.api.saved}</output>}
-                </>
-              }
-            />
-          )}
-        </section>
+      {posts.length > 0 && (
+        <LoadMore
+          shown={posts.length}
+          hasMore={!!query.hasNextPage}
+          isFetching={query.isFetchingNextPage}
+          onLoadMore={() => void query.fetchNextPage()}
+        />
       )}
-    </section>
+      {openId && (
+        <DetailDrawer
+          size="wide"
+          title={post?.title ?? openId.slice(0, 8)}
+          status={post && <StatusBadge tone={postStatusTone(post.status)}>{postStatusLabel(post.status)}</StatusBadge>}
+          subtitle={post?.author.display_name}
+          navigation={buildDrawerNavigation(posts.map((item) => item.id), openId, (id) => {
+            mutation.reset();
+            open(id);
+          })}
+          isDirty={!!reason}
+          scrollKey={openId}
+          onClose={() => {
+            mutation.reset();
+            close();
+          }}
+          footer={
+            post && (
+              <div className="w-full space-y-2">
+                {postStatus === 'deleted' && <p className="text-[13px] text-text-muted">{copy.deletedNote}</p>}
+                {postStatus === 'draft' && <p className="text-[13px] text-text-muted">{copy.draftNote}</p>}
+                <AdminApiError error={mutation.error} />
+                {mutation.isSuccess && <output className="block text-[13px] text-teal-ink">{vi.api.saved}</output>}
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <SelectField
+                    label={vi.api.reason}
+                    value={reason}
+                    allLabel={copy.reasonPlaceholder}
+                    options={Object.entries(vi.moderation.reasons).map(([code, label]) => ({ value: code, label }))}
+                    onChange={(value) => setForm({ postId: openId, reason: value })}
+                  />
+                  {POST_ACTIONS.map((action) => (
+                    <AdminButton
+                      key={action}
+                      variant={action === 'remove' ? 'danger' : 'secondary'}
+                      disabled={
+                        mutation.isPending ||
+                        isLocked ||
+                        !reason.trim() ||
+                        !ALLOWED_POST_ACTIONS[postStatus ?? '']?.includes(action)
+                      }
+                      onClick={() => mutation.mutate(action)}
+                    >
+                      {postStatus === 'held' && action === 'restore' ? vi.api.moderationReleaseHeld : vi.api[action]}
+                    </AdminButton>
+                  ))}
+                </div>
+              </div>
+            )
+          }
+        >
+          <AdminApiError error={detail.error} retry={() => void detail.refetch()} />
+          {detail.isPending && <LoadingState rows={5} />}
+          {post && <ModerationPostDetail post={post} />}
+        </DetailDrawer>
+      )}
+    </div>
   );
 }

@@ -10,6 +10,7 @@ import { flights } from './flights';
 import { privacy } from './privacy';
 import { terms } from './terms';
 import { moderation } from './moderation';
+import { moderationConsole } from './moderation-console';
 import { searchMonitoring } from './search-monitoring';
 import { discoveryJobs } from './discovery-jobs';
 import { adminOperations } from './admin-operations';
@@ -31,6 +32,7 @@ export const vi = {
   discoveryJobs,
   assistant,
   moderation,
+  moderationConsole,
   flights,
   privacy,
   terms,

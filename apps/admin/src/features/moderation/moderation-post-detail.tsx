@@ -5,13 +5,15 @@ import type {
   SocialModerationHistoryDto,
 } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
-import type { ReactNode } from 'react';
+import { DetailSection, KeyValueList } from '@/ui/detail-parts';
+import { StatusBadge, type StatusTone } from '@/ui/status-badge';
 import { ModerationParts } from './moderation-parts';
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3100';
 
-const ACTIONS: readonly CreateModerationActionDtoAction[] = ['hide', 'remove', 'restore'];
-const ALLOWED_ACTIONS: Record<string, readonly CreateModerationActionDtoAction[]> = {
+export const POST_ACTIONS: readonly CreateModerationActionDtoAction[] = ['hide', 'remove', 'restore'];
+/** Hành động được phép theo trạng thái bài (giữ nguyên bản cũ). */
+export const ALLOWED_POST_ACTIONS: Record<string, readonly CreateModerationActionDtoAction[]> = {
   draft: [],
   held: ['restore', 'hide', 'remove'],
   deleted: [],
@@ -24,91 +26,52 @@ const HISTORY_LABEL: Record<string, string> = {
   remove: vi.api.moderationDidRemove,
   restore: vi.api.moderationDidRestore,
 };
-type PostStatus = 'held' | 'draft' | 'published' | 'hidden' | 'removed' | 'deleted';
+export type PostStatus = 'held' | 'draft' | 'published' | 'hidden' | 'removed' | 'deleted';
 
-function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString('vi-VN');
-}
+export const postStatusTone = (status: string): StatusTone =>
+  status === 'published'
+    ? 'success'
+    : status === 'held'
+      ? 'warning'
+      : status === 'removed'
+        ? 'danger'
+        : 'neutral';
 
-function getInitial(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || 'T';
-}
+export const postStatusLabel = (status: string): string =>
+  status === 'held' ? vi.api.moderationHeld : (vi.api[status as PostStatus] ?? status);
 
-export function ModerationPostDetail({
-  post,
-  reason,
-  onReasonChange,
-  onAction,
-  isPending,
-  notice,
-}: {
-  post: AdminSocialPostDetailDto;
-  reason: string;
-  onReasonChange: (value: string) => void;
-  onAction: (action: CreateModerationActionDtoAction) => void;
-  isPending: boolean;
-  /** Lỗi hoặc thông báo "Đã lưu" của lần xử lý gần nhất. */
-  notice: ReactNode;
-}) {
+const formatDate = (value: string) => new Date(value).toLocaleDateString('vi-VN');
+
+/** Nội dung bài trong drawer: một cột (tiêu đề, media đã quét, nội dung, lịch trình, số liệu, lịch sử). Hành động nằm ở footer. */
+export function ModerationPostDetail({ post }: { post: AdminSocialPostDetailDto }) {
   const trip = post.trip_attachment;
   const status = post.status as PostStatus;
-  const authorName = post.author.display_name;
 
   return (
-    <div className="admin-post-layout">
-      <article className="admin-post-main" aria-label={vi.api.moderationPostLabel}>
-        <header>
-          <p className="admin-post-kicker">
-            {trip?.destinationName && <span>{trip.destinationName}</span>}
-            <span>{t('api.postPublishedOn', { date: formatDate(post.created_at) })}</span>
-            <span className={`admin-post-status is-${status}`}>
-              {status === 'held' ? vi.api.moderationHeld : (vi.api[status] ?? post.status)}
-            </span>
-          </p>
-          <h2>{post.title}</h2>
-          <div className="admin-post-byline">
-            <span className="admin-post-avatar" aria-hidden="true">
-              {getInitial(authorName)}
-            </span>
-            <span>{authorName}</span>
-            {post.hashtags.length > 0 && (
-              <ul className="admin-post-tags" aria-label={vi.api.moderationHashtags}>
-                {post.hashtags.map((tag) => (
-                  <li key={tag}>#{tag}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </header>
-
-        <ModerationParts postId={post.id} />
+    <article aria-label={vi.api.moderationPostLabel}>
+      <DetailSection title={post.title}>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
+          {trip?.destinationName && <span>{trip.destinationName}</span>}
+          <span>{t('api.postPublishedOn', { date: formatDate(post.created_at) })}</span>
+          <span>{post.author.display_name}</span>
+        </div>
+        {post.hashtags.length > 0 && (
+          <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={vi.api.moderationHashtags}>
+            {post.hashtags.map((tag) => (
+              <li key={tag}>
+                <StatusBadge>#{tag}</StatusBadge>
+              </li>
+            ))}
+          </ul>
+        )}
         {post.body.trim() ? (
-          <p className="admin-post-body">{post.body}</p>
+          <p className="mt-3 text-sm leading-6 break-words whitespace-pre-wrap">{post.body}</p>
         ) : (
-          <p className="admin-post-muted">{vi.api.moderationNoBody}</p>
+          <p className="mt-3 text-[13px] text-text-muted">{vi.api.moderationNoBody}</p>
         )}
-
-        {!!trip?.items?.length && (
-          <section className="admin-post-itinerary" aria-labelledby="admin-post-itinerary-title">
-            <h3 id="admin-post-itinerary-title">{vi.api.postItinerary}</h3>
-            <ol>
-              {trip.items.map((item, index) => (
-                <li key={index}>
-                  <span className="admin-post-day">{t('api.postDay', { day: item.day })}</span>
-                  <div>
-                    <strong>{item.title}</strong>
-                    {item.location && <p>{item.location}</p>}
-                    {item.notes && <p>{item.notes}</p>}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
-
         {status === 'published' && (
           <a
-            className="admin-text-button admin-post-web-link"
+            className="mt-3 inline-block text-[13px] text-teal-ink underline underline-offset-2"
             href={`${WEB_URL}/inspiration?open=${encodeURIComponent(post.id)}`}
             target="_blank"
             rel="noreferrer"
@@ -116,88 +79,60 @@ export function ModerationPostDetail({
             {vi.api.moderationViewOnWeb} ↗
           </a>
         )}
-      </article>
+      </DetailSection>
 
-      <aside className="admin-post-aside">
-        <section className="admin-post-card">
-          <p className="admin-eyebrow">{vi.api.postStats}</p>
-          <ul className="admin-post-stats">
-            <li>{t('api.postReactionsTotal', { count: post.reaction_total })}</li>
-            <li>{t('api.moderationComments', { count: post.comment_count })}</li>
-            <li>{t('api.postShares', { count: post.share_count })}</li>
-            <li>{t('api.postSaves', { count: post.bookmark_count })}</li>
-          </ul>
-          <p className="admin-post-muted">
-            {t('api.moderationUpdatedOn', { date: formatDate(post.updated_at) })}
-          </p>
-        </section>
+      <ModerationParts postId={post.id} />
 
-        <section className="admin-post-card">
-          <p className="admin-eyebrow">{vi.api.moderationActions}</p>
-          <p className="admin-post-muted">{vi.api.moderationActionsHint}</p>
-          {status === 'deleted' && (
-            <p className="admin-post-muted">
-              Bài đã được tác giả xóa, không thể khôi phục hoặc kiểm duyệt lại.
-            </p>
-          )}
-          {status === 'draft' && (
-            <p className="admin-post-muted">
-              Bài đang là bản nháp. Chỉ xử lý kiểm duyệt sau khi bài được đăng.
-            </p>
-          )}
-          <label className="admin-post-reason">
-            {vi.api.reason}
-            <select
-              required
-              value={reason}
-              onChange={(event) => onReasonChange(event.target.value)}
-              disabled={isPending || status === 'deleted' || status === 'draft'}
-            >
-              <option value="">Chọn lý do kiểm duyệt</option>
-              {Object.entries(vi.moderation.reasons).map(([code, label]) => (
-                <option key={code} value={code}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {notice}
-          <div className="admin-post-actions">
-            {ACTIONS.map((action) => (
-              <button
-                key={action}
-                type="button"
-                className={action === 'remove' ? 'admin-secondary is-danger' : 'admin-secondary'}
-                disabled={isPending || !reason.trim() || !ALLOWED_ACTIONS[status]?.includes(action)}
-                onClick={() => onAction(action)}
-              >
-                {status === 'held' && action === 'restore' ? vi.api.moderationReleaseHeld : vi.api[action]}
-              </button>
+      {!!trip?.items?.length && (
+        <DetailSection title={vi.api.postItinerary}>
+          <ol className="space-y-3">
+            {trip.items.map((item, index) => (
+              <li key={index} className="flex gap-3 text-[13px]">
+                <span className="w-14 shrink-0 text-xs text-text-muted">{t('api.postDay', { day: item.day })}</span>
+                <div className="min-w-0">
+                  <p>{item.title}</p>
+                  {item.location && <p className="text-text-muted">{item.location}</p>}
+                  {item.notes && <p className="text-text-muted">{item.notes}</p>}
+                </div>
+              </li>
             ))}
-          </div>
-        </section>
+          </ol>
+        </DetailSection>
+      )}
 
-        <section className="admin-post-card">
-          <p className="admin-eyebrow">{vi.api.history}</p>
-          <ModerationHistory entries={post.moderation_history} />
-        </section>
-      </aside>
-    </div>
+      <DetailSection title={vi.moderationConsole.postsTab.stats}>
+        <KeyValueList
+          items={[
+            { label: vi.api.postStats, value: t('api.postReactionsTotal', { count: post.reaction_total }) },
+            { label: 'Bình luận', value: post.comment_count },
+            { label: 'Chia sẻ', value: post.share_count },
+            { label: 'Lưu', value: post.bookmark_count },
+            { label: 'Cập nhật', value: formatDate(post.updated_at) },
+          ]}
+        />
+      </DetailSection>
+
+      <DetailSection title={vi.api.history}>
+        <ModerationHistory entries={post.moderation_history} />
+      </DetailSection>
+    </article>
   );
 }
 
 function ModerationHistory({ entries }: { entries: SocialModerationHistoryDto[] }) {
-  if (entries.length === 0) return <p className="admin-post-muted">{vi.api.moderationNoHistory}</p>;
+  if (entries.length === 0) return <p className="text-[13px] text-text-muted">{vi.api.moderationNoHistory}</p>;
   return (
-    <ol className="admin-post-history">
+    <ol className="divide-y divide-border border-y border-border">
       {entries.map((entry) => (
-        <li key={entry.action_id} className={`is-${entry.action}`}>
-          <strong>{HISTORY_LABEL[entry.action] ?? entry.action}</strong>
-          <span>
+        <li key={entry.action_id} className="py-2 text-[13px]">
+          <p>{HISTORY_LABEL[entry.action] ?? entry.action}</p>
+          <p className="text-text-muted">
             {entry.reason_code}
             {entry.reason_detail ? ` · ${entry.reason_detail}` : ''}
-          </span>
-          <time dateTime={entry.created_at}>{new Date(entry.created_at).toLocaleString('vi-VN')}</time>
+          </p>
+          <time className="text-xs text-text-muted" dateTime={entry.created_at}>
+            {new Date(entry.created_at).toLocaleString('vi-VN')}
+          </time>
         </li>
       ))}
     </ol>
