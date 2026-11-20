@@ -7,6 +7,10 @@ export const adminOperations = {
   operations: 'Vận hành',
   platform: 'Nền tảng',
   management: 'Quản trị',
+  navGroups: { content: 'Nội dung', commerce: 'Thương mại', people: 'Người dùng', system: 'Hệ thống' },
+  liveShort: 'Trực tiếp',
+  reconnectingShort: 'Đang kết nối lại',
+  offlineShort: 'Mất kết nối',
   refresh: 'Làm mới dữ liệu',
   // TF104: hồ sơ vừa vào hàng chờ sau khi realtime làm mới.
   freshCase: 'Mới',
