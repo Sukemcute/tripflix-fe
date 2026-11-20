@@ -12,11 +12,12 @@ import {
   userActivityControllerOverview,
 } from '@tripflix/api-client/core-api/analytics/analytics';
 import { vi } from '@tripflix/i18n';
-import { AiKpi } from '../ai-usage/ai-kpi';
+import { SelectField } from '@/ui/filter-toolbar';
+import { MetricStrip, type MetricItem } from '@/ui/metric-strip';
 import { formatUsd } from '../ai-usage/ai-usage-range';
 import type { AnomalyList } from '../orders/orders-types';
 import { AdminApiError } from '../shell/api-state';
-import { Metric, Panel } from '../shell/operations-ui';
+import { Panel } from '../shell/operations-ui';
 import { userActivityRange } from '../user-activity/user-activity-format';
 import {
   countFailedRuns,
@@ -42,27 +43,18 @@ export function SystemSummary() {
   const range = userActivityRange(days, openedAt);
 
   return (
-    <section className="space-y-4" aria-label={copy.title}>
+    <section className="space-y-3" aria-label={copy.title}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-navy">{copy.title}</h2>
-          <p className="text-xs text-text-muted">{copy.description}</p>
+          <h2 className="text-base font-semibold">{copy.title}</h2>
+          <p className="text-[13px] text-text-muted">{copy.description}</p>
         </div>
-        <form className="admin-filters" style={{ padding: 0 }} onSubmit={(event) => event.preventDefault()}>
-          <label>
-            {copy.range}
-            <select
-              value={days}
-              onChange={(event) => setDays(Number(event.target.value) as SummaryRangeDays)}
-            >
-              {SUMMARY_RANGES.map((value) => (
-                <option key={value} value={value}>
-                  {copy.ranges[value]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </form>
+        <SelectField
+          label={copy.range}
+          value={String(days)}
+          options={SUMMARY_RANGES.map((value) => ({ value: String(value), label: copy.ranges[value] }))}
+          onChange={(value) => setDays(Number(value) as SummaryRangeDays)}
+        />
       </div>
       <div className="grid items-start gap-4 xl:grid-cols-2">
         <UsersGroup range={range} />
@@ -77,17 +69,34 @@ export function SystemSummary() {
   );
 }
 
-function Group({ title, href, children }: { title: string; href: string; children: ReactNode }) {
+function Group({
+  title,
+  href,
+  items,
+  note,
+  children,
+}: {
+  title: string;
+  href: string;
+  items: readonly MetricItem[];
+  note?: ReactNode;
+  children?: ReactNode;
+}) {
   return (
     <Panel
       title={title}
       action={
-        <Link className="text-xs font-bold text-teal-ink" href={href}>
+        <Link
+          className="text-xs text-teal-ink underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-teal"
+          href={href}
+        >
           {copy.viewDetail} ↗
         </Link>
       }
     >
-      <div className="space-y-3 p-4">{children}</div>
+      {children}
+      <MetricStrip label={title} items={items} />
+      {note && <p className="border-t border-border px-4 py-2 text-xs text-text-muted">{note}</p>}
     </Panel>
   );
 }
@@ -101,13 +110,17 @@ function UsersGroup({ range }: { range: { from: string; to: string } }) {
   });
   const totals = overview.isError ? undefined : overview.data?.totals;
   return (
-    <Group title={copy.users.title} href="/user-activity">
+    <Group
+      title={copy.users.title}
+      href="/user-activity"
+      items={[
+        { id: 'active', label: copy.users.activeUsers, value: totals?.activeUsers },
+        { id: 'posts', label: copy.users.newPosts, value: totals?.posts },
+        { id: 'shares', label: copy.users.shares, value: totals?.shares },
+      ]}
+      note={<>{copy.users.postsHint} {copy.users.sharesHint}</>}
+    >
       <AdminApiError error={overview.error} retry={() => void overview.refetch()} />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Metric label={copy.users.activeUsers} value={totals?.activeUsers} />
-        <Metric label={copy.users.newPosts} value={totals?.posts} hint={copy.users.postsHint} />
-        <Metric label={copy.users.shares} value={totals?.shares} hint={copy.users.sharesHint} />
-      </div>
     </Group>
   );
 }
@@ -122,18 +135,22 @@ function AiGroup({ range }: { range: { from: string; to: string } }) {
   });
   const total = usage.isError ? undefined : usage.data?.total;
   return (
-    <Group title={copy.ai.title} href="/ai-usage">
+    <Group
+      title={copy.ai.title}
+      href="/ai-usage"
+      items={[
+        { id: 'cost', label: copy.ai.cost, value: total ? formatUsd(total.costUsd) : undefined },
+        { id: 'calls', label: copy.ai.calls, value: total?.calls },
+        {
+          id: 'tokens',
+          label: copy.ai.tokens,
+          value: total
+            ? `${compact.format(total.inputTokens)} / ${compact.format(total.outputTokens)}`
+            : undefined,
+        },
+      ]}
+    >
       <AdminApiError error={usage.error} retry={() => void usage.refetch()} />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <AiKpi label={copy.ai.cost} value={total ? formatUsd(total.costUsd) : undefined} />
-        <Metric label={copy.ai.calls} value={total?.calls} />
-        <AiKpi
-          label={copy.ai.tokens}
-          value={
-            total ? `${compact.format(total.inputTokens)} / ${compact.format(total.outputTokens)}` : undefined
-          }
-        />
-      </div>
     </Group>
   );
 }
@@ -148,20 +165,16 @@ function SystemGroup() {
   });
   const summary = overview.isError ? undefined : overview.data?.summary;
   return (
-    <Group title={copy.system.title} href="/analytics">
+    <Group
+      title={copy.system.title}
+      href="/analytics"
+      items={[
+        { id: 'requests', label: copy.system.requests, value: formatRequests(summary?.requests) },
+        { id: 'errors', label: copy.system.errorRate, value: formatErrorRate(summary?.errorRate) },
+      ]}
+      note={<>{copy.system.last24h}</>}
+    >
       <AdminApiError error={overview.error} retry={() => void overview.refetch()} />
-      <div className="grid gap-3 sm:grid-cols-2">
-        <AiKpi
-          label={copy.system.requests}
-          value={formatRequests(summary?.requests)}
-          hint={copy.system.last24h}
-        />
-        <AiKpi
-          label={copy.system.errorRate}
-          value={formatErrorRate(summary?.errorRate)}
-          hint={copy.system.last24h}
-        />
-      </div>
     </Group>
   );
 }
@@ -176,14 +189,20 @@ function OrdersGroup() {
     retry: false,
   });
   return (
-    <Group title={copy.orders.title} href="/orders">
+    <Group
+      title={copy.orders.title}
+      href="/orders"
+      items={[
+        {
+          id: 'anomalies',
+          label: copy.orders.anomalies,
+          value: anomalies.isError ? undefined : sumAnomalies(anomalies.data?.counts),
+          isUrgent: true,
+        },
+      ]}
+      note={<>{copy.orders.current}</>}
+    >
       <AdminApiError error={anomalies.error} retry={() => void anomalies.refetch()} />
-      <Metric
-        label={copy.orders.anomalies}
-        value={anomalies.isError ? undefined : sumAnomalies(anomalies.data?.counts)}
-        hint={copy.orders.current}
-        urgent
-      />
     </Group>
   );
 }
@@ -205,19 +224,25 @@ function JobsGroup() {
   });
   const error = search.error ?? recommend.error;
   return (
-    <Group title={copy.jobs.title} href="/search-jobs">
+    <Group
+      title={copy.jobs.title}
+      href="/search-jobs"
+      items={[
+        {
+          id: 'failed',
+          label: copy.jobs.failedRuns,
+          value: error ? undefined : countFailedRuns([search.data, recommend.data]),
+          isUrgent: true,
+        },
+      ]}
+      note={<>{copy.jobs.recent}</>}
+    >
       <AdminApiError
         error={error}
         retry={() => {
           void search.refetch();
           void recommend.refetch();
         }}
-      />
-      <Metric
-        label={copy.jobs.failedRuns}
-        value={error ? undefined : countFailedRuns([search.data, recommend.data])}
-        hint={copy.jobs.recent}
-        urgent
       />
     </Group>
   );

@@ -38,7 +38,14 @@ function Content({ item }: { item: MetricItem }) {
             : item.value
           : '—'}
       </span>
-      {item.hint && <span className="mt-0.5 block truncate text-xs text-text-muted">{item.hint}</span>}
+      {item.hint && (
+        <span
+          className="mt-0.5 block truncate text-xs text-text-muted"
+          title={typeof item.hint === 'string' ? item.hint : undefined}
+        >
+          {item.hint}
+        </span>
+      )}
     </>
   );
 }

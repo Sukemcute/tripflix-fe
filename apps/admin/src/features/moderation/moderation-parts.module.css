@@ -1,14 +1,12 @@
 .panel {
-  margin-block: 20px;
-  padding: 20px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
   min-width: 0;
 }
 .coverage {
   margin-block: 16px;
-  padding: 14px;
-  border: 1px solid var(--color-border);
+  padding: 12px;
   border-radius: 8px;
   background: var(--color-surface);
   font-size: 12px;
@@ -16,7 +14,8 @@
 }
 .coverage h4 {
   margin: 0 0 6px;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600;
 }
 .coverage p {
   margin: 0 0 10px;
@@ -46,13 +45,13 @@
 }
 .header h3 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
 }
 .header p {
-  margin: 8px 0 0;
+  margin: 2px 0 0;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.6;
   max-width: 65ch;
 }
@@ -60,14 +59,13 @@
   flex-shrink: 0;
 }
 .button {
-  padding: 8px 12px;
-  min-height: 36px;
+  padding: 0 10px;
+  min-height: 28px;
   border: 1px solid var(--color-border);
-  border-radius: 7px;
+  border-radius: 8px;
   background: var(--color-background);
-  color: var(--color-text);
+  color: var(--color-ink);
   font-size: 12px;
-  font-weight: 600;
   cursor: pointer;
 }
 .button:hover {
@@ -88,15 +86,16 @@
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
 }
 .part {
   min-width: 0;
-  padding: 16px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-background);
+  padding: 14px 0;
+  border-top: 1px solid var(--color-border);
+}
+.part:first-child {
+  border-top: 0;
 }
 .caption {
   grid-column: 1 / -1;
@@ -111,30 +110,30 @@
 }
 .partHeader h4 {
   margin: 0;
-  font-size: 14px;
-}
-.badge {
-  border-radius: 5px;
-  padding: 4px 8px;
-  background: #eef2f6;
-  color: #475569;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
+.badge {
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+  font-size: 12px;
+}
 .badge[data-status='passed'] {
-  background: #e6f6ee;
-  color: #176145;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
 }
 .badge[data-status='flagged'],
 .badge[data-status='failed'] {
-  background: #fff0eb;
-  color: #ad351a;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
 }
 .badge[data-status='checking'],
 .badge[data-status='deferred'],
 .badge[data-status='waiting'] {
-  background: #fff6da;
-  color: #805800;
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
 }
 .body {
   white-space: pre-wrap;
@@ -148,7 +147,7 @@
   width: 100%;
   height: 190px;
   object-fit: contain;
-  border-radius: 5px;
+  border-radius: 4px;
   background: var(--color-surface);
 }
 .placeholder {
@@ -172,12 +171,12 @@
   padding-left: 18px;
   font-size: 13px;
   line-height: 1.7;
-  color: #ad351a;
+  color: var(--color-coral-ink);
 }
 .error {
   font-size: 13px;
   line-height: 1.6;
-  color: #ad351a;
+  color: var(--color-coral-ink);
 }
 .meta {
   display: grid;
@@ -200,9 +199,6 @@
   font-variant-numeric: tabular-nums;
 }
 @media (max-width: 640px) {
-  .panel {
-    padding: 14px;
-  }
   .grid {
     grid-template-columns: minmax(0, 1fr);
   }

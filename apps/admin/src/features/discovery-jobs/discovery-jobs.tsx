@@ -16,7 +16,13 @@ import type {
 import { t, vi } from '@tripflix/i18n';
 import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { EmptyState, LoadingState, Metric, Panel } from '../shell/operations-ui';
+import { AdminButton } from '@/ui/button';
+import { DataTable, type DataColumn } from '@/ui/data-table';
+import { SelectInput, TextField } from '@/ui/form-field';
+import { MetricStrip } from '@/ui/metric-strip';
+import { EmptyState, LoadingState } from '@/ui/states';
+import { StatusBadge, type StatusTone } from '@/ui/status-badge';
+import { Panel } from '../shell/operations-ui';
 import { AdminApiError } from '../shell/api-state';
 import { formatInterval, INTERVAL_PRESET_MINUTES, toIntervalMs } from './interval';
 import { VocabGaps } from './vocab-gaps';
@@ -73,43 +79,47 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
   });
 
   const data = jobs.isError ? undefined : jobs.data;
+  const allRuns = data?.jobs.flatMap((job) => job.runs) ?? [];
+  const countOutcome = (outcome: JobRunDto['outcome']) =>
+    allRuns.filter((entry) => entry.outcome === outcome).length;
   return (
-    <>
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        <span className="admin-badge">
-          {data ? t('discoveryJobs.checkedAt', { time: formatAt(data.checkedAt) }) : vi.api.loading}
-        </span>
-      </div>
-      <p className="admin-helper">
+    <div className="space-y-4">
+      <p className="text-[13px] text-text-muted">
+        {data ? t('discoveryJobs.checkedAt', { time: formatAt(data.checkedAt) }) : vi.api.loading}
+        {' · '}
         {copy.polling} {!canRun && copy.superadminOnly}
       </p>
-      {notice && <output className="admin-helper">{notice}</output>}
+      {notice && <output className="block text-[13px] text-text-muted">{notice}</output>}
       {jobs.isError && <AdminApiError error={jobs.error} retry={() => void jobs.refetch()} />}
       {run.isError && <AdminApiError error={run.error} />}
 
       {jobs.isPending && <LoadingState />}
       {data && (
-        <section className="grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label={copy.history}>
-          <Metric label={copy.running} value={data.jobs.filter((job) => job.isRunning).length} />
-          <Metric
-            label={copy.outcome.succeeded}
-            value={
-              data.jobs.flatMap((job) => job.runs).filter((entry) => entry.outcome === 'succeeded').length
-            }
-            hint={vi.adminOperations.loadedLog}
-          />
-          <Metric
-            label={copy.outcome.failed}
-            value={data.jobs.flatMap((job) => job.runs).filter((entry) => entry.outcome === 'failed').length}
-            hint={vi.adminOperations.loadedLog}
-            urgent
-          />
-          <Metric
-            label={copy.outcome.skipped}
-            value={data.jobs.flatMap((job) => job.runs).filter((entry) => entry.outcome === 'skipped').length}
-            hint={vi.adminOperations.loadedLog}
-          />
-        </section>
+        <MetricStrip
+          label={copy.history}
+          items={[
+            { id: 'running', label: copy.running, value: data.jobs.filter((job) => job.isRunning).length },
+            {
+              id: 'succeeded',
+              label: copy.outcome.succeeded,
+              value: countOutcome('succeeded'),
+              hint: vi.adminOperations.loadedLog,
+            },
+            {
+              id: 'failed',
+              label: copy.outcome.failed,
+              value: countOutcome('failed'),
+              hint: vi.adminOperations.loadedLog,
+              isUrgent: true,
+            },
+            {
+              id: 'skipped',
+              label: copy.outcome.skipped,
+              value: countOutcome('skipped'),
+              hint: vi.adminOperations.loadedLog,
+            },
+          ]}
+        />
       )}
       {data && !data.jobs.length && <EmptyState title={vi.adminOperations.noJobs} />}
 
@@ -117,39 +127,32 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
         const isBusy =
           job.isRunning || job.runs[0]?.outcome === 'running' || (run.isPending && run.variables === job.job);
         return (
-          <section key={job.job} className="admin-data" aria-label={copy.jobs[job.job]}>
-            <div className="admin-data-heading">
-              <div>
-                <h2>
-                  {copy.jobs[job.job]} <code>{job.job}</code>
-                </h2>
-                <p>
-                  {job.intervalMs === null
-                    ? copy.onBoot
-                    : t('discoveryJobs.every', { interval: formatInterval(job.intervalMs) })}
-                </p>
-              </div>
-              {canRun && (
-                <button
-                  type="button"
-                  className="admin-primary"
-                  disabled={isBusy}
-                  onClick={() => run.mutate(job.job)}
-                >
+          <Panel
+            key={job.job}
+            title={copy.jobs[job.job]}
+            description={`${job.job} · ${
+              job.intervalMs === null
+                ? copy.onBoot
+                : t('discoveryJobs.every', { interval: formatInterval(job.intervalMs) })
+            }`}
+            action={
+              canRun && (
+                <AdminButton variant="primary" disabled={isBusy} onClick={() => run.mutate(job.job)}>
                   {isBusy ? copy.running : copy.run}
-                </button>
-              )}
-            </div>
+                </AdminButton>
+              )
+            }
+          >
             {canRun && job.canChangeInterval && <IntervalEditor job={job} queryKey={queryKey} />}
             <JobDurationChart runs={job.runs} />
             <RunsTable runs={job.runs} />
-          </section>
+          </Panel>
         );
       })}
 
       {data?.recommendStats && <RecommendStats stats={data.recommendStats} />}
       {group === 'search' && <VocabGaps />}
-    </>
+    </div>
   );
 }
 
@@ -161,8 +164,10 @@ function JobDurationChart({ runs }: { runs: JobRunDto[] }) {
     .map((run) => ({ at: run.startedAt, durationMs: run.durationMs }));
   if (!data.length) return null;
   return (
-    <Panel title={vi.adminOperations.duration} description={vi.adminOperations.durationHint}>
-      <div className="h-48 w-full p-4" aria-label={vi.adminOperations.duration}>
+    <div className="border-t border-border px-4 py-3">
+      <h3 className="text-[13px] font-semibold">{vi.adminOperations.duration}</h3>
+      <p className="text-xs text-text-muted">{vi.adminOperations.durationHint}</p>
+      <div className="mt-2 h-40 w-full" aria-label={vi.adminOperations.duration}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ left: 0, right: 12 }}>
             <CartesianGrid vertical={false} stroke="var(--color-border)" />
@@ -190,7 +195,7 @@ function JobDurationChart({ runs }: { runs: JobRunDto[] }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </Panel>
+    </div>
   );
 }
 
@@ -213,17 +218,17 @@ function IntervalEditor({ job, queryKey }: { job: DiscoveryJobDto; queryKey: str
   const isDefault = job.intervalMs === job.defaultIntervalMs;
 
   return (
-    <>
+    <div className="space-y-2 border-t border-border px-4 py-3">
       <form
-        className="admin-filters"
+        className="flex flex-wrap items-end gap-3"
         onSubmit={(event) => {
           event.preventDefault();
           if (intervalMs !== null) save.mutate(intervalMs);
         }}
       >
-        <label>
-          {copy.interval.label}
-          <select
+        <div className="w-56">
+          <SelectInput
+            label={copy.interval.label}
             value={isPreset ? minutes : 'custom'}
             onChange={(event) => setMinutes(event.target.value === 'custom' ? '' : event.target.value)}
           >
@@ -233,12 +238,12 @@ function IntervalEditor({ job, queryKey }: { job: DiscoveryJobDto; queryKey: str
               </option>
             ))}
             <option value="custom">{copy.interval.custom}</option>
-          </select>
-        </label>
+          </SelectInput>
+        </div>
         {!isPreset && (
-          <label>
-            {copy.interval.custom}
-            <input
+          <div className="w-40">
+            <TextField
+              label={copy.interval.custom}
               type="number"
               min={1}
               max={1440}
@@ -247,69 +252,63 @@ function IntervalEditor({ job, queryKey }: { job: DiscoveryJobDto; queryKey: str
               value={minutes}
               onChange={(event) => setMinutes(event.target.value)}
             />
-          </label>
+          </div>
         )}
-        <button
+        <AdminButton
           type="submit"
-          className="admin-primary"
+          size="lg"
+          variant="primary"
           disabled={save.isPending || intervalMs === null || intervalMs === job.intervalMs}
         >
           {save.isPending ? copy.interval.saving : copy.interval.save}
-        </button>
+        </AdminButton>
         {!isDefault && job.defaultIntervalMs !== null && (
-          <button
-            type="button"
-            className="admin-secondary"
-            disabled={save.isPending}
-            onClick={() => save.mutate(null)}
-          >
+          <AdminButton size="lg" disabled={save.isPending} onClick={() => save.mutate(null)}>
             {t('discoveryJobs.interval.reset', { interval: formatInterval(job.defaultIntervalMs) })}
-          </button>
+          </AdminButton>
         )}
       </form>
       {minutes !== '' && intervalMs === null && (
-        <output className="admin-helper">{copy.interval.invalid}</output>
+        <output className="block text-xs text-coral-ink">{copy.interval.invalid}</output>
       )}
-      {job.job === 'recommend_build' && <p className="admin-helper">{copy.interval.recommendNote}</p>}
-      {notice && <output className="admin-helper">{notice}</output>}
+      {job.job === 'recommend_build' && <p className="text-xs text-text-muted">{copy.interval.recommendNote}</p>}
+      {notice && <output className="block text-xs text-text-muted">{notice}</output>}
       {save.isError && <AdminApiError error={save.error} />}
-    </>
+    </div>
   );
 }
 
+const outcomeTone = (outcome: JobRunDto['outcome']): StatusTone =>
+  outcome === 'succeeded' ? 'success' : outcome === 'failed' ? 'danger' : outcome === 'running' ? 'info' : 'neutral';
+
+const runColumns: DataColumn<JobRunDto>[] = [
+  { id: 'startedAt', header: copy.columns.startedAt, cell: (r) => formatAt(r.startedAt) },
+  { id: 'trigger', header: copy.columns.trigger, hideBelow: 'md', cell: (r) => copy.trigger[r.trigger] },
+  {
+    id: 'outcome',
+    header: copy.columns.outcome,
+    cell: (r) => <StatusBadge tone={outcomeTone(r.outcome)}>{copy.outcome[r.outcome]}</StatusBadge>,
+  },
+  { id: 'duration', header: copy.columns.duration, align: 'right', cell: (r) => formatDuration(r.durationMs) },
+  { id: 'summary', header: copy.columns.summary, hideBelow: 'sm', cell: (r) => formatSummary(r) },
+  {
+    id: 'error',
+    header: copy.columns.error,
+    hideBelow: 'lg',
+    cell: (r) => <span className="block max-w-xs truncate">{r.error ?? '—'}</span>,
+  },
+];
+
 function RunsTable({ runs }: { runs: JobRunDto[] }) {
-  if (!runs.length) return <output className="admin-empty">{copy.noRuns}</output>;
   return (
-    <div className="admin-table-scroll">
-      <table aria-label={copy.history}>
-        <thead>
-          <tr>
-            <th>{copy.columns.startedAt}</th>
-            <th>{copy.columns.trigger}</th>
-            <th>{copy.columns.outcome}</th>
-            <th>{copy.columns.duration}</th>
-            <th>{copy.columns.summary}</th>
-            <th>{copy.columns.error}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {runs.map((r) => (
-            <tr key={r.runId}>
-              <td>{formatAt(r.startedAt)}</td>
-              <td>{copy.trigger[r.trigger]}</td>
-              <td>
-                <span data-outcome={r.outcome} className={`admin-status ${r.outcome === 'succeeded' ? '' : 'waiting'}`}>
-                  {copy.outcome[r.outcome]}
-                </span>
-              </td>
-              <td>{formatDuration(r.durationMs)}</td>
-              <td>{formatSummary(r)}</td>
-              <td>{r.error ?? '—'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      label={copy.history}
+      columns={runColumns}
+      rows={runs}
+      getRowId={(r) => r.runId}
+      empty={<EmptyState title={copy.noRuns} />}
+      className="border-t border-border"
+    />
   );
 }
 
@@ -318,45 +317,36 @@ function RecommendStats({ stats }: { stats: RecommendStatsDto }) {
     (k) => [copy.stats[k], stats[k]] as const,
   );
   return (
-    <section className="admin-data" aria-label={copy.stats.title}>
-      <div className="admin-data-heading">
-        <div>
-          <h2>{copy.stats.title}</h2>
-        </div>
-      </div>
-      <div className="admin-table-scroll">
-        <table>
-          <tbody>
-            {counts.map(([label, value]) => (
-              <tr key={label}>
-                <th scope="row">{label}</th>
-                <td>{value.toLocaleString('vi-VN')}</td>
-              </tr>
+    <Panel title={copy.stats.title}>
+      <dl className="divide-y divide-border text-[13px]">
+        {counts.map(([label, value]) => (
+          <div key={label} className="flex justify-between gap-4 px-4 py-2.5">
+            <dt className="text-text-muted">{label}</dt>
+            <dd className="tabular-nums">{value.toLocaleString('vi-VN')}</dd>
+          </div>
+        ))}
+        <div className="grid gap-1 px-4 py-2.5 sm:grid-cols-[12rem_1fr]">
+          <dt className="text-text-muted">{copy.stats.algos}</dt>
+          <dd className="space-y-0.5">
+            {stats.algos.map((a) => (
+              <div key={a.name}>
+                <code>{a.name}</code>: {a.postBuilder} · {a.userBuilder} · {a.ranker}
+              </div>
             ))}
-            <tr>
-              <th scope="row">{copy.stats.algos}</th>
-              <td>
-                {stats.algos.map((a) => (
-                  <div key={a.name}>
-                    <code>{a.name}</code>: {a.postBuilder} · {a.userBuilder} · {a.ranker}
-                  </div>
-                ))}
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">{copy.stats.builders}</th>
-              <td>
-                {stats.jobStates.map((s) => (
-                  <div key={s.name}>
-                    <code>{s.name}</code>: {s.lastRunAt ? formatAt(s.lastRunAt) : copy.stats.never}
-                    {s.lastError ? ` · ${s.lastError}` : ''}
-                  </div>
-                ))}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+          </dd>
+        </div>
+        <div className="grid gap-1 px-4 py-2.5 sm:grid-cols-[12rem_1fr]">
+          <dt className="text-text-muted">{copy.stats.builders}</dt>
+          <dd className="space-y-0.5">
+            {stats.jobStates.map((s) => (
+              <div key={s.name}>
+                <code>{s.name}</code>: {s.lastRunAt ? formatAt(s.lastRunAt) : copy.stats.never}
+                {s.lastError ? ` · ${s.lastError}` : ''}
+              </div>
+            ))}
+          </dd>
+        </div>
+      </dl>
+    </Panel>
   );
 }

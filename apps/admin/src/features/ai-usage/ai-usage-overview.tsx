@@ -8,11 +8,12 @@ import {
 } from '@tripflix/api-client/core-api/analytics/analytics';
 import type { AiUsageControllerGetAiUsageGroupBy } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
+import { SelectField } from '@/ui/filter-toolbar';
+import { MetricStrip } from '@/ui/metric-strip';
 import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { AdminApiError } from '../shell/api-state';
 import { EmptyState, LoadingState, Panel } from '../shell/operations-ui';
-import { AiKpi } from './ai-kpi';
 import { bucketFor, count, formatBucketLabel } from './ai-usage-format';
 import { formatUsd } from './ai-usage-range';
 
@@ -61,13 +62,16 @@ export function AiUsageOverview({ range, days }: { range: { from: string; to: st
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <AiKpi label={copy.kpi.cost} value={total ? formatUsd(total.costUsd) : undefined} />
-        <AiKpi label={copy.kpi.calls} value={total ? count.format(total.calls) : undefined} />
-        <AiKpi label={copy.kpi.inputTokens} value={total ? compact.format(total.inputTokens) : undefined} />
-        <AiKpi label={copy.kpi.outputTokens} value={total ? compact.format(total.outputTokens) : undefined} />
-        <AiKpi label={copy.kpi.users} value={users.data ? count.format(users.data.total) : undefined} />
-      </div>
+      <MetricStrip
+        label={copy.title}
+        items={[
+          { id: 'cost', label: copy.kpi.cost, value: total ? formatUsd(total.costUsd) : undefined },
+          { id: 'calls', label: copy.kpi.calls, value: total ? count.format(total.calls) : undefined },
+          { id: 'in', label: copy.kpi.inputTokens, value: total ? compact.format(total.inputTokens) : undefined },
+          { id: 'out', label: copy.kpi.outputTokens, value: total ? compact.format(total.outputTokens) : undefined },
+          { id: 'users', label: copy.kpi.users, value: users.data ? count.format(users.data.total) : undefined },
+        ]}
+      />
 
       {series.isError && <AdminApiError error={series.error} retry={() => void series.refetch()} />}
       <div className="grid gap-6 xl:grid-cols-2">
@@ -150,20 +154,12 @@ export function AiUsageOverview({ range, days }: { range: { from: string; to: st
       <Panel
         title={copy.byGroup}
         action={
-          <label className="flex items-center gap-2 text-xs text-text-muted">
-            {copy.groupBy}
-            <select
-              className="rounded-md border border-border bg-background px-2 py-1 text-xs text-ink"
-              value={groupBy}
-              onChange={(event) => setGroupBy(event.target.value as AiUsageControllerGetAiUsageGroupBy)}
-            >
-              {GROUPS.map((value) => (
-                <option key={value} value={value}>
-                  {copy.groups[value]}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SelectField
+            label={copy.groupBy}
+            value={groupBy}
+            options={GROUPS.map((value) => ({ value, label: copy.groups[value] }))}
+            onChange={(value) => setGroupBy(value as AiUsageControllerGetAiUsageGroupBy)}
+          />
         }
       >
         {usage.isError && <AdminApiError error={usage.error} retry={() => void usage.refetch()} />}

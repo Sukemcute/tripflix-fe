@@ -2,6 +2,8 @@
 
 import type { TelemetryPointDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
+import { EmptyState } from '@/ui/states';
+import { Panel } from '../shell/operations-ui';
 import styles from './analytics.module.css';
 
 const copy = vi.analytics;
@@ -39,14 +41,7 @@ export function MetricChart({
     })
     .join(' ');
   return (
-    <section className={styles.panel}>
-      <header className={styles.panelHeading}>
-        <div>
-          <h2>{title}</h2>
-          <p>{description}</p>
-        </div>
-        <span className={styles.unit}>{unit}</span>
-      </header>
+    <Panel title={`${title} (${unit})`} description={description}>
       {available.length ? (
         <>
           <svg className={styles.chart} viewBox="0 0 720 218" aria-label={title}>
@@ -87,19 +82,21 @@ export function MetricChart({
           </svg>
           <details className={styles.chartDetails}>
             <summary>{copy.chartData}</summary>
-            <div className={styles.tableScroll}>
-              <table>
+            <div className={styles.scroll}>
+              <table className="ops-table">
                 <thead>
                   <tr>
-                    <th>{copy.time}</th>
-                    <th>{unit}</th>
+                    <th scope="col">{copy.time}</th>
+                    <th scope="col" className="text-right">
+                      {unit}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {points.map((point) => (
                     <tr key={point.at}>
                       <td>{formatTime(point.at)}</td>
-                      <td>{formatMetric(point[field], 3)}</td>
+                      <td className="text-right tabular-nums">{formatMetric(point[field], 3)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -108,11 +105,8 @@ export function MetricChart({
           </details>
         </>
       ) : (
-        <div className={styles.empty}>
-          <p>{copy.noChartData}</p>
-          <small>{copy.warmup}</small>
-        </div>
+        <EmptyState title={copy.noChartData} description={copy.warmup} />
       )}
-    </section>
+    </Panel>
   );
 }

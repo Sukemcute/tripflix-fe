@@ -5,9 +5,17 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import { moderationApi, useApiSession } from '@tripflix/api-client';
 import type { CoverOcrFilter, CoverOcrItem } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
+import { AdminButton } from '../../ui/button';
+import { DataTable, type DataColumn } from '../../ui/data-table';
+import { DetailDrawer } from '../../ui/detail-drawer';
+import { DetailSection, KeyValueList } from '../../ui/detail-parts';
+import { buildDrawerNavigation } from '../../ui/use-detail-param';
+import { LoadMore } from '../../ui/pagination';
+import { Segmented } from '../../ui/segmented';
+import { EmptyState } from '../../ui/states';
+import { StatusBadge, type StatusTone } from '../../ui/status-badge';
 import { AdminApiError } from '../shell/api-state';
 import { ModerationParts } from './moderation-parts';
-import styles from './cover-ocr-monitor.module.css';
 
 const filters: { value: CoverOcrFilter; label: string }[] = [
   { value: 'all', label: 'Tất cả' },
@@ -19,16 +27,22 @@ const filters: { value: CoverOcrFilter; label: string }[] = [
 const statusText = vi.moderation.parts.statuses;
 const errorText = vi.moderation.parts.errors;
 
+const statusTone = (status: string): StatusTone =>
+  status === 'passed' ? 'success' : status === 'flagged' ? 'warning' : status === 'failed' ? 'danger' : 'neutral';
+const statusLabel = (status: string) => statusText[status as keyof typeof statusText] ?? status;
+const formatAt = (value: string) => new Date(value).toLocaleString('vi-VN');
+
+/** Theo dõi chữ đọc được từ ảnh bìa video; chi tiết bài mở trong drawer bên phải, danh sách giữ nguyên. */
 export function CoverOcrMonitor() {
   const { user } = useApiSession();
   const client = useQueryClient();
   const [filter, setFilter] = useState<CoverOcrFilter>('all');
-  const [openPostId, setOpenPostId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
   const query = useInfiniteQuery({
     queryKey: ['moderation', 'cover-ocr', user?.id, filter],
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) => moderationApi.coverOcr(filter, pageParam, signal),
-    getNextPageParam: (page) => page.nextCursor ? Number(page.nextCursor) : undefined,
+    getNextPageParam: (page) => (page.nextCursor ? Number(page.nextCursor) : undefined),
     refetchInterval: 30_000,
   });
   const retry = useMutation({
@@ -40,96 +54,139 @@ export function CoverOcrMonitor() {
   });
   const counts = query.data?.pages[0]?.counts;
   const items = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const opened = items.find((item) => item.id === openId);
+
+  const columns: DataColumn<CoverOcrItem>[] = [
+    {
+      id: 'post',
+      header: 'Bài viết',
+      openLabel: (item) => item.postTitle,
+      cell: (item) => (
+        <span className="block max-w-xl min-w-0">
+          <span className="block truncate">{item.postTitle}</span>
+          {(item.status === 'passed' || item.status === 'flagged') && (
+            <span className="block truncate text-xs text-text-muted">
+              {item.extractedText?.trim() || vi.moderation.parts.noCoverText}
+            </span>
+          )}
+        </span>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Trạng thái',
+      cell: (item) => <StatusBadge tone={statusTone(item.status)}>{statusLabel(item.status)}</StatusBadge>,
+    },
+    { id: 'attempts', header: 'Lần thử', align: 'right', hideBelow: 'sm', cell: (item) => item.attempts },
+    { id: 'updatedAt', header: 'Cập nhật', hideBelow: 'md', cell: (item) => formatAt(item.updatedAt) },
+    {
+      id: 'actions',
+      header: <span className="sr-only">Thao tác</span>,
+      align: 'right',
+      cell: (item) =>
+        item.status === 'failed' ? (
+          <AdminButton size="sm" disabled={retry.isPending} onClick={() => retry.mutate(item.id)}>
+            {retry.isPending && retry.variables === item.id ? 'Đang lên lịch…' : 'Thử quét lại'}
+          </AdminButton>
+        ) : null,
+    },
+  ];
 
   return (
-    <section className={styles.panel} aria-label="Theo dõi OCR ảnh bìa video">
-      <header className={styles.header}>
+    <section className="space-y-3" aria-label="Theo dõi OCR ảnh bìa video">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className={styles.eyebrow}>Kiểm duyệt video</p>
-          <h2>Chữ trên ảnh bìa</h2>
-          <p>Theo dõi chữ đọc từ ảnh bìa video. Kết quả bị gắn cờ cần người kiểm duyệt xem lại ảnh gốc.</p>
+          <h2 className="text-sm font-semibold">Chữ trên ảnh bìa</h2>
+          <p className="text-[13px] text-text-muted">
+            Theo dõi chữ đọc từ ảnh bìa video. Kết quả bị gắn cờ cần người kiểm duyệt xem lại ảnh gốc.
+          </p>
         </div>
-        <button type="button" className={styles.button} onClick={() => void query.refetch()}>
-          Làm mới
-        </button>
-      </header>
-      <div className={styles.filters} aria-label="Lọc trạng thái OCR">
-        {filters.map(({ value, label }) => (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={filter === value}
-            className={`${styles.filter} ${filter === value ? styles.selected : ''}`}
-            onClick={() => { setFilter(value); setOpenPostId(null); }}
-          >
-            {label}<strong>{counts?.[value === 'in_progress' ? 'inProgress' : value] ?? '—'}</strong>
-          </button>
-        ))}
+        <AdminButton onClick={() => void query.refetch()}>Làm mới</AdminButton>
       </div>
+      <Segmented
+        label="Lọc trạng thái OCR"
+        value={filter}
+        options={filters.map(({ value, label }) => ({
+          id: value,
+          label,
+          count: counts?.[value === 'in_progress' ? 'inProgress' : value],
+        }))}
+        onChange={(value) => {
+          setFilter(value);
+          setOpenId(null);
+        }}
+      />
       <AdminApiError error={query.error ?? retry.error} retry={() => void query.refetch()} />
-      {retry.isSuccess && <output className={styles.notice}>Đã lên lịch quét lại ảnh bìa.</output>}
-      {query.isPending && <output className={styles.empty}>Đang tải kết quả OCR…</output>}
-      {!query.isPending && !query.error && items.length === 0 && (
-        <p className={styles.empty}>Chưa có lượt OCR ảnh bìa ở trạng thái này.</p>
+      {retry.isSuccess && (
+        <output className="block text-[13px] text-teal-ink">Đã lên lịch quét lại ảnh bìa.</output>
       )}
-      <div className={styles.list}>
-        {items.map((item: CoverOcrItem) => (
-          <article key={item.id} className={styles.item}>
-            <div className={styles.itemMain}>
-              <div className={styles.itemHeading}>
-                <h3>{item.postTitle}</h3>
-                <span className={`${styles.status} ${styles[item.status] ?? ''}`}>
-                  {statusText[item.status as keyof typeof statusText] ?? item.status}
-                </span>
-              </div>
-              <p className={styles.meta}>
-                Bài viết <code>{item.postId}</code> · Tác giả <code>{item.authorId}</code>
-              </p>
-              <p className={styles.meta}>
-                Ảnh bìa <code>{item.assetId}</code> · {item.attempts} lần thử · {new Date(item.updatedAt).toLocaleString('vi-VN')}
-              </p>
-              {(item.status === 'passed' || item.status === 'flagged') && (
-                <p className={styles.excerpt}>{item.extractedText?.trim() || vi.moderation.parts.noCoverText}</p>
-              )}
-              {item.errorCode && (
-                <p className={styles.error}>
-                  {errorText[item.errorCode as keyof typeof errorText] ?? item.errorCode}
-                </p>
-              )}
-            </div>
-            <div className={styles.actions}>
-              <button
-                type="button"
-                className={styles.button}
-                aria-expanded={openPostId === item.postId}
-                onClick={() => setOpenPostId(openPostId === item.postId ? null : item.postId)}
+      <DataTable
+        label="Kết quả OCR ảnh bìa"
+        columns={columns}
+        rows={items}
+        getRowId={(item) => item.id}
+        onRowOpen={(item) => setOpenId(item.id)}
+        selectedId={openId}
+        isLoading={query.isPending}
+        empty={
+          !query.error && <EmptyState title="Chưa có lượt OCR ảnh bìa ở trạng thái này" />
+        }
+      />
+      {items.length > 0 && (
+        <LoadMore
+          shown={items.length}
+          hasMore={!!query.hasNextPage}
+          isFetching={query.isFetchingNextPage}
+          onLoadMore={() => void query.fetchNextPage()}
+        />
+      )}
+      {opened && (
+        <DetailDrawer
+          title={opened.postTitle}
+          status={<StatusBadge tone={statusTone(opened.status)}>{statusLabel(opened.status)}</StatusBadge>}
+          subtitle={opened.postId}
+          scrollKey={opened.id}
+          navigation={buildDrawerNavigation(
+            items.map((item) => item.id),
+            opened.id,
+            setOpenId,
+          )}
+          footer={
+            opened.status === 'failed' ? (
+              <AdminButton
+                variant="primary"
+                disabled={retry.isPending}
+                onClick={() => retry.mutate(opened.id)}
               >
-                {openPostId === item.postId ? 'Đóng chi tiết' : 'Xem chi tiết'}
-              </button>
-              {item.status === 'failed' && (
-                <button
-                  type="button"
-                  className={styles.retry}
-                  disabled={retry.isPending}
-                  onClick={() => retry.mutate(item.id)}
-                >
-                  {retry.isPending && retry.variables === item.id ? 'Đang lên lịch…' : 'Thử quét lại'}
-                </button>
-              )}
-            </div>
-            {openPostId === item.postId && <div className={styles.detail}><ModerationParts postId={item.postId} /></div>}
-          </article>
-        ))}
-      </div>
-      {query.hasNextPage && (
-        <button
-          type="button"
-          className={styles.more}
-          disabled={query.isFetchingNextPage}
-          onClick={() => void query.fetchNextPage()}
+                {retry.isPending && retry.variables === opened.id ? 'Đang lên lịch…' : 'Thử quét lại'}
+              </AdminButton>
+            ) : undefined
+          }
+          onClose={() => setOpenId(null)}
         >
-          {query.isFetchingNextPage ? 'Đang tải…' : 'Xem thêm'}
-        </button>
+          <DetailSection title="Lượt quét">
+            <KeyValueList
+              items={[
+                { label: 'Bài viết', value: opened.postId, isCode: true },
+                { label: 'Tác giả', value: opened.authorId, isCode: true },
+                { label: 'Ảnh bìa', value: opened.assetId, isCode: true },
+                { label: 'Lần thử', value: opened.attempts },
+                { label: 'Cập nhật', value: formatAt(opened.updatedAt) },
+              ]}
+            />
+            {(opened.status === 'passed' || opened.status === 'flagged') && (
+              <p className="mt-3 text-sm leading-6 break-words whitespace-pre-wrap">
+                {opened.extractedText?.trim() || vi.moderation.parts.noCoverText}
+              </p>
+            )}
+            {opened.errorCode && (
+              <p className="mt-3 text-[13px] text-coral-ink">
+                {errorText[opened.errorCode as keyof typeof errorText] ?? opened.errorCode}
+              </p>
+            )}
+          </DetailSection>
+          <ModerationParts postId={opened.postId} />
+        </DetailDrawer>
       )}
     </section>
   );

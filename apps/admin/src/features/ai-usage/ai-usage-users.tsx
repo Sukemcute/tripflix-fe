@@ -3,10 +3,14 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { aiInsightsControllerUsers } from '@tripflix/api-client/core-api/analytics/analytics';
 import type { AiUserUsageItemDto } from '@tripflix/api-client/core-api/model/index';
-import { t, vi } from '@tripflix/i18n';
+import { vi } from '@tripflix/i18n';
 import { useState } from 'react';
+import { AdminButton } from '@/ui/button';
+import { DataTable, type DataColumn } from '@/ui/data-table';
+import { Pagination } from '@/ui/pagination';
+import { EmptyState } from '@/ui/states';
 import { AdminApiError } from '../shell/api-state';
-import { EmptyState, LoadingState, Panel } from '../shell/operations-ui';
+import { Panel } from '../shell/operations-ui';
 import { count, formatDateTime } from './ai-usage-format';
 import { formatUsd } from './ai-usage-range';
 
@@ -32,80 +36,68 @@ export function AiUsageUsers({
     retry: false,
   });
   const data = users.isError ? undefined : users.data;
-  const pageCount = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
   const nameOf = (user: AiUserUsageItemDto) => user.displayName ?? copy.deletedAccount;
+
+  const columns: DataColumn<AiUserUsageItemDto>[] = [
+    { id: 'user', header: copy.columns.user, cell: (user) => nameOf(user) },
+    { id: 'email', header: copy.columns.email, hideBelow: 'lg', cell: (user) => user.email ?? '—' },
+    {
+      id: 'conversations',
+      header: copy.columns.conversations,
+      align: 'right',
+      hideBelow: 'md',
+      cell: (user) => count.format(user.conversations),
+    },
+    { id: 'calls', header: copy.columns.calls, align: 'right', cell: (user) => count.format(user.calls) },
+    {
+      id: 'inputTokens',
+      header: copy.columns.inputTokens,
+      align: 'right',
+      hideBelow: 'xl',
+      cell: (user) => count.format(user.inputTokens),
+    },
+    {
+      id: 'outputTokens',
+      header: copy.columns.outputTokens,
+      align: 'right',
+      hideBelow: 'xl',
+      cell: (user) => count.format(user.outputTokens),
+    },
+    { id: 'cost', header: copy.columns.costUsd, align: 'right', cell: (user) => formatUsd(user.costUsd) },
+    { id: 'lastAt', header: copy.columns.lastAt, hideBelow: 'md', cell: (user) => formatDateTime(user.lastAt) },
+    {
+      id: 'traces',
+      header: <span className="sr-only">{copy.viewTraces}</span>,
+      align: 'right',
+      cell: (user) => (
+        <AdminButton size="sm" onClick={() => onOpenTraces({ userId: user.userId, name: nameOf(user) })}>
+          {copy.viewTraces}
+        </AdminButton>
+      ),
+    },
+  ];
 
   return (
     <Panel title={copy.title} description={copy.description}>
       {users.isError && <AdminApiError error={users.error} retry={() => void users.refetch()} />}
-      {users.isPending ? (
-        <LoadingState />
-      ) : !data || data.items.length === 0 ? (
-        !users.isError && <EmptyState title={copy.empty} />
-      ) : (
-        <>
-          <div className="admin-table-scroll">
-            <table className="ops-table" aria-label={copy.title}>
-              <thead>
-                <tr>
-                  <th scope="col">{copy.columns.user}</th>
-                  <th scope="col">{copy.columns.email}</th>
-                  <th scope="col">{copy.columns.conversations}</th>
-                  <th scope="col">{copy.columns.calls}</th>
-                  <th scope="col">{copy.columns.inputTokens}</th>
-                  <th scope="col">{copy.columns.outputTokens}</th>
-                  <th scope="col">{copy.columns.costUsd}</th>
-                  <th scope="col">{copy.columns.lastAt}</th>
-                  <th scope="col">
-                    <span className="sr-only">{copy.viewTraces}</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.items.map((user) => (
-                  <tr key={user.userId}>
-                    <td className="font-semibold text-navy">{nameOf(user)}</td>
-                    <td>{user.email ?? '—'}</td>
-                    <td className="tabular-nums">{count.format(user.conversations)}</td>
-                    <td className="tabular-nums">{count.format(user.calls)}</td>
-                    <td className="tabular-nums">{count.format(user.inputTokens)}</td>
-                    <td className="tabular-nums">{count.format(user.outputTokens)}</td>
-                    <td className="font-semibold tabular-nums">{formatUsd(user.costUsd)}</td>
-                    <td>{formatDateTime(user.lastAt)}</td>
-                    <td>
-                      <button
-                        type="button"
-                        className="rounded-md border border-border px-3 py-1 text-xs font-semibold text-teal-ink hover:bg-teal-soft"
-                        onClick={() => onOpenTraces({ userId: user.userId, name: nameOf(user) })}
-                      >
-                        {copy.viewTraces}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <nav className="flex items-center justify-end gap-3 px-5 py-4 text-xs text-text-muted">
-            <button
-              type="button"
-              className="rounded-md border border-border px-3 py-1 disabled:opacity-50"
-              disabled={page <= 1 || users.isFetching}
-              onClick={() => setPage((value) => value - 1)}
-            >
-              {copy.previous}
-            </button>
-            <span>{t('aiUsage.userBoard.pageOf', { page, pageCount })}</span>
-            <button
-              type="button"
-              className="rounded-md border border-border px-3 py-1 disabled:opacity-50"
-              disabled={page >= pageCount || users.isFetching}
-              onClick={() => setPage((value) => value + 1)}
-            >
-              {copy.next}
-            </button>
-          </nav>
-        </>
+      <DataTable
+        label={copy.title}
+        columns={columns}
+        rows={data?.items ?? []}
+        getRowId={(user) => user.userId}
+        isLoading={users.isPending}
+        empty={users.isError ? undefined : <EmptyState title={copy.empty} />}
+      />
+      {!!data && data.total > 0 && (
+        <div className="px-3 pb-3">
+          <Pagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={data.total}
+            isFetching={users.isFetching}
+            onPageChange={setPage}
+          />
+        </div>
       )}
     </Panel>
   );
