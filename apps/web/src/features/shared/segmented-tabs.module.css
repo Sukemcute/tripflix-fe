@@ -7,6 +7,7 @@
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
   gap: 8px;
+  min-inline-size: 0;
   box-sizing: border-box;
   padding: var(--tabs-inset);
   border-radius: var(--tabs-radius);

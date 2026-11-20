@@ -23,3 +23,24 @@
 ### 3. Kết quả kiểm tra Đợt 1
 - `pnpm turbo run lint typecheck test --filter=./apps/web --force`: `oxlint` **27 warnings, 0 errors**; `next typegen && tsc --noEmit` **0 errors**; `vitest run` **85 files passed (85), 550 tests passed (550)**.
 - CDP cổng `3210` (`1440×900` và `390×844`): ảnh `before-*` và `after-*` lưu tại `D:\HCMUT\vinAI\vsf\ota-tripflix\tripflix\.orchestrator\nut-tab\dot1\` (riêng `/account/moderation` yêu cầu đăng nhập nên trang trống tab; `/inspiration` và `/inspiration?q=da%20lat` chụp đầy đủ và đã xác nhận fix tràn ngang trên 390px xuống đúng `330px`).
+
+---
+
+## Đợt 2 — Phần đồng đội đã đồng ý (`thanh/TF-nut-tab-dong-bo-2`, worktree `wt-fe-tabs2`)
+
+### 1. Danh sách đã đổi (đúng dạng tab/segmented đơn chọn)
+1. **Chọn Một chiều / Khứ hồi trên form tìm vé (`flights/flight-search-form.tsx:72–90`, `flights/flights.module.css:2183–2186` — chủ gốc: Lê Thị Thùy Trang `ed7a12c`, gần nhất Bảo/Duy):**
+   - Đổi `<fieldset className={styles.tripTabs}>` sang `segmentedTabs.tabs + tabsAuto + styles.tripTabs`, nút dùng `segmentedTabs.tab + tabCompact` (`32px`, đồng chiều cao thanh tìm kiếm). Giữ `min-inline-size: 0` trên `.tabs` để `<fieldset>` không nở tràn ngang trên màn hẹp.
+2. **Chọn điểm đến xem trước trên Trang chủ (`discovery/ota-home-previews.tsx:113–126`, `discovery/ota-home.module.css:814–817` — chủ gốc: Lê Thị Thùy Trang `358b395`):**
+   - Đổi `<fieldset className={styles.chips}>` (`Nha Trang / Hội An / Đà Nẵng`) sang `segmentedTabs.tabs + tabsAuto + styles.chips`, nút dùng `segmentedTabs.tab`, giữ `margin: 24px auto 20px; border: 0;` và scroll animation.
+
+### 2. Danh sách giữ nguyên (không phải tab đơn chọn — không ép)
+1. **`discovery/live-search-screen.tsx:266–295` (chủ: Lê Thị Thùy Trang / Thắng):** danh sách gợi ý địa điểm autocomplete 2 dòng (`place.name` + `place.subtitle`) trong popover `.suggestions`, không phải thanh tab.
+2. **`discovery/stay-result-filters.tsx:107–152` (chủ: Lê Thị Thùy Trang):** bộ lọc nằm trong thanh bên hẹp ~240px gồm chip ngân sách toggle tắt được (`filterChoices` xuống dòng), lưới 3 cột hạng sao (`ratingChoices`) và danh sách sắp xếp dọc vạch trái (`sortChoices`); giữ nguyên để không vỡ bố cục sidebar lọc.
+3. **`hotels/hotel-reviews.tsx:115–134` (chủ: Lê Thị Thùy Trang):** cụm chip nhãn đánh giá (`Tất cả nhãn` + các nhãn có `{count}`, xuống dòng `flex-wrap`, bấm lại để bỏ lọc).
+4. **`flights/flight-results.tsx:782–802` (chủ: Lê Thị Thùy Trang / Duy):** `.cabinTabs` là thẻ chọn hạng vé 2 dòng (`span` tên hạng + `small` giá tiền hoặc trạng thái hết vé `[data-unavailable]`), không ép vào nút tab 1 dòng `white-space: nowrap`.
+
+### 3. Kết quả kiểm tra Đợt 2
+- `pnpm turbo run lint typecheck test --filter=./apps/web --force`: `oxlint` **27 warnings, 0 errors**; `next typegen && tsc --noEmit` **0 errors**; `vitest run` **85 files passed (85), 551 tests passed (551)** (đã cập nhật `segmented-tabs-style.test.ts` kiểm tra cả Đợt 2).
+- CDP cổng `3220` (`1440×900` và `390×844`): chụp `/flights`, `/search`, `/` vào `D:\HCMUT\vinAI\vsf\ota-tripflix\tripflix\.orchestrator\nut-tab\dot2\` (`before-*` và `after-*`; đã tắt dev server khi xong). Xác nhận `[Một chiều] [Khứ hồi]` trên `/flights` và `[Nha Trang] [Hội An] [Đà Nẵng]` trên `/` hiển thị đúng thanh segmented mới trên cả desktop và mobile.
+- **Việc cần báo đồng đội:** báo **Duy** (chip Reels ở `live-posts.tsx`, Đợt 1) và **Trang / Thắng** (`flight-search-form.tsx`, `ota-home-previews.tsx`, Đợt 2) đã đồng bộ sang `segmented-tabs.module.css`.

@@ -68,4 +68,23 @@ describe('segmented-tabs shared CSS & wave 1 migration', () => {
     expect(tripPlanView).toContain('styles.actionButton');
     expect(tripPlanView).not.toContain('role="tablist"');
   });
+
+  it('migrates wave 2 flight trip switcher and home destination switcher while preserving filter chips & 2-line cards', () => {
+    const flightSearchForm = readFeature('flights/flight-search-form.tsx');
+    const otaHomePreviews = readFeature('discovery/ota-home-previews.tsx');
+    const hotelReviews = readFeature('hotels/hotel-reviews.tsx');
+    const stayFilters = readFeature('discovery/stay-result-filters.tsx');
+    const liveSearch = readFeature('discovery/live-search-screen.tsx');
+    const flightResults = readFeature('flights/flight-results.tsx');
+
+    expect(flightSearchForm).toContain('segmented-tabs.module.css');
+    expect(flightSearchForm).toContain('segmentedTabs.tabCompact');
+    expect(otaHomePreviews).toContain('segmented-tabs.module.css');
+    expect(otaHomePreviews).toContain('segmentedTabs.tabsAuto');
+
+    expect(hotelReviews).not.toContain('segmented-tabs.module.css');
+    expect(stayFilters).not.toContain('segmented-tabs.module.css');
+    expect(liveSearch).not.toContain('segmented-tabs.module.css');
+    expect(flightResults).not.toContain('segmented-tabs.module.css');
+  });
 });
