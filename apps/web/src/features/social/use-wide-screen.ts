@@ -1,16 +1,13 @@
 import { useSyncExternalStore } from 'react';
+import { PINNED_ITINERARY_QUERY } from './feed/itinerary-pin';
 
 /** Từ mốc này trở lên đủ chỗ cho sidebar nằm cạnh nội dung; hẹp hơn thì sidebar mở thành bottom sheet. */
 export const WIDE_SCREEN_QUERY = '(min-width: 1024px)';
 
-function subscribeWideScreen(onChange: () => void): () => void {
-  const media = window.matchMedia(WIDE_SCREEN_QUERY);
+function subscribeMediaQuery(query: string, onChange: () => void): () => void {
+  const media = window.matchMedia(query);
   media.addEventListener('change', onChange);
   return () => media.removeEventListener('change', onChange);
-}
-
-function readWideScreen(): boolean {
-  return window.matchMedia(WIDE_SCREEN_QUERY).matches;
 }
 
 /**
@@ -18,7 +15,20 @@ function readWideScreen(): boolean {
  * và không phủ bottom sheet lên màn hình nhỏ; trên màn rộng sidebar trượt ra ngay sau khi hydrate.
  */
 export function useIsWideScreen(): boolean {
-  return useSyncExternalStore(subscribeWideScreen, readWideScreen, () => false);
+  return useSyncExternalStore(
+    (onChange) => subscribeMediaQuery(WIDE_SCREEN_QUERY, onChange),
+    () => window.matchMedia(WIDE_SCREEN_QUERY).matches,
+    () => false,
+  );
+}
+
+/** Màn hình từ 1200px trở lên để tab Bài viết ghim cố định cột Lịch trình (server coi như chưa biết bề rộng). */
+export function useIsPinnedItineraryScreen(): boolean {
+  return useSyncExternalStore(
+    (onChange) => subscribeMediaQuery(PINNED_ITINERARY_QUERY, onChange),
+    () => window.matchMedia(PINNED_ITINERARY_QUERY).matches,
+    () => false,
+  );
 }
 
 /**
