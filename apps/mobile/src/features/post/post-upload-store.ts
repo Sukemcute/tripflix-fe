@@ -27,6 +27,7 @@ interface JobInput {
   compression: VideoCompression | null;
   uploadedAssetId: string | null;
   client: QueryClient;
+  onPublished?: () => Promise<void>;
   /** Lượt tải dở lần trước: Thử lại thì gửi tiếp các phần còn thiếu thay vì tải lại từ đầu. */
   uploadState?: VideoUploadState;
 }
@@ -93,7 +94,13 @@ async function run(id: number) {
     job.postId = saved.id;
     const publication = saved.status === 'draft' ? await socialApi.publishPost(saved.id) : saved;
     if (!isCurrent()) return;
-    update({ phase: 'done', percent: 100, postId: saved.id, moderationStatus: publication.status === 'held' ? 'held' : 'published' });
+    await job.onPublished?.().catch(() => undefined);
+    update({
+      phase: 'done',
+      percent: 100,
+      postId: saved.id,
+      moderationStatus: publication.status === 'held' ? 'held' : 'published',
+    });
     // Làm mới danh sách bài và lưới reel trên trang cá nhân.
     await Promise.all([
       job.client.invalidateQueries({ queryKey: ['social'] }),

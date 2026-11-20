@@ -5,19 +5,45 @@ import {
   createTripPlanDraft,
   getPostTitleFromCaption,
   POST_MEDIA_LIMITS,
+  type PostDraftContent,
+  type PostDraftRecovery,
+  type PostDraftVideo,
   type TripPlanDraft,
 } from '@tripflix/app-core';
-import { itineraryApi, SAVED_ITINERARIES_QUERY_KEY, socialApi, uploadVideo, useApiSession } from '@tripflix/api-client';
+import {
+  itineraryApi,
+  SAVED_ITINERARIES_QUERY_KEY,
+  socialApi,
+  uploadVideo,
+  useApiSession,
+} from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams, useNavigation, usePreventRemove } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Alert, Keyboard, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
+import {
+  Alert,
+  AppState,
+  Keyboard,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { startPostUpload } from './post-upload-store';
+import {
+  clearPublishedPostDraft,
+  readPostDraft,
+  restorePostDraftVideo,
+  writePostDraft,
+} from './post-draft-storage';
+import { PostDraftExitDialog } from './post-draft-exit-dialog';
 import { TripPlanEditor } from './trip-plan-editor';
 import { startVideoCompression, type VideoCompression } from './video-compress';
 import { toPickedVideo, type PickedVideo } from './video-source';
@@ -59,34 +85,106 @@ export function LiveCreateScreen() {
       </Screen>
     );
   return (
-    <DraftEditor
-      key={postId ?? 'new'}
+    <RecoverableDraftEditor
+      key={`${user.id}:${postId ?? 'new'}`}
       post={query.data?.post}
       itineraryId={postId ? undefined : itineraryId}
       userId={user.id}
     />
   );
 }
+
+function RecoverableDraftEditor(props: { post?: SocialPostDto; itineraryId?: string; userId: string }) {
+  const editorKey = props.post?.id ?? 'new';
+  const [baseline] = useState<PostDraftContent>(() => ({
+    title: props.post?.title ?? '',
+    body: props.post?.body ?? '',
+    hashtags: props.post?.hashtags.join(', ') ?? '',
+    visibility: props.post?.visibility === 'private' ? 'private' : 'public',
+    hasTripPlan: !!props.post?.tripAttachment,
+    tripDraft: props.post?.tripAttachment
+      ? buildTripDraftFromAttachment(props.post.tripAttachment, vi.mobile.tripPlan.modes)
+      : createTripPlanDraft(),
+    video: null,
+  }));
+  const [loaded, setLoaded] = useState<{
+    draft: PostDraftRecovery | null;
+    video: PickedVideo | null;
+    error: boolean;
+  } | null>(null);
+  useEffect(() => {
+    let active = true;
+    void readPostDraft(props.userId, editorKey).then(
+      (draft) => {
+        if (active) {
+          // Restored p1/p2 keys must not collide with newly created points after an app restart.
+          if (draft)
+            draft.content.tripDraft.days = draft.content.tripDraft.days.map((day, dayIndex) => ({
+              ...day,
+              points: day.points.map((point, pointIndex) => ({
+                ...point,
+                key: `recovered-${dayIndex}-${pointIndex}`,
+              })),
+            }));
+          setLoaded({ draft, video: draft ? restorePostDraftVideo(draft) : null, error: false });
+        }
+      },
+      () => {
+        if (active) setLoaded({ draft: null, video: null, error: true });
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [props.userId, editorKey]);
+  if (!loaded)
+    return (
+      <Screen title={copy.create.title}>
+        <Txt>{copy.create.recovery.loading}</Txt>
+        <LoadingDots />
+      </Screen>
+    );
+  return (
+    <DraftEditor
+      {...props}
+      baseline={baseline}
+      recovery={loaded.draft}
+      recoveredVideo={loaded.video}
+      recoveryError={loaded.error}
+    />
+  );
+}
+
 function DraftEditor({
   post,
   itineraryId,
   userId,
+  baseline,
+  recovery,
+  recoveredVideo,
+  recoveryError,
 }: {
   post?: SocialPostDto;
   itineraryId?: string;
   userId: string;
+  baseline: PostDraftContent;
+  recovery: PostDraftRecovery | null;
+  recoveredVideo: PickedVideo | null;
+  recoveryError: boolean;
 }) {
   const client = useQueryClient();
-  const [id, setId] = useState(post?.id);
+  const initial = recovery?.content ?? baseline;
+  const editorKey = post?.id ?? 'new';
+  const [id, setId] = useState(recovery?.postId ?? post?.id);
   // Tiêu đề riêng như web; để trống thì lấy dòng đầu caption (core bắt buộc có tiêu đề).
-  const [title, setTitle] = useState(post?.title ?? '');
-  const [body, setBody] = useState(post?.body ?? '');
+  const [title, setTitle] = useState(initial.title);
+  const [body, setBody] = useState(initial.body);
   const postTitle = title.trim() || getPostTitleFromCaption(body);
-  const [hashtags, setHashtags] = useState(post?.hashtags.join(', ') ?? '');
-  const [visibility, setVisibility] = useState<'public' | 'private'>(
-    post?.visibility === 'private' ? 'private' : 'public',
-  );
-  const [video, setVideo] = useState<PickedVideo | null>(null);
+  const [hashtags, setHashtags] = useState(initial.hashtags);
+  const [visibility, setVisibility] = useState<'public' | 'private'>(initial.visibility);
+  const [video, setVideo] = useState<PickedVideo | null>(recoveredVideo);
+  const [sourceVideo, setSourceVideo] = useState<PostDraftVideo | null>(initial.video);
+  const [missingMedia, setMissingMedia] = useState(!!initial.video && !recoveredVideo);
   // Video đã tải lên ở lần bấm trước (ví dụ tải xong nhưng tạo bài lỗi): không tải lại.
   const [uploadedAssetId, setUploadedAssetId] = useState<string | null>(null);
   const [uploadPercent, setUploadPercent] = useState<number | null>(null);
@@ -96,15 +194,99 @@ function DraftEditor({
   const [pickerError, setPickerError] = useState<string | null>(null);
   const [isPicking, setPicking] = useState(false);
   // Đăng theo từng bước (TF105): xem lại video → chi tiết bài → (tuỳ chọn) soạn lộ trình.
-  const [step, setStep] = useState<'video' | 'details' | 'trip'>(post ? 'details' : 'video');
+  const [step, setStep] = useState<'video' | 'details' | 'trip'>(post || recovery ? 'details' : 'video');
   // Đăng kèm lộ trình là tuỳ chọn; chưa mở bước lộ trình thì đăng như bài thường.
   // Sửa bài cũ thì nạp lại lộ trình đã lưu, để lưu lại không mất giờ, khách sạn, chặng bay, loại gợi ý.
-  const [hasTripPlan, setHasTripPlan] = useState(!!post?.tripAttachment);
-  const [tripDraft, setTripDraft] = useState<TripPlanDraft>(() =>
-    post?.tripAttachment
-      ? buildTripDraftFromAttachment(post.tripAttachment, vi.mobile.tripPlan.modes)
-      : createTripPlanDraft(),
+  const [hasTripPlan, setHasTripPlan] = useState(initial.hasTripPlan);
+  const [tripDraft, setTripDraft] = useState<TripPlanDraft>(initial.tripDraft);
+  const content = useMemo<PostDraftContent>(
+    () => ({
+      title,
+      body,
+      hashtags,
+      visibility,
+      hasTripPlan,
+      tripDraft,
+      video: sourceVideo,
+    }),
+    [title, body, hashtags, visibility, hasTripPlan, tripDraft, sourceVideo],
   );
+  const fingerprint = JSON.stringify(content);
+  const [savedFingerprint, setSavedFingerprint] = useState(JSON.stringify(baseline));
+  const dirty = fingerprint !== savedFingerprint;
+  const [deviceFingerprint, setDeviceFingerprint] = useState(recovery ? fingerprint : '');
+  const [deviceError, setDeviceError] = useState(false);
+  const [isLeaving, setLeaving] = useState(false);
+  const [isHandedOff, setHandedOff] = useState(false);
+  const [exitOpen, setExitOpen] = useState(false);
+  const [exitBusy, setExitBusy] = useState(false);
+  const exitNavigation = useRef<(() => void) | null>(null);
+  const latestDraft = useRef<PostDraftRecovery>({
+    version: 1,
+    userId,
+    editorKey,
+    postId: id ?? null,
+    savedAt: 0,
+    content,
+  });
+  useEffect(() => {
+    latestDraft.current = { version: 1, userId, editorKey, postId: id ?? null, savedAt: Date.now(), content };
+  }, [content, id, userId, editorKey]);
+  const submittedDraft = useRef<PostDraftRecovery | null>(null);
+  useEffect(() => {
+    if (!dirty || isLeaving || isHandedOff) return;
+    const writing = new AbortController();
+    void writePostDraft(userId, editorKey, latestDraft.current).then(
+      () => {
+        if (!writing.signal.aborted) {
+          setDeviceFingerprint(fingerprint);
+          setDeviceError(false);
+        }
+      },
+      () => {
+        if (!writing.signal.aborted) setDeviceError(true);
+      },
+    );
+    return () => {
+      writing.abort();
+    };
+  }, [fingerprint, id, userId, editorKey, dirty, isLeaving, isHandedOff]);
+  useEffect(() => {
+    if (!dirty && deviceFingerprint && deviceFingerprint !== fingerprint && !isLeaving && !isHandedOff) {
+      void writePostDraft(userId, editorKey, null).then(
+        () => setDeviceFingerprint(''),
+        () => setDeviceError(true),
+      );
+    }
+  }, [dirty, deviceFingerprint, fingerprint, isLeaving, isHandedOff, userId, editorKey]);
+  useEffect(() => {
+    if (!dirty || isLeaving || isHandedOff) return;
+    const persist = () => {
+      void writePostDraft(userId, editorKey, latestDraft.current).catch(() => setDeviceError(true));
+    };
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') persist();
+    });
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      persist();
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    if (Platform.OS === 'web') {
+      globalThis.addEventListener('pagehide', persist);
+      globalThis.addEventListener('beforeunload', beforeUnload);
+    }
+    return () => {
+      subscription.remove();
+      if (Platform.OS === 'web') {
+        globalThis.removeEventListener('pagehide', persist);
+        globalThis.removeEventListener('beforeunload', beforeUnload);
+      }
+    };
+  }, [dirty, isLeaving, isHandedOff, userId, editorKey]);
+  useEffect(() => {
+    if (isLeaving) exitNavigation.current?.();
+  }, [isLeaving]);
   const [isDraggingPoint, setDraggingPoint] = useState(false);
   const uploadAbort = useRef<AbortController | null>(null);
   // Đăng xong thì thay cả form bằng màn báo đã đăng, để không ai bấm đăng lại hay tưởng chưa đăng.
@@ -142,19 +324,25 @@ function DraftEditor({
       return;
     }
     const apply = () => {
-      setTripDraft(buildTripDraftFromAttachment({
-        destinationName: itinerary.destinationName,
-        destinationPlaceId: itinerary.destinationPlaceId,
-        daysCount: itinerary.daysCount,
-        items: itinerary.items.map((item) => ({
-          ...item,
-          notes: !item.time && item.slot
-            ? [shareCopy.slots[item.slot], item.notes].filter(Boolean).join(' · ')
-            : item.notes,
-        })),
-      }, vi.mobile.tripPlan.modes));
+      setTripDraft(
+        buildTripDraftFromAttachment(
+          {
+            destinationName: itinerary.destinationName,
+            destinationPlaceId: itinerary.destinationPlaceId,
+            daysCount: itinerary.daysCount,
+            items: itinerary.items.map((item) => ({
+              ...item,
+              notes:
+                !item.time && item.slot
+                  ? [shareCopy.slots[item.slot], item.notes].filter(Boolean).join(' · ')
+                  : item.notes,
+            })),
+          },
+          vi.mobile.tripPlan.modes,
+        ),
+      );
       setHasTripPlan(true);
-      setTitle((current) => current.trim() ? current : itinerary.title);
+      setTitle((current) => (current.trim() ? current : itinerary.title));
     };
     if (hasTripPlan) {
       Alert.alert(shareCopy.replaceDraftTitle, shareCopy.replaceDraftBody, [
@@ -171,6 +359,19 @@ function DraftEditor({
     compression.current = null;
     setCompressPercent(null);
     setVideo(next);
+    setSourceVideo(
+      next
+        ? {
+            uri: next.uri,
+            durationMs: next.durationMs,
+            width: next.width,
+            height: next.height,
+            mimeType: next.mimeType,
+            sizeBytes: next.sizeBytes,
+          }
+        : null,
+    );
+    setMissingMedia(false);
     setUploadedAssetId(null);
     if (!next) return;
     const job = startVideoCompression(next, (percent) => {
@@ -234,6 +435,8 @@ function DraftEditor({
 
   const mutation = useMutation({
     mutationFn: async (action: 'save' | 'publish') => {
+      if (missingMedia) throw new Error(copy.create.recovery.missingMedia);
+      submittedDraft.current = latestDraft.current;
       setUploadDone(false);
       const assetId = await uploadSelectedVideo();
       setUploadDone(true);
@@ -253,21 +456,34 @@ function DraftEditor({
         ? socialApi.updatePost(id, draft)
         : socialApi.createDraft({ ...draft, post_type: assetId ? 'video' : 'vlog' }));
       setId(savedPost.id);
-      const publication = action === 'publish' && savedPost.status === 'draft' ? await socialApi.publishPost(savedPost.id) : savedPost;
+      const publication =
+        action === 'publish' && savedPost.status === 'draft'
+          ? await socialApi.publishPost(savedPost.id)
+          : savedPost;
       return { ...savedPost, status: publication.status };
     },
     onSuccess: async (savedPost, action) => {
       setId(savedPost.id);
+      if (submittedDraft.current) {
+        setSavedFingerprint(JSON.stringify(submittedDraft.current.content));
+        await clearPublishedPostDraft(submittedDraft.current).catch(() => setDeviceError(true));
+      }
       if (action === 'publish') {
         Keyboard.dismiss();
-        setPublished({ id: savedPost.id, hasVideo: savedPost.postType === 'video', held: savedPost.status === 'held' });
+        setPublished({
+          id: savedPost.id,
+          hasVideo: savedPost.postType === 'video',
+          held: savedPost.status === 'held',
+        });
       }
       await client.invalidateQueries({ queryKey: ['social'] });
     },
   });
   // Đăng (TF105): giao việc nén, tải video và đăng bài cho tiến trình nền rồi về màn chính ngay.
   function publishInBackground() {
-    if (!body.trim() || mutation.isPending) return;
+    if (!body.trim() || mutation.isPending || missingMedia) return;
+    const handedOffDraft = latestDraft.current!;
+    void writePostDraft(userId, editorKey, handedOffDraft).catch(() => setDeviceError(true));
     const tripAttachment = hasTripPlan ? buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) : null;
     startPostUpload(postTitle, {
       postId: id,
@@ -286,15 +502,24 @@ function DraftEditor({
       compression: compression.current,
       uploadedAssetId,
       client,
+      onPublished: () => clearPublishedPostDraft(handedOffDraft),
     });
     compression.current = null;
     Keyboard.dismiss();
-    router.replace('/(tabs)');
+    setHandedOff(true);
+    exitNavigation.current = () => router.replace('/(tabs)');
+    setLeaving(true);
   }
   const isBusy = mutation.isPending || isPicking;
   const navigation = useNavigation();
   // Đang đăng hay lưu mà bấm quay lại, vuốt mép hay nút back Android: hỏi trước, không thoát ngay.
-  usePreventRemove(mutation.isPending, ({ data }) => {
+  usePreventRemove(!isLeaving && !published && !isHandedOff && (mutation.isPending || dirty), ({ data }) => {
+    exitNavigation.current = () => navigation.dispatch(data.action);
+    if (!mutation.isPending) {
+      Keyboard.dismiss();
+      setExitOpen(true);
+      return;
+    }
     const title =
       mutation.variables === 'save' ? copy.create.leaveSavingTitle : copy.create.leavePublishingTitle;
     if (isUploadDone) {
@@ -309,11 +534,88 @@ function DraftEditor({
         onPress: () => {
           uploadAbort.current?.abort();
           compression.current?.dispose();
-          navigation.dispatch(data.action);
+          setLeaving(true);
         },
       },
     ]);
   });
+  async function leaveEditor(keep: boolean) {
+    setExitBusy(true);
+    try {
+      await writePostDraft(userId, editorKey, keep ? latestDraft.current : null);
+      setDeviceError(false);
+      setLeaving(true);
+    } catch {
+      setDeviceError(true);
+    } finally {
+      setExitBusy(false);
+    }
+  }
+  const exitDialog = (
+    <PostDraftExitDialog
+      visible={exitOpen}
+      busy={exitBusy}
+      error={deviceError}
+      onKeep={() => {
+        void leaveEditor(true);
+      }}
+      onDiscard={() => {
+        void leaveEditor(false);
+      }}
+      onContinue={() => setExitOpen(false)}
+    />
+  );
+  const recoveryNotice =
+    recoveryError || recovery || missingMedia || dirty || deviceError ? (
+      <View style={{ gap: spacing.sm }}>
+        {recoveryError && <Notice tone="warning">{copy.create.recovery.loadFailed}</Notice>}
+        {recovery && <Notice>{copy.create.recovery.restored}</Notice>}
+        {missingMedia && (
+          <>
+            <Notice tone="warning">{copy.create.recovery.missingMedia}</Notice>
+            <Button
+              tone="secondary"
+              style={{ borderRadius: 8 }}
+              onPress={() => {
+                void pickVideo();
+              }}
+            >
+              {copy.create.recovery.chooseMedia}
+            </Button>
+          </>
+        )}
+        {dirty && (
+          <Txt
+            variant="small"
+            accessibilityLiveRegion="polite"
+            style={{ color: deviceError ? colors.coralInk : colors.tealInk }}
+          >
+            {deviceError
+              ? copy.create.recovery.failed
+              : deviceFingerprint === fingerprint
+                ? copy.create.recovery.saved
+                : copy.create.recovery.saving}
+          </Txt>
+        )}
+        {deviceError && (
+          <Button
+            tone="secondary"
+            style={{ borderRadius: 8 }}
+            onPress={() => {
+              void writePostDraft(userId, editorKey, latestDraft.current).then(
+                () => {
+                  setDeviceFingerprint(fingerprint);
+                  setDeviceError(false);
+                },
+                () => setDeviceError(true),
+              );
+            }}
+          >
+            {copy.create.recovery.retry}
+          </Button>
+        )}
+      </View>
+    ) : null;
   const progressPercent = uploadPercent ?? compressPercent;
   const videoDetail =
     uploadPercent !== null
@@ -326,7 +628,8 @@ function DraftEditor({
               size: (video.sizeBytes / 1_000_000).toFixed(1),
             })
           : copy.create.videoHint;
-  if (published) return <PublishedView postId={published.id} hasVideo={published.hasVideo} held={published.held} />;
+  if (published)
+    return <PublishedView postId={published.id} hasVideo={published.hasVideo} held={published.held} />;
   const isSaving = mutation.isPending && mutation.variables === 'save';
   const isPublishing = mutation.isPending && mutation.variables === 'publish';
   const tripAttachment = hasTripPlan ? buildTripAttachment(tripDraft, vi.mobile.tripPlan.modes) : null;
@@ -344,207 +647,240 @@ function DraftEditor({
 
   if (step === 'video') {
     return (
-      <VideoStep
-        video={video}
-        isPicking={isPicking}
-        progressPercent={progressPercent}
-        detail={videoDetail}
-        error={pickerError}
-        onPick={() => {
-          void pickVideo();
-        }}
-        onNext={() => setStep('details')}
-      />
+      <DraftEditorFrame exitOpen={exitOpen} dialog={exitDialog}>
+        <VideoStep
+          canContinueDraft={!!body.trim() || !!title.trim() || hasTripPlan}
+          notice={recoveryNotice}
+          video={video}
+          isPicking={isPicking}
+          progressPercent={progressPercent}
+          detail={videoDetail}
+          error={pickerError}
+          onPick={() => {
+            void pickVideo();
+          }}
+          onNext={() => setStep('details')}
+        />
+      </DraftEditorFrame>
     );
   }
 
   if (step === 'trip') {
     return (
-      <Screen
-        scroll={false}
-        padded={false}
-        header={
-          <StepHeader
-            title={vi.mobile.tripPlan.editor.toggle}
-            onBack={() => setStep('details')}
-            right={
-              <Button tone="text" onPress={() => setStep('details')}>
+      <DraftEditorFrame exitOpen={exitOpen} dialog={exitDialog}>
+        <Screen
+          scroll={false}
+          padded={false}
+          header={
+            <StepHeader
+              title={vi.mobile.tripPlan.editor.toggle}
+              onBack={() => setStep('details')}
+              right={
+                <Button tone="text" onPress={() => setStep('details')}>
+                  {copy.create.tripDone}
+                </Button>
+              }
+            />
+          }
+          footer={
+            <View style={styles.actions}>
+              <Button
+                compact
+                tone="secondary"
+                style={styles.draft}
+                onPress={() => {
+                  setHasTripPlan(false);
+                  setTripDraft(createTripPlanDraft());
+                  setStep('details');
+                }}
+              >
+                {copy.create.tripRemove}
+              </Button>
+              <Button compact style={styles.publish} onPress={() => setStep('details')}>
                 {copy.create.tripDone}
               </Button>
-            }
-          />
-        }
-        footer={
-          <View style={styles.actions}>
-            <Button
-              compact
-              tone="secondary"
-              style={styles.draft}
-              onPress={() => {
-                setHasTripPlan(false);
-                setTripDraft(createTripPlanDraft());
-                setStep('details');
-              }}
-            >
-              {copy.create.tripRemove}
-            </Button>
-            <Button compact style={styles.publish} onPress={() => setStep('details')}>
-              {copy.create.tripDone}
-            </Button>
-          </View>
-        }
-      >
-        {/* Cuộn riêng để khoá cuộn lúc đang kéo thẻ, không thì danh sách vừa cuộn vừa kéo. */}
-        <ScrollView
-          scrollEnabled={!isDraggingPoint}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[ui.content, ui.pad]}
-          showsVerticalScrollIndicator={false}
+            </View>
+          }
         >
-          <TripPlanEditor draft={tripDraft} onChange={setTripDraft} onDragChange={setDraggingPoint} />
-        </ScrollView>
-      </Screen>
+          {/* Cuộn riêng để khoá cuộn lúc đang kéo thẻ, không thì danh sách vừa cuộn vừa kéo. */}
+          <ScrollView
+            scrollEnabled={!isDraggingPoint}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[ui.content, ui.pad]}
+            showsVerticalScrollIndicator={false}
+          >
+            {recoveryNotice}
+            <TripPlanEditor draft={tripDraft} onChange={setTripDraft} onDragChange={setDraggingPoint} />
+          </ScrollView>
+        </Screen>
+      </DraftEditorFrame>
     );
   }
 
   return (
-    <Screen
-      header={<StepHeader title={copy.create.title} onBack={post ? undefined : () => setStep('video')} />}
-      footer={
-        <View style={styles.footer}>
-          {/* Ngay trên nút bấm, không bị bàn phím hay thanh nút che như khi nằm cuối form. */}
-          {mutation.error && video && !uploadedAssetId ? (
-            <Notice tone="error">{copy.create.uploadFailed}</Notice>
-          ) : (
-            <ApiErrorNotice error={mutation.error} />
-          )}
-          {mutation.isSuccess && mutation.variables === 'save' && <Notice>{vi.api.draftSaved}</Notice>}
-          {progressPercent !== null && (
-            <Txt variant="caption" style={ui.muted} accessibilityLiveRegion="polite">
-              {videoDetail}
-            </Txt>
-          )}
-          <View style={styles.actions}>
-            <Button
-              compact
-              tone="secondary"
-              icon="document-outline"
-              style={styles.draft}
-              disabled={mutation.isPending || !body.trim()}
-              onPress={() => mutation.mutate('save')}
-            >
-              {isSaving ? vi.api.saving : id ? copy.create.saveShort : copy.create.draftShort}
-            </Button>
-            <Button
-              compact
-              icon="arrow-up-circle-outline"
-              style={styles.publish}
-              disabled={mutation.isPending || !body.trim()}
-              onPress={publishInBackground}
-            >
-              {isPublishing ? copy.create.publishing : vi.api.publish}
-            </Button>
+    <DraftEditorFrame exitOpen={exitOpen} dialog={exitDialog}>
+      <Screen
+        header={<StepHeader title={copy.create.title} onBack={post ? undefined : () => setStep('video')} />}
+        footer={
+          <View style={styles.footer}>
+            {/* Ngay trên nút bấm, không bị bàn phím hay thanh nút che như khi nằm cuối form. */}
+            {mutation.error && video && !uploadedAssetId ? (
+              <Notice tone="error">{copy.create.uploadFailed}</Notice>
+            ) : (
+              <ApiErrorNotice error={mutation.error} />
+            )}
+            {mutation.isSuccess && mutation.variables === 'save' && <Notice>{vi.api.draftSaved}</Notice>}
+            {progressPercent !== null && (
+              <Txt variant="caption" style={ui.muted} accessibilityLiveRegion="polite">
+                {videoDetail}
+              </Txt>
+            )}
+            <View style={styles.actions}>
+              <Button
+                compact
+                tone="secondary"
+                icon="document-outline"
+                style={styles.draft}
+                disabled={mutation.isPending || !body.trim() || missingMedia}
+                onPress={() => mutation.mutate('save')}
+              >
+                {isSaving ? vi.api.saving : copy.create.recovery.serverSave}
+              </Button>
+              <Button
+                compact
+                icon="arrow-up-circle-outline"
+                style={styles.publish}
+                disabled={mutation.isPending || !body.trim() || missingMedia}
+                onPress={publishInBackground}
+              >
+                {isPublishing ? copy.create.publishing : vi.api.publish}
+              </Button>
+            </View>
           </View>
-        </View>
-      }
-    >
-      <View style={styles.form}>
-        <Field
-          label={copy.create.titleLabel}
-          placeholder={copy.create.titlePlaceholder}
-          value={title}
-          maxLength={255}
-          onChangeText={setTitle}
-        />
-        <View style={styles.captionBlock}>
-          <Txt variant="label">{copy.create.story}</Txt>
-          <Row style={styles.captionRow}>
-            <TextInput
-              accessibilityLabel={copy.create.story}
-              placeholder={copy.create.placeholder}
-              placeholderTextColor={colors.textMuted}
-              value={body}
-              onChangeText={setBody}
-              multiline
-              style={[ui.input, styles.storyBox]}
-            />
+        }
+      >
+        <View style={styles.form}>
+          {recoveryNotice}
+          <Field
+            label={copy.create.titleLabel}
+            placeholder={copy.create.titlePlaceholder}
+            value={title}
+            maxLength={255}
+            onChangeText={setTitle}
+          />
+          <View style={styles.captionBlock}>
+            <Txt variant="label">{copy.create.story}</Txt>
+            <Row style={styles.captionRow}>
+              <TextInput
+                accessibilityLabel={copy.create.story}
+                placeholder={copy.create.placeholder}
+                placeholderTextColor={colors.textMuted}
+                value={body}
+                onChangeText={setBody}
+                multiline
+                style={[ui.input, styles.storyBox]}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={video ? copy.create.changeVideo : copy.create.selectVideo}
+                disabled={isBusy || !!post}
+                onPress={() => setStep('video')}
+                style={({ pressed }) => [styles.thumb, pressed && styles.pressed]}
+              >
+                {video ? (
+                  <VideoThumb uri={video.uri} />
+                ) : (
+                  <Icon name="film-outline" size={24} color={colors.tealInk} />
+                )}
+                {!post && (
+                  <View style={styles.thumbLabel}>
+                    <Txt style={styles.thumbLabelText}>{copy.create.preview}</Txt>
+                  </View>
+                )}
+              </Pressable>
+            </Row>
+          </View>
+          <Field
+            label={copy.create.hashtagsLabel}
+            placeholder={copy.create.hashtagsPlaceholder}
+            value={hashtags}
+            onChangeText={setHashtags}
+            autoCapitalize="none"
+          />
+          <View style={styles.rows}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={video ? copy.create.changeVideo : copy.create.selectVideo}
-              disabled={isBusy || !!post}
-              onPress={() => setStep('video')}
-              style={({ pressed }) => [styles.thumb, pressed && styles.pressed]}
+              onPress={() => {
+                setHasTripPlan(true);
+                setStep('trip');
+              }}
+              style={({ pressed }) => [
+                styles.listRow,
+                tripAttachment && styles.listRowActive,
+                pressed && styles.pressed,
+              ]}
             >
-              {video ? (
-                <VideoThumb uri={video.uri} />
-              ) : (
-                <Icon name="film-outline" size={24} color={colors.tealInk} />
-              )}
-              {!post && (
-                <View style={styles.thumbLabel}>
-                  <Txt style={styles.thumbLabelText}>{copy.create.preview}</Txt>
-                </View>
-              )}
+              <Icon name="map-outline" size={22} color={colors.tealInk} />
+              <View style={styles.flex}>
+                <Txt variant="label">{vi.mobile.tripPlan.editor.toggle}</Txt>
+                <Txt variant="caption" style={tripAttachment ? styles.tripOn : ui.muted} numberOfLines={1}>
+                  {tripSummary}
+                </Txt>
+              </View>
+              <Icon name="chevron-forward" size={18} color={colors.textMuted} />
             </Pressable>
-          </Row>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setVisibility(visibility === 'public' ? 'private' : 'public')}
+              style={({ pressed }) => [styles.listRow, pressed && styles.pressed]}
+            >
+              <Icon
+                name={visibility === 'public' ? 'earth-outline' : 'lock-closed-outline'}
+                size={22}
+                color={colors.ink}
+              />
+              <View style={styles.flex}>
+                <Txt variant="label">
+                  {visibility === 'public' ? copy.create.visibilityPublic : copy.create.visibilityPrivate}
+                </Txt>
+                <Txt variant="caption" style={ui.muted}>
+                  {copy.create.visibilityHint}
+                </Txt>
+              </View>
+              <Icon name="swap-horizontal" size={18} color={colors.textMuted} />
+            </Pressable>
+          </View>
+          {id && (
+            <Button
+              tone="text"
+              onPress={() => router.push({ pathname: '/trip/[slug]', params: { slug: id } })}
+            >
+              {vi.api.detail}
+            </Button>
+          )}
         </View>
-        <Field
-          label={copy.create.hashtagsLabel}
-          placeholder={copy.create.hashtagsPlaceholder}
-          value={hashtags}
-          onChangeText={setHashtags}
-          autoCapitalize="none"
-        />
-        <View style={styles.rows}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              setHasTripPlan(true);
-              setStep('trip');
-            }}
-            style={({ pressed }) => [
-              styles.listRow,
-              tripAttachment && styles.listRowActive,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Icon name="map-outline" size={22} color={colors.tealInk} />
-            <View style={styles.flex}>
-              <Txt variant="label">{vi.mobile.tripPlan.editor.toggle}</Txt>
-              <Txt variant="caption" style={tripAttachment ? styles.tripOn : ui.muted} numberOfLines={1}>
-                {tripSummary}
-              </Txt>
-            </View>
-            <Icon name="chevron-forward" size={18} color={colors.textMuted} />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setVisibility(visibility === 'public' ? 'private' : 'public')}
-            style={({ pressed }) => [styles.listRow, pressed && styles.pressed]}
-          >
-            <Icon
-              name={visibility === 'public' ? 'earth-outline' : 'lock-closed-outline'}
-              size={22}
-              color={colors.ink}
-            />
-            <View style={styles.flex}>
-              <Txt variant="label">
-                {visibility === 'public' ? copy.create.visibilityPublic : copy.create.visibilityPrivate}
-              </Txt>
-              <Txt variant="caption" style={ui.muted}>
-                {copy.create.visibilityHint}
-              </Txt>
-            </View>
-            <Icon name="swap-horizontal" size={18} color={colors.textMuted} />
-          </Pressable>
-        </View>
-        {id && (
-          <Button tone="text" onPress={() => router.push({ pathname: '/trip/[slug]', params: { slug: id } })}>
-            {vi.api.detail}
-          </Button>
-        )}
+      </Screen>
+    </DraftEditorFrame>
+  );
+}
+
+function DraftEditorFrame({
+  children,
+  exitOpen,
+  dialog,
+}: PropsWithChildren<{ exitOpen: boolean; dialog: ReactNode }>) {
+  return (
+    <>
+      <View
+        style={ui.flex}
+        aria-hidden={exitOpen}
+        accessibilityElementsHidden={exitOpen}
+        importantForAccessibility={exitOpen ? 'no-hide-descendants' : 'auto'}
+      >
+        {children}
       </View>
-    </Screen>
+      {dialog}
+    </>
   );
 }
 
@@ -575,6 +911,8 @@ function StepHeader({
 
 /** Bước 1: xem lại video gần như toàn màn hình rồi bấm Tiếp. */
 function VideoStep({
+  canContinueDraft,
+  notice,
   video,
   isPicking,
   progressPercent,
@@ -583,6 +921,8 @@ function VideoStep({
   onPick,
   onNext,
 }: {
+  canContinueDraft?: boolean;
+  notice?: React.ReactNode;
   video: PickedVideo | null;
   isPicking: boolean;
   progressPercent: number | null;
@@ -603,7 +943,8 @@ function VideoStep({
           </Txt>
           <View style={styles.welcomeHeaderSpacer} />
         </Row>
-        <View style={styles.welcomeBody}>
+        <ScrollView contentContainerStyle={styles.welcomeBody} keyboardShouldPersistTaps="handled">
+          {notice}
           <View style={styles.welcomeIcon}>
             <Icon name="videocam-outline" size={40} color={colors.coralInk} />
           </View>
@@ -614,6 +955,11 @@ function VideoStep({
           <Button icon="images-outline" style={styles.welcomeButton} disabled={isPicking} onPress={onPick}>
             {isPicking ? copy.create.selecting : copy.create.selectVideo}
           </Button>
+          {canContinueDraft && (
+            <Button tone="secondary" style={{ alignSelf: 'stretch', borderRadius: 8 }} onPress={onNext}>
+              {copy.create.recovery.continue}
+            </Button>
+          )}
           {error && <Notice tone="error">{error}</Notice>}
           <View style={styles.welcomeTips}>
             {[
@@ -628,7 +974,7 @@ function VideoStep({
               </Row>
             ))}
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -661,6 +1007,7 @@ function VideoStep({
         )}
       </View>
       {error && <Notice tone="error">{error}</Notice>}
+      {notice}
       <Row style={styles.videoActions}>
         <Pressable
           accessibilityRole="button"
@@ -763,7 +1110,11 @@ function PublishedView({ postId, hasVideo, held }: { postId: string; hasVideo: b
           {held ? vi.moderation.heldTitle : copy.create.publishedTitle}
         </Txt>
         <Txt style={styles.publishedBody}>
-          {held ? vi.moderation.heldPost : hasVideo ? copy.create.publishedVideoBody : copy.create.publishedBody}
+          {held
+            ? vi.moderation.heldPost
+            : hasVideo
+              ? copy.create.publishedVideoBody
+              : copy.create.publishedBody}
         </Txt>
         <Button tone="text" onPress={() => router.replace('/create')}>
           {copy.create.postAnother}
@@ -881,7 +1232,7 @@ const styles = StyleSheet.create({
   welcomeHeaderTitle: { flex: 1, textAlign: 'center' },
   welcomeHeaderSpacer: { width: 44 },
   welcomeBody: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
