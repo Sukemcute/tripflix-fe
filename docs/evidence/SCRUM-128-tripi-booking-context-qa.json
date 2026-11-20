@@ -1,0 +1,110 @@
+{
+  "checks": [
+    {
+      "width": 390,
+      "trip": {
+        "dateFrom": "2026-12-01",
+        "dateTo": "2026-12-03",
+        "adults": 2,
+        "children": 0,
+        "infants": 0
+      },
+      "hotelRequests": [
+        {
+          "checkIn": "2026-12-01",
+          "checkOut": "2026-12-03",
+          "adults": "2"
+        },
+        {
+          "checkIn": "2026-12-01",
+          "checkOut": "2026-12-03",
+          "adults": "2"
+        },
+        {
+          "checkIn": "2026-12-01",
+          "checkOut": "2026-12-03",
+          "adults": "2"
+        }
+      ],
+      "checkout": {
+        "adults": 2,
+        "items": [
+          {
+            "productId": "qa-room",
+            "checkIn": "2026-12-01",
+            "checkOut": "2026-12-03",
+            "qty": 1,
+            "ratePlanCode": "FLEX"
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "width": 430,
+      "trip": {
+        "dateFrom": "2026-12-12",
+        "dateTo": "2026-12-15",
+        "adults": 3,
+        "children": 1,
+        "infants": 1
+      },
+      "hotelRequests": [
+        {
+          "checkIn": "2026-12-12",
+          "checkOut": "2026-12-15",
+          "adults": "3"
+        },
+        {
+          "checkIn": "2026-12-12",
+          "checkOut": "2026-12-15",
+          "adults": "3"
+        },
+        {
+          "checkIn": "2026-12-12",
+          "checkOut": "2026-12-15",
+          "adults": "3"
+        }
+      ],
+      "checkout": {
+        "adults": 3,
+        "children": 1,
+        "infants": 1,
+        "items": [
+          {
+            "productId": "qa-room",
+            "checkIn": "2026-12-12",
+            "checkOut": "2026-12-15",
+            "qty": 1,
+            "ratePlanCode": "FLEX"
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    {
+      "width": 320,
+      "result": "passed",
+      "cases": [
+        "missing dates can be selected explicitly",
+        "party edit reaches hotel query",
+        "dirty room quote cannot be selected before updating"
+      ]
+    },
+    {
+      "width": 320,
+      "result": "passed",
+      "cases": [
+        "missing/cleared dates block confirm",
+        "invalid hotel and room deep links block pricing",
+        "no horizontal overflow"
+      ]
+    },
+    {
+      "width": 390,
+      "result": "passed",
+      "cases": ["guest login return link preserves dates and all guest counts"]
+    }
+  ],
+  "native": "Not run; Expo Go device verification remains pending."
+}
