@@ -906,9 +906,7 @@ export function SocialFeedView({
         {/* Loading state */}
         {/* Mở bài qua ?open= thì bài đó hiện trước khi feed tải xong: lúc đó chấm nằm ở cuối feed, không chèn thẻ rỗng. */}
         {isFeedLoading && posts.length === 0 && (
-          <div className={styles.emptyFeed}>
-            <LoadingDots label="Đang tải bảng tin cảm hứng..." />
-          </div>
+          <LoadingDots isBlock label="Đang tải bảng tin cảm hứng..." />
         )}
 
         {/* Error state */}
