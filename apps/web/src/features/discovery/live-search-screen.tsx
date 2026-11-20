@@ -361,7 +361,7 @@ export function LiveSearchScreen({
             </span>
           </label>
           <button
-            className={`primary-button ${styles.submit}`}
+            className={styles.submit}
             type="submit"
             disabled={!canSubmit || search.stays.isFetching}
           >
