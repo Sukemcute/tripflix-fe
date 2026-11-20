@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { TripiMascot } from '@/features/mascot/tripi-mascot';
 import { withReturnTo } from '@/features/auth/auth-return';
-import { AssistantCards } from './assistant-cards';
+import { AssistantCards, hasVisibleAssistantCards } from './assistant-cards';
 import { AssistantIcon, type AssistantIconName } from './assistant-icon';
 import { useAssistant } from './assistant-provider';
 import {
@@ -65,9 +65,12 @@ function AssistantPanel({
   const chat = useAssistant();
   const pathname = usePathname();
   const list = useRef<HTMLDivElement>(null);
+  const latestReplyBubble = useRef<HTMLParagraphElement>(null);
+  const followsReply = useRef(true);
   const input = useRef<HTMLTextAreaElement>(null);
   const panel = useRef<HTMLElement>(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  const revealingReplyId = chat.replyPreview?.id;
 
   // Đo vị trí mép dưới của .ota-header để neo khung chat chính xác theo thanh điều hướng
   useLayoutEffect(() => {
@@ -93,8 +96,23 @@ function AssistantPanel({
   }, [pathname]);
 
   useLayoutEffect(() => {
-    list.current?.scrollTo({ top: list.current.scrollHeight });
+    if (chat.isPending) followsReply.current = true;
+    if (followsReply.current && list.current) list.current.scrollTop = list.current.scrollHeight;
   }, [chat.messages.length, chat.isPending, chat.hasError]);
+
+  useLayoutEffect(() => {
+    const messages = list.current;
+    const bubble = latestReplyBubble.current;
+    if (!revealingReplyId || !messages || !bubble) return;
+
+    const observer = new ResizeObserver(() => {
+      if (!followsReply.current) return;
+      const overflow = bubble.getBoundingClientRect().bottom - messages.getBoundingClientRect().bottom;
+      if (overflow > 0) messages.scrollTo({ top: messages.scrollTop + overflow, behavior: 'smooth' });
+    });
+    observer.observe(bubble);
+    return () => observer.disconnect();
+  }, [revealingReplyId]);
 
   // Lỗi không khoá ô nhập: người dùng sửa câu rồi gửi lại, hoặc bấm "Thử gửi lại".
   const isDisabled = !chat.draft.trim() || chat.isPending;
@@ -161,7 +179,14 @@ function AssistantPanel({
         </button>
       </header>
 
-      <div ref={list} className={styles.messages}>
+      <div
+        ref={list}
+        className={styles.messages}
+        onScroll={({ currentTarget }) => {
+          const { scrollHeight, scrollTop, clientHeight } = currentTarget;
+          followsReply.current = scrollHeight - scrollTop - clientHeight <= 32;
+        }}
+      >
         {!chat.messages.length ? (
           <div className={styles.welcome}>
             <div className={styles.welcomeHead}>
@@ -198,6 +223,8 @@ function AssistantPanel({
           chat.messages.map((message, index) => {
             const isAssistant = message.role === 'assistant';
             const isLatest = index === chat.messages.length - 1;
+            const preview = chat.replyPreview?.id === message.id ? chat.replyPreview : null;
+            const cards = isAssistant && message.cards && hasVisibleAssistantCards(message.cards) ? message.cards : null;
             // Avatar chỉ ở tin đầu của một lượt Tripi, tránh lặp mặt Tripi mỗi bong bóng.
             const startsGroup = isAssistant && chat.messages[index - 1]?.role !== 'assistant';
             return (
@@ -205,7 +232,7 @@ function AssistantPanel({
                 <div
                   className={styles.messageRow}
                   data-role={message.role}
-                  data-has-cards={isAssistant && !!message.cards?.length ? '' : undefined}
+                  data-has-cards={cards ? '' : undefined}
                 >
                   {isAssistant &&
                     (startsGroup ? (
@@ -213,12 +240,31 @@ function AssistantPanel({
                     ) : (
                       <span className={styles.avatarSpacer} />
                     ))}
-                  <p className={styles.message} data-role={message.role}>
-                    {message.text}
+                  <p
+                    ref={isAssistant && isLatest ? latestReplyBubble : undefined}
+                    className={styles.message}
+                    data-role={message.role}
+                  >
+                    {preview ? (
+                      <>
+                        <span className={styles.replyMeasure} aria-hidden="true">
+                          {message.text}
+                        </span>
+                        <span data-reply-preview="" aria-hidden="true">
+                          {message.text.slice(0, preview.wordStart)}
+                          <span key={preview.wordStart} className={styles.replyWord}>
+                            {message.text.slice(preview.wordStart, preview.wordEnd)}
+                          </span>
+                        </span>
+                        <span className="sr-only">{message.text}</span>
+                      </>
+                    ) : (
+                      message.text
+                    )}
                   </p>
-                  {isAssistant && !!message.cards?.length && (
+                  {cards && !preview && (
                     <AssistantCards
-                      cards={message.cards}
+                      cards={cards}
                       onOpen={chat.close}
                       actions={
                         isLatest && !chat.isPending
@@ -240,7 +286,7 @@ function AssistantPanel({
                     </Link>
                   </div>
                 )}
-                {isAssistant && isLatest && !chat.isPending && !!message.suggestions?.length && (
+                {isAssistant && isLatest && !chat.isPending && !preview && !!message.suggestions?.length && (
                   <div className={styles.attachments}>
                     <p className={styles.suggestionsLabel}>{copy.suggestionsLabel}</p>
                     <div className={styles.chips}>

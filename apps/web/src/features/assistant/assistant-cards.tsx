@@ -44,7 +44,7 @@ function useFeedReels(postIds: string[]) {
   });
 }
 
-const ROW_ICONS: Record<string, AssistantIconName> = { stay: 'bed', flight: 'plane', post: 'news', plan: 'map' };
+const ROW_ICONS: Record<string, AssistantIconName> = { stay: 'bed', flight: 'plane', plan: 'map' };
 const INFO_KINDS = new Set([
   'weather',
   'checklist',
@@ -76,6 +76,10 @@ const SKY_ICONS: Record<WeatherSky, AssistantIconName> = {
   storm: 'storm',
   fog: 'cloud',
 };
+
+export function hasVisibleAssistantCards(cards: readonly AssistantCard[]): boolean {
+  return cards.some(({ kind }) => kind === 'video' || INFO_KINDS.has(kind) || Object.hasOwn(ROW_ICONS, kind));
+}
 
 /** Nút của thẻ kế hoạch: chỉ có trên câu trả lời mới nhất, vì lựa chọn cũ không còn hiệu lực. */
 export type CardActions = { act: (label: string, action: AssistantAction) => void; canUndo: boolean };
@@ -350,10 +354,11 @@ export function AssistantCards({
 }) {
   const videos = cards.filter((card) => card.kind === 'video');
   const infos = cards.filter((card) => INFO_KINDS.has(card.kind));
-  // Thẻ lạ (web chưa biết) thì bỏ qua thay vì hiện dòng bấm vào trang sai.
-  const others = cards.filter((card) => ['stay', 'flight', 'post', 'plan'].includes(card.kind));
+  const others = cards.filter((card) => Object.hasOwn(ROW_ICONS, card.kind));
   const reelIds = [...videos, ...infos.filter((card) => card.kind === 'itinerary')].map((card) => card.id);
   const reels = useFeedReels(reelIds).data ?? {};
+  if (!videos.length && !infos.length && !others.length) return null;
+
   return (
     <div className={styles.cards}>
       {videos.length > 0 && (

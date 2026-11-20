@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { readSafeReturnTo } from '../auth/auth-return';
 import { getAssistantBookingLinks, getAssistantCardHref } from './assistant-card-href';
-import { AssistantCards, type CardActions } from './assistant-cards';
+import { AssistantCards, hasVisibleAssistantCards, type CardActions } from './assistant-cards';
 import { toRefusedReply } from './assistant-transport';
 
 const card = (patch: Partial<AssistantCard>): AssistantCard => ({
@@ -112,7 +112,7 @@ describe('thẻ Tripi mở đúng trang web như app', () => {
   });
 });
 
-describe('hiển thị nút trên thẻ Tripi', () => {
+describe('hiển thị thẻ Tripi', () => {
   const render = (cards: AssistantCard[], actions?: CardActions) =>
     renderToStaticMarkup(
       createElement(
@@ -122,6 +122,18 @@ describe('hiển thị nút trên thẻ Tripi', () => {
       ),
     );
   const actions: CardActions = { act: () => {}, canUndo: false };
+  it('ẩn thẻ bài viết, kể cả khi một lượt chỉ có loại thẻ này', () => {
+    const post = card({ title: 'Cuối tuần ở nhà nấu ăn cũng vui' });
+    const stay = card({ kind: 'stay', ref: 'r2', title: 'Nơi ở tại Đà Lạt' });
+
+    expect(hasVisibleAssistantCards([post])).toBe(false);
+    expect(render([post])).toBe('');
+    expect(hasVisibleAssistantCards([post, stay])).toBe(true);
+    const html = render([post, stay]);
+    expect(html).toContain(stay.title);
+    expect(html).not.toContain(post.title);
+  });
+
   it('chỉ câu trả lời mới nhất có nút chọn chuyến', () => {
     const flight = card({
       kind: 'flight',
