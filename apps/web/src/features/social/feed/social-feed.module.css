@@ -2289,17 +2289,19 @@ a.authorAvatar {
 /* --------------------------------------------------------------------------
    Responsive Breakpoints
    -------------------------------------------------------------------------- */
+/* Laptop (TF98): hai cột bên co theo bề ngang màn để cột bảng tin giữa không bị ép hẹp khi mở cả hai.
+   clamp() (không dùng minmax) để grid-template-columns vẫn trượt mượt khi mở/đóng cột; ở 1439px bằng giá trị cũ. */
 @media (max-width: 1439px) {
   .splitViewContainer {
-    grid-template-columns: 300px 16px minmax(0, 1fr) 16px 330px;
+    grid-template-columns: clamp(240px, 21vw, 300px) 16px minmax(0, 1fr) 16px clamp(260px, 23vw, 330px);
   }
 
   .splitViewNoLeft {
-    grid-template-columns: 0px 0px minmax(0, 1fr) 16px 330px;
+    grid-template-columns: 0px 0px minmax(0, 1fr) 16px clamp(260px, 23vw, 330px);
   }
 
   .splitViewNoRight {
-    grid-template-columns: 300px 16px minmax(0, 1fr) 0px 0px;
+    grid-template-columns: clamp(240px, 21vw, 300px) 16px minmax(0, 1fr) 0px 0px;
   }
 
   .splitViewCenterOnly {
@@ -2309,15 +2311,15 @@ a.authorAvatar {
 
 @media (max-width: 1199px) {
   .splitViewContainer {
-    grid-template-columns: 270px 14px minmax(0, 1fr) 14px 290px;
+    grid-template-columns: clamp(220px, 22vw, 270px) 14px minmax(0, 1fr) 14px clamp(240px, 24vw, 290px);
   }
 
   .splitViewNoLeft {
-    grid-template-columns: 0px 0px minmax(0, 1fr) 14px 290px;
+    grid-template-columns: 0px 0px minmax(0, 1fr) 14px clamp(240px, 24vw, 290px);
   }
 
   .splitViewNoRight {
-    grid-template-columns: 270px 14px minmax(0, 1fr) 0px 0px;
+    grid-template-columns: clamp(220px, 22vw, 270px) 14px minmax(0, 1fr) 0px 0px;
   }
 
   .splitViewCenterOnly {
