@@ -1507,6 +1507,39 @@
   background: var(--color-coral-ink);
 }
 
+/* Hàng nút ô đăng bài hẹp (điện thoại, TF98): ba nút có chữ rộng ~345px đẩy nút Đăng ra ngoài màn. Đo theo
+   chính hàng nút nên desktop đủ chỗ thì không đổi; chữ ẩn kiểu chỉ-cho-trình-đọc-màn-hình, tooltip giữ nguyên. */
+.composerBottomRow {
+  container-type: inline-size;
+}
+
+@container (max-width: 479px) {
+  .composerActionGroup {
+    min-width: 0;
+    gap: 4px;
+  }
+
+  /* Chỉ nút trong hàng đăng bài: tab gợi ý (.recommendModeTabs) cũng dùng class .composerTagBtn. */
+  .composerActionGroup > .composerTagBtn {
+    position: relative;
+    padding: 8px;
+  }
+
+  .composerActionGroup > .composerTagBtn > span:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .composerSubmitBtn {
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+}
+
 /* --------------------------------------------------------------------------
    Post Card Component
    -------------------------------------------------------------------------- */
