@@ -2,7 +2,6 @@ export const MIN_IMAGE_SCALE = 1;
 export const MAX_IMAGE_SCALE = 4;
 export const IMAGE_ZOOM_STEP = 0.5;
 export const DOUBLE_TAP_ZOOM_SCALE = 2;
-export const FULLSCREEN_EXIT_ESCAPE_GRACE_MS = 250;
 export const DOUBLE_TAP_WINDOW_MS = 300;
 export const DOUBLE_TAP_DISTANCE_PX = 24;
 
@@ -33,7 +32,7 @@ export const INITIAL_IMAGE_ZOOM_STATE: ImageZoomState = {
   pan: { x: 0, y: 0 },
 };
 
-export type ZoomKeyboardAction = 'zoom-in' | 'zoom-out' | 'reset' | 'toggle-fullscreen';
+export type ZoomKeyboardAction = 'zoom-in' | 'zoom-out' | 'reset' | 'toggle-expanded';
 
 function clampNumber(value: number, min: number, max: number): number {
   if (!Number.isFinite(value)) return min;
@@ -175,20 +174,22 @@ export function resolveZoomKeyboardAction(key: string): ZoomKeyboardAction | nul
   if (key === '+' || key === '=') return 'zoom-in';
   if (key === '-' || key === '_') return 'zoom-out';
   if (key === '0') return 'reset';
-  if (key === 'f' || key === 'F') return 'toggle-fullscreen';
+  if (key === 'f' || key === 'F') return 'toggle-expanded';
   return null;
 }
 
-/** Prevents `<dialog>` from closing on the Escape keypress that just exited fullscreen. */
-export function shouldPreventDialogCancelOnEsc(params: {
-  hasFullscreenElement: boolean;
-  exitedFullscreenAtMs: number | null;
-  nowMs: number;
-}): boolean {
-  if (params.hasFullscreenElement) return true;
-  if (params.exitedFullscreenAtMs === null) return false;
-  const elapsed = params.nowMs - params.exitedFullscreenAtMs;
-  return elapsed >= 0 && elapsed <= FULLSCREEN_EXIT_ESCAPE_GRACE_MS;
+/** Handles Escape (`cancel` event): shrinks expanded viewer first without closing the dialog. */
+export function handleExpandedDialogCancel(params: {
+  isExpanded: boolean;
+  onShrinkExpanded: () => void;
+  onClose?: () => void;
+}): 'shrunk' | 'closed' {
+  if (params.isExpanded) {
+    params.onShrinkExpanded();
+    return 'shrunk';
+  }
+  params.onClose?.();
+  return 'closed';
 }
 
 export function formatZoomPercentage(scale: number): number {

@@ -16,9 +16,8 @@ export interface ImageViewerControlsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onResetZoom: () => void;
-  canFullscreen: boolean;
-  isFullscreen: boolean;
-  onToggleFullscreen: () => void;
+  isExpanded: boolean;
+  onToggleExpanded: () => void;
   className?: string;
 }
 
@@ -29,8 +28,8 @@ export interface ImageZoomSurfaceProps {
   children: ReactNode;
 }
 
-function FullscreenGlyph({ isFullscreen }: { isFullscreen: boolean }) {
-  if (isFullscreen) {
+function ExpandGlyph({ isExpanded }: { isExpanded: boolean }) {
+  if (isExpanded) {
     return (
       <svg
         className={styles.controlIcon}
@@ -42,10 +41,10 @@ function FullscreenGlyph({ isFullscreen }: { isFullscreen: boolean }) {
         strokeLinejoin="round"
         aria-hidden="true"
       >
-        <path d="M8 3v3a2 2 0 0 1-2 2H3" />
-        <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
-        <path d="M3 16h3a2 2 0 0 1 2 2v3" />
-        <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+        <path d="M4 14h6v6" />
+        <path d="M20 10h-6V4" />
+        <path d="M14 10l7-7" />
+        <path d="M3 21l7-7" />
       </svg>
     );
   }
@@ -69,15 +68,14 @@ function FullscreenGlyph({ isFullscreen }: { isFullscreen: boolean }) {
   );
 }
 
-/** Shared zoom (100%–400%) and fullscreen control group for image viewers. */
+/** Shared zoom (100%–400%) and tab-expand control group for image viewers. */
 export function ImageViewerControls({
   scale,
   onZoomIn,
   onZoomOut,
   onResetZoom,
-  canFullscreen,
-  isFullscreen,
-  onToggleFullscreen,
+  isExpanded,
+  onToggleExpanded,
   className,
 }: ImageViewerControlsProps) {
   const percent = formatZoomPercentage(scale);
@@ -86,9 +84,9 @@ export function ImageViewerControls({
   const percentLabel = canZoomOut
     ? vi.api.imageZoomReset
     : vi.api.imageZoomLevel.replace('{percent}', String(percent));
-  const fullscreenLabel = isFullscreen
-    ? vi.api.imageExitFullscreen
-    : vi.api.imageEnterFullscreen;
+  const expandLabel = isExpanded
+    ? vi.api.imageShrinkViewer
+    : vi.api.imageExpandViewer;
 
   return (
     <div className={className ? `${styles.controlsGroup} ${className}` : styles.controlsGroup}>
@@ -123,17 +121,15 @@ export function ImageViewerControls({
         <span aria-hidden="true">+</span>
       </button>
 
-      {canFullscreen ? (
-        <button
-          type="button"
-          className={styles.controlBtn}
-          aria-label={fullscreenLabel}
-          aria-pressed={isFullscreen}
-          onClick={onToggleFullscreen}
-        >
-          <FullscreenGlyph isFullscreen={isFullscreen} />
-        </button>
-      ) : null}
+      <button
+        type="button"
+        className={styles.controlBtn}
+        aria-label={expandLabel}
+        aria-pressed={isExpanded}
+        onClick={onToggleExpanded}
+      >
+        <ExpandGlyph isExpanded={isExpanded} />
+      </button>
     </div>
   );
 }

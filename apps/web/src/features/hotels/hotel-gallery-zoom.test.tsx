@@ -47,8 +47,8 @@ vi.mock('../live-posts.module.css', () => ({
   ),
 }));
 
-describe('HotelGallery & GalleryLightbox zoom integration', () => {
-  it('renders zoom controls in HotelGallery dialog without altering photo count', () => {
+describe('HotelGallery & GalleryLightbox zoom + expanded tab viewer', () => {
+  it('renders zoom and expand controls in HotelGallery without browser fullscreen gating', () => {
     const html = renderToStaticMarkup(
       createElement(HotelGallery, {
         name: 'Vinpearl Resort Cần Thơ',
@@ -64,11 +64,12 @@ describe('HotelGallery & GalleryLightbox zoom integration', () => {
     expect(html).toContain('100%');
     expect(html).toContain(viText.api.imageZoomIn);
     expect(html).toContain(viText.api.imageZoomOut);
+    expect(html).toContain(viText.api.imageExpandViewer);
+    expect(html).toContain('aria-pressed="false"');
     expect(html).toContain('transform:translate3d(0px, 0px, 0) scale(1)');
-    expect(html).not.toContain(viText.api.imageEnterFullscreen);
   });
 
-  it('renders zoom controls and un-preloaded 1x image sizes in GalleryLightbox', () => {
+  it('renders zoom + expand controls and un-preloaded 1x image sizes in GalleryLightbox', () => {
     const html = renderToStaticMarkup(
       createElement(GalleryLightbox, {
         isOpen: true,
@@ -86,24 +87,50 @@ describe('HotelGallery & GalleryLightbox zoom integration', () => {
     expect(html).toContain('1 / 2');
     expect(html).toContain('100%');
     expect(html).toContain(viText.api.imageZoomIn);
+    expect(html).toContain(viText.api.imageExpandViewer);
     expect(html).toContain('data-width="1000"');
     expect(html).toContain('data-sizes="(max-width: 768px) 100vw, 60vw"');
   });
 
-  it('defines fullscreen and reduced-motion styles in both hotel and social CSS', () => {
+  it('uses data-expanded CSS for full tab view and has zero browser Fullscreen API references', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const hotelCss = readFileSync(resolve(here, 'hotel.module.css'), 'utf8');
+    const hotelTsx = readFileSync(resolve(here, 'hotel-gallery.tsx'), 'utf8');
     const socialCss = readFileSync(resolve(here, '../social/live-posts.module.css'), 'utf8');
+    const socialTsx = readFileSync(resolve(here, '../social/feed/gallery-lightbox.tsx'), 'utf8');
     const controlsCss = readFileSync(
       resolve(here, '../shared/image-viewer-controls.module.css'),
       'utf8',
     );
+    const controlsTsx = readFileSync(
+      resolve(here, '../shared/image-viewer-controls.tsx'),
+      'utf8',
+    );
+    const zoomTs = readFileSync(resolve(here, '../shared/image-zoom.ts'), 'utf8');
+    const hookTs = readFileSync(resolve(here, '../shared/use-image-zoom.ts'), 'utf8');
 
-    expect(hotelCss).toContain('.photoDialog:fullscreen');
+    expect(hotelCss).toContain(".photoDialog[data-expanded='true']");
     expect(hotelCss).toContain('.photoStage img');
-    expect(socialCss).toContain('.galleryStageOverlay:fullscreen');
+    expect(socialCss).toContain(".galleryStageOverlay[data-expanded='true']");
     expect(controlsCss).toContain('prefers-reduced-motion: reduce');
     expect(controlsCss).toContain('touch-action: none');
+
+    const viewerSources = [
+      hotelCss,
+      hotelTsx,
+      socialCss,
+      socialTsx,
+      controlsCss,
+      controlsTsx,
+      zoomTs,
+      hookTs,
+    ].join('\n');
+
+    expect(viewerSources).not.toContain('requestFullscreen');
+    expect(viewerSources).not.toContain('exitFullscreen');
+    expect(viewerSources).not.toContain('fullscreenElement');
+    expect(viewerSources).not.toContain('fullscreenEnabled');
+    expect(viewerSources).not.toContain(':fullscreen');
   });
 
   it('upgrades HotelPhoto resolution only when highRes is enabled (scale > 1)', () => {

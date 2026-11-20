@@ -982,20 +982,28 @@
   background: var(--color-overlay);
 }
 
-.galleryStageOverlay:fullscreen {
+.galleryStageOverlay[data-expanded='true'] {
   width: 100vw;
   height: 100dvh;
+  max-width: none;
   max-height: 100dvh;
+  margin: 0;
   border: 0;
   border-radius: 0;
+  box-shadow: none;
 }
 
-.galleryStageOverlay:fullscreen .galleryViewer {
+.galleryStageOverlay[data-expanded='true'] .galleryViewer {
   height: 100dvh;
 }
 
-.galleryStageOverlay:fullscreen .galleryContainImg {
+.galleryStageOverlay[data-expanded='true'] .galleryContainImg {
+  height: 100%;
   max-height: none;
+}
+
+.galleryStageOverlay[data-expanded='true'] .galleryThumbnails {
+  display: none;
 }
 
 .galleryStageOverlay button:focus-visible {

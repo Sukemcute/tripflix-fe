@@ -7,6 +7,7 @@ import {
   ImageViewerControls,
   ImageZoomSurface,
 } from '../shared/image-viewer-controls';
+import { handleExpandedDialogCancel } from '../shared/image-zoom';
 import { useImageZoom } from '../shared/use-image-zoom';
 import styles from './hotel.module.css';
 
@@ -135,6 +136,7 @@ export function HotelGallery({
             aria-haspopup="dialog"
             onClick={() => {
               setIndex(position);
+              zoom.shrinkExpanded();
               setIsDialogOpen(true);
               dialog.current?.showModal();
             }}
@@ -163,13 +165,21 @@ export function HotelGallery({
       <dialog
         ref={dialog}
         className={styles.photoDialog}
+        data-expanded={zoom.isExpanded ? 'true' : undefined}
         aria-label={`${vi.hotel.gallery}: ${name}`}
         onCancel={(event) => {
-          if (zoom.shouldPreventEscCancel()) {
-            event.preventDefault();
-          }
+          handleExpandedDialogCancel({
+            isExpanded: zoom.isExpanded,
+            onShrinkExpanded: () => {
+              event.preventDefault();
+              zoom.shrinkExpanded();
+            },
+          });
         }}
-        onClose={() => setIsDialogOpen(false)}
+        onClose={() => {
+          setIsDialogOpen(false);
+          zoom.shrinkExpanded();
+        }}
       >
         <div className={styles.photoViewer}>
           <header className={styles.photoHeader}>
@@ -183,9 +193,8 @@ export function HotelGallery({
                 onZoomIn={zoom.zoomIn}
                 onZoomOut={zoom.zoomOut}
                 onResetZoom={zoom.resetZoom}
-                canFullscreen={zoom.canFullscreen}
-                isFullscreen={zoom.isFullscreen}
-                onToggleFullscreen={zoom.toggleFullscreen}
+                isExpanded={zoom.isExpanded}
+                onToggleExpanded={zoom.toggleExpanded}
               />
               <button
                 className={styles.photoControl}

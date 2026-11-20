@@ -7,12 +7,12 @@ import {
   computePinchZoomStep,
   computeWheelZoomScale,
   formatZoomPercentage,
+  handleExpandedDialogCancel,
   INITIAL_IMAGE_ZOOM_STATE,
   MAX_IMAGE_SCALE,
   MIN_IMAGE_SCALE,
   pointerOffsetFromCenter,
   resolveZoomKeyboardAction,
-  shouldPreventDialogCancelOnEsc,
   toggleDoubleTapZoom,
   zoomAroundPoint,
 } from './image-zoom';
@@ -97,7 +97,7 @@ describe('image-zoom helpers', () => {
     expect(pinched).toEqual({ scale: 2.5, pan: { x: 0, y: 0 } });
   });
 
-  it('locks slide navigation while zoomed and maps keyboard zoom/fullscreen keys', () => {
+  it('locks slide navigation while zoomed and maps keyboard zoom/expand keys', () => {
     expect(canNavigateSlides(1)).toBe(true);
     expect(canNavigateSlides(1.5)).toBe(false);
     expect(formatZoomPercentage(2.35)).toBe(235);
@@ -106,34 +106,48 @@ describe('image-zoom helpers', () => {
     expect(resolveZoomKeyboardAction('=')).toBe('zoom-in');
     expect(resolveZoomKeyboardAction('-')).toBe('zoom-out');
     expect(resolveZoomKeyboardAction('0')).toBe('reset');
-    expect(resolveZoomKeyboardAction('f')).toBe('toggle-fullscreen');
-    expect(resolveZoomKeyboardAction('F')).toBe('toggle-fullscreen');
+    expect(resolveZoomKeyboardAction('f')).toBe('toggle-expanded');
+    expect(resolveZoomKeyboardAction('F')).toBe('toggle-expanded');
     expect(resolveZoomKeyboardAction('ArrowRight')).toBeNull();
   });
 
-  it('prevents closing dialog on Escape when fullscreen is active or just exited', () => {
-    expect(
-      shouldPreventDialogCancelOnEsc({
-        hasFullscreenElement: true,
-        exitedFullscreenAtMs: null,
-        nowMs: 1000,
-      }),
-    ).toBe(true);
+  it('shrinks expanded viewer on 1st Escape and closes dialog on 2nd Escape', () => {
+    let shrunk = false;
+    let closed = false;
 
-    expect(
-      shouldPreventDialogCancelOnEsc({
-        hasFullscreenElement: false,
-        exitedFullscreenAtMs: 900,
-        nowMs: 1000,
-      }),
-    ).toBe(true);
+    const firstResult = handleExpandedDialogCancel({
+      isExpanded: true,
+      onShrinkExpanded: () => {
+        shrunk = true;
+      },
+      onClose: () => {
+        closed = true;
+      },
+    });
+    expect(firstResult).toBe('shrunk');
+    expect(shrunk).toBe(true);
+    expect(closed).toBe(false);
 
-    expect(
-      shouldPreventDialogCancelOnEsc({
-        hasFullscreenElement: false,
-        exitedFullscreenAtMs: 500,
-        nowMs: 1000,
-      }),
-    ).toBe(false);
+    const secondResult = handleExpandedDialogCancel({
+      isExpanded: false,
+      onShrinkExpanded: () => {
+        shrunk = true;
+      },
+      onClose: () => {
+        closed = true;
+      },
+    });
+    expect(secondResult).toBe('closed');
+    expect(closed).toBe(true);
+  });
+
+  it('re-clamps pan offset when container shrinks from expanded tab back to dialog size', () => {
+    // Zoomed 2x on 1400x900 expanded stage -> maxX = 700, pan.x = 650 valid
+    const expandedPan = clampPanOffset({ x: 650, y: 400 }, 2, { width: 1400, height: 900 });
+    expect(expandedPan).toEqual({ x: 650, y: 400 });
+
+    // Shrinking back to 800x600 stage -> maxX = 400, maxY = 300
+    const shrunkPan = clampPanOffset(expandedPan, 2, { width: 800, height: 600 });
+    expect(shrunkPan).toEqual({ x: 400, y: 300 });
   });
 });

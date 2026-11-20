@@ -5,7 +5,6 @@ import {
   useEffect,
   useRef,
   useState,
-  useSyncExternalStore,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type RefObject,
@@ -23,7 +22,6 @@ import {
   MIN_IMAGE_SCALE,
   pointerOffsetFromCenter,
   resolveZoomKeyboardAction,
-  shouldPreventDialogCancelOnEsc,
   toggleDoubleTapZoom,
   zoomAroundPoint,
   type ImageZoomState,
@@ -42,18 +40,17 @@ export interface UseImageZoomReturn {
   pan: Point2D;
   isZoomed: boolean;
   isInteracting: boolean;
-  isFullscreen: boolean;
-  canFullscreen: boolean;
+  isExpanded: boolean;
   canSwitchSlide: boolean;
   zoomIn: () => void;
   zoomOut: () => void;
   resetZoom: () => void;
-  toggleFullscreen: () => void;
+  toggleExpanded: () => void;
+  shrinkExpanded: () => void;
   handleStageDoubleClick: (event: ReactMouseEvent<HTMLDivElement>) => void;
   handleStagePointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
   handleStagePointerMove: (event: ReactPointerEvent<HTMLDivElement>) => void;
   handleStagePointerUpOrCancel: (event: ReactPointerEvent<HTMLDivElement>) => void;
-  shouldPreventEscCancel: () => boolean;
 }
 
 type GestureSession =
@@ -70,13 +67,6 @@ type GestureSession =
       focalPointFromCenter: Point2D;
     };
 
-const noopSubscribe = () => () => {};
-
-function getClientFullscreenEnabled(): boolean {
-  if (typeof document === 'undefined') return false;
-  return Boolean(document.fullscreenEnabled);
-}
-
 function getDistance(a: Point2D, b: Point2D): number {
   return Math.hypot(b.x - a.x, b.y - a.y);
 }
@@ -86,32 +76,28 @@ function getMidpoint(a: Point2D, b: Point2D): Point2D {
 }
 
 function isEditableElement(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
+  if (typeof HTMLElement === 'undefined' || !(target instanceof HTMLElement)) return false;
   const tag = target.tagName;
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
 }
 
-/** Shared zoom, pan, pinch, wheel, and fullscreen controller for dialog image viewers. */
+/** Shared zoom, pan, pinch, wheel, and tab-expanded controller for dialog image viewers. */
 export function useImageZoom({
   isOpen,
   slideKey,
   dialogRef,
   stageRef,
 }: UseImageZoomOptions): UseImageZoomReturn {
-  const scopeKey = isOpen ? slideKey : '__closed__';
+  const [sessionId, setSessionId] = useState(0);
+  const scopeKey = isOpen ? `${sessionId}:${slideKey}` : '__closed__';
   const [zoomEntry, setZoomEntry] = useState<{ scopeKey: string; state: ImageZoomState }>(() => ({
     scopeKey,
     state: INITIAL_IMAGE_ZOOM_STATE,
   }));
   const [interactingScope, setInteractingScope] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [expandedState, setExpandedState] = useState(false);
 
-  const canFullscreen = useSyncExternalStore(
-    noopSubscribe,
-    getClientFullscreenEnabled,
-    () => false,
-  );
-
+  const isExpanded = isOpen && expandedState;
   const isInteracting = interactingScope === scopeKey;
   const zoomState = zoomEntry.scopeKey === scopeKey ? zoomEntry.state : INITIAL_IMAGE_ZOOM_STATE;
 
@@ -119,8 +105,6 @@ export function useImageZoom({
   const activePointersRef = useRef<Map<number, Point2D>>(new Map());
   const gestureRef = useRef<GestureSession | null>(null);
   const lastTapRef = useRef<{ timeMs: number; point: Point2D } | null>(null);
-  const wasFullscreenRef = useRef(false);
-  const exitedFullscreenAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     zoomStateRef.current = zoomState;
@@ -131,6 +115,15 @@ export function useImageZoom({
     gestureRef.current = null;
     lastTapRef.current = null;
   }, [scopeKey]);
+
+  // Reset zoom and expanded state whenever an open viewer session closes.
+  useEffect(() => {
+    if (!isOpen) return;
+    return () => {
+      setSessionId((prev) => prev + 1);
+      setExpandedState(false);
+    };
+  }, [isOpen]);
 
   const updateZoom = useCallback(
     (updater: (current: ImageZoomState) => ImageZoomState) => {
@@ -179,65 +172,54 @@ export function useImageZoom({
     updateZoom(() => INITIAL_IMAGE_ZOOM_STATE);
   }, [updateZoom]);
 
-  const toggleFullscreen = useCallback(() => {
-    if (typeof document === 'undefined' || !document.fullscreenEnabled) return;
-    const dialog = dialogRef.current;
-    if (!dialog) return;
+  const toggleExpanded = useCallback(() => {
+    setExpandedState((prev) => !prev);
+  }, []);
 
-    const currentFs = document.fullscreenElement;
-    if (currentFs && (currentFs === dialog || dialog.contains(currentFs))) {
-      void document.exitFullscreen?.().catch(() => {});
-      return;
-    }
+  const shrinkExpanded = useCallback(() => {
+    setExpandedState(false);
+  }, []);
 
-    if (typeof dialog.requestFullscreen === 'function') {
-      void dialog.requestFullscreen().catch(() => {});
-    }
-  }, [dialogRef]);
-
-  const toggleFullscreenRef = useRef(toggleFullscreen);
+  const toggleExpandedRef = useRef(toggleExpanded);
   const zoomInRef = useRef(zoomIn);
   const zoomOutRef = useRef(zoomOut);
   const resetZoomRef = useRef(resetZoom);
 
   useEffect(() => {
-    toggleFullscreenRef.current = toggleFullscreen;
+    toggleExpandedRef.current = toggleExpanded;
     zoomInRef.current = zoomIn;
     zoomOutRef.current = zoomOut;
     resetZoomRef.current = resetZoom;
   });
 
-  // Sync fullscreen state and exit fullscreen if the dialog closes.
+  // Re-clamp pan whenever stage box resizes (e.g. toggling expanded mode or resizing viewport).
   useEffect(() => {
-    if (typeof document === 'undefined') return;
+    if (!isOpen || typeof ResizeObserver === 'undefined') return;
+    const stage = stageRef.current;
+    if (!stage) return;
 
-    const syncFullscreen = () => {
-      const dialog = dialogRef.current;
-      const fsEl = document.fullscreenElement;
-      const active = Boolean(dialog && fsEl && (fsEl === dialog || dialog.contains(fsEl)));
-      if (!active && wasFullscreenRef.current) {
-        exitedFullscreenAtRef.current = Date.now();
-      }
-      wasFullscreenRef.current = active;
-      setIsFullscreen(active);
-    };
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const stageSize = {
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      };
+      updateZoom((current) => {
+        if (current.scale <= MIN_IMAGE_SCALE) return current;
+        const clampedPan = clampPanOffset(current.pan, current.scale, stageSize);
+        if (clampedPan.x === current.pan.x && clampedPan.y === current.pan.y) {
+          return current;
+        }
+        return { scale: current.scale, pan: clampedPan };
+      });
+    });
 
-    document.addEventListener('fullscreenchange', syncFullscreen);
-    syncFullscreen();
-
+    observer.observe(stage);
     return () => {
-      document.removeEventListener('fullscreenchange', syncFullscreen);
+      observer.disconnect();
     };
-  }, [dialogRef]);
-
-  useEffect(() => {
-    if (isOpen || typeof document === 'undefined') return;
-    const dialog = dialogRef.current;
-    const fsEl = document.fullscreenElement;
-    if (dialog && fsEl && (fsEl === dialog || dialog.contains(fsEl))) {
-      void document.exitFullscreen?.().catch(() => {});
-    }
-  }, [dialogRef, isOpen]);
+  }, [isOpen, scopeKey, stageRef, updateZoom]);
 
   // Attach non-passive wheel zoom listener directly to the stage element.
   useEffect(() => {
@@ -272,7 +254,7 @@ export function useImageZoom({
     };
   }, [isOpen, scopeKey, stageRef, updateZoom]);
 
-  // Bind zoom (+/-/0) and fullscreen (F) keyboard shortcuts and block slide arrows while zoomed.
+  // Bind zoom (+/-/0) and expand-viewer (F) keyboard shortcuts and block slide arrows while zoomed.
   useEffect(() => {
     if (!isOpen) return;
     const dialog = dialogRef.current;
@@ -298,7 +280,7 @@ export function useImageZoom({
       if (action === 'zoom-in') zoomInRef.current();
       else if (action === 'zoom-out') zoomOutRef.current();
       else if (action === 'reset') resetZoomRef.current();
-      else if (action === 'toggle-fullscreen') toggleFullscreenRef.current();
+      else if (action === 'toggle-expanded') toggleExpandedRef.current();
     };
 
     const handleWindowCaptureKeyDown = (event: KeyboardEvent) => {
@@ -472,14 +454,6 @@ export function useImageZoom({
     }
   }, []);
 
-  const shouldPreventEscCancel = useCallback(() => {
-    return shouldPreventDialogCancelOnEsc({
-      hasFullscreenElement: Boolean(typeof document !== 'undefined' && document.fullscreenElement),
-      exitedFullscreenAtMs: exitedFullscreenAtRef.current,
-      nowMs: Date.now(),
-    });
-  }, []);
-
   const isZoomed = zoomState.scale > MIN_IMAGE_SCALE;
 
   return {
@@ -487,17 +461,16 @@ export function useImageZoom({
     pan: zoomState.pan,
     isZoomed,
     isInteracting,
-    isFullscreen,
-    canFullscreen,
+    isExpanded,
     canSwitchSlide: canNavigateSlides(zoomState.scale),
     zoomIn,
     zoomOut,
     resetZoom,
-    toggleFullscreen,
+    toggleExpanded,
+    shrinkExpanded,
     handleStageDoubleClick,
     handleStagePointerDown,
     handleStagePointerMove,
     handleStagePointerUpOrCancel,
-    shouldPreventEscCancel,
   };
 }

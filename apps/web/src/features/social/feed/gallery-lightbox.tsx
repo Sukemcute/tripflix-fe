@@ -8,6 +8,7 @@ import {
   ImageViewerControls,
   ImageZoomSurface,
 } from '../../shared/image-viewer-controls';
+import { handleExpandedDialogCancel } from '../../shared/image-zoom';
 import { useImageZoom } from '../../shared/use-image-zoom';
 import reelsStyles from '../live-posts.module.css';
 
@@ -98,9 +99,18 @@ export function GalleryLightbox({
     stageRef,
   });
 
+  const shrinkExpanded = zoom.shrinkExpanded;
+  const closeViewer = () => {
+    shrinkExpanded();
+    onClose();
+  };
+
   useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
+    onCloseRef.current = () => {
+      shrinkExpanded();
+      onClose();
+    };
+  }, [onClose, shrinkExpanded]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -165,14 +175,18 @@ export function GalleryLightbox({
     <dialog
       ref={dialogRef}
       className={reelsStyles.galleryStageOverlay}
+      data-expanded={zoom.isExpanded ? 'true' : undefined}
       aria-modal="true"
       aria-label={`${vi.hotel.gallery}: ${displayTitle}`}
       onCancel={(event) => {
         event.preventDefault();
-        if (zoom.shouldPreventEscCancel()) return;
-        onClose();
+        handleExpandedDialogCancel({
+          isExpanded: zoom.isExpanded,
+          onShrinkExpanded: zoom.shrinkExpanded,
+          onClose: onCloseRef.current,
+        });
       }}
-      onClose={onClose}
+      onClose={closeViewer}
     >
       {isOpen && activeImage && (
         <div className={reelsStyles.galleryViewer}>
@@ -189,16 +203,15 @@ export function GalleryLightbox({
                 onZoomIn={zoom.zoomIn}
                 onZoomOut={zoom.zoomOut}
                 onResetZoom={zoom.resetZoom}
-                canFullscreen={zoom.canFullscreen}
-                isFullscreen={zoom.isFullscreen}
-                onToggleFullscreen={zoom.toggleFullscreen}
+                isExpanded={zoom.isExpanded}
+                onToggleExpanded={zoom.toggleExpanded}
               />
               <button
                 type="button"
                 className={reelsStyles.galleryControl}
                 aria-label={vi.api.immersiveCloseGallery}
                 data-tooltip={vi.api.immersiveCloseGallery}
-                onClick={onClose}
+                onClick={closeViewer}
               >
                 {closeIcon ?? '×'}
               </button>

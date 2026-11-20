@@ -137,20 +137,25 @@
   background: var(--color-overlay);
   backdrop-filter: blur(2px);
 }
-.photoDialog:fullscreen {
+.photoDialog[data-expanded='true'] {
   width: 100vw;
   height: 100dvh;
   max-width: none;
   max-height: 100dvh;
+  margin: 0;
   border: 0;
   border-radius: 0;
+  box-shadow: none;
 }
-.photoDialog:fullscreen .photoViewer {
+.photoDialog[data-expanded='true'] .photoViewer {
   height: 100dvh;
 }
-.photoDialog:fullscreen .photoStage img {
+.photoDialog[data-expanded='true'] .photoStage img {
   height: 100%;
   max-height: none;
+}
+.photoDialog[data-expanded='true'] .photoThumbnails {
+  display: none;
 }
 :global(html):has(.photoDialog[open]) {
   overflow: hidden;
