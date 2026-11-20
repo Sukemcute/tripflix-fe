@@ -7,6 +7,7 @@ import { SurveyLogoutCleanup } from '@/features/onboarding/survey-logout-cleanup
 import { AssistantProvider } from '@/features/assistant/assistant-provider';
 import { assistantTransport } from '@/features/assistant/assistant-transport';
 import { AssistantWidget } from '@/features/assistant/assistant-widget';
+import { TooltipLayer } from '@/features/shared/tooltip-layer';
 import { WebNotifications } from '@/features/notifications/web-notifications';
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -22,6 +23,8 @@ export function Providers({ children }: { children: ReactNode }) {
           <AssistantProvider transport={assistantTransport}>
             {children}
             <AssistantWidget />
+            {/* Chú thích data-tooltip dùng chung cho cả trang (trước chỉ gắn ở tab Cảm hứng). */}
+            <TooltipLayer />
           </AssistantProvider>
         </WebNotifications>
       </ApiSessionProvider>
