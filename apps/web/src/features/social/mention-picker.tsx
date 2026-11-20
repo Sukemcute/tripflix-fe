@@ -1,10 +1,26 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getAvatarUrl, useUserSearch } from '@tripflix/api-client';
+import { getAvatarUrl, HttpError, normalizeUserSearchQuery, useUserSearch } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
+import { useDebouncedValue } from '../shared/use-debounced-value';
 import { getAvatarTone } from './avatar-tone';
 import styles from './mention-picker.module.css';
+
+export const MENTION_SEARCH_DEBOUNCE_MS = 250;
+
+/**
+ * Chuẩn hoá cặp từ khoá đang gõ (`liveQuery`) và từ khoá đã qua debounce (`debouncedQuery`):
+ * nếu từ khoá đang gõ chưa đủ điều kiện tìm (`isSearchable === false`), trả `effectiveQuery = ''`
+ * để hiện lời nhắc ngay mà không gọi API.
+ */
+export function resolveMentionSearchInput(liveQuery: string, debouncedQuery: string) {
+  const liveNormalized = normalizeUserSearchQuery(liveQuery);
+  const effectiveQuery = liveNormalized.isSearchable ? debouncedQuery : '';
+  const debouncedNormalized = normalizeUserSearchQuery(effectiveQuery);
+  const isDebouncing = liveNormalized.isSearchable && liveNormalized.query !== debouncedNormalized.query;
+  return { liveNormalized, debouncedNormalized, effectiveQuery, isDebouncing };
+}
 
 export interface MentionUserItem {
   id: string;
@@ -116,8 +132,26 @@ export function MentionPicker({
     [query],
   );
 
-  const { data, isLoading, isSearchable } = useUserSearch(query);
-  const users: MentionUserItem[] = useMemo(() => data?.items ?? [], [data?.items]);
+  const debouncedQuery = useDebouncedValue(query, MENTION_SEARCH_DEBOUNCE_MS);
+  const { liveNormalized, effectiveQuery, isDebouncing } = resolveMentionSearchInput(query, debouncedQuery);
+  const {
+    data,
+    error,
+    isError,
+    isFetching,
+    isLoading,
+    isPlaceholderData,
+    refetch,
+  } = useUserSearch(effectiveQuery);
+
+  const users: MentionUserItem[] = useMemo(
+    () => (liveNormalized.isSearchable ? (data?.items ?? []) : []),
+    [liveNormalized.isSearchable, data?.items],
+  );
+  const hasUsers = users.length > 0;
+  const isRateLimited = error instanceof HttpError && error.status === 429;
+  const isWaitingForSearch = !isError && !hasUsers && (isLoading || isFetching || isDebouncing);
+  const isRefreshingExistingList = hasUsers && (isPlaceholderData || isFetching || isDebouncing);
 
   // Cuộn item đang chọn vào tầm nhìn khi di chuyển phím mũi tên
   useEffect(() => {
@@ -168,14 +202,30 @@ export function MentionPicker({
     >
       <div className={styles.header}>{vi.api.mentionPickerTitle}</div>
 
-      {!isSearchable ? (
+      {!liveNormalized.isSearchable ? (
         <output className={styles.statusText}>{vi.api.mentionSearchPrompt}</output>
-      ) : isLoading ? (
-        <output className={styles.statusText}>{vi.api.mentionSearching}</output>
-      ) : users.length === 0 ? (
-        <output className={styles.statusText}>{vi.api.mentionNoResults}</output>
-      ) : (
-        <div className={styles.userList}>
+      ) : isError && !isDebouncing ? (
+        isRateLimited ? (
+          <output className={styles.statusText}>{vi.api.mentionRateLimited}</output>
+        ) : (
+          <div className={styles.statusError}>
+            <output className={styles.statusText}>{vi.api.mentionSearchFailed}</output>
+            <button
+              type="button"
+              className={styles.retryBtn}
+              onMouseDown={keepInputFocus}
+              onClick={() => {
+                void refetch?.();
+              }}
+            >
+              {vi.api.retry}
+            </button>
+          </div>
+        )
+      ) : hasUsers ? (
+        <div
+          className={`${styles.userList} ${isRefreshingExistingList ? styles.userListRefreshing : ''}`}
+        >
           {users.map((user, index) => {
             const isSelected = index === activeIndex;
             return (
@@ -211,6 +261,10 @@ export function MentionPicker({
             );
           })}
         </div>
+      ) : isWaitingForSearch ? (
+        <output className={styles.statusText}>{vi.api.mentionSearching}</output>
+      ) : (
+        <output className={styles.statusText}>{vi.api.mentionNoResults}</output>
       )}
     </dialog>
   );

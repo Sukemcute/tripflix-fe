@@ -124,6 +124,7 @@ export { getHotelReviews, type HotelReviewFilters } from './hotel-reviews';
 export {
   getExploreResults,
   getPostSearchResults,
+  normalizeUserSearchQuery,
   searchUsers,
   useExploreSearch,
   usePostSearch,

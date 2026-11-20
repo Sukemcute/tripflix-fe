@@ -751,6 +751,8 @@ export const api = {
   mentionSearchPrompt: 'Gõ ít nhất 2 ký tự để tìm kiếm',
   mentionSearching: 'Đang tìm người dùng…',
   mentionNoResults: 'Không tìm thấy người dùng',
+  mentionRateLimited: 'Bạn tìm hơi nhanh, thử lại sau ít giây',
+  mentionSearchFailed: 'Không tìm được, thử lại',
   commentViewReplies: 'Xem phản hồi',
   commentHideReplies: 'Ẩn phản hồi',
   commentReplyAction: 'Trả lời',
