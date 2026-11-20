@@ -140,6 +140,7 @@ export function SocialFeedView({
     ))
   );
   const isFocusPending = isDirectFocus && focusedPostQuery.isPending;
+  const isFeedLoading = !isFocusUnavailable && (postsQuery.isPending || isFocusPending);
 
   const allPosts = useMemo(() => {
     if (isSearchMode && !isDirectFocus) return searchVlogItems;
@@ -903,7 +904,8 @@ export function SocialFeedView({
         )}
 
         {/* Loading state */}
-        {!isFocusUnavailable && (postsQuery.isPending || isFocusPending) && (
+        {/* Mở bài qua ?open= thì bài đó hiện trước khi feed tải xong: lúc đó chấm nằm ở cuối feed, không chèn thẻ rỗng. */}
+        {isFeedLoading && posts.length === 0 && (
           <div className={styles.emptyFeed}>
             <LoadingDots label="Đang tải bảng tin cảm hứng..." />
           </div>
@@ -972,7 +974,7 @@ export function SocialFeedView({
 
         {/* Infinite Scroll trigger */}
         <div ref={sentinelRef} style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {postsQuery.isFetchingNextPage && (
+          {(postsQuery.isFetchingNextPage || (isFeedLoading && posts.length > 0)) && (
             <LoadingDots label="Đang tải thêm bài viết..." />
           )}
         </div>
