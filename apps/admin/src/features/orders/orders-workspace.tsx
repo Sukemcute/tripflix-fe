@@ -3,13 +3,22 @@ import * as adminCommerce from '@tripflix/api-client/core-api/admin-commerce/adm
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { vi } from '@tripflix/i18n';
 import { useState } from 'react';
+import { DataTable, type DataColumn } from '@/ui/data-table';
+import { FilterToolbar, SearchField, SelectField } from '@/ui/filter-toolbar';
+import { MetricStrip } from '@/ui/metric-strip';
+import { LoadMore } from '@/ui/pagination';
+import { EmptyState } from '@/ui/states';
+import { StatusBadge, type StatusTone } from '@/ui/status-badge';
+import { TabPanel, Tabs } from '@/ui/tabs';
+import { readEnumParam } from '@/ui/url-params';
+import { useUrlParams } from '@/ui/use-url-params';
 import { AdminApiError } from '../shell/api-state';
-import { EmptyState, LoadingState, Metric, Panel } from '../shell/operations-ui';
+import { LoadingState, Panel } from '../shell/operations-ui';
 import { formatDateTime, formatMoney, getStatusLabel, summarizeAnomaly } from './orders-format';
 import {
   ANOMALY_KINDS,
   ORDER_STATUSES,
-  type AnomalyKind,
+  type AdminOrder,
   type AnomalyList,
   type OrderDetail,
   type OrderPage,
@@ -17,37 +26,46 @@ import {
 
 const copy = vi.adminOrders;
 const PAGE_SIZE = 20;
+const TAB_IDS = ['anomalies', 'search'] as const;
+const KIND_FILTERS = ['', ...ANOMALY_KINDS] as const;
+const STATUS_FILTERS = ['', ...ORDER_STATUSES] as const;
+
+type AnomalyItem = AnomalyList['items'][number];
+
+const statusTone = (status: string): StatusTone =>
+  status === 'paid' ? 'success' : status === 'paying' ? 'warning' : status === 'pending' ? 'info' : 'neutral';
 
 export function OrdersWorkspace() {
-  const [tab, setTab] = useState<'anomalies' | 'search'>('anomalies');
+  const { params, update } = useUrlParams();
+  const tab = readEnumParam(params.get('tab'), TAB_IDS, 'anomalies');
   const [openOrderId, setOpenOrderId] = useState<string | null>(null);
   return (
-    <div className="space-y-5">
-      <div className="flex gap-2" role="tablist">
-        {(['anomalies', 'search'] as const).map((value) => (
-          <button
-            key={value}
-            role="tab"
-            aria-selected={tab === value}
-            className={tab === value ? 'admin-primary' : 'admin-secondary'}
-            onClick={() => setTab(value)}
-          >
-            {value === 'anomalies' ? copy.tabAnomalies : copy.tabSearch}
-          </button>
-        ))}
-      </div>
-      {tab === 'anomalies' ? (
-        <AnomalyPanel onOpen={setOpenOrderId} />
-      ) : (
-        <SearchPanel onOpen={setOpenOrderId} />
-      )}
+    <div className="space-y-4">
+      <Tabs
+        label={vi.admin.orders}
+        idPrefix="orders"
+        active={tab}
+        onChange={(next) => update({ tab: next === 'anomalies' ? null : next, kind: null, q: null, status: null })}
+        tabs={[
+          { id: 'anomalies', label: copy.tabAnomalies },
+          { id: 'search', label: copy.tabSearch },
+        ]}
+      />
+      <TabPanel idPrefix="orders" active={tab}>
+        {tab === 'anomalies' ? (
+          <AnomalyPanel onOpen={setOpenOrderId} />
+        ) : (
+          <SearchPanel onOpen={setOpenOrderId} />
+        )}
+      </TabPanel>
       {openOrderId && <OrderDetailPanel id={openOrderId} onClose={() => setOpenOrderId(null)} />}
     </div>
   );
 }
 
 function AnomalyPanel({ onOpen }: { onOpen: (id: string) => void }) {
-  const [kind, setKind] = useState<AnomalyKind | ''>('');
+  const { params, update } = useUrlParams();
+  const kind = readEnumParam(params.get('kind'), KIND_FILTERS, '');
   const all = useQuery({
     queryKey: ['admin-anomalies'],
     queryFn: async ({ signal }) =>
@@ -55,85 +73,75 @@ function AnomalyPanel({ onOpen }: { onOpen: (id: string) => void }) {
         .data as unknown as AnomalyList,
   });
   const items = (all.data?.items ?? []).filter((anomaly) => !kind || anomaly.kind === kind);
+  const columns: DataColumn<AnomalyItem>[] = [
+    { id: 'kind', header: copy.columns.kind, cell: (anomaly) => copy.kinds[anomaly.kind] },
+    {
+      id: 'code',
+      header: copy.columns.code,
+      cell: (anomaly) => anomaly.confirmationCode ?? anomaly.orderId.slice(0, 8),
+    },
+    {
+      id: 'status',
+      header: copy.columns.status,
+      cell: (anomaly) => (
+        <StatusBadge tone={statusTone(anomaly.orderStatus)}>{getStatusLabel(anomaly.orderStatus)}</StatusBadge>
+      ),
+    },
+    { id: 'total', header: copy.columns.total, align: 'right', cell: (anomaly) => formatMoney(anomaly.total) },
+    {
+      id: 'detail',
+      header: copy.columns.detail,
+      hideBelow: 'md',
+      cell: (anomaly) => summarizeAnomaly(anomaly.kind, anomaly.detail),
+    },
+    {
+      id: 'since',
+      header: copy.columns.since,
+      hideBelow: 'lg',
+      cell: (anomaly) => <span className="whitespace-nowrap">{formatDateTime(anomaly.since)}</span>,
+    },
+  ];
   return (
-    <>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {ANOMALY_KINDS.map((value) => (
-          <button
-            key={value}
-            className="text-left"
-            onClick={() => setKind(kind === value ? '' : value)}
-            aria-pressed={kind === value}
-          >
-            <Metric
-              label={copy.kinds[value]}
-              value={all.data?.counts[value] ?? (all.isPending ? undefined : 0)}
-              urgent={(all.data?.counts[value] ?? 0) > 0}
-            />
-          </button>
-        ))}
-      </div>
-      <Panel
-        title={kind ? copy.kinds[kind] : copy.tabAnomalies}
-        description={kind ? copy.kindHints[kind] : copy.description}
-      >
-        <AdminApiError error={all.error} retry={() => void all.refetch()} />
-        {all.isPending ? (
-          <LoadingState />
-        ) : items.length === 0 ? (
-          <EmptyState title={copy.noAnomalies} />
-        ) : (
-          <div className="admin-table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>{copy.columns.kind}</th>
-                  <th>{copy.columns.code}</th>
-                  <th>{copy.columns.status}</th>
-                  <th>{copy.columns.total}</th>
-                  <th>{copy.columns.detail}</th>
-                  <th>{copy.columns.since}</th>
-                  <th>{copy.open}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((anomaly) => (
-                  <tr key={`${anomaly.kind}-${anomaly.orderId}`}>
-                    <td>{copy.kinds[anomaly.kind]}</td>
-                    <td>{anomaly.confirmationCode ?? anomaly.orderId.slice(0, 8)}</td>
-                    <td>{getStatusLabel(anomaly.orderStatus)}</td>
-                    <td>{formatMoney(anomaly.total)}</td>
-                    <td>{summarizeAnomaly(anomaly.kind, anomaly.detail)}</td>
-                    <td>{formatDateTime(anomaly.since)}</td>
-                    <td>
-                      <button className="admin-secondary" onClick={() => onOpen(anomaly.orderId)}>
-                        {copy.open}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Panel>
-    </>
+    <div className="space-y-3">
+      <MetricStrip
+        label={copy.tabAnomalies}
+        items={ANOMALY_KINDS.map((value) => ({
+          id: value,
+          label: copy.kinds[value],
+          value: all.data?.counts[value] ?? (all.isPending ? undefined : 0),
+          isUrgent: true,
+          isActive: kind === value,
+          onClick: () => update({ kind: kind === value ? null : value }),
+        }))}
+      />
+      {kind && <p className="text-[13px] text-text-muted">{copy.kindHints[kind]}</p>}
+      <AdminApiError error={all.error} retry={() => void all.refetch()} />
+      <DataTable
+        label={kind ? copy.kinds[kind] : copy.tabAnomalies}
+        columns={columns}
+        rows={items}
+        getRowId={(anomaly) => `${anomaly.kind}-${anomaly.orderId}`}
+        onRowOpen={(anomaly) => onOpen(anomaly.orderId)}
+        isLoading={all.isPending}
+        empty={!all.error && <EmptyState title={copy.noAnomalies} />}
+      />
+    </div>
   );
 }
 
 function SearchPanel({ onOpen }: { onOpen: (id: string) => void }) {
-  const [text, setText] = useState('');
-  const [status, setStatus] = useState('');
-  const [filter, setFilter] = useState({ q: '', status: '' });
+  const { params, update } = useUrlParams();
+  const q = params.get('q') ?? '';
+  const status = readEnumParam(params.get('status'), STATUS_FILTERS, '');
   const pages = useInfiniteQuery({
-    queryKey: ['admin-orders', filter],
+    queryKey: ['admin-orders', { q, status }],
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam, signal }) =>
       (
         await adminCommerce.adminOrdersControllerSearch(
           {
-            q: filter.q || undefined,
-            status: filter.status || undefined,
+            q: q || undefined,
+            status: status || undefined,
             before: pageParam,
             limit: PAGE_SIZE,
           },
@@ -143,90 +151,65 @@ function SearchPanel({ onOpen }: { onOpen: (id: string) => void }) {
     getNextPageParam: (page) => page.nextBefore ?? undefined,
   });
   const orders = pages.data?.pages.flatMap((page) => page.items) ?? [];
+  const columns: DataColumn<AdminOrder>[] = [
+    { id: 'code', header: copy.columns.code, cell: (order) => order.confirmationCode ?? order.id.slice(0, 8) },
+    {
+      id: 'status',
+      header: copy.columns.status,
+      cell: (order) => <StatusBadge tone={statusTone(order.status)}>{getStatusLabel(order.status)}</StatusBadge>,
+    },
+    { id: 'total', header: copy.columns.total, align: 'right', cell: (order) => formatMoney(order.total) },
+    {
+      id: 'contact',
+      header: copy.columns.contact,
+      hideBelow: 'md',
+      cell: (order) =>
+        [order.contactName, order.contactPhone, order.contactEmail].filter(Boolean).join(' · ') || '—',
+    },
+    {
+      id: 'createdAt',
+      header: copy.columns.createdAt,
+      hideBelow: 'lg',
+      cell: (order) => <span className="whitespace-nowrap">{formatDateTime(order.createdAt)}</span>,
+    },
+  ];
   return (
-    <Panel title={copy.tabSearch}>
-      <form
-        className="admin-filters p-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setFilter({ q: text.trim(), status });
-        }}
-      >
-        <label>
-          {copy.searchLabel}
-          <input
-            value={text}
-            maxLength={200}
-            placeholder={copy.searchPlaceholder}
-            onChange={(event) => setText(event.target.value)}
-          />
-        </label>
-        <label>
-          {copy.statusLabel}
-          <select value={status} onChange={(event) => setStatus(event.target.value)}>
-            <option value="">{copy.allStatuses}</option>
-            {ORDER_STATUSES.map((value) => (
-              <option key={value} value={value}>
-                {copy.status[value]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button className="admin-primary">{copy.search}</button>
-      </form>
+    <div className="space-y-3">
+      <FilterToolbar hasActiveFilters={!!(q || status)} onReset={() => update({ q: null, status: null })}>
+        <SearchField
+          label={copy.searchLabel}
+          placeholder={copy.searchPlaceholder}
+          value={q}
+          onChange={(value) => update({ q: value })}
+          className="max-w-96"
+        />
+        <SelectField
+          label={copy.statusLabel}
+          value={status}
+          allLabel={copy.allStatuses}
+          options={ORDER_STATUSES.map((value) => ({ value, label: copy.status[value] }))}
+          onChange={(value) => update({ status: value })}
+        />
+      </FilterToolbar>
       <AdminApiError error={pages.error} retry={() => void pages.refetch()} />
-      {pages.isPending ? (
-        <LoadingState />
-      ) : orders.length === 0 ? (
-        <EmptyState title={copy.noOrders} />
-      ) : (
-        <div className="admin-table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>{copy.columns.code}</th>
-                <th>{copy.columns.status}</th>
-                <th>{copy.columns.total}</th>
-                <th>{copy.columns.contact}</th>
-                <th>{copy.columns.createdAt}</th>
-                <th>{copy.open}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-                <tr key={order.id}>
-                  <td>{order.confirmationCode ?? order.id.slice(0, 8)}</td>
-                  <td>{getStatusLabel(order.status)}</td>
-                  <td>{formatMoney(order.total)}</td>
-                  <td>
-                    {[order.contactName, order.contactPhone, order.contactEmail]
-                      .filter(Boolean)
-                      .join(' · ') || '—'}
-                  </td>
-                  <td>{formatDateTime(order.createdAt)}</td>
-                  <td>
-                    <button className="admin-secondary" onClick={() => onOpen(order.id)}>
-                      {copy.open}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <DataTable
+        label={copy.tabSearch}
+        columns={columns}
+        rows={orders}
+        getRowId={(order) => order.id}
+        onRowOpen={(order) => onOpen(order.id)}
+        isLoading={pages.isPending}
+        empty={!pages.error && <EmptyState title={copy.noOrders} />}
+      />
+      {orders.length > 0 && (
+        <LoadMore
+          shown={orders.length}
+          hasMore={!!pages.hasNextPage}
+          isFetching={pages.isFetchingNextPage}
+          onLoadMore={() => void pages.fetchNextPage()}
+        />
       )}
-      {pages.hasNextPage && (
-        <div className="p-5">
-          <button
-            className="admin-secondary"
-            disabled={pages.isFetchingNextPage}
-            onClick={() => void pages.fetchNextPage()}
-          >
-            {copy.loadMore}
-          </button>
-        </div>
-      )}
-    </Panel>
+    </div>
   );
 }
 

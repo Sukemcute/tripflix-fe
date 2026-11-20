@@ -8,11 +8,18 @@ import {
 import type { UserActivityListItemDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { useState } from 'react';
+import { AdminButton } from '@/ui/button';
+import { DataTable, type DataColumn } from '@/ui/data-table';
+import { FilterToolbar, SelectField } from '@/ui/filter-toolbar';
+import { Pagination } from '@/ui/pagination';
+import { EmptyState } from '@/ui/states';
+import { readEnumParam, readPageParam } from '@/ui/url-params';
+import { useUrlParams } from '@/ui/use-url-params';
 import { AdminApiError } from '../shell/api-state';
 import { UserActivityDialog } from './user-activity-dialog';
 import { UserActivityChart } from './user-activity-overview';
 import { UserAiUsage } from './user-ai-usage';
-import { EmptyState, LoadingState, Metric, Panel } from '../shell/operations-ui';
+import { LoadingState, Metric } from '../shell/operations-ui';
 import {
   chatQuestion,
   describeEvent,
@@ -34,125 +41,131 @@ const dateTime = new Intl.DateTimeFormat('vi-VN', {
 const formatDateTime = (value: string | null) => (value ? dateTime.format(new Date(value)) : '—');
 
 /** Hành vi từng người dùng (SCRUM-177). Chỉ superadmin; API tự chặn người khác. */
+const RANGE_PARAMS = USER_ACTIVITY_RANGES.map(String);
+const DEFAULT_RANGE = '7';
+
 export function UserActivityWorkspace() {
-  const [days, setDays] = useState<UserActivityRangeDays>(7);
-  const [page, setPage] = useState(1);
+  const { params, update } = useUrlParams();
+  const days = Number(readEnumParam(params.get('days'), RANGE_PARAMS, DEFAULT_RANGE)) as UserActivityRangeDays;
+  const page = readPageParam(params.get('page'));
   const [selected, setSelected] = useState<UserActivityListItemDto | null>(null);
   const [openedAt] = useState(() => Date.now()); // mở trang qua nửa đêm thì tải lại để có ngày mới
   const range = userActivityRange(days, openedAt);
-  const params = { ...range, page, pageSize: PAGE_SIZE };
+  const queryParams = { ...range, page, pageSize: PAGE_SIZE };
 
   const list = useQuery({
-    queryKey: ['admin', 'user-activity', params],
-    queryFn: async ({ signal }) => (await userActivityControllerList(params, { signal })).data,
+    queryKey: ['admin', 'user-activity', queryParams],
+    queryFn: async ({ signal }) => (await userActivityControllerList(queryParams, { signal })).data,
     refetchInterval: REFRESH_MS,
     placeholderData: keepPreviousData,
     retry: false,
   });
   const data = list.isError ? undefined : list.data;
-  const pageCount = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+
+  const columns: DataColumn<UserActivityListItemDto>[] = [
+    {
+      id: 'user',
+      header: copy.columns.user,
+      cell: (item) => <span>{item.displayName ?? copy.deletedAccount}</span>,
+    },
+    { id: 'email', header: copy.columns.email, hideBelow: 'md', cell: (item) => item.email ?? '—' },
+    {
+      id: 'followers',
+      header: copy.columns.followers,
+      align: 'right',
+      hideBelow: 'lg',
+      cell: (item) => count.format(item.profile.followerCount),
+    },
+    {
+      id: 'following',
+      header: copy.columns.following,
+      align: 'right',
+      hideBelow: 'xl',
+      cell: (item) => count.format(item.profile.followingCount),
+    },
+    {
+      id: 'likes',
+      header: copy.columns.likes,
+      align: 'right',
+      hideBelow: 'xl',
+      cell: (item) => count.format(item.profile.likeCount),
+    },
+    {
+      id: 'posts',
+      header: copy.columns.posts,
+      align: 'right',
+      hideBelow: 'sm',
+      cell: (item) => count.format(item.profile.postCount),
+    },
+    {
+      id: 'lastActiveAt',
+      header: copy.columns.lastActiveAt,
+      hideBelow: 'md',
+      cell: (item) => <span className="whitespace-nowrap">{formatDateTime(item.lastActiveAt)}</span>,
+    },
+    {
+      id: 'open',
+      header: <span className="sr-only">{copy.viewDetail}</span>,
+      align: 'right',
+      cell: (item) => (
+        <AdminButton size="sm" onClick={() => setSelected(item)}>
+          {copy.viewDetail}
+        </AdminButton>
+      ),
+    },
+  ];
 
   return (
-    <>
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <form className="admin-filters" style={{ padding: 0 }} onSubmit={(event) => event.preventDefault()}>
-          <label>
-            {copy.range}
-            <select
-              value={days}
-              onChange={(event) => {
-                setDays(Number(event.target.value) as UserActivityRangeDays);
-                setPage(1);
-                setSelected(null);
-              }}
-            >
-              {USER_ACTIVITY_RANGES.map((value) => (
-                <option key={value} value={value}>
-                  {copy.ranges[value]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </form>
-        <span className="admin-badge">{copy.autoRefresh}</span>
-      </div>
+    <div className="space-y-5">
+      <FilterToolbar summary={copy.autoRefresh}>
+        <SelectField
+          label={copy.range}
+          value={String(days)}
+          options={USER_ACTIVITY_RANGES.map((value) => ({ value: String(value), label: copy.ranges[value] }))}
+          onChange={(value) => {
+            update({ days: value === DEFAULT_RANGE ? null : value, page: null });
+            setSelected(null);
+          }}
+        />
+      </FilterToolbar>
 
       <UserActivityChart range={range} days={days} />
 
       {list.isError && <AdminApiError error={list.error} retry={() => void list.refetch()} />}
 
-      <Panel title={copy.listTitle} description={copy.listDescription}>
-        {list.isPending ? (
-          <LoadingState />
-        ) : !data || data.items.length === 0 ? (
-          <EmptyState title={copy.empty} />
-        ) : (
-          <>
-            <div className="admin-table-scroll">
-              <table className="ops-table" aria-label={copy.listTitle}>
-                <thead>
-                  <tr>
-                    <th scope="col">{copy.columns.user}</th>
-                    <th scope="col">{copy.columns.email}</th>
-                    <th scope="col">{copy.columns.followers}</th>
-                    <th scope="col">{copy.columns.following}</th>
-                    <th scope="col">{copy.columns.likes}</th>
-                    <th scope="col">{copy.columns.posts}</th>
-                    <th scope="col">{copy.columns.lastActiveAt}</th>
-                    <th scope="col">
-                      <span className="sr-only">{copy.viewDetail}</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.items.map((item) => (
-                    <tr key={item.userId} aria-selected={selected?.userId === item.userId}>
-                      <td className="font-semibold text-navy">{item.displayName ?? copy.deletedAccount}</td>
-                      <td>{item.email ?? '—'}</td>
-                      <td className="tabular-nums">{count.format(item.profile.followerCount)}</td>
-                      <td className="tabular-nums">{count.format(item.profile.followingCount)}</td>
-                      <td className="tabular-nums">{count.format(item.profile.likeCount)}</td>
-                      <td className="tabular-nums">{count.format(item.profile.postCount)}</td>
-                      <td>{formatDateTime(item.lastActiveAt)}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="rounded-md border border-border px-3 py-1 text-xs font-semibold text-teal-ink hover:bg-teal-soft"
-                          onClick={() => setSelected(item)}
-                        >
-                          {copy.viewDetail}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <nav className="flex items-center justify-end gap-3 px-5 py-4 text-xs text-text-muted">
-              <button
-                type="button"
-                className="rounded-md border border-border px-3 py-1 disabled:opacity-50"
-                disabled={page <= 1 || list.isFetching}
-                onClick={() => setPage((value) => value - 1)}
-              >
-                {copy.previous}
-              </button>
-              <span>{t('userActivity.pageOf', { page, pageCount })}</span>
-              <button
-                type="button"
-                className="rounded-md border border-border px-3 py-1 disabled:opacity-50"
-                disabled={page >= pageCount || list.isFetching}
-                onClick={() => setPage((value) => value + 1)}
-              >
-                {copy.next}
-              </button>
-            </nav>
-          </>
-        )}
-      </Panel>
+      <section className="space-y-3" aria-labelledby="user-activity-list-title">
+        <div>
+          <h2 id="user-activity-list-title" className="text-sm font-semibold">
+            {copy.listTitle}
+          </h2>
+          <p className="text-[13px] text-text-muted">{copy.listDescription}</p>
+        </div>
+        <DataTable
+          label={copy.listTitle}
+          columns={columns}
+          rows={data?.items ?? []}
+          getRowId={(item) => item.userId}
+          onRowOpen={setSelected}
+          selectedId={selected?.userId}
+          isLoading={list.isPending}
+          empty={!list.isError && <EmptyState title={copy.empty} />}
+        />
+        {data ? (
+          <Pagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={data.total}
+            isFetching={list.isFetching}
+            onPageChange={(next) => {
+              update({ page: next === 1 ? null : String(next) });
+              setSelected(null);
+            }}
+          />
+        ) : null}
+      </section>
 
       {selected && <UserActivityDetail user={selected} range={range} onClose={() => setSelected(null)} />}
-    </>
+    </div>
   );
 }
 

@@ -1,7 +1,11 @@
 'use client';
-import { useEffect, useId, useRef, type ReactNode } from 'react';
-import { vi } from '@tripflix/i18n';
+import type { ReactNode } from 'react';
+import { AdminDialog } from '@/ui/dialog';
 
+/**
+ * Giữ tên và props cũ để các màn chưa chuyển vẫn chạy; giao diện và hành vi (native dialog, Esc, khoá khi đang xử lý)
+ * nay do AdminDialog đảm nhiệm. Màn mới nên dùng thẳng AdminDialog hoặc ConfirmDialog.
+ */
 export function OperationsDialog({
   title,
   children,
@@ -13,37 +17,9 @@ export function OperationsDialog({
   onClose: () => void;
   isPending?: boolean;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
-  useEffect(() => {
-    const dialog = ref.current;
-    dialog?.showModal();
-    return () => dialog?.close();
-  }, []);
   return (
-    <dialog
-      ref={ref}
-      aria-labelledby={titleId}
-      onCancel={(event) => {
-        event.preventDefault();
-        if (!isPending) onClose();
-      }}
-      className="ops-dialog fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-32px)] max-w-lg overflow-y-auto rounded-xl border border-border bg-background p-0 text-ink"
-    >
-      <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-5">
-        <h2 id={titleId} className="text-base font-bold">
-          {title}
-        </h2>
-        <button
-          className="rounded px-2 py-1 text-text-muted hover:bg-surface-muted"
-          aria-label={vi.adminOperations.done}
-          disabled={isPending}
-          onClick={onClose}
-        >
-          ×
-        </button>
-      </header>
+    <AdminDialog title={title} onClose={onClose} isPending={isPending}>
       {children}
-    </dialog>
+    </AdminDialog>
   );
 }

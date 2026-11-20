@@ -3,13 +3,20 @@
 import Link from 'next/link';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { moderationApi } from '@tripflix/api-client';
+import type { ModerationLogDto } from '@tripflix/api-client/core-api/model/index';
 import { adminIndexHealthControllerCheck } from '@tripflix/api-client/core-api/admin-index-health/admin-index-health';
 import { vi, t, type MessageKey } from '@tripflix/i18n';
+import { AdminButton } from '@/ui/button';
+import { DataTable, type DataColumn } from '@/ui/data-table';
+import { LoadMore } from '@/ui/pagination';
+import { EmptyState, LoadingState } from '@/ui/states';
+import { StatusBadge, type StatusTone } from '@/ui/status-badge';
 import { AdminApiError } from './api-state';
-import { EmptyState, LoadingState, Panel } from './operations-ui';
 import { exportModerationCsv } from './operations-csv';
+import { Panel } from './operations-ui';
 
 const copy = vi.adminOperations;
+
 export function OperationsAlerts() {
   const stats = useQuery({
     queryKey: ['moderation', 'stats'],
@@ -29,47 +36,55 @@ export function OperationsAlerts() {
   ].filter((item) => item.count && item.count > 0);
   const workers =
     health.data?.workers.filter((worker) => ['attention', 'offline'].includes(worker.status)) ?? [];
+  const rowClass = 'flex items-center gap-3 px-3 py-3 transition-colors duration-150 ease-adm hover:bg-surface';
   return (
-    <Panel title={vi.admin.alerts} description={copy.alertsHint}>
+    <div className="space-y-3">
       <AdminApiError error={stats.error} retry={() => void stats.refetch()} />
       <AdminApiError error={health.error} retry={() => void health.refetch()} />
       {stats.isPending || health.isPending ? (
         <LoadingState />
-      ) : (
-        <div className="divide-y divide-border">
+      ) : items.length || workers.length ? (
+        <ul className="divide-y divide-border border-y border-border">
           {items.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="flex items-center justify-between gap-4 px-5 py-5 hover:bg-surface"
-            >
-              <div>
-                <p className="text-sm font-bold">{item.label}</p>
-                <p className="mt-1 text-xs text-text-muted">{copy.open} ↗</p>
-              </div>
-              <strong className="text-xl tabular-nums text-danger">{item.count}</strong>
-            </Link>
+            <li key={item.label}>
+              <Link href={item.href} className={rowClass}>
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-danger" aria-hidden="true" />
+                <span className="flex-1 text-[13px]">{item.label}</span>
+                <span className="text-xs text-text-muted">{copy.open}</span>
+                <strong className="min-w-8 text-right text-sm font-semibold text-coral-ink tabular-nums">
+                  {item.count}
+                </strong>
+              </Link>
+            </li>
           ))}
           {workers.map((worker) => (
-            <Link
-              href="/search-monitor"
-              key={worker.id}
-              className="flex items-center justify-between gap-4 px-5 py-5 hover:bg-surface"
-            >
-              <p className="text-sm font-bold">{worker.name}</p>
-              <span className="text-xs text-danger">
-                {worker.status === 'offline' ? copy.workerOffline : copy.attention} ↗
-              </span>
-            </Link>
+            <li key={worker.id}>
+              <Link href="/search-monitor" className={rowClass}>
+                <span className="flex-1 text-[13px]">{worker.name}</span>
+                <StatusBadge tone={worker.status === 'offline' ? 'danger' : 'warning'}>
+                  {worker.status === 'offline' ? copy.workerOffline : copy.attention}
+                </StatusBadge>
+              </Link>
+            </li>
           ))}
-          {!stats.error && !health.error && !items.length && !workers.length && (
-            <EmptyState title={copy.noAlerts} />
-          )}
-        </div>
+        </ul>
+      ) : (
+        !stats.error && !health.error && <EmptyState title={copy.noAlerts} />
       )}
-    </Panel>
+    </div>
   );
 }
+
+type LogItem = ModerationLogDto;
+
+const actionTone: Record<string, StatusTone> = {
+  hide: 'warning',
+  restore: 'success',
+  remove: 'danger',
+  dismiss: 'neutral',
+};
+
+const dateTimeLabel = (value: string) => new Date(value).toLocaleString('vi-VN');
 
 export function OperationsLog({ exportable = false }: { exportable?: boolean }) {
   const query = useInfiniteQuery({
@@ -80,82 +95,81 @@ export function OperationsLog({ exportable = false }: { exportable?: boolean }) 
     refetchInterval: 30_000,
   });
   const items = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const columns: DataColumn<LogItem>[] = [
+    {
+      id: 'created',
+      header: copy.created,
+      cell: (item) => <span className="whitespace-nowrap">{dateTimeLabel(item.createdAt)}</span>,
+    },
+    {
+      id: 'action',
+      header: copy.action,
+      cell: (item) => (
+        <StatusBadge tone={actionTone[item.action] ?? 'neutral'}>
+          {vi.moderation[item.action as 'hide' | 'restore' | 'remove' | 'dismiss'] ?? item.action}
+        </StatusBadge>
+      ),
+    },
+    {
+      id: 'content',
+      header: copy.content,
+      cell: (item) => (
+        <>
+          <span className="block text-text-muted">
+            {item.targetType === 'comment' ? copy.comments : copy.posts}
+          </span>
+          <code className="block max-w-56 truncate font-mono text-xs">{item.commentId ?? item.postId ?? '—'}</code>
+        </>
+      ),
+    },
+    {
+      id: 'reason',
+      header: vi.moderation.reason,
+      hideBelow: 'md',
+      cell: (item) =>
+        vi.moderation.reasons[item.reasonCode as keyof typeof vi.moderation.reasons] ?? item.reasonCode,
+    },
+    {
+      id: 'actor',
+      header: vi.moderation.actor,
+      hideBelow: 'lg',
+      cell: (item) => (
+        <>
+          <span className="block">{item.actorType === 'system' ? copy.system : copy.staff}</span>
+          {item.actorType !== 'system' && (
+            <code className="block max-w-48 truncate font-mono text-xs text-text-muted">{item.moderatorId}</code>
+          )}
+        </>
+      ),
+    },
+  ];
   return (
-    <Panel
-      title={exportable ? copy.loadedLog : vi.admin.audit}
-      description={copy.logHint}
-      action={
-        exportable && (
-          <button
-            className="admin-secondary"
-            disabled={!items.length}
-            onClick={() => exportModerationCsv(items)}
-          >
+    <div className="space-y-3">
+      {exportable && (
+        <div className="flex justify-end">
+          <AdminButton disabled={!items.length} onClick={() => exportModerationCsv(items)}>
             {copy.export}
-          </button>
-        )
-      }
-    >
+          </AdminButton>
+        </div>
+      )}
       <AdminApiError error={query.error} retry={() => void query.refetch()} />
-      {query.isPending ? (
-        <LoadingState />
-      ) : !items.length && !query.error ? (
-        <EmptyState description={copy.noActivity} />
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="ops-table">
-            <thead>
-              <tr>
-                <th>{copy.created}</th>
-                <th>{copy.action}</th>
-                <th>{copy.content}</th>
-                <th>{vi.moderation.reason}</th>
-                <th>{vi.moderation.actor}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td className="whitespace-nowrap">{new Date(item.createdAt).toLocaleString('vi-VN')}</td>
-                  <td>
-                    <span className="ops-tag">
-                      {vi.moderation[item.action as 'hide' | 'restore' | 'remove' | 'dismiss'] ?? item.action}
-                    </span>
-                  </td>
-                  <td>
-                    <span className="text-text-muted">
-                      {item.targetType === 'comment' ? copy.comments : copy.posts}
-                    </span>
-                    <code className="mt-1 block text-[10px]">{item.commentId ?? item.postId ?? '—'}</code>
-                  </td>
-                  <td>
-                    {vi.moderation.reasons[item.reasonCode as keyof typeof vi.moderation.reasons] ??
-                      item.reasonCode}
-                  </td>
-                  <td>
-                    <span className="block">{item.actorType === 'system' ? copy.system : copy.staff}</span>
-                    {item.actorType !== 'system' && (
-                      <code className="text-[10px] text-text-muted">{item.moderatorId}</code>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <DataTable
+        label={exportable ? copy.loadedLog : vi.admin.audit}
+        columns={columns}
+        rows={items}
+        getRowId={(item) => item.id}
+        isLoading={query.isPending}
+        empty={!query.error && <EmptyState title={copy.empty} description={copy.noActivity} />}
+      />
+      {items.length > 0 && (
+        <LoadMore
+          shown={items.length}
+          hasMore={!!query.hasNextPage}
+          isFetching={query.isFetchingNextPage}
+          onLoadMore={() => void query.fetchNextPage()}
+        />
       )}
-      {query.hasNextPage && (
-        <div className="border-t border-border p-4 text-center">
-          <button
-            className="admin-secondary"
-            disabled={query.isFetchingNextPage}
-            onClick={() => void query.fetchNextPage()}
-          >
-            {query.isFetchingNextPage ? vi.api.loading : copy.more}
-          </button>
-        </div>
-      )}
-    </Panel>
+    </div>
   );
 }
 
@@ -163,10 +177,10 @@ export function UnavailableModule({ label }: { label: MessageKey }) {
   return (
     <Panel title={t(label)}>
       <EmptyState title={copy.unavailable} description={copy.unavailableHint} />
-      <div className="flex flex-wrap justify-center gap-4 border-t border-border p-5 text-xs text-teal-ink">
-        <Link href="/moderation">{copy.viewQueue} ↗</Link>
-        <Link href="/audit">{copy.viewLog} ↗</Link>
-        <Link href="/search-monitor">{copy.checkWorkers} ↗</Link>
+      <div className="flex flex-wrap justify-center gap-4 border-t border-border p-4 text-[13px] text-teal-ink">
+        <Link href="/moderation">{copy.viewQueue}</Link>
+        <Link href="/audit">{copy.viewLog}</Link>
+        <Link href="/search-monitor">{copy.checkWorkers}</Link>
       </div>
     </Panel>
   );

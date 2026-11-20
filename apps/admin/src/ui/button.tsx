@@ -2,8 +2,8 @@ import { cn } from '@tripflix/ui-web';
 import type { ButtonHTMLAttributes } from 'react';
 
 const variants = {
-  // Nút chính: tối đa một nút mỗi vùng. coral-ink để chữ trắng đạt tương phản.
-  primary: 'bg-coral-ink text-white font-semibold hover:bg-coral-ink/90',
+  // Nút chính: tối đa một nút mỗi vùng. Nền ink (trung tính) để không lẫn với nút nguy hiểm màu coral.
+  primary: 'bg-ink text-white font-semibold hover:bg-ink/90',
   secondary: 'border border-border bg-background text-ink hover:bg-surface-muted',
   ghost: 'text-text-muted hover:bg-surface-muted hover:text-ink',
   danger: 'border border-border bg-background text-coral-ink hover:bg-coral-tint',

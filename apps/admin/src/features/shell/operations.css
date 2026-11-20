@@ -38,7 +38,12 @@ summary:focus-visible {
 .ops-content :is(h1, h2, h3) {
   text-wrap: pretty;
 }
-.ops-content :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+.ops-content
+  :is(
+    input:not([type='checkbox']):not([type='radio']):not(.adm-control),
+    select:not(.adm-control),
+    textarea:not(.adm-control)
+  ) {
   border: 1px solid var(--color-border);
   border-radius: 6px;
   background: var(--color-background);

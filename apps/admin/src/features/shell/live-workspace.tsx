@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import { moderationApi, useApiSession } from '@tripflix/api-client';
 import { adminControllerGetMe } from '@tripflix/api-client/core-api/admin/admin';
 import { useMutation, useQuery, useQueryClient, useIsFetching } from '@tanstack/react-query';
@@ -204,7 +204,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <main id="admin-content" className="focus:outline-none" tabIndex={-1}>
           <AdminApiError error={logout.error} />
           <AdminApiError error={profile.error} retry={() => void profile.refetch()} />
-          {profile.isPending ? <LoadingState /> : profile.data ? children : null}
+          {profile.isPending ? (
+            <LoadingState />
+          ) : profile.data ? (
+            // Trang dùng useSearchParams (trạng thái trên URL) cần ranh giới Suspense.
+            <Suspense fallback={<LoadingState />}>{children}</Suspense>
+          ) : null}
         </main>
       </div>
     </div>
