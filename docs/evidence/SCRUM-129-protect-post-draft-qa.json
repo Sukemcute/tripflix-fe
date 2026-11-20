@@ -1,0 +1,16 @@
+{
+  "passed": 9,
+  "checks": [
+    "header exit: continue writing / keep on device; full caption, hashtags, privacy, two-day itinerary restored",
+    "offline server-save failure retains local content",
+    "closing and reopening the browser page restores persisted draft",
+    "an older successful server save does not delete newer edits typed while saving",
+    "successful server save clears only its matching local draft",
+    "discard removes the device copy and reloads server content",
+    "another account does not restore the previous account draft",
+    "missing temporary video warns and blocks posting; canceled media picker retains content; 320px dialog fits",
+    "storage-full failure prevents leaving; retry succeeds and restores unsaved text"
+  ],
+  "errors": [],
+  "native": "Android Back/swipe/background/force-stop and native file recovery not run."
+}
