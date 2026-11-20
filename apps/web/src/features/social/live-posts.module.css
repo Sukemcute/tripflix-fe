@@ -1002,10 +1002,6 @@
   max-height: none;
 }
 
-.galleryStageOverlay[data-expanded='true'] .galleryThumbnails {
-  display: none;
-}
-
 .galleryStageOverlay button:focus-visible {
   outline: 2px solid var(--color-teal-ink);
   outline-offset: 2px;

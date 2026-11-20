@@ -154,9 +154,6 @@
   height: 100%;
   max-height: none;
 }
-.photoDialog[data-expanded='true'] .photoThumbnails {
-  display: none;
-}
 :global(html):has(.photoDialog[open]) {
   overflow: hidden;
 }

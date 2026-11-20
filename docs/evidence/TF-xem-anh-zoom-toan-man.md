@@ -10,7 +10,7 @@
   - Thêm state `isExpanded`, nút `Phóng to khung xem` / `Thu nhỏ khung xem` (`vi.api.imageExpandViewer` / `vi.api.imageShrinkViewer` trong `packages/i18n/src/api.ts`) luôn hiển thị (không phụ thuộc trình duyệt), kèm `aria-pressed={isExpanded}` và icon 2 trạng thái.
   - Phím `F`/`f` bật/tắt `isExpanded`.
   - Khi `isExpanded === true`: `<dialog>` nhận `data-expanded="true"`, chiếm `100vw × 100dvh`, `margin: 0`, `border: 0`, `border-radius: 0`, `box-shadow: none`, ảnh co `object-fit: contain` vừa khung lớn; thanh công cụ header và cặp nút trước/sau vẫn giữ nguyên.
-  - **Quyết định hiển thị dải thumbnail khi phóng to:** ẩn `.photoThumbnails` (khách sạn) và `.galleryThumbnails` (bài viết) khi `[data-expanded='true']` để vùng ảnh đạt chiều cao tối đa, trong khi vẫn giữ cặp nút `‹` / `›` chuyển ảnh.
+  - **Dải thumbnail khi phóng to:** vẫn hiện `.photoThumbnails` (khách sạn) và `.galleryThumbnails` (bài viết) ở hàng dưới của lưới viewer; vùng ảnh chiếm phần còn lại (anh Thành muốn giữ danh sách ảnh).
   - **Esc khi đang phóng to:** lần nhấn `Esc` đầu tiên (`cancel` của `<dialog>`) qua `handleExpandedDialogCancel` chỉ thu khung về kích thước thường (`isExpanded = false`) và chặn đóng hộp thoại (`event.preventDefault()`); nhấn `Esc` lần 2 mới đóng hộp thoại. Khi đóng / mở lại hộp thoại luôn đặt `shrinkExpanded()` về kích thước thường.
   - **Re-clamp pan khi đổi kích thước khung:** gắn `ResizeObserver` vào stage trong `useImageZoom` để tự `clampPanOffset` lại mỗi khi `isExpanded` bật/tắt hoặc viewport thay đổi kích thước lúc đang zoom `1x–4x`.
 - **Chạm code của Trang (`apps/web/src/features/hotels/hotel-gallery.tsx`, `hotel.module.css`):**
