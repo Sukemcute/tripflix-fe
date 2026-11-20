@@ -40,19 +40,58 @@ export type AssistantTransport = (
   context: AssistantContext,
 ) => Promise<AssistantReply>;
 
+const REPLY_REVEAL_INTERVAL_MS = 150;
+type ReplyPreview = { id: string; wordStart: number; wordEnd: number };
+
 function useAssistantState(transport: AssistantTransport) {
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [trip, setTrip] = useState<AssistantTrip | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [replyPreview, setReplyPreview] = useState<ReplyPreview | null>(null);
   const [hasError, setHasError] = useState(false);
   const [hasStorageError, setHasStorageError] = useState(false);
   const request = useRef<AbortController | null>(null);
+  const revealTimer = useRef<number | undefined>(undefined);
   const sequence = useRef(0);
   const userId = useApiSession().user?.id ?? null;
   const previousUserId = useRef<string | null>(null);
-  useEffect(() => () => request.current?.abort(), []);
+  useEffect(() => () => {
+    request.current?.abort();
+    window.clearInterval(revealTimer.current);
+  }, []);
+
+  const finishReplyReveal = useCallback(() => {
+    window.clearInterval(revealTimer.current);
+    revealTimer.current = undefined;
+    setReplyPreview(null);
+  }, []);
+
+  function revealReply({ id, text, isLocal }: AssistantMessage) {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (isLocal || reducedMotion.matches) return;
+
+    const words = [...text.matchAll(/\S+/gu)];
+    const first = words[0];
+    if (!first) return;
+
+    const showWord = (word: RegExpExecArray) => {
+      setReplyPreview({ id, wordStart: word.index, wordEnd: word.index + word[0].length });
+    };
+    showWord(first);
+    let nextWord = 1;
+    revealTimer.current = window.setInterval(() => {
+      const word = words[nextWord];
+      if (!word || reducedMotion.matches) {
+        finishReplyReveal();
+        return;
+      }
+      showWord(word);
+      nextWord += 1;
+    }, REPLY_REVEAL_INTERVAL_MS);
+  }
+
   const saveChat = useCallback((raw: string | null) => {
     try {
       writeStoredChat(raw);
@@ -65,12 +104,13 @@ function useAssistantState(transport: AssistantTransport) {
   const clear = useCallback(() => {
     request.current?.abort();
     request.current = null;
+    finishReplyReveal();
     setMessages([]);
     setTrip(null);
     setDraft('');
     setHasError(false);
     setIsPending(false);
-  }, []);
+  }, [finishReplyReveal]);
 
   useEffect(() => {
     // Chạy trước effect đổi tài khoản để tránh ghi tin của người cũ dưới ID mới.
@@ -81,6 +121,7 @@ function useAssistantState(transport: AssistantTransport) {
 
   async function sendFrom(base: AssistantMessage[], text: string, retry = false, action?: AssistantAction) {
     if (!text.trim() || request.current) return;
+    finishReplyReveal();
     const next = retry
       ? base
       : [...base, { id: String(++sequence.current), role: 'user' as const, text: text.trim() }];
@@ -94,7 +135,9 @@ function useAssistantState(transport: AssistantTransport) {
       const { trip: nextTrip, ...answer } = await transport(next, controller.signal, { trip, action });
       if (!answer.text.trim()) throw new Error('Empty assistant response');
       if (controller.signal.aborted) return;
-      setMessages(completeAssistantTurn(next, { id: String(++sequence.current), role: 'assistant', ...answer }));
+      const reply: AssistantMessage = { id: String(++sequence.current), role: 'assistant', ...answer };
+      revealReply(reply);
+      setMessages(completeAssistantTurn(next, reply));
       if (nextTrip) setTrip(nextTrip);
     } catch {
       if (!controller.signal.aborted) setHasError(true);
@@ -154,6 +197,7 @@ function useAssistantState(transport: AssistantTransport) {
     setDraft,
     messages,
     isPending,
+    replyPreview,
     hasError,
     hasStorageError: Boolean(userId && hasStorageError),
     send,

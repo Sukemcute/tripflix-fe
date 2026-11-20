@@ -344,6 +344,28 @@
   background: var(--color-navy);
   color: var(--color-background);
 }
+.replyMeasure {
+  display: block;
+  block-size: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+.replyWord {
+  animation: reply-word-in 140ms ease-out both;
+}
+@keyframes reply-word-in {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .replyWord {
+    animation: none;
+  }
+}
 .attachments {
   display: flex;
   flex-direction: column;
