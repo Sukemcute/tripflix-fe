@@ -7,7 +7,7 @@ import { AdminButton } from './button';
 import { ChevronDownIcon, SearchMonitorIcon } from './icons';
 
 const control =
-  'adm-control h-8 rounded-adm border bg-background text-[13px] text-ink transition-colors duration-150 ease-adm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal motion-reduce:transition-none';
+  'adm-control h-8 rounded-adm border bg-background text-[13px] text-ink transition-colors duration-150 ease-adm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal-ink motion-reduce:transition-none';
 
 const SEARCH_DEBOUNCE_MS = 300;
 

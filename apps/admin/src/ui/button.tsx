@@ -35,7 +35,7 @@ export function AdminButton({
         'inline-flex shrink-0 items-center justify-center rounded-adm whitespace-nowrap',
         'transition-[color,background-color,border-color,opacity,transform] duration-150 ease-adm',
         'active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-ink',
         'disabled:pointer-events-none disabled:opacity-50',
         variants[variant],
         sizes[size],

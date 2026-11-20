@@ -37,7 +37,7 @@ export function Segmented<Id extends string>({
             className={cn(
               'flex items-center gap-1.5 rounded-adm-sm px-2.5 text-[13px] whitespace-nowrap',
               'transition-colors duration-150 ease-adm motion-reduce:transition-none disabled:opacity-50',
-              'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal',
+              'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal-ink',
               isActive ? 'bg-surface-muted text-ink' : 'text-text-muted hover:text-ink',
             )}
           >

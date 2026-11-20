@@ -69,7 +69,7 @@ export function VocabGaps() {
                 <tr key={gap.gram}>
                   <td>
                     <details>
-                      <summary aria-label={gap.gram} className="cursor-pointer focus-visible:outline-2 focus-visible:outline-teal">
+                      <summary aria-label={gap.gram} className="cursor-pointer focus-visible:outline-2 focus-visible:outline-teal-ink">
                         <code>{gap.gram}</code>{' '}
                         {gap.samples[0] && <span className="text-text-muted">“{gap.samples[0]}”</span>}
                       </summary>

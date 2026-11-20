@@ -29,7 +29,7 @@ export function TextField({
         aria-describedby={note ? noteId : undefined}
         className={cn(
           'adm-control h-9 w-full rounded-adm border bg-background px-3 text-[13px] text-ink',
-          'transition-colors duration-150 ease-adm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal',
+          'transition-colors duration-150 ease-adm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal-ink',
           'disabled:opacity-50 motion-reduce:transition-none',
           error ? 'border-coral-ink' : 'border-border',
           className,
@@ -62,7 +62,7 @@ export function SelectInput({
         id={id}
         className={cn(
           'adm-control h-9 w-full rounded-adm border border-border bg-background px-3 text-[13px] text-ink',
-          'transition-colors duration-150 ease-adm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal',
+          'transition-colors duration-150 ease-adm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal-ink',
           'disabled:opacity-50 motion-reduce:transition-none',
           className,
         )}

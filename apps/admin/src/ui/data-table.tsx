@@ -50,7 +50,7 @@ export interface DataTableProps<Row> {
 
 /**
  * Bảng dữ liệu chung: hàng 36px+, đường kẻ mảnh, không viền thẻ. Cột phụ tự ẩn khi hẹp.
- * Hàng đang chọn có vạch teal bên trái (dấu hiệu nhận biết của Admin).
+ * Hàng đang chọn có vạch teal-ink bên trái (dấu hiệu nhận biết của Admin).
  */
 export function DataTable<Row>({
   label,
@@ -132,7 +132,7 @@ export function DataTable<Row>({
                   className={cn(
                     'transition-colors duration-150 ease-adm motion-reduce:transition-none',
                     onRowOpen && 'cursor-pointer hover:bg-surface',
-                    'data-[selected]:bg-surface data-[selected]:shadow-[inset_2px_0_0_var(--color-teal)]',
+                    'data-[selected]:bg-surface data-[selected]:shadow-[inset_2px_0_0_var(--color-teal-ink)]',
                     rowClassName?.(row),
                   )}
                 >

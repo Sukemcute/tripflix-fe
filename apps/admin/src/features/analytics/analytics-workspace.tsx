@@ -44,7 +44,7 @@ type TraceRow = NonNullable<
 >['traces'][number];
 
 const checkbox = 'flex items-center gap-2 text-[13px]';
-const checkboxInput = 'h-4 w-4 accent-teal-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal';
+const checkboxInput = 'h-4 w-4 accent-teal-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-ink';
 
 /** Hộp ghi chú nhỏ cho tình trạng nguồn dữ liệu (chưa cấu hình, mất kết nối, chưa có dữ liệu). */
 function Notice({ title, children }: { title: string; children?: ReactNode }) {

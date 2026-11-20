@@ -129,7 +129,7 @@ export function CaseDrawer({
           maxLength={500}
           value={notes}
           onChange={(event) => setField({ notes: event.target.value })}
-          className="adm-control h-8 min-w-48 flex-1 rounded-adm border border-border bg-background px-2.5 text-[13px] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal"
+          className="adm-control h-8 min-w-48 flex-1 rounded-adm border border-border bg-background px-2.5 text-[13px] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal-ink"
         />
       </div>
       <AdminApiError error={decision.error} />

@@ -65,7 +65,7 @@ export function Tabs<Id extends string>({
             className={cn(
               '-mb-px flex h-10 shrink-0 items-center gap-1.5 border-b-2 text-[13px] whitespace-nowrap',
               'transition-colors duration-150 ease-adm motion-reduce:transition-none',
-              isSelected ? 'border-teal text-ink' : 'border-transparent text-text-muted hover:text-ink',
+              isSelected ? 'border-teal-ink text-ink' : 'border-transparent text-text-muted hover:text-ink',
             )}
           >
             {tab.label}

@@ -66,7 +66,7 @@ export function MetricStrip({ label, items }: { label: string; items: readonly M
         const interactive = cn(
           cell,
           'block transition-colors duration-150 ease-adm hover:bg-surface motion-reduce:transition-none',
-          item.isActive && 'bg-surface shadow-[inset_0_-2px_0_var(--color-teal)]',
+          item.isActive && 'bg-surface shadow-[inset_0_-2px_0_var(--color-teal-ink)]',
         );
         if (item.href)
           return (

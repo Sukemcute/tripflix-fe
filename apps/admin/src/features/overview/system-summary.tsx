@@ -87,7 +87,7 @@ function Group({
       title={title}
       action={
         <Link
-          className="text-xs text-teal-ink underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-teal"
+          className="text-xs text-teal-ink underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-teal-ink"
           href={href}
         >
           {copy.viewDetail} ↗

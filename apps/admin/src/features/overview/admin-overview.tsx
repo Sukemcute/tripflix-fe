@@ -30,7 +30,7 @@ const workerLabel = (status: string) =>
         ? copy.attention
         : copy.unknown;
 
-const viewAll = 'text-xs text-teal-ink underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-teal';
+const viewAll = 'text-xs text-teal-ink underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-teal-ink';
 
 /** Trang đầu: số tổng toàn hệ thống (chỉ superadmin) rồi tới phần kiểm duyệt cho mọi nhân sự. */
 export function AdminOverview({ isSuperadmin = false }: { isSuperadmin?: boolean }) {
