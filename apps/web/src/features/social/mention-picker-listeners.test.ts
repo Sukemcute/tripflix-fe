@@ -117,7 +117,7 @@ vi.mock('react', async (importOriginal) => {
   return {
     ...actual,
     default: {
-      ...(actual.default ?? actual),
+      ...((actual as typeof actual & { default?: typeof actual }).default ?? actual),
       useState: runtime.useState,
       useRef: runtime.useRef,
       useMemo: runtime.useMemo,
@@ -223,7 +223,7 @@ describe('MentionPicker document listeners gắn đúng 1 lần và luôn gọi 
 
     // Bấm ra ngoài -> gọi onClose3 mới nhất
     const mouseHandler = [...mousedownListeners][0]!;
-    mouseHandler({ target: {} as Node } as MouseEvent);
+    mouseHandler({ target: {} as Node } as unknown as MouseEvent);
     expect(onClose1).not.toHaveBeenCalled();
     expect(onClose2).not.toHaveBeenCalled();
     expect(onClose3).toHaveBeenCalledTimes(1);
