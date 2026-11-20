@@ -65,3 +65,28 @@ it('body đổi mã sai dạng thì 400, không gọi core', async () => {
   expect((await post(['auth', 'admin-handoff', 'exchange'], { code: 1 })).status).toBe(400);
   expect(fetchMock).not.toHaveBeenCalled();
 });
+
+it('phiên làm việc stateless (SEC-02): không bị trần cứng 1000 session gây DoS 503', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input: unknown) => {
+    const url = String(input);
+    if (url.endsWith('/api/auth/login')) {
+      return json(200, { accessToken: 'access-ok', tokenType: 'Bearer', expiresIn: 900 }, {
+        'set-cookie': 'tripflix_refresh=secret; Path=/api/auth; HttpOnly',
+      });
+    }
+    if (url.endsWith('/api/admin/me')) {
+      return json(200, { id: 'staff-ok' });
+    }
+    return json(200, {});
+  });
+
+  // Gọi liên tiếp nhiều phiên, đảm bảo không gặp lỗi 503 (bỏ trần maxSessions = 1000)
+  for (let i = 0; i < 5; i++) {
+    const response = await post(['auth', 'login'], {
+      email: `staff-${i}@example.test`,
+      encPassword: 'encrypted-pass',
+    });
+    expect(response.status).toBe(204);
+    expect(response.headers.get('set-cookie')).toMatch(/tripflix-admin=[^;]+;.*HttpOnly/i);
+  }
+});
