@@ -32,14 +32,16 @@ export function isAssistantHidden(pathname: string): boolean {
 }
 
 function AssistantThinking() {
-  const [step, setStep] = useState(0);
+  const [showFollowUp, setShowFollowUp] = useState(false);
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const timer = setInterval(() => setStep((current) => (current + 1) % copy.thinkingSteps.length), 1800);
-    return () => clearInterval(timer);
+    const timer = setTimeout(() => setShowFollowUp(true), 1800);
+    return () => clearTimeout(timer);
   }, []);
+  const [initialMessage, followUpMessage] = copy.thinkingStepsWeb;
+
   return (
-    <div className={styles.thinking} role="status" aria-label={copy.thinking}>
+    <div className={styles.thinking} role="status" aria-label={initialMessage}>
       <TripiMascot animation="searching" size={52} alt="" />
       <div className={styles.thinkingBubble}>
         <span className={styles.dots} aria-hidden="true">
@@ -47,9 +49,7 @@ function AssistantThinking() {
           <span />
           <span />
         </span>
-        <p key={step} className={styles.thinkingText}>
-          {copy.thinkingSteps[step]}
-        </p>
+        <p className={styles.thinkingText}>{showFollowUp ? followUpMessage : initialMessage}</p>
       </div>
     </div>
   );
@@ -202,7 +202,11 @@ function AssistantPanel({
             const startsGroup = isAssistant && chat.messages[index - 1]?.role !== 'assistant';
             return (
               <div key={message.id} className={styles.turn}>
-                <div className={styles.messageRow} data-role={message.role}>
+                <div
+                  className={styles.messageRow}
+                  data-role={message.role}
+                  data-has-cards={isAssistant && !!message.cards?.length ? '' : undefined}
+                >
                   {isAssistant &&
                     (startsGroup ? (
                       <TripiMascot pose="expr-happy" size={34} alt="" />
@@ -212,31 +216,28 @@ function AssistantPanel({
                   <p className={styles.message} data-role={message.role}>
                     {message.text}
                   </p>
+                  {isAssistant && !!message.cards?.length && (
+                    <AssistantCards
+                      cards={message.cards}
+                      onOpen={chat.close}
+                      actions={
+                        isLatest && !chat.isPending
+                          ? {
+                              act: (label, action) => void chat.act(label, action),
+                              canUndo: !!chat.trip?.ops?.length,
+                            }
+                          : undefined
+                      }
+                    />
+                  )}
                 </div>
-                {/* Thẻ và gợi ý là khối riêng dưới lời giải thích, không ép vào bong bóng hẹp. */}
-                {isAssistant && (!!message.cards?.length || message.action === 'login') && (
+                {isAssistant && message.action === 'login' && (
                   <div className={styles.attachments}>
-                    {!!message.cards?.length && (
-                      <AssistantCards
-                        cards={message.cards}
-                        onOpen={chat.close}
-                        actions={
-                          isLatest && !chat.isPending
-                            ? {
-                                act: (label, action) => void chat.act(label, action),
-                                canUndo: !!chat.trip?.ops?.length,
-                              }
-                            : undefined
-                        }
-                      />
-                    )}
-                    {message.action === 'login' && (
-                      // Phiên chat nằm ở provider gốc nên vẫn còn khi đăng nhập xong quay lại.
-                      <Link className={styles.loginButton} href={withReturnTo('/login', pathname)} onClick={chat.close}>
-                        <AssistantIcon name="login" size={18} />
-                        {copy.login}
-                      </Link>
-                    )}
+                    {/* Phiên chat nằm ở provider gốc nên vẫn còn khi đăng nhập xong quay lại. */}
+                    <Link className={styles.loginButton} href={withReturnTo('/login', pathname)} onClick={chat.close}>
+                      <AssistantIcon name="login" size={18} />
+                      {copy.login}
+                    </Link>
                   </div>
                 )}
                 {isAssistant && isLatest && !chat.isPending && !!message.suggestions?.length && (

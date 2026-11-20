@@ -258,7 +258,7 @@ function WeatherCard({ card }: { card: AssistantCard }) {
           return (
             <li key={`${card.ref}-${index}`} className={styles.weatherRow}>
               <span className={styles.weatherIcon}>
-                <AssistantIcon name={SKY_ICONS[weather.skyKind]} size={22} />
+                <AssistantIcon name={SKY_ICONS[weather.skyKind]} size={18} />
               </span>
               <div className={styles.grow}>
                 <p className={styles.strong}>{line.label}</p>
@@ -305,7 +305,7 @@ function ListCard({
           <li key={`${card.ref}-${index}`} className={styles.listRow}>
             {isChecklist && (
               <span className={styles.check}>
-                <AssistantIcon name="check" size={14} />
+                <AssistantIcon name="check" size={12} />
               </span>
             )}
             <div className={styles.grow}>
