@@ -41,6 +41,8 @@ const text = vi.moderation;
 const copy = vi.moderationConsole;
 const reviewText = vi.moderation.review;
 const reasonKeys = Object.keys(text.reasons) as (keyof typeof text.reasons)[];
+const QUEUE_SORTS = ['priority', 'newest'] as const;
+const PRIORITY_FILTERS = ['all', 'high'] as const;
 
 interface BulkOutcome {
   succeeded: number;
@@ -58,6 +60,8 @@ export function ModerationQueue() {
   const category = readEnumParam(params.get('cat'), CATEGORY_FILTERS, 'all');
   const assignment = readEnumParam(params.get('assign'), ASSIGNMENT_FILTERS, 'all');
   const sla = readEnumParam(params.get('sla'), SLA_FILTERS, 'all');
+  const sort = readEnumParam(params.get('sort'), QUEUE_SORTS, 'priority');
+  const priority = readEnumParam(params.get('priority'), PRIORITY_FILTERS, 'all');
   const search = params.get('q') ?? '';
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -70,6 +74,8 @@ export function ModerationQueue() {
     sla: view === 'pending' ? sla : undefined,
     search: search || undefined,
     view,
+    sort,
+    priority,
     targetType: category === 'comment' || category === 'post' ? category : undefined,
     source: category === 'report' ? 'report' : undefined,
   };
@@ -91,7 +97,10 @@ export function ModerationQueue() {
   const total = query.data?.pages[0]?.total;
   const selectedItems = items.filter((item) => selectedIds.includes(item.id));
   const canSelect = view !== 'removed';
-  const hasActiveFilters = !!(search || category !== 'all' || (view === 'pending' && (assignment !== 'all' || sla !== 'all')));
+  const hasActiveFilters = !!(
+    search || category !== 'all' || sort !== 'priority' || priority !== 'all' ||
+    (view === 'pending' && (assignment !== 'all' || sla !== 'all'))
+  );
 
   // Đổi bộ lọc thì bỏ chọn và đóng hồ sơ đang mở: tập hồ sơ hiển thị đã khác.
   const setFilter = (patch: Record<string, string | null>) => {
@@ -229,8 +238,8 @@ export function ModerationQueue() {
     <div className="space-y-3">
       <FilterToolbar
         hasActiveFilters={hasActiveFilters}
-        onReset={() => setFilter({ q: null, cat: null, assign: null, sla: null })}
-        summary={total !== undefined ? `${items.length} / ${total.toLocaleString('vi-VN')} · ${copy.sortNote}` : copy.sortNote}
+        onReset={() => setFilter({ q: null, cat: null, assign: null, sla: null, sort: null, priority: null })}
+        summary={total !== undefined ? `${items.length} / ${total.toLocaleString('vi-VN')}` : undefined}
         actions={
           freshIds.size > 0 ? (
             <AdminButton
@@ -266,6 +275,20 @@ export function ModerationQueue() {
           allLabel={copy.categories.all}
           options={CATEGORY_FILTERS.filter((id) => id !== 'all').map((id) => ({ value: id, label: copy.categories[id] }))}
           onChange={(value) => setFilter({ cat: value })}
+        />
+        <SelectField
+          label={copy.sortLabel}
+          value={sort === 'priority' ? '' : sort}
+          allLabel={copy.sortOptions.priority}
+          options={[{ value: 'newest', label: copy.sortOptions.newest }]}
+          onChange={(value) => setFilter({ sort: value })}
+        />
+        <SelectField
+          label={copy.priorityLabel}
+          value={priority === 'all' ? '' : priority}
+          allLabel={copy.priorityOptions.all}
+          options={[{ value: 'high', label: copy.priorityOptions.high }]}
+          onChange={(value) => setFilter({ priority: value })}
         />
         {view === 'pending' && (
           <>

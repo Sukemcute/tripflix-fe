@@ -380,3 +380,10 @@ Bảng gốc (để tham chiếu):
 1. `docker start tripflix-postgres-1 tripflix-redis-1 tripflix-mailpit-1` rồi `tripflix-core-api-1 tripflix-notification-service-1 tripflix-traefik-1` (container có sẵn, giữ dữ liệu); đợi `http://localhost:3000/health` = ok.
 2. `cd tripflix-fe && pnpm --filter @tripflix/admin dev` (cổng 3200). Nếu đổi export/di chuyển file mà gặp lỗi lạ: dừng dev, `rm -rf apps/admin/.next`, chạy lại (Turbopack giữ cache cũ).
 3. Playwright: `playwright-core` cài ngoài repo (thư mục scratchpad của session, `npm i playwright-core`), `chromium.launch({ channel: 'msedge' })`. Tài khoản seed: `superadmin@tripflix.local`, `moderator@tripflix.local`, mật khẩu `tripflix-dev-123` (mặc định trong README BE).
+
+### Follow-up: bộ lọc hàng đợi bình luận (2026-11-20)
+
+- Theo phản hồi của người dùng, bổ sung lọc server-side cho hàng đợi kiểm duyệt: `sort=priority|newest` (mặc định giữ thứ tự ưu tiên), `priority=all|high` (high dùng ngưỡng `URGENT_SEVERITY` hiện có). `newest` sắp theo `createdAt` của nội dung đích, gồm bình luận và bài viết; cursor tiếp tục ổn định qua các trang và phân biệt chế độ sắp xếp.
+- Admin có bộ chọn “Sắp xếp” và “Mức ưu tiên”, giữ bộ lọc trên URL, reset cùng các bộ lọc hiện có. OpenAPI và Orval client được sinh từ nguồn; không sửa artifact bằng tay.
+- Kiểm tra: BE OpenAPI build thành công; BE lint exit 0 (còn cảnh báo có sẵn ngoài moderation); test tích hợp filter/cursor 1/1 pass; test HTTP schema/controller 1/1 pass; FE admin typecheck và lint pass. BE typecheck còn lỗi có sẵn ở `feed/infra/trend-signals.consumer.ts` (`core-feed-trend` không thuộc union `ServiceName`).
+- Kiểm tra giao diện trình duyệt dừng ở màn đăng nhập cục bộ; chưa chụp ảnh trạng thái sau đăng nhập.
