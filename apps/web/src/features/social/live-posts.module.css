@@ -773,6 +773,48 @@
   overscroll-behavior: none;
 }
 
+.reelStagePlaceholder[data-loading]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 35%, color-mix(in srgb, var(--color-background) 8%, transparent) 50%, transparent 65%);
+  background-size: 200% 100%;
+  animation: reel-stage-shimmer 1.6s ease-in-out infinite;
+}
+
+.reelStagePlaceholderContent {
+  position: relative;
+  z-index: 1;
+  padding: 24px;
+  color: var(--color-background);
+  text-align: center;
+}
+
+.reelStagePlaceholderContent :global(.empty-state) {
+  color: var(--color-background);
+}
+
+.reelStagePlaceholderContent :global(.empty-state p) {
+  color: var(--color-background);
+}
+
+.reelStagePlaceholderContent :global(.secondary-button) {
+  color: var(--color-ink);
+}
+
+@keyframes reel-stage-shimmer {
+  from { background-position: 120% 0; }
+  to { background-position: -20% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reelStagePlaceholder[data-loading]::before {
+    animation: none;
+    background: none;
+  }
+}
+
 .mediaTrack {
   position: relative;
   width: 100%;
