@@ -279,7 +279,18 @@ export function ReelSocialOverlay({
   const tripPlan = !isSample && tripAttachment && hasTripPlan(tripAttachment) ? tripAttachment : null;
   const caption = isSample ? copy.sampleCaption : item.body;
   // Bài chỉ có caption: không tách tiêu đề in đậm.
-  const fullCaption = isSample ? `${title} · ${caption}` : getPostCaption(item.title, caption);
+  const captionText = isSample ? `${title} · ${caption}` : getPostCaption(item.title, caption);
+  // Feed chỉ có caption; dùng hashtag từ chi tiết bài đã tải cho reel đang xem.
+  const includedTags = new Set((captionText.match(/#[\p{L}\p{M}\p{N}_]+/gu) ?? []).map((tag) => tag.toLowerCase()));
+  const extraTags = (isSample ? [] : detail.data?.post.hashtags ?? []).flatMap((tag) => {
+    const name = tag.trim().replace(/^#+/, '');
+    const hashtag = `#${name}`;
+    const key = hashtag.toLowerCase();
+    if (!name || includedTags.has(key)) return [];
+    includedTags.add(key);
+    return [hashtag];
+  });
+  const fullCaption = [captionText, extraTags.join(' ')].filter(Boolean).join('\n');
   const visibleCaption =
     collapsedLength === null ? fullCaption : fullCaption.slice(0, collapsedLength).trimEnd();
   const expandedHeight = Math.min(captionMaxHeight, Math.max(collapsedHeight, expandedContentHeight));
