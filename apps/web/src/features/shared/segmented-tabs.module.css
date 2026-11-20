@@ -52,7 +52,7 @@
   gap: clamp(2px, 1cqi, 6px);
   padding: 4px clamp(3px, 1.5cqi, 6px);
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.55);
+  background: color-mix(in srgb, var(--color-ink) 55%, transparent);
   backdrop-filter: blur(8px);
   overflow-x: auto;
   scrollbar-width: none;
