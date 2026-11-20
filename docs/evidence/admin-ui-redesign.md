@@ -29,7 +29,7 @@
 ## Kết quả kiểm tra
 
 - `tsc --noEmit` (apps/admin): xanh.
-- `pnpm --filter @tripflix/admin lint`: 2 cảnh báo có sẵn từ trước (`user-activity-dialog.tsx`, file không còn được dùng), không thêm cảnh báo mới.
+- Sau cleanup P6, `pnpm --filter @tripflix/admin lint`: xanh, **0 cảnh báo**; hai cảnh báo trước đây thuộc `user-activity-dialog.tsx` đã được loại bỏ cùng file không dùng.
 - `pnpm --filter @tripflix/admin exec vitest run`: **102/102** (24 file). `pnpm --filter @tripflix/i18n exec vitest run`: 2/2.
 - `node tools/check-boundaries.mjs`: không vi phạm. `next build` (apps/admin): thành công, đủ 14 route.
 - Script trình duyệt (stack local, tài khoản seed superadmin và moderator): `verify-p1`…`verify-p5`, `verify-p6`, `verify-a11y` đều đạt.
@@ -44,10 +44,10 @@
 
 ## Ảnh / video
 
-- Ảnh theo từng giai đoạn nằm ngoài repo, ở `tripflix/outputs/admin-ui-redesign/{baseline,p1,p2,p3,p4,p5-before,p5,p6,p6-moderator}/` (dán vào PR khi mở; không commit ảnh vào repo).
+- Ảnh theo từng giai đoạn nằm ngoài repo, ở `tripflix/outputs/admin-ui-redesign/{baseline,p1,p2,p3,p4,p5-before,p5,p6,p6-moderator,p6-cleanup}/` (dán vào PR khi mở; không commit ảnh vào repo).
 
 ## Ảnh hưởng tới phần của người khác
 
 - Có: `apps/admin` thuộc Thành (đã báo, đồng ý trước khi làm); thêm chuỗi vào `packages/i18n` (`admin-operations`, `admin-orders`, `user-activity`, `moderation-console`). Không đổi API, `packages/tokens`, `packages/ui-web`, cấu hình chung.
 - Đã xoá có duyệt: `module-content.tsx` (mã chết) và trường `owner` trong `nav.ts`. Đã xoá không qua bước duyệt riêng, báo lại để Thành biết: `ai-kpi.tsx` (đúng 20 dòng, không còn nơi dùng, `MetricStrip` thay thế).
-- Còn chờ duyệt xoá (RULES §3): xem danh sách ⚠️ trong báo cáo cuối của P6 và mục 9 của kế hoạch.
+- Cleanup P6 đã được người dùng duyệt và hoàn thành: 5 file không còn import đã xoá; CSS shell chỉ giữ quy tắc nền và selector còn dùng. Không còn việc cleanup nào đang chờ duyệt.
