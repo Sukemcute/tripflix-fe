@@ -1,0 +1,141 @@
+/*
+ * Header trên điện thoại (TF98): một hàng 56px, dính trên cùng, cuộn xuống thì ẩn (header-auto-hide.tsx).
+ * Import trong layout.tsx SAU globals.css để thắng các rule header 640/850/900/1359px cũ mà không phải xoá chúng.
+ * Chỉ áp dụng dưới 768px; desktop giữ nguyên viên thuốc của globals.css.
+ */
+@media (max-width: 767px) {
+  /*
+   * Kiểu khung header: thanh phẳng full-width. Muốn quay về viên thuốc thu nhỏ thì chỉ sửa khối này, ví dụ:
+   *   width: calc(100% - 16px); margin: 8px auto 0; top: 8px;
+   *   border: 1px solid rgb(0 124 110 / 24%); border-radius: 999px;
+   * (Khối trang chủ bên dưới đặt lại border-color; đổi cùng lúc nếu cần.)
+   */
+  .ota-header {
+    width: 100%;
+    margin: 0;
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    background: var(--color-background);
+  }
+
+  .ota-header {
+    position: sticky;
+    top: 0;
+    padding-top: env(safe-area-inset-top);
+    /* Dùng translate (không phải transform) để không đụng transform của header trang chủ và nút :active. */
+    transition: translate 200ms ease;
+  }
+  .ota-header[data-header-hidden] {
+    translate: 0 -100%;
+  }
+
+  .ota-header .header-content {
+    width: calc(100% - 32px);
+    min-height: 56px;
+    padding-block: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+  .ota-header .header-brand {
+    width: 112px;
+    height: 34px;
+    flex-basis: 112px;
+  }
+
+  /* Bốn mục menu sẽ nằm ở thanh đáy (bước sau); trên điện thoại header chỉ giữ logo và cụm nút. */
+  .ota-header .header-content nav {
+    display: none;
+  }
+
+  .ota-header .header-actions {
+    --header-control-size: 36px;
+    gap: 4px;
+  }
+  /* Giỏ hàng (cart-link.tsx) rời header trên điện thoại; trang /cart vẫn vào được từ menu đặt chỗ. */
+  .ota-header .header-actions > a[href='/cart'] {
+    display: none;
+  }
+
+  /*
+   * Chưa đăng nhập: nút chữ "Đăng nhập" thu thành nút tròn 36px có icon người. Chữ vẫn nằm trong link
+   * (chỉ ẩn bằng font-size 0) nên trình đọc màn hình vẫn đọc "Đăng nhập". Icon dùng ::after vì ::before
+   * là hiệu ứng loang của .primary-button.
+   */
+  .ota-header .header-actions > .header-login {
+    position: relative;
+    display: block;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    border-radius: 999px;
+    font-size: 0;
+    line-height: 0;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .ota-header .header-actions > .header-login::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 20px;
+    height: 20px;
+    background: currentColor;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='8' r='3.5'/%3E%3Cpath d='M5 19.5a7 7 0 0 1 14 0'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+  }
+
+  /*
+   * Trang chủ: header không còn nằm đè ảnh hero (globals.css đặt absolute từ 641px) vì header dính sẽ trôi qua
+   * nội dung nền trắng; dùng nền đặc và logo tối như các trang khác.
+   */
+  body:has(> [data-living-home] [data-home-hero]) .ota-header {
+    position: sticky;
+    top: 0;
+    left: auto;
+    transform: none;
+    z-index: 40;
+    border-color: var(--color-border);
+  }
+  body:has(> [data-living-home] [data-home-hero]) .header-logo-dark {
+    display: block;
+  }
+  body:has(> [data-living-home] [data-home-hero]) .header-logo-light {
+    display: none;
+  }
+  body:has(> [data-living-home] [data-home-hero]) .header-brand {
+    filter: none;
+  }
+  body:has(> [data-living-home] [data-home-hero]) .header-icon-button,
+  body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-login) {
+    color: var(--color-ink);
+    text-shadow: none;
+  }
+  body:has(> [data-living-home] [data-home-hero]) .header-icon-button:is(:hover, :focus-visible, [aria-expanded='true']) {
+    color: var(--color-coral-ink);
+    background: var(--color-surface-muted);
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  .ota-header {
+    transition: none;
+  }
+}
+
+/*
+ * Chỗ cho thanh đáy (mobile-tab-bar.tsx). Biến chỉ có khi thanh đáy được render, nên trang ẩn thanh đáy và desktop
+ * dùng giá trị dự phòng 0px trong mọi calc(var(--mobile-tab-bar-space, 0px) …).
+ */
+@media (max-width: 767px) {
+  body:has([data-mobile-tab-bar]) {
+    --mobile-tab-bar-height: 56px;
+    --mobile-tab-bar-space: calc(56px + env(safe-area-inset-bottom));
+  }
+  /* Footer và cuối trang không bị thanh đáy che. Cảm hứng tự chừa chỗ trong khung riêng (social-feed.module.css). */
+  body:has([data-mobile-tab-bar]):not(:has(.auth-fullscreen, [class*='feedPageWrapper'])) {
+    padding-bottom: var(--mobile-tab-bar-space);
+  }
+}

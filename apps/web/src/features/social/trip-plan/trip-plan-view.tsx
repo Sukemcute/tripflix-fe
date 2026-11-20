@@ -2,6 +2,7 @@
 
 import { TripStopIcon } from '../feed/trip-plan-timeline';
 import { commerceApi, socialApi, useApiSession, usePostSearchFeed } from '@tripflix/api-client';
+import { tripPlanPostQueryKey } from '@tripflix/api-client/profile-query-keys';
 import type {
   SocialPostDto,
   TripAttachmentDto,
@@ -17,6 +18,7 @@ import { formatPrice } from '@/features/discovery/trip-card';
 import { isOptimizedImageUrl } from '@/lib/remote-images';
 import { SocialIcon, formatCompactCount } from '../live-posts';
 import { getPostCover, getPostImages, POST_COVER_MASCOT } from '../post-cover';
+import { shouldShowTripPlanSkeleton } from './trip-plan-gate';
 import { buildPostHref } from '../search-url';
 import { ShareMenu, type ShareMenuHandle } from '../share-menu';
 import { AvatarPhoto } from '@/features/shared/avatar-photo';
@@ -74,7 +76,7 @@ function getCover(post: SocialPostDto): string {
 export function TripPlanView({ postId }: { postId: string }) {
   const { user, isReady } = useApiSession();
   const postQuery = useQuery({
-    queryKey: ['social', 'post', postId, user?.id],
+    queryKey: tripPlanPostQueryKey(postId, user?.id),
     queryFn: ({ signal }) => socialApi.getPost(postId, signal),
     enabled: isReady,
     retry: false,
@@ -96,7 +98,9 @@ export function TripPlanView({ postId }: { postId: string }) {
     if (hotel) hotelsById.set(stay.hotelId, hotel);
   });
 
-  if (!isReady || postQuery.isPending) return <TripPlanSkeleton />;
+  if (shouldShowTripPlanSkeleton({ hasPost: !!post, isReady, isPending: postQuery.isPending })) {
+    return <TripPlanSkeleton />;
+  }
   if (!post || !trip) return <TripPlanNotFound />;
 
   const dayCount = getTripDayCount(trip);
@@ -109,7 +113,14 @@ export function TripPlanView({ postId }: { postId: string }) {
   return (
     <main className={styles.page}>
       <div className={styles.cover}>
-        <Image src={cover} alt={post.title} fill priority sizes="100vw" unoptimized={!isOptimizedImageUrl(cover)} />
+        <Image
+          src={cover}
+          alt={post.title}
+          fill
+          priority
+          sizes="100vw"
+          unoptimized={!isOptimizedImageUrl(cover)}
+        />
       </div>
 
       <div className={styles.container}>
@@ -262,10 +273,18 @@ function TripHeader({
           <AvatarPhoto userId={post.authorId} />
         </span>
         <div className={styles.authorText}>
-          <Link prefetch={false} href={`/u/${encodeURIComponent(post.authorId)}`} className={styles.authorName}>
+          <Link
+            prefetch={false}
+            href={`/u/${encodeURIComponent(post.authorId)}`}
+            className={styles.authorName}
+          >
             {post.authorName || vi.api.tripPlanAuthorFallback}
           </Link>
-          <Link prefetch={false} href={buildPostHref(post.id, { postType: post.postType })} className={styles.subtleLink}>
+          <Link
+            prefetch={false}
+            href={buildPostHref(post.id, { postType: post.postType })}
+            className={styles.subtleLink}
+          >
             {vi.api.tripPlanViewPost}
           </Link>
         </div>
@@ -388,38 +407,52 @@ function TripStop({
     <li className={styles.stop} data-has-thumb={thumbnail ? true : undefined}>
       {thumbnail && (
         <span className={styles.stopThumb}>
-          <Image src={thumbnail} alt="" fill sizes="(max-width: 860px) 100vw, 200px" unoptimized={!isOptimizedImageUrl(thumbnail)} />
+          <Image
+            src={thumbnail}
+            alt=""
+            fill
+            sizes="(max-width: 860px) 100vw, 200px"
+            unoptimized={!isOptimizedImageUrl(thumbnail)}
+          />
         </span>
       )}
       <div className={styles.stopBody}>
-      {(item.time || price) && (
-        <div className={styles.stopHead}>
-          <span className={styles.time}>{item.time}</span>
-          {price && <span className={styles.price}>{price}</span>}
-        </div>
-      )}
-      <p className={styles.stopTitle}>
-        <TripStopIcon item={item} />
-        {showTransportPrefix && item.transport && (
-          <span className={styles.transport}>
-            {TRANSPORT_LABELS[item.transport.mode] ?? vi.api.tripPlanTransportOther}
-            {route ? ` ${route}` : ''} ·{' '}
-          </span>
+        {(item.time || price) && (
+          <div className={styles.stopHead}>
+            <span className={styles.time}>{item.time}</span>
+            {price && <span className={styles.price}>{price}</span>}
+          </div>
         )}
-        {item.title}
-      </p>
-      {metaParts.length > 0 && (
-        <p className={styles.stopMeta}>
-          {metaParts.flatMap((part, index) =>
-            index === 0 ? [part] : [<span key={`dot-${index}`} aria-hidden="true"> · </span>, part],
+        <p className={styles.stopTitle}>
+          <TripStopIcon item={item} />
+          {showTransportPrefix && item.transport && (
+            <span className={styles.transport}>
+              {TRANSPORT_LABELS[item.transport.mode] ?? vi.api.tripPlanTransportOther}
+              {route ? ` ${route}` : ''} ·{' '}
+            </span>
           )}
+          {item.title}
         </p>
-      )}
-      {item.notes && (
-        <p className={styles.tip}>
-          <strong>{t('api.tripPlanTipFrom', { name: tipAuthor })}</strong> {item.notes}
-        </p>
-      )}
+        {metaParts.length > 0 && (
+          <p className={styles.stopMeta}>
+            {metaParts.flatMap((part, index) =>
+              index === 0
+                ? [part]
+                : [
+                    <span key={`dot-${index}`} aria-hidden="true">
+                      {' '}
+                      ·{' '}
+                    </span>,
+                    part,
+                  ],
+            )}
+          </p>
+        )}
+        {item.notes && (
+          <p className={styles.tip}>
+            <strong>{t('api.tripPlanTipFrom', { name: tipAuthor })}</strong> {item.notes}
+          </p>
+        )}
       </div>
     </li>
   );
@@ -495,7 +528,9 @@ function TripMoments({ post }: { post: SocialPostDto }) {
 function StayCard({ stay, hotel }: { stay: TripPlanStay; hotel: HotelDetail | undefined }) {
   const name = hotel?.name ?? stay.hotelName ?? '';
   const image = hotel?.thumbnail ?? hotel?.images[0];
-  const mapUrl = hotel?.location ? buildPlaceMapUrl({ lat: hotel.location.lat, lng: hotel.location.lng }) : null;
+  const mapUrl = hotel?.location
+    ? buildPlaceMapUrl({ lat: hotel.location.lat, lng: hotel.location.lng })
+    : null;
   return (
     <li className={styles.stay}>
       <StayImage url={image ?? null} name={name} />
@@ -505,10 +540,16 @@ function StayCard({ stay, hotel }: { stay: TripPlanStay; hotel: HotelDetail | un
           {t('api.tripPlanStayNights', { from: stay.day, to: stay.day + stay.nights, nights: stay.nights })}
         </p>
         {hotel?.priceFrom ? (
-          <p className={styles.stayMeta}>{t('api.tripPlanStayFrom', { price: formatPrice(hotel.priceFrom) })}</p>
+          <p className={styles.stayMeta}>
+            {t('api.tripPlanStayFrom', { price: formatPrice(hotel.priceFrom) })}
+          </p>
         ) : null}
         <p className={styles.stayActions}>
-          <Link prefetch={false} href={`/hotels/${encodeURIComponent(stay.hotelId)}`} className={styles.pillLink}>
+          <Link
+            prefetch={false}
+            href={`/hotels/${encodeURIComponent(stay.hotelId)}`}
+            className={styles.pillLink}
+          >
             {vi.api.tripPlanViewRooms}
           </Link>
           {mapUrl && (
@@ -593,7 +634,9 @@ function CostBreakdown({
       {trip.estimatedCostPerPerson ? (
         <div className={styles.costTotal}>
           <span>{vi.api.tripPlanCostAuthorTotal}</span>
-          <strong>{t('api.tripPlanCostPerPerson', { price: formatPrice(trip.estimatedCostPerPerson) })}</strong>
+          <strong>
+            {t('api.tripPlanCostPerPerson', { price: formatPrice(trip.estimatedCostPerPerson) })}
+          </strong>
         </div>
       ) : null}
       <p className={styles.muted}>{trip.priceDisclaimer?.trim() || vi.api.tripPlanCostNote}</p>
@@ -645,14 +688,20 @@ function SimilarTrips({ postId, destination }: { postId: string; destination?: s
           const meta = [
             getDurationLabel(getTripDayCount(similar.tripAttachment)),
             similar.tripAttachment?.estimatedCostPerPerson
-              ? t('api.tripPlanCostPerPerson', { price: formatPrice(similar.tripAttachment.estimatedCostPerPerson) })
+              ? t('api.tripPlanCostPerPerson', {
+                  price: formatPrice(similar.tripAttachment.estimatedCostPerPerson),
+                })
               : null,
           ]
             .filter(Boolean)
             .join(' · ');
           return (
             <li key={similar.id}>
-              <Link prefetch={false} href={`/trip-plans/${encodeURIComponent(similar.id)}`} className={styles.similarCard}>
+              <Link
+                prefetch={false}
+                href={`/trip-plans/${encodeURIComponent(similar.id)}`}
+                className={styles.similarCard}
+              >
                 <span className={styles.similarImage}>
                   <Image
                     src={image}

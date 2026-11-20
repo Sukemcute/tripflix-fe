@@ -1,4 +1,3 @@
-import { postsControllerListPublicPosts } from '@tripflix/api-client/core-api/social-posts/social-posts';
 import { seoApi } from '@tripflix/api-client/seo';
 import { cache } from 'react';
 import { getServerApiUrl } from '../../lib/site';
@@ -20,28 +19,28 @@ export const findPublicHotel = cache((slug: string) =>
   readOrNull((signal) => seoApi.getHotel(slug, { baseUrl: getServerApiUrl(), signal })),
 );
 
-export const findPublicPost = cache((postId: string) =>
-  readOrNull((signal) => seoApi.getPost(postId, { baseUrl: getServerApiUrl(), signal })),
+/** Chi tiết bài (post, viewerContext, shareUrl). Metadata và prefetch trang lộ trình dùng chung một lần gọi (TF113). */
+export const findPublicPostDetail = cache((postId: string) =>
+  readOrNull((signal) => seoApi.getPostDetail(postId, { baseUrl: getServerApiUrl(), signal })),
+);
+
+export const findPublicPost = cache(
+  async (postId: string) => (await findPublicPostDetail(postId))?.post ?? null,
 );
 
 export const findPublicProfile = cache((userId: string) =>
   readOrNull((signal) => seoApi.getProfile(userId, { baseUrl: getServerApiUrl(), signal })),
 );
 
-/** Kiểm tra ẩn danh xem tác giả có ít nhất 1 bài công khai hay không (limit=1); lỗi/timeout trả null để fail-safe noindex (TF25). */
+/** Trang 1 vlog của tác giả, đưa vào cache React Query trước khi render hồ sơ (TF113). */
+export const findPublicAuthorVlogs = cache((userId: string) =>
+  readOrNull((signal) => seoApi.listAuthorVlogs(userId, { baseUrl: getServerApiUrl(), signal })),
+);
+
+/**
+ * Tác giả có bài hoặc Reels công khai nào không (ẩn danh). Lỗi hoặc timeout trả null để trang noindex an toàn (TF25).
+ * Việc đọc API nằm trong seoApi.hasPublicContent.
+ */
 export const hasPublicProfilePosts = cache((userId: string) =>
-  readOrNull(async (signal) => {
-    const response = await postsControllerListPublicPosts(
-      { author_id: userId, limit: 1 },
-      {
-        baseUrl: getServerApiUrl(),
-        signal,
-        skipAuthorization: true,
-        skipAuthRefresh: true,
-      },
-    );
-    const items = response?.data?.items;
-    if (!Array.isArray(items)) return null;
-    return items.some((post) => post.visibility === 'public' && post.status === 'published' && !post.deletedAt);
-  }),
+  readOrNull((signal) => seoApi.hasPublicContent(userId, { baseUrl: getServerApiUrl(), signal })),
 );

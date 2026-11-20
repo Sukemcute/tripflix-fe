@@ -192,14 +192,16 @@ export const mobile = {
     listTitle: 'Lộ trình đã lưu',
     viewAll: 'Xem tất cả',
     booked: 'Chuyến đã đặt',
-    empty: 'Chưa có lộ trình nào. Bấm Lưu lộ trình ở reel, ở thẻ Tripi hoặc khi tự lên lộ trình để xem lại ở đây.',
+    empty:
+      'Chưa có lộ trình nào. Bấm Lưu lộ trình ở reel, ở thẻ Tripi hoặc khi tự lên lộ trình để xem lại ở đây.',
     loginHint: 'Đăng nhập để lưu và xem lại lộ trình của bạn.',
     days: '{days} ngày · {stops} điểm',
     sources: { reel: 'Từ reel', tripi: 'Tripi lên', builder: 'Tự lên' },
     day: 'Ngày {day}',
     emptyDay: 'Chưa có điểm nào',
     book: 'Đặt lộ trình này',
-    bookHint: 'Lộ trình chỉ lưu theo ngày thứ mấy. Bạn chọn ngày khởi hành ở bước đặt; giá và chỗ trống tính lại lúc đó.',
+    bookHint:
+      'Lộ trình chỉ lưu theo ngày thứ mấy. Bạn chọn ngày khởi hành ở bước đặt; giá và chỗ trống tính lại lúc đó.',
     openReel: 'Xem reel gốc',
     removeStop: 'Bỏ điểm này',
     delete: 'Xoá lộ trình',
@@ -237,9 +239,11 @@ export const mobile = {
     upcomingTitle: 'Chuyến sắp tới',
     upcomingAll: 'Xem tất cả',
     planNewTitle: 'Lên chuyến mới',
-    upcomingEmpty: 'Bạn chưa có chuyến nào sắp đi. Chọn một lộ trình ở tab Khám phá hoặc tự lên lộ trình bên dưới.',
+    upcomingEmpty:
+      'Bạn chưa có chuyến nào sắp đi. Chọn một lộ trình ở tab Khám phá hoặc tự lên lộ trình bên dưới.',
     askTripiTitle: 'Nhờ Tripi lên lộ trình',
-    askTripiBody: 'Kể Tripi nghe bạn muốn đi đâu, mấy ngày, bao nhiêu tiền. Lộ trình Tripi lập đặt được ngay tại đây.',
+    askTripiBody:
+      'Kể Tripi nghe bạn muốn đi đâu, mấy ngày, bao nhiêu tiền. Lộ trình Tripi lập đặt được ngay tại đây.',
     askTripiPlaceholder: 'VD: Đà Lạt 3 ngày 2 đêm, 5 triệu',
     askTripiSend: 'Hỏi Tripi',
     askTripiPrefix: 'Lên lộ trình chi tiết từng ngày (chỗ ở, đi lại, ăn chơi) cho chuyến: ',
@@ -713,6 +717,27 @@ export const mobile = {
       'Mình chưa thấy lựa chọn đáp ứng đủ nhu cầu trong danh mục mẫu. Bạn thử nói rõ điểm đến, số người và ngân sách nhé.',
   },
   create: {
+    recovery: {
+      loading: 'Đang mở bản soạn…',
+      restored: 'Đã khôi phục bản soạn trên thiết bị này.',
+      saved: 'Đã lưu trên thiết bị · Chưa đồng bộ máy chủ.',
+      saving: 'Đang giữ bản soạn trên thiết bị…',
+      failed: 'Chưa lưu được trên thiết bị. Giữ màn này mở và thử lại để tránh mất nội dung.',
+      loadFailed:
+        'Chưa khôi phục được bản soạn trên thiết bị. Bạn có thể thử mở lại trước khi viết nội dung mới.',
+      missingMedia:
+        'Video tạm không còn dùng được. Nội dung và lộ trình vẫn được giữ; chọn lại video trước khi lưu hoặc đăng.',
+      chooseMedia: 'Chọn lại video',
+      retry: 'Thử lưu trên thiết bị',
+      leaveTitle: 'Giữ câu chuyện đang viết?',
+      leaveBody:
+        'Lưu bản soạn trên thiết bị này để viết tiếp, kể cả khi mất mạng. Nội dung chưa được đăng hay lưu lên máy chủ.',
+      keep: 'Lưu trên thiết bị & thoát',
+      savingExit: 'Đang lưu trên thiết bị…',
+      discard: 'Bỏ thay đổi & thoát',
+      continue: 'Tiếp tục viết',
+      serverSave: 'Lưu máy chủ',
+    },
     title: 'Chia sẻ chuyến đi',
     headline: 'Đi rồi, kể tụi mình nghe.',
     body: 'Một câu chuyện thật, ngàn cảm hứng mới.',

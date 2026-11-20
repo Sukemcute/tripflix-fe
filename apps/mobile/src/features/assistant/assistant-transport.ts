@@ -25,6 +25,14 @@ const newConversationId = () =>
     return (char === 'x' ? value : (value & 3) | 8).toString(16);
   });
 
+export function resetAssistantConversationId(): void {
+  conversationId = '';
+}
+
+export function getAssistantConversationId(): string {
+  return conversationId;
+}
+
 /** AI từ chối lượt này: trả một tin của app thay cho lỗi chung, ô nhập vẫn dùng được. */
 function refusedReply(error: unknown): AssistantReply | null {
   if (error instanceof AssistantError) {
@@ -44,7 +52,11 @@ export const assistantTransport: AssistantTransport = async (messages, signal, c
   const history = messages.slice(0, -1);
   const latest = messages.at(-1);
   if (!latest) throw new Error('No message to send');
-  if (!history.length || !conversationId) conversationId = newConversationId();
+  if (context.conversationId) {
+    conversationId = context.conversationId;
+  } else if (!history.length || !conversationId) {
+    conversationId = newConversationId();
+  }
   try {
     const answer = await sendAssistantMessage(
       {

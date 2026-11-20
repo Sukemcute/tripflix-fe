@@ -22,6 +22,7 @@ import {
   shouldLoadReelSource,
   startReelOnPostChange,
   shouldShowReelBackdrop,
+  socialPostToReelPost,
   toReelPost,
 } from './reel-post';
 
@@ -64,6 +65,54 @@ describe('toReelPost', () => {
       commentCount: 4,
       bookmarkCount: 3,
       shareCount: 2,
+      video: card.video,
+    });
+  });
+
+  it('chuyển SocialPostDto có video sang ReelPost đầy đủ', () => {
+    const post = {
+      id: 'post-1',
+      authorId: 'author-1',
+      authorName: 'Minh',
+      postType: 'video' as const,
+      title: 'Đà Nẵng 3 ngày',
+      body: 'Lịch trình chi tiết',
+      hashtags: ['danang'],
+      mediaIds: ['media-1'],
+      tripAttachment: { destinationName: 'Đà Nẵng', daysCount: 3 },
+      isVerified: true,
+      reactionTotal: 10,
+      commentCount: 2,
+      bookmarkCount: 5,
+      shareCount: 1,
+      video: card.video,
+      status: 'published' as const,
+      visibility: 'public' as const,
+      coverMediaId: null,
+      images: [],
+      reactionCounts: {},
+      publishedAt: null,
+      deletedAt: null,
+      createdAt: '2026-11-20T00:00:00Z',
+      updatedAt: '2026-11-20T00:00:00Z',
+    };
+
+    expect(socialPostToReelPost(post)).toEqual({
+      id: 'post-1',
+      authorId: 'author-1',
+      authorName: 'Minh',
+      postType: 'video',
+      title: 'Đà Nẵng 3 ngày',
+      body: 'Lịch trình chi tiết',
+      hashtags: ['danang'],
+      mediaIds: ['media-1'],
+      tripAttachment: { destinationName: 'Đà Nẵng', daysCount: 3 },
+      isVerified: true,
+      reactionTotal: 10,
+      commentCount: 2,
+      bookmarkCount: 5,
+      shareCount: 1,
+      video: card.video,
     });
   });
 
@@ -312,6 +361,11 @@ describe('prependPinnedReelCards', () => {
       'a',
       'c',
     ]);
+  });
+
+  it('bảng tin có bài lặp giữa các trang thì chỉ giữ lần đầu (không trùng key)', () => {
+    expect(prependPinnedReelCards([], [card('a'), card('b'), card('a'), card('c'), card('b')]).map((c) => c.postId)).toEqual(['a', 'b', 'c']);
+    expect(prependPinnedReelCards([card('b')], [card('a'), card('a'), card('b')]).map((c) => c.postId)).toEqual(['b', 'a']);
   });
 
   it('không có Reel ghim (link hỏng, bài bị ẩn) thì là bảng tin như thường', () => {

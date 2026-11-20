@@ -2,11 +2,6 @@
 body {
   font-variant-numeric: tabular-nums;
 }
-.ops-dialog::backdrop,
-.mod-modal-dialog::backdrop {
-  background: var(--color-overlay);
-  backdrop-filter: blur(3px);
-}
 button,
 a,
 input,
@@ -38,7 +33,12 @@ summary:focus-visible {
 .ops-content :is(h1, h2, h3) {
   text-wrap: pretty;
 }
-.ops-content :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+.ops-content
+  :is(
+    input:not([type='checkbox']):not([type='radio']):not(.adm-control),
+    select:not(.adm-control),
+    textarea:not(.adm-control)
+  ) {
   border: 1px solid var(--color-border);
   border-radius: 6px;
   background: var(--color-background);
@@ -72,21 +72,10 @@ summary:focus-visible {
 .ops-table tbody tr:hover {
   background: var(--color-surface);
 }
-.ops-tag {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  padding: 3px 7px;
-  font-size: 10px;
-  line-height: 1.5;
-  white-space: nowrap;
-}
 .ops-content .text-danger {
   color: var(--color-coral-ink);
 }
-.admin-primary,
-.staff-btn-create-modal {
+.admin-primary {
   background: var(--color-teal-ink);
   color: var(--color-background);
   box-shadow: none;
@@ -94,21 +83,10 @@ summary:focus-visible {
   min-height: 36px;
   font-size: 12px;
 }
-.admin-primary:hover:not(:disabled),
-.staff-btn-create-modal:hover {
+.admin-primary:hover:not(:disabled) {
   background: var(--color-ink);
   transform: none;
   box-shadow: none;
-}
-.admin-secondary {
-  border-radius: 6px;
-  min-height: 34px;
-  padding: 7px 12px;
-  font-size: 11px;
-  box-shadow: none;
-}
-.admin-secondary:hover:not(:disabled) {
-  transform: none;
 }
 .admin-error {
   border: 1px solid var(--color-danger);
@@ -118,9 +96,6 @@ summary:focus-visible {
 }
 .admin-error .admin-secondary {
   margin-top: 8px;
-}
-.admin-page-heading {
-  margin-bottom: 20px;
 }
 .ops-content .admin-page-heading h1 {
   font-size: 18px;
@@ -420,76 +395,6 @@ summary:focus-visible {
 .ops-content .mod-btn-detail:hover {
   background: var(--color-teal-soft);
 }
-.mod-modal-overlay {
-  z-index: 60;
-  display: contents;
-  background: transparent;
-  backdrop-filter: none;
-}
-.mod-modal-overlay .mod-modal-dialog {
-  position: fixed;
-  inset: 0 0 0 auto;
-  width: min(760px, 100%);
-  max-width: 100%;
-  height: 100dvh;
-  max-height: 100dvh;
-  margin: 0;
-  border: 0;
-  border-left: 1px solid var(--color-border);
-  border-radius: 0;
-  background: var(--color-background);
-  box-shadow: none;
-}
-.mod-modal-overlay .mod-modal-header {
-  border-radius: 0;
-  padding: 20px 24px;
-}
-.mod-modal-overlay .mod-modal-title {
-  font-size: 16px;
-}
-.mod-modal-overlay .mod-modal-body {
-  padding: 24px;
-}
-.mod-modal-overlay .mod-modal-tabs {
-  gap: 20px;
-  padding-inline: 24px;
-}
-.mod-modal-overlay .mod-modal-tab {
-  padding: 12px 0;
-  font-size: 12px;
-}
-.mod-modal-overlay .mod-modal-tab.is-active {
-  color: var(--color-teal-ink);
-  border-color: var(--color-teal-ink);
-}
-.mod-modal-overlay .mod-post-title {
-  font-size: 15px;
-  font-weight: 400;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  line-height: 1.85;
-}
-.mod-modal-overlay .mod-meta-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  background: var(--color-surface);
-  border-radius: 8px;
-}
-.mod-modal-overlay .mod-meta-val {
-  overflow-wrap: anywhere;
-  font-size: 12px;
-}
-.mod-modal-overlay .mod-modal-footer {
-  flex-wrap: wrap;
-  background: var(--color-background);
-  border-top: 1px solid var(--color-border);
-  padding: 16px 24px;
-}
-.mod-modal-overlay .btn-decision {
-  border-radius: 6px;
-  padding: 10px 14px;
-  font-size: 11px;
-  box-shadow: none;
-}
 .mod-modal-overlay .btn-decision.remove {
   background: var(--color-danger);
 }
@@ -578,9 +483,6 @@ summary:focus-visible {
   }
   .ops-content :is(.mod-monitor-value, .staff-kpi-val) {
     font-size: 26px;
-  }
-  .mod-modal-overlay .mod-modal-body {
-    padding: 16px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

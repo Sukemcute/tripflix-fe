@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import Image from 'next/image';
 import { useQueryClient, useMutation, useQuery, type InfiniteData } from '@tanstack/react-query';
 import { vi, t } from '@tripflix/i18n';
 import {
@@ -18,17 +16,20 @@ import { refreshCommentsIfStale } from '../comment-cache';
 import { useHasUserInteracted } from '../use-has-user-interacted';
 import { useSettledFlag } from '../use-settled-flag';
 import { usePresence } from '../use-presence';
-import { useIsWideScreen } from '../use-wide-screen';
+import { useIsPinnedItineraryScreen, useIsWideScreen } from '../use-wide-screen';
+import { resolveFeedRightOpen, shouldCloseCommentOnToggle } from './itinerary-pin';
 import { nextScrollTarget, stepScrollTowards, wheelDeltaToPixels } from './smooth-wheel-scroll';
 import reelsStyles from '../live-posts.module.css';
 import { type FeedNavFilter } from './floating-nav-rail';
 import { ItinerarySidebarPanel } from './itinerary-sidebar-panel';
 import { PostCard } from './post-card';
 import { FeedHighlightFrame } from './feed-highlight-frame';
+import { GalleryLightbox, stepGalleryIndex } from './gallery-lightbox';
 import { ShareMenu, type ShareMenuHandle } from '../share-menu';
 import { getPostImages } from '../post-cover';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AvatarPhoto } from '@/features/shared/avatar-photo';
+import segmentedTabs from '../../shared/segmented-tabs.module.css';
 import { getFocusedFeedPosts } from './focused-post';
 import styles from './social-feed.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
@@ -47,6 +48,7 @@ export interface SocialFeedViewProps {
   focusCommentId?: string;
   onBackToResults?: () => void;
   isItineraryOpen?: boolean;
+  isItineraryPinned?: boolean;
   onOpenItinerary?: () => void;
   onCloseItinerary?: () => void;
   filterMode?: FeedNavFilter;
@@ -71,6 +73,7 @@ export function SocialFeedView({
   focusCommentId,
   onBackToResults,
   isItineraryOpen: propIsItineraryOpen,
+  isItineraryPinned: propIsItineraryPinned,
   onOpenItinerary,
   onCloseItinerary,
   filterMode: propFilterMode,
@@ -85,20 +88,28 @@ export function SocialFeedView({
   const activeFilter = propFilterMode ?? 'all';
   const [recommendMode, setRecommendMode] = useState<PostRecommendationsControllerRecommendPostsMode>('for_you');
 
+  const isWideScreen = useIsWideScreen();
+  const isPinnedScreen = useIsPinnedItineraryScreen();
+  const isItineraryPinned = propIsItineraryPinned ?? isPinnedScreen;
+
   const [localIsItineraryOpen, setLocalIsItineraryOpen] = useState(true);
-  const isItineraryOpen = propIsItineraryOpen ?? localIsItineraryOpen;
+  const isItineraryOpen = isItineraryPinned || (propIsItineraryOpen ?? localIsItineraryOpen);
   const handleOpenItinerary = onOpenItinerary ?? (() => setLocalIsItineraryOpen(true));
-  const handleCloseItinerary = onCloseItinerary ?? (() => setLocalIsItineraryOpen(false));
+  const handleCloseItinerary = () => {
+    if (isItineraryPinned) return;
+    if (onCloseItinerary) onCloseItinerary();
+    else setLocalIsItineraryOpen(false);
+  };
 
   const [localIsComposerOpen, setLocalIsComposerOpen] = useState(false);
   const handleOpenComposer = onOpenComposer ?? (() => setLocalIsComposerOpen(true));
   const handleCloseComposer = onCloseComposer ?? (() => setLocalIsComposerOpen(false));
 
   // Layout states
-  // Màn rộng mở sẵn panel bình luận; người dùng đóng/mở thì giữ lựa chọn đó. Server render coi như đóng để không lệch hydration.
-  const isWideScreen = useIsWideScreen();
+  // Màn >= 1200px ghim luôn cả hai cột; 1024..1199px mở sẵn và cho phép đóng/mở; server render coi như đóng để không lệch hydration.
   const [rightOpenChoice, setIsRightOpen] = useState<boolean | null>(focusCommentId ? true : null);
-  const isRightOpen = rightOpenChoice ?? isWideScreen;
+  const isRightPinned = isItineraryPinned;
+  const isRightOpen = resolveFeedRightOpen(rightOpenChoice, isWideScreen, isRightPinned);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [activeFocusedPostId, setActiveFocusedPostId] = useState<string | null>(null);
   const [galleryState, setGalleryState] = useState<{ postId: string; index: number } | null>(null);
@@ -116,7 +127,7 @@ export function SocialFeedView({
   const queryKind: 'public' | 'bookmarks' = activeFilter === 'saved' ? 'bookmarks' : 'public';
   const isSearchMode = activeFilter !== 'saved' && effectiveKeyword.length > 0;
   // Tab Bài viết chỉ lấy vlog; Reels có luồng riêng (/v1/feed).
-  const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended', { recommendMode });
+  const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended', { recommendMode, refreshOnReturn: isVisible });
   // Tìm kiếm: cùng query với grid kết quả (search của discovery) nên mở bài từ grid không gọi lại API.
   const searchQuery = usePostSearchFeed(isSearchMode ? effectiveKeyword : '', undefined, searchSort);
   const postsQuery = isSearchMode ? searchQuery : feedQuery;
@@ -141,6 +152,7 @@ export function SocialFeedView({
     ))
   );
   const isFocusPending = isDirectFocus && focusedPostQuery.isPending;
+  const isFeedLoading = !isFocusUnavailable && (postsQuery.isPending || isFocusPending);
 
   const allPosts = useMemo(() => {
     if (isSearchMode && !isDirectFocus) return searchVlogItems;
@@ -220,24 +232,25 @@ export function SocialFeedView({
   useEffect(() => {
     if (!galleryState) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        setGalleryState(null);
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        setGalleryState((prev) => (prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null));
+        setGalleryState((prev) =>
+          prev ? { ...prev, index: stepGalleryIndex(prev.index, -1, activeGalleryImages.length) } : null,
+        );
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         setGalleryState((prev) =>
-          prev
-            ? { ...prev, index: Math.min(activeGalleryImages.length - 1, prev.index + 1) }
-            : null,
+          prev ? { ...prev, index: stepGalleryIndex(prev.index, 1, activeGalleryImages.length) } : null,
         );
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [galleryState, activeGalleryImages.length]);
+
+  const closeGallery = useCallback(() => {
+    setGalleryState(null);
+  }, []);
 
   // Active post for comment thread (dong bo style Reels)
   const activeCommentPost = useMemo(() => {
@@ -691,13 +704,20 @@ export function SocialFeedView({
   const handleToggleComment = useCallback(
     (postId: string) => {
       const currentActiveId = activeCommentPostId ?? activeCommentPost?.id;
-      if (isRightOpen && currentActiveId === postId) {
-        // Neu dang mo dung bai viet nay -> Dong lai
+      if (
+        shouldCloseCommentOnToggle({
+          isRightOpen,
+          currentActivePostId: currentActiveId,
+          targetPostId: postId,
+          isPinned: isRightPinned,
+        })
+      ) {
+        // Neu dang mo dung bai viet nay (man < 1200px) -> Dong lai
         setIsRightOpen(false);
         return;
       }
 
-      // Neu dang dong hoac dang mo bai khac -> Mo panel va tai moi binh luan
+      // Neu dang dong, mo bai khac hoac dang ghim (>= 1200px) -> Chon bai va mo / giu mo panel
       setActiveCommentPostId(postId);
       setIsRightOpen(true);
       refreshCommentsIfStale(client, postId);
@@ -705,7 +725,7 @@ export function SocialFeedView({
         commentInputRef.current?.focus();
       }, 80);
     },
-    [client, isRightOpen, activeCommentPostId, activeCommentPost?.id]
+    [client, isRightOpen, activeCommentPostId, activeCommentPost?.id, isRightPinned]
   );
 
   // Layout container class selection
@@ -730,7 +750,13 @@ export function SocialFeedView({
       : `${styles.splitViewContainer} ${styles.splitViewCenterOnly}`;
 
   return (
-    <div className={`${containerClassName} ${isLayoutAnimated ? '' : styles.layoutStatic}`}>
+    <div
+      className={`${containerClassName} ${isItineraryPinned ? styles.splitViewPinnedLeft : ''} ${
+        isLayoutAnimated ? '' : styles.layoutStatic
+      }`}
+      data-itinerary-pinned={isItineraryPinned ? 'true' : undefined}
+      data-comment-pinned={isRightPinned ? 'true' : undefined}
+    >
       {/* 1. Left Column: Itinerary Sidebar Panel (Nằm ngay bên phải của Dock, cố định vững vàng) */}
       {leftPresence.isRendered && (
         <ItinerarySidebarPanel
@@ -744,12 +770,23 @@ export function SocialFeedView({
           coverImage={activeItineraryCover}
           isOpen={leftPresence.isRendered}
           onClose={handleCloseItinerary}
+          // Chỉ có ý nghĩa khi đang hiện tab gợi ý (không tìm kiếm, không ở "Đã lưu").
+          onBrowseTripPosts={
+            !isSearchMode && activeFilter !== 'saved' && recommendMode !== 'has_plan'
+              ? () => setRecommendMode('has_plan')
+              : undefined
+          }
         />
       )}
 
       {/* 2. Center Column: Main Social Feed (Cuộn mượt độc lập) */}
       <FeedHighlightFrame scrollRef={mainFeedRef} postId={isRightOpen ? activeCommentPost?.id : undefined} isVisible={isVisible}>
-      <main ref={mainFeedRef} className={styles.mainFeedColumn} aria-label="Bảng tin du lịch">
+      <main
+        ref={mainFeedRef}
+        className={styles.mainFeedColumn}
+        style={galleryState ? { overflow: 'hidden' } : undefined}
+        aria-label="Bảng tin du lịch"
+      >
         {isSearchMode && onBackToResults && (
           <div className={styles.searchBackBar}>
             <button type="button" className={styles.searchBackButton} onClick={onBackToResults}>
@@ -877,7 +914,7 @@ export function SocialFeedView({
           <div
             role="tablist"
             aria-label={vi.api.recommendModeAria}
-            className={styles.recommendModeTabs}
+            className={`${segmentedTabs.tabs} ${segmentedTabs.tabsGlass} ${styles.recommendModeTabs}`}
           >
             {RECOMMEND_MODE_OPTIONS.map((option) => {
               const selected = option.value === recommendMode;
@@ -887,12 +924,7 @@ export function SocialFeedView({
                   type="button"
                   role="tab"
                   aria-selected={selected}
-                  className={styles.composerTagBtn}
-                  style={
-                    selected
-                      ? { background: 'var(--tf-color-ink, #111827)', color: '#fff', borderColor: 'transparent' }
-                      : undefined
-                  }
+                  className={segmentedTabs.tab}
                   onClick={() => setRecommendMode(option.value)}
                 >
                   {option.label}
@@ -903,10 +935,9 @@ export function SocialFeedView({
         )}
 
         {/* Loading state */}
-        {!isFocusUnavailable && (postsQuery.isPending || isFocusPending) && (
-          <div className={styles.emptyFeed}>
-            <LoadingDots label="Đang tải bảng tin cảm hứng..." />
-          </div>
+        {/* Mở bài qua ?open= thì bài đó hiện trước khi feed tải xong: lúc đó chấm nằm ở cuối feed, không chèn thẻ rỗng. */}
+        {isFeedLoading && posts.length === 0 && (
+          <LoadingDots isBlock label="Đang tải bảng tin cảm hứng..." />
         )}
 
         {/* Error state */}
@@ -958,6 +989,7 @@ export function SocialFeedView({
               onToggleLike={handleLikeToggle}
               onToggleSave={handleSaveToggle}
               onToggleComment={handleToggleComment}
+              hideCommentButton={isRightPinned}
               onShare={handleShare}
               onViewItinerary={(postId) => {
                 setActiveFocusedPostId(postId);
@@ -972,7 +1004,7 @@ export function SocialFeedView({
 
         {/* Infinite Scroll trigger */}
         <div ref={sentinelRef} style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {postsQuery.isFetchingNextPage && (
+          {(postsQuery.isFetchingNextPage || (isFeedLoading && posts.length > 0)) && (
             <LoadingDots label="Đang tải thêm bài viết..." />
           )}
         </div>
@@ -999,17 +1031,19 @@ export function SocialFeedView({
               </span>
             </h2>
 
-            <button
-              type="button"
-              className={reelsStyles.iconGhostBtn}
-              aria-label={vi.api.commentPanelClose}
-              data-tooltip={vi.api.commentPanelClose}
-              onClick={() => {
-                setIsRightOpen(false);
-              }}
-            >
-              <SocialIcon name="close" size={17} />
-            </button>
+            {!isRightPinned && (
+              <button
+                type="button"
+                className={reelsStyles.iconGhostBtn}
+                aria-label={vi.api.commentPanelClose}
+                data-tooltip={vi.api.commentPanelClose}
+                onClick={() => {
+                  setIsRightOpen(false);
+                }}
+              >
+                <SocialIcon name="close" size={17} />
+              </button>
+            )}
           </div>
 
           {activeCommentPost ? (
@@ -1045,94 +1079,18 @@ export function SocialFeedView({
         />
       )}
 
-      {/* 4. In-Feed Image Gallery Lightbox Modal */}
-      {galleryState && activeGalleryPost && activeGalleryImages[galleryState.index] && (() => {
-        const currentImg = activeGalleryImages[galleryState.index];
-        if (!currentImg) return null;
-        return createPortal(
-          <dialog
-            open
-            className={reelsStyles.galleryStageOverlay}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 9999,
-              margin: 0,
-              padding: 0,
-              border: 'none',
-              width: '100%',
-              height: '100%',
-              maxWidth: 'none',
-              maxHeight: 'none',
-              background: 'color-mix(in srgb, var(--color-ink) 92%, transparent)',
-            }}
-            aria-modal="true"
-            aria-label={activeGalleryPost.title}
-          >
-            <div className={reelsStyles.galleryTopBar}>
-              <span className={reelsStyles.galleryCountPill}>
-                {galleryState.index + 1} / {activeGalleryImages.length}
-              </span>
-              <button
-                type="button"
-                className={reelsStyles.galleryCloseBtn}
-                aria-label={vi.api.immersiveCloseGallery}
-                data-tooltip={vi.api.immersiveCloseGallery}
-                onClick={() => setGalleryState(null)}
-              >
-                <SocialIcon name="close" size={18} />
-              </button>
-            </div>
-
-            <div className={reelsStyles.galleryContainFrame}>
-              <Image
-                key={currentImg.src}
-                src={currentImg.src}
-                alt={activeGalleryPost.title}
-                fill
-                className={reelsStyles.galleryContainImg}
-                sizes="100vw"
-                priority
-                unoptimized={currentImg.src.startsWith('http')}
-              />
-            </div>
-
-            {activeGalleryImages.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  className={`${reelsStyles.gallerySlideNavBtn} ${reelsStyles.gallerySlidePrev}`}
-                  disabled={galleryState.index <= 0}
-                  aria-label={vi.api.immersivePrevSlide}
-                  data-tooltip={vi.api.immersivePrevSlide}
-                  onClick={() =>
-                    setGalleryState((prev) =>
-                      prev ? { ...prev, index: Math.max(0, prev.index - 1) } : null,
-                    )
-                  }
-                >
-                  <SocialIcon name="chevronLeft" size={20} />
-                </button>
-                <button
-                  type="button"
-                  className={`${reelsStyles.gallerySlideNavBtn} ${reelsStyles.gallerySlideNext}`}
-                  disabled={galleryState.index >= activeGalleryImages.length - 1}
-                  aria-label={vi.api.immersiveNextSlide}
-                  data-tooltip={vi.api.immersiveNextSlide}
-                  onClick={() =>
-                    setGalleryState((prev) =>
-                      prev ? { ...prev, index: Math.min(activeGalleryImages.length - 1, prev.index + 1) } : null,
-                    )
-                  }
-                >
-                  <SocialIcon name="chevronRight" size={20} />
-                </button>
-              </>
-            )}
-          </dialog>,
-          document.body,
-        );
-      })()}
+      {/* 4. In-Feed Image Gallery Lightbox Modal (khung cố định + thumbnail như trang khách sạn, top layer qua dialog.showModal) */}
+      <GalleryLightbox
+        isOpen={Boolean(galleryState && activeGalleryPost && activeGalleryImages.length > 0)}
+        title={activeGalleryPost?.title ?? vi.hotel.gallery}
+        images={activeGalleryImages}
+        currentIndex={galleryState?.index ?? 0}
+        onClose={closeGallery}
+        onSelectIndex={(index) => setGalleryState((prev) => (prev ? { ...prev, index } : null))}
+        closeIcon={<SocialIcon name="close" size={18} />}
+        prevIcon={<SocialIcon name="chevronLeft" size={20} />}
+        nextIcon={<SocialIcon name="chevronRight" size={20} />}
+      />
 
       <ShareMenu ref={shareMenuRef} side="above" onShared={handleShared} />
     </div>

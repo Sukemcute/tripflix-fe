@@ -13,4 +13,5 @@ export const PostRecommendationsControllerRecommendReelsMode = {
   trending: 'trending',
   has_plan: 'has_plan',
   recent: 'recent',
+  mixed: 'mixed',
 } as const;

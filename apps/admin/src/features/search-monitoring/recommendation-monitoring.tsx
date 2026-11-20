@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getHomeRecommendations } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
+import { AdminButton } from '@/ui/button';
 import { AdminApiError } from '../shell/api-state';
 import styles from './search-monitoring.module.css';
 
@@ -75,9 +76,9 @@ export function RecommendationMonitoring() {
                 onChange={(event) => setLimit(event.target.value)}
               />
             </label>
-            <button className="admin-primary" disabled={result.isFetching}>
+            <AdminButton variant="primary" type="submit" disabled={result.isFetching}>
               {copy.run}
-            </button>
+            </AdminButton>
           </div>
           {validation && <p role="alert">{validation}</p>}
         </form>

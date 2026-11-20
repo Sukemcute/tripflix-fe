@@ -37,6 +37,8 @@ export interface PostCardProps {
   /** Wall cá nhân chỉ hiện ảnh tác giả thực sự đính kèm. */
   showSuggestedImages?: boolean;
   defaultExpanded?: boolean;
+  /** Cột Bình luận đã cố định và tự theo bài đang đọc (tab Bài viết ≥1200px): không cần nút mở bình luận. */
+  hideCommentButton?: boolean;
 }
 
 export function PostCard({
@@ -48,6 +50,7 @@ export function PostCard({
   onToggleLike,
   onToggleSave,
   onToggleComment,
+  hideCommentButton = false,
   onShare,
   onOpenTag,
   onViewItinerary,
@@ -281,16 +284,18 @@ export function PostCard({
           </button>
 
           {/* Comment Button (Mo Contextual Panel phai) */}
-          <button
-            type="button"
-            className={`${styles.actionBtn} ${isCommentActive ? styles.actionBtnActive : ''}`}
-            aria-pressed={isCommentActive}
-            aria-label={t('api.commentsWithCount', { count: post.commentCount })}
-            onClick={() => onToggleComment(post.id)}
-          >
-            <SocialIcon name="comment" size={18} />
-            <span>{formatCompactCount(post.commentCount)}</span>
-          </button>
+          {!hideCommentButton && (
+            <button
+              type="button"
+              className={`${styles.actionBtn} ${isCommentActive ? styles.actionBtnActive : ''}`}
+              aria-pressed={isCommentActive}
+              aria-label={t('api.commentsWithCount', { count: post.commentCount })}
+              onClick={() => onToggleComment(post.id)}
+            >
+              <SocialIcon name="comment" size={18} />
+              <span>{formatCompactCount(post.commentCount)}</span>
+            </button>
+          )}
 
           {/* Share Button */}
           <button

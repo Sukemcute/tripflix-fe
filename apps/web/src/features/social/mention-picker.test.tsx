@@ -1,7 +1,15 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi as vitestVi } from 'vitest';
+import { afterEach, describe, expect, it, vi as vitestVi } from 'vitest';
 import * as apiClient from '@tripflix/api-client';
-import { MentionPicker, handleMentionPickerKeyDown } from './mention-picker';
+import {
+  MentionPicker,
+  handleMentionPickerKeyDown,
+  resolveMentionPickerState,
+} from './mention-picker';
+
+afterEach(() => {
+  vitestVi.restoreAllMocks();
+});
 
 describe('MentionPicker', () => {
   it('hiện gợi ý gõ ít nhất 2 ký tự khi query quá ngắn', () => {
@@ -64,6 +72,73 @@ describe('MentionPicker', () => {
     expect(html).toContain('Huy Thành');
     expect(html).toContain('Tuấn Anh');
     expect(html).toContain('data-tone=');
+  });
+
+  it('vẫn giữ và làm mờ nhẹ danh sách cũ khi đang tải từ khoá mới (isPlaceholderData)', () => {
+    vitestVi.spyOn(apiClient, 'useUserSearch').mockReturnValue({
+      data: {
+        items: [
+          { id: 'u1', displayName: 'Huy Thành' },
+          { id: 'u2', displayName: 'Tuấn Anh' },
+        ],
+        page: 1,
+        hasMore: false,
+      },
+      isLoading: false,
+      isFetching: true,
+      isPlaceholderData: true,
+      isError: false,
+      error: null,
+      isSearchable: true,
+      refetch: vitestVi.fn(),
+    } as unknown as ReturnType<typeof apiClient.useUserSearch>);
+
+    const html = renderToStaticMarkup(
+      <MentionPicker query="thanh xuan" onSelect={() => {}} onClose={() => {}} />,
+    );
+    expect(html).toContain('Huy Thành');
+    expect(html).toContain('Tuấn Anh');
+    expect(html).toContain('userListRefreshing');
+    expect(html).not.toContain('Đang tìm người dùng…');
+  });
+
+  it('lỗi 429 hiển thị thông báo tìm hơi nhanh thay vì báo không tìm thấy', () => {
+    vitestVi.spyOn(apiClient, 'useUserSearch').mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      isPlaceholderData: false,
+      isError: true,
+      error: new apiClient.HttpError(429, { message: 'Too many requests' }),
+      isSearchable: true,
+      refetch: vitestVi.fn(),
+    } as unknown as ReturnType<typeof apiClient.useUserSearch>);
+
+    const html = renderToStaticMarkup(
+      <MentionPicker query="thanh" onSelect={() => {}} onClose={() => {}} />,
+    );
+    expect(html).toContain('Bạn tìm hơi nhanh, thử lại sau ít giây');
+    expect(html).not.toContain('Không tìm thấy người dùng');
+  });
+
+  it('lỗi API khác hiển thị thông báo lỗi kèm nút thử lại', () => {
+    vitestVi.spyOn(apiClient, 'useUserSearch').mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      isPlaceholderData: false,
+      isError: true,
+      error: new Error('HTTP 500'),
+      isSearchable: true,
+      refetch: vitestVi.fn(),
+    } as unknown as ReturnType<typeof apiClient.useUserSearch>);
+
+    const html = renderToStaticMarkup(
+      <MentionPicker query="thanh" onSelect={() => {}} onClose={() => {}} />,
+    );
+    expect(html).toContain('Không tìm được, thử lại');
+    expect(html).toContain('Thử lại');
+    expect(html).not.toContain('Không tìm thấy người dùng');
   });
 
   describe('handleMentionPickerKeyDown (Tab / Enter / Esc)', () => {
@@ -137,6 +212,51 @@ describe('MentionPicker', () => {
       expect(handledShiftTab).toBe(false);
       expect(preventDefaultShift).not.toHaveBeenCalled();
       expect(onSelect).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resolveMentionPickerState khi chờ debounce 1 giây', () => {
+    it('chưa có kết quả cũ mà đang chờ debounce thì hiện trạng thái đang tìm (kể cả khi query cũ rỗng hoặc lỗi)', () => {
+      expect(
+        resolveMentionPickerState({
+          isSearchable: true,
+          isDebouncing: true,
+          hasUsers: false,
+          isLoading: false,
+          isFetching: false,
+          isPlaceholderData: false,
+          isError: false,
+          isRateLimited: false,
+        }),
+      ).toEqual({ status: 'searching', isRefreshingExistingList: false });
+
+      expect(
+        resolveMentionPickerState({
+          isSearchable: true,
+          isDebouncing: true,
+          hasUsers: false,
+          isLoading: false,
+          isFetching: false,
+          isPlaceholderData: false,
+          isError: true,
+          isRateLimited: false,
+        }),
+      ).toEqual({ status: 'searching', isRefreshingExistingList: false });
+    });
+
+    it('đã có kết quả cũ mà đang chờ debounce thì giữ danh sách cũ làm mờ nhẹ', () => {
+      expect(
+        resolveMentionPickerState({
+          isSearchable: true,
+          isDebouncing: true,
+          hasUsers: true,
+          isLoading: false,
+          isFetching: false,
+          isPlaceholderData: false,
+          isError: false,
+          isRateLimited: false,
+        }),
+      ).toEqual({ status: 'list', isRefreshingExistingList: true });
     });
   });
 });

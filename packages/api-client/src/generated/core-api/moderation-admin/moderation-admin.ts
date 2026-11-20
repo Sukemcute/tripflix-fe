@@ -23,11 +23,13 @@ import type {
 import type {
   AdminModerationControllerActionsParams,
   AdminModerationControllerAppealsParams,
+  AdminModerationControllerCoverOcrParams,
   AdminModerationControllerFailedScansParams,
   AdminModerationControllerQueueParams,
   AppealDto,
   AppealOutcomeDto,
   AppealQueuePageDto,
+  CoverOcrPageDto,
   DecisionDto,
   FailedScanPageDto,
   ModerationCaseDto,
@@ -60,6 +62,165 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export type adminModerationControllerCoverOcrResponse200 = {
+  data: CoverOcrPageDto;
+  status: 200;
+};
+
+export type adminModerationControllerCoverOcrResponseSuccess =
+  adminModerationControllerCoverOcrResponse200 & {
+    headers: Headers;
+  };
+export type adminModerationControllerCoverOcrResponse = adminModerationControllerCoverOcrResponseSuccess;
+
+export const getAdminModerationControllerCoverOcrUrl = (params?: AdminModerationControllerCoverOcrParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/moderation/cover-ocr?${stringifiedParams}`
+    : `/api/v1/admin/moderation/cover-ocr`;
+};
+
+/**
+ * @summary Theo dõi các lượt OCR ảnh bìa video và lọc theo trạng thái
+ */
+export const adminModerationControllerCoverOcr = async (
+  params?: AdminModerationControllerCoverOcrParams,
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationControllerCoverOcrResponse> => {
+  return http<adminModerationControllerCoverOcrResponse>(getAdminModerationControllerCoverOcrUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAdminModerationControllerCoverOcrQueryKey = (
+  params?: AdminModerationControllerCoverOcrParams,
+) => {
+  return [`/api/v1/admin/moderation/cover-ocr`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminModerationControllerCoverOcrQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerCoverOcrParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminModerationControllerCoverOcrQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>> = ({
+    signal,
+  }) => adminModerationControllerCoverOcr(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminModerationControllerCoverOcrQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>
+>;
+export type AdminModerationControllerCoverOcrQueryError = unknown;
+
+export function useAdminModerationControllerCoverOcr<
+  TData = Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+  TError = unknown,
+>(
+  params: undefined | AdminModerationControllerCoverOcrParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerCoverOcr<
+  TData = Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerCoverOcrParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerCoverOcr<
+  TData = Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerCoverOcrParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Theo dõi các lượt OCR ảnh bìa video và lọc theo trạng thái
+ */
+
+export function useAdminModerationControllerCoverOcr<
+  TData = Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerCoverOcrParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminModerationControllerCoverOcrQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 export type adminModerationControllerPostPartsResponse200 = {
   data: ModerationPartsDto;

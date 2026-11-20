@@ -33,7 +33,12 @@ export type AssistantMessage = AssistantChatMessage & {
 export type AssistantReply = Omit<AssistantMessage, 'id' | 'role'> & { trip?: AssistantTrip | null };
 export type AssistantOrigin = { x: number; y: number; width: number; height: number };
 /** Gửi kèm mỗi lượt: reel đang mở và những gì Tripi nhớ về chuyến đi. */
-export type AssistantContext = { trip: AssistantTrip | null; contextPostId?: string; action?: AssistantAction };
+export type AssistantContext = {
+  trip: AssistantTrip | null;
+  contextPostId?: string;
+  action?: AssistantAction;
+  conversationId?: string;
+};
 export type AssistantTransport = (
   messages: readonly AssistantMessage[],
   signal: AbortSignal,
@@ -51,6 +56,7 @@ function useAssistantState(transport?: AssistantTransport) {
   const closeDialog = useCallback(() => setDialog(null), []);
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
+  const [conversationId, setConversationId] = useState<string>('');
   const [trip, setTrip] = useState<AssistantTrip | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -75,6 +81,7 @@ function useAssistantState(transport?: AssistantTransport) {
     setDraft('');
     setHasError(false);
     setIsPending(false);
+    setConversationId('');
   }, []);
 
   useEffect(() => {
@@ -96,9 +103,24 @@ function useAssistantState(transport?: AssistantTransport) {
     setDraft('');
     setHasError(false);
     setIsPending(true);
+    let activeConversationId = conversationId;
+    if (!activeConversationId) {
+      activeConversationId =
+        globalThis.crypto?.randomUUID?.() ??
+        'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+          const value = Math.floor(Math.random() * 16);
+          return (char === 'x' ? value : (value & 3) | 8).toString(16);
+        });
+      setConversationId(activeConversationId);
+    }
     try {
       const reply = transport
-        ? await transport(next, controller.signal, { trip, contextPostId, action })
+        ? await transport(next, controller.signal, {
+            trip,
+            contextPostId,
+            action,
+            conversationId: activeConversationId,
+          })
         : vi.assistant.demoReply;
       const { trip: nextTrip, ...answer } = typeof reply === 'string' ? { text: reply } : reply;
       if (!answer.text.trim()) throw new Error('Empty assistant response');

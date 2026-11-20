@@ -7,6 +7,10 @@ export const api = {
   inspiration: 'Cảm hứng',
   // Hộp thư thông báo trên header web (TF46).
   notificationsTitle: 'Thông báo',
+  notificationsDismiss: 'Đóng thông báo',
+  notificationsSoundNeedsActivation: 'Âm báo chưa sẵn sàng.',
+  notificationsSoundActivate: 'Bật tiếng Tripi',
+  notificationsEnable: 'Bật thông báo trên máy này',
   notificationsToday: 'Hôm nay',
   notificationsEarlier: 'Trước đó',
   notificationsJustNow: 'Vừa xong',
@@ -747,6 +751,8 @@ export const api = {
   mentionSearchPrompt: 'Gõ ít nhất 2 ký tự để tìm kiếm',
   mentionSearching: 'Đang tìm người dùng…',
   mentionNoResults: 'Không tìm thấy người dùng',
+  mentionRateLimited: 'Bạn tìm hơi nhanh, thử lại sau ít giây',
+  mentionSearchFailed: 'Không tìm được, thử lại',
   commentViewReplies: 'Xem phản hồi',
   commentHideReplies: 'Ẩn phản hồi',
   commentReplyAction: 'Trả lời',
@@ -850,6 +856,8 @@ export const api = {
   immersiveReplyingTo: 'Đang trả lời {name}',
   immersiveCancelReply: 'Hủy trả lời',
   commentReplyQuoteTitle: 'Trả lời {name}',
+  commentReplyQuoteAccessibilityLabel: 'Trả lời {name}: {excerpt}',
+  commentReplyQuoteAccessibilityHint: 'Cuộn đến bình luận được trích dẫn nếu bình luận đã tải.',
   commentQuoteUnavailable: 'Bình luận không còn hiển thị',
   // Trang cá nhân công khai (TF47)
   personalPage: 'Trang cá nhân',
@@ -870,4 +878,19 @@ export const api = {
   profileNoSavedVideos: 'Chưa có video đã lưu.',
   profileLoadMore: 'Xem thêm',
   profileIntro: 'Giới thiệu',
+  // Cột Lịch trình (trạng thái trống & chi phí ước tính)
+  immersiveEstimatedCostNote:
+    'Chi phí ước tính trung bình cho 1 người, bao gồm lưu trú và các điểm vui chơi gợi ý.',
+  itineraryNoTripTitle: 'Bài này chưa gắn lịch trình',
+  itineraryNoTripDesc: 'Chia sẻ ảnh và cảm nhận chuyến đi.',
+  itineraryBrowseTripPosts: 'Xem các bài có lịch trình',
+  itinerarySuggestedHeading: 'Lịch trình liên quan',
+  itinerarySuggestedAction: 'Xem lịch trình này',
+  // Thu phóng & phóng to khung xem ảnh
+  imageZoomIn: 'Phóng to ảnh',
+  imageZoomOut: 'Thu nhỏ ảnh',
+  imageZoomReset: 'Đặt lại thu phóng về 100%',
+  imageZoomLevel: 'Mức thu phóng {percent}%',
+  imageExpandViewer: 'Phóng to khung xem',
+  imageShrinkViewer: 'Thu nhỏ khung xem',
 } as const;

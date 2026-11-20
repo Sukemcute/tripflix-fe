@@ -7,6 +7,7 @@ import type { TripAttachmentDto } from '@tripflix/api-client/core-api/model/inde
 import { t, vi } from '@tripflix/i18n';
 import { SocialIcon } from '../live-posts';
 import { POST_COVER_MASCOT } from '../post-cover';
+import segmentedTabs from '../../shared/segmented-tabs.module.css';
 import styles from './social-feed.module.css';
 import { TripPlanTimeline } from './trip-plan-timeline';
 
@@ -26,6 +27,7 @@ export interface ItinerarySidebarPanelProps {
     coverImage?: string;
   } | null;
   onSelectSuggestedTrip?: () => void;
+  onBrowseTripPosts?: () => void;
 }
 
 // Tab Điểm đến đã bỏ: điểm đến của từng ngày nằm ngay trong Lịch trình như sheet trên app.
@@ -42,6 +44,7 @@ export function ItinerarySidebarPanel({
   onClose,
   suggestedTripPost,
   onSelectSuggestedTrip,
+  onBrowseTripPosts,
 }: ItinerarySidebarPanelProps) {
   const [activeTab, setActiveTab] = useState<ItineraryTab>('schedule');
 
@@ -131,14 +134,12 @@ export function ItinerarySidebarPanel({
           </div>
 
           {/* Tab Lịch trình và Chi phí */}
-          <div className={styles.itineraryTabsRow} role="tablist">
+          <div className={`${segmentedTabs.tabs} ${styles.itineraryTabsRow}`} role="tablist">
             <button
               type="button"
               role="tab"
               aria-selected={activeTab === 'schedule'}
-              className={`${styles.itineraryTabItem} ${
-                activeTab === 'schedule' ? styles.itineraryTabItemActive : ''
-              }`}
+              className={`${segmentedTabs.tab} ${segmentedTabs.tabCompact}`}
               onClick={() => setActiveTab('schedule')}
             >
               {vi.api.immersiveTabSchedule}
@@ -147,9 +148,7 @@ export function ItinerarySidebarPanel({
               type="button"
               role="tab"
               aria-selected={activeTab === 'cost'}
-              className={`${styles.itineraryTabItem} ${
-                activeTab === 'cost' ? styles.itineraryTabItemActive : ''
-              }`}
+              className={`${segmentedTabs.tab} ${segmentedTabs.tabCompact}`}
               onClick={() => setActiveTab('cost')}
             >
               {vi.api.immersiveTabCost}
@@ -180,7 +179,7 @@ export function ItinerarySidebarPanel({
                       })}
                     </strong>
                     <p className={styles.itineraryCostNote}>
-                      Chi phí ước tính trung bình cho 1 người, bao gồm lưu trú và các điểm vui chơi gợi ý.
+                      {vi.api.immersiveEstimatedCostNote}
                     </p>
                   </div>
                 ) : (
@@ -194,17 +193,27 @@ export function ItinerarySidebarPanel({
         /* 3. Truong hop bai viet hien tai khong co lich trinh */
         <div className={styles.itineraryNoTripContainer}>
           <div className={styles.itineraryNoTripCard}>
-            <div className={styles.itineraryNoTripIcon}>
-              <SocialIcon name="calendar" size={28} />
+            <div className={styles.itineraryNoTripIcon} aria-hidden="true">
+              <SocialIcon name="calendar" size={18} />
             </div>
-            <h4 className={styles.itineraryNoTripTitle}>Chưa có lịch trình</h4>
-            <p className={styles.itineraryNoTripDesc}>
-              Bài viết bạn đang xem chia sẻ hình ảnh và cảm nhận du lịch mà không đính kèm lịch trình chi tiết.
-            </p>
+            <h4 className={styles.itineraryNoTripTitle}>{vi.api.itineraryNoTripTitle}</h4>
+            <p className={styles.itineraryNoTripDesc}>{vi.api.itineraryNoTripDesc}</p>
+
+            {onBrowseTripPosts && (
+              <button
+                type="button"
+                className={styles.itineraryNoTripBrowseBtn}
+                onClick={onBrowseTripPosts}
+              >
+                {vi.api.itineraryBrowseTripPosts}
+              </button>
+            )}
 
             {suggestedTripPost && (
               <div className={styles.itinerarySuggestedBox}>
-                <span className={styles.itinerarySuggestedHeading}>Lịch trình liên quan:</span>
+                <span className={styles.itinerarySuggestedHeading}>
+                  {vi.api.itinerarySuggestedHeading}
+                </span>
                 <button
                   type="button"
                   className={styles.itinerarySuggestedCard}
@@ -215,12 +224,14 @@ export function ItinerarySidebarPanel({
                       src={suggestedTripPost.coverImage ?? POST_COVER_MASCOT}
                       alt=""
                       fill
-                      sizes="48px"
+                      sizes="44px"
                     />
                   </div>
                   <div className={styles.itinerarySuggestedMeta}>
                     <span className={styles.itinerarySuggestedTitle}>{suggestedTripPost.title}</span>
-                    <span className={styles.itinerarySuggestedAction}>Xem lịch trình này</span>
+                    <span className={styles.itinerarySuggestedAction}>
+                      {vi.api.itinerarySuggestedAction}
+                    </span>
                   </div>
                 </button>
               </div>

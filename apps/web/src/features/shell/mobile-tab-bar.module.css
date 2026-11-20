@@ -1,0 +1,152 @@
+/* Thanh điều hướng đáy (TF98): chỉ dưới 768px; desktop dùng menu trên header. */
+.bar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .bar {
+    position: fixed;
+    inset: auto 0 0;
+    /* Trên header (40), CartBar và dock Cảm hứng; dưới bottom sheet (60–70), modal và khung chat Tripi. */
+    z-index: 50;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+    height: var(--mobile-tab-bar-space, 56px);
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-background);
+  }
+
+  /* /account, /bookings, /cart khi chưa đăng nhập hiện khung đăng nhập toàn màn tại chỗ. */
+  :global(body:has(.auth-fullscreen)) .bar {
+    display: none;
+  }
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab > span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabActive {
+  color: var(--color-coral-ink);
+}
+
+.tab:focus-visible,
+.createButton:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: -4px;
+  border-radius: 12px;
+}
+
+.createButton {
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  width: 44px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--color-coral);
+  color: var(--color-background);
+}
+
+.createButton:active {
+  background: var(--color-coral-ink);
+}
+
+/* Bảng "Đặt chỗ": mở ngay trên thanh đáy, phủ hết chiều ngang. */
+.bookingRoot {
+  display: contents;
+}
+
+.sheet {
+  position: fixed;
+  inset: auto 0 var(--mobile-tab-bar-space, 56px);
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--color-border);
+  border-radius: 20px 20px 0 0;
+  background: var(--color-background);
+  box-shadow: 0 -16px 32px -24px var(--color-overlay);
+  animation: sheet-in 0.18s ease-out both;
+}
+
+.sheet ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sheetLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: var(--color-ink);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sheetLink:hover,
+.sheetLink[aria-current='page'] {
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+
+.sheetLink:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: -2px;
+}
+
+.sheetCount {
+  min-width: 20px;
+  margin-left: auto;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--color-coral-ink);
+  color: var(--color-background);
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    animation: none;
+  }
+}

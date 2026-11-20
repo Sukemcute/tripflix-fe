@@ -10,6 +10,7 @@ import { flights } from './flights';
 import { privacy } from './privacy';
 import { terms } from './terms';
 import { moderation } from './moderation';
+import { moderationConsole } from './moderation-console';
 import { searchMonitoring } from './search-monitoring';
 import { discoveryJobs } from './discovery-jobs';
 import { adminOperations } from './admin-operations';
@@ -18,10 +19,12 @@ import { analytics } from './analytics';
 import { aiUsage } from './ai-usage';
 import { userActivity } from './user-activity';
 import { seo } from './seo';
+import { shell } from './shell';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
   seo,
+  shell,
   analytics,
   aiUsage,
   userActivity,
@@ -31,6 +34,7 @@ export const vi = {
   discoveryJobs,
   assistant,
   moderation,
+  moderationConsole,
   flights,
   privacy,
   terms,

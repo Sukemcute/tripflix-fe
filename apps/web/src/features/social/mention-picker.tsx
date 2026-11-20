@@ -1,10 +1,73 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getAvatarUrl, useUserSearch } from '@tripflix/api-client';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { getAvatarUrl, HttpError, normalizeUserSearchQuery, useUserSearch } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
+import { useDebouncedValue } from '../shared/use-debounced-value';
 import { getAvatarTone } from './avatar-tone';
 import styles from './mention-picker.module.css';
+
+export const MENTION_SEARCH_DEBOUNCE_MS = 1000;
+
+/**
+ * Chuẩn hoá cặp từ khoá đang gõ (`liveQuery`) và từ khoá đã qua debounce (`debouncedQuery`):
+ * nếu từ khoá đang gõ chưa đủ điều kiện tìm (`isSearchable === false`), trả `effectiveQuery = ''`
+ * để hiện lời nhắc ngay mà không gọi API.
+ */
+export function resolveMentionSearchInput(liveQuery: string, debouncedQuery: string) {
+  const liveNormalized = normalizeUserSearchQuery(liveQuery);
+  const effectiveQuery = liveNormalized.isSearchable ? debouncedQuery : '';
+  const debouncedNormalized = normalizeUserSearchQuery(effectiveQuery);
+  const isDebouncing = liveNormalized.isSearchable && liveNormalized.query !== debouncedNormalized.query;
+  return { liveNormalized, debouncedNormalized, effectiveQuery, isDebouncing };
+}
+
+export type MentionPickerViewStatus =
+  | 'prompt'
+  | 'rate-limited'
+  | 'error'
+  | 'list'
+  | 'searching'
+  | 'no-results';
+
+/**
+ * Xác định trạng thái hiển thị của bảng gợi ý:
+ * đang chờ debounce mà chưa có kết quả cũ phải hiện ngay trạng thái đang tìm (`searching`),
+ * còn nếu đã có danh sách cũ thì giữ nguyên danh sách cũ làm mờ (`isRefreshingExistingList`).
+ */
+export function resolveMentionPickerState(params: {
+  isSearchable: boolean;
+  isDebouncing: boolean;
+  hasUsers: boolean;
+  isLoading: boolean;
+  isFetching: boolean;
+  isPlaceholderData: boolean;
+  isError: boolean;
+  isRateLimited: boolean;
+}): {
+  status: MentionPickerViewStatus;
+  isRefreshingExistingList: boolean;
+} {
+  if (!params.isSearchable) {
+    return { status: 'prompt', isRefreshingExistingList: false };
+  }
+  if (params.isError && !params.isDebouncing) {
+    return {
+      status: params.isRateLimited ? 'rate-limited' : 'error',
+      isRefreshingExistingList: false,
+    };
+  }
+  if (params.hasUsers) {
+    return {
+      status: 'list',
+      isRefreshingExistingList: params.isPlaceholderData || params.isFetching || params.isDebouncing,
+    };
+  }
+  if (params.isDebouncing || params.isLoading || params.isFetching) {
+    return { status: 'searching', isRefreshingExistingList: false };
+  }
+  return { status: 'no-results', isRefreshingExistingList: false };
+}
 
 export interface MentionUserItem {
   id: string;
@@ -116,40 +179,92 @@ export function MentionPicker({
     [query],
   );
 
-  const { data, isLoading, isSearchable } = useUserSearch(query);
-  const users: MentionUserItem[] = useMemo(() => data?.items ?? [], [data?.items]);
+  const debouncedQuery = useDebouncedValue(query, MENTION_SEARCH_DEBOUNCE_MS);
+  const { liveNormalized, effectiveQuery, isDebouncing } = resolveMentionSearchInput(query, debouncedQuery);
+  const {
+    data,
+    error,
+    isError,
+    isFetching,
+    isLoading,
+    isPlaceholderData,
+    refetch,
+  } = useUserSearch(effectiveQuery);
+
+  const users: MentionUserItem[] = liveNormalized.isSearchable ? (data?.items ?? []) : [];
+  const hasUsers = users.length > 0;
+  const isRateLimited = error instanceof HttpError && error.status === 429;
+  const { status: viewStatus, isRefreshingExistingList } = resolveMentionPickerState({
+    isSearchable: liveNormalized.isSearchable,
+    isDebouncing,
+    hasUsers,
+    isLoading,
+    isFetching,
+    isPlaceholderData,
+    isError,
+    isRateLimited,
+  });
+
+  // Giữ callback & state mới nhất trong ref để listener trên document chỉ gắn 1 lần khi mount.
+  const latestRef = useRef({
+    users,
+    activeIndex,
+    onSelect,
+    onClose,
+    updateActiveIndex,
+    keepOpenRef,
+  });
+
+  useEffect(() => {
+    latestRef.current = {
+      users,
+      activeIndex,
+      onSelect,
+      onClose,
+      updateActiveIndex,
+      keepOpenRef,
+    };
+  });
 
   // Cuộn item đang chọn vào tầm nhìn khi di chuyển phím mũi tên
   useEffect(() => {
     activeItemRef.current?.scrollIntoView({ block: 'nearest' });
   }, [activeIndex]);
 
-  // Đóng khi click ra ngoài vùng ô nhập và bảng
+  // Chỉ gắn 1 lần khi mount: đóng khi click ra ngoài vùng ô nhập và bảng
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as Node | null;
       if (!target) return;
-      if (rootRef.current?.contains(target) || keepOpenRef?.current?.contains(target)) {
+      const { keepOpenRef: currentKeepOpenRef, onClose: currentOnClose } = latestRef.current;
+      if (rootRef.current?.contains(target) || currentKeepOpenRef?.current?.contains(target)) {
         return;
       }
-      onClose();
+      currentOnClose();
     }
 
     document.addEventListener('mousedown', handlePointerDown);
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
     };
-  }, [onClose, keepOpenRef]);
+  }, []);
 
-  // Điều khiển bàn phím ↑ ↓ Enter Tab Esc trong lúc con trỏ vẫn ở ô nhập
+  // Chỉ gắn 1 lần khi mount: điều khiển bàn phím ↑ ↓ Enter Tab Esc trong lúc con trỏ vẫn ở ô nhập
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      const {
+        users: currentUsers,
+        activeIndex: currentActiveIndex,
+        onSelect: currentOnSelect,
+        onClose: currentOnClose,
+        updateActiveIndex: currentUpdateActiveIndex,
+      } = latestRef.current;
       handleMentionPickerKeyDown(event, {
-        users,
-        activeIndex,
-        onSelect,
-        onClose,
-        updateActiveIndex,
+        users: currentUsers,
+        activeIndex: currentActiveIndex,
+        onSelect: currentOnSelect,
+        onClose: currentOnClose,
+        updateActiveIndex: currentUpdateActiveIndex,
       });
     }
 
@@ -157,7 +272,7 @@ export function MentionPicker({
     return () => {
       document.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [users, activeIndex, onClose, onSelect, updateActiveIndex]);
+  }, []);
 
   return (
     <dialog
@@ -168,14 +283,28 @@ export function MentionPicker({
     >
       <div className={styles.header}>{vi.api.mentionPickerTitle}</div>
 
-      {!isSearchable ? (
+      {viewStatus === 'prompt' ? (
         <output className={styles.statusText}>{vi.api.mentionSearchPrompt}</output>
-      ) : isLoading ? (
-        <output className={styles.statusText}>{vi.api.mentionSearching}</output>
-      ) : users.length === 0 ? (
-        <output className={styles.statusText}>{vi.api.mentionNoResults}</output>
-      ) : (
-        <div className={styles.userList}>
+      ) : viewStatus === 'rate-limited' ? (
+        <output className={styles.statusText}>{vi.api.mentionRateLimited}</output>
+      ) : viewStatus === 'error' ? (
+        <div className={styles.statusError}>
+          <output className={styles.statusText}>{vi.api.mentionSearchFailed}</output>
+          <button
+            type="button"
+            className={styles.retryBtn}
+            onMouseDown={keepInputFocus}
+            onClick={() => {
+              void refetch?.();
+            }}
+          >
+            {vi.api.retry}
+          </button>
+        </div>
+      ) : viewStatus === 'list' ? (
+        <div
+          className={`${styles.userList} ${isRefreshingExistingList ? styles.userListRefreshing : ''}`}
+        >
           {users.map((user, index) => {
             const isSelected = index === activeIndex;
             return (
@@ -211,6 +340,10 @@ export function MentionPicker({
             );
           })}
         </div>
+      ) : viewStatus === 'searching' ? (
+        <output className={styles.statusText}>{vi.api.mentionSearching}</output>
+      ) : (
+        <output className={styles.statusText}>{vi.api.mentionNoResults}</output>
       )}
     </dialog>
   );

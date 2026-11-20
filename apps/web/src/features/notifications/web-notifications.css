@@ -1,0 +1,144 @@
+.notification-toasts {
+  position: fixed;
+  left: 20px;
+  bottom: 24px;
+  z-index: 150;
+  display: grid;
+  gap: 12px;
+  width: min(380px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.notification-toast {
+  position: relative;
+  display: flex;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--color-ink) 15%, transparent);
+  pointer-events: auto;
+  animation: notification-arrive 0.2s ease-out;
+}
+.notification-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  padding: 18px 34px 18px 16px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-radius: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+.notification-toast-content > span:last-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.notification-toast-content strong {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.notification-toast-content small {
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 600;
+}
+.notification-toast-content > span:last-child > span {
+  color: var(--color-muted);
+  font-size: 13px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.notification-toast-avatar {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  position: relative;
+  border-radius: 50%;
+  background: var(--color-surface-muted);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+.notification-toast-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: transparent;
+  border: 0;
+  color: var(--color-muted);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px;
+}
+.notification-push-control {
+  padding: 8px 16px;
+  display: grid;
+  gap: 6px;
+  border-bottom: 1px solid var(--color-border);
+}
+.notification-push-control button {
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.notification-push-control small {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+.notification-sound-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  font-size: 12px;
+  pointer-events: auto;
+}
+.notification-sound-notice button {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+  padding: 8px;
+  cursor: pointer;
+}
+@keyframes notification-arrive {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notification-toast {
+    animation: none;
+  }
+}
+@media (max-width: 640px) {
+  .notification-toasts {
+    left: 16px;
+    bottom: 88px;
+  }
+}
+/* Điện thoại: không thấp hơn thanh điều hướng đáy (features/shell, TF98); giữ mốc 88px cũ khi thanh đáy thấp hơn. */
+@media (max-width: 767px) {
+  .notification-toasts {
+    bottom: max(88px, calc(var(--mobile-tab-bar-space, 0px) + 16px));
+  }
+}

@@ -44,6 +44,88 @@ describe('seoApi', () => {
     expect(fetch.mock.calls[0]![0]).toBe('http://core-api.internal/api/v1/posts?limit=50&cursor=c2');
   });
 
+  describe('hasPublicContent', () => {
+    const emptyPage = { items: [], nextCursor: null, hasMore: false };
+    const publicPost = { id: 'p1', visibility: 'public', status: 'published', deletedAt: null };
+
+    it('trả true khi tác giả có bài công khai và không hỏi bảng tin Reels', async () => {
+      const fetch = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(json({ ...emptyPage, items: [publicPost] }));
+      expect(await seoApi.hasPublicContent('u1', options)).toBe(true);
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch.mock.calls[0]![0]).toBe('http://core-api.internal/api/v1/posts?author_id=u1&limit=1');
+    });
+
+    it('trả true khi tác giả chỉ có Reels công khai (bài trống, bảng tin Reels có mục)', async () => {
+      const fetch = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(json(emptyPage))
+        .mockResolvedValueOnce(json({ items: [{ id: 'r1' }], nextCursor: 'c', hasMore: true }));
+      expect(await seoApi.hasPublicContent('u2', options)).toBe(true);
+      expect(fetch.mock.calls[1]![0]).toBe('http://core-api.internal/api/v1/feed?author_id=u2&limit=1');
+    });
+
+    it('trả false khi không có bài và không có Reels', async () => {
+      vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(json(emptyPage))
+        .mockResolvedValueOnce(json(emptyPage));
+      expect(await seoApi.hasPublicContent('u3', options)).toBe(false);
+    });
+
+    it('bỏ qua bài riêng tư, đã xoá rồi xét tiếp Reels', async () => {
+      vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(
+          json({
+            ...emptyPage,
+            items: [
+              { id: 'x1', visibility: 'private', status: 'published', deletedAt: null },
+              { id: 'x2', visibility: 'public', status: 'published', deletedAt: '2026-11-01T00:00:00.000Z' },
+            ],
+          }),
+        )
+        .mockResolvedValueOnce(json(emptyPage));
+      expect(await seoApi.hasPublicContent('u4', options)).toBe(false);
+    });
+
+    it('không gửi token người dùng khi đọc cả hai nguồn', async () => {
+      const fetch = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(json(emptyPage))
+        .mockResolvedValueOnce(json(emptyPage));
+      await seoApi.hasPublicContent('u5', options);
+      for (const [, init] of fetch.mock.calls)
+        expect(new Headers(init?.headers).get('authorization')).toBeNull();
+    });
+
+    it('ném lỗi khi API trả sai dạng, để trang chuyển về noindex', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(json({ nope: true }));
+      await expect(seoApi.hasPublicContent('u6', options)).rejects.toThrow('Unexpected API page');
+    });
+  });
+
+  it('getPostDetail trả đủ post, viewerContext, shareUrl như socialApi.getPost', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      json({
+        post: { id: 'p1', title: 'Đà Lạt' },
+        viewerContext: { myReaction: null },
+        shareUrl: 'https://x/p1',
+      }),
+    );
+    const detail = await seoApi.getPostDetail('p1', options);
+    expect(Object.keys(detail).sort()).toEqual(['post', 'shareUrl', 'viewerContext']);
+    expect(detail.shareUrl).toBe('https://x/p1');
+  });
+
+  it('listAuthorVlogs gọi đúng tham số author_id và post_type=vlog, ẩn danh', async () => {
+    const fetch = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json({ items: [], nextCursor: null, hasMore: false }));
+    await seoApi.listAuthorVlogs('u1', options);
+    expect(fetch.mock.calls[0]![0]).toBe('http://core-api.internal/api/v1/posts?author_id=u1&post_type=vlog');
+    expect(new Headers(fetch.mock.calls[0]![1]?.headers).get('authorization')).toBeNull();
+  });
+
   it('rejects a malformed page', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(json({ nope: true }));
     await expect(seoApi.listPosts(undefined, options)).rejects.toThrow('Unexpected API page');

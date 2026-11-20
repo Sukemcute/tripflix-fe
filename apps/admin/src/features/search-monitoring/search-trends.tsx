@@ -1,6 +1,8 @@
 'use client';
 
 import { vi } from '@tripflix/i18n';
+import { AdminButton } from '@/ui/button';
+import { StatusBadge } from '@/ui/status-badge';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import styles from './search-monitoring.module.css';
 
@@ -115,19 +117,19 @@ export function SearchTrends({
         <div className={styles.resultHeading}>
           <div>
             <h2>{text.title}</h2>
-            <span className="admin-badge">{isMonitoring ? text.active : text.paused}</span>
+            <StatusBadge tone={isMonitoring ? 'success' : 'neutral'}>{isMonitoring ? text.active : text.paused}</StatusBadge>
           </div>
           <div className={styles.trendActions}>
-            <button className="admin-secondary" disabled={!requestKey || isFetching} onClick={onSample}>
+            <AdminButton disabled={!requestKey || isFetching} onClick={onSample}>
               {text.sample}
-            </button>
-            <button
-              className={isMonitoring ? 'admin-secondary' : 'admin-primary'}
+            </AdminButton>
+            <AdminButton
+              variant={isMonitoring ? 'secondary' : 'primary'}
               disabled={!requestKey || (!isMonitoring && isFetching)}
               onClick={onToggle}
             >
               {isMonitoring ? text.stop : text.start}
-            </button>
+            </AdminButton>
           </div>
         </div>
         {query && <p className={styles.trendQuery}>“{query}”</p>}
@@ -144,9 +146,9 @@ export function SearchTrends({
         <section className={`${styles.panel} ${styles.initial}`}>
           <h2>{text.empty}</h2>
           <p>{text.emptyHelp}</p>
-          <button className="admin-secondary" onClick={onGoQuery}>
+          <AdminButton onClick={onGoQuery}>
             {text.goQuery}
-          </button>
+          </AdminButton>
         </section>
       ) : (
         <>

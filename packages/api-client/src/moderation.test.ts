@@ -57,3 +57,18 @@ it('đọc số liệu kiểm duyệt tính ở server', async () => {
   expect(String(url)).toContain('/api/v1/admin/moderation/stats');
   expect(init?.signal).toBe(abort.signal);
 });
+
+it('đọc trang OCR ảnh bìa theo bộ lọc và gửi token', async () => {
+  const page = {
+    counts: { all: 3, flagged: 1, failed: 1, inProgress: 0, passed: 1 },
+    items: [],
+    nextCursor: null,
+  };
+  const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(json(page));
+  const abort = new AbortController();
+  await expect(moderationApi.coverOcr('failed', 20, abort.signal)).resolves.toEqual(page);
+  const [url, init] = fetch.mock.calls[0]!;
+  expect(String(url)).toContain('/api/v1/admin/moderation/cover-ocr?status=failed&limit=20&cursor=20');
+  expect(new Headers(init?.headers).get('authorization')).toBe('Bearer test-token');
+  expect(init?.signal).toBe(abort.signal);
+});

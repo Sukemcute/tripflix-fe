@@ -37,6 +37,7 @@ export { useFollowAuthor } from './follows';
 export { getAvatarUrl } from './avatar';
 export { getPublicProfileQueryKey, useAuthorReels, useAuthorVlogs, usePublicProfile } from './public-profile';
 export { moderationApi } from './moderation';
+export type { CoverOcrFilter, CoverOcrItem, CoverOcrPage } from './moderation';
 export { removeUnavailablePost } from './remove-unavailable-post';
 export { useSocialPosts } from './queries';
 export {
@@ -65,8 +66,10 @@ export {
 } from './feed-events';
 export {
   feedApi,
+  RECOMMENDED_REELS_KEY,
   REEL_FEED_TABS,
   REELS_BY_IDS_PAGE_SIZE,
+  reloadRecommendedReels,
   reloadReelsFeed,
   sliceReelIdsPage,
   useRecommendedReelsFeed,
@@ -123,6 +126,7 @@ export { getHotelReviews, type HotelReviewFilters } from './hotel-reviews';
 export {
   getExploreResults,
   getPostSearchResults,
+  normalizeUserSearchQuery,
   searchUsers,
   useExploreSearch,
   usePostSearch,
@@ -201,3 +205,5 @@ export {
   type TripAddonStay,
 } from './trip-addons';
 export { itineraryApi, SAVED_ITINERARIES_QUERY_KEY } from './saved-itineraries';
+export { webPushApi, type WebPushRegistration } from './web-push';
+export { loadWebAudioAsset } from './public-audio';

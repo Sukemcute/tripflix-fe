@@ -110,6 +110,14 @@ class HotelPage {
               ...(variant === 'empty' ? { images: [], stars: null, rating: null } : {}),
               ...(variant === 'thumbnail' ? { images: [], thumbnail: base + '/qa-photo-1.jpg' } : {}),
               ...(variant === 'zero' ? { rating: { average: 0, count: 0, source: null }, priceFrom: 0 } : {}),
+              ...(variant === 'room-error'
+                ? {
+                    rooms: hotel.rooms.map((room) => ({
+                      ...room,
+                      images: [base + '/qa-photo-room-1.jpg', base + '/qa-photo-room-2.jpg'],
+                    })),
+                  }
+                : {}),
             },
           });
         return route.fulfill({ json: { items: [], nextCursor: null } });
@@ -216,6 +224,7 @@ class HotelPage {
           await ui.goto();
           await page.getByText('Ảnh hiện chưa tải được', { exact: true }).first().waitFor();
           await ui.snapshot('broken-image');
+          await page.getByText('Chưa tải · 1/2', { exact: true }).waitFor();
           const failedMessage = await page
             .getByText('Ảnh hiện chưa tải được', { exact: true })
             .first()
@@ -224,19 +233,51 @@ class HotelPage {
           await ui.button('Thử tải lại ảnh').first().click();
           await failedMessage.waitForElementState('hidden');
           // Block one fresh image request so loading is deterministic, not a timing sleep.
+          await page.clock.install();
           await page.route('**/qa-photo-1.jpg', async (route) => {
             await new Promise((resolve) => {
               releaseImage = resolve;
             });
-            await route.fulfill({ contentType: 'image/jpeg', body: bytes });
+            try {
+              await route.fulfill({ contentType: 'image/jpeg', body: bytes });
+            } catch (error) {
+              // Retry remounts Image and cancels the old stalled request.
+              if (!error.message.includes('Route is already handled')) throw error;
+            }
           });
           await ui.goto();
           await page.getByText('Đang tải ảnh…', { exact: true }).first().waitFor();
           await ui.button('Chọn phòng').waitFor();
           await ui.snapshot('slow-image');
+          await page.getByText('Đang tải · 1/2', { exact: true }).waitFor();
           const beforeLoad = await page.getByText(hotelName, { exact: true }).boundingBox();
+          await page.clock.fastForward(15001);
+          await page.getByText('Ảnh tải lâu hơn dự kiến', { exact: true }).first().waitFor();
+          await page.getByText('Chưa tải · 1/2', { exact: true }).waitFor();
+          const timeoutRetry = await ui.button('Thử tải lại ảnh').boundingBox();
+          const timeoutPager = await ui.button('Tiếp').boundingBox();
+          assert(
+            timeoutRetry.y >= 0 && timeoutRetry.y + timeoutRetry.height <= timeoutPager.y,
+            'timeout retry never overlaps pager',
+          );
+          await ui.button('Chọn phòng').waitFor();
+          await ui.snapshot('image-timeout');
+          await page.setViewportSize({ width: 375, height: 667 });
+          const shortRetry = await ui.button('Thử tải lại ảnh').boundingBox();
+          const shortPager = await ui.button('Tiếp').boundingBox();
+          assert(
+            shortRetry.y >= 0 && shortRetry.y + shortRetry.height <= shortPager.y,
+            'timeout recovery fits short hero',
+          );
+          await ui.snapshot('image-timeout-short');
+          await page.setViewportSize({ width, height: 844 });
+          await page.unroute('**/qa-photo-1.jpg');
+          imageMode = 'normal';
+          await ui.button('Thử tải lại ảnh').click();
           releaseImage();
-          await page.getByText('Đang tải ảnh…', { exact: true }).first().waitFor({ state: 'hidden' });
+          await page.getByText('1 / 2', { exact: true }).waitFor();
+          await page.getByText('Ảnh tải lâu hơn dự kiến', { exact: true }).waitFor({ state: 'hidden' });
+          await ui.snapshot('timeout-recovered');
           await ui.noOverflow();
           const afterLoad = await page.getByText(hotelName, { exact: true }).boundingBox();
           assert(Math.abs(beforeLoad.y - afterLoad.y) < 1, 'image loading does not move hotel identity');
@@ -249,8 +290,22 @@ class HotelPage {
           });
           await ui.noOverflow();
           await ui.snapshot('large-text-browser-preview');
+          variant = 'room-error';
+          imageMode = 'error';
+          await ui.goto();
+          await ui.button('Chọn phòng').click();
+          await page.getByText('Phòng hướng biển', { exact: true }).waitFor();
+          await page.getByText('Ảnh hiện chưa tải được', { exact: true }).first().waitFor();
+          await ui.snapshot('room-image-error');
+          imageMode = 'normal';
+          await ui.button('Thử tải lại ảnh').first().click();
+          await page.getByText('1 / 2', { exact: true }).filter({ visible: true }).waitFor();
+          await ui.button('Tiếp').click();
+          await page.getByText('Chưa tải · 2/2', { exact: true }).waitFor();
+          await ui.button('Thử tải lại ảnh').filter({ visible: true }).click();
+          await page.getByText('2 / 2', { exact: true }).filter({ visible: true }).waitFor();
           checks.push(
-            'Missing photos/stars/reviews, zero review count/price, broken image retry, slow image does not block room action, 140% browser text (not native)',
+            'Missing photos/stars/reviews, zero review count/price, 404 hotel/room image retry, visible loading/error counters, stalled image timeout after 15s/recovery without CTA or ratio shift, room paging, 140% browser text (not native)',
           );
         }
       }

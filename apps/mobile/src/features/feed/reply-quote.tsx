@@ -15,10 +15,11 @@ export function ReplyQuote({
   onJump: (id: string) => void;
 }) {
   const available = typeof replyToExcerpt === 'string' && replyToExcerpt.length > 0;
+  const name = replyToName?.trim() || vi.api.commentMember;
   const content = (
     <>
       <Txt variant="caption" numberOfLines={1} style={styles.title}>
-        {t('api.commentReplyQuoteTitle', { name: replyToName?.trim() || vi.api.commentMember })}
+        {t('api.commentReplyQuoteTitle', { name })}
       </Txt>
       <Txt variant="caption" numberOfLines={1} ellipsizeMode="tail"
         style={[styles.excerpt, !available && styles.unavailable]}>
@@ -27,7 +28,14 @@ export function ReplyQuote({
     </>
   );
   return available ? (
-    <Pressable accessibilityRole="button" onPress={() => onJump(replyToCommentId)} style={styles.card}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t('api.commentReplyQuoteAccessibilityLabel', { name, excerpt: replyToExcerpt })}
+      accessibilityHint={vi.api.commentReplyQuoteAccessibilityHint}
+      hitSlop={spacing.xs}
+      onPress={() => onJump(replyToCommentId)}
+      style={[styles.card, styles.touchTarget]}
+    >
       {content}
     </Pressable>
   ) : <View style={styles.card}>{content}</View>;
@@ -41,6 +49,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     marginVertical: spacing.xs,
   },
+  touchTarget: { minHeight: 44, justifyContent: 'center' },
   title: { color: colors.textMuted, fontFamily: nativeFonts.semibold },
   excerpt: { color: colors.textMuted },
   unavailable: { fontStyle: 'italic' },

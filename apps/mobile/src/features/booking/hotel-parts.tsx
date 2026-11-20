@@ -1,4 +1,4 @@
-import { useRef, useState, type ComponentRef } from 'react';
+import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
 import type { CommerceHotel } from '@tripflix/api-client';
 import {
   addBookingCartItem,
@@ -18,6 +18,8 @@ import { saveBookingSelection, useBookingSelection } from './cart-store';
 
 const text = vi.commerce;
 const hotelText = vi.hotel;
+type PhotoStatus = 'loading' | 'loaded' | 'error' | 'timeout';
+const PHOTO_WAIT_MS = 15_000;
 export type Guests = { adults: number; children: number; infants: number };
 type Room = CommerceHotel['rooms'][number];
 type Rate = Room['ratePlans'][number];
@@ -49,9 +51,21 @@ export function PhotoGallery({
   // Đo đúng bề rộng khung rồi cho ảnh vừa khung, ảnh to nhỏ khác nhau vẫn đều.
   const [frameWidth, setFrameWidth] = useState(0);
   const [index, setIndex] = useState(0);
+  const [statuses, setStatuses] = useState<Record<string, PhotoStatus>>({});
+  const reportStatus = useCallback((uri: string, status: PhotoStatus) => {
+    setStatuses((previous) => (previous[uri] === status ? previous : { ...previous, [uri]: status }));
+  }, []);
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const slideWidth = Math.max(frameWidth, 1);
   const slideHeight = height ?? Math.round(slideWidth / ratio);
+  const currentStatus = statuses[images[index] ?? ''] ?? 'loading';
+  const counterLabel =
+    currentStatus === 'loaded'
+      ? `${index + 1} / ${images.length}`
+      : t(currentStatus === 'loading' ? 'hotel.photoCounterLoading' : 'hotel.photoCounterError', {
+          current: index + 1,
+          total: images.length,
+        });
   // Khung luôn giữ tỉ lệ và luôn đo bề rộng, kể cả lúc chưa có ảnh, để ảnh tới sau vẫn hiện đúng cỡ.
   return (
     <View
@@ -95,6 +109,7 @@ export function PhotoGallery({
               width={slideWidth}
               height={slideHeight}
               isActive={position === index}
+              reportStatus={reportStatus}
               bottomInset={images.length > 1 ? counterBottom + 44 + spacing.sm : spacing.lg}
               label={`${name}. ${t('hotel.photoPosition', { current: position + 1, total: images.length })}`}
             />
@@ -115,10 +130,10 @@ export function PhotoGallery({
           </Pressable>
           <View style={galleryStyles.counter}>
             <Txt
-              accessibilityLabel={t('hotel.photoPosition', { current: index + 1, total: images.length })}
+              accessibilityLabel={`${t('hotel.photoPosition', { current: index + 1, total: images.length })}. ${currentStatus === 'loaded' ? hotelText.photoLoaded : currentStatus === 'loading' ? hotelText.photoLoading : hotelText.imageUnavailable}`}
               style={galleryStyles.counterText}
             >
-              {index + 1} / {images.length}
+              {counterLabel}
             </Txt>
           </View>
           <Pressable
@@ -147,6 +162,7 @@ function GalleryPhoto({
   label,
   isActive,
   bottomInset,
+  reportStatus,
 }: {
   uri: string;
   width: number;
@@ -154,9 +170,17 @@ function GalleryPhoto({
   label: string;
   isActive: boolean;
   bottomInset: number;
+  reportStatus: (uri: string, status: PhotoStatus) => void;
 }) {
-  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [status, setStatus] = useState<PhotoStatus>('loading');
   const [attempt, setAttempt] = useState(0);
+  useEffect(() => reportStatus(uri, status), [uri, status, reportStatus]);
+  useEffect(() => {
+    if (!isActive || status !== 'loading') return;
+    // A stalled image may never emit onError. Only the visible photo owns a wait timer.
+    const timer = setTimeout(() => setStatus('timeout'), PHOTO_WAIT_MS);
+    return () => clearTimeout(timer);
+  }, [isActive, status, attempt]);
   return (
     <View
       style={{ width, height }}
@@ -170,17 +194,33 @@ function GalleryPhoto({
         style={StyleSheet.absoluteFill}
         contentPosition="center"
         contentFit="cover"
+        cachePolicy={attempt ? 'none' : 'memory-disk'}
+        accessible={isActive && status === 'loaded'}
+        aria-hidden={!isActive || status !== 'loaded'}
         accessibilityLabel={label}
         onLoad={() => setStatus('loaded')}
         onError={() => setStatus('error')}
       />
       {status !== 'loaded' && (
-        <View style={[galleryStyles.placeholder, StyleSheet.absoluteFill, { paddingBottom: bottomInset }]}>
-          <Icon name="image-outline" size={28} color={colors.textMuted} />
-          <Txt accessibilityLiveRegion="polite" style={galleryStyles.placeholderText}>
-            {status === 'error' ? hotelText.imageUnavailable : hotelText.photoLoading}
+        <View
+          aria-busy={status === 'loading'}
+          style={[galleryStyles.placeholder, StyleSheet.absoluteFill, { paddingBottom: bottomInset }]}
+        >
+          {status === 'loading' && (
+            <View accessible={false} aria-hidden style={galleryStyles.skeleton}>
+              <View style={galleryStyles.skeletonBlock} />
+              <View style={galleryStyles.skeletonLine} />
+            </View>
+          )}
+          {status !== 'loading' && <Icon name="image-outline" size={24} color={colors.tealInk} />}
+          <Txt accessibilityLiveRegion={isActive ? 'polite' : 'none'} style={galleryStyles.placeholderText}>
+            {status === 'timeout'
+              ? hotelText.photoTimeout
+              : status === 'error'
+                ? hotelText.imageUnavailable
+                : hotelText.photoLoading}
           </Txt>
-          {status === 'error' && (
+          {(status === 'error' || status === 'timeout') && (
             <Pressable
               accessibilityRole="button"
               onPress={() => {
@@ -199,15 +239,18 @@ function GalleryPhoto({
 }
 
 const galleryStyles = StyleSheet.create({
+  skeleton: { width: '48%', gap: spacing.sm, alignItems: 'center' },
+  skeletonBlock: { width: '100%', height: 24, backgroundColor: colors.border, borderRadius: radius.sm },
+  skeletonLine: { width: '60%', height: 8, backgroundColor: colors.border, borderRadius: radius.sm },
   placeholder: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.seaMist,
     padding: spacing.lg,
   },
-  placeholderText: { fontSize: 14, lineHeight: 23, color: colors.textMuted, textAlign: 'center' },
+  placeholderText: { fontSize: 14, lineHeight: 23, color: colors.ink, textAlign: 'center' },
   pager: {
     position: 'absolute',
     left: spacing.sm,

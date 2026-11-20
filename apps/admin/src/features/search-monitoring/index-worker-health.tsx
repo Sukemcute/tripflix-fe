@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { adminIndexHealthControllerCheck } from '@tripflix/api-client/core-api/admin-index-health/admin-index-health';
 import { vi } from '@tripflix/i18n';
+import { AdminButton } from '@/ui/button';
 import { AdminApiError } from '../shell/api-state';
 import { WorkerMonitorCharts } from './worker-monitor-charts';
 import styles from './search-monitoring.module.css';
@@ -38,13 +39,12 @@ export function IndexWorkerHealth() {
             <h2>{copy.title}</h2>
             <p>{copy.polling}</p>
           </div>
-          <button
-            className="admin-secondary"
+          <AdminButton
             disabled={health.isFetching}
             onClick={() => void health.refetch()}
           >
             {copy.refresh}
-          </button>
+          </AdminButton>
         </div>
         {health.isPending && <output>{vi.api.loading}</output>}
         {health.isError && <AdminApiError error={health.error} />}

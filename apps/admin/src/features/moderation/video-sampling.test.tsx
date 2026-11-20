@@ -36,8 +36,41 @@ it('shows sampled coverage and never calls a partially scanned video clean', () 
   expect(html).toContain('2/3 khung hình đã có kết quả');
   expect(html).toContain('4.95');
   expect(html).toContain('bỏ sót');
-  expect(html).toContain('chưa kiểm tra OCR hoặc âm thanh');
+  expect(html).toContain('chữ chỉ được đọc trên ảnh bìa video');
   expect(html).not.toContain('100%');
+});
+it('shows poster OCR as its own review-only evidence with text and retryable error', () => {
+  const html = renderToStaticMarkup(
+    <ModerationPartsEvidence
+      data={{
+        ...data,
+        items: [
+          {
+            ...base,
+            id: 'cover-ocr',
+            modality: 'video_cover_ocr',
+            status: 'flagged',
+            text: 'Chữ xúc phạm trên bìa',
+            categories: { harassment: true },
+          },
+          {
+            ...base,
+            id: 'cover-ocr-failed',
+            assetId: 'other-video',
+            modality: 'video_cover_ocr',
+            status: 'failed',
+            errorCode: 'ocr_unavailable',
+          },
+        ],
+      }}
+      onRetry={() => {}}
+    />,
+  );
+  expect(html).toContain('Chữ trên ảnh bìa video');
+  expect(html).toContain('Chữ xúc phạm trên bìa');
+  expect(html).toContain('Không đọc chữ ở các khung hình khác');
+  expect(html).toContain('Chưa đọc được chữ trên ảnh bìa');
+  expect(html).toContain('Thử quét lại');
 });
 it('shows the flagged middle timestamp, playback action and preserved retry state', () => {
   const html = renderToStaticMarkup(<ModerationPartsEvidence data={data} onRetry={() => {}} />);

@@ -1,9 +1,11 @@
 import { t, vi } from '@tripflix/i18n';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import './globals.css';
+// Sau globals.css để header điện thoại (TF98) thắng các rule header cũ.
+import '@/features/shell/mobile-header.css';
 import { HeaderAccount } from '@/features/auth/header-account';
 import { AssistantHeaderButton } from '@/features/assistant/assistant-widget';
 import { CartLink } from '@/features/checkout/cart-link';
@@ -11,6 +13,8 @@ import { HeaderNotifications } from '@/features/notifications/header-notificatio
 import { Providers } from './providers';
 import { OtaNavigation } from '@/features/discovery/ota-navigation';
 import { OtaFooter } from '@/features/discovery/ota-footer';
+import { HeaderAutoHide } from '@/features/shell/header-auto-hide';
+import { MobileTabBar } from '@/features/shell/mobile-tab-bar';
 import { ButtonRipple } from '@/features/shared/button-ripple';
 import { DEFAULT_OG_IMAGE } from '@/features/seo/page-metadata';
 import { getSiteUrl } from '@/lib/site';
@@ -37,6 +41,13 @@ export const metadata: Metadata = {
     description: vi.seo.defaultDescription,
     images: [DEFAULT_OG_IMAGE.url],
   },
+};
+
+// viewport-fit=cover để env(safe-area-inset-*) có giá trị trên iPhone (header dính, thanh đáy sau này).
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -76,8 +87,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               </div>
             </div>
           </header>
+          <HeaderAutoHide />
           {children}
           <OtaFooter />
+          <MobileTabBar />
         </Providers>
       </body>
     </html>

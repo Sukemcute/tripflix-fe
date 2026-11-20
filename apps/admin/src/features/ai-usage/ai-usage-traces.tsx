@@ -2,11 +2,19 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { aiInsightsControllerTraces } from '@tripflix/api-client/core-api/analytics/analytics';
+import type { AiTraceItemDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
 import { useState } from 'react';
+import { AdminButton } from '@/ui/button';
+import { DataTable, type DataColumn } from '@/ui/data-table';
+import { FilterToolbar, SelectField } from '@/ui/filter-toolbar';
+import { Pagination } from '@/ui/pagination';
+import { EmptyState } from '@/ui/states';
+import { StatusBadge } from '@/ui/status-badge';
+import { useDetailParam } from '@/ui/use-detail-param';
 import { AdminApiError } from '../shell/api-state';
-import { EmptyState, LoadingState, Panel } from '../shell/operations-ui';
-import { AiTraceDialog } from './ai-trace-dialog';
+import { Panel } from '../shell/operations-ui';
+import { AiTraceDrawer } from './ai-trace-drawer';
 import { ANSWER_KINDS, answerKindLabel, count, formatDateTime, formatLatency } from './ai-usage-format';
 import { formatUsd } from './ai-usage-range';
 
@@ -28,7 +36,7 @@ export function AiUsageTraces({
   const [page, setPage] = useState(1);
   const [answerKind, setAnswerKind] = useState('all');
   const [minCost, setMinCost] = useState<keyof typeof copy.minCosts>('0');
-  const [selected, setSelected] = useState<string | null>(null);
+  const { openId, open, close } = useDetailParam();
   const params = {
     ...range,
     page,
@@ -45,154 +53,148 @@ export function AiUsageTraces({
     retry: false,
   });
   const data = traces.isError ? undefined : traces.data;
-  const pageCount = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+
+  const columns: DataColumn<AiTraceItemDto>[] = [
+    {
+      id: 'time',
+      header: copy.columns.time,
+      openLabel: (item) => `${copy.viewDetail}: ${formatDateTime(item.occurredAt)}`,
+      cell: (item) => <span className="whitespace-nowrap">{formatDateTime(item.occurredAt)}</span>,
+    },
+    {
+      id: 'user',
+      header: copy.columns.user,
+      hideBelow: 'md',
+      cell: (item) => (
+        <span className="block">
+          <span className="block">{item.displayName ?? vi.aiUsage.userBoard.deletedAccount}</span>
+          <span className="block text-xs text-text-muted">{item.email ?? '—'}</span>
+        </span>
+      ),
+    },
+    {
+      id: 'question',
+      header: copy.columns.question,
+      cell: (item) => (
+        <span className="block max-w-xs">
+          <span className="line-clamp-2">{item.question ?? '—'}</span>
+          {item.isAction && <span className="block text-xs text-text-muted">{copy.action}</span>}
+        </span>
+      ),
+    },
+    { id: 'intent', header: copy.columns.intent, hideBelow: 'xl', cell: (item) => item.intent ?? '—' },
+    {
+      id: 'result',
+      header: copy.columns.result,
+      cell: (item) => (
+        <StatusBadge tone={item.answerKind === 'error' ? 'danger' : 'neutral'}>
+          {answerKindLabel(item.answerKind)}
+        </StatusBadge>
+      ),
+    },
+    {
+      id: 'latency',
+      header: copy.columns.latency,
+      align: 'right',
+      hideBelow: 'lg',
+      cell: (item) => formatLatency(item.latencyMs),
+    },
+    { id: 'steps', header: copy.columns.steps, align: 'right', hideBelow: 'xl', cell: (item) => item.steps },
+    {
+      id: 'tokens',
+      header: copy.columns.tokens,
+      align: 'right',
+      hideBelow: 'lg',
+      cell: (item) => `${count.format(item.inputTokens)} / ${count.format(item.outputTokens)}`,
+    },
+    { id: 'cost', header: copy.columns.cost, align: 'right', cell: (item) => formatUsd(item.costUsd) },
+    {
+      id: 'detail',
+      header: <span className="sr-only">{copy.viewDetail}</span>,
+      align: 'right',
+      cell: (item) =>
+        item.turnId ? (
+          <AdminButton size="sm" onClick={() => open(String(item.turnId))}>
+            {copy.viewDetail}
+          </AdminButton>
+        ) : (
+          <span className="text-xs text-text-muted" title={copy.noDetail}>
+            —
+          </span>
+        ),
+    },
+  ];
 
   return (
-    <>
-      <form className="admin-filters mb-4" onSubmit={(event) => event.preventDefault()}>
-        <label>
-          {copy.answerKind}
-          <select
-            value={answerKind}
-            onChange={(event) => {
-              setAnswerKind(event.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="all">{copy.answerKinds.all}</option>
-            {ANSWER_KINDS.map((kind) => (
-              <option key={kind} value={kind}>
-                {answerKindLabel(kind)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {copy.minCost}
-          <select
-            value={minCost}
-            onChange={(event) => {
-              setMinCost(event.target.value as keyof typeof copy.minCosts);
-              setPage(1);
-            }}
-          >
-            {MIN_COSTS.map((value) => (
-              <option key={value} value={value}>
-                {copy.minCosts[value]}
-              </option>
-            ))}
-          </select>
-        </label>
-        {user && (
-          <p className="flex items-center gap-3 self-end text-xs text-text-muted">
-            {t('aiUsage.traceBoard.filteredUser', { name: user.name })}
-            <button
-              type="button"
-              className="rounded-md border border-border px-3 py-1 font-semibold text-teal-ink hover:bg-teal-soft"
-              onClick={onClearUser}
-            >
+    <div className="space-y-4">
+      <FilterToolbar
+        summary={user ? t('aiUsage.traceBoard.filteredUser', { name: user.name }) : undefined}
+        actions={
+          user ? (
+            <AdminButton size="sm" onClick={onClearUser}>
               {copy.clearUser}
-            </button>
-          </p>
-        )}
-      </form>
+            </AdminButton>
+          ) : undefined
+        }
+      >
+        <SelectField
+          label={copy.answerKind}
+          value={answerKind}
+          options={[
+            { value: 'all', label: copy.answerKinds.all },
+            ...ANSWER_KINDS.map((kind) => ({ value: kind, label: answerKindLabel(kind) })),
+          ]}
+          onChange={(value) => {
+            setAnswerKind(value);
+            setPage(1);
+          }}
+        />
+        <SelectField
+          label={copy.minCost}
+          value={minCost}
+          options={MIN_COSTS.map((value) => ({ value, label: copy.minCosts[value] }))}
+          onChange={(value) => {
+            setMinCost(value as keyof typeof copy.minCosts);
+            setPage(1);
+          }}
+        />
+      </FilterToolbar>
 
       <Panel title={copy.title} description={copy.description}>
         {traces.isError && <AdminApiError error={traces.error} retry={() => void traces.refetch()} />}
-        {traces.isPending ? (
-          <LoadingState />
-        ) : !data || data.items.length === 0 ? (
-          !traces.isError && <EmptyState title={copy.empty} />
-        ) : (
-          <>
-            <div className="admin-table-scroll">
-              <table className="ops-table" aria-label={copy.title}>
-                <thead>
-                  <tr>
-                    <th scope="col">{copy.columns.time}</th>
-                    <th scope="col">{copy.columns.user}</th>
-                    <th scope="col">{copy.columns.question}</th>
-                    <th scope="col">{copy.columns.intent}</th>
-                    <th scope="col">{copy.columns.result}</th>
-                    <th scope="col">{copy.columns.latency}</th>
-                    <th scope="col">{copy.columns.steps}</th>
-                    <th scope="col">{copy.columns.tokens}</th>
-                    <th scope="col">{copy.columns.cost}</th>
-                    <th scope="col">
-                      <span className="sr-only">{copy.viewDetail}</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.items.map((item) => (
-                    <tr key={item.eventId}>
-                      <td className="whitespace-nowrap">{formatDateTime(item.occurredAt)}</td>
-                      <td>
-                        <span className="font-semibold text-navy">
-                          {item.displayName ?? vi.aiUsage.userBoard.deletedAccount}
-                        </span>
-                        <span className="block text-xs text-text-muted">{item.email ?? '—'}</span>
-                      </td>
-                      <td className="max-w-xs">
-                        {item.question ?? '—'}
-                        {item.isAction && (
-                          <span className="block text-xs text-text-muted">{copy.action}</span>
-                        )}
-                      </td>
-                      <td>{item.intent ?? '—'}</td>
-                      <td className={item.answerKind === 'error' ? 'font-semibold text-danger' : ''}>
-                        {answerKindLabel(item.answerKind)}
-                      </td>
-                      <td className="whitespace-nowrap tabular-nums">{formatLatency(item.latencyMs)}</td>
-                      <td className="tabular-nums">{item.steps}</td>
-                      <td className="whitespace-nowrap tabular-nums">
-                        {count.format(item.inputTokens)} / {count.format(item.outputTokens)}
-                      </td>
-                      <td className="tabular-nums">{formatUsd(item.costUsd)}</td>
-                      <td>
-                        {item.turnId ? (
-                          <button
-                            type="button"
-                            className="whitespace-nowrap rounded-md border border-border px-3 py-1 text-xs font-semibold text-teal-ink hover:bg-teal-soft"
-                            onClick={() => setSelected(item.turnId)}
-                          >
-                            {copy.viewDetail}
-                          </button>
-                        ) : (
-                          <span className="text-xs text-text-muted" title={copy.noDetail}>
-                            —
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <nav className="flex items-center justify-end gap-3 px-5 py-4 text-xs text-text-muted">
-              <button
-                type="button"
-                className="rounded-md border border-border px-3 py-1 disabled:opacity-50"
-                disabled={page <= 1 || traces.isFetching}
-                onClick={() => setPage((value) => value - 1)}
-              >
-                {copy.previous}
-              </button>
-              <span>{t('aiUsage.traceBoard.pageOf', { page, pageCount })}</span>
-              <button
-                type="button"
-                className="rounded-md border border-border px-3 py-1 disabled:opacity-50"
-                disabled={page >= pageCount || traces.isFetching}
-                onClick={() => setPage((value) => value + 1)}
-              >
-                {copy.next}
-              </button>
-            </nav>
-          </>
+        <DataTable
+          label={copy.title}
+          columns={columns}
+          rows={data?.items ?? []}
+          getRowId={(item) => item.eventId}
+          onRowOpen={(item) => {
+            if (item.turnId) open(String(item.turnId));
+          }}
+          isRowSelected={(item) => !!openId && String(item.turnId) === openId}
+          isLoading={traces.isPending}
+          empty={traces.isError ? undefined : <EmptyState title={copy.empty} />}
+        />
+        {!!data && data.total > 0 && (
+          <div className="px-3 pb-3">
+            <Pagination
+              page={page}
+              pageSize={PAGE_SIZE}
+              total={data.total}
+              isFetching={traces.isFetching}
+              onPageChange={setPage}
+            />
+          </div>
         )}
       </Panel>
 
-      {selected && <AiTraceDialog turnId={selected} onClose={() => setSelected(null)} />}
-    </>
+      {openId && (
+        <AiTraceDrawer
+          turnId={openId}
+          ids={(data?.items ?? []).flatMap((item) => (item.turnId ? [item.turnId] : []))}
+          onOpen={open}
+          onClose={close}
+        />
+      )}
+    </div>
   );
 }

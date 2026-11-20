@@ -17,6 +17,7 @@ export type ReelPost = Pick<
   | 'commentCount'
   | 'bookmarkCount'
   | 'shareCount'
+  | 'video'
 >;
 
 const defaultReelPostCache = new WeakMap<FeedCardDto, ReelPost>();
@@ -49,9 +50,31 @@ export function toReelPost(
     commentCount: card.counts.comments,
     bookmarkCount: card.counts.saves,
     shareCount: card.counts.shares,
+    video: card.video,
   };
   cache.set(card, post);
   return post;
+}
+
+/** Chuyển SocialPostDto (đã có video từ backend) sang ReelPost. */
+export function socialPostToReelPost(post: SocialPostDto): ReelPost {
+  return {
+    id: post.id,
+    authorId: post.authorId,
+    authorName: post.authorName,
+    postType: 'video',
+    title: post.title,
+    body: post.body,
+    hashtags: post.hashtags,
+    mediaIds: post.mediaIds,
+    tripAttachment: post.tripAttachment,
+    isVerified: post.isVerified,
+    reactionTotal: post.reactionTotal,
+    commentCount: post.commentCount,
+    bookmarkCount: post.bookmarkCount,
+    shareCount: post.shareCount,
+    video: post.video ?? null,
+  };
 }
 
 /**
@@ -222,13 +245,13 @@ export function releaseReelVideoSource(video: ReelVideoSource): void {
 }
 
 /**
- * Mở Reel từ link chia sẻ: Reel đó lên đầu, lướt tiếp là bảng tin Reels như thường (bỏ bản trùng nếu bảng tin
- * cũng có Reel đó).
+ * Mở Reel từ link chia sẻ: Reel đó lên đầu, lướt tiếp là bảng tin Reels như thường. Mỗi Reel chỉ giữ lần xuất hiện
+ * đầu: bảng tin gợi ý phân trang bằng offset, khi job gợi ý (10 phút) chạy giữa hai trang thì thứ hạng đổi và trang
+ * sau có thể lặp bài của trang trước (React báo trùng key, lướt nhảy về bài cũ).
  */
 export function prependPinnedReelCards<T extends { postId: string }>(pinnedCards: readonly T[], feedCards: readonly T[]): T[] {
-  if (pinnedCards.length === 0) return [...feedCards];
-  const pinnedIds = new Set(pinnedCards.map((card) => card.postId));
-  return [...pinnedCards, ...feedCards.filter((card) => !pinnedIds.has(card.postId))];
+  const seen = new Set<string>();
+  return [...pinnedCards, ...feedCards].filter((card) => !seen.has(card.postId) && Boolean(seen.add(card.postId)));
 }
 
 /** Trạng thái và số đếm tương tác của một Reel trên cột thao tác bên phải. */

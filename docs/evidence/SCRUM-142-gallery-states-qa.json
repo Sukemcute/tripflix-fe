@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "baseline": false,
+  "checks": [
+    "375px: long title readable early, stars and guest score labelled, gallery paging, CTA visible and room selection preserves dates/guest mix",
+    "390px: long title readable early, stars and guest score labelled, gallery paging, CTA visible and room selection preserves dates/guest mix",
+    "Missing photos/stars/reviews, zero review count/price, 404 hotel/room image retry, visible loading/error counters, stalled image timeout after 15s/recovery without CTA or ratio shift, room paging, 140% browser text (not native)",
+    "430px: long title readable early, stars and guest score labelled, gallery paging, CTA visible and room selection preserves dates/guest mix"
+  ],
+  "pageErrors": [],
+  "apiAndImageFixtures": true,
+  "nativeDeviceTested": false
+}
