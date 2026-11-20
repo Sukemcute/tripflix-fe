@@ -32,3 +32,8 @@
 
 ## Ảnh hưởng tới phần của người khác
 - `useUserSearch` cũng được gọi ở `apps/mobile/src/features/discovery/search-drop-panel.tsx:256` (của Trang — giữ nguyên chữ ký và tên trường trả về, thêm `staleTime: 60_000`, `keepPreviousData`, và `queryKey` hạ thường) và ở `apps/web/src/features/social/search-explore-results.tsx`, `search-results-grid.tsx`.
+
+## Bổ sung: Gắn listener `document` của `MentionPicker` đúng 1 lần khi mount
+- `apps/web/src/features/social/mention-picker.tsx:156–224`: giữ `{ users, activeIndex, onSelect, onClose, updateActiveIndex, keepOpenRef }` mới nhất trong `latestRef` (cập nhật qua `useEffect` không dependency để tránh warning SSR/React Compiler), đổi cả hai effect `mousedown` và `keydown` (capture) về `[]` deps để không gỡ/gắn lại mỗi phím hay khi props callback inline đổi. Không sửa `live-posts.tsx`.
+- `apps/web/src/features/social/mention-picker-listeners.test.ts`: kiểm render 3 lần đổi `onClose`/`onSelect`/`users` mới hoàn toàn nhưng `document.addEventListener` chỉ gọi đúng 1 lần cho `mousedown` và 1 lần cho `keydown` (capture `true`); bấm `Enter` gọi `onSelect3` mới nhất; bấm ra ngoài gọi `onClose3` mới nhất; unmount gọi `removeEventListener` đầy đủ.
+- Kiểm lại `@tripflix/web`: `lint` **28 warnings, 0 errors**; `typecheck` **0 errors**; `vitest run` **78/78 files (522/522 tests) pass**.

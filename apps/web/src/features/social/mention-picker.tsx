@@ -153,37 +153,66 @@ export function MentionPicker({
   const isWaitingForSearch = !isError && !hasUsers && (isLoading || isFetching || isDebouncing);
   const isRefreshingExistingList = hasUsers && (isPlaceholderData || isFetching || isDebouncing);
 
+  // Giữ callback & state mới nhất trong ref để listener trên document chỉ gắn 1 lần khi mount.
+  const latestRef = useRef({
+    users,
+    activeIndex,
+    onSelect,
+    onClose,
+    updateActiveIndex,
+    keepOpenRef,
+  });
+
+  useEffect(() => {
+    latestRef.current = {
+      users,
+      activeIndex,
+      onSelect,
+      onClose,
+      updateActiveIndex,
+      keepOpenRef,
+    };
+  });
+
   // Cuộn item đang chọn vào tầm nhìn khi di chuyển phím mũi tên
   useEffect(() => {
     activeItemRef.current?.scrollIntoView({ block: 'nearest' });
   }, [activeIndex]);
 
-  // Đóng khi click ra ngoài vùng ô nhập và bảng
+  // Chỉ gắn 1 lần khi mount: đóng khi click ra ngoài vùng ô nhập và bảng
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as Node | null;
       if (!target) return;
-      if (rootRef.current?.contains(target) || keepOpenRef?.current?.contains(target)) {
+      const { keepOpenRef: currentKeepOpenRef, onClose: currentOnClose } = latestRef.current;
+      if (rootRef.current?.contains(target) || currentKeepOpenRef?.current?.contains(target)) {
         return;
       }
-      onClose();
+      currentOnClose();
     }
 
     document.addEventListener('mousedown', handlePointerDown);
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
     };
-  }, [onClose, keepOpenRef]);
+  }, []);
 
-  // Điều khiển bàn phím ↑ ↓ Enter Tab Esc trong lúc con trỏ vẫn ở ô nhập
+  // Chỉ gắn 1 lần khi mount: điều khiển bàn phím ↑ ↓ Enter Tab Esc trong lúc con trỏ vẫn ở ô nhập
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      const {
+        users: currentUsers,
+        activeIndex: currentActiveIndex,
+        onSelect: currentOnSelect,
+        onClose: currentOnClose,
+        updateActiveIndex: currentUpdateActiveIndex,
+      } = latestRef.current;
       handleMentionPickerKeyDown(event, {
-        users,
-        activeIndex,
-        onSelect,
-        onClose,
-        updateActiveIndex,
+        users: currentUsers,
+        activeIndex: currentActiveIndex,
+        onSelect: currentOnSelect,
+        onClose: currentOnClose,
+        updateActiveIndex: currentUpdateActiveIndex,
       });
     }
 
@@ -191,7 +220,7 @@ export function MentionPicker({
     return () => {
       document.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [users, activeIndex, onClose, onSelect, updateActiveIndex]);
+  }, []);
 
   return (
     <dialog
