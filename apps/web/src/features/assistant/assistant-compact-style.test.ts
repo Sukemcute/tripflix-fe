@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('Assistant compact layout', () => {
   const css = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'assistant.module.css'), 'utf8');
-  const rule = (name: string) => css.match(new RegExp(`\\.${name}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+  const rule = (name: string) => css.match(new RegExp(`^\\.${name}\\s*\\{([^}]*)\\}`, 'm'))?.[1] ?? '';
 
   it('keeps three equal video columns without horizontal scrolling', () => {
     expect(rule('videos')).toMatch(/display:\s*grid/);
