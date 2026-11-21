@@ -1,5 +1,5 @@
 import { vi } from '@tripflix/i18n';
-import { explorer as x, nativeFonts as f, radius, spacing as s } from '@tripflix/tokens';
+import { colors as c, nativeFonts as f, radius, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
@@ -106,7 +106,7 @@ export function AssistantThinking() {
 }
 
 const styles = StyleSheet.create({
-  face: { alignItems: 'center', justifyContent: 'center', backgroundColor: x.day.tintWarm },
+  face: { alignItems: 'center', justifyContent: 'center', backgroundColor: c.warmMist },
   thinkingRow: { flexDirection: 'row', alignItems: 'flex-end', gap: s.sm },
   thinkingBubble: {
     flexShrink: 1,
@@ -115,11 +115,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: s.lg,
     borderRadius: 20,
     borderBottomLeftRadius: 6,
-    backgroundColor: x.day.canvas,
+    backgroundColor: c.surface,
     borderWidth: 1,
-    borderColor: x.day.line,
+    borderColor: c.border,
   },
   dots: { flexDirection: 'row', gap: 5, height: 12, alignItems: 'flex-end' },
-  dot: { width: 7, height: 7, borderRadius: radius.pill, backgroundColor: x.action.primary },
-  thinkingText: { ...chatType.small, fontFamily: f.medium, color: x.day.textSecondary },
+  dot: { width: 7, height: 7, borderRadius: radius.pill, backgroundColor: c.coral },
+  thinkingText: { ...chatType.small, fontFamily: f.medium, color: c.textMuted },
 });

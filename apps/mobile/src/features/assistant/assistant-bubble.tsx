@@ -1,5 +1,5 @@
 import { vi } from '@tripflix/i18n';
-import { explorer as x, colors, mobileLayout } from '@tripflix/tokens';
+import { colors, mobileLayout } from '@tripflix/tokens';
 import { useNavigation } from 'expo-router';
 import { useRef, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -31,7 +31,11 @@ export function AssistantTrigger({ size, postId }: { size: number; postId?: stri
       aria-hidden={chat.isOpen}
       disabled={chat.isOpen}
       onPress={open}
-      style={({ pressed }) => [styles.touch, pressed && styles.pressed, chat.isOpen && styles.hidden]}
+      style={({ pressed }) => [
+        styles.touch,
+        pressed && styles.pressed,
+        chat.isOpen && styles.hidden,
+      ]}
     >
       <View
         ref={bubble}
@@ -55,9 +59,9 @@ const styles = StyleSheet.create({
   bubble: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: x.day.tintWarm,
+    backgroundColor: colors.warmMist,
     borderWidth: 2,
-    borderColor: x.day.surface,
+    borderColor: colors.background,
     boxShadow: `0 2px 8px ${colors.overlay}`,
   },
   pressed: { opacity: 0.75 },

@@ -1,12 +1,5 @@
 import { vi } from '@tripflix/i18n';
-import {
-  explorer as x,
-  colors as c,
-  mobileLayout,
-  nativeFonts as f,
-  radius,
-  spacing as s,
-} from '@tripflix/tokens';
+import { colors as c, mobileLayout, nativeFonts as f, radius, spacing as s } from '@tripflix/tokens';
 import { useCallback, useRef, useState, type ComponentRef, type ReactElement, type ReactNode } from 'react';
 import {
   Keyboard,
@@ -92,7 +85,7 @@ export function AssistantChat({
         <View style={styles.header}>
           <View style={styles.avatar}>
             <Mascot size={34} />
-            <View style={[styles.statusDot, chat.isPending && { backgroundColor: x.brand.sun }]} />
+            <View style={[styles.statusDot, chat.isPending && { backgroundColor: c.sun }]} />
           </View>
           <View style={{ flex: 1 }}>
             <Txt variant="heading" style={[chatType.title, { fontFamily: f.bold }]}>
@@ -121,7 +114,7 @@ export function AssistantChat({
       )}
       {chat.isPreview && (
         <View style={styles.preview}>
-          <Icon name="flask-outline" size={mobileIconSize.inline} color={x.day.link} />
+          <Icon name="flask-outline" size={mobileIconSize.inline} color={c.coralInk} />
           <Txt variant="caption" style={styles.previewText}>
             {copy.preview}
           </Txt>
@@ -168,10 +161,10 @@ export function AssistantChat({
                       chat.setDraft(prompt.text);
                       input.current?.focus();
                     }}
-                    style={({ pressed }) => [styles.prompt, pressed && { backgroundColor: x.day.canvas }]}
+                    style={({ pressed }) => [styles.prompt, pressed && { backgroundColor: c.warmMist }]}
                   >
                     <View style={styles.promptIcon}>
-                      <Icon name={prompt.icon as IconName} color={x.day.link} size={20} />
+                      <Icon name={prompt.icon as IconName} color={c.coralInk} size={20} />
                     </View>
                     <View style={styles.promptText}>
                       <Txt variant="label" style={styles.promptLabel}>
@@ -181,7 +174,7 @@ export function AssistantChat({
                         {prompt.caption}
                       </Txt>
                     </View>
-                    <Icon name="arrow-forward" size={18} color={x.day.link} />
+                    <Icon name="arrow-forward" size={18} color={c.coralInk} />
                   </Pressable>
                 ))}
               </View>
@@ -238,7 +231,7 @@ export function AssistantChat({
                           }}
                           style={({ pressed }) => [styles.loginButton, pressed && { opacity: 0.85 }]}
                         >
-                          <Icon name="log-in-outline" size={18} color={x.brand.white} />
+                          <Icon name="log-in-outline" size={18} color={c.background} />
                           <Txt style={styles.loginText}>{copy.login}</Txt>
                         </Pressable>
                       )}
@@ -255,10 +248,10 @@ export function AssistantChat({
                             onPress={() => void chat.send(suggestion)}
                             style={({ pressed }) => [
                               styles.chip,
-                              pressed && { backgroundColor: x.day.tintWarm },
+                              pressed && { backgroundColor: c.coralTint },
                             ]}
                           >
-                            <Icon name="sparkles-outline" size={14} color={x.day.link} />
+                            <Icon name="sparkles-outline" size={14} color={c.coralInk} />
                             <Txt variant="label" style={styles.chipText}>
                               {suggestion}
                             </Txt>
@@ -278,13 +271,13 @@ export function AssistantChat({
           )}
           {chat.hasError && (
             <View accessibilityRole="alert" style={styles.error}>
-              <Txt style={[chatType.body, { color: x.day.text }]}>{copy.error}</Txt>
+              <Txt style={[chatType.body, { color: c.ink }]}>{copy.error}</Txt>
               <Pressable
                 accessibilityRole="button"
                 onPress={() => void chat.send(chat.messages.at(-1)?.text, true)}
                 style={styles.retry}
               >
-                <Icon name="refresh" size={mobileIconSize.control} color={x.day.link} />
+                <Icon name="refresh" size={mobileIconSize.control} color={c.coralInk} />
                 <Txt variant="label" style={styles.actionText}>
                   {copy.retry}
                 </Txt>
@@ -304,7 +297,7 @@ export function AssistantChat({
             ref={input}
             accessibilityLabel={copy.placeholder}
             placeholder={copy.placeholder}
-            placeholderTextColor={x.day.textSecondary}
+            placeholderTextColor={c.textMuted}
             value={chat.draft}
             onChangeText={chat.setDraft}
             multiline
@@ -317,12 +310,12 @@ export function AssistantChat({
             disabled={isDisabled}
             accessibilityState={{ disabled: isDisabled }}
             onPress={() => void chat.send()}
-            style={[styles.send, isDisabled && { backgroundColor: x.day.canvas }]}
+            style={[styles.send, isDisabled && { backgroundColor: c.surfaceMuted }]}
           >
             <Icon
               name="arrow-up"
               size={mobileIconSize.control}
-              color={isDisabled ? x.day.textSecondary : x.day.surface}
+              color={isDisabled ? c.textMuted : c.background}
             />
           </Pressable>
         </View>
@@ -409,7 +402,7 @@ function AssistantModal() {
       borderBottomLeftRadius: 32 * (1 - p),
       borderBottomRightRadius: 32 * (1 - p),
       borderWidth: 2 * (1 - p),
-      backgroundColor: interpolateColor(p, [0, 1], [x.day.canvas, x.day.surface]),
+      backgroundColor: interpolateColor(p, [0, 1], [c.warmMist, c.background]),
       opacity: reducedMotion ? progress.get() : 1,
     };
   });
@@ -547,7 +540,7 @@ function AssistantModal() {
           >
             <Mascot size={BUBBLE_MASCOT_SIZE} />
             <View style={styles.morphBadge}>
-              <Icon name="sparkles" size={10} color={x.brand.white} />
+              <Icon name="sparkles" size={10} color={c.background} />
             </View>
           </Animated.View>
         </Animated.View>
@@ -569,12 +562,12 @@ export function AssistantScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: x.day.canvas },
+  container: { flex: 1, backgroundColor: c.background },
   backdrop: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
   dialog: {
     position: 'absolute',
     overflow: 'hidden',
-    borderColor: x.day.surface,
+    borderColor: c.background,
     boxShadow: `0 4px 16px ${c.overlay}`,
   },
   morphMascot: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
@@ -585,9 +578,9 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: x.action.primary,
+    backgroundColor: c.coral,
     borderWidth: 2,
-    borderColor: x.day.surface,
+    borderColor: c.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -596,7 +589,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: x.day.line,
+    backgroundColor: c.border,
     marginTop: s.sm,
   },
   header: {
@@ -606,13 +599,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: s.md,
     paddingVertical: s.xs,
     borderBottomWidth: 1,
-    borderBottomColor: x.day.line,
+    borderBottomColor: c.border,
   },
   avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: x.day.canvas,
+    backgroundColor: c.warmMist,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -624,18 +617,18 @@ const styles = StyleSheet.create({
     height: 11,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: x.day.surface,
-    backgroundColor: x.day.link,
+    borderColor: c.background,
+    backgroundColor: c.teal,
   },
-  subtitle: { ...chatType.meta, color: x.day.link, fontFamily: f.medium },
+  subtitle: { ...chatType.meta, color: c.tealInk, fontFamily: f.medium },
   preview: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: s.sm,
     padding: s.sm,
-    backgroundColor: x.day.canvas,
+    backgroundColor: c.warmMist,
   },
-  previewText: { ...compactType.meta, color: x.day.link },
+  previewText: { ...compactType.meta, color: c.coralInk },
   messages: { padding: s.lg, gap: s.lg, flexGrow: 1 },
   welcome: { gap: s.lg, paddingTop: s.sm },
   welcomeHead: { flexDirection: 'row', alignItems: 'flex-end', gap: s.sm },
@@ -645,15 +638,15 @@ const styles = StyleSheet.create({
     padding: s.lg,
     borderRadius: 22,
     borderBottomLeftRadius: 6,
-    backgroundColor: x.day.canvas,
+    backgroundColor: c.warmMist,
   },
-  welcomeHello: { ...chatType.small, fontFamily: f.semibold, color: x.day.link },
+  welcomeHello: { ...chatType.small, fontFamily: f.semibold, color: c.coralInk },
   title: {
     ...chatType.title,
     fontSize: 19,
     lineHeight: 26,
     fontFamily: f.bold,
-    color: x.day.text,
+    color: c.navy,
     letterSpacing: 0,
   },
   prompts: { width: '100%', gap: s.sm },
@@ -664,32 +657,32 @@ const styles = StyleSheet.create({
     paddingVertical: s.md,
     paddingHorizontal: s.md,
     borderWidth: 1,
-    borderColor: x.day.line,
+    borderColor: c.border,
     borderRadius: 18,
-    backgroundColor: x.day.surface,
+    backgroundColor: c.background,
     boxShadow: `0 4px 14px -10px ${c.overlay}`,
   },
   promptIcon: {
     width: 40,
     height: 40,
     borderRadius: 14,
-    backgroundColor: x.day.tintWarm,
+    backgroundColor: c.coralTint,
     alignItems: 'center',
     justifyContent: 'center',
   },
   promptText: { flex: 1, gap: 2 },
-  promptLabel: { ...chatType.body, fontFamily: f.semibold, color: x.day.text },
-  promptCaption: { ...chatType.small, color: x.day.textSecondary },
+  promptLabel: { ...chatType.body, fontFamily: f.semibold, color: c.ink },
+  promptCaption: { ...chatType.small, color: c.textMuted },
   turn: { gap: s.sm },
   messageRow: { flexDirection: 'row', alignItems: 'flex-end', gap: s.sm },
   avatarSpacer: { width: 34 },
   message: { maxWidth: '82%', paddingVertical: s.md, paddingHorizontal: s.lg, borderRadius: 22 },
-  userMessage: { backgroundColor: x.day.text, borderBottomRightRadius: 6 },
-  assistantMessage: { flexShrink: 1, backgroundColor: x.day.canvas, borderBottomLeftRadius: 6 },
-  messageText: { ...chatType.body, color: x.day.text },
-  userText: { color: x.brand.white },
+  userMessage: { backgroundColor: c.navy, borderBottomRightRadius: 6 },
+  assistantMessage: { flexShrink: 1, backgroundColor: c.warmMist, borderBottomLeftRadius: 6 },
+  messageText: { ...chatType.body, color: c.ink },
+  userText: { color: c.background },
   attachments: { gap: s.sm, marginLeft: 34 + s.sm },
-  suggestionsLabel: { ...chatType.meta, fontFamily: f.semibold, color: x.day.textSecondary },
+  suggestionsLabel: { ...chatType.meta, fontFamily: f.semibold, color: c.textMuted },
   loginButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -698,12 +691,12 @@ const styles = StyleSheet.create({
     minHeight: mobileLayout.touchTarget,
     paddingHorizontal: s.lg,
     borderRadius: radius.pill,
-    backgroundColor: x.action.primary,
+    backgroundColor: c.coral,
   },
-  loginText: { ...chatType.small, fontFamily: f.semibold, color: x.action.onPrimary },
-  error: { backgroundColor: x.day.tintWarm, padding: s.lg, borderRadius: 18, gap: s.sm },
+  loginText: { ...chatType.small, fontFamily: f.semibold, color: c.background },
+  error: { backgroundColor: c.coralTint, padding: s.lg, borderRadius: 18, gap: s.sm },
   retry: { flexDirection: 'row', alignItems: 'center', gap: s.sm, minHeight: mobileLayout.touchTarget },
-  actionText: { ...chatType.small, fontFamily: f.semibold, color: x.day.link },
+  actionText: { ...chatType.small, fontFamily: f.semibold, color: c.coralInk },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: s.sm },
   chip: {
     flexDirection: 'row',
@@ -714,19 +707,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: s.lg,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: x.day.link,
-    backgroundColor: x.day.surface,
+    borderColor: c.coralSoft,
+    backgroundColor: c.background,
   },
-  chipText: { ...chatType.small, fontFamily: f.semibold, color: x.day.link },
-  composerArea: { borderTopWidth: 1, borderTopColor: x.day.line, padding: s.md, gap: s.sm },
+  chipText: { ...chatType.small, fontFamily: f.semibold, color: c.coralInk },
+  composerArea: { borderTopWidth: 1, borderTopColor: c.border, padding: s.md, gap: s.sm },
   composer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     borderWidth: 1,
-    borderColor: x.day.line,
+    borderColor: c.border,
     borderRadius: 24,
     padding: s.xs,
-    backgroundColor: x.day.canvas,
+    backgroundColor: c.surface,
   },
   input: {
     flex: 1,
@@ -738,18 +731,18 @@ const styles = StyleSheet.create({
     paddingBottom: COMPOSER_INPUT_PADDING,
     textAlignVertical: 'center',
     fontFamily: f.regular,
-    color: x.day.text,
+    color: c.ink,
     ...chatType.body,
   },
   send: {
     width: mobileLayout.touchTarget,
     height: mobileLayout.touchTarget,
     borderRadius: mobileLayout.touchTarget / 2,
-    backgroundColor: x.action.primary,
+    backgroundColor: c.coral,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  footnote: { ...compactType.meta, textAlign: 'center', color: x.day.textSecondary },
+  footnote: { ...compactType.meta, textAlign: 'center', color: c.textMuted },
   confirmBackdrop: {
     ...StyleSheet.absoluteFill,
     backgroundColor: c.overlay,
@@ -757,13 +750,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: s.xl,
   },
-  confirm: { backgroundColor: x.day.surface, borderRadius: 24, padding: s.xl, gap: s.md, maxWidth: 340 },
-  mutedBody: { ...compactType.body, color: x.day.textSecondary },
+  confirm: { backgroundColor: c.background, borderRadius: 24, padding: s.xl, gap: s.md, maxWidth: 340 },
+  mutedBody: { ...compactType.body, color: c.textMuted },
   confirmAction: {
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: x.day.canvas,
+    backgroundColor: c.surface,
   },
 });
