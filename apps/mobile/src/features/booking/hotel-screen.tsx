@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { commerceApi, getFutureDate, useApiSession } from '@tripflix/api-client';
 import { isValidAssistantStay } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, mobileLayout, nativeFonts, spacing } from '@tripflix/tokens';
 import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
@@ -102,7 +102,7 @@ export function CommerceHotelScreen() {
           style={({ pressed }) => [styles.chooseRoom, pressed && styles.pressed]}
         >
           <Txt style={styles.chooseRoomLabel}>{hotelText.chooseRoom}</Txt>
-          <Icon name="arrow-forward" size={20} color={colors.background} />
+          <Icon name="arrow-forward" size={20} color={x.action.onPrimary} />
         </Pressable>
       </View>
     ) : undefined;
@@ -151,7 +151,7 @@ export function CommerceHotelScreen() {
                 <Notice tone="error">{vi.assistant.stayReview.invalidStay}</Notice>
               )}
               <Pressable accessibilityRole="button" onPress={editStay} style={styles.map}>
-                <Icon name="calendar-outline" size={18} color={colors.tealInk} />
+                <Icon name="calendar-outline" size={18} color={x.day.link} />
                 <Txt style={styles.mapLabel}>{vi.assistant.stayReview.edit}</Txt>
               </Pressable>
             </View>
@@ -159,10 +159,13 @@ export function CommerceHotelScreen() {
           {!params.id && <Notice>{text.noHotel}</Notice>}
           {hotel && (
             <>
-              <Txt style={styles.province}>{hotel.province.name}</Txt>
+              <View style={styles.provinceChip}>
+                <Icon name="location" size={14} color={x.day.link} />
+                <Txt style={styles.province}>{hotel.province.name}</Txt>
+              </View>
               <Txt style={styles.name}>{hotel.name}</Txt>
               <Row style={styles.starRow}>
-                <Icon name="star-outline" size={18} color={colors.textMuted} />
+                <Icon name="star" size={18} color={x.day.text} />
                 <Txt style={styles.secondary}>
                   {hotel.stars ? t('hotel.starClass', { count: hotel.stars }) : hotelText.noStarClass}
                 </Txt>
@@ -178,9 +181,9 @@ export function CommerceHotelScreen() {
                   }
                   style={({ pressed }) => [styles.map, pressed && styles.pressed]}
                 >
-                  <Icon name="location-outline" size={18} color={colors.tealInk} />
+                  <Icon name="location-outline" size={18} color={x.day.link} />
                   <Txt style={styles.mapLabel}>{hotelText.map}</Txt>
-                  <Icon name="open-outline" size={17} color={colors.tealInk} />
+                  <Icon name="open-outline" size={17} color={x.day.link} />
                 </Pressable>
               )}
               {hotel.rating && hotel.rating.count > 0 ? (
@@ -228,15 +231,52 @@ export function CommerceHotelScreen() {
   );
 }
 
+const lift = {
+  shadowColor: x.shadow,
+  shadowOffset: { width: 0, height: x.elevation.floating.offsetY },
+  shadowRadius: x.elevation.floating.blur,
+  shadowOpacity: 0.12,
+  elevation: 3,
+} as const;
+
 const styles = StyleSheet.create({
-  tripContext: { backgroundColor: colors.seaMist, borderRadius: 8, padding: spacing.md, gap: spacing.sm },
+  tripContext: {
+    backgroundColor: x.day.tintExplore,
+    borderRadius: x.radius.lg,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
   content: { paddingBottom: spacing.xl },
-  identity: { padding: mobileLayout.gutter, gap: spacing.md, backgroundColor: colors.background },
-  province: { fontSize: 13, lineHeight: 22, color: colors.tealInk, fontFamily: nativeFonts.semibold },
-  name: { fontSize: 26, lineHeight: 36, color: colors.navy, fontFamily: nativeFonts.bold },
-  secondary: { fontSize: 13, lineHeight: 22, color: colors.textMuted, flexShrink: 1 },
-  address: { fontSize: 14, lineHeight: 23, color: colors.textMuted },
-  starRow: { gap: spacing.sm, alignItems: 'center' },
+  // Khối thông tin chồng lên ảnh với góc trên bo lớn, như thẻ trượt trong thiết kế Stitch.
+  identity: {
+    marginTop: -x.space.xl,
+    padding: mobileLayout.gutter,
+    gap: spacing.md,
+    backgroundColor: x.day.canvas,
+    borderTopLeftRadius: x.radius.xl,
+    borderTopRightRadius: x.radius.xl,
+  },
+  provinceChip: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: x.radius.pill,
+    backgroundColor: x.day.tintExplore,
+  },
+  province: { fontSize: 13, lineHeight: 18, color: x.day.link, fontFamily: nativeFonts.semibold },
+  name: {
+    fontSize: x.type.title.fontSize,
+    lineHeight: 34,
+    color: x.day.text,
+    fontFamily: nativeFonts.extraBold,
+    letterSpacing: x.type.title.letterSpacing,
+  },
+  secondary: { fontSize: 14, lineHeight: 21, color: x.day.textSecondary, flexShrink: 1 },
+  address: { fontSize: 14, lineHeight: 22, color: x.day.textSecondary },
+  starRow: { gap: spacing.xs, alignItems: 'center' },
   toolbar: {
     position: 'absolute',
     top: spacing.md,
@@ -246,14 +286,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   floating: {
+    ...lift,
     width: 44,
     height: 44,
-    borderRadius: radius.sm,
-    backgroundColor: colors.background,
+    borderRadius: x.radius.pill,
+    backgroundColor: x.day.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cart: { borderRadius: radius.sm, backgroundColor: colors.background, padding: spacing.xs },
+  cart: { ...lift, borderRadius: x.radius.pill, backgroundColor: x.day.surface, padding: spacing.xs },
   pressed: { opacity: 0.75 },
   map: {
     alignSelf: 'flex-start',
@@ -262,42 +303,48 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     minHeight: 44,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.sm,
+    backgroundColor: x.day.tintExplore,
+    borderRadius: x.radius.pill,
   },
-  mapLabel: { fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.semibold, color: colors.tealInk },
+  mapLabel: { fontSize: 14, lineHeight: 22, fontFamily: nativeFonts.semibold, color: x.day.link },
   rating: { gap: spacing.sm },
   ratingRow: { alignItems: 'center', gap: spacing.md, flexWrap: 'wrap' },
   score: {
-    borderRadius: radius.sm,
-    paddingVertical: spacing.sm,
+    borderRadius: x.radius.pill,
+    paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.brand.sun,
   },
-  scoreLabel: { fontSize: 18, lineHeight: 28, fontFamily: nativeFonts.semibold, color: colors.tealInk },
+  scoreLabel: { fontSize: 18, lineHeight: 26, fontFamily: nativeFonts.extraBold, color: x.brand.ink },
   reviewText: { gap: spacing.xs, flexShrink: 1 },
-  footer: { gap: spacing.md },
+  footer: { gap: spacing.sm },
   chooseRoom: {
-    minHeight: 52,
+    minHeight: x.control.primary,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    borderRadius: radius.sm,
-    backgroundColor: colors.coralInk,
+    borderRadius: x.radius.pill,
+    backgroundColor: x.action.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
   },
   chooseRoomLabel: {
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 24,
-    color: colors.background,
-    fontFamily: nativeFonts.semibold,
+    color: x.action.onPrimary,
+    fontFamily: nativeFonts.bold,
     flexShrink: 1,
     textAlign: 'center',
   },
-  priceRow: { alignItems: 'baseline', gap: spacing.sm, flexWrap: 'wrap' },
-  price: { fontSize: 24, lineHeight: 34, color: colors.navy, fontFamily: nativeFonts.semibold },
-  sections: { paddingHorizontal: mobileLayout.gutter },
-  loading: { paddingVertical: spacing.lg, color: colors.textMuted, fontSize: 14, lineHeight: 23 },
+  priceRow: { alignItems: 'baseline', gap: spacing.xs, flexWrap: 'wrap' },
+  price: {
+    fontSize: 24,
+    lineHeight: 32,
+    color: x.day.text,
+    fontFamily: nativeFonts.extraBold,
+    fontVariant: ['tabular-nums'],
+  },
+  sections: { paddingHorizontal: mobileLayout.gutter, backgroundColor: x.day.canvas },
+  loading: { paddingVertical: spacing.lg, color: x.day.textSecondary, fontSize: 14, lineHeight: 23 },
 });

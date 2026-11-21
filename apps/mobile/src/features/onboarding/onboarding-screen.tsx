@@ -1,4 +1,4 @@
-import { nativeFonts as fonts, colors } from '@tripflix/tokens';
+import { explorer as x, nativeFonts as fonts } from '@tripflix/tokens';
 import { t, vi } from '@tripflix/i18n';
 import { resolveMobileLoginReturn } from '@tripflix/app-core';
 import { Image } from 'expo-image';
@@ -21,9 +21,9 @@ import { assets, Icon, Logo, Txt, type IconName } from '@/components/mobile-ui';
 import { useOnboarding } from './onboarding-provider';
 import type { Interest, OnboardingStep, Pace } from './onboarding-model';
 
-const ACCENT = colors.coralInk;
-const BACKGROUND = '#FFFDFA';
-const INK = colors.navy;
+const ACCENT = x.day.link;
+const BACKGROUND = x.day.canvas;
+const INK = x.day.text;
 const enter = FadeInDown.duration(280).reduceMotion(ReduceMotion.System);
 type InterestOption = {
   id: Interest;
@@ -102,7 +102,7 @@ function Action({
       style={({ pressed }) => [styles.action, disabled && styles.actionDisabled, pressed && styles.pressed]}
     >
       <Txt style={styles.actionText}>{label}</Txt>
-      <Icon name="arrow-forward" color={colors.background} size={22} />
+      <Icon name="arrow-forward" color={x.action.onPrimary} size={22} />
     </Pressable>
   );
 }
@@ -128,6 +128,20 @@ function TextAction({
     >
       <Txt style={styles.textActionLabel}>{label}</Txt>
     </Pressable>
+  );
+}
+
+function TripiGuide({ message }: { message: string }) {
+  return (
+    <View style={styles.guide}>
+      <View style={styles.guideAvatar}>
+        <Image source={assets.welcome} contentFit="contain" style={styles.guideImage} />
+      </View>
+      <View style={styles.guideBubble}>
+        <Txt style={styles.guideName}>Tripi</Txt>
+        <Txt style={styles.guideText}>{message}</Txt>
+      </View>
+    </View>
   );
 }
 
@@ -312,27 +326,25 @@ function OnboardingFlow() {
               </View>
               <View style={styles.welcomeCopy}>
                 <Txt variant="title" style={[styles.headline, compact && styles.headlineCompact]}>
-                  Chuyến đi,{'\n'}theo{' '}
-                  <Txt style={[styles.headline, styles.accent, compact && styles.headlineCompact]}>
-                    gu của bạn.
-                  </Txt>
+                  Chuyến đi,{'\n'}theo gu của bạn.
                 </Txt>
+                <Txt style={styles.slogan}>{vi.mobile.explorer.slogan}</Txt>
                 <Txt style={styles.body}>
                   Chọn vài điều bạn thích.{'\n'}Bắt đầu tìm cảm hứng cho chuyến đi tiếp theo.
                 </Txt>
               </View>
               <View style={styles.introNote}>
-                <View style={styles.noteRule} />
+                <Icon name="time-outline" size={16} color={x.day.link} />
                 <Txt style={styles.noteText}>Hai câu hỏi ngắn. Không cần tài khoản.</Txt>
               </View>
             </>
           ) : step === 'interests' ? (
             <>
               <View style={styles.stepHeading}>
+                <TripiGuide message="Chọn một hoặc nhiều điều bạn thích nhé." />
                 <Txt variant="title" style={styles.question}>
-                  Điều gì khiến bạn{'\n'}muốn <Txt style={[styles.question, styles.accent]}>xách ba lô?</Txt>
+                  Điều gì khiến bạn{'\n'}muốn xách ba lô?
                 </Txt>
-                <Txt style={styles.body}>Chọn một hoặc nhiều điều bạn thích.</Txt>
               </View>
               <View style={styles.interestGrid}>
                 {interests.map((item) => {
@@ -351,21 +363,19 @@ function OnboardingFlow() {
                             : [...record.interests, item.id],
                         })
                       }
-                      style={({ pressed }) => [styles.interest, pressed && styles.pressed]}
+                      style={({ pressed }) => [
+                        styles.interest,
+                        selected && styles.interestSelected,
+                        pressed && styles.pressed,
+                      ]}
                     >
-                      <View
-                        style={[
-                          styles.interestPhoto,
-                          { aspectRatio: compact ? 1.22 : 1.02 },
-                          selected && styles.selectedPhoto,
-                        ]}
-                      >
+                      <View style={[styles.interestPhoto, { aspectRatio: compact ? 1.22 : 1.02 }]}>
                         <InterestArt item={item} />
                         <View style={[styles.check, selected && styles.checked]}>
-                          {selected && <Icon name="checkmark" size={18} color={colors.background} />}
+                          {selected && <Icon name="checkmark" size={16} color={x.brand.white} />}
                         </View>
                       </View>
-                      <Txt style={[styles.interestTitle, selected && styles.accent]}>{item.title}</Txt>
+                      <Txt style={styles.interestTitle}>{item.title}</Txt>
                       <Txt style={styles.interestDetail}>{item.detail}</Txt>
                     </Pressable>
                   );
@@ -380,11 +390,10 @@ function OnboardingFlow() {
           ) : step === 'pace' ? (
             <>
               <View style={styles.stepHeading}>
+                <TripiGuide message="Bạn thường thích tận hưởng thế nào?" />
                 <Txt variant="title" style={styles.question}>
-                  Một chuyến đi,{'\n'}
-                  <Txt style={[styles.question, styles.accent]}>nhịp của riêng bạn.</Txt>
+                  Một chuyến đi,{'\n'}nhịp của riêng bạn.
                 </Txt>
-                <Txt style={styles.body}>Bạn thường thích tận hưởng thế nào?</Txt>
               </View>
               <View
                 style={styles.paceArt}
@@ -395,7 +404,11 @@ function OnboardingFlow() {
                 <View style={styles.paceArtShade} />
                 <Image source={assets.explore} contentFit="contain" style={styles.paceMascot} />
               </View>
-              <View accessibilityRole="radiogroup" accessibilityLabel="Nhịp chuyến đi">
+              <View
+                accessibilityRole="radiogroup"
+                accessibilityLabel="Nhịp chuyến đi"
+                style={styles.paceList}
+              >
                 {paces.map((item) => {
                   const selected = record.pace === item.id;
                   return (
@@ -414,7 +427,7 @@ function OnboardingFlow() {
                       ]}
                     >
                       <View style={styles.paceIcon}>
-                        <Icon name={item.icon} size={24} color={selected ? ACCENT : INK} />
+                        <Icon name={item.icon} size={22} color={ACCENT} />
                       </View>
                       <View style={styles.paceCopy}>
                         <Txt style={styles.paceTitle}>{item.title}</Txt>
@@ -432,8 +445,7 @@ function OnboardingFlow() {
             <>
               <View style={styles.stepHeading}>
                 <Txt variant="title" style={styles.question}>
-                  Một chút về bạn.{'\n'}
-                  <Txt style={[styles.question, styles.accent]}>Nhiều điều để đi.</Txt>
+                  Một chút về bạn.{'\n'}Nhiều điều để đi.
                 </Txt>
                 <Txt style={styles.body}>Đây là gu chuyến đi bạn vừa chọn.</Txt>
               </View>
@@ -532,21 +544,31 @@ function OnboardingFlow() {
   );
 }
 
+const card = {
+  backgroundColor: x.day.surface,
+  borderRadius: x.radius.lg,
+  shadowColor: x.shadow,
+  shadowOffset: { width: 0, height: x.elevation.floating.offsetY },
+  shadowRadius: x.elevation.floating.blur,
+  shadowOpacity: 0.07,
+  elevation: 2,
+} as const;
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: BACKGROUND },
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
-    paddingHorizontal: 24,
+    paddingHorizontal: x.gutter,
     minHeight: 64,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   back: { width: 48, height: 48, marginLeft: -12, alignItems: 'center', justifyContent: 'center' },
-  content: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 20 },
-  welcomeContent: { justifyContent: 'center', paddingTop: 8 },
-  stage: { gap: 24 },
-  collage: { marginBottom: 8, marginHorizontal: -4 },
+  content: { flexGrow: 1, paddingHorizontal: x.gutter, paddingTop: x.space.md, paddingBottom: x.space.lg },
+  welcomeContent: { justifyContent: 'center', paddingTop: x.space.xs },
+  stage: { gap: x.space.xl },
+  collage: { marginBottom: x.space.xs, marginHorizontal: -4 },
   mainPhoto: {
     position: 'absolute',
     top: 0,
@@ -554,6 +576,7 @@ const styles = StyleSheet.create({
     bottom: 22,
     width: '68%',
     overflow: 'hidden',
+    borderRadius: x.radius.xl,
     transform: [{ rotate: '-5deg' }],
   },
   smallPhoto: {
@@ -562,6 +585,8 @@ const styles = StyleSheet.create({
     height: '66%',
     right: 0,
     top: '24%',
+    overflow: 'hidden',
+    borderRadius: x.radius.lg,
     borderWidth: 5,
     borderColor: BACKGROUND,
     transform: [{ rotate: '8deg' }],
@@ -572,12 +597,14 @@ const styles = StyleSheet.create({
     left: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    backgroundColor: colors.sun,
-    padding: 9,
+    gap: x.space.xs,
+    backgroundColor: x.brand.sun,
+    paddingVertical: x.space.xs,
+    paddingHorizontal: x.space.sm,
+    borderRadius: x.radius.pill,
     transform: [{ rotate: '-3deg' }],
   },
-  photoCaptionText: { fontFamily: fonts.semibold, fontSize: 12, lineHeight: 18, color: INK },
+  photoCaptionText: { fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18, color: INK },
   mascot: {
     position: 'absolute',
     width: 92,
@@ -587,149 +614,234 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '9deg' }],
   },
   mascotImage: { width: '100%', height: '100%' },
-  welcomeCopy: { gap: 14 },
-  headline: { fontFamily: fonts.extraBold, color: INK, fontSize: 36, lineHeight: 47, letterSpacing: -1.5 },
-  headlineCompact: { fontSize: 32, lineHeight: 42 },
-  accent: { color: ACCENT },
-  body: { color: '#53606B', fontSize: 14, lineHeight: 23 },
-  introNote: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  noteRule: { width: 22, height: 2, backgroundColor: ACCENT },
-  noteText: { flex: 1, color: '#53606B', fontSize: 12, lineHeight: 20 },
-  action: {
-    minHeight: 56,
-    borderRadius: 4,
-    backgroundColor: ACCENT,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+  welcomeCopy: { gap: x.space.sm },
+  headline: {
+    fontFamily: fonts.extraBold,
+    color: INK,
+    fontSize: x.type.display.fontSize,
+    lineHeight: 44,
+    letterSpacing: x.type.display.letterSpacing,
+  },
+  headlineCompact: { fontSize: 30, lineHeight: 38 },
+  accent: { color: x.day.link },
+  slogan: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 24, color: x.day.link },
+  body: { color: x.day.textSecondary, fontSize: 15, lineHeight: 23 },
+  introNote: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
+    gap: x.space.xs,
+    alignSelf: 'flex-start',
+    paddingVertical: x.space.xs,
+    paddingHorizontal: x.space.sm,
+    borderRadius: x.radius.pill,
+    backgroundColor: x.day.tintExplore,
+  },
+  noteText: { color: x.day.link, fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18, flexShrink: 1 },
+  action: {
+    minHeight: x.control.primary,
+    borderRadius: x.radius.pill,
+    backgroundColor: x.action.primary,
+    paddingVertical: x.space.sm,
+    paddingHorizontal: x.space.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: x.space.xs,
   },
   actionText: {
-    fontFamily: fonts.semibold,
+    fontFamily: fonts.bold,
     fontSize: 16,
     lineHeight: 24,
-    color: colors.background,
+    color: x.action.onPrimary,
     flexShrink: 1,
   },
-  actionDisabled: { backgroundColor: '#D8D5D0' },
-  pressed: { opacity: 0.8, transform: [{ scale: 0.985 }] },
+  actionDisabled: { opacity: 0.45 },
+  pressed: { opacity: 0.82 },
   textAction: { minHeight: 44, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
   textActionLabel: {
-    fontFamily: fonts.medium,
-    fontSize: 12,
+    fontFamily: fonts.semibold,
+    fontSize: 14,
     lineHeight: 20,
-    color: INK,
-    textDecorationLine: 'underline',
+    color: x.day.textSecondary,
   },
-  footer: { paddingTop: 12, paddingHorizontal: 24, paddingBottom: 8, gap: 4, backgroundColor: BACKGROUND },
+  footer: {
+    paddingTop: x.space.sm,
+    paddingHorizontal: x.gutter,
+    paddingBottom: x.space.xs,
+    gap: 4,
+    backgroundColor: BACKGROUND,
+  },
   footerHint: {
     textAlign: 'center',
-    color: '#626974',
-    fontSize: 11,
+    color: x.day.textSecondary,
+    fontSize: 13,
     lineHeight: 18,
-    paddingTop: 9,
-    paddingBottom: 7,
+    paddingTop: x.space.xs,
+    paddingBottom: x.space.xxs,
   },
-  progressRow: { paddingHorizontal: 24, flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 26 },
-  progressLine: { height: 2, flex: 1, backgroundColor: '#E4E0DB' },
-  progressFilled: { backgroundColor: ACCENT },
+  progressRow: {
+    paddingHorizontal: x.gutter,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 26,
+  },
+  progressLine: { height: 6, flex: 1, borderRadius: x.radius.pill, backgroundColor: x.day.line },
+  progressFilled: { backgroundColor: x.action.primary },
   stepLabel: {
-    fontFamily: fonts.medium,
-    fontSize: 11,
+    fontFamily: fonts.semibold,
+    fontSize: 13,
     lineHeight: 18,
-    color: '#53606B',
-    marginLeft: 10,
-    minWidth: 37,
+    color: x.day.textSecondary,
+    marginLeft: x.space.xs,
+    minWidth: 40,
   },
-  stepHeading: { gap: 10 },
-  question: { fontFamily: fonts.bold, fontSize: 28, lineHeight: 38, letterSpacing: -1, color: INK },
-  interestGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 18, justifyContent: 'space-between' },
-  interest: { width: '47%', gap: 4 },
+  stepHeading: { gap: x.space.sm },
+  guide: { flexDirection: 'row', alignItems: 'flex-end', gap: x.space.xs },
+  guideAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: x.radius.pill,
+    backgroundColor: x.day.tintWarm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  guideImage: { width: 48, height: 52 },
+  guideBubble: {
+    ...card,
+    flex: 1,
+    borderBottomLeftRadius: x.radius.sm / 2,
+    paddingVertical: x.space.sm,
+    paddingHorizontal: x.space.md,
+  },
+  guideName: { fontFamily: fonts.bold, fontSize: 13, lineHeight: 18, color: x.day.link },
+  guideText: { fontSize: 15, lineHeight: 22, color: INK },
+  question: {
+    fontFamily: fonts.extraBold,
+    fontSize: x.type.title.fontSize,
+    lineHeight: 34,
+    letterSpacing: x.type.title.letterSpacing,
+    color: INK,
+  },
+  interestGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: x.space.sm, justifyContent: 'space-between' },
+  interest: {
+    ...card,
+    width: '48%',
+    padding: x.space.xs,
+    gap: 2,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  interestSelected: { borderColor: x.brand.coral, backgroundColor: x.day.tintWarm },
   interestPhoto: {
     width: '100%',
     overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: 'transparent',
-    marginBottom: 4,
+    borderRadius: x.radius.md,
+    marginBottom: x.space.xs,
   },
-  selectedPhoto: { borderColor: ACCENT },
-  iconArt: { backgroundColor: '#FFF0EB', alignItems: 'center', justifyContent: 'center' },
+  iconArt: { backgroundColor: x.day.tintWarm, alignItems: 'center', justifyContent: 'center' },
   check: {
     position: 'absolute',
     right: 7,
     top: 7,
-    width: 25,
-    height: 25,
-    borderWidth: 1.5,
-    borderColor: colors.background,
-    backgroundColor: '#141B3D66',
+    width: 26,
+    height: 26,
+    borderRadius: x.radius.pill,
+    borderWidth: 2,
+    borderColor: x.brand.white,
+    backgroundColor: x.glass,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checked: { backgroundColor: ACCENT, borderColor: ACCENT },
-  interestTitle: { fontFamily: fonts.semibold, fontSize: 14, lineHeight: 22, color: INK },
-  interestDetail: { fontSize: 11, lineHeight: 18, color: '#626974' },
-  selectionCount: { fontSize: 12, lineHeight: 20, color: '#53606B' },
-  paceArt: { height: 110, overflow: 'hidden' },
-  paceArtShade: { ...StyleSheet.absoluteFill, backgroundColor: '#141B3D12' },
+  checked: { backgroundColor: x.brand.coral, borderColor: x.brand.white },
+  interestTitle: {
+    fontFamily: fonts.bold,
+    fontSize: 15,
+    lineHeight: 21,
+    color: INK,
+    paddingHorizontal: x.space.xxs,
+  },
+  interestDetail: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: x.day.textSecondary,
+    paddingHorizontal: x.space.xxs,
+  },
+  selectionCount: { fontSize: 13, lineHeight: 18, color: x.day.textSecondary },
+  paceArt: { height: 120, overflow: 'hidden', borderRadius: x.radius.xl },
+  paceArtShade: { ...StyleSheet.absoluteFill, backgroundColor: x.glass, opacity: 0.25 },
   paceMascot: { position: 'absolute', right: 12, bottom: -10, height: 122, width: 112 },
+  paceList: { gap: x.space.sm },
   paceRow: {
+    ...card,
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 92,
-    gap: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E4E0DB',
-    borderLeftWidth: 3,
-    borderLeftColor: 'transparent',
+    minHeight: 80,
+    gap: x.space.sm,
+    paddingVertical: x.space.sm,
+    paddingHorizontal: x.space.md,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
-  paceSelected: { backgroundColor: '#FFF0EB', borderLeftColor: ACCENT },
-  paceIcon: { width: 32, alignItems: 'center' },
-  paceCopy: { flex: 1, gap: 4 },
-  paceTitle: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 24, color: INK },
-  paceDetail: { fontSize: 12, lineHeight: 20, color: '#53606B' },
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
-    borderColor: '#8B8B8B',
+  paceSelected: { backgroundColor: x.day.tintWarm, borderColor: x.brand.coral },
+  paceIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: x.radius.md,
+    backgroundColor: x.day.tintExplore,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioSelected: { borderColor: ACCENT },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: ACCENT },
+  paceCopy: { flex: 1, gap: 2 },
+  paceTitle: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 22, color: INK },
+  paceDetail: { fontSize: 13, lineHeight: 18, color: x.day.textSecondary },
+  radio: {
+    width: 24,
+    height: 24,
+    borderRadius: x.radius.pill,
+    borderWidth: 2,
+    borderColor: x.day.input,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioSelected: { borderColor: x.brand.coral },
+  radioDot: { width: 12, height: 12, borderRadius: x.radius.pill, backgroundColor: x.brand.coral },
   summaryPhotos: {
     height: 155,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 12,
+    marginVertical: x.space.sm,
   },
   summaryPhoto: {
     width: '37%',
     height: 145,
+    overflow: 'hidden',
+    borderRadius: x.radius.lg,
     borderWidth: 5,
-    borderColor: colors.background,
+    borderColor: x.day.surface,
     marginHorizontal: -10,
   },
-  summarySection: { gap: 0, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#E4E0DB' },
+  summarySection: { ...card, gap: 2, padding: x.space.md },
   summaryLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
-  summaryLabel: { fontSize: 12, lineHeight: 20, color: '#53606B', flexShrink: 1 },
-  summaryValue: { fontFamily: fonts.semibold, fontSize: 18, lineHeight: 28, color: INK },
-  localNote: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
-  localNoteText: { flex: 1, fontSize: 12, lineHeight: 21, color: '#53606B' },
+  summaryLabel: { fontSize: 13, lineHeight: 18, color: x.day.textSecondary, flexShrink: 1 },
+  summaryValue: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 24, color: INK },
+  localNote: {
+    flexDirection: 'row',
+    gap: x.space.xs,
+    alignItems: 'flex-start',
+    padding: x.space.sm,
+    borderRadius: x.radius.md,
+    backgroundColor: x.day.tintExplore,
+  },
+  localNoteText: { flex: 1, fontSize: 13, lineHeight: 20, color: INK },
   error: {
     gap: 2,
-    marginBottom: 8,
-    padding: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: ACCENT,
-    backgroundColor: '#FFF0EB',
+    marginBottom: x.space.xs,
+    padding: x.space.sm,
+    borderRadius: x.radius.md,
+    backgroundColor: x.day.tintWarm,
   },
-  errorText: { color: ACCENT, fontSize: 12, lineHeight: 20 },
+  errorText: { color: x.day.error, fontSize: 13, lineHeight: 20 },
 });

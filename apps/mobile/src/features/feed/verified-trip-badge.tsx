@@ -1,12 +1,12 @@
 import { vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { StyleSheet, View } from 'react-native';
 import { compactType } from '@/components/mobile-scale';
 import { Icon, Txt } from '@/components/mobile-ui';
 
 /** Tích "Đã đi" (TF105): lộ trình lấy từ chuyến đã đi xong của chính người đăng, server xác thực lúc đăng. */
 export function VerifiedTripBadge({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
-  const color = tone === 'light' ? colors.background : colors.tealInk;
+  const color = tone === 'light' ? x.day.surface : x.day.link;
   return (
     <View
       style={[styles.badge, tone === 'light' ? styles.light : styles.dark]}
@@ -31,6 +31,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   light: { backgroundColor: colors.overlay },
-  dark: { backgroundColor: colors.seaMist },
+  dark: { backgroundColor: x.day.tintExplore },
   text: { ...compactType.label, fontFamily: nativeFonts.semibold },
 });

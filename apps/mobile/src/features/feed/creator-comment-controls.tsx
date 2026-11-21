@@ -4,7 +4,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { commentControlsApi } from '@tripflix/api-client';
 import type { CommentSettingsDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
-import { colors, spacing } from '@tripflix/tokens';
+import { explorer as x, spacing } from '@tripflix/tokens';
 import { Button, Card, Field, Txt } from '../../components/mobile-ui';
 import { ApiErrorNotice } from '../../components/api-state';
 
@@ -78,9 +78,9 @@ export function CreatorCommentControls({
                 <View
                   style={{
                     borderLeftWidth: 3,
-                    borderLeftColor: colors.border,
+                    borderLeftColor: x.day.line,
                     padding: spacing.sm,
-                    backgroundColor: colors.surfaceMuted,
+                    backgroundColor: x.day.canvas,
                     gap: spacing.xs,
                   }}
                 >
@@ -169,7 +169,7 @@ function SettingsForm({ postId, initial }: { postId: string; initial: CommentSet
           accessibilityLabel={text.commentsEnabled}
           value={enabled}
           onValueChange={setEnabled}
-          trackColor={{ true: colors.tealInk }}
+          trackColor={{ true: x.day.link }}
         />
       </View>
       <Field label={text.keywords} value={keywords} onChangeText={setKeywords} multiline maxLength={4100} />

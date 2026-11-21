@@ -12,7 +12,7 @@ import {
 import { t, vi, type MessageKey } from '@tripflix/i18n';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import { RequireAccount } from '@/components/api-state';
 import { DateSingleField } from '@/components/date-sheet';
@@ -427,7 +427,7 @@ function CheckoutForm() {
   return (
     <Screen
       title={text.checkout}
-      background={colors.background}
+      background={x.day.surface}
       footer={
         canPay ? (
           <View style={checkoutStyles.footer}>
@@ -444,11 +444,7 @@ function CheckoutForm() {
                     : text.checkoutMethodHint}
               </Txt>
             )}
-            <Button
-              disabled={isPayDisabled}
-              onPress={() => payment.mutate('pay')}
-              style={[checkoutStyles.pay, isPayDisabled && checkoutStyles.disabledPay]}
-            >
+            <Button disabled={isPayDisabled} onPress={() => payment.mutate('pay')} style={checkoutStyles.pay}>
               {payment.isPending ? vi.api.loading : text.pay}
             </Button>
           </View>
@@ -472,10 +468,10 @@ function CheckoutForm() {
                 paddingHorizontal: spacing.md,
                 paddingVertical: spacing.sm,
                 borderRadius: radius.sm,
-                backgroundColor: colors.coralTint,
+                backgroundColor: x.day.tintWarm,
               }}
             >
-              <Icon name="time-outline" size={18} color={colors.coralInk} />
+              <Icon name="time-outline" size={18} color={x.day.text} />
               <HoldTimer expiresAt={order.holdExpiresAt} />
             </Row>
           )}
@@ -680,11 +676,11 @@ function CheckoutForm() {
                                 paddingVertical: spacing.sm,
                                 borderRadius: radius.sm,
                                 borderWidth: 1,
-                                borderColor: isActive ? colors.tealInk : colors.border,
-                                backgroundColor: isActive ? colors.seaMist : colors.background,
+                                borderColor: isActive ? x.day.link : x.day.line,
+                                backgroundColor: isActive ? x.day.tintExplore : x.day.surface,
                               }}
                             >
-                              <Txt variant="small" style={{ fontWeight: '600', color: colors.ink }}>
+                              <Txt variant="small" style={{ fontWeight: '600', color: x.day.text }}>
                                 {card.label}
                               </Txt>
                               <Txt variant="small" style={[ui.muted, { fontSize: 11 }]}>
@@ -704,7 +700,7 @@ function CheckoutForm() {
                     </>
                   ) : (
                     <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
-                      <Icon name="open-outline" size={18} color={colors.tealInk} />
+                      <Icon name="open-outline" size={18} color={x.day.link} />
                       <Txt variant="small" style={[ui.muted, { flex: 1 }]}>
                         {text.vnpayHint}
                       </Txt>
@@ -730,11 +726,11 @@ function CheckoutForm() {
                       borderWidth: 2,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      borderColor: hasConsent ? colors.coral : colors.textSubtle,
-                      backgroundColor: hasConsent ? colors.coral : colors.background,
+                      borderColor: hasConsent ? x.action.primary : x.day.input,
+                      backgroundColor: hasConsent ? x.action.primary : x.day.surface,
                     }}
                   >
-                    {hasConsent && <Icon name="checkmark" size={15} color={colors.background} />}
+                    {hasConsent && <Icon name="checkmark" size={15} color={x.action.onPrimary} />}
                   </View>
                   <View style={{ flex: 1 }}>
                     <Txt variant="small">{text.policy}</Txt>
@@ -848,7 +844,7 @@ function FormCard({
   return (
     <View style={checkoutStyles.form}>
       <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
-        <Icon name={icon} size={22} color={colors.tealInk} />
+        <Icon name={icon} size={22} color={x.day.link} />
         <View style={{ flex: 1 }}>
           <Txt accessibilityRole="header" style={checkoutStyles.formTitle}>
             {title}
@@ -862,11 +858,11 @@ function FormCard({
 }
 
 const checkoutStyles = StyleSheet.create({
-  copyButton: { borderRadius: radius.sm, minHeight: 48, backgroundColor: colors.seaMist, borderWidth: 0 },
+  copyButton: { borderRadius: radius.sm, minHeight: 48, backgroundColor: x.day.tintExplore, borderWidth: 0 },
   copyGroup: {
     padding: spacing.md,
     gap: spacing.sm,
-    backgroundColor: colors.sunSoft,
+    backgroundColor: x.day.tintSun,
     borderRadius: radius.sm,
   },
   input: {
@@ -874,20 +870,19 @@ const checkoutStyles = StyleSheet.create({
     minHeight: 52,
     fontSize: 16,
     lineHeight: 25,
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
   },
   footer: { gap: spacing.sm },
-  total: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold, color: colors.navy },
-  meta: { fontSize: 13, lineHeight: 22, color: colors.ink },
-  pay: { minHeight: 52, borderRadius: radius.sm, backgroundColor: colors.coralInk },
-  disabledPay: { backgroundColor: colors.navy, opacity: 0.8 },
+  total: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold, color: x.day.text },
+  meta: { fontSize: 13, lineHeight: 22, color: x.day.text },
+  pay: { minHeight: 52 },
   form: {
     gap: spacing.lg,
     padding: spacing.lg,
     borderRadius: radius.md,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: x.day.canvas,
   },
-  formTitle: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: colors.navy },
+  formTitle: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: x.day.text },
   method: {
     minHeight: 48,
     flexGrow: 1,
@@ -895,38 +890,61 @@ const checkoutStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.sm,
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
   },
-  selectedMethod: { backgroundColor: colors.navy },
-  methodLabel: { fontSize: 15, lineHeight: 24, color: colors.ink, fontFamily: nativeFonts.semibold },
-  selectedLabel: { color: colors.background },
+  selectedMethod: { backgroundColor: x.day.text },
+  methodLabel: { fontSize: 15, lineHeight: 24, color: x.day.text, fontFamily: nativeFonts.semibold },
+  selectedLabel: { color: x.day.surface },
 });
 
 export function OrderSummary({ order }: { order: NonNullable<ReturnType<typeof useCommerceOrder>['data']> }) {
+  const statusLabel = order.tripStatus === 'completed' ? text.tripCompleted : text.status[order.status];
+  const statusTone = order.status === 'paid' ? 'teal' : order.status === 'pending' ? 'sun' : 'coral';
+  const statusIcon: IconName =
+    order.status === 'paid'
+      ? 'checkmark-circle'
+      : order.status === 'pending'
+        ? 'time-outline'
+        : 'close-circle';
   return (
     <>
-      <Txt variant="heading">
-        {order.tripStatus === 'completed' ? text.tripCompleted : text.status[order.status]}
-      </Txt>
+      <Row style={{ alignItems: 'center' }}>
+        <Badge tone={statusTone} icon={statusIcon}>
+          {statusLabel}
+        </Badge>
+      </Row>
       {order.items.map((item) => (
-        <Card key={item.id}>
+        <View key={item.id} style={orderStyles.item}>
           <Txt variant="heading">{item.productName}</Txt>
-          <Txt>
-            {item.productType === 'flight'
-              ? vi.flights.date + ' · ' + formatDate(item.date)
-              : formatDate(item.date) + ' → ' + formatDate(item.dateTo)}
-          </Txt>
-          <Txt>
-            {item.qty} × {item.ratePlanName}
-          </Txt>
-          <Txt>{item.isRefundable ? text.refundable : text.nonRefundable}</Txt>
+          <Row style={orderStyles.line}>
+            <Icon name="calendar-outline" size={18} color={x.day.link} />
+            <Txt style={orderStyles.lineText}>
+              {item.productType === 'flight'
+                ? vi.flights.date + ': ' + formatDate(item.date)
+                : formatDate(item.date) + ' → ' + formatDate(item.dateTo)}
+            </Txt>
+          </Row>
+          <Row style={orderStyles.line}>
+            <Icon name="bed-outline" size={18} color={x.day.link} />
+            <Txt style={orderStyles.lineText}>
+              {item.qty} × {item.ratePlanName}
+            </Txt>
+          </Row>
+          <Row style={orderStyles.line}>
+            <Icon
+              name={item.isRefundable ? 'shield-checkmark-outline' : 'alert-circle-outline'}
+              size={18}
+              color={item.isRefundable ? x.day.link : x.day.textSecondary}
+            />
+            <Txt style={orderStyles.lineText}>{item.isRefundable ? text.refundable : text.nonRefundable}</Txt>
+          </Row>
           {item.freeCancelUntil && (
-            <Txt>
+            <Txt style={orderStyles.note}>
               {text.freeCancel}: {formatDate(item.freeCancelUntil.slice(0, 10))}
             </Txt>
           )}
           <PriceRow label={text.total} amount={money(item.lineTotal)} />
-        </Card>
+        </View>
       ))}
       <PriceRow total label={text.total} amount={money(order.total)} />
       {order.confirmationCode && <PriceRow label={text.confirmation} amount={order.confirmationCode} />}
@@ -934,6 +952,21 @@ export function OrderSummary({ order }: { order: NonNullable<ReturnType<typeof u
     </>
   );
 }
+
+const orderStyles = StyleSheet.create({
+  item: {
+    gap: spacing.sm,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: x.day.surface,
+    borderWidth: 1,
+    borderColor: x.day.line,
+  },
+  line: { alignItems: 'center', gap: spacing.sm },
+  lineText: { flex: 1, color: x.day.text },
+  note: { color: x.day.textSecondary, fontSize: 13, lineHeight: 20 },
+});
+
 export function CommerceOrderScreen() {
   const { id = '' } = useLocalSearchParams<{ id?: string }>();
   const pathname = usePathname();
@@ -966,7 +999,9 @@ export function CommerceOrderScreen() {
           {query.data.status === 'paid' && <CancelOrder orderId={query.data.orderId} />}
         </>
       )}
-      <Button onPress={() => router.replace('/my-trips')}>{text.viewTrips}</Button>
+      <Button tone="secondary" onPress={() => router.replace('/my-trips')}>
+        {text.viewTrips}
+      </Button>
     </Screen>
   );
 }

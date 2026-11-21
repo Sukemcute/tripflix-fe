@@ -10,7 +10,7 @@ import {
   type BookingCartItem,
 } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Icon, money, Notice, Row, Txt, ui } from '@/components/mobile-ui';
@@ -74,12 +74,12 @@ export function PhotoGallery({
         ...(height ? { height } : { aspectRatio: ratio }),
         borderRadius: rounded,
         overflow: 'hidden',
-        backgroundColor: colors.surfaceMuted,
+        backgroundColor: x.day.canvas,
       }}
     >
       {!images.length && (
         <View style={galleryStyles.placeholder}>
-          <Icon name="image-outline" size={28} color={colors.textMuted} />
+          <Icon name="image-outline" size={28} color={x.day.textSecondary} />
           <Txt style={galleryStyles.placeholderText}>
             {isLoading ? hotelText.photoLoading : hotelText.noPhotos}
           </Txt>
@@ -126,7 +126,7 @@ export function PhotoGallery({
             onPress={() => scroll.current?.scrollTo({ x: (index - 1) * slideWidth, animated: true })}
             style={({ pressed }) => [galleryStyles.control, (pressed || index === 0) && galleryStyles.dim]}
           >
-            <Icon name="chevron-back" size={20} color={colors.background} />
+            <Icon name="chevron-back" size={20} color={x.brand.white} />
           </Pressable>
           <View style={galleryStyles.counter}>
             <Txt
@@ -147,7 +147,7 @@ export function PhotoGallery({
               (pressed || index === images.length - 1) && galleryStyles.dim,
             ]}
           >
-            <Icon name="chevron-forward" size={20} color={colors.background} />
+            <Icon name="chevron-forward" size={20} color={x.brand.white} />
           </Pressable>
         </View>
       )}
@@ -212,7 +212,7 @@ function GalleryPhoto({
               <View style={galleryStyles.skeletonLine} />
             </View>
           )}
-          {status !== 'loading' && <Icon name="image-outline" size={24} color={colors.tealInk} />}
+          {status !== 'loading' && <Icon name="image-outline" size={24} color={x.day.link} />}
           <Txt accessibilityLiveRegion={isActive ? 'polite' : 'none'} style={galleryStyles.placeholderText}>
             {status === 'timeout'
               ? hotelText.photoTimeout
@@ -240,17 +240,17 @@ function GalleryPhoto({
 
 const galleryStyles = StyleSheet.create({
   skeleton: { width: '48%', gap: spacing.sm, alignItems: 'center' },
-  skeletonBlock: { width: '100%', height: 24, backgroundColor: colors.border, borderRadius: radius.sm },
-  skeletonLine: { width: '60%', height: 8, backgroundColor: colors.border, borderRadius: radius.sm },
+  skeletonBlock: { width: '100%', height: 24, backgroundColor: x.day.line, borderRadius: radius.sm },
+  skeletonLine: { width: '60%', height: 8, backgroundColor: x.day.line, borderRadius: radius.sm },
   placeholder: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
     padding: spacing.lg,
   },
-  placeholderText: { fontSize: 14, lineHeight: 23, color: colors.ink, textAlign: 'center' },
+  placeholderText: { fontSize: 14, lineHeight: 23, color: x.day.text, textAlign: 'center' },
   pager: {
     position: 'absolute',
     left: spacing.sm,
@@ -274,17 +274,17 @@ const galleryStyles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: colors.overlayHeavy,
   },
-  counterText: { color: colors.background, fontSize: 13, lineHeight: 22, fontFamily: nativeFonts.semibold },
+  counterText: { color: x.brand.white, fontSize: 13, lineHeight: 22, fontFamily: nativeFonts.semibold },
   retry: {
     minHeight: 44,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.sm,
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  retryText: { fontSize: 14, lineHeight: 23, color: colors.tealInk, fontFamily: nativeFonts.semibold },
+  retryText: { fontSize: 14, lineHeight: 23, color: x.day.link, fontFamily: nativeFonts.semibold },
   dim: { opacity: 0.6 },
 });
 
@@ -334,10 +334,10 @@ function RateQty({
         borderRadius: radius.sm,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.background,
+        backgroundColor: x.day.surface,
       }}
     >
-      <Txt style={{ color: isEnabled ? colors.tealInk : colors.textSubtle, fontSize: 18, lineHeight: 26 }}>
+      <Txt style={{ color: isEnabled ? x.day.link : x.day.textSecondary, fontSize: 18, lineHeight: 26 }}>
         {sign}
       </Txt>
     </Pressable>
@@ -356,12 +356,12 @@ function RateQty({
             paddingVertical: 12,
             minHeight: 48,
             borderRadius: radius.sm,
-            backgroundColor: isDisabled ? colors.surfaceMuted : colors.coralInk,
+            backgroundColor: isDisabled ? x.day.canvas : x.day.text,
           }}
         >
           <Txt
             style={{
-              color: isDisabled ? colors.textMuted : colors.background,
+              color: isDisabled ? x.day.textSecondary : x.day.surface,
               fontSize: 15,
               lineHeight: 24,
               fontFamily: nativeFonts.semibold,
@@ -378,11 +378,11 @@ function RateQty({
             justifyContent: 'space-between',
             padding: 4,
             borderRadius: radius.sm,
-            backgroundColor: colors.surfaceMuted,
+            backgroundColor: x.day.canvas,
           }}
         >
           {pillButton('−', !isDisabled, qty - 1)}
-          <Txt style={{ color: colors.navy, fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.semibold }}>
+          <Txt style={{ color: x.day.text, fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.semibold }}>
             {qty} {text.cartRooms}
           </Txt>
           {pillButton('+', !isDisabled && qty < booking.maxQty, qty + 1)}
@@ -393,10 +393,10 @@ function RateQty({
   );
 }
 
-function CheckLine({ children, tone = colors.ink }: { children: string; tone?: string }) {
+function CheckLine({ children, tone = x.day.text }: { children: string; tone?: string }) {
   return (
     <Row style={{ gap: 6, alignItems: 'flex-start' }}>
-      <Icon name="checkmark" size={15} color={tone === colors.ink ? colors.teal : tone} />
+      <Icon name="checkmark" size={15} color={tone === x.day.text ? x.day.link : tone} />
       <Txt style={{ flex: 1, color: tone, fontSize: 14, lineHeight: 23 }}>{children}</Txt>
     </Row>
   );
@@ -446,17 +446,17 @@ function RateRow({
         padding: spacing.md,
         gap: spacing.md,
         borderRadius: radius.sm,
-        backgroundColor: isSelected ? colors.seaMist : colors.surface,
+        backgroundColor: isSelected ? x.day.tintExplore : x.day.canvas,
       }}
     >
       <Row style={{ alignItems: 'flex-start', gap: spacing.sm }}>
         <Txt style={{ flex: 1, fontSize: 16, lineHeight: 25, fontFamily: nativeFonts.semibold }}>
           {rate.name}
         </Txt>
-        {isSelected && <Icon name="checkmark-circle" size={22} color={colors.tealInk} />}
+        {isSelected && <Icon name="checkmark-circle" size={22} color={x.day.link} />}
       </Row>
       <View style={{ gap: 6 }}>
-        <CheckLine tone={rate.isRefundable ? colors.tealInk : colors.textMuted}>{policy}</CheckLine>
+        <CheckLine tone={rate.isRefundable ? x.day.link : x.day.textSecondary}>{policy}</CheckLine>
         {rate.perks.map((perk) => (
           <CheckLine key={perk}>{perk}</CheckLine>
         ))}
@@ -472,16 +472,16 @@ function RateRow({
                 alignSelf: 'flex-start',
                 paddingHorizontal: 6,
                 borderRadius: radius.sm,
-                backgroundColor: colors.coral,
+                backgroundColor: x.action.primary,
               }}
             >
-              <Txt variant="small" style={{ color: colors.background, fontWeight: '700' }}>
+              <Txt variant="small" style={{ color: x.action.onPrimary, fontWeight: '700' }}>
                 -{rate.discountPct}%
               </Txt>
             </View>
           )}
           {rate.listPricePerNight !== null && perNight !== null && rate.listPricePerNight > perNight && (
-            <Txt variant="small" style={{ color: colors.textSubtle, textDecorationLine: 'line-through' }}>
+            <Txt variant="small" style={{ color: x.day.textSecondary, textDecorationLine: 'line-through' }}>
               {money(rate.listPricePerNight)}
             </Txt>
           )}
@@ -493,7 +493,7 @@ function RateRow({
         ) : (
           <View style={{ alignItems: 'flex-end' }}>
             <Txt
-              style={{ fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy }}
+              style={{ fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.text }}
             >
               {money(perNight)}
             </Txt>
@@ -510,18 +510,14 @@ function RateRow({
         </Txt>
       )}
       {discount > 0 && (
-        <Txt variant="small" style={{ color: colors.tealInk }}>
+        <Txt variant="small" style={{ color: x.day.link }}>
           {text.cartChildSurcharge} {money(discount)}
         </Txt>
       )}
       {room.isAvailable && pricePerRoom !== null && (
         <View>
           {onPick ? (
-            <Button
-              style={{ borderRadius: radius.sm, backgroundColor: colors.coralInk, minHeight: 48 }}
-              disabled={isDisabled}
-              onPress={() => onPick(rate.code)}
-            >
+            <Button style={{ minHeight: 48 }} disabled={isDisabled} onPress={() => onPick(rate.code)}>
               {isSelected ? vi.mobile.tripPlan.picked : hotelText.pickRate}
             </Button>
           ) : (
@@ -554,7 +550,7 @@ const AMENITY_PREVIEW = 3;
 function Fact({ icon, children }: { icon: Parameters<typeof Icon>[0]['name']; children: string }) {
   return (
     <Row style={{ gap: 4, alignItems: 'center' }}>
-      <Icon name={icon} size={15} color={colors.textMuted} />
+      <Icon name={icon} size={15} color={x.day.textSecondary} />
       <Txt style={roomStyles.secondary}>{children}</Txt>
     </Row>
   );
@@ -601,7 +597,7 @@ export function RoomCard({
     <View
       style={{
         borderRadius: radius.md,
-        backgroundColor: colors.background,
+        backgroundColor: x.day.surface,
         overflow: 'hidden',
       }}
     >
@@ -623,7 +619,7 @@ export function RoomCard({
             <Row style={{ flexWrap: 'wrap', columnGap: spacing.md, rowGap: 6 }}>
               {amenities.map((amenity) => (
                 <Row key={amenity} style={{ gap: spacing.sm, alignItems: 'flex-start', width: '100%' }}>
-                  <Icon name="checkmark-circle-outline" size={15} color={colors.teal} />
+                  <Icon name="checkmark-circle-outline" size={15} color={x.day.link} />
                   <Txt style={[roomStyles.secondary, { flex: 1 }]}>{amenity}</Txt>
                 </Row>
               ))}
@@ -649,10 +645,10 @@ export function RoomCard({
               paddingHorizontal: spacing.sm,
               paddingVertical: 4,
               borderRadius: radius.sm,
-              backgroundColor: colors.coralTint,
+              backgroundColor: x.day.tintWarm,
             }}
           >
-            <Txt variant="small" style={{ color: colors.coralInk, fontWeight: '600' }}>
+            <Txt variant="small" style={{ color: x.day.text, fontWeight: '600' }}>
               {t('hotel.roomsLeft', { count: room.remaining })}
             </Txt>
           </View>
@@ -683,7 +679,7 @@ export function RoomCard({
             <Txt style={roomStyles.toggleText}>
               {isRatesOpen ? hotelText.collapseRatePlans : t('hotel.moreRatePlans', { count: hiddenRates })}
             </Txt>
-            <Icon name={isRatesOpen ? 'chevron-up' : 'chevron-down'} size={18} color={colors.tealInk} />
+            <Icon name={isRatesOpen ? 'chevron-up' : 'chevron-down'} size={18} color={x.day.link} />
           </Pressable>
         )}
       </View>
@@ -692,8 +688,8 @@ export function RoomCard({
 }
 
 const roomStyles = StyleSheet.create({
-  title: { fontSize: 18, lineHeight: 28, fontFamily: nativeFonts.semibold, color: colors.navy },
-  secondary: { fontSize: 14, lineHeight: 23, color: colors.textMuted },
+  title: { fontSize: 18, lineHeight: 28, fontFamily: nativeFonts.semibold, color: x.day.text },
+  secondary: { fontSize: 14, lineHeight: 23, color: x.day.textSecondary },
   toggle: {
     minHeight: 44,
     flexDirection: 'row',
@@ -702,13 +698,13 @@ const roomStyles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.sm,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: x.day.canvas,
     alignSelf: 'flex-start',
   },
   toggleText: {
     fontSize: 14,
     lineHeight: 23,
-    color: colors.tealInk,
+    color: x.day.link,
     fontFamily: nativeFonts.semibold,
     flexShrink: 1,
   },

@@ -27,7 +27,7 @@ import {
 } from '@tripflix/api-client';
 import { suggestControllerSuggest } from '@tripflix/api-client/core-api/discovery/discovery';
 import { t, vi } from '@tripflix/i18n';
-import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
@@ -266,7 +266,7 @@ function PaidTripPicker({
               <Icon
                 name={flights ? 'airplane' : 'bed'}
                 size={18}
-                color={isPicked ? colors.background : colors.tealInk}
+                color={isPicked ? x.day.surface : x.day.link}
               />
             </View>
             <View style={styles.flex}>
@@ -283,7 +283,7 @@ function PaidTripPicker({
                   .join(' · ')}
               </Txt>
             </View>
-            {isPicked && <Icon name="checkmark-circle" size={20} color={colors.tealInk} />}
+            {isPicked && <Icon name="checkmark-circle" size={20} color={x.day.link} />}
           </Pressable>
         );
       })}
@@ -334,7 +334,7 @@ function PosterPicker({
             <Image source={previewUri} contentFit="cover" style={StyleSheet.absoluteFill} />
           ) : (
             <View style={styles.posterFallback}>
-              <Icon name={hasCustom ? 'image-outline' : 'film-outline'} size={22} color={colors.tealInk} />
+              <Icon name={hasCustom ? 'image-outline' : 'film-outline'} size={22} color={x.day.link} />
             </View>
           )}
         </View>
@@ -515,7 +515,7 @@ function PointRow({
           }
         >
           <View style={styles.moveCol}>
-            <Icon name="reorder-three" size={22} color={colors.textMuted} />
+            <Icon name="reorder-three" size={22} color={x.day.textSecondary} />
           </View>
           <Pressable accessibilityRole="button" onPress={onToggle} style={styles.pointBody}>
             <Txt style={styles.time}>{TRIP_PLAN_TIME_PATTERN.test(point.time) ? point.time : '--:--'}</Txt>
@@ -530,13 +530,13 @@ function PointRow({
                       : ACTIVITY_ICONS[getTripPlanCategory(point)]
               }
               size={18}
-              color={isBookable ? colors.tealInk : colors.textMuted}
+              color={isBookable ? x.day.link : x.day.textSecondary}
             />
             <View style={styles.flex}>
               <Txt variant="label" numberOfLines={1}>
                 {summary}
               </Txt>
-              <Txt variant="caption" style={{ color: isBookable ? colors.tealInk : colors.textMuted }}>
+              <Txt variant="caption" style={{ color: isBookable ? x.day.link : x.day.textSecondary }}>
                 {isBookable ? copy.bookable : copy.reference}
               </Txt>
             </View>
@@ -610,12 +610,8 @@ function PointRow({
                   pressed && styles.pressed,
                 ]}
               >
-                <Icon
-                  name={option.icon}
-                  size={20}
-                  color={option.isSelected ? colors.background : colors.ink}
-                />
-                <Txt variant="label" style={{ color: option.isSelected ? colors.background : colors.ink }}>
+                <Icon name={option.icon} size={20} color={option.isSelected ? x.day.surface : x.day.text} />
+                <Txt variant="label" style={{ color: option.isSelected ? x.day.surface : x.day.text }}>
                   {option.label}
                 </Txt>
               </Pressable>
@@ -645,9 +641,9 @@ function PointRow({
                       <Icon
                         name={ACTIVITY_ICONS[category]}
                         size={14}
-                        color={isSelected ? colors.tealInk : colors.textMuted}
+                        color={isSelected ? x.day.link : x.day.textSecondary}
                       />
-                      <Txt variant="small" style={{ color: isSelected ? colors.tealInk : colors.textMuted }}>
+                      <Txt variant="small" style={{ color: isSelected ? x.day.link : x.day.textSecondary }}>
                         {vi.mobile.tripBuilder.activityKinds[category]}
                       </Txt>
                     </Pressable>
@@ -662,7 +658,7 @@ function PointRow({
               onPress={onChooseHotel}
               style={({ pressed }) => [styles.hotelChoice, pressed && styles.pressed]}
             >
-              <Icon name="bed" size={20} color={colors.coralInk} />
+              <Icon name="bed" size={20} color={x.day.text} />
               <View style={styles.flex}>
                 <Txt variant="label" numberOfLines={1}>
                   {point.hotelId ? point.title : copy.pickHotel}
@@ -671,7 +667,7 @@ function PointRow({
                   {point.hotelId ? point.roomName || copy.pickRoomHint : copy.pickHotelHint}
                 </Txt>
               </View>
-              <Txt variant="label" style={{ color: colors.coralInk }}>
+              <Txt variant="label" style={{ color: x.day.text }}>
                 {point.hotelId ? copy.changeHotel : copy.choose}
               </Txt>
             </Pressable>
@@ -782,8 +778,8 @@ export function DestinationPicker({
       />
       {!!placeId && (
         <Row style={{ gap: spacing.xs, alignItems: 'center' }}>
-          <Icon name="checkmark-circle" size={16} color={colors.tealInk} />
-          <Txt variant="caption" style={{ color: colors.tealInk }}>
+          <Icon name="checkmark-circle" size={16} color={x.day.link} />
+          <Txt variant="caption" style={{ color: x.day.link }}>
             {copy.destinationPicked}
           </Txt>
         </Row>
@@ -797,7 +793,7 @@ export function DestinationPicker({
               onPress={() => onChange({ destinationName: place.name, destinationPlaceId: place.refId })}
               style={({ pressed }) => [styles.placeOption, pressed && styles.pressed]}
             >
-              <Icon name="location-outline" size={18} color={colors.tealInk} />
+              <Icon name="location-outline" size={18} color={x.day.link} />
               <Txt style={styles.flex}>{place.name}</Txt>
               {!!place.subtitle && (
                 <Txt variant="caption" style={styles.muted}>
@@ -822,12 +818,12 @@ const styles = StyleSheet.create({
   segment: {
     padding: 3,
     borderRadius: radius.md,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: x.day.canvas,
   },
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: spacing.xs + 2, borderRadius: radius.sm },
-  segmentActive: { backgroundColor: colors.tealInk },
-  segmentText: { fontSize: 13, color: colors.ink },
-  segmentTextActive: { color: colors.background },
+  segmentActive: { backgroundColor: x.day.link },
+  segmentText: { fontSize: 13, color: x.day.text },
+  segmentTextActive: { color: x.brand.white },
   tripCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -835,26 +831,26 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     borderRadius: mobileLayout.cardRadius,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
-  tripCardPicked: { borderColor: colors.teal, backgroundColor: colors.seaMist },
+  tripCardPicked: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
   tripIcon: {
     width: 36,
     height: 36,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
-  tripIconPicked: { backgroundColor: colors.tealInk },
+  tripIconPicked: { backgroundColor: x.day.link },
   posterRow: { gap: spacing.md, alignItems: 'center' },
   poster: {
     width: 72,
     height: 96,
     borderRadius: radius.md,
     overflow: 'hidden',
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
   posterFallback: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   posterActions: { gap: spacing.sm, alignItems: 'flex-start' },
@@ -864,16 +860,16 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: mobileLayout.cardRadius,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    borderColor: x.day.line,
   },
   dayHeader: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   point: {
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
-  pointOpen: { borderColor: colors.teal },
+  pointOpen: { borderColor: x.day.link },
   pointHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingRight: spacing.xs },
   moveCol: { width: 32, alignItems: 'center', paddingVertical: spacing.md },
   pointBody: {
@@ -883,7 +879,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.sm,
   },
-  time: { width: 44, fontSize: 12, color: colors.textMuted },
+  time: { width: 44, fontSize: 12, color: x.day.textSecondary },
   pointForm: { gap: spacing.sm, padding: spacing.sm, paddingTop: 0 },
   hotelChoice: {
     flexDirection: 'row',
@@ -891,7 +887,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     padding: spacing.md,
     borderRadius: radius.md,
-    backgroundColor: colors.warmMist,
+    backgroundColor: x.day.tintWarm,
   },
   placeOption: {
     flexDirection: 'row',
@@ -900,10 +896,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.md,
-    backgroundColor: colors.surface,
+    backgroundColor: x.day.canvas,
   },
   chips: { flexWrap: 'wrap', gap: spacing.sm },
-  levelLabel: { color: colors.textMuted },
+  levelLabel: { color: x.day.textSecondary },
   kindRow: { gap: spacing.sm },
   kindOption: {
     flex: 1,
@@ -912,15 +908,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
-  kindOptionSelected: { backgroundColor: colors.ink, borderColor: colors.ink },
+  kindOptionSelected: { backgroundColor: x.day.text, borderColor: x.day.text },
   subPanel: {
     gap: spacing.xs,
     padding: spacing.sm,
     borderRadius: radius.md,
-    backgroundColor: colors.surface,
+    backgroundColor: x.day.canvas,
   },
   subChips: { flexWrap: 'wrap', gap: spacing.xs },
   subChip: {
@@ -931,11 +927,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
-  subChipSelected: { borderColor: colors.tealInk, backgroundColor: colors.tealSoft },
-  muted: { color: colors.textMuted },
+  subChipSelected: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
+  muted: { color: x.day.textSecondary },
   flex: { flex: 1 },
   pressed: { opacity: 0.85 },
 });

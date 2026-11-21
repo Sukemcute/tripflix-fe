@@ -1,4 +1,4 @@
-import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import { useEffect, useState, type PropsWithChildren, type ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: mobileLayout.contentWidth,
     alignSelf: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
     borderTopLeftRadius: mobileLayout.sheetRadius,
     borderTopRightRadius: mobileLayout.sheetRadius,
   },
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: radius.pill,
-    backgroundColor: colors.border,
+    backgroundColor: x.day.line,
     alignSelf: 'center',
     marginTop: spacing.md,
   },
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     gap: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: x.day.line,
   },
   compactHandle: { marginTop: spacing.sm },
   compactHeading: { paddingLeft: spacing.lg, paddingVertical: 0 },

@@ -12,7 +12,7 @@ import { VerifiedTripBadge } from './verified-trip-badge';
 import type { TripAttachmentDto } from '@tripflix/api-client/core-api/model/index';
 import { isBackSwipeComplete } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
 import { Image } from 'expo-image';
@@ -52,12 +52,17 @@ function TripPlan({ trip }: { trip: TripAttachmentDto }) {
     <>
       {items.length > 0 && (
         <View style={styles.section}>
-          <Txt variant="label">{copy.itinerary}</Txt>
+          <Txt variant="heading">{copy.itinerary}</Txt>
           <View style={styles.panel}>
             {items.map((item, index) => (
               <View key={`${item.day}-${index}`} style={styles.stop}>
                 <View style={styles.rail}>
-                  <View style={styles.dayBadge}>
+                  <View
+                    style={[
+                      styles.dayBadge,
+                      items.findIndex((other) => other.day === item.day) === index && styles.dayBadgeFirst,
+                    ]}
+                  >
                     <Txt variant="caption" style={styles.dayText}>
                       {t('mobile.postDetail.dayShort', { day: item.day })}
                     </Txt>
@@ -65,7 +70,12 @@ function TripPlan({ trip }: { trip: TripAttachmentDto }) {
                   {index < items.length - 1 && <View style={styles.railLine} />}
                 </View>
                 <View style={[styles.stopBody, index < items.length - 1 && styles.stopGap]}>
-                  <Txt variant="label">{item.time ? `${item.time} · ${item.title}` : item.title}</Txt>
+                  {!!item.time && (
+                    <Txt variant="caption" style={styles.time}>
+                      {item.time}
+                    </Txt>
+                  )}
+                  <Txt variant="label">{item.title}</Txt>
                   {!!item.location && (
                     <Txt variant="small" style={styles.muted}>
                       {item.location}
@@ -89,7 +99,7 @@ function TripPlan({ trip }: { trip: TripAttachmentDto }) {
           style={({ pressed }) => [styles.panel, styles.hotel, pressed && styles.pressed]}
         >
           <View style={styles.hotelIcon}>
-            <Icon name="bed-outline" size={20} color={colors.tealInk} />
+            <Icon name="bed-outline" size={20} color={x.day.link} />
           </View>
           <View style={styles.hotelBody}>
             <Txt variant="caption" style={styles.muted}>
@@ -197,7 +207,9 @@ export function LivePostDetailScreen() {
     onSuccess: () => client.invalidateQueries({ queryKey: ['social', 'post', slug, user?.id], exact: true }),
   });
   const manage = useMutation({
-    mutationFn: async (_action: 'publish') => { await socialApi.publishPost(slug); },
+    mutationFn: async (_action: 'publish') => {
+      await socialApi.publishPost(slug);
+    },
     onSuccess: async () => {
       await client.invalidateQueries({ queryKey: ['social'] });
     },
@@ -230,7 +242,13 @@ export function LivePostDetailScreen() {
           <Screen
             title={vi.api.posts}
             right={
-              post ? <PostOptionsMenu postId={post.id} authorId={post.authorId} onDeleted={() => router.replace('/(tabs)')} /> : undefined
+              post ? (
+                <PostOptionsMenu
+                  postId={post.id}
+                  authorId={post.authorId}
+                  onDeleted={() => router.replace('/(tabs)')}
+                />
+              ) : undefined
             }
             footer={
               post && (
@@ -314,7 +332,12 @@ export function LivePostDetailScreen() {
             {(!isReady || query.isPending) && <LoadingDots />}
             {post && (
               <>
-                {post.status === 'held' && post.authorId === user?.id && <View style={styles.intro}><Txt variant="heading">{vi.moderation.heldTitle}</Txt><Txt>{vi.moderation.heldPost}</Txt></View>}
+                {post.status === 'held' && post.authorId === user?.id && (
+                  <View style={styles.intro}>
+                    <Txt variant="heading">{vi.moderation.heldTitle}</Txt>
+                    <Txt>{vi.moderation.heldPost}</Txt>
+                  </View>
+                )}
                 {!!post.body && (
                   <View style={styles.intro}>
                     <Txt>{post.body}</Txt>
@@ -364,41 +387,55 @@ const styles = StyleSheet.create({
   poster: {
     width: '100%',
     aspectRatio: 16 / 9,
-    borderRadius: mobileLayout.cardRadius,
-    backgroundColor: colors.seaMist,
+    borderRadius: x.radius.xl,
+    backgroundColor: x.day.tintExplore,
   },
   intro: { gap: spacing.xs },
   muted: { color: colors.textMuted },
-  hashtags: { color: colors.tealInk, marginTop: spacing.xs },
+  hashtags: { color: x.day.link, marginTop: spacing.xs },
   section: { gap: spacing.sm },
   panel: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    borderRadius: mobileLayout.cardRadius,
-    padding: spacing.md,
+    borderRadius: x.radius.xl,
+    padding: x.space.md,
+    backgroundColor: x.day.surface,
+    shadowColor: x.shadow,
+    shadowOffset: { width: 0, height: x.elevation.floating.offsetY },
+    shadowRadius: x.elevation.floating.blur,
+    shadowOpacity: 0.07,
+    elevation: 2,
   },
   stop: { flexDirection: 'row', gap: spacing.md },
   rail: { alignItems: 'center' },
   dayBadge: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
-  dayText: { color: colors.tealInk },
-  railLine: { flex: 1, width: 1, backgroundColor: colors.border, marginVertical: spacing.xs },
-  stopBody: { flex: 1, minHeight: 32, justifyContent: 'center' },
+  // Điểm đầu của mỗi ngày nổi bật bằng coral, các điểm sau trong cùng ngày dịu hơn.
+  dayBadgeFirst: { backgroundColor: x.action.primary },
+  dayText: { color: x.action.onPrimary, fontFamily: nativeFonts.bold },
+  railLine: {
+    flex: 1,
+    width: 0,
+    borderLeftWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: x.brand.teal,
+    marginVertical: spacing.xs,
+  },
+  time: { color: x.day.link, fontFamily: nativeFonts.semibold },
+  stopBody: { flex: 1, minHeight: 34, justifyContent: 'center' },
   stopGap: { paddingBottom: spacing.lg },
   hotel: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   hotelIcon: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
   hotelBody: { flex: 1 },
   pressed: { opacity: 0.7 },

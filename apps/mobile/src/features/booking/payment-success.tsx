@@ -1,6 +1,6 @@
 import type { CheckoutDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
-import { colors, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { View } from 'react-native';
 import { CancelOrder } from './order-cancel';
@@ -31,10 +31,10 @@ export function PaymentSuccessScreen({ order }: { order: CheckoutDto }) {
               bottom: 0,
               padding: spacing.xs,
               borderRadius: radius.pill,
-              backgroundColor: colors.seaMist,
+              backgroundColor: x.day.tintExplore,
             }}
           >
-            <Icon name="checkmark-circle" size={32} color={colors.tealInk} />
+            <Icon name="checkmark-circle" size={32} color={x.day.link} />
           </View>
         </View>
         <Txt variant="title" style={ui.center}>

@@ -1,5 +1,5 @@
 import { vi } from '@tripflix/i18n';
-import { colors, spacing } from '@tripflix/tokens';
+import { explorer as x, spacing } from '@tripflix/tokens';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -16,7 +16,7 @@ const BOUNCE_MS = 280;
 const STAGGER_MS = 140;
 
 /** Ba chấm nhảy thay cho chữ "Đang tải…"; trình đọc màn hình vẫn đọc "Đang tải". */
-export function LoadingDots({ color = colors.textMuted }: { color?: string }) {
+export function LoadingDots({ color = x.day.textSecondary }: { color?: string }) {
   return (
     <View style={styles.row} accessible accessibilityRole="progressbar" accessibilityLabel={vi.api.loading}>
       {Array.from({ length: DOT_COUNT }, (_, index) => (

@@ -3,7 +3,7 @@ import { groupItineraryDays, toTripAttachment } from '@tripflix/app-core';
 import { itineraryApi, SAVED_ITINERARIES_QUERY_KEY, useApiSession } from '@tripflix/api-client';
 import type { SavedItineraryDto, SavedItineraryItemDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
-import { colors, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, radius, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { LoadingDots } from '@/components/loading-dots';
@@ -36,7 +36,7 @@ function ItineraryRow({ itinerary }: { itinerary: SavedItineraryDto }) {
       style={({ pressed }) => [layout.row, pressed && { opacity: 0.7 }]}
     >
       <View style={layout.rowIcon}>
-        <Icon name="map-outline" size={20} color={colors.tealInk} />
+        <Icon name="map-outline" size={20} color={x.day.link} />
       </View>
       <View style={ui.flex}>
         <Txt style={layout.rowTitle} numberOfLines={2}>
@@ -123,16 +123,20 @@ function StopRow({ item, onRemove }: { item: SavedItineraryItemDto; onRemove: ()
   return (
     <Row style={layout.stop}>
       {!!when && (
-        <Txt variant="label" style={layout.stopTime}>{when}</Txt>
+        <Txt variant="label" style={layout.stopTime}>
+          {when}
+        </Txt>
       )}
       <Row style={layout.stopCard}>
         <View style={[layout.stopIcon, item.hotel && layout.hotelIcon]}>
-          <Icon name={icon} size={18} color={item.hotel ? colors.background : colors.ink} />
+          <Icon name={icon} size={18} color={item.hotel ? x.brand.white : x.day.text} />
         </View>
         <View style={layout.stopBody}>
           <Txt variant="label">{item.title}</Txt>
           {!!detail && (
-            <Txt variant="small" style={ui.muted}>{detail}</Txt>
+            <Txt variant="small" style={ui.muted}>
+              {detail}
+            </Txt>
           )}
         </View>
         <Pressable
@@ -142,7 +146,7 @@ function StopRow({ item, onRemove }: { item: SavedItineraryItemDto; onRemove: ()
           onPress={onRemove}
           style={layout.removeStop}
         >
-          <Icon name="close" size={18} color={colors.ink} />
+          <Icon name="close" size={18} color={x.day.text} />
         </Pressable>
       </Row>
     </Row>
@@ -212,7 +216,7 @@ export function SavedItineraryScreen() {
   return (
     <Screen
       title={itinerary.title}
-      background={colors.surfaceMuted}
+      background={x.day.canvas}
       footer={
         <View style={{ gap: spacing.sm }}>
           <Button
@@ -246,7 +250,9 @@ export function SavedItineraryScreen() {
               <View style={timeline.dayContent}>
                 <Txt style={timeline.dayLabel}>{t('mobile.savedItinerary.day', { day })}</Txt>
                 {items.length === 0 && (
-                  <Txt variant="small" style={ui.muted}>{copy.emptyDay}</Txt>
+                  <Txt variant="small" style={ui.muted}>
+                    {copy.emptyDay}
+                  </Txt>
                 )}
                 {items.map(({ index, ...item }) => (
                   <StopRow key={index} item={item} onRemove={() => removeStop(index)} />
@@ -282,8 +288,8 @@ const layout = StyleSheet.create({
     padding: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
   rowIcon: {
     width: 40,
@@ -291,7 +297,7 @@ const layout = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
   rowTitle: { fontWeight: '700' },
   stop: { gap: spacing.sm, alignItems: 'flex-start' },
@@ -304,8 +310,8 @@ const layout = StyleSheet.create({
     padding: spacing.sm,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
   stopIcon: {
     width: 36,
@@ -313,9 +319,9 @@ const layout = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: x.day.canvas,
   },
-  hotelIcon: { backgroundColor: colors.coral },
+  hotelIcon: { backgroundColor: x.day.tintWarm },
   stopBody: { flex: 1, minWidth: 0, gap: 2 },
   removeStop: { padding: spacing.xs },
 });

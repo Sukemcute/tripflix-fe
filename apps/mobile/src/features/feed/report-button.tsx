@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { moderationApi, useApiSession } from '@tripflix/api-client';
 import type { ReportDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
-import { colors, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, Field, IconButton, Notice, Txt } from '@/components/mobile-ui';
@@ -116,8 +116,8 @@ const styles = StyleSheet.create({
     minHeight: 44,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: x.day.line,
     borderRadius: radius.md,
   },
-  selected: { borderColor: colors.tealInk, backgroundColor: colors.seaMist },
+  selected: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
 });

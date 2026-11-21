@@ -3,7 +3,7 @@ import '@/polyfills/crypto';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiSessionProvider } from '@tripflix/api-client';
 import * as SecureStore from 'expo-secure-store';
-import { colors, mobileLayout } from '@tripflix/tokens';
+import { explorer as x, mobileLayout } from '@tripflix/tokens';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { useState } from 'react';
@@ -47,10 +47,10 @@ export default function RootLayout() {
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: colors.background,
+          backgroundColor: x.day.surface,
         }}
       >
-        <ActivityIndicator color={colors.coral} accessibilityLabel={copy.common.loading} />
+        <ActivityIndicator color={x.action.primary} accessibilityLabel={copy.common.loading} />
       </View>
     ) : (
       <QueryClientProvider client={queryClient}>
@@ -70,7 +70,7 @@ export default function RootLayout() {
                   <Stack
                     screenOptions={{
                       headerShown: false,
-                      contentStyle: { backgroundColor: colors.background },
+                      contentStyle: { backgroundColor: x.day.surface },
                       animation: 'none',
                     }}
                   >

@@ -1,5 +1,5 @@
 import { t, vi } from '@tripflix/i18n';
-import { colors, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Icon, Row, Txt } from '@/components/mobile-ui';
@@ -14,7 +14,9 @@ export function PostUploadCard() {
   const isRunning = job.phase !== 'done' && job.phase !== 'failed';
   const label =
     job.phase === 'done'
-      ? job.moderationStatus === 'held' ? vi.moderation.heldPost : copy.bgDone
+      ? job.moderationStatus === 'held'
+        ? vi.moderation.heldPost
+        : copy.bgDone
       : job.phase === 'failed'
         ? copy.bgFailed
         : t(
@@ -30,14 +32,14 @@ export function PostUploadCard() {
       <View style={styles.thumb}>
         {isRunning ? (
           <>
-            <ActivityIndicator color={colors.background} />
+            <ActivityIndicator color={x.brand.white} />
             <Txt style={styles.thumbText}>{job.percent}%</Txt>
           </>
         ) : (
           <Icon
             name={job.phase === 'done' ? 'checkmark-circle' : 'alert-circle'}
             size={26}
-            color={colors.background}
+            color={x.brand.white}
           />
         )}
       </View>
@@ -45,7 +47,7 @@ export function PostUploadCard() {
         <Txt variant="label" numberOfLines={1}>
           {job.title}
         </Txt>
-        <Txt variant="caption" style={{ color: job.phase === 'failed' ? colors.coralInk : colors.textMuted }}>
+        <Txt variant="caption" style={{ color: job.phase === 'failed' ? x.day.text : x.day.textSecondary }}>
           {label}
         </Txt>
         {isRunning && (
@@ -95,25 +97,25 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.sm,
     borderRadius: radius.md,
-    backgroundColor: colors.surface,
+    backgroundColor: x.day.canvas,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    borderColor: x.day.line,
     alignSelf: 'stretch',
   },
   thumb: {
     width: 56,
     height: 74,
     borderRadius: radius.sm,
-    backgroundColor: colors.tealInk,
+    backgroundColor: x.day.link,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
   },
-  thumbText: { color: colors.background, fontSize: 12, fontWeight: '700' },
+  thumbText: { color: x.brand.white, fontSize: 12, fontWeight: '700' },
   body: { flex: 1, justifyContent: 'center', gap: 4 },
-  track: { height: 4, borderRadius: 2, backgroundColor: colors.border, overflow: 'hidden' },
-  fill: { height: 4, backgroundColor: colors.tealInk },
+  track: { height: 4, borderRadius: 2, backgroundColor: x.day.line, overflow: 'hidden' },
+  fill: { height: 4, backgroundColor: x.day.link },
   actions: { gap: spacing.lg },
-  action: { color: colors.tealInk },
-  muted: { color: colors.textMuted },
+  action: { color: x.day.link },
+  muted: { color: x.day.textSecondary },
 });

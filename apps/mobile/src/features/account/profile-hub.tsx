@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { commerceApi, socialApi, useApiSession } from '@tripflix/api-client';
 import { formatProfileCount, getNameInitials, holdCountdown } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -23,41 +23,43 @@ export function OwnProfileHeading({
   isGuest?: boolean;
 }) {
   return (
-    <View style={styles.group}>
-      <View style={styles.hero}>
-        <Image
-          source={assets.vietnam}
-          contentFit="cover"
-          accessible={false}
-          aria-hidden
-          style={styles.photo}
-        />
+    <View style={styles.profileCard}>
+      <View style={styles.identity}>
         <LinearGradient
-          colors={[colors.sun, colors.sun, colors.transparent]}
-          locations={[0, 0.48, 1]}
+          colors={x.sunset}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          pointerEvents="none"
-          style={StyleSheet.absoluteFill}
-        />
-        <Txt style={styles.eyebrow}>{text.eyebrow}</Txt>
-        {!isGuest && (
-          <View style={styles.initials}>
-            <Txt style={styles.initialsText} accessible={false} aria-hidden allowFontScaling={false}>
-              {getNameInitials(name) || 'TF'}
-            </Txt>
+          end={{ x: 1, y: 1 }}
+          style={styles.avatarRing}
+        >
+          <View style={styles.avatar}>
+            {isGuest ? (
+              <Image
+                source={assets.welcome}
+                contentFit="contain"
+                accessible={false}
+                aria-hidden
+                style={styles.guestArt}
+              />
+            ) : (
+              <Txt style={styles.initialsText} accessible={false} aria-hidden allowFontScaling={false}>
+                {getNameInitials(name) || 'TF'}
+              </Txt>
+            )}
           </View>
-        )}
-        <Txt accessibilityRole="header" style={styles.name}>
-          {name}
-        </Txt>
+        </LinearGradient>
+        <View style={styles.identityCopy}>
+          <Txt accessibilityRole="header" style={styles.name}>
+            {name}
+          </Txt>
+          <Txt style={styles.slogan}>{vi.mobile.explorer.slogan}</Txt>
+        </View>
       </View>
       {!!stats.length && (
         <View style={styles.stats}>
           {stats.map((stat) => (
             <View key={stat.label} style={styles.stat}>
               <Txt style={styles.number}>{formatProfileCount(stat.value)}</Txt>
-              <Txt style={styles.meta}>{stat.label}</Txt>
+              <Txt style={styles.statLabel}>{stat.label}</Txt>
             </View>
           ))}
         </View>
@@ -129,10 +131,10 @@ export function ProfileHub() {
                 }
                 style={({ pressed }) => [styles.action, styles.pay, pressed && styles.pressed]}
               >
-                <Txt style={styles.actionText}>
+                <Txt style={[styles.actionText, styles.payText]}>
                   {pending.status === 'pending' ? text.continuePayment : text.checkPayment}
                 </Txt>
-                <Icon name="arrow-forward" size={20} color={colors.background} />
+                <Icon name="arrow-forward" size={20} color={x.action.onPrimary} />
               </Pressable>
             </View>
           )}
@@ -146,7 +148,7 @@ export function ProfileHub() {
                 style={({ pressed }) => [styles.action, pressed && styles.pressed]}
               >
                 <Txt style={styles.actionText}>{text.continueDraft}</Txt>
-                <Icon name="arrow-forward" size={20} color={colors.background} />
+                <Icon name="arrow-forward" size={20} color={x.brand.white} />
               </Pressable>
             </View>
           )}
@@ -190,10 +192,10 @@ export function ProfileHub() {
           onPress={() => open('/my-trips')}
           style={({ pressed }) => [styles.shortcut, styles.sea, pressed && styles.pressed]}
         >
-          <Icon name="bag-handle-outline" size={24} color={colors.tealInk} />
+          <Icon name="ticket-outline" size={24} color={x.day.link} />
           <Txt style={styles.shortcutTitle}>{text.trips}</Txt>
           <Txt style={styles.meta}>{text.tripHint}</Txt>
-          <Icon name="arrow-forward" size={20} color={colors.tealInk} />
+          <Icon name="arrow-forward" size={20} color={x.day.link} />
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -201,86 +203,115 @@ export function ProfileHub() {
           onPress={() => open('/saved')}
           style={({ pressed }) => [styles.shortcut, styles.yellow, pressed && styles.pressed]}
         >
-          <Icon name="bookmark-outline" size={24} color={colors.ink} />
+          <Icon name="bookmark-outline" size={24} color={x.day.text} />
           <Txt style={styles.shortcutTitle}>{text.saved}</Txt>
           <Txt style={styles.meta}>{text.savedHint}</Txt>
-          <Icon name="arrow-forward" size={20} color={colors.ink} />
+          <Icon name="arrow-forward" size={20} color={x.day.text} />
         </Pressable>
       </View>
     </View>
   );
 }
 
+const card = {
+  backgroundColor: x.day.surface,
+  borderRadius: x.radius.xl,
+  shadowColor: x.shadow,
+  shadowOffset: { width: 0, height: x.elevation.floating.offsetY },
+  shadowRadius: x.elevation.floating.blur,
+  shadowOpacity: 0.07,
+  elevation: 2,
+} as const;
+
 const styles = StyleSheet.create({
-  group: { gap: spacing.lg },
-  hero: {
-    minHeight: 180,
-    padding: spacing.lg,
-    gap: spacing.md,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.sun,
-  },
-  photo: { position: 'absolute', right: 0, top: 0, bottom: 0, width: '60%' },
-  eyebrow: {
-    fontSize: 12,
-    lineHeight: 20,
-    fontFamily: nativeFonts.semibold,
-    letterSpacing: 1,
-    color: colors.navy,
-    maxWidth: '65%',
-  },
-  initials: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.sm,
-    justifyContent: 'center',
+  group: { gap: x.space.md },
+  profileCard: { ...card, padding: x.space.md, gap: x.space.md },
+  identity: { flexDirection: 'row', alignItems: 'center', gap: x.space.sm },
+  avatarRing: { width: 72, height: 72, borderRadius: x.radius.pill, padding: 3 },
+  avatar: {
+    flex: 1,
+    borderRadius: x.radius.pill,
+    backgroundColor: x.day.tintWarm,
+    borderWidth: 2,
+    borderColor: x.day.surface,
     alignItems: 'center',
-    backgroundColor: colors.navy,
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  initialsText: { fontSize: 18, lineHeight: 28, fontFamily: nativeFonts.semibold, color: colors.background },
-  name: { fontSize: 28, lineHeight: 38, fontFamily: nativeFonts.bold, color: colors.navy, maxWidth: '65%' },
-  stats: { flexDirection: 'row', gap: spacing.sm },
-  stat: { flex: 1, gap: spacing.xs, alignItems: 'center' },
-  number: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: colors.navy },
-  meta: { fontSize: 13, lineHeight: 22, color: colors.ink },
-  section: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: colors.navy },
-  panel: { padding: spacing.lg, gap: spacing.sm, borderRadius: radius.md },
-  shortcuts: { flexDirection: 'row', gap: spacing.md },
-  shortcut: { flex: 1, padding: spacing.md, borderRadius: radius.md, gap: spacing.sm },
-  shortcutTitle: { fontSize: 18, lineHeight: 27, fontFamily: nativeFonts.semibold, color: colors.navy },
-  panelTitle: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy },
-  coral: { backgroundColor: colors.coralTint },
-  yellow: { backgroundColor: colors.sunSoft },
-  sea: { backgroundColor: colors.seaMist },
+  guestArt: { width: 58, height: 62, marginTop: 8 },
+  initialsText: { fontSize: 22, lineHeight: 28, fontFamily: nativeFonts.extraBold, color: x.day.text },
+  identityCopy: { flex: 1, gap: 2 },
+  name: {
+    fontSize: x.type.title.fontSize - 2,
+    lineHeight: 30,
+    fontFamily: nativeFonts.extraBold,
+    letterSpacing: x.type.title.letterSpacing,
+    color: x.day.text,
+  },
+  slogan: { fontSize: 14, lineHeight: 20, fontFamily: nativeFonts.semibold, color: x.day.link },
+  stats: {
+    flexDirection: 'row',
+    gap: x.space.xs,
+    padding: x.space.sm,
+    borderRadius: x.radius.lg,
+    backgroundColor: x.day.tintExplore,
+  },
+  stat: { flex: 1, gap: 2, alignItems: 'center' },
+  number: {
+    fontSize: 20,
+    lineHeight: 26,
+    fontFamily: nativeFonts.extraBold,
+    color: x.day.text,
+    fontVariant: ['tabular-nums'],
+  },
+  statLabel: { fontSize: 13, lineHeight: 18, color: x.day.textSecondary },
+  meta: { fontSize: 14, lineHeight: 21, color: x.day.textSecondary },
+  section: {
+    fontSize: x.type.headline.fontSize,
+    lineHeight: 28,
+    fontFamily: nativeFonts.bold,
+    color: x.day.text,
+  },
+  panel: { ...card, padding: x.space.md, gap: x.space.xs, borderRadius: x.radius.lg },
+  shortcuts: { flexDirection: 'row', gap: x.space.sm },
+  shortcut: { flex: 1, padding: x.space.md, borderRadius: x.radius.lg, gap: x.space.xs },
+  shortcutTitle: { fontSize: 17, lineHeight: 24, fontFamily: nativeFonts.bold, color: x.day.text },
+  panelTitle: { fontSize: 18, lineHeight: 26, fontFamily: nativeFonts.bold, color: x.day.text },
+  coral: { backgroundColor: x.day.tintWarm },
+  yellow: { backgroundColor: x.day.tintSun },
+  sea: { backgroundColor: x.day.tintExplore },
   action: {
-    minHeight: 48,
+    minHeight: x.control.compact,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    borderRadius: radius.sm,
-    padding: spacing.md,
-    backgroundColor: colors.navy,
-    marginTop: spacing.xs,
+    justifyContent: 'center',
+    gap: x.space.xs,
+    borderRadius: x.radius.pill,
+    paddingVertical: x.space.xs,
+    paddingHorizontal: x.space.md,
+    backgroundColor: x.action.secondary,
+    marginTop: x.space.xxs,
   },
-  pay: { backgroundColor: colors.coralInk },
+  pay: { backgroundColor: x.action.primary },
+  payText: { color: x.action.onPrimary },
   actionText: {
     fontSize: 15,
-    lineHeight: 24,
-    fontFamily: nativeFonts.semibold,
-    color: colors.background,
+    lineHeight: 22,
+    fontFamily: nativeFonts.bold,
+    color: x.action.onSecondary,
     flexShrink: 1,
   },
   pressed: { opacity: 0.8 },
-  error: { gap: spacing.xs },
+  error: { gap: x.space.xxs },
   retry: {
     minHeight: 48,
     justifyContent: 'center',
     alignSelf: 'flex-start',
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceMuted,
+    paddingHorizontal: x.space.md,
+    borderRadius: x.radius.pill,
+    backgroundColor: x.day.surface,
+    borderWidth: 1,
+    borderColor: x.day.line,
   },
-  retryText: { fontSize: 14, lineHeight: 23, color: colors.coralInk, fontFamily: nativeFonts.semibold },
+  retryText: { fontSize: 14, lineHeight: 20, color: x.day.link, fontFamily: nativeFonts.semibold },
 });

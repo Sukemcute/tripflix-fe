@@ -1,7 +1,7 @@
 import { useReelsFeed } from '@tripflix/api-client';
 import { getBookableTripPlan } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { usePathname } from 'expo-router';
 import { useState } from 'react';
@@ -108,7 +108,7 @@ export function FeaturedTrips({
               {poster ? (
                 <Image source={poster} contentFit="cover" style={StyleSheet.absoluteFill} />
               ) : (
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tealInk }]} />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: x.day.link }]} />
               )}
               <View style={layout.reelBadge}>
                 <Txt style={layout.reelBadgeText}>{t('mobile.tripPlan.dayCount', { days })}</Txt>
@@ -124,9 +124,9 @@ export function FeaturedTrips({
                     </Txt>
                   )}
                   {plan.flights.length > 0 && (
-                    <Icon name="airplane-outline" size={13} color={colors.background} />
+                    <Icon name="airplane-outline" size={13} color={x.brand.white} />
                   )}
-                  {plan.hotels.length > 0 && <Icon name="bed-outline" size={13} color={colors.background} />}
+                  {plan.hotels.length > 0 && <Icon name="bed-outline" size={13} color={x.brand.white} />}
                 </Row>
               </View>
             </Pressable>
@@ -156,7 +156,7 @@ const layout = StyleSheet.create({
     aspectRatio: 3 / 4.2,
     borderRadius: radius.lg,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: x.day.canvas,
   },
   reelBadge: {
     position: 'absolute',
@@ -165,10 +165,10 @@ const layout = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: radius.pill,
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
   // Chữ dùng bộ cỡ và phông của app (compactType, nativeFonts) như các thẻ chuyến bay, khách sạn bên dưới.
-  reelBadgeText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.tealInk },
+  reelBadgeText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.link },
   reelText: {
     position: 'absolute',
     left: 0,
@@ -178,6 +178,6 @@ const layout = StyleSheet.create({
     padding: spacing.sm,
     backgroundColor: colors.overlayHeavy,
   },
-  reelTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.background },
-  reelMeta: { ...compactType.label, fontFamily: nativeFonts.medium, color: colors.background, flexShrink: 1 },
+  reelTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.brand.white },
+  reelMeta: { ...compactType.label, fontFamily: nativeFonts.medium, color: x.brand.white, flexShrink: 1 },
 });

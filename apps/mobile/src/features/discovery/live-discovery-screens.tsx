@@ -10,7 +10,7 @@ import {
 import type { SearchPostsRequestDtoSort } from '@tripflix/api-client/core-api/model/index';
 import { homeRecommendationsControllerRecommendForHome } from '@tripflix/api-client/core-api/discovery/discovery';
 import { vi } from '@tripflix/i18n';
-import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -126,12 +126,12 @@ function HotelWebRedirectCard({ place }: { place: string }) {
   };
 
   return (
-    <Card style={{ backgroundColor: colors.seaMist, borderColor: colors.teal, borderWidth: 1 }}>
+    <Card style={{ backgroundColor: x.day.tintExplore, borderColor: x.day.link, borderWidth: 1 }}>
       <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <View style={{ flex: 1, gap: spacing.xs, paddingRight: spacing.sm }}>
           <Row style={{ gap: spacing.xs, alignItems: 'center' }}>
-            <Icon name="business-outline" size={16} color={colors.tealInk} />
-            <Txt variant="caption" style={{ color: colors.tealInk, fontFamily: nativeFonts.semibold }}>
+            <Icon name="business-outline" size={16} color={x.day.link} />
+            <Txt variant="caption" style={{ color: x.day.link, fontFamily: nativeFonts.semibold }}>
               TRIPFLIX WEB
             </Txt>
           </Row>
@@ -167,7 +167,7 @@ function PostSearchResultCard({ item }: { item: ExploreItemDto }) {
               width: '100%',
               aspectRatio: 16 / 9,
               borderRadius: radius.md,
-              backgroundColor: colors.seaMist,
+              backgroundColor: x.day.tintExplore,
             }}
             contentFit="cover"
           />
@@ -185,7 +185,7 @@ function PostSearchResultCard({ item }: { item: ExploreItemDto }) {
       </Row>
       <Txt variant="heading">{item.title}</Txt>
       {item.reason ? (
-        <Txt variant="small" style={{ color: colors.coralInk }}>
+        <Txt variant="small" style={{ color: x.day.text }}>
           {item.reason}
         </Txt>
       ) : null}
@@ -287,14 +287,14 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
           style={styles.searchBar}
           onPress={() => setIsSearchOpen(true)}
         >
-          <Icon name="search-outline" color={colors.textMuted} size={mobileIconSize.control} />
-          <Txt style={[styles.searchInput, { color: colors.textMuted }]}>
+          <Icon name="search-outline" color={x.day.textSecondary} size={mobileIconSize.control} />
+          <Txt style={[styles.searchInput, { color: x.day.textSecondary }]}>
             {vi.mobile.searchPanel.placeholder}
           </Txt>
         </Pressable>
       ) : (
         <View style={styles.searchBar}>
-          <Icon name="search-outline" color={colors.textMuted} size={mobileIconSize.control} />
+          <Icon name="search-outline" color={x.day.textSecondary} size={mobileIconSize.control} />
           <TextInput
             ref={input}
             accessibilityLabel={vi.api.search}
@@ -302,7 +302,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
             onChangeText={setText}
             maxLength={100}
             placeholder="Tìm khách sạn, điểm đến, bài viết..."
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={x.day.textSecondary}
             returnKeyType="search"
             onSubmitEditing={() => submitSearch()}
             style={styles.searchInput}
@@ -555,8 +555,8 @@ const styles = StyleSheet.create({
     minHeight: mobileLayout.buttonHeight,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.warmMist,
+    borderColor: x.day.line,
+    backgroundColor: x.day.tintWarm,
     paddingLeft: spacing.md,
   },
   searchInput: {
@@ -564,11 +564,11 @@ const styles = StyleSheet.create({
     minWidth: 0,
     minHeight: mobileLayout.touchTarget,
     fontFamily: nativeFonts.regular,
-    color: colors.ink,
+    color: x.day.text,
     ...compactType.body,
   },
   result: { alignItems: 'flex-start' },
-  resultPhoto: { width: 90, height: 112, borderRadius: radius.md, backgroundColor: colors.seaMist },
+  resultPhoto: { width: 90, height: 112, borderRadius: radius.md, backgroundColor: x.day.tintExplore },
   categories: { flexWrap: 'wrap', gap: spacing.sm },
   assistant: {
     flexDirection: 'row',
@@ -576,6 +576,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.md,
     borderRadius: radius.lg,
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
 });

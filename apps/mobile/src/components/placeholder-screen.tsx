@@ -1,5 +1,5 @@
 import { t, type MessageKey } from '@tripflix/i18n';
-import { colors, spacing } from '@tripflix/tokens';
+import { explorer as x, spacing } from '@tripflix/tokens';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,9 +17,9 @@ export function PlaceholderScreen({ title }: { title: MessageKey }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, backgroundColor: x.day.surface },
   body: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.xl },
-  brand: { color: colors.coral, fontWeight: '700' },
-  title: { color: colors.navy, fontSize: 28, fontWeight: '800' },
-  note: { color: colors.textMuted },
+  brand: { color: x.action.primary, fontWeight: '700' },
+  title: { color: x.day.text, fontSize: 28, fontWeight: '800' },
+  note: { color: x.day.textSecondary },
 });

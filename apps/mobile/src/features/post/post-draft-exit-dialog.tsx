@@ -1,5 +1,5 @@
 import { vi } from '@tripflix/i18n';
-import { colors, nativeFonts, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, nativeFonts, spacing } from '@tripflix/tokens';
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRef, type ComponentRef } from 'react';
@@ -44,7 +44,7 @@ export function PostDraftExitDialog({
         >
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
             <View style={styles.icon}>
-              <Icon name="document-text-outline" size={26} color={colors.navy} />
+              <Icon name="document-text-outline" size={26} color={x.day.text} />
             </View>
             <Txt style={styles.title}>{text.leaveTitle}</Txt>
             <Txt style={styles.body}>{text.leaveBody}</Txt>
@@ -68,14 +68,14 @@ export function PostDraftExitDialog({
 const styles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: 'flex-end', padding: spacing.md, backgroundColor: colors.overlay },
   dialog: {
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
     borderRadius: 8,
     maxHeight: '95%',
   },
   content: { padding: spacing.lg, gap: spacing.md },
-  icon: { alignSelf: 'flex-start', padding: spacing.md, backgroundColor: colors.sun, borderRadius: 8 },
-  title: { fontSize: 23, lineHeight: 33, fontFamily: nativeFonts.bold, color: colors.navy },
-  body: { fontSize: 14, lineHeight: 23, color: colors.textMuted },
-  primary: { borderRadius: 8, minHeight: 48, backgroundColor: colors.coralInk },
+  icon: { alignSelf: 'flex-start', padding: spacing.md, backgroundColor: x.day.tintSun, borderRadius: 8 },
+  title: { fontSize: 23, lineHeight: 33, fontFamily: nativeFonts.bold, color: x.day.text },
+  body: { fontSize: 14, lineHeight: 23, color: x.day.textSecondary },
+  primary: { minHeight: 48 },
   secondary: { borderRadius: 8, minHeight: 48 },
 });

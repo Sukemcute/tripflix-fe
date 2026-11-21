@@ -2,8 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAvailableStays, getFutureDate, readPage, useApiSession } from '@tripflix/api-client';
 import { suggestControllerSuggest } from '@tripflix/api-client/core-api/discovery/discovery';
 import { t, vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
-import { Image } from 'expo-image';
+import { explorer as x, nativeFonts, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -11,6 +10,7 @@ import { ApiErrorNotice } from '@/components/api-state';
 import { LoadingDots } from '@/components/loading-dots';
 import { compactType } from '@/components/mobile-scale';
 import { Icon, money, Notice, Row, Txt, ui } from '@/components/mobile-ui';
+import { StayPhoto } from './stay-photo';
 
 const PAGE_SIZE = 10;
 /** Số nút trang hiện cùng lúc quanh trang đang xem. */
@@ -123,19 +123,13 @@ export function ExploreHotelResults({ q }: { q: string }) {
             onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: hotel.hotelId } })}
             style={({ pressed }) => [styles.card, pressed && { opacity: 0.85 }]}
           >
-            {hotel.thumbnail ? (
-              <Image source={hotel.thumbnail} contentFit="cover" style={styles.photo} />
-            ) : (
-              <View style={[styles.photo, styles.noPhoto]}>
-                <Icon name="bed-outline" size={28} color={colors.tealInk} />
-              </View>
-            )}
+            <StayPhoto uri={hotel.thumbnail} style={styles.photo} />
             <View style={styles.body}>
               <Txt style={styles.name} numberOfLines={2}>
                 {hotel.name}
               </Txt>
               <Row style={{ gap: 4, alignItems: 'center' }}>
-                <Icon name="location-outline" size={13} color={colors.textMuted} />
+                <Icon name="location-outline" size={13} color={x.day.textSecondary} />
                 <Txt variant="small" style={ui.muted} numberOfLines={1}>
                   {[
                     hotel.province.name,
@@ -221,7 +215,7 @@ function PageButton({
       ]}
     >
       {icon ? (
-        <Icon name={icon} size={16} color={colors.ink} />
+        <Icon name={icon} size={16} color={x.day.text} />
       ) : (
         <Txt style={[styles.pageText, isSelected && styles.pageTextSelected]}>{label}</Txt>
       )}
@@ -229,32 +223,46 @@ function PageButton({
   );
 }
 
+// Thẻ kết quả theo thiết kế Stitch: ảnh lớn ở trên, tên, điểm đánh giá, giá rõ đơn vị.
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    padding: spacing.sm,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    overflow: 'hidden',
+    borderRadius: x.radius.xl,
+    backgroundColor: x.day.surface,
+    shadowColor: x.shadow,
+    shadowOffset: { width: 0, height: x.elevation.floating.offsetY },
+    shadowRadius: x.elevation.floating.blur,
+    shadowOpacity: 0.08,
+    elevation: 2,
   },
-  photo: { width: 112, height: 132, borderRadius: radius.md, backgroundColor: colors.seaMist },
-  noPhoto: { alignItems: 'center', justifyContent: 'center' },
-  body: { flex: 1, minWidth: 0, gap: 4, paddingVertical: 2 },
-  name: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
+  photo: { width: '100%', aspectRatio: 16 / 10, backgroundColor: x.day.tintExplore },
+  body: { gap: x.space.xxs, padding: x.space.md },
+  name: { fontSize: 18, lineHeight: 24, fontFamily: nativeFonts.bold, color: x.day.text },
   score: {
-    ...compactType.label,
+    fontSize: 13,
+    lineHeight: 18,
     fontFamily: nativeFonts.bold,
-    color: colors.background,
-    backgroundColor: colors.teal,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: radius.sm,
+    color: x.brand.ink,
+    backgroundColor: x.brand.sun,
+    paddingHorizontal: x.space.xs,
+    paddingVertical: 2,
+    borderRadius: x.radius.pill,
     overflow: 'hidden',
   },
-  priceRow: { marginTop: 'auto', alignItems: 'flex-end' },
-  price: { fontSize: 18, lineHeight: 24, fontFamily: nativeFonts.bold, color: colors.coralInk },
+  priceRow: {
+    marginTop: x.space.xs,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: x.space.xxs,
+    flexWrap: 'wrap',
+  },
+  price: {
+    fontSize: 20,
+    lineHeight: 26,
+    fontFamily: nativeFonts.extraBold,
+    color: x.day.text,
+    fontVariant: ['tabular-nums'],
+  },
   pager: { justifyContent: 'center', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
   pageButton: {
     minWidth: 36,
@@ -264,11 +272,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
-  pageButtonSelected: { backgroundColor: colors.ink, borderColor: colors.ink },
-  pageText: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
-  pageTextSelected: { color: colors.background },
-  ellipsis: { ...compactType.body, color: colors.textMuted },
+  pageButtonSelected: { backgroundColor: x.day.link, borderColor: x.day.link },
+  pageText: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
+  pageTextSelected: { color: x.brand.white },
+  ellipsis: { ...compactType.body, color: x.day.textSecondary },
 });

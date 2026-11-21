@@ -1,6 +1,6 @@
 import { getApiErrorKind } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
-import { colors as c, nativeFonts as fonts } from '@tripflix/tokens';
+import { explorer as x, colors as c, nativeFonts as fonts } from '@tripflix/tokens';
 import {
   useRef,
   useState,
@@ -58,7 +58,7 @@ export function AuthButton({
         <Icon
           name={icon}
           size={20}
-          color={disabled ? c.textMuted : tone === 'primary' ? c.background : c.navy}
+          color={disabled ? c.textMuted : tone === 'primary' ? x.action.onPrimary : c.navy}
         />
       )}
     </Pressable>
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  primary: { backgroundColor: c.coralInk },
+  primary: { backgroundColor: x.action.primary },
   secondary: { backgroundColor: c.surfaceMuted },
   textButton: { backgroundColor: c.transparent, minHeight: 48 },
   buttonLabel: {
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flexShrink: 1,
   },
-  light: { color: c.background },
+  light: { color: x.action.onPrimary },
   disabled: { backgroundColor: c.surfaceMuted },
   disabledText: { color: c.textMuted },
   pressed: { opacity: 0.8 },

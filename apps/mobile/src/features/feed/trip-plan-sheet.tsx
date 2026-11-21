@@ -1,7 +1,7 @@
 import { getBookableTripPlan, getTripNights, getTripPlanCategory } from '@tripflix/app-core';
 import type { TripAttachmentDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
-import { colors } from '@tripflix/tokens';
+import { explorer as x } from '@tripflix/tokens';
 import { router, usePathname } from 'expo-router';
 import { View } from 'react-native';
 import { BottomSheet } from '@/components/bottom-sheet';
@@ -78,7 +78,7 @@ export function TripPlanSheet({
       <View style={styles.hero}>
         <Row style={styles.heroChips}>
           <View style={styles.heroChip}>
-            <Icon name="calendar-outline" size={12} color={colors.tealInk} />
+            <Icon name="calendar-outline" size={12} color={x.day.link} />
             <Txt style={styles.heroChipText}>{t('mobile.tripPlan.daysNights', { days, nights })}</Txt>
           </View>
         </Row>
@@ -121,7 +121,7 @@ export function TripPlanSheet({
                   ))}
                 {selfArranged.map((leg, index) => (
                   <View key={'self' + index} style={styles.stop}>
-                    <Icon name="bus-outline" size={14} color={colors.textMuted} />
+                    <Icon name="bus-outline" size={14} color={x.day.textSecondary} />
                     <Txt style={styles.muted}>
                       {[leg.title || copy.modes[leg.mode], copy.selfArranged].join(' · ')}
                     </Txt>
@@ -136,7 +136,7 @@ export function TripPlanSheet({
                         <Icon
                           name={ACTIVITY_ICONS[getTripPlanCategory(item)]}
                           size={14}
-                          color={colors.textMuted}
+                          color={x.day.textSecondary}
                         />
                         <View style={styles.stopText}>
                           <Txt style={styles.description}>

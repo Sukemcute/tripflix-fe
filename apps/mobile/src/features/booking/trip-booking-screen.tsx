@@ -25,7 +25,7 @@ import {
 } from '@tripflix/api-client';
 import { flightsControllerSearch } from '@tripflix/api-client/core-api/flights/flights';
 import { t, vi } from '@tripflix/i18n';
-import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -344,7 +344,7 @@ function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
       back={false}
       header={null}
       compact
-      background={colors.surface}
+      background={x.day.canvas}
       scroll={false}
       padded={false}
       footer={
@@ -410,7 +410,7 @@ function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
               }}
               style={({ pressed }) => [layout.coverBack, pressed && styles.pressed]}
             >
-              <Icon name="arrow-back" size={20} color={colors.background} />
+              <Icon name="arrow-back" size={20} color={x.brand.white} />
             </Pressable>
           </View>
           <View style={layout.coverText}>
@@ -452,7 +452,7 @@ function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
                       pressed && styles.pressed,
                     ]}
                   >
-                    <Icon name={pill.icon} size={16} color={colors.tealInk} />
+                    <Icon name={pill.icon} size={16} color={x.day.link} />
                     <Txt style={layout.pillText}>{pill.label}</Txt>
                   </Pressable>
                 ))}
@@ -661,7 +661,7 @@ function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
                   time: item.time ?? '',
                   content: (
                     <View style={styles.stop}>
-                      <Icon name="bus-outline" size={14} color={colors.textMuted} />
+                      <Icon name="bus-outline" size={14} color={x.day.textSecondary} />
                       <Txt style={styles.muted}>
                         {[item.time, item.title, copy.selfArranged].filter(Boolean).join(' · ')}
                       </Txt>
@@ -684,7 +684,9 @@ function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
               return (
                 <View key={day} style={styles.day}>
                   {day < days && <View style={styles.rail} />}
-                  <View style={styles.dayDot} />
+                  <View style={styles.dayDot}>
+                    <Txt style={styles.dayDotText}>{day}</Txt>
+                  </View>
                   <View style={styles.dayContent}>
                     <Txt style={styles.dayLabel}>
                       {isDateValid
@@ -754,13 +756,7 @@ export function TripBookingScreen() {
   // Lộ trình nổi bật chỉ nằm ở tab Khám phá.
   if (selected) return <SelectedTripScreen key={selected.postId} selected={selected} />;
   return (
-    <Screen
-      title={copy.bookingTitle}
-      back={false}
-      header={<BookingHeader />}
-      compact
-      background={colors.surface}
-    >
+    <Screen title={copy.bookingTitle} back={false} header={<BookingHeader />}>
       <View style={{ gap: spacing.xl }}>
         <SavedItinerariesSection />
         <View style={{ gap: spacing.md }}>
@@ -797,7 +793,7 @@ const layout = StyleSheet.create({
     marginHorizontal: -mobileLayout.gutter,
     marginTop: -spacing.md,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: x.day.canvas,
   },
   coverMascot: { alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
   coverShade: { backgroundColor: colors.overlay },
@@ -814,8 +810,8 @@ const layout = StyleSheet.create({
     backgroundColor: colors.overlayHeavy,
   },
   coverText: { gap: 2, paddingTop: spacing.xs },
-  coverTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.ink },
-  coverMeta: { ...compactType.body, fontFamily: nativeFonts.regular, color: colors.textMuted },
+  coverTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text },
+  coverMeta: { ...compactType.body, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
   panel: { backgroundColor: 'transparent', borderWidth: 0, padding: 0 },
   pills: { gap: spacing.sm, flexWrap: 'wrap' },
   pill: {
@@ -826,11 +822,11 @@ const layout = StyleSheet.create({
     paddingVertical: spacing.xs + 2,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
-  pillActive: { borderColor: colors.teal, backgroundColor: colors.seaMist },
-  pillText: { ...compactType.body, fontFamily: nativeFonts.medium, color: colors.ink },
+  pillActive: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
+  pillText: { ...compactType.body, fontFamily: nativeFonts.medium, color: x.day.text },
 });
 
 const localStyles = StyleSheet.create({

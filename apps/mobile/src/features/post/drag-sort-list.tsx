@@ -1,4 +1,4 @@
-import { colors, spacing } from '@tripflix/tokens';
+import { explorer as x, spacing } from '@tripflix/tokens';
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { StyleSheet, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   list: { marginBottom: -spacing.sm },
   row: {
     paddingBottom: spacing.sm,
-    shadowColor: colors.text,
+    shadowColor: x.day.text,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 12,
   },

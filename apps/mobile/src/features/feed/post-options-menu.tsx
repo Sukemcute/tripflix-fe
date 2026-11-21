@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { evictPostFromCache, socialApi, useApiSession } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
-import { colors, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { BottomSheet } from '../../components/bottom-sheet';
 import { Button, Icon, IconButton, Txt, type IconName } from '../../components/mobile-ui';
@@ -170,7 +170,7 @@ export function PostOptionsMenu({
                       <Icon
                         name={visibility === value ? 'radio-button-on' : 'radio-button-off'}
                         size={22}
-                        color={colors.tealInk}
+                        color={x.day.link}
                       />
                       <Txt>{value === 'public' ? 'Công khai' : 'Chỉ mình tôi'}</Txt>
                     </Pressable>
@@ -226,16 +226,16 @@ function Option({
       onPress={onPress}
       style={({ pressed }) => [
         styles.option,
-        { opacity: disabled ? 0.45 : 1, backgroundColor: pressed ? colors.surfaceMuted : colors.transparent },
+        { opacity: disabled ? 0.45 : 1, backgroundColor: pressed ? x.day.canvas : colors.transparent },
       ]}
     >
-      <Icon name={icon} size={24} color={danger ? colors.danger : colors.text} />
+      <Icon name={icon} size={24} color={danger ? x.day.error : x.day.text} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Txt variant="label" style={danger ? { color: colors.danger } : undefined}>
+        <Txt variant="label" style={danger ? { color: x.day.error } : undefined}>
           {title}
         </Txt>
         {hint && (
-          <Txt variant="caption" style={{ color: colors.textMuted }}>
+          <Txt variant="caption" style={{ color: x.day.textSecondary }}>
             {hint}
           </Txt>
         )}
@@ -252,5 +252,5 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     borderRadius: 12,
   },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: spacing.xs },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: x.day.line, marginVertical: spacing.xs },
 });

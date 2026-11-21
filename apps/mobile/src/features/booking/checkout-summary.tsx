@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { CheckoutDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { formatDate, Icon, money, Row, Txt } from '@/components/mobile-ui';
 
@@ -40,7 +40,7 @@ export function CheckoutSummary({ order, total }: { order: CheckoutDto; total?: 
         return (
           <View key={item.id} style={[styles.service, isFlight ? styles.flight : styles.stay]}>
             <Row style={styles.identity}>
-              <Icon name={isFlight ? 'airplane-outline' : 'bed-outline'} size={20} color={colors.ink} />
+              <Icon name={isFlight ? 'airplane-outline' : 'bed-outline'} size={20} color={x.day.text} />
               <Txt style={[styles.serviceTitle, isFlight && styles.route]}>{title}</Txt>
             </Row>
             {!isFlight && <Txt style={styles.body}>{item.productName}</Txt>}
@@ -74,7 +74,7 @@ export function CheckoutSummary({ order, total }: { order: CheckoutDto; total?: 
         <Txt style={styles.toggleLabel}>
           {isExpanded ? text.checkoutCollapseSummary : text.checkoutExpandSummary}
         </Txt>
-        <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.background} />
+        <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={18} color={x.brand.white} />
       </Pressable>
       {hasRooms && (
         <View style={styles.fees}>
@@ -97,31 +97,31 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   group: { gap: spacing.sm },
-  title: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold, color: colors.navy },
+  title: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold, color: x.day.text },
   service: { gap: spacing.sm, padding: spacing.lg, borderRadius: radius.md },
-  flight: { backgroundColor: colors.sunSoft },
-  stay: { backgroundColor: colors.seaMist },
+  flight: { backgroundColor: x.day.tintSun },
+  stay: { backgroundColor: x.day.tintExplore },
   identity: { alignItems: 'flex-start', gap: spacing.sm },
   serviceTitle: {
     flex: 1,
     fontSize: 18,
     lineHeight: 28,
     fontFamily: nativeFonts.semibold,
-    color: colors.navy,
+    color: x.day.text,
   },
   route: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold },
-  body: { fontSize: 15, lineHeight: 24, color: colors.navy },
-  secondary: { fontSize: 13, lineHeight: 22, color: colors.ink },
+  body: { fontSize: 15, lineHeight: 24, color: x.day.text },
+  secondary: { fontSize: 13, lineHeight: 22, color: x.day.text },
   metaRow: { gap: spacing.sm, flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start' },
   date: { flexShrink: 1 },
   details: { gap: spacing.sm, paddingTop: spacing.sm },
-  fees: { gap: spacing.xs, padding: spacing.md, borderRadius: radius.sm, backgroundColor: colors.coralTint },
-  linePrice: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy },
+  fees: { gap: spacing.xs, padding: spacing.md, borderRadius: radius.sm, backgroundColor: x.day.tintWarm },
+  linePrice: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.text },
   toggle: {
     minHeight: 48,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.navy,
+    backgroundColor: x.day.text,
     borderRadius: radius.sm,
     flexDirection: 'row',
     alignItems: 'center',
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     lineHeight: 23,
-    color: colors.background,
+    color: x.brand.white,
     fontFamily: nativeFonts.semibold,
   },
   pressed: { opacity: 0.75 },

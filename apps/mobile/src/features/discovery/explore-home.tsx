@@ -1,5 +1,5 @@
 import type { HomeDestinationPickDto } from '@tripflix/api-client/core-api/model/index';
-import { colors, nativeFonts as fonts } from '@tripflix/tokens';
+import { explorer as x, nativeFonts as fonts } from '@tripflix/tokens';
 import { vi } from '@tripflix/i18n';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,8 +13,8 @@ import { NotificationBell } from '@/features/account/notification-bell';
 import { SearchDropPanel } from './search-drop-panel';
 
 export type ExploreCategory = 'all' | 'sea' | 'weekend';
-const ACCENT = colors.coralInk;
-const BACKGROUND = '#FFFDFA';
+const ACCENT = x.day.link;
+const BACKGROUND = x.day.canvas;
 const enter = FadeInDown.duration(280).reduceMotion(ReduceMotion.System);
 const copy = vi.mobile.explore;
 const categories: { id: ExploreCategory; label: string }[] = [
@@ -61,15 +61,16 @@ export function ExploreHome({
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <Animated.View entering={enter} style={styles.opening}>
           <Txt variant="title" style={styles.title}>
-            Đi đâu <Txt style={[styles.title, styles.accent]}>tiếp đây?</Txt>
+            {vi.mobile.explorer.title}
           </Txt>
+          <Txt style={styles.slogan}>{vi.mobile.explorer.slogan}</Txt>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={vi.mobile.searchPanel.placeholder}
             onPress={onSearchOpen}
             style={({ pressed }) => [styles.search, pressed && styles.pressed]}
           >
-            <Icon name="search-outline" size={22} color={colors.navy} />
+            <Icon name="search-outline" size={22} color={x.day.text} />
             <Txt style={styles.searchText}>{vi.mobile.searchPanel.placeholder}</Txt>
           </Pressable>
           <View style={styles.services}>
@@ -79,18 +80,24 @@ export function ExploreHome({
               onPress={() => router.push({ pathname: '/search', params: { autoFocus: '1' } })}
               style={({ pressed }) => [styles.service, pressed && styles.pressed]}
             >
-              <Icon name="bed-outline" size={23} color={colors.navy} />
-              <Txt style={styles.serviceText}>Khách sạn</Txt>
+              <Icon name="bed-outline" size={23} color={x.day.text} />
+              <View style={styles.serviceCopy}>
+                <Txt style={styles.serviceText}>Khách sạn</Txt>
+                <Txt style={styles.serviceHint}>{vi.mobile.explorer.stayHint}</Txt>
+              </View>
               <Icon name="arrow-up-right-box-outline" size={16} color={ACCENT} />
             </Pressable>
-            <View style={styles.serviceDivider} />
+
             <Pressable
               accessibilityRole="button"
               onPress={() => router.push('/flights')}
               style={({ pressed }) => [styles.service, pressed && styles.pressed]}
             >
-              <Icon name="airplane-outline" size={23} color={colors.navy} />
-              <Txt style={styles.serviceText}>{vi.flights.title}</Txt>
+              <Icon name="airplane-outline" size={23} color={x.day.text} />
+              <View style={styles.serviceCopy}>
+                <Txt style={styles.serviceText}>{vi.flights.title}</Txt>
+                <Txt style={styles.serviceHint}>{vi.mobile.explorer.flightHint}</Txt>
+              </View>
               <Icon name="arrow-up-right-box-outline" size={16} color={ACCENT} />
             </Pressable>
           </View>
@@ -116,6 +123,19 @@ export function ExploreHome({
           ))}
         </View>
         <ExploreHighlights category={category} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={vi.mobile.explorer.assistantAction}
+          onPress={() => router.push('/assistant')}
+          style={({ pressed }) => [styles.assistant, pressed && styles.pressed]}
+        >
+          <Image source={assets.curious} contentFit="contain" style={styles.assistantMascot} />
+          <View style={styles.assistantCopy}>
+            <Txt style={styles.assistantTitle}>{vi.mobile.explorer.assistantTitle}</Txt>
+            <Txt style={styles.secondary}>{vi.mobile.explorer.assistantBody}</Txt>
+            <Txt style={styles.assistantAction}>{vi.mobile.explorer.assistantAction}</Txt>
+          </View>
+        </Pressable>
         {children}
       </ScrollView>
     </SafeAreaView>
@@ -140,19 +160,16 @@ function ExploreHighlights({ category }: { category: ExploreCategory }) {
         style={({ pressed }) => [styles.hero, pressed && styles.pressed]}
       >
         <Image source={featured.image} contentFit="cover" style={StyleSheet.absoluteFill} />
-        <LinearGradient
-          colors={['#141B3D00', '#141B3DAA', '#141B3DEE']}
-          locations={[0, 0.5, 1]}
-          style={StyleSheet.absoluteFill}
-        />
+        <LinearGradient colors={x.scrim} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
         <View style={styles.heroContent}>
           <Txt style={styles.heroPlace}>{featured.name}</Txt>
+          <Txt style={styles.editorial}>{vi.mobile.explorer.editorial}</Txt>
           <View style={styles.heroBottom}>
             <Txt variant="heading" style={styles.heroTitle}>
               {isWeekend ? copy.weekendHero : copy.beachHero}
             </Txt>
             <View style={styles.heroArrow}>
-              <Icon name="arrow-forward" size={22} color={colors.background} />
+              <Icon name="arrow-forward" size={22} color={x.brand.white} />
             </View>
           </View>
         </View>
@@ -221,7 +238,7 @@ export function ExploreStayCard({ destination }: { destination: HomeDestinationP
             />
           ) : (
             <View style={styles.noPhoto}>
-              <Icon name="bed-outline" size={26} color={colors.textMuted} />
+              <Icon name="bed-outline" size={26} color={x.day.textSecondary} />
               <Txt style={styles.photoLabel}>Chưa có ảnh</Txt>
             </View>
           )}
@@ -242,7 +259,7 @@ export function ExploreStayCard({ destination }: { destination: HomeDestinationP
         </View>
       </Pressable>
       <View style={styles.reason}>
-        <View style={styles.reasonRule} />
+        <Icon name="sparkles-outline" size={16} color={ACCENT} />
         <Txt style={styles.reasonText}>{stay.reason.text}</Txt>
       </View>
       <View style={styles.stayFooter}>
@@ -261,7 +278,7 @@ export function ExploreStayCard({ destination }: { destination: HomeDestinationP
           style={({ pressed }) => [styles.roomButton, pressed && styles.pressed]}
         >
           <Txt style={styles.roomButtonText}>{vi.hotel.viewRooms}</Txt>
-          <Icon name="arrow-forward" color={colors.background} size={19} />
+          <Icon name="arrow-forward" color={x.brand.white} size={19} />
         </Pressable>
       </View>
     </View>
@@ -320,39 +337,62 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  content: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 6, paddingBottom: 28, gap: 18 },
-  opening: { gap: 14 },
+  content: {
+    flexGrow: 1,
+    paddingHorizontal: x.gutter,
+    paddingTop: 12,
+    paddingBottom: 32,
+    gap: x.space.xl,
+  },
+  opening: { gap: 12 },
+  slogan: { fontSize: 14, lineHeight: 22, color: x.day.textSecondary },
+  serviceCopy: { flex: 1, gap: 2 },
+  serviceHint: { fontSize: 11, lineHeight: 16, color: x.day.textSecondary },
+  assistant: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: x.radius.lg,
+    backgroundColor: x.day.tintExplore,
+  },
+  assistantMascot: { width: 68, height: 84 },
+  assistantCopy: { flex: 1, gap: 6 },
+  assistantTitle: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 24, color: x.day.text },
+  assistantAction: { fontFamily: fonts.semibold, fontSize: 14, lineHeight: 22, color: x.day.link },
+  editorial: { fontSize: 10, lineHeight: 16, color: x.day.surface },
   title: {
     fontFamily: fonts.extraBold,
     fontSize: 30,
     lineHeight: 42,
     letterSpacing: -1.2,
-    color: colors.navy,
+    color: x.day.text,
   },
   accent: { color: ACCENT },
   search: {
     minHeight: 52,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 4,
+    borderRadius: x.radius.md,
     borderWidth: 1,
-    borderColor: '#C9CDD0',
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  searchText: { fontSize: 13, lineHeight: 21, color: '#53606B', flex: 1 },
+  searchText: { fontSize: 13, lineHeight: 21, color: x.day.textSecondary, flex: 1 },
   services: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#DEDAD5',
-    alignItems: 'center',
+    gap: 12,
+    alignItems: 'stretch',
   },
   service: {
     flex: 1,
-    minHeight: 52,
-    paddingVertical: 10,
+    minHeight: 88,
+    padding: 12,
+    backgroundColor: x.day.surface,
+    borderRadius: x.radius.lg,
     flexDirection: 'row',
     gap: 9,
     alignItems: 'center',
@@ -362,42 +402,41 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semibold,
     fontSize: 13,
     lineHeight: 22,
-    color: colors.navy,
+    color: x.day.text,
     flexShrink: 1,
   },
-  serviceDivider: { width: 1, height: 24, backgroundColor: '#DEDAD5' },
   filters: {
     flexDirection: 'row',
-    gap: 22,
+    gap: 8,
     alignItems: 'stretch',
-    borderBottomWidth: 1,
-    borderBottomColor: '#DEDAD5',
+    flexWrap: 'wrap',
   },
   filter: {
     minHeight: 44,
     paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: x.radius.pill,
+    backgroundColor: x.day.surface,
     justifyContent: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
   },
-  filterSelected: { borderBottomColor: ACCENT },
-  filterLabel: { fontFamily: fonts.semibold, fontSize: 13, lineHeight: 22, color: '#53606B' },
-  hero: { height: 214, overflow: 'hidden', backgroundColor: colors.navy },
+  filterSelected: { backgroundColor: x.day.tintExplore },
+  filterLabel: { fontFamily: fonts.semibold, fontSize: 13, lineHeight: 22, color: x.day.textSecondary },
+  hero: { borderRadius: x.radius.xl, height: 270, overflow: 'hidden', backgroundColor: x.day.text },
   heroContent: { flex: 1, justifyContent: 'flex-end', padding: 18, gap: 6 },
-  heroPlace: { color: colors.background, fontFamily: fonts.medium, fontSize: 13, lineHeight: 22 },
+  heroPlace: { color: x.brand.white, fontFamily: fonts.medium, fontSize: 13, lineHeight: 22 },
   heroBottom: { flexDirection: 'row', gap: 16, alignItems: 'flex-end', justifyContent: 'space-between' },
   heroTitle: {
     fontSize: 25,
     lineHeight: 34,
     letterSpacing: -0.6,
     fontFamily: fonts.bold,
-    color: colors.background,
+    color: x.brand.white,
     flex: 1,
   },
   heroArrow: {
     width: 44,
     height: 44,
-    borderRadius: 3,
+    borderRadius: x.radius.pill,
     backgroundColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
@@ -409,14 +448,19 @@ const styles = StyleSheet.create({
     lineHeight: 29,
     fontFamily: fonts.bold,
     letterSpacing: -0.5,
-    color: colors.navy,
+    color: x.day.text,
     flexShrink: 1,
   },
   textLink: { minHeight: 44, flexDirection: 'row', gap: 7, alignItems: 'center', paddingVertical: 8 },
   linkText: { color: ACCENT, fontFamily: fonts.semibold, fontSize: 12, lineHeight: 20, flexShrink: 1 },
   destinations: { flexDirection: 'row', gap: 14 },
   destination: { flex: 1, minWidth: 0, gap: 8 },
-  destinationImage: { width: '100%', aspectRatio: 1.15, backgroundColor: colors.seaMist },
+  destinationImage: {
+    borderRadius: x.radius.lg,
+    width: '100%',
+    aspectRatio: 1.15,
+    backgroundColor: x.day.tintExplore,
+  },
   destinationLabel: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -424,22 +468,27 @@ const styles = StyleSheet.create({
     gap: 4,
     minHeight: 30,
   },
-  destinationName: { fontFamily: fonts.semibold, color: colors.navy, fontSize: 14, lineHeight: 23, flex: 1 },
+  destinationName: { fontFamily: fonts.semibold, color: x.day.text, fontSize: 14, lineHeight: 23, flex: 1 },
   staysHeading: { gap: 4, marginTop: 8 },
-  secondary: { color: '#53606B', fontSize: 13, lineHeight: 21 },
-  stay: { gap: 14, paddingBottom: 22, borderBottomWidth: 1, borderBottomColor: '#DEDAD5' },
-  stayMain: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
-  stayPhoto: { width: 92, height: 132, backgroundColor: '#F1EDE7' },
+  secondary: { color: x.day.textSecondary, fontSize: 13, lineHeight: 21 },
+  stay: { gap: 16, padding: 16, borderRadius: x.radius.lg, backgroundColor: x.day.surface },
+  stayMain: { gap: 16 },
+  stayPhoto: {
+    width: '100%',
+    aspectRatio: 1.6,
+    borderRadius: x.radius.md,
+    overflow: 'hidden',
+    backgroundColor: x.day.tintExplore,
+  },
   noPhoto: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 8 },
-  photoLabel: { color: '#53606B', textAlign: 'center', fontSize: 11, lineHeight: 17 },
+  photoLabel: { color: x.day.textSecondary, textAlign: 'center', fontSize: 11, lineHeight: 17 },
   stayCopy: { flex: 1, gap: 5 },
-  stayName: { fontFamily: fonts.semibold, fontSize: 17, lineHeight: 25, color: colors.navy },
+  stayName: { fontFamily: fonts.semibold, fontSize: 17, lineHeight: 25, color: x.day.text },
   priceRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', marginTop: 4 },
   price: { fontSize: 20, lineHeight: 29, fontFamily: fonts.bold, color: ACCENT },
-  priceNote: { color: '#53606B', fontSize: 12, lineHeight: 19 },
+  priceNote: { color: x.day.textSecondary, fontSize: 12, lineHeight: 19 },
   reason: { flexDirection: 'row', gap: 10, alignItems: 'stretch' },
-  reasonRule: { width: 2, backgroundColor: '#C8C1B8' },
-  reasonText: { flex: 1, color: '#53606B', fontSize: 13, lineHeight: 22 },
+  reasonText: { flex: 1, color: x.day.textSecondary, fontSize: 13, lineHeight: 22 },
   stayFooter: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -451,7 +500,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 4,
+    borderRadius: x.radius.md,
     backgroundColor: ACCENT,
     flexDirection: 'row',
     alignItems: 'center',
@@ -461,15 +510,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     fontFamily: fonts.semibold,
-    color: colors.background,
+    color: x.brand.white,
     flexShrink: 1,
   },
   skeleton: { flexDirection: 'row', gap: 14, paddingBottom: 22 },
-  skeletonPhoto: { width: 92, height: 132, backgroundColor: '#E6E1DA' },
+  skeletonPhoto: { width: 92, height: 132, backgroundColor: x.day.line },
   skeletonCopy: { flex: 1, paddingTop: 8, gap: 15 },
-  skeletonLine: { height: 16, width: '40%', backgroundColor: '#E6E1DA' },
-  notice: { borderLeftWidth: 2, borderLeftColor: '#C8C1B8', paddingLeft: 14, gap: 4 },
-  noticeText: { color: '#53606B', fontSize: 14, lineHeight: 23 },
+  skeletonLine: { height: 16, width: '40%', backgroundColor: x.day.line },
+  notice: { padding: x.space.md, borderRadius: x.radius.md, backgroundColor: x.day.surface, gap: 4 },
+  noticeText: { color: x.day.textSecondary, fontSize: 14, lineHeight: 23 },
   retry: { flexDirection: 'row', alignSelf: 'flex-start', minHeight: 44, alignItems: 'center', gap: 8 },
   pressed: { opacity: 0.8, transform: [{ scale: 0.99 }] },
 });
