@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     borderColor: x.day.line,
     backgroundColor: x.day.surface,
   },
-  activityOpen: { borderColor: x.day.text },
+  activityOpen: { borderColor: x.day.link },
   activityHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, padding: spacing.sm },
   activityBody: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   activityIcon: {

@@ -969,7 +969,7 @@ const ticketStyles = StyleSheet.create({
   fares: { borderRadius: radius.lg, borderWidth: 1, borderColor: x.day.line, overflow: 'hidden' },
   fare: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md },
   fareDivider: { borderTopWidth: 1, borderTopColor: x.day.line },
-  fareSelected: { backgroundColor: x.day.tintExplore, borderLeftWidth: 3, borderLeftColor: x.day.link },
+  fareSelected: { backgroundColor: x.day.tintExplore },
   radio: {
     width: 20,
     height: 20,

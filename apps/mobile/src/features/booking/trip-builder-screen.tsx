@@ -635,7 +635,9 @@ export function TripBuilderScreen() {
           {days.map((day, dayIndex) => (
             <View key={day} style={planStyles.day}>
               {dayIndex < days.length - 1 && <View style={planStyles.rail} />}
-              <View style={planStyles.dayDot} />
+              <View style={planStyles.dayDot}>
+                <Txt style={planStyles.dayDotText}>{day}</Txt>
+              </View>
               <View style={planStyles.dayContent}>
                 <Row style={styles.dayHead}>
                   <Txt style={[planStyles.dayLabel, ui.flex]}>

@@ -345,6 +345,6 @@ const styles = StyleSheet.create({
     fontFamily: nativeFonts.extraBold,
     fontVariant: ['tabular-nums'],
   },
-  sections: { paddingHorizontal: mobileLayout.gutter, backgroundColor: x.day.canvas },
+  sections: { gap: spacing.sm, paddingHorizontal: mobileLayout.gutter, backgroundColor: x.day.canvas },
   loading: { paddingVertical: spacing.lg, color: x.day.textSecondary, fontSize: 14, lineHeight: 23 },
 });
