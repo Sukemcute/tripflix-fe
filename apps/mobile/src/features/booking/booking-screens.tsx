@@ -4,7 +4,7 @@ import {
   shiftTripDate,
   validateReviewContact,
 } from '@tripflix/app-core';
-import { colors as c, spacing as s } from '@tripflix/tokens';
+import { explorer as x, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -208,7 +208,7 @@ export function CartScreen() {
       {review.selection.hasFlight ? (
         <Card>
           <Row>
-            <Icon name="airplane-outline" color={c.tealInk} size={30} />
+            <Icon name="airplane-outline" color={x.day.link} size={30} />
             <View style={ui.flex}>
               <Txt variant="label">{copy.booking.flightRoute}</Txt>
               <Txt variant="caption" style={ui.muted}>
@@ -366,7 +366,10 @@ export function CheckoutScreen() {
           style={[
             ui.card,
             ui.row,
-            review.payment === method.key && { borderColor: c.coral, backgroundColor: c.warmMist },
+            review.payment === method.key && {
+              borderColor: x.action.primary,
+              backgroundColor: x.day.tintWarm,
+            },
           ]}
         >
           <Icon name={method.icon} />
@@ -378,7 +381,7 @@ export function CheckoutScreen() {
           </View>
           <Icon
             name={review.payment === method.key ? 'radio-button-on' : 'radio-button-off'}
-            color={review.payment === method.key ? c.coral : c.textMuted}
+            color={review.payment === method.key ? x.action.primary : x.day.textSecondary}
           />
         </Pressable>
       ))}
@@ -391,14 +394,14 @@ export function CheckoutScreen() {
       >
         <Icon
           name={review.contact.hasConsent ? 'checkbox' : 'square-outline'}
-          color={review.contact.hasConsent ? c.tealInk : c.textMuted}
+          color={review.contact.hasConsent ? x.day.link : x.day.textSecondary}
         />
         <Txt variant="small" style={ui.flex}>
           {copy.booking.consent}
         </Txt>
       </Pressable>
       {hasAttempted && !validation.hasConsent && (
-        <Txt accessibilityRole="alert" variant="small" style={{ color: c.coralInk }}>
+        <Txt accessibilityRole="alert" variant="small" style={{ color: x.day.text }}>
           {copy.booking.consentError}
         </Txt>
       )}

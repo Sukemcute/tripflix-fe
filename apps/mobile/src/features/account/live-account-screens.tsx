@@ -4,7 +4,7 @@ import * as auth from '@tripflix/api-client/core-api/auth/auth';
 import type { UserDto } from '@tripflix/api-client/core-api/model/index';
 import { DISPLAY_NAME_MAX, NEW_PASSWORD_MAX } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { colors as c, nativeFonts, radius, spacing as s } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing as s } from '@tripflix/tokens';
 import { Redirect, router, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -22,7 +22,7 @@ export function LiveProfileScreen() {
   const groups = [
     {
       title: text.accountGroup,
-      tone: c.seaMist,
+      tone: x.day.tintExplore,
       items: [
         {
           label: profile.settings,
@@ -41,7 +41,7 @@ export function LiveProfileScreen() {
     },
     {
       title: text.activityGroup,
-      tone: c.sunSoft,
+      tone: x.day.tintSun,
       items: [
         {
           label: copy.common.notification,
@@ -81,9 +81,9 @@ export function LiveProfileScreen() {
               onPress={item.onPress}
               style={({ pressed }) => [styles.menu, pressed && ui.pressed]}
             >
-              <Icon name={item.icon} size={22} color={c.ink} />
+              <Icon name={item.icon} size={22} color={x.day.text} />
               <Txt style={styles.menuLabel}>{item.label}</Txt>
-              <Icon name="chevron-forward" size={18} color={c.ink} />
+              <Icon name="chevron-forward" size={18} color={x.day.text} />
             </Pressable>
           ))}
         </View>
@@ -207,10 +207,10 @@ export function LiveTripsScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 28, lineHeight: 38, fontFamily: nativeFonts.bold, color: c.navy },
-  body: { fontSize: 16, lineHeight: 25, color: c.ink },
+  title: { fontSize: 28, lineHeight: 38, fontFamily: nativeFonts.bold, color: x.day.text },
+  body: { fontSize: 16, lineHeight: 25, color: x.day.text },
   menuGroup: { padding: s.lg, gap: s.sm, borderRadius: radius.md },
-  groupTitle: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: c.navy },
+  groupTitle: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.text },
   menu: { flexDirection: 'row', alignItems: 'center', gap: s.md, paddingVertical: s.md, minHeight: 56 },
-  menuLabel: { flex: 1, fontSize: 16, lineHeight: 25, color: c.ink },
+  menuLabel: { flex: 1, fontSize: 16, lineHeight: 25, color: x.day.text },
 });

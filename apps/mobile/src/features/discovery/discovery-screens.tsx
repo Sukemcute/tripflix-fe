@@ -1,5 +1,5 @@
 import { searchReviewTrips } from '@tripflix/app-core';
-import { colors as c, spacing as s } from '@tripflix/tokens';
+import { explorer as x, colors as c, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -42,7 +42,7 @@ export function ExploreScreen() {
       }
     >
       <View style={{ gap: s.sm }}>
-        <Txt variant="small" style={{ color: c.tealInk }}>
+        <Txt variant="small" style={{ color: x.day.link }}>
           {copy.explore.greeting}
         </Txt>
         <Txt variant="title">{copy.explore.title}</Txt>
@@ -53,7 +53,7 @@ export function ExploreScreen() {
       <Pressable
         accessibilityRole="button"
         onPress={() => router.push('/search')}
-        style={[ui.input, ui.row, { backgroundColor: c.warmMist }]}
+        style={[ui.input, ui.row, { backgroundColor: x.day.tintWarm }]}
       >
         <Icon name="search-outline" />
         <Txt variant="small" style={[ui.muted, ui.flex]}>
@@ -79,7 +79,7 @@ export function ExploreScreen() {
           );
           router.push('/search');
         }}
-        style={{ height: 250, borderRadius: 24, overflow: 'hidden', backgroundColor: c.tealInk }}
+        style={{ height: 250, borderRadius: 24, overflow: 'hidden', backgroundColor: x.day.link }}
       >
         <Image
           source={category === 2 ? assets.hoiAn : assets.sea}
@@ -103,14 +103,14 @@ export function ExploreScreen() {
                 : copy.explore.heroBadge}
           </Badge>
           <View style={{ gap: s.sm }}>
-            <Txt variant="title" style={{ color: c.background }}>
+            <Txt variant="title" style={{ color: x.brand.white }}>
               {copy.explore.heroTitle}
             </Txt>
             <Row>
-              <Txt variant="small" style={{ color: c.background, flex: 1 }}>
+              <Txt variant="small" style={{ color: x.brand.white, flex: 1 }}>
                 {copy.explore.heroBody}
               </Txt>
-              <Icon name="arrow-forward-circle-outline" color={c.background} size={36} />
+              <Icon name="arrow-forward-circle-outline" color={x.brand.white} size={36} />
             </Row>
           </View>
         </View>
@@ -209,10 +209,10 @@ export function SearchScreen() {
               <Txt variant="small" style={ui.muted}>
                 {criteria.hotelOnly ? copy.explore.hotelOnly : copy.explore.package}
               </Txt>
-              <Txt variant="heading" style={{ color: c.coralInk }}>
+              <Txt variant="heading" style={{ color: x.day.text }}>
                 {money(criteria.perGuest)} <Txt variant="small">{copy.common.perGuest}</Txt>
               </Txt>
-              <Txt variant="small" style={{ color: c.tealInk }}>
+              <Txt variant="small" style={{ color: x.day.link }}>
                 {copy.explore.reason}
               </Txt>
             </View>
@@ -301,7 +301,7 @@ export function AssistantScreen() {
       <View
         style={{
           alignItems: 'center',
-          backgroundColor: c.seaMist,
+          backgroundColor: x.day.tintExplore,
           marginHorizontal: -20,
           padding: s.xl,
           gap: s.md,
@@ -312,7 +312,7 @@ export function AssistantScreen() {
         <Txt variant="title" style={ui.center}>
           {copy.assistant.headline}
         </Txt>
-        <Txt variant="small" style={{ color: c.tealInk }}>
+        <Txt variant="small" style={{ color: x.day.link }}>
           {copy.assistant.body}
         </Txt>
       </View>
@@ -327,7 +327,7 @@ export function AssistantScreen() {
         <Card
           key={`${index}-${message.role}`}
           style={{
-            backgroundColor: message.role === 'user' ? c.seaMist : c.warmMist,
+            backgroundColor: message.role === 'user' ? x.day.tintExplore : x.day.tintWarm,
             alignSelf: message.role === 'user' ? 'flex-end' : 'stretch',
             maxWidth: '100%',
           }}

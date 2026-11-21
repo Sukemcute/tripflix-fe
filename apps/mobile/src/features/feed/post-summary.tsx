@@ -1,13 +1,6 @@
 import { usePostSummary } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
-import {
-  explorer as x,
-  colors as c,
-  mobileLayout,
-  nativeFonts,
-  radius,
-  spacing as s,
-} from '@tripflix/tokens';
+import { explorer as x, mobileLayout, nativeFonts, radius, spacing as s } from '@tripflix/tokens';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
@@ -139,7 +132,7 @@ export function CommunitySummary({ postId }: { postId: string }) {
 
 const styles = StyleSheet.create({
   root: {
-    backgroundColor: c.warmMist,
+    backgroundColor: x.day.tintWarm,
     borderRadius: mobileLayout.cardRadius,
     padding: s.sm,
     marginBottom: s.md,
@@ -147,7 +140,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: s.sm },
   heading: { flex: 1 },
   title: { fontSize: 14, lineHeight: 19 },
-  basedOn: { color: c.textMuted, fontSize: 12, lineHeight: 17 },
+  basedOn: { color: x.day.textSecondary, fontSize: 12, lineHeight: 17 },
   frame: { overflow: 'hidden' },
   // Nằm ngoài dòng chảy, nên luôn đo được chiều cao thật dù khung đang thu về 0.
   content: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: s.sm, gap: s.xs },
@@ -155,8 +148,8 @@ const styles = StyleSheet.create({
   label: { fontFamily: nativeFonts.semibold },
   sectionHeading: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: s.sm },
   ai: {
-    color: c.tealInk,
-    backgroundColor: c.seaMist,
+    color: x.day.link,
+    backgroundColor: x.day.tintExplore,
     fontSize: 11,
     lineHeight: 17,
     borderRadius: radius.sm,

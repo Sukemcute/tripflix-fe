@@ -399,7 +399,7 @@ function ListCard({ card, actions }: { card: AssistantCard; actions?: CardAction
         <View key={`${card.ref}-${index}`} style={[styles.listRow, index > 0 && styles.divider]}>
           {isChecklist && (
             <View style={styles.check}>
-              <Icon name="checkmark" size={14} color={c.background} />
+              <Icon name="checkmark" size={14} color={x.brand.white} />
             </View>
           )}
           <View style={{ flex: 1 }}>
@@ -444,7 +444,7 @@ function VideoCard({ card, reel, onPlay }: { card: AssistantCard; reel?: Reel; o
         <View style={[StyleSheet.absoluteFill, { backgroundColor: x.day.link }]} />
       )}
       <View style={styles.play}>
-        <Icon name="play" size={16} color={c.background} />
+        <Icon name="play" size={16} color={x.brand.white} />
       </View>
       <View style={styles.videoCaption}>
         <Txt numberOfLines={3} style={styles.videoTitle}>
@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: x.day.line,
-    backgroundColor: c.background,
+    backgroundColor: x.day.surface,
     boxShadow: `0 6px 18px -12px ${c.overlay}`,
   },
   pressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
   dayChip: {
     ...chatType.meta,
     fontFamily: f.bold,
-    color: c.background,
+    color: x.brand.white,
     backgroundColor: x.day.text,
     paddingHorizontal: s.sm,
     paddingVertical: 3,
@@ -575,9 +575,9 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: c.coral,
+    backgroundColor: x.action.primary,
     borderWidth: 2,
-    borderColor: c.background,
+    borderColor: x.day.surface,
     boxShadow: `0 0 0 2px ${x.day.line}`,
   },
   // Nét đứt nối các mốc trong ngày; nền viền thường quá nhạt, không thấy được đường đi.
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     borderLeftWidth: 2,
     borderStyle: 'dashed',
-    borderColor: x.action.primaryPressed,
+    borderColor: x.action.primary,
   },
   stopBody: { flex: 1, gap: 3, paddingBottom: s.md },
   // Chuyến bay, khách sạn Tripflix trong lộ trình: nổi bật để khách thấy phần đặt được.
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
     marginBottom: s.sm,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: c.coral,
+    borderColor: x.day.line,
     backgroundColor: x.day.tintWarm,
   },
   serviceBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: x.day.line,
-    backgroundColor: c.background,
+    backgroundColor: x.day.surface,
   },
   actionPrimary: { borderColor: x.action.primary, backgroundColor: x.action.primary },
   actionText: { ...chatType.small, fontFamily: f.semibold, color: x.day.text },
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: c.teal,
+    backgroundColor: x.day.link,
   },
   listLabel: { ...chatType.body, fontFamily: f.semibold, color: x.day.text },
   row: { flexDirection: 'row', alignItems: 'center', gap: s.md, padding: s.md },
@@ -683,5 +683,5 @@ const styles = StyleSheet.create({
     backgroundColor: c.overlay,
   },
   videoCaption: { padding: s.sm, backgroundColor: c.overlayHeavy },
-  videoTitle: { ...chatType.meta, fontFamily: f.semibold, color: c.background },
+  videoTitle: { ...chatType.meta, fontFamily: f.semibold, color: x.brand.white },
 });

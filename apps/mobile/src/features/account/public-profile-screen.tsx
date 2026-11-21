@@ -365,7 +365,7 @@ function Tile({
         </Txt>
       )}
       <View style={styles.likes}>
-        <Icon name="heart" size={mobileIconSize.inline} color={c.background} />
+        <Icon name="heart" size={mobileIconSize.inline} color={x.brand.white} />
         <Txt variant="caption" style={styles.likesText}>
           {formatProfileCount(likes)}
         </Txt>
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     marginHorizontal: -mobileLayout.gutter,
-    borderBottomColor: c.border,
+    borderBottomColor: x.day.line,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   tab: {
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
   },
   // Bóng chữ để số vẫn đọc được trên ảnh bìa sáng.
   likesText: {
-    color: c.background,
+    color: x.brand.white,
     fontFamily: nativeFonts.bold,
     textShadowColor: c.overlayHeavy,
     textShadowOffset: { width: 0, height: 1 },
@@ -439,9 +439,9 @@ const styles = StyleSheet.create({
 });
 
 const ownStyles = StyleSheet.create({
-  heldCard: { gap: s.sm, borderRadius: radius.md, borderWidth: 0, backgroundColor: c.sunSoft },
+  heldCard: { gap: s.sm, borderRadius: radius.md, borderWidth: 0, backgroundColor: x.day.tintSun },
   detailButton: { borderRadius: radius.sm, minHeight: 48 },
-  body: { fontSize: 16, lineHeight: 25, color: c.ink },
+  body: { fontSize: 16, lineHeight: 25, color: x.day.text },
   login: {
     minHeight: 52,
     borderRadius: x.radius.pill,
@@ -451,18 +451,18 @@ const ownStyles = StyleSheet.create({
     padding: s.md,
   },
   loginText: { fontSize: 15, lineHeight: 24, fontFamily: nativeFonts.semibold, color: x.action.onPrimary },
-  section: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: c.navy },
+  section: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: x.day.text },
   tabs: { flexDirection: 'row', gap: s.sm },
   tab: {
     flex: 1,
     minHeight: 48,
     borderRadius: radius.sm,
     padding: s.sm,
-    backgroundColor: c.surfaceMuted,
+    backgroundColor: x.day.canvas,
     alignItems: 'center',
     justifyContent: 'center',
   },
   selectedTab: { backgroundColor: x.day.link },
-  tabText: { fontSize: 14, lineHeight: 23, color: c.ink, textAlign: 'center' },
-  selectedText: { color: c.background },
+  tabText: { fontSize: 14, lineHeight: 23, color: x.day.text, textAlign: 'center' },
+  selectedText: { color: x.brand.white },
 });

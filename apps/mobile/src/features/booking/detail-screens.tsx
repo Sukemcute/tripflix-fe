@@ -1,5 +1,5 @@
 import { calculateTripQuote, shiftTripDate } from '@tripflix/app-core';
-import { colors as c, spacing as s } from '@tripflix/tokens';
+import { explorer as x, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -131,7 +131,7 @@ export function ItineraryScreen() {
             style={{
               width: 40,
               height: 40,
-              backgroundColor: c.sunSoft,
+              backgroundColor: x.day.tintSun,
               borderRadius: 20,
               alignItems: 'center',
               justifyContent: 'center',
@@ -145,7 +145,7 @@ export function ItineraryScreen() {
               {copy.itinerary.creatorNote}
             </Txt>
           </View>
-          <Icon name="checkmark-circle" color={c.tealInk} />
+          <Icon name="checkmark-circle" color={x.day.link} />
         </Row>
         <Segments
           options={[copy.itinerary.plan, copy.itinerary.cost, copy.itinerary.reviews]}
@@ -169,16 +169,16 @@ export function ItineraryScreen() {
                     style={{
                       width: 34,
                       height: 34,
-                      backgroundColor: c.seaMist,
+                      backgroundColor: x.day.tintExplore,
                       borderRadius: 17,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Icon name={stop.icon} size={18} color={c.tealInk} />
+                    <Icon name={stop.icon} size={18} color={x.day.link} />
                   </View>
                   {index < days[day]!.stops.length - 1 && (
-                    <View style={{ width: 1, flex: 1, minHeight: 30, backgroundColor: c.border }} />
+                    <View style={{ width: 1, flex: 1, minHeight: 30, backgroundColor: x.day.line }} />
                   )}
                 </View>
                 <View style={{ flex: 1, paddingBottom: s.lg, gap: s.sm }}>
@@ -189,7 +189,7 @@ export function ItineraryScreen() {
                   {stop.icon === 'bed-outline' && (
                     <Pressable accessibilityRole="button" onPress={() => router.push('/hotel')}>
                       <Image source={assets.hotel} style={{ width: '100%', height: 130, borderRadius: 12 }} />
-                      <Txt variant="small" style={{ color: c.tealInk, paddingVertical: s.sm }}>
+                      <Txt variant="small" style={{ color: x.day.link, paddingVertical: s.sm }}>
                         {copy.hotel.title} →
                       </Txt>
                     </Pressable>
@@ -210,7 +210,7 @@ export function ItineraryScreen() {
           <Card>
             <Row>
               {Array.from({ length: 5 }, (_, index) => (
-                <Icon key={index} name="star" color={c.sun} size={18} />
+                <Icon key={index} name="star" color={x.brand.sun} size={18} />
               ))}
             </Row>
             <Txt variant="small">{copy.itinerary.reviewsBody}</Txt>
@@ -255,7 +255,7 @@ export function HotelScreen() {
             {copy.hotel.body}
           </Txt>
           <Row>
-            <Icon name="star" color={c.sun} size={18} />
+            <Icon name="star" color={x.brand.sun} size={18} />
             <Txt variant="small">{copy.hotel.rating}</Txt>
           </Row>
         </View>
@@ -266,7 +266,7 @@ export function HotelScreen() {
             { icon: 'cafe-outline' as const, label: copy.hotel.breakfast },
           ].map((amenity) => (
             <View key={amenity.label} style={{ alignItems: 'center', gap: s.sm }}>
-              <Icon name={amenity.icon} color={c.tealInk} />
+              <Icon name={amenity.icon} color={x.day.link} />
               <Txt variant="small">{amenity.label}</Txt>
             </View>
           ))}

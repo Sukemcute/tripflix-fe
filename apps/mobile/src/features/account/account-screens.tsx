@@ -1,5 +1,5 @@
 import { shiftTripDate } from '@tripflix/app-core';
-import { colors as c, spacing as s } from '@tripflix/tokens';
+import { explorer as x, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -154,7 +154,7 @@ export function ProfileScreen() {
         />
       }
     >
-      <View style={{ backgroundColor: c.seaMist, borderRadius: 24, padding: s.xl, gap: s.lg }}>
+      <View style={{ backgroundColor: x.day.tintExplore, borderRadius: 24, padding: s.xl, gap: s.lg }}>
         <View
           style={{
             height: 76,
@@ -162,9 +162,9 @@ export function ProfileScreen() {
             borderRadius: 38,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: c.sunSoft,
+            backgroundColor: x.day.tintSun,
             borderWidth: 4,
-            borderColor: c.background,
+            borderColor: x.day.surface,
           }}
         >
           <Txt variant="title">
@@ -199,13 +199,13 @@ export function ProfileScreen() {
           onPress={menu.action}
           style={[ui.row, { minHeight: 56 }]}
         >
-          <View style={{ backgroundColor: c.seaMist, padding: s.md, borderRadius: 12 }}>
-            <Icon name={menu.icon} color={c.tealInk} />
+          <View style={{ backgroundColor: x.day.tintExplore, padding: s.md, borderRadius: 12 }}>
+            <Icon name={menu.icon} color={x.day.link} />
           </View>
           <Txt variant="small" style={ui.flex}>
             {menu.label}
           </Txt>
-          <Icon name="chevron-forward" size={18} color={c.textMuted} />
+          <Icon name="chevron-forward" size={18} color={x.day.textSecondary} />
         </Pressable>
       ))}
       <Sheet
@@ -278,7 +278,7 @@ export function NotificationsScreen() {
           onPress={() => router.push('/my-trips')}
           style={[ui.card, ui.row]}
         >
-          <Icon name="checkmark-circle-outline" color={c.tealInk} size={32} />
+          <Icon name="checkmark-circle-outline" color={x.day.link} size={32} />
           <View style={ui.flex}>
             <Txt variant="label">{copy.notifications.orderTitle}</Txt>
             <Txt variant="small" style={ui.muted}>
@@ -295,7 +295,7 @@ export function NotificationsScreen() {
           onPress={() => router.push('/(tabs)/me')}
           style={[ui.card, ui.row]}
         >
-          <Icon name="create-outline" color={c.tealInk} size={32} />
+          <Icon name="create-outline" color={x.day.link} size={32} />
           <View style={ui.flex}>
             <Txt variant="label">{copy.notifications.postTitle}</Txt>
             <Txt variant="small" style={ui.muted}>

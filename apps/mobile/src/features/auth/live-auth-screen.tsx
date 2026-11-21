@@ -21,7 +21,7 @@ import {
   type SignupGender,
 } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors as c, mobileLayout, nativeFonts, spacing as s } from '@tripflix/tokens';
+import { explorer as x, mobileLayout, nativeFonts, spacing as s } from '@tripflix/tokens';
 import { useMutation } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
 import { Image } from 'expo-image';
@@ -67,7 +67,7 @@ function WebLinkText({ path, children }: { path: string; children: string }) {
     <Txt
       variant="small"
       accessibilityRole="link"
-      style={[styles.termsLink, { color: c.coralInk }]}
+      style={[styles.termsLink, { color: x.day.text }]}
       onPress={() => void Linking.openURL(`${WEB_URL}${path}`)}
     >
       {children}
@@ -215,7 +215,7 @@ export function LiveLoginScreen() {
   return (
     <Screen
       padded={false}
-      background={c.background}
+      background={x.day.surface}
       header={
         <View style={styles.header}>
           <Logo />
@@ -226,7 +226,7 @@ export function LiveLoginScreen() {
             onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
             style={styles.back}
           >
-            <Icon name="arrow-back" size={24} color={c.navy} />
+            <Icon name="arrow-back" size={24} color={x.day.text} />
           </Pressable>
         </View>
       }
@@ -331,7 +331,11 @@ export function LiveLoginScreen() {
                   onPress={() => setPasswordVisible(!passwordVisible)}
                   style={styles.visibility}
                 >
-                  <Icon name={passwordVisible ? 'eye-off-outline' : 'eye-outline'} size={22} color={c.navy} />
+                  <Icon
+                    name={passwordVisible ? 'eye-off-outline' : 'eye-outline'}
+                    size={22}
+                    color={x.day.text}
+                  />
                 </Pressable>
               }
             />
@@ -345,7 +349,7 @@ export function LiveLoginScreen() {
                         : 'information-circle-outline'
                     }
                     size={17}
-                    color={strength === 'passwordStrong' ? c.tealInk : c.textMuted}
+                    color={strength === 'passwordStrong' ? x.day.link : x.day.textSecondary}
                   />
                 )}
                 <Txt
@@ -418,7 +422,7 @@ export function LiveLoginScreen() {
                   style={[authInputFrame, styles.select]}
                 >
                   <Txt style={styles.selectLabel}>{describeNationality(nationality)}</Txt>
-                  <Icon name="chevron-down" size={20} color={c.textMuted} />
+                  <Icon name="chevron-down" size={20} color={x.day.textSecondary} />
                 </Pressable>
               </View>
               <Pressable
@@ -435,7 +439,7 @@ export function LiveLoginScreen() {
                 <Icon
                   name={hasAcceptedTerms ? 'checkbox' : 'square-outline'}
                   size={24}
-                  color={hasAcceptedTerms ? c.coralInk : c.textMuted}
+                  color={hasAcceptedTerms ? x.day.text : x.day.textSecondary}
                 />
                 <Txt style={styles.termsText}>
                   {vi.api.termsAgreePrefix}{' '}
@@ -576,13 +580,13 @@ const styles = StyleSheet.create({
   back: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   form: { paddingHorizontal: mobileLayout.gutter, paddingTop: s.sm, paddingBottom: s.lg, gap: s.xl },
   heading: { gap: s.sm },
-  title: { fontFamily: nativeFonts.bold, fontSize: 30, lineHeight: 41, letterSpacing: -1, color: c.navy },
-  body: { fontSize: 14, lineHeight: 23, color: c.textMuted },
-  photo: { overflow: 'hidden', borderRadius: 8, backgroundColor: c.seaMist },
+  title: { fontFamily: nativeFonts.bold, fontSize: 30, lineHeight: 41, letterSpacing: -1, color: x.day.text },
+  body: { fontSize: 14, lineHeight: 23, color: x.day.textSecondary },
+  photo: { overflow: 'hidden', borderRadius: 8, backgroundColor: x.day.tintExplore },
   group: { gap: s.lg },
-  groupTitle: { color: c.navy, fontSize: 19, lineHeight: 28, fontFamily: nativeFonts.semibold },
+  groupTitle: { color: x.day.text, fontSize: 19, lineHeight: 28, fontFamily: nativeFonts.semibold },
   fieldGroup: { gap: s.sm },
-  label: { fontSize: 14, lineHeight: 22, fontFamily: nativeFonts.medium, color: c.navy },
+  label: { fontSize: 14, lineHeight: 22, fontFamily: nativeFonts.medium, color: x.day.text },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: s.sm },
   select: {
     flexDirection: 'row',
@@ -594,13 +598,13 @@ const styles = StyleSheet.create({
   },
   selectLabel: { flex: 1, fontSize: 15, lineHeight: 24 },
   terms: { flexDirection: 'row', alignItems: 'flex-start', gap: s.sm, minHeight: 48, paddingVertical: s.xs },
-  termsText: { flex: 1, fontSize: 13, lineHeight: 22, color: c.textMuted },
+  termsText: { flex: 1, fontSize: 13, lineHeight: 22, color: x.day.textSecondary },
   termsLink: { fontFamily: nativeFonts.semibold, fontSize: 13, lineHeight: 22, textDecorationLine: 'none' },
   passwordGroup: { gap: s.sm },
   passwordHint: { flexDirection: 'row', alignItems: 'flex-start', gap: s.sm },
-  helper: { fontSize: 13, lineHeight: 22, color: c.textMuted, flexShrink: 1 },
-  localError: { fontSize: 13, lineHeight: 22, color: c.coralInk },
-  validPassword: { color: c.tealInk },
+  helper: { fontSize: 13, lineHeight: 22, color: x.day.textSecondary, flexShrink: 1 },
+  localError: { fontSize: 13, lineHeight: 22, color: x.day.text },
+  validPassword: { color: x.day.link },
   visibility: { width: 48, minHeight: 52, justifyContent: 'center', alignItems: 'center' },
   actions: { gap: s.md },
 });

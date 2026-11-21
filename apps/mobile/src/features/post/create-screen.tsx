@@ -1,4 +1,4 @@
-import { colors as c, spacing as s } from '@tripflix/tokens';
+import { explorer as x, spacing as s } from '@tripflix/tokens';
 import { POST_MEDIA_LIMITS, validatePostMedia } from '@tripflix/app-core';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -167,7 +167,7 @@ export function CreateScreen() {
         style={[
           ui.card,
           {
-            backgroundColor: c.warmMist,
+            backgroundColor: x.day.tintWarm,
             minHeight: 160,
             justifyContent: 'center',
             alignItems: 'center',
@@ -175,7 +175,7 @@ export function CreateScreen() {
           },
         ]}
       >
-        <Icon name="cloud-upload-outline" color={c.tealInk} size={32} />
+        <Icon name="cloud-upload-outline" color={x.day.link} size={32} />
         <Txt variant="label">{copy.create.upload}</Txt>
         <Txt variant="caption" style={[ui.muted, ui.center]}>
           {copy.create.uploadHint}
@@ -189,13 +189,13 @@ export function CreateScreen() {
                 minHeight: 160,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: c.seaMist,
+                backgroundColor: x.day.tintExplore,
                 borderRadius: 12,
                 padding: s.lg,
                 gap: s.sm,
               }}
             >
-              <Icon name="film-outline" size={36} color={c.tealInk} />
+              <Icon name="film-outline" size={36} color={x.day.link} />
               <Txt variant="label">{copy.create.videoSelected}</Txt>
               <Txt variant="small">
                 {Math.floor((media.durationMs ?? 0) / 60_000)}:

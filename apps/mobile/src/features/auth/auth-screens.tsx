@@ -1,4 +1,4 @@
-import { colors as c, spacing as s } from '@tripflix/tokens';
+import { explorer as x, colors as c, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -39,7 +39,7 @@ export function LoginScreen({ afterSignIn }: { afterSignIn?: () => void } = {}) 
             justifyContent: 'flex-end',
           }}
         >
-          <Txt variant="heading" style={{ color: c.background }}>
+          <Txt variant="heading" style={{ color: x.brand.white }}>
             {copy.auth.hero}
           </Txt>
         </View>
@@ -70,7 +70,7 @@ export function LoginScreen({ afterSignIn }: { afterSignIn?: () => void } = {}) 
         onSubmitEditing={signIn}
       />
       {hasError && (
-        <Txt accessibilityRole="alert" variant="small" style={{ color: c.coralInk }}>
+        <Txt accessibilityRole="alert" variant="small" style={{ color: x.day.text }}>
           {copy.auth.error}
         </Txt>
       )}

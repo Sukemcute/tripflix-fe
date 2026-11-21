@@ -1,6 +1,6 @@
 import { getDemoTrip } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { colors as c, spacing as s } from '@tripflix/tokens';
+import { explorer as x, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
@@ -74,12 +74,12 @@ export function FeedTripDetailScreen() {
               width: 36,
               height: 36,
               borderRadius: 18,
-              backgroundColor: c.seaMist,
+              backgroundColor: x.day.tintExplore,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Txt variant="label" style={{ color: c.tealInk }}>
+            <Txt variant="label" style={{ color: x.day.link }}>
               {index + 1}
             </Txt>
           </View>

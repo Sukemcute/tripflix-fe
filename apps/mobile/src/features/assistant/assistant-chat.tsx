@@ -92,7 +92,7 @@ export function AssistantChat({
         <View style={styles.header}>
           <View style={styles.avatar}>
             <Mascot size={34} />
-            <View style={[styles.statusDot, chat.isPending && { backgroundColor: c.sun }]} />
+            <View style={[styles.statusDot, chat.isPending && { backgroundColor: x.brand.sun }]} />
           </View>
           <View style={{ flex: 1 }}>
             <Txt variant="heading" style={[chatType.title, { fontFamily: f.bold }]}>
@@ -238,7 +238,7 @@ export function AssistantChat({
                           }}
                           style={({ pressed }) => [styles.loginButton, pressed && { opacity: 0.85 }]}
                         >
-                          <Icon name="log-in-outline" size={18} color={c.background} />
+                          <Icon name="log-in-outline" size={18} color={x.brand.white} />
                           <Txt style={styles.loginText}>{copy.login}</Txt>
                         </Pressable>
                       )}
@@ -322,7 +322,7 @@ export function AssistantChat({
             <Icon
               name="arrow-up"
               size={mobileIconSize.control}
-              color={isDisabled ? x.day.textSecondary : c.background}
+              color={isDisabled ? x.day.textSecondary : x.day.surface}
             />
           </Pressable>
         </View>
@@ -409,7 +409,7 @@ function AssistantModal() {
       borderBottomLeftRadius: 32 * (1 - p),
       borderBottomRightRadius: 32 * (1 - p),
       borderWidth: 2 * (1 - p),
-      backgroundColor: interpolateColor(p, [0, 1], [x.day.canvas, c.background]),
+      backgroundColor: interpolateColor(p, [0, 1], [x.day.canvas, x.day.surface]),
       opacity: reducedMotion ? progress.get() : 1,
     };
   });
@@ -547,7 +547,7 @@ function AssistantModal() {
           >
             <Mascot size={BUBBLE_MASCOT_SIZE} />
             <View style={styles.morphBadge}>
-              <Icon name="sparkles" size={10} color={c.background} />
+              <Icon name="sparkles" size={10} color={x.brand.white} />
             </View>
           </Animated.View>
         </Animated.View>
@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
   dialog: {
     position: 'absolute',
     overflow: 'hidden',
-    borderColor: c.background,
+    borderColor: x.day.surface,
     boxShadow: `0 4px 16px ${c.overlay}`,
   },
   morphMascot: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
@@ -585,9 +585,9 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: c.coral,
+    backgroundColor: x.action.primary,
     borderWidth: 2,
-    borderColor: c.background,
+    borderColor: x.day.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -624,8 +624,8 @@ const styles = StyleSheet.create({
     height: 11,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: c.background,
-    backgroundColor: c.teal,
+    borderColor: x.day.surface,
+    backgroundColor: x.day.link,
   },
   subtitle: { ...chatType.meta, color: x.day.link, fontFamily: f.medium },
   preview: {
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: x.day.line,
     borderRadius: 18,
-    backgroundColor: c.background,
+    backgroundColor: x.day.surface,
     boxShadow: `0 4px 14px -10px ${c.overlay}`,
   },
   promptIcon: {
@@ -687,7 +687,7 @@ const styles = StyleSheet.create({
   userMessage: { backgroundColor: x.day.text, borderBottomRightRadius: 6 },
   assistantMessage: { flexShrink: 1, backgroundColor: x.day.canvas, borderBottomLeftRadius: 6 },
   messageText: { ...chatType.body, color: x.day.text },
-  userText: { color: c.background },
+  userText: { color: x.brand.white },
   attachments: { gap: s.sm, marginLeft: 34 + s.sm },
   suggestionsLabel: { ...chatType.meta, fontFamily: f.semibold, color: x.day.textSecondary },
   loginButton: {
@@ -714,8 +714,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: s.lg,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: x.action.primaryPressed,
-    backgroundColor: c.background,
+    borderColor: x.day.link,
+    backgroundColor: x.day.surface,
   },
   chipText: { ...chatType.small, fontFamily: f.semibold, color: x.day.link },
   composerArea: { borderTopWidth: 1, borderTopColor: x.day.line, padding: s.md, gap: s.sm },
@@ -726,7 +726,7 @@ const styles = StyleSheet.create({
     borderColor: x.day.line,
     borderRadius: 24,
     padding: s.xs,
-    backgroundColor: c.surface,
+    backgroundColor: x.day.canvas,
   },
   input: {
     flex: 1,
@@ -745,7 +745,7 @@ const styles = StyleSheet.create({
     width: mobileLayout.touchTarget,
     height: mobileLayout.touchTarget,
     borderRadius: mobileLayout.touchTarget / 2,
-    backgroundColor: c.coral,
+    backgroundColor: x.action.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -757,13 +757,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: s.xl,
   },
-  confirm: { backgroundColor: c.background, borderRadius: 24, padding: s.xl, gap: s.md, maxWidth: 340 },
+  confirm: { backgroundColor: x.day.surface, borderRadius: 24, padding: s.xl, gap: s.md, maxWidth: 340 },
   mutedBody: { ...compactType.body, color: x.day.textSecondary },
   confirmAction: {
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: c.surface,
+    backgroundColor: x.day.canvas,
   },
 });
