@@ -336,7 +336,7 @@ const layout = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: x.day.canvas,
   },
-  hotelIcon: { backgroundColor: x.day.tintWarm },
+  hotelIcon: { backgroundColor: x.action.primary },
   stopBody: { flex: 1, minWidth: 0, gap: 2 },
   removeStop: { padding: spacing.xs },
 });
