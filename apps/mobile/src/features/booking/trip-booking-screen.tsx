@@ -758,12 +758,12 @@ export function TripBookingScreen() {
   return (
     <Screen title={copy.bookingTitle} back={false} header={<BookingHeader />}>
       <View style={{ gap: spacing.xl }}>
-        <SavedItinerariesSection />
-        <View style={{ gap: spacing.md }}>
+        <AskTripiCard />
+        <View style={{ gap: spacing.sm }}>
           <Txt variant="title">{copy.planNewTitle}</Txt>
           <TripBuilderEntry />
-          <AskTripiCard />
         </View>
+        <SavedItinerariesSection />
       </View>
     </Screen>
   );

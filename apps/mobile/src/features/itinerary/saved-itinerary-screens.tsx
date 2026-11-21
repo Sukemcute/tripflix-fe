@@ -68,9 +68,10 @@ export function SavedItinerariesSection() {
       </Row>
       {query.isPending && <LoadingDots />}
       {!query.isPending && itineraries.length === 0 && (
-        <Txt variant="small" style={ui.muted}>
-          {copy.empty}
-        </Txt>
+        <View style={emptyStyles.box}>
+          <Icon name="bookmark-outline" size={22} color={x.day.link} />
+          <Txt style={[emptyStyles.text, ui.flex]}>{copy.empty}</Txt>
+        </View>
       )}
       {itineraries.slice(0, HOME_LIMIT).map((itinerary) => (
         <ItineraryRow key={itinerary.id} itinerary={itinerary} />
@@ -81,6 +82,20 @@ export function SavedItinerariesSection() {
     </View>
   );
 }
+
+const emptyStyles = StyleSheet.create({
+  box: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: x.day.line,
+  },
+  text: { color: x.day.textSecondary, fontSize: 14, lineHeight: 22 },
+});
 
 export function SavedItinerariesScreen() {
   const { user, query } = useSavedItineraries();

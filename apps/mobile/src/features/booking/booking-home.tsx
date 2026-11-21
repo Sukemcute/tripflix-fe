@@ -10,10 +10,11 @@ import { vi } from '@tripflix/i18n';
 import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { LoadingDots } from '@/components/loading-dots';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
-import { Badge, Button, formatDate, Icon, money, Row, Txt, ui } from '@/components/mobile-ui';
+import { assets, Badge, Button, formatDate, Icon, money, Row, Txt, ui } from '@/components/mobile-ui';
 import { AssistantCards } from '@/features/assistant/assistant-cards';
 import type { AssistantMessage } from '@/features/assistant/assistant-provider';
 import { askTripiTurn, newTripiConversationId } from '@/features/assistant/assistant-transport';
@@ -143,13 +144,15 @@ export function AskTripiCard() {
   return (
     <View style={{ gap: spacing.md }}>
       <View style={layout.ask}>
-        <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
-          <Icon name="sparkles" size={mobileIconSize.control} color={x.day.text} />
-          <Txt variant="heading" style={ui.flex}>
-            {copy.askTripiTitle}
-          </Txt>
-        </Row>
-        <Txt style={styles.muted}>{copy.askTripiBody}</Txt>
+        <View style={layout.askIntro}>
+          <View style={layout.askCopy}>
+            <Txt accessibilityRole="header" style={layout.askTitle}>
+              {copy.askTripiTitle}
+            </Txt>
+            <Txt style={styles.muted}>{copy.askTripiBody}</Txt>
+          </View>
+          <Image source={assets.welcome} contentFit="contain" style={layout.askMascot} />
+        </View>
         <TextInput
           value={text}
           onChangeText={setText}
@@ -243,11 +246,15 @@ const layout = StyleSheet.create({
   },
   tripTitle: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
   ask: {
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderRadius: radius.lg,
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: x.radius.xl,
     backgroundColor: x.day.tintWarm,
   },
+  askIntro: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  askCopy: { flex: 1, gap: spacing.xs },
+  askTitle: { fontFamily: nativeFonts.bold, fontSize: 22, lineHeight: 30, color: x.day.text },
+  askMascot: { width: 96, height: 104 },
   askInput: {
     ...compactType.body,
     fontFamily: nativeFonts.regular,
