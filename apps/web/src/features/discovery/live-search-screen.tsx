@@ -13,7 +13,7 @@ import { OTA_DESTINATIONS, getDestinationHref } from './ota-destinations';
 import listing from './hotel-listing.module.css';
 import { StayPriceInput } from './stay-price-input';
 import { SoftDatePicker } from '@/features/shared/soft-date-picker';
-import { SoftSelect } from '@/features/shared/soft-select';
+import { placeBelow, SoftSelect, useCloseOnScroll } from '@/features/shared/soft-select';
 import {
   getStayDateIssue, getStayPriceIssue, getStayToday, isStayInteger, MAX_STAY_GUESTS, MAX_STAY_ROOMS,
 } from './stay-search-validation';
@@ -22,6 +22,7 @@ import { SearchAdBanner } from './search-ad-banner';
 import { SoftStarIcon } from './soft-star-icon';
 import { PriceRangeSlider } from './price-range-slider';
 import { GuestPicker } from '@/features/hotels/guest-picker';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 
 // Vừa chiều cao cột lọc + banner, để trang không bị kéo dài khi nhiều kết quả.
 const RESULTS_PAGE_SIZE = 5;
@@ -77,6 +78,26 @@ export function LiveSearchScreen({
   }, [isHomepage, searchParamsString, apply]);
 
   const [suggestionsOpen, setSuggestionsOpen] = useState(!initialFilters?.placeId);
+  const placeFieldRef = useRef<HTMLDivElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const showSuggestions = suggestionsOpen && !search.selection && !search.filters.placeId && search.text.trim().length >= 2;
+  useCloseOnScroll(showSuggestions, suggestionsRef);
+
+  useEffect(() => {
+    const field = placeFieldRef.current;
+    const popup = suggestionsRef.current;
+    if (!field || !popup) return;
+    if (!showSuggestions) {
+      popup.hidePopover();
+      return;
+    }
+    const rect = field.getBoundingClientRect();
+    popup.style.width = `${Math.min(Math.max(rect.width, 320), window.innerWidth - 32)}px`;
+    placeBelow(field, popup);
+    const available = popup.dataset.side === 'top' ? rect.top : window.innerHeight - rect.bottom;
+    popup.style.maxHeight = `${Math.min(340, Math.max(0, available - 22))}px`;
+    popup.showPopover();
+  }, [showSuggestions]);
   const [showValidation, setShowValidation] = useState(false);
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
   const today = getStayToday();
@@ -196,6 +217,7 @@ export function LiveSearchScreen({
         )}
         <div className={styles.searchRow}>
           <div
+            ref={placeFieldRef}
             className={`ota-place-field ${styles.placeField} ${styles.field}`}
             onBlur={(event) => {
               if (!event.currentTarget.contains(event.relatedTarget)) setSuggestionsOpen(false);
@@ -226,12 +248,11 @@ export function LiveSearchScreen({
             </div>
             <div
               id="place-suggestions"
-              hidden={
-                !suggestionsOpen ||
-                !!search.selection ||
-                !!search.filters.placeId ||
-                search.text.trim().length < 2
-              }
+              ref={suggestionsRef}
+              popover="auto"
+              onToggle={(event) => {
+                if (event.newState === 'closed') setSuggestionsOpen(false);
+              }}
               className={styles.suggestions}
             >
               <ApiErrorNotice
@@ -240,7 +261,7 @@ export function LiveSearchScreen({
                   void search.suggestions.refetch();
                 }}
               />
-              {search.suggestions.isFetching && <output>{vi.api.loading}</output>}
+              {search.suggestions.isFetching && <output><LoadingDots /></output>}
               {search.suggestions.data?.items.length === 0 && <p>{vi.api.noSuggestions}</p>}
               <div className="suggested-queries" aria-label={vi.api.places}>
                 {search.suggestions.data?.items.map((place) => (
@@ -340,12 +361,12 @@ export function LiveSearchScreen({
             </span>
           </label>
           <button
-            className={`primary-button ${styles.submit}`}
+            className={styles.submit}
             type="submit"
             disabled={!canSubmit || search.stays.isFetching}
           >
             <StaySearchIcon name="search" />
-            {search.stays.isFetching ? vi.api.loading : vi.api.findStays}
+            <BusyLabel isBusy={search.stays.isFetching}>{vi.api.findStays}</BusyLabel>
           </button>
         </div>
         {!isHomepage && (
@@ -518,7 +539,7 @@ export function LiveSearchScreen({
               })}
             </nav>
             {!search.submitted && <p className={listing.state}>{vi.api.choosePlace}</p>}
-            {search.stays.isFetching && <output className={listing.state}>{vi.api.loading}</output>}
+            {search.stays.isPending && search.stays.isFetching && <LoadingDots isBlock />}
             <ApiErrorNotice
               error={search.stays.error}
               retry={() => {
@@ -553,7 +574,10 @@ export function LiveSearchScreen({
                       <div className={listing.cardInfo}>
                         <p className="eyebrow">
                           {stay.province.name}
-                          {stay.stars ? ` · ${stay.stars} ★` : ''}
+                          {/* Điểm đánh giá của khách thay cho hạng sao, để khớp với điểm ở trang chi tiết. */}
+                          {stay.rating
+                            ? ` · ★ ${t('ota.stayRating', { average: stay.rating.average.toLocaleString('vi-VN'), count: stay.rating.count })}`
+                            : ''}
                         </p>
                         <h3>{stay.name}</h3>
                       </div>

@@ -6,7 +6,6 @@ import * as SecureStore from 'expo-secure-store';
 import { colors, mobileLayout } from '@tripflix/tokens';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { ActivityIndicator, Platform, View } from 'react-native';
 import { AppFrame } from '@/components/app-frame';
@@ -14,8 +13,10 @@ import { copy, Txt } from '@/components/mobile-ui';
 import { ReviewProvider } from '@/features/review/review-provider';
 import { CommerceProvider } from '@/features/booking/commerce-provider';
 import { AssistantProvider } from '@/features/assistant/assistant-provider';
-import { AssistantBubble } from '@/features/assistant/assistant-bubble';
 import { assistantTransport } from '@/features/assistant/assistant-transport';
+import { ReelsLaunchProvider } from '@/features/feed/reels-launch';
+import { OnboardingProvider } from '@/features/onboarding/onboarding-provider';
+import { NotificationBanner } from '@/features/account/notification-banner';
 
 const tokenStorage =
   Platform.OS === 'web'
@@ -25,7 +26,8 @@ const tokenStorage =
         write: (token: string) => SecureStore.setItemAsync('tripflix.refresh', token),
         clear: () => SecureStore.deleteItemAsync('tripflix.refresh'),
       };
-export const unstable_settings = { anchor: 'index' };
+// Returning visitors enter Reels; first-time entry is handled by the tabs gate.
+export const unstable_settings = { anchor: '(tabs)' };
 
 export default function RootLayout() {
   const [queryClient] = useState(
@@ -38,8 +40,8 @@ export default function RootLayout() {
     'BeVietnamPro-Bold': require('../../assets/brand/be-vietnam-pro-3.ttf'),
     'BeVietnamPro-ExtraBold': require('../../assets/brand/be-vietnam-pro-4.ttf'),
   });
-  if (!hasFonts && !fontError)
-    return (
+  const content =
+    !hasFonts && !fontError ? (
       <View
         style={{
           flex: 1,
@@ -50,51 +52,58 @@ export default function RootLayout() {
       >
         <ActivityIndicator color={colors.coral} accessibilityLabel={copy.common.loading} />
       </View>
+    ) : (
+      <QueryClientProvider client={queryClient}>
+        <ApiSessionProvider
+          baseUrl={
+            process.env.EXPO_PUBLIC_API_URL ??
+            (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080')
+          }
+          client={Platform.OS === 'web' ? 'web' : 'native'}
+          storage={tokenStorage}
+        >
+          <OnboardingProvider>
+            <CommerceProvider>
+              <ReviewProvider>
+                <AssistantProvider transport={assistantTransport}>
+                  {fontError && <Txt variant="caption">{copy.common.fontError}</Txt>}
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                      contentStyle: { backgroundColor: colors.background },
+                      animation: 'none',
+                    }}
+                  >
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="my-trips" />
+                    <Stack.Screen
+                      name="trip/[slug]"
+                      options={{ animation: 'default', fullScreenGestureEnabled: true }}
+                    />
+                    <Stack.Screen
+                      name="user/[id]"
+                      options={{ animation: 'default', fullScreenGestureEnabled: true }}
+                    />
+                  </Stack>
+                  <NotificationBanner />
+                </AssistantProvider>
+              </ReviewProvider>
+            </CommerceProvider>
+          </OnboardingProvider>
+        </ApiSessionProvider>
+      </QueryClientProvider>
     );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ApiSessionProvider
-        baseUrl={
-          process.env.EXPO_PUBLIC_API_URL ??
-          (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080')
-        }
-        client={Platform.OS === 'web' ? 'web' : 'native'}
-        storage={tokenStorage}
-      >
-        <CommerceProvider>
-          <ReviewProvider>
-            <AssistantProvider transport={assistantTransport}>
-              <StatusBar style="dark" />
-              {fontError && <Txt variant="caption">{copy.common.fontError}</Txt>}
-              <AppFrame
-                style={{
-                  flex: 1,
-                  width: '100%',
-                  alignSelf: 'center',
-                  maxWidth: Platform.OS === 'web' ? mobileLayout.contentWidth : undefined,
-                }}
-              >
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    contentStyle: { backgroundColor: colors.background },
-                    animation: 'none',
-                  }}
-                >
-                  <Stack.Screen name="index" />
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen
-                    name="trip/[slug]"
-                    options={{ animation: 'default', fullScreenGestureEnabled: true }}
-                  />
-                </Stack>
-                <AssistantBubble />
-              </AppFrame>
-            </AssistantProvider>
-          </ReviewProvider>
-        </CommerceProvider>
-      </ApiSessionProvider>
-    </QueryClientProvider>
+    <AppFrame
+      style={{
+        flex: 1,
+        width: '100%',
+        alignSelf: 'center',
+        maxWidth: Platform.OS === 'web' ? mobileLayout.contentWidth : undefined,
+      }}
+    >
+      <ReelsLaunchProvider>{content}</ReelsLaunchProvider>
+    </AppFrame>
   );
 }

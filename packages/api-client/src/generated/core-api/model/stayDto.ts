@@ -5,10 +5,16 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { StayProvinceDto } from './stayProvinceDto';
+import type { StayRatingDto } from './stayRatingDto';
 
 export interface StayDto {
-  /** Mã khách sạn của commerce; mở trang chi tiết bằng mã này */
+  /** Mã khách sạn của commerce */
   hotelId: string;
+  /**
+   * Mã trên URL trang chi tiết (`/hotels/<slug>`); null thì dùng `hotelId`
+   * @nullable
+   */
+  slug: string | null;
   name: string;
   /** @nullable */
   stars: number | null;
@@ -20,4 +26,9 @@ export interface StayDto {
   unitPrice: number;
   /** Tổng tiền cả kỳ ở, mọi phòng (VND) */
   totalPrice: number;
+  /**
+   * Điểm đánh giá của khách; null khi khách sạn chưa có đánh giá
+   * @nullable
+   */
+  rating: StayRatingDto | null;
 }

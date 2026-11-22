@@ -79,9 +79,8 @@ interface CachedKey {
 }
 
 const KEY_TTL_MS = 10 * 60_000;
-/** entry null: server chưa bật mã hoá; vẫn nhớ 10 phút để không gọi lại API trả 503 mỗi lần đăng nhập. */
-let cached: { entry: CachedKey | null; fetchedAt: number } | null = null;
-let pending: Promise<CachedKey | null> | null = null;
+let cached: CachedKey | null = null;
+let pending: Promise<CachedKey> | null = null;
 
 /** Ép lấy lại khoá ở lần gửi sau. */
 export function resetPasswordKeyCache(): void {
@@ -89,38 +88,28 @@ export function resetPasswordKeyCache(): void {
   pending = null;
 }
 
-/** Nạp sẵn khoá (hoặc null: server chưa bật mã hoá) mà không gọi API. Dùng trong test. */
-export function primePasswordKeyCache(key: PasswordKey | null, offsetSeconds = 0): void {
+/** Nạp sẵn khoá mà không gọi API. Dùng trong test. */
+export function primePasswordKeyCache(key: PasswordKey, offsetSeconds = 0): void {
   pending = null;
-  cached = { entry: key ? { key, offsetSeconds, fetchedAt: Date.now() } : null, fetchedAt: Date.now() };
+  cached = { key, offsetSeconds, fetchedAt: Date.now() };
 }
 
-/**
- * null: server chưa bật mã hoá (503) hoặc là bản cũ chưa có API này (404). Khi đó gửi mật khẩu thường,
- * server chỉ nhận khi chưa bật AUTH_PASSWORD_ENCRYPTION_REQUIRED.
- */
-async function loadKey(force: boolean): Promise<CachedKey | null> {
-  if (!force && cached && Date.now() - cached.fetchedAt < KEY_TTL_MS) return cached.entry;
-  if (!force && pending) return pending;
+async function loadKey(force: boolean): Promise<CachedKey> {
+  if (!force && cached && Date.now() - cached.fetchedAt < KEY_TTL_MS) return cached;
+  if (pending) return pending;
+  cached = null;
   pending = (async () => {
     try {
       const options: HttpRequestOptions = { skipAuthorization: true, skipAuthRefresh: true };
       const res = await authControllerPasswordKey(options);
       const body = readEntity(res.data, ['keyId', 'publicKey']);
       const offsetSeconds = typeof body.serverTime === 'number' ? body.serverTime - Date.now() / 1000 : 0;
-      const entry = {
+      cached = {
         key: { keyId: body.keyId, publicKey: body.publicKey },
         offsetSeconds,
         fetchedAt: Date.now(),
       };
-      cached = { entry, fetchedAt: entry.fetchedAt };
-      return entry;
-    } catch (error) {
-      if (error instanceof HttpError && (error.status === 503 || error.status === 404)) {
-        cached = { entry: null, fetchedAt: Date.now() };
-        return null;
-      }
-      throw error;
+      return cached;
     } finally {
       pending = null;
     }
@@ -129,8 +118,6 @@ async function loadKey(force: boolean): Promise<CachedKey | null> {
 }
 
 export interface PasswordField {
-  /** Tên trường mật khẩu thường, ví dụ password. */
-  plain: string;
   /** Tên trường đã mã hoá, ví dụ encPassword. */
   encrypted: string;
   value: string;
@@ -144,7 +131,7 @@ function isEnvelopeRejected(error: unknown): boolean {
 }
 
 /**
- * Dựng các trường mật khẩu (mã hoá nếu server có khoá) rồi gọi send. Chuỗi bị từ chối (khoá đổi, server khởi động lại
+ * Mã hoá các trường mật khẩu trước khi gọi send. Chuỗi bị từ chối (khoá đổi, server khởi động lại
  * với khoá tạm, đồng hồ lệch) thì lấy khoá mới, mã hoá lại và gửi thêm đúng một lần.
  */
 export async function sendWithPasswords<T>(
@@ -152,15 +139,11 @@ export async function sendWithPasswords<T>(
   email: string | undefined,
   send: (passwordFields: Record<string, string>) => Promise<T>,
 ): Promise<T> {
-  const build = (entry: CachedKey | null) => {
+  const build = (entry: CachedKey) => {
     const out: Record<string, string> = {};
+    const nowSeconds = Date.now() / 1000 + entry.offsetSeconds;
     for (const f of fields) {
-      if (entry) {
-        const nowSeconds = Date.now() / 1000 + entry.offsetSeconds;
-        out[f.encrypted] = encryptPassword(entry.key, f.value, { purpose: f.purpose, email, nowSeconds });
-      } else {
-        out[f.plain] = f.value;
-      }
+      out[f.encrypted] = encryptPassword(entry.key, f.value, { purpose: f.purpose, email, nowSeconds });
     }
     return out;
   };
@@ -168,7 +151,7 @@ export async function sendWithPasswords<T>(
   try {
     return await send(build(entry));
   } catch (error) {
-    if (!entry || !isEnvelopeRejected(error)) throw error;
+    if (!isEnvelopeRejected(error)) throw error;
     return send(build(await loadKey(true)));
   }
 }

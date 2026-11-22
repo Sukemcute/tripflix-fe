@@ -1,10 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 680" preserveAspectRatio="none" fill="none">
   <defs>
     <linearGradient id="silk" x1="1440" y1="0" x2="1030" y2="400" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#85fff4" stop-opacity=".55"/>
-      <stop offset=".45" stop-color="#10c6d5" stop-opacity=".28"/>
+      <stop stop-color="#85fff4" stop-opacity=".3"/>
+      <stop offset=".45" stop-color="#10c6d5" stop-opacity=".14"/>
       <stop offset="1" stop-color="#c8ffff" stop-opacity="0"/>
     </linearGradient>
+    <filter id="soft-silk" x="-10%" y="-20%" width="130%" height="150%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
     <path id="gull" d="M-24 3Q-12-6 0 2Q10-12 26-8Q11-6 1 7Q-11-1-24 3Z"/>
   </defs>
   <style>
@@ -18,10 +21,9 @@
     @keyframes glide-b { to { transform: translate(-26px,12px); } }
     @keyframes flow { to { transform: skewY(-2deg) scaleX(1.025); opacity:.7; } }
   </style>
-  <g class="silk" fill="url(#silk)">
-    <path d="M1440-40C1320 15 1410 155 1170 250C1300 190 1350 190 1440 80Z"/>
-    <path d="M1460 0C1340 48 1410 162 1190 250C1370 170 1400 180 1460 125Z" opacity=".6"/>
-    <path d="M1440 520C1350 540 1330 650 1120 680H1440Z" opacity=".45"/>
+  <g class="silk" fill="url(#silk)" filter="url(#soft-silk)">
+    <path d="M1470-30C1350 24 1406 145 1160 272C1305 224 1370 164 1470 74Z"/>
+    <path d="M1480 500C1360 538 1320 632 1110 700H1480Z" opacity=".28"/>
   </g>
   <g class="bird-a"><use href="#gull" transform="translate(490 72) rotate(10) scale(.72)" fill="#fff"/></g>
   <g class="bird-b"><use href="#gull" transform="translate(1215 62) rotate(-15)" fill="#fff"/></g>

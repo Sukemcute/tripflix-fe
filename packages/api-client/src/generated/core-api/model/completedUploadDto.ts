@@ -8,6 +8,6 @@ import type { CompletedUploadDtoStatus } from './completedUploadDtoStatus';
 
 export interface CompletedUploadDto {
   assetId: string;
-  /** ready khi gọi lại lúc video đã chuyển mã xong. */
+  /** Video: processing (đang chuyển mã), ready khi gọi lại lúc đã xong. Ảnh: ready ngay. */
   status: CompletedUploadDtoStatus;
 }

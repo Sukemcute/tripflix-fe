@@ -110,6 +110,7 @@ export const ota = {
   resetFilters: 'Đặt lại',
   starRating: 'Hạng sao',
   starsExact: '{count} sao',
+  stayRating: '{average}/5 ({count} đánh giá)',
   sortPriceAsc: 'Giá thấp đến cao',
   sortPriceDesc: 'Giá cao đến thấp',
   priceRangeTitle: 'Khoảng giá mỗi đêm (VND)',

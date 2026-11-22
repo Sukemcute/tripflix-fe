@@ -1,29 +1,41 @@
-/* Phần ruột của mục menu (icon + chữ) không tạo hộp riêng, để icon và chữ vẫn xếp theo kiểu của thẻ a. */
+.nav {
+  position: relative;
+  isolation: isolate;
+  padding: 3px;
+  border-radius: 13px;
+  background: var(--nav-tray-fill, #f5f8f8);
+}
+
 .navItem {
   display: contents;
 }
-/* Mục vừa bấm khi trang đích còn đang tải: nền cam nhạt nhấp nháy, mục cũ vẫn giữ màu cam tới khi trang mới hiện. */
-.nav a:has(.navItem[data-pending]) {
-  background: var(--color-coral-tint);
-  color: var(--color-coral-ink);
-  animation: navPending 0.9s ease-in-out infinite alternate;
-}
-@keyframes navPending {
-  to {
-    background: color-mix(in srgb, var(--color-coral-ink) 18%, var(--color-background));
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .nav a:has(.navItem[data-pending]) {
-    animation: none;
-  }
-}
-/* Mục đang mở: viên nền cam đậm, chữ và icon trắng (TF06P; kiểu viên chung ở .header-content nav, globals.css). */
-.nav a[aria-current='page'],
-.nav a[aria-current='page']:hover {
-  background: var(--color-coral-ink);
-  color: var(--color-background);
+
+.nav a:is([aria-current='page'], :has(.navItem[data-pending])) {
+  color: var(--nav-current-color, var(--color-teal-ink));
   font-weight: 700;
+}
+
+.nav:not(:has(.navIndicator:not([hidden]))) a[aria-current='page'] {
+  background: var(--nav-indicator-fill, var(--color-sea-mist));
+}
+
+.nav:has(.navIndicator:not([hidden])) a:is([aria-current='page'], :has(.navItem[data-pending])):hover {
+  background: transparent;
+}
+
+.navIndicator {
+  position: absolute;
+  inset-block: 3px;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 10px;
+  background: var(--nav-indicator-fill, #e9f5f2);
+  transition: left 280ms cubic-bezier(.22, .7, .25, 1) 90ms,
+    right 280ms cubic-bezier(.22, .7, .25, 1);
+}
+
+.navIndicator[data-direction='left'] {
+  transition-delay: 0ms, 90ms;
 }
 :global(body:has([class*='immersiveRoot'])) .footer {
   display: none;
@@ -36,7 +48,7 @@
 }
 .footerGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.95fr) minmax(0, 1.4fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.95fr) minmax(0, 0.9fr) minmax(0, 1.4fr);
   align-items: start;
   gap: 24px clamp(18px, 2.8vw, 46px);
   padding-block: clamp(28px, 4vw, 52px) clamp(24px, 3vw, 40px);
@@ -50,14 +62,15 @@
 .footerIdentity p {
   max-width: 35ch;
   margin-top: 6px;
-  font-size: 0.8rem;
+  font-size: 0.94rem;
   line-height: 1.65;
 }
 .footerLegal {
   display: inline-block;
   margin-top: 10px;
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
+  color: #365b56;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -256,5 +269,54 @@
   }
   .footerPostcard {
     grid-template-columns: minmax(0, 1fr) 72px;
+  }
+}
+
+.footer[data-water-footer] {
+  position: relative;
+  z-index: 1;
+  color: #f5fffb;
+  background: linear-gradient(transparent, rgb(8 30 39 / 78%) 36px, rgb(8 30 39 / 86%));
+  border: 0;
+  padding-top: 24px;
+  touch-action: manipulation;
+}
+
+.footer[data-water-footer]::before {
+  content: '';
+  position: absolute;
+  inset: 0 4% auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(173 223 214 / 54%) 20%, rgb(245 223 169 / 76%) 50%, rgb(173 223 214 / 54%) 80%, transparent);
+  pointer-events: none;
+}
+
+.footer[data-water-footer] .footerLegal {
+  display: block;
+  width: fit-content;
+}
+
+.footer[data-water-footer] .footerIdentity strong,
+.footer[data-water-footer] .footerLegal,
+.footer[data-water-footer] .footerGrid nav a:is(:hover, :focus-visible) {
+  color: #ebf9f5;
+}
+
+.footer[data-water-footer] .footerBrand {
+  padding: 5px 9px;
+  border-radius: 12px;
+  background: rgb(250 255 251 / 84%);
+}
+
+.footer[data-water-footer] .footerPostcard {
+  color: #102f36;
+  background: rgb(250 255 251 / 78%);
+  border-radius: 22px;
+  backdrop-filter: blur(14px);
+}
+
+@media (min-width: 901px) {
+  :global(body:has([data-living-home][data-home-scrolling])) .footer[data-water-footer] .footerPostcard {
+    backdrop-filter: none;
   }
 }

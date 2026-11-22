@@ -32,3 +32,52 @@ export function validatePostMedia(
   if (durationMs == null || !Number.isFinite(durationMs) || durationMs <= 0) return 'unknownDuration';
   return durationMs > POST_MEDIA_LIMITS.videoDurationMs ? 'tooLong' : null;
 }
+
+/**
+ * Nén video trên điện thoại trước khi tải lên: chỉ để file nhẹ, tải nhanh.
+ * Worker vẫn chuyển mã ra 360p, 540p, 720p như cũ, nên bản nén chỉ cần đủ tốt cho 720p.
+ * Đo ngày 12/11 với video iPhone 1080p 60 fps 23 Mbps: nén còn 1080p ~7 Mbps làm 720p
+ * giảm ~3 điểm VMAF; dùng 12 Mbps để bớt mất chất lượng ở đoạn chuyển động nhiều.
+ */
+export const VIDEO_COMPRESSION = {
+  /** Cạnh dài tối đa sau khi nén (1080p dọc là 1080x1920). */
+  maxLongEdge: 1920,
+  targetBitrate: 12_000_000,
+  /** Video đã ≤1080p và tổng bitrate dưới mức này thì gửi nguyên: nén lại chỉ mất chất lượng. */
+  skipBelowBitrate: 15_000_000,
+} as const;
+
+export interface VideoCompressionInput {
+  width: number;
+  height: number;
+  sizeBytes: number;
+  durationMs: number;
+}
+
+/** Có nên nén video này trước khi tải lên không. Thiếu thông tin thì nén cho chắc. */
+export function shouldCompressVideo(video: VideoCompressionInput): boolean {
+  const longEdge = Math.max(video.width, video.height);
+  const seconds = video.durationMs / 1000;
+  if (!(longEdge > 0) || !(seconds > 0) || !(video.sizeBytes > 0)) return true;
+  const bitrate = (video.sizeBytes * 8) / seconds;
+  return longEdge > VIDEO_COMPRESSION.maxLongEdge || bitrate > VIDEO_COMPRESSION.skipBelowBitrate;
+}
+
+/** Tiêu đề core bắt buộc (tối đa 255 ký tự) lấy từ dòng đầu của caption, vì app chỉ cho nhập caption. */
+export const POST_TITLE_MAX_LENGTH = 100;
+
+export function getPostTitleFromCaption(caption: string): string {
+  const firstLine = caption.trim().split(/\r?\n/, 1)[0]!.trim();
+  if (firstLine.length <= POST_TITLE_MAX_LENGTH) return firstLine;
+  const cut = firstLine.slice(0, POST_TITLE_MAX_LENGTH - 1);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > POST_TITLE_MAX_LENGTH / 2 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
+
+/** Chữ hiện dưới reel: bài mới có tiêu đề là đầu caption nên chỉ hiện caption; bài cũ ghép tiêu đề và nội dung. */
+export function getPostCaption(title: string, body: string | null | undefined): string {
+  const text = body?.trim() ?? '';
+  if (!text) return title.trim();
+  const titleStem = title.trim().replace(/…$/, '');
+  return text.startsWith(titleStem) ? text : `${title.trim()} · ${text}`;
+}

@@ -1,0 +1,103 @@
+.controlsGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.controlBtn {
+  display: inline-grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    opacity 140ms ease;
+}
+
+.controlBtn:hover:not(:disabled) {
+  background: var(--color-surface);
+  border-color: var(--color-teal-ink);
+}
+
+.controlBtn:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
+}
+
+.controlBtn:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.percentBtn {
+  min-width: 54px;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+}
+
+.controlIcon {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.zoomSurface {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  transform-origin: center center;
+  transition: transform 160ms ease-out;
+  user-select: none;
+}
+
+.zoomSurface img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.zoomSurfaceZoomed {
+  touch-action: none;
+  cursor: grab;
+}
+
+.zoomSurfaceInteracting {
+  will-change: transform;
+  transition: none;
+  cursor: grabbing;
+}
+
+@media (max-width: 640px) {
+  .controlsGroup {
+    gap: 4px;
+  }
+
+  .controlBtn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 6px;
+    font-size: 0.8125rem;
+  }
+
+  .percentBtn {
+    min-width: 46px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .controlBtn,
+  .zoomSurface {
+    transition: none;
+  }
+}

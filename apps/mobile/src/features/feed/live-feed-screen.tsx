@@ -5,13 +5,15 @@ import { router } from 'expo-router';
 import { Button, Card, copy, Empty, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 import { View } from 'react-native';
+import { LoadingDots } from '@/components/loading-dots';
+import { PostOptionsMenu } from './post-options-menu';
 
 export function LivePostCard({ post }: { post: SocialPostDto }) {
   return (
     <Card>
-      <Txt variant="caption">
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Txt variant="caption" style={{ flex: 1 }}>
         {vi.api.author} · {post.authorName || post.authorId.slice(0, 8)}
-      </Txt>
+      </Txt><PostOptionsMenu postId={post.id} authorId={post.authorId} /></View>
       <Txt variant="heading">{post.title}</Txt>
       <Txt>{post.body}</Txt>
       {post.tripAttachment?.destinationName && <Txt>{post.tripAttachment.destinationName}</Txt>}
@@ -29,7 +31,8 @@ export function LivePostCard({ post }: { post: SocialPostDto }) {
 }
 export function LiveFeedScreen({ kind = 'public' }: { kind?: 'public' | 'mine' | 'bookmarks' }) {
   const { user, isReady } = useApiSession();
-  const query = useSocialPosts(kind);
+  // Màn này là danh sách bài viết cho cả công khai, bài của tôi và đã lưu; Reels có màn riêng.
+  const query = useSocialPosts(kind, '', 'vlog');
   if (!isReady || (kind === 'mine' && !user)) return <RequireAccount />;
   const posts = query.data?.pages.flatMap((page) => page.items);
   const isSaved = kind === 'bookmarks';
@@ -61,7 +64,7 @@ export function LiveFeedScreen({ kind = 'public' }: { kind?: 'public' | 'mine' |
           onAction={() => router.push({ pathname: '/login', params: { returnTo: '/saved' } })}
         />
       ) : query.isPending && !query.error ? (
-        <Txt>{vi.api.loading}</Txt>
+        <LoadingDots />
       ) : null}
       {posts?.length === 0 &&
         (isSaved ? (

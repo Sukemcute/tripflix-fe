@@ -17,8 +17,19 @@
   font-display: swap;
 }
 
+* {
+  scrollbar-width: none;
+  scrollbar-gutter: auto;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   color: var(--color-ink);
+  /* Header margins must not move the entire body when the home hero arrives. */
+  display: flow-root;
 }
 button,
 input,
@@ -61,52 +72,84 @@ h3 {
   font-weight: 700;
   text-wrap: balance;
 }
+:root {
+  --ota-container-width: min(1600px, calc(100% - clamp(48px, 8vw, 160px)));
+}
 .ota-container {
-  width: min(1600px, calc(100% - clamp(48px, 8vw, 160px)));
+  width: var(--ota-container-width);
   margin-inline: auto;
 }
-/* Header kính (TF06P): đứng yên đầu trang, nền trắng trong mờ, viền xám mảnh mép dưới. */
+/* Header giữ viền viên thuốc, nền trong suốt để ảnh/nền trang vẫn liền mạch. */
 .ota-header {
   position: relative;
   z-index: 40;
-  border-bottom: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-background) 88%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(1.6);
-  backdrop-filter: blur(16px) saturate(1.6);
+  /* Căn hai mép header theo cùng lưới nội dung với banner bên dưới. */
+  width: var(--ota-container-width);
+  margin: 12px auto;
+  border: 1px solid rgb(0 124 110 / 24%);
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
 }
 .header-content {
+  width: calc(100% - clamp(32px, 4vw, 64px));
   min-height: 80px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 48px;
+  gap: 20px;
 }
+.header-content > a { flex-shrink: 0; }
+.header-brand {
+  justify-self: start;
+  position: relative;
+  display: block;
+  width: 142px;
+  height: 43px;
+  flex: 0 0 142px;
+}
+.header-brand:focus:not(:focus-visible) {
+  outline: none;
+}
+.header-brand:focus-visible {
+  outline: none;
+  box-shadow: 0 3px 0 var(--color-teal);
+}
+.header-brand img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.header-logo-light { display: none; }
 .header-content img {
   width: 142px;
   height: auto;
 }
-/* Menu header dạng viên trong một viên xám nhạt: mỗi mục có icon, rê chuột nền trắng, mục đang mở nền cam nhạt (TF06P). */
+.header-content .header-brand img {
+  width: 100%;
+  height: 100%;
+}
 .header-content nav {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-surface-muted) 60%, transparent);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  justify-self: center;
+  width: min(680px, 56vw);
+  gap: 6px;
   font-size: 14px;
 }
 .header-content nav a {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 9px 16px;
-  border-radius: 999px;
+  border-radius: 10px;
   color: var(--color-ink);
   font-weight: 600;
   white-space: nowrap;
-  transition:
-    background 0.1s,
-    color 0.1s,
-    transform 0.08s;
+  transition: background 160ms ease, color 160ms ease;
 }
 .header-content nav a svg {
   flex: none;
@@ -117,18 +160,19 @@ h3 {
   stroke-linejoin: round;
 }
 .header-content nav a:hover {
-  background: var(--color-background);
-}
-.header-content nav a:active {
-  transform: scale(0.95);
+  background: var(--color-surface-muted);
+  color: var(--color-teal-ink);
 }
 /* Nút tròn chỉ có icon trên header (chuông thông báo). */
 .header-icon-button {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: var(--header-control-size, 40px);
+  height: var(--header-control-size, 40px);
+  padding: 0;
+  border: 0;
   border-radius: 999px;
+  background: transparent;
   color: var(--color-ink);
   transition:
     background 0.2s,
@@ -146,16 +190,18 @@ h3 {
   background: var(--color-background);
   color: var(--color-coral-ink);
 }
-/* Cụm bên phải (giỏ hàng, chuông, avatar): một viên cùng kiểu với viên menu, mọi nút tròn 40px. */
+/* Các nút bên phải đứng riêng, không đặt thêm một viên bao quanh cả cụm. */
 .header-actions {
+  --header-control-size: 40px;
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-left: auto;
-  padding: 4px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-surface-muted) 60%, transparent);
+  gap: 8px;
+  justify-self: end;
+  margin-left: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 /* Bỏ các khoảng kéo sát cũ (giỏ + tài khoản trong cart.module.css): trong viên đã có gap. */
 .ota-header .header-content .header-actions > * {
@@ -165,8 +211,8 @@ h3 {
 .header-actions > a:not(.header-login) {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: var(--header-control-size, 40px);
+  height: var(--header-control-size, 40px);
   padding: 0;
   border-radius: 999px;
   transition:
@@ -180,7 +226,7 @@ h3 {
   background: none;
 }
 .header-actions > a:not(.header-login):hover {
-  background: var(--color-background);
+  background: rgb(255 255 255 / 48%);
   color: var(--color-coral-ink);
 }
 .header-notifications {
@@ -190,6 +236,7 @@ h3 {
 .header-actions > .header-login {
   min-height: 40px;
   padding: 8px 18px;
+  border-radius: 999px;
 }
 /* Khung chung của bảng thả xuống trên header. */
 .header-popover {
@@ -210,12 +257,195 @@ h3 {
   }
 }
 .header-notifications-panel {
-  width: min(340px, calc(100vw - 32px));
+  width: min(380px, calc(100vw - 32px));
 }
 .header-notifications-head {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 16px 6px;
+  font-size: 20px;
+}
+.header-notifications .header-icon-button {
+  position: relative;
+}
+.header-notifications-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 18px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  background: var(--color-coral-ink);
+  color: var(--color-background);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+.header-notifications-more {
+  width: 100%;
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-teal-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.header-notifications-more:hover {
+  background: var(--color-surface-muted);
+}
+.header-notifications button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.header-notifications-status {
+  display: block;
+  padding: 16px;
+  color: var(--color-text-muted);
+}
+.header-notifications-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.header-notifications-body {
+  max-height: min(460px, 65vh);
+  overflow-y: auto;
+  padding: 0 8px 8px;
+}
+.header-notifications-section h3 {
+  margin: 0;
+  padding: 10px 8px 4px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.header-notifications-list {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.header-notifications-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-text-muted);
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.header-notifications-item.is-unread {
+  background: var(--color-teal-soft);
+  color: var(--color-ink);
+}
+.header-notifications-item:hover {
+  background: var(--color-surface-muted);
+}
+.header-notifications-item:focus-visible {
+  outline-offset: -3px;
+}
+.header-notifications-avatar {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+  font-size: 19px;
+  font-weight: 700;
+}
+.header-notifications-avatar[data-tone='teal'] {
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+.header-notifications-avatar[data-tone='sun'] {
+  background: var(--color-sun-soft);
+  color: var(--color-navy);
+}
+.header-notifications-avatar[data-tone='navy'] {
+  background: var(--color-surface-muted);
+  color: var(--color-navy);
+}
+.header-notifications-avatar:not([data-tone]) {
+  background: var(--color-background);
+}
+.header-notifications-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+}
+.header-notifications-kind {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--color-background);
+  border-radius: 999px;
+  background: var(--color-teal);
+  color: var(--color-background);
+}
+.header-notifications-kind[data-kind='reaction'] {
+  background: var(--color-coral);
+}
+.header-notifications-kind[data-kind='follow'] {
+  background: var(--color-navy);
+}
+.header-notifications-kind svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.header-notifications-kind[data-kind='reaction'] svg {
+  fill: currentColor;
+}
+.header-notifications-text {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+.header-notifications-text strong {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+.header-notifications-text > span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.header-notifications-text time {
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.is-unread .header-notifications-text time {
+  color: var(--color-teal-ink);
+  font-weight: 600;
+}
+.header-notifications-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  color: var(--color-teal);
 }
 .header-notifications-empty {
   display: grid;
@@ -226,11 +456,6 @@ h3 {
 }
 .header-notifications-empty strong {
   font-size: 14px;
-}
-.header-notifications-empty p {
-  color: var(--color-text-muted);
-  font-size: 13px;
-  line-height: 1.6;
 }
 .header-notifications-empty-icon {
   display: grid;
@@ -376,6 +601,41 @@ h3 {
 .header-login {
   margin-left: auto;
 }
+
+/* Ignore hero markup inside hidden streaming segments until it joins the page. */
+body:has(> [data-living-home] [data-home-hero]) .ota-header {
+  border-color: rgb(255 255 255 / 48%);
+}
+@media (min-width: 641px) {
+  body:has(> [data-living-home] [data-home-hero]) .ota-header {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    margin: 0;
+    transform: translateX(-50%);
+    z-index: 50;
+  }
+}
+body:has(> [data-living-home] [data-home-hero]) .header-logo-dark { display: none; }
+body:has(> [data-living-home] [data-home-hero]) .header-logo-light { display: block; }
+body:has(> [data-living-home] [data-home-hero]) .header-brand { filter: drop-shadow(0 2px 5px rgb(0 35 45 / 46%)); }
+body:has(> [data-living-home] [data-home-hero]) .header-content nav a,
+body:has(> [data-living-home] [data-home-hero]) .header-icon-button,
+body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-login) {
+  color: #fff;
+  text-shadow: 0 1px 5px rgb(0 35 45 / 58%);
+}
+body:has(> [data-living-home] [data-home-hero]) .header-content nav {
+  --nav-tray-fill: rgb(255 255 255 / 7%);
+  --nav-indicator-fill: rgb(255 255 255 / 17%);
+  --nav-current-color: #fff;
+}
+body:has(> [data-living-home] [data-home-hero]) .header-content nav a:hover,
+body:has(> [data-living-home] [data-home-hero]) .header-icon-button:is(:hover, :focus-visible, [aria-expanded='true']),
+body:has(> [data-living-home] [data-home-hero]) .header-actions > a:not(.header-login):hover {
+  color: #fff;
+  background: rgb(255 255 255 / 14%);
+}
 .header-account {
   position: relative;
 }
@@ -401,6 +661,7 @@ h3 {
   border-color: var(--color-coral-ink);
 }
 .header-account-avatar {
+  position: relative;
   display: grid;
   flex: none;
   place-items: center;
@@ -520,9 +781,9 @@ h3 {
 }
 .ota-home.results-page {
   padding-top: 0;
-  padding-bottom: 32px;
+  padding-bottom: 16px;
   position: relative;
-  margin-top: -46px;
+  margin-top: 0;
   scroll-margin-top: 24px;
 }
 .ota-home > .result-grid:empty {
@@ -558,7 +819,7 @@ h3 {
 }
 @media (max-width: 640px) {
   .ota-home.results-page {
-    margin-top: -16px;
+    margin-top: -12px;
   }
 }
 .search-form > input,
@@ -1107,19 +1368,10 @@ h3 {
   line-height: 1.9;
   color: var(--color-teal-ink);
 }
-.skip-link {
-  position: fixed;
-  top: -100px;
-  left: 20px;
-  padding: 12px;
-  background: var(--color-background);
-  z-index: 20;
-}
-.skip-link:focus-visible {
-  top: 10px;
-}
 .page-loading {
   padding-block: 48px;
+  /* Keep the footer below the viewport while a streamed route is pending. */
+  min-height: 100svh;
 }
 .skeleton {
   background: var(--color-surface-muted);
@@ -1137,16 +1389,38 @@ h3 {
   height: 120px;
   width: 75%;
 }
-@media (max-width: 900px) {
-  .ota-container {
-    width: calc(100% - 40px);
-  }
+@media (max-width: 1359px) {
   .header-content {
-    gap: 24px;
-    min-height: 80px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 16px;
+    padding-block: 12px;
+  }
+  .header-brand,
+  .header-actions {
+    grid-row: 1;
+  }
+  .header-actions {
+    grid-column: 2;
   }
   .header-content nav {
-    gap: 2px;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: min(680px, 100%);
+  }
+}
+@media (max-width: 900px) {
+  :root {
+    --ota-container-width: calc(100% - 40px);
+  }
+  .ota-container {
+    width: var(--ota-container-width);
+  }
+  .ota-header {
+    width: var(--ota-container-width);
+  }
+  .header-content {
+    gap: 8px 16px;
+    min-height: 80px;
   }
   .header-content nav a {
     padding-inline: 12px;
@@ -1196,14 +1470,40 @@ h3 {
     font-size: 25px;
   }
 }
+@media (max-width: 850px) and (min-width: 641px) {
+  .header-content {
+    flex-wrap: wrap;
+    row-gap: 4px;
+    padding-block: 10px;
+  }
+  .header-content nav {
+    order: 3;
+    flex: 0 0 100%;
+    justify-content: center;
+  }
+}
 @media (max-width: 640px) {
+  :root {
+    --ota-container-width: calc(100% - 32px);
+  }
   .ota-container {
-    width: calc(100% - 32px);
+    width: var(--ota-container-width);
+  }
+  .ota-header {
+    width: var(--ota-container-width);
   }
   .header-content {
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 10px 8px;
     padding-block: 16px;
+  }
+  .header-brand {
+    width: clamp(96px, 30vw, 120px);
+    height: 36px;
+  }
+  .header-actions {
+    --header-control-size: 32px;
+    gap: 4px;
   }
   .header-content img {
     width: 120px;
@@ -1220,7 +1520,9 @@ h3 {
     justify-content: space-between;
   }
   .header-content nav a {
-    padding: 8px 8px;
+    padding: 8px 4px;
+    white-space: normal;
+    text-align: center;
   }
   .header-content nav a svg {
     display: none;
@@ -1362,6 +1664,15 @@ h3 {
     font-size: 30px;
   }
 }
+@media (max-width: 380px) {
+  .header-content nav {
+    gap: 0;
+  }
+  .header-content nav a {
+    padding-inline: 3px;
+    font-size: 11px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1383,6 +1694,29 @@ body:has(.auth-fullscreen) {
   height: 100%;
   /* clip (không phải hidden): chặn cả cuộn bằng code, như khi bộ chọn ngày mở popup rồi scrollIntoView. */
   overflow: clip;
+}
+
+/* Trang Cảm hứng (Inspiration Feed & Reels): toàn màn hình cố định, không cuộn khung ngoài */
+html:has([class*="feedPageWrapper"]),
+body:has([class*="feedPageWrapper"]) {
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden !important;
+}
+
+/* Trang Cảm hứng: nền ngoài viên header cùng màu nền trang, chỉ trong viên header là trắng. */
+html:has([class*="feedPageWrapper"]),
+body:has([class*="feedPageWrapper"]) {
+  background: var(--color-surface);
+}
+body:has([class*="feedPageWrapper"]) .ota-header {
+  background: var(--color-background);
+}
+/* Cùng số đo với khung trang Cảm hứng (inspiration-view.tsx đặt --feed-header-height ở thẻ gốc). */
+body:has([class*="feedPageWrapper"]) #content {
+  height: calc(100dvh - var(--feed-header-height, 106px));
+  max-height: calc(100dvh - var(--feed-header-height, 106px));
+  overflow: hidden;
 }
 .auth-fullscreen {
   height: 100dvh;
@@ -2584,6 +2918,30 @@ body:has(.auth-fullscreen) {
   background: var(--color-warm-mist);
   overflow: hidden;
 }
+/* Ảnh tác giả tải lên ở trang chi tiết bài: ảnh đầu (ảnh bìa) rộng cả hàng, các ảnh sau chia hai cột. */
+.post-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.post-gallery-item {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+  background: var(--color-warm-mist);
+  overflow: hidden;
+}
+.post-gallery-item:first-child {
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 9;
+  border-radius: 20px;
+}
+.post-gallery-item > img {
+  object-fit: cover;
+}
 .post-cover.is-brand {
   background: linear-gradient(135deg, var(--color-sea-mist), var(--color-sun-soft));
 }
@@ -2854,6 +3212,11 @@ body:has(.auth-fullscreen) {
   border: 1px solid var(--color-border);
   background: var(--color-background);
 }
+.comment.is-focused {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
 .comment-body {
   flex: 1;
   min-width: 0;
@@ -2956,12 +3319,11 @@ body:has(.auth-fullscreen) {
 .profile-layout {
   display: grid;
   grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-  gap: 28px;
+  gap: 24px 28px;
   align-items: start;
 }
 .profile-aside {
-  position: sticky;
-  top: 24px;
+  grid-column: 1;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -2969,7 +3331,18 @@ body:has(.auth-fullscreen) {
   border: 1px solid var(--color-border);
   border-radius: 28px;
   background: var(--color-background);
-  box-shadow: 0 24px 48px -36px var(--color-overlay);
+}
+.profile-main,
+.profile-notice,
+.profile-travel {
+  grid-column: 2;
+  min-width: 0;
+}
+.profile-layout:has(> .profile-travel) > :is(.profile-aside, .profile-main) {
+  align-self: stretch;
+}
+.profile-main > .profile-card {
+  flex: 1;
 }
 .profile-identity {
   display: flex;
@@ -2979,6 +3352,7 @@ body:has(.auth-fullscreen) {
   text-align: center;
 }
 .profile-avatar {
+  position: relative;
   display: grid;
   place-items: center;
   width: 96px;
@@ -3060,7 +3434,20 @@ body:has(.auth-fullscreen) {
   border: 1px solid var(--color-border);
   border-radius: 28px;
   background: var(--color-background);
-  box-shadow: 0 24px 48px -40px var(--color-overlay);
+}
+.account-page :is(.profile-aside, .profile-card) {
+  box-shadow: 0 0 18px rgb(23 36 44 / 6%);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.account-page :is(.profile-aside, .profile-card):focus-within {
+  border-color: var(--color-teal-soft);
+  box-shadow: 0 0 22px rgb(0 108 99 / 11%);
+}
+@media (hover: hover) {
+  .account-page :is(.profile-aside, .profile-card):hover {
+    border-color: var(--color-teal-soft);
+    box-shadow: 0 0 22px rgb(0 108 99 / 11%);
+  }
 }
 .profile-card h2 {
   margin-bottom: 6px;
@@ -3186,6 +3573,110 @@ body:has(.auth-fullscreen) {
   flex-direction: column;
   gap: 24px;
 }
+/* Sở thích du lịch (TF106): mỗi trường một ô dropdown chọn nhiều, dựng bằng <details> gốc. */
+.travel-form {
+  display: grid;
+  gap: 20px;
+}
+.travel-fields {
+  display: grid;
+  gap: 16px;
+}
+.travel-field {
+  display: grid;
+  gap: 8px;
+}
+.travel-field-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+.travel-menu {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  display: grid;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-background);
+  box-shadow: 0 24px 48px -24px var(--color-overlay);
+}
+.travel-select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+/* .primary-button:disabled hiện con trỏ chờ; nút Lưu ở đây còn bị khoá khi chưa đổi gì, lúc đó không phải đang tải. */
+.travel-form .primary-button:disabled:not([aria-busy='true']) {
+  cursor: not-allowed;
+}
+/* Mỗi trường một khung: pill xuống dòng khi nhiều, nút + mở danh sách còn lại. */
+.travel-tags {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 7px 8px 7px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-background);
+}
+.travel-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.travel-add {
+  position: relative;
+}
+.travel-add summary {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px dashed var(--color-teal-ink);
+  border-radius: 999px;
+  color: var(--color-teal-ink);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.travel-add summary::-webkit-details-marker {
+  display: none;
+}
+.travel-add .travel-menu {
+  right: auto;
+  width: max-content;
+  min-width: 200px;
+}
+.travel-select-option:hover {
+  background: var(--color-sea-mist);
+}
 /* Mục "Bảo mật & thiết bị" dùng khung profile-card; khoảng cách giữa các phần đã có gap của account-panel. */
 .account-panel > .profile-card-header {
   margin-bottom: 0;
@@ -3246,9 +3737,11 @@ body:has(.auth-fullscreen) {
     gap: 20px;
   }
   .profile-aside {
-    position: static;
     min-width: 0;
     padding: 20px;
+  }
+  .profile-layout > :is(.profile-main, .profile-notice, .profile-travel) {
+    grid-column: 1;
   }
   .profile-identity {
     flex-direction: row;
@@ -3339,9 +3832,20 @@ body:has(.auth-fullscreen) {
   flex-direction: column;
   gap: 8px;
 }
-.composer-field label {
+.composer-field label,
+.composer-field-title {
   font-size: 14px;
   font-weight: 700;
+}
+.composer-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.composer-fieldset > legend {
+  margin-bottom: 8px;
+  padding: 0;
 }
 .composer-label-row {
   display: flex;
@@ -3375,5 +3879,853 @@ body:has(.auth-fullscreen) {
   .composer-field textarea,
   .account-page .auth-field input {
     transition: none;
+  }
+}
+
+/* Tên người dùng dẫn tới trang cá nhân công khai (TF47): giữ màu chữ xung quanh. */
+.profile-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.profile-link:hover {
+  text-decoration: underline;
+}
+
+/* Khảo sát sở thích (SCRUM-160) là trang đứng riêng: ẩn header và footer chung của site. */
+body:has(> [data-onboarding-page]) > .ota-header,
+body:has(> [data-onboarding-page]) > footer {
+  display: none;
+}
+
+/* TF109: ảnh đại diện (AvatarPhoto) phủ lên ô chữ cái đầu, bo tròn theo ô. Ô cha phải có position: relative
+   (đặt sẵn ở từng class avatar; không dùng :has() vì trình duyệt cũ bỏ qua và ảnh tràn ra khung ngoài).
+   Ghi kèm .header-content để thắng độ ưu tiên của `.header-content img { width: 142px }`. */
+img.avatar-photo,
+.header-content img.avatar-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+/* Lớp khung thú & phụ kiện bọc NGOÀI vòng tròn avatar (kiểu Discord Avatar Decorations): tràn ra ~23% quanh vòng tròn. */
+img.avatar-outer-deco,
+.header-content img.avatar-outer-deco {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  z-index: 2;
+  width: 147%;
+  height: 147%;
+  max-width: none;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+img.avatar-outer-sticker,
+.header-content img.avatar-outer-sticker {
+  position: absolute;
+  z-index: 3;
+  max-width: none;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 2px 5px var(--color-overlay));
+}
+.profile-avatar-editor {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+}
+.profile-avatar.is-editable {
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.profile-avatar.is-editable:focus-visible {
+  outline: 2px solid var(--color-coral-ink);
+  outline-offset: 8px;
+}
+.profile-avatar.is-editable:disabled {
+  cursor: progress;
+}
+/* Icon máy ảnh nằm trong vòng tròn, góc dưới phải. */
+.profile-avatar-camera {
+  position: absolute;
+  right: 2%;
+  bottom: 2%;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-coral-ink);
+  box-shadow: 0 2px 6px var(--color-overlay);
+}
+.profile-avatar-camera svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.profile-avatar-busy {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background: var(--color-overlay);
+}
+.profile-avatar-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  translate: -50% 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 196px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-background);
+  box-shadow: 0 24px 48px -24px var(--color-overlay);
+  animation: header-popover-in 0.16s ease-out both;
+}
+@media (max-width: 900px) {
+  .profile-avatar-menu {
+    left: 0;
+    translate: 0 0;
+  }
+}
+.profile-avatar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 11px;
+  background: none;
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease;
+}
+.profile-avatar-menu-item svg {
+  flex: none;
+  color: var(--color-text-muted);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: color 0.14s ease;
+}
+.profile-avatar-menu-item:hover,
+.profile-avatar-menu-item:focus-visible {
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+}
+.profile-avatar-menu-item:hover svg,
+.profile-avatar-menu-item:focus-visible svg {
+  color: var(--color-coral-ink);
+}
+.profile-avatar-menu-divider {
+  display: block;
+  height: 1px;
+  margin: 3px 6px;
+  background: var(--color-border);
+}
+.profile-avatar-menu-item.is-danger {
+  color: var(--color-danger);
+}
+.profile-avatar-menu-item.is-danger svg {
+  color: currentColor;
+}
+.profile-avatar-menu-item.is-danger:hover,
+.profile-avatar-menu-item.is-danger:focus-visible {
+  background: var(--color-coral-tint);
+  color: var(--color-danger);
+}
+/* Hộp chỉnh ảnh đại diện căn giữa màn hình, kèm bộ chọn khung thú & phụ kiện bọc NGOÀI hình tròn. */
+.avatar-crop {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(880px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 26px;
+  background: var(--color-background);
+  color: var(--color-text);
+  box-shadow: 0 32px 64px -24px var(--color-overlay-heavy);
+}
+.avatar-crop::-webkit-scrollbar {
+  display: none;
+}
+/* Máy tính: ảnh bên trái, khung & phụ kiện bên phải để vừa một màn hình, không cần cuộn hộp. */
+.avatar-crop-body {
+  display: grid;
+  gap: 16px;
+}
+.avatar-crop-side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+@media (min-width: 760px) {
+  .avatar-crop-body {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+  .avatar-crop-side .avatar-decor-section:first-child {
+    margin-top: 0;
+  }
+  .avatar-crop-side .avatar-frame-tray,
+  .avatar-crop-side .avatar-sticker-tray {
+    max-height: min(320px, calc(100dvh - 330px));
+  }
+}
+.avatar-crop::backdrop {
+  background: var(--color-overlay-heavy);
+  backdrop-filter: blur(4px);
+}
+.avatar-crop-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.avatar-crop-header h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 19px;
+  line-height: 1.25;
+}
+.avatar-crop-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease,
+    border-color 0.14s ease;
+}
+.avatar-crop-close svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.avatar-crop-close:hover,
+.avatar-crop-close:focus-visible {
+  border-color: var(--color-coral-soft);
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+.avatar-crop-stage-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 14px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 42%, var(--color-navy) 0%, var(--color-ink) 100%);
+}
+/* Vùng đệm 360x360 quanh hình tròn 240px để tai cáo, gấu bông, sừng và phụ kiện tràn ra ngoài hình tròn. */
+.avatar-crop-stage-outer {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 360px;
+  max-width: 100%;
+  aspect-ratio: 1;
+  touch-action: none;
+  user-select: none;
+}
+.avatar-crop-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-coral-ink);
+  box-shadow:
+    0 0 0 3px var(--color-background),
+    0 16px 36px -12px var(--color-overlay-heavy);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.avatar-crop-frame:active,
+.avatar-crop-frame.is-dragging {
+  cursor: grabbing;
+}
+/* Ảnh gốc mờ ngoài vòng tròn, trùng toạ độ với ảnh trong vòng để thấy phần bị cắt. */
+.avatar-crop-ghost {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.4;
+  filter: blur(1.5px);
+  pointer-events: none;
+}
+.avatar-crop-ghost > div {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+}
+.avatar-crop-ghost img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  transform-origin: 0 0;
+}
+.avatar-crop-photo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.avatar-decor-existing-preview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-coral-ink);
+  color: var(--color-background);
+  font-size: 76px;
+  font-weight: 700;
+}
+/* Lớp phủ có cùng tâm và kích thước chuẩn 240x240 nhưng overflow: visible để vẽ phần tràn ra ngoài hình tròn. */
+.avatar-crop-outer-layer {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  z-index: 5;
+  overflow: visible;
+  pointer-events: none;
+}
+.avatar-crop-sticker {
+  position: absolute;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1.5px dashed var(--color-transparent);
+  border-radius: 12px;
+  background: none;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  transition: border-color 0.12s ease;
+}
+.avatar-crop-sticker:active {
+  cursor: grabbing;
+}
+.avatar-crop-sticker.is-selected {
+  border-color: var(--color-sun);
+  box-shadow: 0 0 0 2px var(--color-overlay);
+}
+.avatar-crop-sticker img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 6px var(--color-overlay));
+}
+.avatar-crop-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: 999px;
+  background-image:
+    linear-gradient(to right, var(--color-border) 1px, var(--color-transparent) 1px),
+    linear-gradient(to bottom, var(--color-border) 1px, var(--color-transparent) 1px);
+  background-size: 33.333% 33.333%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease;
+}
+.avatar-crop-frame.is-dragging .avatar-crop-grid {
+  opacity: 0.35;
+}
+.avatar-crop-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: 999px;
+  pointer-events: none;
+}
+.avatar-crop-zoom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-background);
+}
+.avatar-zoom-step {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.avatar-zoom-step svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.avatar-zoom-step:hover:not(:disabled) {
+  border-color: var(--color-coral-soft);
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+.avatar-zoom-step:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.avatar-crop-zoom {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+}
+.avatar-crop-zoom input {
+  width: 100%;
+  accent-color: var(--color-coral-ink);
+  cursor: pointer;
+}
+.avatar-zoom-badge {
+  flex: none;
+  min-width: 44px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.avatar-reselect-btn {
+  flex: none;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-surface);
+  color: var(--color-teal-ink);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.avatar-reselect-btn:hover {
+  border-color: var(--color-teal);
+  background: var(--color-sea-mist);
+}
+.avatar-sticker-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-warm-mist);
+}
+.avatar-sticker-scale {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.avatar-sticker-scale input {
+  flex: 1;
+  accent-color: var(--color-coral-ink);
+}
+.avatar-sticker-tool-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.avatar-tool-pill {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--color-coral-soft);
+  border-radius: 9px;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.avatar-tool-pill:hover {
+  border-color: var(--color-coral-ink);
+}
+.avatar-tool-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.avatar-tool-btn svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.avatar-tool-btn:hover,
+.avatar-tool-btn.is-active {
+  border-color: var(--color-teal);
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+.avatar-tool-btn.is-danger {
+  color: var(--color-danger);
+}
+.avatar-tool-btn.is-danger:hover {
+  border-color: var(--color-danger);
+  background: var(--color-coral-tint);
+  color: var(--color-danger);
+}
+.avatar-decor-section {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+}
+.avatar-decor-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.avatar-decor-tab-list {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-background);
+}
+.avatar-decor-tab {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.avatar-decor-tab.is-active {
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+.avatar-decor-clear {
+  padding: 5px 9px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-danger);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.avatar-decor-clear:hover {
+  background: var(--color-coral-tint);
+}
+.avatar-sticker-tray {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 168px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.avatar-sticker-chip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 13px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  cursor: pointer;
+  transition:
+    border-color 0.14s ease,
+    transform 0.14s ease,
+    background 0.14s ease;
+}
+.avatar-sticker-chip:hover {
+  border-color: var(--color-coral-soft);
+  background: var(--color-warm-mist);
+  transform: translateY(-1px);
+}
+.avatar-sticker-chip.is-added {
+  border-color: var(--color-coral);
+  background: var(--color-coral-tint);
+}
+.avatar-sticker-chip-thumb {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+}
+.avatar-sticker-chip-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.avatar-sticker-chip-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+}
+.avatar-sticker-chip-count {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-coral-ink);
+  color: var(--color-background);
+  font-size: 10px;
+  font-weight: 700;
+}
+/* Lưới thẻ chọn khung bọc ngoài kiểu Discord Avatar Decorations. */
+.avatar-frame-tray {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-height: 210px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.avatar-frame-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px 10px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-ink);
+  color: var(--color-background);
+  cursor: pointer;
+  transition:
+    transform 0.14s ease,
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
+}
+.avatar-frame-card:hover {
+  border-color: var(--color-coral-soft);
+  transform: translateY(-2px);
+}
+.avatar-frame-card.is-selected {
+  border-color: var(--color-sun);
+  box-shadow: 0 0 0 2px var(--color-coral);
+}
+.avatar-frame-card-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+}
+.avatar-frame-card-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  background: var(--color-text-muted);
+  opacity: 0.45;
+}
+.avatar-frame-card-deco {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  width: 76px;
+  height: 76px;
+  max-width: none;
+  object-fit: contain;
+  pointer-events: none;
+}
+.avatar-frame-card-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+}
+.avatar-crop-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+}
+@media (max-width: 480px) {
+  .avatar-crop {
+    padding: 16px;
+  }
+  .avatar-crop-stage-outer {
+    width: 296px;
+  }
+  .avatar-sticker-tray {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .avatar-frame-tray {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .avatar-crop-actions > button {
+    flex: 1;
+  }
+}
+/* Ba chấm đang tải (LoadingDots). */
+.loading-dots {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1em;
+  vertical-align: middle;
+}
+.loading-dots-row {
+  display: inline-flex;
+  gap: 5px;
+}
+.loading-dots-row i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-coral);
+  animation: loading-dots-bounce 0.9s ease-in-out infinite;
+}
+.loading-dots-row i:nth-child(2) {
+  background: var(--color-sun);
+  animation-delay: 0.15s;
+}
+.loading-dots-row i:nth-child(3) {
+  background: var(--color-teal);
+  animation-delay: 0.3s;
+}
+.loading-dots-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* Tải cả trang/cả vùng: luôn căn giữa, chiều cao cố định. */
+.loading-dots-block {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 160px;
+}
+/* Trong nút: chữ và chấm chồng cùng một ô, nút giữ nguyên kích thước. */
+.loading-dots-slot {
+  display: inline-grid;
+  place-items: center;
+}
+.loading-dots-slot > * {
+  grid-area: 1 / 1;
+}
+.loading-dots-slot-hidden {
+  visibility: hidden;
+}
+@keyframes loading-dots-bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  40% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-dots-row i {
+    animation: none;
   }
 }

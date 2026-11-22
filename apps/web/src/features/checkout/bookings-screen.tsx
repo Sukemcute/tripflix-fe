@@ -1,29 +1,42 @@
 'use client';
+import { useEffect } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { commerceApi, useApiSession } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/features/discovery/trip-card';
 import { CheckoutError } from './checkout-error';
 import styles from './checkout.module.css';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.commerce;
+/** Đơn nhiều mục không kéo dài thẻ (và cả hàng thẻ): chỉ hiện chừng này mục, còn lại xem ở chi tiết đơn. */
+const MAX_ITEMS_PER_CARD = 2;
 const formatDate = (date: string) => date.split('-').reverse().join('/');
 
 /** Chuyến đi của tôi: mọi đơn của người đang đăng nhập, mới đặt trước. */
 export function BookingsScreen() {
+  const router = useRouter();
   const { user, isReady } = useApiSession();
+
+  useEffect(() => {
+    if (isReady && !user) {
+      router.replace('/login?returnTo=%2Fbookings');
+    }
+  }, [isReady, user, router]);
+
+  if (!isReady || !user) {
+    return (
+      <main className={`ota-container ${styles.page}`}>
+        <LoadingDots isBlock />
+      </main>
+    );
+  }
+
   return (
     <main className={`ota-container ${styles.page}`}>
       <h1 className={styles.title}>{copy.booked}</h1>
-      {isReady && !user && (
-        <div className={styles.card}>
-          <p>{copy.loginToViewPayment}</p>
-          <Link prefetch={false} className="primary-button" href="/login?returnTo=%2Fbookings">
-            {copy.login}
-          </Link>
-        </div>
-      )}
       <BookingsList />
     </main>
   );
@@ -43,7 +56,7 @@ export function BookingsList() {
 
   return (
     <>
-      {query.isPending && !!user && <p>{vi.api.loading}</p>}
+      {query.isPending && !!user && <LoadingDots isBlock />}
       <CheckoutError error={query.error} retry={() => void query.refetch()} />
       {query.isSuccess && !trips.length && (
         <div className="account-empty">
@@ -69,11 +82,13 @@ export function BookingsList() {
           <Link prefetch={false} key={trip.orderId} href={`/checkout/${trip.orderId}`} className={styles.trip}>
             <div className={styles.summaryHead}>
               <span className={styles.status} data-status={trip.status}>
-                {copy.status[trip.status as keyof typeof copy.status] ?? trip.status}
+                {trip.tripStatus === 'completed'
+                  ? copy.tripCompleted
+                  : (copy.status[trip.status as keyof typeof copy.status] ?? trip.status)}
               </span>
               {trip.confirmationCode && <code>{trip.confirmationCode}</code>}
             </div>
-            {trip.items.map((item) => (
+            {trip.items.slice(0, MAX_ITEMS_PER_CARD).map((item) => (
               <div key={item.id}>
                 {item.propertyName && <p className={styles.property}>{item.propertyName}</p>}
                 <h2>{item.productName}</h2>
@@ -85,6 +100,11 @@ export function BookingsList() {
                 </p>
               </div>
             ))}
+            {trip.items.length > MAX_ITEMS_PER_CARD && (
+              <p className={styles.moreItems}>
+                {t('commerce.moreItems', { count: trip.items.length - MAX_ITEMS_PER_CARD })}
+              </p>
+            )}
             <p className={styles.total}>
               <span>{copy.total}</span>
               <strong>{formatPrice(trip.total)}</strong>
@@ -99,7 +119,7 @@ export function BookingsList() {
           disabled={query.isFetchingNextPage}
           onClick={() => void query.fetchNextPage()}
         >
-          {query.isFetchingNextPage ? vi.api.loading : vi.api.next}
+          <BusyLabel isBusy={query.isFetchingNextPage}>{vi.api.next}</BusyLabel>
         </button>
       )}
     </>

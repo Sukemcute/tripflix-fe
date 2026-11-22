@@ -20,19 +20,40 @@ export function AdminLogin({ returnTo }: { returnTo: string }) {
     },
   });
   return (
-    <main className="admin-login">
-      <section className="admin-login-story">
+    <main className="grid min-h-dvh bg-background text-ink lg:grid-cols-2">
+      <section className="flex flex-col items-start gap-12 border-b border-border bg-surface p-8 lg:border-r lg:border-b-0 lg:p-16">
         <Image src="/brand/tripflix-logo.svg" alt={vi.app.name} width={160} height={48} priority />
-        <div>
-          <p className="admin-eyebrow">{vi.admin.title}</p>
-          <h1>{vi.api.login}</h1>
-          <p>{vi.api.staffOnly}</p>
-          <Image src="/brand/tripi-welcome.png" alt={vi.mobile.common.mascot} width={230} height={230} priority />
+        <div className="my-auto max-w-md py-6">
+          <p className="mb-6 text-xs font-bold tracking-wider text-teal-ink">
+            {vi.adminOperations.workspace}
+          </p>
+          <h1 className="text-3xl leading-tight font-bold tracking-tight lg:text-5xl">
+            {vi.adminOperations.loginHeading}
+          </h1>
+          <p className="mt-6 max-w-sm text-sm leading-loose text-text-muted">
+            {vi.adminOperations.loginHint}
+          </p>
+          <ul className="mt-10 divide-y divide-border border-y border-border text-xs text-text-muted">
+            {[
+              vi.adminOperations.pending,
+              vi.adminOperations.infrastructure,
+              vi.adminOperations.staffTitle,
+            ].map((label, index) => (
+              <li key={label} className="flex gap-4 py-4">
+                <span className="font-mono text-text-subtle">0{index + 1}</span>
+                {label}
+              </li>
+            ))}
+          </ul>
         </div>
+        <p className="text-[10px] text-text-muted">{vi.adminOperations.loginRestricted}</p>
       </section>
-      <section className="admin-login-content">
-        <div>
-          <h2>{vi.api.login}</h2>
+      <section className="flex items-center justify-center p-8 lg:p-16">
+        <div className="w-full max-w-sm">
+          <h2 className="text-2xl font-bold tracking-tight">{vi.adminOperations.loginWelcome}</h2>
+          <p className="mt-3 mb-8 text-xs leading-relaxed text-text-muted">
+            {vi.adminOperations.loginAccount}
+          </p>
           <AdminApiError
             error={error}
             retry={() => {

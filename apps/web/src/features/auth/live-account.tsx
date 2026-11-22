@@ -5,16 +5,15 @@ import { vi } from '@tripflix/i18n';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
-import { BookingsList } from '@/features/checkout/bookings-screen';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
-import { PublicPosts } from '@/features/social/live-posts';
-import { PostComposer } from '@/features/social/post-composer';
 import { ProfileInfoCard } from './account-profile';
+import { TravelPreferencesCard } from './travel-preferences';
 import { AccountSecurity } from './account-security';
 import { EmailVerificationNotice } from './email-verification-notice';
 import { ACCOUNT_TABS, type AccountTab } from './account-tabs';
-import { ADMIN_URL, getInitial, isStaffRole } from './account-helpers';
+import { AvatarEditor } from './avatar-editor';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 // Màn đăng nhập nằm ở login-form.tsx; giữ export ở đây để app/login/page.tsx không phải đổi.
 export { LiveLogin } from './login-form';
@@ -24,41 +23,39 @@ export { LiveLogin } from './login-form';
  * ?tab= mở sẵn một mục (xem account-tabs.ts).
  */
 export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTab }) {
-  const { user, isReady, session, error } = useApiSession();
+  const { user, isReady, session } = useApiSession();
   const router = useRouter();
   const [tab, setTab] = useState<AccountTab>(initialTab);
   const logout = useMutation({
     mutationFn: () => session.logout(),
     onSuccess: () => router.push('/'),
   });
-  if (!isReady)
+
+  useEffect(() => {
+    if (isReady && !user) {
+      router.replace('/login?returnTo=%2Faccount');
+    }
+  }, [isReady, user, router]);
+
+  if (!isReady || !user)
     return (
       <main id="content" className="ota-container results-page account-page">
         <section className="account-guest is-loading" aria-busy="true">
-          <output>{vi.api.loading}</output>
+          <LoadingDots isBlock />
         </section>
-      </main>
-    );
-  if (!user)
-    return (
-      <main id="content" className="ota-container results-page account-page">
-        <ApiErrorNotice
-          error={error}
-          retry={() => {
-            void session.initialize();
-          }}
-        />
-        <AccountGuest />
       </main>
     );
   return (
     <main id="content" className="ota-container results-page account-page">
       <div className="profile-layout">
+        {user.emailVerified === false && (
+          <div className="profile-notice">
+            <EmailVerificationNotice key={`verify-${user.id}`} />
+          </div>
+        )}
         <aside className="profile-aside">
           <div className="profile-identity">
-            <span className="profile-avatar" aria-hidden="true">
-              {getInitial(user.displayName)}
-            </span>
+            <AvatarEditor user={user} />
             <h1>{user.displayName}</h1>
             <span className="account-role">{describeRole(user.role)}</span>
           </div>
@@ -74,12 +71,6 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
                 {TAB_LABELS[kind]}
               </button>
             ))}
-            {ADMIN_URL && isStaffRole(user.role) && (
-              <a href={ADMIN_URL}>
-                <NavIcon name="admin" />
-                {vi.api.openAdmin}
-              </a>
-            )}
             <button
               type="button"
               className="is-logout"
@@ -93,67 +84,28 @@ export function LiveAccount({ initialTab = 'profile' }: { initialTab?: AccountTa
           <ApiErrorNotice error={logout.error} />
         </aside>
         <div className="profile-main">
-          {user.emailVerified === false && <EmailVerificationNotice key={`verify-${user.id}`} />}
           {tab === 'profile' ? (
             <ProfileInfoCard key={user.id} userId={user.id} />
           ) : tab === 'security' ? (
             <AccountSecurity key={user.id} userId={user.id} />
-          ) : tab === 'create' ? (
-            <PostComposer />
-          ) : tab === 'bookings' ? (
-            <AccountSection id="account-bookings" title={TAB_LABELS[tab]} hint={vi.commerce.bookedHint}>
-              <BookingsList />
-            </AccountSection>
-          ) : (
-            <AccountSection
-              id={`account-${tab}`}
-              title={TAB_LABELS[tab]}
-              hint={tab === 'mine' ? vi.api.myPostsHint : vi.api.bookmarksHint}
-            >
-              <PublicPosts kind={tab} />
-            </AccountSection>
-          )}
+          ) : null}
         </div>
+        {tab === 'profile' && (
+          <div className="profile-travel">
+            <TravelPreferencesCard key={`travel-${user.id}`} userId={user.id} />
+          </div>
+        )}
       </div>
     </main>
-  );
-}
-
-/** Khung một mục trong trang tài khoản, cùng kiểu với "Thông tin cá nhân": tiêu đề, dòng mô tả, rồi nội dung. */
-function AccountSection({
-  id,
-  title,
-  hint,
-  children,
-}: {
-  id: string;
-  title: string;
-  hint: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="profile-card" aria-labelledby={`${id}-title`}>
-      <header className="profile-card-header">
-        <div>
-          <h2 id={`${id}-title`}>{title}</h2>
-          <p className="auth-hint">{hint}</p>
-        </div>
-      </header>
-      {children}
-    </section>
   );
 }
 
 const TAB_LABELS: Record<AccountTab, string> = {
   profile: vi.api.profileInfoTitle,
   security: vi.api.accountNavSecurity,
-  bookings: vi.commerce.booked,
-  mine: vi.api.myPosts,
-  bookmarks: vi.api.bookmarks,
-  create: vi.api.create,
 };
 
-const NAV_ICONS: Record<AccountTab | 'admin' | 'logout', ReactNode> = {
+const NAV_ICONS: Record<AccountTab | 'logout', ReactNode> = {
   profile: (
     <>
       <circle cx="12" cy="8" r="4" />
@@ -164,33 +116,6 @@ const NAV_ICONS: Record<AccountTab | 'admin' | 'logout', ReactNode> = {
     <>
       <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z" />
       <path d="m9 12 2 2 4-4" />
-    </>
-  ),
-  bookings: (
-    <>
-      <rect x="3" y="7" width="18" height="13" rx="2" />
-      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18" />
-    </>
-  ),
-  mine: (
-    <>
-      <rect x="4" y="3" width="16" height="18" rx="2" />
-      <path d="M8 8h8M8 12h8M8 16h5" />
-    </>
-  ),
-  bookmarks: <path d="M6 3h12v18l-6-4-6 4V3Z" />,
-  create: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8v8M8 12h8" />
-    </>
-  ),
-  admin: (
-    <>
-      <rect x="3" y="3" width="7" height="7" rx="1.5" />
-      <rect x="14" y="3" width="7" height="7" rx="1.5" />
-      <rect x="3" y="14" width="7" height="7" rx="1.5" />
-      <rect x="14" y="14" width="7" height="7" rx="1.5" />
     </>
   ),
   logout: (
@@ -210,7 +135,7 @@ function NavIcon({ name }: { name: keyof typeof NAV_ICONS }) {
 }
 
 /** Trang tài khoản khi chưa đăng nhập: giải thích trang này để làm gì, nút Đăng nhập và Tạo tài khoản. */
-function AccountGuest() {
+export function AccountGuest() {
   return (
     <section className="account-guest" aria-labelledby="account-guest-title">
       <div className="account-guest-body">

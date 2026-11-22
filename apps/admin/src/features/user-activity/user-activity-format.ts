@@ -1,0 +1,87 @@
+import { t, vi } from '@tripflix/i18n';
+
+const copy = vi.userActivity;
+const DAY_MS = 86_400_000;
+
+export const USER_ACTIVITY_RANGES = [1, 7, 30, 90] as const;
+export type UserActivityRangeDays = (typeof USER_ACTIVITY_RANGES)[number];
+
+// Ngày theo giờ Việt Nam, khớp cách API tính ngày.
+const vnDate = (at: number) => new Date(at + 7 * 3_600_000).toISOString().slice(0, 10);
+
+/** `days` ngày tính tới hôm nay (gồm hôm nay), dạng YYYY-MM-DD mà API nhận. */
+export function userActivityRange(days: UserActivityRangeDays, now: number): { from: string; to: string } {
+  return { from: vnDate(now - (days - 1) * DAY_MS), to: vnDate(now) };
+}
+
+export interface DailyActivity {
+  date: string;
+  activeUsers: number;
+  reactions: number;
+  comments: number;
+  shares: number;
+  views: number;
+  chats: number;
+  posts: number;
+}
+
+/**
+ * API chỉ trả ngày có hoạt động; điền ngày trống bằng 0 để biểu đồ liền mạch.
+ * `from` và `to` là ngày dạng YYYY-MM-DD theo giờ Việt Nam, gồm cả hai đầu.
+ */
+export function fillDays(daily: readonly DailyActivity[], from: string, to: string): DailyActivity[] {
+  const byDate = new Map(daily.map((day) => [day.date, day]));
+  const days: DailyActivity[] = [];
+  for (let at = Date.parse(`${from}T00:00:00Z`); at <= Date.parse(`${to}T00:00:00Z`); at += DAY_MS) {
+    const date = new Date(at).toISOString().slice(0, 10);
+    days.push(
+      byDate.get(date) ?? {
+        date,
+        activeUsers: 0,
+        reactions: 0,
+        comments: 0,
+        shares: 0,
+        views: 0,
+        chats: 0,
+        posts: 0,
+      },
+    );
+  }
+  return days;
+}
+
+export interface ActivityEventLike {
+  kind: string;
+  detail: Record<string, unknown>;
+}
+
+const isKind = (kind: string): kind is keyof typeof copy.kinds => kind in copy.kinds;
+
+/** Tên loại hoạt động cho người đọc; loại lạ thì giữ nguyên. */
+export function kindLabel(kind: string): string {
+  return isKind(kind) ? copy.kinds[kind] : kind;
+}
+
+/** Câu hỏi chat đã che thông tin cá nhân; null khi không phải lượt chat hoặc thiếu câu hỏi. */
+export function chatQuestion(event: ActivityEventLike): string | null {
+  return event.kind === 'chat' && typeof event.detail.question === 'string' ? event.detail.question : null;
+}
+
+/** Một dòng mô tả ngắn cho cột "chi tiết" của sự kiện. */
+export function describeEvent(event: ActivityEventLike): string {
+  const { detail } = event;
+  if (event.kind === 'chat') {
+    const question = chatQuestion(event) ?? '';
+    if (detail.answerKind === 'error') return `${question} · ${copy.chatError}`;
+    if (detail.isAction === true) return `${question} · ${copy.chatAction}`;
+    return question;
+  }
+  if (event.kind === 'view' && typeof detail.watchedMs === 'number') {
+    return t('userActivity.watchedSeconds', { seconds: Math.round(detail.watchedMs / 1000) });
+  }
+  if (event.kind === 'reaction' && typeof detail.reaction === 'string') {
+    const reaction = detail.reaction;
+    return reaction in copy.reactions ? copy.reactions[reaction as keyof typeof copy.reactions] : reaction;
+  }
+  return '';
+}

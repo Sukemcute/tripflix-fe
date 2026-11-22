@@ -2,9 +2,17 @@
 import { socialApi } from '@tripflix/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t, vi } from '@tripflix/i18n';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
+import { usePostImages } from './composer/use-post-images';
+import { buildPostHref } from './search-url';
+
+// Khu chọn ảnh kéo theo icon của live-posts (nặng), nên chỉ tải khi mở mục đăng bài.
+const PostImagePicker = dynamic(() => import('./composer/post-image-picker').then((m) => m.PostImagePicker), {
+  ssr: false,
+});
 
 const TITLE_MAX = 255;
 const HASHTAG_MAX = 10;
@@ -20,7 +28,7 @@ export function parseHashtags(value: string): string[] {
 }
 
 /**
- * Mục "Chia sẻ trải nghiệm" trong trang tài khoản: tạo (rồi sửa tiếp) bản nháp bài chữ.
+ * Mục "Chia sẻ trải nghiệm" trong trang tài khoản: tạo (rồi sửa tiếp) bản nháp bài viết kèm tối đa 10 ảnh.
  * Nhãn "Tiêu đề", "Nội dung", nút "Lưu bản nháp", link "Xem chi tiết" giữ nguyên cho tests/e2e/api-integration.cjs.
  */
 export function PostComposer() {
@@ -30,11 +38,20 @@ export function PostComposer() {
   const [id, setId] = useState<string>();
   const client = useQueryClient();
   const hashtags = parseHashtags(hashtagText);
+  const postImages = usePostImages();
   const mutation = useMutation({
-    mutationFn: () =>
-      id
-        ? socialApi.updatePost(id, { title: title.trim(), body, hashtags })
-        : socialApi.createDraft({ title: title.trim(), body, hashtags, post_type: 'vlog' }),
+    mutationFn: () => {
+      if (postImages.isUploading) throw new Error(vi.api.composerImageWaitUpload);
+      if (postImages.hasFailed) throw new Error(vi.api.composerImageFixFailed);
+      // Luôn gửi đủ danh sách ảnh (kể cả rỗng) để xoá hết ảnh cũng lưu được; ảnh đầu là ảnh bìa.
+      const imageMedia = {
+        media_ids: postImages.imageIds,
+        ...(postImages.imageIds[0] ? { cover_media_id: postImages.imageIds[0] } : {}),
+      };
+      return id
+        ? socialApi.updatePost(id, { title: title.trim(), body, hashtags, ...imageMedia })
+        : socialApi.createDraft({ title: title.trim(), body, hashtags, post_type: 'vlog', ...imageMedia });
+    },
     onSuccess: async (post) => {
       setId(post.id);
       await client.invalidateQueries({ queryKey: ['social'] });
@@ -48,13 +65,6 @@ export function PostComposer() {
           <p className="auth-hint">{vi.api.composerHint}</p>
         </div>
       </header>
-      <p className="profile-note">
-        <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 11v5M12 8h.01" />
-        </svg>
-        {vi.api.mediaUnavailable}
-      </p>
       <form
         className="composer-form"
         onSubmit={(event) => {
@@ -88,6 +98,10 @@ export function PostComposer() {
             onChange={(event) => setBody(event.target.value)}
           />
         </div>
+        <fieldset className="composer-field composer-fieldset">
+          <legend className="composer-field-title">{vi.api.composerImagesTitle}</legend>
+          <PostImagePicker images={postImages} isDisabled={mutation.isPending} />
+        </fieldset>
         <div className="composer-field">
           <label htmlFor="composer-hashtags">{vi.api.hashtags}</label>
           <input
@@ -115,7 +129,7 @@ export function PostComposer() {
             {mutation.isPending ? vi.api.saving : vi.api.saveDraft}
           </button>
           {id && (
-            <Link prefetch={false} className="secondary-button" href={`/trips/${id}`}>
+            <Link prefetch={false} className="secondary-button" href={buildPostHref(id)}>
               {vi.api.detail}
             </Link>
           )}

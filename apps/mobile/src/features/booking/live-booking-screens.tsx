@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type ComponentProps } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { commerceApi, HttpError, useApiSession } from '@tripflix/api-client';
+import { commerceApi, createCancelVnpayOperation, HttpError, useApiSession } from '@tripflix/api-client';
 import type { PayResultDto } from '@tripflix/api-client/core-api/model/index';
 import {
   findCheckoutFieldErrors,
@@ -12,8 +12,8 @@ import {
 import { t, vi, type MessageKey } from '@tripflix/i18n';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { colors, radius, spacing } from '@tripflix/tokens';
-import { Pressable, View } from 'react-native';
+import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import { RequireAccount } from '@/components/api-state';
 import { DateSingleField } from '@/components/date-sheet';
 import {
@@ -21,7 +21,7 @@ import {
   Button,
   Card,
   copy,
-  Field,
+  Field as BaseField,
   formatDate,
   Icon,
   type IconName,
@@ -30,16 +30,21 @@ import {
   PriceRow,
   Row,
   Screen,
-  Segments,
   Txt,
   ui,
 } from '@/components/mobile-ui';
 import { CommerceError, HoldTimer, useCommerceOrder } from './commerce-state';
 import { useCommerce } from './commerce-provider';
-import { CancelOrder, OrderCancelledScreen } from './order-cancel';
+import { CancelHold, CancelOrder, OrderCancelledScreen } from './order-cancel';
 import { PaymentSuccessScreen } from './payment-success';
+import { LoadingDots } from '@/components/loading-dots';
+
+import { CheckoutSummary } from './checkout-summary';
 
 const text = vi.commerce;
+function Field(props: ComponentProps<typeof BaseField>) {
+  return <BaseField {...props} style={[checkoutStyles.input, props.style]} />;
+}
 const BIRTHDATE_MESSAGES: Partial<Record<GuestFieldError, MessageKey>> = {
   required: 'commerce.fieldErrors.birthdateRequired',
   futureDate: 'commerce.fieldErrors.birthdateFuture',
@@ -80,7 +85,7 @@ export function CommerceCartScreen() {
     return (
       <Screen title={text.review}>
         <Notice>{text.emptyCart}</Notice>
-        <Button onPress={() => router.push('/search')}>{text.findHotel}</Button>
+        <Button onPress={() => router.navigate('/(tabs)/explore')}>{text.findHotel}</Button>
       </Screen>
     );
   const item = draft.request.items[0]!;
@@ -135,12 +140,13 @@ export function CommerceCheckoutScreen() {
     return (
       <Screen title={text.checkout}>
         <Notice>{text.emptyCart}</Notice>
-        <Button onPress={() => router.push('/search')}>{text.findHotel}</Button>
+        <Button onPress={() => router.navigate('/(tabs)/explore')}>{text.findHotel}</Button>
       </Screen>
     );
   return <CheckoutForm key={`${user.id}:${id}`} />;
 }
 function CheckoutForm() {
+  const { user } = useApiSession();
   const { id = '' } = useLocalSearchParams<{ id?: string }>();
   const { operations } = useCommerce();
   const client = useQueryClient();
@@ -163,6 +169,7 @@ function CheckoutForm() {
   const [message, setMessage] = useState('');
   const [validation, setValidation] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [copiedContact, setCopiedContact] = useState(false);
   const [today] = useState(() => toLocalIsoDate(new Date()));
   const [newTotal, setNewTotal] = useState<number>();
   const [acceptedTotal, setAcceptedTotal] = useState<number>();
@@ -173,10 +180,48 @@ function CheckoutForm() {
   const retryPayment = useRef<
     (() => Promise<PayResultDto | { paymentUrl: string; expiresAt: string }>) | null
   >(operations.retries.get(id) ?? null);
+  // Đơn đang chờ VNPay (không phải thẻ chờ OTP): form đã gửi, chỉ còn chờ kết quả hoặc tạo lần trả mới.
+  const isPayingVnpay = order?.status === 'paying' && !challenge;
   const isExpired =
     order &&
     (['expired', 'cancelled'].includes(order.status) ||
       (order.status === 'pending' && holdCountdown(order.holdExpiresAt).expired));
+
+  // Quay lại app khi lần trả VNPay chưa có kết quả (đóng tab, bấm back, chuyển app) thì coi như huỷ lần đó:
+  // đơn về pending để trả lại hoặc huỷ giỏ. Trả xong thì VNPay chuyển về trang kết quả, không về đây.
+  const [cancelVnpay] = useState(createCancelVnpayOperation);
+  const hasCheckedOnOpen = useRef(false);
+  const cancelPendingVnpay = useRef(async () => {});
+  // Gán trong effect (không trong lúc render) để luôn đọc trạng thái đơn mới nhất khi app active lại.
+  useEffect(() => {
+    cancelPendingVnpay.current = async () => {
+      if (order?.status !== 'paying' || challenge) return;
+      try {
+        const result = await cancelVnpay({ id, attempt: Date.now() });
+        if (result.status !== 'pending') return;
+        operations.paymentUrls.delete(id);
+        operations.uncertain.delete(id);
+        operations.retries.delete(id);
+        setPaymentUrl('');
+        setUnknown(false);
+        setMessage(text.vnpayCancelled);
+        await query.refetch();
+      } catch {
+        // Không huỷ được thì vẫn còn nút tạo lần VNPay mới; job hết hạn sẽ nhả đơn.
+      }
+    };
+  });
+  useEffect(() => {
+    if (!order || hasCheckedOnOpen.current) return;
+    hasCheckedOnOpen.current = true;
+    void cancelPendingVnpay.current();
+  }, [order]);
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void cancelPendingVnpay.current();
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     if (order?.status === 'paid') {
@@ -205,7 +250,7 @@ function CheckoutForm() {
         return retryPayment.current();
       }
       if (action === 'vnpayNew') {
-        if (!paymentUrl || !['pending', 'paying'].includes(order.status)) return null;
+        if (!['pending', 'paying'].includes(order.status)) return null;
         const input = {
           id,
           body: { expectedTotal: acceptedTotal ?? order.total, acceptedPolicyVersion: order.policyVersion },
@@ -291,6 +336,28 @@ function CheckoutForm() {
       await query.refetch();
     },
     onError: (error) => {
+      if (
+        error instanceof HttpError &&
+        error.status === 400 &&
+        error.body &&
+        typeof error.body === 'object' &&
+        'errors' in error.body &&
+        Array.isArray(error.body.errors)
+      ) {
+        const entries = error.body.errors.filter(
+          (entry): entry is { field: string; message: string } =>
+            !!entry &&
+            typeof entry === 'object' &&
+            typeof entry.field === 'string' &&
+            typeof entry.message === 'string' &&
+            (/^contact\.(fullName|phone|email)$/.test(entry.field) ||
+              /^guests\[\d+\]\.(fullName|birthdate)$/.test(entry.field)),
+        );
+        setFieldErrors((previous) => ({
+          ...previous,
+          ...Object.fromEntries(entries.map((entry) => [entry.field, entry.message])),
+        }));
+      }
       const isDefinitive = error instanceof HttpError && error.status < 500 && error.status !== 409;
       if (isDefinitive) operations.uncertain.delete(id);
       setUnknown(operations.uncertain.has(id));
@@ -333,28 +400,58 @@ function CheckoutForm() {
       },
     }));
   const canPay = !!order && !isExpired && !challenge && order.status === 'pending';
+  const validateField = (field: string, guestPatch?: { index: number; birthdate: string }) => {
+    if (!order) return;
+    const passengers = Array.from({ length: order.passengersRequired }, (_, index) => ({
+      fullName: guests[index]?.fullName ?? '',
+      birthdate: guestPatch?.index === index ? guestPatch.birthdate : (guests[index]?.birthdate ?? ''),
+    }));
+    const errors = findCheckoutFieldErrors({
+      contact: { fullName: name, phone, email },
+      guests: passengers,
+      passengerTypes: order.passengerTypes,
+      travelDates: findTravelDates(order.items),
+      stayDate: findStayDate(order.items),
+      today,
+    });
+    setFieldErrors((previous) => {
+      const next = { ...previous };
+      if (errors[field]) next[field] = describeFieldError(field, errors[field]);
+      else delete next[field];
+      return next;
+    });
+  };
   const payTotal = order ? (acceptedTotal ?? order.total) : 0;
   const isPayDisabled =
     isLocked || !hasConsent || newTotal !== undefined || (method === 0 && !cardNumber.trim());
   return (
     <Screen
       title={text.checkout}
-      background={colors.surface}
+      background={colors.background}
       footer={
         canPay ? (
-          <Row style={{ justifyContent: 'space-between', alignItems: 'center', gap: spacing.md }}>
-            <View>
-              <Txt variant="small" style={ui.muted}>
-                {text.total}
+          <View style={checkoutStyles.footer}>
+            <Row style={{ justifyContent: 'space-between', gap: spacing.md, flexWrap: 'wrap' }}>
+              <Txt style={checkoutStyles.meta}>{text.checkoutPayable}</Txt>
+              <Txt style={checkoutStyles.total}>{money(payTotal)}</Txt>
+            </Row>
+            {isPayDisabled && !isLocked && (
+              <Txt style={checkoutStyles.meta}>
+                {newTotal !== undefined
+                  ? text.acceptPrice
+                  : !hasConsent
+                    ? text.checkoutConsentHint
+                    : text.checkoutMethodHint}
               </Txt>
-              <Txt variant="heading" style={{ color: colors.coralInk }}>
-                {money(payTotal)}
-              </Txt>
-            </View>
-            <Button disabled={isPayDisabled} onPress={() => payment.mutate('pay')} style={{ flex: 1 }}>
+            )}
+            <Button
+              disabled={isPayDisabled}
+              onPress={() => payment.mutate('pay')}
+              style={[checkoutStyles.pay, isPayDisabled && checkoutStyles.disabledPay]}
+            >
               {payment.isPending ? vi.api.loading : text.pay}
             </Button>
-          </Row>
+          </View>
         ) : undefined
       }
     >
@@ -364,7 +461,7 @@ function CheckoutForm() {
           void query.refetch();
         }}
       />
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      {query.isPending && <LoadingDots />}
       {order && (
         <>
           {order.status === 'pending' && !isExpired && (
@@ -374,7 +471,7 @@ function CheckoutForm() {
                 alignItems: 'center',
                 paddingHorizontal: spacing.md,
                 paddingVertical: spacing.sm,
-                borderRadius: radius.pill,
+                borderRadius: radius.sm,
                 backgroundColor: colors.coralTint,
               }}
             >
@@ -382,37 +479,61 @@ function CheckoutForm() {
               <HoldTimer expiresAt={order.holdExpiresAt} />
             </Row>
           )}
-          <CheckoutSummary order={order} total={payTotal} />
+          <CheckoutSummary order={order} total={canPay ? undefined : payTotal} />
           {isExpired ? (
             <>
-              <Notice tone="error">{text.expired}</Notice>
-              <Button onPress={() => router.push('/search')}>{text.findHotel}</Button>
+              <Notice tone="error">{order.status === 'cancelled' ? text.holdCancelled : text.expired}</Notice>
+              <Button onPress={() => router.navigate('/(tabs)/explore')}>{text.findHotel}</Button>
             </>
-          ) : (
+          ) : isPayingVnpay ? null : (
             <>
               <FormCard title={text.contact} icon="person-outline">
+                <Txt style={checkoutStyles.meta}>{text.checkoutGuests.requiredHint}</Txt>
+                <Button
+                  tone="secondary"
+                  style={checkoutStyles.copyButton}
+                  disabled={isLocked || !!challenge}
+                  onPress={() => {
+                    setName((previous) => previous || user?.displayName || '');
+                    setPhone((previous) => previous || user?.phone || '');
+                    setEmail((previous) => previous || user?.email || '');
+                    setFieldErrors((previous) => {
+                      const next = { ...previous };
+                      if (!name && user?.displayName) delete next['contact.fullName'];
+                      if (!phone && user?.phone) delete next['contact.phone'];
+                      if (!email && user?.email) delete next['contact.email'];
+                      return next;
+                    });
+                  }}
+                >
+                  {text.checkoutGuests.useAccount}
+                </Button>
+                <Txt style={checkoutStyles.meta}>{text.checkoutGuests.accountHint}</Txt>
                 <Field
-                  label={text.name}
+                  label={text.checkoutGuests.contactName}
                   value={name}
                   editable={!isLocked && !challenge}
                   onChangeText={setName}
+                  onBlur={() => validateField('contact.fullName')}
                   autoComplete="name"
                   error={fieldErrors['contact.fullName']}
                 />
                 <Field
-                  label={text.phone}
+                  label={text.checkoutGuests.contactPhone}
                   value={phone}
                   editable={!isLocked && !challenge}
                   onChangeText={setPhone}
+                  onBlur={() => validateField('contact.phone')}
                   keyboardType="phone-pad"
                   error={fieldErrors['contact.phone']}
                   autoComplete="tel"
                 />
                 <Field
-                  label={text.email}
+                  label={text.checkoutGuests.contactEmail}
                   value={email}
                   editable={!isLocked && !challenge}
                   onChangeText={setEmail}
+                  onBlur={() => validateField('contact.email')}
                   keyboardType="email-address"
                   error={fieldErrors['contact.email']}
                   autoCapitalize="none"
@@ -431,20 +552,75 @@ function CheckoutForm() {
                       : undefined
                   }
                 >
+                  <Txt style={checkoutStyles.meta}>{text.checkoutGuests.nameHint}</Txt>
+                  {index === 0 && (
+                    <View style={checkoutStyles.copyGroup}>
+                      <Button
+                        tone="secondary"
+                        style={checkoutStyles.copyButton}
+                        disabled={isLocked || !!challenge || !name.trim()}
+                        onPress={() => {
+                          editGuest(0, 'fullName', name.trim());
+                          setCopiedContact(true);
+                          setFieldErrors((previous) => {
+                            const next = { ...previous };
+                            delete next['guests[0].fullName'];
+                            return next;
+                          });
+                        }}
+                      >
+                        {text.checkoutGuests.useContact}
+                      </Button>
+                      <Txt style={checkoutStyles.meta}>{text.checkoutGuests.copyHint}</Txt>
+                      {copiedContact && (
+                        <Txt accessibilityLiveRegion="polite" style={checkoutStyles.meta}>
+                          {text.checkoutGuests.copied}
+                        </Txt>
+                      )}
+                      <Button
+                        tone="secondary"
+                        style={checkoutStyles.copyButton}
+                        disabled={isLocked || !!challenge}
+                        onPress={() => {
+                          setGuests((previous) => ({
+                            ...previous,
+                            0: {
+                              fullName: previous[0]?.fullName || user?.displayName || '',
+                              birthdate: previous[0]?.birthdate || user?.dateOfBirth?.slice(0, 10) || '',
+                            },
+                          }));
+                          setFieldErrors((previous) => {
+                            const next = { ...previous };
+                            if (!guests[0]?.fullName && user?.displayName) delete next['guests[0].fullName'];
+                            if (!guests[0]?.birthdate && user?.dateOfBirth)
+                              delete next['guests[0].birthdate'];
+                            return next;
+                          });
+                        }}
+                      >
+                        {text.checkoutGuests.usePassengerAccount}
+                      </Button>
+                      <Txt style={checkoutStyles.meta}>{text.checkoutGuests.passengerAccountHint}</Txt>
+                    </View>
+                  )}
                   <Field
-                    label={text.name}
+                    label={t('commerce.checkoutGuests.passengerName', { number: index + 1 })}
                     value={guests[index]?.fullName ?? ''}
                     editable={!isLocked && !challenge}
                     onChangeText={(value) => editGuest(index, 'fullName', value)}
+                    onBlur={() => validateField(`guests[${index}].fullName`)}
                     error={fieldErrors[`guests[${index}].fullName`]}
                   />
                   <DateSingleField
-                    label={text.birthdate}
+                    label={t('commerce.checkoutGuests.passengerBirthdate', { number: index + 1 })}
                     value={guests[index]?.birthdate ?? ''}
                     min="1900-01-01"
                     max={today}
                     isDisabled={isLocked || !!challenge}
-                    onChange={(value) => editGuest(index, 'birthdate', value)}
+                    onChange={(value) => {
+                      editGuest(index, 'birthdate', value);
+                      validateField(`guests[${index}].birthdate`, { index, birthdate: value });
+                    }}
                     error={fieldErrors[`guests[${index}].birthdate`]}
                   />
                 </FormCard>
@@ -452,7 +628,30 @@ function CheckoutForm() {
               {!challenge && (
                 <FormCard title={text.paymentMethod} icon="card-outline">
                   {!isLocked && (
-                    <Segments options={[text.card, text.vnpay]} selected={method} onSelect={setMethod} />
+                    <Row style={{ gap: spacing.sm, flexWrap: 'wrap' }}>
+                      {[text.card, text.vnpay].map((label, index) => (
+                        <Pressable
+                          key={label}
+                          accessibilityRole="tab"
+                          accessibilityState={{ selected: method === index }}
+                          onPress={() => setMethod(index)}
+                          style={({ pressed }) => [
+                            checkoutStyles.method,
+                            method === index && checkoutStyles.selectedMethod,
+                            pressed && ui.pressed,
+                          ]}
+                        >
+                          <Txt
+                            style={[
+                              checkoutStyles.methodLabel,
+                              method === index && checkoutStyles.selectedLabel,
+                            ]}
+                          >
+                            {label}
+                          </Txt>
+                        </Pressable>
+                      ))}
+                    </Row>
                   )}
                   {method === 0 ? (
                     <>
@@ -479,7 +678,7 @@ function CheckoutForm() {
                               style={{
                                 paddingHorizontal: spacing.md,
                                 paddingVertical: spacing.sm,
-                                borderRadius: radius.pill,
+                                borderRadius: radius.sm,
                                 borderWidth: 1,
                                 borderColor: isActive ? colors.tealInk : colors.border,
                                 backgroundColor: isActive ? colors.seaMist : colors.background,
@@ -517,6 +716,7 @@ function CheckoutForm() {
                 <Pressable
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: hasConsent, disabled: isLocked }}
+                  aria-checked={hasConsent}
                   disabled={isLocked}
                   onPress={() => setConsent(!hasConsent)}
                   style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' }}
@@ -572,6 +772,7 @@ function CheckoutForm() {
                     maxLength={6}
                   />
                   <Button
+                    style={checkoutStyles.pay}
                     disabled={payment.isPending || isUnknown || otp.length !== 6}
                     onPress={() => payment.mutate('otp')}
                   >
@@ -581,18 +782,22 @@ function CheckoutForm() {
               )}
             </>
           )}
-          {(order.status === 'paying' || operations.uncertain.has(id)) && <Notice>{text.waiting}</Notice>}
-          {!!message && <Notice>{message}</Notice>}
-          {paymentUrl && (
+          {((order.status === 'paying' && !challenge) || operations.uncertain.has(id)) && (
+            <Notice>{text.waiting}</Notice>
+          )}
+          {!!message && !(challenge && message === text.otpHint) && <Notice>{message}</Notice>}
+          {(!!paymentUrl || isPayingVnpay) && (
             <>
-              <Button
-                tone="secondary"
-                onPress={() => {
-                  void Linking.openURL(paymentUrl).catch(() => setMessage(text.reopenGateway));
-                }}
-              >
-                {text.reopenGateway}
-              </Button>
+              {!!paymentUrl && (
+                <Button
+                  tone="secondary"
+                  onPress={() => {
+                    void Linking.openURL(paymentUrl).catch(() => setMessage(text.reopenGateway));
+                  }}
+                >
+                  {text.reopenGateway}
+                </Button>
+              )}
               {['pending', 'paying'].includes(order.status) && (
                 <Button
                   tone="secondary"
@@ -611,6 +816,7 @@ function CheckoutForm() {
           )}
           <CommerceError error={payment.error} />
           {validation && <Notice tone="error">{validation}</Notice>}
+          {order.status === 'pending' && !isExpired && !payment.isPending && <CancelHold orderId={id} />}
           {order.status !== 'pending' && (
             <Button
               tone="text"
@@ -627,7 +833,7 @@ function CheckoutForm() {
   );
 }
 
-/** Thẻ trắng có tiêu đề + biểu tượng, gom từng phần của màn thanh toán cho gọn. */
+/** Group fields without nesting another white card inside the checkout. */
 function FormCard({
   title,
   subtitle,
@@ -640,29 +846,14 @@ function FormCard({
   children: ReactNode;
 }) {
   return (
-    <View
-      style={{ padding: spacing.md, gap: spacing.md, borderRadius: 20, backgroundColor: colors.background }}
-    >
+    <View style={checkoutStyles.form}>
       <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
-        <View
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: radius.pill,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: colors.seaMist,
-          }}
-        >
-          <Icon name={icon} size={16} color={colors.tealInk} />
-        </View>
+        <Icon name={icon} size={22} color={colors.tealInk} />
         <View style={{ flex: 1 }}>
-          <Txt variant="label">{title}</Txt>
-          {subtitle && (
-            <Txt variant="small" style={ui.muted}>
-              {subtitle}
-            </Txt>
-          )}
+          <Txt accessibilityRole="header" style={checkoutStyles.formTitle}>
+            {title}
+          </Txt>
+          {subtitle && <Txt style={checkoutStyles.meta}>{subtitle}</Txt>}
         </View>
       </Row>
       {children}
@@ -670,79 +861,53 @@ function FormCard({
   );
 }
 
-/** Tóm tắt đơn gọn: mỗi mục một khối, tổng tiền chỉ một lần. */
-function CheckoutSummary({
-  order,
-  total,
-}: {
-  order: NonNullable<ReturnType<typeof useCommerceOrder>['data']>;
-  total: number;
-}) {
-  return (
-    <View
-      style={{ padding: spacing.md, gap: spacing.md, borderRadius: 20, backgroundColor: colors.background }}
-    >
-      {order.items.map((item) => (
-        <View key={item.id} style={{ gap: 4 }}>
-          <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.md }}>
-            <Txt variant="label" style={{ flex: 1 }}>
-              {item.productName}
-            </Txt>
-            <Txt variant="label">{money(item.lineTotal)}</Txt>
-          </Row>
-          <Row style={{ gap: 6 }}>
-            <Icon name="calendar-outline" size={14} color={colors.textMuted} />
-            <Txt variant="small" style={ui.muted}>
-              {item.productType === 'flight'
-                ? formatDate(item.date)
-                : `${formatDate(item.date)} → ${formatDate(item.dateTo)}`}
-            </Txt>
-          </Row>
-          <Txt variant="small" style={ui.muted}>
-            {item.qty} × {item.ratePlanName}
-          </Txt>
-          <View
-            style={{
-              alignSelf: 'flex-start',
-              marginTop: 2,
-              paddingHorizontal: spacing.sm,
-              paddingVertical: 2,
-              borderRadius: radius.pill,
-              backgroundColor: item.isRefundable ? colors.seaMist : colors.surfaceMuted,
-            }}
-          >
-            <Txt variant="small" style={{ color: item.isRefundable ? colors.tealInk : colors.textMuted }}>
-              {item.isRefundable && item.freeCancelUntil
-                ? `${text.freeCancel}: ${formatDate(item.freeCancelUntil.slice(0, 10))}`
-                : item.isRefundable
-                  ? text.refundable
-                  : text.nonRefundable}
-            </Txt>
-          </View>
-        </View>
-      ))}
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          paddingTop: spacing.md,
-          borderTopWidth: 1,
-          borderStyle: 'dashed',
-          borderTopColor: colors.border,
-        }}
-      >
-        <Txt variant="label">{text.total}</Txt>
-        <Txt variant="heading" style={{ color: colors.coralInk }}>
-          {money(total)}
-        </Txt>
-      </View>
-    </View>
-  );
-}
+const checkoutStyles = StyleSheet.create({
+  copyButton: { borderRadius: radius.sm, minHeight: 48, backgroundColor: colors.seaMist, borderWidth: 0 },
+  copyGroup: {
+    padding: spacing.md,
+    gap: spacing.sm,
+    backgroundColor: colors.sunSoft,
+    borderRadius: radius.sm,
+  },
+  input: {
+    borderRadius: radius.sm,
+    minHeight: 52,
+    fontSize: 16,
+    lineHeight: 25,
+    backgroundColor: colors.background,
+  },
+  footer: { gap: spacing.sm },
+  total: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold, color: colors.navy },
+  meta: { fontSize: 13, lineHeight: 22, color: colors.ink },
+  pay: { minHeight: 52, borderRadius: radius.sm, backgroundColor: colors.coralInk },
+  disabledPay: { backgroundColor: colors.navy, opacity: 0.8 },
+  form: {
+    gap: spacing.lg,
+    padding: spacing.lg,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMuted,
+  },
+  formTitle: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: colors.navy },
+  method: {
+    minHeight: 48,
+    flexGrow: 1,
+    padding: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    backgroundColor: colors.background,
+  },
+  selectedMethod: { backgroundColor: colors.navy },
+  methodLabel: { fontSize: 15, lineHeight: 24, color: colors.ink, fontFamily: nativeFonts.semibold },
+  selectedLabel: { color: colors.background },
+});
+
 export function OrderSummary({ order }: { order: NonNullable<ReturnType<typeof useCommerceOrder>['data']> }) {
   return (
     <>
-      <Txt variant="heading">{text.status[order.status]}</Txt>
+      <Txt variant="heading">
+        {order.tripStatus === 'completed' ? text.tripCompleted : text.status[order.status]}
+      </Txt>
       {order.items.map((item) => (
         <Card key={item.id}>
           <Txt variant="heading">{item.productName}</Txt>
@@ -788,7 +953,7 @@ export function CommerceOrderScreen() {
           void query.refetch();
         }}
       />
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
+      {query.isPending && <LoadingDots />}
       {query.data && (
         <>
           <OrderSummary order={query.data} />
@@ -801,7 +966,7 @@ export function CommerceOrderScreen() {
           {query.data.status === 'paid' && <CancelOrder orderId={query.data.orderId} />}
         </>
       )}
-      <Button onPress={() => router.replace('/(tabs)/trips')}>{text.viewTrips}</Button>
+      <Button onPress={() => router.replace('/my-trips')}>{text.viewTrips}</Button>
     </Screen>
   );
 }

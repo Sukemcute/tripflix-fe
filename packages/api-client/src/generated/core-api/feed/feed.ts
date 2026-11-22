@@ -4,20 +4,28 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { FeedControllerGetFeedParams, FeedPageDto } from '../model';
+import type {
+  FeedControllerGetFeedParams,
+  FeedEventsAcceptedDto,
+  FeedEventsRequestDto,
+  FeedPageDto,
+} from '../model';
 
 import { http } from '../../../http';
 
@@ -48,10 +56,17 @@ export type feedControllerGetFeedResponse400 = {
   status: 400;
 };
 
+export type feedControllerGetFeedResponse401 = {
+  data: void;
+  status: 401;
+};
+
 export type feedControllerGetFeedResponseSuccess = feedControllerGetFeedResponse200 & {
   headers: Headers;
 };
-export type feedControllerGetFeedResponseError = feedControllerGetFeedResponse400 & {
+export type feedControllerGetFeedResponseError = (
+  feedControllerGetFeedResponse400 | feedControllerGetFeedResponse401
+) & {
   headers: Headers;
 };
 
@@ -73,7 +88,7 @@ export const getFeedControllerGetFeedUrl = (params?: FeedControllerGetFeedParams
 };
 
 /**
- * @summary Bảng tin video: chỉ gồm bài phát được. for_you xếp mới nhất trước, hot xếp theo tổng tương tác có trọng số. Khách cũng xem được.
+ * @summary Bảng tin Reels: chỉ gồm bài dạng video phát được. for_you xếp mới nhất trước, hot xếp theo tổng tương tác có trọng số. Khách cũng xem được.
  */
 export const feedControllerGetFeed = async (
   params?: FeedControllerGetFeedParams,
@@ -166,7 +181,7 @@ export function useFeedControllerGetFeed<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Bảng tin video: chỉ gồm bài phát được. for_you xếp mới nhất trước, hot xếp theo tổng tương tác có trọng số. Khách cũng xem được.
+ * @summary Bảng tin Reels: chỉ gồm bài dạng video phát được. for_you xếp mới nhất trước, hot xếp theo tổng tương tác có trọng số. Khách cũng xem được.
  */
 
 export function useFeedControllerGetFeed<
@@ -188,3 +203,123 @@ export function useFeedControllerGetFeed<
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+export type feedEventsControllerRecordResponse202 = {
+  data: FeedEventsAcceptedDto;
+  status: 202;
+};
+
+export type feedEventsControllerRecordResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type feedEventsControllerRecordResponseSuccess = feedEventsControllerRecordResponse202 & {
+  headers: Headers;
+};
+export type feedEventsControllerRecordResponseError = feedEventsControllerRecordResponse400 & {
+  headers: Headers;
+};
+
+export type feedEventsControllerRecordResponse =
+  feedEventsControllerRecordResponseSuccess | feedEventsControllerRecordResponseError;
+
+export const getFeedEventsControllerRecordUrl = () => {
+  return `/api/v1/feed/events`;
+};
+
+/**
+ * @summary Nhận lô sự kiện hành vi từ app (xem Reels, bấm đặt từ lộ trình), tối đa 50 sự kiện. Khách cũng gửi được. Chỉ đẩy vào stream:app-events, không ghi bảng nào; sự kiện của bài không xem được trên feed bị bỏ qua.
+ */
+export const feedEventsControllerRecord = async (
+  feedEventsRequestDto: FeedEventsRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<feedEventsControllerRecordResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<feedEventsControllerRecordResponse>(getFeedEventsControllerRecordUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(feedEventsRequestDto),
+  });
+};
+
+export const getFeedEventsControllerRecordMutationKey = () => ['feedEventsControllerRecord'] as const;
+
+export const getFeedEventsControllerRecordMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof feedEventsControllerRecord>>,
+    TError,
+    FeedEventsControllerRecordMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof feedEventsControllerRecord>>,
+  TError,
+  FeedEventsControllerRecordMutationVariables,
+  TContext
+> => {
+  const mutationKey = getFeedEventsControllerRecordMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof feedEventsControllerRecord>>,
+    FeedEventsControllerRecordMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return feedEventsControllerRecord(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type FeedEventsControllerRecordMutationResult = NonNullable<
+  Awaited<ReturnType<typeof feedEventsControllerRecord>>
+>;
+export type FeedEventsControllerRecordMutationBody = FeedEventsRequestDto;
+export type FeedEventsControllerRecordMutationError = void;
+export type FeedEventsControllerRecordMutationVariables = { data: FeedEventsRequestDto };
+
+/**
+ * @summary Nhận lô sự kiện hành vi từ app (xem Reels, bấm đặt từ lộ trình), tối đa 50 sự kiện. Khách cũng gửi được. Chỉ đẩy vào stream:app-events, không ghi bảng nào; sự kiện của bài không xem được trên feed bị bỏ qua.
+ */
+export const useFeedEventsControllerRecord = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof feedEventsControllerRecord>>,
+      TError,
+      FeedEventsControllerRecordMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof feedEventsControllerRecord>>,
+  TError,
+  FeedEventsControllerRecordMutationVariables,
+  TContext
+> => {
+  return useMutation(getFeedEventsControllerRecordMutationOptions(options), queryClient);
+};

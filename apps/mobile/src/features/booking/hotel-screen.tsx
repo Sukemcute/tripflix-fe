@@ -1,12 +1,13 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { commerceApi, getFutureDate, useApiSession } from '@tripflix/api-client';
+import { isValidAssistantStay } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
+import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Pressable, ScrollView, View } from 'react-native';
-import { Button, Icon, Mascot, money, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Icon, money, Notice, Row, Screen, Txt } from '@/components/mobile-ui';
 import { CommerceError } from './commerce-state';
 import { CartLink } from './cart-ui';
 import { HotelInfoSections, HotelReviewsSection } from './hotel-detail-sections';
@@ -14,8 +15,6 @@ import { PhotoGallery } from './hotel-parts';
 
 const text = vi.commerce;
 const hotelText = vi.hotel;
-const HERO_OVERLAP = 24;
-const MIN_HERO_HEIGHT = 200;
 
 function FloatingButton({
   children,
@@ -31,15 +30,7 @@ function FloatingButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={{
-        width: 40,
-        height: 40,
-        borderRadius: radius.pill,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: colors.background,
-        opacity: 0.94,
-      }}
+      style={({ pressed }) => [styles.floating, pressed && styles.pressed]}
     >
       {children}
     </Pressable>
@@ -54,28 +45,35 @@ export function CommerceHotelScreen() {
     adults?: string;
     children?: string;
     infants?: string;
+    fromTripi?: string;
   }>();
-  const { isReady } = useApiSession();
+  const { isReady, user } = useApiSession();
+  const { width, height } = useWindowDimensions();
   const today = getFutureDate(0);
+  const isTripi = params.fromTripi === '1';
   const stay = {
-    checkIn: params.checkIn && params.checkIn >= today ? params.checkIn : getFutureDate(1),
-    checkOut: params.checkOut ?? getFutureDate(3),
-    adults: Number(params.adults ?? 2) || 2,
+    checkIn: isTripi
+      ? (params.checkIn ?? '')
+      : params.checkIn && params.checkIn >= today
+        ? params.checkIn
+        : getFutureDate(1),
+    checkOut: params.checkOut ?? (isTripi ? '' : getFutureDate(3)),
+    adults: isTripi ? Number(params.adults) : Number(params.adults ?? 2) || 2,
   };
+  const isStayValid =
+    !isTripi ||
+    isValidAssistantStay(
+      { ...stay, children: Number(params.children), infants: Number(params.infants) },
+      today,
+    );
+  const editStay = () => router.push({ pathname: '/tripi-stay', params: { ...params, name: hotel?.name } });
   const query = useQuery({
     queryKey: ['commerce', 'hotel', params.id, stay],
-    enabled: isReady && !!params.id,
+    enabled: isReady && !!params.id && isStayValid,
     queryFn: ({ signal }) => commerceApi.getHotel(params.id!, stay, signal),
   });
   const hotel = query.data;
-  // Ảnh + thẻ thông tin vừa khít một màn hình: ảnh lấy phần chiều cao còn lại sau thẻ.
-  const [viewportHeight, setViewportHeight] = useState(0);
-  const [infoHeight, setInfoHeight] = useState(0);
-  const heroHeight =
-    viewportHeight && infoHeight
-      ? Math.max(MIN_HERO_HEIGHT, viewportHeight - infoHeight + HERO_OVERLAP)
-      : undefined;
-  // Chọn phòng ở màn riêng (như Agoda) để màn chi tiết gọn, mang theo kỳ ở và số khách.
+  const heroHeight = height < 700 ? 180 : Math.min(230, Math.round(width * 0.6));
   const openRooms = () =>
     router.push({
       pathname: '/hotel-rooms',
@@ -86,116 +84,90 @@ export function CommerceHotelScreen() {
         adults: String(stay.adults),
         children: params.children ?? '0',
         infants: params.infants ?? '0',
+        ...(isTripi ? { fromTripi: '1' } : {}),
       },
     });
   const photos = hotel ? (hotel.images.length ? hotel.images : hotel.thumbnail ? [hotel.thumbnail] : []) : [];
-  const footer = hotel?.priceFrom ? (
-    <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <View>
-        <Txt variant="small" style={ui.muted}>
-          {hotelText.from}
-        </Txt>
-        <Txt variant="heading" style={{ color: colors.coralInk }}>
-          {money(hotel.priceFrom)}
-          <Txt variant="small" style={ui.muted}>
-            {` ${hotelText.perNightShort}`}
-          </Txt>
-        </Txt>
+  const footer =
+    hotel?.priceFrom != null && isStayValid ? (
+      <View style={styles.footer}>
+        <Row style={styles.priceRow}>
+          <Txt style={styles.secondary}>{hotelText.from}</Txt>
+          <Txt style={styles.price}>{money(hotel.priceFrom)}</Txt>
+          <Txt style={styles.secondary}>{hotelText.perNightShort}</Txt>
+        </Row>
+        <Pressable
+          accessibilityRole="button"
+          onPress={openRooms}
+          style={({ pressed }) => [styles.chooseRoom, pressed && styles.pressed]}
+        >
+          <Txt style={styles.chooseRoomLabel}>{hotelText.chooseRoom}</Txt>
+          <Icon name="arrow-forward" size={20} color={colors.background} />
+        </Pressable>
       </View>
-      <Button onPress={openRooms}>{hotelText.chooseRoom}</Button>
-    </Row>
-  ) : undefined;
+    ) : undefined;
 
   return (
     <Screen header={null} scroll={false} padded={false} footer={footer}>
-      <ScrollView
-        onLayout={(event) => setViewportHeight(Math.round(event.nativeEvent.layout.height))}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: spacing.xl }}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View>
           <PhotoGallery
+            key={photos.join('|')}
             images={photos}
             name={hotel?.name ?? text.hotel}
-            ratio={4 / 3}
             rounded={0}
             height={heroHeight}
-            counterBottom={36}
+            isLoading={!!params.id && isStayValid && query.isPending}
           />
-          <Row
-            style={{
-              position: 'absolute',
-              top: spacing.md,
-              left: spacing.md,
-              right: spacing.md,
-              justifyContent: 'space-between',
-            }}
-          >
+          <Row style={styles.toolbar}>
             <FloatingButton
               label={vi.mobile.common.back}
               onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
             >
-              <Icon name="arrow-back" size={20} />
+              <Icon name="arrow-back" size={22} />
             </FloatingButton>
-            <View
-              style={{
-                borderRadius: radius.pill,
-                backgroundColor: colors.background,
-                opacity: 0.94,
-                padding: 4,
-              }}
-            >
+            <View style={user ? styles.cart : undefined}>
               <CartLink />
             </View>
           </Row>
         </View>
-
-        {/* Thẻ thông tin giống băng rôn web: nền xanh nhạt, vòng vàng bên phải, linh vật Tripi. */}
-        <View
-          onLayout={(event) => setInfoHeight(Math.round(event.nativeEvent.layout.height))}
-          style={{
-            marginTop: -HERO_OVERLAP,
-            borderTopLeftRadius: mobileLayout.sheetRadius,
-            borderTopRightRadius: mobileLayout.sheetRadius,
-            overflow: 'hidden',
-            backgroundColor: colors.seaMist,
-            paddingHorizontal: mobileLayout.gutter,
-            paddingVertical: spacing.lg,
-            gap: spacing.xs,
-          }}
-        >
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              right: -140,
-              top: -40,
-              width: 300,
-              height: 300,
-              borderRadius: 150,
-              backgroundColor: colors.sunSoft,
-            }}
-          />
-          <View pointerEvents="none" style={{ position: 'absolute', right: 4, top: 6 }}>
-            <Mascot pose="explore" size={104} />
-          </View>
+        <View style={styles.identity}>
+          {isTripi && (
+            <View style={styles.tripContext}>
+              <Txt style={styles.mapLabel}>{vi.assistant.stayReview.confirmed}</Txt>
+              {isStayValid ? (
+                <Txt style={styles.address}>
+                  {stay.checkIn.split('-').reverse().join('/')} →{' '}
+                  {stay.checkOut.split('-').reverse().join('/')} · {stay.adults}{' '}
+                  {hotelText.adultsLabel.toLowerCase()}
+                  {Number(params.children) > 0
+                    ? ` · ${params.children} ${hotelText.childrenLabel.toLowerCase()}`
+                    : ''}
+                  {Number(params.infants) > 0
+                    ? ` · ${params.infants} ${hotelText.infantsLabel.toLowerCase()}`
+                    : ''}
+                </Txt>
+              ) : (
+                <Notice tone="error">{vi.assistant.stayReview.invalidStay}</Notice>
+              )}
+              <Pressable accessibilityRole="button" onPress={editStay} style={styles.map}>
+                <Icon name="calendar-outline" size={18} color={colors.tealInk} />
+                <Txt style={styles.mapLabel}>{vi.assistant.stayReview.edit}</Txt>
+              </Pressable>
+            </View>
+          )}
           {!params.id && <Notice>{text.noHotel}</Notice>}
           {hotel && (
             <>
-              <Txt variant="small" style={{ color: colors.tealInk, fontWeight: '700' }}>
-                {hotel.province.name}
-              </Txt>
-              <Txt variant="title" style={{ maxWidth: '68%' }}>
-                {hotel.name}
-              </Txt>
-              {hotel.stars ? (
-                <Txt style={{ color: colors.coralInk, letterSpacing: 2 }}>{'★'.repeat(hotel.stars)}</Txt>
-              ) : null}
-              {hotel.address && (
-                <Txt variant="small" style={[ui.muted, { maxWidth: '70%' }]}>
-                  {hotel.address}
+              <Txt style={styles.province}>{hotel.province.name}</Txt>
+              <Txt style={styles.name}>{hotel.name}</Txt>
+              <Row style={styles.starRow}>
+                <Icon name="star-outline" size={18} color={colors.textMuted} />
+                <Txt style={styles.secondary}>
+                  {hotel.stars ? t('hotel.starClass', { count: hotel.stars }) : hotelText.noStarClass}
                 </Txt>
-              )}
+              </Row>
+              {!!hotel.address && <Txt style={styles.address}>{hotel.address}</Txt>}
               {hotel.location && (
                 <Pressable
                   accessibilityRole="link"
@@ -204,44 +176,50 @@ export function CommerceHotelScreen() {
                       `https://www.google.com/maps/search/?api=1&query=${hotel.location!.lat},${hotel.location!.lng}`,
                     )
                   }
+                  style={({ pressed }) => [styles.map, pressed && styles.pressed]}
                 >
-                  <Txt variant="small" style={{ color: colors.tealInk, fontWeight: '600' }}>
-                    {hotelText.map} ↗
-                  </Txt>
+                  <Icon name="location-outline" size={18} color={colors.tealInk} />
+                  <Txt style={styles.mapLabel}>{hotelText.map}</Txt>
+                  <Icon name="open-outline" size={17} color={colors.tealInk} />
                 </Pressable>
               )}
-              {hotel.rating && (
-                <Row style={{ gap: spacing.sm, alignItems: 'center', marginTop: spacing.xs }}>
-                  <View
-                    style={{
-                      paddingHorizontal: spacing.sm,
-                      paddingVertical: 4,
-                      borderRadius: radius.pill,
-                      backgroundColor: colors.background,
-                    }}
-                  >
-                    <Txt variant="label" style={{ color: colors.tealInk }}>
-                      {hotel.rating.average.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} / 5
-                    </Txt>
-                  </View>
-                  <Txt variant="small" style={ui.muted}>
-                    {t('hotel.reviewCount', { count: hotel.rating.count })}
-                    {hotel.rating.source ? ` · ${hotel.rating.source}` : ''}
-                  </Txt>
-                </Row>
+              {hotel.rating && hotel.rating.count > 0 ? (
+                <View style={styles.rating}>
+                  <Txt style={styles.secondary}>{hotelText.guestScore}</Txt>
+                  <Row style={styles.ratingRow}>
+                    <View style={styles.score}>
+                      <Txt style={styles.scoreLabel}>
+                        {hotel.rating.average.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} / 5
+                      </Txt>
+                    </View>
+                    <View style={styles.reviewText}>
+                      <Txt style={styles.secondary}>
+                        {t('hotel.reviewCount', { count: hotel.rating.count })}
+                      </Txt>
+                      {!!hotel.rating.source && (
+                        <Txt style={styles.secondary}>
+                          {hotelText.ratingSource}: {hotel.rating.source}
+                        </Txt>
+                      )}
+                    </View>
+                  </Row>
+                </View>
+              ) : (
+                <Txt style={styles.secondary}>{hotelText.noGuestReviews}</Txt>
               )}
             </>
           )}
         </View>
-
-        <View style={{ paddingHorizontal: mobileLayout.gutter }}>
+        <View style={styles.sections}>
           <CommerceError
             error={query.error}
             retry={() => {
               void query.refetch();
             }}
           />
-          {query.isPending && <Txt style={{ paddingVertical: spacing.lg }}>{hotelText.loading}</Txt>}
+          {query.isPending && !!params.id && isStayValid && (
+            <Txt style={styles.loading}>{hotelText.loading}</Txt>
+          )}
           {hotel && <HotelInfoSections hotel={hotel} />}
           {params.id && <HotelReviewsSection id={params.id} />}
         </View>
@@ -249,3 +227,77 @@ export function CommerceHotelScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  tripContext: { backgroundColor: colors.seaMist, borderRadius: 8, padding: spacing.md, gap: spacing.sm },
+  content: { paddingBottom: spacing.xl },
+  identity: { padding: mobileLayout.gutter, gap: spacing.md, backgroundColor: colors.background },
+  province: { fontSize: 13, lineHeight: 22, color: colors.tealInk, fontFamily: nativeFonts.semibold },
+  name: { fontSize: 26, lineHeight: 36, color: colors.navy, fontFamily: nativeFonts.bold },
+  secondary: { fontSize: 13, lineHeight: 22, color: colors.textMuted, flexShrink: 1 },
+  address: { fontSize: 14, lineHeight: 23, color: colors.textMuted },
+  starRow: { gap: spacing.sm, alignItems: 'center' },
+  toolbar: {
+    position: 'absolute',
+    top: spacing.md,
+    left: spacing.md,
+    right: spacing.md,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  floating: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cart: { borderRadius: radius.sm, backgroundColor: colors.background, padding: spacing.xs },
+  pressed: { opacity: 0.75 },
+  map: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.sm,
+  },
+  mapLabel: { fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.semibold, color: colors.tealInk },
+  rating: { gap: spacing.sm },
+  ratingRow: { alignItems: 'center', gap: spacing.md, flexWrap: 'wrap' },
+  score: {
+    borderRadius: radius.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.seaMist,
+  },
+  scoreLabel: { fontSize: 18, lineHeight: 28, fontFamily: nativeFonts.semibold, color: colors.tealInk },
+  reviewText: { gap: spacing.xs, flexShrink: 1 },
+  footer: { gap: spacing.md },
+  chooseRoom: {
+    minHeight: 52,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radius.sm,
+    backgroundColor: colors.coralInk,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+  },
+  chooseRoomLabel: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: colors.background,
+    fontFamily: nativeFonts.semibold,
+    flexShrink: 1,
+    textAlign: 'center',
+  },
+  priceRow: { alignItems: 'baseline', gap: spacing.sm, flexWrap: 'wrap' },
+  price: { fontSize: 24, lineHeight: 34, color: colors.navy, fontFamily: nativeFonts.semibold },
+  sections: { paddingHorizontal: mobileLayout.gutter },
+  loading: { paddingVertical: spacing.lg, color: colors.textMuted, fontSize: 14, lineHeight: 23 },
+});

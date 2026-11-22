@@ -6,11 +6,15 @@ import type { SocialCommentPageDto } from './generated/core-api/model/socialComm
 
 const queryKey = ['social', 'comments', 'post', undefined, 'viewer'];
 const comment = (id: string, patch: Partial<SocialCommentDto> = {}): SocialCommentDto => ({
+  moderationState: null,
   id,
   postId: 'post',
   authorId: 'author',
   parentCommentId: null,
+  replyToCommentId: null,
+  replyToExcerpt: null,
   body: 'Hay quá',
+  mentions: [],
   isEdited: false,
   likeCount: 2,
   isLiked: false,

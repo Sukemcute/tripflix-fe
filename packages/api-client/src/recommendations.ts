@@ -34,13 +34,16 @@ export const HOME_RECOMMENDATIONS_REFRESH = {
   refetchOnWindowFocus: false,
 } as const;
 
-export function useHomeRecommendations(filters: HomeRecommendationsFilters = {}) {
+export function useHomeRecommendations(
+  filters: HomeRecommendationsFilters = {},
+  options: { enabled?: boolean } = {},
+) {
   const { isReady } = useApiSession();
   const recentParam = (filters.recentPlaceIds ?? []).join(',');
 
   return useQuery({
     queryKey: ['discovery', 'home-recommendations', recentParam, filters.limit],
-    enabled: isReady,
+    enabled: isReady && (options.enabled ?? true),
     ...HOME_RECOMMENDATIONS_REFRESH,
     queryFn: ({ signal }) => getHomeRecommendations(filters, signal),
   });

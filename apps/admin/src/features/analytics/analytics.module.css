@@ -1,0 +1,110 @@
+/* Chỉ giữ phần đồ thị và biểu đồ thác (waterfall); khung trang, bộ lọc, bảng dùng thành phần chung trong src/ui. */
+.chart {
+  width: 100%;
+  padding: 0 16px 8px;
+}
+.chart text {
+  fill: var(--color-text-muted);
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+.gridLine {
+  stroke: var(--color-border);
+  stroke-dasharray: 3 4;
+}
+.trafficLine,
+.latencyLine {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.trafficLine {
+  stroke: var(--color-teal-ink);
+}
+.latencyLine {
+  stroke: var(--color-navy);
+}
+.point {
+  fill: var(--color-teal-ink);
+}
+.chartDetails {
+  margin: 0 16px 16px;
+}
+.chartDetails summary {
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+.chartDetails summary:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
+}
+.scroll {
+  max-height: 240px;
+  overflow: auto;
+}
+.method {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-right: 8px;
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.waterfall {
+  overflow-x: auto;
+}
+.spanRow {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(200px, 2fr) 88px;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--color-border);
+  min-width: 560px;
+  align-items: center;
+}
+.spanRow:first-child {
+  border-top: 0;
+}
+.spanRow strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.spanRow small {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.spanRow code {
+  color: var(--color-text-subtle);
+  font-size: 11px;
+}
+.spanTrack {
+  background: var(--color-surface-muted);
+  height: 16px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.spanBar,
+.errorBar {
+  display: block;
+  height: 100%;
+  min-width: 3px;
+  border-radius: 4px;
+}
+.spanBar {
+  background: var(--color-teal-ink);
+}
+.errorBar {
+  background: var(--color-danger);
+}
+.number {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: right;
+}

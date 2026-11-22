@@ -1,0 +1,82 @@
+/* Thông báo đã đăng: nền tối trơn, chữ trắng, không bóng màu; trượt lên từ cuối màn hình. */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 10px 10px 10px 14px;
+  border-radius: 12px;
+  background: var(--color-navy);
+  color: var(--color-background);
+  font-size: 0.9rem;
+  box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--color-ink) 45%, transparent);
+  transform: translateX(-50%);
+  animation: toast-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.icon {
+  flex-shrink: 0;
+  color: var(--color-teal);
+}
+
+.text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.action {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-sun);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.action:hover {
+  background: color-mix(in srgb, var(--color-background) 12%, transparent);
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--color-background) 70%, transparent);
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--color-background);
+  background: color-mix(in srgb, var(--color-background) 12%, transparent);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}
+
+/* Điện thoại: nằm trên thanh điều hướng đáy (features/shell, TF98). */
+@media (max-width: 767px) {
+  .toast {
+    bottom: calc(var(--mobile-tab-bar-space, 0px) + 12px);
+  }
+}

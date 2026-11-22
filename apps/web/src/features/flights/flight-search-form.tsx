@@ -8,7 +8,9 @@ import { AirportPicker, type AirportOption } from './airport-picker';
 import { DatePicker } from './date-picker';
 import { FlightIcon } from './flight-icon';
 import { PassengerPicker } from './passenger-picker';
+import segmentedTabs from '../shared/segmented-tabs.module.css';
 import styles from './flights.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.flights;
 const airportNames: Readonly<Record<string, string>> = copy.airports;
@@ -68,7 +70,7 @@ export function FlightSearchForm({
   return (
     <form action="/flights" method="get" className={styles.searchPanel}>
       <div className={styles.searchHeading}>
-        <fieldset className={styles.tripTabs}>
+        <fieldset className={`${segmentedTabs.tabs} ${segmentedTabs.tabsAuto} ${styles.tripTabs}`}>
           <legend className={styles.srOnly}>{copy.tripTypeLabel}</legend>
           {(
             [
@@ -79,6 +81,7 @@ export function FlightSearchForm({
             <button
               key={value}
               type="button"
+              className={`${segmentedTabs.tab} ${segmentedTabs.tabCompact}`}
               aria-pressed={tripType === value}
               onClick={() => setTripType(value)}
             >
@@ -88,7 +91,7 @@ export function FlightSearchForm({
           ))}
         </fieldset>
         {isRound && <input type="hidden" name="trip" value="round" />}
-        {routes.isPending && <output className={styles.searchHint}>{vi.api.loading}</output>}
+        {routes.isPending && <output className={styles.searchHint}><LoadingDots /></output>}
         {routes.data?.length === 0 && <output className={styles.searchHint}>{copy.noRoutes}</output>}
       </div>
       <div className={styles.searchRow} data-round={isRound || undefined}>

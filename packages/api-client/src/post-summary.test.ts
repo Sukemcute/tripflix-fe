@@ -128,6 +128,11 @@ describe('AI summary transport', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe('http://api/api/v1/posts/post%2F1/ai-summary');
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'GET', signal });
   });
+  it('treats 204 with an empty body as not generated yet', async () => {
+    configureHttp({ baseUrl: '' });
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 204 }));
+    expect(await getPostSummary('post-1')).toBeNull();
+  });
   it('treats 404 as not generated yet and preserves service failures for retry', async () => {
     configureHttp({ baseUrl: '' });
     vi.spyOn(globalThis, 'fetch')

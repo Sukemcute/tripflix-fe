@@ -101,6 +101,51 @@ describe('uploadVideo', () => {
     expect(JSON.parse(String(fetchMock.mock.calls[2]![1]!.body))).toEqual({ partNumbers: [1] });
   });
 
+  it('báo trạng thái sau mỗi phần và tải tiếp đúng các phần còn thiếu, không tạo lượt mới', async () => {
+    const states: { uploaded: { partNumber: number }[] }[] = [];
+    mockFetch(
+      () => json(201, created),
+      () => s3(200, '"e1"'),
+      () => s3(500),
+    );
+    await expect(
+      uploadVideo(makeSource(), { maxAttempts: 1, onState: (state) => states.push(state) }),
+    ).rejects.toThrow();
+    const last = states.at(-1)!;
+    expect(last.uploaded).toEqual([{ partNumber: 1, etag: '"e1"' }]);
+    vi.restoreAllMocks();
+
+    const progress: number[] = [];
+    const source = makeSource();
+    const fetchMock = mockFetch(
+      expectRequest('POST', 'http://api/api/media/uploads/asset-1/parts', () =>
+        json(200, {
+          parts: [2, 3].map((partNumber) => ({ partNumber, url: `https://s3/new-${partNumber}` })),
+          expiresAt: created.expiresAt,
+        }),
+      ),
+      expectRequest('PUT', 'https://s3/new-2', () => s3(200, '"e2"')),
+      expectRequest('PUT', 'https://s3/new-3', () => s3(200, '"e3"')),
+      expectRequest('POST', 'http://api/api/media/uploads/asset-1/complete', () =>
+        json(202, { assetId: 'asset-1', status: 'processing' }),
+      ),
+    );
+    await expect(
+      uploadVideo(source, { resume: last as never, onProgress: (done) => progress.push(done) }),
+    ).resolves.toBe('asset-1');
+    expect(JSON.parse(String(fetchMock.mock.calls[0]![1]!.body))).toEqual({ partNumbers: [2, 3] });
+    expect(source.reads).toEqual([
+      [10, 20],
+      [20, 25],
+    ]);
+    expect(progress[0]).toBe(10);
+    expect(
+      JSON.parse(String(fetchMock.mock.calls[3]![1]!.body)).parts.map(
+        (p: { partNumber: number }) => p.partNumber,
+      ),
+    ).toEqual([1, 2, 3]);
+  });
+
   it('thử lại phần lỗi mạng sau khi chờ, không đọc lại file', async () => {
     const delays: number[] = [];
     const source = makeSource();

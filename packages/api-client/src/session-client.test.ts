@@ -1,12 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionClient } from './session-client';
+
+vi.mock('./browser-session-proof', () => ({
+  BROWSER_PROOF_HEADER: 'X-Tripflix-Session-Proof',
+  signBrowserProof: async () => 'signed-proof',
+}));
 import { http, HttpError, type HttpResponse } from './http';
 import { getApiErrorKind, getAuthErrorKind } from './response';
 import { primePasswordKeyCache } from './password-encryption';
 
-// Các test ở đây kiểm token và phiên; giả như server chưa bật mã hoá mật khẩu để không có request lấy khoá.
-// Mã hoá mật khẩu kiểm riêng ở password-encryption.test.ts.
-beforeEach(() => primePasswordKeyCache(null));
+// Nạp khoá công khai thử nghiệm để các test tập trung vào quản lý phiên.
+beforeEach(() => {
+  const publicKey = Buffer.from([9, ...new Uint8Array(31)]).toString('base64url');
+  primePasswordKeyCache({ keyId: 'test', publicKey });
+});
 
 const user = {
   id: 'member-1',
@@ -21,13 +28,44 @@ const json = (status: number, body: unknown) =>
 afterEach(() => vi.restoreAllMocks());
 
 describe('session integration', () => {
+  it('restores and signs in through the Admin BFF without receiving a token pair', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (url) =>
+        String(url).endsWith('/auth/me') ? json(200, user) : new Response(null, { status: 204 }),
+      );
+    const session = new SessionClient({ baseUrl: '/bff', client: 'web', serverSession: true });
+
+    await session.initialize();
+    expect(session.getSnapshot().user).toEqual(user);
+    await session.login({ email: user.email, password: 'example-password' });
+    await session.logout();
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/bff/api/auth/refresh',
+      '/bff/api/auth/me',
+      '/bff/api/auth/login',
+      '/bff/api/auth/me',
+      '/bff/api/auth/logout',
+    ]);
+    for (const [, request] of fetchMock.mock.calls) {
+      expect(new Headers(request?.headers).has('authorization')).toBe(false);
+      expect(request?.credentials).toBe('include');
+    }
+    expect(session.getSnapshot().user).toBeNull();
+  });
+
   it('reports a profile 401 after successful login as a session error', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) =>
-      String(url).endsWith('/auth/login') ? json(200, pair) : json(401, {}),
-    );
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (url) =>
+        String(url).endsWith('/auth/login') ? json(200, pair) : json(401, {}),
+      );
     const session = new SessionClient({ baseUrl: '', client: 'web' });
 
-    const [result] = await Promise.allSettled([session.login({ email: user.email, password: 'example-password' })]);
+    const [result] = await Promise.allSettled([
+      session.login({ email: user.email, password: 'example-password' }),
+    ]);
     expect(result?.status).toBe('rejected');
     if (result?.status !== 'rejected') throw new Error('Expected profile loading to fail');
     expect(getAuthErrorKind(result.reason, 'login')).toBeNull();
@@ -259,5 +297,86 @@ describe('sendRegistrationCode', () => {
       resendAfterSeconds: 0,
     });
     expect(await session.requestRegistrationCode(input)).toBe('reg-3');
+  });
+});
+
+describe('sendLoginCode and 2-step login', () => {
+  it('requests a login verification code and sends loginChallengeId + code on login', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(202, { loginChallengeId: 'chal-1', resendAfterSeconds: 60 }))
+      .mockResolvedValueOnce(json(200, { ...pair, refreshToken: undefined }))
+      .mockResolvedValueOnce(json(200, user));
+    const session = new SessionClient({ baseUrl: 'http://api', client: 'web' });
+    const challenge = await session.sendLoginCode({ email: user.email, password: 'example-password' });
+    expect(challenge).toEqual({ loginChallengeId: 'chal-1', resendAfterSeconds: 60 });
+
+    await session.login({
+      email: user.email,
+      password: 'example-password',
+      deviceName: 'Chrome',
+      loginChallengeId: challenge.loginChallengeId,
+      code: '12345678',
+    });
+    expect(session.getSnapshot().user?.id).toBe(user.id);
+    const [, loginInit] = fetchMock.mock.calls[1]!;
+    expect(JSON.parse(String(loginInit!.body))).toMatchObject({
+      email: user.email,
+      loginChallengeId: 'chal-1',
+      code: '12345678',
+      deviceName: 'Chrome',
+    });
+  });
+});
+
+describe('admin handoff', () => {
+  it.each([null, 'skipped', 'completed'] as const)(
+    'Google loads authoritative survey status %s before login completion',
+    async (status) => {
+      const travelPreferences = status
+        ? { status, interests: ['coast'], regions: [], budgetLevels: [], updatedAt: '2026-11-18T00:00:00Z' }
+        : null;
+      const fetchMock = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(json(200, pair))
+        .mockResolvedValueOnce(json(200, { ...user, travelPreferences }));
+      const session = new SessionClient({ baseUrl: '', client: 'web' });
+      await session.loginWithGoogle({ idToken: 'qa-google-id-token' });
+      expect(session.getSnapshot().user?.travelPreferences).toEqual(travelPreferences);
+      expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(['/api/auth/google', '/api/auth/me']);
+    },
+  );
+  it('web requests a one-time code with the access token', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(200, { ...pair, refreshToken: undefined }))
+      .mockResolvedValueOnce(json(200, { ...user, role: 'moderator' }))
+      .mockResolvedValueOnce(json(200, { code: 'handoff-code', expiresIn: 60 }));
+    const session = new SessionClient({ baseUrl: 'http://api', client: 'web' });
+    await session.loginWithGoogle({ idToken: 'google-id-token' });
+
+    await expect(session.createAdminHandoff()).resolves.toBe('handoff-code');
+    const [url, init] = fetchMock.mock.calls[2]!;
+    expect(String(url)).toBe('http://api/api/auth/admin-handoff');
+    expect(init!.method).toBe('POST');
+    expect(new Headers(init!.headers).get('authorization')).toBe('Bearer access-1');
+  });
+
+  it('admin exchanges the code through the BFF with a browser proof, then loads the user', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (url) =>
+        String(url).endsWith('/auth/me') ? json(200, user) : new Response(null, { status: 204 }),
+      );
+    const session = new SessionClient({ baseUrl: '/bff', client: 'web', serverSession: true });
+
+    await session.exchangeAdminHandoff('handoff-code');
+
+    expect(session.getSnapshot().user).toEqual(user);
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe('/bff/api/auth/admin-handoff/exchange');
+    expect(JSON.parse(String(init!.body))).toEqual({ code: 'handoff-code' });
+    expect(new Headers(init!.headers).get('X-Tripflix-Session-Proof')).toBe('signed-proof');
+    expect(new Headers(init!.headers).get('X-Tripflix-Client')).toBe('web');
   });
 });

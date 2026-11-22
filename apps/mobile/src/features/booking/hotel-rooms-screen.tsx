@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { commerceApi, getFutureDate, useApiSession } from '@tripflix/api-client';
-import { countBookingCartGuests, countRoomsForGuests, isValidTripDate } from '@tripflix/app-core';
+import {
+  countBookingCartGuests,
+  countRoomsForGuests,
+  isValidTripDate,
+  isValidTripPlanPassengers,
+  isValidAssistantStay,
+} from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { colors, spacing } from '@tripflix/tokens';
-import { useLocalSearchParams } from 'expo-router';
+import { colors, radius, spacing } from '@tripflix/tokens';
+import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { DateRangeField } from '@/components/date-sheet';
 import { Button, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
@@ -12,6 +18,9 @@ import { CommerceError } from './commerce-state';
 import { CartLink, SelectionBar, Stepper } from './cart-ui';
 import { saveBookingSelection, useBookingSelection } from './cart-store';
 import { RoomCard, type Guests } from './hotel-parts';
+import { saveTripPick } from './trip-booking-store';
+import { LoadingDots } from '@/components/loading-dots';
+import { savePostRoom } from '@/features/post/post-hotel-pick-store';
 
 const text = vi.commerce;
 const hotelText = vi.hotel;
@@ -21,31 +30,48 @@ const MAX_GUESTS = 9;
 export function HotelRoomsScreen() {
   const params = useLocalSearchParams<{
     id?: string;
+    pick?: string;
+    pickId?: string;
+    pickKey?: string;
+    productId?: string;
+    ratePlanCode?: string;
     checkIn?: string;
     checkOut?: string;
     adults?: string;
     children?: string;
     infants?: string;
+    fromTripi?: string;
   }>();
+  // 'post': chọn phòng cho điểm khách sạn khi soạn lộ trình (TF105); dùng chung giao diện chọn của đặt lộ trình.
+  const isPostPick = params.pick === 'post';
+  const isTripPick = params.pick === 'trip' || isPostPick;
+  const isTripi = params.fromTripi === '1';
   const { isReady } = useApiSession();
   const today = getFutureDate(0);
   const [dates, setDates] = useState({
-    checkIn: params.checkIn && params.checkIn >= today ? params.checkIn : getFutureDate(1),
-    checkOut: params.checkOut ?? getFutureDate(3),
+    checkIn:
+      isTripPick || isTripi
+        ? (params.checkIn ?? '')
+        : params.checkIn && params.checkIn >= today
+          ? params.checkIn
+          : getFutureDate(1),
+    checkOut: params.checkOut ?? (isTripi ? '' : getFutureDate(3)),
   });
   const [guests, setGuests] = useState<Guests>({
-    adults: Number(params.adults ?? 2) || 2,
-    children: Number(params.children ?? 0) || 0,
-    infants: Number(params.infants ?? 0) || 0,
+    adults: isTripi ? Number(params.adults) : Number(params.adults ?? 2) || 2,
+    children: isTripi ? Number(params.children) : Number(params.children ?? 0) || 0,
+    infants: isTripi ? Number(params.infants) : Number(params.infants ?? 0) || 0,
   });
   const [stay, setStay] = useState({ ...dates, ...guests });
-  const [isEditing, setEditing] = useState(false);
+  const [isEditing, setEditing] = useState(isTripi && !isValidAssistantStay(stay, today));
   const selection = useBookingSelection();
-  const valid =
-    isValidTripDate(dates.checkIn, today) &&
-    dates.checkOut > dates.checkIn &&
-    guests.adults >= 1 &&
-    countBookingCartGuests(guests) <= MAX_GUESTS;
+  const valid = isTripi
+    ? isValidAssistantStay({ ...dates, ...guests }, today)
+    : isValidTripDate(dates.checkIn, today) &&
+      dates.checkOut > dates.checkIn &&
+      (isTripPick
+        ? isValidTripPlanPassengers(guests, MAX_GUESTS)
+        : guests.adults >= 1 && countBookingCartGuests(guests) <= MAX_GUESTS);
   const isUnchanged =
     dates.checkIn === stay.checkIn &&
     dates.checkOut === stay.checkOut &&
@@ -54,7 +80,7 @@ export function HotelRoomsScreen() {
     guests.infants === stay.infants;
   const query = useQuery({
     queryKey: ['commerce', 'hotel', params.id, stay],
-    enabled: isReady && !!params.id,
+    enabled: isReady && !!params.id && (!isTripi || isValidAssistantStay(stay, today)),
     queryFn: ({ signal }) =>
       commerceApi.getHotel(
         params.id!,
@@ -64,6 +90,17 @@ export function HotelRoomsScreen() {
     placeholderData: keepPreviousData,
   });
   const hotel = query.data;
+  const returnTo = isTripi
+    ? `/hotel-rooms?${new URLSearchParams({
+        id: params.id ?? '',
+        fromTripi: '1',
+        checkIn: stay.checkIn,
+        checkOut: stay.checkOut,
+        adults: String(stay.adults),
+        children: String(stay.children),
+        infants: String(stay.infants),
+      }).toString()}`
+    : `/hotel-rooms?id=${params.id ?? ''}`;
   const canAdd = countBookingCartGuests(guests) < MAX_GUESTS;
   const nights = Math.max(1, Math.round((Date.parse(stay.checkOut) - Date.parse(stay.checkIn)) / 86_400_000));
   const formatDay = (iso: string) => iso.split('-').reverse().slice(0, 2).join('/');
@@ -90,36 +127,62 @@ export function HotelRoomsScreen() {
     <Screen
       background={colors.surface}
       title={hotel?.name ?? hotelText.rooms}
-      right={<CartLink />}
+      right={isTripPick ? undefined : <CartLink />}
       footer={
-        selection.items.length ? <SelectionBar returnTo={`/hotel-rooms?id=${params.id ?? ''}`} /> : undefined
+        !isTripPick && selection.items.length && (!isTripi || (valid && isUnchanged)) ? (
+          <SelectionBar returnTo={returnTo} />
+        ) : undefined
       }
     >
+      {isTripPick && (
+        <Notice>
+          {vi.mobile.tripPlan.pickRoomTitle} · {vi.mobile.tripPlan.pickNotice}
+        </Notice>
+      )}
       {/* Tóm tắt kỳ ở, bấm Đổi mới mở phần chỉnh để màn chọn phòng gọn. */}
       <View
         style={{
           padding: spacing.md,
           gap: spacing.md,
-          borderRadius: 20,
-          backgroundColor: colors.seaMist,
+          borderRadius: radius.md,
+          backgroundColor: colors.surface,
         }}
       >
         <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
-            <Txt variant="label">
-              {formatDay(stay.checkIn)} → {formatDay(stay.checkOut)} · {nights} {text.nights}
+            <Row style={{ flexWrap: 'wrap', gap: spacing.md }}>
+              {[
+                { label: hotelText.checkIn, value: stay.checkIn },
+                { label: hotelText.checkOut, value: stay.checkOut },
+              ].map((date) => (
+                <View key={date.label} style={{ gap: spacing.xs }}>
+                  <Txt style={{ fontSize: 13, lineHeight: 22, color: colors.textMuted }}>{date.label}</Txt>
+                  <Txt style={{ fontSize: 14, lineHeight: 23, color: colors.navy }}>
+                    {formatDay(date.value)}
+                  </Txt>
+                </View>
+              ))}
+            </Row>
+            <Txt style={{ fontSize: 13, lineHeight: 22, color: colors.textMuted }}>
+              {nights} {text.nights}
             </Txt>
-            <Txt variant="small" style={ui.muted}>
+            <Txt style={{ fontSize: 13, lineHeight: 22, color: colors.textMuted }}>
               {stay.adults} {hotelText.adultsLabel.toLowerCase()}
               {stay.children ? ` · ${stay.children} ${hotelText.childrenLabel.toLowerCase()}` : ''}
               {stay.infants ? ` · ${stay.infants} ${hotelText.infantsLabel.toLowerCase()}` : ''}
             </Txt>
           </View>
-          <Button tone="text" onPress={() => setEditing((value) => !value)}>
-            {isEditing ? hotelText.showLess : hotelText.changeStay}
-          </Button>
+          {!isTripPick && (
+            <Button
+              style={{ borderRadius: radius.sm, minHeight: 44 }}
+              tone="text"
+              onPress={() => setEditing((value) => !value)}
+            >
+              {isEditing ? hotelText.showLess : hotelText.changeStay}
+            </Button>
+          )}
         </Row>
-        {isEditing && (
+        {!isTripPick && isEditing && (
           <>
             <DateRangeField
               startLabel={vi.api.checkIn}
@@ -154,7 +217,7 @@ export function HotelRoomsScreen() {
           void query.refetch();
         }}
       />
-      {query.isFetching && <Txt>{vi.api.loading}</Txt>}
+      {query.isFetching && <LoadingDots />}
       {hotel && !hotel.isAvailable && <Notice tone="warning">{text.unavailable}</Notice>}
       {hotel?.rooms.map((room) => (
         <RoomCard
@@ -163,7 +226,51 @@ export function HotelRoomsScreen() {
           room={room}
           stay={stay}
           rooms={countRoomsForGuests({ ...stay, maxGuests: room.maxGuests })}
-          isDisabled={query.isFetching}
+          isDisabled={
+            query.isFetching ||
+            (isTripi && (!valid || !isUnchanged)) ||
+            (isTripPick &&
+              (!params.pickKey || (!isPostPick && !params.pickId) || !valid || !hotel.isAvailable))
+          }
+          pickedRatePlanCode={
+            isTripPick && params.productId === room.productId ? params.ratePlanCode : undefined
+          }
+          onPick={
+            isTripPick
+              ? (ratePlanCode) => {
+                  const rate = room.ratePlans.find((option) => option.code === ratePlanCode);
+                  if (isPostPick && params.pickKey && rate?.totalPrice != null && room.isAvailable) {
+                    savePostRoom(params.pickKey, {
+                      productId: room.productId,
+                      ratePlanCode,
+                      roomName: room.name,
+                      rateName: rate.name,
+                      totalPrice: rate.totalPrice,
+                    });
+                    router.back();
+                    return;
+                  }
+                  if (
+                    !params.pickKey ||
+                    !params.pickId ||
+                    !hotel.isAvailable ||
+                    !room.isAvailable ||
+                    rate?.totalPrice == null ||
+                    query.isFetching ||
+                    !valid
+                  )
+                    return;
+                  saveTripPick(params.pickKey, params.pickId, {
+                    productId: room.productId,
+                    ratePlanCode,
+                    totalPrice: rate.totalPrice,
+                    roomName: room.name,
+                    rateName: rate.name,
+                  });
+                  router.back();
+                }
+              : undefined
+          }
         />
       ))}
     </Screen>

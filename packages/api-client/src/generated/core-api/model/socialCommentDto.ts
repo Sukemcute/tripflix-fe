@@ -4,8 +4,24 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { CommentMentionDto } from './commentMentionDto';
+import type { SocialCommentDtoCreatorReview } from './socialCommentDtoCreatorReview';
+import type { SocialCommentDtoModerationState } from './socialCommentDtoModerationState';
+import type { SocialCommentDtoStatus } from './socialCommentDtoStatus';
 
 export interface SocialCommentDto {
+  /**
+   * Tag theo UTF-16; [] nếu không có hoặc nội dung bị che
+   * @maxItems 10
+   */
+  mentions: CommentMentionDto[];
+  creatorReview?: SocialCommentDtoCreatorReview;
+  status?: SocialCommentDtoStatus;
+  /**
+   * Trạng thái kiểm duyệt hiển thị cho tác giả
+   * @nullable
+   */
+  moderationState: SocialCommentDtoModerationState;
   id: string;
   postId: string;
   authorId: string;
@@ -16,6 +32,21 @@ export interface SocialCommentDto {
   authorName?: string | null;
   /** @nullable */
   parentCommentId: string | null;
+  /**
+   * ID bình luận hoặc phản hồi được trả lời trực tiếp
+   * @nullable
+   */
+  replyToCommentId: string | null;
+  /**
+   * Tên hiển thị của người được trả lời
+   * @nullable
+   */
+  replyToName?: string | null;
+  /**
+   * Đoạn trích tối đa 120 ký tự của câu được trả lời; null nếu câu đó không còn công khai
+   * @nullable
+   */
+  replyToExcerpt: string | null;
   body: string;
   isEdited: boolean;
   /** Số lượt thích bình luận */

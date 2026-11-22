@@ -4,6 +4,9 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { PostImageDto } from './postImageDto';
+import type { PostVideoDto } from './postVideoDto';
+import type { PostViewerContextDto } from './postViewerContextDto';
 import type { SocialPostDtoPostType } from './socialPostDtoPostType';
 import type { SocialPostDtoReactionCounts } from './socialPostDtoReactionCounts';
 import type { SocialPostDtoStatus } from './socialPostDtoStatus';
@@ -26,8 +29,19 @@ export interface SocialPostDto {
   visibility: SocialPostDtoVisibility;
   isVerified: boolean;
   mediaIds: string[];
-  /** @nullable */
+  /**
+   * ID media làm ảnh bìa (DEPRECATED: UI dùng post.images[0].url hoặc video.posters)
+   * @deprecated
+   * @nullable
+   */
   coverMediaId: string | null;
+  /** Ảnh của bài viết (vlog) theo đúng thứ tự mediaIds; Reels luôn rỗng */
+  images?: PostImageDto[];
+  /**
+   * Thông tin phát video và posters của Reels
+   * @nullable
+   */
+  video?: PostVideoDto | null;
   /** @nullable */
   tripAttachment: TripAttachmentDto | null;
   reactionCounts: SocialPostDtoReactionCounts;
@@ -35,6 +49,8 @@ export interface SocialPostDto {
   commentCount: number;
   shareCount: number;
   bookmarkCount: number;
+  /** @nullable */
+  viewerContext?: PostViewerContextDto | null;
   /** @nullable */
   publishedAt: string | null;
   createdAt: string;

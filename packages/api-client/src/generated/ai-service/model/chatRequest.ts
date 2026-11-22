@@ -4,11 +4,15 @@
  * Tripflix AI Service
  * OpenAPI spec version: 0.1.0
  */
+import type { DraftAction } from './draftAction';
+import type { TripContext } from './tripContext';
 import type { Turn } from './turn';
 
 export interface ChatRequest {
+  action?: DraftAction | null;
+  contextPostId?: string | null;
   conversationId: string;
-  /** @maxItems 10 */
+  /** @maxItems 30 */
   history?: Turn[];
   /**
    * @minLength 1
@@ -17,4 +21,5 @@ export interface ChatRequest {
    */
   message: string;
   searchMode?: 'reel' | null;
+  trip?: TripContext | null;
 }

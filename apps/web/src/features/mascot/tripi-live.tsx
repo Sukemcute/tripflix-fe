@@ -9,7 +9,13 @@ const TripiRive = dynamic(() => import('./tripi-rive').then((module) => module.T
   ssr: false,
 });
 
-export function TripiLive({ className }: { className?: string }) {
+export function TripiLive({
+  className,
+  interactive = true,
+}: {
+  className?: string;
+  interactive?: boolean;
+}) {
   const container = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [motion, setMotion] = useState(false);
@@ -48,7 +54,9 @@ export function TripiLive({ className }: { className?: string }) {
         className={styles.still}
         style={{ opacity: motion && ready ? 0 : 1 }}
       />
-      {motion && requested && <TripiRive active={visible} onReady={setReady} />}
+      {motion && requested && (
+        <TripiRive active={visible} interactive={interactive} onReady={setReady} />
+      )}
     </div>
   );
 }

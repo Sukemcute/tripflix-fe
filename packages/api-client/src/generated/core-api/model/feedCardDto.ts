@@ -9,6 +9,7 @@ import type { FeedCountsDto } from './feedCountsDto';
 import type { FeedReasonDto } from './feedReasonDto';
 import type { FeedVideoDto } from './feedVideoDto';
 import type { FeedViewerStateDto } from './feedViewerStateDto';
+import type { TripAttachmentDto } from './tripAttachmentDto';
 
 export interface FeedCardDto {
   postId: string;
@@ -24,6 +25,10 @@ export interface FeedCardDto {
   tags: string[];
   /** Chưa có dữ liệu, hiện luôn rỗng */
   linkedProductIds: string[];
+  /** @nullable */
+  tripAttachment?: TripAttachmentDto | null;
+  /** Lộ trình lấy từ chuyến đã đi xong của chính người đăng (tích "Đã đi") */
+  isVerified: boolean;
   counts: FeedCountsDto;
   /**
    * null với khách

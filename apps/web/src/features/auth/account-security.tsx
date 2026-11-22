@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AuthErrorNotice, PasswordField } from './auth-fields';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 /** Mục "Bảo mật & thiết bị" của trang tài khoản: đổi mật khẩu, rồi các thiết bị đang đăng nhập. */
 export function AccountSecurity({ userId }: { userId: string }) {
@@ -157,7 +158,7 @@ function DevicesPanel({ userId }: { userId: string }) {
         }}
       />
       <ApiErrorNotice error={action.error} />
-      {devices.isPending && <p className="auth-hint">{vi.api.loading}</p>}
+      {devices.isPending && <LoadingDots isBlock />}
       {devices.data?.length === 0 && <p className="auth-hint">{vi.api.noDevices}</p>}
       <ul className="device-list" id="account-device-list">
         {visibleDevices.map((device) => (

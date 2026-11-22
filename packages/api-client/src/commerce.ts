@@ -199,6 +199,20 @@ export function createOtpOperation() {
       ).data,
   );
 }
+/** Huỷ giỏ đang giữ chỗ (pending), trả chỗ về kho ngay. */
+export function createCancelHoldOperation() {
+  return createOperation(
+    async (id: string, key) =>
+      (await checkout.checkoutControllerCancel(encodeURIComponent(id), headers(key))).data,
+  );
+}
+/** Khách quay lại khi lần trả VNPay chưa có kết quả: huỷ lần đó để đơn về pending. */
+export function createCancelVnpayOperation() {
+  return createOperation(
+    async (input: { id: string; attempt: number }, key) =>
+      (await checkout.vnpayCheckoutControllerCancel(encodeURIComponent(input.id), headers(key))).data,
+  );
+}
 export function createVnpayOperation() {
   return createOperation(
     async (input: { id: string; body: StartVnpayRequestDto; attempt: number }, key) =>

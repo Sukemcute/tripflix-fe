@@ -80,7 +80,7 @@ export function VnpayReturnScreen() {
           {vi.commerce.detail}
         </Button>
       )}
-      <Button tone="text" onPress={() => router.replace('/(tabs)/trips')}>
+      <Button tone="text" onPress={() => router.replace('/my-trips')}>
         {vi.commerce.viewTrips}
       </Button>
     </Screen>

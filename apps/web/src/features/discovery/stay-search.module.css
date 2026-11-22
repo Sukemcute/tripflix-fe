@@ -1,3 +1,12 @@
+.homepagePlaceholder {
+  height: 86px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 1100px) {
+  .homepagePlaceholder { height: 310px; }
+}
+
 .panel {
   position: relative;
   z-index: 3;
@@ -47,119 +56,113 @@
 }
 .searchRow {
   display: grid;
-  grid-template-columns:
-    minmax(200px, 1.4fr) repeat(2, minmax(150px, 1fr)) minmax(190px, 1.2fr) minmax(85px, 0.5fr)
-    auto;
-  align-items: center;
-  padding: 4px 6px 4px 10px;
-  border: 1px solid #dce9e6;
-  border-radius: 999px;
-  background: #fbfdfc;
-  transition:
-    border-color 250ms ease,
-    box-shadow 250ms ease,
-    background 200ms ease;
-}
-.searchRow:focus-within {
-  border-color: var(--color-teal);
-  background: #ffffff;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-teal) 18%, transparent);
+  grid-template-columns: minmax(0, 1.45fr) repeat(2, minmax(0, 1.1fr)) repeat(2, minmax(0, 1fr)) auto;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid #e4ecea;
+  border-radius: 20px;
+  background: var(--color-surface);
 }
 .panel .field {
+  position: relative;
   display: flex;
   align-items: center;
-  align-self: stretch;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
+  min-height: 72px;
   margin: 0;
-  padding: 8px 14px;
-  border-right: 1px solid #e4ecea;
-  border-radius: 12px;
-  transition: background 288ms;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--color-background);
+  transition: border-color 256ms, box-shadow 256ms;
 }
-.field:hover,
-.field:focus-within {
-  background: #f2f9f7;
+.panel .field:hover {
+  border-color: #cfe5e0;
+}
+.panel .field:focus-within,
+.panel .field:has([aria-expanded='true']) {
+  border-color: var(--color-teal-ink);
+  box-shadow: 0 0 0 4px rgb(0 108 99 / 10%);
 }
 .field > svg {
+  box-sizing: content-box;
   flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--color-sea-mist);
   color: var(--color-teal-ink);
 }
 .fieldContent {
-  display: block;
+  display: grid;
+  flex: 1;
+  gap: 2px;
   min-width: 0;
-  width: 100%;
   color: var(--color-text-muted);
-  font-size: 11px;
-  font-weight: 400;
-}
-.panel .fieldContent > div > button {
-  /* Ô chọn khách dùng chung với trang khách sạn; ở thanh tìm bỏ viền cho giống các ô khác. */
-  min-height: 28px;
-  margin-top: 4px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  font-size: 14px;
-  font-weight: 700;
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 12px;
+  font-weight: 600;
 }
 .panel .fieldContent > div {
-  gap: 0;
-  font-size: 11px;
+  gap: 2px;
+  font: inherit;
 }
 .panel .fieldContent label {
   margin: 0;
   font: inherit;
 }
-.panel .field input {
+.panel .field input,
+.panel .fieldContent > div > button,
+.panel .dateField > button {
   display: block;
   width: 100%;
+  height: 26px;
+  min-height: 0;
   min-width: 0;
-  height: 24px;
-  margin: 2px 0 0;
+  margin: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: var(--color-ink);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
   font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.panel .dateField > button {
+  font-size: 17px;
+  font-weight: 800;
+  box-shadow: none;
+}
+.dateField > button > svg {
+  display: none;
 }
 .field input::placeholder {
-  color: #667b78;
-  font-weight: 400;
-}
-.field:has(input:focus) {
-  background: var(--color-sea-mist);
+  color: var(--color-text-subtle);
+  font-weight: 600;
 }
 .field input:focus {
   box-shadow: none;
 }
-.placeField {
-  position: relative;
-}
 .suggestions {
-  position: absolute;
-  top: calc(100% + 16px);
-  left: 0;
-  z-index: 4;
-  width: max(100%, 320px);
-  max-width: calc(100vw - 64px);
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  max-width: calc(100vw - 32px);
   max-height: 340px;
+  overscroll-behavior: contain;
+  color: var(--color-ink);
   overflow-y: auto;
   padding: 12px;
   border: 1px solid #dce9e6;
   border-radius: 18px;
   background: white;
   box-shadow: 0 16px 40px rgb(0 76 68 / 15%);
-}
-.suggestions[hidden] {
-  display: none;
 }
 .suggestions :global(.suggested-queries) {
   display: grid;
@@ -177,36 +180,34 @@
   gap: 12px;
 }
 .panel .submit {
-  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 10px;
-  min-height: 52px;
-  margin: 0 0 0 6px;
-  padding: 12px 24px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--color-teal-ink) 0%, var(--color-teal) 100%);
+  min-height: 72px;
+  margin: 0;
+  padding: 0 28px;
+  border: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--color-teal-ink), var(--color-teal));
   color: white;
-  font-weight: 800;
-  box-shadow: 0 4px 14px -2px rgba(0, 166, 153, 0.45);
-  transition:
-    transform 250ms ease,
-    box-shadow 250ms ease,
-    filter 250ms ease;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 12px 24px -12px rgb(0 108 99 / 70%);
+  cursor: pointer;
+  transition: filter 256ms;
 }
 .panel .submit:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 22px -3px rgba(0, 166, 153, 0.55);
   filter: brightness(1.06);
 }
-/* Nút xanh loang Coral; chữ chuyển Ink cho đủ tương phản trên Coral. */
-.submit {
-  --ripple-color: var(--color-coral);
-  transition: color 480ms;
+.panel .submit:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
 }
-.submit:hover:not(:disabled) {
-  color: var(--color-ink);
-}
-.submit:disabled {
-  opacity: 0.65;
+.panel .submit:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
 }
 .toolbar {
@@ -300,13 +301,6 @@
   font-size: 12px;
   font-weight: 600;
 }
-/* Ô ngày mềm (SoftDatePicker kiểu trần) trong khung tìm phòng, thẳng hàng với ô nhập cũ. */
-.dateField {
-  margin-top: 4px;
-}
-.dateField button {
-  font-size: 13px;
-}
 .moreFiltersToggle {
   display: inline-flex;
   flex-shrink: 0;
@@ -379,49 +373,22 @@
   padding: 10px;
   background: #f2f9f7;
 }
-@media (max-width: 1199px) {
-  .panel {
-    padding: 20px;
-  }
-  .searchRow {
-    grid-template-columns:
-      minmax(170px, 1.3fr) repeat(2, minmax(125px, 1fr)) minmax(150px, 1fr) minmax(65px, 0.45fr)
-      auto;
-  }
+@media (max-width: 1350px) {
   .panel .field {
     gap: 8px;
     padding-inline: 10px;
   }
-  .field > svg {
-    display: none;
-  }
-  .placeField > svg {
-    display: block;
-  }
 }
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
+  .searchRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .placeField,
   .panel .submit {
     grid-column: 1 / -1;
-    min-height: 48px;
-    margin: 8px 0 0;
   }
-  .searchRow {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .panel .placeField {
-    grid-column: 1 / -1;
-    border-right: 0;
-    border-bottom: 1px solid #e4ecea;
-    padding-block: 14px;
-  }
-  .panel .field {
-    padding-block: 12px;
-  }
-  .field > svg {
-    display: none;
-  }
-  .placeField > svg {
-    display: block;
+  .panel .submit {
+    min-height: 56px;
   }
 }
 @media (max-width: 640px) {
@@ -441,21 +408,16 @@
     font-size: 10px;
     max-width: 19ch;
   }
-  .searchRow {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .panel .field {
+    padding-inline: 8px;
+  }
+  .field > svg {
+    width: 18px;
+    height: 18px;
     padding: 6px;
-    border-radius: 16px;
   }
-  .panel .field:nth-child(3),
-  .panel .field:nth-child(5) {
-    border-right: 0;
-  }
-  .panel .field:nth-child(4),
-  .panel .field:nth-child(5) {
-    border-top: 1px solid #e4ecea;
-  }
-  .panel .field input {
-    font-size: 12px;
+  .panel .dateField > button {
+    font-size: 14px;
   }
   .toolbar {
     gap: 10px;
@@ -471,10 +433,6 @@
     top: 66px;
     grid-template-columns: 1fr;
   }
-  .suggestions {
-    max-width: calc(100vw - 88px);
-    width: 100%;
-  }
 }
 
 /* ==========================================================================
@@ -486,7 +444,7 @@
 .homepagePanel {
   position: relative;
   z-index: 10;
-  margin-top: -48px;
+  margin-top: -234px;
   padding: 0 !important;
   border: none !important;
   border-radius: 0 !important;
@@ -545,168 +503,42 @@
   transform: translateY(-1px);
 }
 
-.homepagePanel .searchRow {
-  position: relative;
-  display: grid;
-  grid-template-columns:
-    minmax(180px, 1.6fr) repeat(2, minmax(120px, 1fr)) minmax(70px, 0.5fr)
-    minmax(96px, 0.7fr) auto;
-  align-items: center;
-  gap: 0;
-  padding: 8px 10px 8px 20px;
-  border-radius: 999px;
-  background: #ffffff;
-  border: 1px solid rgba(0, 76, 68, 0.12);
-  box-shadow:
-    0 24px 60px -14px rgba(15, 23, 42, 0.14),
-    0 4px 20px -2px rgba(0, 76, 68, 0.05),
-    0 0 0 1px rgba(255, 255, 255, 0.95) inset;
-  transition:
-    box-shadow 300ms cubic-bezier(0.2, 0.7, 0.25, 1),
-    border-color 250ms ease,
-    transform 300ms cubic-bezier(0.2, 0.7, 0.25, 1);
-}
-
-.homepagePanel .searchRow:hover {
-  border-color: rgba(0, 166, 153, 0.45);
-  box-shadow:
-    0 32px 72px -16px rgba(0, 76, 68, 0.22),
-    0 6px 24px -2px rgba(0, 166, 153, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.95) inset;
-  transform: translateY(-2px);
-}
-
-.homepagePanel .searchRow:focus-within {
-  border-color: var(--color-teal);
-  box-shadow:
-    0 36px 84px -16px rgba(0, 76, 68, 0.25),
-    0 0 0 4px rgba(0, 166, 153, 0.15);
-  transform: translateY(-2px);
-}
-
-.homepagePanel .field {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  border-right: 1px solid #edf2f1;
-  border-radius: 0;
-  background: transparent;
-  transition: background 200ms ease;
-}
-
-.homepagePanel .field:hover,
-.homepagePanel .field:focus-within {
-  background: rgba(0, 166, 153, 0.04);
-  border-radius: 16px;
-}
-
-.homepagePanel .field:last-of-type {
-  border-right: none;
-}
-
-.homepagePanel .fieldContent label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.homepagePanel .field input {
-  font-size: 14px;
-  font-weight: 700;
-  color: #0f172a;
-  height: 24px;
-  margin-top: 2px;
-}
-
-.homepagePanel .field input::placeholder {
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-.homepagePanel .submit {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 54px;
-  padding: 0 28px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #00A699 0%, #007C6E 100%);
-  border: none;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  box-shadow: 0 10px 24px -4px rgba(0, 166, 153, 0.45);
-  cursor: pointer;
-  transition:
-    transform 250ms cubic-bezier(0.2, 0.7, 0.25, 1),
-    box-shadow 250ms ease,
-    background 250ms ease;
-}
-
-.homepagePanel .submit:hover {
-  background: linear-gradient(135deg, #02bba6 0%, #008778 100%);
-  box-shadow: 0 14px 32px -4px rgba(0, 166, 153, 0.6);
-  transform: translateY(-2px) scale(1.02);
-}
-
-.homepagePanel .submit:active {
-  transform: translateY(0) scale(0.98);
-}
-
-@media (max-width: 980px) {
-  .homepagePanel .heading {
-    padding-inline: 16px;
+@media (max-width: 1199px) and (min-width: 901px) {
+  .homepagePanel {
+    margin-top: -227px;
+    margin-bottom: 130px;
   }
-  .homepagePanel .searchRow {
-    grid-template-columns: minmax(160px, 1.4fr) repeat(2, minmax(110px, 1fr)) minmax(65px, 0.5fr) minmax(65px, 0.5fr) auto;
-    padding: 6px 8px 6px 14px;
+}
+
+@media (min-width: 1200px) {
+  .homepagePanel {
+    margin-bottom: 137px;
   }
-  .homepagePanel .field {
-    padding: 8px 10px;
-    gap: 8px;
-  }
-  .homepagePanel .submit {
-    height: 48px;
-    padding: 0 20px;
-    font-size: 13px;
+}
+
+@media (max-width: 900px) and (min-width: 641px) {
+  .homepagePanel {
+    margin-top: -58px;
   }
 }
 
 @media (max-width: 640px) {
   .homepagePanel {
-    margin-top: -20px;
+    margin-top: -30px;
   }
-  .homepagePanel .heading {
-    padding-inline: 4px;
-    padding-bottom: 8px;
-  }
-  .homepagePanel .searchRow {
-    grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 380px) {
+  .panel .field {
     gap: 6px;
-    padding: 12px;
-    border-radius: 24px;
-    box-shadow: 0 14px 34px -6px rgba(0, 76, 68, 0.16);
+    padding-inline: 6px;
   }
-  .homepagePanel .field {
-    border-right: none;
-    padding: 8px 12px;
-    background: #f8faf9;
-    border-radius: 14px;
+  .field > svg {
+    width: 16px;
+    height: 16px;
+    padding: 4px;
   }
-  .homepagePanel .placeField {
-    grid-column: 1 / -1;
-  }
-  .homepagePanel .submit {
-    grid-column: 1 / -1;
-    width: 100%;
-    height: 48px;
-    border-radius: 16px;
+  .panel .dateField > button {
+    font-size: 12px;
   }
 }

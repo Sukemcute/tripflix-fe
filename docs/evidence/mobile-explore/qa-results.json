@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "baseline": false,
+  "apiFixtures": true,
+  "rankingOrLivePricesTested": false,
+  "nativeTested": false,
+  "checks": [
+    "Layout 375px: first viewport, long names, price, missing image, no horizontal overflow",
+    "Category selection; destination/hotel/flight/search/notification navigation and Back",
+    "Empty and HTTP error states; retry restores the same recommendation source",
+    "Loading skeleton uses stable hotel-row layout",
+    "Empty hotel arrays and failed image requests have explicit fallback states",
+    "Layout 390px: first viewport, long names, price, missing image, no horizontal overflow",
+    "Layout 430px: first viewport, long names, price, missing image, no horizontal overflow",
+    "Layout 320px: first viewport, long names, price, missing image, no horizontal overflow"
+  ],
+  "pageErrors": []
+}

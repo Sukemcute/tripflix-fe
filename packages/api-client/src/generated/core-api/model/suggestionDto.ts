@@ -13,6 +13,11 @@ export interface SuggestionDto {
   type: SuggestionDtoType;
   /** place: placeId để gọi /stays · hotel: mã khách sạn của commerce · airport: mã IATA */
   refId: string;
+  /**
+   * hotel: mã trên URL trang chi tiết (`/hotels/<slug>`) · place, airport: null. Có thể null tới lượt dựng lại chỉ mục gợi ý kế tiếp sau khi deploy; khi đó dùng `refId`
+   * @nullable
+   */
+  slug: string | null;
   /** Tên hiện ở dòng chính */
   name: string;
   /**

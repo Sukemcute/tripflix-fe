@@ -12,7 +12,11 @@
     "preview": {
       "distribution": "internal",
       "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://staging.tripflix.example/" }
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.tripflix.io.vn",
+        "EXPO_PUBLIC_AI_URL": "https://api.tripflix.io.vn/ai",
+        "EXPO_PUBLIC_WEB_URL": "https://tripflix.io.vn"
+      }
     },
     "production": {
       "autoIncrement": true

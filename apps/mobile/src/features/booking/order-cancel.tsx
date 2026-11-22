@@ -1,15 +1,63 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { commerceApi, createCancelPaidOperation } from '@tripflix/api-client';
+import { commerceApi, createCancelHoldOperation, createCancelPaidOperation } from '@tripflix/api-client';
 import type { CheckoutDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
 import { colors, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { View } from 'react-native';
-import { Button, Card, formatDate, Icon, money, Notice, PriceRow, Screen, Txt, ui } from '@/components/mobile-ui';
+import {
+  Button,
+  Card,
+  formatDate,
+  Icon,
+  money,
+  Notice,
+  PriceRow,
+  Screen,
+  Txt,
+  ui,
+} from '@/components/mobile-ui';
 import { CommerceError } from './commerce-state';
+import { LoadingDots } from '@/components/loading-dots';
 
 const text = vi.commerce;
+
+/** Huỷ giỏ đang giữ chỗ trước khi hết 30 phút: hỏi lại rồi trả chỗ về kho ngay, chưa trừ tiền nên không có phí. */
+export function CancelHold({ orderId }: { orderId: string }) {
+  const client = useQueryClient();
+  const [isOpen, setIsOpen] = useState(false);
+  const [cancelHold] = useState(createCancelHoldOperation);
+  const cancel = useMutation({
+    retry: false,
+    mutationFn: () => cancelHold(orderId),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['commerce', 'order'] });
+      void client.invalidateQueries({ queryKey: ['commerce', 'trips'] });
+    },
+  });
+  if (!isOpen)
+    return (
+      <Button tone="text" onPress={() => setIsOpen(true)}>
+        {text.cancelHold}
+      </Button>
+    );
+  return (
+    <Card>
+      <Txt variant="heading">{text.cancelHoldTitle}</Txt>
+      <Txt variant="small" style={ui.muted}>
+        {text.cancelHoldNote}
+      </Txt>
+      <CommerceError error={cancel.error} />
+      <Button onPress={() => cancel.mutate()} disabled={cancel.isPending}>
+        {cancel.isPending ? vi.api.loading : text.cancelHoldConfirm}
+      </Button>
+      <Button tone="secondary" onPress={() => setIsOpen(false)} disabled={cancel.isPending}>
+        {text.cancelHoldKeep}
+      </Button>
+    </Card>
+  );
+}
 
 /** Huỷ đơn đã thanh toán: xem trước phí và số tiền hoàn, xác nhận rồi mới huỷ (giống web). */
 export function CancelOrder({ orderId }: { orderId: string }) {
@@ -44,7 +92,7 @@ export function CancelOrder({ orderId }: { orderId: string }) {
   return (
     <Card>
       <Txt variant="heading">{text.cancelTitle}</Txt>
-      {quote.isPending && <Txt>{vi.api.loading}</Txt>}
+      {quote.isPending && <LoadingDots />}
       <CommerceError error={quote.error} retry={() => void quote.refetch()} />
       {details && !details.isCancellable && <Notice tone="warning">{text.cancelBlocked}</Notice>}
       {details?.isCancellable && (
@@ -78,7 +126,9 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
     <Screen title={text.cancelledTitle} back={false}>
       <View style={{ alignItems: 'center', gap: spacing.sm, paddingTop: spacing.md }}>
         {/* Vòng xám nhiều lớp như web để khác hẳn dấu tích xanh của đơn đã thanh toán. */}
-        <View style={{ padding: spacing.sm, borderRadius: radius.pill, backgroundColor: colors.surfaceMuted }}>
+        <View
+          style={{ padding: spacing.sm, borderRadius: radius.pill, backgroundColor: colors.surfaceMuted }}
+        >
           <View style={{ padding: spacing.sm, borderRadius: radius.pill, backgroundColor: colors.border }}>
             <View
               style={{
@@ -150,7 +200,11 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
                       paddingTop: spacing.sm,
                       borderTopWidth: 4,
                       borderTopColor:
-                        state === 'done' ? colors.teal : state === 'current' ? colors.coralInk : colors.border,
+                        state === 'done'
+                          ? colors.teal
+                          : state === 'current'
+                            ? colors.coralInk
+                            : colors.border,
                     }}
                   >
                     <Txt
@@ -215,7 +269,7 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
           <PriceRow label={text.total} amount={money(order.total)} />
         </View>
       </Card>
-      <Button icon="arrow-forward" onPress={() => router.replace('/(tabs)/trips')}>
+      <Button icon="arrow-forward" onPress={() => router.replace('/my-trips')}>
         {text.viewTrips}
       </Button>
       <Button tone="secondary" onPress={() => router.replace('/search')}>

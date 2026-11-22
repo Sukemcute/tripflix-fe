@@ -1,7 +1,7 @@
 import type { ExpoConfig } from 'expo/config';
 
 // Màu ở đây phải là chuỗi cố định (Expo đọc lúc build), giữ khớp với @tripflix/tokens.
-const CORAL = '#FF5A3C';
+const BLACK = '#000000';
 const WHITE = '#FFFFFF';
 
 const config: ExpoConfig = {
@@ -32,16 +32,21 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-secure-store',
+    'expo-font',
+    'expo-status-bar',
+    'expo-video',
     ['expo-image-picker', { photosPermission: false, cameraPermission: false, microphonePermission: false }],
     [
       'expo-splash-screen',
       {
-        backgroundColor: CORAL,
-        image: './assets/images/splash-icon.png',
-        imageWidth: 76,
+        backgroundColor: BLACK,
+        image: './assets/brand/tripflix-launch-mark.png',
+        imageWidth: 96,
       },
     ],
   ],
+  // Project EAS để build APK trên cloud; mỗi người dùng project của tài khoản Expo mình (TF05H).
+  ...(process.env.EAS_PROJECT_ID && { extra: { eas: { projectId: process.env.EAS_PROJECT_ID } } }),
   experiments: {
     typedRoutes: true,
     reactCompiler: true,

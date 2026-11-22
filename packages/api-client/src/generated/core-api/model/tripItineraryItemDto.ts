@@ -4,6 +4,9 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { TripItemHotelDto } from './tripItemHotelDto';
+import type { TripItineraryItemDtoCategory } from './tripItineraryItemDtoCategory';
+import type { TripTransportDto } from './tripTransportDto';
 
 export interface TripItineraryItemDto {
   /** Số ngày trong lộ trình */
@@ -14,4 +17,15 @@ export interface TripItineraryItemDto {
   location?: string;
   /** Ghi chú */
   notes?: string;
+  /**
+   * Giờ trong ngày (HH:mm)
+   * @pattern ^([01]\d|2[0-3]):[0-5]\d$
+   */
+  time?: string;
+  /** Loại điểm gợi ý để app chọn icon: cà phê, ăn uống, vui chơi, khác */
+  category?: TripItineraryItemDtoCategory;
+  /** Khách sạn của điểm này (một chuyến có thể nhiều khách sạn) */
+  hotel?: TripItemHotelDto;
+  /** Phương tiện được chọn khi soạn lộ trình */
+  transport?: TripTransportDto;
 }

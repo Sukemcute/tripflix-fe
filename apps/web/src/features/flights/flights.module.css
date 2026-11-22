@@ -1059,7 +1059,9 @@
 }
 
 .stripLine {
+  /* Trên nền ô ngày (đang chọn, rê chuột) nhưng dưới chấm giá, để nền ô không che mất đường. */
   position: absolute;
+  z-index: 1;
   right: 0;
   bottom: 6px;
   left: 0;
@@ -1079,7 +1081,6 @@
 
 .stripDays li {
   position: relative;
-  z-index: 1;
 }
 
 .stripDays a {
@@ -1113,6 +1114,7 @@
 
 .stripDot {
   position: absolute;
+  z-index: 2;
   left: 50%;
   width: 7px;
   height: 7px;
@@ -2179,43 +2181,8 @@
 /* ---------- Khứ hồi ---------- */
 
 .tripTabs {
-  display: inline-flex;
-  gap: 4px;
   margin: 0;
-  padding: 4px;
   border: 0;
-  border-radius: 999px;
-  background: var(--color-sea-mist);
-}
-
-.tripTabs button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 14px;
-  border-radius: 999px;
-  color: var(--color-teal-ink);
-  font-size: 13px;
-  font-weight: 700;
-  transition:
-    background 256ms,
-    color 256ms,
-    box-shadow 256ms;
-}
-
-.tripTabs button:hover:not([aria-pressed='true']) {
-  background: rgb(255 255 255 / 60%);
-}
-
-.tripTabs button[aria-pressed='true'] {
-  background: white;
-  color: var(--color-ink);
-  box-shadow: 0 6px 14px -8px rgb(0 76 68 / 45%);
-}
-
-.tripTabs button:focus-visible {
-  outline: 2px solid var(--color-teal-ink);
-  outline-offset: 2px;
 }
 
 .searchRow[data-round] {
@@ -2527,9 +2494,13 @@
 
   .banner {
     grid-template-columns: minmax(0, 1fr);
-    align-content: start;
-    min-height: 0;
+    grid-template-rows: 1fr auto;
+    min-height: 440px;
     padding: 32px 20px 0;
+  }
+
+  .bannerCopy {
+    align-self: start;
   }
 
   .banner::before {
@@ -2556,7 +2527,7 @@
 
   .feature {
     position: relative;
-    margin: 96px -20px 0;
+    margin: 88px -20px 0;
     padding: 12px;
     border-top-right-radius: var(--cutout);
   }
@@ -2576,6 +2547,7 @@
 
   .featureCard {
     width: auto;
+    min-height: 112px;
   }
 
   .row {

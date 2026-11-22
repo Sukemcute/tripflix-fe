@@ -1,6 +1,6 @@
 import { QueryClient, type InfiniteData } from '@tanstack/react-query';
 import { expect, it } from 'vitest';
-import { findCachedFeedCard, updateReelSocialCache } from './reel-social-cache';
+import { findCachedFeedCard, removeReelFromSavedFeedCache, updateReelSocialCache } from './reel-social-cache';
 import type { FeedCardDto } from './generated/core-api/model/feedCardDto';
 import type { FeedPageDto } from './generated/core-api/model/feedPageDto';
 import type { SocialPostDetailDto } from './generated/core-api/model/socialPostDetailDto';
@@ -22,6 +22,7 @@ const card = (postId: string): FeedCardDto => ({
   region: null,
   tags: [],
   linkedProductIds: [],
+  isVerified: false,
   reason: null,
   counts: { likes: 5, saves: 3, comments: 2, shares: 1 },
   viewerState: { liked: false, saved: false },
@@ -66,6 +67,40 @@ it('keeps the same post in sync across feed tabs, including rollback', () => {
   rollback();
   expect(readHot().pages[0]!.items[0]!.counts.likes).toBe(5);
   expect(readHot().pages[0]!.items[0]!.viewerState?.liked).toBe(false);
+});
+
+it('keeps Reels opened from search results (useReelsByIds) in sync, including rollback', () => {
+  const { client, feed } = setup();
+  const byIdsKey = ['feed', 'byIds', 'one,two', 'viewer'];
+  const otherViewerKey = ['feed', 'byIds', 'one,two', 'someone-else'];
+  client.setQueryData(byIdsKey, feed);
+  client.setQueryData(otherViewerKey, feed);
+  const readByIds = () => client.getQueryData<InfiniteData<FeedPageDto>>(byIdsKey)!;
+
+  const rollback = updateReelSocialCache(client, 'viewer', 'one', 'like', true);
+  expect(readByIds().pages[0]!.items[0]!.viewerState?.liked).toBe(true);
+  expect(readByIds().pages[0]!.items[0]!.counts.likes).toBe(6);
+  expect(client.getQueryData<InfiniteData<FeedPageDto>>(otherViewerKey)!.pages[0]!.items[0]!.counts.likes).toBe(5);
+
+  rollback();
+  expect(readByIds().pages[0]!.items[0]!.viewerState?.liked).toBe(false);
+  expect(readByIds().pages[0]!.items[0]!.counts.likes).toBe(5);
+});
+
+it('keeps the saved Reels list in sync with the other tabs, including rollback', () => {
+  const { client, feed, read } = setup();
+  const savedKey = ['feed', 'saved', 'viewer'];
+  client.setQueryData(savedKey, feed);
+  const readSaved = () => client.getQueryData<InfiniteData<FeedPageDto>>(savedKey)!;
+
+  const rollback = updateReelSocialCache(client, 'viewer', 'one', 'save', true);
+  expect(read().pages[0]!.items[0]!.counts.saves).toBe(4);
+  expect(readSaved().pages[0]!.items[0]!.counts.saves).toBe(4);
+  expect(readSaved().pages[0]!.items[0]!.viewerState?.saved).toBe(true);
+
+  rollback();
+  expect(readSaved().pages[0]!.items[0]!.counts.saves).toBe(3);
+  expect(readSaved().pages[0]!.items[0]!.viewerState?.saved).toBe(false);
 });
 
 it('rolls back just the failed action without discarding successful saves, comments or another reel', () => {
@@ -150,4 +185,39 @@ it('finds a post in any cached feed tab and returns nothing for an unknown post'
   });
   expect(findCachedFeedCard(client, 'hot-post')?.postId).toBe('hot-post');
   expect(findCachedFeedCard(client, 'missing')).toBeUndefined();
+});
+
+it('removes an unsaved reel from the saved list only, keeping cursors and other tabs', () => {
+  const { client, feed, read } = setup();
+  const savedKey = ['feed', 'saved', 'viewer'];
+  client.setQueryData(savedKey, feed);
+
+  removeReelFromSavedFeedCache(client, 'viewer', 'one');
+
+  const saved = client.getQueryData<InfiniteData<FeedPageDto>>(savedKey)!;
+  expect(saved.pages.flatMap((page) => page.items.map((item) => item.postId))).toEqual(['two']);
+  expect(saved.pages[0]!.nextCursor).toBe('cursor');
+  expect(read().pages[0]!.items[0]!.postId).toBe('one');
+  expect(client.getQueryData(['feed', 'saved', 'other-viewer'])).toBeUndefined();
+});
+
+it('updates Reels recommended by discovery (every mode) like the regular feed', () => {
+  const { client } = setup();
+  const recommended = (postId: string): InfiniteData<FeedPageDto> => ({ pages: [{ items: [card(postId)], nextCursor: null }], pageParams: [undefined] });
+  const trendingKey = ['feed', 'recommended', 'trending', 'viewer'];
+  const hasPlanKey = ['feed', 'recommended', 'has_plan', 'viewer'];
+  const otherViewerKey = ['feed', 'recommended', 'trending', 'someone-else'];
+  client.setQueryData(trendingKey, recommended('one'));
+  client.setQueryData(hasPlanKey, recommended('one'));
+  client.setQueryData(otherViewerKey, recommended('one'));
+
+  updateReelSocialCache(client, 'viewer', 'one', 'like', true);
+
+  for (const key of [trendingKey, hasPlanKey]) {
+    const item = client.getQueryData<InfiniteData<FeedPageDto>>(key)!.pages[0]!.items[0]!;
+    expect(item.viewerState).toMatchObject({ liked: true });
+    expect(item.counts.likes).toBe(6);
+  }
+  // Danh sách của người xem khác không bị đổi.
+  expect(client.getQueryData<InfiniteData<FeedPageDto>>(otherViewerKey)!.pages[0]!.items[0]!.viewerState).toMatchObject({ liked: false });
 });

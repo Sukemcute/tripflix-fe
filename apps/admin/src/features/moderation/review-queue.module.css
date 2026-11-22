@@ -1,0 +1,91 @@
+.lease {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.lease p {
+  margin: 0;
+}
+.status {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.assigned {
+  color: var(--color-teal-ink);
+  font-weight: 700;
+}
+.overdue {
+  color: var(--color-coral-ink);
+  font-weight: 700;
+}
+.muted {
+  color: var(--color-text-muted);
+}
+.actions,
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.actions button,
+.summary button,
+.filters select {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.actions button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.filters {
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+.filters label {
+  display: grid;
+  gap: 6px;
+}
+.summary {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+.summary h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+.summary p {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+.summary strong {
+  font-variant-numeric: tabular-nums;
+  margin-left: 8px;
+}
+.summary button {
+  font-size: 13px;
+}
+.alert {
+  color: var(--color-coral-ink);
+  font-weight: 700;
+}

@@ -137,6 +137,23 @@
   background: var(--color-overlay);
   backdrop-filter: blur(2px);
 }
+.photoDialog[data-expanded='true'] {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.photoDialog[data-expanded='true'] .photoViewer {
+  height: 100dvh;
+}
+.photoDialog[data-expanded='true'] .photoStage img {
+  height: 100%;
+  max-height: none;
+}
 :global(html):has(.photoDialog[open]) {
   overflow: hidden;
 }
@@ -152,6 +169,15 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
+}
+.photoHeader > div:first-child {
+  min-width: 0;
+}
+.photoHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 .photoHeader strong {
   display: block;
@@ -175,7 +201,7 @@
   border-radius: 12px;
   background: var(--color-surface);
 }
-.photoStage > img {
+.photoStage img {
   display: block;
   width: 100%;
   height: 100%;
@@ -221,7 +247,6 @@
   max-width: 28rem;
   overflow-x: auto;
   padding: 4px;
-  scrollbar-width: thin;
 }
 .photoThumbnails button {
   position: relative;
@@ -446,6 +471,11 @@
   padding: 16px;
   color: var(--color-text-muted);
   font-size: 13px;
+}
+/* Tải lại giá phòng: làm mờ thay vì chèn dòng "đang tải" đẩy danh sách xuống. */
+.rooms[aria-busy="true"] {
+  opacity: 0.6;
+  transition: opacity 0.2s;
 }
 .room {
   display: grid;
@@ -1056,7 +1086,7 @@
   .photoViewer {
     height: auto;
   }
-  .photoStage > img {
+  .photoStage img {
     height: auto;
     max-height: calc(100dvh - 11rem);
   }
@@ -1176,19 +1206,21 @@
   cursor: pointer;
 }
 .guestPopover {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 30;
-  display: grid;
+  position: fixed;
+  inset: auto;
   gap: 14px;
   width: min(320px, 86vw);
-  margin-top: 8px;
+  margin: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 18px;
   border: 1px solid var(--color-border);
   border-radius: 12px;
   background: var(--color-background);
   box-shadow: 0 18px 36px -22px var(--color-ink);
+}
+.guestPopover:popover-open {
+  display: grid;
 }
 .guestRow {
   display: flex;

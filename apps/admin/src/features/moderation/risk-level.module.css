@@ -1,0 +1,66 @@
+.tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.tag {
+  display: inline-flex;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  white-space: nowrap;
+}
+.context {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 0;
+}
+.report {
+  background: var(--color-teal-soft);
+  color: var(--color-teal-ink);
+}
+.ai {
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+.rule {
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+.neutral {
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+.pending {
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
+}
+.critical {
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+}
+.high {
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
+}
+.medium {
+  background: var(--color-sun-soft);
+  color: var(--color-ink);
+}
+.low {
+  background: var(--color-teal-soft);
+  color: var(--color-teal-ink);
+}
+.evidence {
+  background: var(--color-surface-muted);
+  color: var(--color-teal-ink);
+}
+.note {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}

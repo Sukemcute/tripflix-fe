@@ -1,9 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
-import { exploreControllerSearch, exploreControllerSearchPosts } from './generated/core-api/discovery/discovery';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import {
+  exploreControllerSearch,
+  exploreControllerSearchPosts,
+  postRecommendationsControllerRecommendPosts,
+} from './generated/core-api/discovery/discovery';
+import { userSearchControllerSearch } from './generated/core-api/users/users';
 import type {
   ExploreResponseDto,
+  PostRecommendationsControllerRecommendPostsMode,
+  PostRecommendationsDto,
   SearchPostsRequestDto,
   SearchPostsResponseDto,
+  SocialPostDto,
+  UserSearchResponseDto,
 } from './generated/core-api/model';
 import { readEntity } from './response';
 import { useApiSession } from './session';
@@ -35,8 +44,18 @@ export async function getPostSearchResults(
   return readEntity(response.data, ['understood', 'items', 'total', 'nextCursor']) as SearchPostsResponseDto;
 }
 
+type PostDetail = Awaited<ReturnType<typeof socialApi.getPost>>;
+
+/** Chi tiết trả viewerContext ở ngoài bài: gắn vào để trạng thái thích/lưu đúng như ở luồng /v1/posts. */
+function withViewerContext(detail: PostDetail): SocialPostDto {
+  return { ...detail.post, viewerContext: detail.viewerContext ?? detail.post.viewerContext ?? null };
+}
+
 /** Số bài mỗi trang khi tìm theo từ khoá: mỗi bài cần thêm một lần lấy chi tiết nên giữ nhỏ. */
 export const KEYWORD_SEARCH_PAGE_SIZE = 10;
+
+/** Feed gợi ý: màn hình chỉ hiện 1–2 bài, lấy 7 bài một lần rồi tải tiếp khi lướt tới bài 5–6. */
+export const RECOMMEND_PAGE_SIZE = 7;
 
 /**
  * Tìm bài công khai bằng engine của discovery (hiểu câu, bỏ dấu, sửa gõ, ghép/tách chữ), rồi lấy chi tiết từng bài
@@ -48,7 +67,7 @@ export async function searchPublicPosts(keyword: string, cursor?: string, signal
   const details = await Promise.all(
     found.items.map((item) =>
       socialApi.getPost(item.refId, signal).then(
-        (detail) => detail.post,
+        withViewerContext,
         () => null,
       ),
     ),
@@ -56,23 +75,51 @@ export async function searchPublicPosts(keyword: string, cursor?: string, signal
   return { items: details.filter((post) => post !== null), nextCursor: found.nextCursor };
 }
 
+/**
+ * Bài gợi ý theo gu (GET /api/recommendations/posts; khách nhận "đang thịnh hành"), rồi lấy chi tiết từng bài
+ * như searchPublicPosts để trả cùng dạng trang với socialApi.listPosts.
+ */
+export async function recommendPublicPosts(
+  cursor?: string,
+  signal?: AbortSignal,
+  postType?: 'vlog',
+  mode: PostRecommendationsControllerRecommendPostsMode = 'for_you',
+) {
+  const response = await postRecommendationsControllerRecommendPosts(
+    { mode, limit: RECOMMEND_PAGE_SIZE, ...(cursor ? { cursor } : {}), ...(postType ? { postType } : {}) },
+    { signal },
+  );
+  const page = readEntity(response.data, ['items', 'algo', 'nextCursor']) as PostRecommendationsDto;
+  const details = await Promise.all(
+    page.items.map((item) =>
+      socialApi.getPost(item.post.id, signal).then(
+        withViewerContext,
+        () => null,
+      ),
+    ),
+  );
+  return { items: details.filter((post) => post !== null), nextCursor: page.nextCursor };
+}
+
 /** Hook tìm bài trên app: dùng useQuery cache theo params */
 export function usePostSearch(params: {
   q: string;
   postType?: SearchPostsRequestDto['postType'];
+  sort?: SearchPostsRequestDto['sort'];
   cursor?: string | null;
   limit?: number;
 }) {
   const { isReady } = useApiSession();
   const query = params.q.trim();
   return useQuery({
-    queryKey: ['discovery', 'posts', query, params.postType ?? 'all', params.cursor ?? null, params.limit ?? 20],
+    queryKey: ['discovery', 'posts', query, params.postType ?? 'all', params.sort ?? 'relevance', params.cursor ?? null, params.limit ?? 20],
     enabled: isReady && query.length > 0,
     queryFn: ({ signal }) =>
       getPostSearchResults(
         {
           q: query,
           postType: params.postType,
+          sort: params.sort,
           cursor: params.cursor,
           limit: params.limit,
         },
@@ -81,3 +128,47 @@ export function usePostSearch(params: {
   });
 }
 
+/** Tìm người dùng công khai theo tên hiển thị, gõ không dấu vẫn ra (GET /api/v1/users/search). */
+export async function searchUsers(q: string, page = 1, signal?: AbortSignal): Promise<UserSearchResponseDto> {
+  const response = await userSearchControllerSearch({ q, page }, { signal });
+  return readEntity(response.data, ['items', 'page', 'hasMore']) as UserSearchResponseDto;
+}
+
+export const USER_SEARCH_STALE_TIME_MS = 60_000;
+
+/** Chuẩn hoá, hạ thường theo tiếng Việt và kiểm tra từ khoá tìm người dùng (2–50 ký tự hiển thị sau NFKC, không ký tự điều khiển). */
+export function normalizeUserSearchQuery(q: string): { query: string; isSearchable: boolean } {
+  const query = q.normalize('NFKC').replace(/\s+/gu, ' ').trim().toLocaleLowerCase('vi');
+  const folded = query.normalize('NFD').replace(/[\p{M}\s]/gu, '');
+  const isSearchable = query.length <= 50 && folded.length >= 2 && !/\p{C}/u.test(query);
+  return { query, isSearchable };
+}
+
+export function useUserSearch(q: string) {
+  const { isReady } = useApiSession();
+  const { query, isSearchable } = normalizeUserSearchQuery(q);
+  const result = useQuery({
+    queryKey: ['discovery', 'users', query],
+    enabled: isReady && isSearchable,
+    staleTime: USER_SEARCH_STALE_TIME_MS,
+    placeholderData: keepPreviousData,
+    retry: false,
+    queryFn: ({ signal }) => searchUsers(query, 1, signal),
+  });
+  return { ...result, isSearchable };
+}
+
+/** Tìm người dùng công khai có phân trang cho tab Người dùng. */
+export function useInfiniteUserSearch(q: string) {
+  const { isReady } = useApiSession();
+  const { query, isSearchable } = normalizeUserSearchQuery(q);
+  const result = useInfiniteQuery({
+    queryKey: ['discovery', 'users', 'infinite', query],
+    enabled: isReady && isSearchable,
+    initialPageParam: 1,
+    retry: false,
+    queryFn: ({ pageParam, signal }) => searchUsers(query, pageParam, signal),
+    getNextPageParam: (page) => (page.hasMore ? page.page + 1 : undefined),
+  });
+  return { ...result, isSearchable };
+}

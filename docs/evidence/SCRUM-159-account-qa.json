@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "checks": [
+    "Signup → authenticated survey despite completed device record → save → create; profile/settings reopens taste editor",
+    "Previously skipped device still shows signup survey; skipping resumes saved task",
+    "Skipped account is asked again on its next login",
+    "Incomplete existing account is prompted; failed PATCH retains draft; retry preserves web fields and stops future prompts",
+    "Switching accounts isolates drafts; completed first account is not blocked by second-account cache",
+    "Existing password login keeps normal return path and does not restart onboarding",
+    "Rejected registration stays on form and does not erase existing device preferences",
+    "Account save and return succeed even when the device cache is unavailable",
+    "Restored account without survey is prompted once and skip does not create a navigation loop"
+  ],
+  "pageErrors": [],
+  "authApiFixtures": true,
+  "realEmailOrNativeTested": false
+}

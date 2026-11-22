@@ -1,17 +1,28 @@
-import { getReelResolutionCap, getReelPlayerIndexes } from '@tripflix/app-core';
+import { getReelPlaybackSources, getReelPlayerIndexes, getReelResolutionCap } from '@tripflix/app-core';
 import { useVideoPlayer, type VideoPlayer } from 'expo-video';
 import { Platform } from 'react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReelItem } from './reel-types';
 
+const RENDITION_TIMEOUT_MS = 8_000;
+const CURRENT_BUFFER_SECONDS = 30;
+const AHEAD_BUFFER_SECONDS = 10;
+const BEHIND_BUFFER_SECONDS = 4;
+
 /** Native SharedObjects have mutable setters, outside React's immutable render data. */
 function applyPlayerLimits(
   player: VideoPlayer,
-  { isCurrent, maxResolution }: { isCurrent: boolean; maxResolution: VideoPlayer['maxResolution'] },
+  {
+    forwardBufferDuration,
+    maxResolution,
+  }: {
+    forwardBufferDuration: number;
+    maxResolution: VideoPlayer['maxResolution'];
+  },
 ) {
   player.maxResolution = maxResolution;
   player.bufferOptions = {
-    preferredForwardBufferDuration: isCurrent ? 30 : 4,
+    preferredForwardBufferDuration: forwardBufferDuration,
     minBufferForPlayback: 1,
     prioritizeTimeOverSizeThreshold: true,
   };
@@ -35,30 +46,60 @@ function silencePlayer(player: VideoPlayer) {
 function usePlayerSlot({
   item,
   isCurrent,
+  forwardBufferDuration,
   shouldPlay,
   isMuted,
   isDataLimited,
   retry,
+  playbackCookieHeader,
+  isPlaybackSessionSettled,
 }: {
   item?: ReelItem;
   isCurrent: boolean;
+  forwardBufferDuration: number;
   shouldPlay: boolean;
   isMuted: boolean;
   isDataLimited: boolean;
   retry: number;
+  playbackCookieHeader: string | null;
+  isPlaybackSessionSettled: boolean;
 }) {
   const player = useVideoPlayer(null, (instance) => {
     instance.loop = true;
     instance.muted = true;
     instance.staysActiveInBackground = false;
   });
-  const sourceKey = item ? `${item.id}\n${item.playback.hlsUrl}\n${retry}` : null;
-  const uri = item?.playback.hlsUrl ?? null;
-  const request = useMemo(() => ({ sourceKey, uri }), [sourceKey, uri]);
+  const sources = item ? getReelPlaybackSources(item.playback, isDataLimited ? 540 : Infinity) : [];
+  const sourceKey = item ? JSON.stringify([item.id, retry, sources]) : null;
+  // Keep the fallback only for this assignment, even if this slot later returns to the same Reel.
+  const assignment = useMemo(() => ({ sourceKey }), [sourceKey]);
+  const [fallback, setFallback] = useState<{ assignment: typeof assignment; index: number } | null>(null);
+  const sourceIndex = fallback?.assignment === assignment ? fallback.index : 0;
+  // Chờ có cookie xem video (TF82) rồi mới gắn nguồn: gắn trước thì CloudFront trả 403 khi đã bật khoá.
+  const uri = isPlaybackSessionSettled ? (sources[sourceIndex] ?? null) : null;
+  const request = useMemo(() => ({ assignment, uri }), [assignment, uri]);
   const queue = useRef(Promise.resolve());
+  // Đọc cookie lúc gắn nguồn, không đưa vào request: cookie mới (vài giờ một lần) không bắt video đang xem tải lại.
+  const cookieHeader = useRef(playbackCookieHeader);
+  useEffect(() => {
+    cookieHeader.current = playbackCookieHeader;
+  }, [playbackCookieHeader]);
   const appliedLimitsKey = useRef<string | null>(null);
+  const readyRequest = useRef<typeof request | null>(null);
   const [loadedRequest, setLoadedRequest] = useState<typeof request | null>(null);
   const [failedRequest, setFailedRequest] = useState<typeof request | null>(null);
+  const canFallback = sources[sourceIndex + 1] !== undefined;
+  const onSourceFailure = useCallback(() => {
+    if (canFallback) {
+      setFallback((current) =>
+        current?.assignment === assignment && current.index > sourceIndex
+          ? current
+          : { assignment, index: sourceIndex + 1 },
+      );
+    } else {
+      setFailedRequest(request);
+    }
+  }, [assignment, canFallback, sourceIndex, request]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -70,30 +111,36 @@ function usePlayerSlot({
         await player.replaceAsync(
           request.uri
             ? // expo-video cannot cache HLS on iOS, so caching is only requested on Android.
-              { uri: request.uri, contentType: 'hls', useCaching: Platform.OS === 'android' }
+              {
+                uri: request.uri,
+                contentType: 'hls',
+                useCaching: Platform.OS === 'android',
+                ...(cookieHeader.current ? { headers: { Cookie: cookieHeader.current } } : {}),
+              }
             : null,
         );
         if (!controller.signal.aborted) setLoadedRequest(request);
       })
       .catch(() => {
-        if (!controller.signal.aborted) setFailedRequest(request);
+        if (!controller.signal.aborted) onSourceFailure();
       });
     return () => {
       controller.abort();
       silencePlayer(player);
     };
-  }, [player, request]);
+  }, [player, request, onSourceFailure]);
 
-  const isLoaded = sourceKey !== null && loadedRequest === request;
+  const hasError = request.uri !== null && failedRequest === request;
+  const isLoaded = request.uri !== null && loadedRequest === request && !hasError;
   const aspect = item?.playback.aspect ?? '9:16';
   const synchronize = useCallback(
     (status: VideoPlayer['status'] = player.status) => {
       // These setters reach the native player, so they only run when a limit really changes.
-      const limitsKey = `${sourceKey}|${isCurrent}|${isDataLimited}`;
+      const limitsKey = `${sourceKey}|${forwardBufferDuration}|${isDataLimited}`;
       if (appliedLimitsKey.current !== limitsKey) {
         appliedLimitsKey.current = limitsKey;
         applyPlayerLimits(player, {
-          isCurrent,
+          forwardBufferDuration,
           maxResolution: isDataLimited ? getReelResolutionCap(aspect) : null,
         });
       }
@@ -102,13 +149,12 @@ function usePlayerSlot({
         isMuted,
       });
     },
-    [player, sourceKey, isCurrent, shouldPlay, isMuted, isLoaded, isDataLimited, aspect],
+    [player, sourceKey, forwardBufferDuration, shouldPlay, isMuted, isLoaded, isDataLimited, aspect],
   );
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     synchronize();
-    // A preloaded web player can become ready only after its VideoView mounts.
     const subscription = player.addListener('statusChange', ({ status }) => {
-      // The web player emits this event before updating its status getter.
       if (status === 'readyToPlay') synchronize(status);
     });
     return () => {
@@ -117,11 +163,37 @@ function usePlayerSlot({
     };
   }, [player, synchronize]);
 
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (player.status === 'error') {
+      onSourceFailure();
+      return;
+    }
+    if (player.status === 'readyToPlay') readyRequest.current = request;
+    // Only give up on a slow rendition while trying to start the visible Reel.
+    // Offscreen players have time to warm up, and playback keeps its chosen level once ready.
+    const timeout =
+      isCurrent && canFallback && readyRequest.current !== request
+        ? setTimeout(onSourceFailure, RENDITION_TIMEOUT_MS)
+        : undefined;
+    const subscription = player.addListener('statusChange', ({ status }) => {
+      if (status === 'readyToPlay') readyRequest.current = request;
+      if (status === 'readyToPlay' || status === 'error') clearTimeout(timeout);
+      if (status === 'error') onSourceFailure();
+    });
+    return () => {
+      clearTimeout(timeout);
+      subscription.remove();
+    };
+  }, [player, request, isLoaded, isCurrent, canFallback, onSourceFailure]);
+
   return {
     player,
     isLoaded,
-    hasError: sourceKey !== null && failedRequest === request,
-    onAttach: synchronize,
+    hasError,
+    shouldPlay,
+    isMuted,
+    onAttach: Platform.OS === 'web' ? undefined : synchronize,
   };
 }
 
@@ -134,6 +206,8 @@ export function usePlayerPool({
   isMuted,
   isDataLimited,
   retry,
+  playbackCookieHeader,
+  isPlaybackSessionSettled,
 }: {
   items: readonly ReelItem[];
   activeIndex: number;
@@ -143,6 +217,9 @@ export function usePlayerPool({
   isMuted: boolean;
   isDataLimited: boolean;
   retry: { id: string; attempt: number } | null;
+  /** Header Cookie của CloudFront (usePlaybackSession); null khi BE chưa bật ký cookie. */
+  playbackCookieHeader: string | null;
+  isPlaybackSessionSettled: boolean;
 }) {
   const indexes = getReelPlayerIndexes(items.length, activeIndex);
   const itemAt = (slot: number) => {
@@ -151,18 +228,36 @@ export function usePlayerPool({
   };
   const optionsAt = (slot: number) => {
     const item = itemAt(slot);
-    const isCurrent = indexes[slot] === focusedIndex;
+    const index = indexes[slot];
+    const isCurrent = index === focusedIndex;
+    // Video phía trước tải sẵn 10 giây đầu để lướt tới là chạy ngay, kể cả lướt liền 3 video;
+    // video phía sau giữ phần đã tải, không tải thêm.
+    const forwardBufferDuration = isCurrent
+      ? CURRENT_BUFFER_SECONDS
+      : index != null && index > focusedIndex
+        ? AHEAD_BUFFER_SECONDS
+        : BEHIND_BUFFER_SECONDS;
     return {
       item,
       isCurrent,
+      forwardBufferDuration,
       shouldPlay: isEnabled && !isPaused && isCurrent,
       isMuted,
       isDataLimited,
       retry: retry?.id === item?.id ? (retry?.attempt ?? 0) : 0,
+      playbackCookieHeader,
+      isPlaybackSessionSettled,
     };
   };
   const first = usePlayerSlot(optionsAt(0));
   const second = usePlayerSlot(optionsAt(1));
   const third = usePlayerSlot(optionsAt(2));
-  return [first, second, third].map((slot, index) => ({ ...slot, index: indexes[index] }));
+  const fourth = usePlayerSlot(optionsAt(3));
+  const fifth = usePlayerSlot(optionsAt(4));
+  // Số hook cố định bằng REEL_PLAYER_COUNT (6).
+  const sixth = usePlayerSlot(optionsAt(5));
+  return [first, second, third, fourth, fifth, sixth].map((slot, index) => ({
+    ...slot,
+    index: indexes[index],
+  }));
 }

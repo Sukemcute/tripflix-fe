@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { decideCacheAction, readSessionCacheState } from './session-cache';
 import { SessionClient, type SessionOptions, type SessionState } from './session-client';
 
 const SessionContext = createContext<SessionClient | null>(null);
@@ -21,11 +22,15 @@ export function ApiSessionProvider({ children, ...options }: SessionOptions & { 
     // StrictMode mounts effects twice; do not rotate the same refresh token twice.
     session.connectHttp();
     void session.initialize();
-    let previousUserId = session.getSnapshot().user?.id;
+    // Khôi phục phiên lúc mở app không đụng cache; khách đăng nhập thì tải lại ngầm; đăng xuất, mất phiên hay đổi
+    // tài khoản thì xoá sạch (decideCacheAction).
+    let previous = readSessionCacheState(session.getSnapshot());
     return session.subscribe(() => {
-      const userId = session.getSnapshot().user?.id;
-      if (previousUserId !== userId) queryClient.clear();
-      previousUserId = userId;
+      const next = readSessionCacheState(session.getSnapshot());
+      const action = decideCacheAction(previous, next);
+      previous = next;
+      if (action === 'clear') queryClient.clear();
+      else if (action === 'invalidate') void queryClient.invalidateQueries();
     });
   }, [session, queryClient]);
   return createElement(SessionContext.Provider, { value: session }, children);

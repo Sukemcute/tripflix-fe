@@ -22,12 +22,26 @@ import type {
 
 import type {
   AdminModerationControllerActionsParams,
+  AdminModerationControllerAppealsParams,
+  AdminModerationControllerCoverOcrParams,
+  AdminModerationControllerFailedScansParams,
   AdminModerationControllerQueueParams,
+  AppealDto,
+  AppealOutcomeDto,
+  AppealQueuePageDto,
+  CoverOcrPageDto,
   DecisionDto,
+  FailedScanPageDto,
+  ModerationCaseDto,
   ModerationDecisionResultDto,
   ModerationDetailDto,
   ModerationLogPageDto,
+  ModerationPartRetryDto,
+  ModerationPartsDto,
   ModerationQueuePageDto,
+  ModerationStatsDto,
+  ReviewLeaseDto,
+  ScanRetryDto,
 } from '../model';
 
 import { http } from '../../../http';
@@ -49,6 +63,1046 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
+export type adminModerationControllerCoverOcrResponse200 = {
+  data: CoverOcrPageDto;
+  status: 200;
+};
+
+export type adminModerationControllerCoverOcrResponseSuccess =
+  adminModerationControllerCoverOcrResponse200 & {
+    headers: Headers;
+  };
+export type adminModerationControllerCoverOcrResponse = adminModerationControllerCoverOcrResponseSuccess;
+
+export const getAdminModerationControllerCoverOcrUrl = (params?: AdminModerationControllerCoverOcrParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/moderation/cover-ocr?${stringifiedParams}`
+    : `/api/v1/admin/moderation/cover-ocr`;
+};
+
+/**
+ * @summary Theo dõi các lượt OCR ảnh bìa video và lọc theo trạng thái
+ */
+export const adminModerationControllerCoverOcr = async (
+  params?: AdminModerationControllerCoverOcrParams,
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationControllerCoverOcrResponse> => {
+  return http<adminModerationControllerCoverOcrResponse>(getAdminModerationControllerCoverOcrUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAdminModerationControllerCoverOcrQueryKey = (
+  params?: AdminModerationControllerCoverOcrParams,
+) => {
+  return [`/api/v1/admin/moderation/cover-ocr`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminModerationControllerCoverOcrQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerCoverOcrParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminModerationControllerCoverOcrQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>> = ({
+    signal,
+  }) => adminModerationControllerCoverOcr(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminModerationControllerCoverOcrQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>
+>;
+export type AdminModerationControllerCoverOcrQueryError = unknown;
+
+export function useAdminModerationControllerCoverOcr<
+  TData = Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+  TError = unknown,
+>(
+  params: undefined | AdminModerationControllerCoverOcrParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerCoverOcr<
+  TData = Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerCoverOcrParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerCoverOcr<
+  TData = Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerCoverOcrParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Theo dõi các lượt OCR ảnh bìa video và lọc theo trạng thái
+ */
+
+export function useAdminModerationControllerCoverOcr<
+  TData = Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerCoverOcrParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerCoverOcr>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminModerationControllerCoverOcrQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type adminModerationControllerPostPartsResponse200 = {
+  data: ModerationPartsDto;
+  status: 200;
+};
+
+export type adminModerationControllerPostPartsResponseSuccess =
+  adminModerationControllerPostPartsResponse200 & {
+    headers: Headers;
+  };
+export type adminModerationControllerPostPartsResponse = adminModerationControllerPostPartsResponseSuccess;
+
+export const getAdminModerationControllerPostPartsUrl = (id: string) => {
+  return `/api/v1/admin/moderation/posts/${id}/parts`;
+};
+
+/**
+ * @summary Bằng chứng quét riêng caption và từng ảnh của phiên bản bài hiện tại
+ */
+export const adminModerationControllerPostParts = async (
+  id: string,
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationControllerPostPartsResponse> => {
+  return http<adminModerationControllerPostPartsResponse>(getAdminModerationControllerPostPartsUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAdminModerationControllerPostPartsQueryKey = (id: string) => {
+  return [`/api/v1/admin/moderation/posts/${id}/parts`] as const;
+};
+
+export const getAdminModerationControllerPostPartsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminModerationControllerPostParts>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerPostParts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminModerationControllerPostPartsQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminModerationControllerPostParts>>> = ({
+    signal,
+  }) => adminModerationControllerPostParts(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminModerationControllerPostParts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminModerationControllerPostPartsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationControllerPostParts>>
+>;
+export type AdminModerationControllerPostPartsQueryError = unknown;
+
+export function useAdminModerationControllerPostParts<
+  TData = Awaited<ReturnType<typeof adminModerationControllerPostParts>>,
+  TError = unknown,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerPostParts>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerPostParts>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerPostParts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerPostParts<
+  TData = Awaited<ReturnType<typeof adminModerationControllerPostParts>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerPostParts>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerPostParts>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerPostParts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerPostParts<
+  TData = Awaited<ReturnType<typeof adminModerationControllerPostParts>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerPostParts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Bằng chứng quét riêng caption và từng ảnh của phiên bản bài hiện tại
+ */
+
+export function useAdminModerationControllerPostParts<
+  TData = Awaited<ReturnType<typeof adminModerationControllerPostParts>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerPostParts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminModerationControllerPostPartsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type adminModerationControllerRetryPartResponse201 = {
+  data: ModerationPartRetryDto;
+  status: 201;
+};
+
+export type adminModerationControllerRetryPartResponseSuccess =
+  adminModerationControllerRetryPartResponse201 & {
+    headers: Headers;
+  };
+export type adminModerationControllerRetryPartResponse = adminModerationControllerRetryPartResponseSuccess;
+
+export const getAdminModerationControllerRetryPartUrl = (id: string) => {
+  return `/api/v1/admin/moderation/parts/${id}/retry`;
+};
+
+export const adminModerationControllerRetryPart = async (
+  id: string,
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationControllerRetryPartResponse> => {
+  return http<adminModerationControllerRetryPartResponse>(getAdminModerationControllerRetryPartUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getAdminModerationControllerRetryPartMutationKey = () =>
+  ['adminModerationControllerRetryPart'] as const;
+
+export const getAdminModerationControllerRetryPartMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminModerationControllerRetryPart>>,
+    TError,
+    AdminModerationControllerRetryPartMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminModerationControllerRetryPart>>,
+  TError,
+  AdminModerationControllerRetryPartMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminModerationControllerRetryPartMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminModerationControllerRetryPart>>,
+    AdminModerationControllerRetryPartMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return adminModerationControllerRetryPart(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminModerationControllerRetryPartMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationControllerRetryPart>>
+>;
+
+export type AdminModerationControllerRetryPartMutationError = unknown;
+export type AdminModerationControllerRetryPartMutationVariables = { id: string };
+
+export const useAdminModerationControllerRetryPart = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminModerationControllerRetryPart>>,
+      TError,
+      AdminModerationControllerRetryPartMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminModerationControllerRetryPart>>,
+  TError,
+  AdminModerationControllerRetryPartMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminModerationControllerRetryPartMutationOptions(options), queryClient);
+};
+export type adminModerationControllerStatsResponse200 = {
+  data: ModerationStatsDto;
+  status: 200;
+};
+
+export type adminModerationControllerStatsResponseSuccess = adminModerationControllerStatsResponse200 & {
+  headers: Headers;
+};
+export type adminModerationControllerStatsResponse = adminModerationControllerStatsResponseSuccess;
+
+export const getAdminModerationControllerStatsUrl = () => {
+  return `/api/v1/admin/moderation/stats`;
+};
+
+/**
+ * @summary Số liệu tổng của hàng chờ, khiếu nại và scan, tính ở server
+ */
+export const adminModerationControllerStats = async (
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationControllerStatsResponse> => {
+  return http<adminModerationControllerStatsResponse>(getAdminModerationControllerStatsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAdminModerationControllerStatsQueryKey = () => {
+  return [`/api/v1/admin/moderation/stats`] as const;
+};
+
+export const getAdminModerationControllerStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminModerationControllerStats>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerStats>>, TError, TData>>;
+  request?: SecondParameter<typeof http>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminModerationControllerStatsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminModerationControllerStats>>> = ({ signal }) =>
+    adminModerationControllerStats({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminModerationControllerStats>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminModerationControllerStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationControllerStats>>
+>;
+export type AdminModerationControllerStatsQueryError = unknown;
+
+export function useAdminModerationControllerStats<
+  TData = Awaited<ReturnType<typeof adminModerationControllerStats>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerStats>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerStats>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerStats>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerStats<
+  TData = Awaited<ReturnType<typeof adminModerationControllerStats>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerStats>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerStats>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerStats>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerStats<
+  TData = Awaited<ReturnType<typeof adminModerationControllerStats>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerStats>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Số liệu tổng của hàng chờ, khiếu nại và scan, tính ở server
+ */
+
+export function useAdminModerationControllerStats<
+  TData = Awaited<ReturnType<typeof adminModerationControllerStats>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerStats>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminModerationControllerStatsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type adminModerationControllerFailedScansResponse200 = {
+  data: FailedScanPageDto;
+  status: 200;
+};
+
+export type adminModerationControllerFailedScansResponseSuccess =
+  adminModerationControllerFailedScansResponse200 & {
+    headers: Headers;
+  };
+export type adminModerationControllerFailedScansResponse =
+  adminModerationControllerFailedScansResponseSuccess;
+
+export const getAdminModerationControllerFailedScansUrl = (
+  params?: AdminModerationControllerFailedScansParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/moderation/scans/failed?${stringifiedParams}`
+    : `/api/v1/admin/moderation/scans/failed`;
+};
+
+export const adminModerationControllerFailedScans = async (
+  params?: AdminModerationControllerFailedScansParams,
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationControllerFailedScansResponse> => {
+  return http<adminModerationControllerFailedScansResponse>(
+    getAdminModerationControllerFailedScansUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getAdminModerationControllerFailedScansQueryKey = (
+  params?: AdminModerationControllerFailedScansParams,
+) => {
+  return [`/api/v1/admin/moderation/scans/failed`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminModerationControllerFailedScansQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminModerationControllerFailedScans>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerFailedScansParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerFailedScans>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminModerationControllerFailedScansQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminModerationControllerFailedScans>>> = ({
+    signal,
+  }) => adminModerationControllerFailedScans(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminModerationControllerFailedScans>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminModerationControllerFailedScansQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationControllerFailedScans>>
+>;
+export type AdminModerationControllerFailedScansQueryError = unknown;
+
+export function useAdminModerationControllerFailedScans<
+  TData = Awaited<ReturnType<typeof adminModerationControllerFailedScans>>,
+  TError = unknown,
+>(
+  params: undefined | AdminModerationControllerFailedScansParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerFailedScans>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerFailedScans>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerFailedScans>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerFailedScans<
+  TData = Awaited<ReturnType<typeof adminModerationControllerFailedScans>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerFailedScansParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerFailedScans>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerFailedScans>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerFailedScans>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerFailedScans<
+  TData = Awaited<ReturnType<typeof adminModerationControllerFailedScans>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerFailedScansParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerFailedScans>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useAdminModerationControllerFailedScans<
+  TData = Awaited<ReturnType<typeof adminModerationControllerFailedScans>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerFailedScansParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerFailedScans>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminModerationControllerFailedScansQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type adminModerationControllerRetryScanResponse201 = {
+  data: ScanRetryDto;
+  status: 201;
+};
+
+export type adminModerationControllerRetryScanResponseSuccess =
+  adminModerationControllerRetryScanResponse201 & {
+    headers: Headers;
+  };
+export type adminModerationControllerRetryScanResponse = adminModerationControllerRetryScanResponseSuccess;
+
+export const getAdminModerationControllerRetryScanUrl = (id: string) => {
+  return `/api/v1/admin/moderation/scans/${id}/retry`;
+};
+
+export const adminModerationControllerRetryScan = async (
+  id: string,
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationControllerRetryScanResponse> => {
+  return http<adminModerationControllerRetryScanResponse>(getAdminModerationControllerRetryScanUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getAdminModerationControllerRetryScanMutationKey = () =>
+  ['adminModerationControllerRetryScan'] as const;
+
+export const getAdminModerationControllerRetryScanMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminModerationControllerRetryScan>>,
+    TError,
+    AdminModerationControllerRetryScanMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminModerationControllerRetryScan>>,
+  TError,
+  AdminModerationControllerRetryScanMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminModerationControllerRetryScanMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminModerationControllerRetryScan>>,
+    AdminModerationControllerRetryScanMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return adminModerationControllerRetryScan(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminModerationControllerRetryScanMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationControllerRetryScan>>
+>;
+
+export type AdminModerationControllerRetryScanMutationError = unknown;
+export type AdminModerationControllerRetryScanMutationVariables = { id: string };
+
+export const useAdminModerationControllerRetryScan = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminModerationControllerRetryScan>>,
+      TError,
+      AdminModerationControllerRetryScanMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminModerationControllerRetryScan>>,
+  TError,
+  AdminModerationControllerRetryScanMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminModerationControllerRetryScanMutationOptions(options), queryClient);
+};
+export type adminModerationControllerAppealsResponse200 = {
+  data: AppealQueuePageDto;
+  status: 200;
+};
+
+export type adminModerationControllerAppealsResponseSuccess = adminModerationControllerAppealsResponse200 & {
+  headers: Headers;
+};
+export type adminModerationControllerAppealsResponse = adminModerationControllerAppealsResponseSuccess;
+
+export const getAdminModerationControllerAppealsUrl = (params?: AdminModerationControllerAppealsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/admin/moderation/appeals?${stringifiedParams}`
+    : `/api/v1/admin/moderation/appeals`;
+};
+
+export const adminModerationControllerAppeals = async (
+  params?: AdminModerationControllerAppealsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationControllerAppealsResponse> => {
+  return http<adminModerationControllerAppealsResponse>(getAdminModerationControllerAppealsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAdminModerationControllerAppealsQueryKey = (
+  params?: AdminModerationControllerAppealsParams,
+) => {
+  return [`/api/v1/admin/moderation/appeals`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminModerationControllerAppealsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminModerationControllerAppeals>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerAppealsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerAppeals>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminModerationControllerAppealsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminModerationControllerAppeals>>> = ({ signal }) =>
+    adminModerationControllerAppeals(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminModerationControllerAppeals>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminModerationControllerAppealsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationControllerAppeals>>
+>;
+export type AdminModerationControllerAppealsQueryError = unknown;
+
+export function useAdminModerationControllerAppeals<
+  TData = Awaited<ReturnType<typeof adminModerationControllerAppeals>>,
+  TError = unknown,
+>(
+  params: undefined | AdminModerationControllerAppealsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerAppeals>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerAppeals>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerAppeals>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerAppeals<
+  TData = Awaited<ReturnType<typeof adminModerationControllerAppeals>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerAppealsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerAppeals>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationControllerAppeals>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationControllerAppeals>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationControllerAppeals<
+  TData = Awaited<ReturnType<typeof adminModerationControllerAppeals>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerAppealsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerAppeals>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useAdminModerationControllerAppeals<
+  TData = Awaited<ReturnType<typeof adminModerationControllerAppeals>>,
+  TError = unknown,
+>(
+  params?: AdminModerationControllerAppealsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof adminModerationControllerAppeals>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminModerationControllerAppealsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type adminModerationControllerAppealDecisionResponse201 = {
+  data: AppealDto;
+  status: 201;
+};
+
+export type adminModerationControllerAppealDecisionResponseSuccess =
+  adminModerationControllerAppealDecisionResponse201 & {
+    headers: Headers;
+  };
+export type adminModerationControllerAppealDecisionResponse =
+  adminModerationControllerAppealDecisionResponseSuccess;
+
+export const getAdminModerationControllerAppealDecisionUrl = (id: string) => {
+  return `/api/v1/admin/moderation/appeals/${id}/decisions`;
+};
+
+export const adminModerationControllerAppealDecision = async (
+  id: string,
+  appealOutcomeDto: AppealOutcomeDto,
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationControllerAppealDecisionResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<adminModerationControllerAppealDecisionResponse>(
+    getAdminModerationControllerAppealDecisionUrl(id),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+      body: JSON.stringify(appealOutcomeDto),
+    },
+  );
+};
+
+export const getAdminModerationControllerAppealDecisionMutationKey = () =>
+  ['adminModerationControllerAppealDecision'] as const;
+
+export const getAdminModerationControllerAppealDecisionMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminModerationControllerAppealDecision>>,
+    TError,
+    AdminModerationControllerAppealDecisionMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminModerationControllerAppealDecision>>,
+  TError,
+  AdminModerationControllerAppealDecisionMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminModerationControllerAppealDecisionMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminModerationControllerAppealDecision>>,
+    AdminModerationControllerAppealDecisionMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminModerationControllerAppealDecision(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminModerationControllerAppealDecisionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationControllerAppealDecision>>
+>;
+export type AdminModerationControllerAppealDecisionMutationBody = AppealOutcomeDto;
+export type AdminModerationControllerAppealDecisionMutationError = unknown;
+export type AdminModerationControllerAppealDecisionMutationVariables = { id: string; data: AppealOutcomeDto };
+
+export const useAdminModerationControllerAppealDecision = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminModerationControllerAppealDecision>>,
+      TError,
+      AdminModerationControllerAppealDecisionMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminModerationControllerAppealDecision>>,
+  TError,
+  AdminModerationControllerAppealDecisionMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminModerationControllerAppealDecisionMutationOptions(options), queryClient);
+};
 export type adminModerationControllerQueueResponse200 = {
   data: ModerationQueuePageDto;
   status: 200;
@@ -341,6 +1395,116 @@ export function useAdminModerationControllerDetail<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export type adminModerationControllerReviewLeaseResponse201 = {
+  data: ModerationCaseDto;
+  status: 201;
+};
+
+export type adminModerationControllerReviewLeaseResponseSuccess =
+  adminModerationControllerReviewLeaseResponse201 & {
+    headers: Headers;
+  };
+export type adminModerationControllerReviewLeaseResponse =
+  adminModerationControllerReviewLeaseResponseSuccess;
+
+export const getAdminModerationControllerReviewLeaseUrl = (id: string) => {
+  return `/api/v1/admin/moderation/queue/${id}/lease`;
+};
+
+export const adminModerationControllerReviewLease = async (
+  id: string,
+  reviewLeaseDto: ReviewLeaseDto,
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationControllerReviewLeaseResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<adminModerationControllerReviewLeaseResponse>(getAdminModerationControllerReviewLeaseUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(reviewLeaseDto),
+  });
+};
+
+export const getAdminModerationControllerReviewLeaseMutationKey = () =>
+  ['adminModerationControllerReviewLease'] as const;
+
+export const getAdminModerationControllerReviewLeaseMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminModerationControllerReviewLease>>,
+    TError,
+    AdminModerationControllerReviewLeaseMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminModerationControllerReviewLease>>,
+  TError,
+  AdminModerationControllerReviewLeaseMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminModerationControllerReviewLeaseMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminModerationControllerReviewLease>>,
+    AdminModerationControllerReviewLeaseMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminModerationControllerReviewLease(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminModerationControllerReviewLeaseMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationControllerReviewLease>>
+>;
+export type AdminModerationControllerReviewLeaseMutationBody = ReviewLeaseDto;
+export type AdminModerationControllerReviewLeaseMutationError = unknown;
+export type AdminModerationControllerReviewLeaseMutationVariables = { id: string; data: ReviewLeaseDto };
+
+export const useAdminModerationControllerReviewLease = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminModerationControllerReviewLease>>,
+      TError,
+      AdminModerationControllerReviewLeaseMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminModerationControllerReviewLease>>,
+  TError,
+  AdminModerationControllerReviewLeaseMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminModerationControllerReviewLeaseMutationOptions(options), queryClient);
+};
 export type adminModerationControllerDecisionResponse201 = {
   data: ModerationDecisionResultDto;
   status: 201;

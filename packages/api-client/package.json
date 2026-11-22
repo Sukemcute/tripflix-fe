@@ -6,6 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./flight-search": "./src/flight-search.ts",
+    "./seo": "./src/seo.ts",
+    "./profile-query-keys": "./src/profile-query-keys.ts",
     "./core-api/*": "./src/generated/core-api/*.ts",
     "./ai-service/*": "./src/generated/ai-service/*.ts"
   },
@@ -19,7 +21,8 @@
     "@noble/ciphers": "catalog:",
     "@noble/curves": "catalog:",
     "@noble/hashes": "catalog:",
-    "@tanstack/react-query": "catalog:"
+    "@tanstack/react-query": "catalog:",
+    "socket.io-client": "catalog:"
   },
   "peerDependencies": {
     "react": "catalog:"

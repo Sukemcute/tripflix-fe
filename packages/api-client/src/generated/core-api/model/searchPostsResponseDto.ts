@@ -6,6 +6,7 @@
  */
 import type { ExploreItemDto } from './exploreItemDto';
 import type { ExploreUnderstoodDto } from './exploreUnderstoodDto';
+import type { SearchPostsResponseDtoFallbackRelaxedItem } from './searchPostsResponseDtoFallbackRelaxedItem';
 
 export interface SearchPostsResponseDto {
   /** Máy hiểu câu thế nào (hiện dạng chip) */
@@ -19,4 +20,10 @@ export interface SearchPostsResponseDto {
    * @nullable
    */
   nextCursor: string | null;
+  /** Từ trong câu mà dữ liệu không có. Chỉ có giá trị khi `isFallback = true`, rỗng nếu không */
+  dropped: string[];
+  /** true: không bài nào khớp đủ câu nên `items` là kết quả thay thế sau khi nới điều kiện (xem `fallbackRelaxed`). FE nên báo "Kết quả thay thế cho “q”" */
+  isFallback: boolean;
+  /** Chỉ có giá trị khi `isFallback = true`. Điều kiện đã nới: place = khác nơi (cách nơi hỏi quá 40 km), budget = vượt ngân sách, terms = không khớp đủ từ trong câu */
+  fallbackRelaxed: SearchPostsResponseDtoFallbackRelaxedItem[];
 }

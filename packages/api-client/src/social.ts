@@ -8,9 +8,11 @@ import type {
   UpdatePostDto,
   SetReactionDtoType,
   PostsControllerListPublicPostsParams,
+  BookmarksControllerListMyBookmarksPostType,
   PostsControllerListMyPostsParams,
   AdminPostsControllerListAdminPostsParams,
   CreateModerationActionDto,
+  CommentMentionDto,
 } from './generated/core-api/model';
 import { readEntity, readPage } from './response';
 
@@ -21,8 +23,11 @@ export const socialApi = {
   async listMyPosts(query: PostsControllerListMyPostsParams = {}, signal?: AbortSignal) {
     return readPage((await posts.postsControllerListMyPosts(query, { signal })).data);
   },
-  async listBookmarks(cursor?: string, signal?: AbortSignal) {
-    return readPage((await bookmarks.bookmarksControllerListMyBookmarks({ cursor }, { signal })).data);
+  async listBookmarks(cursor?: string, signal?: AbortSignal, postType?: BookmarksControllerListMyBookmarksPostType) {
+    return readPage(
+      (await bookmarks.bookmarksControllerListMyBookmarks({ cursor, ...(postType ? { post_type: postType } : {}) }, { signal }))
+        .data,
+    );
   },
   async getPost(id: string, signal?: AbortSignal) {
     return readEntity((await posts.postsControllerGetPostDetail(encodeURIComponent(id), { signal })).data, [
@@ -45,7 +50,7 @@ export const socialApi = {
     return (await posts.postsControllerDeletePost(encodeURIComponent(id))).data;
   },
   async publishPost(id: string) {
-    return (await posts.postsControllerPublishPost(encodeURIComponent(id))).data;
+    return readEntity((await posts.postsControllerPublishPost(encodeURIComponent(id))).data, ['id', 'status']);
   },
   async sharePost(id: string) {
     return (await posts.postsControllerTrackShare(encodeURIComponent(id))).data;
@@ -69,16 +74,27 @@ export const socialApi = {
       ).data,
     );
   },
-  async addComment(id: string, body: string, parentCommentId?: string) {
+  async getCommentThread(postId: string, focusCommentId: string, signal?: AbortSignal) {
+    return readPage(
+      (await comments.commentsControllerListComments(encodeURIComponent(postId), { focusCommentId }, { signal })).data,
+    );
+  },
+  async addComment(id: string, body: string, parentCommentId?: string, mentions?: CommentMentionDto[]) {
     return (
       await comments.commentsControllerCreateComment(encodeURIComponent(id), {
         body,
         parent_comment_id: parentCommentId,
+        ...(mentions !== undefined ? { mentions } : {}),
       })
     ).data;
   },
-  async editComment(id: string, body: string) {
-    return (await comments.commentsControllerEditComment(encodeURIComponent(id), { body })).data;
+  async editComment(id: string, body: string, mentions?: CommentMentionDto[]) {
+    return (
+      await comments.commentsControllerEditComment(encodeURIComponent(id), {
+        body,
+        ...(mentions !== undefined ? { mentions } : {}),
+      })
+    ).data;
   },
   async deleteComment(id: string) {
     return (await comments.commentsControllerDeleteComment(encodeURIComponent(id))).data;

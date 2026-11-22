@@ -2,14 +2,16 @@ import {
   getReelPosterPrefetchUrls,
   getSwipedTabIndex,
   layoutReelVideo,
+  REEL_LOOKAHEAD_COUNT,
   selectReelPoster,
+  shouldRefreshPlaybackForReel,
 } from '@tripflix/app-core';
-import { useReelsFeed, type ReelFeedTab } from '@tripflix/api-client';
+import { usePlaybackSession, type ReelFeedTab } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { useNetworkState } from 'expo-network';
-import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -17,6 +19,8 @@ import {
   AppState,
   ActivityIndicator,
   FlatList,
+  Platform,
+  RefreshControl,
   StyleSheet,
   View,
   useWindowDimensions,
@@ -34,10 +38,14 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { Button, Icon, IconButton, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 import { SHEET_CLOSE_SPRING } from '@/components/motion';
+import { SearchDropPanel } from '@/features/discovery/search-drop-panel';
+import { useReelViewTracking } from './feed-events';
 import { ReelSlide } from './reel-slide';
 import type { ReelItem } from './reel-types';
+import { useReelsLaunch } from './reels-launch';
 import { REEL_TABS, REELS_TAB_BAR_HEIGHT, ReelsTabBar, type ReelTab } from './reels-tab-bar';
 import { usePlayerPool } from './use-player-pool';
+import { useReelsTabFeed } from './use-reels-tab-feed';
 
 const copy = vi.mobile.reels;
 const TAB_EDGE_RESISTANCE = 0.25;
@@ -78,9 +86,20 @@ export function ReelsScreen() {
   const [tab, setTab] = useState<ReelTab>('for_you');
   const [isSample, setIsSample] = useState(false);
   const [isChromeHidden, setIsChromeHidden] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   /** Reel cần mở ngay (ví dụ bấm thẻ video trong khung chat Tripi). */
   const { reel: targetId } = useLocalSearchParams<{ reel?: string }>();
   const clearTarget = useCallback(() => router.setParams({ reel: undefined }), []);
+  // Nhấn icon Reels khi đang ở Reels thì về video đầu và tải lại (như TikTok); từ tab khác quay về thì giữ chỗ đang xem.
+  const navigation = useNavigation();
+  const [reloadCount, setReloadCount] = useState(0);
+  useEffect(
+    () =>
+      navigation.addListener('tabPress' as never, () => {
+        if (navigation.isFocused()) setReloadCount((count) => count + 1);
+      }),
+    [navigation],
+  );
   const { width } = useWindowDimensions();
   // The bar follows `tab` at once; the list only changes after the old one has left the screen.
   const [contentTab, setContentTab] = useState<ReelTab>('for_you');
@@ -88,8 +107,10 @@ export function ReelsScreen() {
   const [swapCount, setSwapCount] = useState(0);
   const [contentSize, setContentSize] = useState({ width: 0, height: 0 });
   // Loaded up front so a swipe finds its list and first poster ready instead of a dark wait.
-  const forYouFeed = useReelsFeed({ tab: 'for_you' });
-  const hotFeed = useReelsFeed({ tab: 'hot' });
+  const forYouFeed = useReelsTabFeed('for_you').feed;
+  const hotFeed = useReelsTabFeed('hot').feed;
+  // Cookie video xin cùng lúc với feed; ReelsFeed dùng lại kết quả này (cùng query), video đầu không chờ thêm.
+  usePlaybackSession();
   const forYouPlaybacks = useMemo(() => readPlaybacks(forYouFeed.data), [forYouFeed.data]);
   const hotPlaybacks = useMemo(() => readPlaybacks(hotFeed.data), [hotFeed.data]);
   const firstPlaybackOf = (reelTab: ReelTab) =>
@@ -198,7 +219,11 @@ export function ReelsScreen() {
   }, [targetId, isSwitching, translateX]);
 
   if (isSample && DEMO_REELS.length > 0)
-    return <ReelsFeed items={DEMO_REELS} isSample onExitSample={() => setIsSample(false)} />;
+    return (
+      <GestureHandlerRootView style={styles.screen}>
+        <ReelsFeed items={DEMO_REELS} isSample onExitSample={() => setIsSample(false)} />
+      </GestureHandlerRootView>
+    );
   return (
     <GestureHandlerRootView style={styles.screen}>
       <GestureDetector gesture={tabSwipe}>
@@ -230,6 +255,7 @@ export function ReelsScreen() {
               initialLayout={contentSize}
               targetId={contentTab === 'for_you' ? targetId : undefined}
               onTargetShown={clearTarget}
+              reloadCount={reloadCount}
               onHiddenChange={setIsChromeHidden}
               onOpenSample={() => setIsSample(true)}
             />
@@ -245,13 +271,14 @@ export function ReelsScreen() {
         selected={tab}
         isHidden={isChromeHidden}
         onSelect={selectTab}
-        onSearch={() => router.push({ pathname: '/(tabs)/explore', params: { autoFocus: '1' } })}
+        onSearch={() => setIsSearchOpen(true)}
       />
+      <SearchDropPanel visible={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </GestureHandlerRootView>
   );
 }
 
-type FeedPages = ReturnType<typeof useReelsFeed>['data'];
+type FeedPages = ReturnType<typeof useReelsTabFeed>['feed']['data'];
 
 function readPlaybacks(feedPages: FeedPages): ReelItem['playback'][] {
   return (feedPages?.pages.flatMap((page) => page.items) ?? []).flatMap((card) =>
@@ -311,6 +338,7 @@ function ReelsTabFeed({
   initialLayout,
   targetId,
   onTargetShown,
+  reloadCount,
   onHiddenChange,
   onOpenSample,
 }: {
@@ -318,24 +346,35 @@ function ReelsTabFeed({
   initialLayout: { width: number; height: number };
   targetId?: string;
   onTargetShown: () => void;
+  /** Tăng lên mỗi lần người xem nhấn lại icon Reels. */
+  reloadCount: number;
   onHiddenChange: (isHidden: boolean) => void;
   onOpenSample: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const feed = useReelsFeed({ tab });
+  const { feed, reload } = useReelsTabFeed(tab);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [scrollToTopCount, setScrollToTopCount] = useState(0);
   const refreshInFlight = useRef(false);
-  const refreshFeed = async () => {
+  // Trang đầu mới có thứ tự mới (feed chọn seed mới, discovery mở phiên mới), nên chỉ tải lại trang đầu.
+  const refreshFeed = useCallback(async () => {
     if (refreshInFlight.current) return;
     refreshInFlight.current = true;
     setIsRefreshing(true);
     try {
-      await feed.refetch();
+      await reload();
     } finally {
       refreshInFlight.current = false;
       setIsRefreshing(false);
     }
-  };
+  }, [reload]);
+  const lastReloadCount = useRef(reloadCount);
+  useEffect(() => {
+    if (reloadCount === lastReloadCount.current) return;
+    lastReloadCount.current = reloadCount;
+    setScrollToTopCount((count) => count + 1);
+    void refreshFeed();
+  }, [reloadCount, refreshFeed]);
   const items = useMemo(() => {
     // A hot post can move between pages when its score changes while the viewer scrolls.
     const seenPostIds = new Set<string>();
@@ -362,10 +401,10 @@ function ReelsTabFeed({
     void feed.fetchNextPage({ cancelRefetch: false });
   }, [isTargetLoaded, feed]);
 
-  const loadMore = () => {
-    if (feed.hasNextPage && !feed.isFetching && !feed.isError)
-      void feed.fetchNextPage({ cancelRefetch: false });
-  };
+  const { hasNextPage, isFetching, isError, fetchNextPage } = feed;
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetching && !isError) void fetchNextPage({ cancelRefetch: false });
+  }, [hasNextPage, isFetching, isError, fetchNextPage]);
   const retryFeed = () => {
     if (feed.isFetching) return;
     if (feed.isFetchNextPageError) {
@@ -394,6 +433,7 @@ function ReelsTabFeed({
             void refreshFeed();
           }}
           isRefreshing={isRefreshing}
+          scrollToTopCount={scrollToTopCount}
         />
       </View>
     );
@@ -437,6 +477,7 @@ export function ReelsFeed({
   initialLayout = { width: 0, height: 0 },
   targetId,
   onTargetShown,
+  onActiveIndexChange,
   isSample = false,
   onHiddenChange,
   onExitSample,
@@ -444,11 +485,13 @@ export function ReelsFeed({
   isFetchingMore = false,
   onRefresh,
   isRefreshing = false,
+  scrollToTopCount = 0,
 }: {
   items: readonly ReelItem[];
   initialLayout?: { width: number; height: number };
   targetId?: string;
   onTargetShown?: () => void;
+  onActiveIndexChange?: (index: number) => void;
   isSample?: boolean;
   onHiddenChange?: (isHidden: boolean) => void;
   onExitSample?: () => void;
@@ -456,9 +499,12 @@ export function ReelsFeed({
   isFetchingMore?: boolean;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  /** Tăng lên thì về ngay video đầu. */
+  scrollToTopCount?: number;
 }) {
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
+  const { isLaunching, onFirstFrame } = useReelsLaunch();
   const network = useNetworkState();
   const [isForeground, setIsForeground] = useState(AppState.currentState === 'active');
   // Known size means the list draws on its first frame, with no dark frame before onLayout.
@@ -471,22 +517,62 @@ export function ReelsFeed({
   const [retry, setRetry] = useState<{ id: string; attempt: number } | null>(null);
   const [hasComments, setHasComments] = useState(false);
   const currentIndex = Math.min(activeIndex, Math.max(0, items.length - 1));
+  useEffect(() => {
+    onActiveIndexChange?.(currentIndex);
+  }, [currentIndex, onActiveIndexChange]);
   const visibleIndex = Math.min(focusedIndex, Math.max(0, items.length - 1));
   const hideHeader = heldId !== null && heldId === items[visibleIndex]?.id;
   const isOffline = network.isConnected === false || network.isInternetReachable === false;
-  // 5G cũng phát bản nét nhất, giống TikTok/Reels. Chỉ nên giới hạn khi người dùng bật "Tiết kiệm dữ liệu" (iOS Low Data
-  // Mode, Android Data Saver); expo-network chưa đọc được các cờ này nên tạm không giới hạn. Khi có module thì gán ở đây.
+  const isPlaybackEnabled = isFocused && isForeground && !isOffline;
+  // expo-network does not expose system Data Saver / Low Data Mode flags.
   const isDataLimited = false;
+  // Xin cookie video ngay khi vào Reels, song song với feed, để video đầu không phải chờ thêm.
+  const playbackSession = usePlaybackSession();
   const slots = usePlayerPool({
     items,
     activeIndex: currentIndex,
     focusedIndex: visibleIndex,
-    isEnabled: isFocused && isForeground && !isOffline,
-    isPaused: pausedId === items[visibleIndex]?.id,
+    isEnabled: isPlaybackEnabled,
+    isPaused: isLaunching || pausedId === items[visibleIndex]?.id,
     isMuted: false,
     isDataLimited,
     retry,
+    playbackCookieHeader: playbackSession.cookieHeader,
+    isPlaybackSessionSettled: playbackSession.isSettled,
   });
+  // TF82: Reel đang xem lỗi (có thể do cookie hết hạn khi app nằm nền lâu) thì xin cookie mới rồi tải lại một lần.
+  // Nguồn mới đọc cookie lúc gắn (use-player-pool), nên chỉ cần tăng retry sau khi refresh xong.
+  const refreshedReelIds = useRef(new Set<string>());
+  const visibleReelId = items[visibleIndex]?.id;
+  const hasVisibleError = slots.find((slot) => slot.index === visibleIndex)?.hasError ?? false;
+  const { refresh: refreshPlaybackSession } = playbackSession;
+  useEffect(() => {
+    const reelId = visibleReelId;
+    if (
+      !reelId ||
+      !shouldRefreshPlaybackForReel({
+        reelId,
+        hasError: hasVisibleError,
+        refreshedReelIds: refreshedReelIds.current,
+      })
+    ) {
+      return;
+    }
+    refreshedReelIds.current.add(reelId);
+    void refreshPlaybackSession().then(() =>
+      setRetry((value) => ({ id: reelId, attempt: (value?.attempt ?? 0) + 1 })),
+    );
+  }, [visibleReelId, hasVisibleError, refreshPlaybackSession]);
+  // Chỉ đếm Reels thật đang phát cho người xem thấy; Reels mẫu không gửi (TF23).
+  const watchedItem = isSample ? undefined : items[visibleIndex];
+  useReelViewTracking(
+    watchedItem?.postId ?? null,
+    isPlaybackEnabled && !isLaunching && pausedId !== watchedItem?.id,
+  );
+
+  useEffect(() => {
+    if (isPlaybackEnabled && currentIndex + REEL_LOOKAHEAD_COUNT >= items.length - 1) onLoadMore?.();
+  }, [currentIndex, isPlaybackEnabled, items.length, onLoadMore]);
 
   useEffect(() => {
     if (layout.width === 0) return;
@@ -530,6 +616,12 @@ export function ReelsFeed({
     return () => cancelAnimationFrame(frame);
   }, [targetIndex, layout.height, onTargetShown]);
 
+  useEffect(() => {
+    if (scrollToTopCount === 0) return;
+    list.current?.scrollToOffset({ offset: 0, animated: false });
+    settle(0);
+  }, [scrollToTopCount, settle]);
+
   const indexAt = (offset: number) =>
     Math.max(0, Math.min(items.length - 1, Math.round(offset / layout.height)));
 
@@ -560,6 +652,8 @@ export function ReelsFeed({
           keyExtractor={(item) => item.id}
           pagingEnabled
           scrollEnabled={!hasComments}
+          // The inline comments composer must receive the first tap while its keyboard is open.
+          keyboardShouldPersistTaps="handled"
           disableIntervalMomentum
           decelerationRate="fast"
           showsVerticalScrollIndicator={false}
@@ -567,13 +661,23 @@ export function ReelsFeed({
           onScroll={onScroll}
           scrollEventThrottle={16}
           onMomentumScrollEnd={(event) => settle(indexAt(event.nativeEvent.contentOffset.y))}
-          windowSize={3}
+          // Web needs a mounted VideoView for each player that is buffering.
+          windowSize={Platform.OS === 'web' ? REEL_LOOKAHEAD_COUNT * 2 + 1 : 3}
           initialNumToRender={3}
-          maxToRenderPerBatch={3}
-          onEndReached={onLoadMore}
-          onEndReachedThreshold={1}
-          onRefresh={onRefresh}
-          refreshing={isRefreshing}
+          maxToRenderPerBatch={Platform.OS === 'web' ? REEL_LOOKAHEAD_COUNT + 2 : 3}
+          // Vuốt xuống ở video đầu để tải lại. Vòng xoay màu trắng trên nền tối và nằm dưới thanh tab trên cùng,
+          // không thì nó bị thanh tab che và người xem tưởng không có gì xảy ra.
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.background}
+                colors={[colors.ink]}
+                progressViewOffset={insets.top + REELS_TAB_BAR_HEIGHT}
+              />
+            ) : undefined
+          }
           ListFooterComponent={
             isFetchingMore ? (
               <ActivityIndicator
@@ -593,7 +697,17 @@ export function ReelsFeed({
                 player={slot?.player}
                 isLoaded={slot?.isLoaded ?? false}
                 hasError={slot?.hasError ?? false}
+                shouldPlay={slot?.shouldPlay ?? false}
+                isMuted={slot?.isMuted ?? false}
                 onAttach={slot?.onAttach}
+                onFirstFrame={
+                  isLaunching &&
+                  isFocused &&
+                  visibleIndex === index &&
+                  (targetId ? item.postId === targetId : index === 0)
+                    ? onFirstFrame
+                    : undefined
+                }
                 width={layout.width}
                 height={layout.height}
                 isActive={visibleIndex === index}

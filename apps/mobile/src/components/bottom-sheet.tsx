@@ -12,15 +12,12 @@ import {
 import {
   GestureDetector,
   GestureHandlerRootView,
-  GestureStateManager,
-  useNativeGesture,
   usePanGesture,
   type PanGestureActiveEvent,
 } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
   interpolate,
-  useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -28,7 +25,9 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { IconButton, Txt, copy } from './mobile-ui';
+import { compactType, mobileIconSize } from './mobile-scale';
 import { SHEET_CLOSE_SPRING, SHEET_OPEN_SPRING } from './motion';
+import { useSheetListDrag } from './use-sheet-list-drag';
 
 const DISMISS_DISTANCE = 100;
 const DISMISS_VELOCITY = 800;
@@ -43,6 +42,7 @@ export function BottomSheet({
   title,
   onClose,
   footer,
+  compact = false,
   isScrollEnabled = true,
   children,
 }: PropsWithChildren<{
@@ -50,6 +50,7 @@ export function BottomSheet({
   title: string;
   onClose: () => void;
   footer?: ReactNode;
+  compact?: boolean;
   /** Off when the content has its own drag, which a scrolling parent would otherwise take over. */
   isScrollEnabled?: boolean;
 }>) {
@@ -60,23 +61,6 @@ export function BottomSheet({
   const sheetHeight = useSharedValue(windowHeight);
   const startOffset = useSharedValue(0);
   const releaseVelocity = useSharedValue(0);
-  const scrollY = useSharedValue(0);
-  const touchX = useSharedValue(0);
-  const touchY = useSharedValue(0);
-  useEffect(() => {
-    if (visible) {
-      scrollY.set(0);
-      translateY.set(withSpring(0, SHEET_OPEN_SPRING));
-      return;
-    }
-    translateY.set(
-      // A flick keeps its speed on the way out rather than stalling before the spring starts.
-      withSpring(windowHeight, { ...SHEET_CLOSE_SPRING, velocity: releaseVelocity.get() }, (finished) => {
-        if (finished) scheduleOnRN(setMounted, false);
-      }),
-    );
-    releaseVelocity.set(0);
-  }, [visible, windowHeight, translateY, releaseVelocity, scrollY]);
   const startDrag = (event: PanGestureActiveEvent) => {
     'worklet';
     // Activation happens a few points in; subtracting that keeps the sheet from jumping.
@@ -106,38 +90,34 @@ export function BottomSheet({
     onUpdate: moveDrag,
     onDeactivate: settleDrag,
   });
-  // Nội dung đang ở trên cùng thì vuốt xuống ở đâu cũng kéo sheet; còn lại vẫn cuộn như thường.
-  const bodyScroll = useNativeGesture();
-  const bodyPan = usePanGesture({
+  // Nội dung cuộn dở thì cuộn lên trước, chạm đỉnh thì cùng ngón tay đó kéo sheet.
+  const {
+    pan: bodyPan,
+    scroll: bodyScroll,
+    onScroll: onBodyScroll,
+    scrollY,
+  } = useSheetListDrag({
     // Nội dung có cử chỉ kéo riêng (lịch chọn ngày) thì chỉ kéo sheet ở phần đầu.
     enabled: isScrollEnabled,
-    manualActivation: true,
-    simultaneousWith: bodyScroll,
-    onTouchesDown: (event) => {
-      const touch = event.allTouches[0];
-      if (!touch || scrollY.get() > 1 || event.numberOfTouches !== 1) {
-        GestureStateManager.fail(event.handlerTag);
-        return;
-      }
-      touchX.set(touch.absoluteX);
-      touchY.set(touch.absoluteY);
-    },
-    onTouchesMove: (event) => {
-      const touch = event.allTouches[0];
-      if (!touch) return;
-      const dy = touch.absoluteY - touchY.get();
-      const dx = Math.abs(touch.absoluteX - touchX.get());
-      if (dy < -8 || dx > 20 || event.numberOfTouches !== 1) GestureStateManager.fail(event.handlerTag);
-      else if (dy > DISMISS_MIN_DISTANCE && dy > dx && scrollY.get() <= 1)
-        GestureStateManager.activate(event.handlerTag);
-    },
+    activateAfter: DISMISS_MIN_DISTANCE,
     onActivate: startDrag,
     onUpdate: moveDrag,
     onDeactivate: settleDrag,
   });
-  const onBodyScroll = useAnimatedScrollHandler((event) => {
-    scrollY.set(event.contentOffset.y);
-  });
+  useEffect(() => {
+    if (visible) {
+      scrollY.set(0);
+      translateY.set(withSpring(0, SHEET_OPEN_SPRING));
+      return;
+    }
+    translateY.set(
+      // A flick keeps its speed on the way out rather than stalling before the spring starts.
+      withSpring(windowHeight, { ...SHEET_CLOSE_SPRING, velocity: releaseVelocity.get() }, (finished) => {
+        if (finished) scheduleOnRN(setMounted, false);
+      }),
+    );
+    releaseVelocity.set(0);
+  }, [visible, windowHeight, translateY, releaseVelocity, scrollY]);
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.get() }] }));
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: interpolate(translateY.get(), [0, sheetHeight.get()], [1, 0], Extrapolation.CLAMP),
@@ -164,18 +144,30 @@ export function BottomSheet({
             }}
             style={[
               styles.sheet,
-              { maxHeight: windowHeight * 0.85, paddingBottom: Math.max(insets.bottom, spacing.md) },
+              {
+                maxHeight: windowHeight * 0.85,
+                paddingBottom: Math.max(insets.bottom, compact ? spacing.sm : spacing.md),
+              },
               sheetStyle,
             ]}
           >
             <GestureDetector gesture={headerPan}>
               <View collapsable={false}>
-                <View style={styles.handle} />
-                <View style={styles.heading}>
-                  <Txt variant="label" numberOfLines={1} style={styles.title}>
+                <View style={[styles.handle, compact && styles.compactHandle]} />
+                <View style={[styles.heading, compact && styles.compactHeading]}>
+                  <Txt
+                    variant="label"
+                    numberOfLines={1}
+                    style={[styles.title, compact && styles.compactTitle]}
+                  >
                     {title}
                   </Txt>
-                  <IconButton name="close" label={copy.common.close} onPress={onClose} />
+                  <IconButton
+                    name="close"
+                    size={compact ? mobileIconSize.control : undefined}
+                    label={copy.common.close}
+                    onPress={onClose}
+                  />
                 </View>
               </View>
             </GestureDetector>
@@ -185,8 +177,9 @@ export function BottomSheet({
                   <Animated.ScrollView
                     style={styles.body}
                     keyboardShouldPersistTaps="handled"
-                    contentContainerStyle={styles.bodyContent}
+                    contentContainerStyle={[styles.bodyContent, compact && styles.compactBodyContent]}
                     bounces={false}
+                    showsVerticalScrollIndicator={false}
                     onScroll={onBodyScroll}
                     scrollEventThrottle={16}
                     scrollEnabled={isScrollEnabled}
@@ -196,7 +189,7 @@ export function BottomSheet({
                 </GestureDetector>
               </Animated.View>
             </GestureDetector>
-            {!!footer && <View style={styles.footer}>{footer}</View>}
+            {!!footer && <View style={[styles.footer, compact && styles.compactFooter]}>{footer}</View>}
           </Animated.View>
         </KeyboardAvoidingView>
       </GestureHandlerRootView>
@@ -241,4 +234,9 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
   },
+  compactHandle: { marginTop: spacing.sm },
+  compactHeading: { paddingLeft: spacing.lg, paddingVertical: 0 },
+  compactTitle: compactType.heading,
+  compactBodyContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
+  compactFooter: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
 });

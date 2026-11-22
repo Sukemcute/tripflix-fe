@@ -18,6 +18,7 @@ import type {
   CreateUploadDto,
   CreatedUploadDto,
   MediaErrorDto,
+  PlaybackSessionDto,
   ResignPartsDto,
   SignedPartsDto,
 } from '../model';
@@ -289,6 +290,11 @@ export type mediaUploadControllerCompleteUploadResponse410 = {
   status: 410;
 };
 
+export type mediaUploadControllerCompleteUploadResponse422 = {
+  data: MediaErrorDto;
+  status: 422;
+};
+
 export type mediaUploadControllerCompleteUploadResponseSuccess =
   mediaUploadControllerCompleteUploadResponse202 & {
     headers: Headers;
@@ -297,6 +303,7 @@ export type mediaUploadControllerCompleteUploadResponseError = (
   | mediaUploadControllerCompleteUploadResponse404
   | mediaUploadControllerCompleteUploadResponse409
   | mediaUploadControllerCompleteUploadResponse410
+  | mediaUploadControllerCompleteUploadResponse422
 ) & {
   headers: Headers;
 };
@@ -407,4 +414,98 @@ export const useMediaUploadControllerCompleteUpload = <TError = MediaErrorDto, T
   TContext
 > => {
   return useMutation(getMediaUploadControllerCompleteUploadMutationOptions(options), queryClient);
+};
+export type mediaPlaybackControllerCreateSessionResponse200 = {
+  data: PlaybackSessionDto;
+  status: 200;
+};
+
+export type mediaPlaybackControllerCreateSessionResponseSuccess =
+  mediaPlaybackControllerCreateSessionResponse200 & {
+    headers: Headers;
+  };
+export type mediaPlaybackControllerCreateSessionResponse =
+  mediaPlaybackControllerCreateSessionResponseSuccess;
+
+export const getMediaPlaybackControllerCreateSessionUrl = () => {
+  return `/api/media/playback-session`;
+};
+
+/**
+ * Web: gọi kèm credentials (có Origin), trình duyệt nhận Set-Cookie cho tên miền media. App: không nhận Set-Cookie, ghép `cookies` thành header Cookie khi phát video.
+ * @summary Cấp cookie xem video trên CDN
+ */
+export const mediaPlaybackControllerCreateSession = async (
+  options?: Parameters<typeof http>[1],
+): Promise<mediaPlaybackControllerCreateSessionResponse> => {
+  return http<mediaPlaybackControllerCreateSessionResponse>(getMediaPlaybackControllerCreateSessionUrl(), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getMediaPlaybackControllerCreateSessionMutationKey = () =>
+  ['mediaPlaybackControllerCreateSession'] as const;
+
+export const getMediaPlaybackControllerCreateSessionMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof mediaPlaybackControllerCreateSession>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof mediaPlaybackControllerCreateSession>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = getMediaPlaybackControllerCreateSessionMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof mediaPlaybackControllerCreateSession>>,
+    void
+  > = () => {
+    return mediaPlaybackControllerCreateSession(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MediaPlaybackControllerCreateSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof mediaPlaybackControllerCreateSession>>
+>;
+
+export type MediaPlaybackControllerCreateSessionMutationError = unknown;
+
+/**
+ * @summary Cấp cookie xem video trên CDN
+ */
+export const useMediaPlaybackControllerCreateSession = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof mediaPlaybackControllerCreateSession>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof mediaPlaybackControllerCreateSession>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getMediaPlaybackControllerCreateSessionMutationOptions(options), queryClient);
 };

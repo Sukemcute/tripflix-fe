@@ -9,6 +9,7 @@ import { useState, type ReactNode } from 'react';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { SoftDatePicker } from '@/features/shared/soft-date-picker';
 import { SoftSelect } from '@/features/shared/soft-select';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 type Gender = keyof typeof vi.api.genderOptions;
 type FieldName = 'displayName' | 'phone' | 'dateOfBirth' | 'gender' | 'nationality';
@@ -104,7 +105,7 @@ export function ProfileInfoCard({ userId }: { userId: string }) {
   if (profile.isPending)
     return (
       <section className="profile-card" aria-busy="true">
-        <output className="auth-hint">{vi.api.loading}</output>
+        <LoadingDots isBlock />
       </section>
     );
   if (!profile.data)
@@ -135,12 +136,11 @@ export function ProfileInfoCard({ userId }: { userId: string }) {
       <header className="profile-card-header">
         <div>
           <h2 id="profile-info-title">{vi.api.profileInfoTitle}</h2>
-          <p className="auth-hint">{vi.api.profileInfoHint}</p>
         </div>
         {!isEditing && (
           <button
             type="button"
-            className="primary-button profile-edit"
+            className="secondary-button profile-edit"
             onClick={() => {
               save.reset();
               setDraft(toDraft(data));
@@ -256,14 +256,6 @@ export function ProfileInfoCard({ userId }: { userId: string }) {
             <path d="M8 11V8a4 4 0 0 1 8 0v3" />
           </svg>
         </div>
-
-        <p className="profile-note">
-          <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 11v5M12 8h.01" />
-          </svg>
-          {vi.api.emailLocked}
-        </p>
 
         {save.error && Object.keys(fieldErrors).length === 0 && <ApiErrorNotice error={save.error} />}
         {save.isSuccess && !isEditing && <output className="auth-success">{vi.api.profileSaved}</output>}

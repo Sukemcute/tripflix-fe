@@ -27,6 +27,7 @@ import { CancelOrder } from './cancel-order';
 import { CheckoutError } from './checkout-error';
 import { CheckoutIcon, type CheckoutIconName } from './checkout-icon';
 import styles from './checkout-form.module.css';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.commerce;
 type Order = Awaited<ReturnType<typeof commerceApi.getCheckout>>;
@@ -73,16 +74,19 @@ function readServerFieldErrors(error: unknown): Record<string, string> {
 }
 
 export function CheckoutScreen({ id }: { id: string }) {
+  const router = useRouter();
   const { user, isReady } = useApiSession();
-  if (isReady && !user)
+
+  useEffect(() => {
+    if (isReady && !user) {
+      router.replace(`/login?returnTo=${encodeURIComponent(`/checkout/${id}`)}`);
+    }
+  }, [isReady, user, router, id]);
+
+  if (!isReady || !user)
     return (
       <main className={`ota-container ${styles.page}`}>
-        <div className={styles.card}>
-          <p>{copy.loginToViewPayment}</p>
-          <Link prefetch={false} className="primary-button" href={`/login?returnTo=${encodeURIComponent(`/checkout/${id}`)}`}>
-            {vi.commerce.login}
-          </Link>
-        </div>
+        <LoadingDots isBlock />
       </main>
     );
   return <CheckoutForm key={`${user?.id}:${id}`} id={id} isEnabled={isReady && !!user} />;
@@ -246,7 +250,7 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
   if (query.isPending && isEnabled)
     return (
       <main className={`ota-container ${styles.page}`}>
-        <p>{vi.api.loading}</p>
+        <LoadingDots isBlock />
       </main>
     );
   if (!order)
@@ -509,7 +513,7 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                     className="primary-button"
                     disabled={payment.isPending || otp.length !== 6}
                   >
-                    {payment.isPending ? vi.api.loading : copy.confirmOtp}
+                    <BusyLabel isBusy={payment.isPending}>{copy.confirmOtp}</BusyLabel>
                   </button>
                 </div>
               )}
@@ -549,7 +553,7 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                     disabled={isLocked || newTotal !== undefined || (method === 'card' && !cardNumber.trim())}
                   >
                     <CheckoutIcon name="lock" size={18} />
-                    {payment.isPending ? vi.api.loading : `${copy.pay} ${formatPrice(total)}`}
+                    <BusyLabel isBusy={payment.isPending}>{`${copy.pay} ${formatPrice(total)}`}</BusyLabel>
                   </button>
                   <p className={styles.payNote}>
                     <CheckoutIcon name="shield" size={16} />
@@ -732,7 +736,9 @@ function OrderSummary({
       <div className={styles.summaryHead}>
         <span className={styles.summaryTitle}>{copy.summaryTitle}</span>
         <span className={styles.status} data-status={order.status}>
-          {copy.status[order.status as keyof typeof copy.status] ?? order.status}
+          {order.tripStatus === 'completed'
+            ? copy.tripCompleted
+            : (copy.status[order.status as keyof typeof copy.status] ?? order.status)}
         </span>
       </div>
       {order.status === 'pending' && <HoldTimer expiresAt={order.holdExpiresAt} />}

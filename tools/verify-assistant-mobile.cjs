@@ -163,7 +163,7 @@ class AssistantPage {
       await page.getByText('Cuối tuần này nên đi đâu gần Hà Nội?', { exact: true }).waitFor();
       await view.button('Bắt đầu cuộc trò chuyện mới').click();
       await view.button('Bắt đầu lại').click();
-      await page.getByText('ĐI ĐÂU CŨNG CÓ TRIPI').waitFor();
+      await page.getByText('Chào bạn, mình là Tripi!').waitFor();
       assert.equal(await view.input.inputValue(), '');
       assert.equal(await page.getByText('Tripi đã nhận được ý tưởng của bạn!', { exact: false }).count(), 0);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);

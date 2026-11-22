@@ -25,12 +25,22 @@ import type {
   ExploreResponseDto,
   HomeRecommendationsControllerRecommendForHomeParams,
   HomeRecommendationsDto,
+  PlacesControllerPlacesParams,
+  PlacesResponseDto,
+  PostRecommendationsControllerRecommendPostsParams,
+  PostRecommendationsControllerRecommendReelsParams,
+  PostRecommendationsDto,
+  ReelRecommendationsDto,
+  SearchPlacesRequestDto,
+  SearchPlacesResponseDto,
   SearchPostsRequestDto,
   SearchPostsResponseDto,
   StayPageDto,
   StaysControllerListStaysParams,
   SuggestControllerSuggestParams,
   SuggestResponseDto,
+  TripAddonRequestDto,
+  TripAddonsDto,
 } from '../model';
 
 import { http } from '../../../http';
@@ -204,6 +214,164 @@ export function useSuggestControllerSuggest<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getSuggestControllerSuggestQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type placesControllerPlacesResponse200 = {
+  data: PlacesResponseDto;
+  status: 200;
+};
+
+export type placesControllerPlacesResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type placesControllerPlacesResponseSuccess = placesControllerPlacesResponse200 & {
+  headers: Headers;
+};
+export type placesControllerPlacesResponseError = placesControllerPlacesResponse400 & {
+  headers: Headers;
+};
+
+export type placesControllerPlacesResponse =
+  placesControllerPlacesResponseSuccess | placesControllerPlacesResponseError;
+
+export const getPlacesControllerPlacesUrl = (params?: PlacesControllerPlacesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/places?${stringifiedParams}` : `/api/places`;
+};
+
+/**
+ * Dữ liệu © OpenStreetMap contributors (ODbL), nạp sẵn cho các thành phố demo. App phải hiện `attribution` kèm danh sách.
+ *
+ * - Cần `city` (tên có dấu hay không đều được, hoặc id như `vung-tau`) hoặc `near=lat,lng`. Tỉnh gồm cả điểm đến con ("Lâm Đồng" ra điểm của Đà Lạt) và không lọc bán kính.
+ * - `lodging` là chỗ ở ngoài Tripflix: chỉ để tham khảo, không có giá, không đặt được.
+ * - Không khớp thành phố thì `items: []` (không phải lỗi).
+ * @summary Điểm tham quan, ăn uống, chỗ ở có toạ độ quanh một thành phố hoặc một toạ độ
+ */
+export const placesControllerPlaces = async (
+  params?: PlacesControllerPlacesParams,
+  options?: Parameters<typeof http>[1],
+): Promise<placesControllerPlacesResponse> => {
+  return http<placesControllerPlacesResponse>(getPlacesControllerPlacesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getPlacesControllerPlacesQueryKey = (params?: PlacesControllerPlacesParams) => {
+  return [`/api/places`, ...(params ? [params] : [])] as const;
+};
+
+export const getPlacesControllerPlacesQueryOptions = <
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params?: PlacesControllerPlacesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPlacesControllerPlacesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof placesControllerPlaces>>> = ({ signal }) =>
+    placesControllerPlaces(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof placesControllerPlaces>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PlacesControllerPlacesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof placesControllerPlaces>>
+>;
+export type PlacesControllerPlacesQueryError = void;
+
+export function usePlacesControllerPlaces<
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params: undefined | PlacesControllerPlacesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof placesControllerPlaces>>,
+          TError,
+          Awaited<ReturnType<typeof placesControllerPlaces>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePlacesControllerPlaces<
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params?: PlacesControllerPlacesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof placesControllerPlaces>>,
+          TError,
+          Awaited<ReturnType<typeof placesControllerPlaces>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePlacesControllerPlaces<
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params?: PlacesControllerPlacesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Điểm tham quan, ăn uống, chỗ ở có toạ độ quanh một thành phố hoặc một toạ độ
+ */
+
+export function usePlacesControllerPlaces<
+  TData = Awaited<ReturnType<typeof placesControllerPlaces>>,
+  TError = void,
+>(
+  params?: PlacesControllerPlacesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof placesControllerPlaces>>, TError, TData>>;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getPlacesControllerPlacesQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -400,8 +568,9 @@ export const getExploreControllerSearchUrl = () => {
  * Một ô tìm cho app. Công khai, không cần đăng nhập. Chỉ đọc chỉ mục của discovery (dựng lại mỗi 10 phút).
  *
  * - Hiểu nơi (`đà lạt`, `sg`), ý muốn (`ks`, `ăn gì`), ngân sách (`dưới 2tr`), số ngày (`3n2đ`), tên riêng, gõ sai nhẹ, không dấu.
- * - Gõ có dấu thì tôn trọng dấu (`trứng` ≠ `Trung`). Không có gì khớp thì vùng có `total: 0`, không đoán bừa.
- * - Vùng câu muốn tìm rỗng: `suggest` là các gợi ý khác (bỏ các từ trong `dropped`).
+ * - Gõ có dấu thì tôn trọng dấu (`trứng` ≠ `Trung`). Gõ sai thì tìm cả câu gốc lẫn câu đã sửa rồi gộp kết quả.
+ * - `sections` chỉ gồm mục khớp đủ câu: đúng nơi, không vượt ngân sách, khớp từ. Vùng không có mục nào như vậy thì `total: 0`.
+ * - Vùng câu muốn tìm rỗng: `fallback` là kết quả thay thế sau khi nới điều kiện (`relaxed`: khác nơi, vượt ngân sách, bỏ từ). Không có gì liên quan thì `fallback: null`.
  * - `loc` chỉ dùng khi câu không nói nơi.
  * @summary Tìm khám phá bằng câu tự nhiên, kết quả chia theo vùng (Ở đâu, Lộ trình, Bài viết, Video...)
  */
@@ -524,9 +693,12 @@ export const getExploreControllerSearchPostsUrl = () => {
 /**
  * Cho tab tìm bài trên app và web Cảm hứng. Công khai. Cùng bộ hiểu câu và chỉ mục với `POST /api/search`.
  *
- * - `postType`: `all` (mặc định), `plan`, `video`, `post`. Video kèm lộ trình thuộc cả `plan` và `video`; với `all` chỉ trả một lần.
- * - Ngân sách trong câu là lọc cứng theo chi phí mỗi người của lộ trình. Bài bị ẩn hoặc xoá không trả về.
+ * - `postType`: `all` (mặc định), `plan`, `video`, `post`, `article`. Video kèm lộ trình thuộc cả `plan` và `video`; với `all` chỉ trả một lần. `article` = `plan` + `post` nhưng bỏ mọi video, lọc ở server nên trang luôn đủ `limit`.
+ * - `sort`: `relevance` (mặc định, liên quan nhất), `trending` (điểm `hot@v2`), `recent` (mới nhất trước). Chỉ đổi thứ tự trong tập kết quả khớp, không đổi `total` hay `isFallback`.
+ * - Mỗi bài có `likes`, `comments`, `createdAt`, `author` để hiện thẻ. Không có trạng thái đã thích/đã lưu của người xem.
+ * - Kết quả chính không bao giờ vượt ngân sách trong câu (chi phí mỗi người của lộ trình). Bài bị ẩn hoặc xoá không trả về.
  * - Phân trang: gửi `nextCursor` của trang trước vào `cursor`. Không có kết quả thì `items: []`, `total: 0`.
+ * - Không bài nào khớp đủ câu (vd "mùa thu hà nội", lộ trình vượt ngân sách): `isFallback: true`, `items` là kết quả thay thế, `fallbackRelaxed` là điều kiện đã nới, `dropped` là các từ bị bỏ.
  * @summary Tìm bài (lộ trình, video, bài viết) bằng câu tự nhiên, có phân trang
  */
 export const exploreControllerSearchPosts = async (
@@ -620,6 +792,130 @@ export const useExploreControllerSearchPosts = <TError = void, TContext = unknow
   TContext
 > => {
   return useMutation(getExploreControllerSearchPostsMutationOptions(options), queryClient);
+};
+export type exploreControllerSearchPlacesResponse200 = {
+  data: SearchPlacesResponseDto;
+  status: 200;
+};
+
+export type exploreControllerSearchPlacesResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type exploreControllerSearchPlacesResponseSuccess = exploreControllerSearchPlacesResponse200 & {
+  headers: Headers;
+};
+export type exploreControllerSearchPlacesResponseError = exploreControllerSearchPlacesResponse400 & {
+  headers: Headers;
+};
+
+export type exploreControllerSearchPlacesResponse =
+  exploreControllerSearchPlacesResponseSuccess | exploreControllerSearchPlacesResponseError;
+
+export const getExploreControllerSearchPlacesUrl = () => {
+  return `/api/search/places`;
+};
+
+/**
+ * Cho các tab riêng của trang tìm web Cảm hứng. Công khai. Cùng bộ hiểu câu và chỉ mục với `POST /api/search`.
+ *
+ * - `kind`: `stay` (khách sạn đặt được, `refId` là mã khách sạn), `see`, `food`, `cafe` (địa điểm ngoài Tripflix từ OpenStreetMap, không đặt được, có `location`).
+ * - Có điểm OpenStreetMap thì `attribution` khác null và phải hiện kèm danh sách.
+ * - Phân trang, `isFallback`, `dropped`, `fallbackRelaxed` như `POST /api/search/posts`.
+ * @summary Tìm một loại chỗ, điểm (khách sạn, điểm tham quan, quán ăn, quán nước) bằng câu tự nhiên, có phân trang
+ */
+export const exploreControllerSearchPlaces = async (
+  searchPlacesRequestDto: SearchPlacesRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<exploreControllerSearchPlacesResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<exploreControllerSearchPlacesResponse>(getExploreControllerSearchPlacesUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(searchPlacesRequestDto),
+  });
+};
+
+export const getExploreControllerSearchPlacesMutationKey = () => ['exploreControllerSearchPlaces'] as const;
+
+export const getExploreControllerSearchPlacesMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof exploreControllerSearchPlaces>>,
+    TError,
+    ExploreControllerSearchPlacesMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof exploreControllerSearchPlaces>>,
+  TError,
+  ExploreControllerSearchPlacesMutationVariables,
+  TContext
+> => {
+  const mutationKey = getExploreControllerSearchPlacesMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof exploreControllerSearchPlaces>>,
+    ExploreControllerSearchPlacesMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return exploreControllerSearchPlaces(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ExploreControllerSearchPlacesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof exploreControllerSearchPlaces>>
+>;
+export type ExploreControllerSearchPlacesMutationBody = SearchPlacesRequestDto;
+export type ExploreControllerSearchPlacesMutationError = void;
+export type ExploreControllerSearchPlacesMutationVariables = { data: SearchPlacesRequestDto };
+
+/**
+ * @summary Tìm một loại chỗ, điểm (khách sạn, điểm tham quan, quán ăn, quán nước) bằng câu tự nhiên, có phân trang
+ */
+export const useExploreControllerSearchPlaces = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof exploreControllerSearchPlaces>>,
+      TError,
+      ExploreControllerSearchPlacesMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof exploreControllerSearchPlaces>>,
+  TError,
+  ExploreControllerSearchPlacesMutationVariables,
+  TContext
+> => {
+  return useMutation(getExploreControllerSearchPlacesMutationOptions(options), queryClient);
 };
 export type homeRecommendationsControllerRecommendForHomeResponse200 = {
   data: HomeRecommendationsDto;
@@ -822,3 +1118,499 @@ export function useHomeRecommendationsControllerRecommendForHome<
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+export type postRecommendationsControllerRecommendPostsResponse200 = {
+  data: PostRecommendationsDto;
+  status: 200;
+};
+
+export type postRecommendationsControllerRecommendPostsResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type postRecommendationsControllerRecommendPostsResponseSuccess =
+  postRecommendationsControllerRecommendPostsResponse200 & {
+    headers: Headers;
+  };
+export type postRecommendationsControllerRecommendPostsResponseError =
+  postRecommendationsControllerRecommendPostsResponse400 & {
+    headers: Headers;
+  };
+
+export type postRecommendationsControllerRecommendPostsResponse =
+  | postRecommendationsControllerRecommendPostsResponseSuccess
+  | postRecommendationsControllerRecommendPostsResponseError;
+
+export const getPostRecommendationsControllerRecommendPostsUrl = (
+  params?: PostRecommendationsControllerRecommendPostsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recommendations/posts?${stringifiedParams}`
+    : `/api/recommendations/posts`;
+};
+
+/**
+ * Đăng nhập tuỳ chọn. Gu người dùng tính lại mỗi 10 phút từ cảm xúc, bình luận, chia sẻ, đơn, lượt tìm.
+ *
+ * - `for_you`: theo gu; khách (không token) nhận `trending`, xem trường `algo`.
+ * - `trending`: bài thịnh hành chung.
+ * - `has_plan`: giống `for_you` (khách nhận `trending`) nhưng chỉ lấy bài có lịch trình.
+ * - `recent`: bài mới đăng gần đây (mới nhất trước, không xếp hạng cá nhân hoá).
+ * - Không bỏ bài nào vì lịch sử người xem, chỉ hạ điểm: bài đã tương tác, bài đã gợi ý ở phiên trước (hơn 30 phút, trong 48 giờ, tối đa 100 bài), bài thứ 3 trở đi của cùng tác giả. Gọi lại cùng cursor ra cùng trang.
+ * - Người đăng nhập: bài tự đăng trong 1 giờ lên đầu feed của chính họ (`reason.code: own_post`, `source: own`); người khác thấy bài đó như bài thường.
+ * - Phân trang: gửi `nextCursor` của trang trước vào `cursor`; trang sau dùng cùng thuật toán với trang đầu.
+ * - Khoảng 5% vị trí là bài ngẫu nhiên (`source: explore`) để đo chất lượng gợi ý.
+ * @summary Gợi ý bài viết cho bạn hoặc đang thịnh hành
+ */
+export const postRecommendationsControllerRecommendPosts = async (
+  params?: PostRecommendationsControllerRecommendPostsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<postRecommendationsControllerRecommendPostsResponse> => {
+  return http<postRecommendationsControllerRecommendPostsResponse>(
+    getPostRecommendationsControllerRecommendPostsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getPostRecommendationsControllerRecommendPostsQueryKey = (
+  params?: PostRecommendationsControllerRecommendPostsParams,
+) => {
+  return [`/api/recommendations/posts`, ...(params ? [params] : [])] as const;
+};
+
+export const getPostRecommendationsControllerRecommendPostsQueryOptions = <
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPostRecommendationsControllerRecommendPostsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>> = ({
+    signal,
+  }) => postRecommendationsControllerRecommendPosts(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PostRecommendationsControllerRecommendPostsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>
+>;
+export type PostRecommendationsControllerRecommendPostsQueryError = void;
+
+export function usePostRecommendationsControllerRecommendPosts<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+  TError = void,
+>(
+  params: undefined | PostRecommendationsControllerRecommendPostsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+          TError,
+          Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePostRecommendationsControllerRecommendPosts<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+          TError,
+          Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePostRecommendationsControllerRecommendPosts<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Gợi ý bài viết cho bạn hoặc đang thịnh hành
+ */
+
+export function usePostRecommendationsControllerRecommendPosts<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendPosts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getPostRecommendationsControllerRecommendPostsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type postRecommendationsControllerRecommendReelsResponse200 = {
+  data: ReelRecommendationsDto;
+  status: 200;
+};
+
+export type postRecommendationsControllerRecommendReelsResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type postRecommendationsControllerRecommendReelsResponseSuccess =
+  postRecommendationsControllerRecommendReelsResponse200 & {
+    headers: Headers;
+  };
+export type postRecommendationsControllerRecommendReelsResponseError =
+  postRecommendationsControllerRecommendReelsResponse400 & {
+    headers: Headers;
+  };
+
+export type postRecommendationsControllerRecommendReelsResponse =
+  | postRecommendationsControllerRecommendReelsResponseSuccess
+  | postRecommendationsControllerRecommendReelsResponseError;
+
+export const getPostRecommendationsControllerRecommendReelsUrl = (
+  params?: PostRecommendationsControllerRecommendReelsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recommendations/reels?${stringifiedParams}`
+    : `/api/recommendations/reels`;
+};
+
+/**
+ * Lấy thẻ phát được từ content/feed trong cùng request.
+ *
+ * - `trending`: đúng thứ tự Hot của feed như tab "Đang hot" (FeedFacade.listTopHot, TF111), `algo: feed_hot`.
+ * - `for_you`, `has_plan`, `recent`: xếp hạng bằng discovery như `/recommendations/posts`.
+ * - `mixed`: feed Reels mặc định, cứ 4 ô thì ô thứ 4 là Hot của feed (`source: hot`), 3 ô còn lại là `for_you`; một nguồn hết thì nguồn kia lấp. Khách nhận phần `for_you` là trending của discovery.
+ * - Phân trang: gửi `nextCursor` vào `cursor`; trang sau giữ mode của trang đầu.
+ * - `fresh=true` (trang đầu, khi người xem tự tải lại): bài đã gợi ý cho người này, kể cả vừa gợi ý, bị đẩy xuống để tải lại không ra y hệt trang cũ. Mặc định chỉ bài gợi ý cách hơn 30 phút bị đẩy xuống. Bỏ qua khi có `cursor` hoặc khách.
+ * @summary Gợi ý Reels phát được (trending, for_you, has_plan, recent hoặc mixed)
+ */
+export const postRecommendationsControllerRecommendReels = async (
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<postRecommendationsControllerRecommendReelsResponse> => {
+  return http<postRecommendationsControllerRecommendReelsResponse>(
+    getPostRecommendationsControllerRecommendReelsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getPostRecommendationsControllerRecommendReelsQueryKey = (
+  params?: PostRecommendationsControllerRecommendReelsParams,
+) => {
+  return [`/api/recommendations/reels`, ...(params ? [params] : [])] as const;
+};
+
+export const getPostRecommendationsControllerRecommendReelsQueryOptions = <
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPostRecommendationsControllerRecommendReelsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>> = ({
+    signal,
+  }) => postRecommendationsControllerRecommendReels(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PostRecommendationsControllerRecommendReelsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>
+>;
+export type PostRecommendationsControllerRecommendReelsQueryError = void;
+
+export function usePostRecommendationsControllerRecommendReels<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params: undefined | PostRecommendationsControllerRecommendReelsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+          TError,
+          Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePostRecommendationsControllerRecommendReels<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+          TError,
+          Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePostRecommendationsControllerRecommendReels<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Gợi ý Reels phát được (trending, for_you, has_plan, recent hoặc mixed)
+ */
+
+export function usePostRecommendationsControllerRecommendReels<
+  TData = Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>,
+  TError = void,
+>(
+  params?: PostRecommendationsControllerRecommendReelsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof postRecommendationsControllerRecommendReels>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getPostRecommendationsControllerRecommendReelsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type tripAddonsControllerSuggestResponse200 = {
+  data: TripAddonsDto;
+  status: 200;
+};
+
+export type tripAddonsControllerSuggestResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type tripAddonsControllerSuggestResponseSuccess = tripAddonsControllerSuggestResponse200 & {
+  headers: Headers;
+};
+export type tripAddonsControllerSuggestResponseError = tripAddonsControllerSuggestResponse400 & {
+  headers: Headers;
+};
+
+export type tripAddonsControllerSuggestResponse =
+  tripAddonsControllerSuggestResponseSuccess | tripAddonsControllerSuggestResponseError;
+
+export const getTripAddonsControllerSuggestUrl = () => {
+  return `/api/recommendations/trip-addons`;
+};
+
+/**
+ * Công khai, chỉ đọc. Gọi ở màn xem lại trước khi giữ chỗ (giỏ phòng, xem lại chuyến bay) với các mục đang chọn.
+ *
+ * - Có phòng, chưa có vé: chuyến bay tới nơi của khách sạn, chiều đi ngày nhận phòng, chiều về ngày trả phòng (từ khách sạn cuối), bay từ `fromAirport` (mặc định SGN). Xếp bằng ranker `trip_flights@v0` trên hồ sơ `flight_profile@v0`. Nhóm: rẻ nhất, giờ đẹp, bay nhanh, có vé hoàn huỷ, được đặt nhiều.
+ * - Có vé, chưa có phòng: khách sạn còn phòng ở tỉnh của sân bay đến, từ ngày đi tới ngày về (vé một chiều: 2 đêm). Xếp bằng ranker `trip_stays@v0` trên hồ sơ `hotel_profile@v0` (job 10 phút). Nhóm: giá tốt, đánh giá cao, gần chỗ đi chơi, nhiều chỗ ăn chơi, đáng tiền, được đặt nhiều; mọi nhóm trừ giá tốt bỏ khách sạn vượt ngân sách (`budgetLevels`).
+ * - Mỗi nhóm có `perGroup` mục; FE hiện nhóm thành chip, mục mang nhãn lý do (`badges`).
+ * - Đủ cả hai: `missing = null`, không gợi ý.
+ * - Người dùng tích một gợi ý thì gửi nó cùng các mục cũ trong **một** `POST /checkout` (giữ chỗ chung, trả tiền một lần).
+ * @summary Gợi ý phần còn thiếu của chuyến (vé máy bay hoặc khách sạn), trước khi giữ chỗ
+ */
+export const tripAddonsControllerSuggest = async (
+  tripAddonRequestDto: TripAddonRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<tripAddonsControllerSuggestResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<tripAddonsControllerSuggestResponse>(getTripAddonsControllerSuggestUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(tripAddonRequestDto),
+  });
+};
+
+export const getTripAddonsControllerSuggestMutationKey = () => ['tripAddonsControllerSuggest'] as const;
+
+export const getTripAddonsControllerSuggestMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+    TError,
+    TripAddonsControllerSuggestMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+  TError,
+  TripAddonsControllerSuggestMutationVariables,
+  TContext
+> => {
+  const mutationKey = getTripAddonsControllerSuggestMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+    TripAddonsControllerSuggestMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return tripAddonsControllerSuggest(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TripAddonsControllerSuggestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof tripAddonsControllerSuggest>>
+>;
+export type TripAddonsControllerSuggestMutationBody = TripAddonRequestDto;
+export type TripAddonsControllerSuggestMutationError = void;
+export type TripAddonsControllerSuggestMutationVariables = { data: TripAddonRequestDto };
+
+/**
+ * @summary Gợi ý phần còn thiếu của chuyến (vé máy bay hoặc khách sạn), trước khi giữ chỗ
+ */
+export const useTripAddonsControllerSuggest = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+      TError,
+      TripAddonsControllerSuggestMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof tripAddonsControllerSuggest>>,
+  TError,
+  TripAddonsControllerSuggestMutationVariables,
+  TContext
+> => {
+  return useMutation(getTripAddonsControllerSuggestMutationOptions(options), queryClient);
+};

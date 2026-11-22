@@ -1,21 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getCollapsedCaptionLength } from '@tripflix/app-core';
+import { VerifiedTripBadge } from './verified-trip-badge';
+import { getCollapsedCaptionLength, getPostCaption, getReelScale, hasTripPlan } from '@tripflix/app-core';
 import {
   HttpError,
+  RECOMMENDED_REELS_KEY,
   REEL_FEED_TABS,
   removeUnavailablePost,
   socialApi,
   updateReelSocialCache,
   useApiSession,
 } from '@tripflix/api-client';
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -27,6 +29,8 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
+import { mobileIconSize } from '@/components/mobile-scale';
+import { AssistantTrigger } from '@/features/assistant/assistant-bubble';
 import {
   HEART_POP_SETTLE,
   HEART_POP_UP,
@@ -36,15 +40,15 @@ import {
   SNAP_SPRING,
 } from '@/components/motion';
 import { ReelCommentsPanel } from './reel-comments-panel';
+import { SEEK_BAR_ZONE } from './reel-seek-bar';
 import type { ReelItem } from './reel-types';
-import { ReportButton } from './report-button';
+import { TripPlanSheet } from './trip-plan-sheet';
+import { PostOptionsMenu } from './post-options-menu';
 
 const copy = vi.mobile.reels;
 const number = (value: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value);
-const DETAIL_HEIGHT = 32;
-const CAPTION_LINES = 2;
-const CAPTION_LINE_HEIGHT = 20;
-const CAPTION_MAX_HEIGHT = 180;
+const DETAIL_HEIGHT = 30;
+const CAPTION_LINES = 3;
 const SHOW_MORE_SUFFIX = `… ${copy.showMore}`;
 // Measured by characters, so keep a little extra room for wide letters in the removed text.
 const SHOW_MORE_RESERVED_CHARS = SHOW_MORE_SUFFIX.length + 4;
@@ -59,11 +63,24 @@ const TEXT_SHADOW = {
 const HEART_POP_SCALE = 1.25;
 const HEART_POP_LIFT = -6;
 const PRESSED_SCALE = 0.88;
+const RAIL_ACTION_SIZE = mobileLayout.touchTarget;
+// Neo cột nút vào đáy khung Reel, chừa khoảng trống ở góc dưới phải.
+const RAIL_BOTTOM = 64;
+// Kích thước icon ở chiều rộng chuẩn 390pt.
+const RAIL_ICON_SIZE = 30;
+const RAIL_ICON_WIDTH_SCALE = 1.07;
+const AUTHOR_TYPE = { fontSize: 14, lineHeight: 19 };
+const CAPTION_TYPE = { fontSize: 14, lineHeight: 20 };
+const RAIL_COUNT_TYPE = { fontSize: 12, lineHeight: 15 };
+const DETAIL_TYPE = { fontSize: 13, lineHeight: 17 };
+const AVATAR_SIZE = 26;
 
 function RailAction({
   icon,
   label,
   count,
+  iconSize,
+  iconWidthScale = RAIL_ICON_WIDTH_SCALE,
   selected = false,
   disabled = false,
   shouldPop = false,
@@ -72,6 +89,8 @@ function RailAction({
   icon: IconName;
   label: string;
   count?: number;
+  iconSize: number;
+  iconWidthScale?: number;
   selected?: boolean;
   disabled?: boolean;
   /** Nảy khi chuyển sang trạng thái chọn (thả tim). */
@@ -81,7 +100,7 @@ function RailAction({
   const scale = useSharedValue(1);
   const lift = useSharedValue(0);
   const iconStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: lift.get() }, { scale: scale.get() }],
+    transform: [{ translateY: lift.get() }, { scale: scale.get() }, { scaleX: iconWidthScale }],
   }));
   return (
     <Pressable
@@ -105,7 +124,7 @@ function RailAction({
       style={[styles.railAction, disabled && { opacity: 0.5 }]}
     >
       <Animated.View style={iconStyle}>
-        <Icon name={icon} size={34} color={selected ? colors.coral : colors.background} />
+        <Icon name={icon} size={iconSize} color={selected ? colors.coral : colors.background} />
       </Animated.View>
       {count !== undefined && (
         <Txt variant="caption" style={styles.railCount}>
@@ -122,6 +141,8 @@ export function ReelSocialOverlay({
   isSample,
   isHidden = false,
   commentsProgress,
+  viewportHeight,
+  likeRequest = 0,
   onCommentsVisibilityChange,
 }: {
   item: ReelItem;
@@ -129,14 +150,26 @@ export function ReelSocialOverlay({
   isSample: boolean;
   isHidden?: boolean;
   commentsProgress: SharedValue<number>;
+  viewportHeight: number;
+  /** Tăng lên mỗi lần nhấn đúp video: thả tim nếu chưa thả, đã thả thì giữ nguyên. */
+  likeRequest?: number;
   onCommentsVisibilityChange: (visible: boolean) => void;
 }) {
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
+  const { width, height: windowHeight } = useWindowDimensions();
+  const screenWidth = Math.min(width, mobileLayout.contentWidth);
+  // Caption mở rộng tối đa 1/3 màn hình, dài hơn thì cuộn trong khung đó.
+  const captionMaxHeight = Math.round(windowHeight / 3);
+  const [isCaptionLong, setIsCaptionLong] = useState(false);
+  const reelScale = getReelScale(Math.min(width, mobileLayout.contentWidth));
+  const railIconSize = Math.round(RAIL_ICON_SIZE * reelScale);
+  const tripiSize = Math.round(mobileIconSize.reelTripi * Math.min(1, reelScale));
   const [hasComments, setHasComments] = useState(false);
+  const [isTripPlanOpen, setIsTripPlanOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [collapsedLength, setCollapsedLength] = useState<number | null>(null);
-  const [collapsedHeight, setCollapsedHeight] = useState(CAPTION_LINES * CAPTION_LINE_HEIGHT);
+  const [collapsedHeight, setCollapsedHeight] = useState(CAPTION_LINES * CAPTION_TYPE.lineHeight);
   const [expandedContentHeight, setExpandedContentHeight] = useState(0);
   const expandedScroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const expansion = useSharedValue(0);
@@ -198,6 +231,8 @@ export function ReelSocialOverlay({
         ...REEL_FEED_TABS.map((tab) =>
           client.cancelQueries({ queryKey: ['feed', tab, user.id], exact: true }),
         ),
+        // Dành cho bạn của người đăng nhập đọc từ discovery: trang đang tải về sau không được đè tim vừa bấm.
+        client.cancelQueries({ queryKey: [...RECOMMENDED_REELS_KEY, 'mixed', user.id], exact: true }),
         client.cancelQueries({ queryKey: ['social', 'post', postId, user.id], exact: true }),
       ]);
       return updateReelSocialCache(client, user.id, postId, action.type, !!action.selected);
@@ -226,6 +261,12 @@ export function ReelSocialOverlay({
     if (mutation.isPending) return;
     mutation.mutate({ type: action, selected: action === 'like' ? !isLiked : !isSaved });
   };
+  const handledLikeRequest = useRef(likeRequest);
+  useEffect(() => {
+    if (likeRequest === handledLikeRequest.current) return;
+    handledLikeRequest.current = likeRequest;
+    if (!isLiked) interact('like');
+  });
   const closeComments = () => {
     setHasComments(false);
   };
@@ -237,11 +278,25 @@ export function ReelSocialOverlay({
   }, [hasComments, onCommentsVisibilityChange]);
   const author = isSample ? copy.sampleAuthor : item.social?.author.name || vi.api.author;
   const title = isSample ? copy.sample : item.title;
+  const tripAttachment = detail.data?.post.tripAttachment;
+  const tripPlan = !isSample && tripAttachment && hasTripPlan(tripAttachment) ? tripAttachment : null;
   const caption = isSample ? copy.sampleCaption : item.body;
-  const fullCaption = caption ? `${title} · ${caption}` : title;
+  // Bài chỉ có caption: không tách tiêu đề in đậm.
+  const captionText = isSample ? `${title} · ${caption}` : getPostCaption(item.title, caption);
+  // Feed chỉ có caption; dùng hashtag từ chi tiết bài đã tải cho reel đang xem.
+  const includedTags = new Set((captionText.match(/#[\p{L}\p{M}\p{N}_]+/gu) ?? []).map((tag) => tag.toLowerCase()));
+  const extraTags = (isSample ? [] : detail.data?.post.hashtags ?? []).flatMap((tag) => {
+    const name = tag.trim().replace(/^#+/, '');
+    const hashtag = `#${name}`;
+    const key = hashtag.toLowerCase();
+    if (!name || includedTags.has(key)) return [];
+    includedTags.add(key);
+    return [hashtag];
+  });
+  const fullCaption = [captionText, extraTags.join(' ')].filter(Boolean).join('\n');
   const visibleCaption =
     collapsedLength === null ? fullCaption : fullCaption.slice(0, collapsedLength).trimEnd();
-  const expandedHeight = Math.min(CAPTION_MAX_HEIGHT, Math.max(collapsedHeight, expandedContentHeight));
+  const expandedHeight = Math.min(captionMaxHeight, Math.max(collapsedHeight, expandedContentHeight));
   const toggleExpanded = (shouldExpand: boolean) => {
     setIsExpanded(shouldExpand);
     if (!shouldExpand) expandedScroll.current?.scrollTo({ y: 0, animated: true });
@@ -276,13 +331,17 @@ export function ReelSocialOverlay({
       </Animated.View>
       <Animated.View
         style={[styles.rail, chromeStyle]}
-        pointerEvents={isHidden ? 'none' : 'auto'}
-        accessibilityElementsHidden={isHidden}
-        aria-hidden={isHidden}
-        importantForAccessibility={isHidden ? 'no-hide-descendants' : 'auto'}
+        pointerEvents={isHidden || hasComments ? 'none' : 'auto'}
+        accessibilityElementsHidden={isHidden || hasComments}
+        aria-hidden={isHidden || hasComments}
+        importantForAccessibility={isHidden || hasComments ? 'no-hide-descendants' : 'auto'}
       >
+        <View style={styles.tripi}>
+          <AssistantTrigger size={tripiSize} postId={postId} />
+        </View>
         <RailAction
-          icon={isLiked ? 'heart' : 'heart-outline'}
+          icon="heart"
+          iconSize={railIconSize}
           label={isLiked ? vi.api.unlike : vi.api.like}
           count={counts.likes}
           selected={isLiked}
@@ -290,7 +349,8 @@ export function ReelSocialOverlay({
           onPress={() => interact('like')}
         />
         <RailAction
-          icon="chatbubble-ellipses-outline"
+          icon="chatbubble-ellipses"
+          iconSize={railIconSize}
           label={vi.api.comments}
           count={counts.comments}
           onPress={() => {
@@ -298,14 +358,17 @@ export function ReelSocialOverlay({
           }}
         />
         <RailAction
-          icon={isSaved ? 'bookmark' : 'bookmark-outline'}
+          icon="bookmark"
+          iconSize={railIconSize}
           label={isSaved ? vi.api.unbookmark : vi.api.bookmark}
           count={counts.saves}
           selected={isSaved}
           onPress={() => interact('save')}
         />
         <RailAction
-          icon="paper-plane-outline"
+          icon="arrow-redo"
+          iconSize={railIconSize}
+          iconWidthScale={1}
           label={vi.api.share}
           count={counts.shares}
           // Không làm mờ nút khi tim, lưu đang gửi; chỉ bỏ qua lần bấm lúc đó.
@@ -313,17 +376,11 @@ export function ReelSocialOverlay({
             if (!mutation.isPending) mutation.mutate({ type: 'share' });
           }}
         />
-        {/* Cuối cột như TikTok: hành động ít dùng, không lẫn với tim, bình luận. */}
-        {!isSample && postId && (
-          <ReportButton
-            targetType="post"
-            targetId={postId}
-            trigger={(open) => <RailAction icon="flag-outline" label={vi.moderation.reportTitle} onPress={open} />}
-          />
-        )}
+        {postId && item.social && <PostOptionsMenu postId={postId} authorId={item.social.author.id}
+          trigger={open => <RailAction icon="ellipsis-horizontal" iconSize={railIconSize} label={vi.api.postMoreOptions} onPress={open} />} />}
       </Animated.View>
       <Animated.View
-        style={[styles.caption, chromeStyle]}
+        style={[styles.caption, { width: Math.round(screenWidth * 0.75) - spacing.md }, chromeStyle]}
         pointerEvents={isHidden ? 'none' : 'box-none'}
         accessibilityElementsHidden={isHidden}
         aria-hidden={isHidden}
@@ -334,18 +391,27 @@ export function ReelSocialOverlay({
             {copy.sample}
           </Txt>
         )}
-        <View style={styles.authorRow}>
+        <Pressable
+          style={styles.authorRow}
+          disabled={isSample || !item.social}
+          accessibilityRole="link"
+          accessibilityLabel={t('api.profileOpen', { name: author })}
+          onPress={() =>
+            item.social && router.push({ pathname: '/user/[id]', params: { id: item.social.author.id } })
+          }
+        >
           {item.social?.author.avatarUrl ? (
             <Image source={item.social.author.avatarUrl} style={styles.avatar} />
           ) : (
             <View style={styles.avatar}>
-              <Icon name="person-outline" color={colors.background} size={18} />
+              <Icon name="person-outline" color={colors.background} size={14} />
             </View>
           )}
           <Txt variant="label" style={styles.author} numberOfLines={1}>
             {author}
           </Txt>
-        </View>
+          {!!item.social?.isVerified && <VerifiedTripBadge />}
+        </Pressable>
         {/* Lays out the full text unseen: RN cannot place inline text after its own truncation. */}
         <View
           style={styles.captionMeasure}
@@ -355,6 +421,21 @@ export function ReelSocialOverlay({
         >
           <Txt
             style={styles.captionBody}
+            // Web không có onTextLayout: đo chiều cao để biết caption dài hơn 2 dòng.
+            onLayout={({ nativeEvent }) => {
+              const lines = Math.round(nativeEvent.layout.height / CAPTION_TYPE.lineHeight);
+              setIsCaptionLong(lines > CAPTION_LINES);
+              // shortcut: web ước lượng chỗ cắt theo số ký tự mỗi dòng; native đo đúng bằng onTextLayout.
+              if (Platform.OS === 'web')
+                setCollapsedLength(
+                  lines > CAPTION_LINES
+                    ? Math.max(
+                        0,
+                        Math.floor((fullCaption.length * CAPTION_LINES) / lines) - SHOW_MORE_RESERVED_CHARS,
+                      )
+                    : null,
+                );
+            }}
             onTextLayout={({ nativeEvent }) =>
               setCollapsedLength(
                 getCollapsedCaptionLength(
@@ -365,8 +446,7 @@ export function ReelSocialOverlay({
               )
             }
           >
-            <Txt style={styles.captionTitle}>{title}</Txt>
-            {fullCaption.slice(title.length)}
+            {fullCaption}
           </Txt>
         </View>
         <Animated.View style={[styles.captionText, captionTextStyle]}>
@@ -378,15 +458,14 @@ export function ReelSocialOverlay({
             onLayout={({ nativeEvent }) => setCollapsedHeight(nativeEvent.layout.height)}
           >
             <Pressable
-              accessibilityRole={collapsedLength === null ? undefined : 'button'}
-              accessibilityState={collapsedLength === null ? undefined : { expanded: false }}
-              disabled={collapsedLength === null}
+              accessibilityRole={isCaptionLong ? 'button' : undefined}
+              accessibilityState={isCaptionLong ? { expanded: false } : undefined}
+              disabled={!isCaptionLong}
               onPress={() => toggleExpanded(true)}
               style={({ pressed }) => pressed && styles.captionPressed}
             >
               <Txt style={styles.captionBody} numberOfLines={CAPTION_LINES}>
-                <Txt style={styles.captionTitle}>{visibleCaption.slice(0, title.length)}</Txt>
-                {visibleCaption.slice(title.length)}
+                {visibleCaption}
                 {collapsedLength !== null && <Txt style={styles.captionTitle}>{SHOW_MORE_SUFFIX}</Txt>}
               </Txt>
             </Pressable>
@@ -400,7 +479,7 @@ export function ReelSocialOverlay({
             <ScrollView
               ref={expandedScroll}
               nestedScrollEnabled
-              scrollEnabled={expandedContentHeight > CAPTION_MAX_HEIGHT}
+              scrollEnabled={expandedContentHeight > captionMaxHeight}
               onContentSizeChange={(_width, contentHeight) => setExpandedContentHeight(contentHeight)}
             >
               <Pressable
@@ -410,25 +489,25 @@ export function ReelSocialOverlay({
                 style={({ pressed }) => pressed && styles.captionPressed}
               >
                 <Txt style={styles.captionBody}>
-                  <Txt style={styles.captionTitle}>{title}</Txt>
-                  {`${fullCaption.slice(title.length)} `}
+                  {`${fullCaption} `}
                   <Txt style={styles.captionTitle}>{copy.showLess}</Txt>
                 </Txt>
               </Pressable>
             </ScrollView>
           </Animated.View>
         </Animated.View>
-        {postId && (
+        {/* Chỉ bài người đăng có chia sẻ lộ trình mới có nút: mở lộ trình để đặt y chang. */}
+        {postId && tripPlan && (
           <Pressable
             style={styles.detail}
             accessibilityRole="button"
             hitSlop={{ top: DETAIL_HIT_SLOP, bottom: DETAIL_HIT_SLOP }}
-            onPress={() => router.push({ pathname: '/trip/[slug]', params: { slug: postId } })}
+            onPress={() => setIsTripPlanOpen(true)}
           >
+            <Icon name="location-outline" size={15} color={colors.coralInk} />
             <Txt variant="label" style={styles.detailText}>
-              {copy.detail}
+              {vi.mobile.tripPlan.view}
             </Txt>
-            <Icon name="arrow-forward" size={16} color={colors.background} />
           </Pressable>
         )}
         {!!mutation.error && (
@@ -447,10 +526,30 @@ export function ReelSocialOverlay({
           </Pressable>
         )}
       </Animated.View>
+      {postId && tripPlan && (
+        <TripPlanSheet
+          visible={isTripPlanOpen}
+          onClose={() => setIsTripPlanOpen(false)}
+          postId={postId}
+          postTitle={title}
+          authorName={author}
+          coverUrl={
+            tripPlan.posterUrl ||
+            item.playback.posters.w540 ||
+            item.playback.posters.w360 ||
+            item.playback.posters.w720
+          }
+          trip={tripPlan}
+        />
+      )}
       <ReelCommentsPanel
+        inline
+        viewportHeight={viewportHeight}
         visible={hasComments}
         openProgress={commentsProgress}
         postId={postId}
+        commentCount={counts.comments}
+        showSummary
         draft={draft}
         onDraftChange={setDraft}
         comments={sampleComments}
@@ -473,11 +572,10 @@ const styles = StyleSheet.create({
   captionTitle: {
     color: colors.background,
     fontFamily: nativeFonts.semibold,
-    fontSize: 14,
-    lineHeight: CAPTION_LINE_HEIGHT,
+    ...CAPTION_TYPE,
     ...TEXT_SHADOW,
   },
-  captionBody: { color: colors.background, fontSize: 14, lineHeight: CAPTION_LINE_HEIGHT, ...TEXT_SHADOW },
+  captionBody: { color: colors.background, ...CAPTION_TYPE, ...TEXT_SHADOW },
   captionText: { overflow: 'hidden' },
   collapsedLayer: { position: 'absolute', top: 0, left: 0, right: 0 },
   captionPressed: { opacity: 0.7 },
@@ -485,30 +583,42 @@ const styles = StyleSheet.create({
   rail: {
     position: 'absolute',
     right: spacing.sm,
-    bottom: spacing.md,
+    bottom: RAIL_BOTTOM,
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
-  railCount: { color: colors.background, fontFamily: nativeFonts.semibold, ...TEXT_SHADOW },
+  tripi: { marginBottom: spacing.lg },
+  railCount: {
+    color: colors.background,
+    ...RAIL_COUNT_TYPE,
+    fontFamily: nativeFonts.semibold,
+    ...TEXT_SHADOW,
+  },
   railAction: {
-    minWidth: 52,
-    minHeight: 52,
+    minWidth: RAIL_ACTION_SIZE,
+    minHeight: RAIL_ACTION_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
+    gap: 2,
   },
   caption: {
     position: 'absolute',
-    left: spacing.lg,
-    right: 72,
-    bottom: spacing.md,
+    left: spacing.md,
+    // Chừa vùng thanh tua ở đáy reel.
+    bottom: spacing.md + SEEK_BAR_ZONE,
     gap: spacing.xs,
   },
-  authorRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
-  author: { flex: 1, color: colors.background, ...TEXT_SHADOW },
+  authorRow: { flexDirection: 'row', gap: spacing.xs, alignItems: 'center' },
+  author: {
+    flex: 1,
+    color: colors.background,
+    fontFamily: nativeFonts.semibold,
+    ...AUTHOR_TYPE,
+    ...TEXT_SHADOW,
+  },
   avatar: {
-    width: 32,
-    height: 32,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.background,
@@ -526,15 +636,13 @@ const styles = StyleSheet.create({
   },
   detail: {
     alignSelf: 'flex-start',
-    height: DETAIL_HEIGHT,
-    marginTop: spacing.xs,
+    minHeight: DETAIL_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
-    // Màu cam chính của brand: đây là lời mời bấm vào xem bài, nổi bật trên video.
-    backgroundColor: colors.coral,
-    borderRadius: radius.md,
+    backgroundColor: colors.warmMist,
+    borderRadius: radius.pill,
   },
-  detailText: { color: colors.background, flexShrink: 1 },
+  detailText: { color: colors.ink, flexShrink: 1, fontFamily: nativeFonts.semibold, ...DETAIL_TYPE },
 });

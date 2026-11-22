@@ -29,6 +29,7 @@ import { FlightIcon } from './flight-icon';
 import { formatPassengerMix } from './passenger-picker';
 import { toAirportOption } from './flight-search-form';
 import styles from './flights.module.css';
+import { BusyLabel, LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.flights;
 const SORT_OPTIONS = [
@@ -99,6 +100,7 @@ function AirlineLogo({ code, airline }: { code: string | null; airline: string |
   if (logo) {
     return (
       <span className={styles.airlineLogo} aria-hidden="true">
+        {/* Logo SVG cục bộ: Next không tối ưu SVG nên giữ unoptimized. */}
         <Image src={logo} alt="" width={120} height={32} unoptimized />
       </span>
     );
@@ -440,8 +442,7 @@ function RoundTripSummary({
         .filter(Boolean)
         .join(' · ')
     : isReturnStep
-      ? vi.api.loading
-      : copy.notChosenYet;
+      ? <LoadingDots /> : copy.notChosenYet;
 
   return (
     <section className={styles.roundSummary} aria-label={copy.roundTrip}>
@@ -920,7 +921,7 @@ export function FlightCard({
                   disabled={isLocked || !canBook}
                   onClick={() => fare && onHold(cabin.productId, fare.code)}
                 >
-                  {isHolding ? vi.api.loading : chooseLabel}
+                  <BusyLabel isBusy={isHolding}>{chooseLabel}</BusyLabel>
                 </button>
               )}
               {canBook && cabin.remaining != null && (

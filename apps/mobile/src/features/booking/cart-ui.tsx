@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { createCheckoutOperation, useApiSession } from '@tripflix/api-client';
+import { createCheckoutOperation, useApiSession, type TripAddonRequest } from '@tripflix/api-client';
 import {
   calculateBookingCartChildDiscount,
   calculateBookingCartTotal,
@@ -15,12 +15,26 @@ import {
   setBookingCartItemQty,
   type BookingCart,
 } from '@tripflix/app-core';
-import { vi } from '@tripflix/i18n';
-import { colors, radius, spacing } from '@tripflix/tokens';
+import { t, vi } from '@tripflix/i18n';
+import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
-import { Pressable, View } from 'react-native';
-import { Badge, Button, Card, formatDate, Icon, money, Notice, PriceRow, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { Pressable, StyleSheet, View } from 'react-native';
+import {
+  Button,
+  Card,
+  formatDate,
+  Icon,
+  money,
+  Notice,
+  PriceRow,
+  Row,
+  Screen,
+  Txt,
+  ui,
+} from '@/components/mobile-ui';
+import { CartLineIssue, useBookingCartCheck } from './cart-check';
 import { CommerceError } from './commerce-state';
+import { NO_ADDON_PICKS, TripAddonsSection, type TripAddonPicks } from './trip-addons-section';
 import { saveBookingCart, saveBookingSelection, useBookingCart, useBookingSelection } from './cart-store';
 
 const text = vi.commerce;
@@ -46,18 +60,18 @@ export function Stepper({
       accessibilityRole="button"
       accessibilityLabel={`${sign === '+' ? vi.hotel.increaseGuests : vi.hotel.decreaseGuests} ${label}`}
       disabled={!isEnabled}
+      accessibilityState={{ disabled: !isEnabled }}
       onPress={() => onChange(next)}
       style={{
-        width: 34,
-        height: 34,
-        borderRadius: radius.pill,
-        borderWidth: 1,
-        borderColor: isEnabled ? colors.ink : colors.border,
+        width: 44,
+        height: 44,
+        borderRadius: radius.sm,
+        backgroundColor: colors.surfaceMuted,
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Txt variant="label" style={{ color: isEnabled ? colors.ink : colors.textSubtle }}>
+      <Txt style={{ color: isEnabled ? colors.navy : colors.textSubtle, fontSize: 18, lineHeight: 26 }}>
         {sign}
       </Txt>
     </Pressable>
@@ -65,7 +79,15 @@ export function Stepper({
   return (
     <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
       {button('−', canDecrease, value - 1)}
-      <Txt variant="label" style={{ minWidth: unit ? 56 : 20, textAlign: 'center' }}>
+      <Txt
+        style={{
+          minWidth: unit ? 56 : 20,
+          textAlign: 'center',
+          fontSize: 14,
+          lineHeight: 23,
+          fontFamily: nativeFonts.semibold,
+        }}
+      >
         {value}
         {unit ? ` ${unit}` : ''}
       </Txt>
@@ -85,13 +107,33 @@ export function CartWarnings({ cart }: { cart: BookingCart }) {
   ));
 }
 
-/** Giữ chỗ các phòng truyền vào, xoá chúng khỏi nơi lưu rồi sang thanh toán. */
-function useHoldCart(cart: BookingCart, saveCart: (cart: BookingCart) => void) {
+/**
+ * Giữ chỗ các phòng truyền vào cùng vé chọn từ gợi ý (TF39) trong một đơn, xoá giỏ rồi sang thanh toán.
+ * Không nhét thêm vé vào đơn đã giữ được, nên vé gợi ý phải đi chung lần POST /checkout này.
+ */
+function useHoldCart(
+  cart: BookingCart,
+  saveCart: (cart: BookingCart) => void,
+  addonFlights: readonly { productId: string; ratePlanCode: string; date: string }[] = [],
+) {
   // Giữ một operation để bấm lại sau lỗi mạng gửi đúng Idempotency-Key cũ.
   const [createCheckout] = useState(createCheckoutOperation);
   return useMutation({
     retry: false,
-    mutationFn: () => createCheckout(createBookingCartRequest(cart)),
+    mutationFn: () => {
+      const request = createBookingCartRequest(cart);
+      return createCheckout({
+        ...request,
+        items: [
+          ...request.items,
+          ...addonFlights.map((flight) => ({
+            productId: flight.productId,
+            checkIn: flight.date,
+            ratePlanCode: flight.ratePlanCode,
+          })),
+        ],
+      });
+    },
     onSuccess: (order) => {
       saveCart(EMPTY_BOOKING_CART);
       router.push({ pathname: '/checkout', params: { id: order.orderId } });
@@ -191,7 +233,9 @@ export function SelectionBar({ returnTo }: { returnTo: string }) {
   const isBlocked = findUnderCapacityStays(selection).length > 0;
   return (
     <View style={{ gap: spacing.sm }}>
-      <Row style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
+      <Row
+        style={{ justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: spacing.sm }}
+      >
         <Txt variant="small" style={ui.muted}>
           {roomCount} {text.cartRooms} · {text.cartSubtotal}
         </Txt>
@@ -214,6 +258,7 @@ export function SelectionBar({ returnTo }: { returnTo: string }) {
       <Row style={{ gap: spacing.sm }}>
         <Button
           tone="text"
+          style={cartStyles.secondaryAction}
           onPress={() => {
             saveBookingSelection(EMPTY_BOOKING_CART);
             setNotice('');
@@ -221,26 +266,26 @@ export function SelectionBar({ returnTo }: { returnTo: string }) {
         >
           {text.cartClearSelection}
         </Button>
-        <Button tone="secondary" disabled={isBlocked} onPress={addToCart} style={{ flex: 1 }}>
+        <Button tone="secondary" disabled={isBlocked} onPress={addToCart} style={cartStyles.secondaryAction}>
           {text.cartAdd}
         </Button>
-        {isReady && !user ? (
-          <Button
-            style={{ flex: 1 }}
-            onPress={() => router.push({ pathname: '/login', params: { returnTo } })}
-          >
-            {text.login}
-          </Button>
-        ) : (
-          <Button
-            style={{ flex: 1 }}
-            disabled={!isReady || hold.isPending || isBlocked}
-            onPress={() => hold.mutate()}
-          >
-            {hold.isPending ? vi.api.loading : text.cartBook}
-          </Button>
-        )}
       </Row>
+      {isReady && !user ? (
+        <Button
+          style={cartStyles.primaryAction}
+          onPress={() => router.push({ pathname: '/login', params: { returnTo } })}
+        >
+          {text.login}
+        </Button>
+      ) : (
+        <Button
+          style={cartStyles.primaryAction}
+          disabled={!isReady || hold.isPending || isBlocked}
+          onPress={() => hold.mutate()}
+        >
+          {hold.isPending ? vi.api.loading : text.cartBook}
+        </Button>
+      )}
     </View>
   );
 }
@@ -249,28 +294,60 @@ export function SelectionBar({ returnTo }: { returnTo: string }) {
 export function CartScreen() {
   const cart = useBookingCart();
   const { user, isReady } = useApiSession();
-  const hold = useHoldCart(cart, saveBookingCart);
+  // Gợi ý vé khứ hồi cho các phòng trong giỏ (TF39), chọn thì giữ chỗ chung một đơn.
+  const [addonFrom, setAddonFrom] = useState<string | null>(null);
+  const addonRequest: TripAddonRequest | null = cart.items.length
+    ? {
+        items: cart.items.map((line) => ({
+          type: 'hotel' as const,
+          hotelId: line.propertyId,
+          checkIn: line.checkIn,
+          checkOut: line.checkOut,
+        })),
+        adults: cart.adults,
+        ...(addonFrom ? { fromAirport: addonFrom } : {}),
+      }
+    : null;
+  const addonKey = JSON.stringify(addonRequest);
+  const [addonState, setAddonState] = useState<{ key: string; picks: TripAddonPicks }>({
+    key: addonKey,
+    picks: NO_ADDON_PICKS,
+  });
+  const addonPicks = addonState.key === addonKey ? addonState.picks : NO_ADDON_PICKS;
+  const addonFlights = [addonPicks.outbound, addonPicks.inbound].flatMap((flight) =>
+    flight ? [flight] : [],
+  );
+  const addonTotal = addonFlights.reduce((sum, flight) => sum + flight.totalPrice, 0);
+  const hold = useHoldCart(cart, saveBookingCart, addonFlights);
+  const check = useBookingCartCheck(cart, hold.error);
   if (!cart.items.length)
     return (
       <Screen title={text.cartTitle}>
         <Notice>{text.cartEmpty}</Notice>
-        <Button onPress={() => router.push('/search')}>{text.findHotel}</Button>
+        <Button onPress={() => router.navigate('/(tabs)/explore')}>{text.findHotel}</Button>
       </Screen>
     );
   const discount = calculateBookingCartChildDiscount(cart);
   const lineTotals = listBookingCartLineTotals(cart);
-  const isBlocked = findUnderCapacityStays(cart).length > 0;
+  const hasIssues = check.issues.size > 0;
+  const isBlocked = findUnderCapacityStays(cart).length > 0 || hasIssues;
   return (
     <Screen
       title={text.cartTitle}
       footer={
         <>
           {discount > 0 && <PriceRow label={text.cartChildSurcharge} amount={money(discount)} />}
-          <PriceRow total label={text.cartSubtotal} amount={money(calculateBookingCartTotal(cart))} />
-          <CartWarnings cart={cart} />
-          <CommerceError error={hold.error} />
+          {addonTotal > 0 && (
+            <PriceRow label={vi.mobile.tripAddons.flightsLabel} amount={money(addonTotal)} />
+          )}
+          <PriceRow
+            total
+            label={text.cartSubtotal}
+            amount={money(calculateBookingCartTotal(cart) + addonTotal)}
+          />
           {isReady && !user ? (
             <Button
+              style={cartStyles.primaryAction}
               icon="arrow-forward"
               onPress={() => router.push({ pathname: '/login', params: { returnTo: '/cart' } })}
             >
@@ -278,6 +355,7 @@ export function CartScreen() {
             </Button>
           ) : (
             <Button
+              style={cartStyles.primaryAction}
               icon="arrow-forward"
               disabled={!isReady || hold.isPending || isBlocked}
               onPress={() => hold.mutate()}
@@ -291,17 +369,43 @@ export function CartScreen() {
       <Txt variant="small" style={ui.muted}>
         {countBookingCartGuests(cart)} {text.guests} · {text.cartNoHold}
       </Txt>
+      {check.isChecking && (
+        <Txt variant="small" style={ui.muted}>
+          {text.cartChecking}
+        </Txt>
+      )}
       {cart.items.map((line, lineIndex) => {
         const key = getBookingCartItemKey(line);
         const setQty = (qty: number) => saveBookingCart(setBookingCartItemQty(cart, key, qty));
+        const issue = check.issues.get(key);
         return (
-          <Card key={key}>
-            <Badge icon="bed-outline">{line.propertyName}</Badge>
-            <Txt variant="heading">{line.roomName}</Txt>
-            <Txt variant="small" style={ui.muted}>
-              {line.ratePlanName} · {formatDate(line.checkIn)} → {formatDate(line.checkOut)}
-            </Txt>
-            <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <Card key={key} style={cartStyles.card}>
+            <Txt style={cartStyles.property}>{line.propertyName}</Txt>
+            <Txt style={cartStyles.room}>{line.roomName}</Txt>
+            <Txt style={cartStyles.secondary}>{line.ratePlanName}</Txt>
+            <Row style={cartStyles.dates}>
+              <View style={cartStyles.date}>
+                <Txt style={cartStyles.secondary}>{vi.hotel.checkIn}</Txt>
+                <Txt style={cartStyles.dateValue}>{formatDate(line.checkIn)}</Txt>
+              </View>
+              <View style={cartStyles.date}>
+                <Txt style={cartStyles.secondary}>{vi.hotel.checkOut}</Txt>
+                <Txt style={cartStyles.dateValue}>{formatDate(line.checkOut)}</Txt>
+              </View>
+            </Row>
+            <View style={{ gap: spacing.xs }}>
+              <Txt style={cartStyles.secondary}>
+                {t('commerce.cartLinePeriod', {
+                  rooms: line.qty,
+                  nights: Math.max(
+                    1,
+                    Math.round((Date.parse(line.checkOut) - Date.parse(line.checkIn)) / 86400000),
+                  ),
+                })}
+              </Txt>
+              <Txt style={cartStyles.price}>{money(lineTotals[lineIndex] ?? 0)}</Txt>
+            </View>
+            <Row style={cartStyles.controls}>
               <Stepper
                 value={line.qty}
                 label={line.roomName}
@@ -310,14 +414,66 @@ export function CartScreen() {
                 canIncrease={line.qty < line.maxQty}
                 onChange={setQty}
               />
-              <Txt variant="heading">{money(lineTotals[lineIndex] ?? 0)}</Txt>
+              {!issue && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${text.cartRemove} ${line.roomName}`}
+                  onPress={() => setQty(0)}
+                  style={({ pressed }) => [cartStyles.remove, pressed && { opacity: 0.7 }]}
+                >
+                  <Icon name="trash-outline" size={18} color={colors.textMuted} />
+                  <Txt style={cartStyles.secondary}>{text.cartRemove}</Txt>
+                </Pressable>
+              )}
             </Row>
-            <Button tone="text" onPress={() => setQty(0)}>
-              {text.cartRemove}
-            </Button>
+            {issue ? (
+              <CartLineIssue
+                cart={cart}
+                line={line}
+                issue={issue}
+                provinceSlug={check.provinceByProperty.get(line.propertyId)}
+              />
+            ) : null}
           </Card>
         );
       })}
+      {/* Gợi ý vé khứ hồi trước khi giữ chỗ (TF39); vé chọn được giữ chung đơn với các phòng. */}
+      <TripAddonsSection
+        request={addonRequest}
+        picks={addonPicks}
+        onChangePicks={(picks) => setAddonState({ key: addonKey, picks })}
+        onChangeFrom={setAddonFrom}
+      />
+      {/* Cảnh báo và lỗi nằm trong phần cuộn để thanh đáy chỉ còn tổng tiền và nút đặt, không che nửa màn hình. */}
+      <CartWarnings cart={cart} />
+      {hasIssues ? <Notice tone="error">{text.cartFixIssues}</Notice> : <CommerceError error={hold.error} />}
     </Screen>
   );
 }
+
+const cartStyles = StyleSheet.create({
+  primaryAction: { borderRadius: radius.sm, backgroundColor: colors.coralInk, minHeight: 52 },
+  secondaryAction: { borderRadius: radius.sm, minHeight: 44, flex: 1 },
+  card: {
+    borderRadius: radius.md,
+    borderWidth: 0,
+    padding: spacing.lg,
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+  },
+  property: { fontSize: 18, lineHeight: 28, fontFamily: nativeFonts.semibold, color: colors.navy },
+  room: { fontSize: 15, lineHeight: 24, fontFamily: nativeFonts.medium, color: colors.navy },
+  secondary: { fontSize: 13, lineHeight: 22, color: colors.textMuted },
+  dates: { gap: spacing.md, flexWrap: 'wrap' },
+  date: { flexGrow: 1, flexBasis: 120, gap: spacing.xs },
+  dateValue: { fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.medium, color: colors.navy },
+  price: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy },
+  controls: { justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
+  remove: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
+  },
+});

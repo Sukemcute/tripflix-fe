@@ -4,9 +4,15 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { FeedControllerGetFeedSaved } from './feedControllerGetFeedSaved';
 import type { FeedControllerGetFeedTab } from './feedControllerGetFeedTab';
 
 export type FeedControllerGetFeedParams = {
+  /** Lấy thẻ của đúng các bài này (uuid cách nhau bởi dấu phẩy, tối đa 20), theo đúng thứ tự truyền vào. Bài ẩn, riêng tư, đã xoá, không phải Reels hoặc video chưa xử lý xong thì bỏ qua. Bỏ qua tab và limit, nextCursor luôn null; không dùng chung với cursor, saved, author_id */
+  post_ids?: string;
+  /** true: chỉ Reels người xem đã lưu, mới nhất trước. Cần đăng nhập, chỉ dùng với tab for_you */
+  saved?: FeedControllerGetFeedSaved;
+  author_id?: string;
   cursor?: string;
   /** Tối đa 20 */
   limit?: number;

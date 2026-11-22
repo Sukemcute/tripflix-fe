@@ -1,0 +1,214 @@
+/* ==========================================================================
+   TORN PAPER & TRAVEL JOURNAL VECTOR EFFECTS (UI/UX PRO MAX)
+   Hiệu ứng mép giấy xé tay thủ công kết hợp phong cách Travel Scrapbook
+   ========================================================================== */
+
+.tornPaperWrapper {
+  position: relative;
+  width: 100%;
+  pointer-events: none;
+  user-select: none;
+  z-index: 5;
+  line-height: 0;
+  overflow: hidden;
+}
+
+.tornSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 1. Mép xé giấy đáy Hero -> Thân trang (Hero to Canvas) */
+.heroDivider {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: clamp(48px, 6vw, 96px);
+  z-index: 3;
+}
+
+.heroDivider .tornSvg {
+  height: 100%;
+}
+
+/* 2. Mép xé giấy đầu dải Vé (Stay Top Divider) */
+.stayTopDivider {
+  position: relative;
+  margin-top: -1px;
+  height: clamp(36px, 4vw, 68px);
+  z-index: 4;
+}
+
+.stayTopDivider .tornSvg {
+  height: 100%;
+}
+
+/* 3. Mép xé giấy cuối dải Vé (Stay Bottom Divider) */
+.stayBottomDivider {
+  position: relative;
+  margin-bottom: -1px;
+  height: clamp(36px, 4vw, 68px);
+  z-index: 4;
+}
+
+.stayBottomDivider .tornSvg {
+  height: 100%;
+}
+
+/* 4. Mép xé chuyển tiếp Footer */
+.footerDivider {
+  position: relative;
+  margin-bottom: -1px;
+  height: clamp(32px, 3.5vw, 60px);
+  z-index: 2;
+}
+
+.footerDivider .tornSvg {
+  height: 100%;
+}
+
+.flipped {
+  transform: rotate(180deg);
+}
+
+/* ==========================================================================
+   HOA VĂN ĐỊA HÌNH VECTOR (TOPOGRAPHIC ELEVATION CONTOURS)
+   ========================================================================== */
+.topoWrapper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden;
+  z-index: 0;
+  color: var(--color-teal-ink, #006C63);
+}
+
+.topoSvg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ==========================================================================
+   BĂNG KEO WASHI TAPE PHONG CÁCH SCRAPBOOK
+   ========================================================================== */
+.washiTape {
+  position: absolute;
+  width: clamp(54px, 5vw, 84px);
+  height: clamp(16px, 1.4vw, 24px);
+  z-index: 6;
+  pointer-events: none;
+  user-select: none;
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  opacity: 0.88;
+}
+
+/* Răng cưa 2 đầu băng keo washi */
+.washiTape::before,
+.washiTape::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background-size: 5px 6px;
+  background-repeat: repeat-y;
+}
+
+.washiTape::before {
+  left: -4px;
+  background-image: radial-gradient(circle at 0 3px, transparent 2px, currentColor 2.5px);
+}
+
+.washiTape::after {
+  right: -4px;
+  background-image: radial-gradient(circle at 5px 3px, transparent 2px, currentColor 2.5px);
+}
+
+.tapeGold {
+  background: color-mix(in srgb, var(--color-sun, #FFC531) 75%, transparent);
+  color: color-mix(in srgb, var(--color-sun, #FFC531) 75%, transparent);
+  border-block: 1px dashed rgba(255, 255, 255, 0.5);
+}
+
+.tapeCoral {
+  background: color-mix(in srgb, var(--color-coral, #FF5A3C) 75%, transparent);
+  color: color-mix(in srgb, var(--color-coral, #FF5A3C) 75%, transparent);
+  border-block: 1px dashed rgba(255, 255, 255, 0.5);
+}
+
+.tapeTeal {
+  background: color-mix(in srgb, var(--color-teal, #00B2A3) 75%, transparent);
+  color: color-mix(in srgb, var(--color-teal, #00B2A3) 75%, transparent);
+  border-block: 1px dashed rgba(255, 255, 255, 0.5);
+}
+
+/* ==========================================================================
+   CON DẤU BƯU ĐIỆN DU LỊCH (TRAVEL POSTMARK CIRCULAR STAMP)
+   ========================================================================== */
+.postmarkStamp {
+  position: absolute;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  border: 1.5px dashed var(--color-coral, #FF5A3C);
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.85;
+  filter: drop-shadow(0 2px 4px rgba(255, 90, 60, 0.15));
+}
+
+.postmarkInner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid var(--color-coral, #FF5A3C);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-coral-ink, #BC331E);
+  text-align: center;
+}
+
+.postmarkTop {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  line-height: 1;
+}
+
+.postmarkCity {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin-block: 2px;
+  border-block: 0.5px solid var(--color-coral, #FF5A3C);
+  padding-block: 1px;
+  width: 85%;
+}
+
+.postmarkWave {
+  font-size: 7px;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.postmarkDate {
+  font-size: 6.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-top: 1px;
+}
+

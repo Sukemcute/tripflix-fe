@@ -2,6 +2,7 @@
 import { vi } from '@tripflix/i18n';
 import Link, { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLayoutEffect, useRef } from 'react';
 import type React from 'react';
 import styles from './ota-shell.module.css';
 
@@ -30,13 +31,10 @@ const NAVIGATION = [
 function matches(href: string, pathname: string) {
   return (
     pathname === href ||
-    (href === '/search' && pathname.startsWith('/hotels/')) ||
-    (href === '/inspiration' && pathname.startsWith('/trips/'))
+    (href === '/search' && pathname.startsWith('/hotels/'))
   );
 }
 
-// Nằm trong Link để đọc trạng thái chuyển trang: mục vừa bấm hiện viên "đang tải" cho tới khi trang mới hiện,
-// mục cũ giữ màu cam để hai bên đổi cùng lúc (TF06P).
 function NavItemContent({ icon, label }: { icon: React.ReactNode; label: string }) {
   const { pending } = useLinkStatus();
   return (
@@ -51,8 +49,51 @@ function NavItemContent({ icon, label }: { icon: React.ReactNode; label: string 
 
 export function OtaNavigation() {
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
+  const indicatorRef = useRef<HTMLSpanElement>(null);
+
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    const indicator = indicatorRef.current;
+    if (!nav || !indicator) return;
+
+    const updateIndicator = () => {
+      const activeTab =
+        nav.querySelector<HTMLAnchorElement>('a:has([data-pending])') ??
+        nav.querySelector<HTMLAnchorElement>('a[aria-current="page"]');
+      if (!activeTab) {
+        indicator.hidden = true;
+        return;
+      }
+
+      const left = activeTab.offsetLeft;
+      const right = nav.clientWidth - left - activeTab.offsetWidth;
+      if (indicator.style.left !== `${left}px`) {
+        indicator.dataset.direction = left < indicator.offsetLeft ? 'left' : 'right';
+      }
+      indicator.style.left = `${left}px`;
+      indicator.style.right = `${right}px`;
+      indicator.hidden = false;
+    };
+
+    updateIndicator();
+    const resizeObserver = new ResizeObserver(updateIndicator);
+    resizeObserver.observe(nav);
+    const pendingObserver = new MutationObserver(updateIndicator);
+    pendingObserver.observe(nav, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-pending'],
+    });
+    return () => {
+      resizeObserver.disconnect();
+      pendingObserver.disconnect();
+    };
+  }, [pathname]);
+
   return (
-    <nav className={styles.nav} aria-label={vi.demo.common.explore}>
+    <nav ref={navRef} className={styles.nav} aria-label={vi.demo.common.explore}>
+      <span ref={indicatorRef} className={styles.navIndicator} aria-hidden="true" hidden />
       {NAVIGATION.map(({ href, label, icon }) => (
         <Link prefetch={false} key={href} href={href} aria-current={matches(href, pathname) ? 'page' : undefined}>
           <NavItemContent icon={icon} label={label} />

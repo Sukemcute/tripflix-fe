@@ -1,0 +1,63 @@
+.quoteCard {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: 0 0 4px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  text-align: left;
+  font: inherit;
+}
+
+.quoteCardClickable {
+  cursor: pointer;
+}
+
+.quoteCardClickable:hover {
+  background: var(--color-sea-mist);
+}
+
+.quoteCardClickable:focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 1px;
+}
+
+.quoteTitle {
+  min-width: 0;
+  max-width: 100%;
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quoteExcerpt {
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quoteUnavailable {
+  margin: 0;
+  min-width: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  font-style: italic;
+  color: var(--color-text-muted);
+}

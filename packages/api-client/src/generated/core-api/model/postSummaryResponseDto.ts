@@ -57,7 +57,12 @@ export interface PostSummaryResponseDto {
    * @nullable
    */
   generatedAt?: string | null;
-  /** Cờ cảnh báo bản tóm tắt đã cũ so với thảo luận hiện tại (số bình luận bài viết đã thay đổi) */
+  /**
+   * Lần AI kiểm gần nhất thấy đầu vào không đổi; null khi chưa kiểm lại từ lúc lưu
+   * @nullable
+   */
+  checkedAt?: string | null;
+  /** Bản tóm tắt đã cũ: số bình luận đổi, hoặc có bình luận mới/bị sửa sau max(generatedAt, checkedAt) */
   isStale: boolean;
   /** Thời điểm tạo bản tóm tắt */
   createdAt: string;

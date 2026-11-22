@@ -16,12 +16,19 @@ export interface HttpRequestOptions extends RequestInit {
   /** Auth endpoints must not recursively try to refresh themselves. */
   skipAuthRefresh?: boolean;
   skipAuthorization?: boolean;
+  /** Ghi đè địa chỉ gateway cho riêng request này (đọc dữ liệu công khai phía server, không đụng cấu hình chung). */
+  baseUrl?: string;
 }
 
 let config: HttpConfig = { baseUrl: '' };
 
 export function configureHttp(next: HttpConfig) {
   config = next;
+}
+
+/** Cấu hình hiện tại, cho kết nối không đi qua fetch (WebSocket /ws) dùng chung địa chỉ gateway và token. */
+export function getHttpConfig(): Readonly<HttpConfig> {
+  return config;
 }
 
 /** Kết quả trả về, đúng dạng Orval (client fetch) mong đợi. */
@@ -79,7 +86,7 @@ async function readBody(res: Response): Promise<unknown> {
  * Gửi request có Bearer token và tự refresh một lần khi 401, trả Response thô (chưa đọc body).
  * Dùng cho phản hồi dạng stream (SSE) mà code Orval sinh ra không đọc được.
  */
-export async function httpRaw(url: string, options: HttpRequestOptions & { baseUrl?: string } = {}) {
+export async function httpRaw(url: string, options: HttpRequestOptions = {}) {
   const { skipAuthRefresh, skipAuthorization, baseUrl, ...init } = options;
   const requestConfig = baseUrl === undefined ? config : { ...config, baseUrl };
   const method = (init.method ?? 'GET').toUpperCase();

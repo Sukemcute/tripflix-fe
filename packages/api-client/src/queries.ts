@@ -1,22 +1,72 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { searchPublicPosts } from './explore-search';
+import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import { recommendPublicPosts, searchPublicPosts } from './explore-search';
+import type { PostRecommendationsControllerRecommendPostsMode } from './generated/core-api/model';
+import { useResetOnReturn } from './reset-on-return';
 import { useApiSession } from './session';
 import { socialApi } from './social';
 
-export function useSocialPosts(kind: 'public' | 'mine' | 'bookmarks' = 'public', keyword = '') {
+export function useSocialPosts(
+  kind: 'public' | 'mine' | 'bookmarks' = 'public',
+  keyword = '',
+  // Chỉ còn vlog: Reels lấy qua useReelsFeed (/v1/feed).
+  postType?: 'vlog',
+  // 'recommended': khi không có từ khoá, lấy bài gợi ý theo gu của discovery thay cho bài mới nhất.
+  publicSource: 'latest' | 'recommended' = 'latest',
+  options: {
+    enabled?: boolean;
+    recommendMode?: PostRecommendationsControllerRecommendPostsMode;
+    /** Bài gợi ý: quay lại trang thì bỏ danh sách cũ, gọi lại (useResetOnReturn). */
+    refreshOnReturn?: boolean;
+  } = {},
+) {
   const { user, isReady } = useApiSession();
+  const client = useQueryClient();
+  const recommendMode = options.recommendMode ?? 'for_you';
+  const queryKey = ['social', kind, user?.id, keyword, postType, publicSource, ...(publicSource === 'recommended' ? [recommendMode] : [])];
+  const isRecommendedFeed = kind === 'public' && !keyword && publicSource === 'recommended';
+  useResetOnReturn(queryKey, Boolean(options.refreshOnReturn) && isRecommendedFeed && isReady && (options.enabled ?? true));
   return useInfiniteQuery({
-    queryKey: ['social', kind, user?.id, keyword],
+    queryKey,
     initialPageParam: undefined as string | undefined,
-    enabled: isReady && (kind === 'public' || !!user),
+    enabled: (options.enabled ?? true) && isReady && (kind === 'public' || !!user),
     queryFn: ({ pageParam, signal }) =>
       kind === 'mine'
-        ? socialApi.listMyPosts({ cursor: pageParam }, signal)
+        ? socialApi.listMyPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal)
         : kind === 'bookmarks'
-          ? socialApi.listBookmarks(pageParam, signal)
+          ? socialApi.listBookmarks(pageParam, signal, postType)
           : keyword
-            ? searchPublicPosts(keyword, pageParam, signal) // có từ khoá: tìm bằng discovery thay cho ILIKE của content
-            : socialApi.listPosts({ cursor: pageParam }, signal),
+            ? // Có từ khoá: tìm bằng discovery thay cho ILIKE của content. Discovery chưa có loại khớp đúng vlog
+              // (post bỏ sót bài có lộ trình) nên tạm lọc sau khi lấy chi tiết.
+              searchPublicPosts(keyword, pageParam, signal).then((page) =>
+                postType ? { ...page, items: page.items.filter((post) => post.postType === postType) } : page,
+              )
+            : isRecommendedFeed
+              ? recommendedPage(client, queryKey, pageParam) ?? recommendPublicPosts(pageParam, signal, postType, recommendMode)
+              : socialApi.listPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
+    select: withoutRepeatedPosts,
   });
+}
+
+/**
+ * Gợi ý phân trang bằng offset nhưng mỗi trang xếp hạng lại (job hot chạy lại, bài mới vào): danh sách nở thêm một bài
+ * trước offset thì bài cuối trang trước lặp ở đầu trang sau. Giữ lần xuất hiện đầu để feed không trùng key.
+ */
+export function withoutRepeatedPosts<P extends { items: Array<{ id: string }> }, K>(data: InfiniteData<P, K>): InfiniteData<P, K> {
+  const seen = new Set<string>();
+  const isNew = (id: string) => !seen.has(id) && Boolean(seen.add(id));
+  return { ...data, pages: data.pages.map((page) => ({ ...page, items: page.items.filter((post) => isNew(post.id)) })) };
+}
+
+type RecommendedPage = Awaited<ReturnType<typeof recommendPublicPosts>>;
+
+/**
+ * Trang gợi ý đã tải thì giữ nguyên khi bị làm mới (invalidate ['social'] sau bình luận, quay lại tab...).
+ * Tải lại sẽ tính trang 1 theo gu mới nhưng các trang sau vẫn theo cursor cũ: trùng bài, và mỗi trang gọi lại 1 + 7 request.
+ * Feed mới chỉ có khi mở lại trang; lượt thích, lưu, xoá vẫn cập nhật tại chỗ qua setQueriesData.
+ */
+export function recommendedPage(client: ReturnType<typeof useQueryClient>, queryKey: unknown[], pageParam: string | undefined) {
+  const cached = client.getQueryData<InfiniteData<RecommendedPage, string | undefined>>(queryKey);
+  const index = cached?.pageParams.indexOf(pageParam) ?? -1;
+  return index >= 0 ? Promise.resolve(cached!.pages[index]!) : undefined;
 }

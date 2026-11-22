@@ -1,12 +1,15 @@
 import {
   findCachedFeedCard,
   HttpError,
+  RECOMMENDED_REELS_KEY,
   REEL_FEED_TABS,
   removeUnavailablePost,
   socialApi,
   updateReelSocialCache,
   useApiSession,
+  useFollowAuthor,
 } from '@tripflix/api-client';
+import { VerifiedTripBadge } from './verified-trip-badge';
 import type { TripAttachmentDto } from '@tripflix/api-client/core-api/model/index';
 import { isBackSwipeComplete } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
@@ -16,7 +19,7 @@ import * as Linking from 'expo-linking';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActionSheetIOS, Alert, Platform, Pressable, Share, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, Share, StyleSheet, View } from 'react-native';
 import {
   GestureDetector,
   GestureHandlerRootView,
@@ -26,11 +29,12 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { ApiErrorNotice } from '@/components/api-state';
-import { Button, Icon, IconButton, money, Notice, Screen, Txt } from '@/components/mobile-ui';
+import { Button, Icon, money, Notice, Screen, Txt } from '@/components/mobile-ui';
 import { SHEET_CLOSE_SPRING } from '@/components/motion';
 import { PostActionBar } from './post-action-bar';
 import { ReelCommentsPanel } from './reel-comments-panel';
-import { ReportButton } from './report-button';
+import { PostOptionsMenu } from './post-options-menu';
+import { LoadingDots } from '@/components/loading-dots';
 
 const copy = vi.mobile.postDetail;
 const NO_COMMENTS: readonly { id: number; body: string }[] = [];
@@ -62,7 +66,7 @@ function TripPlan({ trip }: { trip: TripAttachmentDto }) {
                   {index < items.length - 1 && <View style={styles.railLine} />}
                 </View>
                 <View style={[styles.stopBody, index < items.length - 1 && styles.stopGap]}>
-                  <Txt variant="label">{item.title}</Txt>
+                  <Txt variant="label">{item.time ? `${item.time} · ${item.title}` : item.title}</Txt>
                   {!!item.location && (
                     <Txt variant="small" style={styles.muted}>
                       {item.location}
@@ -104,10 +108,15 @@ function TripPlan({ trip }: { trip: TripAttachmentDto }) {
 }
 
 export function LivePostDetailScreen() {
-  const { slug = '' } = useLocalSearchParams<{ slug: string }>();
+  // comment/thread đến từ thông báo: mở sẵn khung bình luận và nhảy tới bình luận đó.
+  const {
+    slug = '',
+    comment,
+    thread,
+  } = useLocalSearchParams<{ slug: string; comment?: string; thread?: string }>();
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
-  const [hasComments, setHasComments] = useState(false);
+  const [hasComments, setHasComments] = useState(!!comment);
   const commentsProgress = useSharedValue(0);
   const navigation = useNavigation();
   const swipeX = useSharedValue(0);
@@ -166,6 +175,8 @@ export function LivePostDetailScreen() {
         ...REEL_FEED_TABS.map((tab) =>
           client.cancelQueries({ queryKey: ['feed', tab, user.id], exact: true }),
         ),
+        // Dành cho bạn của người đăng nhập đọc từ discovery: trang đang tải về sau không được đè tim vừa bấm.
+        client.cancelQueries({ queryKey: [...RECOMMENDED_REELS_KEY, 'mixed', user.id], exact: true }),
         client.cancelQueries({ queryKey: ['social', 'post', slug, user.id], exact: true }),
       ]);
       return updateReelSocialCache(client, user.id, slug, action.type, action.isSelected);
@@ -189,13 +200,9 @@ export function LivePostDetailScreen() {
     onSuccess: () => client.invalidateQueries({ queryKey: ['social', 'post', slug, user?.id], exact: true }),
   });
   const manage = useMutation({
-    mutationFn: async (action: 'publish' | 'delete') => {
-      if (action === 'publish') await socialApi.publishPost(slug);
-      else await socialApi.deletePost(slug);
-    },
-    onSuccess: async (_, action) => {
+    mutationFn: async (_action: 'publish') => { await socialApi.publishPost(slug); },
+    onSuccess: async () => {
       await client.invalidateQueries({ queryKey: ['social'] });
-      if (action === 'delete') router.replace('/(tabs)');
     },
   });
   const interact = (type: 'like' | 'save') => {
@@ -206,34 +213,9 @@ export function LivePostDetailScreen() {
     if (social.isPending) return;
     social.mutate({ type, isSelected: type === 'like' ? !isLiked : !isSaved });
   };
-  const confirmDelete = () =>
-    Alert.alert(vi.api.confirmDelete, post?.title, [
-      { text: vi.api.cancel, style: 'cancel' },
-      { text: vi.api.remove, style: 'destructive', onPress: () => manage.mutate('delete') },
-    ]);
-  const edit = () => router.push({ pathname: '/create', params: { postId: slug } });
-  const openOwnerMenu = () => {
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: [vi.api.edit, vi.api.remove, vi.api.cancel],
-          destructiveButtonIndex: 1,
-          cancelButtonIndex: 2,
-        },
-        (index) => {
-          if (index === 0) edit();
-          if (index === 1) confirmDelete();
-        },
-      );
-      return;
-    }
-    Alert.alert(copy.more, undefined, [
-      { text: vi.api.cancel, style: 'cancel' },
-      { text: vi.api.remove, onPress: confirmDelete },
-      { text: vi.api.edit, onPress: edit },
-    ]);
-  };
   const trip = post?.tripAttachment;
+  const canShowFollow = isReady && !!post && post.status === 'published' && post.authorId !== user?.id;
+  const follow = useFollowAuthor(canShowFollow ? post.authorId : undefined);
   const authorName =
     post?.authorId === user?.id ? user?.displayName : post?.authorName || cachedCard?.author.name;
   const tripFacts = [
@@ -251,11 +233,7 @@ export function LivePostDetailScreen() {
           <Screen
             title={vi.api.posts}
             right={
-              post && post.authorId === user?.id ? (
-                <IconButton name="ellipsis-horizontal" label={copy.more} onPress={openOwnerMenu} />
-              ) : post ? (
-                <ReportButton targetType="post" targetId={post.id} compact />
-              ) : undefined
+              post ? <PostOptionsMenu postId={post.id} authorId={post.authorId} onDeleted={() => router.replace('/(tabs)')} /> : undefined
             }
             footer={
               post && (
@@ -294,9 +272,39 @@ export function LivePostDetailScreen() {
               <View style={styles.intro}>
                 {!!title && <Txt variant="heading">{title}</Txt>}
                 {!!authorName && (
-                  <Txt variant="small" style={styles.muted}>
+                  <Txt
+                    variant="small"
+                    style={styles.muted}
+                    accessibilityRole="link"
+                    onPress={
+                      post
+                        ? () => router.push({ pathname: '/user/[id]', params: { id: post.authorId } })
+                        : undefined
+                    }
+                  >
                     {authorName}
                   </Txt>
+                )}
+                {!!post?.isVerified && <VerifiedTripBadge tone="dark" />}
+                {canShowFollow && (
+                  <>
+                    <Button
+                      tone="secondary"
+                      compact
+                      disabled={!!user && !follow.canToggle}
+                      onPress={() => {
+                        if (user) follow.toggle();
+                        else router.push({ pathname: '/login', params: { returnTo: `/trip/${slug}` } });
+                      }}
+                    >
+                      {follow.isLoading || follow.isUpdating
+                        ? vi.api.loading
+                        : follow.isFollowing
+                          ? vi.api.unfollowAuthor
+                          : vi.api.followAuthor}
+                    </Button>
+                    <ApiErrorNotice error={follow.error} retry={() => void follow.retry()} />
+                  </>
                 )}
                 {tripFacts.length > 0 && <Txt variant="small">{tripFacts.join(' · ')}</Txt>}
                 {!!trip?.estimatedCostPerPerson && !!trip.priceDisclaimer && (
@@ -306,9 +314,10 @@ export function LivePostDetailScreen() {
                 )}
               </View>
             )}
-            {(!isReady || query.isPending) && <Txt style={styles.muted}>{vi.api.loading}</Txt>}
+            {(!isReady || query.isPending) && <LoadingDots />}
             {post && (
               <>
+                {post.status === 'held' && post.authorId === user?.id && <View style={styles.intro}><Txt variant="heading">{vi.moderation.heldTitle}</Txt><Txt>{vi.moderation.heldPost}</Txt></View>}
                 {!!post.body && (
                   <View style={styles.intro}>
                     <Txt>{post.body}</Txt>
@@ -335,6 +344,7 @@ export function LivePostDetailScreen() {
               visible={hasComments}
               openProgress={commentsProgress}
               postId={slug}
+              commentCount={post?.commentCount}
               draft=""
               onDraftChange={ignoreDraft}
               comments={NO_COMMENTS}
@@ -342,6 +352,8 @@ export function LivePostDetailScreen() {
               onClose={() => setHasComments(false)}
               hasBackdrop
               loginReturnTo={`/trip/${slug}`}
+              focusCommentId={comment}
+              focusThreadId={thread}
             />
           </Screen>
         </Animated.View>

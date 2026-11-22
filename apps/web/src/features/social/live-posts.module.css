@@ -56,12 +56,13 @@
   --iv-control-bg: var(--color-background);
   --iv-shadow: 0 8px 28px -12px rgba(24, 36, 43, 0.12);
 
-  background: var(--iv-page-bg);
+  /* Trong suốt để mặt nước tĩnh của trang Cảm hứng hiện quanh khung Reels bo góc. */
+  background: transparent;
   color: var(--iv-text);
   flex: 1;
   width: 100%;
-  height: calc(100dvh - 80px);
-  min-height: 620px;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -312,7 +313,6 @@
   border: 0;
   background: var(--iv-accent);
   color: var(--color-background);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
   font: inherit;
   font-size: 0.84rem;
   font-weight: 700;
@@ -341,33 +341,45 @@
   flex: 1;
   min-height: 0;
   width: 100%;
-  max-width: 1760px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 16px 20px;
+  padding: 12px 0;
   display: grid;
-  gap: 20px;
+  /* Một hàng đúng bằng chỗ còn lại của khung trang (TF98): nội dung các cột không đẩy lưới cao hơn trang. */
+  grid-template-rows: minmax(0, 1fr);
+  /* Khoảng cách nằm trong cột riêng (cột 2 và 4) để cùng co về 0 khi sidebar đóng. */
+  gap: 0;
   align-items: stretch;
   transition: grid-template-columns 240ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Luôn đủ 5 cột: trình duyệt chỉ chuyển mượt grid-template-columns khi số cột không đổi. */
+/* Trước lần thao tác đầu tiên: bố cục mặc định hiện ngay, không co giãn (xem useHasUserInteracted). */
+.viewerGrid.layoutStatic {
+  transition: none;
+}
+
 .gridThreeCols {
-  grid-template-columns: 340px minmax(0, 1fr) 380px;
+  grid-template-columns: 340px 20px minmax(0, 1fr) 20px 380px;
 }
 
 .gridNoLeft {
-  grid-template-columns: minmax(0, 1fr) 380px;
+  grid-template-columns: 0px 0px minmax(0, 1fr) 20px 380px;
 }
 
 .gridNoRight {
-  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-columns: 340px 20px minmax(0, 1fr) 0px 0px;
 }
 
 .gridCenterOnly {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: 0px 0px minmax(0, 1fr) 0px 0px;
 }
 
 /* Itinerary Panel wrapper inside Reels view */
 .itineraryInReels {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
   position: relative !important;
   top: auto !important;
   width: 100% !important;
@@ -395,26 +407,31 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--iv-border);
+  padding: 14px 14px 12px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
   flex-shrink: 0;
 }
 
 .panelHeaderTitle {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 15px;
   font-weight: 800;
-  color: var(--iv-text);
+  color: var(--color-navy);
+  letter-spacing: -0.01em;
 }
 
 .panelHeaderIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-teal-ink);
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--color-coral-tint);
+  color: var(--color-coral);
 }
 
 .iconGhostBtn {
@@ -423,7 +440,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 999px;
+  border-radius: 10px;
   border: 0;
   background: var(--color-transparent);
   color: var(--iv-text-muted);
@@ -720,6 +737,8 @@
    ========================================================================== */
 
 .centerPanel {
+  grid-column: 3;
+  grid-row: 1;
   position: relative;
   min-height: 0;
   min-width: 0;
@@ -732,10 +751,16 @@
 }
 
 .mediaStageFrame {
+  /* Chỗ dành cho cột tương tác ở góc dưới phải; cụm lên/xuống tính theo giá trị này để không chồng lên. */
+  --iv-action-dock-height: 250px;
+  --iv-action-dock-bottom: 48px;
+  /* Chiều cao dải chờ hiện ra dưới video khi đang tải bài kế tiếp. */
+  --iv-next-loading-height: 64px;
   position: relative;
+  width: 100%;
   height: 100%;
-  max-height: calc(100dvh - 116px);
-  aspect-ratio: 9 / 16;
+  /* Theo ô lưới thay vì số cứng 100dvh - 116px (chỉ đúng với header một hàng; header hai hàng ở 1024–1359px). */
+  max-height: 100%;
   max-width: 100%;
   border-radius: 24px;
   overflow: hidden;
@@ -746,6 +771,48 @@
   justify-content: center;
   user-select: none;
   overscroll-behavior: none;
+}
+
+.reelStagePlaceholder[data-loading]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 35%, color-mix(in srgb, var(--color-background) 8%, transparent) 50%, transparent 65%);
+  background-size: 200% 100%;
+  animation: reel-stage-shimmer 1.6s ease-in-out infinite;
+}
+
+.reelStagePlaceholderContent {
+  position: relative;
+  z-index: 1;
+  padding: 24px;
+  color: var(--color-background);
+  text-align: center;
+}
+
+.reelStagePlaceholderContent :global(.empty-state) {
+  color: var(--color-background);
+}
+
+.reelStagePlaceholderContent :global(.empty-state p) {
+  color: var(--color-background);
+}
+
+.reelStagePlaceholderContent :global(.secondary-button) {
+  color: var(--color-ink);
+}
+
+@keyframes reel-stage-shimmer {
+  from { background-position: 120% 0; }
+  to { background-position: -20% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reelStagePlaceholder[data-loading]::before {
+    animation: none;
+    background: none;
+  }
 }
 
 .mediaTrack {
@@ -785,13 +852,20 @@
 }
 
 .mediaBackdropBlur {
+  /* Vẽ ở 1/4 kích thước rồi phóng to 4 lần: nhìn như blur(28px) trên cả khung nhưng GPU chỉ làm mờ
+     ít hơn 16 lần số điểm ảnh. Lớp riêng (will-change) để khi cuộn chỉ dịch chuyển, không vẽ lại. */
   position: absolute;
-  inset: -24px;
+  top: 50%;
+  left: 50%;
+  width: calc(25% + 12px);
+  height: calc(25% + 12px);
+  transform: translate(-50%, -50%) scale(4);
   background-size: cover;
   background-position: center;
-  filter: blur(28px) brightness(0.45);
+  filter: blur(7px) brightness(0.45);
   opacity: 0.75;
   pointer-events: none;
+  will-change: transform;
 }
 
 .mediaVideoElement {
@@ -799,11 +873,72 @@
   z-index: 1;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* Giữ nguyên tỷ lệ gốc: dọc thì chừa hai bên, ngang thì chừa trên dưới; phần trống là nền mờ từ poster. */
+  object-fit: contain;
+  border-radius: 0;
 }
 
 .mediaVideoLandscape {
   object-fit: contain;
+}
+
+/* Khung chờ của Reel chưa có link phát hoặc lỗi phát: tối như khung video, giống Reels mobile. */
+.reelPendingStage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: var(--color-overlay-heavy);
+}
+
+.reelPendingSpinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid var(--color-overlay);
+  border-top-color: var(--color-background);
+  animation: reelPendingSpin 0.9s linear infinite;
+}
+
+.reelPendingText {
+  margin: 0;
+  color: var(--color-background);
+  text-align: center;
+}
+
+.reelRetryBtn {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-background) 40%, transparent);
+  background: var(--color-background);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reelRetryBtn:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
+}
+
+@keyframes reelPendingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reelPendingSpinner {
+    animation: none;
+  }
 }
 
 .mediaImageElement {
@@ -811,294 +946,229 @@
   z-index: 1;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-}
-
-/* Adaptive Image Collage inside Fixed Media Stage Frame */
-
-.adaptiveImageGrid {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  display: grid;
-  gap: 3px;
-  background: rgb(20 22 27);
-}
-
-.gridSingle {
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
-  background: transparent;
-}
-
-.gridTwoCols {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr;
-}
-
-.gridTwoRows {
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr 1fr;
-}
-
-.gridThreePortrait {
-  grid-template-columns: 1.12fr 0.88fr;
-  grid-template-rows: 1fr 1fr;
-}
-
-.gridThreeLandscape {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1.15fr 0.85fr;
-}
-
-.gridFour {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-}
-
-.gridFourLandscape {
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: 1.2fr 0.8fr;
-}
-
-/* Bố cục 5 ô bất đối xứng (Cột trái 2 ảnh lớn 50% + Cột phải 3 ảnh 33.33%) chuẩn ảnh mẫu */
-
-.gridFiveCollage {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: repeat(6, 1fr);
-}
-
-.gridCellBtn {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  padding: 0;
-  margin: 0;
-  border: none;
-  border-radius: 0;
-  overflow: hidden;
-  background: rgb(18 20 26);
-  cursor: pointer;
-  display: block;
-}
-
-.gridCellSingleBackdrop {
-  background: transparent;
-}
-
-.gridCellSpanTwoRows {
-  grid-row: 1 / span 2;
-}
-
-.gridCellSpanTwoCols {
-  grid-column: 1 / span 2;
-}
-
-.gridCellSpanThreeCols {
-  grid-column: 1 / span 3;
-}
-
-.collageLeftTop {
-  grid-column: 1;
-  grid-row: 1 / span 3;
-}
-
-.collageLeftBottom {
-  grid-column: 1;
-  grid-row: 4 / span 3;
-}
-
-.collageRightTop {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-}
-
-.collageRightMiddle {
-  grid-column: 2;
-  grid-row: 3 / span 2;
-}
-
-.collageRightBottom {
-  grid-column: 2;
-  grid-row: 5 / span 2;
-}
-
-.gridCellImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 220ms ease;
-}
-
-.gridCellImgContain {
-  width: 100%;
-  height: 100%;
+  /* Poster chờ phát phải khớp đúng khung video để không nhảy hình khi video bắt đầu. */
   object-fit: contain;
-  transition: transform 220ms ease;
+  border-radius: 0;
 }
 
-.gridCellBtn:hover .gridCellImg,
-.gridCellBtn:focus-visible .gridCellImg,
-.gridCellBtn:hover .gridCellImgContain,
-.gridCellBtn:focus-visible .gridCellImgContain {
-  transform: scale(1.03);
-}
-
-.gridCellMoreOverlay {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(8, 9, 12, 0.48);
-  color: rgb(255 255 255);
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
-}
-
-/* In-Stage Image Gallery Overlay (object-fit: contain) */
+/* Khung xem ảnh bài viết cố định kèm dải thumbnail (top layer qua <dialog>.showModal(), đồng bộ kiểu trang khách sạn) */
 
 .galleryStageOverlay {
-  position: absolute;
+  --gallery-line: var(--color-border);
+  --gallery-padding: clamp(0.75rem, 2vw, 1.125rem);
+  --gallery-max-width: 60rem;
+  --gallery-max-height: 44rem;
+  --gallery-thumb-strip-width: 28rem;
   inset: 0;
-  z-index: 6;
-  background: rgb(11 12 15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: min(var(--gallery-max-width), calc(100% - 2 * var(--gallery-padding)));
+  height: min(var(--gallery-max-height), calc(100dvh - 2 * var(--gallery-padding)));
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--gallery-line);
+  border-radius: 18px;
+  background: var(--color-background);
+  color: var(--color-ink);
+  box-shadow: 0 24px 64px var(--color-overlay);
 }
 
-.galleryTopBar {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  right: 14px;
-  z-index: 7;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  pointer-events: none;
+.galleryStageOverlay:not([open]) {
+  display: none;
 }
 
-.galleryCountPill {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(15, 17, 22, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(8px);
-  color: rgb(255 255 255);
-  font-size: 0.8rem;
-  font-weight: 700;
+.galleryStageOverlay::backdrop {
+  background: var(--color-overlay);
 }
 
-.galleryCloseBtn {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(15, 17, 22, 0.75);
-  backdrop-filter: blur(8px);
-  color: rgb(255 255 255);
-  cursor: pointer;
-  transition: background-color 160ms ease;
+.galleryStageOverlay[data-expanded='true'] {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
-.galleryCloseBtn:hover {
-  background: rgba(255, 90, 60, 0.85);
+.galleryStageOverlay[data-expanded='true'] .galleryViewer {
+  height: 100dvh;
 }
 
-.galleryContainFrame {
-  position: relative;
-  width: 100%;
+.galleryStageOverlay[data-expanded='true'] .galleryContainImg {
   height: 100%;
+  max-height: none;
+}
+
+.galleryStageOverlay button:focus-visible {
+  outline: 2px solid var(--color-teal-ink);
+  outline-offset: 2px;
+}
+
+.galleryViewer {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  height: 100%;
+  padding: var(--gallery-padding);
+  box-sizing: border-box;
+}
+
+.galleryHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.galleryHeaderText {
+  min-width: 0;
+}
+
+.galleryHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.galleryHeaderTitle {
+  display: block;
+  overflow: hidden;
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.galleryCountOutput {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.galleryStage {
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--color-surface);
 }
 
 .galleryContainImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   object-fit: contain;
 }
 
-.gallerySlideNavBtn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 7;
-  display: inline-flex;
+.galleryNavigation {
+  display: grid;
+  grid-template-columns: auto minmax(0, auto) auto;
   align-items: center;
   justify-content: center;
+  gap: 12px;
+}
+
+.galleryControl {
+  display: grid;
   width: 40px;
   height: 40px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(15, 17, 22, 0.68);
-  backdrop-filter: blur(8px);
-  color: rgb(255 255 255);
+  place-items: center;
+  border: 1px solid var(--gallery-line);
+  border-radius: 50%;
+  background: var(--color-background);
+  color: inherit;
   cursor: pointer;
   transition:
-    background-color 160ms ease,
-    opacity 160ms ease;
+    background-color 220ms,
+    border-color 220ms,
+    opacity 160ms;
 }
 
-.gallerySlideNavBtn:hover:not(:disabled) {
-  background: rgba(15, 17, 22, 0.92);
+.galleryControl svg {
+  width: 18px;
+  height: 18px;
 }
 
-.gallerySlideNavBtn:disabled {
-  opacity: 0.32;
+.galleryControl:hover:not(:disabled) {
+  background: var(--color-surface);
+  border-color: var(--color-teal-ink);
+}
+
+.galleryControl:disabled {
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
-.gallerySlidePrev {
-  left: 12px;
+.galleryThumbnails {
+  display: flex;
+  gap: 8px;
+  max-width: var(--gallery-thumb-strip-width);
+  overflow-x: auto;
+  padding: 4px;
+  scrollbar-width: thin;
 }
 
-.gallerySlideNext {
-  right: 12px;
-}
-
-/* Text-Only Post View inside Center Stage */
-
-.textOnlyStage {
+.galleryThumbBtn {
   position: relative;
-  z-index: 1;
+  display: grid;
+  flex: 0 0 64px;
+  height: 48px;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 220ms;
+}
+
+.galleryThumbBtn:is(:hover, :focus-visible, [aria-current]) {
+  opacity: 1;
+}
+
+.galleryThumbBtn[aria-current] {
+  border-color: var(--color-coral-ink);
+}
+
+.galleryThumbImg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  padding: 36px 28px 180px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 16px;
-  background: radial-gradient(circle at 20% 20%, rgba(255, 90, 60, 0.22), transparent 60%),
-    linear-gradient(160deg, rgb(24 28 36), rgb(14 16 22));
-  color: rgb(247 247 248);
-  overflow-y: auto;
+  object-fit: cover;
 }
 
-.textOnlyTitle {
-  margin: 0;
-  font-size: 1.45rem;
-  font-weight: 800;
-  line-height: 1.35;
+@media (max-width: 640px) {
+  .galleryStageOverlay {
+    height: fit-content;
+    max-height: calc(100dvh - 2 * var(--gallery-padding));
+  }
+
+  .galleryViewer {
+    height: auto;
+  }
+
+  .galleryContainImg {
+    height: auto;
+    max-height: calc(100dvh - 11rem);
+  }
 }
 
-.textOnlyBody {
-  margin: 0;
-  font-size: 0.98rem;
-  line-height: 1.68;
-  color: rgba(247, 247, 248, 0.88);
-  white-space: pre-line;
+@media (prefers-reduced-motion: reduce) {
+  .galleryControl,
+  .galleryThumbBtn {
+    transition: none;
+  }
 }
 
 /* Top-Left Volume Control + Slider & Top-Right Hover Controls (More / Fullscreen) */
@@ -1115,6 +1185,42 @@
   transition: opacity 180ms ease;
 }
 
+/* Reels mở từ kết quả tìm kiếm: nút âm lượng nằm dưới nút quay lại. */
+.stageTopLeftControlsBelowBack {
+  top: 60px;
+}
+
+/* Luôn hiện (không chờ hover) để người xem biết đường về grid kết quả. */
+.searchBackPill {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 17, 22, 0.62);
+  color: rgb(255 255 255);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.searchBackPill:hover {
+  background: rgba(15, 17, 22, 0.84);
+}
+
+.searchBackPill:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+}
+
 .mediaStageFrame:hover .stageTopLeftControls,
 .mediaStageFrame:focus-within .stageTopLeftControls {
   opacity: 1;
@@ -1128,7 +1234,6 @@
   padding: 0 6px;
   border-radius: 999px;
   background: rgba(15, 17, 22, 0.62);
-  backdrop-filter: blur(8px);
   color: rgb(255 255 255);
   transition: background-color 160ms ease;
 }
@@ -1154,6 +1259,7 @@
 
 .volumeSliderWrap {
   width: 0;
+  height: 12px;
   opacity: 0;
   overflow: hidden;
   display: flex;
@@ -1177,8 +1283,47 @@
   width: 66px;
   height: 4px;
   margin: 0;
-  accent-color: rgb(255 255 255);
+  appearance: none;
+  background: transparent;
   cursor: pointer;
+}
+
+.volumeRangeInput::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--color-background) var(--volume-progress), color-mix(in srgb, var(--color-background) 30%, transparent) var(--volume-progress));
+}
+
+.volumeRangeInput::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-coral);
+  box-shadow: none;
+}
+
+.volumeRangeInput::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-background) 30%, transparent);
+}
+
+.volumeRangeInput::-moz-range-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-background);
+}
+
+.volumeRangeInput::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-coral);
+  box-shadow: none;
 }
 
 .stageTopControls {
@@ -1209,7 +1354,6 @@
   border-radius: 999px;
   border: 0;
   background: rgba(15, 17, 22, 0.62);
-  backdrop-filter: blur(8px);
   color: rgb(255 255 255);
   text-decoration: none;
   cursor: pointer;
@@ -1233,7 +1377,6 @@
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   background: rgba(15, 17, 22, 0.56);
-  backdrop-filter: blur(8px);
   color: rgb(255 255 255);
   cursor: pointer;
   opacity: 1;
@@ -1261,7 +1404,7 @@
   position: absolute;
   inset: auto 0 0 0;
   z-index: 3;
-  padding: 48px 16px 16px;
+  padding: 48px 104px 32px 24px;
   background: linear-gradient(
     to top,
     rgba(8, 9, 12, 0.92) 0%,
@@ -1280,6 +1423,7 @@
 }
 
 .overlayAvatar {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1287,7 +1431,6 @@
   height: 38px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
-  border: 1.5px solid rgba(255, 255, 255, 0.65);
   color: rgb(255 255 255);
   font-size: 0.86rem;
   font-weight: 800;
@@ -1308,9 +1451,8 @@
   font-weight: 800;
 }
 
-.overlayAuthorHandle {
-  font-size: 0.76rem;
-  color: rgba(247, 247, 248, 0.72);
+.stageBottomOverlay > * {
+  max-width: 600px;
 }
 
 .overlayCaptionBox {
@@ -1353,18 +1495,14 @@
 .overlayTagPill {
   padding: 3px 9px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(6px);
+  /* Không làm mờ nền phía sau (tốn GPU trên video đang phát); nền đậm hơn chút để chữ vẫn rõ. */
+  background: rgba(255, 255, 255, 0.2);
   border: 0;
   color: rgb(255 255 255);
   font: inherit;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-}
-
-.overlayTagPill:hover {
-  background: rgba(255, 255, 255, 0.24);
 }
 
 .overlayAttachedTripCard {
@@ -1375,7 +1513,6 @@
   padding: 9px 12px;
   border-radius: 14px;
   background: rgba(25, 27, 32, 0.84);
-  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: rgb(247 247 248);
   text-decoration: none;
@@ -1432,41 +1569,246 @@
   text-overflow: ellipsis;
 }
 
-/* Video Progress Bar */
+/* Video Progress Bar: thanh nhìn mảnh 4px nhưng vùng bấm/kéo cao 20px cho dễ trúng chuột (ReelSeekBar). */
+.progressBar {
+  position: absolute;
+  inset: auto 24px 6px 24px;
+  height: 20px;
+  z-index: 5;
+}
 
 .progressBarTrack {
   position: absolute;
-  inset: auto 0 0 0;
+  inset: 8px 0 auto 0;
   height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
   background: rgba(255, 255, 255, 0.22);
-  z-index: 5;
+  pointer-events: none;
+  transition: height 120ms ease, top 120ms ease;
+}
+
+/* Rê chuột hoặc đang kéo: thanh dày lên, hiện nút tròn ở vị trí đang xem. */
+.progressBar:hover .progressBarTrack,
+.progressBar[data-scrubbing] .progressBarTrack {
+  top: 7px;
+  height: 6px;
+}
+
+/* Thẻ range trong suốt phủ lên thanh: nhận bấm, kéo, bàn phím; chỉ nút tròn là nhìn thấy (khi rê chuột/kéo). */
+.progressBarInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
   cursor: pointer;
+  appearance: none;
+  touch-action: none;
+}
+
+/* CSS chung viền xanh mọi input khi focus (cho ô nhập chữ); thanh tua không cần, Tab tới thì có viền trắng bên dưới. */
+.progressBarInput:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.progressBarInput:focus-visible {
+  outline: 2px solid var(--color-background);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+.progressBarInput::-webkit-slider-runnable-track {
+  height: 100%;
+  background: transparent;
+}
+
+.progressBarInput::-moz-range-track {
+  height: 100%;
+  background: transparent;
+}
+
+.progressBarInput::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-background);
+  opacity: 0;
+  appearance: none;
+  transition: opacity 120ms ease;
+}
+
+.progressBarInput::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-background);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.progressBar:hover .progressBarInput::-webkit-slider-thumb,
+.progressBar[data-scrubbing] .progressBarInput::-webkit-slider-thumb,
+.progressBarInput:focus-visible::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+.progressBar:hover .progressBarInput::-moz-range-thumb,
+.progressBar[data-scrubbing] .progressBarInput::-moz-range-thumb,
+.progressBarInput:focus-visible::-moz-range-thumb {
+  opacity: 1;
+}
+
+/* Đang kéo: mốc "0:17 / 0:23" phía trên thanh như TikTok, mốc đang kéo tới đậm hơn. */
+.seekTimeLabel {
+  position: absolute;
+  left: 50%;
+  bottom: 32px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--color-overlay-heavy);
+  color: color-mix(in srgb, var(--color-background) 72%, transparent);
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.seekTimeCurrent {
+  color: var(--color-background);
+  font-weight: 700;
+}
+
+.stageBottomOverlay {
+  transition: opacity 150ms ease;
+}
+
+.stageBottomOverlay[data-hidden] {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .progressBarFill {
+  width: 100%;
   height: 100%;
   background: var(--iv-accent);
-  transition: width 120ms linear;
+  /* Cập nhật mỗi khung hình bằng requestAnimationFrame nên không cần transition. */
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+}
+
+/* Video đứng chờ tải (mạng yếu): vệt sáng chạy qua thanh tiến độ như TikTok, biết là đang tải chứ không bị treo. */
+.progressBarTrack[data-buffering]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: color-mix(in srgb, var(--color-background) 70%, transparent);
+  animation: reel-buffering-sweep 1s ease-in-out infinite;
+}
+
+@keyframes reel-buffering-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+/* Video chưa có hình đầu tiên: vòng chờ giữa khung, thấy được cả lúc đang vuốt sang bài chưa tải xong. */
+.reelLoadingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.reelLoadingSpinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid var(--color-overlay);
+  border-top-color: var(--color-background);
+  animation: reelPendingSpin 0.9s linear infinite;
+}
+
+/*
+ * Hết bài đã tải hoặc bài kế tiếp chưa có hình: khung video trượt lên một đoạn như lúc vuốt lên ở TikTok, lộ dải
+ * dưới có vòng chờ; tải xong thì trượt về. Dải nằm dưới khung video nên không che chữ, thẻ lộ trình.
+ */
+.mediaTrack {
+  transition: transform 220ms ease;
+}
+
+.mediaStageFrame[data-next-loading] .mediaTrack {
+  transform: translateY(calc(-1 * var(--iv-next-loading-height)));
+}
+
+.reelMoreLoading {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: var(--iv-next-loading-height);
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-background);
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.reelLoadingSpinnerSmall {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--color-overlay);
+  border-top-color: var(--color-background);
+  animation: reelPendingSpin 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mediaTrack {
+    transition: none;
+  }
+
+  .progressBarTrack[data-buffering]::after,
+  .reelLoadingSpinner,
+  .reelLoadingSpinnerSmall {
+    animation: none;
+  }
 }
 
 /* --- Vertical Action Bar & Post Navigation (Right of Media Stage) --- */
 
 .stageSideDock {
+  position: absolute;
+  right: 16px;
+  bottom: var(--iv-action-dock-bottom);
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  max-height: calc(100dvh - 180px);
-  padding: 12px 0 16px;
-  gap: 16px;
-  flex-shrink: 0;
 }
 
 .navArrowsCluster {
   position: absolute;
-  top: 50%;
-  right: 8px;
+  /* 48px là nửa chiều cao cụm (2 nút 44px + khoảng 8px), 16px là khoảng hở với cột tương tác. */
+  top: min(50%, calc(100% - var(--iv-action-dock-bottom) - var(--iv-action-dock-height) - 16px - 48px));
+  right: 16px;
   transform: translateY(-50%);
   z-index: 4;
   display: flex;
@@ -1483,9 +1825,8 @@
   height: 44px;
   border-radius: 999px;
   border: 0;
-  background: var(--iv-control-bg);
-  color: var(--iv-text);
-  box-shadow: var(--iv-shadow);
+  background: color-mix(in srgb, var(--color-ink) 55%, transparent);
+  color: var(--color-background);
   cursor: pointer;
   transition:
     transform 160ms ease,
@@ -1493,7 +1834,7 @@
 }
 
 .navArrowBtn:hover:not(:disabled) {
-  background: var(--iv-hover-bg);
+  background: color-mix(in srgb, var(--color-ink) 75%, transparent);
   transform: translateY(-1px);
 }
 
@@ -1513,7 +1854,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 6px;
 }
 
 .actionAvatarBadgeWrap {
@@ -1529,7 +1870,6 @@
   height: 44px;
   border-radius: 999px;
   background: var(--iv-elevated-bg);
-  border: 2px solid var(--iv-accent);
   color: var(--iv-text);
   font-weight: 800;
   font-size: 0.9rem;
@@ -1556,7 +1896,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 0;
   border: 0;
   background: var(--color-transparent);
   color: var(--iv-text);
@@ -1569,22 +1909,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* Rộng 44px để dễ bấm; thấp 34px để số đếm sát icon như TikTok (cả nút vẫn cao hơn 44px tính cả số). */
   width: 44px;
-  height: 44px;
-  border-radius: 999px;
+  height: 34px;
+  /* Không nền tròn; bóng đổ để icon trắng vẫn rõ trên video sáng. */
   border: 0;
-  background: var(--iv-control-bg);
-  color: var(--iv-text);
-  box-shadow: var(--iv-shadow);
+  background: var(--color-transparent);
+  color: var(--color-background);
+  filter: drop-shadow(0 1px 3px color-mix(in srgb, var(--color-ink) 70%, transparent));
   transition:
     transform 160ms ease,
-    background-color 160ms ease,
     color 160ms ease;
 }
 
+/* Icon đặc như icon chia sẻ: tim, bình luận, lưu là hình nét đơn nên tô đầy bằng màu chữ (trắng; đã thích, đang mở,
+   đã lưu thì theo màu trạng thái bên dưới). */
+.verticalActionCircle svg {
+  fill: currentColor;
+}
+
 .verticalActionItem:hover .verticalActionCircle {
-  background: var(--iv-hover-bg);
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 
 .verticalActionLiked .verticalActionCircle {
@@ -1602,7 +1947,8 @@
 .verticalActionCount {
   font-size: 0.76rem;
   font-weight: 700;
-  color: var(--iv-text);
+  color: var(--color-background);
+  text-shadow: 0 1px 3px color-mix(in srgb, var(--color-ink) 70%, transparent);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1611,14 +1957,20 @@
    ========================================================================== */
 
 .rightPanel {
-  background: var(--iv-panel-bg);
-  border: 1px solid var(--iv-border);
-  border-radius: 20px;
-  box-shadow: var(--iv-shadow);
+  min-width: 0;
+  background: var(--color-background);
+  border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
+  border-radius: 22px;
+  box-shadow: 0 18px 48px -26px color-mix(in srgb, var(--color-ink) 40%, transparent);
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+}
+
+.viewerGrid > .rightPanel {
+  grid-column: 5;
+  grid-row: 1;
 }
 
 .rightHeaderBar {
@@ -1641,9 +1993,17 @@
   min-height: 0;
   overflow-y: auto;
   padding: 16px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  align-content: start;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.rightScrollArea::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Post Details Summary inside Right Panel */
@@ -1785,8 +2145,23 @@
   cursor: pointer;
 }
 
-.hashtagBtn:hover {
+/* Như TikTok: tên tác giả (Reels, bình luận) bấm được nhưng rê chuột không gạch chân, không đổi màu. */
+.profileLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Riêng tên tác giả trên video Reels: gạch chân khi rê chuột (anh Thành muốn giữ ở Reels). */
+.overlayAuthorNameRow .profileLink:hover {
   text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Avatar trong Reels và bình luận là link tới trang cá nhân: giữ nguyên kiểu, không gạch chân. */
+a.overlayAvatar,
+a.avatarSmall {
+  flex-shrink: 0;
+  text-decoration: none;
 }
 
 .postSummaryStatsRow {
@@ -1851,33 +2226,79 @@
   margin: 0;
   padding: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+  min-width: 0;
 }
 
 .panelCommentItem {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+  min-width: 0;
+  /* Chỉ hiện dần khi tải xong, không trượt. */
+  animation: commentFadeIn 200ms ease-out both;
+}
+
+/* Bình luận mở từ thông báo: tô nền riêng hàng bình luận, không tô cả luồng trả lời bên dưới. */
+.panelCommentFocused > :first-child {
+  border-radius: 12px;
+  background: var(--color-sea-mist);
+  box-shadow: 0 0 0 6px var(--color-sea-mist);
+}
+
+/* Nhấn vào khung trích dẫn cuộn tới bình luận gốc: nổi nhẹ 1.5s bằng token nền dịu, không neon/glow. */
+.panelCommentItem[data-quote-highlighted='true'] > :first-child {
+  border-radius: 12px;
+  background: var(--color-sea-mist);
+  transition: background-color 180ms ease-out;
+}
+
+@keyframes commentFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .panelCommentRow {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  min-width: 0;
 }
 
 .avatarSmall {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 999px;
-  background: var(--iv-hover-bg);
+  background: var(--color-coral-tint);
   border: 0;
-  color: var(--iv-text);
-  font-size: 0.76rem;
+  color: var(--color-coral-ink);
+  font-size: 0.78rem;
   font-weight: 800;
   flex-shrink: 0;
+}
+
+.avatarSmall[data-tone='teal'] {
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+
+.avatarSmall[data-tone='sun'] {
+  background: var(--color-sun-soft);
+  color: var(--color-navy);
+}
+
+.avatarSmall[data-tone='navy'] {
+  background: var(--color-surface-muted);
+  color: var(--color-navy);
 }
 
 .avatarSmallWrap {
@@ -1899,7 +2320,7 @@
   height: 14px;
   border-radius: 999px;
   background: #FFFFFF;
-  color: #FF6A00;
+  color: var(--color-coral);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
@@ -1916,6 +2337,7 @@
   flex: 1;
   min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
 }
 
@@ -1930,31 +2352,41 @@
 
 .panelCommentAuthor {
   font-weight: 800;
-  color: var(--iv-text);
+  color: var(--color-navy);
 }
 
 .commentVerifiedIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #FF6A00;
+  color: var(--color-coral);
 }
 
 .authorRoleTag {
-  padding: 1px 6px;
-  border-radius: 6px;
-  background: var(--iv-accent-soft);
-  color: var(--iv-accent);
-  font-size: 0.7rem;
-  font-weight: 700;
+  color: var(--iv-text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
 }
 
 .panelCommentText {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   line-height: 1.5;
-  color: var(--iv-text);
+  color: var(--color-ink);
   word-break: break-word;
+}
+
+.commentMentionLink {
+  color: var(--color-coral-ink);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.commentMentionLink:hover,
+.commentMentionLink:focus-visible {
+  color: var(--color-coral-ink);
+  text-decoration: none;
 }
 
 .panelCommentActions {
@@ -1992,16 +2424,20 @@
   padding-left: 14px;
   border-left: 1.5px solid var(--iv-border);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   margin-top: 6px;
+  min-width: 0;
 }
 
 /* Sticky Comment Composer at bottom of Right Panel */
 
 .stickyComposerBox {
-  border-top: 1px solid var(--iv-border);
-  background: var(--iv-panel-bg);
-  padding: 10px 14px;
+  /* Mốc định vị cho bảng emoji: bảng rộng theo cả khung nhập, không tràn ra ngoài panel. */
+  position: relative;
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  background: var(--color-transparent);
+  padding: 12px 14px 14px;
   display: grid;
   gap: 8px;
   flex-shrink: 0;
@@ -2025,21 +2461,134 @@
   gap: 10px;
 }
 
+/* Kiểu TikTok: avatar và nút gửi nằm ngoài; viên thuốc chứa ô nhập và nút emoji, viền mảnh, nền sáng nhẹ. */
+.panelComposerField {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 40px;
+  padding: 0 4px 0 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent);
+  background: var(--color-surface);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+/* Không vòng sáng hay viền focus mặc định; viền đậm hơn và nền sáng lên là đủ báo đang nhập. */
+.panelComposerField:focus-within {
+  border-color: color-mix(in srgb, var(--color-text-subtle) 70%, transparent);
+  background: var(--color-background);
+}
+
 .panelComposerInput {
   flex: 1;
   min-width: 0;
   min-height: 38px;
-  padding: 7px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--iv-border);
-  background: var(--iv-elevated-bg);
-  color: var(--iv-text);
+  padding: 0;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--color-ink);
   font: inherit;
-  font-size: 0.84rem;
+  font-size: 0.86rem;
 }
 
-.panelComposerInput:focus {
-  outline: 1.5px solid var(--iv-accent);
+.panelComposerInput:focus,
+.panelComposerInput:focus-visible {
+  /* globals.css tô viền teal (box-shadow inset) cho mọi input đang focus; ở đây khung viên thuốc
+     bên ngoài đã báo trạng thái focus nên tắt để không lộ khung chữ nhật bên trong. */
+  outline: none;
+  box-shadow: none;
+}
+
+/* Lớp phủ mirror cho ô đăng bình luận: giữ nguyên font/cỡ chữ/metrics để caret không lệch khi tô đậm @mention */
+.composerInputOverlayWrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+}
+
+.composerInputMirror,
+.panelComposerInputOverlay {
+  box-sizing: border-box;
+  width: 100%;
+  height: 38px;
+  min-height: 38px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 400;
+  line-height: 38px;
+  letter-spacing: normal;
+  font-kerning: normal;
+  white-space: pre;
+}
+
+.composerInputMirror {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  color: var(--color-ink);
+}
+
+.composerMirrorTail {
+  display: inline-block;
+  width: 4px;
+}
+
+.panelComposerInputOverlay {
+  position: relative;
+  z-index: 1;
+  display: block;
+  background: var(--color-transparent);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--color-ink);
+}
+
+.panelComposerInputOverlay::placeholder {
+  color: var(--color-text-muted);
+  -webkit-text-fill-color: var(--color-text-muted);
+  opacity: 1;
+}
+
+/* Giữ nguyên font-weight và bề rộng ký tự để không làm lệch con trỏ; mô phỏng in đậm bằng nét viền + bóng ngang 0px blur */
+.mentionMirrorTag {
+  color: var(--color-coral-ink);
+  font-weight: inherit;
+  -webkit-text-stroke: 0.45px currentColor;
+  text-shadow: 0.35px 0 0 currentColor;
+}
+
+.panelEmojiBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-transparent);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.panelEmojiBtn:hover,
+.panelEmojiBtnActive {
+  background: var(--color-surface-muted);
+  color: var(--color-navy);
 }
 
 .panelSendBtn {
@@ -2050,10 +2599,15 @@
   height: 36px;
   border-radius: 999px;
   border: 0;
-  background: var(--iv-accent);
-  color: rgb(255 255 255);
+  background: var(--color-coral);
+  color: var(--color-background);
   cursor: pointer;
   flex-shrink: 0;
+  transition: background-color 160ms ease;
+}
+
+.panelSendBtn:hover:not(:disabled) {
+  background: var(--color-coral-ink);
 }
 
 .panelSendBtn:disabled {
@@ -2073,46 +2627,71 @@
   margin: 0;
   border: 0;
   z-index: 70;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(8px);
+  background: var(--color-overlay);
   display: grid;
   place-items: center;
   padding: 20px;
   /* Light Theme tokens explicitly defined for root modal */
-  --iv-panel-bg: #FFFFFF;
-  --iv-elevated-bg: #F8FAFC;
-  --iv-hover-bg: #F1F5F9;
-  --iv-text: #141B3D;
-  --iv-text-muted: #64748B;
-  --iv-border: #E2E8F0;
-  --iv-accent: #FF6A00;
-  --iv-accent-ink: #FFFFFF;
-  --iv-accent-soft: rgba(255, 106, 0, 0.12);
-  --iv-shadow: 0 20px 48px -8px rgba(15, 23, 42, 0.22), 0 4px 16px rgba(15, 23, 42, 0.08);
+  --iv-panel-bg: var(--color-background);
+  --iv-elevated-bg: var(--color-surface);
+  --iv-hover-bg: var(--color-surface-muted);
+  --iv-text: var(--color-text);
+  --iv-text-muted: var(--color-text-muted);
+  --iv-border: var(--color-border);
+  --iv-accent: var(--color-coral);
+  --iv-accent-ink: var(--color-background);
+  --iv-accent-soft: var(--color-coral-tint);
+  --iv-shadow: 0 12px 32px -12px color-mix(in srgb, var(--color-ink) 30%, transparent);
 }
 
 .composerModalCard {
   width: min(680px, 100%);
   max-height: 88vh;
   overflow-y: auto;
-  background: #FFFFFF !important;
-  color: #141B3D !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 20px;
+  background: var(--color-background);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25), 0 4px 16px rgba(15, 23, 42, 0.08) !important;
+  box-shadow: var(--iv-shadow);
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.composerModalCard::-webkit-scrollbar {
-  width: 6px;
+@media (prefers-reduced-motion: no-preference) {
+  .modalBackdrop {
+    animation: composer-fade 180ms ease-out both;
+  }
+
+  .modalBackdrop > .composerModalCard {
+    animation: composer-slide 180ms ease-out both;
+  }
+
+  .modalBackdrop[data-closing] {
+    animation-name: composer-fade-out;
+  }
+
+  .modalBackdrop[data-closing] > .composerModalCard {
+    animation-name: composer-slide-out;
+  }
 }
 
-.composerModalCard::-webkit-scrollbar-thumb {
-  background: var(--iv-border);
-  border-radius: 999px;
+@keyframes composer-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes composer-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes composer-slide {
+  from { translate: 0 -6px; }
+}
+
+@keyframes composer-slide-out {
+  to { translate: 0 -6px; }
 }
 
 .composerSection {
@@ -2135,15 +2714,6 @@
   align-items: center;
   gap: 6px;
   margin: 0;
-}
-
-.composerSectionBadge {
-  font-size: 0.72rem;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--iv-elevated-bg);
-  color: var(--iv-text-muted);
 }
 
 .composerTypeToggle {
@@ -2179,17 +2749,28 @@
 }
 
 .composerDropzone {
+  width: 100%;
   border: 1.5px dashed var(--iv-border);
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 24px 16px;
   text-align: center;
   cursor: pointer;
-  transition: all 180ms ease;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
   background: var(--iv-elevated-bg);
+  font: inherit;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+/* Đang kéo file qua: viền liền màu nhấn, nền ấm hơn để biết thả vào được. */
+.composerDropzone[data-drag-over] {
+  border-style: solid;
+  border-color: var(--iv-accent);
+  background: var(--iv-accent-soft);
 }
 
 .composerDropzone:hover {
@@ -2206,7 +2787,7 @@
   align-items: center;
   justify-content: center;
   color: var(--iv-accent);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--iv-border);
 }
 
 .composerDropzoneText {
@@ -2217,7 +2798,8 @@
 }
 
 .composerDropzoneHint {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
   color: var(--iv-text-muted);
   margin: 0;
 }
@@ -2260,6 +2842,7 @@
 }
 
 .composerProgressBarBg {
+  position: relative;
   width: 100%;
   height: 6px;
   background: var(--iv-border);
@@ -2267,11 +2850,43 @@
   overflow: hidden;
 }
 
+/* scaleX thay cho width: trình duyệt chỉ vẽ lại lớp này, không tính lại bố cục mỗi lần số byte đổi. */
 .composerProgressBarFill {
+  width: 100%;
   height: 100%;
   background: var(--iv-accent);
-  transition: width 200ms ease;
   border-radius: 999px;
+  transform-origin: left center;
+  transition: transform 280ms linear;
+}
+
+/* Gửi xong, chờ server hoàn tất: vệt sáng chạy qua để biết vẫn đang làm, không đứng im ở 90%. */
+.composerProgressBarBg[data-finishing]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: color-mix(in srgb, var(--color-background) 45%, transparent);
+  animation: composer-progress-sweep 1.1s ease-in-out infinite;
+}
+
+@keyframes composer-progress-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composerProgressBarFill {
+    transition: none;
+  }
+
+  .composerProgressBarBg[data-finishing]::after {
+    animation: none;
+  }
 }
 
 .composerProgressText {
@@ -2309,68 +2924,20 @@
 }
 
 .composerItineraryToggleSubtitle {
-  font-size: 0.76rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
   color: var(--iv-text-muted);
-}
-
-.composerItineraryContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  background: var(--iv-elevated-bg);
-  border-radius: 14px;
-  padding: 14px;
-  border: 1px solid var(--iv-border);
-}
-
-.itineraryItemCard {
-  background: var(--iv-panel-bg);
-  border-radius: 10px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border: 1px solid var(--iv-border);
-}
-
-.itineraryItemHeader {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .itineraryDaySelect {
   padding: 6px 10px;
   border-radius: 8px;
   border: 1px solid var(--iv-border);
-  background: var(--iv-elevated-bg);
+  background-color: var(--iv-elevated-bg);
   font: inherit;
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--iv-text);
-}
-
-.addItemBtn {
-  padding: 8px 14px;
-  border: 1px dashed var(--iv-border);
-  border-radius: 10px;
-  background: transparent;
-  color: var(--iv-text);
-  font: inherit;
-  font-size: 0.84rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 180ms ease;
-}
-
-.addItemBtn:hover {
-  background: var(--iv-panel-bg);
-  border-color: var(--iv-accent);
-  color: var(--iv-accent);
 }
 
 .removeItineraryItemBtn {
@@ -2418,10 +2985,67 @@
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid var(--iv-border);
-  background: var(--iv-elevated-bg);
+  background-color: var(--iv-elevated-bg);
   color: var(--iv-text);
   font: inherit;
   font-size: 0.88rem;
+}
+
+/* Lớp phủ mirror cho khung sửa bình luận (textarea đa dòng) */
+.editTextareaOverlayWrap {
+  position: relative;
+  border-radius: 12px;
+  background-color: var(--iv-elevated-bg);
+}
+
+.editTextareaMirror,
+.editTextareaOverlay {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+  word-spacing: normal;
+  font-kerning: normal;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.editTextareaMirror {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--color-transparent);
+  color: var(--iv-text);
+  scrollbar-color: transparent transparent;
+}
+
+.editTextareaOverlay {
+  position: relative;
+  z-index: 1;
+  display: block;
+  border-color: var(--iv-border);
+  background-color: var(--color-transparent);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--iv-text);
+  resize: vertical;
+}
+
+.editTextareaOverlay::placeholder {
+  color: var(--iv-text-muted);
+  -webkit-text-fill-color: var(--iv-text-muted);
+  opacity: 1;
 }
 
 .composerMetaRow {
@@ -2435,6 +3059,24 @@
   justify-content: flex-end;
   gap: 10px;
 }
+
+/* Thanh tiêu đề dùng chung với panel bình luận có đệm riêng; trong pop-up card đã có đệm 24px nên bỏ đệm trên, trái, phải. */
+.composerModalCard > .panelHeaderBar {
+  padding: 0 0 14px;
+}
+
+/* Ô chọn dùng chung (SoftSelect) trong pop-up: cùng nền, cỡ chữ với các ô nhập bên cạnh. */
+.composerSelect > button {
+  background: var(--iv-elevated-bg);
+  font-size: 0.88rem;
+}
+
+/* Nút ở chân pop-up đăng bài: nút phụ có viền, nút chính màu trơn; không bóng đổ. */
+.composerModalFooter .utilityBtn {
+  border: 1px solid var(--iv-border);
+  box-shadow: none;
+}
+
 
 .composerHeaderActions {
   display: flex;
@@ -2464,28 +3106,11 @@
   color: var(--iv-accent);
 }
 
-.editingDraftBadge {
-  font-size: 0.74rem;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
 
 .saveSuccessBanner {
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: rgba(34, 197, 94, 0.1);
-  color: rgb(22, 101, 52);
+  color: var(--color-teal-ink);
   font-size: 0.84rem;
   font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .draftsListContainer {
@@ -2537,21 +3162,11 @@
 }
 
 .draftMeta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.78rem;
+  margin: 0;
+  font-size: 0.8rem;
   color: var(--iv-text-muted);
-  flex-wrap: wrap;
 }
 
-.draftBadge {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--iv-panel-bg);
-  font-weight: 500;
-  border: 1px solid var(--iv-border);
-}
 
 .draftActions {
   display: flex;
@@ -2591,20 +3206,81 @@
 }
 
 .draftDeleteBtn:hover {
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.3);
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
 }
 
 .draftEmptyState {
-  padding: 36px 16px;
+  padding: 40px 16px 32px;
   text-align: center;
-  color: var(--iv-text-muted);
-  font-size: 0.88rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
+}
+
+.draftEmptyIcon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: var(--iv-elevated-bg);
+  color: var(--iv-text-muted);
+}
+
+.draftEmptyTitle {
+  margin: 0;
+  color: var(--iv-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.draftEmptyHint {
+  margin: 0 0 12px;
+  color: var(--iv-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.draftsHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: -6px;
+}
+
+.draftsCount {
+  color: var(--iv-text-muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+/* Nút phụ viền mảnh, không bóng: "Viết bài mới" ở đầu màn bản nháp và ở màn trống. */
+.draftsNewBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 14px;
+  border: 1px solid var(--iv-border);
+  border-radius: 999px;
+  background: var(--iv-panel-bg);
+  color: var(--iv-text);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.draftsNewBtn:hover {
+  background: var(--iv-hover-bg);
+  border-color: var(--iv-text-muted);
 }
 
 .drawerBackdrop {
@@ -2670,15 +3346,44 @@
 
 @media (max-width: 1439px) {
   .gridThreeCols {
-    grid-template-columns: 310px minmax(0, 1fr) 340px;
+    grid-template-columns: 300px 16px minmax(0, 1fr) 16px 330px;
   }
 
   .gridNoLeft {
-    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-columns: 0px 0px minmax(0, 1fr) 16px 330px;
   }
 
   .gridNoRight {
-    grid-template-columns: 310px minmax(0, 1fr);
+    grid-template-columns: 300px 16px minmax(0, 1fr) 0px 0px;
+  }
+
+  .gridCenterOnly {
+    grid-template-columns: 0px 0px minmax(0, 1fr) 0px 0px;
+  }
+}
+
+@media (max-width: 1199px) {
+  .gridThreeCols {
+    grid-template-columns: 270px 14px minmax(0, 1fr) 14px 290px;
+  }
+
+  .gridNoLeft {
+    grid-template-columns: 0px 0px minmax(0, 1fr) 14px 290px;
+  }
+
+  .gridNoRight {
+    grid-template-columns: 270px 14px minmax(0, 1fr) 0px 0px;
+  }
+
+  .gridCenterOnly {
+    grid-template-columns: 0px 0px minmax(0, 1fr) 0px 0px;
+  }
+}
+
+/* Khung quá thấp để vừa cả hai cụm nút: bỏ cụm lên/xuống, vẫn chuyển bài bằng cuộn và phím mũi tên. */
+@media (max-height: 599px) {
+  .navArrowsCluster {
+    display: none;
   }
 }
 
@@ -2686,7 +3391,7 @@
 
 @media (max-width: 1023px) {
   .immersiveRoot {
-    height: calc(100dvh - 72px);
+    height: 100%;
   }
 
   .viewerGrid,
@@ -2696,6 +3401,28 @@
   .gridCenterOnly {
     grid-template-columns: minmax(0, 1fr);
     padding: 10px 12px;
+  }
+
+  .itineraryInReels,
+  .centerPanel,
+  .viewerGrid > .rightPanel {
+    grid-column: auto;
+  }
+
+  /* Lịch trình mở thành bottom sheet như panel bình luận, thay vì bị ẩn hẳn. */
+  .itineraryInReels {
+    position: fixed !important;
+    /* Đứng trên thanh điều hướng đáy (<768px); trên 768px biến bằng 0. */
+    inset: auto 0 var(--mobile-tab-bar-space, 0px) 0 !important;
+    height: 78dvh !important;
+    max-height: 78dvh !important;
+    border-radius: 22px 22px 0 0 !important;
+    z-index: 60;
+  }
+
+  .mediaStageFrame {
+    width: auto;
+    aspect-ratio: 9 / 16;
   }
 
   .drawerBackdrop {
@@ -2709,7 +3436,8 @@
   .leftPanel,
   .rightPanel {
     position: fixed;
-    inset: auto 0 0 0;
+    /* Đứng trên thanh điều hướng đáy (<768px) để ô nhập bình luận không bị che. */
+    inset: auto 0 var(--mobile-tab-bar-space, 0px) 0;
     height: 78dvh;
     border-radius: 22px 22px 0 0;
     z-index: 60;
@@ -2717,6 +3445,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .panelCommentItem {
+    animation: none;
+  }
+
   .immersiveRoot,
   .viewerGrid,
   .mediaTrack,
@@ -2726,5 +3458,26 @@
   .floatingCircleAccentBtn {
     transition: none !important;
     animation: none;
+  }
+}
+
+/* Chữ chỉ cho trình đọc màn hình (huy hiệu xác minh chỉ có icon). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.accountCardHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.accountCardHeader > p { margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .progressBarTrack,
+  .stageBottomOverlay,
+  .progressBarInput::-webkit-slider-thumb,
+  .progressBarInput::-moz-range-thumb {
+    transition: none;
   }
 }

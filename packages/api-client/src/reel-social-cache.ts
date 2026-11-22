@@ -1,5 +1,5 @@
 import type { InfiniteData, QueryClient } from '@tanstack/react-query';
-import { REEL_FEED_TABS } from './feed';
+import { RECOMMENDED_REELS_KEY, REEL_FEED_TABS } from './feed';
 import type { FeedPageDto } from './generated/core-api/model/feedPageDto';
 import type { socialApi } from './social';
 
@@ -23,8 +23,20 @@ export function updateReelSocialCache(
   action: ReelSocialAction,
   selected: boolean,
 ) {
-  // A post can sit in several tabs, so every tab's cached card has to change together.
-  const feedKeys = REEL_FEED_TABS.map((tab) => ['feed', tab, userId]);
+  // A post can sit in several tabs (and in the saved Reels list), so every cached card has to change together.
+  // Reels opened from search results or a shared link live under ['feed', 'byIds', ids, userId] (useReelsByIds).
+  // Reels gợi ý của discovery (mỗi mode một danh sách) live under ['feed', 'recommended', mode, userId].
+  const keysOf = (prefix: readonly unknown[]) =>
+    client
+      .getQueriesData<InfiniteData<FeedPageDto>>({ queryKey: prefix })
+      .map(([queryKey]) => queryKey)
+      .filter((queryKey) => queryKey[3] === userId);
+  const feedKeys = [
+    ...REEL_FEED_TABS.map((tab) => ['feed', tab, userId]),
+    ['feed', 'saved', userId],
+    ...keysOf(['feed', 'byIds']),
+    ...keysOf(RECOMMENDED_REELS_KEY),
+  ];
   const previousFeeds = feedKeys.map((feedKey) => client.getQueryData<InfiniteData<FeedPageDto>>(feedKey));
   const detailKey = ['social', 'post', postId, userId];
   const previousDetail = client.getQueryData<PostDetail>(detailKey);
@@ -125,4 +137,22 @@ export function updateReelSocialCache(
           },
       );
   };
+}
+
+/**
+ * Bỏ lưu thành công thì Reel đó không còn thuộc danh sách "Đã lưu": xoá khỏi cache thay vì chỉ đổi saved=false.
+ * Chỉ gọi sau khi server xác nhận, nên lỗi mạng không làm Reel biến mất rồi hiện lại.
+ */
+export function removeReelFromSavedFeedCache(client: QueryClient, userId: string, postId: string) {
+  client.setQueryData<InfiniteData<FeedPageDto>>(
+    ['feed', 'saved', userId],
+    (data) =>
+      data && {
+        ...data,
+        pages: data.pages.map((page) => ({
+          ...page,
+          items: page.items.filter((card) => card.postId !== postId),
+        })),
+      },
+  );
 }

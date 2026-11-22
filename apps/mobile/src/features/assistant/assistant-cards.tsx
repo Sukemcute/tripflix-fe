@@ -1,11 +1,30 @@
-import { feedApi, type AssistantCard } from '@tripflix/api-client';
-import { vi } from '@tripflix/i18n';
-import { colors as c, radius, spacing as s } from '@tripflix/tokens';
+import {
+  feedApi,
+  getFutureDate,
+  type AssistantAction,
+  type AssistantCard,
+  type AssistantTrip,
+} from '@tripflix/api-client';
+import {
+  buildAssistantTripSelection,
+  resolveAssistantStayContext,
+  groupItineraryLines,
+  parseWeatherLine,
+  type DayPart,
+  type ItineraryStop,
+  type WeatherSky,
+} from '@tripflix/app-core';
+import { t, vi } from '@tripflix/i18n';
+import { colors as c, nativeFonts as f, radius, spacing as s } from '@tripflix/tokens';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
+import { Fragment, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Icon, money, Txt } from '@/components/mobile-ui';
+import { Button, Icon, money, Txt, type IconName } from '@/components/mobile-ui';
+import { saveTripBooking } from '@/features/booking/trip-booking-store';
+import { SaveItineraryButton } from '@/features/itinerary/save-itinerary-button';
+import { chatType } from './assistant-visuals';
 
 const copy = vi.assistant;
 type Reel = { poster: string };
@@ -41,10 +60,374 @@ function openReel(card: AssistantCard, isInFeed: boolean, onOpen: () => void) {
   router.navigate({ pathname: '/(tabs)', params: { reel: card.id } });
 }
 
-function openCard(card: AssistantCard, onOpen: () => void) {
+function openCard(card: AssistantCard, onOpen: () => void, bookingTrip?: AssistantTrip | null) {
   onOpen();
-  if (card.kind === 'stay') router.push({ pathname: '/hotel/[id]', params: { id: card.id } });
-  else router.push({ pathname: '/trip/[slug]', params: { slug: card.id } });
+  if (card.kind === 'stay') {
+    const stay = resolveAssistantStayContext(card, bookingTrip);
+    router.push({
+      pathname: '/tripi-stay',
+      params: {
+        id: card.id,
+        name: card.title,
+        ...stay,
+        adults: String(stay.adults),
+        children: String(stay.children),
+        infants: String(stay.infants),
+      },
+    });
+  } else if (card.kind === 'flight') {
+    // Màn chọn vé có sẵn tự tìm lại theo tuyến, ngày, số khách; giá và chỗ luôn lấy mới từ core.
+    router.push({
+      pathname: '/flights',
+      params: {
+        from: card.fromAirport ?? '',
+        to: card.toAirport ?? '',
+        date: card.flightDate ?? '',
+        passengers: String(card.passengers ?? 1),
+      },
+    });
+  } else router.push({ pathname: '/trip/[slug]', params: { slug: card.id } });
+}
+
+const ROW_ICONS: Record<string, IconName> = {
+  stay: 'bed-outline',
+  flight: 'airplane-outline',
+  post: 'newspaper-outline',
+  plan: 'map-outline',
+};
+
+const INFO_KINDS = new Set([
+  'weather',
+  'checklist',
+  'itinerary',
+  'summary',
+  'compare',
+  'transport',
+  'booking',
+]);
+const INFO_ICONS: Record<string, IconName> = {
+  weather: 'partly-sunny-outline',
+  checklist: 'checkbox-outline',
+  itinerary: 'map-outline',
+  summary: 'chatbubbles-outline',
+  compare: 'git-compare-outline',
+  transport: 'bus-outline',
+};
+const PART_ICONS: Record<DayPart, IconName> = {
+  morning: 'sunny-outline',
+  noon: 'sunny',
+  afternoon: 'partly-sunny-outline',
+  evening: 'moon-outline',
+  night: 'moon',
+};
+const PART_TONES: Record<DayPart, { background: string; color: string }> = {
+  morning: { background: c.sunSoft, color: c.navy },
+  noon: { background: c.sunSoft, color: c.navy },
+  afternoon: { background: c.coralTint, color: c.coralInk },
+  evening: { background: c.seaMist, color: c.tealInk },
+  night: { background: c.surfaceMuted, color: c.navy },
+};
+const SKY_ICONS: Record<WeatherSky, IconName> = {
+  sunny: 'sunny-outline',
+  cloudy: 'cloud-outline',
+  rain: 'rainy-outline',
+  storm: 'thunderstorm-outline',
+  fog: 'cloudy-outline',
+};
+
+/** Nút của thẻ kế hoạch: chỉ có trên câu trả lời mới nhất, vì lựa chọn cũ không còn hiệu lực. */
+type CardActions = {
+  act: (label: string, action: AssistantAction) => void;
+  canUndo: boolean;
+  trip?: AssistantTrip | null;
+};
+
+function ServerActions({
+  card,
+  actions,
+  onOpen,
+}: {
+  card: AssistantCard;
+  actions?: CardActions;
+  onOpen: () => void;
+}) {
+  const pathname = usePathname();
+  const buttons = card.actions?.filter((action) => {
+    if (action.type === 'book') return action.path === '/trip-builder';
+    // Giữ nút Chọn theo dòng so sánh, không lặp lại action cùng ref ở chân thẻ.
+    return (
+      action.type === 'select' &&
+      action.ref &&
+      actions &&
+      !(card.kind === 'compare' && card.lines?.some((line) => line.ref === action.ref))
+    );
+  });
+  // TF105: lộ trình Tripi vừa lên (có ngày) thì lưu được, cạnh nút Đặt; chỉ thẻ mới nhất có trip.
+  const canSave = card.kind === 'itinerary' && !!actions?.trip?.days?.length;
+  if (!buttons?.length && !canSave) return null;
+  return (
+    <View style={styles.actions}>
+      {canSave && (
+        <SaveItineraryButton
+          request={() =>
+            actions?.trip ? { source: 'tripi', trip: actions.trip as Record<string, unknown> } : null
+          }
+        />
+      )}
+      {buttons?.map((action, index) => (
+        <Button
+          key={`${card.ref}-action-${index}`}
+          compact
+          onPress={() => {
+            if (action.type === 'select' && action.ref) {
+              actions?.act(action.label, { type: 'select', ref: action.ref });
+            } else if (action.type === 'book' && action.path === '/trip-builder') {
+              onOpen();
+              // Kế hoạch Tripi đã chốt sang thẳng Đặt theo lộ trình với đủ điểm từng ngày; thẻ khác vẫn mở Tự lên lộ trình.
+              const selection =
+                card.kind === 'itinerary'
+                  ? buildAssistantTripSelection(card, action.params ?? {}, {
+                      authorName: copy.name,
+                      today: getFutureDate(0),
+                    })
+                  : null;
+              if (selection) {
+                saveTripBooking({ ...selection, origin: pathname });
+                router.navigate('/(tabs)/book');
+              } else {
+                router.push({ pathname: '/trip-builder', params: action.params ?? {} });
+              }
+            }
+          }}
+        >
+          {action.label}
+        </Button>
+      ))}
+    </View>
+  );
+}
+
+function CardHeader({ icon, title, subtitle }: { icon: IconName; title: string; subtitle?: string }) {
+  return (
+    <View style={styles.cardHeader}>
+      <View style={styles.cardIcon}>
+        <Icon name={icon} size={20} color={c.coralInk} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Txt numberOfLines={2} style={styles.cardTitle}>
+          {title}
+        </Txt>
+        {!!subtitle && <Txt style={styles.cardSubtitle}>{subtitle}</Txt>}
+      </View>
+    </View>
+  );
+}
+
+function ActionButton({
+  label,
+  onPress,
+  isPrimary = false,
+}: {
+  label: string;
+  onPress: () => void;
+  isPrimary?: boolean;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.action, isPrimary && styles.actionPrimary, pressed && styles.pressed]}
+    >
+      <Txt style={[styles.actionText, isPrimary && styles.actionPrimaryText]}>{label}</Txt>
+    </Pressable>
+  );
+}
+
+function Source({ card }: { card: AssistantCard }) {
+  return card.source ? (
+    <Txt style={styles.source}>
+      {copy.source}: {card.source}
+    </Txt>
+  ) : null;
+}
+
+function StopRow({ stop, isLast }: { stop: ItineraryStop; isLast: boolean }) {
+  const tone = stop.part ? PART_TONES[stop.part] : null;
+  const leg = [
+    stop.distanceKm !== null ? t('assistant.legDistance', { km: stop.distanceKm }) : null,
+    stop.minutes !== null ? t('assistant.legDuration', { minutes: stop.minutes }) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  return (
+    <View style={styles.stop}>
+      <View style={styles.rail}>
+        <View style={[styles.railDot, tone && { backgroundColor: tone.color }]} />
+        {!isLast && <View style={styles.railLine} />}
+      </View>
+      <View style={[styles.stopBody, stop.service && styles.serviceStop]}>
+        {stop.service && (
+          <View style={styles.serviceBadge}>
+            <Icon
+              name={stop.service === 'flight' ? 'airplane-outline' : 'bed-outline'}
+              size={13}
+              color={c.coralInk}
+            />
+            <Txt style={styles.serviceText}>{copy.tripflixService}</Txt>
+          </View>
+        )}
+        {!!stop.partLabel && (
+          <View style={[styles.partBadge, tone && { backgroundColor: tone.background }]}>
+            {stop.part && <Icon name={PART_ICONS[stop.part]} size={13} color={tone?.color ?? c.navy} />}
+            <Txt style={[styles.partText, tone && { color: tone.color }]}>{stop.partLabel}</Txt>
+          </View>
+        )}
+        <Txt style={styles.stopTitle}>{stop.title}</Txt>
+        {!!stop.place && <Txt style={styles.stopMeta}>{stop.place}</Txt>}
+        {!!leg && (
+          <View style={styles.leg}>
+            <Icon name="car-outline" size={13} color={c.textMuted} />
+            <Txt style={styles.stopMeta}>{leg}</Txt>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
+/** Lộ trình dạng timeline theo ngày (SCRUM-167): ngày → mốc có buổi, tên điểm, quãng đường. */
+function ItineraryCard({
+  card,
+  reel,
+  onOpen,
+  actions,
+}: {
+  card: AssistantCard;
+  reel?: Reel;
+  onOpen: () => void;
+  actions?: CardActions;
+}) {
+  const isPlan = card.id.startsWith('plan:');
+  const days = groupItineraryLines(card.lines ?? []);
+  const stopCount = days.reduce((total, day) => total + day.stops.length, 0);
+  const dayCount = days.filter((day) => day.day !== null).length;
+  const subtitle = dayCount
+    ? t('assistant.itinerarySummary', { days: dayCount, stops: stopCount })
+    : t('assistant.itineraryStops', { stops: stopCount });
+  return (
+    <View style={styles.card}>
+      <CardHeader icon="map-outline" title={card.title} subtitle={subtitle} />
+      {days.map((day, dayIndex) => (
+        <View key={`${card.ref}-day-${dayIndex}`} style={styles.day}>
+          <View style={styles.dayHead}>
+            <Txt style={styles.dayChip}>
+              {day.day !== null ? t('assistant.dayLabel', { day: day.day }) : copy.otherStops}
+            </Txt>
+            <View style={styles.dayRule} />
+          </View>
+          {day.stops.map((stop, index) => (
+            <StopRow
+              key={`${card.ref}-${dayIndex}-${index}`}
+              stop={stop}
+              isLast={index === day.stops.length - 1}
+            />
+          ))}
+        </View>
+      ))}
+      <Source card={card} />
+      {isPlan && actions?.canUndo && (
+        <View style={styles.actions}>
+          <ActionButton label={copy.undo} onPress={() => actions.act(copy.undo, { type: 'undo' })} />
+        </View>
+      )}
+      {!isPlan && (
+        <View style={styles.actions}>
+          {reel && <ActionButton label={copy.watchReel} onPress={() => openReel(card, true, onOpen)} />}
+          <ActionButton isPrimary label={copy.bookTrip} onPress={() => openCard(card, onOpen)} />
+        </View>
+      )}
+    </View>
+  );
+}
+
+function WeatherCard({ card }: { card: AssistantCard }) {
+  return (
+    <View style={styles.card}>
+      <CardHeader icon="partly-sunny-outline" title={card.title} />
+      {card.lines?.map((line, index) => {
+        const weather = parseWeatherLine(line.detail);
+        return (
+          <View key={`${card.ref}-${index}`} style={[styles.weatherRow, index > 0 && styles.divider]}>
+            <View style={styles.weatherIcon}>
+              <Icon name={SKY_ICONS[weather.skyKind]} size={22} color={c.tealInk} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Txt style={styles.weatherDay}>{line.label}</Txt>
+              <Txt style={styles.stopMeta}>{weather.sky ?? line.detail}</Txt>
+            </View>
+            <View style={styles.weatherRight}>
+              {weather.minC !== null && weather.maxC !== null && (
+                <Txt style={styles.temperature}>
+                  {t('assistant.temperatureRange', { min: weather.minC, max: weather.maxC })}
+                </Txt>
+              )}
+              {weather.rainChance !== null && (
+                <View style={styles.rainChip}>
+                  <Icon name="water-outline" size={12} color={c.tealInk} />
+                  <Txt style={styles.rainText}>
+                    {t('assistant.rainChance', { percent: weather.rainChance })}
+                  </Txt>
+                </View>
+              )}
+            </View>
+          </View>
+        );
+      })}
+      <Source card={card} />
+    </View>
+  );
+}
+
+/** Checklist, so sánh, tóm tắt, di chuyển: danh sách dòng gọn, dòng so sánh có nút Chọn. */
+function ListCard({ card, actions }: { card: AssistantCard; actions?: CardActions }) {
+  const isChecklist = card.kind === 'checklist';
+  const isPlan = card.id.startsWith('plan:');
+  return (
+    <View style={styles.card}>
+      <CardHeader icon={INFO_ICONS[card.kind] ?? 'information-circle-outline'} title={card.title} />
+      {card.lines?.map((line, index) => (
+        <View key={`${card.ref}-${index}`} style={[styles.listRow, index > 0 && styles.divider]}>
+          {isChecklist && (
+            <View style={styles.check}>
+              <Icon name="checkmark" size={14} color={c.background} />
+            </View>
+          )}
+          <View style={{ flex: 1 }}>
+            <Txt style={styles.listLabel}>{line.label}</Txt>
+            {!!line.detail && <Txt style={styles.stopMeta}>{line.detail}</Txt>}
+          </View>
+          {!!line.ref && actions && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${copy.choose}: ${line.label}`}
+              onPress={() =>
+                actions.act(`${copy.choose} ${line.label}`, { type: 'select', ref: line.ref ?? '' })
+              }
+              style={({ pressed }) => [styles.action, styles.actionPrimary, pressed && styles.pressed]}
+            >
+              <Txt style={[styles.actionText, styles.actionPrimaryText]}>{copy.choose}</Txt>
+            </Pressable>
+          )}
+        </View>
+      ))}
+      <Source card={card} />
+      {isPlan && actions?.canUndo && (
+        <View style={styles.actions}>
+          <ActionButton label={copy.undo} onPress={() => actions.act(copy.undo, { type: 'undo' })} />
+        </View>
+      )}
+    </View>
+  );
 }
 
 function VideoCard({ card, reel, onPlay }: { card: AssistantCard; reel?: Reel; onPlay: () => void }) {
@@ -53,7 +436,7 @@ function VideoCard({ card, reel, onPlay }: { card: AssistantCard; reel?: Reel; o
       accessibilityRole="button"
       accessibilityLabel={`${copy.watchVideo}: ${card.title}`}
       onPress={onPlay}
-      style={({ pressed }) => [styles.video, pressed && { opacity: 0.85 }]}
+      style={({ pressed }) => [styles.video, pressed && styles.pressed]}
     >
       {reel ? (
         <Image source={reel.poster} style={StyleSheet.absoluteFill} contentFit="cover" />
@@ -61,10 +444,10 @@ function VideoCard({ card, reel, onPlay }: { card: AssistantCard; reel?: Reel; o
         <View style={[StyleSheet.absoluteFill, { backgroundColor: c.tealInk }]} />
       )}
       <View style={styles.play}>
-        <Icon name="play" size={18} color={c.background} />
+        <Icon name="play" size={16} color={c.background} />
       </View>
       <View style={styles.videoCaption}>
-        <Txt variant="caption" numberOfLines={3} style={{ color: c.background }}>
+        <Txt numberOfLines={3} style={styles.videoTitle}>
           {card.title}
         </Txt>
       </View>
@@ -72,13 +455,38 @@ function VideoCard({ card, reel, onPlay }: { card: AssistantCard; reel?: Reel; o
   );
 }
 
-/** Thẻ Tripi tìm được: video thành hàng thẻ dọc như Reels (bấm để mở ở Reels), bài viết và nơi ở thành dòng bấm được. */
-export function AssistantCards({ cards, onOpen }: { cards: AssistantCard[]; onOpen: () => void }) {
+function infoCard(
+  card: AssistantCard,
+  reel: Reel | undefined,
+  onOpen: () => void,
+  actions?: CardActions,
+): ReactNode {
+  if (card.kind === 'itinerary')
+    return <ItineraryCard card={card} reel={reel} onOpen={onOpen} actions={actions} />;
+  if (card.kind === 'weather') return <WeatherCard card={card} />;
+  return <ListCard card={card} actions={actions} />;
+}
+
+/** Thẻ Tripi tìm được: video thành hàng thẻ dọc như Reels; lộ trình, thời tiết, danh sách và phòng/vé là khối riêng có CTA. */
+export function AssistantCards({
+  cards,
+  onOpen,
+  actions,
+  bookingTrip,
+}: {
+  cards: AssistantCard[];
+  onOpen: () => void;
+  actions?: CardActions;
+  bookingTrip?: AssistantTrip | null;
+}) {
   const videos = cards.filter((card) => card.kind === 'video');
-  const others = cards.filter((card) => card.kind !== 'video');
-  const reels = useFeedReels(videos.map((card) => card.id)).data ?? {};
+  const infos = cards.filter((card) => INFO_KINDS.has(card.kind));
+  // Thẻ lạ (app cũ chưa biết) thì bỏ qua thay vì hiện dòng bấm vào trang sai.
+  const others = cards.filter((card) => ['stay', 'flight', 'post', 'plan'].includes(card.kind));
+  const reelIds = [...videos, ...infos.filter((card) => card.kind === 'itinerary')].map((card) => card.id);
+  const reels = useFeedReels(reelIds).data ?? {};
   return (
-    <View style={{ gap: s.sm }}>
+    <View style={{ gap: s.md }}>
       {videos.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: s.sm }}>
           {videos.map((card) => (
@@ -91,56 +499,189 @@ export function AssistantCards({ cards, onOpen }: { cards: AssistantCard[]; onOp
           ))}
         </ScrollView>
       )}
+      {infos.map((card) => (
+        <Fragment key={card.ref}>
+          {infoCard(card, reels[card.id], onOpen, actions)}
+          <ServerActions card={card} actions={actions} onOpen={onOpen} />
+        </Fragment>
+      ))}
       {others.map((card) => (
-        <Pressable
-          key={card.ref}
-          accessibilityRole="button"
-          onPress={() => openCard(card, onOpen)}
-          style={({ pressed }) => [styles.row, pressed && { opacity: 0.85 }]}
-        >
-          <Icon name={card.kind === 'stay' ? 'bed-outline' : 'map-outline'} size={18} color={c.tealInk} />
-          <View style={{ flex: 1 }}>
-            <Txt variant="label" numberOfLines={2}>
-              {card.title}
-            </Txt>
-            {card.priceFrom !== null && (
-              <Txt variant="caption" style={{ color: c.coralInk }}>
-                {copy.priceFrom} {money(card.priceFrom)}
+        <Fragment key={card.ref}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => openCard(card, onOpen, bookingTrip)}
+            style={({ pressed }) => [styles.card, styles.row, pressed && styles.pressed]}
+          >
+            <View style={styles.cardIcon}>
+              <Icon name={ROW_ICONS[card.kind] ?? 'map-outline'} size={20} color={c.coralInk} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Txt numberOfLines={2} style={styles.listLabel}>
+                {card.title}
               </Txt>
-            )}
-          </View>
-        </Pressable>
+              {card.priceFrom !== null && (
+                <Txt style={styles.price}>
+                  {copy.priceFrom} {money(card.priceFrom)}
+                </Txt>
+              )}
+            </View>
+            <Icon name="chevron-forward" size={18} color={c.textMuted} />
+          </Pressable>
+          <ServerActions card={card} actions={actions} onOpen={onOpen} />
+        </Fragment>
       ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  video: {
-    width: 112,
-    height: 168,
+  card: {
+    gap: s.md,
+    padding: s.lg,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: c.border,
+    backgroundColor: c.background,
+    boxShadow: `0 6px 18px -12px ${c.overlay}`,
+  },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: s.md },
+  cardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.coralTint,
+  },
+  cardTitle: { ...chatType.title, fontFamily: f.bold, color: c.navy },
+  cardSubtitle: { ...chatType.meta, fontFamily: f.medium, color: c.textMuted },
+  day: { gap: s.sm },
+  dayHead: { flexDirection: 'row', alignItems: 'center', gap: s.sm },
+  dayChip: {
+    ...chatType.meta,
+    fontFamily: f.bold,
+    color: c.background,
+    backgroundColor: c.navy,
+    paddingHorizontal: s.sm,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
     overflow: 'hidden',
-    borderRadius: radius.lg,
+  },
+  dayRule: { flex: 1, height: 1, backgroundColor: c.border },
+  stop: { flexDirection: 'row', gap: s.md },
+  rail: { width: 14, alignItems: 'center', paddingTop: 6 },
+  railDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: c.coral,
+    borderWidth: 2,
+    borderColor: c.background,
+    boxShadow: `0 0 0 2px ${c.border}`,
+  },
+  // Nét đứt nối các mốc trong ngày; nền viền thường quá nhạt, không thấy được đường đi.
+  railLine: {
+    flex: 1,
+    width: 0,
+    marginTop: 4,
+    borderLeftWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: c.coralSoft,
+  },
+  stopBody: { flex: 1, gap: 3, paddingBottom: s.md },
+  // Chuyến bay, khách sạn Tripflix trong lộ trình: nổi bật để khách thấy phần đặt được.
+  serviceStop: {
+    padding: s.sm,
+    marginBottom: s.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: c.coral,
+    backgroundColor: c.coralTint,
+  },
+  serviceBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  serviceText: { ...chatType.meta, fontFamily: f.semibold, color: c.coralInk },
+  partBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    paddingHorizontal: s.sm,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    backgroundColor: c.surfaceMuted,
+  },
+  partText: { ...chatType.meta, fontFamily: f.semibold, color: c.navy },
+  stopTitle: { ...chatType.body, fontFamily: f.semibold, color: c.ink },
+  stopMeta: { ...chatType.meta, color: c.textMuted },
+  leg: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  source: { ...chatType.meta, color: c.textMuted },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: s.sm },
+  action: {
+    minHeight: 40,
+    justifyContent: 'center',
+    paddingHorizontal: s.lg,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: c.border,
+    backgroundColor: c.background,
+  },
+  actionPrimary: { borderColor: c.coral, backgroundColor: c.coral },
+  actionText: { ...chatType.small, fontFamily: f.semibold, color: c.navy },
+  actionPrimaryText: { color: c.background },
+  weatherRow: { flexDirection: 'row', alignItems: 'center', gap: s.md },
+  divider: { paddingTop: s.md, borderTopWidth: 1, borderTopColor: c.border },
+  weatherIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.seaMist,
+  },
+  weatherDay: { ...chatType.body, fontFamily: f.semibold, color: c.ink },
+  weatherRight: { alignItems: 'flex-end', gap: 4 },
+  temperature: { ...chatType.title, fontFamily: f.bold, color: c.navy },
+  rainChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: radius.pill,
+    backgroundColor: c.seaMist,
+  },
+  rainText: { ...chatType.meta, fontFamily: f.semibold, color: c.tealInk },
+  listRow: { flexDirection: 'row', alignItems: 'center', gap: s.md },
+  check: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.teal,
+  },
+  listLabel: { ...chatType.body, fontFamily: f.semibold, color: c.ink },
+  row: { flexDirection: 'row', alignItems: 'center', gap: s.md, padding: s.md },
+  price: { ...chatType.small, fontFamily: f.semibold, color: c.coralInk },
+  video: {
+    width: 120,
+    height: 180,
+    overflow: 'hidden',
+    borderRadius: 18,
     justifyContent: 'flex-end',
   },
   play: {
     position: 'absolute',
     top: s.sm,
     right: s.sm,
-    width: 30,
-    height: 30,
+    width: 32,
+    height: 32,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.overlay,
   },
   videoCaption: { padding: s.sm, backgroundColor: c.overlayHeavy },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: s.sm,
-    padding: s.md,
-    borderRadius: radius.md,
-    backgroundColor: c.warmMist,
-  },
+  videoTitle: { ...chatType.meta, fontFamily: f.semibold, color: c.background },
 });

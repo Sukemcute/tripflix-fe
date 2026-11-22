@@ -1,6 +1,8 @@
 import * as auth from './generated/core-api/auth/auth';
 import type {
   GoogleLoginDto,
+  LoginCodeDto,
+  LoginCodeResultDto,
   LoginDto,
   MyProfileDto,
   RegisterDto,
@@ -8,6 +10,7 @@ import type {
   RegistrationCodeResultDto,
   TokenPairDto,
 } from './generated/core-api/model';
+import { BROWSER_PROOF_HEADER, signBrowserProof, type BrowserProofPurpose } from './browser-session-proof';
 import { configureHttp, HttpError, type HttpRequestOptions } from './http';
 import { sendWithPasswords } from './password-encryption';
 import { readEntity, SessionSetupError } from './response';
@@ -17,6 +20,8 @@ export interface PasswordCredentials {
   email: string;
   password: string;
   deviceName?: string;
+  loginChallengeId?: string;
+  code?: string;
 }
 export type RegisterInput = Omit<RegisterDto, 'password' | 'encPassword'> & { password: string };
 
@@ -28,6 +33,7 @@ export interface TokenStorage {
 export interface SessionOptions {
   baseUrl: string;
   client: 'web' | 'native';
+  serverSession?: boolean;
   storage?: TokenStorage;
 }
 export interface SessionState {
@@ -117,6 +123,13 @@ export class SessionClient {
     return true;
   }
 
+  private async proofOptions(purpose: BrowserProofPurpose): Promise<HttpRequestOptions> {
+    if (this.options.client !== 'web') return this.authOptions;
+    const headers = new Headers(this.authOptions.headers);
+    headers.set(BROWSER_PROOF_HEADER, await signBrowserProof(purpose));
+    return { ...this.authOptions, headers };
+  }
+
   refresh(): Promise<boolean> {
     if (this.refreshPromise) return this.refreshPromise;
     const version = this.version;
@@ -125,8 +138,9 @@ export class SessionClient {
       try {
         const response = await auth.authControllerRefresh(
           this.options.client === 'native' ? { refreshToken: this.refreshToken! } : {},
-          this.authOptions,
+          await this.proofOptions('refresh'),
         );
+        if (this.options.serverSession) return version === this.version;
         return await this.acceptTokens(
           readEntity(response.data, ['accessToken', 'tokenType', 'expiresIn']),
           version,
@@ -144,25 +158,62 @@ export class SessionClient {
     return this.refreshPromise;
   }
 
-  /** Mật khẩu được mã hoá trước khi gửi (TF056); server chưa bật mã hoá thì gửi như cũ. */
+  /** Mật khẩu được mã hoá trước khi gửi (TF056). */
   async login(credentials: PasswordCredentials): Promise<void> {
     const version = ++this.version;
-    const { email, password, deviceName } = credentials;
+    const { email, password, deviceName, loginChallengeId, code } = credentials;
     const response = await sendWithPasswords(
-      [{ plain: 'password', encrypted: 'encPassword', value: password, purpose: 'login' }],
+      [{ encrypted: 'encPassword', value: password, purpose: 'login' }],
       email,
-      (fields) => auth.authControllerLogin({ email, ...(deviceName ? { deviceName } : {}), ...fields } as LoginDto, this.authOptions),
+      async (fields) =>
+        auth.authControllerLogin(
+          {
+            email,
+            ...(deviceName ? { deviceName } : {}),
+            ...(loginChallengeId ? { loginChallengeId } : {}),
+            ...(code ? { code } : {}),
+            ...fields,
+          } as LoginDto,
+          await this.proofOptions('login'),
+        ),
     );
     await this.completeLogin(response.data, version);
+  }
+  /** Bước 1 đăng nhập bằng mật khẩu: kiểm tra email + mật khẩu và gửi mã xác thực 8 chữ số về email. */
+  async sendLoginCode(input: { email: string; password: string }): Promise<LoginCodeResultDto> {
+    const { email, password } = input;
+    const response = await sendWithPasswords(
+      [{ encrypted: 'encPassword', value: password, purpose: 'login' }],
+      email,
+      (fields) => auth.authControllerRequestLoginCode({ email, ...fields } as LoginCodeDto, this.authOptions),
+    );
+    const { loginChallengeId, resendAfterSeconds } = readEntity(response.data, ['loginChallengeId']);
+    return {
+      loginChallengeId,
+      resendAfterSeconds: typeof resendAfterSeconds === 'number' ? resendAfterSeconds : 0,
+    };
   }
   /** Google ID token from Google Identity Services; tokens are kept exactly like a password login. */
   async loginWithGoogle(input: GoogleLoginDto): Promise<void> {
     const version = ++this.version;
-    const response = await auth.authControllerLoginWithGoogle(input, this.authOptions);
+    const response = await auth.authControllerLoginWithGoogle(input, await this.proofOptions('google'));
+    await this.completeLogin(response.data, version);
+  }
+  /** Web: mã dùng một lần (60 giây) để mở trang quản trị bằng phiên này. Không phải nhân viên: HttpError 403. */
+  async createAdminHandoff(): Promise<string> {
+    const response = await auth.authControllerCreateAdminHandoff();
+    return readEntity(response.data, ['code']).code;
+  }
+  /** Trang quản trị: đổi mã từ web lấy phiên riêng, gắn khoá trình duyệt của admin. */
+  async exchangeAdminHandoff(code: string): Promise<void> {
+    const version = ++this.version;
+    const response = await auth.authControllerExchangeAdminHandoff({ code }, await this.proofOptions('login'));
     await this.completeLogin(response.data, version);
   }
   private async completeLogin(data: TokenPairDto | void, version: number): Promise<void> {
-    if (!(await this.acceptTokens(readEntity(data, ['accessToken', 'tokenType', 'expiresIn']), version))) return;
+    if (version !== this.version) return;
+    if (!this.options.serverSession &&
+        !(await this.acceptTokens(readEntity(data, ['accessToken', 'tokenType', 'expiresIn']), version))) return;
     try {
       await this.reloadUser();
     } catch (error) {
@@ -172,7 +223,7 @@ export class SessionClient {
   async register(credentials: RegisterInput): Promise<void> {
     const { password, ...rest } = credentials;
     await sendWithPasswords(
-      [{ plain: 'password', encrypted: 'encPassword', value: password, purpose: 'register' }],
+      [{ encrypted: 'encPassword', value: password, purpose: 'register' }],
       rest.email,
       (fields) => auth.authControllerRegister({ ...rest, ...fields }, this.authOptions),
     );
@@ -204,9 +255,10 @@ export class SessionClient {
     if (await this.refresh()) await this.reloadUser();
   }
   async logout(): Promise<void> {
+    const options = this.options.serverSession ? await this.proofOptions('refresh') : this.authOptions;
     await auth.authControllerLogout({
-      ...this.authOptions,
-      skipAuthRefresh: false,
+      ...options,
+      skipAuthRefresh: this.options.serverSession ?? false,
       skipAuthorization: false,
     });
     await this.clear();

@@ -7,13 +7,21 @@ import styles from './tripi-live.module.css';
 // Phục vụ đúng WASM cùng phiên bản runtime để canvas khởi tạo trong suốt và không phụ thuộc CDN.
 RuntimeLoader.setWasmUrl('/brand/tripi-rive/rive.wasm');
 
-export function TripiRive({ active, onReady }: { active: boolean; onReady: (ready: boolean) => void }) {
+export function TripiRive({
+  active,
+  interactive,
+  onReady,
+}: {
+  active: boolean;
+  interactive: boolean;
+  onReady: (ready: boolean) => void;
+}) {
   const reactionCount = useRef(0);
   const player = useRef<HTMLButtonElement>(null);
   const { rive, RiveComponent } = useRive({
     src: '/brand/tripi-rive/tripi.riv',
     artboard: 'Tripi',
-    stateMachines: 'Tripi',
+    stateMachine: 'Tripi',
     autoplay: true,
     autoBind: true,
     shouldDisableRiveListeners: true,
@@ -67,9 +75,10 @@ export function TripiRive({ active, onReady }: { active: boolean; onReady: (read
   useEffect(() => {
     if (!rive || !model) return;
     const blink = model.trigger('blink');
-    const reactions = ['wave', 'wink', 'wave', 'laugh'] as const;
+    const reactions = ['wave', 'wink', 'laugh', 'wave'] as const;
     let blinkTimeout: number | undefined;
     let reactionTimeout: number | undefined;
+    let welcomeTimeout: number | undefined;
     let reactionIndex = 0;
     const scheduleBlink = () => {
       blinkTimeout = window.setTimeout(
@@ -77,7 +86,7 @@ export function TripiRive({ active, onReady }: { active: boolean; onReady: (read
           blink?.trigger();
           scheduleBlink();
         },
-        2600 + Math.random() * 3000,
+        2200 + Math.random() * 2000,
       );
     };
     const scheduleReaction = () => {
@@ -88,14 +97,16 @@ export function TripiRive({ active, onReady }: { active: boolean; onReady: (read
           reactionIndex += 1;
           scheduleReaction();
         },
-        6500 + Math.random() * 4500,
+        3200 + Math.random() * 1800,
       );
     };
     const sync = () => {
       window.clearTimeout(blinkTimeout);
       window.clearTimeout(reactionTimeout);
+      window.clearTimeout(welcomeTimeout);
       if (active && !document.hidden) {
         rive.startRendering();
+        welcomeTimeout = window.setTimeout(() => model.trigger('wave')?.trigger(), 900);
         scheduleBlink();
         scheduleReaction();
       } else {
@@ -107,6 +118,7 @@ export function TripiRive({ active, onReady }: { active: boolean; onReady: (read
     return () => {
       window.clearTimeout(blinkTimeout);
       window.clearTimeout(reactionTimeout);
+      window.clearTimeout(welcomeTimeout);
       document.removeEventListener('visibilitychange', sync);
     };
   }, [active, model, rive]);
@@ -115,13 +127,16 @@ export function TripiRive({ active, onReady }: { active: boolean; onReady: (read
     <button
       ref={player}
       type="button"
-      aria-label="Chào Tripi"
+      aria-label={interactive ? 'Chào Tripi' : undefined}
+      aria-hidden={interactive ? undefined : true}
+      tabIndex={interactive ? 0 : -1}
       className={styles.player}
       disabled={!model}
       onPointerEnter={(event) => {
-        if (event.pointerType === 'mouse') model?.trigger('wave')?.trigger();
+        if (interactive && event.pointerType === 'mouse') model?.trigger('wave')?.trigger();
       }}
       onClick={() => {
+        if (!interactive) return;
         const reaction = reactionCount.current++ % 2 === 0 ? 'laugh' : 'wink';
         model?.trigger(reaction)?.trigger();
         model?.trigger('wave')?.trigger();

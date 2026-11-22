@@ -7,6 +7,7 @@ import { ApiErrorNotice } from '@/features/shared/api-state';
 import { SoftSelect } from '@/features/shared/soft-select';
 import { HotelGallery } from './hotel-gallery';
 import styles from './hotel.module.css';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 const copy = vi.hotel;
 const formatDate = (date: string, monthOnly = false) =>
@@ -137,7 +138,7 @@ export function HotelReviews({ id }: { id: string }) {
           void query.refetch();
         }}
       />
-      {query.isFetching && <output>{copy.loadingReviews}</output>}
+      {query.isPending && <LoadingDots isBlock label={copy.loadingReviews} />}
       {query.data?.items.length === 0 && (
         <div className="empty-state">
           <p>{summary?.count ? copy.noMatchingReviews : copy.noReviews}</p>

@@ -10,13 +10,31 @@ import { flights } from './flights';
 import { privacy } from './privacy';
 import { terms } from './terms';
 import { moderation } from './moderation';
+import { moderationConsole } from './moderation-console';
 import { searchMonitoring } from './search-monitoring';
+import { discoveryJobs } from './discovery-jobs';
+import { adminOperations } from './admin-operations';
+import { adminOrders } from './admin-orders';
+import { analytics } from './analytics';
+import { aiUsage } from './ai-usage';
+import { userActivity } from './user-activity';
+import { seo } from './seo';
+import { shell } from './shell';
 
 // Chữ tiếng Việt hiện cho người dùng. Thêm khoá mới ở đây, không viết chữ thẳng trong component.
 export const vi = {
+  seo,
+  shell,
+  analytics,
+  aiUsage,
+  userActivity,
+  adminOperations,
+  adminOrders,
   searchMonitoring,
+  discoveryJobs,
   assistant,
   moderation,
+  moderationConsole,
   flights,
   privacy,
   terms,
@@ -46,8 +64,12 @@ export const vi = {
     title: 'Tripflix Admin',
     overview: 'Tổng quan',
     moderation: 'Kiểm duyệt',
-    analytics: 'Xu hướng & Gian lận',
+    analytics: 'Số liệu & Giám sát',
+    aiUsage: 'Chi phí AI',
+    userActivity: 'Hành vi người dùng',
     searchMonitoring: 'Theo dõi tìm kiếm',
+    searchJobs: 'Job tìm kiếm',
+    recommendJobs: 'Job gợi ý',
     inventory: 'Lịch trống & giá',
     orders: 'Đơn hàng & Thanh toán',
     users: 'Người dùng',

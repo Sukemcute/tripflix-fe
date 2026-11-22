@@ -20,6 +20,18 @@ export interface VideoUploadOptions {
   maxAttempts?: number;
   /** Chờ trước lần thử lại thứ n (bắt đầu từ 1). Mặc định 1 giây, 2 giây, 4 giây... */
   retryDelayMs?: (attempt: number) => number;
+  /** Lượt tải dở lần trước (từ onState): chỉ gửi các phần còn thiếu, không tạo lượt tải mới. */
+  resume?: VideoUploadState;
+  /** Gọi khi tạo lượt tải và sau mỗi phần xong, để lỗi giữa chừng thì lần sau tải tiếp. */
+  onState?: (state: VideoUploadState) => void;
+}
+
+/** Trạng thái một lượt tải nhiều phần: đủ để tải tiếp các phần chưa xong. */
+export interface VideoUploadState {
+  assetId: string;
+  partSizeBytes: number;
+  partNumbers: number[];
+  uploaded: UploadedPartDto[];
 }
 
 const MIME_BY_EXTENSION: Record<string, VideoMimeType> = {
@@ -69,29 +81,66 @@ export async function uploadVideo(
     maxAttempts = 3,
     retryDelayMs = (attempt) => 1000 * 2 ** (attempt - 1),
   } = options;
-  const created = (
-    await media.mediaUploadControllerCreateUpload(
-      { mimeType: source.mimeType, fileSizeBytes: source.sizeBytes, durationSec: source.durationSec },
-      { signal },
-    )
-  ).data;
-  if (!('assetId' in created)) throw new Error('Không tạo được lượt tải lên');
-  const { assetId, partSizeBytes } = created;
-  const urls = new Map(created.parts.map((part: SignedPartDto) => [part.partNumber, part.url]));
-  const uploaded: UploadedPartDto[] = [];
-  let uploadedBytes = 0;
-  onProgress?.(0, source.sizeBytes);
+  const { resume, onState } = options;
+  let assetId: string;
+  let partSizeBytes: number;
+  let partNumbers: number[];
+  const urls = new Map<number, string>();
+  const uploaded: UploadedPartDto[] = [...(resume?.uploaded ?? [])];
+  if (resume) {
+    ({ assetId, partSizeBytes, partNumbers } = resume);
+    // Link ký lần trước có thể đã hết hạn: xin lại link cho các phần còn thiếu.
+    const missing = partNumbers.filter((n) => !uploaded.some((part) => part.partNumber === n));
+    if (missing.length > 0) {
+      const resigned = (
+        await media.mediaUploadControllerResignParts(assetId, { partNumbers: missing }, { signal })
+      ).data;
+      if (!('parts' in resigned)) throw new Error('Không xin lại được link tải lên');
+      for (const part of resigned.parts) urls.set(part.partNumber, part.url);
+    }
+  } else {
+    const created = (
+      await media.mediaUploadControllerCreateUpload(
+        { mimeType: source.mimeType, fileSizeBytes: source.sizeBytes, durationSec: source.durationSec },
+        { signal },
+      )
+    ).data;
+    if (!('assetId' in created)) throw new Error('Không tạo được lượt tải lên');
+    ({ assetId, partSizeBytes } = created);
+    for (const part of created.parts as SignedPartDto[]) urls.set(part.partNumber, part.url);
+    partNumbers = [...urls.keys()];
+  }
+  const reportState = () => onState?.({ assetId, partSizeBytes, partNumbers, uploaded: [...uploaded] });
+  reportState();
+  const partBytes = (partNumber: number) =>
+    Math.min(partNumber * partSizeBytes, source.sizeBytes) - (partNumber - 1) * partSizeBytes;
+  let uploadedBytes = uploaded.reduce((sum, part) => sum + partBytes(part.partNumber), 0);
+  // Thử lại một phần thì số byte đang gửi về 0; chỉ báo khi tăng để thanh tiến độ không lùi.
+  let reportedBytes = -1;
+  const reportProgress = (bytes: number) => {
+    if (bytes <= reportedBytes) return;
+    reportedBytes = bytes;
+    onProgress?.(bytes, source.sizeBytes);
+  };
+  reportProgress(uploadedBytes);
 
-  for (const partNumber of [...urls.keys()].sort((a, b) => a - b)) {
+  for (const partNumber of [...partNumbers].sort((a, b) => a - b)) {
+    if (uploaded.some((part) => part.partNumber === partNumber)) continue;
     const start = (partNumber - 1) * partSizeBytes;
     const end = Math.min(start + partSizeBytes, source.sizeBytes);
     const chunk = await source.readRange(start, end);
     for (let attempt = 1; ; attempt += 1) {
       signal?.throwIfAborted();
       try {
-        const { etag } = await uploadChunkToPresignedUrl(urls.get(partNumber)!, chunk, signal);
+        const { etag } = await uploadChunkToPresignedUrl(
+          urls.get(partNumber)!,
+          chunk,
+          signal,
+          onProgress && ((sent) => reportProgress(uploadedBytes + Math.min(sent, end - start))),
+        );
         if (!etag) throw new Error(`S3 không trả ETag cho phần ${partNumber}`);
         uploaded.push({ partNumber, etag });
+        reportState();
         break;
       } catch (error) {
         if (signal?.aborted || attempt >= maxAttempts) throw error;
@@ -118,9 +167,13 @@ export async function uploadVideo(
       }
     }
     uploadedBytes += end - start;
-    onProgress?.(uploadedBytes, source.sizeBytes);
+    reportProgress(uploadedBytes);
   }
 
-  await media.mediaUploadControllerCompleteUpload(assetId, { parts: uploaded }, { signal });
+  await media.mediaUploadControllerCompleteUpload(
+    assetId,
+    { parts: [...uploaded].sort((a, b) => a.partNumber - b.partNumber) },
+    { signal },
+  );
   return assetId;
 }

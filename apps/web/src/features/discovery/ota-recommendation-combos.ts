@@ -32,6 +32,7 @@ export interface DestinationSpotlight {
 }
 
 export interface StayRecommendation {
+  verifiedPrice?: boolean;
   name: string;
   region: string;
   badge: string;
@@ -250,15 +251,15 @@ export const DESTINATION_PRESETS: Record<string, DestinationPreset> = {
     description:
       'Thức dậy giữa đồi thông mờ ảo, đón bình minh săn biển mây bồng bềnh và nhâm nhi ly cà phê thơm nồng trong tiết trời se lạnh đặc trưng cao nguyên.',
     meta: '16°C · Mùa săn mây & dã quỳ nở rộ',
-    image: '/brand/destinations/da-lat-spotlight.jpg',
-    stayImage: '/brand/hotel.jpg',
+    image: '/brand/destinations/da-lat-view.jpg',
+    stayImage: '/brand/destinations/da-lat-spotlight.jpg',
     experience: {
       name: 'Cà phê Cheo Veooo & Bánh căn Lệ',
       location: 'Hoàng Hoa Thám · Tăng Bạt Hổ',
       badge: 'Cà phê & Điểm check-in',
       ratingText: '4.8 · 2.1k đánh giá',
       description: 'Săn biển mây sáng sớm và thưởng thức bánh căn xíu mại nóng giòn.',
-      image: '/brand/destinations/da-lat-experience.jpg',
+      image: '/brand/destinations/da-lat-cafe.webp',
     },
   },
   'lam-dong': {
@@ -269,15 +270,15 @@ export const DESTINATION_PRESETS: Record<string, DestinationPreset> = {
     description:
       'Chiêm ngưỡng hồ Tuyền Lâm bảng lảng sương mù, trekking đỉnh Lang Biang hùng vĩ và trải nghiệm không gian sống chậm giữa rừng thông ngút ngàn.',
     meta: '16°C · Tiết trời mát lạnh lý tưởng',
-    image: '/brand/destinations/da-lat-spotlight.jpg',
-    stayImage: '/brand/hotel.jpg',
+    image: '/brand/destinations/da-lat-view.jpg',
+    stayImage: '/brand/destinations/da-lat-spotlight.jpg',
     experience: {
       name: 'Cà phê Cheo Veooo & Bánh căn Lệ',
       location: 'Hoàng Hoa Thám · Đà Lạt',
       badge: 'Cà phê & Điểm check-in',
       ratingText: '4.9 · 2.2k đánh giá',
       description: 'Săn mây đón ánh bình minh và thưởng thức bánh căn xíu mại nóng hổi.',
-      image: '/brand/destinations/da-lat-experience.jpg',
+      image: '/brand/destinations/da-lat-cafe.webp',
     },
   },
   'hoi-an': {
@@ -587,7 +588,7 @@ export const RECOMMENDATION_COMBOS: readonly RecommendationCombo[] = [
       stars: 5,
       priceFrom: 1850000,
       description: 'Kiến trúc lâu đài giữa rừng thông bạt ngàn, view ôm trọn hồ Tuyền Lâm.',
-      image: '/brand/hotel.jpg',
+      image: DESTINATION_PRESETS['da-lat']!.stayImage ?? DEFAULT_STAY_FALLBACK,
       href: '/search?placeId=da-lat',
       otherDealsCount: 3,
     },
@@ -729,13 +730,16 @@ export function buildCombosFromApi(
       ? `${bestHotel.reason.text}. Vị trí trung tâm thuận tiện di chuyển tới các điểm tham quan.`
       : preset.description;
 
-    const stayImage = resolveStayImage(slug, bestHotel?.thumbnail);
+    const stayImage = slug === 'da-lat' || slug === 'lam-dong'
+      ? preset.stayImage ?? DEFAULT_STAY_FALLBACK
+      : resolveStayImage(slug, bestHotel?.thumbnail);
     const stayHref =
       item.otherDealsCount && item.otherDealsCount > 0
         ? `/search?placeId=${slug}`
         : `/search?placeId=${slug}&q=${encodeURIComponent(bestHotel?.name ?? preset.name)}`;
 
     const stay: StayRecommendation = {
+      verifiedPrice: !!bestHotel?.priceFrom,
       name: bestHotel?.name ?? `Khách sạn tại ${preset.name}`,
       region: `${preset.name}${bestHotel?.stars ? ` · ${bestHotel.stars} sao` : ''}`,
       badge: stayBadge,

@@ -1,11 +1,13 @@
 import * as Linking from 'expo-linking';
 import {
   useApiSession,
+  getApiErrorKind,
   usePostSearch,
   type ExploreItemDto,
   type ExploreUnderstoodDto,
   type SearchPostsRequestDtoPostType,
 } from '@tripflix/api-client';
+import type { SearchPostsRequestDtoSort } from '@tripflix/api-client/core-api/model/index';
 import { homeRecommendationsControllerRecommendForHome } from '@tripflix/api-client/core-api/discovery/discovery';
 import { vi } from '@tripflix/i18n';
 import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
@@ -13,7 +15,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
-  assets,
   Badge,
   Button,
   Card,
@@ -32,9 +33,20 @@ import {
 } from '@/components/mobile-ui';
 import { ApiErrorNotice, UnavailableScreen } from '@/components/api-state';
 import { LiveFeedScreen } from '@/features/feed/live-feed-screen';
-import { HotelSearchResults } from './hotel-search-results';
+import { HotelSearchResults, TripHotelSearchScreen } from './hotel-search-results';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { SearchDropPanel } from './search-drop-panel';
+import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { NotificationBell } from '@/features/account/notification-bell';
+import {
+  ExploreHome,
+  ExploreStayCard,
+  ExploreStaysHeading,
+  ExploreStaysLoading,
+  ExploreStaysNotice,
+} from './explore-home';
+import { LoadingDots } from '@/components/loading-dots';
 
 const RECOMMENDATION_LIMIT = 3;
 
@@ -177,11 +189,7 @@ function PostSearchResultCard({ item }: { item: ExploreItemDto }) {
           {item.reason}
         </Txt>
       ) : null}
-      {item.priceFrom != null && (
-        <Txt variant="label">
-          Chi phí: ~{money(item.priceFrom)} / người
-        </Txt>
-      )}
+      {item.priceFrom != null && <Txt variant="label">Chi phí: ~{money(item.priceFrom)} / người</Txt>}
       <Button tone="secondary" icon="arrow-forward" onPress={openPost}>
         Xem bài viết
       </Button>
@@ -195,8 +203,11 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
   const [text, setText] = useState(q ?? '');
   const [submittedQuery, setSubmittedQuery] = useState(q?.trim() ?? '');
   const [postType, setPostType] = useState<SearchPostsRequestDtoPostType>('all');
+  const [sort, setSort] = useState<SearchPostsRequestDtoSort>('relevance');
   const [cursor, setCursor] = useState<string | null>(null);
   const [category, setCategory] = useState<'all' | 'sea' | 'weekend'>('all');
+  // Tab Khám phá: bấm thanh search mở khung thả xuống thay vì gõ ngay trên trang.
+  const [isSearchOpen, setIsSearchOpen] = useState(!back && (autoFocus === '1' || autoFocus === 'true'));
   const input = useRef<ComponentRef<typeof TextInput>>(null);
 
   if (q !== prevQ) {
@@ -219,6 +230,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
   const search = usePostSearch({
     q: submittedQuery,
     postType,
+    sort,
     cursor,
   });
 
@@ -242,71 +254,64 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
     setCursor(null);
   };
 
+  const handleSortChange = (nextSort: SearchPostsRequestDtoSort) => {
+    setSort(nextSort);
+    setCursor(null);
+  };
+
   const understood = search.data?.understood;
   const items = search.data?.items ?? [];
   const total = search.data?.total ?? 0;
   const nextCursor = search.data?.nextCursor;
 
+  if (isBrowsing)
+    return (
+      <ExploreHome
+        category={category}
+        onCategoryChange={setCategory}
+        searchOpen={isSearchOpen}
+        onSearchOpen={() => setIsSearchOpen(true)}
+        onSearchClose={() => setIsSearchOpen(false)}
+      >
+        <StayRecommendations />
+      </ExploreHome>
+    );
+
   return (
-    <Screen
-      title={back ? vi.api.search : undefined}
-      back={back}
-      right={
-        <IconButton
-          name="notifications-outline"
-          label={copy.common.notification}
-          onPress={() => router.push('/notifications')}
-        />
-      }
-    >
-      {/* Search Bar at the very top */}
-      <View style={styles.searchBar}>
-        <Icon name="search-outline" color={colors.textMuted} size={20} />
-        <TextInput
-          ref={input}
-          accessibilityLabel={vi.api.search}
-          value={text}
-          onChangeText={setText}
-          maxLength={100}
-          placeholder="Tìm khách sạn, điểm đến, bài viết..."
-          placeholderTextColor={colors.textMuted}
-          returnKeyType="search"
-          onSubmitEditing={() => submitSearch()}
-          style={styles.searchInput}
-        />
-        {text.length > 0 && (
-          <IconButton name="close-circle-outline" label="Xoá tìm kiếm" onPress={clearSearch} />
-        )}
-        <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={() => submitSearch()} />
-      </View>
-
-      {isBrowsing && (
-        <>
-          <Button tone="teal" icon="airplane-outline" onPress={() => router.push('/flights')}>
-            {vi.flights.title}
-          </Button>
-
-          <View style={{ gap: spacing.xs }}>
-            <Txt variant="small" style={ui.muted}>
-              {copy.explore.intro}
-            </Txt>
-            <Txt variant="title">{copy.explore.browseTitle}</Txt>
-          </View>
-
-          <Row style={styles.categories}>
-            <Chip selected={category === 'all'} onPress={() => setCategory('all')}>
-              {copy.notifications.all}
-            </Chip>
-            <Chip selected={category === 'sea'} onPress={() => setCategory('sea')}>
-              {copy.explore.sea}
-            </Chip>
-            <Chip selected={category === 'weekend'} onPress={() => setCategory('weekend')}>
-              {copy.explore.weekend}
-            </Chip>
-          </Row>
-          <ExploreHighlights category={category} />
-          <StayRecommendations />
-        </>
+    <Screen compact title={back ? vi.api.search : undefined} back={back} right={<NotificationBell />}>
+      <SearchDropPanel visible={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      {!back ? (
+        <Pressable
+          accessibilityRole="search"
+          accessibilityLabel={vi.mobile.searchPanel.placeholder}
+          style={styles.searchBar}
+          onPress={() => setIsSearchOpen(true)}
+        >
+          <Icon name="search-outline" color={colors.textMuted} size={mobileIconSize.control} />
+          <Txt style={[styles.searchInput, { color: colors.textMuted }]}>
+            {vi.mobile.searchPanel.placeholder}
+          </Txt>
+        </Pressable>
+      ) : (
+        <View style={styles.searchBar}>
+          <Icon name="search-outline" color={colors.textMuted} size={mobileIconSize.control} />
+          <TextInput
+            ref={input}
+            accessibilityLabel={vi.api.search}
+            value={text}
+            onChangeText={setText}
+            maxLength={100}
+            placeholder="Tìm khách sạn, điểm đến, bài viết..."
+            placeholderTextColor={colors.textMuted}
+            returnKeyType="search"
+            onSubmitEditing={() => submitSearch()}
+            style={styles.searchInput}
+          />
+          {text.length > 0 && (
+            <IconButton name="close-circle-outline" label="Xoá tìm kiếm" onPress={clearSearch} />
+          )}
+          <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={() => submitSearch()} />
+        </View>
       )}
 
       {!isBrowsing && (
@@ -325,6 +330,19 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
             </Chip>
             <Chip selected={postType === 'post'} onPress={() => handlePostTypeChange('post')}>
               Bài viết
+            </Chip>
+          </Row>
+
+          {/* Sort Tabs */}
+          <Row style={styles.categories}>
+            <Chip selected={sort === 'relevance'} onPress={() => handleSortChange('relevance')}>
+              {vi.api.postSortRelevance}
+            </Chip>
+            <Chip selected={sort === 'trending'} onPress={() => handleSortChange('trending')}>
+              {vi.api.postSortTrending}
+            </Chip>
+            <Chip selected={sort === 'recent'} onPress={() => handleSortChange('recent')}>
+              {vi.api.postSortRecent}
             </Chip>
           </Row>
 
@@ -347,7 +365,7 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
           {understood?.place && <HotelWebRedirectCard place={understood.place} />}
 
           {/* Loading */}
-          {search.isPending && <Txt>{vi.api.loading}</Txt>}
+          {search.isPending && <LoadingDots />}
 
           {/* Error */}
           <ApiErrorNotice
@@ -440,87 +458,6 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
   );
 }
 
-function ExploreHighlights({ category }: { category: 'all' | 'sea' | 'weekend' }) {
-  const isWeekend = category === 'weekend';
-  const destinations = [
-    { name: copy.explore.nhaTrang, image: assets.beach },
-    category === 'sea'
-      ? { name: copy.explore.haLong, image: assets.vietnam }
-      : { name: copy.explore.hoiAn, image: assets.hoiAn },
-  ];
-  const openSearch = (q?: string) => router.push({ pathname: '/search', params: q ? { q } : {} });
-  const featured = destinations[isWeekend ? 1 : 0]!;
-  return (
-    <>
-      <Pressable accessibilityRole="button" onPress={() => openSearch(featured.name)} style={styles.hero}>
-        <Image
-          source={isWeekend ? featured.image : assets.vietnam}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-        />
-        <View style={styles.heroShade} />
-        <Badge tone="sun" icon="sunny-outline">
-          {copy.explore.mood}
-        </Badge>
-        <View style={{ gap: spacing.sm }}>
-          <Txt variant="title" style={styles.heroTitle}>
-            {isWeekend ? copy.explore.weekendHero : copy.explore.beachHero}
-          </Txt>
-          <Row>
-            <Txt variant="caption" style={styles.heroBody}>
-              {copy.explore.liveHeroBody}
-            </Txt>
-            <View style={styles.heroArrow}>
-              <Icon name="arrow-forward" color={colors.background} size={18} />
-            </View>
-          </Row>
-        </View>
-      </Pressable>
-      <View style={{ gap: spacing.md }}>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <Txt variant="heading" style={ui.flex}>
-            {isWeekend
-              ? copy.explore.weekendTitle
-              : category === 'sea'
-                ? copy.explore.beachTitle
-                : copy.explore.curatedTitle}
-          </Txt>
-          <Button tone="text" onPress={() => openSearch()} icon="arrow-forward">
-            {copy.common.viewAll}
-          </Button>
-        </Row>
-        <View style={styles.destinations}>
-          {(isWeekend ? [...destinations].reverse() : destinations).map((destination) => (
-            <Pressable
-              key={destination.name}
-              accessibilityRole="button"
-              onPress={() => openSearch(destination.name)}
-              style={styles.destination}
-            >
-              <Image source={destination.image} style={styles.destinationImage} contentFit="cover" />
-              <Txt variant="label">{destination.name}</Txt>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push('/assistant')}
-        style={styles.assistant}
-      >
-        <Mascot size={60} />
-        <View style={ui.flex}>
-          <Txt variant="label">{copy.explore.assistantTitle}</Txt>
-          <Txt variant="caption" style={ui.muted}>
-            {copy.explore.assistantBody}
-          </Txt>
-        </View>
-        <Icon name="arrow-forward" size={18} color={colors.tealInk} />
-      </Pressable>
-    </>
-  );
-}
-
 function StayRecommendations() {
   const { isReady } = useApiSession();
   const query = useQuery({
@@ -539,115 +476,52 @@ function StayRecommendations() {
     },
   });
 
+  const destinations = query.data?.filter((destination) => destination.hotels.length > 0);
   return (
     <>
-      <Txt variant="heading">{vi.api.suggestionsLabel}</Txt>
-      {query.isPending && <Txt>{vi.api.loading}</Txt>}
-      <ApiErrorNotice
-        error={query.error}
-        retry={() => {
-          void query.refetch();
-        }}
-      />
-      {query.data?.length === 0 && <Notice>{vi.api.noSuggestions}</Notice>}
-      {query.data?.map((dest) => {
-        const bestStay = dest.hotels[0];
-        if (!bestStay) return null;
-        return (
-          <Card key={dest.province.slug || bestStay.hotelId} style={{ padding: 0, overflow: 'hidden', gap: 0 }}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={bestStay.name}
-              onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: bestStay.hotelId } })}
-            >
-              <View>
-                {bestStay.thumbnail ? (
-                  <Image
-                    source={bestStay.thumbnail}
-                    style={{ width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.seaMist }}
-                    contentFit="cover"
-                  />
-                ) : (
-                  <View style={{ width: '100%', aspectRatio: 4 / 3, backgroundColor: colors.seaMist }} />
-                )}
-                {/* Nhãn nổi trên ảnh như thẻ khách sạn của web. */}
-                <Row style={{ position: 'absolute', top: spacing.sm, left: spacing.sm, gap: spacing.xs }}>
-                  <Badge tone="teal" icon="location-outline">
-                    {dest.province.name}
-                  </Badge>
-                  {bestStay.stars ? <Badge tone="sun">{`${bestStay.stars} ★`}</Badge> : null}
-                </Row>
-                <View
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    paddingHorizontal: spacing.md,
-                    paddingTop: spacing.xl,
-                    paddingBottom: spacing.sm,
-                    backgroundColor: colors.overlay,
-                  }}
-                >
-                  <Txt variant="heading" style={{ color: colors.background }} numberOfLines={2}>
-                    {bestStay.name}
-                  </Txt>
-                </View>
-              </View>
-            </Pressable>
-            <View style={{ padding: spacing.md, gap: spacing.sm }}>
-              <Row
-                style={{
-                  gap: spacing.xs,
-                  alignItems: 'flex-start',
-                  padding: spacing.sm,
-                  borderRadius: radius.md,
-                  backgroundColor: colors.seaMist,
-                }}
-              >
-                <Icon name="pricetag-outline" size={16} color={colors.tealInk} />
-                <Txt variant="small" style={{ flex: 1, color: colors.tealInk }}>
-                  {bestStay.reason.text}
-                </Txt>
-              </Row>
-              <Row style={{ alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.sm }}>
-                <View style={{ flexShrink: 1 }}>
-                  <Txt variant="small" style={{ color: colors.textMuted }}>
-                    {vi.hotel.from}
-                  </Txt>
-                  <Txt variant="title" style={{ color: colors.coralInk }}>
-                    {money(bestStay.priceFrom)}
-                  </Txt>
-                  <Txt variant="small" style={{ color: colors.textMuted }}>
-                    / {vi.api.perNight}
-                  </Txt>
-                </View>
-                <Button
-                  icon="arrow-forward"
-                  onPress={() => router.push({ pathname: '/hotel/[id]', params: { id: bestStay.hotelId } })}
-                >
-                  {vi.hotel.viewRooms}
-                </Button>
-              </Row>
-              {dest.otherDealsCount > 0 && (
-                <Button
-                  tone="text"
-                  onPress={() => router.push({ pathname: '/search', params: { q: dest.province.name } })}
-                  icon="arrow-forward"
-                >
-                  {`Khám phá thêm ${dest.otherDealsCount} deal hời`}
-                </Button>
-              )}
-            </View>
-          </Card>
-        );
-      })}
+      <ExploreStaysHeading />
+      {query.isPending && <ExploreStaysLoading />}
+      {query.error && (
+        <ExploreStaysNotice
+          message={vi.api[getApiErrorKind(query.error)]}
+          busy={query.isFetching}
+          retry={() => {
+            void query.refetch();
+          }}
+        />
+      )}
+      {destinations?.length === 0 && <ExploreStaysNotice message={vi.api.noSuggestions} />}
+      {destinations?.map((destination) => (
+        <ExploreStayCard
+          key={destination.province.slug || destination.hotels[0]?.hotelId}
+          destination={destination}
+        />
+      ))}
     </>
   );
 }
 
 export function LiveSearchEntry() {
-  const { view } = useLocalSearchParams<{ view?: string }>();
+  const { view, pick, pickId, pickKey, q, checkIn, checkOut, adults } = useLocalSearchParams<{
+    view?: string;
+    pick?: string;
+    pickId?: string;
+    pickKey?: string;
+    q?: string;
+    checkIn?: string;
+    checkOut?: string;
+    adults?: string;
+  }>();
+  if (pick === 'post' && pickKey && checkIn && checkOut && adults) {
+    return (
+      <TripHotelSearchScreen q={q ?? ''} pick={{ key: pickKey, checkIn, checkOut, adults, mode: 'post' }} />
+    );
+  }
+  // pickId 'hotelProperty:<chặng ở>': đổi khách sạn của một chặng khi đặt theo lộ trình.
+  if (pick === 'trip' && pickId?.startsWith('hotelProperty') && pickKey && checkIn && checkOut && adults) {
+    const stayId = pickId.split(':')[1] || 'hotel0';
+    return <TripHotelSearchScreen q={q ?? ''} pick={{ key: pickKey, checkIn, checkOut, adults, stayId }} />;
+  }
   return view === 'mine' ? <LiveFeedScreen kind="mine" /> : <LiveSearchScreen back />;
 }
 export function LiveAssistantScreen() {
@@ -691,35 +565,11 @@ const styles = StyleSheet.create({
     minHeight: mobileLayout.touchTarget,
     fontFamily: nativeFonts.regular,
     color: colors.ink,
-    fontSize: 14,
+    ...compactType.body,
   },
   result: { alignItems: 'flex-start' },
   resultPhoto: { width: 90, height: 112, borderRadius: radius.md, backgroundColor: colors.seaMist },
   categories: { flexWrap: 'wrap', gap: spacing.sm },
-  hero: {
-    minHeight: 235,
-    borderRadius: mobileLayout.cardRadius,
-    overflow: 'hidden',
-    padding: spacing.lg,
-    justifyContent: 'space-between',
-    gap: spacing.xl,
-    backgroundColor: colors.ink,
-  },
-  heroShade: { ...StyleSheet.absoluteFill, backgroundColor: colors.overlay },
-  heroTitle: { fontSize: 30, lineHeight: 37, color: colors.background },
-  heroBody: { flex: 1, color: colors.background, fontFamily: nativeFonts.semibold },
-  heroArrow: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  destinations: { flexDirection: 'row', gap: spacing.md },
-  destination: { flex: 1, minWidth: 0, gap: spacing.sm },
-  destinationImage: { width: '100%', height: 124, borderRadius: radius.lg, backgroundColor: colors.seaMist },
   assistant: {
     flexDirection: 'row',
     alignItems: 'center',

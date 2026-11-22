@@ -17,16 +17,14 @@ import { formatPrice } from './trip-card';
 import { StayThumbnail } from './stay-thumbnail';
 import { SoftStarIcon } from './soft-star-icon';
 import { StaySearchIcon } from './stay-search-icon';
-import { Pacifico } from 'next/font/google';
+import { WashiTape } from './torn-paper';
+import segmentedTabs from '../shared/segmented-tabs.module.css';
 import styles from './ota-home.module.css';
-
-const handwritingFont = Pacifico({
-  subsets: ['vietnamese', 'latin'],
-  weight: ['400'],
-  display: 'swap',
-});
+import { useNearViewport } from './use-near-viewport';
+import { LoadingDots } from '@/features/shared/loading-dots';
 
 export function HomeStayPreview() {
+  const { ref, isNear } = useNearViewport();
   const { isReady } = useApiSession();
   const [destination, setDestination] = useState<(typeof OTA_DESTINATIONS)[number]>(OTA_DESTINATIONS[0]);
   const [dates] = useState(() => ({ checkIn: getFutureDate(1), checkOut: getFutureDate(3) }));
@@ -42,19 +40,18 @@ export function HomeStayPreview() {
   };
   const query = useQuery({
     queryKey: ['discovery', 'home-stays', filters],
-    enabled: isReady,
+    enabled: isReady && isNear,
     queryFn: ({ signal }) => getAvailableStays(filters, { signal, limit: 3 }),
     // Giữ 3 thẻ cũ trong lúc tải điểm đến mới để dải không sụp chiều cao.
     placeholderData: keepPreviousData,
   });
   return (
-    <section className={styles.stayBand} aria-labelledby="home-stays-title">
-      <Image className={styles.stayBackdrop} src="/brand/home-stays-ninh-binh.jpg" alt="" fill sizes="100vw" />
-      <span className={styles.stayEdgeTop} aria-hidden="true" />
-      <span className={styles.stayEdgeBottom} aria-hidden="true" />
+    <section ref={ref} className={styles.stayBand} aria-labelledby="home-stays-title">
       <div className={`ota-container ${styles.stayContent}`}>
         <div className={styles.stayHeader} data-home-banner>
           <div className={styles.stayTicket}>
+            {/* Miếng dán washi tape cố định vé trên trang sổ tay */}
+            <WashiTape color="coral" angle={-4} className={styles.ticketTape} />
             <div className={styles.stayCopy}>
               <div className={styles.stayInnerFrame}>
                 <div className={styles.stayTicketBadge}>
@@ -80,7 +77,7 @@ export function HomeStayPreview() {
                     href={getDestinationHref(destination)}
                     aria-label={`Điểm đến ${destination.name}`}
                   >
-                    <span key={destination.id} className={`${handwritingFont.className} ${styles.stayDestinationText}`}>
+                    <span key={destination.id} className={styles.stayDestinationText}>
                       {destination.name}
                     </span>
                   </Link>
@@ -88,17 +85,15 @@ export function HomeStayPreview() {
               </div>
             </div>
             <div className={styles.stayScene} aria-hidden="true">
-              {OTA_DESTINATIONS.map((place) => (
-                <Image
-                  key={place.id}
-                  className={styles.stayLandscape}
-                  data-active={place.id === destination.id || undefined}
-                  src={place.image}
-                  alt=""
-                  fill
-                  sizes="(max-width: 640px) 90vw, 38vw"
-                />
-              ))}
+              <Image
+                key={destination.id}
+                className={styles.stayLandscape}
+                data-active
+                src={destination.image}
+                alt=""
+                fill
+                sizes="(max-width: 640px) 90vw, 38vw"
+              />
               <div className={styles.stayRedStamp} aria-hidden="true">
                 <span className={styles.stampOrg}>★ TRIPFLIX ★</span>
                 <span className={styles.stampAction}>VERIFIED</span>
@@ -116,11 +111,15 @@ export function HomeStayPreview() {
             aria-hidden="true"
           />
         </div>
-        <fieldset className={styles.chips} aria-label={vi.api.destination}>
+        <fieldset
+          className={`${segmentedTabs.tabs} ${segmentedTabs.tabsAuto} ${styles.chips}`}
+          aria-label={vi.api.destination}
+        >
           {OTA_DESTINATIONS.map((place) => (
             <button
               type="button"
               key={place.id}
+              className={segmentedTabs.tab}
               aria-pressed={place.id === destination.id}
               onClick={() => setDestination(place)}
             >
@@ -134,7 +133,9 @@ export function HomeStayPreview() {
             void query.refetch();
           }}
         />
-        {query.isPending && <output className={styles.state}>{vi.api.loading}</output>}
+        {query.isPending && (
+          <output className={`${styles.state} ${styles.loadingState}`}><LoadingDots /></output>
+        )}
         {query.data?.items.length === 0 && (
           <p className={styles.state}>
             {vi.ota.noMatchingStays}. {vi.ota.noStaysHint}
@@ -177,12 +178,15 @@ export function HomeStayPreview() {
 }
 
 export function HomeStoryPreview() {
-  const query = useSocialPosts();
+  const { ref, isNear } = useNearViewport();
+  const query = useSocialPosts('public', '', 'vlog', 'latest', { enabled: isNear });
   const posts = query.data?.pages[0]?.items.slice(0, 3);
   return (
     <section
+      ref={ref}
       className={`ota-container ${styles.section} ${styles.stories}`}
       aria-labelledby="home-stories-title"
+      data-water-stories
       data-home-reveal
     >
       <div className={styles.sectionHead}>
@@ -200,14 +204,18 @@ export function HomeStoryPreview() {
           void query.refetch();
         }}
       />
-      {query.isPending && <output className={styles.state}>{vi.api.loading}</output>}
+      {query.isPending && (
+        <output className={`${styles.state} ${styles.loadingState}`}><LoadingDots /></output>
+      )}
       {posts?.length === 0 && <p className={styles.state}>{vi.api.noPosts}</p>}
       <div className={styles.previewGrid}>
         {posts?.map((post) => (
           <article className={styles.story} key={post.id}>
             <p className="pin-tag">{post.tripAttachment?.destinationName ?? vi.ota.story}</p>
             <h3>
-              <Link prefetch={false} href={`/trips/${encodeURIComponent(post.id)}`}>{post.title}</Link>
+              <Link prefetch={false} href={`/inspiration?view=posts&open=${encodeURIComponent(post.id)}`}>
+                {post.title}
+              </Link>
             </h3>
             <p className={styles.excerpt}>{post.body}</p>
             <p className={styles.storyStats}>

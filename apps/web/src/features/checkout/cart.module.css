@@ -2,8 +2,28 @@
   padding-block: 32px 64px;
 }
 
-.page h1 {
+.title {
   margin: 0 0 4px;
+  color: var(--color-ink);
+  font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+/* Thẻ chung giống trang cá nhân: nền trắng, viền mảnh, bo 20px, bóng nhẹ. */
+.item,
+.emptyCard,
+.summary {
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-background);
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--color-ink) 4%, transparent);
 }
 
 .layout {
@@ -26,9 +46,7 @@
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  padding: 18px 20px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  padding: 20px 24px;
 }
 
 .item h2 {
@@ -44,6 +62,7 @@
   color: var(--color-teal-ink);
   font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -64,11 +83,15 @@
   width: 32px;
   height: 32px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 50%;
   background: var(--color-background);
   color: var(--color-ink);
   font-size: 18px;
   cursor: pointer;
+}
+
+.stepper button:hover:not(:disabled) {
+  border-color: var(--color-ink);
 }
 
 .stepper button:disabled {
@@ -85,15 +108,67 @@
   cursor: pointer;
 }
 
+.emptyCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 44px 24px;
+}
+
+.emptyCard h2 {
+  margin: 0 0 8px;
+  color: var(--color-ink);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.emptyCard p {
+  max-width: 380px;
+  margin: 0 0 22px;
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.emptyIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+  margin-bottom: 16px;
+}
+
 .summary {
   position: sticky;
   top: 96px;
   display: grid;
-  gap: 12px;
-  padding: 20px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: var(--color-warm-mist);
+  gap: 14px;
+  padding: 22px 24px;
+}
+
+.summary h2 {
+  margin: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-ink);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.summary :global(.primary-button) {
+  width: 100%;
+}
+
+.summaryHint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
 }
 
 .total {
@@ -234,6 +309,7 @@
 
   .item {
     flex-direction: column;
+    padding: 18px;
   }
 
   .itemActions {
@@ -289,4 +365,11 @@
   list-style: none;
   color: var(--color-text-muted);
   font-size: 12px;
+}
+
+/* Điện thoại: thanh giỏ hàng nằm ngay trên thanh điều hướng đáy (features/shell, TF98). */
+@media (max-width: 767px) {
+  .bar {
+    bottom: var(--mobile-tab-bar-space, 0px);
+  }
 }

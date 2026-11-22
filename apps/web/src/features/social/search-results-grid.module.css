@@ -1,0 +1,525 @@
+.resultsScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px 28px 40px;
+  box-sizing: border-box;
+}
+
+.resultsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1280px;
+  margin: 0 auto 12px;
+}
+
+.resultsTitle {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.clearButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+
+.clearButton:hover {
+  color: var(--color-coral-ink);
+  border-color: var(--color-coral-soft);
+}
+
+/* Khoảng cách hàng tab kết quả tìm kiếm (style chi tiết lấy từ segmented-tabs.module.css). */
+.tabs {
+  max-width: min(1280px, 100%);
+  margin: 0 auto 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  gap: 24px 16px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--color-transparent);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+.thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-surface-muted);
+}
+
+.thumb[data-kind='reel'] {
+  background: var(--color-ink);
+}
+
+.thumbImage {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 260ms ease;
+}
+
+.card:hover .thumbImage {
+  transform: scale(1.04);
+}
+
+/* Lớp tối dưới đáy để số tim luôn đọc được trên ảnh sáng. */
+.thumb::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 40%;
+  background: linear-gradient(var(--color-transparent), var(--color-overlay));
+  pointer-events: none;
+}
+
+.reelBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  display: inline-flex;
+  color: var(--color-background);
+}
+
+.likes {
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-background);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.caption {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.tag {
+  color: var(--color-teal-ink);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.avatar[data-tone='teal'] {
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+
+.avatar[data-tone='sun'] {
+  background: var(--color-sun-soft);
+  color: var(--color-navy);
+}
+
+.avatar[data-tone='navy'] {
+  background: var(--color-surface-muted);
+  color: var(--color-navy);
+}
+
+.authorName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+
+.date {
+  flex-shrink: 0;
+  color: var(--color-text-subtle);
+}
+
+.skeletonCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonThumb,
+.skeletonLine,
+.skeletonLineShort {
+  border-radius: 10px;
+  background: var(--color-surface-muted);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.skeletonThumb {
+  aspect-ratio: 3 / 4;
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: 6px;
+}
+
+.skeletonLineShort {
+  width: 60%;
+  height: 12px;
+  border-radius: 6px;
+}
+
+.stateBox {
+  max-width: 520px;
+  margin: 48px auto;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.sentinel {
+  height: 1px;
+}
+
+.loadingMore {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Tab Tất cả: các vùng kết quả tìm khám phá, tab khách sạn, địa điểm, quán. */
+.understood {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: 1280px;
+  margin: 0 auto 20px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+
+.exploreSection {
+  max-width: 1280px;
+  margin: 0 auto 32px;
+}
+
+.exploreSectionHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.exploreSectionHeader h3 {
+  min-width: 0;
+  margin: 0;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.exploreTotal {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.seeAll,
+.loadMore {
+  flex-shrink: 0;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--color-teal-ink);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.loadMore {
+  display: block;
+  margin: 24px auto 0;
+}
+
+.loadMore:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.fallbackNote {
+  max-width: 1280px;
+  margin: 0 auto 16px;
+  color: var(--color-text-muted);
+}
+
+.thumbIcon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-teal-ink);
+}
+
+.cardMeta {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mapHint {
+  color: var(--color-teal-ink);
+}
+
+.attribution {
+  max-width: 1280px;
+  margin: 16px auto 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+a.card {
+  text-decoration: none;
+}
+
+/* Tab Người dùng và khối Người dùng trong tab Tất cả. */
+.userGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.userCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-background);
+  color: var(--color-text);
+  text-decoration: none;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.userCard:hover {
+  border-color: var(--color-coral-soft);
+  background: var(--color-warm-mist);
+}
+
+.userCard:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+}
+
+.userCardAvatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--color-coral-tint);
+  color: var(--color-coral-ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.userCardAvatar[data-tone='teal'] {
+  background: var(--color-sea-mist);
+  color: var(--color-teal-ink);
+}
+
+.userCardAvatar[data-tone='sun'] {
+  background: var(--color-sun-soft);
+  color: var(--color-navy);
+}
+
+.userCardAvatar[data-tone='navy'] {
+  background: var(--color-surface-muted);
+  color: var(--color-navy);
+}
+
+.userCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.userCardName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.userCardHandle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.userCardAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-teal-ink);
+}
+
+.userCardActionLabel {
+  white-space: nowrap;
+}
+
+.userResultList {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.userResultGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .resultsScroll {
+    padding: 16px 14px 32px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 10px;
+  }
+
+  .userGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .userCardActionLabel {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumbImage,
+  .userCard,
+  .skeletonThumb,
+  .skeletonLine,
+  .skeletonLineShort {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Chỗ giữ bài xem trước của tác giả chưa cuộn tới: đủ cao để chỉ người trong màn hình mới tải. */
+.userPreviewSlot {
+  min-height: 200px;
+}

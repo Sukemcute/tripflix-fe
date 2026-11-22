@@ -2,6 +2,13 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { vi } from '@tripflix/i18n';
+import { isOptimizedImageUrl } from '../../lib/remote-images';
+import {
+  ImageViewerControls,
+  ImageZoomSurface,
+} from '../shared/image-viewer-controls';
+import { handleExpandedDialogCancel } from '../shared/image-zoom';
+import { useImageZoom } from '../shared/use-image-zoom';
 import styles from './hotel.module.css';
 
 const galleryIconPaths = {
@@ -24,13 +31,30 @@ function GalleryIcon({ name }: { name: keyof typeof galleryIconPaths }) {
   );
 }
 
-export function HotelPhoto({ url, alt }: { url: string; alt: string }) {
+export function HotelPhoto({
+  url,
+  alt,
+  highRes = false,
+}: {
+  url: string;
+  alt: string;
+  highRes?: boolean;
+}) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   if (failedUrl === url) {
     return alt ? <span className={styles.missingPhoto}>{vi.hotel.imageUnavailable}</span> : null;
   }
   return (
-    <Image src={url} alt={alt} width={1000} height={700} unoptimized onError={() => setFailedUrl(url)} />
+    <Image
+      src={url}
+      alt={alt}
+      width={highRes ? 2000 : 1000}
+      height={highRes ? 1400 : 700}
+      sizes={highRes ? '100vw' : '(max-width: 768px) 100vw, 60vw'}
+      draggable={false}
+      unoptimized={!isOptimizedImageUrl(url)}
+      onError={() => setFailedUrl(url)}
+    />
   );
 }
 
@@ -44,11 +68,26 @@ export function HotelGallery({
   layout?: keyof typeof galleryLayouts;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const activeThumbnail = useRef<HTMLButtonElement>(null);
   const [index, setIndex] = useState(0);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const urls = [...new Set(images)].filter((url) => /^https?:\/\//i.test(url));
   const count = urls.length;
   const activeIndex = Math.min(index, count - 1);
+  const activeUrl = urls[activeIndex] ?? '';
+  const zoom = useImageZoom({
+    isOpen: isDialogOpen,
+    slideKey: `${activeIndex}:${activeUrl}`,
+    dialogRef: dialog,
+    stageRef,
+  });
+  const canSwitchSlideRef = useRef(zoom.canSwitchSlide);
+
+  useEffect(() => {
+    canSwitchSlideRef.current = zoom.canSwitchSlide;
+  });
+
   const move = useCallback((offset: number) => {
     setIndex((previous) => (Math.min(previous, count - 1) + offset + count) % count);
   }, [count]);
@@ -61,6 +100,7 @@ export function HotelGallery({
     };
     const navigateByKey = (event: KeyboardEvent) => {
       if (count < 2 || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      if (!canSwitchSlideRef.current) return;
       event.preventDefault();
       move(event.key === 'ArrowLeft' ? -1 : 1);
     };
@@ -96,6 +136,8 @@ export function HotelGallery({
             aria-haspopup="dialog"
             onClick={() => {
               setIndex(position);
+              zoom.shrinkExpanded();
+              setIsDialogOpen(true);
               dialog.current?.showModal();
             }}
             aria-label={`${vi.hotel.photo} ${position + 1}: ${name}`}
@@ -123,7 +165,21 @@ export function HotelGallery({
       <dialog
         ref={dialog}
         className={styles.photoDialog}
+        data-expanded={zoom.isExpanded ? 'true' : undefined}
         aria-label={`${vi.hotel.gallery}: ${name}`}
+        onCancel={(event) => {
+          handleExpandedDialogCancel({
+            isExpanded: zoom.isExpanded,
+            onShrinkExpanded: () => {
+              event.preventDefault();
+              zoom.shrinkExpanded();
+            },
+          });
+        }}
+        onClose={() => {
+          setIsDialogOpen(false);
+          zoom.shrinkExpanded();
+        }}
       >
         <div className={styles.photoViewer}>
           <header className={styles.photoHeader}>
@@ -131,22 +187,33 @@ export function HotelGallery({
               <strong>{name}</strong>
               <output>{vi.hotel.photo} {activeIndex + 1} / {count}</output>
             </div>
-            <button
-              className={styles.photoControl}
-              type="button"
-              aria-label={vi.hotel.close}
-              onClick={() => dialog.current?.close()}
-            >
-              <GalleryIcon name="close" />
-            </button>
+            <div className={styles.photoHeaderActions}>
+              <ImageViewerControls
+                scale={zoom.scale}
+                onZoomIn={zoom.zoomIn}
+                onZoomOut={zoom.zoomOut}
+                onResetZoom={zoom.resetZoom}
+                isExpanded={zoom.isExpanded}
+                onToggleExpanded={zoom.toggleExpanded}
+              />
+              <button
+                className={styles.photoControl}
+                type="button"
+                aria-label={vi.hotel.close}
+                onClick={() => dialog.current?.close()}
+              >
+                <GalleryIcon name="close" />
+              </button>
+            </div>
           </header>
-          <div className={styles.photoStage}>
+          <ImageZoomSurface stageRef={stageRef} stageClassName={styles.photoStage} zoom={zoom}>
             <HotelPhoto
               key={urls[activeIndex]}
               url={urls[activeIndex]!}
               alt={`${name} · ${vi.hotel.photo} ${activeIndex + 1}`}
+              highRes={zoom.isZoomed}
             />
-          </div>
+          </ImageZoomSurface>
           {count > 1 && (
             <div className={styles.photoNavigation}>
               <button className={styles.photoControl} type="button" aria-label={vi.hotel.previous} onClick={() => move(-1)}>

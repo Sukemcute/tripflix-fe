@@ -9,6 +9,13 @@ import type { ModerationCaseDtoStatus } from './moderationCaseDtoStatus';
 import type { ModerationCaseDtoTargetType } from './moderationCaseDtoTargetType';
 
 export interface ModerationCaseDto {
+  /** @nullable */
+  assigneeId: string | null;
+  /** @nullable */
+  leaseId: string | null;
+  /** @nullable */
+  leaseExpiresAt: string | null;
+  dueAt: string;
   id: string;
   targetType: ModerationCaseDtoTargetType;
   targetId: string;
