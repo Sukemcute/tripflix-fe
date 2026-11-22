@@ -44,4 +44,4 @@ Import model theo đường dẫn `@tripflix/api-client/core-api/model/index` (�
 BE giữ một số field social dạng snake_case; adapter gửi đúng hợp đồng đó, không đổi tên field trên dây.
 
 Quy trình sinh client: chạy `pnpm contracts:build` ở BE trước, sau đó `pnpm gen:api` ở FE.
-Xem [evidence tích hợp](../../docs/evidence/api-integration.md) để chạy hệ thống và kiểm tra lại.
+Xem [minh chứng tích hợp tại thời điểm triển khai](https://github.com/Sukemcute/tripflix-fe/blob/ffab348ce5306d38061001603b250320b42e2986/docs/evidence/api-integration.md) để xem các bước và kết quả kiểm tra của phiên bản đó.
