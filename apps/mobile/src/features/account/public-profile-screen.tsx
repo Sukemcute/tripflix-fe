@@ -13,7 +13,7 @@ import { formatProfileCount, getNameInitials } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
 import { colors as c, mobileLayout, nativeFonts, radius, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import { Button, Card, copy, Icon, IconButton, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
@@ -255,13 +255,15 @@ function VlogGrid({ userId }: { userId: string }) {
 }
 
 function HeldPosts({ userId }: { userId: string }) {
+  // Chỉ hỏi lại kết quả kiểm duyệt khi đang mở màn này; màn nằm dưới stack thì thôi gọi mỗi 10 giây.
+  const isFocused = useIsFocused();
   const posts = useInfiniteQuery({
     queryKey: ['social', 'my-posts', userId, 'held'],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) =>
       socialApi.listMyPosts({ status: 'held', cursor: pageParam, limit: 20 }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
-    refetchInterval: 10000,
+    refetchInterval: isFocused ? 10000 : false,
   });
   const items = posts.data?.pages.flatMap((page) => page.items) ?? [];
   return (

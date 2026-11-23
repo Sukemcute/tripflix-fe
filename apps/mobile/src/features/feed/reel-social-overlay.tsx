@@ -542,24 +542,27 @@ export function ReelSocialOverlay({
           trip={tripPlan}
         />
       )}
-      <ReelCommentsPanel
-        inline
-        viewportHeight={viewportHeight}
-        visible={hasComments}
-        openProgress={commentsProgress}
-        postId={postId}
-        commentCount={counts.comments}
-        showSummary
-        draft={draft}
-        onDraftChange={setDraft}
-        comments={sampleComments}
-        onSend={() => {
-          if (!draft.trim()) return;
-          setSampleComments((comments) => [...comments, { id: ++nextCommentId.current, body: draft.trim() }]);
-          setDraft('');
-        }}
-        onClose={closeComments}
-      />
+      {/* Panel đóng thì không vẽ gì, nhưng useAnimatedKeyboard bên trong vẫn nghe bàn phím ở cả 6 Reel đã dựng. */}
+      {hasComments && (
+        <ReelCommentsPanel
+          inline
+          viewportHeight={viewportHeight}
+          visible={hasComments}
+          openProgress={commentsProgress}
+          postId={postId}
+          commentCount={counts.comments}
+          showSummary
+          draft={draft}
+          onDraftChange={setDraft}
+          comments={sampleComments}
+          onSend={() => {
+            if (!draft.trim()) return;
+            setSampleComments((comments) => [...comments, { id: ++nextCommentId.current, body: draft.trim() }]);
+            setDraft('');
+          }}
+          onClose={closeComments}
+        />
+      )}
     </>
   );
 }

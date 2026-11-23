@@ -71,11 +71,6 @@ export function ProfileHub() {
   const { user, isReady } = useApiSession();
   const [now, setNow] = useState(() => new Date());
   const enabled = isReady && !!user;
-  useEffect(() => {
-    if (!enabled) return;
-    const timer = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, [enabled]);
   const trips = useQuery({
     queryKey: ['commerce', 'trips', user?.id, 'profile-preview'],
     enabled,
@@ -100,6 +95,18 @@ export function ProfileHub() {
         Number.isFinite(Date.parse(trip.holdExpiresAt)) &&
         !holdCountdown(trip.holdExpiresAt, now).expired),
   );
+  // `now` chỉ để biết chỗ giữ đã hết hạn chưa: hẹn giờ đúng lúc hết hạn sớm nhất thay vì vẽ lại cả màn mỗi giây.
+  const nextExpiryMs = Math.min(
+    ...(trips.data?.trips ?? [])
+      .filter((trip) => trip.status === 'pending')
+      .map((trip) => Date.parse(trip.holdExpiresAt))
+      .filter((at) => Number.isFinite(at) && at > now.getTime()),
+  );
+  useEffect(() => {
+    if (!enabled || !Number.isFinite(nextExpiryMs)) return;
+    const timer = setTimeout(() => setNow(new Date()), nextExpiryMs - Date.now() + 100);
+    return () => clearTimeout(timer);
+  }, [enabled, nextExpiryMs]);
   const draft = drafts.data?.items[0];
   const open = (target: '/my-trips' | '/saved') =>
     router.push(user ? target : { pathname: '/login', params: { returnTo: target } });

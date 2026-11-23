@@ -84,8 +84,13 @@ export function FeedHighlightFrame({
       for (const child of container.children) resizeObserver.observe(child);
       scheduleFrame();
     };
-    const mutationObserver = new MutationObserver(observeContent);
-    mutationObserver.observe(container, { childList: true, subtree: true, characterData: true });
+    // Chỉ khi danh sách con trực tiếp đổi mới phải observe lại từng con; đổi bên trong thẻ (số like, giờ đăng, thẻ bài
+    // được thay) chỉ cần vẽ lại khung. Trước đây mọi đổi chữ trong feed đều observe lại cả danh sách.
+    const mutationObserver = new MutationObserver((records) => {
+      if (records.some((record) => record.target === container)) observeContent();
+      else scheduleFrame();
+    });
+    mutationObserver.observe(container, { childList: true, subtree: true });
     observeContent();
     cancelAnimationFrame(pending.animationFrame);
     updateFrame();

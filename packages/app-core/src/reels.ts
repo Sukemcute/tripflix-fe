@@ -20,6 +20,14 @@ export function getReelPlaybackSources(
   return [...available.map((level) => `${prefix}${level}p/index.m3u8`), hlsUrl];
 }
 
+/**
+ * Mobile: master trước để player tự đổi mức theo băng thông (ABR); trần khi tiết kiệm dữ liệu đã đặt qua maxResolution.
+ * Các bản lẻ giữ làm dự phòng khi master lỗi.
+ */
+export function getAdaptiveReelPlaybackSources(playback: Pick<ReelPlayback, 'hlsUrl' | 'levels'>, maxLevel = Infinity): string[] {
+  return [playback.hlsUrl, ...getReelPlaybackSources(playback, maxLevel).filter((url) => url !== playback.hlsUrl)];
+}
+
 export function selectReelPoster(posters: ReelPlayback['posters'], width: number): string {
   if (width <= 360) return posters.w360;
   if (width <= 540) return posters.w540;

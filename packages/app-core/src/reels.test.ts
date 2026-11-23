@@ -3,6 +3,7 @@ import {
   fitReelVideo,
   getCollapsedCaptionLength,
   getReelCommentsSheetHeight,
+  getAdaptiveReelPlaybackSources,
   getReelPlaybackSources,
   getReelPosterPrefetchUrls,
   getReelResolutionCap,
@@ -108,6 +109,13 @@ describe('reels playback policy', () => {
     expect(getReelPlaybackSources({ ...playback, hlsUrl: signedUrl })).toEqual([signedUrl]);
     const otherUrl = `${prefix}playlist.m3u8`;
     expect(getReelPlaybackSources({ ...playback, hlsUrl: otherUrl })).toEqual([otherUrl]);
+  });
+
+  it('mobile phát master trước (ABR), các bản lẻ còn lại làm dự phòng', () => {
+    const prefix = 'https://video.example/reel/';
+    const hlsUrl = `${prefix}master.m3u8`;
+    expect(getAdaptiveReelPlaybackSources({ hlsUrl, levels: [360, 720] }, 540)).toEqual([hlsUrl, `${prefix}360p/index.m3u8`]);
+    expect(getAdaptiveReelPlaybackSources({ hlsUrl: `${hlsUrl}?token=abc`, levels: [720] })).toEqual([`${hlsUrl}?token=abc`]);
   });
 
   it('chỉ cắt caption dài hơn số dòng cho phép và chừa chỗ cho chữ nối', () => {
