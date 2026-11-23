@@ -1078,7 +1078,8 @@ export const MediaTrackItem = memo(function MediaTrackItem({
             tabIndex={-1}
           >
             {getInitial(authorInfo.name)}
-            <AvatarPhoto userId={post.authorId} />
+            {/* Thẻ Reels mang sẵn ảnh (null: chưa có ảnh), khỏi gọi /users/:id/avatar cho từng bài. */}
+            <AvatarPhoto userId={post.authorId} src={reelCard ? reelCard.author.avatarUrl : undefined} />
           </Link>
           <div className={styles.overlayAuthorMeta}>
             <div className={styles.overlayAuthorNameRow}>
