@@ -130,7 +130,8 @@ export function ReelSeekBar({
     height: interpolate(scrub.get(), [0, 1], [LINE_HEIGHT, SCRUB_LINE_HEIGHT]),
     opacity: interpolate(scrub.get(), [0, 1], [0.7, 1]),
   }));
-  const fillStyle = useAnimatedStyle(() => ({ width: progress.get() * width }));
+  // Đổi width mỗi khung hình bắt dựng lại layout; scaleX từ mép trái chỉ là transform.
+  const fillStyle = useAnimatedStyle(() => ({ width, transform: [{ scaleX: progress.get() }] }));
   const thumbStyle = useAnimatedStyle(() => ({
     opacity: scrub.get(),
     transform: [{ translateX: progress.get() * width - THUMB_SIZE / 2 }, { scale: scrub.get() }],
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
   },
   track: { overflow: 'hidden' },
   rest: { ...StyleSheet.absoluteFill, backgroundColor: colors.background, opacity: 0.3 },
-  fill: { height: '100%', backgroundColor: colors.background },
+  fill: { height: '100%', backgroundColor: colors.background, transformOrigin: 'left' },
   thumb: {
     position: 'absolute',
     left: 0,
