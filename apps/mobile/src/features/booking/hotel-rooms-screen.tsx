@@ -78,15 +78,13 @@ export function HotelRoomsScreen() {
     guests.adults === stay.adults &&
     guests.children === stay.children &&
     guests.infants === stay.infants;
+  // Cùng khoá với màn khách sạn (chỉ ngày và người lớn, đúng tham số gửi API): mở danh sách phòng dùng lại dữ liệu
+  // vừa tải, không gọi lại khi trẻ em, em bé khác 0.
+  const hotelStay = { checkIn: stay.checkIn, checkOut: stay.checkOut, adults: stay.adults };
   const query = useQuery({
-    queryKey: ['commerce', 'hotel', params.id, stay],
+    queryKey: ['commerce', 'hotel', params.id, hotelStay],
     enabled: isReady && !!params.id && (!isTripi || isValidAssistantStay(stay, today)),
-    queryFn: ({ signal }) =>
-      commerceApi.getHotel(
-        params.id!,
-        { checkIn: stay.checkIn, checkOut: stay.checkOut, adults: stay.adults },
-        signal,
-      ),
+    queryFn: ({ signal }) => commerceApi.getHotel(params.id!, hotelStay, signal),
     placeholderData: keepPreviousData,
   });
   const hotel = query.data;
