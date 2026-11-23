@@ -7,6 +7,7 @@ import styles from './live-posts.module.css';
 
 /** Video đang phát mà thời gian không chạy quá chừng này (mạng yếu, đang tải) thì thanh tiến độ hiện vệt sáng. */
 const STALL_MS = 400;
+const PAUSED_CHECK_MS = 250;
 
 /**
  * Thanh tiến độ kiêm thanh tua của Reel đang xem (như TikTok):
@@ -33,7 +34,7 @@ export function ReelSeekBar({
   const [scrub, setScrub] = useState<{ seconds: number; duration: number } | null>(null);
 
   useEffect(() => {
-    const frame = { id: 0 };
+    const frame = { id: 0, timeout: 0 };
     let lastTime = -1;
     let lastAdvanceAt = performance.now();
     let lastAnnouncedSecond = -1;
@@ -69,10 +70,20 @@ export function ReelSeekBar({
         const isBuffering = !video.paused && now - lastAdvanceAt > STALL_MS && !isScrubbingRef.current;
         if (track.hasAttribute('data-buffering') !== isBuffering) track.toggleAttribute('data-buffering', isBuffering);
       }
+      // Video dừng (Reel không phải bài đang xem, hoặc người xem bấm dừng) thì không vẽ mỗi khung hình, chỉ kiểm lại 4 lần/giây.
+      if (video?.paused && !isScrubbingRef.current) {
+        frame.timeout = window.setTimeout(() => {
+          frame.id = window.requestAnimationFrame(tick);
+        }, PAUSED_CHECK_MS);
+        return;
+      }
       frame.id = window.requestAnimationFrame(tick);
     };
     frame.id = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(frame.id);
+    return () => {
+      window.cancelAnimationFrame(frame.id);
+      window.clearTimeout(frame.timeout);
+    };
   }, [videoRef]);
 
   const showScrub = (seconds: number) => {
