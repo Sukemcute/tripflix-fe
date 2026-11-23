@@ -84,6 +84,7 @@ import { useSettledFlag } from './use-settled-flag';
 import {
   canStepToNextReel,
   computeReelEngagement,
+  countTrailingEmptyPages,
   getReelBufferSeconds,
   getReelRenderMode,
   pickReelAfterRemoval,
@@ -1470,10 +1471,12 @@ export function InspirationImmersiveViewer({
     }
   }, [activePost, postDetailQuery.error, client]);
 
-  // Tự động tải trang tiếp theo khi lướt gần cuối, hoặc khi các trang đã tải chưa có Reels nào sau khi lọc.
+  // Tự động tải trang tiếp theo khi lướt gần cuối; quá 2 trang rỗng thì dừng để tránh gọi API liên tiếp vô hạn.
   useEffect(() => {
+    const canFetchEmptyPage = posts.length > 0 || countTrailingEmptyPages(postsQuery.data?.pages ?? []) <= 2;
     if (
       (posts.length === 0 || activeIndex >= posts.length - 2) &&
+      canFetchEmptyPage &&
       postsQuery.hasNextPage &&
       !postsQuery.isFetchingNextPage
     ) {

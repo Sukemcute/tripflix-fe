@@ -4,6 +4,7 @@ import {
   attachReelVideoSource,
   canStepToNextReel,
   computeReelEngagement,
+  countTrailingEmptyPages,
   formatReelTime,
   getReelKeySeekTarget,
   getReelBufferSeconds,
@@ -139,6 +140,14 @@ describe('toReelPost', () => {
     expect(updated).not.toBe(first);
     expect(updated.reactionTotal).toBe(6);
     expect(toReelPost(otherCard, cache)).toBe(untouched);
+  });
+});
+
+describe('countTrailingEmptyPages', () => {
+  it('chỉ đếm các trang rỗng liên tiếp ở cuối', () => {
+    expect(countTrailingEmptyPages([])).toBe(0);
+    expect(countTrailingEmptyPages([{ items: [] }, { items: ['post'] }, { items: [] }, { items: [] }])).toBe(2);
+    expect(countTrailingEmptyPages([{ items: [] }, { items: [] }, { items: [] }])).toBe(3);
   });
 });
 

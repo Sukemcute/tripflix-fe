@@ -87,6 +87,13 @@ export function pickReelAfterRemoval(postIds: readonly string[], removedId: stri
   return postIds[index + 1] ?? postIds[index - 1] ?? null;
 }
 
+/** Đếm các trang rỗng liên tiếp ở cuối để chặn vòng tự tải vô hạn khi server vẫn trả con trỏ. */
+export function countTrailingEmptyPages(pages: readonly { items: readonly unknown[] }[]): number {
+  let count = 0;
+  for (let index = pages.length - 1; index >= 0 && pages[index]!.items.length === 0; index -= 1) count += 1;
+  return count;
+}
+
 /**
  * Mức render của một Reel theo khoảng cách tới bài đang xem, để lướt lâu không nặng dần:
  * - `video`: bài đang xem, 2 bài phía trước (tải sẵn để lướt nhanh vẫn phát ngay) và 2 bài phía sau (giữ phần đã
