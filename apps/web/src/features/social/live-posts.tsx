@@ -84,6 +84,7 @@ import { useSettledFlag } from './use-settled-flag';
 import {
   canStepToNextReel,
   computeReelEngagement,
+  countTrailingEmptyPages,
   getReelBufferSeconds,
   getReelRenderMode,
   pickReelAfterRemoval,
@@ -1078,7 +1079,8 @@ export const MediaTrackItem = memo(function MediaTrackItem({
             tabIndex={-1}
           >
             {getInitial(authorInfo.name)}
-            <AvatarPhoto userId={post.authorId} />
+            {/* Thẻ Reels mang sẵn ảnh (null: chưa có ảnh), khỏi gọi /users/:id/avatar cho từng bài. */}
+            <AvatarPhoto userId={post.authorId} src={reelCard ? reelCard.author.avatarUrl : undefined} />
           </Link>
           <div className={styles.overlayAuthorMeta}>
             <div className={styles.overlayAuthorNameRow}>
@@ -1469,10 +1471,12 @@ export function InspirationImmersiveViewer({
     }
   }, [activePost, postDetailQuery.error, client]);
 
-  // Tự động tải trang tiếp theo khi lướt gần cuối, hoặc khi các trang đã tải chưa có Reels nào sau khi lọc.
+  // Tự động tải trang tiếp theo khi lướt gần cuối; quá 2 trang rỗng thì dừng để tránh gọi API liên tiếp vô hạn.
   useEffect(() => {
+    const canFetchEmptyPage = posts.length > 0 || countTrailingEmptyPages(postsQuery.data?.pages ?? []) <= 2;
     if (
       (posts.length === 0 || activeIndex >= posts.length - 2) &&
+      canFetchEmptyPage &&
       postsQuery.hasNextPage &&
       !postsQuery.isFetchingNextPage
     ) {

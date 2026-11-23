@@ -259,6 +259,7 @@ export * from './loginDto';
 export * from './markPostSummaryCheckedDto';
 export * from './markPostSummaryCheckedResponseDto';
 export * from './mediaErrorDto';
+export * from './mediaPlaybackControllerCreateSessionParams';
 export * from './moderationAuthorDto';
 export * from './moderationCaseDto';
 export * from './moderationCaseDtoFlags';

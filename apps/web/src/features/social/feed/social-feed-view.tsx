@@ -33,6 +33,7 @@ import segmentedTabs from '../../shared/segmented-tabs.module.css';
 import { getFocusedFeedPosts } from './focused-post';
 import styles from './social-feed.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
+import { getEngagementRefreshKeys } from './engagement-refresh';
 
 export interface SocialFeedViewProps {
   /** Tab đang hiện. Tab được giữ mounted khi ẩn, nên hiện lại cũng là bố cục ban đầu: không chạy hiệu ứng. */
@@ -127,7 +128,11 @@ export function SocialFeedView({
   const queryKind: 'public' | 'bookmarks' = activeFilter === 'saved' ? 'bookmarks' : 'public';
   const isSearchMode = activeFilter !== 'saved' && effectiveKeyword.length > 0;
   // Tab Bài viết chỉ lấy vlog; Reels có luồng riêng (/v1/feed).
-  const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended', { recommendMode, refreshOnReturn: isVisible });
+  const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended', {
+    recommendMode,
+    refreshOnReturn: isVisible,
+    enabled: isVisible,
+  });
   // Tìm kiếm: cùng query với grid kết quả (search của discovery) nên mở bài từ grid không gọi lại API.
   const searchQuery = usePostSearchFeed(isSearchMode ? effectiveKeyword : '', undefined, searchSort);
   const postsQuery = isSearchMode ? searchQuery : feedQuery;
@@ -655,7 +660,9 @@ export function SocialFeedView({
           return next;
         });
       }
-      void client.invalidateQueries({ queryKey: ['social'] });
+      for (const queryKey of getEngagementRefreshKeys(payload.type, payload.postId)) {
+        void client.invalidateQueries({ queryKey });
+      }
     },
   });
 
