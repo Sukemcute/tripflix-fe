@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { getFutureDate } from '@tripflix/api-client';
 import { isValidAssistantStay, isValidTripDate, isValidTripPlanPassengers } from '@tripflix/app-core';
-import { colors, nativeFonts, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, spacing } from '@tripflix/tokens';
 import { t, vi } from '@tripflix/i18n';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
@@ -37,10 +37,9 @@ export function AssistantStayScreen() {
   return (
     <Screen
       title={text.title}
-      background={colors.surface}
+      background={x.day.canvas}
       footer={
         <Button
-          style={{ borderRadius: 8, backgroundColor: colors.coralInk }}
           disabled={!valid}
           icon="arrow-forward"
           onPress={() =>
@@ -63,8 +62,7 @@ export function AssistantStayScreen() {
       }
     >
       <View style={styles.intro}>
-        <Icon name="sunny-outline" size={30} color={colors.navy} />
-        <Txt style={styles.eyebrow}>{text.eyebrow}</Txt>
+        <Icon name="sunny-outline" size={30} color={x.day.link} />
         <Txt style={styles.title}>{text.heading}</Txt>
         <Txt style={styles.body}>{params.name ?? text.fallbackName}</Txt>
       </View>
@@ -72,7 +70,7 @@ export function AssistantStayScreen() {
       {!params.id && <Notice tone="error">{text.missingHotel}</Notice>}
       <View style={styles.section}>
         <Row style={styles.heading}>
-          <Icon name="calendar-outline" size={22} color={colors.tealInk} />
+          <Icon name="calendar-outline" size={22} color={x.day.link} />
           <Txt style={styles.sectionTitle}>{text.dates}</Txt>
         </Row>
         <DateRangeField
@@ -101,7 +99,7 @@ export function AssistantStayScreen() {
       </View>
       <View style={[styles.section, styles.party]}>
         <Row style={styles.heading}>
-          <Icon name="people-outline" size={22} color={colors.tealInk} />
+          <Icon name="people-outline" size={22} color={x.day.link} />
           <Txt style={styles.sectionTitle}>{text.party}</Txt>
         </Row>
         {(['adults', 'children', 'infants'] as const).map((key) => {
@@ -143,16 +141,25 @@ export function AssistantStayScreen() {
 }
 
 const styles = StyleSheet.create({
-  intro: { backgroundColor: colors.sun, borderRadius: 8, padding: spacing.lg, gap: spacing.sm },
-  eyebrow: { fontSize: 12, lineHeight: 20, fontFamily: nativeFonts.semibold, color: colors.navy },
-  title: { fontSize: 28, lineHeight: 38, fontFamily: nativeFonts.bold, color: colors.navy },
-  body: { fontSize: 15, lineHeight: 24, color: colors.navy, fontFamily: nativeFonts.medium },
-  description: { fontSize: 13, lineHeight: 22, color: colors.textMuted },
+  intro: {
+    backgroundColor: x.day.tintExplore,
+    borderRadius: x.radius.xl,
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  title: {
+    fontSize: x.type.title.fontSize,
+    lineHeight: 34,
+    fontFamily: nativeFonts.extraBold,
+    color: x.day.text,
+  },
+  body: { fontSize: 15, lineHeight: 24, color: x.day.text, fontFamily: nativeFonts.medium },
+  description: { fontSize: 13, lineHeight: 22, color: x.day.textSecondary },
   section: { gap: spacing.md, paddingVertical: spacing.md },
   heading: { alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
-  sectionTitle: { fontSize: 17, lineHeight: 26, fontFamily: nativeFonts.semibold, color: colors.navy },
-  party: { backgroundColor: colors.seaMist, padding: spacing.md, borderRadius: 8 },
+  sectionTitle: { fontSize: 17, lineHeight: 26, fontFamily: nativeFonts.semibold, color: x.day.text },
+  party: { backgroundColor: x.day.tintExplore, padding: spacing.md, borderRadius: 8 },
   guestRow: { justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
   guestLabel: { flex: 1, gap: spacing.xs },
-  error: { color: colors.coralInk, fontSize: 13, lineHeight: 22 },
+  error: { color: x.day.text, fontSize: 13, lineHeight: 22 },
 });

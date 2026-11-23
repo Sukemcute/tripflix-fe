@@ -11,7 +11,14 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { PostUploadCard } from '@/features/post/post-upload-card';
 import { formatProfileCount, getNameInitials } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { colors as c, mobileLayout, nativeFonts, radius, spacing as s } from '@tripflix/tokens';
+import {
+  explorer as x,
+  colors as c,
+  mobileLayout,
+  nativeFonts,
+  radius,
+  spacing as s,
+} from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
@@ -360,7 +367,7 @@ function Tile({
         </Txt>
       )}
       <View style={styles.likes}>
-        <Icon name="heart" size={mobileIconSize.inline} color={c.background} />
+        <Icon name="heart" size={mobileIconSize.inline} color={x.brand.white} />
         <Txt variant="caption" style={styles.likesText}>
           {formatProfileCount(likes)}
         </Txt>
@@ -370,12 +377,18 @@ function Tile({
 }
 
 const styles = StyleSheet.create({
-  header: { alignItems: 'center', gap: s.sm, paddingBottom: s.lg },
+  header: {
+    alignItems: 'center',
+    gap: s.sm,
+    padding: s.md,
+    borderRadius: x.radius.xl,
+    backgroundColor: x.day.surface,
+  },
   avatar: {
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: c.sunSoft,
+    backgroundColor: x.day.tintWarm,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -385,7 +398,7 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     marginHorizontal: -mobileLayout.gutter,
-    borderBottomColor: c.border,
+    borderBottomColor: x.day.line,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   tab: {
@@ -396,7 +409,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: c.transparent,
   },
-  tabActive: { borderBottomColor: c.text },
+  tabActive: { borderBottomColor: x.day.link },
   // Lưới tràn hết bề ngang như TikTok: bù lại lề hai bên của màn, ô sát nhau chỉ cách 1px.
   grid: {
     flexDirection: 'row',
@@ -406,7 +419,7 @@ const styles = StyleSheet.create({
     marginTop: GRID_GAP - s.xl,
     marginHorizontal: -mobileLayout.gutter,
   },
-  tile: { backgroundColor: c.seaMist, overflow: 'hidden', justifyContent: 'center' },
+  tile: { backgroundColor: x.day.tintExplore, overflow: 'hidden', justifyContent: 'center' },
   tileTitle: { padding: s.sm },
   likes: {
     position: 'absolute',
@@ -418,7 +431,7 @@ const styles = StyleSheet.create({
   },
   // Bóng chữ để số vẫn đọc được trên ảnh bìa sáng.
   likesText: {
-    color: c.background,
+    color: x.brand.white,
     fontFamily: nativeFonts.bold,
     textShadowColor: c.overlayHeavy,
     textShadowOffset: { width: 0, height: 1 },
@@ -428,30 +441,30 @@ const styles = StyleSheet.create({
 });
 
 const ownStyles = StyleSheet.create({
-  heldCard: { gap: s.sm, borderRadius: radius.md, borderWidth: 0, backgroundColor: c.sunSoft },
+  heldCard: { gap: s.sm, borderRadius: radius.md, borderWidth: 0, backgroundColor: x.day.tintSun },
   detailButton: { borderRadius: radius.sm, minHeight: 48 },
-  body: { fontSize: 16, lineHeight: 25, color: c.ink },
+  body: { fontSize: 16, lineHeight: 25, color: x.day.text },
   login: {
     minHeight: 52,
-    borderRadius: radius.sm,
-    backgroundColor: c.coralInk,
+    borderRadius: x.radius.pill,
+    backgroundColor: x.action.primary,
     justifyContent: 'center',
     alignItems: 'center',
     padding: s.md,
   },
-  loginText: { fontSize: 15, lineHeight: 24, fontFamily: nativeFonts.semibold, color: c.background },
-  section: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: c.navy },
+  loginText: { fontSize: 15, lineHeight: 24, fontFamily: nativeFonts.semibold, color: x.action.onPrimary },
+  section: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: x.day.text },
   tabs: { flexDirection: 'row', gap: s.sm },
   tab: {
     flex: 1,
     minHeight: 48,
     borderRadius: radius.sm,
     padding: s.sm,
-    backgroundColor: c.surfaceMuted,
+    backgroundColor: x.day.canvas,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  selectedTab: { backgroundColor: c.coralInk },
-  tabText: { fontSize: 14, lineHeight: 23, color: c.ink, textAlign: 'center' },
-  selectedText: { color: c.background },
+  selectedTab: { backgroundColor: x.day.link },
+  tabText: { fontSize: 14, lineHeight: 23, color: x.day.text, textAlign: 'center' },
+  selectedText: { color: x.brand.white },
 });

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { feedApi, HttpError, usePostSearch, useUserSearch } from '@tripflix/api-client';
 import type { ExploreItemDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
-import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
@@ -74,7 +74,7 @@ export function SearchDropPanel({ visible, onClose }: { visible: boolean; onClos
         <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
           <View style={styles.inputBox}>
             <View style={styles.inputIcon}>
-              <Icon name="search" size={mobileIconSize.inline} color={colors.tealInk} />
+              <Icon name="search" size={mobileIconSize.inline} color={x.day.link} />
             </View>
             <TextInput
               ref={input}
@@ -82,7 +82,7 @@ export function SearchDropPanel({ visible, onClose }: { visible: boolean; onClos
               onChangeText={setText}
               maxLength={100}
               placeholder={copy.placeholder}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={x.day.textSecondary}
               returnKeyType="search"
               accessibilityLabel={copy.placeholder}
               style={styles.input}
@@ -93,7 +93,7 @@ export function SearchDropPanel({ visible, onClose }: { visible: boolean; onClos
                 accessibilityLabel={copy.clear}
                 onPress={() => setText('')}
               >
-                <Icon name="close-circle" size={mobileIconSize.control} color={colors.textMuted} />
+                <Icon name="close-circle" size={mobileIconSize.control} color={x.day.textSecondary} />
               </Pressable>
             )}
           </View>
@@ -193,7 +193,7 @@ function PostResults({
                 {item.thumbnail ? (
                   <Image source={item.thumbnail} style={StyleSheet.absoluteFill} contentFit="cover" />
                 ) : (
-                  <Icon name="play-circle-outline" size={mobileIconSize.reel} color={colors.background} />
+                  <Icon name="play-circle-outline" size={mobileIconSize.reel} color={x.brand.white} />
                 )}
                 <Txt variant="caption" numberOfLines={1} style={styles.tileReason}>
                   {item.reason}
@@ -223,7 +223,7 @@ function PostResults({
             {item.thumbnail ? (
               <Image source={item.thumbnail} style={StyleSheet.absoluteFill} contentFit="cover" />
             ) : (
-              <Icon name="map-outline" size={mobileIconSize.nav} color={colors.textMuted} />
+              <Icon name="map-outline" size={mobileIconSize.nav} color={x.day.textSecondary} />
             )}
           </View>
           <View style={styles.planBody}>
@@ -281,7 +281,7 @@ function UserResults({ query, onOpenReel }: { query: string; onOpenReel: (postId
             style={styles.userRow}
             onPress={() => onOpenReel(post.postId)}
           >
-            <Icon name="play-circle-outline" size={mobileIconSize.nav} color={colors.coral} />
+            <Icon name="play-circle-outline" size={mobileIconSize.nav} color={x.action.primary} />
             <View style={styles.planBody}>
               <Txt variant="label" numberOfLines={2}>
                 {post.title}
@@ -323,7 +323,7 @@ function UserResults({ query, onOpenReel }: { query: string; onOpenReel: (postId
           <Txt variant="label" style={styles.planBody} numberOfLines={1}>
             {user.displayName}
           </Txt>
-          <Icon name="chevron-forward" size={mobileIconSize.inline} color={colors.textMuted} />
+          <Icon name="chevron-forward" size={mobileIconSize.inline} color={x.day.textSecondary} />
         </Pressable>
       ))}
     </>
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     top: 0,
     alignSelf: 'center',
     overflow: 'hidden',
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
     borderBottomLeftRadius: mobileLayout.sheetRadius,
     borderBottomRightRadius: mobileLayout.sheetRadius,
   },
@@ -351,9 +351,9 @@ const styles = StyleSheet.create({
     paddingLeft: spacing.xs,
     paddingRight: spacing.md,
     borderRadius: radius.pill,
-    backgroundColor: colors.surface,
+    backgroundColor: x.day.canvas,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: x.day.line,
   },
   // Cùng kiểu ô tìm ở đầu trang chủ (TF48).
   inputIcon: {
@@ -362,22 +362,22 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.tealSoft,
+    backgroundColor: x.day.tintExplore,
   },
-  input: { flex: 1, color: colors.ink, ...compactType.body },
+  input: { flex: 1, color: x.day.text, ...compactType.body },
   tabs: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   results: { flex: 1 },
   resultsContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md },
-  muted: { color: colors.textMuted },
-  error: { color: colors.coralInk },
-  accent: { color: colors.tealInk },
+  muted: { color: x.day.textSecondary },
+  error: { color: x.day.text },
+  accent: { color: x.day.link },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   tile: { width: '48%', gap: spacing.xs },
   tileMedia: {
     aspectRatio: 3 / 4,
     borderRadius: radius.md,
     overflow: 'hidden',
-    backgroundColor: colors.ink,
+    backgroundColor: x.day.text,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     left: spacing.sm,
     right: spacing.sm,
     bottom: spacing.sm,
-    color: colors.background,
+    color: x.brand.white,
   },
   plan: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
   planMedia: {
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
     height: 96,
     borderRadius: radius.md,
     overflow: 'hidden',
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -415,9 +415,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: radius.pill,
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: colors.tealInk },
+  avatarText: { color: x.day.link },
 });

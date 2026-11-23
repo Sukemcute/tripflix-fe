@@ -1,9 +1,9 @@
-import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { compactType } from '@/components/mobile-scale';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
-const DAY_DOT = 10;
+const DAY_DOT = 28;
 export function formatDay(date: string) {
   return new Date(`${date}T00:00:00Z`).toLocaleDateString('vi-VN', {
     weekday: 'short',
@@ -47,10 +47,10 @@ export function ProductCard({
   onAction?: () => void;
   children?: ReactNode;
 }) {
-  const accent = tone === 'flight' ? colors.teal : colors.coral;
-  const ink = tone === 'flight' ? colors.tealInk : colors.coralInk;
+  const accent = tone === 'flight' ? x.brand.teal : x.brand.coral;
+  const ink = x.brand.ink;
   return (
-    <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.background }]}>
+    <View style={[styles.card, { borderColor: x.day.line, backgroundColor: x.day.surface }]}>
       <View style={styles.cardRow}>
         {onToggle && (
           <Pressable
@@ -64,7 +64,7 @@ export function ProductCard({
             <Icon
               name={isSelected ? 'checkbox' : 'square-outline'}
               size={22}
-              color={isDisabled ? colors.textSubtle : ink}
+              color={isDisabled ? x.day.textSecondary : ink}
             />
           </Pressable>
         )}
@@ -76,7 +76,7 @@ export function ProductCard({
           style={[styles.cardRow, styles.cardBody]}
         >
           <View style={[styles.cardIcon, { backgroundColor: accent }]}>
-            <Icon name={icon} size={18} color={colors.background} />
+            <Icon name={icon} size={18} color={x.action.onPrimary} />
           </View>
           <View style={styles.cardBody}>
             <Txt style={styles.cardTitle} numberOfLines={2}>
@@ -150,11 +150,11 @@ export const styles = StyleSheet.create({
     padding: spacing.sm,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
   heroCover: { width: 72, minHeight: 96, alignSelf: 'stretch', borderRadius: radius.md },
-  heroFallback: { backgroundColor: colors.seaMist, alignItems: 'center', justifyContent: 'center' },
+  heroFallback: { backgroundColor: x.day.tintExplore, alignItems: 'center', justifyContent: 'center' },
   heroContent: { flex: 1, minWidth: 0, gap: spacing.xs },
   changeTrip: {
     flexDirection: 'row',
@@ -164,16 +164,16 @@ export const styles = StyleSheet.create({
     minHeight: spacing.xl + spacing.xs,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.pill,
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
   featuredCard: {
     flexDirection: 'row',
     gap: spacing.md,
     padding: spacing.md,
     borderRadius: radius.lg,
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: x.day.line,
   },
   poster: { width: 72, height: 96, borderRadius: radius.md },
   selectionToggle: {
@@ -184,7 +184,7 @@ export const styles = StyleSheet.create({
   },
   passengers: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   passenger: { gap: spacing.xs },
-  muted: { ...compactType.meta, color: colors.textMuted },
+  muted: { ...compactType.meta, color: x.day.textSecondary },
   pressed: { opacity: 0.7 },
   hero: { gap: spacing.xs, marginBottom: spacing.md },
   heroChips: { gap: spacing.xs, flexWrap: 'wrap' },
@@ -195,16 +195,16 @@ export const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: radius.pill,
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
-  heroChipText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.tealInk },
+  heroChipText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.link },
   bookPanel: {
     gap: spacing.xs,
     padding: spacing.sm,
     borderRadius: mobileLayout.cardRadius,
-    backgroundColor: colors.surface,
+    backgroundColor: x.day.canvas,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: x.day.line,
   },
   filters: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
   date: { flex: 1 },
@@ -212,36 +212,43 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: mobileLayout.touchTarget,
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
     borderRadius: mobileLayout.inputRadius,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: x.day.line,
   },
   label: { ...compactType.label, fontFamily: nativeFonts.semibold },
-  status: { ...compactType.meta, color: colors.coralInk },
+  status: { ...compactType.meta, color: x.day.error },
   timeline: { gap: 0 },
   day: { flexDirection: 'row', gap: spacing.md, paddingBottom: spacing.lg },
   rail: {
     position: 'absolute',
     left: DAY_DOT / 2 - 1,
-    top: DAY_DOT + 4,
+    top: DAY_DOT + 2,
     bottom: 0,
     width: 2,
     borderRadius: 1,
-    backgroundColor: colors.border,
+    backgroundColor: x.day.line,
   },
+  // Mốc ngày dạng huy hiệu có số, như đường thời gian trong thiết kế Stitch.
   dayDot: {
     width: DAY_DOT,
     height: DAY_DOT,
-    marginTop: 4,
     borderRadius: radius.pill,
-    backgroundColor: colors.coral,
-    borderWidth: 2,
-    borderColor: colors.coralTint,
+    backgroundColor: x.action.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  dayDotText: { color: x.action.onPrimary, fontFamily: nativeFonts.bold, fontSize: 13, lineHeight: 18 },
   dayContent: { flex: 1, minWidth: 0, gap: spacing.sm },
-  dayLabel: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.ink },
-  card: { borderWidth: 1.5, borderRadius: radius.lg, padding: spacing.sm, gap: spacing.sm },
+  dayLabel: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.text },
+  card: {
+    borderWidth: 0,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    gap: spacing.sm,
+    backgroundColor: x.day.surface,
+  },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   cardIcon: {
     width: 36,
@@ -254,14 +261,12 @@ export const styles = StyleSheet.create({
   otaBadge: {
     ...compactType.meta,
     fontFamily: nativeFonts.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
   },
-  cardTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.ink },
-  cardDetail: { ...compactType.meta, color: colors.textMuted },
+  cardTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.text },
+  cardDetail: { ...compactType.meta, color: x.day.textSecondary },
   cardPrice: { alignItems: 'flex-end', maxWidth: 110 },
   price: { ...compactType.heading, fontFamily: nativeFonts.semibold },
-  cardStatus: { ...compactType.meta, color: colors.danger, textAlign: 'right' },
+  cardStatus: { ...compactType.meta, color: x.day.error, textAlign: 'right' },
   cardAction: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -270,7 +275,7 @@ export const styles = StyleSheet.create({
     minHeight: 28,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.pill,
-    backgroundColor: colors.background,
+    backgroundColor: x.day.tintExplore,
   },
   cardActionText: { ...compactType.label, fontFamily: nativeFonts.semibold },
   chooser: { gap: spacing.xs },
@@ -280,24 +285,22 @@ export const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
-  choiceSelected: { backgroundColor: colors.ink, borderColor: colors.ink },
-  choiceText: { ...compactType.label, color: colors.ink },
-  choiceTextSelected: { color: colors.background, fontFamily: nativeFonts.semibold },
+  choiceSelected: { backgroundColor: x.day.link, borderColor: x.day.link },
+  choiceText: { ...compactType.label, color: x.day.text },
+  choiceTextSelected: { color: x.brand.white, fontFamily: nativeFonts.semibold },
   community: { gap: spacing.xs, paddingTop: 2 },
   communityLabel: {
     ...compactType.meta,
     fontFamily: nativeFonts.semibold,
-    color: colors.textSubtle,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    color: x.day.textSecondary,
   },
   stop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs },
   stopText: { flex: 1, gap: 1 },
-  description: { ...compactType.body, color: colors.ink },
+  description: { ...compactType.body, color: x.day.text },
   totalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  total: { ...compactType.title, fontFamily: nativeFonts.semibold, color: colors.coralInk },
+  total: { ...compactType.title, fontFamily: nativeFonts.semibold, color: x.day.text },
   actions: { gap: spacing.sm, justifyContent: 'flex-end', flexWrap: 'wrap' },
 });

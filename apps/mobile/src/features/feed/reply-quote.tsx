@@ -1,5 +1,5 @@
 import { t, vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Txt } from '@/components/mobile-ui';
 
@@ -21,8 +21,12 @@ export function ReplyQuote({
       <Txt variant="caption" numberOfLines={1} style={styles.title}>
         {t('api.commentReplyQuoteTitle', { name })}
       </Txt>
-      <Txt variant="caption" numberOfLines={1} ellipsizeMode="tail"
-        style={[styles.excerpt, !available && styles.unavailable]}>
+      <Txt
+        variant="caption"
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        style={[styles.excerpt, !available && styles.unavailable]}
+      >
         {available ? replyToExcerpt : vi.api.commentQuoteUnavailable}
       </Txt>
     </>
@@ -38,19 +42,21 @@ export function ReplyQuote({
     >
       {content}
     </Pressable>
-  ) : <View style={styles.card}>{content}</View>;
+  ) : (
+    <View style={styles.card}>{content}</View>
+  );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: x.day.canvas,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     marginVertical: spacing.xs,
   },
   touchTarget: { minHeight: 44, justifyContent: 'center' },
-  title: { color: colors.textMuted, fontFamily: nativeFonts.semibold },
-  excerpt: { color: colors.textMuted },
+  title: { color: x.day.textSecondary, fontFamily: nativeFonts.semibold },
+  excerpt: { color: x.day.textSecondary },
   unavailable: { fontStyle: 'italic' },
 });

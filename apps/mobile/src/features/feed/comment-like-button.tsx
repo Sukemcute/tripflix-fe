@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { socialApi, updateCommentLikeCache, useApiSession } from '@tripflix/api-client';
 import { t } from '@tripflix/i18n';
-import { colors, mobileLayout, spacing } from '@tripflix/tokens';
+import { explorer as x, mobileLayout, spacing } from '@tripflix/tokens';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -72,7 +72,7 @@ export function CommentLikeButton({
         <Icon
           name={isLiked ? 'heart' : 'heart-outline'}
           size={compact ? 18 : 22}
-          color={isLiked ? colors.coral : colors.textMuted}
+          color={isLiked ? x.action.primary : x.day.textSecondary}
         />
       </Animated.View>
       {likeCount > 0 && (
@@ -104,6 +104,6 @@ const styles = StyleSheet.create({
   },
   compactCount: { fontSize: 11, lineHeight: 15 },
   pressed: { opacity: 0.6 },
-  count: { color: colors.textMuted },
-  countLiked: { color: colors.coralInk },
+  count: { color: x.day.textSecondary },
+  countLiked: { color: x.day.text },
 });

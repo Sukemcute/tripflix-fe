@@ -9,7 +9,7 @@ import {
   isValidAssistantStay,
 } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { colors, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, radius, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { DateRangeField } from '@/components/date-sheet';
@@ -123,7 +123,7 @@ export function HotelRoomsScreen() {
   );
   return (
     <Screen
-      background={colors.surface}
+      background={x.day.canvas}
       title={hotel?.name ?? hotelText.rooms}
       right={isTripPick ? undefined : <CartLink />}
       footer={
@@ -143,7 +143,7 @@ export function HotelRoomsScreen() {
           padding: spacing.md,
           gap: spacing.md,
           borderRadius: radius.md,
-          backgroundColor: colors.surface,
+          backgroundColor: x.day.canvas,
         }}
       >
         <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -154,17 +154,17 @@ export function HotelRoomsScreen() {
                 { label: hotelText.checkOut, value: stay.checkOut },
               ].map((date) => (
                 <View key={date.label} style={{ gap: spacing.xs }}>
-                  <Txt style={{ fontSize: 13, lineHeight: 22, color: colors.textMuted }}>{date.label}</Txt>
-                  <Txt style={{ fontSize: 14, lineHeight: 23, color: colors.navy }}>
+                  <Txt style={{ fontSize: 13, lineHeight: 22, color: x.day.textSecondary }}>{date.label}</Txt>
+                  <Txt style={{ fontSize: 14, lineHeight: 23, color: x.day.text }}>
                     {formatDay(date.value)}
                   </Txt>
                 </View>
               ))}
             </Row>
-            <Txt style={{ fontSize: 13, lineHeight: 22, color: colors.textMuted }}>
+            <Txt style={{ fontSize: 13, lineHeight: 22, color: x.day.textSecondary }}>
               {nights} {text.nights}
             </Txt>
-            <Txt style={{ fontSize: 13, lineHeight: 22, color: colors.textMuted }}>
+            <Txt style={{ fontSize: 13, lineHeight: 22, color: x.day.textSecondary }}>
               {stay.adults} {hotelText.adultsLabel.toLowerCase()}
               {stay.children ? ` · ${stay.children} ${hotelText.childrenLabel.toLowerCase()}` : ''}
               {stay.infants ? ` · ${stay.infants} ${hotelText.infantsLabel.toLowerCase()}` : ''}

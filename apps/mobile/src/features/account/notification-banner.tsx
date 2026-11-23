@@ -5,7 +5,7 @@ import {
   useNotificationsRealtime,
   type InboxNotification,
 } from '@tripflix/api-client';
-import { colors as c, spacing as s } from '@tripflix/tokens';
+import { explorer as x, spacing as s } from '@tripflix/tokens';
 import { router, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -73,7 +73,7 @@ export function NotificationBanner() {
         style={styles.banner}
       >
         <View style={styles.icon}>
-          <Icon name="chatbubble-ellipses-outline" color={c.tealInk} size={18} />
+          <Icon name="chatbubble-ellipses-outline" color={x.day.link} size={18} />
         </View>
         <View style={ui.flex}>
           <Txt variant="label" numberOfLines={1}>
@@ -100,10 +100,10 @@ const styles = StyleSheet.create({
     gap: s.md,
     padding: s.md,
     borderRadius: 16,
-    backgroundColor: c.background,
+    backgroundColor: x.day.surface,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: c.border,
-    shadowColor: c.ink,
+    borderColor: x.day.line,
+    shadowColor: x.day.text,
     shadowOpacity: 0.15,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
@@ -115,6 +115,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: c.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
 });

@@ -16,7 +16,7 @@ import {
   type BookingCart,
 } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import {
@@ -66,12 +66,12 @@ export function Stepper({
         width: 44,
         height: 44,
         borderRadius: radius.sm,
-        backgroundColor: colors.surfaceMuted,
+        backgroundColor: x.day.canvas,
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Txt style={{ color: isEnabled ? colors.navy : colors.textSubtle, fontSize: 18, lineHeight: 26 }}>
+      <Txt style={{ color: isEnabled ? x.day.text : x.day.textSecondary, fontSize: 18, lineHeight: 26 }}>
         {sign}
       </Txt>
     </Pressable>
@@ -175,12 +175,12 @@ export function CartLink() {
             height: 18,
             paddingHorizontal: 4,
             borderRadius: radius.pill,
-            backgroundColor: colors.coral,
+            backgroundColor: x.action.primary,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Txt variant="small" style={{ color: colors.background, fontSize: 11, fontWeight: '700' }}>
+          <Txt variant="small" style={{ color: x.action.onPrimary, fontSize: 11, fontWeight: '700' }}>
             {count}
           </Txt>
         </View>
@@ -203,7 +203,7 @@ export function SelectionBar({ returnTo }: { returnTo: string }) {
     if (!isAdded) return null;
     return (
       <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <Txt variant="label" style={{ color: colors.tealInk }}>
+        <Txt variant="label" style={{ color: x.day.link }}>
           ✓ {text.cartAdded}
         </Txt>
         <Button tone="secondary" onPress={() => router.push('/cart')}>
@@ -242,7 +242,7 @@ export function SelectionBar({ returnTo }: { returnTo: string }) {
         <Txt variant="heading">{money(calculateBookingCartTotal(selection))}</Txt>
       </Row>
       {discount > 0 && (
-        <Txt variant="small" style={{ color: colors.tealInk }}>
+        <Txt variant="small" style={{ color: x.day.link }}>
           {text.cartChildSurcharge} {money(discount)}
         </Txt>
       )}
@@ -421,7 +421,7 @@ export function CartScreen() {
                   onPress={() => setQty(0)}
                   style={({ pressed }) => [cartStyles.remove, pressed && { opacity: 0.7 }]}
                 >
-                  <Icon name="trash-outline" size={18} color={colors.textMuted} />
+                  <Icon name="trash-outline" size={18} color={x.day.textSecondary} />
                   <Txt style={cartStyles.secondary}>{text.cartRemove}</Txt>
                 </Pressable>
               )}
@@ -452,22 +452,23 @@ export function CartScreen() {
 }
 
 const cartStyles = StyleSheet.create({
-  primaryAction: { borderRadius: radius.sm, backgroundColor: colors.coralInk, minHeight: 52 },
+  primaryAction: { minHeight: 52 },
   secondaryAction: { borderRadius: radius.sm, minHeight: 44, flex: 1 },
   card: {
-    borderRadius: radius.md,
-    borderWidth: 0,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: x.day.line,
     padding: spacing.lg,
     gap: spacing.md,
-    backgroundColor: colors.surface,
+    backgroundColor: x.day.surface,
   },
-  property: { fontSize: 18, lineHeight: 28, fontFamily: nativeFonts.semibold, color: colors.navy },
-  room: { fontSize: 15, lineHeight: 24, fontFamily: nativeFonts.medium, color: colors.navy },
-  secondary: { fontSize: 13, lineHeight: 22, color: colors.textMuted },
+  property: { fontSize: 18, lineHeight: 28, fontFamily: nativeFonts.semibold, color: x.day.text },
+  room: { fontSize: 15, lineHeight: 24, fontFamily: nativeFonts.medium, color: x.day.text },
+  secondary: { fontSize: 13, lineHeight: 22, color: x.day.textSecondary },
   dates: { gap: spacing.md, flexWrap: 'wrap' },
   date: { flexGrow: 1, flexBasis: 120, gap: spacing.xs },
-  dateValue: { fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.medium, color: colors.navy },
-  price: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy },
+  dateValue: { fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.medium, color: x.day.text },
+  price: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.text },
   controls: { justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
   remove: {
     minHeight: 44,

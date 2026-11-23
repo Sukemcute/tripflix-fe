@@ -14,7 +14,7 @@ import {
   type BookingCartLineIssue,
 } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, spacing } from '@tripflix/tokens';
+import { explorer as x, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { Button, money, Notice, Row, Txt, ui } from '@/components/mobile-ui';
@@ -196,14 +196,14 @@ function AlternativeStays({
           key={stay.hotelId}
           accessibilityRole="button"
           onPress={() => openHotel(stay.hotelId, line, cart)}
-          style={{ paddingVertical: spacing.xs, borderTopWidth: 1, borderTopColor: colors.border }}
+          style={{ paddingVertical: spacing.xs, borderTopWidth: 1, borderTopColor: x.day.line }}
         >
           <Row style={{ justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm }}>
             <Txt style={ui.flex} numberOfLines={1}>
               {stay.name}
               {stay.stars ? ` · ${stay.stars}★` : ''}
             </Txt>
-            <Txt variant="small" style={{ color: colors.coralInk }}>
+            <Txt variant="small" style={{ color: x.day.text }}>
               {t('commerce.cartAlternativePrice', { price: money(stay.unitPrice) })}
             </Txt>
           </Row>

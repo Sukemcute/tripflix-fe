@@ -21,7 +21,7 @@ import {
   type FlightSort,
 } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -527,11 +527,11 @@ function FlightCard({
     <Card
       style={[
         isOpen && ticketStyles.card,
-        isPicked ? { borderColor: colors.teal, borderWidth: 2 } : undefined,
+        isPicked ? { borderColor: x.day.link, borderWidth: 2 } : undefined,
       ]}
     >
       {isPicked && (
-        <Txt variant="label" style={{ color: colors.tealInk }}>
+        <Txt variant="label" style={{ color: x.day.link }}>
           {vi.mobile.tripPlan.picked}
         </Txt>
       )}
@@ -593,7 +593,7 @@ function FlightCard({
               <FlightAirlineMark airline={flight.airline} airlineCode={flight.airlineCode} />
             </View>
             <Txt style={ticketStyles.bandTag} numberOfLines={1}>
-              {(copy.oneWay + ' · ' + cabin.cabinName).toUpperCase()}
+              {copy.oneWay + ' · ' + cabin.cabinName}
             </Txt>
             <Pressable
               accessibilityRole="button"
@@ -601,7 +601,7 @@ function FlightCard({
               style={({ pressed }) => [ticketStyles.collapse, pressed && { opacity: 0.7 }]}
             >
               <Txt style={ticketStyles.collapseText}>{copy.close}</Txt>
-              <Icon name="chevron-up" size={14} color={colors.background} />
+              <Icon name="chevron-up" size={14} color={x.brand.white} />
             </Pressable>
           </View>
           <View style={ticketStyles.zigzag} aria-hidden>
@@ -611,7 +611,7 @@ function FlightCard({
           </View>
           <View style={ticketStyles.section}>
             {isPicked && (
-              <Txt variant="label" style={{ color: colors.tealInk }}>
+              <Txt variant="label" style={{ color: x.day.link }}>
                 {vi.mobile.tripPlan.picked}
               </Txt>
             )}
@@ -630,9 +630,9 @@ function FlightCard({
                   </Txt>
                 )}
                 <View style={ticketStyles.planeDot}>
-                  <Icon name="airplane" size={14} color={colors.coral} />
+                  <Icon name="airplane" size={14} color={x.action.primary} />
                 </View>
-                <Txt variant="small" style={{ color: colors.tealInk, fontFamily: nativeFonts.semibold }}>
+                <Txt variant="small" style={{ color: x.day.link, fontFamily: nativeFonts.semibold }}>
                   {copy.direct}
                 </Txt>
               </View>
@@ -656,7 +656,7 @@ function FlightCard({
                 ],
               ].map(([label, value]) => (
                 <View key={label} style={ticketStyles.fact}>
-                  <Txt style={ticketStyles.factLabel}>{label!.toUpperCase()}</Txt>
+                  <Txt style={ticketStyles.factLabel}>{label}</Txt>
                   <Txt style={ticketStyles.factValue}>{value}</Txt>
                 </View>
               ))}
@@ -687,7 +687,7 @@ function FlightCard({
                       <Icon
                         name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
                         size={16}
-                        color={isSelected ? colors.tealInk : colors.textMuted}
+                        color={isSelected ? x.day.link : x.day.textSecondary}
                       />
                       <Txt style={ticketStyles.cabinName}>{offer.cabinName}</Txt>
                     </Row>
@@ -727,7 +727,7 @@ function FlightCard({
                           <Txt
                             style={[
                               ticketStyles.fareNote,
-                              !option.isRefundable && { color: colors.textMuted },
+                              !option.isRefundable && { color: x.day.textSecondary },
                             ]}
                           >
                             {option.isRefundable && option.freeCancelDays > 0
@@ -834,7 +834,7 @@ function FlightCard({
                   style={{
                     width,
                     alignSelf: 'stretch',
-                    backgroundColor: index % 2 ? 'transparent' : colors.ink,
+                    backgroundColor: index % 2 ? 'transparent' : x.day.text,
                   }}
                 />
               ))}
@@ -856,9 +856,9 @@ const cardStyles = StyleSheet.create({
     padding: spacing.md,
     marginHorizontal: -spacing.xs,
     borderRadius: radius.lg,
-    backgroundColor: colors.coralTint,
+    backgroundColor: x.day.tintWarm,
   },
-  price: { fontSize: 22, lineHeight: 28, fontFamily: nativeFonts.bold, color: colors.ink },
+  price: { fontSize: 22, lineHeight: 28, fontFamily: nativeFonts.bold, color: x.day.text },
 });
 
 /** Tên thành phố của sân bay ("Hà Nội · Nội Bài" → "Hà Nội"). */
@@ -872,20 +872,19 @@ const ticketStyles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.tealInk,
+    backgroundColor: x.day.link,
   },
   logoPill: {
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: radius.md,
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
   },
   bandTag: {
     flex: 1,
     ...compactType.label,
     fontFamily: nativeFonts.semibold,
-    color: colors.background,
-    letterSpacing: 0.6,
+    color: x.brand.white,
   },
   collapse: {
     flexDirection: 'row',
@@ -895,16 +894,16 @@ const ticketStyles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: colors.background,
+    borderColor: x.day.surface,
   },
-  collapseText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.background },
+  collapseText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.brand.white },
   section: { gap: spacing.md, padding: spacing.md },
   zigzag: { flexDirection: 'row', height: 6, marginTop: -3, overflow: 'hidden' },
   tooth: {
     width: 10,
     height: 10,
     marginTop: -6,
-    backgroundColor: colors.tealInk,
+    backgroundColor: x.day.link,
     transform: [{ rotate: '45deg' }],
   },
   perforation: { height: 20, justifyContent: 'center' },
@@ -912,7 +911,7 @@ const ticketStyles = StyleSheet.create({
     marginHorizontal: spacing.md,
     borderTopWidth: 2,
     borderStyle: 'dashed',
-    borderTopColor: colors.border,
+    borderTopColor: x.day.line,
   },
   notch: {
     position: 'absolute',
@@ -921,22 +920,22 @@ const ticketStyles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: x.day.line,
+    backgroundColor: x.day.canvas,
   },
-  fareNote: { ...compactType.label, fontFamily: nativeFonts.regular, color: colors.tealInk },
-  currency: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.textMuted },
+  fareNote: { ...compactType.label, fontFamily: nativeFonts.regular, color: x.day.link },
+  currency: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.textSecondary },
   barcode: { flexDirection: 'row', height: 36, alignSelf: 'center', marginTop: spacing.sm },
-  barcodeText: { ...compactType.label, textAlign: 'center', color: colors.textMuted, letterSpacing: 2 },
-  code: { fontSize: 32, lineHeight: 38, fontFamily: nativeFonts.bold, color: colors.ink },
-  time: { fontSize: 20, lineHeight: 26, fontFamily: nativeFonts.bold, color: colors.tealInk },
+  barcodeText: { ...compactType.label, textAlign: 'center', color: x.day.textSecondary, letterSpacing: 2 },
+  code: { fontSize: 32, lineHeight: 38, fontFamily: nativeFonts.bold, color: x.day.text },
+  time: { fontSize: 20, lineHeight: 26, fontFamily: nativeFonts.bold, color: x.day.link },
   planeDot: {
     width: 28,
     height: 28,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.coralTint,
+    backgroundColor: x.day.tintWarm,
   },
   facts: {
     flexDirection: 'row',
@@ -944,17 +943,17 @@ const ticketStyles = StyleSheet.create({
     rowGap: spacing.sm,
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: x.day.line,
   },
   fact: { width: '33.33%', gap: 2 },
   factLabel: {
     ...compactType.label,
     fontFamily: nativeFonts.semibold,
-    color: colors.textMuted,
+    color: x.day.textSecondary,
     letterSpacing: 0.4,
   },
-  factValue: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
-  sectionTitle: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.textMuted },
+  factValue: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
+  sectionTitle: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.textSecondary },
   // Ô có viền, chọn thì nền xanh và dấu tích: nhìn ra là lựa chọn, không phải thông tin cố định của vé.
   cabinTab: {
     gap: 2,
@@ -962,47 +961,47 @@ const ticketStyles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: radius.lg,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
-  cabinTabSelected: { borderColor: colors.tealInk, backgroundColor: colors.seaMist },
-  cabinName: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
-  fares: { borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  cabinTabSelected: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
+  cabinName: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
+  fares: { borderRadius: radius.lg, borderWidth: 1, borderColor: x.day.line, overflow: 'hidden' },
   fare: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md },
-  fareDivider: { borderTopWidth: 1, borderTopColor: colors.border },
-  fareSelected: { backgroundColor: colors.seaMist, borderLeftWidth: 3, borderLeftColor: colors.tealInk },
+  fareDivider: { borderTopWidth: 1, borderTopColor: x.day.line },
+  fareSelected: { backgroundColor: x.day.tintExplore },
   radio: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: x.day.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioOn: { borderColor: colors.tealInk },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.tealInk },
-  fareName: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
+  radioOn: { borderColor: x.day.link },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: x.day.link },
+  fareName: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
   chip: {
     ...compactType.label,
     fontSize: 11,
     fontFamily: nativeFonts.semibold,
-    color: colors.tealInk,
-    backgroundColor: colors.background,
+    color: x.day.link,
+    backgroundColor: x.day.surface,
     paddingHorizontal: spacing.sm,
     paddingVertical: 1,
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  farePrice: { ...compactType.body, fontFamily: nativeFonts.bold, color: colors.coralInk },
+  farePrice: { ...compactType.body, fontFamily: nativeFonts.bold, color: x.day.text },
   stub: { gap: spacing.xs, padding: spacing.md, paddingTop: spacing.xs },
-  total: { fontSize: 26, lineHeight: 32, fontFamily: nativeFonts.bold, color: colors.ink },
+  total: { fontSize: 26, lineHeight: 32, fontFamily: nativeFonts.bold, color: x.day.text },
   stubRows: {
     gap: spacing.xs,
     paddingVertical: spacing.sm,
     marginBottom: spacing.xs,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: x.day.line,
   },
 });
 

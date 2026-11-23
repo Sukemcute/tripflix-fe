@@ -1,6 +1,6 @@
 import { TRIP_PLAN_CATEGORIES, TRIP_PLAN_TIME_PATTERN, type TripPlanCategory } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { compactType } from '@/components/mobile-scale';
@@ -40,7 +40,7 @@ export function TimeTag({ time, onAdd }: { time: string; onAdd?: () => void }) {
         onPress={onAdd}
         style={({ pressed }) => [styles.timeTag, styles.addTime, pressed && styles.pressed]}
       >
-        <Icon name="time-outline" size={14} color={colors.tealInk} />
+        <Icon name="time-outline" size={14} color={x.day.link} />
         <Txt style={styles.addTimeText}>{copy.addTimeShort}</Txt>
       </Pressable>
     );
@@ -76,10 +76,10 @@ export function ActivityCard({
     <View style={[styles.activity, isOpen && styles.activityOpen]}>
       {handle(
         <View style={styles.activityHead} accessibilityHint={vi.mobile.tripPlan.editor.dragHint}>
-          <Icon name="reorder-three" size={22} color={colors.textMuted} />
+          <Icon name="reorder-three" size={22} color={x.day.textSecondary} />
           <Pressable accessibilityRole="button" onPress={onToggle} style={[ui.flex, styles.activityBody]}>
             <View style={styles.activityIcon}>
-              <Icon name={ACTIVITY_ICONS[item.category]} size={18} color={colors.ink} />
+              <Icon name={ACTIVITY_ICONS[item.category]} size={18} color={x.day.text} />
             </View>
             <View style={ui.flex}>
               <Txt style={styles.activityTitle} numberOfLines={2}>
@@ -137,10 +137,10 @@ export function ActivityCard({
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.6 },
-  muted: { ...compactType.body, fontFamily: nativeFonts.regular, color: colors.textMuted },
+  muted: { ...compactType.body, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
   chips: { alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
   timeTag: { width: 48, paddingTop: spacing.md, alignItems: 'center' },
-  timeText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.ink },
+  timeText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.text },
   addTime: {
     flexDirection: 'row',
     gap: 2,
@@ -150,17 +150,17 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colors.tealInk,
+    borderColor: x.day.link,
     justifyContent: 'center',
   },
-  addTimeText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.tealInk },
+  addTimeText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.link },
   activity: {
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
-  activityOpen: { borderColor: colors.ink },
+  activityOpen: { borderColor: x.day.link },
   activityHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, padding: spacing.sm },
   activityBody: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   activityIcon: {
@@ -169,9 +169,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: x.day.canvas,
   },
-  activityTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.ink },
+  activityTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.text },
   activityForm: { gap: spacing.sm, paddingHorizontal: spacing.sm, paddingBottom: spacing.sm },
   activityFields: { gap: spacing.sm, alignItems: 'flex-start' },
   timeField: { width: 88 },

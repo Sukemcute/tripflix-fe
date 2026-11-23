@@ -1,6 +1,6 @@
 import { usePostSummary } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
-import { colors as c, mobileLayout, nativeFonts, radius, spacing as s } from '@tripflix/tokens';
+import { explorer as x, mobileLayout, nativeFonts, radius, spacing as s } from '@tripflix/tokens';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
@@ -72,7 +72,9 @@ export function CommunitySummary({ postId }: { postId: string }) {
         <Mascot pose="celebrate" size={30} />
         <View style={styles.heading}>
           <View style={styles.sectionHeading}>
-            <Txt variant="label" style={styles.title}>{copy.resultTitle}</Txt>
+            <Txt variant="label" style={styles.title}>
+              {copy.resultTitle}
+            </Txt>
             <Txt style={styles.ai}>{copy.badge}</Txt>
           </View>
           <Txt variant="caption" style={styles.basedOn}>
@@ -104,7 +106,9 @@ export function CommunitySummary({ postId }: { postId: string }) {
           {summary.hasSafetyWarnings && (
             <View testID="summary-safety">
               <Notice tone="warning">
-                <Txt variant="label" style={styles.title}>{copy.safetyTitle}</Txt>
+                <Txt variant="label" style={styles.title}>
+                  {copy.safetyTitle}
+                </Txt>
                 {'\n'}
                 {copy.safety}
               </Notice>
@@ -112,7 +116,11 @@ export function CommunitySummary({ postId }: { postId: string }) {
           )}
           {splitSummarySections(summary.summary).map((section, i) => (
             <Txt key={i} variant="small" style={styles.body} selectable>
-              {section.label && <Txt variant="small" style={[styles.body, styles.label]}>{section.label}: </Txt>}
+              {section.label && (
+                <Txt variant="small" style={[styles.body, styles.label]}>
+                  {section.label}:{' '}
+                </Txt>
+              )}
               {section.text}
             </Txt>
           ))}
@@ -124,7 +132,7 @@ export function CommunitySummary({ postId }: { postId: string }) {
 
 const styles = StyleSheet.create({
   root: {
-    backgroundColor: c.warmMist,
+    backgroundColor: x.day.tintWarm,
     borderRadius: mobileLayout.cardRadius,
     padding: s.sm,
     marginBottom: s.md,
@@ -132,7 +140,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: s.sm },
   heading: { flex: 1 },
   title: { fontSize: 14, lineHeight: 19 },
-  basedOn: { color: c.textMuted, fontSize: 12, lineHeight: 17 },
+  basedOn: { color: x.day.textSecondary, fontSize: 12, lineHeight: 17 },
   frame: { overflow: 'hidden' },
   // Nằm ngoài dòng chảy, nên luôn đo được chiều cao thật dù khung đang thu về 0.
   content: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: s.sm, gap: s.xs },
@@ -140,8 +148,8 @@ const styles = StyleSheet.create({
   label: { fontFamily: nativeFonts.semibold },
   sectionHeading: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: s.sm },
   ai: {
-    color: c.tealInk,
-    backgroundColor: c.seaMist,
+    color: x.day.link,
+    backgroundColor: x.day.tintExplore,
     fontSize: 11,
     lineHeight: 17,
     borderRadius: radius.sm,
@@ -151,11 +159,11 @@ const styles = StyleSheet.create({
   toggle: {
     height: TOGGLE_HEIGHT,
     borderRadius: radius.pill,
-    backgroundColor: c.coralInk,
+    backgroundColor: x.action.primary,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: s.md,
   },
-  toggleText: { color: c.background, fontSize: 13, lineHeight: 18 },
+  toggleText: { color: x.action.onPrimary, fontSize: 13, lineHeight: 18 },
   pressed: { opacity: 0.75 },
 });

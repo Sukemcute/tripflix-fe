@@ -19,7 +19,7 @@ import {
   type TripAddonStay,
 } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -555,7 +555,7 @@ export function TripBuilderScreen() {
   return (
     <Screen
       title={copy.title}
-      background={colors.surface}
+      background={x.day.canvas}
       scroll={false}
       padded={false}
       footer={
@@ -635,7 +635,9 @@ export function TripBuilderScreen() {
           {days.map((day, dayIndex) => (
             <View key={day} style={planStyles.day}>
               {dayIndex < days.length - 1 && <View style={planStyles.rail} />}
-              <View style={planStyles.dayDot} />
+              <View style={planStyles.dayDot}>
+                <Txt style={planStyles.dayDotText}>{day}</Txt>
+              </View>
               <View style={planStyles.dayContent}>
                 <Row style={styles.dayHead}>
                   <Txt style={[planStyles.dayLabel, ui.flex]}>
@@ -656,7 +658,7 @@ export function TripBuilderScreen() {
                     <Row key={out.key} style={styles.timedRow}>
                       <TimeTag time={HOTEL_CHECK_OUT_TIME} />
                       <Row style={[ui.flex, styles.checkOut]}>
-                        <Icon name="log-out-outline" size={16} color={colors.textMuted} />
+                        <Icon name="log-out-outline" size={16} color={x.day.textSecondary} />
                         <Txt style={styles.muted}>
                           {t('mobile.tripBuilder.checkOut', { hotel: out.name })}
                         </Txt>
@@ -711,7 +713,7 @@ export function TripBuilderScreen() {
 
         {flightDraft && (
           <View style={[styles.draft, styles.flightDraft]}>
-            <Txt style={[styles.draftTitle, { color: colors.tealInk }]}>
+            <Txt style={[styles.draftTitle, { color: x.day.link }]}>
               {flightDraft.leg === 'outbound'
                 ? t('mobile.tripBuilder.outboundTitle', { place: destination.destinationName || '…' })
                 : t('mobile.tripBuilder.inboundTitle', { home: flightDraft.to })}
@@ -810,13 +812,13 @@ export function TripBuilderEntry() {
       style={({ pressed }) => [styles.entry, pressed && styles.pressed]}
     >
       <View style={styles.entryIcon}>
-        <Icon name="map" size={22} color={colors.background} />
+        <Icon name="map" size={22} color={x.brand.white} />
       </View>
       <View style={ui.flex}>
         <Txt style={styles.entryTitle}>{copy.entryTitle}</Txt>
         <Txt style={styles.muted}>{copy.entryBody}</Txt>
       </View>
-      <Icon name="chevron-forward" size={mobileIconSize.control} color={colors.textMuted} />
+      <Icon name="chevron-forward" size={mobileIconSize.control} color={x.day.textSecondary} />
     </Pressable>
   );
 }
@@ -904,7 +906,7 @@ function AddButton({
   onPress: () => void;
   isDisabled?: boolean;
 }) {
-  const ink = tone === 'hotel' ? colors.coralInk : tone === 'flight' ? colors.tealInk : colors.ink;
+  const ink = tone === 'hotel' ? x.day.text : tone === 'flight' ? x.day.link : x.day.text;
   return (
     <Pressable
       accessibilityRole="button"
@@ -921,18 +923,18 @@ function AddButton({
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.6 },
-  muted: { ...compactType.body, fontFamily: nativeFonts.regular, color: colors.textMuted },
-  heading: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.ink },
+  muted: { ...compactType.body, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+  heading: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text },
   card: {
     gap: spacing.md,
     padding: spacing.md,
     borderRadius: radius.lg,
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    borderColor: x.day.line,
   },
   stepperRow: { alignItems: 'center', justifyContent: 'space-between' },
-  stepperLabel: { ...compactType.heading, fontFamily: nativeFonts.medium, color: colors.ink },
+  stepperLabel: { ...compactType.heading, fontFamily: nativeFonts.medium, color: x.day.text },
   stepper: { alignItems: 'center', gap: spacing.sm },
   stepperValue: {
     ...compactType.heading,
@@ -946,13 +948,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colors.coralInk,
-    backgroundColor: colors.coralTint,
+    borderColor: x.day.text,
+    backgroundColor: x.day.tintWarm,
   },
-  draftTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.coralInk },
-  flightDraft: { borderColor: colors.tealInk, backgroundColor: colors.seaMist },
+  draftTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.text },
+  flightDraft: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
   originRow: { alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
-  legRoute: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.ink },
+  legRoute: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text },
   draftActions: { justifyContent: 'flex-end', alignItems: 'center', gap: spacing.sm },
   addRow: { gap: spacing.sm },
   checkOut: { alignItems: 'center', gap: spacing.xs, minHeight: 28 },
@@ -969,20 +971,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderStyle: 'dashed',
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
   },
   addText: { ...compactType.heading, fontFamily: nativeFonts.semibold },
   footer: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  total: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.coralInk },
+  total: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text },
   entry: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     padding: spacing.md,
     borderRadius: radius.lg,
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: x.day.line,
   },
   entryIcon: {
     width: 44,
@@ -990,7 +992,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.tealInk,
+    backgroundColor: x.day.link,
   },
-  entryTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.ink },
+  entryTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text },
 });

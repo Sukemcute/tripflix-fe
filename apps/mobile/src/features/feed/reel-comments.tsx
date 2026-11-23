@@ -1,6 +1,6 @@
 import type { DemoTripSlug } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors as c, nativeFonts as f, spacing as s } from '@tripflix/tokens';
+import { explorer as x, colors as c, nativeFonts as f, spacing as s } from '@tripflix/tokens';
 import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import {
   Keyboard,
@@ -437,7 +437,7 @@ export function ReelComments({
                   onPress={send}
                   style={[styles.send, !draft.trim() && styles.sendDisabled]}
                 >
-                  <Icon name="arrow-up" size={20} color={draft.trim() ? c.background : c.textSubtle} />
+                  <Icon name="arrow-up" size={20} color={draft.trim() ? x.action.onPrimary : c.textSubtle} />
                 </Pressable>
               </View>
               <Txt style={styles.preview}>{copy.preview}</Txt>
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: c.coralInk,
+    backgroundColor: x.action.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },

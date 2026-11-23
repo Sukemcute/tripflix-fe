@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { vi } from '@tripflix/i18n';
-import { colors, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, radius, spacing } from '@tripflix/tokens';
 import { Button, Txt } from '../../components/mobile-ui';
 
 export function ModeratedComment({
@@ -16,13 +16,13 @@ export function ModeratedComment({
     <View style={{ flex: 1, gap: spacing.xs }}>
       <View
         style={{
-          backgroundColor: colors.surfaceMuted,
+          backgroundColor: x.day.canvas,
           borderRadius: radius.md,
           padding: spacing.md,
           gap: spacing.xs,
         }}
       >
-        <Txt style={{ color: colors.textMuted }}>{vi.api.commentModerationHidden}</Txt>
+        <Txt style={{ color: x.day.textSecondary }}>{vi.api.commentModerationHidden}</Txt>
         <Button tone="text" onPress={onLearnMore}>
           {vi.api.commentModerationLearnMore}
         </Button>
@@ -50,7 +50,7 @@ export function HeldComment({
   return (
     <View
       style={{
-        backgroundColor: colors.surfaceMuted,
+        backgroundColor: x.day.canvas,
         borderRadius: radius.md,
         padding: spacing.md,
         gap: spacing.xs,

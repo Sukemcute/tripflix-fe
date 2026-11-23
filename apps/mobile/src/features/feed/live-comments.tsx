@@ -1,8 +1,21 @@
 import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import { socialApi, useApiSession, usePostCommentsRealtime, useCommentPermissions } from '@tripflix/api-client';
+import {
+  socialApi,
+  useApiSession,
+  usePostCommentsRealtime,
+  useCommentPermissions,
+} from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
-import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode, type RefObject, type ComponentRef } from 'react';
+import { explorer as x, colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PropsWithChildren,
+  type ReactNode,
+  type RefObject,
+  type ComponentRef,
+} from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Button, Card, Field, Icon, Notice, Txt } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
@@ -127,8 +140,12 @@ export function LiveComments({
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
   useEffect(() => {
-    const hiddenIds = new Set(query.data?.pages.flatMap((page) => page.items)
-      .filter((comment) => comment.moderationState === 'hidden').map((comment) => comment.id));
+    const hiddenIds = new Set(
+      query.data?.pages
+        .flatMap((page) => page.items)
+        .filter((comment) => comment.moderationState === 'hidden')
+        .map((comment) => comment.id),
+    );
     if (editing && hiddenIds.has(editing)) {
       setEditing(null);
       setBody('');
@@ -139,14 +156,18 @@ export function LiveComments({
     const target = commentViews.current.get(id);
     const root = measurementRoot.current;
     if (!target || !root || !onRevealComment) return;
-    target.measureLayout(root, (_x, y) => {
-      // Tải lại hoặc đóng luồng có thể làm bình luận đích biến mất trong lúc đo.
-      if (commentViews.current.get(id) !== target) return;
-      onRevealComment(Math.max(0, y - spacing.sm));
-      clearTimeout(highlightTimer.current);
-      setHighlightedQuote(id);
-      highlightTimer.current = setTimeout(() => setHighlightedQuote(undefined), 1_500);
-    }, () => {});
+    target.measureLayout(
+      root,
+      (_x, y) => {
+        // Tải lại hoặc đóng luồng có thể làm bình luận đích biến mất trong lúc đo.
+        if (commentViews.current.get(id) !== target) return;
+        onRevealComment(Math.max(0, y - spacing.sm));
+        clearTimeout(highlightTimer.current);
+        setHighlightedQuote(id);
+        highlightTimer.current = setTimeout(() => setHighlightedQuote(undefined), 1_500);
+      },
+      () => {},
+    );
   };
   const permissions = useCommentPermissions(postId);
   const mutation = useMutation({
@@ -157,12 +178,18 @@ export function LiveComments({
           ? socialApi.editComment(editing, body.trim())
           : socialApi.addComment(postId, body.trim(), replyTarget?.id ?? parentCommentId),
     onSuccess: async (result, action) => {
-      const createdReply = action === 'save' && !editing && result && 'parentCommentId' in result && result.parentCommentId ? result : undefined;
+      const createdReply =
+        action === 'save' && !editing && result && 'parentCommentId' in result && result.parentCommentId
+          ? result
+          : undefined;
       if (createdReply) {
-        client.setQueriesData<InfiniteData<Awaited<ReturnType<typeof socialApi.listComments>>>>({
-          queryKey: ['social', 'comments', postId, createdReply.parentCommentId],
-          predicate: (query) => query.queryKey[4] === user?.id,
-        }, (data) => appendReply(data, createdReply));
+        client.setQueriesData<InfiniteData<Awaited<ReturnType<typeof socialApi.listComments>>>>(
+          {
+            queryKey: ['social', 'comments', postId, createdReply.parentCommentId],
+            predicate: (query) => query.queryKey[4] === user?.id,
+          },
+          (data) => appendReply(data, createdReply),
+        );
       }
       if (action === 'save') {
         setBody('');
@@ -173,8 +200,13 @@ export function LiveComments({
       }
       await Promise.all([
         // Giữ reply vừa gửi trên màn hình khi các trang sau chưa tải.
-        client.invalidateQueries({ queryKey: ['social', 'comments', postId], refetchType: createdReply ? 'none' : 'active' }),
-        ...(createdReply ? [client.refetchQueries({ queryKey: ['social', 'comments', postId, undefined], type: 'active' })] : []),
+        client.invalidateQueries({
+          queryKey: ['social', 'comments', postId],
+          refetchType: createdReply ? 'none' : 'active',
+        }),
+        ...(createdReply
+          ? [client.refetchQueries({ queryKey: ['social', 'comments', postId, undefined], type: 'active' })]
+          : []),
         client.invalidateQueries({ queryKey: ['social', 'post', postId] }),
         client.invalidateQueries({ queryKey: ['social', 'summary', postId] }),
         client.invalidateQueries({ queryKey: ['feed'], refetchType: 'none' }),
@@ -195,192 +227,231 @@ export function LiveComments({
       {/* Trả lời trống thì không cần lời mời bình luận; chỉ danh sách gốc mới hiện. */}
       {!parentCommentId && query.data?.pages[0]?.items.length === 0 && <Notice>{vi.api.noComments}</Notice>}
       {commentItems(query.data, !!parentCommentId).map((comment) => {
-          if (comment.moderationState === 'hidden') {
-            return <ModeratedComment key={comment.id}
+        if (comment.moderationState === 'hidden') {
+          return (
+            <ModeratedComment
+              key={comment.id}
               onLearnMore={onModerationDetails ?? (() => router.push('/moderation-status'))}
               onDelete={comment.authorId === user?.id ? () => mutation.mutate(comment.id) : undefined}
-              isDeleting={mutation.isPending} />;
-          }
-          if (comment.status === 'held') return <HeldComment key={comment.id} body={comment.body} creatorReview={comment.creatorReview}
-            onDelete={comment.authorId === user?.id ? () => mutation.mutate(comment.id) : undefined} isDeleting={mutation.isPending} />;
-          const authorName =
-            comment.authorId === user?.id
-              ? user.displayName
-              : comment.authorName || comment.authorId.slice(0, 8);
-          const likeButton = !comment.deletedAt && (
-            <CommentLikeButton
-              commentId={comment.id}
-              isLiked={comment.isLiked}
-              likeCount={comment.likeCount}
-              authorName={authorName}
-              queryKey={queryKey}
-              compact={compact}
-              onLoginRequired={goToLogin}
+              isDeleting={mutation.isPending}
             />
           );
+        }
+        if (comment.status === 'held')
           return (
-            <View
+            <HeldComment
               key={comment.id}
-              collapsable={false}
-              ref={(view) => {
-                if (view) commentViews.current.set(comment.id, view);
-                else commentViews.current.delete(comment.id);
-              }}
-              style={compact ? styles.comment : undefined}
-              onLayout={(event) => {
-                const { y } = event.nativeEvent.layout;
-                commentOffsets.current.set(comment.id, y);
-                // Trả lời nằm trong luồng nên cuộn tới bình luận gốc; danh sách chỉ đo được vị trí của mức gốc.
-                if (comment.id === (focusThreadId ?? focusCommentId) && onRevealComment && !hasRevealedFocus.current) {
-                  hasRevealedFocus.current = true;
-                  onRevealComment(Math.max(0, y - spacing.sm));
-                }
-              }}
+              body={comment.body}
+              creatorReview={comment.creatorReview}
+              onDelete={comment.authorId === user?.id ? () => mutation.mutate(comment.id) : undefined}
+              isDeleting={mutation.isPending}
+            />
+          );
+        const authorName =
+          comment.authorId === user?.id
+            ? user.displayName
+            : comment.authorName || comment.authorId.slice(0, 8);
+        const likeButton = !comment.deletedAt && (
+          <CommentLikeButton
+            commentId={comment.id}
+            isLiked={comment.isLiked}
+            likeCount={comment.likeCount}
+            authorName={authorName}
+            queryKey={queryKey}
+            compact={compact}
+            onLoginRequired={goToLogin}
+          />
+        );
+        return (
+          <View
+            key={comment.id}
+            collapsable={false}
+            ref={(view) => {
+              if (view) commentViews.current.set(comment.id, view);
+              else commentViews.current.delete(comment.id);
+            }}
+            style={compact ? styles.comment : undefined}
+            onLayout={(event) => {
+              const { y } = event.nativeEvent.layout;
+              commentOffsets.current.set(comment.id, y);
+              // Trả lời nằm trong luồng nên cuộn tới bình luận gốc; danh sách chỉ đo được vị trí của mức gốc.
+              if (
+                comment.id === (focusThreadId ?? focusCommentId) &&
+                onRevealComment &&
+                !hasRevealedFocus.current
+              ) {
+                hasRevealedFocus.current = true;
+                onRevealComment(Math.max(0, y - spacing.sm));
+              }
+            }}
+          >
+            {compact && (
+              <View style={[styles.avatar, !!parentCommentId && styles.replyAvatar]}>
+                <Icon name="person-outline" size={parentCommentId ? 12 : 14} color={x.day.textSecondary} />
+              </View>
+            )}
+            <Card
+              style={[
+                compact && styles.commentBody,
+                (comment.id === focusCommentId || comment.id === highlightedQuote) && styles.focused,
+              ]}
             >
-              {compact && (
-                <View style={[styles.avatar, !!parentCommentId && styles.replyAvatar]}>
-                  <Icon name="person-outline" size={parentCommentId ? 12 : 14} color={colors.textMuted} />
-                </View>
+              <Txt
+                variant="caption"
+                style={compact && styles.author}
+                accessibilityRole="link"
+                onPress={() =>
+                  onOpenProfile
+                    ? onOpenProfile(comment.authorId)
+                    : router.push({ pathname: '/user/[id]', params: { id: comment.authorId } })
+                }
+              >
+                {authorName}
+                {!compact && ` · ${new Date(comment.createdAt).toLocaleDateString('vi-VN')}`}
+              </Txt>
+              {shouldShowReplyQuote(comment) && comment.replyToCommentId && (
+                <ReplyQuote
+                  replyToCommentId={comment.replyToCommentId}
+                  replyToName={comment.replyToName}
+                  replyToExcerpt={comment.replyToExcerpt}
+                  onJump={jumpToQuote}
+                />
               )}
-              <Card style={[compact && styles.commentBody, (comment.id === focusCommentId || comment.id === highlightedQuote) && styles.focused]}>
-                <Txt
-                  variant="caption"
-                  style={compact && styles.author}
-                  accessibilityRole="link"
-                  onPress={() => onOpenProfile ? onOpenProfile(comment.authorId) : router.push({ pathname: '/user/[id]', params: { id: comment.authorId } })}
-                >
-                  {authorName}
-                  {!compact && ` · ${new Date(comment.createdAt).toLocaleDateString('vi-VN')}`}
-                </Txt>
-                {shouldShowReplyQuote(comment) && comment.replyToCommentId && (
-                  <ReplyQuote replyToCommentId={comment.replyToCommentId}
-                    replyToName={comment.replyToName} replyToExcerpt={comment.replyToExcerpt}
-                    onJump={jumpToQuote} />
+              <Txt style={compact && styles.message}>{comment.body}</Txt>
+              {!compact && likeButton}
+              <View style={compact ? styles.actions : undefined}>
+                {compact && (
+                  <Txt variant="caption" style={styles.date}>
+                    {new Date(comment.createdAt).toLocaleDateString('vi-VN', {
+                      day: 'numeric',
+                      month: 'numeric',
+                    })}
+                  </Txt>
                 )}
-                <Txt style={compact && styles.message}>{comment.body}</Txt>
-                {!compact && likeButton}
-                <View style={compact ? styles.actions : undefined}>
-                  {compact && (
-                    <Txt variant="caption" style={styles.date}>
-                      {new Date(comment.createdAt).toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' })}
-                    </Txt>
-                  )}
-                  {comment.authorId === user?.id && (
-                    <>
-                      <CommentAction
-                        compact={compact}
-                        disabled={mutation.isPending}
-                        onPress={() => {
-                          setEditing(comment.id);
-                          setBody(comment.body);
-                        }}
-                      >
-                        {vi.api.edit}
-                      </CommentAction>
-                      <CommentAction
-                        compact={compact}
-                        disabled={mutation.isPending}
-                        onPress={() => mutation.mutate(comment.id)}
-                      >
-                        {vi.api.remove}
-                      </CommentAction>
-                    </>
-                  )}
-                  {(parentCommentId || compact) && (
+                {comment.authorId === user?.id && (
+                  <>
                     <CommentAction
                       compact={compact}
+                      disabled={mutation.isPending}
                       onPress={() => {
-                        if (!user) return goToLogin();
-                        const target = { id: comment.id, name: authorName, threadId: comment.parentCommentId ?? comment.id };
-                        if (onReply) onReply(target);
-                        else {
-                          setEditing(null);
-                          setReplyTarget(target);
-                          setFocusRequest((value) => value + 1);
-                        }
+                        setEditing(comment.id);
+                        setBody(comment.body);
                       }}
                     >
-                      {vi.api.reply}
+                      {vi.api.edit}
                     </CommentAction>
-                  )}
-                  {/* Chỉ mời xem khi có trả lời; đang mở thì cho ẩn. */}
-                  {!parentCommentId && !compact && (
                     <CommentAction
                       compact={compact}
-                      onPress={() => setReplying(replying === comment.id ? undefined : comment.id)}
+                      disabled={mutation.isPending}
+                      onPress={() => mutation.mutate(comment.id)}
                     >
-                      {replying === comment.id
-                        ? vi.api.hideReplies
-                        : comment.replyCount
-                          ? t('api.viewReplies', { count: comment.replyCount })
-                          : vi.api.replies}
+                      {vi.api.remove}
                     </CommentAction>
-                  )}
-                  {/* Cờ nhỏ, cùng màu chữ phụ: báo cáo ít dùng nên không chiếm một dòng riêng. */}
-                  {comment.authorId !== user?.id && (
-                    <ReportButton
-                      targetType="comment"
-                      targetId={comment.id}
-                      trigger={(open) => (
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={vi.moderation.reportTitle}
-                          hitSlop={compact ? COMPACT_REPORT_HIT_SLOP : REPORT_HIT_SLOP}
-                          onPress={open}
-                          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
-                        >
-                          <Icon name="flag-outline" size={compact ? 12 : 14} color={colors.textMuted} />
-                        </Pressable>
-                      )}
-                    />
-                  )}
-                  {compact && likeButton}
-                </View>
-                {!parentCommentId && replying === comment.id && (
-                  <View style={compact && styles.replyThread}>
-                    <LiveComments
-                      postId={postId}
-                      parentCommentId={comment.id}
-                      quoteRoot={measurementRoot}
-                      onReply={compact ? (target) => {
+                  </>
+                )}
+                {(parentCommentId || compact) && (
+                  <CommentAction
+                    compact={compact}
+                    onPress={() => {
+                      if (!user) return goToLogin();
+                      const target = {
+                        id: comment.id,
+                        name: authorName,
+                        threadId: comment.parentCommentId ?? comment.id,
+                      };
+                      if (onReply) onReply(target);
+                      else {
                         setEditing(null);
                         setReplyTarget(target);
                         setFocusRequest((value) => value + 1);
-                      } : undefined}
-                      onRevealComment={onRevealComment}
-                      focusCommentId={focusCommentId}
-                      showHeading={!compact}
-                      compact={compact}
-                      onLoginRequired={onLoginRequired}
-                      onModerationDetails={onModerationDetails}
-                      onOpenProfile={onOpenProfile}
-                    />
-                  </View>
-                )}
-                {compact && !parentCommentId && (!!comment.replyCount || replying === comment.id) && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded: replying === comment.id }}
-                    onPress={() => setReplying(replying === comment.id ? undefined : comment.id)}
-                    style={styles.replies}
+                      }
+                    }}
                   >
-                    <View style={styles.replyLine} />
-                    <Txt variant="caption" style={styles.actionLabel}>
-                      {replying === comment.id
-                        ? vi.api.hideReplies
-                        : t('mobile.reelComments.showReplies', { count: comment.replyCount ?? 0 })}
-                    </Txt>
-                    <Icon
-                      name={replying === comment.id ? 'chevron-up' : 'chevron-down'}
-                      size={11}
-                      color={colors.textMuted}
-                    />
-                  </Pressable>
+                    {vi.api.reply}
+                  </CommentAction>
                 )}
-              </Card>
-            </View>
-          );
-        })}
+                {/* Chỉ mời xem khi có trả lời; đang mở thì cho ẩn. */}
+                {!parentCommentId && !compact && (
+                  <CommentAction
+                    compact={compact}
+                    onPress={() => setReplying(replying === comment.id ? undefined : comment.id)}
+                  >
+                    {replying === comment.id
+                      ? vi.api.hideReplies
+                      : comment.replyCount
+                        ? t('api.viewReplies', { count: comment.replyCount })
+                        : vi.api.replies}
+                  </CommentAction>
+                )}
+                {/* Cờ nhỏ, cùng màu chữ phụ: báo cáo ít dùng nên không chiếm một dòng riêng. */}
+                {comment.authorId !== user?.id && (
+                  <ReportButton
+                    targetType="comment"
+                    targetId={comment.id}
+                    trigger={(open) => (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={vi.moderation.reportTitle}
+                        hitSlop={compact ? COMPACT_REPORT_HIT_SLOP : REPORT_HIT_SLOP}
+                        onPress={open}
+                        style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+                      >
+                        <Icon name="flag-outline" size={compact ? 12 : 14} color={x.day.textSecondary} />
+                      </Pressable>
+                    )}
+                  />
+                )}
+                {compact && likeButton}
+              </View>
+              {!parentCommentId && replying === comment.id && (
+                <View style={compact && styles.replyThread}>
+                  <LiveComments
+                    postId={postId}
+                    parentCommentId={comment.id}
+                    quoteRoot={measurementRoot}
+                    onReply={
+                      compact
+                        ? (target) => {
+                            setEditing(null);
+                            setReplyTarget(target);
+                            setFocusRequest((value) => value + 1);
+                          }
+                        : undefined
+                    }
+                    onRevealComment={onRevealComment}
+                    focusCommentId={focusCommentId}
+                    showHeading={!compact}
+                    compact={compact}
+                    onLoginRequired={onLoginRequired}
+                    onModerationDetails={onModerationDetails}
+                    onOpenProfile={onOpenProfile}
+                  />
+                </View>
+              )}
+              {compact && !parentCommentId && (!!comment.replyCount || replying === comment.id) && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: replying === comment.id }}
+                  onPress={() => setReplying(replying === comment.id ? undefined : comment.id)}
+                  style={styles.replies}
+                >
+                  <View style={styles.replyLine} />
+                  <Txt variant="caption" style={styles.actionLabel}>
+                    {replying === comment.id
+                      ? vi.api.hideReplies
+                      : t('mobile.reelComments.showReplies', { count: comment.replyCount ?? 0 })}
+                  </Txt>
+                  <Icon
+                    name={replying === comment.id ? 'chevron-up' : 'chevron-down'}
+                    size={11}
+                    color={x.day.textSecondary}
+                  />
+                </Pressable>
+              )}
+            </Card>
+          </View>
+        );
+      })}
       {/* Chừa chỗ dưới cùng khi đang trả lời, để bình luận ở cuối danh sách vẫn cuộn lên được trên cùng. */}
       {replyTarget && onRevealComment && <View style={{ height: windowHeight * 0.5 }} />}
       {query.hasNextPage && (
@@ -398,16 +469,26 @@ export function LiveComments({
   return (
     <>
       {showHeading && <Txt variant="heading">{vi.api.comments}</Txt>}
-      {renderContent ? renderContent(
-        <View ref={ownQuoteRoot} collapsable={false} style={compact && styles.content}>{content}</View>,
-      ) : quoteRoot ? content : (
-        <View ref={ownQuoteRoot} collapsable={false} style={compact && styles.content}>{content}</View>
+      {renderContent ? (
+        renderContent(
+          <View ref={ownQuoteRoot} collapsable={false} style={compact && styles.content}>
+            {content}
+          </View>,
+        )
+      ) : quoteRoot ? (
+        content
+      ) : (
+        <View ref={ownQuoteRoot} collapsable={false} style={compact && styles.content}>
+          {content}
+        </View>
       )}
       {/* Trả lời trong khung reels gửi từ ô nhập chính; ô nhập ở đây chỉ còn để sửa trả lời của mình. */}
       {!(compact && parentCommentId && !editing) && (
         <View style={renderContent ? styles.composer : compact ? undefined : styles.inlineComposer}>
           <ApiErrorNotice error={mutation.error} />
-          {permissions.data?.enabled === false && !editing ? <Txt>{vi.moderation.commentsDisabled}</Txt> : user ? (
+          {permissions.data?.enabled === false && !editing ? (
+            <Txt>{vi.moderation.commentsDisabled}</Txt>
+          ) : user ? (
             <>
               {compact ? (
                 <>
@@ -422,7 +503,7 @@ export function LiveComments({
                         hitSlop={REPORT_HIT_SLOP}
                         onPress={() => setReplyTarget(undefined)}
                       >
-                        <Icon name="close" size={16} color={colors.textMuted} />
+                        <Icon name="close" size={16} color={x.day.textSecondary} />
                       </Pressable>
                     </View>
                   )}
@@ -481,10 +562,14 @@ export function LiveComments({
               style={({ pressed }) => [styles.guestComposer, pressed && styles.pressed]}
             >
               <View style={styles.avatar}>
-                <Icon name="person-outline" size={14} color={colors.textMuted} />
+                <Icon name="person-outline" size={14} color={x.day.textSecondary} />
               </View>
-              <Txt variant="small" style={styles.guestPlaceholder}>{vi.mobile.reelComments.placeholder}</Txt>
-              <Txt variant="caption" style={styles.guestLogin}>{vi.api.login}</Txt>
+              <Txt variant="small" style={styles.guestPlaceholder}>
+                {vi.mobile.reelComments.placeholder}
+              </Txt>
+              <Txt variant="caption" style={styles.guestLogin}>
+                {vi.api.login}
+              </Txt>
             </Pressable>
           ) : (
             <Button onPress={goToLogin}>{vi.api.login}</Button>
@@ -497,13 +582,13 @@ export function LiveComments({
 
 const styles = StyleSheet.create({
   content: { gap: spacing.sm },
-  focused: { backgroundColor: colors.sunSoft, borderRadius: 12 },
+  focused: { backgroundColor: x.day.tintSun, borderRadius: 12 },
   inlineComposer: { gap: spacing.lg },
   composer: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.xs,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: x.day.line,
   },
   comment: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   avatar: {
@@ -512,32 +597,39 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: x.day.canvas,
   },
   replyAvatar: { width: 22, height: 22 },
-  commentBody: { flex: 1, minWidth: 0, borderWidth: 0, backgroundColor: colors.transparent, padding: 0, gap: 1 },
-  author: { color: colors.textMuted, fontFamily: nativeFonts.semibold, fontSize: 12, lineHeight: 17 },
+  commentBody: {
+    flex: 1,
+    minWidth: 0,
+    borderWidth: 0,
+    backgroundColor: colors.transparent,
+    padding: 0,
+    gap: 1,
+  },
+  author: { color: x.day.textSecondary, fontFamily: nativeFonts.semibold, fontSize: 12, lineHeight: 17 },
   message: { fontSize: 15, lineHeight: 21 },
   actions: { flexDirection: 'row', alignItems: 'center', columnGap: spacing.sm, flexWrap: 'wrap' },
-  date: { color: colors.textMuted, fontSize: 11, lineHeight: 16 },
+  date: { color: x.day.textSecondary, fontSize: 11, lineHeight: 16 },
   pressed: { opacity: 0.5 },
   action: { minHeight: 26, justifyContent: 'center' },
-  actionLabel: { color: colors.textMuted, fontFamily: nativeFonts.semibold, fontSize: 12, lineHeight: 16 },
+  actionLabel: { color: x.day.textSecondary, fontFamily: nativeFonts.semibold, fontSize: 12, lineHeight: 16 },
   replies: { minHeight: 26, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  replyLine: { width: 18, height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
+  replyLine: { width: 18, height: StyleSheet.hairlineWidth, backgroundColor: x.day.line },
   replyThread: { marginTop: spacing.xs, gap: spacing.xs },
   guestComposer: {
     minHeight: 44,
     borderRadius: radius.pill,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: x.day.canvas,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.sm,
   },
-  guestPlaceholder: { color: colors.textMuted, flex: 1, fontSize: 14, lineHeight: 19 },
-  guestLogin: { color: colors.tealInk, fontFamily: nativeFonts.semibold },
-  muted: { color: colors.textMuted },
+  guestPlaceholder: { color: x.day.textSecondary, flex: 1, fontSize: 14, lineHeight: 19 },
+  guestLogin: { color: x.day.link, fontFamily: nativeFonts.semibold },
+  muted: { color: x.day.textSecondary },
   replyingBar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.xs },
   replyingText: { flex: 1 },
 });

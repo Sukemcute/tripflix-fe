@@ -1,6 +1,6 @@
 import { getApiErrorKind } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
-import { colors as c, nativeFonts as fonts } from '@tripflix/tokens';
+import { explorer as x, colors as c, nativeFonts as fonts } from '@tripflix/tokens';
 import {
   useRef,
   useState,
@@ -58,7 +58,7 @@ export function AuthButton({
         <Icon
           name={icon}
           size={20}
-          color={disabled ? c.textMuted : tone === 'primary' ? c.background : c.navy}
+          color={disabled ? x.day.textSecondary : tone === 'primary' ? x.action.onPrimary : x.day.text}
         />
       )}
     </Pressable>
@@ -99,7 +99,7 @@ export function AuthField({
           aria-required={true}
           aria-invalid={!!error}
           aria-describedby={error ? errorId : undefined}
-          placeholderTextColor={c.textMuted}
+          placeholderTextColor={x.day.textSecondary}
           onFocus={(event) => {
             setFocused(true);
             onFocus?.(event);
@@ -134,7 +134,7 @@ export function AuthNotice({
       <Icon
         name={error ? 'alert-circle-outline' : 'information-circle-outline'}
         size={20}
-        color={error ? c.coralInk : c.textMuted}
+        color={error ? x.day.text : x.day.textSecondary}
       />
       <Txt style={[styles.noticeText, error && styles.errorText]}>{children}</Txt>
     </View>
@@ -169,7 +169,7 @@ export function AuthChoice({
     >
       <Txt style={[styles.choiceLabel, selected && styles.selectedLabel]}>{children}</Txt>
       <View style={styles.choiceCheck}>
-        {selected && <Icon name="checkmark" size={18} color={c.tealInk} />}
+        {selected && <Icon name="checkmark" size={18} color={x.day.link} />}
       </View>
     </Pressable>
   );
@@ -222,16 +222,16 @@ export function AuthSheet({
 
 export const authInputFrame = {
   minHeight: 54,
-  borderRadius: 8,
-  backgroundColor: c.surface,
+  borderRadius: x.radius.md,
+  backgroundColor: x.day.surface,
   borderWidth: 1,
-  borderColor: c.border,
+  borderColor: x.day.input,
 } as const;
 
 const styles = StyleSheet.create({
   button: {
     minHeight: 54,
-    borderRadius: 6,
+    borderRadius: x.radius.pill,
     paddingHorizontal: 18,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -239,27 +239,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  primary: { backgroundColor: c.coralInk },
-  secondary: { backgroundColor: c.surfaceMuted },
+  primary: { backgroundColor: x.action.primary },
+  secondary: { backgroundColor: x.day.surface, borderWidth: 1, borderColor: x.day.line },
   textButton: { backgroundColor: c.transparent, minHeight: 48 },
   buttonLabel: {
-    color: c.navy,
+    color: x.day.text,
     fontFamily: fonts.semibold,
     fontSize: 15,
     lineHeight: 24,
     textAlign: 'center',
     flexShrink: 1,
   },
-  light: { color: c.background },
-  disabled: { backgroundColor: c.surfaceMuted },
-  disabledText: { color: c.textMuted },
+  light: { color: x.action.onPrimary },
+  disabled: { backgroundColor: x.day.line },
+  disabledText: { color: x.day.textSecondary },
   pressed: { opacity: 0.8 },
   field: { gap: 8 },
-  label: { fontSize: 14, lineHeight: 22, fontFamily: fonts.medium, color: c.navy },
+  label: { fontSize: 14, lineHeight: 22, fontFamily: fonts.medium, color: x.day.text },
   inputFrame: { ...authInputFrame, flexDirection: 'row', alignItems: 'center' },
-  focused: { borderColor: c.tealInk },
-  invalid: { borderColor: c.coralInk },
-  fieldError: { color: c.coralInk, fontSize: 13, lineHeight: 22 },
+  focused: { borderColor: x.day.link },
+  invalid: { borderColor: x.day.text },
+  fieldError: { color: x.day.text, fontSize: 13, lineHeight: 22 },
   input: {
     flex: 1,
     minWidth: 0,
@@ -269,39 +269,39 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 24,
     fontFamily: fonts.regular,
-    color: c.ink,
+    color: x.day.text,
     borderRadius: 8,
   },
   notice: {
     padding: 14,
     borderRadius: 8,
-    backgroundColor: c.surface,
+    backgroundColor: x.day.canvas,
     flexDirection: 'row',
     gap: 10,
     alignItems: 'flex-start',
   },
-  errorNotice: { backgroundColor: c.coralTint },
-  noticeText: { flex: 1, fontSize: 13, lineHeight: 22, color: c.textMuted },
-  errorText: { color: c.coralInk },
+  errorNotice: { backgroundColor: x.day.tintWarm },
+  noticeText: { flex: 1, fontSize: 13, lineHeight: 22, color: x.day.textSecondary },
+  errorText: { color: x.day.text },
   choice: {
     minHeight: 46,
     minWidth: 80,
     paddingVertical: 11,
     paddingHorizontal: 14,
     borderRadius: 6,
-    backgroundColor: c.surfaceMuted,
+    backgroundColor: x.day.canvas,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     flexGrow: 1,
   },
-  choiceSelected: { backgroundColor: c.seaMist },
-  choiceLabel: { fontSize: 14, lineHeight: 23, color: c.navy, flexShrink: 1 },
-  selectedLabel: { color: c.tealInk, fontFamily: fonts.semibold },
+  choiceSelected: { backgroundColor: x.day.tintExplore },
+  choiceLabel: { fontSize: 14, lineHeight: 23, color: x.day.text, flexShrink: 1 },
+  selectedLabel: { color: x.day.link, fontFamily: fonts.semibold },
   choiceCheck: { width: 18 },
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: c.overlay },
   sheet: {
-    backgroundColor: c.background,
+    backgroundColor: x.day.surface,
     width: '100%',
     maxWidth: 430,
     maxHeight: '82%',
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  sheetTitle: { color: c.navy, flex: 1 },
+  sheetTitle: { color: x.day.text, flex: 1 },
   sheetContent: { gap: 10 },
   close: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
 });

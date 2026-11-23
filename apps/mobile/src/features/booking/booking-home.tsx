@@ -7,13 +7,14 @@ import {
   type AssistantTrip,
 } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { LoadingDots } from '@/components/loading-dots';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
-import { Badge, Button, formatDate, Icon, money, Row, Txt, ui } from '@/components/mobile-ui';
+import { assets, Badge, Button, formatDate, Icon, money, Row, Txt, ui } from '@/components/mobile-ui';
 import { AssistantCards } from '@/features/assistant/assistant-cards';
 import type { AssistantMessage } from '@/features/assistant/assistant-provider';
 import { askTripiTurn, newTripiConversationId } from '@/features/assistant/assistant-transport';
@@ -56,7 +57,7 @@ export function UpcomingTrips() {
       {!query.isPending && trips.length === 0 && (
         <View style={layout.empty}>
           <View style={layout.tripIcon}>
-            <Icon name="airplane-outline" size={22} color={colors.tealInk} />
+            <Icon name="airplane-outline" size={22} color={x.day.link} />
           </View>
           <Txt style={[layout.bodyText, ui.flex]}>{copy.upcomingEmpty}</Txt>
         </View>
@@ -69,7 +70,7 @@ export function UpcomingTrips() {
           style={({ pressed }) => [layout.trip, pressed && styles.pressed]}
         >
           <View style={layout.tripIcon}>
-            <Icon name="calendar-outline" size={20} color={colors.tealInk} />
+            <Icon name="calendar-outline" size={20} color={x.day.link} />
           </View>
           <View style={ui.flex}>
             <Txt style={layout.tripTitle} numberOfLines={2}>
@@ -143,19 +144,21 @@ export function AskTripiCard() {
   return (
     <View style={{ gap: spacing.md }}>
       <View style={layout.ask}>
-        <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
-          <Icon name="sparkles" size={mobileIconSize.control} color={colors.coralInk} />
-          <Txt variant="heading" style={ui.flex}>
-            {copy.askTripiTitle}
-          </Txt>
-        </Row>
-        <Txt style={styles.muted}>{copy.askTripiBody}</Txt>
+        <View style={layout.askIntro}>
+          <View style={layout.askCopy}>
+            <Txt accessibilityRole="header" style={layout.askTitle}>
+              {copy.askTripiTitle}
+            </Txt>
+            <Txt style={styles.muted}>{copy.askTripiBody}</Txt>
+          </View>
+          <Image source={assets.welcome} contentFit="contain" style={layout.askMascot} />
+        </View>
         <TextInput
           value={text}
           onChangeText={setText}
           maxLength={200}
           placeholder={copy.askTripiPlaceholder}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={x.day.textSecondary}
           returnKeyType="send"
           onSubmitEditing={ask}
           editable={!turn.isPending}
@@ -178,7 +181,7 @@ export function AskTripiCard() {
           {/* Tripi hỏi lại hoặc từ chối thì khách trả lời ngay ở ô trên. */}
           {!!latest.text && (
             <Row style={layout.reply}>
-              <Icon name="sparkles" size={18} color={colors.coralInk} />
+              <Icon name="sparkles" size={18} color={x.day.text} />
               <Txt style={[layout.bodyText, ui.flex]}>{latest.text}</Txt>
             </Row>
           )}
@@ -207,8 +210,8 @@ const layout = StyleSheet.create({
     padding: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
   tripIcon: {
     width: 40,
@@ -216,10 +219,10 @@ const layout = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
   sectionTitle: { flex: 1 },
-  bodyText: { ...compactType.body, fontFamily: nativeFonts.regular, color: colors.ink, lineHeight: 22 },
+  bodyText: { ...compactType.body, fontFamily: nativeFonts.regular, color: x.day.text, lineHeight: 22 },
   // Nét đứt, nền trong suốt: chỉ là thông báo, không nhầm với thẻ bấm được bên dưới.
   empty: {
     flexDirection: 'row',
@@ -229,7 +232,7 @@ const layout = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colors.border,
+    borderColor: x.day.line,
   },
   // Câu trả lời của Tripi nằm trong khung riêng, thụt vào như các thẻ bên dưới.
   reply: {
@@ -237,26 +240,30 @@ const layout = StyleSheet.create({
     gap: spacing.sm,
     padding: spacing.md,
     borderRadius: radius.lg,
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: x.day.line,
   },
-  tripTitle: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
+  tripTitle: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
   ask: {
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderRadius: radius.lg,
-    backgroundColor: colors.coralTint,
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: x.radius.xl,
+    backgroundColor: x.day.tintWarm,
   },
+  askIntro: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  askCopy: { flex: 1, gap: spacing.xs },
+  askTitle: { fontFamily: nativeFonts.bold, fontSize: 22, lineHeight: 30, color: x.day.text },
+  askMascot: { width: 96, height: 104 },
   askInput: {
     ...compactType.body,
     fontFamily: nativeFonts.regular,
-    color: colors.ink,
+    color: x.day.text,
     minHeight: 44,
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
 });

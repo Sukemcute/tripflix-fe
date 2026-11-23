@@ -1,6 +1,6 @@
 import { getDemoTrip, type DemoTripSlug } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { colors as c, spacing as s } from '@tripflix/tokens';
+import { explorer as x, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
@@ -56,7 +56,7 @@ export function TripCard({
           {trip.days} {vi.demo.common.days} {trip.nights} {vi.demo.common.nights}
         </Txt>
         <Row style={{ gap: s.xs, flexWrap: 'wrap' }}>
-          <Txt variant="label" style={{ color: c.coralInk }}>
+          <Txt variant="label" style={{ color: x.day.text }}>
             {money(trip.pricePerGuest)}
           </Txt>
           <Txt variant="caption" style={ui.muted}>

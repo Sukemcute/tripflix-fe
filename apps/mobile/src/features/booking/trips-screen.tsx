@@ -5,10 +5,9 @@ import { commerceApi, useApiSession } from '@tripflix/api-client';
 import type { TripDto } from '@tripflix/api-client/core-api/model/index';
 import { holdCountdown } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ApiErrorNotice } from '@/components/api-state';
 import {
   assets,
@@ -50,6 +49,9 @@ export function CommerceTripsScreen() {
   const introduction = (
     <View style={styles.intro}>
       <View style={styles.hero}>
+        <Txt style={styles.title} accessibilityRole="header">
+          {labels.title}
+        </Txt>
         <Image
           source={assets.sea}
           contentFit="cover"
@@ -57,18 +59,6 @@ export function CommerceTripsScreen() {
           aria-hidden
           style={styles.heroPhoto}
         />
-        <LinearGradient
-          colors={[colors.sun, colors.sun, colors.transparent]}
-          locations={[0, 0.48, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-        <Txt style={styles.heroEyebrow}>{labels.heroEyebrow}</Txt>
-        <Txt style={styles.title} accessibilityRole="header">
-          {labels.title}
-        </Txt>
       </View>
       <Txt style={styles.body}>{labels.body}</Txt>
       <View style={styles.tabs}>
@@ -89,7 +79,7 @@ export function CommerceTripsScreen() {
   return (
     <Screen
       compact
-      background={colors.background}
+      background={x.day.surface}
       title={copy.profile.myTrips}
       scroll={!user}
       right={<NotificationBell />}
@@ -307,7 +297,7 @@ function TripCard({ trip, now }: { trip: TripDto; now: Date }) {
           <Txt style={styles.secondary}>{t('commerce.tripList.moreStays', { count: stays.length - 1 })}</Txt>
         )}
         <View style={styles.dateRow}>
-          <Icon name="calendar-outline" size={18} color={colors.textMuted} />
+          <Icon name="calendar-outline" size={18} color={x.day.textSecondary} />
           <Txt style={[styles.body, ui.flex]}>
             {trip.startDate
               ? `${formatDate(trip.startDate.slice(0, 10))}${trip.endDate && trip.endDate !== trip.startDate ? ' → ' + formatDate(trip.endDate.slice(0, 10)) : ''}`
@@ -325,7 +315,7 @@ function TripCard({ trip, now }: { trip: TripDto; now: Date }) {
         <View style={styles.hold}>
           <View style={styles.holdTop}>
             <View style={styles.timerLabel}>
-              <Icon name="time-outline" size={20} color={colors.ink} />
+              <Icon name="time-outline" size={20} color={x.day.text} />
               <Txt style={[styles.secondary, styles.timerText]}>{labels.remaining}</Txt>
             </View>
             <Txt style={styles.countdown}>
@@ -390,8 +380,8 @@ function TripCard({ trip, now }: { trip: TripDto; now: Date }) {
           router.push({ pathname: canContinue ? '/checkout' : '/booking/[id]', params: { id: trip.orderId } })
         }
       >
-        <Txt style={styles.actionLabel}>{action}</Txt>
-        <Icon name="arrow-forward" size={20} color={colors.background} />
+        <Txt style={[styles.actionLabel, canContinue && styles.payLabel]}>{action}</Txt>
+        <Icon name="arrow-forward" size={20} color={canContinue ? x.action.onPrimary : x.day.surface} />
       </Pressable>
     </View>
   );
@@ -400,32 +390,24 @@ function TripCard({ trip, now }: { trip: TripDto; now: Date }) {
 const styles = StyleSheet.create({
   intro: { gap: spacing.md, paddingBottom: spacing.lg },
   hero: {
-    minHeight: 156,
-    padding: spacing.lg,
-    gap: spacing.sm,
-    justifyContent: 'center',
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.sun,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: x.radius.xl,
+    backgroundColor: x.day.surface,
   },
-  heroPhoto: { position: 'absolute', top: 0, right: 0, bottom: 0, width: '60%' },
-  heroEyebrow: {
-    fontSize: 12,
-    lineHeight: 20,
-    letterSpacing: 1.5,
-    fontFamily: nativeFonts.semibold,
-    color: colors.navy,
-    maxWidth: '60%',
-  },
+  heroPhoto: { width: 96, height: 96, borderRadius: x.radius.lg, backgroundColor: x.day.tintExplore },
   title: {
-    fontSize: 30,
-    lineHeight: 40,
-    fontFamily: nativeFonts.bold,
-    color: colors.navy,
-    maxWidth: '60%',
+    flex: 1,
+    fontSize: x.type.title.fontSize,
+    lineHeight: 34,
+    fontFamily: nativeFonts.extraBold,
+    letterSpacing: x.type.title.letterSpacing,
+    color: x.day.text,
   },
-  body: { fontSize: 16, lineHeight: 25, color: colors.ink },
-  secondary: { fontSize: 13, lineHeight: 22, color: colors.ink },
+  body: { fontSize: 16, lineHeight: 25, color: x.day.text },
+  secondary: { fontSize: 13, lineHeight: 22, color: x.day.text },
   tabs: { flexDirection: 'row', gap: spacing.sm },
   tab: {
     flex: 1,
@@ -435,30 +417,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: radius.sm,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: x.day.canvas,
   },
-  selectedTab: { backgroundColor: colors.coralInk },
+  selectedTab: { backgroundColor: x.day.link },
   tabLabel: {
     fontSize: 13,
     lineHeight: 22,
     fontFamily: nativeFonts.medium,
-    color: colors.ink,
+    color: x.day.text,
     textAlign: 'center',
   },
-  selectedLabel: { color: colors.background, fontFamily: nativeFonts.semibold },
+  selectedLabel: { color: x.brand.white, fontFamily: nativeFonts.semibold },
   card: { borderRadius: radius.md, padding: spacing.lg, gap: spacing.lg },
-  pendingCard: { backgroundColor: colors.coralTint },
-  payingCard: { backgroundColor: colors.sunSoft },
-  confirmedCard: { backgroundColor: colors.seaMist },
-  closedCard: { backgroundColor: colors.surfaceMuted },
+  pendingCard: { backgroundColor: x.day.tintWarm },
+  payingCard: { backgroundColor: x.day.tintSun },
+  confirmedCard: { backgroundColor: x.day.tintExplore },
+  closedCard: { backgroundColor: x.day.canvas },
   group: { gap: spacing.xs },
   status: {
     alignSelf: 'flex-start',
     paddingVertical: spacing.xs,
   },
-  statusText: { fontSize: 13, lineHeight: 22, fontFamily: nativeFonts.semibold, color: colors.ink },
-  successText: { color: colors.tealInk },
-  cardTitle: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: colors.navy },
+  statusText: { fontSize: 13, lineHeight: 22, fontFamily: nativeFonts.semibold, color: x.day.text },
+  successText: { color: x.day.link },
+  cardTitle: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.text },
   routeTitle: { fontSize: 32, lineHeight: 42, fontFamily: nativeFonts.bold },
   dateRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', marginTop: spacing.sm },
   hold: { gap: spacing.xs },
@@ -476,10 +458,10 @@ const styles = StyleSheet.create({
     lineHeight: 34,
     fontFamily: nativeFonts.semibold,
     fontVariant: ['tabular-nums'],
-    color: colors.navy,
+    color: x.day.text,
   },
-  code: { fontSize: 17, lineHeight: 27, fontFamily: nativeFonts.semibold, color: colors.tealInk },
-  amount: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: colors.navy },
+  code: { fontSize: 17, lineHeight: 27, fontFamily: nativeFonts.semibold, color: x.day.link },
+  amount: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: x.day.text },
   button: {
     minHeight: 52,
     borderRadius: radius.sm,
@@ -489,14 +471,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
   },
-  payButton: { backgroundColor: colors.coralInk },
-  viewButton: { backgroundColor: colors.navy },
+  payButton: { backgroundColor: x.action.primary },
+  payLabel: { color: x.action.onPrimary },
+  viewButton: { backgroundColor: x.day.text },
   actionLabel: {
     flexShrink: 1,
     fontSize: 15,
     lineHeight: 24,
     fontFamily: nativeFonts.semibold,
-    color: colors.background,
+    color: x.brand.white,
     textAlign: 'center',
   },
 });

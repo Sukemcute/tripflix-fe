@@ -1,5 +1,5 @@
 import { vi } from '@tripflix/i18n';
-import { colors, mobileLayout, spacing } from '@tripflix/tokens';
+import { explorer as x, mobileLayout, spacing } from '@tripflix/tokens';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -45,7 +45,7 @@ function PostAction({
       style={({ pressed }) => [styles.action, pressed && styles.pressed]}
     >
       <Animated.View style={iconStyle}>
-        <Icon name={icon} size={24} color={isSelected ? colors.coral : colors.ink} />
+        <Icon name={icon} size={24} color={isSelected ? x.action.primary : x.day.text} />
       </Animated.View>
       <Txt variant="small" style={isSelected ? styles.countSelected : styles.count}>
         {countFormat.format(count)}
@@ -117,6 +117,6 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   pressed: { opacity: 0.6 },
-  count: { color: colors.ink },
-  countSelected: { color: colors.coralInk },
+  count: { color: x.day.text },
+  countSelected: { color: x.day.text },
 });

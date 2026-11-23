@@ -7,7 +7,7 @@ import {
   type HotelReviewFilters,
 } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
-import { colors, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, radius, spacing } from '@tripflix/tokens';
 import { Pressable, View } from 'react-native';
 import { Icon, type IconName, money, Row, Txt, ui } from '@/components/mobile-ui';
 import { CommerceError } from './commerce-state';
@@ -61,7 +61,7 @@ export function Section({
         paddingVertical: spacing.lg,
         gap: spacing.md,
         borderTopWidth: 8,
-        borderTopColor: colors.surface,
+        borderTopColor: x.day.canvas,
       }}
     >
       <Row style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -83,10 +83,10 @@ function IconLine({ icon, children }: { icon: IconName; children: ReactNode }) {
           borderRadius: radius.pill,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: colors.seaMist,
+          backgroundColor: x.day.tintExplore,
         }}
       >
-        <Icon name={icon} size={16} color={colors.tealInk} />
+        <Icon name={icon} size={16} color={x.day.link} />
       </View>
       <Txt style={{ flex: 1, paddingTop: 5 }}>{children}</Txt>
     </Row>
@@ -96,7 +96,7 @@ function IconLine({ icon, children }: { icon: IconName; children: ReactNode }) {
 function TextToggle({ isOpen, onPress }: { isOpen: boolean; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress}>
-      <Txt variant="label" style={{ color: colors.tealInk }}>
+      <Txt variant="label" style={{ color: x.day.link }}>
         {isOpen ? copy.showLess : copy.showMore}
       </Txt>
     </Pressable>
@@ -130,7 +130,7 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
           <Row style={{ flexWrap: 'wrap', columnGap: spacing.md, rowGap: spacing.md }}>
             {featured.map((amenity) => (
               <Row key={`${amenity.group}-${amenity.name}`} style={{ gap: spacing.sm, width: '46%' }}>
-                <Icon name={iconOf(amenity.icon)} size={18} color={colors.tealInk} />
+                <Icon name={iconOf(amenity.icon)} size={18} color={x.day.link} />
                 <Txt variant="small" style={{ flexShrink: 1 }}>
                   {amenity.name}
                 </Txt>
@@ -144,7 +144,7 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
         <Section title={copy.nearby}>
           {hotel.address && (
             <Row style={{ gap: spacing.sm }}>
-              <Icon name="location-outline" size={18} color={colors.coralInk} />
+              <Icon name="location-outline" size={18} color={x.day.text} />
               <Txt variant="small" style={{ flex: 1 }}>
                 {hotel.address}
               </Txt>
@@ -184,7 +184,7 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
                 .filter((amenity) => amenity.group === group)
                 .map((amenity) => (
                   <Row key={amenity.name} style={{ gap: spacing.sm }}>
-                    <Icon name="checkmark" size={16} color={colors.teal} />
+                    <Icon name="checkmark" size={16} color={x.day.link} />
                     <Txt variant="small" style={{ flex: 1 }}>
                       {amenity.name}
                     </Txt>
@@ -237,12 +237,12 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
                       flex: 1,
                       padding: spacing.md,
                       borderRadius: radius.lg,
-                      backgroundColor: colors.surface,
+                      backgroundColor: x.day.canvas,
                       gap: 2,
                     }}
                   >
                     <Row style={{ gap: 6 }}>
-                      <Icon name={item.icon} size={16} color={colors.tealInk} />
+                      <Icon name={item.icon} size={16} color={x.day.link} />
                       <Txt variant="small" style={ui.muted}>
                         {item.label}
                       </Txt>
@@ -266,7 +266,8 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
   );
 }
 
-const AVATAR_TONES = [colors.tealInk, colors.coralInk, colors.sun] as const;
+// Chữ trắng trên avatar nên chỉ dùng các tông đậm (tương phản >= 4.5:1).
+const AVATAR_TONES = [x.day.link, x.day.error, x.day.text] as const;
 const initialsOf = (name: string) =>
   name
     .trim()
@@ -289,11 +290,11 @@ function Chip({ label, isActive, onPress }: { label: string; isActive: boolean; 
         paddingVertical: 6,
         borderRadius: radius.pill,
         borderWidth: 1,
-        borderColor: isActive ? colors.ink : colors.border,
-        backgroundColor: isActive ? colors.ink : colors.background,
+        borderColor: isActive ? x.day.text : x.day.line,
+        backgroundColor: isActive ? x.day.text : x.day.surface,
       }}
     >
-      <Txt variant="small" style={{ color: isActive ? colors.background : colors.ink, fontWeight: '600' }}>
+      <Txt variant="small" style={{ color: isActive ? x.day.surface : x.day.text, fontWeight: '600' }}>
         {label}
       </Txt>
     </Pressable>
@@ -339,13 +340,13 @@ export function HotelReviewsSection({ id }: { id: string }) {
               borderRadius: radius.lg,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: colors.tealInk,
+              backgroundColor: x.day.link,
             }}
           >
-            <Txt variant="title" style={{ color: colors.background }}>
+            <Txt variant="title" style={{ color: x.brand.white }}>
               {summary.average?.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}
             </Txt>
-            <Txt variant="small" style={{ color: colors.background }}>
+            <Txt variant="small" style={{ color: x.brand.white }}>
               {copy.outOfFive}
             </Txt>
           </View>
@@ -355,13 +356,13 @@ export function HotelReviewsSection({ id }: { id: string }) {
                 <Txt variant="small" style={{ width: 28 }}>
                   {level.rating} ★
                 </Txt>
-                <View style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.surfaceMuted }}>
+                <View style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: x.day.canvas }}>
                   <View
                     style={{
                       width: `${summary.count ? (level.count / summary.count) * 100 : 0}%`,
                       height: 6,
                       borderRadius: 3,
-                      backgroundColor: colors.teal,
+                      backgroundColor: x.day.link,
                     }}
                   />
                 </View>
@@ -375,10 +376,10 @@ export function HotelReviewsSection({ id }: { id: string }) {
       )}
       {summary?.aiSummary && (
         <View
-          style={{ padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.sunSoft, gap: 4 }}
+          style={{ padding: spacing.md, borderRadius: radius.lg, backgroundColor: x.day.tintSun, gap: 4 }}
         >
           <Row style={{ gap: 6 }}>
-            <Icon name="sparkles-outline" size={16} color={colors.coralInk} />
+            <Icon name="sparkles-outline" size={16} color={x.day.text} />
             <Txt variant="label">{copy.reviewSummary}</Txt>
           </Row>
           <Txt variant="small">{summary.aiSummary}</Txt>
@@ -425,7 +426,7 @@ export function HotelReviewsSection({ id }: { id: string }) {
             gap: spacing.sm,
             paddingTop: spacing.md,
             borderTopWidth: 1,
-            borderTopColor: colors.border,
+            borderTopColor: x.day.line,
           }}
         >
           <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
@@ -439,7 +440,7 @@ export function HotelReviewsSection({ id }: { id: string }) {
                 backgroundColor: toneOf(review.authorName),
               }}
             >
-              <Txt variant="label" style={{ color: colors.background }}>
+              <Txt variant="label" style={{ color: x.brand.white }}>
                 {initialsOf(review.authorName)}
               </Txt>
             </View>
@@ -456,9 +457,9 @@ export function HotelReviewsSection({ id }: { id: string }) {
                   .join(' · ')}
               </Txt>
             </View>
-            <Txt style={{ color: colors.coralInk, letterSpacing: 1 }}>
+            <Txt style={{ color: x.day.text, letterSpacing: 1 }}>
               {'★'.repeat(review.rating)}
-              <Txt style={{ color: colors.border }}>{'★'.repeat(5 - review.rating)}</Txt>
+              <Txt style={{ color: x.day.line }}>{'★'.repeat(5 - review.rating)}</Txt>
             </Txt>
           </Row>
           {review.title && <Txt variant="label">{review.title}</Txt>}
@@ -474,10 +475,10 @@ export function HotelReviewsSection({ id }: { id: string }) {
                     paddingHorizontal: spacing.sm,
                     paddingVertical: 2,
                     borderRadius: radius.pill,
-                    backgroundColor: colors.seaMist,
+                    backgroundColor: x.day.tintExplore,
                   }}
                 >
-                  <Txt variant="small" style={{ color: colors.tealInk }}>
+                  <Txt variant="small" style={{ color: x.day.link }}>
                     {tag}
                   </Txt>
                 </View>
@@ -502,7 +503,7 @@ export function HotelReviewsSection({ id }: { id: string }) {
             paddingVertical: spacing.md,
             borderRadius: radius.pill,
             borderWidth: 1,
-            borderColor: colors.border,
+            borderColor: x.day.line,
           }}
         >
           <Txt variant="label">{query.isFetching ? copy.loadingReviews : copy.moreReviews}</Txt>

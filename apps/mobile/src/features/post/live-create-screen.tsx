@@ -19,7 +19,7 @@ import {
 } from '@tripflix/api-client';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
-import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams, useNavigation, usePreventRemove } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type PropsWithChildren, type ReactNode } from 'react';
@@ -588,7 +588,7 @@ function DraftEditor({
           <Txt
             variant="small"
             accessibilityLiveRegion="polite"
-            style={{ color: deviceError ? colors.coralInk : colors.tealInk }}
+            style={{ color: deviceError ? x.day.text : x.day.link }}
           >
             {deviceError
               ? copy.create.recovery.failed
@@ -761,6 +761,19 @@ function DraftEditor({
       >
         <View style={styles.form}>
           {recoveryNotice}
+          <View style={styles.studioLabel}>
+            <Icon name="videocam-outline" size={18} color={x.day.link} />
+            <View style={styles.flex}>
+              <Txt variant="label">{copy.create.title}</Txt>
+            </View>
+            {uploadedAssetId && (
+              <View style={styles.uploadReady}>
+                <Txt variant="caption" style={styles.uploadReadyText}>
+                  {vi.mobile.explorer.uploadReady}
+                </Txt>
+              </View>
+            )}
+          </View>
           <Field
             label={copy.create.titleLabel}
             placeholder={copy.create.titlePlaceholder}
@@ -774,7 +787,7 @@ function DraftEditor({
               <TextInput
                 accessibilityLabel={copy.create.story}
                 placeholder={copy.create.placeholder}
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={x.day.textSecondary}
                 value={body}
                 onChangeText={setBody}
                 multiline
@@ -790,7 +803,7 @@ function DraftEditor({
                 {video ? (
                   <VideoThumb uri={video.uri} />
                 ) : (
-                  <Icon name="film-outline" size={24} color={colors.tealInk} />
+                  <Icon name="film-outline" size={24} color={x.day.link} />
                 )}
                 {!post && (
                   <View style={styles.thumbLabel}>
@@ -799,6 +812,26 @@ function DraftEditor({
                 )}
               </Pressable>
             </Row>
+          </View>
+          {/* Gợi ý caption bằng AI chưa có API; chỉ là bản xem trước, không bấm được. */}
+          <View
+            accessible
+            accessibilityLabel={vi.mobile.explorer.tripiCaptionSoonLabel}
+            accessibilityState={{ disabled: true }}
+            style={styles.tripiPreview}
+          >
+            <Mascot size={48} />
+            <View style={styles.flex}>
+              <Txt variant="label">{vi.mobile.explorer.tripiAssistant}</Txt>
+              <Txt variant="caption" style={ui.muted}>
+                {vi.mobile.explorer.tripiCaptionSoon}
+              </Txt>
+            </View>
+            <View style={styles.comingSoon}>
+              <Txt variant="caption" style={styles.comingSoonText}>
+                {vi.mobile.explorer.comingSoon}
+              </Txt>
+            </View>
           </View>
           <Field
             label={copy.create.hashtagsLabel}
@@ -820,14 +853,14 @@ function DraftEditor({
                 pressed && styles.pressed,
               ]}
             >
-              <Icon name="map-outline" size={22} color={colors.tealInk} />
+              <Icon name="map-outline" size={22} color={x.day.link} />
               <View style={styles.flex}>
                 <Txt variant="label">{vi.mobile.tripPlan.editor.toggle}</Txt>
                 <Txt variant="caption" style={tripAttachment ? styles.tripOn : ui.muted} numberOfLines={1}>
                   {tripSummary}
                 </Txt>
               </View>
-              <Icon name="chevron-forward" size={18} color={colors.textMuted} />
+              <Icon name="chevron-forward" size={18} color={x.day.textSecondary} />
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -837,7 +870,7 @@ function DraftEditor({
               <Icon
                 name={visibility === 'public' ? 'earth-outline' : 'lock-closed-outline'}
                 size={22}
-                color={colors.ink}
+                color={x.day.text}
               />
               <View style={styles.flex}>
                 <Txt variant="label">
@@ -847,7 +880,7 @@ function DraftEditor({
                   {copy.create.visibilityHint}
                 </Txt>
               </View>
-              <Icon name="swap-horizontal" size={18} color={colors.textMuted} />
+              <Icon name="swap-horizontal" size={18} color={x.day.textSecondary} />
             </Pressable>
           </View>
           {id && (
@@ -946,7 +979,7 @@ function VideoStep({
         <ScrollView contentContainerStyle={styles.welcomeBody} keyboardShouldPersistTaps="handled">
           {notice}
           <View style={styles.welcomeIcon}>
-            <Icon name="videocam-outline" size={40} color={colors.coralInk} />
+            <Icon name="videocam-outline" size={40} color={x.day.text} />
           </View>
           <Txt variant="heading" style={styles.welcomeTitle}>
             {copy.create.welcomeTitle}
@@ -967,7 +1000,7 @@ function VideoStep({
               { icon: 'map-outline' as const, text: copy.create.tipTrip },
             ].map((tip) => (
               <Row key={tip.icon} style={styles.welcomeTip}>
-                <Icon name={tip.icon} size={18} color={colors.tealInk} />
+                <Icon name={tip.icon} size={18} color={x.day.link} />
                 <Txt variant="small" style={styles.flex}>
                   {tip.text}
                 </Txt>
@@ -986,7 +1019,7 @@ function VideoStep({
           <IconButton
             name="close"
             label={vi.mobile.create.back}
-            color={colors.background}
+            color={x.brand.white}
             onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
           />
           {video && (
@@ -1056,7 +1089,7 @@ function VideoPreview({ uri }: { uri: string }) {
       >
         {isPaused && (
           <View style={styles.previewPaused}>
-            <Icon name="play" size={56} color={colors.background} />
+            <Icon name="play" size={56} color={x.brand.white} />
           </View>
         )}
       </Pressable>
@@ -1066,7 +1099,7 @@ function VideoPreview({ uri }: { uri: string }) {
         onPress={() => setMuted(!isMuted)}
         style={styles.previewSound}
       >
-        <Icon name={isMuted ? 'volume-mute' : 'volume-high'} size={20} color={colors.background} />
+        <Icon name={isMuted ? 'volume-mute' : 'volume-high'} size={20} color={x.brand.white} />
       </Pressable>
     </>
   );
@@ -1131,6 +1164,37 @@ function formatDuration(durationMs: number) {
 
 const styles = StyleSheet.create({
   form: { gap: spacing.lg },
+  studioLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: x.radius.lg,
+    backgroundColor: x.day.surface,
+  },
+  uploadReady: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    backgroundColor: x.day.tintExplore,
+  },
+  uploadReadyText: { color: x.day.link },
+  tripiPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: x.radius.xl,
+    backgroundColor: x.day.tintExplore,
+    opacity: 0.8,
+  },
+  comingSoon: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    backgroundColor: x.day.surface,
+  },
+  comingSoonText: { color: x.day.textSecondary },
   media: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1139,9 +1203,9 @@ const styles = StyleSheet.create({
     borderRadius: mobileLayout.cardRadius,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colors.textSubtle,
+    borderColor: x.day.textSecondary,
   },
-  mediaSelected: { borderStyle: 'solid', borderColor: colors.border, backgroundColor: colors.warmMist },
+  mediaSelected: { borderStyle: 'solid', borderColor: x.day.line, backgroundColor: x.day.tintWarm },
   pressed: { opacity: 0.7 },
   mediaIcon: {
     width: 48,
@@ -1149,7 +1213,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
   mediaText: { flex: 1, gap: spacing.xs },
   previewPaused: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -1164,8 +1228,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.overlay,
   },
-  progressTrack: { height: 4, borderRadius: 2, backgroundColor: colors.border, overflow: 'hidden' },
-  progressFill: { height: 4, backgroundColor: colors.tealInk },
+  progressTrack: { height: 4, borderRadius: 2, backgroundColor: x.day.line, overflow: 'hidden' },
+  progressFill: { height: 4, backgroundColor: x.day.link },
   story: { minHeight: 88, textAlignVertical: 'top' },
   visibility: {
     flexDirection: 'row',
@@ -1187,7 +1251,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
   thumbLabel: {
     position: 'absolute',
@@ -1198,8 +1262,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.overlayHeavy,
   },
-  thumbLabelText: { color: colors.background, fontSize: 12 },
-  rows: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+  thumbLabelText: { color: x.brand.white, fontSize: 12 },
+  rows: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: x.day.line },
   listRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1208,16 +1272,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderRadius: radius.md,
   },
-  listRowActive: { backgroundColor: colors.seaMist },
-  tripOn: { color: colors.tealInk },
+  listRowActive: { backgroundColor: x.day.tintExplore },
+  tripOn: { color: x.day.link },
   stepHeader: {
     alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
-  videoScreen: { flex: 1, backgroundColor: colors.ink, padding: spacing.sm, gap: spacing.sm },
-  videoStage: { flex: 1, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.tealInk },
+  videoScreen: { flex: 1, backgroundColor: x.day.text, padding: spacing.sm, gap: spacing.sm },
+  videoStage: { flex: 1, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: x.day.link },
   videoEmpty: {
     flex: 1,
     alignItems: 'center',
@@ -1225,9 +1289,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     padding: spacing.lg,
   },
-  videoEmptyText: { color: colors.background, fontSize: 17, fontWeight: '600' },
-  videoEmptyHint: { color: colors.background, fontSize: 13, textAlign: 'center' },
-  welcomeScreen: { flex: 1, backgroundColor: colors.background },
+  videoEmptyText: { color: x.brand.white, fontSize: 17, fontWeight: '600' },
+  videoEmptyHint: { color: x.brand.white, fontSize: 13, textAlign: 'center' },
+  welcomeScreen: { flex: 1, backgroundColor: x.day.surface },
   welcomeHeader: { alignItems: 'center', paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
   welcomeHeaderTitle: { flex: 1, textAlign: 'center' },
   welcomeHeaderSpacer: { width: 44 },
@@ -1245,10 +1309,10 @@ const styles = StyleSheet.create({
     borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.warmMist,
+    backgroundColor: x.day.tintWarm,
   },
   welcomeTitle: { textAlign: 'center' },
-  welcomeText: { textAlign: 'center', color: colors.textMuted },
+  welcomeText: { textAlign: 'center', color: x.day.textSecondary },
   welcomeButton: { alignSelf: 'stretch', marginTop: spacing.sm },
   welcomeTips: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
   welcomeTip: {
@@ -1256,7 +1320,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     padding: spacing.md,
     borderRadius: radius.md,
-    backgroundColor: colors.surface,
+    backgroundColor: x.day.canvas,
   },
   videoTop: {
     position: 'absolute',
@@ -1273,7 +1337,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.overlayHeavy,
   },
-  videoPillText: { color: colors.background, fontSize: 13 },
+  videoPillText: { color: x.brand.white, fontSize: 13 },
   videoBottom: {
     position: 'absolute',
     left: spacing.md,
@@ -1281,18 +1345,18 @@ const styles = StyleSheet.create({
     bottom: spacing.md,
     gap: spacing.xs,
   },
-  videoInfo: { color: colors.background, fontSize: 12 },
+  videoInfo: { color: x.brand.white, fontSize: 12 },
   videoActions: { gap: spacing.sm },
   pill: { flex: 1, alignItems: 'center', paddingVertical: spacing.md, borderRadius: radius.pill },
-  pillLight: { backgroundColor: colors.background },
-  pillLightText: { color: colors.ink, fontWeight: '600' },
-  pillPrimary: { backgroundColor: colors.coral },
-  pillPrimaryText: { color: colors.background, fontWeight: '600' },
+  pillLight: { backgroundColor: x.day.surface },
+  pillLightText: { color: x.day.text, fontWeight: '600' },
+  pillPrimary: { backgroundColor: x.action.primary },
+  pillPrimaryText: { color: x.action.onPrimary, fontWeight: '600' },
   pillDisabled: { opacity: 0.5 },
   actions: { flexDirection: 'row', gap: spacing.sm },
   published: { alignItems: 'center', gap: spacing.md, paddingTop: spacing.xl },
   publishedTitle: { textAlign: 'center' },
-  publishedBody: { textAlign: 'center', color: colors.textMuted },
+  publishedBody: { textAlign: 'center', color: x.day.textSecondary },
   draft: { flex: 1 },
   publish: { flex: 1 },
 });

@@ -2,17 +2,17 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { commerceApi, getAvailableStays, getFutureDate, readPage, useApiSession } from '@tripflix/api-client';
 import { suggestControllerSuggest } from '@tripflix/api-client/core-api/discovery/discovery';
 import { t, vi } from '@tripflix/i18n';
-import { colors, radius, spacing } from '@tripflix/tokens';
-import { Image } from 'expo-image';
+import { explorer as x, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
-import { Badge, Button, Icon, money, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { Badge, Button, money, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 import { saveTripHotel } from '@/features/booking/trip-booking-store';
 import { savePostHotel } from '@/features/post/post-hotel-pick-store';
 import { formatDay } from '@/features/booking/trip-plan-parts';
 import { LoadingDots } from '@/components/loading-dots';
+import { StayPhoto } from './stay-photo';
 
 const HOTEL_LIMIT = 6;
 type HotelHit = {
@@ -56,7 +56,7 @@ export function TripHotelSearchScreen({ q, pick }: { q: string; pick: TripHotelP
           maxLength={100}
           placeholder={vi.mobile.tripPlan.hotelSearch}
           accessibilityLabel={vi.mobile.tripPlan.hotelSearch}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={x.day.textSecondary}
           style={[ui.input, { flex: 1, minWidth: 0 }]}
         />
         <Button compact onPress={submit}>
@@ -209,37 +209,21 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
             onPress={() => openHotel(hotel)}
             style={{
               width: pick ? '100%' : 220,
-              borderRadius: radius.lg,
+              borderRadius: x.radius.lg,
               overflow: 'hidden',
-              borderWidth: 1,
-              borderColor: colors.border,
-              backgroundColor: colors.background,
+              backgroundColor: x.day.surface,
             }}
           >
-            {hotel.thumbnail ? (
-              <Image
-                source={hotel.thumbnail}
-                style={pick ? { width: '100%', aspectRatio: 16 / 9 } : { height: 120 }}
-                contentFit="cover"
-              />
-            ) : (
-              <View
-                style={{
-                  height: 120,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: colors.seaMist,
-                }}
-              >
-                <Icon name="bed-outline" size={32} color={colors.tealInk} />
-              </View>
-            )}
+            <StayPhoto
+              uri={hotel.thumbnail}
+              style={pick ? { width: '100%', aspectRatio: 16 / 9 } : { height: 120 }}
+            />
             <View style={{ padding: spacing.sm, gap: 2 }}>
               <Txt variant="label" numberOfLines={pick ? 2 : 1}>
                 {hotel.name}
               </Txt>
               {pick && hotel.rating && (
-                <Txt variant="small" style={{ color: colors.tealInk }}>
+                <Txt variant="small" style={{ color: x.day.link }}>
                   {hotel.rating.average.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} / 5 ·{' '}
                   {t('hotel.reviewCount', { count: hotel.rating.count })}
                 </Txt>
@@ -249,14 +233,14 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
                 {hotel.stars ? ` · ${hotel.stars} ★` : ''}
               </Txt>
               {hotel.price !== undefined && (
-                <Txt variant="label" style={{ color: colors.coralInk }}>
+                <Txt variant="label" style={{ color: x.day.text }}>
                   {vi.hotel.from} {money(hotel.price)}
                   {pick ? ` ${vi.hotel.perNightShort}` : ''}
                 </Txt>
               )}
               {pick && (
-                <View style={[ui.button, { backgroundColor: colors.teal, marginTop: spacing.sm }]}>
-                  <Txt variant="label" style={{ color: colors.background }}>
+                <View style={[ui.button, ui.primary, { marginTop: spacing.sm }]}>
+                  <Txt variant="label" style={{ color: x.action.onPrimary }}>
                     {vi.mobile.tripPlan.pickHotel}
                   </Txt>
                 </View>

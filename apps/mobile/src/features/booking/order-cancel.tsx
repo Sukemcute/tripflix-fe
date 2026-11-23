@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { commerceApi, createCancelHoldOperation, createCancelPaidOperation } from '@tripflix/api-client';
 import type { CheckoutDto } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
-import { colors, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { View } from 'react-native';
 import {
@@ -126,10 +126,8 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
     <Screen title={text.cancelledTitle} back={false}>
       <View style={{ alignItems: 'center', gap: spacing.sm, paddingTop: spacing.md }}>
         {/* Vòng xám nhiều lớp như web để khác hẳn dấu tích xanh của đơn đã thanh toán. */}
-        <View
-          style={{ padding: spacing.sm, borderRadius: radius.pill, backgroundColor: colors.surfaceMuted }}
-        >
-          <View style={{ padding: spacing.sm, borderRadius: radius.pill, backgroundColor: colors.border }}>
+        <View style={{ padding: spacing.sm, borderRadius: radius.pill, backgroundColor: x.day.canvas }}>
+          <View style={{ padding: spacing.sm, borderRadius: radius.pill, backgroundColor: x.day.line }}>
             <View
               style={{
                 width: 72,
@@ -137,10 +135,10 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
                 borderRadius: radius.pill,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: colors.textMuted,
+                backgroundColor: x.day.textSecondary,
               }}
             >
-              <Icon name="close" size={38} color={colors.background} />
+              <Icon name="close" size={38} color={x.brand.white} />
             </View>
           </View>
         </View>
@@ -157,9 +155,9 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
               paddingHorizontal: spacing.lg,
               borderWidth: 1.5,
               borderStyle: 'dashed',
-              borderColor: colors.textMuted,
+              borderColor: x.day.textSecondary,
               borderRadius: radius.sm,
-              backgroundColor: colors.background,
+              backgroundColor: x.day.surface,
             }}
           >
             <Txt variant="small" style={ui.muted}>
@@ -170,7 +168,7 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
                 fontSize: 22,
                 fontWeight: '800',
                 letterSpacing: 2,
-                color: colors.textMuted,
+                color: x.day.textSecondary,
                 textDecorationLine: 'line-through',
               }}
             >
@@ -200,11 +198,7 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
                       paddingTop: spacing.sm,
                       borderTopWidth: 4,
                       borderTopColor:
-                        state === 'done'
-                          ? colors.teal
-                          : state === 'current'
-                            ? colors.coralInk
-                            : colors.border,
+                        state === 'done' ? x.day.link : state === 'current' ? x.day.text : x.day.line,
                     }}
                   >
                     <Txt
@@ -212,9 +206,9 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
                       style={[
                         ui.center,
                         state === 'done'
-                          ? { color: colors.tealInk }
+                          ? { color: x.day.link }
                           : state === 'current'
-                            ? { color: colors.ink, fontWeight: '700' }
+                            ? { color: x.day.text, fontWeight: '700' }
                             : ui.muted,
                       ]}
                     >
@@ -226,10 +220,10 @@ export function OrderCancelledScreen({ order }: { order: CheckoutDto }) {
             </View>
             <PriceRow label={text.refundPaid} amount={money(order.total)} />
             <PriceRow label={text.refundFee} amount={money(refund.feeAmount)} />
-            <View style={{ borderTopWidth: 1, borderStyle: 'dashed', borderTopColor: colors.border }} />
+            <View style={{ borderTopWidth: 1, borderStyle: 'dashed', borderTopColor: x.day.line }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Txt variant="heading">{text.refundAmount}</Txt>
-              <Txt variant="heading" style={{ color: colors.tealInk }}>
+              <Txt variant="heading" style={{ color: x.day.link }}>
                 {money(refund.amount)}
               </Txt>
             </View>

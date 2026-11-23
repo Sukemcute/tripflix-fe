@@ -1,6 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { vi } from '@tripflix/i18n';
-import { colors as c, mobileLayout as layout, nativeFonts as f, spacing as s } from '@tripflix/tokens';
+import {
+  colors as c,
+  explorer as x,
+  mobileLayout as layout,
+  nativeFonts as f,
+  spacing as s,
+} from '@tripflix/tokens';
 import { Image, type ImageSource } from 'expo-image';
 import { router } from 'expo-router';
 import {
@@ -28,6 +34,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { compactType, mobileIconSize } from './mobile-scale';
+
+const d = x.day;
 
 export const copy = vi.mobile;
 export const assets = {
@@ -60,7 +68,7 @@ const compactText = {
   caption: compactType.meta,
 };
 
-export function Icon({ name, size, color = c.ink }: { name: IconName; size?: number; color?: string }) {
+export function Icon({ name, size, color = d.text }: { name: IconName; size?: number; color?: string }) {
   const compact = useContext(CompactScreenContext);
   return (
     <Ionicons
@@ -114,7 +122,8 @@ export function Button({
 }>) {
   const compactScreen = useContext(CompactScreenContext);
   const compact = compactOverride ?? compactScreen;
-  const foreground = tone === 'primary' ? c.background : tone === 'text' ? c.coralInk : c.ink;
+  const foreground =
+    tone === 'primary' ? x.action.onPrimary : tone === 'teal' || tone === 'text' ? d.link : d.text;
   return (
     <Pressable
       testID={testID}
@@ -122,9 +131,19 @@ export function Button({
       accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [ui.button, compact && ui.compactButton, ui[tone], disabled && ui.disabled, pressed && ui.pressed, style]}
+      style={({ pressed }) => [
+        ui.button,
+        compact && ui.compactButton,
+        ui[tone],
+        disabled && ui.disabled,
+        pressed && (tone === 'primary' ? ui.primaryPressed : ui.pressed),
+        style,
+      ]}
     >
-      <Txt variant="label" style={[{ color: foreground, flexShrink: 1, textAlign: 'center' }, compact && ui.compactLabel]}>
+      <Txt
+        variant="label"
+        style={[{ color: foreground, flexShrink: 1, textAlign: 'center' }, compact && ui.compactLabel]}
+      >
         {children}
       </Txt>
       {icon && <Icon name={icon} color={foreground} size={compact ? mobileIconSize.control : 20} />}
@@ -136,7 +155,7 @@ export function IconButton({
   label,
   onPress,
   light = false,
-  color = c.ink,
+  color = d.text,
   size,
   disabled = false,
 }: {
@@ -157,7 +176,7 @@ export function IconButton({
       onPress={onPress}
       style={({ pressed }) => [
         ui.iconButton,
-        light && { backgroundColor: c.background },
+        light && { backgroundColor: d.surface },
         disabled && ui.disabled,
         pressed && ui.pressed,
       ]}
@@ -179,12 +198,12 @@ export function Badge({
   icon,
 }: PropsWithChildren<{ tone?: 'teal' | 'sun' | 'coral'; icon?: IconName }>) {
   const compact = useContext(CompactScreenContext);
-  const foreground = tone === 'teal' ? c.tealInk : tone === 'coral' ? c.coralInk : c.ink;
+  const foreground = tone === 'teal' ? d.link : tone === 'coral' ? c.coralInk : d.text;
   return (
     <View
       style={[
         ui.badge,
-        { backgroundColor: tone === 'teal' ? c.seaMist : tone === 'sun' ? c.sunSoft : c.coralTint },
+        { backgroundColor: tone === 'teal' ? d.tintExplore : tone === 'sun' ? d.tintSun : d.tintWarm },
       ]}
     >
       {icon && <Icon name={icon} size={compact ? mobileIconSize.inline : 14} color={foreground} />}
@@ -204,7 +223,7 @@ export function Notice({
       accessibilityRole={tone === 'error' ? 'alert' : undefined}
       style={[
         ui.notice,
-        { backgroundColor: tone === 'info' ? c.seaMist : tone === 'warning' ? c.sunSoft : c.coralTint },
+        { backgroundColor: tone === 'info' ? d.tintExplore : tone === 'warning' ? d.tintSun : d.tintWarm },
       ]}
     >
       <Icon
@@ -215,10 +234,10 @@ export function Notice({
               ? 'information-circle-outline'
               : 'shield-checkmark-outline'
         }
-        color={tone === 'error' ? c.coralInk : c.tealInk}
+        color={tone === 'error' ? d.error : d.link}
         size={compact ? mobileIconSize.control : 20}
       />
-      <Txt variant="small" style={{ flex: 1, color: tone === 'error' ? c.coralInk : c.ink }}>
+      <Txt variant="small" style={{ flex: 1, color: tone === 'error' ? d.error : d.text }}>
         {children}
       </Txt>
     </View>
@@ -230,20 +249,27 @@ export function Field({
   style,
   compact: compactOverride,
   ...props
-}: ComponentProps<typeof TextInput> & { label: string; error?: string; compact?: boolean; style?: StyleProp<TextStyle> }) {
+}: ComponentProps<typeof TextInput> & {
+  label: string;
+  error?: string;
+  compact?: boolean;
+  style?: StyleProp<TextStyle>;
+}) {
   const compactScreen = useContext(CompactScreenContext);
   const compact = compactOverride ?? compactScreen;
   return (
     <View style={{ gap: compact ? s.xs : s.sm }}>
-      <Txt variant="label" style={compact && ui.compactLabel}>{label}</Txt>
+      <Txt variant="label" style={compact && ui.compactLabel}>
+        {label}
+      </Txt>
       <TextInput
         {...props}
         accessibilityLabel={label}
-        placeholderTextColor={c.textMuted}
-        style={[ui.input, compact && ui.compactInput, error && { borderColor: c.danger }, style]}
+        placeholderTextColor={d.textSecondary}
+        style={[ui.input, compact && ui.compactInput, error && { borderColor: d.error }, style]}
       />
       {error && (
-        <Txt accessibilityRole="alert" variant="small" style={{ color: c.coralInk }}>
+        <Txt accessibilityRole="alert" variant="small" style={{ color: d.error }}>
           {error}
         </Txt>
       )}
@@ -260,12 +286,9 @@ export function Chip({
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={[ui.chip, selected && { backgroundColor: c.ink, borderColor: c.ink }]}
+      style={({ pressed }) => [ui.chip, selected && ui.chipSelected, pressed && ui.pressed]}
     >
-      <Txt
-        variant="small"
-        style={{ color: selected ? c.background : c.ink, fontFamily: selected ? f.semibold : f.regular }}
-      >
+      <Txt variant="small" style={{ color: selected ? x.brand.white : d.text, fontFamily: f.semibold }}>
         {children}
       </Txt>
     </Pressable>
@@ -288,12 +311,12 @@ export function Segments({
           accessibilityRole="tab"
           accessibilityState={{ selected: selected === index }}
           onPress={() => onSelect(index)}
-          style={[ui.segment, selected === index && { borderBottomColor: c.coral }]}
+          style={[ui.segment, selected === index && ui.segmentSelected]}
         >
           <Txt
             variant="small"
             style={{
-              color: selected === index ? c.ink : c.textMuted,
+              color: selected === index ? d.text : d.textSecondary,
               fontFamily: selected === index ? f.bold : f.regular,
             }}
           >
@@ -367,7 +390,7 @@ export function Screen({
   header,
   padded = true,
   scroll = true,
-  background = c.background,
+  background = d.canvas,
   compact = false,
 }: PropsWithChildren<{
   title?: string;
@@ -484,7 +507,7 @@ export function PriceRow({
 }) {
   return (
     <Row style={[ui.priceRow, total && ui.total]}>
-      <Txt variant={total ? 'label' : 'small'} style={{ flex: 1, color: total ? c.ink : c.textMuted }}>
+      <Txt variant={total ? 'label' : 'small'} style={{ flex: 1, color: total ? d.text : d.textSecondary }}>
         {label}
       </Txt>
       <Txt variant={total ? 'heading' : 'label'}>{amount}</Txt>
@@ -492,54 +515,70 @@ export function PriceRow({
   );
 }
 
+const lift = {
+  shadowColor: x.shadow,
+  shadowOffset: { width: 0, height: -x.elevation.floating.offsetY },
+  shadowRadius: x.elevation.floating.blur,
+  shadowOpacity: x.elevation.floating.opacity,
+  elevation: x.elevation.floating.android,
+} as const;
+
 export const ui = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: s.md },
-  content: { flexGrow: 1, gap: s.xl, paddingBottom: s.xl },
-  pad: { paddingHorizontal: layout.gutter, paddingTop: s.md },
-  typography: { color: c.ink, fontFamily: f.regular },
-  body: { fontSize: 15, lineHeight: 24 },
-  title: { fontSize: 28, lineHeight: 38, fontFamily: f.extraBold, letterSpacing: -0.8 },
-  heading: { fontSize: 20, lineHeight: 29, fontFamily: f.bold, letterSpacing: -0.4 },
-  small: { fontSize: 13, lineHeight: 21 },
-  caption: { fontSize: 11, lineHeight: 17 },
-  label: { fontSize: 14, lineHeight: 22, fontFamily: f.semibold },
-  muted: { color: c.textMuted },
+  content: { flexGrow: 1, gap: x.space.xl, paddingBottom: x.space.xxl },
+  pad: { paddingHorizontal: x.gutter, paddingTop: x.space.sm },
+  typography: { color: d.text, fontFamily: f.regular },
+  body: { fontSize: x.type.body.fontSize, lineHeight: x.type.body.lineHeight },
+  title: {
+    fontSize: x.type.title.fontSize,
+    lineHeight: x.type.title.lineHeight,
+    fontFamily: f.extraBold,
+    letterSpacing: x.type.title.letterSpacing,
+  },
+  heading: {
+    fontSize: x.type.headline.fontSize,
+    lineHeight: x.type.headline.lineHeight,
+    fontFamily: f.bold,
+    letterSpacing: x.type.headline.letterSpacing,
+  },
+  small: { fontSize: 14, lineHeight: 21 },
+  caption: { fontSize: x.type.caption.fontSize, lineHeight: x.type.caption.lineHeight },
+  label: { fontSize: x.type.label.fontSize, lineHeight: 22, fontFamily: f.semibold },
+  muted: { color: d.textSecondary },
   center: { textAlign: 'center' },
   button: {
-    minHeight: layout.buttonHeight,
-    borderRadius: 14,
-    paddingHorizontal: s.lg,
-    paddingVertical: s.md,
+    minHeight: x.control.primary,
+    borderRadius: x.radius.pill,
+    paddingHorizontal: x.space.lg,
+    paddingVertical: x.space.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: s.sm,
   },
-  compactButton: { minHeight: layout.touchTarget, paddingVertical: s.sm, paddingHorizontal: s.md, gap: s.xs },
+  compactButton: { minHeight: x.control.compact, paddingVertical: s.sm, paddingHorizontal: s.lg, gap: s.xs },
   compactLabel: compactType.label,
-  primary: { backgroundColor: c.coral },
-  secondary: { backgroundColor: c.background, borderWidth: 1, borderColor: c.border },
-  teal: { backgroundColor: c.teal },
+  primary: { backgroundColor: x.action.primary },
+  primaryPressed: { backgroundColor: x.action.primaryPressed },
+  secondary: { backgroundColor: d.surface, borderWidth: 1, borderColor: d.line },
+  teal: { backgroundColor: d.tintExplore },
   text: { backgroundColor: c.transparent },
-  // Text buttons keep the same touch target as filled controls.
   disabled: { opacity: 0.45 },
-  pressed: { opacity: 0.7 },
+  pressed: { opacity: 0.78 },
   iconButton: {
-    width: layout.touchTarget,
-    height: layout.touchTarget,
+    width: x.control.touch,
+    height: x.control.touch,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 22,
+    borderRadius: x.radius.pill,
   },
   card: {
-    padding: s.lg,
-    borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: layout.cardRadius,
+    padding: x.space.md,
+    borderRadius: x.radius.lg,
     gap: s.md,
-    backgroundColor: c.background,
+    backgroundColor: d.surface,
   },
   compactCard: { padding: s.md, gap: s.sm },
   badge: {
@@ -548,21 +587,27 @@ export const ui = StyleSheet.create({
     alignSelf: 'flex-start',
     gap: s.xs,
     paddingVertical: s.xs,
-    paddingHorizontal: s.sm,
-    borderRadius: 7,
+    paddingHorizontal: x.space.sm,
+    borderRadius: x.radius.pill,
   },
-  notice: { padding: s.lg, borderRadius: 14, flexDirection: 'row', alignItems: 'flex-start', gap: s.sm },
+  notice: {
+    padding: x.space.md,
+    borderRadius: x.radius.md,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: s.sm,
+  },
   input: {
-    minHeight: layout.buttonHeight,
+    minHeight: x.control.primary,
     borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: layout.inputRadius,
-    paddingHorizontal: s.lg,
+    borderColor: d.input,
+    borderRadius: x.radius.md,
+    paddingHorizontal: x.space.md,
     paddingVertical: s.md,
     fontFamily: f.regular,
-    fontSize: 14,
-    color: c.ink,
-    backgroundColor: c.background,
+    fontSize: x.type.body.fontSize,
+    color: d.text,
+    backgroundColor: d.surface,
   },
   compactInput: {
     minHeight: layout.touchTarget,
@@ -572,14 +617,16 @@ export const ui = StyleSheet.create({
   },
   chip: {
     minHeight: layout.touchTarget,
-    paddingHorizontal: s.lg,
-    paddingVertical: s.md,
+    paddingHorizontal: x.space.md,
+    paddingVertical: s.sm,
     borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: 99,
+    borderColor: d.line,
+    borderRadius: x.radius.pill,
+    backgroundColor: d.surface,
     justifyContent: 'center',
   },
-  segments: { gap: s.lg, borderBottomWidth: 1, borderBottomColor: c.border, flexWrap: 'wrap' },
+  chipSelected: { backgroundColor: d.link, borderColor: d.link },
+  segments: { gap: s.lg, borderBottomWidth: 1, borderBottomColor: d.line, flexWrap: 'wrap' },
   segment: {
     minHeight: layout.touchTarget,
     justifyContent: 'center',
@@ -587,27 +634,27 @@ export const ui = StyleSheet.create({
     borderBottomColor: c.transparent,
     paddingVertical: s.md,
   },
-  header: { minHeight: 60, paddingHorizontal: s.lg, paddingVertical: s.xs },
+  segmentSelected: { borderBottomColor: x.action.primary },
+  header: { minHeight: 56, paddingHorizontal: x.space.xs, paddingVertical: s.xs },
   footer: {
-    paddingHorizontal: layout.gutter,
-    paddingTop: s.md,
-    paddingBottom: s.md,
-    borderTopWidth: 1,
-    borderTopColor: c.border,
+    paddingHorizontal: x.gutter,
+    paddingTop: x.space.sm,
+    paddingBottom: x.space.sm,
     gap: s.sm,
-    backgroundColor: c.background,
+    backgroundColor: d.surface,
+    ...lift,
   },
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: c.overlay },
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: x.backdrop },
   sheet: {
-    backgroundColor: c.background,
-    padding: layout.gutter,
-    borderTopLeftRadius: layout.sheetRadius,
-    borderTopRightRadius: layout.sheetRadius,
+    backgroundColor: d.surface,
+    padding: x.gutter,
+    borderTopLeftRadius: x.radius.xl,
+    borderTopRightRadius: x.radius.xl,
     maxHeight: '85%',
     gap: s.lg,
   },
   empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: s.xxl, gap: s.lg },
   emptyInset: { marginHorizontal: s.lg },
   priceRow: { justifyContent: 'space-between', paddingVertical: s.sm },
-  total: { borderTopWidth: 1, borderTopColor: c.border, paddingTop: s.lg, marginTop: s.sm },
+  total: { borderTopWidth: 1, borderTopColor: d.line, paddingTop: s.lg, marginTop: s.sm },
 });

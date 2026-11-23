@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import { Modal, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppFrame } from './app-frame';
@@ -84,9 +84,7 @@ function MonthGrid({
                 key={`out-${iso}`}
                 style={{ width: `${100 / 7}%`, height: cellHeight, justifyContent: 'center' }}
               >
-                <Txt
-                  style={{ textAlign: 'center', color: colors.coralSoft, opacity: 0.5, fontWeight: '500' }}
-                >
+                <Txt style={{ textAlign: 'center', color: x.day.tintWarm, opacity: 0.5, fontWeight: '500' }}>
                   {parse(iso).getDate()}
                 </Txt>
               </View>
@@ -101,7 +99,7 @@ function MonthGrid({
           const hasBand = hasRange && start !== end && (inside || isStart || isEnd);
           const roundLeft = inside && column === 0;
           const roundRight = inside && column === 6;
-          const textColor = selected ? colors.background : inside ? colors.tealInk : colors.ink;
+          const textColor = selected ? x.day.surface : inside ? x.day.link : x.day.text;
           return (
             <View key={iso} style={{ width: `${100 / 7}%`, height: cellHeight, justifyContent: 'center' }}>
               {hasBand && (
@@ -112,7 +110,7 @@ function MonthGrid({
                     bottom: 3,
                     left: isStart ? '50%' : 0,
                     right: isEnd ? '50%' : 0,
-                    backgroundColor: colors.seaMist,
+                    backgroundColor: x.day.tintExplore,
                     borderTopLeftRadius: roundLeft ? radius.pill : 0,
                     borderBottomLeftRadius: roundLeft ? radius.pill : 0,
                     borderTopRightRadius: roundRight ? radius.pill : 0,
@@ -133,13 +131,13 @@ function MonthGrid({
                   borderRadius: radius.pill,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: selected ? colors.tealInk : pressed ? colors.surfaceMuted : 'transparent',
+                  backgroundColor: selected ? x.day.link : pressed ? x.day.canvas : 'transparent',
                 })}
               >
                 <Txt
                   style={{
                     fontWeight: selected ? '700' : '500',
-                    color: isDisabled ? colors.textSubtle : textColor,
+                    color: isDisabled ? x.day.textSecondary : textColor,
                     opacity: isDisabled ? 0.55 : 1,
                   }}
                 >
@@ -184,8 +182,8 @@ function YearMonthPicker({
               alignItems: 'center',
               borderRadius: radius.md,
               borderWidth: 1,
-              borderColor: item === current.getFullYear() ? colors.tealInk : colors.border,
-              backgroundColor: item === current.getFullYear() ? colors.seaMist : colors.background,
+              borderColor: item === current.getFullYear() ? x.day.link : x.day.line,
+              backgroundColor: item === current.getFullYear() ? x.day.tintExplore : x.day.surface,
             }}
           >
             <Txt variant="label">{item}</Txt>
@@ -214,7 +212,7 @@ function YearMonthPicker({
                 alignItems: 'center',
                 borderRadius: radius.md,
                 borderWidth: 1,
-                borderColor: colors.border,
+                borderColor: x.day.line,
                 opacity: isDisabled ? 0.4 : 1,
               }}
             >
@@ -284,7 +282,7 @@ export function DateSheet(props: SheetProps) {
               borderTopLeftRadius: mobileLayout.sheetRadius,
               borderTopRightRadius: mobileLayout.sheetRadius,
               overflow: 'hidden',
-              backgroundColor: colors.background,
+              backgroundColor: x.day.surface,
             }}
           >
             <View
@@ -294,7 +292,7 @@ export function DateSheet(props: SheetProps) {
                 height: 5,
                 marginTop: spacing.sm,
                 borderRadius: radius.pill,
-                backgroundColor: colors.border,
+                backgroundColor: x.day.line,
               }}
             />
             <Row style={{ justifyContent: 'space-between', alignItems: 'center', padding: spacing.md }}>
@@ -315,7 +313,7 @@ export function DateSheet(props: SheetProps) {
                 }}
                 style={{ padding: spacing.xs }}
               >
-                <Txt variant="label" style={{ color: colors.coralInk }}>
+                <Txt variant="label" style={{ color: x.day.text }}>
                   Xoá
                 </Txt>
               </Pressable>
@@ -337,13 +335,13 @@ export function DateSheet(props: SheetProps) {
                       paddingHorizontal: spacing.md,
                       borderRadius: mobileLayout.cardRadius,
                       borderWidth: box.isActive ? 2 : 1,
-                      borderColor: box.isActive ? colors.tealInk : colors.border,
-                      backgroundColor: box.isActive ? colors.seaMist : colors.surface,
+                      borderColor: box.isActive ? x.day.link : x.day.line,
+                      backgroundColor: box.isActive ? x.day.tintExplore : x.day.canvas,
                     }}
                   >
-                    <Icon name="calendar-outline" size={18} color={colors.tealInk} />
+                    <Icon name="calendar-outline" size={18} color={x.day.link} />
                     <View>
-                      <Txt variant="small" style={{ color: colors.textMuted }}>
+                      <Txt variant="small" style={{ color: x.day.textSecondary }}>
                         {box.label}
                       </Txt>
                       <Txt variant="label">{box.value ? formatShort(box.value) : 'Chọn ngày'}</Txt>
@@ -366,13 +364,13 @@ export function DateSheet(props: SheetProps) {
                 paddingHorizontal: spacing.md,
                 paddingVertical: 6,
                 borderRadius: radius.pill,
-                backgroundColor: colors.seaMist,
+                backgroundColor: x.day.tintExplore,
               }}
             >
-              <Txt variant="label" style={{ color: colors.tealInk }}>
+              <Txt variant="label" style={{ color: x.day.link }}>
                 {isPickingYear ? 'Quay lại lịch' : `Chọn năm · ${firstMonth.getFullYear()}`}
               </Txt>
-              <Icon name={isPickingYear ? 'chevron-up' : 'chevron-down'} size={18} color={colors.tealInk} />
+              <Icon name={isPickingYear ? 'chevron-up' : 'chevron-down'} size={18} color={x.day.link} />
             </Pressable>
             <Row
               style={{
@@ -381,7 +379,7 @@ export function DateSheet(props: SheetProps) {
                 paddingTop: spacing.md,
                 paddingBottom: spacing.sm,
                 borderBottomWidth: isPickingYear ? 0 : 1,
-                borderBottomColor: colors.border,
+                borderBottomColor: x.day.line,
               }}
             >
               {!isPickingYear &&
@@ -392,7 +390,7 @@ export function DateSheet(props: SheetProps) {
                     style={{
                       width: `${100 / 7}%`,
                       textAlign: 'center',
-                      color: colors.textMuted,
+                      color: x.day.textSecondary,
                       fontWeight: '600',
                     }}
                   >
@@ -438,7 +436,7 @@ export function DateSheet(props: SheetProps) {
                 ))
               )}
             </ScrollView>
-            <View style={{ padding: spacing.md, borderTopWidth: 1, borderTopColor: colors.border }}>
+            <View style={{ padding: spacing.md, borderTopWidth: 1, borderTopColor: x.day.line }}>
               <Pressable
                 accessibilityRole="button"
                 disabled={!canFinish}
@@ -452,10 +450,10 @@ export function DateSheet(props: SheetProps) {
                   borderRadius: radius.pill,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: canFinish ? colors.coral : colors.border,
+                  backgroundColor: canFinish ? x.action.primary : x.day.line,
                 }}
               >
-                <Txt variant="label" style={{ color: colors.background }}>
+                <Txt variant="label" style={{ color: canFinish ? x.action.onPrimary : x.day.textSecondary }}>
                   {finishLabel}
                 </Txt>
               </Pressable>
@@ -494,17 +492,17 @@ function DateBox({
         padding: spacing.md,
         borderRadius: cornerRadius,
         borderWidth: isActive ? 2 : 1,
-        borderColor: isActive ? colors.tealInk : colors.border,
-        backgroundColor: colors.background,
+        borderColor: isActive ? x.day.link : x.day.line,
+        backgroundColor: x.day.surface,
       }}
     >
       <View style={{ flexShrink: 1 }}>
-        <Txt variant="small" style={{ color: colors.textMuted }}>
+        <Txt variant="small" style={{ color: x.day.textSecondary }}>
           {label}
         </Txt>
         <Txt variant="label">{value ? formatShort(value) : 'Chọn ngày'}</Txt>
       </View>
-      <Icon name="calendar-outline" size={20} color={colors.tealInk} />
+      <Icon name="calendar-outline" size={20} color={x.day.link} />
     </Pressable>
   );
 }
@@ -589,7 +587,7 @@ export function DateSingleField({
         />
       </Row>
       {error && (
-        <Txt variant="small" style={{ color: colors.danger }}>
+        <Txt variant="small" style={{ color: x.day.error }}>
           {error}
         </Txt>
       )}

@@ -7,7 +7,7 @@ import {
 } from '@tripflix/api-client';
 import { getNotificationAge, isSameLocalDay } from '@tripflix/app-core';
 import { t } from '@tripflix/i18n';
-import { colors as c, nativeFonts, spacing as s } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, spacing as s } from '@tripflix/tokens';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 import { Button, copy, Icon, type IconName, Screen, Txt, ui } from '@/components/mobile-ui';
@@ -17,12 +17,17 @@ const text = copy.notifications;
 
 /** Icon và màu theo nhóm thông báo, để nhìn lướt cũng biết là bình luận, cảm xúc, kiểm duyệt hay đơn. */
 function getNotificationLook(item: InboxNotification): { icon: IconName; background: string; color: string } {
-  if (item.type.startsWith('comment.')) return { icon: 'chatbubble-ellipses-outline', background: c.tealSoft, color: c.tealInk };
-  if (item.type.startsWith('reaction.')) return { icon: 'heart-outline', background: c.coralTint, color: c.coralInk };
-  if (item.type.startsWith('moderation.')) return { icon: 'shield-checkmark-outline', background: c.sunSoft, color: c.ink };
-  if (item.type.startsWith('follow.')) return { icon: 'person-add-outline', background: c.seaMist, color: c.tealInk };
-  if (typeof item.data.orderId === 'string') return { icon: 'bag-handle-outline', background: c.surfaceMuted, color: c.textMuted };
-  return { icon: 'notifications-outline', background: c.surfaceMuted, color: c.textMuted };
+  if (item.type.startsWith('comment.'))
+    return { icon: 'chatbubble-ellipses-outline', background: x.day.tintExplore, color: x.day.link };
+  if (item.type.startsWith('reaction.'))
+    return { icon: 'heart-outline', background: x.day.tintWarm, color: x.day.text };
+  if (item.type.startsWith('moderation.'))
+    return { icon: 'shield-checkmark-outline', background: x.day.tintSun, color: x.day.text };
+  if (item.type.startsWith('follow.'))
+    return { icon: 'person-add-outline', background: x.day.tintExplore, color: x.day.link };
+  if (typeof item.data.orderId === 'string')
+    return { icon: 'bag-handle-outline', background: x.day.canvas, color: x.day.textSecondary };
+  return { icon: 'notifications-outline', background: x.day.canvas, color: x.day.textSecondary };
 }
 
 function formatNotificationTime(createdAt: Date, now: Date): string {
@@ -34,7 +39,15 @@ function formatNotificationTime(createdAt: Date, now: Date): string {
   return createdAt.toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' });
 }
 
-function NotificationRow({ item, now, onPress }: { item: InboxNotification; now: Date; onPress: () => void }) {
+function NotificationRow({
+  item,
+  now,
+  onPress,
+}: {
+  item: InboxNotification;
+  now: Date;
+  onPress: () => void;
+}) {
   const look = getNotificationLook(item);
   const excerpt = getNotificationExcerpt(item);
   const isUnread = !item.readAt;
@@ -42,7 +55,9 @@ function NotificationRow({ item, now, onPress }: { item: InboxNotification; now:
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={[isUnread && text.unreadMark, item.title, item.body, excerpt, time].filter(Boolean).join('. ')}
+      accessibilityLabel={[isUnread && text.unreadMark, item.title, item.body, excerpt, time]
+        .filter(Boolean)
+        .join('. ')}
       onPress={onPress}
       style={({ pressed }) => [styles.row, isUnread && styles.unreadRow, pressed && styles.pressed]}
     >
@@ -87,7 +102,12 @@ export function LiveNotificationsScreen() {
       title={text.title}
       right={
         unread > 0 && items[0] ? (
-          <Button tone="text" compact disabled={markAll.isPending} onPress={() => markAll.mutate(items[0]!.id)}>
+          <Button
+            tone="text"
+            compact
+            disabled={markAll.isPending}
+            onPress={() => markAll.mutate(items[0]!.id)}
+          >
             {text.markAllRead}
           </Button>
         ) : undefined
@@ -104,7 +124,7 @@ export function LiveNotificationsScreen() {
       {!notifications.isPending && !notifications.error && !items.length && (
         <View style={styles.empty}>
           <View style={[styles.icon, styles.emptyIcon]}>
-            <Icon name="notifications-outline" color={c.tealInk} size={28} />
+            <Icon name="notifications-outline" color={x.day.link} size={28} />
           </View>
           <Txt variant="label">{text.empty}</Txt>
           <Txt variant="small" style={[ui.muted, styles.emptyBody]}>
@@ -128,7 +148,11 @@ export function LiveNotificationsScreen() {
         </View>
       ))}
       {notifications.hasNextPage && (
-        <Button tone="text" disabled={notifications.isFetchingNextPage} onPress={() => void notifications.fetchNextPage()}>
+        <Button
+          tone="text"
+          disabled={notifications.isFetchingNextPage}
+          onPress={() => void notifications.fetchNextPage()}
+        >
           {text.loadMore}
         </Button>
       )}
@@ -139,9 +163,14 @@ export function LiveNotificationsScreen() {
 const styles = StyleSheet.create({
   summary: { marginBottom: s.sm },
   section: { gap: s.xs, marginBottom: s.md },
-  sectionTitle: { color: c.textMuted, fontFamily: nativeFonts.semibold, marginTop: s.sm, marginBottom: s.xs },
+  sectionTitle: {
+    color: x.day.textSecondary,
+    fontFamily: nativeFonts.semibold,
+    marginTop: s.sm,
+    marginBottom: s.xs,
+  },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: s.md, padding: s.md, borderRadius: 14 },
-  unreadRow: { backgroundColor: c.coralTint },
+  unreadRow: { backgroundColor: x.day.tintWarm },
   pressed: { opacity: 0.7 },
   icon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   unreadTitle: { fontFamily: nativeFonts.semibold },
@@ -150,12 +179,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: s.sm,
     paddingVertical: s.xs,
     borderRadius: 8,
-    backgroundColor: c.surfaceMuted,
-    color: c.text,
+    backgroundColor: x.day.canvas,
+    color: x.day.text,
   },
-  time: { color: c.textSubtle, marginTop: s.xs },
-  dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: c.coral, marginTop: 6 },
+  time: { color: x.day.textSecondary, marginTop: s.xs },
+  dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: x.action.primary, marginTop: 6 },
   empty: { alignItems: 'center', gap: s.sm, paddingVertical: s.xxl },
-  emptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.seaMist },
+  emptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: x.day.tintExplore },
   emptyBody: { textAlign: 'center', maxWidth: 280 },
 });

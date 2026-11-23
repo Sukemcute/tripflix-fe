@@ -1,7 +1,7 @@
 import { useFlightCalendar } from '@tripflix/api-client';
 import type { FlightSort } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -48,7 +48,6 @@ export function FlightHero() {
       <Image source={assets.sea} contentFit="cover" style={StyleSheet.absoluteFill} />
       <View style={[StyleSheet.absoluteFill, styles.heroShade]} />
       <View style={styles.heroText}>
-        <Txt style={styles.heroEyebrow}>{copy.title.toUpperCase()}</Txt>
         <Txt style={styles.heroTitle}>{copy.heroTitle}</Txt>
         <Txt style={styles.heroIntro}>{copy.heroIntro}</Txt>
       </View>
@@ -84,7 +83,7 @@ export function AirportField({
       style={({ pressed }) => [styles.field, pressed && styles.pressed, isDisabled && styles.disabled]}
     >
       <View style={styles.fieldIcon}>
-        <Icon name={icon} size={22} color={colors.tealInk} />
+        <Icon name={icon} size={22} color={x.day.link} />
       </View>
       <View style={ui.flex}>
         <Txt style={styles.fieldLabel}>{label}</Txt>
@@ -101,7 +100,7 @@ export function AirportField({
           <Txt style={styles.fieldPlaceholder}>{placeholder}</Txt>
         )}
       </View>
-      <Icon name="chevron-down" size={18} color={colors.textMuted} />
+      <Icon name="chevron-down" size={18} color={x.day.textSecondary} />
     </Pressable>
   );
 }
@@ -116,7 +115,7 @@ export function SwapAirportsButton({ isDisabled, onPress }: { isDisabled?: boole
       onPress={onPress}
       style={({ pressed }) => [styles.swap, pressed && styles.pressed, isDisabled && styles.disabled]}
     >
-      <Icon name="swap-vertical" size={20} color={colors.tealInk} />
+      <Icon name="swap-vertical" size={20} color={x.day.link} />
     </Pressable>
   );
 }
@@ -143,7 +142,7 @@ export function InfoField({
       onPress={onPress}
       style={({ pressed }) => [styles.field, styles.fieldCompact, pressed && styles.pressed]}
     >
-      <Icon name={icon} size={20} color={colors.tealInk} />
+      <Icon name={icon} size={20} color={x.day.link} />
       <View style={ui.flex}>
         <Txt style={styles.fieldLabel}>{label}</Txt>
         <Txt style={styles.fieldValue}>{value}</Txt>
@@ -296,7 +295,7 @@ export function FlightTimeline({
           <Image source={logo} contentFit="contain" contentPosition="left" style={styles.airlineLogo} />
         ) : (
           <View style={styles.airlineBadge}>
-            <Icon name="airplane" size={16} color={colors.background} />
+            <Icon name="airplane" size={16} color={x.brand.white} />
           </View>
         )}
         <View style={ui.flex}>
@@ -320,7 +319,7 @@ export function FlightTimeline({
           <View style={styles.line}>
             <View style={styles.lineDot} />
             <View style={styles.lineRule} />
-            <Icon name="airplane" size={14} color={colors.coral} />
+            <Icon name="airplane" size={14} color={x.action.primary} />
           </View>
           <Txt style={styles.direct}>{copy.direct}</Txt>
         </View>
@@ -349,19 +348,13 @@ const styles = StyleSheet.create({
     minHeight: 220,
     borderRadius: mobileLayout.cardRadius,
     overflow: 'hidden',
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
     justifyContent: 'flex-start',
   },
-  heroShade: { backgroundColor: colors.background, opacity: 0.78 },
+  heroShade: { backgroundColor: x.day.surface, opacity: 0.78 },
   heroText: { gap: spacing.xs, padding: spacing.lg, paddingRight: 110, zIndex: 1 },
-  heroEyebrow: {
-    ...compactType.label,
-    fontFamily: nativeFonts.semibold,
-    color: colors.tealInk,
-    letterSpacing: 1.2,
-  },
-  heroTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.ink },
-  heroIntro: { ...compactType.body, fontFamily: nativeFonts.regular, color: colors.textMuted },
+  heroTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text },
+  heroIntro: { ...compactType.body, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
   heroMascot: { position: 'absolute', right: 0, bottom: 0, width: 120, height: 130, zIndex: 2 },
   field: {
     flexDirection: 'row',
@@ -370,8 +363,8 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
   fieldCompact: { flex: 1, gap: spacing.sm },
   fieldIcon: {
@@ -380,13 +373,18 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
-  fieldLabel: { ...compactType.label, fontFamily: nativeFonts.regular, color: colors.textMuted },
-  fieldCode: { fontSize: 24, lineHeight: 30, fontFamily: nativeFonts.bold, color: colors.ink },
-  fieldName: { ...compactType.body, flexShrink: 1, fontFamily: nativeFonts.regular, color: colors.textMuted },
-  fieldPlaceholder: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.textMuted },
-  fieldValue: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
+  fieldLabel: { ...compactType.label, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+  fieldCode: { fontSize: 24, lineHeight: 30, fontFamily: nativeFonts.bold, color: x.day.text },
+  fieldName: {
+    ...compactType.body,
+    flexShrink: 1,
+    fontFamily: nativeFonts.regular,
+    color: x.day.textSecondary,
+  },
+  fieldPlaceholder: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.textSecondary },
+  fieldValue: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
   swap: {
     position: 'absolute',
     right: 56,
@@ -399,8 +397,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
   strip: { gap: spacing.sm },
   stripDay: {
@@ -411,13 +409,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
-  stripDaySelected: { borderColor: colors.teal, backgroundColor: colors.seaMist },
-  stripWeekday: { ...compactType.label, fontFamily: nativeFonts.regular, color: colors.textMuted },
-  stripPrice: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
-  stripPriceLow: { color: colors.coralInk },
+  stripDaySelected: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
+  stripWeekday: { ...compactType.label, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+  stripPrice: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
+  stripPriceLow: { color: x.day.text },
   sorts: { gap: spacing.sm },
   tag: {
     ...compactType.label,
@@ -427,35 +425,35 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  tagCoral: { backgroundColor: colors.coral, color: colors.background },
-  tagTeal: { backgroundColor: colors.teal, color: colors.background },
+  tagCoral: { backgroundColor: x.action.primary, color: x.action.onPrimary },
+  tagTeal: { backgroundColor: x.day.link, color: x.brand.white },
   airlineBadge: {
     width: 32,
     height: 32,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.tealInk,
+    backgroundColor: x.day.link,
   },
   airlineLogo: { width: 120, height: 28 },
   baggage: {
     ...compactType.label,
     fontFamily: nativeFonts.semibold,
-    color: colors.tealInk,
-    backgroundColor: colors.seaMist,
+    color: x.day.link,
+    backgroundColor: x.day.tintExplore,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  airline: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
-  flightMeta: { ...compactType.label, fontFamily: nativeFonts.regular, color: colors.textMuted },
-  time: { fontSize: 24, lineHeight: 30, fontFamily: nativeFonts.bold, color: colors.ink },
-  airport: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.textMuted },
+  airline: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
+  flightMeta: { ...compactType.label, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+  time: { fontSize: 24, lineHeight: 30, fontFamily: nativeFonts.bold, color: x.day.text },
+  airport: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.textSecondary },
   line: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: 4 },
-  lineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.border },
-  lineRule: { flex: 1, height: 1, backgroundColor: colors.border },
-  direct: { ...compactType.label, fontFamily: nativeFonts.semibold, color: colors.tealInk },
+  lineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: x.day.line },
+  lineRule: { flex: 1, height: 1, backgroundColor: x.day.line },
+  direct: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.link },
 });
 
 /** Bỏ dấu, chữ thường để tìm "da nang" ra Đà Nẵng. */
@@ -478,12 +476,12 @@ export function AirportPickerList({
   return (
     <View style={{ gap: spacing.sm }}>
       <View style={pickerStyles.search}>
-        <Icon name="search-outline" size={18} color={colors.textMuted} />
+        <Icon name="search-outline" size={18} color={x.day.textSecondary} />
         <TextInput
           value={query}
           onChangeText={setQuery}
           placeholder={copy.searchAirport}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={x.day.textSecondary}
           accessibilityLabel={copy.searchAirport}
           style={pickerStyles.searchInput}
         />
@@ -504,7 +502,7 @@ export function AirportPickerList({
             ]}
           >
             <View style={[pickerStyles.code, isSelected && pickerStyles.codeSelected]}>
-              <Txt style={[pickerStyles.codeText, isSelected && { color: colors.background }]}>{value}</Txt>
+              <Txt style={[pickerStyles.codeText, isSelected && { color: x.brand.white }]}>{value}</Txt>
             </View>
             <View style={ui.flex}>
               <Txt style={pickerStyles.city}>{city}</Txt>
@@ -514,7 +512,7 @@ export function AirportPickerList({
                 </Txt>
               )}
             </View>
-            {isSelected && <Icon name="checkmark-circle" size={22} color={colors.tealInk} />}
+            {isSelected && <Icon name="checkmark-circle" size={22} color={x.day.link} />}
           </Pressable>
         );
       })}
@@ -535,15 +533,15 @@ const pickerStyles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: x.day.line,
+    backgroundColor: x.day.canvas,
   },
   searchInput: {
     ...compactType.body,
     flex: 1,
     minHeight: 44,
     fontFamily: nativeFonts.regular,
-    color: colors.ink,
+    color: x.day.text,
   },
   row: {
     flexDirection: 'row',
@@ -552,21 +550,21 @@ const pickerStyles = StyleSheet.create({
     padding: spacing.sm,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
-  rowSelected: { borderColor: colors.teal, backgroundColor: colors.seaMist },
+  rowSelected: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
   code: {
     width: 52,
     height: 44,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
-  codeSelected: { backgroundColor: colors.tealInk },
-  codeText: { ...compactType.body, fontFamily: nativeFonts.bold, color: colors.tealInk, letterSpacing: 0.5 },
-  city: { ...compactType.body, fontFamily: nativeFonts.semibold, color: colors.ink },
+  codeSelected: { backgroundColor: x.day.link },
+  codeText: { ...compactType.body, fontFamily: nativeFonts.bold, color: x.day.link, letterSpacing: 0.5 },
+  city: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
 });
 
 /** Logo hãng; không có logo thì tên hãng (hoặc biểu tượng máy bay). */

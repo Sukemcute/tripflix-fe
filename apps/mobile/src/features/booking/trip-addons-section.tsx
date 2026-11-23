@@ -5,7 +5,7 @@ import {
   type TripAddonStay,
 } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
-import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ApiErrorNotice } from '@/components/api-state';
@@ -120,7 +120,7 @@ export function TripAddonsSection({
                 .join(' · ')}
               price={money(stay.totalPrice)}
               badge={stay.badges[0]?.text}
-              trailing={<Icon name="chevron-forward" size={18} color={colors.coralInk} />}
+              trailing={<Icon name="chevron-forward" size={18} color={x.day.text} />}
             />
           )}
         />
@@ -213,8 +213,8 @@ function Grouped<T>({
 }
 
 const TONES = {
-  flight: { ink: colors.tealInk, soft: colors.seaMist },
-  hotel: { ink: colors.coralInk, soft: colors.coralTint },
+  flight: { ink: x.day.link, soft: x.day.tintExplore },
+  hotel: { ink: x.day.text, soft: x.day.tintWarm },
 } as const;
 
 function Section({
@@ -270,7 +270,7 @@ function Option({
         <Icon
           name={isSelected ? 'radio-button-on' : 'radio-button-off'}
           size={20}
-          color={isSelected ? ink : colors.textMuted}
+          color={isSelected ? ink : x.day.textSecondary}
         />
       )}
       <View style={ui.flex}>
@@ -297,7 +297,7 @@ export function formatShortDate(iso: string): string {
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.8 },
-  muted: { ...compactType.body, fontFamily: nativeFonts.regular, color: colors.textMuted },
+  muted: { ...compactType.body, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
   section: {
     gap: spacing.sm,
     padding: spacing.md,
@@ -306,11 +306,11 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   sectionHead: { alignItems: 'center', gap: spacing.xs },
-  sectionTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: colors.ink, flexShrink: 1 },
+  sectionTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text, flexShrink: 1 },
   originRow: { alignItems: 'center', gap: spacing.sm },
   chips: { gap: spacing.sm },
   leg: { gap: spacing.sm },
-  legTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.tealInk },
+  legTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.link },
   options: { gap: spacing.sm },
   option: {
     flexDirection: 'row',
@@ -318,11 +318,11 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     padding: spacing.md,
     borderRadius: radius.md,
-    backgroundColor: colors.background,
+    backgroundColor: x.day.surface,
     borderWidth: 1,
     borderColor: colors.transparent,
   },
-  optionTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: colors.ink },
+  optionTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.text },
   badge: {
     alignSelf: 'flex-start',
     marginTop: 4,
@@ -331,5 +331,5 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   badgeText: { ...compactType.label, fontFamily: nativeFonts.semibold },
-  price: { ...compactType.price, fontFamily: nativeFonts.bold, color: colors.ink },
+  price: { ...compactType.price, fontFamily: nativeFonts.bold, color: x.day.text },
 });
