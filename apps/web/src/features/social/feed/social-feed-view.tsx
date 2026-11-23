@@ -33,6 +33,7 @@ import segmentedTabs from '../../shared/segmented-tabs.module.css';
 import { getFocusedFeedPosts } from './focused-post';
 import styles from './social-feed.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
+import { getEngagementRefreshKeys } from './engagement-refresh';
 
 export interface SocialFeedViewProps {
   /** Tab đang hiện. Tab được giữ mounted khi ẩn, nên hiện lại cũng là bố cục ban đầu: không chạy hiệu ứng. */
@@ -659,7 +660,9 @@ export function SocialFeedView({
           return next;
         });
       }
-      void client.invalidateQueries({ queryKey: ['social'] });
+      for (const queryKey of getEngagementRefreshKeys(payload.type, payload.postId)) {
+        void client.invalidateQueries({ queryKey });
+      }
     },
   });
 
