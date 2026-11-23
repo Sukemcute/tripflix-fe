@@ -96,45 +96,7 @@
   border-radius: 10px;
 }
 .tabs {
-  display: flex;
-  gap: 4px;
-  margin: 0 32px;
-  border-top: 1px solid var(--color-border);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.tab {
-  position: relative;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 58px;
-  padding: 0 24px;
-  border: 0;
-  background: transparent;
-  color: var(--color-text-muted);
-  font: inherit;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.tab:hover {
-  color: var(--color-teal-ink);
-  background: var(--color-surface);
-}
-.tab[aria-selected='true'] {
-  color: var(--color-teal-ink);
-}
-.tab[aria-selected='true']::after {
-  position: absolute;
-  content: '';
-  bottom: 0;
-  left: 22px;
-  right: 22px;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: var(--color-teal-ink);
+  margin: 0 32px 16px;
 }
 .content {
   min-width: 0;
@@ -316,12 +278,7 @@
     font-size: 0.75rem;
   }
   .tabs {
-    margin: 0 16px;
-  }
-  .tab {
-    min-height: 50px;
-    padding: 0 20px;
-    font-size: 0.8rem;
+    margin: 0 16px 14px;
   }
 
   .videoGrid {
@@ -330,38 +287,5 @@
   }
 }
 .savedFilters {
-  display: flex;
-  gap: 8px;
   margin: 0 0 22px;
-  padding: 5px;
-  width: fit-content;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background: var(--color-surface);
-}
-.savedFilters button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  min-width: 120px;
-  padding: 9px 18px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--color-text-muted);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.savedFilters button[aria-pressed='true'] {
-  border-color: var(--color-border);
-  background: var(--color-background);
-  color: var(--color-teal-ink);
-  box-shadow: 0 2px 5px color-mix(in srgb, var(--color-ink) 5%, transparent);
-}
-.savedFilters button:hover {
-  color: var(--color-teal-ink);
 }

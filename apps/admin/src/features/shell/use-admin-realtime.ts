@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useApiSession } from '@tripflix/api-client';
 import { subscribeAdminRealtime } from './admin-realtime-stream';
 
 export function useAdminRealtime(enabled: boolean) {
   const client = useQueryClient();
+  const { session } = useApiSession();
   const [status, setStatus] = useState<'connecting' | 'live' | 'offline'>('connecting');
   useEffect(() => {
     if (!enabled) return;
@@ -27,7 +29,7 @@ export function useAdminRealtime(enabled: boolean) {
       },
       onChange: reload,
       onReconnecting: connecting,
-    });
+    }, undefined, () => session.refresh());
     const reconnect = () => {
       connecting();
       reload();
@@ -40,6 +42,6 @@ export function useAdminRealtime(enabled: boolean) {
       window.removeEventListener('online', reconnect);
       window.removeEventListener('offline', connecting);
     };
-  }, [enabled, client]);
+  }, [enabled, client, session]);
   return status;
 }

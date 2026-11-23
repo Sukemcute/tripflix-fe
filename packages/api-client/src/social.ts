@@ -29,6 +29,14 @@ export const socialApi = {
         .data,
     );
   },
+  /**
+   * Nhiều bài một lần theo id (tối đa 50), đúng thứ tự truyền vào, kèm viewerContext; bài ẩn, xoá thì không có.
+   * Dùng thay cho gọi getPost từng bài ở trang gợi ý, tìm kiếm.
+   */
+  async getPostsByIds(ids: string[], signal?: AbortSignal) {
+    if (ids.length === 0) return [];
+    return readPage((await posts.postsControllerListPublicPosts({ ids: ids.join(',') }, { signal })).data).items;
+  },
   async getPost(id: string, signal?: AbortSignal) {
     return readEntity((await posts.postsControllerGetPostDetail(encodeURIComponent(id), { signal })).data, [
       'post',

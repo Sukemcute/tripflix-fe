@@ -1,5 +1,6 @@
 import { t, vi } from '@tripflix/i18n';
 import type { Metadata, Viewport } from 'next';
+import { Playfair_Display } from 'next/font/google';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
@@ -18,6 +19,14 @@ import { MobileTabBar } from '@/features/shell/mobile-tab-bar';
 import { ButtonRipple } from '@/features/shared/button-ripple';
 import { DEFAULT_OG_IMAGE } from '@/features/seo/page-metadata';
 import { getSiteUrl } from '@/lib/site';
+
+const playfair = Playfair_Display({
+  weight: ['600', '700', '900'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-playfair',
+});
 
 // Metadata mặc định cho mọi trang (TF112): metadataBase biến link tương đối (canonical, ảnh) thành tuyệt đối.
 // Trang con tự đặt title đầy đủ, nên không dùng title.template để tránh lặp "| Tripflix". Canonical và og:url
@@ -52,7 +61,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="vi">
+    <html lang="vi" className={playfair.variable}>
       <body className="min-h-dvh bg-background text-text antialiased">
         <Providers>
           <ButtonRipple />

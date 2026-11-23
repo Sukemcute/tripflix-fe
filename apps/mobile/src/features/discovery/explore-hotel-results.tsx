@@ -94,7 +94,7 @@ export function ExploreHotelResults({ q }: { q: string }) {
     }
   };
 
-  const isLoading = place.isPending || stays.isPending || isJumping;
+  const isLoading = place.isLoading || stays.isLoading || isJumping;
   const hotels = stays.data?.items ?? [];
   const firstPage = Math.max(1, Math.min(page - Math.floor(PAGE_WINDOW / 2), pageCount - PAGE_WINDOW + 1));
   const pages = Array.from({ length: Math.min(PAGE_WINDOW, pageCount) }, (_, index) => firstPage + index);

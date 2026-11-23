@@ -49,57 +49,10 @@
   border-color: var(--color-coral-soft);
 }
 
-/* Tab gạch chân kiểu TikTok: chữ đậm và vạch coral-ink ở tab đang chọn. */
+/* Khoảng cách hàng tab kết quả tìm kiếm (style chi tiết lấy từ segmented-tabs.module.css). */
 .tabs {
-  display: flex;
-  gap: 4px;
-  max-width: 1280px;
+  max-width: min(1280px, 100%);
   margin: 0 auto 20px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.tab {
-  position: relative;
-  flex-shrink: 0;
-  min-width: 96px;
-  padding: 10px 18px 12px;
-  border: 0;
-  background: var(--color-transparent);
-  color: var(--color-text-muted);
-  font: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: color 150ms ease;
-}
-
-.tab:hover {
-  color: var(--color-ink);
-}
-
-.tab[aria-selected='true'] {
-  color: var(--color-ink);
-  font-weight: 800;
-}
-
-.tab[aria-selected='true']::after {
-  content: '';
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: -1px;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: var(--color-coral-ink);
-}
-
-.tab:focus-visible {
-  outline: 2px solid var(--color-teal);
-  outline-offset: -2px;
-  border-radius: 8px;
 }
 
 .grid {
@@ -536,11 +489,6 @@ a.card {
 @media (max-width: 640px) {
   .resultsScroll {
     padding: 16px 14px 32px;
-  }
-
-  .tab {
-    min-width: auto;
-    padding: 10px 14px 12px;
   }
 
   .grid {

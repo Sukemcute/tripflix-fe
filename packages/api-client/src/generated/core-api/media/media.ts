@@ -18,6 +18,7 @@ import type {
   CreateUploadDto,
   CreatedUploadDto,
   MediaErrorDto,
+  MediaPlaybackControllerCreateSessionParams,
   PlaybackSessionDto,
   ResignPartsDto,
   SignedPartsDto,
@@ -427,8 +428,22 @@ export type mediaPlaybackControllerCreateSessionResponseSuccess =
 export type mediaPlaybackControllerCreateSessionResponse =
   mediaPlaybackControllerCreateSessionResponseSuccess;
 
-export const getMediaPlaybackControllerCreateSessionUrl = () => {
-  return `/api/media/playback-session`;
+export const getMediaPlaybackControllerCreateSessionUrl = (
+  params?: MediaPlaybackControllerCreateSessionParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/media/playback-session?${stringifiedParams}`
+    : `/api/media/playback-session`;
 };
 
 /**
@@ -436,12 +451,16 @@ export const getMediaPlaybackControllerCreateSessionUrl = () => {
  * @summary Cấp cookie xem video trên CDN
  */
 export const mediaPlaybackControllerCreateSession = async (
+  params?: MediaPlaybackControllerCreateSessionParams,
   options?: Parameters<typeof http>[1],
 ): Promise<mediaPlaybackControllerCreateSessionResponse> => {
-  return http<mediaPlaybackControllerCreateSessionResponse>(getMediaPlaybackControllerCreateSessionUrl(), {
-    ...options,
-    method: 'POST',
-  });
+  return http<mediaPlaybackControllerCreateSessionResponse>(
+    getMediaPlaybackControllerCreateSessionUrl(params),
+    {
+      ...options,
+      method: 'POST',
+    },
+  );
 };
 
 export const getMediaPlaybackControllerCreateSessionMutationKey = () =>
@@ -454,14 +473,14 @@ export const getMediaPlaybackControllerCreateSessionMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof mediaPlaybackControllerCreateSession>>,
     TError,
-    void,
+    MediaPlaybackControllerCreateSessionMutationVariables,
     TContext
   >;
   request?: SecondParameter<typeof http>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof mediaPlaybackControllerCreateSession>>,
   TError,
-  void,
+  MediaPlaybackControllerCreateSessionMutationVariables,
   TContext
 > => {
   const mutationKey = getMediaPlaybackControllerCreateSessionMutationKey();
@@ -473,9 +492,11 @@ export const getMediaPlaybackControllerCreateSessionMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof mediaPlaybackControllerCreateSession>>,
-    void
-  > = () => {
-    return mediaPlaybackControllerCreateSession(requestOptions);
+    MediaPlaybackControllerCreateSessionMutationVariables
+  > = (props) => {
+    const { params } = props ?? {};
+
+    return mediaPlaybackControllerCreateSession(params, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -486,6 +507,9 @@ export type MediaPlaybackControllerCreateSessionMutationResult = NonNullable<
 >;
 
 export type MediaPlaybackControllerCreateSessionMutationError = unknown;
+export type MediaPlaybackControllerCreateSessionMutationVariables = {
+  params?: MediaPlaybackControllerCreateSessionParams;
+};
 
 /**
  * @summary Cấp cookie xem video trên CDN
@@ -495,7 +519,7 @@ export const useMediaPlaybackControllerCreateSession = <TError = unknown, TConte
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof mediaPlaybackControllerCreateSession>>,
       TError,
-      void,
+      MediaPlaybackControllerCreateSessionMutationVariables,
       TContext
     >;
     request?: SecondParameter<typeof http>;
@@ -504,7 +528,7 @@ export const useMediaPlaybackControllerCreateSession = <TError = unknown, TConte
 ): UseMutationResult<
   Awaited<ReturnType<typeof mediaPlaybackControllerCreateSession>>,
   TError,
-  void,
+  MediaPlaybackControllerCreateSessionMutationVariables,
   TContext
 > => {
   return useMutation(getMediaPlaybackControllerCreateSessionMutationOptions(options), queryClient);

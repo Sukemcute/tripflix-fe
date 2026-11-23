@@ -17,4 +17,6 @@ export type PostsControllerListPublicPostsParams = {
   post_type?: PostsControllerListPublicPostsPostType;
   /** Lọc theo hashtag */
   hashtag?: string;
+  /** Lấy nhiều bài một lần theo id (uuid, cách nhau bởi dấu phẩy, tối đa 50), giữ đúng thứ tự truyền vào; bài ẩn, xoá, không tồn tại thì bỏ qua. Có ids thì bỏ qua cursor và các bộ lọc khác. Dùng thay cho gọi GET /v1/posts/:id từng bài (gợi ý, tìm kiếm) */
+  ids?: string;
 };

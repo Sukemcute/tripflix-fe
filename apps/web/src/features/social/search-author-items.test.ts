@@ -186,6 +186,14 @@ describe('deduplicateUsers', () => {
 });
 
 describe('grid card mappers và mergeSearchGridCards', () => {
+  it('Reel từ discovery không có thumbnail thì dùng poster video như trang cá nhân', () => {
+    const reelPost: SocialPostDto = { ...baseVlog, id: 'reel-post', postType: 'video', images: [], video: baseReel.video };
+    expect(socialPostToGridCard(reelPost, null).cover).toBe('https://cdn/reel-1/360.jpg');
+    expect(socialPostToGridCard(reelPost, '').cover).toBe('https://cdn/reel-1/360.jpg');
+    expect(socialPostToGridCard(reelPost, 'https://cdn/discovery.jpg').cover).toBe('https://cdn/discovery.jpg');
+    expect(socialPostToGridCard({ ...reelPost, video: null }, null).cover).toBeUndefined();
+  });
+
   it('chuẩn hoá SocialPostDto và FeedCardDto sang GridCardItem', () => {
     const postCard = socialPostToGridCard({ ...baseVlog, authorName: null }, 'https://cdn/discovery.jpg', 'Minh Bảo');
     expect(postCard).toMatchObject({

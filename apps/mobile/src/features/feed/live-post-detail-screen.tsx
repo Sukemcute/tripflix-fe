@@ -1,6 +1,7 @@
 import {
   findCachedFeedCard,
   HttpError,
+  RECOMMENDED_REELS_KEY,
   REEL_FEED_TABS,
   removeUnavailablePost,
   socialApi,
@@ -184,6 +185,8 @@ export function LivePostDetailScreen() {
         ...REEL_FEED_TABS.map((tab) =>
           client.cancelQueries({ queryKey: ['feed', tab, user.id], exact: true }),
         ),
+        // Dành cho bạn của người đăng nhập đọc từ discovery: trang đang tải về sau không được đè tim vừa bấm.
+        client.cancelQueries({ queryKey: [...RECOMMENDED_REELS_KEY, 'mixed', user.id], exact: true }),
         client.cancelQueries({ queryKey: ['social', 'post', slug, user.id], exact: true }),
       ]);
       return updateReelSocialCache(client, user.id, slug, action.type, action.isSelected);

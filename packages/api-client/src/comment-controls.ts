@@ -47,6 +47,6 @@ export function useCommentPermissions(postId: string) {
     queryKey: ['social', 'comment-permissions', postId, user?.id],
     queryFn: ({ signal }) => commentControlsApi.permissions(postId, signal),
     staleTime: 5000,
-    refetchInterval: 10000,
+    refetchInterval: 60_000,
   });
 }

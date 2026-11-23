@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminEventStream } from '../../../../features/shell/server-realtime';
 
@@ -7,7 +7,6 @@ export const runtime = 'nodejs';
 const secure = process.env.NODE_ENV === 'production';
 const cookieName = secure ? '__Host-tripflix-admin' : 'tripflix-admin';
 const sessionSeconds = 8 * 60 * 60;
-const maxSessions = 1_000;
 const adminOrigin = process.env.ADMIN_ORIGIN ?? process.env.NEXT_PUBLIC_ADMIN_URL ?? 'http://localhost:3200';
 const coreUrl = process.env.ADMIN_CORE_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 const noStore = { 'Cache-Control': 'no-store' };
@@ -21,12 +20,63 @@ interface Tokens {
 
 interface Session extends Tokens {
   expires: number;
-  refresh?: Promise<Response>;
   closing?: boolean;
 }
 
-const server = globalThis as typeof globalThis & { tripflixAdminSessions?: Map<string, Session> };
-const sessions = (server.tripflixAdminSessions ??= new Map());
+/** Khóa mã hóa AES-256-GCM cho session stateless: không lưu RAM, không giới hạn 1.000 session, đồng bộ đa container (SEC-02). */
+const SESSION_KEY = createHash('sha256')
+  .update(
+    process.env.ADMIN_SESSION_SECRET ??
+      process.env.AUTH_JWT_PRIVATE_KEY ??
+      'tripflix-admin-session-secret-key-32b-seed',
+  )
+  .digest();
+
+function sealSession(session: Session): string {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', SESSION_KEY, iv);
+  const payload = Buffer.from(
+    JSON.stringify({
+      access: session.access,
+      accessExpiresAt: session.accessExpiresAt,
+      refreshCookie: session.refreshCookie,
+      expires: session.expires,
+    }),
+    'utf8',
+  );
+  const ciphertext = Buffer.concat([cipher.update(payload), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `${iv.toString('base64url')}.${tag.toString('base64url')}.${ciphertext.toString('base64url')}`;
+}
+
+function unsealSession(sealed: string | undefined): Session | undefined {
+  if (!sealed) return undefined;
+  try {
+    const parts = sealed.split('.');
+    if (parts.length !== 3) return undefined;
+    const [ivStr, tagStr, ctStr] = parts;
+    if (!ivStr || !tagStr || !ctStr) return undefined;
+    const iv = Buffer.from(ivStr, 'base64url');
+    const tag = Buffer.from(tagStr, 'base64url');
+    const ciphertext = Buffer.from(ctStr, 'base64url');
+    const decipher = createDecipheriv('aes-256-gcm', SESSION_KEY, iv);
+    decipher.setAuthTag(tag);
+    const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+    const data = JSON.parse(decrypted.toString('utf8')) as Session;
+    if (
+      !data ||
+      typeof data.access !== 'string' ||
+      !Number.isFinite(data.accessExpiresAt) ||
+      !Number.isFinite(data.expires) ||
+      typeof data.refreshCookie !== 'string'
+    ) {
+      return undefined;
+    }
+    return data;
+  } catch {
+    return undefined;
+  }
+}
 
 function reply(status: number, body?: object) {
   return new NextResponse(body ? JSON.stringify(body) : null, {
@@ -132,24 +182,24 @@ function allowed(path: string, method: string) {
   return method === 'POST' && (path === '/api/search' || path === '/api/search/posts');
 }
 
-async function login(request: NextRequest, id: string | undefined) {
+async function login(request: NextRequest, rawCookie: string | undefined) {
   // Chặn cả request gửi trực tiếp đến BFF với trường mật khẩu gốc.
   const data = await request.json().catch(() => null);
   if (!data || typeof data.email !== 'string' || typeof data.encPassword !== 'string' || 'password' in data) {
     return reply(400);
   }
   const body = JSON.stringify({ email: data.email, encPassword: data.encPassword });
-  return openSession(request, id, '/api/auth/login', body);
+  return openSession(request, rawCookie, '/api/auth/login', body);
 }
 
 /** Nút "Mở trang quản trị" bên web: đổi mã một lần (POST /api/auth/admin-handoff) lấy phiên, không đăng nhập lại. */
-async function exchangeHandoff(request: NextRequest, id: string | undefined) {
+async function exchangeHandoff(request: NextRequest, rawCookie: string | undefined) {
   const data = await request.json().catch(() => null);
   if (!data || typeof data.code !== 'string' || Object.keys(data).length !== 1) return reply(400);
-  return openSession(request, id, '/api/auth/admin-handoff/exchange', JSON.stringify({ code: data.code }));
+  return openSession(request, rawCookie, '/api/auth/admin-handoff/exchange', JSON.stringify({ code: data.code }));
 }
 
-async function openSession(request: NextRequest, id: string | undefined, path: string, body: string) {
+async function openSession(request: NextRequest, rawCookie: string | undefined, path: string, body: string) {
   const response = await upstream(request, path, { web: true, body });
   if (!response.ok) return authError(response);
   const tokens = await readTokens(response);
@@ -160,26 +210,19 @@ async function openSession(request: NextRequest, id: string | undefined, path: s
   }
   await profile.body?.cancel();
 
+  const previous = unsealSession(rawCookie);
+  if (previous) {
+    await logout(request, previous).catch(() => undefined);
+  }
+
   const now = Date.now();
-  for (const [key, session] of sessions) {
-    if (session.expires <= now) sessions.delete(key);
-  }
-  const previous = id ? sessions.get(id) : undefined;
-  if (previous && id) {
-    const revoked = await logout(request, id, previous);
-    if (!revoked.ok) {
-      await upstream(request, '/api/auth/logout', { access: tokens.access }).catch(() => undefined);
-      return revoked;
-    }
-  }
-  if (sessions.size >= maxSessions) {
-    await upstream(request, '/api/auth/logout', { access: tokens.access }).catch(() => undefined);
-    return reply(503);
-  }
-  const nextId = randomBytes(32).toString('base64url');
-  sessions.set(nextId, { ...tokens, expires: now + sessionSeconds * 1000 });
+  const session: Session = {
+    ...tokens,
+    expires: now + sessionSeconds * 1000,
+  };
+  const sealed = sealSession(session);
   const result = reply(204);
-  setSessionCookie(result, nextId, sessionSeconds);
+  setSessionCookie(result, sealed, sessionSeconds);
   return result;
 }
 
@@ -187,43 +230,47 @@ function refreshUpstream(request: NextRequest, session: Session) {
   return upstream(request, '/api/auth/refresh', { web: true, cookie: session.refreshCookie, body: '{}' });
 }
 
-async function refresh(request: NextRequest, id: string, session: Session) {
+async function refresh(request: NextRequest, session: Session) {
   const response = await refreshUpstream(request, session);
   if (!response.ok) {
     const result = await authError(response);
     if (response.status === 401) {
-      sessions.delete(id);
       setSessionCookie(result, '', 0);
     }
     return result;
   }
-  Object.assign(session, await readTokens(response));
-  return reply(204);
+  const newTokens = await readTokens(response);
+  const updatedSession: Session = {
+    ...session,
+    ...newTokens,
+  };
+  const result = reply(204);
+  setSessionCookie(result, sealSession(updatedSession), sessionSeconds);
+  return result;
 }
 
-function clearSession(id: string) {
-  sessions.delete(id);
+function clearSession() {
   const result = reply(204);
   setSessionCookie(result, '', 0);
   return result;
 }
 
-async function logout(request: NextRequest, id: string, session: Session) {
+async function logout(request: NextRequest, session: Session) {
   if (session.closing) return reply(409);
   session.closing = true;
   try {
-    await session.refresh;
-    if (!sessions.has(id)) return clearSession(id);
     let response = await upstream(request, '/api/auth/logout', { access: session.access });
     if (response.status === 401) {
       const rotated = await refreshUpstream(request, session);
-      if (rotated.status === 401) return clearSession(id);
+      if (rotated.status === 401) return clearSession();
       if (!rotated.ok) return authError(rotated);
-      Object.assign(session, await readTokens(rotated));
-      response = await upstream(request, '/api/auth/logout', { access: session.access });
+      const newTokens = await readTokens(rotated);
+      response = await upstream(request, '/api/auth/logout', { access: newTokens.access });
     }
     if (!response.ok) return authError(response);
-    return clearSession(id);
+    return clearSession();
+  } catch {
+    return clearSession();
   } finally {
     session.closing = false;
   }
@@ -237,32 +284,27 @@ async function handle(request: NextRequest, context: RouteContext<'/bff/api/[...
   const method = request.method;
   if (method !== 'GET' && request.headers.get('origin') !== adminOrigin) return reply(403);
 
-  const id = request.cookies.get(cookieName)?.value;
-  const session = id ? sessions.get(id) : undefined;
+  const rawCookie = request.cookies.get(cookieName)?.value;
+  const session = unsealSession(rawCookie);
   try {
     if (method === 'GET' && path === '/api/auth/password-key') {
       return forward(await upstream(request, path));
     }
-    if (method === 'POST' && path === '/api/auth/login') return await login(request, id);
-    if (method === 'POST' && path === '/api/auth/admin-handoff/exchange') return await exchangeHandoff(request, id);
+    if (method === 'POST' && path === '/api/auth/login') return await login(request, rawCookie);
+    if (method === 'POST' && path === '/api/auth/admin-handoff/exchange') return await exchangeHandoff(request, rawCookie);
 
     const isRefresh = method === 'POST' && path === '/api/auth/refresh';
     const isLogout = method === 'POST' && path === '/api/auth/logout';
     if (!isRefresh && !isLogout && !allowed(path, method)) return reply(404);
-    if (!id || !session || session.expires <= Date.now()) {
-      if (id) sessions.delete(id);
+    if (!rawCookie || !session || session.expires <= Date.now()) {
       const result = reply(isLogout ? 204 : 401);
-      if (id) setSessionCookie(result, '', 0);
+      if (rawCookie) setSessionCookie(result, '', 0);
       return result;
     }
-    if (isLogout) return await logout(request, id, session);
+    if (isLogout) return await logout(request, session);
     if (session.closing) return reply(401);
     if (isRefresh) {
-      session.refresh ??= refresh(request, id, session).finally(() => {
-        session.refresh = undefined;
-      });
-      // Mỗi caller cần một response riêng khi nhiều tab cùng yêu cầu refresh.
-      return (await session.refresh).clone();
+      return await refresh(request, session);
     }
     if (session.accessExpiresAt <= Date.now()) return reply(401);
     if (method === 'GET' && path === '/api/admin/realtime') {
@@ -272,7 +314,7 @@ async function handle(request: NextRequest, context: RouteContext<'/bff/api/[...
       return createAdminEventStream({
         url: process.env.ADMIN_REALTIME_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080',
         signal: request.signal,
-        getSession: () => sessions.get(id),
+        getSession: () => unsealSession(request.cookies.get(cookieName)?.value),
       });
     }
     const body = method === 'GET' || !request.body ? undefined : await request.text();

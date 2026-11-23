@@ -9,31 +9,39 @@ beforeEach(() => configureHttp({ baseUrl: 'http://api' }));
 afterEach(() => vi.restoreAllMocks());
 
 const item = (id: string) => ({ post: { id }, source: 'hot', reason: { code: 'trending', text: '' } });
-const detail = (id: string) => ({ post: { id, title: `Bài ${id}` }, viewerContext: { myReaction: null, isBookmarked: false }, shareUrl: 'x' });
+/** GET /api/v1/posts?ids=: server trả các bài còn hiện, đúng thứ tự id; 'gone' coi như đã ẩn/xoá. */
+const postsByIds = (url: URL, viewerContext: unknown = { myReaction: null, isBookmarked: false }) =>
+  json({
+    items: url.searchParams.get('ids')!.split(',').filter((id) => id !== 'gone').map((id) => ({ id, title: `Bài ${id}`, viewerContext })),
+    nextCursor: null,
+    hasMore: false,
+  });
 
 describe('recommendPublicPosts', () => {
-  it('gọi /api/recommendations/posts rồi lấy chi tiết từng bài, giữ thứ tự gợi ý, bỏ bài lỗi', async () => {
+  it('gọi /api/recommendations/posts rồi lấy cả trang bài trong một lần, giữ thứ tự gợi ý, bỏ bài đã ẩn', async () => {
     const send = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = new URL(String(input));
       if (url.pathname === '/api/recommendations/posts') {
         return json({ items: [item('b'), item('gone'), item('a')], algo: 'for_you', nextCursor: 'c2' });
       }
-      return url.pathname.endsWith('/gone') ? json({ message: 'not found' }, 404) : json(detail(url.pathname.split('/').pop()!));
+      return postsByIds(url);
     });
     const page = await recommendPublicPosts('c1', undefined, 'vlog');
     expect(page.items.map((p) => p.id)).toEqual(['b', 'a']);
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(new URL(String(send.mock.calls[1]![0])).searchParams.get('ids')).toBe('b,gone,a');
     expect(page.nextCursor).toBe('c2');
     const url = new URL(String(send.mock.calls[0]![0]));
     expect(Object.fromEntries(url.searchParams)).toEqual({ mode: 'for_you', limit: '7', cursor: 'c1', postType: 'vlog' });
   });
 
-  it('gắn viewerContext (ở ngoài post trong chi tiết) vào từng bài để F5 vẫn hiện tim đã thả', async () => {
+  it('giữ viewerContext của từng bài để F5 vẫn hiện tim đã thả', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = new URL(String(input));
       if (url.pathname === '/api/recommendations/posts') {
         return json({ items: [item('liked')], algo: 'for_you', nextCursor: null });
       }
-      return json({ post: { id: 'liked' }, viewerContext: { myReaction: 'like', isBookmarked: true }, shareUrl: 'x' });
+      return postsByIds(url, { myReaction: 'like', isBookmarked: true });
     });
     const page = await recommendPublicPosts();
     expect(page.items[0]?.viewerContext).toEqual({ myReaction: 'like', isBookmarked: true });

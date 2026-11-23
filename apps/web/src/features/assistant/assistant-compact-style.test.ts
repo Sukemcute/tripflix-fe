@@ -5,12 +5,14 @@ import { describe, expect, it } from 'vitest';
 
 describe('Assistant compact layout', () => {
   const css = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'assistant.module.css'), 'utf8');
-  const rule = (name: string) => css.match(new RegExp(`\\.${name}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+  const rule = (name: string) => css.match(new RegExp(`^\\.${name}\\s*\\{([^}]*)\\}`, 'm'))?.[1] ?? '';
 
   it('keeps three equal video columns without horizontal scrolling', () => {
     expect(rule('videos')).toMatch(/display:\s*grid/);
     expect(rule('videos')).toMatch(/grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/);
-    expect(rule('videos')).toMatch(/max-width:\s*min\(100%,\s*calc\(82%\s*\+\s*34\.44px\)\)/);
+    expect(rule('cards')).toMatch(/grid-column:\s*2/);
+    expect(rule('cards')).toMatch(/contain:\s*inline-size/);
+    expect(rule('videos')).toMatch(/width:\s*100%/);
     expect(rule('videos')).not.toMatch(/overflow-x:\s*auto/);
     expect(rule('video')).toMatch(/aspect-ratio:\s*2\s*\/\s*3/);
     expect(rule('video')).toMatch(/min-width:\s*0/);

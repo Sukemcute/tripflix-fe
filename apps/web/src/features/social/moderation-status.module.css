@@ -22,29 +22,7 @@
 }
 
 .tabs {
-  display: inline-flex;
-  gap: 4px;
   margin-bottom: 20px;
-  padding: 4px;
-  border-radius: 999px;
-  background: var(--color-surface-muted);
-}
-
-.tab {
-  padding: 8px 18px;
-  border-radius: 999px;
-  color: var(--color-text-muted);
-  font-size: 14px;
-  font-weight: 700;
-  transition:
-    background 200ms,
-    color 200ms;
-}
-
-.tab[aria-selected='true'] {
-  background: var(--color-background);
-  color: var(--color-teal-ink);
-  box-shadow: 0 0 0 1px var(--color-border);
 }
 
 .list {

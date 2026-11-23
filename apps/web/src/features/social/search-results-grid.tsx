@@ -11,6 +11,7 @@ import { formatAuthorDisplay, formatCompactCount, SocialIcon } from './live-post
 import { mergeSearchGridCards, type GridCardItem } from './search-author-items';
 import { ExploreAllResults, PlaceResults, UserResults } from './search-explore-results';
 import { getPlaceKind, SEARCH_RESULT_TYPES, type SearchResultType } from './search-url';
+import segmentedTabs from '../shared/segmented-tabs.module.css';
 import styles from './search-results-grid.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
 
@@ -80,14 +81,14 @@ export function SearchResultsGrid({
         </button>
       </header>
 
-      <div className={styles.tabs} role="tablist" aria-label={vi.api.searchResultsTabsAria}>
+      <div className={`${segmentedTabs.tabs} ${segmentedTabs.tabsAuto} ${styles.tabs}`} role="tablist" aria-label={vi.api.searchResultsTabsAria}>
         {SEARCH_RESULT_TYPES.map((type) => (
           <button
             key={type}
             type="button"
             role="tab"
             aria-selected={type === resultType}
-            className={styles.tab}
+            className={segmentedTabs.tab}
             onClick={() => onChangeResultType(type)}
           >
             {RESULT_TYPE_LABELS[type]}
@@ -103,14 +104,14 @@ export function SearchResultsGrid({
         <PlaceResults keyword={keyword} kind={placeKind} onOpenPost={onOpenPost} onOpenReel={onOpenReel} />
       ) : (
         <>
-          <div className={styles.tabs} role="tablist" aria-label={vi.api.postSortAria}>
+          <div className={`${segmentedTabs.tabs} ${segmentedTabs.tabsAuto} ${styles.tabs}`} role="tablist" aria-label={vi.api.postSortAria}>
             {POST_SORT_OPTIONS.map((option) => (
               <button
                 key={option.value}
                 type="button"
                 role="tab"
                 aria-selected={option.value === sort}
-                className={styles.tab}
+                className={`${segmentedTabs.tab} ${segmentedTabs.tabCompact}`}
                 onClick={() => onChangeSort(option.value)}
               >
                 {option.label}

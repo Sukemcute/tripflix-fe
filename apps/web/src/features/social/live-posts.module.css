@@ -982,6 +982,26 @@
   background: var(--color-overlay);
 }
 
+.galleryStageOverlay[data-expanded='true'] {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.galleryStageOverlay[data-expanded='true'] .galleryViewer {
+  height: 100dvh;
+}
+
+.galleryStageOverlay[data-expanded='true'] .galleryContainImg {
+  height: 100%;
+  max-height: none;
+}
+
 .galleryStageOverlay button:focus-visible {
   outline: 2px solid var(--color-teal-ink);
   outline-offset: 2px;
@@ -1005,6 +1025,13 @@
 
 .galleryHeaderText {
   min-width: 0;
+}
+
+.galleryHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .galleryHeaderTitle {
@@ -1931,7 +1958,7 @@
 
 .rightPanel {
   min-width: 0;
-  background: color-mix(in srgb, var(--color-background) 88%, transparent);
+  background: var(--color-background);
   border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
   border-radius: 22px;
   box-shadow: 0 18px 48px -26px color-mix(in srgb, var(--color-ink) 40%, transparent);
@@ -3385,7 +3412,8 @@ a.avatarSmall {
   /* Lịch trình mở thành bottom sheet như panel bình luận, thay vì bị ẩn hẳn. */
   .itineraryInReels {
     position: fixed !important;
-    inset: auto 0 0 0 !important;
+    /* Đứng trên thanh điều hướng đáy (<768px); trên 768px biến bằng 0. */
+    inset: auto 0 var(--mobile-tab-bar-space, 0px) 0 !important;
     height: 78dvh !important;
     max-height: 78dvh !important;
     border-radius: 22px 22px 0 0 !important;
@@ -3408,7 +3436,8 @@ a.avatarSmall {
   .leftPanel,
   .rightPanel {
     position: fixed;
-    inset: auto 0 0 0;
+    /* Đứng trên thanh điều hướng đáy (<768px) để ô nhập bình luận không bị che. */
+    inset: auto 0 var(--mobile-tab-bar-space, 0px) 0;
     height: 78dvh;
     border-radius: 22px 22px 0 0;
     z-index: 60;

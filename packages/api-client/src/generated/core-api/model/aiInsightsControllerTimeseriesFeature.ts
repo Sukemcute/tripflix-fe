@@ -12,4 +12,5 @@ export const AiInsightsControllerTimeseriesFeature = {
   chat: 'chat',
   summary: 'summary',
   moderation: 'moderation',
+  cover_ocr: 'cover_ocr',
 } as const;

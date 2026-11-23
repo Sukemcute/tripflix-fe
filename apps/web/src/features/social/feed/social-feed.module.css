@@ -29,29 +29,21 @@
 }
 
 .recommendModeTabs {
-  /* Lớp kính mờ giữ chữ tab dễ đọc trên mặt nước của trang Cảm hứng. */
-  --tabs-radius: 14px;
-  --tabs-inset: 4px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
   margin-bottom: 12px;
-  padding: var(--tabs-inset);
-  border-radius: var(--tabs-radius);
-  background: var(--water-glass, transparent);
-  backdrop-filter: blur(10px);
 }
 
-.recommendModeTabs .composerTagBtn {
-  justify-content: center;
-  min-height: 40px;
+/* Bốn nhãn dài như "Dành cho bạn" cần ~500px mới đủ một hàng: lề nút hẹp như trước khi dùng bộ tab chung,
+   và chữ không bao giờ tràn khỏi nút. Selector có thẻ để thắng .tab/.tabs của bộ chung bất kể thứ tự nạp CSS. */
+.recommendModeTabs > button {
+  min-width: 0;
   padding-inline: 6px;
-  border-radius: calc(var(--tabs-radius) - var(--tabs-inset));
-  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-@container (max-width: 420px) {
-  .recommendModeTabs {
+@container (max-width: 500px) {
+  div.recommendModeTabs {
+    grid-auto-flow: row;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -450,7 +442,7 @@
   height: 100%;
   max-height: none;
   min-height: 0;
-  background: color-mix(in srgb, var(--color-background) 88%, transparent);
+  background: var(--color-background);
   border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
   border-radius: 22px;
   box-shadow: 0 18px 48px -26px color-mix(in srgb, var(--color-ink) 40%, transparent);
@@ -634,40 +626,9 @@
   background: var(--color-coral-ink);
 }
 
-/* Tabs dạng viên thuốc */
+/* Khoảng cách hàng tab Lịch trình / Chi phí (style chi tiết lấy từ segmented-tabs.module.css) */
 .itineraryTabsRow {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   margin: 0 14px 4px;
-  padding: 4px;
-  border-radius: 999px;
-  background: var(--color-surface-muted);
-}
-
-.itineraryTabItem {
-  flex: 1;
-  padding: 7px 4px;
-  border: none;
-  border-radius: 999px;
-  background: var(--color-transparent);
-  color: var(--color-text-muted);
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  text-align: center;
-  transition: all 180ms ease;
-  white-space: nowrap;
-}
-
-.itineraryTabItem:hover {
-  color: var(--color-navy);
-}
-
-.itineraryTabItemActive {
-  background: var(--color-background) !important;
-  color: var(--color-navy) !important;
-  box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--color-ink) 25%, transparent);
 }
 
 /* Vùng cuộn */
@@ -891,11 +852,12 @@
 
 /* No Trip Attached State */
 .itineraryNoTripContainer {
-  padding: 24px 16px;
+  padding: clamp(20px, 6dvh, 48px) 16px 20px;
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
 }
 
 .itineraryNoTripCard {
@@ -903,46 +865,78 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
 }
 
 .itineraryNoTripIcon {
-  width: 52px;
-  height: 52px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: color-mix(in srgb, var(--color-coral) 8%, transparent);
   color: var(--color-coral);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .itineraryNoTripTitle {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  color: #141B3D;
-  margin: 0 0 6px;
+  color: var(--color-navy);
+  margin: 0 0 4px;
 }
 
 .itineraryNoTripDesc {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+
+.itineraryNoTripBrowseBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-navy);
   font-size: 12.5px;
-  color: #64748B;
-  margin: 0 0 16px;
-  line-height: 1.5;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.itineraryNoTripBrowseBtn:hover {
+  border-color: var(--color-coral);
+  background: var(--color-warm-mist);
+  color: var(--color-coral-ink);
+}
+
+.itineraryNoTripBrowseBtn:focus-visible {
+  outline: 2px solid var(--color-coral-ink);
+  outline-offset: 2px;
 }
 
 .itinerarySuggestedBox {
   width: 100%;
   text-align: left;
-  border-top: 1px solid #F1F5F9;
-  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+  margin-top: 14px;
 }
 
 .itinerarySuggestedHeading {
   display: block;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
-  color: #94A3B8;
+  color: var(--color-text-muted);
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -955,16 +949,23 @@
   width: 100%;
   padding: 8px 10px;
   border-radius: 10px;
-  border: 1px solid #E2E8F0;
-  background: #FFFFFF;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
   cursor: pointer;
   text-align: left;
-  transition: all 160ms ease;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
 }
 
 .itinerarySuggestedCard:hover {
   border-color: var(--color-coral);
-  background: #FFFBF8;
+  background: var(--color-warm-mist);
+}
+
+.itinerarySuggestedCard:focus-visible {
+  outline: 2px solid var(--color-coral-ink);
+  outline-offset: 2px;
 }
 
 .itinerarySuggestedThumb {
@@ -990,7 +991,7 @@
 .itinerarySuggestedTitle {
   font-size: 12.5px;
   font-weight: 600;
-  color: #141B3D;
+  color: var(--color-navy);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -999,7 +1000,14 @@
 .itinerarySuggestedAction {
   font-size: 11px;
   font-weight: 600;
-  color: var(--color-coral);
+  color: var(--color-coral-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .itineraryNoTripBrowseBtn,
+  .itinerarySuggestedCard {
+    transition: none;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -1025,17 +1033,9 @@
   transition: grid-template-columns 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.splitViewNoLeft {
-  grid-template-columns: 0px 0px minmax(0, 1fr) 20px 380px;
-}
-
-.splitViewNoRight {
-  grid-template-columns: 340px 20px minmax(0, 1fr) 0px 0px;
-}
-
-/* Bảng tin tự giới hạn 800px và canh giữa (.mainFeedColumn) nên không cần justify-content. */
-.splitViewCenterOnly {
-  grid-template-columns: 0px 0px minmax(0, 1fr) 0px 0px;
+/* Từ 1200px trở lên tab Bài viết luôn ghim cột Lịch trình bên trái, ẩn nút thu gọn mà không sửa ItinerarySidebarPanel. */
+.splitViewPinnedLeft .itineraryCollapseBtn {
+  display: none;
 }
 
 /* Sidebar luôn ở cột cố định: sidebar đang đóng (đã gỡ khỏi DOM) không làm các phần khác nhảy cột. */
@@ -2289,23 +2289,18 @@ a.authorAvatar {
 /* --------------------------------------------------------------------------
    Responsive Breakpoints
    -------------------------------------------------------------------------- */
+/* Từ 1200px trở lên tab Bài viết cố định cả hai cột bên (luôn 3 cột, không dùng trạng thái đóng trái/phải). */
+@media (min-width: 1200px) {
+  .splitViewContainer .itineraryCollapseBtn {
+    display: none;
+  }
+}
+
 /* Laptop (TF98): hai cột bên co theo bề ngang màn để cột bảng tin giữa không bị ép hẹp khi mở cả hai.
    clamp() (không dùng minmax) để grid-template-columns vẫn trượt mượt khi mở/đóng cột; ở 1439px bằng giá trị cũ. */
 @media (max-width: 1439px) {
   .splitViewContainer {
     grid-template-columns: clamp(240px, 21vw, 300px) 16px minmax(0, 1fr) 16px clamp(260px, 23vw, 330px);
-  }
-
-  .splitViewNoLeft {
-    grid-template-columns: 0px 0px minmax(0, 1fr) 16px clamp(260px, 23vw, 330px);
-  }
-
-  .splitViewNoRight {
-    grid-template-columns: clamp(240px, 21vw, 300px) 16px minmax(0, 1fr) 0px 0px;
-  }
-
-  .splitViewCenterOnly {
-    grid-template-columns: 0px 0px minmax(0, 1fr) 0px 0px;
   }
 }
 
@@ -2358,7 +2353,8 @@ a.authorAvatar {
   .itineraryInFeed,
   .rightPanelInFeed {
     position: fixed !important;
-    inset: auto 0 0 0 !important;
+    /* Đứng trên thanh điều hướng đáy (<768px) để ô nhập bình luận không bị che; trên 768px biến bằng 0. */
+    inset: auto 0 var(--mobile-tab-bar-space, 0px) 0 !important;
     width: 100% !important;
     height: 78dvh !important;
     max-height: 78dvh !important;

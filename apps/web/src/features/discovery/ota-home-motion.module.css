@@ -91,11 +91,6 @@
   transform: scale(1.08);
   filter: blur(8px);
 }
-/* Khung bình luận và lịch trình dùng nền trắng đặc trên trang Cảm hứng. */
-.waterContent :is(:global([class*='rightPanelInFeed']), :global([class*='itineraryInFeed'])) {
-  background: var(--color-background);
-  backdrop-filter: none;
-}
 
 .waterContent {
   position: relative;

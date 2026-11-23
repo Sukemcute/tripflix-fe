@@ -235,7 +235,7 @@
   color: var(--color-text-muted);
 }
 .strong {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-ink);
 }
@@ -299,6 +299,9 @@
 }
 
 .turn {
+  --message-avatar: 34px;
+  --message-gap: 8px;
+  --message-max-width: 82%;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -306,17 +309,27 @@
 .messageRow {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: var(--message-gap);
+}
+.messageRow[data-has-cards] {
+  display: grid;
+  grid-template-columns: var(--message-avatar) minmax(0, 1fr);
+  width: fit-content;
+  min-width: min(100%, 256px);
+  max-width: min(100%, calc(var(--message-avatar) + var(--message-gap) + var(--message-max-width)));
+}
+.messageRow[data-has-cards] .message {
+  max-width: none;
 }
 .messageRow[data-role='user'] {
   justify-content: flex-end;
 }
 .avatarSpacer {
   flex: none;
-  width: 34px;
+  width: var(--message-avatar);
 }
 .message {
-  max-width: 82%;
+  max-width: var(--message-max-width);
   padding: 10px 14px;
   border-radius: 22px 22px 22px 6px;
   background: var(--color-warm-mist);
@@ -331,11 +344,33 @@
   background: var(--color-navy);
   color: var(--color-background);
 }
+.replyMeasure {
+  display: block;
+  block-size: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+.replyWord {
+  animation: reply-word-in 140ms ease-out both;
+}
+@keyframes reply-word-in {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .replyWord {
+    animation: none;
+  }
+}
 .attachments {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-left: 42px;
+  margin-left: calc(var(--message-avatar) + var(--message-gap));
 }
 .suggestionsLabel {
   font-size: 12px;
@@ -542,24 +577,28 @@
 
 /* Thẻ */
 .cards {
+  grid-column: 2;
+  /* Nội dung bong bóng quyết định bề rộng cột. */
+  contain: inline-size;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  overflow-wrap: anywhere;
 }
 .card {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid var(--color-border);
-  border-radius: 20px;
+  border-radius: 16px;
   background: var(--color-background);
   box-shadow: 0 6px 18px -12px var(--color-overlay);
 }
 .cardHeader {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 .cardIcon {
   display: grid;
@@ -571,8 +610,16 @@
   background: var(--color-coral-tint);
   color: var(--color-coral-ink);
 }
+.cards .cardIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+.cards .meta {
+  font-size: 11px;
+}
 .cardTitle {
-  font-size: 15px;
+  font-size: var(--assistant-font-body);
   font-weight: 700;
   color: var(--color-navy);
 }
@@ -584,14 +631,16 @@
 .cardAction,
 .cardActionPrimary {
   display: inline-flex;
-  flex: none;
+  flex: 0 1 auto;
   align-items: center;
   min-height: 40px;
-  padding: 0 16px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 12px;
   border: 1px solid var(--color-border);
   border-radius: 999px;
   background: var(--color-background);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--color-navy);
   cursor: pointer;
@@ -706,7 +755,7 @@
   color: var(--part-fg);
 }
 .stopTitle {
-  font-size: var(--assistant-font-body);
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-ink);
 }
@@ -722,22 +771,22 @@
   flex-direction: column;
 }
 .list > li + li {
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid var(--color-border);
 }
 .listRow,
 .weatherRow {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 .check {
   display: grid;
   flex: none;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border-radius: 999px;
   background: var(--color-teal);
   color: var(--color-background);
@@ -746,20 +795,22 @@
   display: grid;
   flex: none;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
   background: var(--color-sea-mist);
   color: var(--color-teal-ink);
 }
 .weatherRight {
   display: flex;
+  flex: none;
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
+  white-space: nowrap;
 }
 .temperature {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--color-navy);
 }
@@ -770,17 +821,17 @@
   padding: 1px 6px;
   border-radius: 999px;
   background: var(--color-sea-mist);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--color-teal-ink);
 }
 .rowCard {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px;
+  gap: 8px;
+  padding: 10px;
   border: 1px solid var(--color-border);
-  border-radius: 20px;
+  border-radius: 16px;
   background: var(--color-background);
   color: var(--color-text-muted);
   box-shadow: 0 6px 18px -12px var(--color-overlay);
@@ -789,12 +840,12 @@
   background: var(--color-surface);
 }
 .rowTitle {
-  font-size: var(--assistant-font-body);
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-ink);
 }
 .price {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--color-coral-ink);
 }
@@ -802,8 +853,6 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   width: 100%;
-  /* Bù 82% phần thụt 42px của attachments để cùng max-width với bong bóng. */
-  max-width: min(100%, calc(82% + 34.44px));
   gap: 8px;
 }
 .video {

@@ -25,7 +25,7 @@ export interface PostSearchFeedOptions {
 
 /**
  * Một trang kết quả tìm bài bằng engine discovery, giữ đúng thứ tự xếp hạng.
- * Bài đã ẩn/xoá giữa hai lần gọi (chi tiết lỗi) thì bỏ qua thay vì làm hỏng cả trang.
+ * Bài đã ẩn/xoá giữa hai lần gọi thì server bỏ qua.
  */
 export async function searchPostFeedPage(
   keyword: string,
@@ -35,24 +35,10 @@ export async function searchPostFeedPage(
     { q: keyword, cursor, limit: POST_SEARCH_FEED_PAGE_SIZE, ...(postType ? { postType } : {}), ...(sort ? { sort } : {}) },
     signal,
   );
-  const thumbnails: Record<string, string | null> = {};
-  const details = await Promise.all(
-    found.items.map((hit) =>
-      socialApi.getPost(hit.refId, signal).then(
-        (detail): SocialPostDto | null => {
-          thumbnails[detail.post.id] = hit.thumbnail;
-          // Chi tiết trả viewerContext ở ngoài bài: gắn vào để trạng thái thích/lưu đúng như ở luồng bài.
-          return { ...detail.post, viewerContext: detail.viewerContext ?? detail.post.viewerContext ?? null };
-        },
-        (): SocialPostDto | null => null,
-      ),
-    ),
-  );
-  return {
-    items: details.filter((post): post is SocialPostDto => post !== null),
-    nextCursor: found.nextCursor,
-    thumbnails,
-  };
+  const items: SocialPostDto[] = await socialApi.getPostsByIds(found.items.map((hit) => hit.refId), signal);
+  const thumbnailById = new Map(found.items.map((hit) => [hit.refId, hit.thumbnail]));
+  const thumbnails: Record<string, string | null> = Object.fromEntries(items.map((post) => [post.id, thumbnailById.get(post.id) ?? null]));
+  return { items, nextCursor: found.nextCursor, thumbnails };
 }
 
 export function getPostSearchFeedQueryKey(

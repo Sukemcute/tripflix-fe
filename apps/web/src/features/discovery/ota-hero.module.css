@@ -282,7 +282,7 @@
   position: relative;
   display: inline-block;
   padding: 0.02em 0.18em 0.16em 0.04em;
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: var(--font-playfair), Georgia, serif;
   font-size: 1.04em;
   font-weight: 700;
   font-style: italic;

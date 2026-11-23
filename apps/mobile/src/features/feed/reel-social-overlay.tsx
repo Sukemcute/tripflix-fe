@@ -3,6 +3,7 @@ import { VerifiedTripBadge } from './verified-trip-badge';
 import { getCollapsedCaptionLength, getPostCaption, getReelScale, hasTripPlan } from '@tripflix/app-core';
 import {
   HttpError,
+  RECOMMENDED_REELS_KEY,
   REEL_FEED_TABS,
   removeUnavailablePost,
   socialApi,
@@ -230,6 +231,8 @@ export function ReelSocialOverlay({
         ...REEL_FEED_TABS.map((tab) =>
           client.cancelQueries({ queryKey: ['feed', tab, user.id], exact: true }),
         ),
+        // Dành cho bạn của người đăng nhập đọc từ discovery: trang đang tải về sau không được đè tim vừa bấm.
+        client.cancelQueries({ queryKey: [...RECOMMENDED_REELS_KEY, 'mixed', user.id], exact: true }),
         client.cancelQueries({ queryKey: ['social', 'post', postId, user.id], exact: true }),
       ]);
       return updateReelSocialCache(client, user.id, postId, action.type, !!action.selected);

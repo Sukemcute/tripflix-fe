@@ -93,6 +93,8 @@ export const assistant = {
     'Đang xếp lịch trình cho gọn…',
     'Sắp xong rồi nè…',
   ],
+  /** Câu chờ riêng cho web: nhẹ nhàng, hợp cả khi khách chỉ chào hỏi. Mobile vẫn dùng `thinkingSteps`. */
+  thinkingStepsWeb: ['Đợi Tripi suy nghĩ xíu nghen…', 'Xíu nữa thôi nha…'],
   itinerarySummary: '{days} ngày · {stops} điểm dừng',
   itineraryStops: '{stops} điểm dừng',
   dayLabel: 'Ngày {day}',

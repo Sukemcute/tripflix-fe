@@ -18,6 +18,7 @@ import { StayThumbnail } from './stay-thumbnail';
 import { SoftStarIcon } from './soft-star-icon';
 import { StaySearchIcon } from './stay-search-icon';
 import { WashiTape } from './torn-paper';
+import segmentedTabs from '../shared/segmented-tabs.module.css';
 import styles from './ota-home.module.css';
 import { useNearViewport } from './use-near-viewport';
 import { LoadingDots } from '@/features/shared/loading-dots';
@@ -110,11 +111,15 @@ export function HomeStayPreview() {
             aria-hidden="true"
           />
         </div>
-        <fieldset className={styles.chips} aria-label={vi.api.destination}>
+        <fieldset
+          className={`${segmentedTabs.tabs} ${segmentedTabs.tabsAuto} ${styles.chips}`}
+          aria-label={vi.api.destination}
+        >
           {OTA_DESTINATIONS.map((place) => (
             <button
               type="button"
               key={place.id}
+              className={segmentedTabs.tab}
               aria-pressed={place.id === destination.id}
               onClick={() => setDestination(place)}
             >

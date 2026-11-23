@@ -16,7 +16,8 @@ import { refreshCommentsIfStale } from '../comment-cache';
 import { useHasUserInteracted } from '../use-has-user-interacted';
 import { useSettledFlag } from '../use-settled-flag';
 import { usePresence } from '../use-presence';
-import { useIsWideScreen } from '../use-wide-screen';
+import { useIsPinnedItineraryScreen, useIsWideScreen } from '../use-wide-screen';
+import { resolveFeedRightOpen, shouldCloseCommentOnToggle } from './itinerary-pin';
 import { nextScrollTarget, stepScrollTowards, wheelDeltaToPixels } from './smooth-wheel-scroll';
 import reelsStyles from '../live-posts.module.css';
 import { type FeedNavFilter } from './floating-nav-rail';
@@ -28,9 +29,11 @@ import { ShareMenu, type ShareMenuHandle } from '../share-menu';
 import { getPostImages } from '../post-cover';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { AvatarPhoto } from '@/features/shared/avatar-photo';
+import segmentedTabs from '../../shared/segmented-tabs.module.css';
 import { getFocusedFeedPosts } from './focused-post';
 import styles from './social-feed.module.css';
 import { LoadingDots } from '@/features/shared/loading-dots';
+import { getEngagementRefreshKeys } from './engagement-refresh';
 
 export interface SocialFeedViewProps {
   /** Tab đang hiện. Tab được giữ mounted khi ẩn, nên hiện lại cũng là bố cục ban đầu: không chạy hiệu ứng. */
@@ -46,6 +49,7 @@ export interface SocialFeedViewProps {
   focusCommentId?: string;
   onBackToResults?: () => void;
   isItineraryOpen?: boolean;
+  isItineraryPinned?: boolean;
   onOpenItinerary?: () => void;
   onCloseItinerary?: () => void;
   filterMode?: FeedNavFilter;
@@ -70,6 +74,7 @@ export function SocialFeedView({
   focusCommentId,
   onBackToResults,
   isItineraryOpen: propIsItineraryOpen,
+  isItineraryPinned: propIsItineraryPinned,
   onOpenItinerary,
   onCloseItinerary,
   filterMode: propFilterMode,
@@ -84,20 +89,28 @@ export function SocialFeedView({
   const activeFilter = propFilterMode ?? 'all';
   const [recommendMode, setRecommendMode] = useState<PostRecommendationsControllerRecommendPostsMode>('for_you');
 
+  const isWideScreen = useIsWideScreen();
+  const isPinnedScreen = useIsPinnedItineraryScreen();
+  const isItineraryPinned = propIsItineraryPinned ?? isPinnedScreen;
+
   const [localIsItineraryOpen, setLocalIsItineraryOpen] = useState(true);
-  const isItineraryOpen = propIsItineraryOpen ?? localIsItineraryOpen;
+  const isItineraryOpen = isItineraryPinned || (propIsItineraryOpen ?? localIsItineraryOpen);
   const handleOpenItinerary = onOpenItinerary ?? (() => setLocalIsItineraryOpen(true));
-  const handleCloseItinerary = onCloseItinerary ?? (() => setLocalIsItineraryOpen(false));
+  const handleCloseItinerary = () => {
+    if (isItineraryPinned) return;
+    if (onCloseItinerary) onCloseItinerary();
+    else setLocalIsItineraryOpen(false);
+  };
 
   const [localIsComposerOpen, setLocalIsComposerOpen] = useState(false);
   const handleOpenComposer = onOpenComposer ?? (() => setLocalIsComposerOpen(true));
   const handleCloseComposer = onCloseComposer ?? (() => setLocalIsComposerOpen(false));
 
   // Layout states
-  // Màn rộng mở sẵn panel bình luận; người dùng đóng/mở thì giữ lựa chọn đó. Server render coi như đóng để không lệch hydration.
-  const isWideScreen = useIsWideScreen();
+  // Màn >= 1200px ghim luôn cả hai cột; 1024..1199px mở sẵn và cho phép đóng/mở; server render coi như đóng để không lệch hydration.
   const [rightOpenChoice, setIsRightOpen] = useState<boolean | null>(focusCommentId ? true : null);
-  const isRightOpen = rightOpenChoice ?? isWideScreen;
+  const isRightPinned = isItineraryPinned;
+  const isRightOpen = resolveFeedRightOpen(rightOpenChoice, isWideScreen, isRightPinned);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [activeFocusedPostId, setActiveFocusedPostId] = useState<string | null>(null);
   const [galleryState, setGalleryState] = useState<{ postId: string; index: number } | null>(null);
@@ -115,7 +128,11 @@ export function SocialFeedView({
   const queryKind: 'public' | 'bookmarks' = activeFilter === 'saved' ? 'bookmarks' : 'public';
   const isSearchMode = activeFilter !== 'saved' && effectiveKeyword.length > 0;
   // Tab Bài viết chỉ lấy vlog; Reels có luồng riêng (/v1/feed).
-  const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended', { recommendMode, refreshOnReturn: isVisible });
+  const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended', {
+    recommendMode,
+    refreshOnReturn: isVisible,
+    enabled: isVisible,
+  });
   // Tìm kiếm: cùng query với grid kết quả (search của discovery) nên mở bài từ grid không gọi lại API.
   const searchQuery = usePostSearchFeed(isSearchMode ? effectiveKeyword : '', undefined, searchSort);
   const postsQuery = isSearchMode ? searchQuery : feedQuery;
@@ -643,7 +660,9 @@ export function SocialFeedView({
           return next;
         });
       }
-      void client.invalidateQueries({ queryKey: ['social'] });
+      for (const queryKey of getEngagementRefreshKeys(payload.type, payload.postId)) {
+        void client.invalidateQueries({ queryKey });
+      }
     },
   });
 
@@ -692,13 +711,20 @@ export function SocialFeedView({
   const handleToggleComment = useCallback(
     (postId: string) => {
       const currentActiveId = activeCommentPostId ?? activeCommentPost?.id;
-      if (isRightOpen && currentActiveId === postId) {
-        // Neu dang mo dung bai viet nay -> Dong lai
+      if (
+        shouldCloseCommentOnToggle({
+          isRightOpen,
+          currentActivePostId: currentActiveId,
+          targetPostId: postId,
+          isPinned: isRightPinned,
+        })
+      ) {
+        // Neu dang mo dung bai viet nay (man < 1200px) -> Dong lai
         setIsRightOpen(false);
         return;
       }
 
-      // Neu dang dong hoac dang mo bai khac -> Mo panel va tai moi binh luan
+      // Neu dang dong, mo bai khac hoac dang ghim (>= 1200px) -> Chon bai va mo / giu mo panel
       setActiveCommentPostId(postId);
       setIsRightOpen(true);
       refreshCommentsIfStale(client, postId);
@@ -706,7 +732,7 @@ export function SocialFeedView({
         commentInputRef.current?.focus();
       }, 80);
     },
-    [client, isRightOpen, activeCommentPostId, activeCommentPost?.id]
+    [client, isRightOpen, activeCommentPostId, activeCommentPost?.id, isRightPinned]
   );
 
   // Layout container class selection
@@ -731,7 +757,13 @@ export function SocialFeedView({
       : `${styles.splitViewContainer} ${styles.splitViewCenterOnly}`;
 
   return (
-    <div className={`${containerClassName} ${isLayoutAnimated ? '' : styles.layoutStatic}`}>
+    <div
+      className={`${containerClassName} ${isItineraryPinned ? styles.splitViewPinnedLeft : ''} ${
+        isLayoutAnimated ? '' : styles.layoutStatic
+      }`}
+      data-itinerary-pinned={isItineraryPinned ? 'true' : undefined}
+      data-comment-pinned={isRightPinned ? 'true' : undefined}
+    >
       {/* 1. Left Column: Itinerary Sidebar Panel (Nằm ngay bên phải của Dock, cố định vững vàng) */}
       {leftPresence.isRendered && (
         <ItinerarySidebarPanel
@@ -745,6 +777,12 @@ export function SocialFeedView({
           coverImage={activeItineraryCover}
           isOpen={leftPresence.isRendered}
           onClose={handleCloseItinerary}
+          // Chỉ có ý nghĩa khi đang hiện tab gợi ý (không tìm kiếm, không ở "Đã lưu").
+          onBrowseTripPosts={
+            !isSearchMode && activeFilter !== 'saved' && recommendMode !== 'has_plan'
+              ? () => setRecommendMode('has_plan')
+              : undefined
+          }
         />
       )}
 
@@ -883,7 +921,7 @@ export function SocialFeedView({
           <div
             role="tablist"
             aria-label={vi.api.recommendModeAria}
-            className={styles.recommendModeTabs}
+            className={`${segmentedTabs.tabs} ${segmentedTabs.tabsGlass} ${styles.recommendModeTabs}`}
           >
             {RECOMMEND_MODE_OPTIONS.map((option) => {
               const selected = option.value === recommendMode;
@@ -893,12 +931,7 @@ export function SocialFeedView({
                   type="button"
                   role="tab"
                   aria-selected={selected}
-                  className={styles.composerTagBtn}
-                  style={
-                    selected
-                      ? { background: 'var(--tf-color-ink, #111827)', color: '#fff', borderColor: 'transparent' }
-                      : undefined
-                  }
+                  className={segmentedTabs.tab}
                   onClick={() => setRecommendMode(option.value)}
                 >
                   {option.label}
@@ -963,6 +996,7 @@ export function SocialFeedView({
               onToggleLike={handleLikeToggle}
               onToggleSave={handleSaveToggle}
               onToggleComment={handleToggleComment}
+              hideCommentButton={isRightPinned}
               onShare={handleShare}
               onViewItinerary={(postId) => {
                 setActiveFocusedPostId(postId);
@@ -1004,17 +1038,19 @@ export function SocialFeedView({
               </span>
             </h2>
 
-            <button
-              type="button"
-              className={reelsStyles.iconGhostBtn}
-              aria-label={vi.api.commentPanelClose}
-              data-tooltip={vi.api.commentPanelClose}
-              onClick={() => {
-                setIsRightOpen(false);
-              }}
-            >
-              <SocialIcon name="close" size={17} />
-            </button>
+            {!isRightPinned && (
+              <button
+                type="button"
+                className={reelsStyles.iconGhostBtn}
+                aria-label={vi.api.commentPanelClose}
+                data-tooltip={vi.api.commentPanelClose}
+                onClick={() => {
+                  setIsRightOpen(false);
+                }}
+              >
+                <SocialIcon name="close" size={17} />
+              </button>
+            )}
           </div>
 
           {activeCommentPost ? (

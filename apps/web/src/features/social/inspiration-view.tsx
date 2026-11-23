@@ -25,10 +25,10 @@ import {
   type SearchResultType,
   type SearchSort,
 } from './search-url';
-import { useIsWideScreen } from './use-wide-screen';
+import { useIsPinnedItineraryScreen, useIsWideScreen } from './use-wide-screen';
+import { resolveTabItineraryOpen } from './feed/itinerary-pin';
 import { COMPOSE_PARAM, readComposeType, removeComposeParam, type ComposeType } from '@/features/shell/mobile-tabs';
 import { PublishToast } from './composer/publish-toast';
-import { TooltipLayer } from './feed/tooltip-layer';
 import styles from './feed/social-feed.module.css';
 
 const InspirationImmersiveViewer = dynamic(
@@ -96,13 +96,37 @@ export function InspirationView() {
   // Link chia sẻ Reel (?open=<id>&kind=reel, không có từ khoá): Reel đó lên đầu bảng tin Reels.
   const sharedReelId = !isSearching && openPostId && isOpenReel ? openPostId : null;
 
-  // Cac trang thai chung dieu phoi qua Instagram Left Dock
-  // Mặc định: tab Bài viết mở sẵn Lịch trình trên màn rộng (thông tin chính đi kèm bài đọc); Reels để đóng
-  // cho khung video rộng như TikTok; màn hẹp luôn đóng vì Lịch trình là bottom sheet che nội dung.
-  // Người dùng đóng/mở thì giữ lựa chọn đó khi chuyển qua lại giữa hai tab.
+  // Trạng thái Lịch trình tách riêng giữa Bài viết và Reels:
+  // - Bài viết >= 1200px luôn ghim cố định cột Lịch trình; 1024..1199px mở sẵn và đóng/mở được; < 1024px đóng sẵn (bottom sheet).
+  // - Reels mặc định đóng để khung video rộng và vẫn đóng/mở độc lập không ảnh hưởng tab Bài viết.
   const isWideScreen = useIsWideScreen();
-  const [itineraryChoice, setIsItineraryOpen] = useState<boolean | null>(null);
-  const isItineraryOpen = itineraryChoice ?? (isWideScreen && !isReels);
+  const isPinnedScreen = useIsPinnedItineraryScreen();
+  const [postsItineraryChoice, setPostsItineraryChoice] = useState<boolean | null>(null);
+  const [reelsItineraryChoice, setReelsItineraryChoice] = useState<boolean | null>(null);
+  const isPostsItineraryOpen = resolveTabItineraryOpen({
+    view: 'posts',
+    isWideScreen,
+    isPinnedWidth: isPinnedScreen,
+    postsChoice: postsItineraryChoice,
+    reelsChoice: reelsItineraryChoice,
+  });
+  const isReelsItineraryOpen = resolveTabItineraryOpen({
+    view: 'reels',
+    isWideScreen,
+    isPinnedWidth: isPinnedScreen,
+    postsChoice: postsItineraryChoice,
+    reelsChoice: reelsItineraryChoice,
+  });
+  const activeItineraryOpen = isReels ? isReelsItineraryOpen : isPostsItineraryOpen;
+  const handleToggleActiveItinerary = useCallback(() => {
+    if (isReels) {
+      setReelsItineraryChoice(!isReelsItineraryOpen);
+      return;
+    }
+    if (!isPinnedScreen) {
+      setPostsItineraryChoice(!isPostsItineraryOpen);
+    }
+  }, [isReels, isReelsItineraryOpen, isPinnedScreen, isPostsItineraryOpen]);
   const [filterMode, setFilterMode] = useState<FeedNavFilter>('all');
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerPostType, setComposerPostType] = useState<'video' | 'vlog'>('vlog');
@@ -238,8 +262,8 @@ export function InspirationView() {
         onSearchSubmit={handleSubmitSearch}
         activeFilter={filterMode}
         onSelectFilter={handleSelectFilter}
-        isItineraryOpen={isItineraryOpen}
-        onToggleItinerary={() => setIsItineraryOpen(!isItineraryOpen)}
+        isItineraryOpen={activeItineraryOpen}
+        onToggleItinerary={handleToggleActiveItinerary}
         onOpenComposer={handleOpenComposer}
       />
 
@@ -255,9 +279,12 @@ export function InspirationView() {
           focusPostId={openPostId}
           focusCommentId={focusCommentId}
           onBackToResults={isSearching ? handleBackToResults : undefined}
-          isItineraryOpen={isItineraryOpen}
-          onOpenItinerary={() => setIsItineraryOpen(true)}
-          onCloseItinerary={() => setIsItineraryOpen(false)}
+          isItineraryOpen={isPostsItineraryOpen}
+          isItineraryPinned={isPinnedScreen}
+          onOpenItinerary={() => setPostsItineraryChoice(true)}
+          onCloseItinerary={() => {
+            if (!isPinnedScreen) setPostsItineraryChoice(false);
+          }}
           filterMode={filterMode}
           isComposerOpen={isComposerOpen}
           onOpenComposer={handleOpenComposer}
@@ -294,8 +321,8 @@ export function InspirationView() {
           focusCommentId={focusCommentId}
           onBackToResults={isSearchReelOpen ? handleBackToResults : undefined}
           onSearchKeywordChange={handleSubmitSearch}
-          isItineraryOpen={isItineraryOpen}
-          onToggleItinerary={() => setIsItineraryOpen(!isItineraryOpen)}
+          isItineraryOpen={isReelsItineraryOpen}
+          onToggleItinerary={() => setReelsItineraryChoice(!isReelsItineraryOpen)}
           onOpenComposer={handleOpenComposer}
         />
       )}
@@ -310,7 +337,6 @@ export function InspirationView() {
         />
       )}
       <PublishToast />
-      <TooltipLayer />
     </div>
   );
 }

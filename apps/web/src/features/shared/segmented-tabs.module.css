@@ -1,0 +1,152 @@
+/* Bộ segmented tabs dùng chung trên web, đồng bộ theo mẫu recommendModeTabs. */
+
+.tabs {
+  --tabs-radius: 14px;
+  --tabs-inset: 4px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 8px;
+  min-inline-size: 0;
+  box-sizing: border-box;
+  padding: var(--tabs-inset);
+  border-radius: var(--tabs-radius);
+  background: var(--color-surface-muted);
+}
+
+.tabsGlass {
+  background: var(--water-glass, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.tabsAuto {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabsAuto::-webkit-scrollbar {
+  display: none;
+}
+
+.tabsDarkAnchor {
+  position: absolute;
+  top: 14px;
+  left: 8px;
+  right: 8px;
+  z-index: 25;
+  display: flex;
+  justify-content: center;
+  container-type: inline-size;
+  pointer-events: none;
+}
+
+.tabsDark {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  gap: clamp(2px, 1cqi, 6px);
+  padding: 4px clamp(3px, 1.5cqi, 6px);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-ink) 55%, transparent);
+  backdrop-filter: blur(8px);
+  overflow-x: auto;
+  scrollbar-width: none;
+  pointer-events: auto;
+}
+
+.tabsDark::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: calc(var(--tabs-radius) - var(--tabs-inset));
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.tabsAuto .tab {
+  flex: 0 0 auto;
+  padding-inline: 14px;
+}
+
+.tab:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--color-coral-ink);
+  outline-offset: 2px;
+}
+
+.tab[aria-selected='true'],
+.tab[aria-pressed='true'],
+.tabActive {
+  background: var(--color-ink);
+  color: var(--color-background);
+}
+
+.tab[aria-selected='true']:hover,
+.tab[aria-pressed='true']:hover,
+.tabActive:hover {
+  background: var(--color-ink);
+  color: var(--color-background);
+}
+
+.tabCompact {
+  min-height: 32px;
+  padding-inline: 8px;
+  font-size: 12.5px;
+}
+
+.tabsDark .tab {
+  min-height: 30px;
+  padding: 5px clamp(6px, 1.6cqi, 12px);
+  border-radius: 999px;
+  font-size: clamp(10.5px, 3.2cqi, 12px);
+  color: var(--color-background);
+}
+
+.tabsDark .tab:hover {
+  background: color-mix(in srgb, var(--color-background) 16%, transparent);
+  color: var(--color-background);
+}
+
+.tabsDark .tab[aria-selected='true'],
+.tabsDark .tab[aria-pressed='true'],
+.tabsDark .tabActive,
+.tabsDark .tab[aria-selected='true']:hover,
+.tabsDark .tab[aria-pressed='true']:hover,
+.tabsDark .tabActive:hover {
+  background: var(--color-background);
+  color: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+}

@@ -41,6 +41,7 @@ export interface ReelHlsConfig {
   autoStartLoad: boolean;
   maxBufferLength: number;
   maxMaxBufferLength: number;
+  backBufferLength: number;
   abrEwmaDefaultEstimate: number;
 }
 export interface ReelHlsLibrary {
@@ -225,6 +226,7 @@ export function attachReelHlsSource(
         autoStartLoad: false,
         maxBufferLength: bufferSeconds,
         maxMaxBufferLength: bufferSeconds,
+        backBufferLength: 10,
         abrEwmaDefaultEstimate: REEL_INITIAL_BANDWIDTH_BPS,
       });
       player = created;

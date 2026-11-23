@@ -47,7 +47,7 @@
   max-width: 620px;
   margin: 24px 0 16px;
   color: var(--color-navy);
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: var(--font-playfair), Georgia, serif;
   font-size: clamp(2.6rem, 5.2vw, 4.7rem);
   font-weight: 700;
   line-height: 1.02;

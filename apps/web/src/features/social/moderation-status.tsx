@@ -8,6 +8,7 @@ import { t, vi } from '@tripflix/i18n';
 import { ApiErrorNotice } from '@/features/shared/api-state';
 import { LoadingDots } from '@/features/shared/loading-dots';
 import { getAppealDaysLeft } from './appeal-days';
+import segmentedTabs from '../shared/segmented-tabs.module.css';
 import styles from './moderation-status.module.css';
 
 const text = vi.moderation.myStatus;
@@ -126,7 +127,7 @@ export function ModerationStatus() {
         <h1 className={styles.title}>{text.title}</h1>
         <p className={styles.intro}>{text.intro}</p>
       </header>
-      <div className={styles.tabs} role="tablist">
+      <div className={`${segmentedTabs.tabs} ${segmentedTabs.tabsAuto} ${styles.tabs}`} role="tablist">
         {(['decisions', 'reports'] as const).map((key) => (
           <button
             key={key}
@@ -135,7 +136,7 @@ export function ModerationStatus() {
             id={`moderation-tab-${key}`}
             aria-controls={`moderation-panel-${key}`}
             aria-selected={tab === key}
-            className={styles.tab}
+            className={segmentedTabs.tab}
             onClick={() => setTab(key)}
           >
             {key === 'decisions' ? text.tabDecisions : text.tabReports}
