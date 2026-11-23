@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ADMIN_REALTIME_URL, CLOSE_GRACE_MS, subscribeAdminRealtime } from './admin-realtime-stream';
+import { ADMIN_REALTIME_URL, CLOSE_GRACE_MS, REOPEN_DELAY_MS, subscribeAdminRealtime } from './admin-realtime-stream';
 
 class FakeSource {
   static created: FakeSource[] = [];
   handlers = new Map<string, () => void>();
   onerror: (() => unknown) | null = null;
   isClosed = false;
+  readyState = 1;
   constructor(public url: string) {
     FakeSource.created.push(this);
   }
@@ -87,5 +88,45 @@ describe('subscribeAdminRealtime (TF104)', () => {
     expect(late.onReady).toHaveBeenCalledTimes(1);
     offFirst();
     offLate();
+  });
+
+  it('BFF trả 401 (access token hết hạn) làm luồng đóng hẳn: làm mới phiên rồi mở lại, trang vẫn nhận tín hiệu', async () => {
+    const page = listener();
+    const refresh = vi.fn(async () => true);
+    const off = subscribeAdminRealtime(page, create, refresh);
+    const first = FakeSource.created[0]!;
+    first.readyState = 2;
+    first.onerror?.();
+    expect(page.onReconnecting).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(REOPEN_DELAY_MS);
+
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(FakeSource.created).toHaveLength(2);
+    FakeSource.created[1]!.fire('ready');
+    expect(page.onReady).toHaveBeenCalledTimes(1);
+    off();
+  });
+
+  it('hết phiên (làm mới trả false) thì không mở lại luồng', async () => {
+    const off = subscribeAdminRealtime(listener(), create, async () => false);
+    const first = FakeSource.created[0]!;
+    first.readyState = 2;
+    first.onerror?.();
+    await vi.advanceTimersByTimeAsync(REOPEN_DELAY_MS);
+    expect(FakeSource.created).toHaveLength(1);
+    off();
+  });
+
+  it('mạng chập chờn (trình duyệt còn tự nối lại) thì không làm mới phiên, không mở luồng thứ hai', async () => {
+    const refresh = vi.fn(async () => true);
+    const off = subscribeAdminRealtime(listener(), create, refresh);
+    const first = FakeSource.created[0]!;
+    first.readyState = 0;
+    first.onerror?.();
+    await vi.advanceTimersByTimeAsync(REOPEN_DELAY_MS);
+    expect(refresh).not.toHaveBeenCalled();
+    expect(FakeSource.created).toHaveLength(1);
+    off();
   });
 });
