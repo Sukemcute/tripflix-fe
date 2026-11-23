@@ -127,7 +127,11 @@ export function SocialFeedView({
   const queryKind: 'public' | 'bookmarks' = activeFilter === 'saved' ? 'bookmarks' : 'public';
   const isSearchMode = activeFilter !== 'saved' && effectiveKeyword.length > 0;
   // Tab Bài viết chỉ lấy vlog; Reels có luồng riêng (/v1/feed).
-  const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended', { recommendMode, refreshOnReturn: isVisible });
+  const feedQuery = useSocialPosts(queryKind, '', 'vlog', 'recommended', {
+    recommendMode,
+    refreshOnReturn: isVisible,
+    enabled: isVisible,
+  });
   // Tìm kiếm: cùng query với grid kết quả (search của discovery) nên mở bài từ grid không gọi lại API.
   const searchQuery = usePostSearchFeed(isSearchMode ? effectiveKeyword : '', undefined, searchSort);
   const postsQuery = isSearchMode ? searchQuery : feedQuery;
