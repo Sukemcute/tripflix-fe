@@ -1,4 +1,4 @@
-import { getReelPlaybackSources, getReelPlayerIndexes, getReelResolutionCap } from '@tripflix/app-core';
+import { getAdaptiveReelPlaybackSources, getReelPlayerIndexes, getReelResolutionCap } from '@tripflix/app-core';
 import { useVideoPlayer, type VideoPlayer } from 'expo-video';
 import { Platform } from 'react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -69,7 +69,7 @@ function usePlayerSlot({
     instance.muted = true;
     instance.staysActiveInBackground = false;
   });
-  const sources = item ? getReelPlaybackSources(item.playback, isDataLimited ? 540 : Infinity) : [];
+  const sources = item ? getAdaptiveReelPlaybackSources(item.playback, isDataLimited ? 540 : Infinity) : [];
   const sourceKey = item ? JSON.stringify([item.id, retry, sources]) : null;
   // Keep the fallback only for this assignment, even if this slot later returns to the same Reel.
   const assignment = useMemo(() => ({ sourceKey }), [sourceKey]);
