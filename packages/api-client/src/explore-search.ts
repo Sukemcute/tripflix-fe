@@ -44,13 +44,6 @@ export async function getPostSearchResults(
   return readEntity(response.data, ['understood', 'items', 'total', 'nextCursor']) as SearchPostsResponseDto;
 }
 
-type PostDetail = Awaited<ReturnType<typeof socialApi.getPost>>;
-
-/** Chi tiết trả viewerContext ở ngoài bài: gắn vào để trạng thái thích/lưu đúng như ở luồng /v1/posts. */
-function withViewerContext(detail: PostDetail): SocialPostDto {
-  return { ...detail.post, viewerContext: detail.viewerContext ?? detail.post.viewerContext ?? null };
-}
-
 /** Số bài mỗi trang khi tìm theo từ khoá: mỗi bài cần thêm một lần lấy chi tiết nên giữ nhỏ. */
 export const KEYWORD_SEARCH_PAGE_SIZE = 10;
 
@@ -58,25 +51,18 @@ export const KEYWORD_SEARCH_PAGE_SIZE = 10;
 export const RECOMMEND_PAGE_SIZE = 7;
 
 /**
- * Tìm bài công khai bằng engine của discovery (hiểu câu, bỏ dấu, sửa gõ, ghép/tách chữ), rồi lấy chi tiết từng bài
- * theo đúng thứ tự xếp hạng. Trả cùng dạng trang với socialApi.listPosts nên viewer dùng lại được.
- * Bài đã ẩn/xoá giữa hai lần gọi (chi tiết lỗi) thì bỏ qua thay vì làm hỏng cả trang.
+ * Tìm bài công khai bằng engine của discovery (hiểu câu, bỏ dấu, sửa gõ, ghép/tách chữ), rồi lấy cả trang bài trong
+ * một lần gọi, đúng thứ tự xếp hạng. Trả cùng dạng trang với socialApi.listPosts nên viewer dùng lại được.
+ * Bài đã ẩn/xoá giữa hai lần gọi thì server bỏ qua.
  */
 export async function searchPublicPosts(keyword: string, cursor?: string, signal?: AbortSignal) {
   const found = await getPostSearchResults({ q: keyword, cursor, limit: KEYWORD_SEARCH_PAGE_SIZE }, signal);
-  const details = await Promise.all(
-    found.items.map((item) =>
-      socialApi.getPost(item.refId, signal).then(
-        withViewerContext,
-        () => null,
-      ),
-    ),
-  );
-  return { items: details.filter((post) => post !== null), nextCursor: found.nextCursor };
+  const items: SocialPostDto[] = await socialApi.getPostsByIds(found.items.map((item) => item.refId), signal);
+  return { items, nextCursor: found.nextCursor };
 }
 
 /**
- * Bài gợi ý theo gu (GET /api/recommendations/posts; khách nhận "đang thịnh hành"), rồi lấy chi tiết từng bài
+ * Bài gợi ý theo gu (GET /api/recommendations/posts; khách nhận "đang thịnh hành"), rồi lấy cả trang bài một lần
  * như searchPublicPosts để trả cùng dạng trang với socialApi.listPosts.
  */
 export async function recommendPublicPosts(
@@ -90,15 +76,8 @@ export async function recommendPublicPosts(
     { signal },
   );
   const page = readEntity(response.data, ['items', 'algo', 'nextCursor']) as PostRecommendationsDto;
-  const details = await Promise.all(
-    page.items.map((item) =>
-      socialApi.getPost(item.post.id, signal).then(
-        withViewerContext,
-        () => null,
-      ),
-    ),
-  );
-  return { items: details.filter((post) => post !== null), nextCursor: page.nextCursor };
+  const items: SocialPostDto[] = await socialApi.getPostsByIds(page.items.map((item) => item.post.id), signal);
+  return { items, nextCursor: page.nextCursor };
 }
 
 /** Hook tìm bài trên app: dùng useQuery cache theo params */

@@ -10,11 +10,17 @@ afterEach(() => vi.restoreAllMocks());
 const hit = (refId: string, thumbnail: string | null = null) => ({
   id: `post:${refId}`, kind: 'video', refId, title: refId, subtitle: null, thumbnail, reason: '', priceFrom: null, days: null, location: null,
 });
-const detail = (id: string) => ({
-  post: { id, title: `Bài ${id}`, postType: id.startsWith('v') ? 'video' : 'vlog' },
-  viewerContext: { myReaction: 'like', isBookmarked: true },
-  shareUrl: 'x',
-});
+/** GET /api/v1/posts?ids=: server trả các bài còn hiện, đúng thứ tự id; 'gone' coi như đã ẩn/xoá. */
+const postsByIds = (url: URL) =>
+  json({
+    items: url.searchParams
+      .get('ids')!
+      .split(',')
+      .filter((id) => id !== 'gone')
+      .map((id) => ({ id, title: `Bài ${id}`, postType: id.startsWith('v') ? 'video' : 'vlog', viewerContext: { myReaction: 'like', isBookmarked: true } })),
+    nextCursor: null,
+    hasMore: false,
+  });
 
 describe('searchPostFeedPage', () => {
   it('giữ thứ tự xếp hạng, gắn viewerContext vào bài và trả ảnh bìa theo id', async () => {
@@ -23,9 +29,10 @@ describe('searchPostFeedPage', () => {
       if (url.pathname === '/api/search/posts') {
         return json({ understood: {}, items: [hit('v1', '/p/v1.jpg'), hit('a2')], total: 2, nextCursor: '12' });
       }
-      return json(detail(url.pathname.split('/').pop()!));
+      return postsByIds(url);
     });
     const page = await searchPostFeedPage('đà lạt', { cursor: '0' });
+    expect(send).toHaveBeenCalledTimes(2);
     expect(page.items.map((post) => post.id)).toEqual(['v1', 'a2']);
     expect(page.items[0]?.viewerContext).toEqual({ myReaction: 'like', isBookmarked: true });
     expect(page.thumbnails).toEqual({ v1: '/p/v1.jpg', a2: null });
@@ -35,13 +42,13 @@ describe('searchPostFeedPage', () => {
     expect(JSON.parse(String(init?.body))).toEqual({ q: 'đà lạt', cursor: '0', limit: 12 });
   });
 
-  it('bỏ bài mà chi tiết lỗi (đã ẩn/xoá), không để lại ảnh bìa của bài đó', async () => {
+  it('bỏ bài đã ẩn/xoá (server không trả), không để lại ảnh bìa của bài đó', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = new URL(String(input));
       if (url.pathname === '/api/search/posts') {
         return json({ understood: {}, items: [hit('a1'), hit('gone', '/p/gone.jpg')], total: 2, nextCursor: null });
       }
-      return url.pathname.endsWith('/gone') ? json({ message: 'not found' }, 404) : json(detail('a1'));
+      return postsByIds(url);
     });
     const page = await searchPostFeedPage('sunworld');
     expect(page.items.map((post) => post.id)).toEqual(['a1']);
