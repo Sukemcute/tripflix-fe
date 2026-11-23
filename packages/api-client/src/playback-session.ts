@@ -30,7 +30,7 @@ export function getPlaybackSessionRefreshDelayMs(expiresAt: string | null, nowMs
 
 export const playbackSessionApi = {
   async create(signal?: AbortSignal): Promise<PlaybackSession> {
-    return readEntity((await mediaPlaybackControllerCreateSession({ signal })).data, ['cookies', 'expiresAt']);
+    return readEntity((await mediaPlaybackControllerCreateSession(undefined, { signal })).data, ['cookies', 'expiresAt']);
   },
 };
 
