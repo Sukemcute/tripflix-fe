@@ -11,21 +11,15 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { PostUploadCard } from '@/features/post/post-upload-card';
 import { formatProfileCount, getNameInitials } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import {
-  explorer as x,
-  colors as c,
-  mobileLayout,
-  nativeFonts,
-  radius,
-  spacing as s,
-} from '@tripflix/tokens';
+import { explorer as x, mobileLayout, nativeFonts, radius, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import { Button, Card, copy, Icon, IconButton, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { mobileIconSize } from '@/components/mobile-scale';
+import { typeStyle } from '@/components/type-scale';
 import { LoadingDots } from '@/components/loading-dots';
 import { OwnProfileHeading, ProfileHub } from './profile-hub';
 import { getDisplayName } from './display-name';
@@ -404,7 +398,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { ...compactType.title, fontFamily: nativeFonts.bold },
+  avatarText: { ...typeStyle('subhead'), fontFamily: nativeFonts.bold },
   stats: { flexDirection: 'row', alignSelf: 'stretch', marginVertical: s.sm },
   stat: { flex: 1, alignItems: 'center', gap: s.xs },
   tabs: {
@@ -419,7 +413,7 @@ const styles = StyleSheet.create({
     minHeight: mobileLayout.touchTarget,
     justifyContent: 'center',
     borderBottomWidth: 2,
-    borderBottomColor: c.transparent,
+    borderBottomColor: 'transparent',
   },
   tabActive: { borderBottomColor: x.day.link },
   // Lưới tràn hết bề ngang như TikTok: bù lại lề hai bên của màn, ô sát nhau chỉ cách 1px.
@@ -445,7 +439,7 @@ const styles = StyleSheet.create({
   likesText: {
     color: x.brand.white,
     fontFamily: nativeFonts.bold,
-    textShadowColor: c.overlayHeavy,
+    textShadowColor: x.scrim[2],
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
