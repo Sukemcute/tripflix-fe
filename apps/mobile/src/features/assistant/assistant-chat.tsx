@@ -14,6 +14,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
@@ -40,7 +41,7 @@ import Animated, {
   interpolateColor,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { Icon, IconButton, Mascot, Row, Txt, type IconName } from '@/components/mobile-ui';
+import { Icon, IconButton, Mascot, Txt, type IconName } from '@/components/mobile-ui';
 import { mobileIconSize } from '@/components/mobile-scale';
 import { typeStyle } from '@/components/type-scale';
 import { SHEET_CLOSE_SPRING } from '@/components/motion';
@@ -247,11 +248,14 @@ export function AssistantChat({
                   )}
                   {isAssistant && isLatest && !chat.isPending && !!message.suggestions?.length && (
                     <View style={styles.attachments}>
-                      <Row style={styles.suggestionsHead}>
-                        <Icon name="sparkles" size={13} color={x.brand.coral} />
-                        <Txt style={styles.suggestionsLabel}>{copy.suggestionsLabel}</Txt>
-                      </Row>
-                      <View style={styles.chips}>
+                      {/* Một hàng cuộn ngang thay cho nhiều hàng chip để câu trả lời không bị đẩy lên. */}
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        accessibilityLabel={copy.suggestionsLabel}
+                        style={styles.chipsScroll}
+                        contentContainerStyle={styles.chips}
+                      >
                         {message.suggestions.map((suggestion) => (
                           <Pressable
                             key={suggestion}
@@ -264,7 +268,7 @@ export function AssistantChat({
                             </Txt>
                           </Pressable>
                         ))}
-                      </View>
+                      </ScrollView>
                     </View>
                   )}
                 </Animated.View>
@@ -689,8 +693,6 @@ const styles = StyleSheet.create({
   messageText: { ...chatType.body, color: x.day.text },
   userText: { color: x.day.surface },
   attachments: { gap: s.sm, marginLeft: 34 + s.sm },
-  suggestionsHead: { alignItems: 'center', gap: 6 },
-  suggestionsLabel: { ...chatType.meta, fontFamily: f.semibold, color: x.day.textSecondary },
   loginButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -705,15 +707,16 @@ const styles = StyleSheet.create({
   error: { backgroundColor: x.day.tintWarm, padding: s.lg, borderRadius: 18, gap: s.sm },
   retry: { flexDirection: 'row', alignItems: 'center', gap: s.sm, minHeight: mobileLayout.touchTarget },
   actionText: { ...chatType.small, fontFamily: f.semibold, color: c.coralInk },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: s.sm },
+  // Tràn ra mép màn hình để chip cuối không bị cắt giữa khung chat.
+  chipsScroll: { marginRight: -s.lg },
+  chips: { flexDirection: 'row', gap: s.sm, paddingRight: s.lg },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    minHeight: 40,
-    alignSelf: 'flex-start',
+    minHeight: 36,
     paddingHorizontal: s.md,
-    borderRadius: radius.pill,
+    borderRadius: x.radius.sm,
     borderWidth: 1,
     borderColor: x.day.line,
     backgroundColor: x.day.surface,
