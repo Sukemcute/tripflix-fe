@@ -3,7 +3,7 @@ import { explorer as x, nativeFonts } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { Icon, Txt } from '@/components/mobile-ui';
 
 /** Ảnh khách sạn; khi chưa có hoặc tải lỗi thì hiện khung dự phòng có chữ thay vì ô trống. */

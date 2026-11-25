@@ -6,7 +6,7 @@ import { t, vi } from '@tripflix/i18n';
 import { explorer as x, nativeFonts } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { LoadingDots } from '@/components/loading-dots';
 import {
@@ -55,12 +55,14 @@ export function ExploreFeed() {
   const [isResolving, setIsResolving] = useState(false);
   // Thẻ khách sạn ở Tìm kiếm mở Khám phá kèm địa điểm đã hiểu (`?q=`): hiện ngay kết quả khách sạn trong app.
   const placeParam = getExploreHotelQuery(useLocalSearchParams<{ q?: string | string[] }>().q);
-  useEffect(() => {
-    if (!placeParam) return;
+  // Cập nhật ngay khi render lúc tham số đổi (không qua effect): tránh một lần vẽ thừa với ô tìm cũ.
+  const [appliedPlaceParam, setAppliedPlaceParam] = useState('');
+  if (placeParam && placeParam !== appliedPlaceParam) {
+    setAppliedPlaceParam(placeParam);
     setKind('hotel');
     setInput(placeParam);
     setHotelQuery(placeParam);
-  }, [placeParam]);
+  }
   const submit = async () => {
     const value = input.trim();
     if (value.length < 2 || isResolving) return;
