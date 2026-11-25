@@ -4,6 +4,7 @@ import {
   evictPostFromCache,
   HttpError,
   isPostNotFoundError,
+  reloadRecommendedReels,
   removeReelFromSavedFeedCache,
   socialApi,
   updateReelSocialCache,
@@ -1331,6 +1332,7 @@ export function InspirationImmersiveViewer({
     enabled: isReady && !isSearchReels && !isSavedMode,
     mode: reelsMode,
     refreshOnReturn: true,
+    freshOnNewList: true,
   });
   const feedQuery = isSavedMode ? savedFeedQuery : recommendedReelsQuery;
   // Đổi chip: đánh dấu dữ liệu tạm để giữ khung chờ tới khi danh sách mới về.
@@ -2175,7 +2177,16 @@ export function InspirationImmersiveViewer({
                 role="tab"
                 aria-selected={selected}
                 className={segmentedTabs.tab}
-                onClick={() => setReelsMode(option.value)}
+                onClick={() => {
+                  if (!selected) {
+                    setReelsMode(option.value);
+                    return;
+                  }
+                  // Bấm lại chip đang chọn: về Reel đầu và tải danh sách mới (fresh), như vuốt tải lại trên app.
+                  setActivePostId(null);
+                  trackScrollRef.current?.scrollTo({ top: 0 });
+                  void reloadRecommendedReels(client, option.value);
+                }}
               >
                 {option.label}
               </button>

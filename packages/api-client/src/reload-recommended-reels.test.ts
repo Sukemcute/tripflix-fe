@@ -1,6 +1,6 @@
 import { QueryClient, type InfiniteData } from '@tanstack/react-query';
 import { expect, it } from 'vitest';
-import { RECOMMENDED_REELS_KEY, reloadRecommendedReels, takeRecommendedFresh } from './feed';
+import { RECOMMENDED_REELS_KEY, recommendedReelsParams, reloadRecommendedReels, takeRecommendedFresh } from './feed';
 
 type Page = { items: Array<{ postId: string }>; nextCursor: string | null };
 
@@ -40,4 +40,18 @@ it('tải lại thì trang đầu kế tiếp gửi fresh đúng một lần, ch
   expect(takeRecommendedFresh('trending')).toBe(false);
   expect(takeRecommendedFresh('mixed')).toBe(true);
   expect(takeRecommendedFresh('mixed')).toBe(false);
+});
+
+it('freshOnNewList: mọi trang đầu gửi fresh, trang sau chỉ gửi cursor', () => {
+  expect(recommendedReelsParams('trending', undefined, true)).toEqual({ mode: 'trending', limit: 10, fresh: 'true' });
+  expect(recommendedReelsParams('trending', undefined, true)).toEqual({ mode: 'trending', limit: 10, fresh: 'true' });
+  expect(recommendedReelsParams('trending', 'c1', true)).toEqual({ mode: 'trending', limit: 10, cursor: 'c1' });
+});
+
+it('không bật freshOnNewList: trang đầu chỉ gửi fresh ngay sau khi tải lại, và xoá cờ', async () => {
+  takeRecommendedFresh('for_you');
+  expect(recommendedReelsParams('for_you', undefined, false)).toEqual({ mode: 'for_you', limit: 10 });
+  await reloadRecommendedReels(new QueryClient(), 'for_you');
+  expect(recommendedReelsParams('for_you', undefined, false)).toEqual({ mode: 'for_you', limit: 10, fresh: 'true' });
+  expect(recommendedReelsParams('for_you', undefined, false)).toEqual({ mode: 'for_you', limit: 10 });
 });
