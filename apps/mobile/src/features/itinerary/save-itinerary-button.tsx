@@ -4,6 +4,7 @@ import type { SaveItineraryRequestDto } from '@tripflix/api-client/core-api/mode
 import { vi } from '@tripflix/i18n';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { Button } from '@/components/mobile-ui';
 
 const copy = vi.mobile.savedItinerary;
@@ -15,9 +16,12 @@ const copy = vi.mobile.savedItinerary;
 export function SaveItineraryButton({
   request,
   compact = true,
+  style,
 }: {
   request: () => SaveItineraryRequestDto | null;
   compact?: boolean;
+  /** Cho nơi gọi chỉnh dáng nút (ví dụ bo góc) mà không đổi nút ở chỗ khác. */
+  style?: StyleProp<ViewStyle>;
 }) {
   const { user, isReady } = useApiSession();
   const client = useQueryClient();
@@ -49,6 +53,7 @@ export function SaveItineraryButton({
   return (
     <Button
       compact={compact}
+      style={style}
       tone="secondary"
       icon={currentId ? 'bookmark' : 'bookmark-outline'}
       disabled={toggle.isPending}
