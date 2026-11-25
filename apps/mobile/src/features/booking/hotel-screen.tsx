@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     minHeight: x.control.primary,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    borderRadius: x.radius.pill,
+    borderRadius: x.radius.md,
     backgroundColor: x.action.primary,
     flexDirection: 'row',
     alignItems: 'center',

@@ -169,7 +169,6 @@ function ServerActions({
     <View style={styles.actions}>
       {canSave && (
         <SaveItineraryButton
-          style={styles.planButton}
           request={() =>
             actions?.trip ? { source: 'tripi', trip: actions.trip as Record<string, unknown> } : null
           }
@@ -179,7 +178,6 @@ function ServerActions({
         <Button
           key={`${card.ref}-action-${index}`}
           compact
-          style={styles.planButton}
           onPress={() => {
             if (action.type === 'select' && action.ref) {
               actions?.act(action.label, { type: 'select', ref: action.ref });
@@ -628,8 +626,6 @@ const styles = StyleSheet.create({
     borderColor: x.day.line,
     backgroundColor: x.day.surface,
   },
-  // Nút dưới thẻ lộ trình bo góc nhẹ như chip gợi ý, không dùng dạng viên thuốc.
-  planButton: { borderRadius: x.radius.md },
   actionPrimary: { borderColor: x.brand.coral, backgroundColor: x.brand.coral },
   actionText: { ...chatType.small, fontFamily: f.semibold, color: x.day.text },
   actionPrimaryText: { color: x.day.surface, fontSize: 14, lineHeight: 20 },

@@ -231,7 +231,7 @@ export const authInputFrame = {
 const styles = StyleSheet.create({
   button: {
     minHeight: 54,
-    borderRadius: x.radius.pill,
+    borderRadius: x.radius.md,
     paddingHorizontal: 18,
     paddingVertical: 14,
     flexDirection: 'row',

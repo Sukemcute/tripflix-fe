@@ -596,9 +596,10 @@ export const ui = StyleSheet.create({
   label: { fontSize: x.type.label.fontSize, lineHeight: 22, fontFamily: f.semibold },
   muted: { color: d.textSecondary },
   center: { textAlign: 'center' },
+  // Nút chữ nhật bo 12px (cùng ô nhập); dạng viên thuốc chỉ còn ở chip lọc và huy hiệu.
   button: {
     minHeight: x.control.primary,
-    borderRadius: x.radius.pill,
+    borderRadius: x.radius.md,
     paddingHorizontal: x.space.lg,
     paddingVertical: x.space.sm,
     flexDirection: 'row',
