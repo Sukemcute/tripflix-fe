@@ -318,6 +318,6 @@ export const styles = StyleSheet.create({
   stopText: { flex: 1, gap: 1 },
   description: { ...typeStyle('label'), color: x.day.text },
   totalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  total: { ...typeStyle('subhead'), fontFamily: nativeFonts.semibold, color: x.day.price },
+  total: { ...typeStyle('subhead'), fontFamily: nativeFonts.extraBold, color: x.day.price },
   actions: { gap: spacing.sm, justifyContent: 'flex-end', flexWrap: 'wrap' },
 });

@@ -1087,7 +1087,7 @@ const styles = StyleSheet.create({
   },
   addText: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.semibold },
   footer: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  total: { ...typeStyle('subhead'), fontFamily: nativeFonts.bold, color: x.day.price },
+  total: { ...typeStyle('subhead'), fontFamily: nativeFonts.extraBold, color: x.day.price },
   entry: {
     flexDirection: 'row',
     alignItems: 'center',
