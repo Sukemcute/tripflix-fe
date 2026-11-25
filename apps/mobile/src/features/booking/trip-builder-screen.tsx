@@ -23,10 +23,22 @@ import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { ReduceMotion, ZoomIn } from 'react-native-reanimated';
 import { DateSingleField } from '@/components/date-sheet';
 import { mobileIconSize } from '@/components/mobile-scale';
 import { typeStyle } from '@/components/type-scale';
-import { Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import {
+  Badge,
+  Button,
+  Icon,
+  IconButton,
+  money,
+  Row,
+  Screen,
+  Txt,
+  ui,
+  type IconName,
+} from '@/components/mobile-ui';
 import { DragSortList } from '@/features/post/drag-sort-list';
 import { ActivityCard, TimeTag, type ActivityFields } from './activity-card';
 import { clearPostHotelPick, savePostHotel, usePostHotelPick } from '@/features/post/post-hotel-pick-store';
@@ -597,32 +609,58 @@ export function TripBuilderScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.card}>
-          <DestinationPicker
-            name={destination.destinationName}
-            placeId={destination.destinationPlaceId}
-            onChange={setDestination}
-          />
-          <Stepper
-            label={vi.mobile.tripPlan.adults}
-            value={adults}
-            min={1}
-            max={Math.min(MAX_ADULTS, MAX_SEATS - children)}
-            onChange={(value) => changeGuests({ adults: value })}
-          />
-          <Stepper
-            label={vi.mobile.tripPlan.children}
-            value={children}
-            min={0}
-            max={MAX_SEATS - adults}
-            onChange={(value) => changeGuests({ children: value })}
-          />
-          <Stepper
-            label={vi.mobile.tripPlan.infants}
-            value={infants}
-            min={0}
-            max={adults}
-            onChange={(value) => changeGuests({ infants: value })}
-          />
+          {/* Nửa trên: điểm đến, nền xanh nhạt để tách khỏi phần số khách. */}
+          <View style={styles.destinationBlock}>
+            <View style={styles.blockHead}>
+              <View style={styles.headIcon}>
+                <Icon name="location" size={18} color={x.brand.white} />
+              </View>
+              <Txt style={styles.blockTitle}>{copy.destinationTitle}</Txt>
+            </View>
+            <DestinationPicker
+              label={copy.destinationTitle}
+              hideLabel
+              name={destination.destinationName}
+              placeId={destination.destinationPlaceId}
+              onChange={setDestination}
+            />
+          </View>
+          <View style={styles.guestsBlock}>
+            <View style={styles.guestsHead}>
+              <Txt style={styles.blockTitle}>{copy.guestsTitle}</Txt>
+              <Badge tone="teal" icon="people-outline">
+                {/* Em bé không chiếm chỗ ngồi: giới hạn chỉ tính người lớn và trẻ em, như các nút +/− bên dưới. */}
+                {t('mobile.tripBuilder.seatsCount', { count: adults + children, max: MAX_SEATS })}
+              </Badge>
+            </View>
+            <GuestRow
+              icon="person"
+              label={copy.guestAdults}
+              hint={copy.guestAdultsHint}
+              value={adults}
+              min={1}
+              max={Math.min(MAX_ADULTS, MAX_SEATS - children)}
+              onChange={(value) => changeGuests({ adults: value })}
+            />
+            <GuestRow
+              icon="happy"
+              label={copy.guestChildren}
+              hint={copy.guestChildrenHint}
+              value={children}
+              min={0}
+              max={MAX_SEATS - adults}
+              onChange={(value) => changeGuests({ children: value })}
+            />
+            <GuestRow
+              icon="heart"
+              label={copy.guestInfants}
+              hint={copy.guestInfantsHint}
+              value={infants}
+              min={0}
+              max={adults}
+              onChange={(value) => changeGuests({ infants: value })}
+            />
+          </View>
         </View>
 
         <Txt style={styles.heading}>{copy.itemsTitle}</Txt>
@@ -863,40 +901,71 @@ function formatShortDate(iso: string): string {
   return `${day}/${month}`;
 }
 
-function Stepper({
-  label,
-  value,
-  min,
-  max,
-  onChange,
-}: {
+type CountProps = {
   label: string;
   value: number;
   min: number;
   max: number;
   onChange: (value: number) => void;
-}) {
+};
+
+/** Bộ chỉnh số dạng viên thuốc: hai nút tròn hai bên, số ở giữa nảy nhẹ mỗi lần đổi. */
+function CountStepper({ label, value, min, max, onChange }: CountProps) {
+  const step = (name: IconName, isDisabled: boolean, next: number, description: string) => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={description}
+      accessibilityState={{ disabled: isDisabled }}
+      disabled={isDisabled}
+      hitSlop={4}
+      onPress={() => onChange(next)}
+      style={({ pressed }) => [
+        styles.stepButton,
+        isDisabled && styles.stepButtonDisabled,
+        pressed && styles.stepButtonPressed,
+      ]}
+    >
+      <Icon name={name} size={18} color={x.day.link} />
+    </Pressable>
+  );
+  return (
+    <View style={styles.stepper}>
+      {step('remove', value <= min, value - 1, t('mobile.tripBuilder.lessFor', { label }))}
+      <Animated.View
+        key={value}
+        entering={ZoomIn.duration(160).reduceMotion(ReduceMotion.System)}
+        style={styles.stepValueBox}
+      >
+        <Txt accessibilityLabel={`${label}: ${value}`} style={styles.stepValue}>
+          {value}
+        </Txt>
+      </Animated.View>
+      {step('add', value >= max, value + 1, t('mobile.tripBuilder.moreFor', { label }))}
+    </View>
+  );
+}
+
+function Stepper(props: CountProps) {
   return (
     <Row style={styles.stepperRow}>
-      <Txt style={styles.stepperLabel}>{label}</Txt>
-      <Row style={styles.stepper}>
-        <IconButton
-          name="remove"
-          size={mobileIconSize.control}
-          label={copy.less}
-          disabled={value <= min}
-          onPress={() => onChange(value - 1)}
-        />
-        <Txt style={styles.stepperValue}>{value}</Txt>
-        <IconButton
-          name="add"
-          size={mobileIconSize.control}
-          label={copy.more}
-          disabled={value >= max}
-          onPress={() => onChange(value + 1)}
-        />
-      </Row>
+      <Txt style={styles.stepperLabel}>{props.label}</Txt>
+      <CountStepper {...props} />
     </Row>
+  );
+}
+
+function GuestRow({ icon, hint, ...count }: CountProps & { icon: IconName; hint: string }) {
+  return (
+    <View style={styles.guestRow}>
+      <View style={styles.guestIcon}>
+        <Icon name={icon} size={20} color={x.brand.coral} />
+      </View>
+      <View style={styles.guestCopy}>
+        <Txt style={styles.guestLabel}>{count.label}</Txt>
+        <Txt style={styles.guestHint}>{hint}</Txt>
+      </View>
+      <CountStepper {...count} />
+    </View>
   );
 }
 
@@ -933,22 +1002,58 @@ const styles = StyleSheet.create({
   muted: { ...typeStyle('label'), fontFamily: nativeFonts.regular, color: x.day.textSecondary },
   heading: { ...typeStyle('subhead'), fontFamily: nativeFonts.bold, color: x.day.text },
   card: {
-    gap: spacing.md,
-    padding: spacing.md,
     borderRadius: radius.lg,
     backgroundColor: x.day.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: x.day.line,
+    overflow: 'hidden',
   },
+  destinationBlock: { gap: spacing.sm, padding: spacing.md, backgroundColor: x.day.tintExplore },
+  guestsBlock: { gap: spacing.md, padding: spacing.md },
+  blockHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  headIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: x.day.link,
+  },
+  blockTitle: { ...typeStyle('subhead'), fontFamily: nativeFonts.bold, color: x.day.text },
+  guestsHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  guestRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52 },
+  guestIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: x.day.tintWarm,
+  },
+  guestCopy: { flex: 1, minWidth: 0 },
+  guestLabel: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.semibold, color: x.day.text },
+  guestHint: { ...typeStyle('caption'), color: x.day.textSecondary },
   stepperRow: { alignItems: 'center', justifyContent: 'space-between' },
   stepperLabel: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.medium, color: x.day.text },
-  stepper: { alignItems: 'center', gap: spacing.sm },
-  stepperValue: {
-    ...typeStyle('bodyStrong'),
-    fontFamily: nativeFonts.semibold,
-    minWidth: 20,
-    textAlign: 'center',
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 4,
+    borderRadius: radius.pill,
+    backgroundColor: x.day.tintExplore,
   },
+  stepButton: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: x.day.surface,
+  },
+  stepButtonDisabled: { opacity: 0.35 },
+  stepButtonPressed: { transform: [{ scale: 0.88 }], backgroundColor: x.day.canvas },
+  stepValueBox: { minWidth: 36, alignItems: 'center' },
+  stepValue: { ...typeStyle('subhead'), fontFamily: nativeFonts.bold, color: x.day.text },
   draft: {
     gap: spacing.md,
     padding: spacing.md,

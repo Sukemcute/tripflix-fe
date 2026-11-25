@@ -271,6 +271,7 @@ export function Field({
   error,
   style,
   compact: compactOverride,
+  hideLabel = false,
   onFocus,
   onBlur,
   ...props
@@ -278,6 +279,8 @@ export function Field({
   label: string;
   error?: string;
   compact?: boolean;
+  /** Ẩn nhãn nhìn thấy khi màn đã có tiêu đề riêng; nhãn vẫn đọc được bằng trình đọc màn hình. */
+  hideLabel?: boolean;
   style?: StyleProp<TextStyle>;
 }) {
   const compactScreen = useContext(CompactScreenContext);
@@ -286,9 +289,11 @@ export function Field({
   const [isFocused, setFocused] = useState(false);
   return (
     <View style={{ gap: compact ? s.xs : s.sm }}>
-      <Txt variant="label" style={compact && ui.compactLabel}>
-        {label}
-      </Txt>
+      {!hideLabel && (
+        <Txt variant="label" style={compact && ui.compactLabel}>
+          {label}
+        </Txt>
+      )}
       <TextInput
         {...props}
         accessibilityLabel={label}

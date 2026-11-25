@@ -742,9 +742,15 @@ export function DestinationPicker({
   name,
   placeId,
   onChange,
+  label,
+  hideLabel,
 }: {
   name: string;
   placeId: string;
+  /** Nhãn ô nhập; mặc định "Điểm đến". */
+  label?: string;
+  /** Ẩn nhãn nhìn thấy khi nơi gọi đã có tiêu đề riêng. */
+  hideLabel?: boolean;
   onChange: (destination: { destinationName: string; destinationPlaceId: string }) => void;
 }) {
   const { isReady } = useApiSession();
@@ -770,7 +776,8 @@ export function DestinationPicker({
   return (
     <View style={styles.section}>
       <Field
-        label={copy.destination}
+        label={label ?? copy.destination}
+        hideLabel={hideLabel}
         placeholder={copy.destinationSearch}
         value={name}
         onChangeText={(value) => onChange({ destinationName: value, destinationPlaceId: '' })}
