@@ -156,12 +156,17 @@ function CheckoutForm() {
     queryKey: ['commerce', 'test-cards'],
     queryFn: ({ signal }) => commerceApi.listTestCards(signal),
     retry: false,
+    // Danh sách thẻ demo không đổi khi đang mở màn; production tắt cổng demo thì không hỏi lại.
+    staleTime: Infinity,
   });
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [guests, setGuests] = useState<Record<number, { fullName: string; birthdate: string }>>({});
-  const [method, setMethod] = useState(0);
+  const [selectedMethod, setMethod] = useState(0);
+  // Production tắt cổng thẻ demo (SCRUM-187): API thẻ trả 404 thì chỉ còn VNPay (index 1).
+  const isCardUnavailable = cards.error instanceof HttpError && cards.error.status === 404;
+  const method = isCardUnavailable ? 1 : selectedMethod;
   const [cardNumber, setCardNumber] = useState('');
   const [hasConsent, setConsent] = useState(false);
   const [otp, setOtp] = useState('');
@@ -625,7 +630,7 @@ function CheckoutForm() {
                 <FormCard title={text.paymentMethod} icon="card-outline">
                   {!isLocked && (
                     <Row style={{ gap: spacing.sm, flexWrap: 'wrap' }}>
-                      {[text.card, text.vnpay].map((label, index) => (
+                      {[text.card, text.vnpay].map((label, index) => (isCardUnavailable && index === 0 ? null : (
                         <Pressable
                           key={label}
                           accessibilityRole="tab"
@@ -646,7 +651,7 @@ function CheckoutForm() {
                             {label}
                           </Txt>
                         </Pressable>
-                      ))}
+                      )))}
                     </Row>
                   )}
                   {method === 0 ? (

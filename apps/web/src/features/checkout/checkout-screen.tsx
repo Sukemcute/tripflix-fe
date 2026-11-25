@@ -111,6 +111,8 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
     enabled: isEnabled,
     queryFn: ({ signal }) => commerceApi.listTestCards(signal),
     retry: false,
+    // Danh sách thẻ demo không đổi khi đang mở trang; production tắt cổng demo thì không hỏi lại.
+    staleTime: Infinity,
   });
   const [operations] = useState(() => ({
     card: createCardPaymentOperation(),
@@ -121,7 +123,11 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [guests, setGuests] = useState<Record<number, GuestDraft>>({});
-  const [method, setMethod] = useState<Method>('card');
+  const [selectedMethod, setMethod] = useState<Method>('card');
+  // Production tắt cổng thẻ demo (SCRUM-187): API thẻ trả 404 thì chỉ còn VNPay.
+  const isCardUnavailable = cards.error instanceof HttpError && cards.error.status === 404;
+  const method: Method = isCardUnavailable ? 'vnpay' : selectedMethod;
+  const methods: readonly Method[] = isCardUnavailable ? ['vnpay'] : ['card', 'vnpay'];
   const [cardNumber, setCardNumber] = useState('');
   const [hasConsent, setConsent] = useState(false);
   const [challengeId, setChallengeId] = useState<string>();
@@ -410,7 +416,7 @@ function CheckoutForm({ id, isEnabled }: { id: string; isEnabled: boolean }) {
                   </span>
                 </legend>
                 <div className={styles.methods} role="radiogroup">
-                  {(['card', 'vnpay'] as const).map((value) => (
+                  {methods.map((value) => (
                     <label key={value} className={styles.method} data-selected={method === value}>
                       <input
                         type="radio"
