@@ -5,7 +5,7 @@ import { explorer as x, mobileLayout, nativeFonts, radius, spacing } from '@trip
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { compactType } from '@/components/mobile-scale';
+import { typeStyle } from '@/components/type-scale';
 import { assets, Chip, Icon, Row, Txt, ui, type IconName } from '@/components/mobile-ui';
 
 const copy = vi.flights;
@@ -353,8 +353,8 @@ const styles = StyleSheet.create({
   },
   heroShade: { backgroundColor: x.day.surface, opacity: 0.78 },
   heroText: { gap: spacing.xs, padding: spacing.lg, paddingRight: 110, zIndex: 1 },
-  heroTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text },
-  heroIntro: { ...compactType.body, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+  heroTitle: { ...typeStyle('headline'), fontFamily: nativeFonts.bold, color: x.day.text },
+  heroIntro: { ...typeStyle('label'), fontFamily: nativeFonts.regular, color: x.day.textSecondary },
   heroMascot: { position: 'absolute', right: 0, bottom: 0, width: 120, height: 130, zIndex: 2 },
   field: {
     flexDirection: 'row',
@@ -375,16 +375,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: x.day.tintExplore,
   },
-  fieldLabel: { ...compactType.label, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+  fieldLabel: { ...typeStyle('caption'), fontFamily: nativeFonts.regular, color: x.day.textSecondary },
   fieldCode: { fontSize: 24, lineHeight: 30, fontFamily: nativeFonts.bold, color: x.day.text },
   fieldName: {
-    ...compactType.body,
+    ...typeStyle('label'),
     flexShrink: 1,
     fontFamily: nativeFonts.regular,
     color: x.day.textSecondary,
   },
-  fieldPlaceholder: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.textSecondary },
-  fieldValue: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
+  fieldPlaceholder: { ...typeStyle('label'), fontFamily: nativeFonts.semibold, color: x.day.textSecondary },
+  fieldValue: { ...typeStyle('label'), fontFamily: nativeFonts.semibold, color: x.day.text },
   swap: {
     position: 'absolute',
     right: 56,
@@ -413,12 +413,12 @@ const styles = StyleSheet.create({
     backgroundColor: x.day.surface,
   },
   stripDaySelected: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
-  stripWeekday: { ...compactType.label, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
-  stripPrice: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
+  stripWeekday: { ...typeStyle('caption'), fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+  stripPrice: { ...typeStyle('label'), fontFamily: nativeFonts.semibold, color: x.day.text },
   stripPriceLow: { color: x.day.text },
   sorts: { gap: spacing.sm },
   tag: {
-    ...compactType.label,
+    ...typeStyle('caption'),
     fontFamily: nativeFonts.semibold,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
   },
   airlineLogo: { width: 120, height: 28 },
   baggage: {
-    ...compactType.label,
+    ...typeStyle('caption'),
     fontFamily: nativeFonts.semibold,
     color: x.day.link,
     backgroundColor: x.day.tintExplore,
@@ -446,14 +446,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  airline: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
-  flightMeta: { ...compactType.label, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+  airline: { ...typeStyle('label'), fontFamily: nativeFonts.semibold, color: x.day.text },
+  flightMeta: { ...typeStyle('caption'), fontFamily: nativeFonts.regular, color: x.day.textSecondary },
   time: { fontSize: 24, lineHeight: 30, fontFamily: nativeFonts.bold, color: x.day.text },
-  airport: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.textSecondary },
+  airport: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold, color: x.day.textSecondary },
   line: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: 4 },
   lineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: x.day.line },
   lineRule: { flex: 1, height: 1, backgroundColor: x.day.line },
-  direct: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.link },
+  direct: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold, color: x.day.link },
 });
 
 /** Bỏ dấu, chữ thường để tìm "da nang" ra Đà Nẵng. */
@@ -537,7 +537,7 @@ const pickerStyles = StyleSheet.create({
     backgroundColor: x.day.canvas,
   },
   searchInput: {
-    ...compactType.body,
+    ...typeStyle('label'),
     flex: 1,
     minHeight: 44,
     fontFamily: nativeFonts.regular,
@@ -563,8 +563,8 @@ const pickerStyles = StyleSheet.create({
     backgroundColor: x.day.tintExplore,
   },
   codeSelected: { backgroundColor: x.day.link },
-  codeText: { ...compactType.body, fontFamily: nativeFonts.bold, color: x.day.link, letterSpacing: 0.5 },
-  city: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
+  codeText: { ...typeStyle('label'), fontFamily: nativeFonts.bold, color: x.day.link, letterSpacing: 0.5 },
+  city: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.semibold, color: x.day.text },
 });
 
 /** Logo hãng; không có logo thì tên hãng (hoặc biểu tượng máy bay). */

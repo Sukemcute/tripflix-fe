@@ -44,7 +44,7 @@ import {
 import { saveTripPick, type TripBookingOffer } from '@/features/booking/trip-booking-store';
 import { CommerceError } from '@/features/booking/commerce-state';
 import { LoadingDots } from '@/components/loading-dots';
-import { compactType } from '@/components/mobile-scale';
+import { typeStyle } from '@/components/type-scale';
 import {
   AirportField,
   FlightAirlineMark,
@@ -882,7 +882,7 @@ const ticketStyles = StyleSheet.create({
   },
   bandTag: {
     flex: 1,
-    ...compactType.label,
+    ...typeStyle('caption'),
     fontFamily: nativeFonts.semibold,
     color: x.brand.white,
   },
@@ -896,7 +896,7 @@ const ticketStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: x.day.surface,
   },
-  collapseText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.brand.white },
+  collapseText: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold, color: x.brand.white },
   section: { gap: spacing.md, padding: spacing.md },
   zigzag: { flexDirection: 'row', height: 6, marginTop: -3, overflow: 'hidden' },
   tooth: {
@@ -923,10 +923,10 @@ const ticketStyles = StyleSheet.create({
     borderColor: x.day.line,
     backgroundColor: x.day.canvas,
   },
-  fareNote: { ...compactType.label, fontFamily: nativeFonts.regular, color: x.day.link },
-  currency: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.textSecondary },
+  fareNote: { ...typeStyle('caption'), fontFamily: nativeFonts.regular, color: x.day.link },
+  currency: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold, color: x.day.textSecondary },
   barcode: { flexDirection: 'row', height: 36, alignSelf: 'center', marginTop: spacing.sm },
-  barcodeText: { ...compactType.label, textAlign: 'center', color: x.day.textSecondary, letterSpacing: 2 },
+  barcodeText: { ...typeStyle('caption'), textAlign: 'center', color: x.day.textSecondary, letterSpacing: 2 },
   code: { fontSize: 32, lineHeight: 38, fontFamily: nativeFonts.bold, color: x.day.text },
   time: { fontSize: 20, lineHeight: 26, fontFamily: nativeFonts.bold, color: x.day.link },
   planeDot: {
@@ -947,13 +947,13 @@ const ticketStyles = StyleSheet.create({
   },
   fact: { width: '33.33%', gap: 2 },
   factLabel: {
-    ...compactType.label,
+    ...typeStyle('caption'),
     fontFamily: nativeFonts.semibold,
     color: x.day.textSecondary,
     letterSpacing: 0.4,
   },
-  factValue: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
-  sectionTitle: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.textSecondary },
+  factValue: { ...typeStyle('label'), fontFamily: nativeFonts.semibold, color: x.day.text },
+  sectionTitle: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold, color: x.day.textSecondary },
   // Ô có viền, chọn thì nền xanh và dấu tích: nhìn ra là lựa chọn, không phải thông tin cố định của vé.
   cabinTab: {
     gap: 2,
@@ -965,7 +965,7 @@ const ticketStyles = StyleSheet.create({
     backgroundColor: x.day.surface,
   },
   cabinTabSelected: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
-  cabinName: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
+  cabinName: { ...typeStyle('label'), fontFamily: nativeFonts.semibold, color: x.day.text },
   fares: { borderRadius: radius.lg, borderWidth: 1, borderColor: x.day.line, overflow: 'hidden' },
   fare: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md },
   fareDivider: { borderTopWidth: 1, borderTopColor: x.day.line },
@@ -981,10 +981,9 @@ const ticketStyles = StyleSheet.create({
   },
   radioOn: { borderColor: x.day.link },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: x.day.link },
-  fareName: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
+  fareName: { ...typeStyle('label'), fontFamily: nativeFonts.semibold, color: x.day.text },
   chip: {
-    ...compactType.label,
-    fontSize: 11,
+    ...typeStyle('micro'),
     fontFamily: nativeFonts.semibold,
     color: x.day.link,
     backgroundColor: x.day.surface,
@@ -993,7 +992,7 @@ const ticketStyles = StyleSheet.create({
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  farePrice: { ...compactType.body, fontFamily: nativeFonts.bold, color: x.day.text },
+  farePrice: { ...typeStyle('label'), fontFamily: nativeFonts.bold, color: x.day.text },
   stub: { gap: spacing.xs, padding: spacing.md, paddingTop: spacing.xs },
   total: { fontSize: 26, lineHeight: 32, fontFamily: nativeFonts.bold, color: x.day.text },
   stubRows: {
