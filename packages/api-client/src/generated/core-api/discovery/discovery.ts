@@ -1171,6 +1171,7 @@ export const getPostRecommendationsControllerRecommendPostsUrl = (
  * - Người đăng nhập: bài tự đăng trong 1 giờ lên đầu feed của chính họ (`reason.code: own_post`, `source: own`); người khác thấy bài đó như bài thường.
  * - Phân trang: gửi `nextCursor` của trang trước vào `cursor`; trang sau dùng cùng thuật toán với trang đầu.
  * - Khoảng 5% vị trí là bài ngẫu nhiên (`source: explore`) để đo chất lượng gợi ý.
+ * - `fresh=true` (trang đầu, khi người xem tự tải lại): bài đã gợi ý cho người này, kể cả vừa gợi ý, bị đẩy xuống để tải lại không ra y hệt trang cũ. Mặc định chỉ bài gợi ý cách hơn 30 phút bị đẩy xuống. Bỏ qua khi có `cursor` hoặc khách.
  * @summary Gợi ý bài viết cho bạn hoặc đang thịnh hành
  */
 export const postRecommendationsControllerRecommendPosts = async (

@@ -46,6 +46,28 @@ describe('recommendPublicPosts', () => {
     const page = await recommendPublicPosts();
     expect(page.items[0]?.viewerContext).toEqual({ myReaction: 'like', isBookmarked: true });
   });
+
+  it('gửi fresh=true ở trang đầu khi bật fresh, bỏ qua khi có cursor hoặc không bật fresh', async () => {
+    const send = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = new URL(String(input));
+      if (url.pathname === '/api/recommendations/posts') {
+        return json({ items: [item('p1')], algo: 'for_you', nextCursor: 'c2' });
+      }
+      return postsByIds(url);
+    });
+
+    await recommendPublicPosts(undefined, undefined, 'vlog', 'for_you', { fresh: true });
+    const firstUrl = new URL(String(send.mock.calls[0]![0]));
+    expect(Object.fromEntries(firstUrl.searchParams)).toEqual({ mode: 'for_you', limit: '7', fresh: 'true', postType: 'vlog' });
+
+    await recommendPublicPosts('c1', undefined, 'vlog', 'for_you', { fresh: true });
+    const cursorUrl = new URL(String(send.mock.calls[2]![0]));
+    expect(Object.fromEntries(cursorUrl.searchParams)).toEqual({ mode: 'for_you', limit: '7', cursor: 'c1', postType: 'vlog' });
+
+    await recommendPublicPosts(undefined, undefined, 'vlog', 'for_you');
+    const defaultUrl = new URL(String(send.mock.calls[4]![0]));
+    expect(Object.fromEntries(defaultUrl.searchParams)).toEqual({ mode: 'for_you', limit: '7', postType: 'vlog' });
+  });
 });
 
 describe('recommendedPage (giữ trang gợi ý đã tải khi bị làm mới)', () => {
