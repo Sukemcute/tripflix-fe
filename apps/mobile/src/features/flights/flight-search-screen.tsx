@@ -691,7 +691,12 @@ function FlightCard({
                       />
                       <Txt style={ticketStyles.cabinName}>{offer.cabinName}</Txt>
                     </Row>
-                    <Txt variant="small" style={ui.muted}>
+                    <Txt
+                      variant="small"
+                      style={
+                        offer.isAvailable && offer.priceFrom != null ? ticketStyles.cabinPrice : ui.muted
+                      }
+                    >
                       {offer.isAvailable && offer.priceFrom != null
                         ? money(offer.priceFrom)
                         : getReason(offer)}
@@ -858,7 +863,7 @@ const cardStyles = StyleSheet.create({
     borderRadius: radius.lg,
     backgroundColor: x.day.tintWarm,
   },
-  price: { fontSize: 22, lineHeight: 28, fontFamily: nativeFonts.bold, color: x.day.text },
+  price: { fontSize: 22, lineHeight: 28, fontFamily: nativeFonts.bold, color: x.day.price },
 });
 
 /** Tên thành phố của sân bay ("Hà Nội · Nội Bài" → "Hà Nội"). */
@@ -965,6 +970,7 @@ const ticketStyles = StyleSheet.create({
     backgroundColor: x.day.surface,
   },
   cabinTabSelected: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
+  cabinPrice: { color: x.day.price, fontFamily: nativeFonts.semibold },
   cabinName: { ...typeStyle('label'), fontFamily: nativeFonts.semibold, color: x.day.text },
   fares: { borderRadius: radius.lg, borderWidth: 1, borderColor: x.day.line, overflow: 'hidden' },
   fare: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md },
@@ -992,9 +998,9 @@ const ticketStyles = StyleSheet.create({
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  farePrice: { ...typeStyle('label'), fontFamily: nativeFonts.bold, color: x.day.text },
+  farePrice: { ...typeStyle('label'), fontFamily: nativeFonts.bold, color: x.day.price },
   stub: { gap: spacing.xs, padding: spacing.md, paddingTop: spacing.xs },
-  total: { fontSize: 26, lineHeight: 32, fontFamily: nativeFonts.bold, color: x.day.text },
+  total: { fontSize: 26, lineHeight: 32, fontFamily: nativeFonts.bold, color: x.day.price },
   stubRows: {
     gap: spacing.xs,
     paddingVertical: spacing.sm,

@@ -15,7 +15,7 @@ import {
   type WeatherSky,
 } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors as c, nativeFonts as f, radius, spacing as s } from '@tripflix/tokens';
+import { colors as c, explorer as x, nativeFonts as f, radius, spacing as s } from '@tripflix/tokens';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router, usePathname } from 'expo-router';
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
   },
   listLabel: { ...chatType.body, fontFamily: f.semibold, color: c.ink },
   row: { flexDirection: 'row', alignItems: 'center', gap: s.md, padding: s.md },
-  price: { ...chatType.small, fontFamily: f.semibold, color: c.coralInk },
+  price: { ...chatType.small, fontFamily: f.semibold, color: x.day.price },
   video: {
     width: 120,
     height: 180,

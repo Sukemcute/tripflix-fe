@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 26,
     fontFamily: nativeFonts.extraBold,
-    color: x.day.text,
+    color: x.day.price,
     fontVariant: ['tabular-nums'],
   },
   pager: { justifyContent: 'center', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },

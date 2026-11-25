@@ -873,7 +873,7 @@ const checkoutStyles = StyleSheet.create({
     backgroundColor: x.day.surface,
   },
   footer: { gap: spacing.sm },
-  total: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold, color: x.day.text },
+  total: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold, color: x.day.price },
   meta: { fontSize: 13, lineHeight: 22, color: x.day.text },
   pay: { minHeight: 52 },
   form: {

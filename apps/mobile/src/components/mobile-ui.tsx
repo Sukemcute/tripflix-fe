@@ -556,7 +556,9 @@ export function PriceRow({
       <Txt variant={total ? 'label' : 'small'} style={{ flex: 1, color: total ? d.text : d.textSecondary }}>
         {label}
       </Txt>
-      <Txt variant={total ? 'heading' : 'label'}>{amount}</Txt>
+      <Txt variant={total ? 'heading' : 'label'} style={{ color: d.price }}>
+        {amount}
+      </Txt>
     </Row>
   );
 }

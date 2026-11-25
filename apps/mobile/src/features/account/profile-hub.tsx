@@ -126,7 +126,7 @@ export function ProfileHub() {
                   pending.items[0]?.productName ||
                   copy.profile.myTrips}
               </Txt>
-              <Txt style={styles.number}>{money(pending.total)}</Txt>
+              <Txt style={[styles.number, { color: x.day.price }]}>{money(pending.total)}</Txt>
               <Pressable
                 accessibilityRole="button"
                 onPress={() =>

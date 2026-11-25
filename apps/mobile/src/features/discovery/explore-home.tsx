@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   stayCopy: { flex: 1, gap: 5 },
   stayName: { fontFamily: fonts.semibold, fontSize: 17, lineHeight: 25, color: x.day.text },
   priceRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', marginTop: 4 },
-  price: { fontSize: 20, lineHeight: 29, fontFamily: fonts.bold, color: ACCENT },
+  price: { fontSize: 20, lineHeight: 29, fontFamily: fonts.bold, color: x.day.price },
   priceNote: { color: x.day.textSecondary, fontSize: 12, lineHeight: 19 },
   reason: { flexDirection: 'row', gap: 10, alignItems: 'stretch' },
   reasonText: { flex: 1, color: x.day.textSecondary, fontSize: 13, lineHeight: 22 },

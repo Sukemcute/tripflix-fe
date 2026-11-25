@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 24,
     lineHeight: 32,
-    color: x.day.text,
+    color: x.day.price,
     fontFamily: nativeFonts.extraBold,
     fontVariant: ['tabular-nums'],
   },

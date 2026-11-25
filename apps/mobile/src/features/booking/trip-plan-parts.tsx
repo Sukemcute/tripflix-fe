@@ -104,7 +104,7 @@ export function ProductCard({
             {/* Giá nằm dưới tên, không chen ngang hàng: tên khách sạn, chuyến bay có trọn bề ngang để đọc hết. */}
             {(!!price || !!status) && (
               <View style={styles.cardPriceRow}>
-                {price ? <Txt style={[styles.price, { color: ink }]}>{price}</Txt> : null}
+                {price ? <Txt style={[styles.price, { color: x.day.price }]}>{price}</Txt> : null}
                 {!!status && <Txt style={styles.cardStatus}>{status}</Txt>}
               </View>
             )}
@@ -318,6 +318,6 @@ export const styles = StyleSheet.create({
   stopText: { flex: 1, gap: 1 },
   description: { ...typeStyle('label'), color: x.day.text },
   totalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  total: { ...typeStyle('subhead'), fontFamily: nativeFonts.semibold, color: x.day.text },
+  total: { ...typeStyle('subhead'), fontFamily: nativeFonts.semibold, color: x.day.price },
   actions: { gap: spacing.sm, justifyContent: 'flex-end', flexWrap: 'wrap' },
 });

@@ -331,5 +331,5 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   badgeText: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold },
-  price: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.bold, color: x.day.text },
+  price: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.bold, color: x.day.price },
 });

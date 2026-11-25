@@ -501,7 +501,7 @@ function RateRow({
         ) : (
           <View style={{ alignItems: 'flex-end' }}>
             <Txt
-              style={{ fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.text }}
+              style={{ fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.price }}
             >
               {money(perNight)}
             </Txt>

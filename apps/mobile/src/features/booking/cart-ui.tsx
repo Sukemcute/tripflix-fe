@@ -241,7 +241,9 @@ export function SelectionBar({ returnTo }: { returnTo: string }) {
         <Txt variant="small" style={ui.muted}>
           {roomCount} {text.cartRooms} · {text.cartSubtotal}
         </Txt>
-        <Txt variant="heading">{money(calculateBookingCartTotal(selection))}</Txt>
+        <Txt variant="heading" style={{ color: x.day.price }}>
+          {money(calculateBookingCartTotal(selection))}
+        </Txt>
       </Row>
       {discount > 0 && (
         <Txt variant="small" style={{ color: x.day.link }}>
@@ -474,7 +476,7 @@ const cartStyles = StyleSheet.create({
   dates: { gap: spacing.md, flexWrap: 'wrap' },
   date: { flexGrow: 1, flexBasis: 120, gap: spacing.xs },
   dateValue: { fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.medium, color: x.day.text },
-  price: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.text },
+  price: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.price },
   controls: { justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
   remove: {
     minHeight: 44,

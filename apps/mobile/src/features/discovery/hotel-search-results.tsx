@@ -233,7 +233,7 @@ export function HotelSearchResults({ q, pick }: { q: string; pick?: TripHotelPic
                 {hotel.stars ? ` · ${hotel.stars} ★` : ''}
               </Txt>
               {hotel.price !== undefined && (
-                <Txt variant="label" style={{ color: x.day.text }}>
+                <Txt variant="label" style={{ color: x.day.price }}>
                   {vi.hotel.from} {money(hotel.price)}
                   {pick ? ` ${vi.hotel.perNightShort}` : ''}
                 </Txt>
