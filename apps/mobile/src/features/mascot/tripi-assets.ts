@@ -185,6 +185,11 @@ export const TRIPI_ANIMATIONS = {
     source: require('../../../assets/brand/tripi-library/animations/success.webp'),
     fallback: 'ui-success',
   },
+  // Bước đi tại chỗ, xuất từ rig Rive (tools/mascot/render-tripi-walk.py): chân bước thật, không chỉ nhún cả người.
+  walking: {
+    source: require('../../../assets/brand/tripi-library/animations/walking.webp'),
+    fallback: 'turn-front',
+  },
 } as const;
 
 export type TripiAnimation = keyof typeof TRIPI_ANIMATIONS;

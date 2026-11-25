@@ -1,164 +1,206 @@
 <Rive version="1" kind="fragment">
-  <Artboard id="0:1" name="Tripi" width="768" height="768" defaultStateMachineId="0:2" viewModelId="0:3" viewModelInstanceId="0:4" styleId="0:166">
+  <Artboard id="0:1" name="Tripi" width="768" height="768" defaultStateMachineId="0:2" viewModelId="0:3" viewModelInstanceId="0:4" styleId="0:181">
     <Node id="0:101" name="Root" x="384" y="737">
-      <Node id="0:127" name="ArmWave" x="-163.52153110047846" y="-293.9712918660287">
-        <Image id="0:132" name="arm-wave" assetId="0:131" originX="0" originY="0" x="-148.21052631578948" y="-136.5741626794258" opacity="0" />
-        <Node id="0:128" name="Arm lift" x="0" y="0">
-          <Image id="0:130" name="arm-rest" assetId="0:129" originX="0" originY="0" x="-90.02870813397129" y="-22.660287081339675" opacity="1" />
+      <Node id="0:108" name="Upper" x="-16.535885167464116" y="-73.49282296650718">
+        <Node id="0:109" name="UpperInner" x="16.535885167464116" y="73.49282296650718">
+          <Node id="0:137" name="ArmWave" x="-163.52153110047846" y="-293.9712918660287">
+            <Image id="0:142" name="arm-wave" assetId="0:141" originX="0" originY="0" x="-148.21052631578948" y="-136.5741626794258" opacity="0" />
+            <Node id="0:138" name="Arm lift" x="0" y="0">
+              <Image id="0:140" name="arm-rest" assetId="0:139" originX="0" originY="0" x="-90.02870813397129" y="-22.660287081339675" opacity="1" />
+            </Node>
+          </Node>
+          <Node id="0:120" name="Head" x="0" y="-336.84210526315786">
+            <Image id="0:136" name="mouth-grin" assetId="0:135" originX="0" originY="0" x="-64.30622009569379" y="-103.5023923444976" opacity="0" />
+            <Image id="0:134" name="mouth-laugh" assetId="0:133" originX="0" originY="0" x="-64.30622009569379" y="-103.5023923444976" opacity="0" />
+            <Image id="0:132" name="mouth-smile" assetId="0:131" originX="0" originY="0" x="-64.30622009569379" y="-103.5023923444976" opacity="1" />
+            <Image id="0:130" name="eyes-wink" assetId="0:129" originX="0" originY="0" x="-146.98564593301435" y="-208.22966507177034" opacity="0" />
+            <Image id="0:128" name="eyes-happy" assetId="0:127" originX="0" originY="0" x="-146.98564593301435" y="-208.22966507177034" opacity="0" />
+            <Image id="0:126" name="eyes-closed" assetId="0:125" originX="0" originY="0" x="-146.98564593301435" y="-208.22966507177034" opacity="0" />
+            <Image id="0:124" name="eyes-open" assetId="0:123" originX="0" originY="0" x="-146.98564593301435" y="-208.22966507177034" opacity="1" />
+            <Image id="0:122" name="head" assetId="0:121" originX="0" originY="0" x="-383.3875598086124" y="-394.41148325358853" opacity="1" />
+          </Node>
+          <Node id="0:115" name="Body" x="0" y="0">
+            <Image id="0:119" name="hip-shade" assetId="0:118" originX="0" originY="0" x="-163.52153110047846" y="-83.29186602870823" opacity="0" />
+            <Image id="0:117" name="body" assetId="0:116" originX="0" originY="0" x="-224.15311004784687" y="-338.6794258373206" opacity="1" />
+          </Node>
+          <Image id="0:114" name="arm-back" assetId="0:113" originX="0" originY="0" x="109.01435406698562" y="-316.63157894736844" opacity="1" />
+          <Node id="0:110" name="Tail" x="188.6315789473684" y="-159.23444976076556">
+            <Image id="0:112" name="tail" assetId="0:111" originX="0" originY="0" x="-57.56937799043067" y="-216.19138755980856" opacity="1" />
+          </Node>
         </Node>
       </Node>
-      <Node id="0:110" name="Head" x="0" y="-336.84210526315786">
-        <Image id="0:126" name="mouth-grin" assetId="0:125" originX="0" originY="0" x="-64.30622009569379" y="-103.5023923444976" opacity="0" />
-        <Image id="0:124" name="mouth-laugh" assetId="0:123" originX="0" originY="0" x="-64.30622009569379" y="-103.5023923444976" opacity="0" />
-        <Image id="0:122" name="mouth-smile" assetId="0:121" originX="0" originY="0" x="-64.30622009569379" y="-103.5023923444976" opacity="1" />
-        <Image id="0:120" name="eyes-wink" assetId="0:119" originX="0" originY="0" x="-146.98564593301435" y="-208.22966507177034" opacity="0" />
-        <Image id="0:118" name="eyes-happy" assetId="0:117" originX="0" originY="0" x="-146.98564593301435" y="-208.22966507177034" opacity="0" />
-        <Image id="0:116" name="eyes-closed" assetId="0:115" originX="0" originY="0" x="-146.98564593301435" y="-208.22966507177034" opacity="0" />
-        <Image id="0:114" name="eyes-open" assetId="0:113" originX="0" originY="0" x="-146.98564593301435" y="-208.22966507177034" opacity="1" />
-        <Image id="0:112" name="head" assetId="0:111" originX="0" originY="0" x="-383.3875598086124" y="-394.41148325358853" opacity="1" />
+      <Node id="0:105" name="LegRight" x="0" y="0">
+        <Image id="0:107" name="leg-right" assetId="0:106" originX="0" originY="0" x="-5.511961722488024" y="-124.93779904306223" opacity="1" />
       </Node>
-      <Node id="0:107" name="Body" x="0" y="0">
-        <Image id="0:109" name="body" assetId="0:108" originX="0" originY="0" x="-224.15311004784687" y="-338.6794258373206" opacity="1" />
-      </Node>
-      <Image id="0:106" name="arm-back" assetId="0:105" originX="0" originY="0" x="109.01435406698562" y="-316.63157894736844" opacity="1" />
-      <Node id="0:102" name="Tail" x="188.6315789473684" y="-159.23444976076556">
-        <Image id="0:104" name="tail" assetId="0:103" originX="0" originY="0" x="-57.56937799043067" y="-216.19138755980856" opacity="1" />
+      <Node id="0:102" name="LegLeft" x="0" y="0">
+        <Image id="0:104" name="leg-left" assetId="0:103" originX="0" originY="0" x="-163.52153110047846" y="-126.16267942583738" opacity="1" />
       </Node>
     </Node>
     <StateMachine id="0:2" name="Tripi">
-      <StateMachineLayer name="Breathing" id="0:148">
+      <StateMachineLayer name="Breathing" id="0:160">
         <EntryState x="0" y="0">
-          <StateTransition stateToId="0:149" />
+          <StateTransition stateToId="0:161" />
         </EntryState>
         <ExitState x="600" y="-160" />
         <AnyState x="160" y="-160" />
-        <AnimationState id="0:149" animationId="0:138" x="160" y="0" />
+        <AnimationState id="0:161" animationId="0:149" x="160" y="0" />
       </StateMachineLayer>
-      <StateMachineLayer name="Head follow through" id="0:150">
+      <StateMachineLayer name="Head follow through" id="0:162">
         <EntryState x="0" y="0">
-          <StateTransition stateToId="0:151" />
+          <StateTransition stateToId="0:163" />
         </EntryState>
         <ExitState x="600" y="-160" />
         <AnyState x="160" y="-160" />
-        <AnimationState id="0:151" animationId="0:139" x="160" y="0" />
+        <AnimationState id="0:163" animationId="0:150" x="160" y="0" />
       </StateMachineLayer>
-      <StateMachineLayer name="Tail follow through" id="0:152">
+      <StateMachineLayer name="Tail follow through" id="0:164">
         <EntryState x="0" y="0">
-          <StateTransition stateToId="0:153" />
+          <StateTransition stateToId="0:165" />
         </EntryState>
         <ExitState x="600" y="-160" />
         <AnyState x="160" y="-160" />
-        <AnimationState id="0:153" animationId="0:140" x="160" y="0" />
+        <AnimationState id="0:165" animationId="0:151" x="160" y="0" />
       </StateMachineLayer>
-      <StateMachineLayer name="Arm" id="0:154">
+      <StateMachineLayer name="Arm" id="0:166">
         <EntryState x="0" y="0">
-          <StateTransition stateToId="0:155" />
+          <StateTransition stateToId="0:167" />
         </EntryState>
         <ExitState x="600" y="-160" />
         <AnyState x="160" y="-160">
-          <StateTransition stateToId="0:156" duration="60" enableEarlyExit="true">
+          <StateTransition stateToId="0:168" duration="60" enableEarlyExit="true">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
-                  <DataBindContext sourcePathIds="0:3-0:133" propertyKey="686" />
+                  <DataBindContext sourcePathIds="0:3-0:143" propertyKey="686" />
                 </BindablePropertyTrigger>
               </TransitionPropertyViewModelComparator>
               <TransitionValueTriggerComparator value="0" />
             </TransitionViewModelCondition>
           </StateTransition>
         </AnyState>
-        <AnimationState id="0:155" animationId="0:141" x="160" y="0" />
-        <AnimationState id="0:156" animationId="0:142" reset="true" x="360" y="120">
-          <StateTransition stateToId="0:155" duration="100" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" />
+        <AnimationState id="0:167" animationId="0:152" x="160" y="0" />
+        <AnimationState id="0:168" animationId="0:153" reset="true" x="360" y="120">
+          <StateTransition stateToId="0:167" duration="100" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" />
         </AnimationState>
       </StateMachineLayer>
-      <StateMachineLayer name="Expression" id="0:157">
+      <StateMachineLayer name="Expression" id="0:169">
         <EntryState x="0" y="0">
-          <StateTransition stateToId="0:158" />
+          <StateTransition stateToId="0:170" />
         </EntryState>
         <ExitState x="600" y="-160" />
         <AnyState x="160" y="-160">
-          <StateTransition stateToId="0:159" duration="0" enableEarlyExit="true">
+          <StateTransition stateToId="0:171" duration="0" enableEarlyExit="true">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
-                  <DataBindContext sourcePathIds="0:3-0:134" propertyKey="686" />
+                  <DataBindContext sourcePathIds="0:3-0:144" propertyKey="686" />
                 </BindablePropertyTrigger>
               </TransitionPropertyViewModelComparator>
               <TransitionValueTriggerComparator value="0" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:160" duration="60" enableEarlyExit="true">
+          <StateTransition stateToId="0:172" duration="60" enableEarlyExit="true">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
-                  <DataBindContext sourcePathIds="0:3-0:135" propertyKey="686" />
+                  <DataBindContext sourcePathIds="0:3-0:145" propertyKey="686" />
                 </BindablePropertyTrigger>
               </TransitionPropertyViewModelComparator>
               <TransitionValueTriggerComparator value="0" />
             </TransitionViewModelCondition>
           </StateTransition>
-          <StateTransition stateToId="0:161" duration="60" enableEarlyExit="true">
+          <StateTransition stateToId="0:173" duration="60" enableEarlyExit="true">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
-                  <DataBindContext sourcePathIds="0:3-0:136" propertyKey="686" />
+                  <DataBindContext sourcePathIds="0:3-0:146" propertyKey="686" />
                 </BindablePropertyTrigger>
               </TransitionPropertyViewModelComparator>
               <TransitionValueTriggerComparator value="0" />
             </TransitionViewModelCondition>
           </StateTransition>
         </AnyState>
-        <AnimationState id="0:158" animationId="0:143" x="160" y="0" />
-        <AnimationState id="0:159" animationId="0:144" reset="true" x="360" y="120">
-          <StateTransition stateToId="0:158" duration="100" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" />
+        <AnimationState id="0:170" animationId="0:154" x="160" y="0" />
+        <AnimationState id="0:171" animationId="0:155" reset="true" x="360" y="120">
+          <StateTransition stateToId="0:170" duration="100" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" />
         </AnimationState>
-        <AnimationState id="0:160" animationId="0:145" reset="true" x="540" y="240">
-          <StateTransition stateToId="0:158" duration="100" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" />
+        <AnimationState id="0:172" animationId="0:156" reset="true" x="540" y="240">
+          <StateTransition stateToId="0:170" duration="100" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" />
         </AnimationState>
-        <AnimationState id="0:161" animationId="0:146" reset="true" x="720" y="360">
-          <StateTransition stateToId="0:158" duration="100" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" />
+        <AnimationState id="0:173" animationId="0:157" reset="true" x="720" y="360">
+          <StateTransition stateToId="0:170" duration="100" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" />
         </AnimationState>
       </StateMachineLayer>
-      <StateMachineLayer name="Celebration" id="0:163">
+      <StateMachineLayer name="Celebration" id="0:175">
         <EntryState x="0" y="0">
-          <StateTransition stateToId="0:164" />
+          <StateTransition stateToId="0:176" />
         </EntryState>
         <ExitState x="600" y="-160" />
         <AnyState x="160" y="-160">
-          <StateTransition stateToId="0:165" duration="60" enableEarlyExit="true">
+          <StateTransition stateToId="0:177" duration="60" enableEarlyExit="true">
             <TransitionViewModelCondition>
               <TransitionPropertyViewModelComparator>
                 <BindablePropertyTrigger>
-                  <DataBindContext sourcePathIds="0:3-0:137" propertyKey="686" />
+                  <DataBindContext sourcePathIds="0:3-0:147" propertyKey="686" />
                 </BindablePropertyTrigger>
               </TransitionPropertyViewModelComparator>
               <TransitionValueTriggerComparator value="0" />
             </TransitionViewModelCondition>
           </StateTransition>
         </AnyState>
-        <AnimationState id="0:164" animationId="0:162" x="160" y="0" />
-        <AnimationState id="0:165" animationId="0:147" reset="true" x="360" y="120">
-          <StateTransition stateToId="0:164" duration="100" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" />
+        <AnimationState id="0:176" animationId="0:174" x="160" y="0" />
+        <AnimationState id="0:177" animationId="0:158" reset="true" x="360" y="120">
+          <StateTransition stateToId="0:176" duration="100" enableExitTime="true" exitTimeIsPercetange="true" exitTime="100" />
         </AnimationState>
       </StateMachineLayer>
-      <StateMachineListenerSingle targetId="0:112" listenerTypeValue="enter" name="enter">
+      <StateMachineLayer name="Walk" id="0:178">
+        <EntryState x="0" y="0">
+          <StateTransition stateToId="0:179" />
+        </EntryState>
+        <ExitState x="600" y="-160" />
+        <AnyState x="160" y="-160" />
+        <AnimationState id="0:179" animationId="0:174" x="160" y="0">
+          <StateTransition stateToId="0:180" duration="120">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:3-0:148" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="true" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+        <AnimationState id="0:180" animationId="0:159" x="360" y="0">
+          <StateTransition stateToId="0:179" duration="120">
+            <TransitionViewModelCondition>
+              <TransitionPropertyViewModelComparator>
+                <BindablePropertyBoolean>
+                  <DataBindContext sourcePathIds="0:3-0:148" propertyKey="634" />
+                </BindablePropertyBoolean>
+              </TransitionPropertyViewModelComparator>
+              <TransitionValueBooleanComparator value="false" />
+            </TransitionViewModelCondition>
+          </StateTransition>
+        </AnimationState>
+      </StateMachineLayer>
+      <StateMachineListenerSingle targetId="0:122" listenerTypeValue="enter" name="enter">
         <ListenerViewModelChange>
           <BindablePropertyTrigger propertyValue="1">
-            <DataBindContext sourcePathIds="0:3-0:133" propertyKey="686" direction="true" />
+            <DataBindContext sourcePathIds="0:3-0:143" propertyKey="686" direction="true" />
           </BindablePropertyTrigger>
         </ListenerViewModelChange>
       </StateMachineListenerSingle>
-      <StateMachineListenerSingle targetId="0:112" listenerTypeValue="click" name="click">
+      <StateMachineListenerSingle targetId="0:122" listenerTypeValue="click" name="click">
         <ListenerViewModelChange>
           <BindablePropertyTrigger propertyValue="1">
-            <DataBindContext sourcePathIds="0:3-0:136" propertyKey="686" direction="true" />
+            <DataBindContext sourcePathIds="0:3-0:146" propertyKey="686" direction="true" />
           </BindablePropertyTrigger>
         </ListenerViewModelChange>
       </StateMachineListenerSingle>
     </StateMachine>
-    <LinearAnimation id="0:138" name="idle" fps="60" duration="228" loopValue="loop">
-      <KeyedObject objectId="0:107">
+    <LinearAnimation id="0:149" name="idle" fps="60" duration="228" loopValue="loop">
+      <KeyedObject objectId="0:115">
         <KeyedProperty property="scaleY">
           <KeyFrameDouble frame="0" value="1" interpolationType="cubic">
             <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
@@ -185,8 +227,8 @@
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation id="0:139" name="headSway" fps="60" duration="337" loopValue="loop">
-      <KeyedObject objectId="0:110">
+    <LinearAnimation id="0:150" name="headSway" fps="60" duration="337" loopValue="loop">
+      <KeyedObject objectId="0:120">
         <KeyedProperty property="rotation">
           <KeyFrameDouble frame="0" value="-0.012" interpolationType="cubic">
             <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
@@ -200,8 +242,8 @@
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation id="0:140" name="tailFollow" fps="60" duration="293" loopValue="loop">
-      <KeyedObject objectId="0:102">
+    <LinearAnimation id="0:151" name="tailFollow" fps="60" duration="293" loopValue="loop">
+      <KeyedObject objectId="0:110">
         <KeyedProperty property="rotation">
           <KeyFrameDouble frame="0" value="-0.025" interpolationType="cubic">
             <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
@@ -215,25 +257,25 @@
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation id="0:141" name="armRest" fps="60" duration="1" loopValue="oneShot">
-      <KeyedObject objectId="0:130">
+    <LinearAnimation id="0:152" name="armRest" fps="60" duration="1" loopValue="oneShot">
+      <KeyedObject objectId="0:140">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:132">
+      <KeyedObject objectId="0:142">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:127">
+      <KeyedObject objectId="0:137">
         <KeyedProperty property="rotation">
           <KeyFrameDouble frame="0" value="0" interpolationType="cubic">
             <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
           </KeyFrameDouble>
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:128">
+      <KeyedObject objectId="0:138">
         <KeyedProperty property="rotation">
           <KeyFrameDouble frame="0" value="0" interpolationType="cubic">
             <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
@@ -241,8 +283,8 @@
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation id="0:142" name="wave" fps="60" duration="122" loopValue="oneShot">
-      <KeyedObject objectId="0:130">
+    <LinearAnimation id="0:153" name="wave" fps="60" duration="122" loopValue="oneShot">
+      <KeyedObject objectId="0:140">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="1" interpolationType="cubic">
             <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
@@ -264,7 +306,7 @@
           </KeyFrameDouble>
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:132">
+      <KeyedObject objectId="0:142">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="0" interpolationType="cubic">
             <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
@@ -286,7 +328,7 @@
           </KeyFrameDouble>
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:128">
+      <KeyedObject objectId="0:138">
         <KeyedProperty property="rotation">
           <KeyFrameDouble frame="0" value="0" interpolationType="cubic">
             <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
@@ -308,7 +350,7 @@
           </KeyFrameDouble>
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:127">
+      <KeyedObject objectId="0:137">
         <KeyedProperty property="rotation">
           <KeyFrameDouble frame="0" value="0" interpolationType="cubic">
             <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
@@ -337,35 +379,10 @@
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation id="0:143" name="neutral" fps="60" duration="1" loopValue="oneShot">
-      <KeyedObject objectId="0:114">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:116">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:118">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:120">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:122">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
+    <LinearAnimation id="0:154" name="neutral" fps="60" duration="1" loopValue="oneShot">
       <KeyedObject objectId="0:124">
         <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
+          <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="0:126">
@@ -373,114 +390,114 @@
           <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
+      <KeyedObject objectId="0:128">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:130">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:132">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:134">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:136">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation id="0:144" name="blink" fps="60" duration="12" loopValue="oneShot">
-      <KeyedObject objectId="0:114">
+    <LinearAnimation id="0:155" name="blink" fps="60" duration="12" loopValue="oneShot">
+      <KeyedObject objectId="0:124">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
           <KeyFrameDouble frame="3" value="0" interpolationType="hold" />
           <KeyFrameDouble frame="8" value="1" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:116">
+      <KeyedObject objectId="0:126">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
           <KeyFrameDouble frame="3" value="1" interpolationType="hold" />
           <KeyFrameDouble frame="8" value="0" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:118">
+      <KeyedObject objectId="0:128">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:120">
+      <KeyedObject objectId="0:130">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:122">
+      <KeyedObject objectId="0:132">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:124">
+      <KeyedObject objectId="0:134">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:126">
+      <KeyedObject objectId="0:136">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation id="0:145" name="wink" fps="60" duration="58" loopValue="oneShot">
-      <KeyedObject objectId="0:114">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:116">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:118">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:120">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:122">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
+    <LinearAnimation id="0:156" name="wink" fps="60" duration="58" loopValue="oneShot">
       <KeyedObject objectId="0:124">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="0:126">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:128">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:130">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:132">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:134">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:136">
         <KeyedProperty property="opacity">
           <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation id="0:146" name="laugh" fps="60" duration="100" loopValue="oneShot">
-      <KeyedObject objectId="0:114">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:116">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:118">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:120">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:122">
-        <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
-        </KeyedProperty>
-      </KeyedObject>
+    <LinearAnimation id="0:157" name="laugh" fps="60" duration="100" loopValue="oneShot">
       <KeyedObject objectId="0:124">
         <KeyedProperty property="opacity">
-          <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
+          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="0:126">
@@ -488,7 +505,32 @@
           <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
         </KeyedProperty>
       </KeyedObject>
-      <KeyedObject objectId="0:110">
+      <KeyedObject objectId="0:128">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:130">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:132">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:134">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:136">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="0" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:120">
         <KeyedProperty property="y">
           <KeyFrameDouble frame="0" value="-336.84210526315786" interpolationType="cubic">
             <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
@@ -514,7 +556,7 @@
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation id="0:147" name="celebrate" fps="60" duration="78" loopValue="oneShot">
+    <LinearAnimation id="0:158" name="celebrate" fps="60" duration="78" loopValue="oneShot">
       <KeyedObject objectId="0:101">
         <KeyedProperty property="scaleY">
           <KeyFrameDouble frame="0" value="1" interpolationType="cubic">
@@ -560,34 +602,173 @@
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>
-    <LinearAnimation id="0:162" name="rest" fps="60" duration="1" loopValue="oneShot" />
-    <LayoutComponentStyle id="0:166" />
+    <LinearAnimation id="0:159" name="walk" fps="60" duration="64" loopValue="loop">
+      <KeyedObject objectId="0:102">
+        <KeyedProperty property="y">
+          <KeyFrameDouble frame="0" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="16" value="-31.84688995215311" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="32" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="64" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:105">
+        <KeyedProperty property="y">
+          <KeyFrameDouble frame="0" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="32" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="48" value="-31.84688995215311" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="64" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:108">
+        <KeyedProperty property="y">
+          <KeyFrameDouble frame="0" value="-73.49282296650718" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="16" value="-82.06698564593302" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="32" value="-73.49282296650718" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="48" value="-82.06698564593302" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="64" value="-73.49282296650718" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:108">
+        <KeyedProperty property="rotation">
+          <KeyFrameDouble frame="0" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="16" value="0.035" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="32" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="48" value="-0.035" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="64" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:120">
+        <KeyedProperty property="rotation">
+          <KeyFrameDouble frame="0" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="16" value="-0.025" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="32" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="48" value="0.025" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="64" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:110">
+        <KeyedProperty property="rotation">
+          <KeyFrameDouble frame="0" value="-0.02" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="16" value="0.07" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="32" value="-0.02" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="48" value="0.07" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="64" value="-0.02" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:137">
+        <KeyedProperty property="rotation">
+          <KeyFrameDouble frame="0" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="16" value="-0.07" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="32" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="48" value="0.07" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+          <KeyFrameDouble frame="64" value="0" interpolationType="cubic">
+            <CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1" />
+          </KeyFrameDouble>
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:119">
+        <KeyedProperty property="opacity">
+          <KeyFrameDouble frame="0" value="1" interpolationType="hold" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:174" name="rest" fps="60" duration="1" loopValue="oneShot" />
+    <LayoutComponentStyle id="0:181" />
   </Artboard>
-  <ImageAsset id="0:103" name="tail" file="assets/tail.png" />
-  <ImageAsset id="0:105" name="arm-back" file="assets/arm-back.png" />
-  <ImageAsset id="0:108" name="body" file="assets/body.png" />
-  <ImageAsset id="0:111" name="head" file="assets/head.png" />
-  <ImageAsset id="0:113" name="eyes-open" file="assets/eyes-open.png" />
-  <ImageAsset id="0:115" name="eyes-closed" file="assets/eyes-closed.png" />
-  <ImageAsset id="0:117" name="eyes-happy" file="assets/eyes-happy.png" />
-  <ImageAsset id="0:119" name="eyes-wink" file="assets/eyes-wink.png" />
-  <ImageAsset id="0:121" name="mouth-smile" file="assets/mouth-smile.png" />
-  <ImageAsset id="0:123" name="mouth-laugh" file="assets/mouth-laugh.png" />
-  <ImageAsset id="0:125" name="mouth-grin" file="assets/mouth-grin.png" />
-  <ImageAsset id="0:129" name="arm-rest" file="assets/arm-rest.png" />
-  <ImageAsset id="0:131" name="arm-wave" file="assets/arm-wave.png" />
+  <ImageAsset id="0:103" name="leg-left" file="assets/leg-left.png" />
+  <ImageAsset id="0:106" name="leg-right" file="assets/leg-right.png" />
+  <ImageAsset id="0:111" name="tail" file="assets/tail.png" />
+  <ImageAsset id="0:113" name="arm-back" file="assets/arm-back.png" />
+  <ImageAsset id="0:116" name="body" file="assets/body.png" />
+  <ImageAsset id="0:118" name="hip-shade" file="assets/hip-shade.png" />
+  <ImageAsset id="0:121" name="head" file="assets/head.png" />
+  <ImageAsset id="0:123" name="eyes-open" file="assets/eyes-open.png" />
+  <ImageAsset id="0:125" name="eyes-closed" file="assets/eyes-closed.png" />
+  <ImageAsset id="0:127" name="eyes-happy" file="assets/eyes-happy.png" />
+  <ImageAsset id="0:129" name="eyes-wink" file="assets/eyes-wink.png" />
+  <ImageAsset id="0:131" name="mouth-smile" file="assets/mouth-smile.png" />
+  <ImageAsset id="0:133" name="mouth-laugh" file="assets/mouth-laugh.png" />
+  <ImageAsset id="0:135" name="mouth-grin" file="assets/mouth-grin.png" />
+  <ImageAsset id="0:139" name="arm-rest" file="assets/arm-rest.png" />
+  <ImageAsset id="0:141" name="arm-wave" file="assets/arm-wave.png" />
   <ViewModel id="0:3" name="Tripi" defaultInstanceId="0:4">
     <ViewModelInstance id="0:4" name="Default" exports="true">
-      <ViewModelInstanceTrigger viewModelPropertyId="0:133" propertyValue="0" />
-      <ViewModelInstanceTrigger viewModelPropertyId="0:134" propertyValue="0" />
-      <ViewModelInstanceTrigger viewModelPropertyId="0:135" propertyValue="0" />
-      <ViewModelInstanceTrigger viewModelPropertyId="0:136" propertyValue="0" />
-      <ViewModelInstanceTrigger viewModelPropertyId="0:137" propertyValue="0" />
+      <ViewModelInstanceTrigger viewModelPropertyId="0:143" propertyValue="0" />
+      <ViewModelInstanceTrigger viewModelPropertyId="0:144" propertyValue="0" />
+      <ViewModelInstanceTrigger viewModelPropertyId="0:145" propertyValue="0" />
+      <ViewModelInstanceTrigger viewModelPropertyId="0:146" propertyValue="0" />
+      <ViewModelInstanceTrigger viewModelPropertyId="0:147" propertyValue="0" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:148" propertyValue="false" />
     </ViewModelInstance>
-    <ViewModelPropertyTrigger id="0:133" name="wave" />
-    <ViewModelPropertyTrigger id="0:134" name="blink" />
-    <ViewModelPropertyTrigger id="0:135" name="wink" />
-    <ViewModelPropertyTrigger id="0:136" name="laugh" />
-    <ViewModelPropertyTrigger id="0:137" name="celebrate" />
+    <ViewModelPropertyTrigger id="0:143" name="wave" />
+    <ViewModelPropertyTrigger id="0:144" name="blink" />
+    <ViewModelPropertyTrigger id="0:145" name="wink" />
+    <ViewModelPropertyTrigger id="0:146" name="laugh" />
+    <ViewModelPropertyTrigger id="0:147" name="celebrate" />
+    <ViewModelPropertyBoolean id="0:148" name="walking" />
   </ViewModel>
 </Rive>

@@ -26,6 +26,9 @@ Các tên trong bảng có đuôi `.png`. Hình đầu tò mò ở thẻ “Chư
 | `searching` | Đang tìm chuyến | `.webp`, `.webm` |
 | `departure` | Chuẩn bị lên đường | `.webp`, `.webm` |
 | `success` | Hoàn tất / đặt thành công | `.webp`, `.webm` |
+| `walking` | Tripi bước đi tại chỗ (màn chờ mobile) | `.webp` |
+
+`walking.webp` không thuộc bộ HyperFrames ở trên: xuất từ rig Rive (`design/tripi-rive`, chân là lớp riêng nên bước thật) bằng `tools/mascot/render-tripi-walk.py`. Vòng 32 khung, 30 khung/giây, khoảng 1,07 giây, 512 × 512 px, nền trong suốt. Ảnh tĩnh khi giảm chuyển động: `turn-front.png`.
 
 File trong `animations/`, mỗi vòng **512 × 512 px, 3 giây, 24 fps**, không âm thanh. WebP có timestamp 41–42 ms, tổng chính xác 3000 ms. Dùng animated WebP trong thẻ `img` để lặp tự động; dùng WebM trong `video muted loop playsinline` nếu cần điều khiển thời gian. WebM cần browser có hỗ trợ VP9 alpha. Chọn PNG tĩnh tương ứng khi `prefers-reduced-motion: reduce`.
 
