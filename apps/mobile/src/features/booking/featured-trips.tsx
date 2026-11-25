@@ -1,14 +1,14 @@
 import { useReelsFeed } from '@tripflix/api-client';
 import { getBookableTripPlan } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { explorer as x, colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { usePathname } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ApiErrorNotice } from '@/components/api-state';
 import { LoadingDots } from '@/components/loading-dots';
-import { compactType } from '@/components/mobile-scale';
+import { typeStyle } from '@/components/type-scale';
 import { Button, Icon, Row, Txt } from '@/components/mobile-ui';
 import { saveTripBooking } from './trip-booking-store';
 import { ChoiceChip, styles } from './trip-plan-parts';
@@ -167,8 +167,8 @@ const layout = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: x.day.tintExplore,
   },
-  // Chữ dùng bộ cỡ và phông của app (compactType, nativeFonts) như các thẻ chuyến bay, khách sạn bên dưới.
-  reelBadgeText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.link },
+  // Chữ dùng thang explorer và phông của app như các thẻ chuyến bay, khách sạn bên dưới.
+  reelBadgeText: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold, color: x.day.link },
   reelText: {
     position: 'absolute',
     left: 0,
@@ -176,8 +176,8 @@ const layout = StyleSheet.create({
     bottom: 0,
     gap: 2,
     padding: spacing.sm,
-    backgroundColor: colors.overlayHeavy,
+    backgroundColor: x.scrim[2],
   },
-  reelTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.brand.white },
-  reelMeta: { ...compactType.label, fontFamily: nativeFonts.medium, color: x.brand.white, flexShrink: 1 },
+  reelTitle: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.semibold, color: x.brand.white },
+  reelMeta: { ...typeStyle('caption'), fontFamily: nativeFonts.medium, color: x.brand.white, flexShrink: 1 },
 });

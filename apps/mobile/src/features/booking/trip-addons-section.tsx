@@ -5,12 +5,12 @@ import {
   type TripAddonStay,
 } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
-import { explorer as x, colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ApiErrorNotice } from '@/components/api-state';
 import { LoadingDots } from '@/components/loading-dots';
-import { compactType } from '@/components/mobile-scale';
+import { typeStyle } from '@/components/type-scale';
 import { Icon, money, Row, Txt, ui } from '@/components/mobile-ui';
 import { ChoiceChip } from './trip-plan-parts';
 
@@ -297,7 +297,7 @@ export function formatShortDate(iso: string): string {
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.8 },
-  muted: { ...compactType.body, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+  muted: { ...typeStyle('label'), fontFamily: nativeFonts.regular, color: x.day.textSecondary },
   section: {
     gap: spacing.sm,
     padding: spacing.md,
@@ -306,11 +306,11 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   sectionHead: { alignItems: 'center', gap: spacing.xs },
-  sectionTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text, flexShrink: 1 },
+  sectionTitle: { ...typeStyle('subhead'), fontFamily: nativeFonts.bold, color: x.day.text, flexShrink: 1 },
   originRow: { alignItems: 'center', gap: spacing.sm },
   chips: { gap: spacing.sm },
   leg: { gap: spacing.sm },
-  legTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.link },
+  legTitle: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.semibold, color: x.day.link },
   options: { gap: spacing.sm },
   option: {
     flexDirection: 'row',
@@ -320,9 +320,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: x.day.surface,
     borderWidth: 1,
-    borderColor: colors.transparent,
+    borderColor: 'transparent',
   },
-  optionTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.text },
+  optionTitle: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.semibold, color: x.day.text },
   badge: {
     alignSelf: 'flex-start',
     marginTop: 4,
@@ -330,6 +330,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: radius.sm,
   },
-  badgeText: { ...compactType.label, fontFamily: nativeFonts.semibold },
-  price: { ...compactType.price, fontFamily: nativeFonts.bold, color: x.day.text },
+  badgeText: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold },
+  price: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.bold, color: x.day.text },
 });

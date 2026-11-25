@@ -24,7 +24,8 @@ import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { DateSingleField } from '@/components/date-sheet';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { mobileIconSize } from '@/components/mobile-scale';
+import { typeStyle } from '@/components/type-scale';
 import { Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { DragSortList } from '@/features/post/drag-sort-list';
 import { ActivityCard, TimeTag, type ActivityFields } from './activity-card';
@@ -34,7 +35,13 @@ import { CommerceError } from './commerce-state';
 import { useTripPicks } from './trip-booking-store';
 import { SaveItineraryButton } from '@/features/itinerary/save-itinerary-button';
 import { NO_ADDON_PICKS, TripAddonsSection, type TripAddonPicks } from './trip-addons-section';
-import { ChoiceChip, ProductCard, formatDay, styles as planStyles } from './trip-plan-parts';
+import {
+  ChoiceChip,
+  ProductCard,
+  formatDay,
+  formatPassengerSummary,
+  styles as planStyles,
+} from './trip-plan-parts';
 
 const copy = vi.mobile.tripBuilder;
 const MAX_ADULTS = 9;
@@ -564,7 +571,7 @@ export function TripBuilderScreen() {
             <Txt style={styles.muted}>
               {t('mobile.tripBuilder.pickedCount', { count: bookable.length + pickedFlights.length }) +
                 ' · ' +
-                t('mobile.tripPlan.passengerSummary', guests)}
+                formatPassengerSummary(guests)}
             </Txt>
             <Txt style={styles.total}>{money(grandTotal)}</Txt>
             {grandTotal > 0 && (
@@ -923,8 +930,8 @@ function AddButton({
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.6 },
-  muted: { ...compactType.body, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
-  heading: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text },
+  muted: { ...typeStyle('label'), fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+  heading: { ...typeStyle('subhead'), fontFamily: nativeFonts.bold, color: x.day.text },
   card: {
     gap: spacing.md,
     padding: spacing.md,
@@ -934,10 +941,10 @@ const styles = StyleSheet.create({
     borderColor: x.day.line,
   },
   stepperRow: { alignItems: 'center', justifyContent: 'space-between' },
-  stepperLabel: { ...compactType.heading, fontFamily: nativeFonts.medium, color: x.day.text },
+  stepperLabel: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.medium, color: x.day.text },
   stepper: { alignItems: 'center', gap: spacing.sm },
   stepperValue: {
-    ...compactType.heading,
+    ...typeStyle('bodyStrong'),
     fontFamily: nativeFonts.semibold,
     minWidth: 20,
     textAlign: 'center',
@@ -951,10 +958,10 @@ const styles = StyleSheet.create({
     borderColor: x.day.text,
     backgroundColor: x.day.tintWarm,
   },
-  draftTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.text },
+  draftTitle: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.semibold, color: x.day.text },
   flightDraft: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
   originRow: { alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
-  legRoute: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text },
+  legRoute: { ...typeStyle('subhead'), fontFamily: nativeFonts.bold, color: x.day.text },
   draftActions: { justifyContent: 'flex-end', alignItems: 'center', gap: spacing.sm },
   addRow: { gap: spacing.sm },
   checkOut: { alignItems: 'center', gap: spacing.xs, minHeight: 28 },
@@ -973,9 +980,9 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     backgroundColor: x.day.surface,
   },
-  addText: { ...compactType.heading, fontFamily: nativeFonts.semibold },
+  addText: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.semibold },
   footer: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  total: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text },
+  total: { ...typeStyle('subhead'), fontFamily: nativeFonts.bold, color: x.day.text },
   entry: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -994,5 +1001,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: x.day.link,
   },
-  entryTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text },
+  entryTitle: { ...typeStyle('subhead'), fontFamily: nativeFonts.bold, color: x.day.text },
 });

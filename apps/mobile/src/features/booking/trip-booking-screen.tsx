@@ -25,13 +25,14 @@ import {
 } from '@tripflix/api-client';
 import { flightsControllerSearch } from '@tripflix/api-client/core-api/flights/flights';
 import { t, vi } from '@tripflix/i18n';
-import { explorer as x, colors, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { DateSingleField } from '@/components/date-sheet';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { mobileIconSize } from '@/components/mobile-scale';
+import { typeStyle } from '@/components/type-scale';
 import { assets, Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { DragSortList } from '@/features/post/drag-sort-list';
 import { ActivityCard, TimeTag, type ActivityFields } from './activity-card';
@@ -44,7 +45,7 @@ import { TripBuilderEntry } from './trip-builder-screen';
 
 const soldOutOf = (error: unknown) =>
   error instanceof HttpError && error.status === 409 ? readSoldOutConflict(error.body) : null;
-import { ChoiceChip, ProductCard, formatDay, styles } from './trip-plan-parts';
+import { ChoiceChip, ProductCard, formatDay, formatPassengerSummary, styles } from './trip-plan-parts';
 import {
   saveTripBooking,
   useTripBooking,
@@ -356,7 +357,7 @@ function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
                 total: (plan?.flights.length ?? 0) + stays.length,
               }) +
                 ' · ' +
-                t('mobile.tripPlan.passengerSummary', passengers)}
+                formatPassengerSummary(passengers)}
             </Txt>
             <Txt style={styles.total}>{money(total)}</Txt>
             {adults + children > 0 && total > 0 && (
@@ -437,7 +438,7 @@ function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
                   },
                   {
                     icon: 'people-outline' as const,
-                    label: t('mobile.tripPlan.passengerSummary', passengers),
+                    label: formatPassengerSummary(passengers),
                   },
                 ].map((pill) => (
                   <Pressable
@@ -796,7 +797,7 @@ const layout = StyleSheet.create({
     backgroundColor: x.day.canvas,
   },
   coverMascot: { alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
-  coverShade: { backgroundColor: colors.overlay },
+  coverShade: { backgroundColor: x.glass },
   coverMascotImage: { width: '70%', height: '92%' },
   coverBack: {
     position: 'absolute',
@@ -807,11 +808,11 @@ const layout = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.overlayHeavy,
+    backgroundColor: x.scrim[2],
   },
   coverText: { gap: 2, paddingTop: spacing.xs },
-  coverTitle: { ...compactType.title, fontFamily: nativeFonts.bold, color: x.day.text },
-  coverMeta: { ...compactType.body, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+  coverTitle: { ...typeStyle('subhead'), fontFamily: nativeFonts.bold, color: x.day.text },
+  coverMeta: { ...typeStyle('label'), fontFamily: nativeFonts.regular, color: x.day.textSecondary },
   panel: { backgroundColor: 'transparent', borderWidth: 0, padding: 0 },
   pills: { gap: spacing.sm, flexWrap: 'wrap' },
   pill: {
@@ -826,7 +827,7 @@ const layout = StyleSheet.create({
     backgroundColor: x.day.surface,
   },
   pillActive: { borderColor: x.day.link, backgroundColor: x.day.tintExplore },
-  pillText: { ...compactType.body, fontFamily: nativeFonts.medium, color: x.day.text },
+  pillText: { ...typeStyle('label'), fontFamily: nativeFonts.medium, color: x.day.text },
 });
 
 const localStyles = StyleSheet.create({

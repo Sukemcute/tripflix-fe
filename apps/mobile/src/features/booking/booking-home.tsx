@@ -13,7 +13,8 @@ import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { LoadingDots } from '@/components/loading-dots';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { mobileIconSize } from '@/components/mobile-scale';
+import { typeStyle } from '@/components/type-scale';
 import { assets, Badge, Button, formatDate, Icon, money, Row, Txt, ui } from '@/components/mobile-ui';
 import { AssistantCards } from '@/features/assistant/assistant-cards';
 import type { AssistantMessage } from '@/features/assistant/assistant-provider';
@@ -222,7 +223,7 @@ const layout = StyleSheet.create({
     backgroundColor: x.day.tintExplore,
   },
   sectionTitle: { flex: 1 },
-  bodyText: { ...compactType.body, fontFamily: nativeFonts.regular, color: x.day.text, lineHeight: 22 },
+  bodyText: { ...typeStyle('label'), fontFamily: nativeFonts.regular, color: x.day.text, lineHeight: 22 },
   // Nét đứt, nền trong suốt: chỉ là thông báo, không nhầm với thẻ bấm được bên dưới.
   empty: {
     flexDirection: 'row',
@@ -244,7 +245,7 @@ const layout = StyleSheet.create({
     borderWidth: 1,
     borderColor: x.day.line,
   },
-  tripTitle: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
+  tripTitle: { ...typeStyle('label'), fontFamily: nativeFonts.semibold, color: x.day.text },
   ask: {
     gap: spacing.md,
     padding: spacing.lg,
@@ -256,7 +257,7 @@ const layout = StyleSheet.create({
   askTitle: { fontFamily: nativeFonts.bold, fontSize: 22, lineHeight: 30, color: x.day.text },
   askMascot: { width: 96, height: 104 },
   askInput: {
-    ...compactType.body,
+    ...typeStyle('label'),
     fontFamily: nativeFonts.regular,
     color: x.day.text,
     minHeight: 44,
