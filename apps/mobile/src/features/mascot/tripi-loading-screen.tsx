@@ -12,7 +12,6 @@ import Animated, {
   useReducedMotion,
   useSharedValue,
   withRepeat,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import { Txt } from '@/components/mobile-ui';
@@ -21,43 +20,34 @@ import { TRIPI_ANIMATIONS, TRIPI_ASSETS } from './tripi-assets';
 
 const copy = vi.mobile.loading;
 const TRIPI_SIZE = 250;
-const FLOAT_MS = 1_400;
+const GLOW_MS = 2_800;
 const TIP_MS = 2_600;
 
-/** Màn chờ khi app đang mở: Tripi kéo vali nhún nhẹ trước quầng hoàng hôn, kèm mẹo dùng app đổi lần lượt. */
+/**
+ * Màn chờ khi app đang mở: Tripi bước đi tại chỗ (vòng bước từ rig Rive, TF71) trước quầng hoàng hôn phồng nhẹ,
+ * kèm mẹo dùng app đổi lần lượt. Vòng bước đã tự nhún theo nhịp chân nên không nhún thêm cả người.
+ */
 export function TripiLoadingScreen() {
   const reducedMotion = useReducedMotion();
-  const lift = useSharedValue(0);
   const glow = useSharedValue(0);
   const [tipIndex, setTipIndex] = useState(0);
 
   useEffect(() => {
     if (reducedMotion) return;
-    const ease = Easing.inOut(Easing.sin);
-    lift.set(
-      withRepeat(
-        withSequence(
-          withTiming(-10, { duration: FLOAT_MS, easing: ease }),
-          withTiming(0, { duration: FLOAT_MS, easing: ease }),
-        ),
-        -1,
-      ),
-    );
-    glow.set(withRepeat(withTiming(1, { duration: FLOAT_MS * 2, easing: ease }), -1, true));
-  }, [reducedMotion, lift, glow]);
+    glow.set(withRepeat(withTiming(1, { duration: GLOW_MS, easing: Easing.inOut(Easing.sin) }), -1, true));
+  }, [reducedMotion, glow]);
 
   useEffect(() => {
     const timer = setInterval(() => setTipIndex((index) => (index + 1) % copy.tips.length), TIP_MS);
     return () => clearInterval(timer);
   }, []);
 
-  const tripiStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lift.get() }] }));
   const glowStyle = useAnimatedStyle(() => ({
     transform: [{ scale: 0.92 + glow.get() * 0.12 }],
     opacity: 0.28 + glow.get() * 0.17,
   }));
 
-  const motion = TRIPI_ANIMATIONS.departure;
+  const motion = TRIPI_ANIMATIONS.walking;
   const source = reducedMotion ? TRIPI_ASSETS[motion.fallback].source : motion.source;
 
   return (
@@ -66,14 +56,12 @@ export function TripiLoadingScreen() {
         <Animated.View style={[styles.glow, glowStyle]}>
           <LinearGradient colors={x.sunset} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.fill} />
         </Animated.View>
-        <Animated.View style={tripiStyle}>
-          <Image
-            source={source}
-            contentFit="contain"
-            accessible={false}
-            style={{ width: TRIPI_SIZE, height: TRIPI_SIZE }}
-          />
-        </Animated.View>
+        <Image
+          source={source}
+          contentFit="contain"
+          accessible={false}
+          style={{ width: TRIPI_SIZE, height: TRIPI_SIZE }}
+        />
       </View>
       <Txt variant="heading" style={styles.title}>
         {copy.title}
