@@ -35,7 +35,7 @@ import { HotelSearchResults, TripHotelSearchScreen } from './hotel-search-result
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SearchDropPanel } from './search-drop-panel';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { mobileIconSize } from '@/components/mobile-scale';
 import { NotificationBell } from '@/features/account/notification-bell';
 import {
   ExploreHome,
@@ -55,23 +55,27 @@ const RECOMMENDATION_LIMIT = 3;
 function HotelResultsCard({ place }: { place: string }) {
   const openHotels = () => router.push({ pathname: '/explore', params: { q: place } });
 
+  // Cả thẻ là một nút: tiêu đề có trọn bề ngang, không phải nhường chỗ cho nút riêng rồi xuống dòng.
   return (
-    <Card style={{ backgroundColor: x.day.tintExplore, borderColor: x.day.link, borderWidth: 1 }}>
-      <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <View style={{ flex: 1, gap: spacing.xs, paddingRight: spacing.sm }}>
-          <Row style={{ gap: spacing.xs, alignItems: 'center' }}>
-            <Icon name="bed-outline" size={16} color={x.day.link} />
-            <Txt variant="heading">{t('mobile.explore.searchHotelsTitle', { place })}</Txt>
-          </Row>
-          <Txt variant="small" style={ui.muted}>
-            {vi.mobile.explore.searchHotelsBody}
-          </Txt>
-        </View>
-        <Button tone="teal" icon="arrow-forward" onPress={openHotels}>
-          {vi.mobile.explore.searchHotelsAction}
-        </Button>
-      </Row>
-    </Card>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${t('mobile.explore.searchHotelsTitle', { place })}. ${vi.mobile.explore.searchHotelsAction}`}
+      onPress={openHotels}
+      style={({ pressed }) => [styles.hotelCard, pressed && styles.hotelCardPressed]}
+    >
+      <View style={styles.hotelIcon}>
+        <Icon name="bed" size={22} color={x.brand.white} />
+      </View>
+      <View style={styles.hotelCopy}>
+        <Txt variant="heading" numberOfLines={1}>
+          {t('mobile.explore.searchHotelsTitle', { place })}
+        </Txt>
+        <Txt variant="small" style={ui.muted} numberOfLines={2}>
+          {vi.mobile.explore.searchHotelsBody}
+        </Txt>
+      </View>
+      <Icon name="chevron-forward" size={22} color={x.day.link} />
+    </Pressable>
   );
 }
 
@@ -458,8 +462,29 @@ const styles = StyleSheet.create({
     minHeight: mobileLayout.touchTarget,
     fontFamily: nativeFonts.regular,
     color: x.day.text,
-    ...compactType.body,
+    fontSize: x.type.label.fontSize,
+    lineHeight: 21,
   },
+  hotelCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: x.day.link,
+    backgroundColor: x.day.tintExplore,
+  },
+  hotelCardPressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
+  hotelIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: x.day.link,
+  },
+  hotelCopy: { flex: 1, minWidth: 0, gap: 2 },
   result: { alignItems: 'flex-start' },
   resultPhoto: { width: 90, height: 112, borderRadius: radius.md, backgroundColor: x.day.tintExplore },
   categories: { flexWrap: 'wrap', gap: spacing.sm },
