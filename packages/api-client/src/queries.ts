@@ -41,7 +41,8 @@ export function useSocialPosts(
                 postType ? { ...page, items: page.items.filter((post) => post.postType === postType) } : page,
               )
             : isRecommendedFeed
-              ? recommendedPage(client, queryKey, pageParam) ?? recommendPublicPosts(pageParam, signal, postType, recommendMode)
+              ? recommendedPage(client, queryKey, pageParam) ??
+                recommendPublicPosts(pageParam, signal, postType, recommendMode, { fresh: !pageParam })
               : socialApi.listPosts({ cursor: pageParam, ...(postType ? { post_type: postType } : {}) }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     select: withoutRepeatedPosts,

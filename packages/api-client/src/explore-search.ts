@@ -70,9 +70,15 @@ export async function recommendPublicPosts(
   signal?: AbortSignal,
   postType?: 'vlog',
   mode: PostRecommendationsControllerRecommendPostsMode = 'for_you',
+  { fresh = false }: { fresh?: boolean } = {},
 ) {
   const response = await postRecommendationsControllerRecommendPosts(
-    { mode, limit: RECOMMEND_PAGE_SIZE, ...(cursor ? { cursor } : {}), ...(postType ? { postType } : {}) },
+    {
+      mode,
+      limit: RECOMMEND_PAGE_SIZE,
+      ...(cursor ? { cursor } : fresh ? { fresh: 'true' as const } : {}),
+      ...(postType ? { postType } : {}),
+    },
     { signal },
   );
   const page = readEntity(response.data, ['items', 'algo', 'nextCursor']) as PostRecommendationsDto;
