@@ -7,7 +7,7 @@ import { explorer as x, mobileLayout, nativeFonts, spacing } from '@tripflix/tok
 import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { Icon, money, Notice, Row, Screen, Txt } from '@/components/mobile-ui';
+import { Empty, Icon, money, Notice, Row, Screen, Txt } from '@/components/mobile-ui';
 import { CommerceError } from './commerce-state';
 import { CartLink } from './cart-ui';
 import { HotelInfoSections, HotelReviewsSection } from './hotel-detail-sections';
@@ -107,6 +107,19 @@ export function CommerceHotelScreen() {
       </View>
     ) : undefined;
 
+  // Không có khách sạn thì ảnh, giá và nút chọn phòng đều trống: chỉ hướng người dùng đi chọn khách sạn.
+  if (!params.id)
+    return (
+      <Screen title={text.hotel}>
+        <Empty
+          pose="curious"
+          title={hotelText.missingHotelTitle}
+          body={hotelText.missingHotelBody}
+          action={hotelText.missingHotelAction}
+          onAction={() => router.replace('/explore')}
+        />
+      </Screen>
+    );
   return (
     <Screen header={null} scroll={false} padded={false} footer={footer}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -156,7 +169,6 @@ export function CommerceHotelScreen() {
               </Pressable>
             </View>
           )}
-          {!params.id && <Notice>{text.noHotel}</Notice>}
           {hotel && (
             <>
               <View style={styles.provinceChip}>

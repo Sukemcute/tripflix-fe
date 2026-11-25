@@ -95,6 +95,7 @@ export function ModerationStatusScreen() {
                 <ApiErrorNotice error={submit.error} />
                 <Button
                   disabled={submit.isPending || !reason.trim()}
+                  disabledHint={!reason.trim() ? vi.api.appealReasonRequired : undefined}
                   onPress={() => submit.mutate({ id: item.id, text: reason.trim() })}
                 >
                   Gửi

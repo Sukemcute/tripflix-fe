@@ -1,5 +1,6 @@
 // Phải nạp trước mọi thứ khác: mã hoá mật khẩu cần crypto.getRandomValues (TF056).
 import '@/polyfills/crypto';
+import '@/components/text-field-focus';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiSessionProvider } from '@tripflix/api-client';
 import * as SecureStore from 'expo-secure-store';
@@ -7,7 +8,7 @@ import { explorer as x, mobileLayout } from '@tripflix/tokens';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Platform, View } from 'react-native';
+import { Platform } from 'react-native';
 import { AppFrame } from '@/components/app-frame';
 import { copy, Txt } from '@/components/mobile-ui';
 import { ReviewProvider } from '@/features/review/review-provider';
@@ -17,6 +18,7 @@ import { assistantTransport } from '@/features/assistant/assistant-transport';
 import { ReelsLaunchProvider } from '@/features/feed/reels-launch';
 import { OnboardingProvider } from '@/features/onboarding/onboarding-provider';
 import { NotificationBanner } from '@/features/account/notification-banner';
+import { TripiLoadingScreen } from '@/features/mascot/tripi-loading-screen';
 
 const tokenStorage =
   Platform.OS === 'web'
@@ -42,16 +44,7 @@ export default function RootLayout() {
   });
   const content =
     !hasFonts && !fontError ? (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: x.day.surface,
-        }}
-      >
-        <ActivityIndicator color={x.action.primary} accessibilityLabel={copy.common.loading} />
-      </View>
+      <TripiLoadingScreen />
     ) : (
       <QueryClientProvider client={queryClient}>
         <ApiSessionProvider

@@ -44,6 +44,7 @@ import { SEEK_BAR_ZONE } from './reel-seek-bar';
 import type { ReelItem } from './reel-types';
 import { TripPlanSheet } from './trip-plan-sheet';
 import { PostOptionsMenu } from './post-options-menu';
+import { getDisplayName } from '@/features/account/display-name';
 
 const copy = vi.mobile.reels;
 const number = (value: number) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value);
@@ -276,7 +277,9 @@ export function ReelSocialOverlay({
     onCommentsVisibilityChange(true);
     return () => onCommentsVisibilityChange(false);
   }, [hasComments, onCommentsVisibilityChange]);
-  const author = isSample ? copy.sampleAuthor : item.social?.author.name || vi.api.author;
+  const author = isSample
+    ? copy.sampleAuthor
+    : getDisplayName(item.social?.author.name, vi.mobile.common.userFallbackName);
   const title = isSample ? copy.sample : item.title;
   const tripAttachment = detail.data?.post.tripAttachment;
   const tripPlan = !isSample && tripAttachment && hasTripPlan(tripAttachment) ? tripAttachment : null;

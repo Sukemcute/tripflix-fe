@@ -13,6 +13,7 @@ import {
   createContext,
   useContext,
   useRef,
+  useState,
   type ComponentProps,
   type ComponentRef,
   type PropsWithChildren,
@@ -111,10 +112,13 @@ export function Button({
   style,
   testID,
   compact: compactOverride,
+  disabledHint,
 }: PropsWithChildren<{
   onPress: () => void;
   tone?: 'primary' | 'secondary' | 'teal' | 'text';
   disabled?: boolean;
+  /** Vì sao nút đang tắt, hiện ngay dưới nút: nút mờ mà không giải thích thì người dùng không biết thiếu gì. */
+  disabledHint?: string;
   icon?: IconName;
   style?: StyleProp<ViewStyle>;
   testID?: string;
@@ -124,7 +128,8 @@ export function Button({
   const compact = compactOverride ?? compactScreen;
   const foreground =
     tone === 'primary' ? x.action.onPrimary : tone === 'teal' || tone === 'text' ? d.link : d.text;
-  return (
+  const hint = disabled && disabledHint ? disabledHint : undefined;
+  const button = (
     <Pressable
       testID={testID}
       accessibilityRole="button"
@@ -142,12 +147,28 @@ export function Button({
     >
       <Txt
         variant="label"
-        style={[{ color: foreground, flexShrink: 1, textAlign: 'center' }, compact && ui.compactLabel]}
+        // Chữ trắng trên coral chỉ đọc được khi đậm và đủ lớn: nút chính không thu nhãn về 11px như nút gọn khác.
+        style={[
+          { color: foreground, flexShrink: 1, textAlign: 'center' },
+          compact && tone !== 'primary' && ui.compactLabel,
+        ]}
       >
         {children}
       </Txt>
       {icon && <Icon name={icon} color={foreground} size={compact ? mobileIconSize.control : 20} />}
     </Pressable>
+  );
+  if (!hint) return button;
+  return (
+    <View style={ui.hintedButton}>
+      {button}
+      <Row style={ui.buttonHint}>
+        <Icon name="information-circle-outline" size={16} color={d.textSecondary} />
+        <Txt variant="small" style={[ui.muted, { flex: 1 }]}>
+          {hint}
+        </Txt>
+      </Row>
+    </View>
   );
 }
 export function IconButton({
@@ -231,8 +252,8 @@ export function Notice({
           tone === 'error'
             ? 'alert-circle-outline'
             : tone === 'warning'
-              ? 'information-circle-outline'
-              : 'shield-checkmark-outline'
+              ? 'warning-outline'
+              : 'information-circle-outline'
         }
         color={tone === 'error' ? d.error : d.link}
         size={compact ? mobileIconSize.control : 20}
@@ -248,6 +269,8 @@ export function Field({
   error,
   style,
   compact: compactOverride,
+  onFocus,
+  onBlur,
   ...props
 }: ComponentProps<typeof TextInput> & {
   label: string;
@@ -257,6 +280,8 @@ export function Field({
 }) {
   const compactScreen = useContext(CompactScreenContext);
   const compact = compactOverride ?? compactScreen;
+  // Viền xanh khi đang gõ, như ô ở màn đăng nhập: thấy ngay ô nào đang nhận chữ.
+  const [isFocused, setFocused] = useState(false);
   return (
     <View style={{ gap: compact ? s.xs : s.sm }}>
       <Txt variant="label" style={compact && ui.compactLabel}>
@@ -266,7 +291,21 @@ export function Field({
         {...props}
         accessibilityLabel={label}
         placeholderTextColor={d.textSecondary}
-        style={[ui.input, compact && ui.compactInput, error && { borderColor: d.error }, style]}
+        onFocus={(event) => {
+          setFocused(true);
+          onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setFocused(false);
+          onBlur?.(event);
+        }}
+        style={[
+          ui.input,
+          compact && ui.compactInput,
+          isFocused && ui.inputFocused,
+          error && { borderColor: d.error },
+          style,
+        ]}
       />
       {error && (
         <Txt accessibilityRole="alert" variant="small" style={{ color: d.error }}>
@@ -566,6 +605,8 @@ export const ui = StyleSheet.create({
   teal: { backgroundColor: d.tintExplore },
   text: { backgroundColor: c.transparent },
   disabled: { opacity: 0.45 },
+  hintedButton: { gap: s.xs },
+  buttonHint: { gap: s.xs, alignItems: 'flex-start' },
   pressed: { opacity: 0.78 },
   iconButton: {
     width: x.control.touch,
@@ -597,6 +638,7 @@ export const ui = StyleSheet.create({
     alignItems: 'flex-start',
     gap: s.sm,
   },
+  inputFocused: { borderColor: d.link },
   input: {
     minHeight: x.control.primary,
     borderWidth: 1,

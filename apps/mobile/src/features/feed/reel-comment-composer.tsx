@@ -1,12 +1,14 @@
 import { vi } from '@tripflix/i18n';
 import { colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Icon } from '@/components/mobile-ui';
 
 // Cảm xúc hay dùng khi bình luận du lịch; chạm là chèn vào cuối câu, không cần mở bàn phím emoji.
 const QUICK_EMOJIS = ['😍', '😂', '🔥', '👏', '🥰', '😮', '🙌', '✈️'] as const;
 const EMOJI_HIDE_DELAY_MS = 250;
+const INPUT_MIN_HEIGHT = 44;
+const INPUT_MAX_HEIGHT = 120;
 
 export function ReelCommentComposer({
   value,
@@ -30,6 +32,8 @@ export function ReelCommentComposer({
 }) {
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const [isFocused, setFocused] = useState(false);
+  // Web không tự giãn ô nhiều dòng: đo chiều cao chữ rồi đặt lại, giới hạn như trên điện thoại.
+  const [webHeight, setWebHeight] = useState<number>();
   // Chạm emoji làm ô nhập mất focus trước khi lần chạm tới nút; ẩn hàng emoji ngay thì emoji không bao giờ được chèn.
   // Đợi một nhịp: chạm emoji sẽ focus lại ô nhập và huỷ việc ẩn.
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -93,8 +97,18 @@ export function ReelCommentComposer({
             selection.current = event.nativeEvent.selection;
           }}
           multiline
+          // Trên web ô nhiều dòng mặc định cao 2 dòng nên chữ gợi ý lệch lên trên; bắt đầu từ 1 dòng như trên điện thoại.
+          numberOfLines={Platform.OS === 'web' ? 1 : undefined}
+          onContentSizeChange={(event) => {
+            if (Platform.OS === 'web') setWebHeight(event.nativeEvent.contentSize.height);
+          }}
           maxLength={10000}
-          style={styles.input}
+          style={[
+            styles.input,
+            webHeight !== undefined && {
+              height: Math.min(INPUT_MAX_HEIGHT, Math.max(INPUT_MIN_HEIGHT, webHeight)),
+            },
+          ]}
         />
         <Pressable
           accessibilityRole="button"
@@ -135,8 +149,8 @@ const styles = StyleSheet.create({
   initial: { fontSize: 11, fontFamily: nativeFonts.semibold, color: colors.tealInk },
   input: {
     flex: 1,
-    minHeight: 44,
-    maxHeight: 120,
+    minHeight: INPUT_MIN_HEIGHT,
+    maxHeight: INPUT_MAX_HEIGHT,
     borderRadius: radius.pill,
     backgroundColor: colors.surfaceMuted,
     color: colors.ink,
@@ -144,7 +158,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    // Ô nhiều dòng luôn đặt chữ ở mép trên: đệm (44 - 20) / 2 để một dòng nằm giữa, gõ thêm dòng thì ô cao ra đều.
+    paddingVertical: 12,
+    textAlignVertical: 'center',
   },
   send: { width: 44, height: 44, borderRadius: radius.pill, justifyContent: 'center', alignItems: 'center' },
 });

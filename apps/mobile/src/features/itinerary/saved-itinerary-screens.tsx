@@ -110,7 +110,14 @@ export function SavedItinerariesScreen() {
         />
       )}
       {user && query.isPending && <LoadingDots />}
-      {user && !query.isPending && !query.data?.length && <Empty title={copy.listTitle} body={copy.empty} />}
+      {user && !query.isPending && !query.data?.length && (
+        <Empty
+          title={copy.listTitle}
+          body={copy.empty}
+          action={copy.emptyAction}
+          onAction={() => router.navigate('/(tabs)')}
+        />
+      )}
       <View style={{ gap: spacing.sm }}>
         {(query.data ?? []).map((itinerary) => (
           <ItineraryRow key={itinerary.id} itinerary={itinerary} />

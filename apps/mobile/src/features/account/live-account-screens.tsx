@@ -141,7 +141,11 @@ function ProfileEditor({ user }: { user: UserDto }) {
         {user.email}
       </Txt>
       <Field label={vi.api.displayName} value={name} onChangeText={setName} maxLength={DISPLAY_NAME_MAX} />
-      <Button disabled={mutation.isPending || !name.trim()} onPress={() => mutation.mutate('profile')}>
+      <Button
+        disabled={mutation.isPending || !name.trim()}
+        disabledHint={!name.trim() ? vi.api.displayNameRequired : undefined}
+        onPress={() => mutation.mutate('profile')}
+      >
         {vi.api.save}
       </Button>
       <Txt variant="heading">{vi.api.changePassword}</Txt>
@@ -162,6 +166,7 @@ function ProfileEditor({ user }: { user: UserDto }) {
       />
       <Button
         disabled={mutation.isPending || !currentPassword || newPassword.length < 8}
+        disabledHint={!currentPassword || newPassword.length < 8 ? vi.api.passwordFieldsRequired : undefined}
         onPress={() => mutation.mutate('password')}
       >
         {vi.api.changePassword}

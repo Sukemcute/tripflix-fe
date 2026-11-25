@@ -164,6 +164,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: s.md,
   },
-  toggleText: { color: x.action.onPrimary, fontSize: 13, lineHeight: 18 },
+  toggleText: { color: x.action.onPrimary, fontFamily: nativeFonts.semibold, fontSize: 14, lineHeight: 20 },
   pressed: { opacity: 0.75 },
 });

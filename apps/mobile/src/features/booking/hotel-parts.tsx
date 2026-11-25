@@ -12,6 +12,7 @@ import {
 import { t, vi } from '@tripflix/i18n';
 import { explorer as x, colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Icon, money, Notice, Row, Txt, ui } from '@/components/mobile-ui';
 import { saveBookingSelection, useBookingSelection } from './cart-store';
@@ -206,6 +207,12 @@ function GalleryPhoto({
           aria-busy={status === 'loading'}
           style={[galleryStyles.placeholder, StyleSheet.absoluteFill, { paddingBottom: bottomInset }]}
         >
+          <LinearGradient
+            colors={[x.day.tintExplore, x.day.tintWarm]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
           {status === 'loading' && (
             <View accessible={false} aria-hidden style={galleryStyles.skeleton}>
               <View style={galleryStyles.skeletonBlock} />
@@ -472,7 +479,8 @@ function RateRow({
                 alignSelf: 'flex-start',
                 paddingHorizontal: 6,
                 borderRadius: radius.sm,
-                backgroundColor: x.action.primary,
+                // Nhãn giảm giá chữ nhỏ: nền coral đậm để chữ trắng đủ tương phản.
+                backgroundColor: colors.coralInk,
               }}
             >
               <Txt variant="small" style={{ color: x.action.onPrimary, fontWeight: '700' }}>

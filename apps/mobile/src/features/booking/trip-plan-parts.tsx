@@ -239,7 +239,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayDotText: { color: x.action.onPrimary, fontFamily: nativeFonts.bold, fontSize: 13, lineHeight: 18 },
+  dayDotText: { color: x.action.onPrimary, fontFamily: nativeFonts.bold, fontSize: 14, lineHeight: 18 },
   dayContent: { flex: 1, minWidth: 0, gap: spacing.sm },
   dayLabel: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.text },
   card: {

@@ -9,13 +9,14 @@ import { Button, Card, copy, Empty, Icon, Notice, Screen, Txt, ui } from '@/comp
 import { ApiErrorNotice, RequireAccount } from '@/components/api-state';
 import { LoadingDots } from '@/components/loading-dots';
 import { PostOptionsMenu } from './post-options-menu';
+import { getDisplayName } from '@/features/account/display-name';
 
 export function LivePostCard({ post }: { post: SocialPostDto }) {
   return (
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Txt variant="caption" style={{ flex: 1 }}>
-          {vi.api.author} · {post.authorName || post.authorId.slice(0, 8)}
+          {vi.api.author} · {getDisplayName(post.authorName, vi.mobile.common.userFallbackName)}
         </Txt>
         <PostOptionsMenu postId={post.id} authorId={post.authorId} />
       </View>
@@ -56,29 +57,6 @@ export function LiveFeedScreen({ kind = 'public' }: { kind?: 'public' | 'mine' |
           <Txt variant="small" style={ui.muted}>
             {copy.profile.savedBody}
           </Txt>
-          <View style={savedStyles.filters}>
-            <View style={savedStyles.filterActive}>
-              <Txt variant="label" style={savedStyles.filterActiveText}>
-                {vi.mobile.explorer.savedAll}
-              </Txt>
-            </View>
-            {/* Thư mục tự tạo cần API bộ sưu tập; chưa có thì chỉ hiện dạng xem trước, không bấm được. */}
-            <View
-              accessible
-              accessibilityRole="button"
-              accessibilityLabel={vi.mobile.explorer.savedFoldersSoonLabel}
-              accessibilityState={{ disabled: true }}
-              style={savedStyles.filter}
-            >
-              <Icon name="folder-outline" size={16} color={x.day.textSecondary} />
-              <Txt variant="caption" style={savedStyles.filterText}>
-                {vi.mobile.explorer.savedFolders}
-              </Txt>
-              <Txt variant="caption" style={savedStyles.soon}>
-                {vi.mobile.explorer.comingSoon}
-              </Txt>
-            </View>
-          </View>
         </View>
       )}
       <ApiErrorNotice
@@ -136,7 +114,7 @@ export function LiveFeedScreen({ kind = 'public' }: { kind?: 'public' | 'mine' |
                       {post.title}
                     </Txt>
                     <Txt numberOfLines={1} style={savedStyles.posterAuthor}>
-                      {post.authorName || vi.api.author}
+                      {getDisplayName(post.authorName, vi.mobile.common.userFallbackName)}
                     </Txt>
                   </View>
                 </View>
@@ -170,26 +148,6 @@ export function LiveFeedScreen({ kind = 'public' }: { kind?: 'public' | 'mine' |
 
 const savedStyles = StyleSheet.create({
   title: { color: x.day.text },
-  filters: { flexDirection: 'row', gap: 8, marginTop: 18 },
-  filterActive: {
-    minHeight: 40,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    borderRadius: x.radius.pill,
-    backgroundColor: x.day.link,
-  },
-  filterActiveText: { color: x.brand.white },
-  filter: {
-    minHeight: 40,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    borderRadius: x.radius.pill,
-    backgroundColor: x.day.surface,
-  },
-  filterText: { color: x.day.textSecondary },
-  soon: { color: x.day.textSecondary, fontFamily: nativeFonts.semibold },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 16 },
   tile: { gap: 8 },
   poster: {

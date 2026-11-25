@@ -7,6 +7,7 @@ import { vi } from '@tripflix/i18n';
 import { explorer as x, spacing } from '@tripflix/tokens';
 import { Button, Card, Field, Txt } from '../../components/mobile-ui';
 import { ApiErrorNotice } from '../../components/api-state';
+import { getDisplayName } from '../account/display-name';
 
 const text = vi.moderation;
 export function CreatorCommentControls({
@@ -71,7 +72,7 @@ export function CreatorCommentControls({
           {items.map((item) => (
             <Card key={item.id} style={{ gap: spacing.sm }}>
               <Txt variant="caption">
-                {item.authorName || `@${item.authorId.slice(0, 8)}`} ·{' '}
+                {getDisplayName(item.authorName, vi.mobile.common.userFallbackName)} ·{' '}
                 {new Date(item.createdAt).toLocaleString('vi-VN')}
               </Txt>
               {item.parentContext && (

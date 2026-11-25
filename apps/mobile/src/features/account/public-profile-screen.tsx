@@ -23,11 +23,13 @@ import { Image } from 'expo-image';
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
-import { Button, Card, copy, Icon, IconButton, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
+import { Button, Card, copy, Icon, IconButton, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { ApiErrorNotice } from '@/components/api-state';
 import { compactType, mobileIconSize } from '@/components/mobile-scale';
 import { LoadingDots } from '@/components/loading-dots';
 import { OwnProfileHeading, ProfileHub } from './profile-hub';
+import { getDisplayName } from './display-name';
+import { NotificationBell } from './notification-bell';
 
 const GRID_COLUMNS = 3;
 const GRID_GAP = 1;
@@ -73,11 +75,14 @@ export function MyProfileScreen() {
       id={user.id}
       back={false}
       right={
-        <IconButton
-          name="settings-outline"
-          label={copy.profile.menu}
-          onPress={() => router.push('/settings')}
-        />
+        <Row>
+          <NotificationBell />
+          <IconButton
+            name="settings-outline"
+            label={copy.profile.menu}
+            onPress={() => router.push('/settings')}
+          />
+        </Row>
       }
     />
   );
@@ -91,6 +96,12 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
   const [tab, setTab] = useState<'videos' | 'posts' | 'held'>('videos');
   const isMissing = profile.error instanceof HttpError && profile.error.status === 404;
   const name = profile.data?.displayName ?? '';
+  // Đã có kết quả thì không giữ tiêu đề "Đang tải…": hồ sơ không có tên dùng tên chung, không tìm thấy thì ghi "Hồ sơ".
+  const title = profile.data
+    ? getDisplayName(name, vi.mobile.common.userFallbackName)
+    : profile.isPending
+      ? vi.api.loading
+      : vi.api.profileSection;
   const stats = profile.data
     ? [
         { value: profile.data.followingCount, label: vi.api.profileFollowing },
@@ -100,9 +111,9 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
     : [];
 
   return (
-    <Screen title={name || vi.api.loading} back={back} right={right}>
+    <Screen title={title} back={back} right={right}>
       {isMissing ? (
-        <Notice>{vi.api.profileNotFound}</Notice>
+        <Notice tone="error">{vi.api.profileNotFound}</Notice>
       ) : (
         <ApiErrorNotice error={profile.error} retry={() => void profile.refetch()} />
       )}
@@ -116,7 +127,7 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
                 {getNameInitials(name) || 'TF'}
               </Txt>
             </View>
-            <Txt variant="title">{name}</Txt>
+            <Txt variant="title">{title}</Txt>
             <View style={styles.stats}>
               {stats.map((item) => (
                 <View key={item.label} style={styles.stat}>
@@ -182,8 +193,9 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
                       : tab !== key && ui.muted
                   }
                 >
+                  {/* Nhãn ngắn để ba tab nằm trên một dòng trên màn hẹp. */}
                   {key === 'held'
-                    ? vi.moderation.heldTitle
+                    ? vi.moderation.heldTabShort
                     : key === 'videos'
                       ? vi.api.profileVideos
                       : vi.api.profilePosts}

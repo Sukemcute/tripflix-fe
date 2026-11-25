@@ -150,19 +150,15 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
               </Txt>
             </Row>
           )}
+          {/* Khoảng cách địa danh hiện là dữ liệu mẫu: chỉ hiện tên địa danh, không hiện số km chưa kiểm chứng. */}
           {hotel.nearby.map((place) => (
-            <Row key={place.name} style={{ justifyContent: 'space-between', gap: spacing.md }}>
+            <Row key={place.name} style={{ gap: spacing.sm }}>
+              <Icon name="navigate-outline" size={16} color={x.day.textSecondary} />
               <Txt variant="small" style={{ flex: 1 }}>
                 {place.name}
               </Txt>
-              <Txt variant="small" style={ui.muted}>
-                {place.distanceKm.toLocaleString('vi-VN')} km
-              </Txt>
             </Row>
           ))}
-          <Txt variant="small" style={[ui.muted, { fontSize: 11 }]}>
-            {copy.mockNearby}
-          </Txt>
         </Section>
       )}
 

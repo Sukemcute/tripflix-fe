@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
   },
   actionPrimary: { borderColor: c.coral, backgroundColor: c.coral },
   actionText: { ...chatType.small, fontFamily: f.semibold, color: c.navy },
-  actionPrimaryText: { color: c.background },
+  actionPrimaryText: { color: c.background, fontSize: 14, lineHeight: 20 },
   weatherRow: { flexDirection: 'row', alignItems: 'center', gap: s.md },
   divider: { paddingTop: s.md, borderTopWidth: 1, borderTopColor: c.border },
   weatherIcon: {

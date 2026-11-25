@@ -16,12 +16,13 @@ import {
   type BookingCart,
 } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import {
   Button,
   Card,
+  Empty,
   formatDate,
   Icon,
   money,
@@ -175,7 +176,8 @@ export function CartLink() {
             height: 18,
             paddingHorizontal: 4,
             borderRadius: radius.pill,
-            backgroundColor: x.action.primary,
+            // Số nhỏ 11px: nền coral đậm để chữ trắng đủ tương phản (coral sáng chỉ dành cho nhãn nút lớn).
+            backgroundColor: colors.coralInk,
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -323,8 +325,12 @@ export function CartScreen() {
   if (!cart.items.length)
     return (
       <Screen title={text.cartTitle}>
-        <Notice>{text.cartEmpty}</Notice>
-        <Button onPress={() => router.navigate('/(tabs)/explore')}>{text.findHotel}</Button>
+        <Empty
+          title={text.cartEmpty}
+          body={text.cartEmptyHint}
+          action={text.findHotel}
+          onAction={() => router.navigate('/(tabs)/explore')}
+        />
       </Screen>
     );
   const discount = calculateBookingCartChildDiscount(cart);

@@ -2,10 +2,10 @@ import { t, type MessageKey } from '@tripflix/i18n';
 import { Redirect, Tabs, router, useGlobalSearchParams, usePathname } from 'expo-router';
 import { useApiSession } from '@tripflix/api-client';
 import { useState } from 'react';
-import { View } from 'react-native';
-import { InsideTabBarContext, Txt } from '@/components/mobile-ui';
+import { InsideTabBarContext } from '@/components/mobile-ui';
 import { FloatingTabBar } from '@/components/floating-tab-bar';
 import { useUnreadNotificationCount } from '@/features/account/notification-bell';
+import { TripiLoadingScreen } from '@/features/mascot/tripi-loading-screen';
 import { useOnboarding } from '@/features/onboarding/onboarding-provider';
 import { needsAccountOnboarding, shouldOfferOnboarding } from '@/features/onboarding/onboarding-model';
 
@@ -23,12 +23,7 @@ export default function TabsLayout() {
   const { record, ready, dismissedAccount } = useOnboarding();
   const pathname = usePathname();
   const params = useGlobalSearchParams();
-  if (!ready || !isReady)
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFDFA' }}>
-        <Txt>Đang mở hành trình…</Txt>
-      </View>
-    );
+  if (!ready || !isReady) return <TripiLoadingScreen />;
   return (
     <ReadyTabs
       offerOnEntry={
@@ -84,7 +79,8 @@ function ReadyTabs({ offerOnEntry }: { offerOnEntry: boolean }) {
             }
             options={{
               title: t(tab.label),
-              ...(tab.name === 'explore' &&
+              // Badge chưa đọc đặt ở Tôi: thông báo thuộc về tài khoản, tab Khám phá không có thông báo nào.
+              ...(tab.name === 'me' &&
                 unreadCount > 0 && {
                   tabBarBadge: unreadCount,
                   tabBarAccessibilityLabel: `${t(tab.label)}, ${t('api.notificationsUnreadCount', { count: unreadCount })}`,

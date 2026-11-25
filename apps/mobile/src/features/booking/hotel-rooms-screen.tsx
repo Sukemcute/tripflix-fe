@@ -13,7 +13,7 @@ import { explorer as x, radius, spacing } from '@tripflix/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { DateRangeField } from '@/components/date-sheet';
-import { Button, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { Button, Empty, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
 import { CommerceError } from './commerce-state';
 import { CartLink, SelectionBar, Stepper } from './cart-ui';
 import { saveBookingSelection, useBookingSelection } from './cart-store';
@@ -121,6 +121,19 @@ export function HotelRoomsScreen() {
       />
     </Row>
   );
+  // Không có khách sạn thì kỳ ở và danh sách phòng đều vô nghĩa: chỉ hướng người dùng đi chọn khách sạn.
+  if (!params.id)
+    return (
+      <Screen background={x.day.canvas} title={hotelText.rooms}>
+        <Empty
+          pose="curious"
+          title={hotelText.missingHotelTitle}
+          body={hotelText.missingHotelBody}
+          action={hotelText.missingHotelAction}
+          onAction={() => router.replace('/explore')}
+        />
+      </Screen>
+    );
   return (
     <Screen
       background={x.day.canvas}
@@ -197,6 +210,8 @@ export function HotelRoomsScreen() {
             <Button
               icon="search"
               disabled={!valid || !params.id || query.isFetching || isUnchanged}
+              // Kỳ ở sai đã có thông báo lỗi ngay trên; chỉ cần nói thêm khi chưa đổi gì.
+              disabledHint={valid && isUnchanged ? hotelText.stayUnchanged : undefined}
               onPress={() => {
                 // Đổi số khách thì phòng đang chọn đi theo đoàn mới, giống web.
                 if (selection.items.length) saveBookingSelection({ ...selection, ...guests });
@@ -217,6 +232,16 @@ export function HotelRoomsScreen() {
       />
       {query.isFetching && <LoadingDots />}
       {hotel && !hotel.isAvailable && <Notice tone="warning">{text.unavailable}</Notice>}
+      {hotel && !query.isFetching && hotel.rooms.length === 0 && (
+        <Empty
+          compact
+          pose="curious"
+          title={hotelText.noRoomsTitle}
+          body={hotelText.noRoomsBody}
+          action={isTripPick ? undefined : hotelText.noRoomsAction}
+          onAction={isTripPick ? undefined : () => setEditing(true)}
+        />
+      )}
       {hotel?.rooms.map((room) => (
         <RoomCard
           key={room.productId}

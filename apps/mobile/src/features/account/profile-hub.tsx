@@ -51,7 +51,6 @@ export function OwnProfileHeading({
           <Txt accessibilityRole="header" style={styles.name}>
             {name}
           </Txt>
-          <Txt style={styles.slogan}>{vi.mobile.explorer.slogan}</Txt>
         </View>
       </View>
       {!!stats.length && (
@@ -255,7 +254,6 @@ const styles = StyleSheet.create({
     letterSpacing: x.type.title.letterSpacing,
     color: x.day.text,
   },
-  slogan: { fontSize: 14, lineHeight: 20, fontFamily: nativeFonts.semibold, color: x.day.link },
   stats: {
     flexDirection: 'row',
     gap: x.space.xs,
