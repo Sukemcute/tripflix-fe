@@ -1,3 +1,7 @@
+/**
+ * @deprecated Thang chữ cũ (10–13px) dưới mức tối thiểu 12px của audit UI/UX. Dùng `explorer.type` trong
+ * `@tripflix/tokens`; các màn còn dùng sẽ được chuyển dần (roadmap #5), sau đó xoá.
+ */
 export const compactType = {
   meta: { fontSize: 10, lineHeight: 14 },
   label: { fontSize: 11, lineHeight: 15 },

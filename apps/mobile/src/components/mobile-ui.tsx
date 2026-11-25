@@ -34,7 +34,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { compactType, mobileIconSize } from './mobile-scale';
+import { mobileIconSize } from './mobile-scale';
 
 const d = x.day;
 
@@ -60,13 +60,15 @@ export function formatDate(value: string): string {
 }
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 const CompactScreenContext = createContext(false);
+// Màn "gọn" vẫn dùng thang chữ explorer, chỉ hạ một bậc so với màn thường; không còn chữ 10–12px của compactType
+// (audit UI/UX: chữ tối thiểu 12px, tiêu đề không bé hơn nhãn).
 const compactText = {
-  title: compactType.title,
-  heading: compactType.heading,
-  label: compactType.label,
-  body: compactType.body,
-  small: compactType.body,
-  caption: compactType.meta,
+  title: { fontSize: x.type.headline.fontSize, lineHeight: x.type.headline.lineHeight },
+  heading: { fontSize: x.type.subhead.fontSize, lineHeight: x.type.subhead.lineHeight },
+  label: { fontSize: x.type.label.fontSize, lineHeight: x.type.label.lineHeight },
+  body: { fontSize: x.type.label.fontSize, lineHeight: 21 },
+  small: { fontSize: x.type.caption.fontSize, lineHeight: 19 },
+  caption: { fontSize: x.type.micro.fontSize, lineHeight: x.type.micro.lineHeight },
 };
 
 export function Icon({ name, size, color = d.text }: { name: IconName; size?: number; color?: string }) {
@@ -598,7 +600,7 @@ export const ui = StyleSheet.create({
     gap: s.sm,
   },
   compactButton: { minHeight: x.control.compact, paddingVertical: s.sm, paddingHorizontal: s.lg, gap: s.xs },
-  compactLabel: compactType.label,
+  compactLabel: { fontSize: x.type.label.fontSize, lineHeight: x.type.label.lineHeight },
   primary: { backgroundColor: x.action.primary },
   primaryPressed: { backgroundColor: x.action.primaryPressed },
   secondary: { backgroundColor: d.surface, borderWidth: 1, borderColor: d.line },
@@ -653,7 +655,8 @@ export const ui = StyleSheet.create({
   },
   compactInput: {
     minHeight: layout.touchTarget,
-    ...compactType.body,
+    fontSize: x.type.label.fontSize,
+    lineHeight: 21,
     paddingVertical: s.sm,
     paddingHorizontal: s.md,
   },
