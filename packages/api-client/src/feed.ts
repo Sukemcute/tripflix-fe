@@ -106,6 +106,20 @@ export function takeRecommendedFresh(mode: PostRecommendationsControllerRecommen
   return freshRecommendedModes.delete(mode);
 }
 
+/**
+ * Tham số gọi trang Reels gợi ý: trang sau gửi cursor; trang đầu gửi fresh khi vừa tải lại hoặc khi bật freshOnNewList.
+ * Đọc takeRecommendedFresh trước để cờ tải lại luôn được xoá, kể cả khi freshOnNewList đã bật.
+ */
+export function recommendedReelsParams(
+  mode: PostRecommendationsControllerRecommendReelsMode,
+  pageParam: string | undefined,
+  freshOnNewList: boolean,
+) {
+  if (pageParam) return { mode, limit: 10, cursor: pageParam };
+  const isFresh = takeRecommendedFresh(mode) || freshOnNewList;
+  return { mode, limit: 10, ...(isFresh ? { fresh: 'true' as const } : {}) };
+}
+
 export async function reloadRecommendedReels(queryClient: QueryClient, mode: PostRecommendationsControllerRecommendReelsMode) {
   freshRecommendedModes.add(mode);
   type RecommendedData = InfiniteData<{ items: FeedCardDto[]; nextCursor: string | null | undefined }, string | undefined>;
@@ -124,11 +138,17 @@ export function useRecommendedReelsFeed({
   enabled = true,
   mode = 'trending',
   refreshOnReturn = false,
+  freshOnNewList = false,
 }: {
   enabled?: boolean;
   mode?: PostRecommendationsControllerRecommendReelsMode;
   /** Quay lại trang thì bỏ danh sách cũ, gọi lại gợi ý (useResetOnReturn). */
   refreshOnReturn?: boolean;
+  /**
+   * Mọi lần gọi trang đầu đều gửi fresh=true. Web bật: trang đầu chỉ được gọi khi mở danh sách mới
+   * (F5, quay lại trang, đổi chip lần đầu, bấm lại chip), nên không ra lại bài vừa gợi ý trong 30 phút.
+   */
+  freshOnNewList?: boolean;
 } = {}) {
   const { user, isReady } = useApiSession();
   const queryKey = [...RECOMMENDED_REELS_KEY, mode, user?.id];
@@ -139,7 +159,7 @@ export function useRecommendedReelsFeed({
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam, signal }) => {
       const response = await postRecommendationsControllerRecommendReels(
-        { mode, limit: 10, ...(pageParam ? { cursor: pageParam } : takeRecommendedFresh(mode) ? { fresh: 'true' as const } : {}) },
+        recommendedReelsParams(mode, pageParam, freshOnNewList),
         { signal },
       );
       const page = readEntity(response.data, ['items', 'algo', 'nextCursor']) as ReelRecommendationsDto;
