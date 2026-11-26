@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     marginTop: -x.space.xl,
     padding: mobileLayout.gutter,
     gap: spacing.md,
-    backgroundColor: x.day.canvas,
+    backgroundColor: x.day.surface,
     borderTopLeftRadius: x.radius.xl,
     borderTopRightRadius: x.radius.xl,
   },
@@ -357,6 +357,12 @@ const styles = StyleSheet.create({
     fontFamily: nativeFonts.extraBold,
     fontVariant: ['tabular-nums'],
   },
-  sections: { gap: spacing.sm, paddingHorizontal: mobileLayout.gutter, backgroundColor: x.day.canvas },
+  // Nền kem để các thẻ trắng của từng mục nổi lên, thay cho các mục xếp phẳng ngăn bằng đường kẻ.
+  sections: {
+    gap: spacing.md,
+    paddingHorizontal: mobileLayout.gutter,
+    paddingTop: spacing.md,
+    backgroundColor: x.day.canvas,
+  },
   loading: { paddingVertical: spacing.lg, color: x.day.textSecondary, fontSize: 14, lineHeight: 23 },
 });

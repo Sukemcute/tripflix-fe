@@ -7,11 +7,13 @@ import {
   type HotelReviewFilters,
 } from '@tripflix/api-client';
 import { t, vi } from '@tripflix/i18n';
-import { explorer as x, radius, spacing } from '@tripflix/tokens';
-import { Pressable, View } from 'react-native';
-import { Icon, type IconName, money, Row, Txt, ui } from '@/components/mobile-ui';
+import { explorer as x, nativeFonts, spacing } from '@tripflix/tokens';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Icon, type IconName, money, Row, Txt } from '@/components/mobile-ui';
+import { typeStyle } from '@/components/type-scale';
 import { CommerceError } from './commerce-state';
 
+const radius = x.radius;
 const copy = vi.hotel;
 const labelOf = (labels: Record<string, string>, key: string) => labels[key] ?? key;
 const hasValue = (value: unknown) => value !== null && value !== undefined && value !== '';
@@ -45,27 +47,60 @@ const ICONS: Record<string, IconName> = {
 };
 const iconOf = (name?: string | null): IconName => (name && ICONS[name]) || 'sparkles-outline';
 
-/** Một mục của màn chi tiết: tiêu đề + nội dung, ngăn nhau bằng dải xám như Agoda. */
+/** Cỡ chữ dùng chung cho cả màn chi tiết: tiêu đề mục, chữ thường, chữ đậm, chữ phụ. */
+const T = {
+  title: { ...typeStyle('headline'), fontFamily: nativeFonts.bold, color: x.day.text },
+  body: { ...typeStyle('label'), lineHeight: 22, fontFamily: nativeFonts.regular, color: x.day.text },
+  strong: { ...typeStyle('label'), fontFamily: nativeFonts.semibold, color: x.day.text },
+  meta: { ...typeStyle('caption'), fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+} as const;
+
+/** Một mục của màn chi tiết: thẻ trắng nổi trên nền kem, đầu thẻ có icon và tiêu đề cùng cỡ ở mọi mục. */
 export function Section({
   title,
+  icon,
   aside,
   children,
 }: {
   title: string;
+  icon?: IconName;
   aside?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <View
       style={{
-        paddingVertical: spacing.lg,
+        padding: spacing.md,
         gap: spacing.md,
-        borderTopWidth: 8,
-        borderTopColor: x.day.canvas,
+        borderRadius: radius.xl,
+        backgroundColor: x.day.surface,
+        shadowColor: x.shadow,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 14,
+        shadowOpacity: 0.07,
+        elevation: 2,
       }}
     >
-      <Row style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <Txt variant="heading">{title}</Txt>
+      <Row style={{ justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm }}>
+        <Row style={{ gap: spacing.sm, alignItems: 'center', flexShrink: 1 }}>
+          {icon && (
+            <View
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: radius.sm,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: x.day.tintWarm,
+              }}
+            >
+              <Icon name={icon} size={18} color={x.brand.coral} />
+            </View>
+          )}
+          <Txt accessibilityRole="header" style={[T.title, { flexShrink: 1 }]}>
+            {title}
+          </Txt>
+        </Row>
         {aside}
       </Row>
       {children}
@@ -80,7 +115,7 @@ function IconLine({ icon, children }: { icon: IconName; children: ReactNode }) {
         style={{
           width: 32,
           height: 32,
-          borderRadius: radius.pill,
+          borderRadius: radius.sm,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: x.day.tintExplore,
@@ -88,7 +123,7 @@ function IconLine({ icon, children }: { icon: IconName; children: ReactNode }) {
       >
         <Icon name={icon} size={16} color={x.day.link} />
       </View>
-      <Txt style={{ flex: 1, paddingTop: 5 }}>{children}</Txt>
+      <Txt style={[T.body, { flex: 1, paddingTop: 5 }]}>{children}</Txt>
     </Row>
   );
 }
@@ -96,9 +131,7 @@ function IconLine({ icon, children }: { icon: IconName; children: ReactNode }) {
 function TextToggle({ isOpen, onPress }: { isOpen: boolean; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress}>
-      <Txt variant="label" style={{ color: x.day.link }}>
-        {isOpen ? copy.showLess : copy.showMore}
-      </Txt>
+      <Txt style={[T.strong, { color: x.day.link }]}>{isOpen ? copy.showLess : copy.showMore}</Txt>
     </Pressable>
   );
 }
@@ -116,7 +149,7 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
   return (
     <>
       {hotel.highlights.length > 0 && (
-        <Section title={copy.highlights}>
+        <Section title={copy.highlights} icon="sparkles-outline">
           {hotel.highlights.map((highlight, index) => (
             <IconLine key={`${highlight.text}-${index}`} icon={iconOf(highlight.icon)}>
               {highlight.text}
@@ -126,14 +159,12 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
       )}
 
       {featured.length > 0 && (
-        <Section title={copy.featuredAmenities}>
+        <Section title={copy.featuredAmenities} icon="star-outline">
           <Row style={{ flexWrap: 'wrap', columnGap: spacing.md, rowGap: spacing.md }}>
             {featured.map((amenity) => (
               <Row key={`${amenity.group}-${amenity.name}`} style={{ gap: spacing.sm, width: '46%' }}>
                 <Icon name={iconOf(amenity.icon)} size={18} color={x.day.link} />
-                <Txt variant="small" style={{ flexShrink: 1 }}>
-                  {amenity.name}
-                </Txt>
+                <Txt style={[T.body, { flexShrink: 1 }]}>{amenity.name}</Txt>
               </Row>
             ))}
           </Row>
@@ -141,30 +172,26 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
       )}
 
       {hotel.nearby.length > 0 && (
-        <Section title={copy.nearby}>
+        <Section title={copy.nearby} icon="compass-outline">
           {hotel.address && (
             <Row style={{ gap: spacing.sm }}>
               <Icon name="location-outline" size={18} color={x.day.text} />
-              <Txt variant="small" style={{ flex: 1 }}>
-                {hotel.address}
-              </Txt>
+              <Txt style={[T.body, { flex: 1 }]}>{hotel.address}</Txt>
             </Row>
           )}
           {/* Khoảng cách địa danh hiện là dữ liệu mẫu: chỉ hiện tên địa danh, không hiện số km chưa kiểm chứng. */}
           {hotel.nearby.map((place) => (
             <Row key={place.name} style={{ gap: spacing.sm }}>
               <Icon name="navigate-outline" size={16} color={x.day.textSecondary} />
-              <Txt variant="small" style={{ flex: 1 }}>
-                {place.name}
-              </Txt>
+              <Txt style={[T.body, { flex: 1 }]}>{place.name}</Txt>
             </Row>
           ))}
         </Section>
       )}
 
       {hotel.description && (
-        <Section title={copy.introduction}>
-          <Txt numberOfLines={isDescriptionOpen ? undefined : 4} style={{ lineHeight: 22 }}>
+        <Section title={copy.introduction} icon="information-circle-outline">
+          <Txt numberOfLines={isDescriptionOpen ? undefined : 4} style={[T.body, { lineHeight: 24 }]}>
             {hotel.description}
           </Txt>
           <TextToggle isOpen={isDescriptionOpen} onPress={() => setDescriptionOpen((open) => !open)} />
@@ -172,18 +199,16 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
       )}
 
       {(groups.length > 0 || facts.length > 0 || hotel.languages.length > 0) && (
-        <Section title={copy.allAmenities}>
+        <Section title={copy.allAmenities} icon="checkmark-done-outline">
           {shownGroups.map((group) => (
             <View key={group} style={{ gap: spacing.sm }}>
-              <Txt variant="label">{labelOf(copy.groups, group)}</Txt>
+              <Txt style={T.strong}>{labelOf(copy.groups, group)}</Txt>
               {hotel.amenities
                 .filter((amenity) => amenity.group === group)
                 .map((amenity) => (
                   <Row key={amenity.name} style={{ gap: spacing.sm }}>
                     <Icon name="checkmark" size={16} color={x.day.link} />
-                    <Txt variant="small" style={{ flex: 1 }}>
-                      {amenity.name}
-                    </Txt>
+                    <Txt style={[T.body, { flex: 1 }]}>{amenity.name}</Txt>
                   </Row>
                 ))}
             </View>
@@ -193,24 +218,18 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
           )}
           {facts.length > 0 && (
             <View style={{ gap: spacing.sm }}>
-              <Txt variant="label">{copy.facts}</Txt>
+              <Txt style={T.strong}>{copy.facts}</Txt>
               {facts.map(([key, value]) => (
                 <Row key={key} style={{ justifyContent: 'space-between', gap: spacing.md }}>
-                  <Txt variant="small" style={ui.muted}>
-                    {labelOf(copy.factLabels, key)}
-                  </Txt>
-                  <Txt variant="small" style={{ flexShrink: 1, textAlign: 'right' }}>
-                    {String(value)}
-                  </Txt>
+                  <Txt style={T.meta}>{labelOf(copy.factLabels, key)}</Txt>
+                  <Txt style={[T.body, { flexShrink: 1, textAlign: 'right' }]}>{String(value)}</Txt>
                 </Row>
               ))}
             </View>
           )}
           {hotel.languages.length > 0 && (
-            <Txt variant="small">
-              <Txt variant="small" style={{ fontWeight: '700' }}>
-                {copy.languages}:{' '}
-              </Txt>
+            <Txt style={T.body}>
+              <Txt style={T.strong}>{copy.languages}: </Txt>
               {hotel.languages.map((language) => labelOf(copy.languageNames, language)).join(', ')}
             </Txt>
           )}
@@ -218,7 +237,7 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
       )}
 
       {hasPolicies && (
-        <Section title={copy.policies}>
+        <Section title={copy.policies} icon="shield-checkmark-outline">
           {(hotel.checkInTime || hotel.checkOutTime) && (
             <Row style={{ gap: spacing.sm }}>
               {[
@@ -232,26 +251,27 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
                     style={{
                       flex: 1,
                       padding: spacing.md,
-                      borderRadius: radius.lg,
-                      backgroundColor: x.day.canvas,
+                      borderRadius: radius.md,
+                      backgroundColor: x.day.tintExplore,
                       gap: 2,
                     }}
                   >
                     <Row style={{ gap: 6 }}>
                       <Icon name={item.icon} size={16} color={x.day.link} />
-                      <Txt variant="small" style={ui.muted}>
-                        {item.label}
-                      </Txt>
+                      <Txt style={T.meta}>{item.label}</Txt>
                     </Row>
-                    <Txt variant="heading">{item.value}</Txt>
+                    <Txt style={[T.title, { fontSize: 22 }]}>{item.value}</Txt>
                   </View>
                 ))}
             </Row>
           )}
           {policies.map(([key, value]) => (
-            <View key={key} style={{ gap: 2 }}>
-              <Txt variant="label">{labelOf(copy.policyLabels, key)}</Txt>
-              <Txt variant="small" style={ui.muted}>
+            <View
+              key={key}
+              style={{ gap: 2, padding: spacing.md, borderRadius: radius.md, backgroundColor: x.day.canvas }}
+            >
+              <Txt style={T.strong}>{labelOf(copy.policyLabels, key)}</Txt>
+              <Txt style={[T.body, { color: x.day.textSecondary }]}>
                 {key === 'depositAmount' ? money(Number(value)) : String(value)}
               </Txt>
             </View>
@@ -281,19 +301,66 @@ function Chip({ label, isActive, onPress }: { label: string; isActive: boolean; 
       accessibilityRole="button"
       accessibilityState={{ selected: isActive }}
       onPress={onPress}
-      style={{
-        paddingHorizontal: spacing.md,
-        paddingVertical: 6,
-        borderRadius: radius.pill,
-        borderWidth: 1,
-        borderColor: isActive ? x.day.text : x.day.line,
-        backgroundColor: isActive ? x.day.text : x.day.surface,
-      }}
+      style={({ pressed }) => [
+        {
+          minHeight: 36,
+          justifyContent: 'center',
+          paddingHorizontal: spacing.md,
+          borderRadius: radius.sm,
+          borderWidth: 1,
+          borderColor: isActive ? x.day.link : x.day.line,
+          backgroundColor: isActive ? x.day.tintExplore : x.day.surface,
+        },
+        pressed && { opacity: 0.75 },
+      ]}
     >
-      <Txt variant="small" style={{ color: isActive ? x.day.surface : x.day.text, fontWeight: '600' }}>
-        {label}
-      </Txt>
+      <Txt style={[T.strong, { color: isActive ? x.day.link : x.day.text }]}>{label}</Txt>
     </Pressable>
+  );
+}
+
+/** Chọn cách sắp xếp: một hàng ô liền nhau cuộn ngang được, ô đang chọn đậm màu để biết ngay mình đang xem theo gì. */
+function SortTabs({
+  value,
+  onChange,
+}: {
+  value: HotelReviewFilters['sort'];
+  onChange: (sort: NonNullable<HotelReviewFilters['sort']>) => void;
+}) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ marginHorizontal: -spacing.md }}
+      contentContainerStyle={{ paddingHorizontal: spacing.md }}
+    >
+      <Row style={{ padding: 4, gap: 4, borderRadius: radius.md, backgroundColor: x.day.canvas }}>
+        {(['newest', 'highest', 'lowest', 'helpful'] as const).map((sort) => {
+          const isActive = value === sort;
+          return (
+            <Pressable
+              key={sort}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
+              onPress={() => onChange(sort)}
+              style={({ pressed }) => [
+                {
+                  minHeight: 40,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingHorizontal: spacing.md,
+                  borderRadius: radius.sm,
+                  backgroundColor: isActive ? x.day.link : 'transparent',
+                },
+                pressed && { opacity: 0.75 },
+              ]}
+            >
+              <Txt style={[T.strong, { color: isActive ? x.brand.white : x.day.text }]}>{copy[sort]}</Txt>
+            </Pressable>
+          );
+        })}
+      </Row>
+    </ScrollView>
   );
 }
 
@@ -319,16 +386,21 @@ export function HotelReviewsSection({ id }: { id: string }) {
   return (
     <Section
       title={copy.reviews}
+      icon="chatbubbles-outline"
       aside={
-        summary ? (
-          <Txt variant="small" style={ui.muted}>
-            {t('hotel.reviewCount', { count: summary.count })}
-          </Txt>
-        ) : undefined
+        summary ? <Txt style={T.meta}>{t('hotel.reviewCount', { count: summary.count })}</Txt> : undefined
       }
     >
       {summary && summary.count > 0 && (
-        <Row style={{ gap: spacing.lg, alignItems: 'center' }}>
+        <Row
+          style={{
+            gap: spacing.lg,
+            alignItems: 'center',
+            padding: spacing.md,
+            borderRadius: radius.lg,
+            backgroundColor: x.day.tintExplore,
+          }}
+        >
           <View
             style={{
               width: 84,
@@ -339,20 +411,16 @@ export function HotelReviewsSection({ id }: { id: string }) {
               backgroundColor: x.day.link,
             }}
           >
-            <Txt variant="title" style={{ color: x.brand.white }}>
+            <Txt style={{ ...typeStyle('title'), fontFamily: nativeFonts.extraBold, color: x.brand.white }}>
               {summary.average?.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}
             </Txt>
-            <Txt variant="small" style={{ color: x.brand.white }}>
-              {copy.outOfFive}
-            </Txt>
+            <Txt style={{ ...T.meta, color: x.brand.white }}>{copy.outOfFive}</Txt>
           </View>
           <View style={{ flex: 1, gap: 4 }}>
             {summary.distribution.map((level) => (
               <Row key={level.rating} style={{ gap: spacing.sm, alignItems: 'center' }}>
-                <Txt variant="small" style={{ width: 28 }}>
-                  {level.rating} ★
-                </Txt>
-                <View style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: x.day.canvas }}>
+                <Txt style={[T.body, { width: 28 }]}>{level.rating} ★</Txt>
+                <View style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: x.day.surface }}>
                   <View
                     style={{
                       width: `${summary.count ? (level.count / summary.count) * 100 : 0}%`,
@@ -362,9 +430,7 @@ export function HotelReviewsSection({ id }: { id: string }) {
                     }}
                   />
                 </View>
-                <Txt variant="small" style={[ui.muted, { width: 28, textAlign: 'right' }]}>
-                  {level.count}
-                </Txt>
+                <Txt style={[T.meta, { width: 28, textAlign: 'right' }]}>{level.count}</Txt>
               </Row>
             ))}
           </View>
@@ -376,32 +442,31 @@ export function HotelReviewsSection({ id }: { id: string }) {
         >
           <Row style={{ gap: 6 }}>
             <Icon name="sparkles-outline" size={16} color={x.day.text} />
-            <Txt variant="label">{copy.reviewSummary}</Txt>
+            <Txt style={T.strong}>{copy.reviewSummary}</Txt>
           </Row>
-          <Txt variant="small">{summary.aiSummary}</Txt>
+          <Txt style={T.body}>{summary.aiSummary}</Txt>
         </View>
       )}
-      <Row style={{ flexWrap: 'wrap', gap: spacing.sm }}>
-        {(['newest', 'highest', 'lowest', 'helpful'] as const).map((sort) => (
-          <Chip
-            key={sort}
-            label={copy[sort]}
-            isActive={filters.sort === sort}
-            onPress={() => update({ sort })}
-          />
-        ))}
-      </Row>
+      <SortTabs value={filters.sort} onChange={(sort) => update({ sort })} />
       {summary && summary.tags.length > 0 && (
-        <Row style={{ flexWrap: 'wrap', gap: spacing.sm }}>
-          {summary.tags.map(({ tag, count }) => (
-            <Chip
-              key={tag}
-              label={`${tag} · ${count}`}
-              isActive={filters.tag === tag}
-              onPress={() => update({ tag: filters.tag === tag ? undefined : tag })}
-            />
-          ))}
-        </Row>
+        <View style={{ gap: spacing.xs }}>
+          <Txt style={T.meta}>{copy.filterByTopic}</Txt>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginHorizontal: -spacing.md }}
+            contentContainerStyle={{ gap: spacing.sm, paddingHorizontal: spacing.md }}
+          >
+            {summary.tags.map(({ tag, count }) => (
+              <Chip
+                key={tag}
+                label={`${tag} · ${count}`}
+                isActive={filters.tag === tag}
+                onPress={() => update({ tag: filters.tag === tag ? undefined : tag })}
+              />
+            ))}
+          </ScrollView>
+        </View>
       )}
       <CommerceError
         error={query.error}
@@ -409,20 +474,18 @@ export function HotelReviewsSection({ id }: { id: string }) {
           void query.refetch();
         }}
       />
-      {query.isPending && <Txt variant="small">{copy.loadingReviews}</Txt>}
+      {query.isPending && <Txt style={T.body}>{copy.loadingReviews}</Txt>}
       {query.data && items.length === 0 && (
-        <Txt variant="small" style={ui.muted}>
-          {summary?.count ? copy.noMatchingReviews : copy.noReviews}
-        </Txt>
+        <Txt style={T.meta}>{summary?.count ? copy.noMatchingReviews : copy.noReviews}</Txt>
       )}
       {items.map((review) => (
         <View
           key={review.id}
           style={{
             gap: spacing.sm,
-            paddingTop: spacing.md,
-            borderTopWidth: 1,
-            borderTopColor: x.day.line,
+            padding: spacing.md,
+            borderRadius: radius.lg,
+            backgroundColor: x.day.canvas,
           }}
         >
           <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
@@ -436,13 +499,11 @@ export function HotelReviewsSection({ id }: { id: string }) {
                 backgroundColor: toneOf(review.authorName),
               }}
             >
-              <Txt variant="label" style={{ color: x.brand.white }}>
-                {initialsOf(review.authorName)}
-              </Txt>
+              <Txt style={{ ...T.strong, color: x.brand.white }}>{initialsOf(review.authorName)}</Txt>
             </View>
             <View style={{ flex: 1 }}>
-              <Txt variant="label">{review.authorName}</Txt>
-              <Txt variant="small" style={ui.muted}>
+              <Txt style={T.strong}>{review.authorName}</Txt>
+              <Txt style={T.meta}>
                 {[
                   review.travelerType
                     ? labelOf(copy.travelerTypes as Record<string, string>, review.travelerType)
@@ -458,10 +519,8 @@ export function HotelReviewsSection({ id }: { id: string }) {
               <Txt style={{ color: x.day.line }}>{'★'.repeat(5 - review.rating)}</Txt>
             </Txt>
           </Row>
-          {review.title && <Txt variant="label">{review.title}</Txt>}
-          <Txt variant="small" style={{ lineHeight: 20 }}>
-            {review.body}
-          </Txt>
+          {review.title && <Txt style={{ ...T.strong, fontSize: 15 }}>{review.title}</Txt>}
+          <Txt style={T.body}>{review.body}</Txt>
           {review.tags.length > 0 && (
             <Row style={{ flexWrap: 'wrap', gap: 6 }}>
               {review.tags.map((tag) => (
@@ -470,18 +529,16 @@ export function HotelReviewsSection({ id }: { id: string }) {
                   style={{
                     paddingHorizontal: spacing.sm,
                     paddingVertical: 2,
-                    borderRadius: radius.pill,
+                    borderRadius: radius.sm,
                     backgroundColor: x.day.tintExplore,
                   }}
                 >
-                  <Txt variant="small" style={{ color: x.day.link }}>
-                    {tag}
-                  </Txt>
+                  <Txt style={[T.meta, { color: x.day.link, fontFamily: nativeFonts.medium }]}>{tag}</Txt>
                 </View>
               ))}
             </Row>
           )}
-          <Txt variant="small" style={[ui.muted, { fontSize: 11 }]}>
+          <Txt style={T.meta}>
             {copy.written}: {formatDay(review.createdAt)}
             {review.helpfulCount > 0 ? ` · ${t('hotel.helpfulCount', { count: review.helpfulCount })}` : ''}
           </Txt>
@@ -496,13 +553,16 @@ export function HotelReviewsSection({ id }: { id: string }) {
           }
           style={{
             alignItems: 'center',
-            paddingVertical: spacing.md,
-            borderRadius: radius.pill,
+            minHeight: 48,
+            justifyContent: 'center',
+            borderRadius: radius.md,
             borderWidth: 1,
-            borderColor: x.day.line,
+            borderColor: x.day.link,
           }}
         >
-          <Txt variant="label">{query.isFetching ? copy.loadingReviews : copy.moreReviews}</Txt>
+          <Txt style={{ ...T.strong, color: x.day.link }}>
+            {query.isFetching ? copy.loadingReviews : copy.moreReviews}
+          </Txt>
         </Pressable>
       )}
     </Section>
