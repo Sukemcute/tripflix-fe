@@ -275,11 +275,7 @@ export function AssistantChat({
               );
             })
           )}
-          {chat.isPending && (
-            <Animated.View entering={enter}>
-              <AssistantThinking />
-            </Animated.View>
-          )}
+          {chat.isPending && !chat.hasError && <AssistantThinking />}
           {chat.hasError && (
             <View accessibilityRole="alert" style={styles.error}>
               <Txt style={[chatType.body, { color: x.day.text }]}>{copy.error}</Txt>
