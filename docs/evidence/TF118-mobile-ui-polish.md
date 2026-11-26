@@ -1,0 +1,26 @@
+# TF118 · Chỉnh giao diện mobile sau khi thử trên Expo Web
+
+- Jira [SCRUM-190](https://tripflix.atlassian.net/browse/SCRUM-190) · Nhánh `trang/TF118-mobile-ui-polish` · Trang (dùng AI) · 26/11/2026.
+- Tiếp nối [PR #367](https://github.com/Sukemcute/tripflix-fe/pull/367) trên `develop`.
+
+## Thay đổi đã kiểm
+
+| Hạng mục | Kết quả |
+| --- | --- |
+| Đăng nhập | Màu nền ô tự điền đồng bộ với khung đăng nhập trên web. Hai ô vẫn khai báo autofill email và mật khẩu. |
+| Checkout | Phiếu giữ chỗ màu xanh ngọc hiển thị giá từng dịch vụ, thời hạn và tổng tiền. Form liên hệ, hành khách, lựa chọn phương thức và thanh thanh toán có bố cục mới. |
+| Dùng thông tin tài khoản | Điền các trường có trong hồ sơ, giữ lại dữ liệu ở trường hồ sơ còn thiếu. Form báo khi thông tin đã khớp. |
+| Tripi | Hiện ba chấm trong lúc chờ phản hồi. Cả câu trả lời và lỗi đều kết thúc trạng thái chờ. |
+
+## Kiểm tra
+
+- `pnpm turbo run lint typecheck test --affected` với base `origin/develop`: 12/12 tác vụ đạt. Mobile 26/26 test, lint 0 lỗi và 21 cảnh báo.
+- `node tools/check-boundaries.mjs` và `git diff --check`: đạt.
+- `tools/verify-mobile-checkout-ui.cjs`: đạt ở 320, 375, 390 và 430 px. Kiểm tổng tiền, đến OTP bằng gateway fixture, lỗi form và trường hợp hồ sơ thiếu số điện thoại.
+- `tools/verify-assistant-chat-design.cjs`: đạt ở 375, 390 và 430 px. Kiểm cả phản hồi SSE và lỗi tức thì bằng fixture.
+
+## Ảnh và phạm vi
+
+Ảnh kiểm tra được chụp trên Expo Web và lưu ngoài repo trong hai thư mục `tripflix-tf118-polish-checkout` và `tripflix-tf118-polish-assistant` dưới thư mục tạm của máy. Chưa chạy trên thiết bị Android thật, với autofill có mật khẩu đã lưu, hoặc với giao dịch thanh toán thật.
+
+Các thay đổi nằm trong mobile, chuỗi i18n và bộ test giao diện. Phần checkout dùng dữ liệu và hợp đồng API hiện có.
