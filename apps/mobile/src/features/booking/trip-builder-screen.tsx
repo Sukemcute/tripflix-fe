@@ -576,7 +576,7 @@ export function TripBuilderScreen({ header }: { header?: ReactNode } = {}) {
     <Screen
       title={copy.title}
       header={header}
-      background={x.day.canvas}
+      background={x.day.surface}
       scroll={false}
       padded={false}
       footer={

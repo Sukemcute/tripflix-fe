@@ -14,7 +14,6 @@ import { SearchDropPanel } from './search-drop-panel';
 
 export type ExploreCategory = 'all' | 'sea' | 'weekend';
 const ACCENT = x.day.link;
-const BACKGROUND = x.day.canvas;
 const enter = FadeInDown.duration(280).reduceMotion(ReduceMotion.System);
 const copy = vi.mobile.explore;
 const categories: { id: ExploreCategory; label: string }[] = [
@@ -329,7 +328,7 @@ export function ExploreStaysNotice({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: BACKGROUND },
+  screen: { flex: 1, backgroundColor: x.day.surface },
   header: {
     minHeight: 56,
     paddingHorizontal: 20,
@@ -471,7 +470,14 @@ const styles = StyleSheet.create({
   destinationName: { fontFamily: fonts.semibold, color: x.day.text, fontSize: 14, lineHeight: 23, flex: 1 },
   staysHeading: { gap: 4, marginTop: 8 },
   secondary: { color: x.day.textSecondary, fontSize: 13, lineHeight: 21 },
-  stay: { gap: 16, padding: 16, borderRadius: x.radius.lg, backgroundColor: x.day.surface },
+  stay: {
+    gap: 16,
+    padding: 16,
+    borderRadius: x.radius.lg,
+    borderWidth: 1,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
+  },
   stayMain: { gap: 16 },
   stayPhoto: {
     width: '100%',

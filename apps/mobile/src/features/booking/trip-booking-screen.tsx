@@ -345,7 +345,7 @@ function SelectedTripScreen({ selected }: { selected: SelectedTripBooking }) {
       back={false}
       header={null}
       compact
-      background={x.day.canvas}
+      background={x.day.surface}
       scroll={false}
       padded={false}
       footer={

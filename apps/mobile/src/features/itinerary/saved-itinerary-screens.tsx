@@ -238,7 +238,7 @@ export function SavedItineraryScreen() {
   return (
     <Screen
       title={itinerary.title}
-      background={x.day.canvas}
+      background={x.day.surface}
       footer={
         <View style={{ gap: spacing.sm }}>
           <Button

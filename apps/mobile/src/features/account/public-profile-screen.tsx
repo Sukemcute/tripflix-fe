@@ -21,6 +21,7 @@ import { ApiErrorNotice } from '@/components/api-state';
 import { mobileIconSize } from '@/components/mobile-scale';
 import { typeStyle } from '@/components/type-scale';
 import { LoadingDots } from '@/components/loading-dots';
+import { TRIPI_ASSETS } from '@/features/mascot/tripi-assets';
 import { OwnProfileHeading, ProfileHub } from './profile-hub';
 import { getDisplayName } from './display-name';
 import { NotificationBell } from './notification-bell';
@@ -200,9 +201,9 @@ function ProfileView({ id, back, right }: { id: string; back?: boolean; right?: 
           {tab === 'held' && isMine ? (
             <HeldPosts userId={id} />
           ) : tab === 'videos' ? (
-            <ReelGrid userId={id} />
+            <ReelGrid userId={id} isMine={isMine} />
           ) : (
-            <VlogGrid userId={id} />
+            <VlogGrid userId={id} isMine={isMine} />
           )}
         </>
       )}
@@ -223,12 +224,12 @@ function useTileSize() {
   return { size, onLayout };
 }
 
-function ReelGrid({ userId }: { userId: string }) {
+function ReelGrid({ userId, isMine }: { userId: string; isMine: boolean }) {
   const reels = useAuthorReels(userId);
   const { size, onLayout } = useTileSize();
   const items = reels.data?.pages.flatMap((page) => page.items) ?? [];
   return (
-    <GridState query={reels} isEmpty={items.length === 0} emptyText={vi.api.profileNoVideos}>
+    <GridState query={reels} isEmpty={items.length === 0} emptyText={vi.api.profileNoVideos} isMine={isMine}>
       <View style={styles.grid} onLayout={onLayout}>
         {items.map((reel) => (
           <Tile
@@ -245,12 +246,12 @@ function ReelGrid({ userId }: { userId: string }) {
   );
 }
 
-function VlogGrid({ userId }: { userId: string }) {
+function VlogGrid({ userId, isMine }: { userId: string; isMine: boolean }) {
   const vlogs = useAuthorVlogs(userId);
   const { size, onLayout } = useTileSize();
   const items = vlogs.data?.pages.flatMap((page) => page.items) ?? [];
   return (
-    <GridState query={vlogs} isEmpty={items.length === 0} emptyText={vi.api.profileNoPosts}>
+    <GridState query={vlogs} isEmpty={items.length === 0} emptyText={vi.api.profileNoPosts} isMine={isMine}>
       <View style={styles.grid} onLayout={onLayout}>
         {items.map((post) => (
           <Tile
@@ -305,6 +306,7 @@ function GridState({
   query,
   isEmpty,
   emptyText,
+  isMine = false,
   children,
 }: {
   query: {
@@ -317,10 +319,29 @@ function GridState({
   };
   isEmpty: boolean;
   emptyText: string;
+  /** Hồ sơ của chính mình: màn rỗng có Tripi và nút đăng bài thay cho một dòng chữ. */
+  isMine?: boolean;
   children: React.ReactNode;
 }) {
   if (query.isPending) return <LoadingDots />;
   if (query.error) return <ApiErrorNotice error={query.error} retry={() => void query.refetch()} />;
+  if (isEmpty && isMine)
+    return (
+      <View style={styles.emptyMine}>
+        <Image
+          source={TRIPI_ASSETS['action-explore'].source}
+          contentFit="contain"
+          accessible={false}
+          aria-hidden
+          style={styles.emptyArt}
+        />
+        <Txt style={styles.emptyTitle}>{emptyText}</Txt>
+        <Txt style={[ui.center, ui.muted]}>{copy.profile.hub.shareFirstHint}</Txt>
+        <Button icon="add" onPress={() => router.push('/create')}>
+          {copy.profile.hub.shareFirst}
+        </Button>
+      </View>
+    );
   if (isEmpty) return <Txt style={[ui.center, ui.muted, styles.state]}>{emptyText}</Txt>;
   return (
     <>
@@ -444,6 +465,14 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
   state: { paddingVertical: s.xl },
+  emptyMine: { alignItems: 'center', gap: s.sm, paddingVertical: s.lg },
+  emptyArt: { width: 132, height: 132 },
+  emptyTitle: {
+    ...typeStyle('subhead'),
+    fontFamily: nativeFonts.bold,
+    color: x.day.text,
+    textAlign: 'center',
+  },
 });
 
 const ownStyles = StyleSheet.create({
@@ -460,13 +489,21 @@ const ownStyles = StyleSheet.create({
   },
   loginText: { fontSize: 15, lineHeight: 24, fontFamily: nativeFonts.semibold, color: x.action.onPrimary },
   section: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: x.day.text },
-  tabs: { flexDirection: 'row', gap: s.sm },
+  // Ba tab liền nhau trong một khung viền; tab đang chọn đậm màu.
+  tabs: {
+    flexDirection: 'row',
+    gap: 4,
+    padding: 4,
+    borderRadius: x.radius.md,
+    borderWidth: 1,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
+  },
   tab: {
     flex: 1,
-    minHeight: 48,
-    borderRadius: radius.sm,
-    padding: s.sm,
-    backgroundColor: x.day.canvas,
+    minHeight: 44,
+    borderRadius: x.radius.sm,
+    padding: s.xs,
     alignItems: 'center',
     justifyContent: 'center',
   },
