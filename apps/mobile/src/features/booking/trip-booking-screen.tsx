@@ -33,7 +33,7 @@ import { Image } from 'expo-image';
 import { DateSingleField } from '@/components/date-sheet';
 import { mobileIconSize } from '@/components/mobile-scale';
 import { typeStyle } from '@/components/type-scale';
-import { assets, Button, Icon, IconButton, money, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { assets, Button, Icon, IconButton, money, Row, Screen, Txt, ui, type IconName } from '@/components/mobile-ui';
 import { DragSortList } from '@/features/post/drag-sort-list';
 import { ActivityCard, TimeTag, type ActivityFields } from './activity-card';
 import { CartLink } from './cart-ui';
@@ -41,7 +41,7 @@ import { CommerceError } from './commerce-state';
 import { AskTripiCard } from './booking-home';
 import { SaveItineraryButton } from '@/features/itinerary/save-itinerary-button';
 import { SavedItinerariesSection } from '@/features/itinerary/saved-itinerary-screens';
-import { TripBuilderEntry } from './trip-builder-screen';
+import { TripBuilderScreen } from './trip-builder-screen';
 
 const soldOutOf = (error: unknown) =>
   error instanceof HttpError && error.status === 409 ? readSoldOutConflict(error.body) : null;
@@ -756,31 +756,80 @@ export function TripBookingScreen() {
   const selected = useTripBooking();
   // Lộ trình nổi bật chỉ nằm ở tab Khám phá.
   if (selected) return <SelectedTripScreen key={selected.postId} selected={selected} />;
+  return <BookingLanding />;
+}
+
+type BookingTab = 'tripi' | 'build' | 'saved';
+
+/** Mỗi việc một màu để ba tab không trông giống nhau; chữ trên nền vàng dùng màu mực cho đủ tương phản. */
+const BOOKING_TABS: readonly { key: BookingTab; label: string; icon: IconName; color: string; activeText: string }[] = [
+  { key: 'tripi', label: copy.tabTripi, icon: 'sparkles', color: x.brand.coral, activeText: x.brand.white },
+  { key: 'build', label: copy.tabBuild, icon: 'map-outline', color: x.day.link, activeText: x.brand.white },
+  { key: 'saved', label: copy.tabSaved, icon: 'bookmark-outline', color: x.brand.sun, activeText: x.brand.ink },
+];
+
+// Giữ tab đang mở khi sang màn khác (chọn khách sạn, thanh toán) rồi quay lại tab Đặt.
+let lastBookingTab: BookingTab = 'tripi';
+
+/** Tab Đặt chia ba việc bằng thanh tab trên cùng; Tự lên mở thẳng trình lên lộ trình thay cho lối vào riêng. */
+function BookingLanding() {
+  const { user } = useApiSession();
+  const [tab, setTab] = useState<BookingTab>(lastBookingTab);
+  const selectTab = (next: BookingTab) => {
+    lastBookingTab = next;
+    setTab(next);
+  };
+  const header = <BookingHeader tab={tab} onSelect={selectTab} />;
+  if (tab === 'build') return <TripBuilderScreen header={header} />;
   return (
-    <Screen title={copy.bookingTitle} back={false} header={<BookingHeader />}>
-      <View style={{ gap: spacing.xl }}>
+    <Screen title={copy.bookingTitle} back={false} header={header}>
+      {tab === 'tripi' ? (
         <AskTripiCard />
-        <View style={{ gap: spacing.sm }}>
-          <Txt variant="title">{copy.planNewTitle}</Txt>
-          <TripBuilderEntry />
-        </View>
+      ) : user ? (
         <SavedItinerariesSection />
-      </View>
+      ) : (
+        <Txt style={styles.muted}>{copy.savedNeedLogin}</Txt>
+      )}
     </Screen>
   );
 }
 
-/** Đầu trang tab Đặt: tiêu đề lớn và lối vào giỏ, thay cho logo để chừa chỗ cho nội dung. */
-function BookingHeader() {
+/** Đầu trang tab Đặt: tiêu đề lớn, lối vào giỏ và thanh ba tab chia đều bề ngang. */
+function BookingHeader({ tab, onSelect }: { tab: BookingTab; onSelect: (tab: BookingTab) => void }) {
   return (
-    <Row style={layout.header}>
-      <Txt variant="title">{copy.bookingTitle}</Txt>
-      <CartLink />
-    </Row>
+    <View style={layout.headerBlock}>
+      <Row style={layout.header}>
+        <Txt variant="title">{copy.bookingTitle}</Txt>
+        <CartLink />
+      </Row>
+      <View accessibilityRole="tablist" style={layout.tabs}>
+        {BOOKING_TABS.map((item) => {
+          const isActive = item.key === tab;
+          return (
+            <Pressable
+              key={item.key}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+              onPress={() => onSelect(item.key)}
+              style={[layout.tab, isActive && { backgroundColor: item.color }]}
+            >
+              <Icon name={item.icon} size={18} color={isActive ? item.activeText : item.color} />
+              <Txt
+                numberOfLines={1}
+                style={[layout.tabLabel, { color: isActive ? item.activeText : x.day.textSecondary }]}
+              >
+                {item.label}
+              </Txt>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 
 const layout = StyleSheet.create({
+  headerBlock: { paddingBottom: spacing.sm },
   header: {
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -788,6 +837,27 @@ const layout = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
   },
+  tabs: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginHorizontal: spacing.lg,
+    padding: spacing.xs,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
+  },
+  tab: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+  },
+  tabLabel: { fontFamily: nativeFonts.semibold, fontSize: 13, lineHeight: 18 },
   // Ảnh bìa tràn hết bề ngang, giữ phần trên của poster (chữ trên ảnh bìa thường nằm ở đó).
   cover: {
     height: 220,

@@ -156,7 +156,8 @@ const nextKey = (prefix: string) => `${prefix}${Date.now().toString(36)}-${(keyS
  * Tự lên lộ trình ở tab Đặt (TF105): thêm, bớt khách sạn và chuyến bay tuỳ ý. Mỗi món chọn ở màn thật của app
  * (tìm khách sạn → chọn phòng, đặt vé máy bay ở chế độ chọn) rồi quay về thành một thẻ; giữ chỗ tất cả trong một đơn.
  */
-export function TripBuilderScreen() {
+/** `header` cho tab Đặt gắn tiêu đề và thanh tab lên trên; mở như màn riêng thì dùng thanh có nút quay lại. */
+export function TripBuilderScreen({ header }: { header?: ReactNode } = {}) {
   const { user } = useApiSession();
   const params = useLocalSearchParams();
   const [seed] = useState(() => readTripBuilderSeed(params, getFutureDate(0)));
@@ -574,6 +575,7 @@ export function TripBuilderScreen() {
   return (
     <Screen
       title={copy.title}
+      header={header}
       background={x.day.canvas}
       scroll={false}
       padded={false}

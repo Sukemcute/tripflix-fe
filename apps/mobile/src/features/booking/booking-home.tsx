@@ -6,19 +6,21 @@ import {
   type AssistantAction,
   type AssistantTrip,
 } from '@tripflix/api-client';
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { DateSingleField } from '@/components/date-sheet';
 import { LoadingDots } from '@/components/loading-dots';
 import { mobileIconSize } from '@/components/mobile-scale';
 import { typeStyle } from '@/components/type-scale';
-import { assets, Badge, Button, formatDate, Icon, money, Row, Txt, ui } from '@/components/mobile-ui';
+import { assets, Badge, Button, Field, formatDate, Icon, money, Row, Segments, Txt, ui } from '@/components/mobile-ui';
 import { AssistantCards } from '@/features/assistant/assistant-cards';
 import type { AssistantMessage } from '@/features/assistant/assistant-provider';
 import { askTripiTurn, newTripiConversationId } from '@/features/assistant/assistant-transport';
+import { Stepper } from './cart-ui';
 import { styles } from './trip-plan-parts';
 
 const copy = vi.mobile.tripPlan;
@@ -93,28 +95,54 @@ export function UpcomingTrips() {
   );
 }
 
+type TripForm = { origin: string; destination: string; startDate: string; budget: string; dayCount: number };
+
+const MAX_TRIP_DAYS = 14;
+const createEmptyForm = (): TripForm => ({
+  origin: '',
+  destination: '',
+  startDate: getFutureDate(14),
+  budget: '',
+  dayCount: 3,
+});
+
 /** Cuộc trò chuyện của ô lên lộ trình, sống hết phiên dùng app (ô bị gỡ khi đang xem lộ trình hay thanh toán). */
 let savedChat: {
-  text: string;
+  form: TripForm;
+  revision: string;
   conversationId: string;
   messages: AssistantMessage[];
   trip: AssistantTrip | null;
-} = { text: '', conversationId: newTripiConversationId(), messages: [], trip: null };
+} = { form: createEmptyForm(), revision: '', conversationId: newTripiConversationId(), messages: [], trip: null };
+
+const readBudgetDigits = (value: string) => value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 12);
+const formatBudget = (digits: string) => (digits ? Number(digits).toLocaleString('vi-VN') : '');
+
+function isFormComplete(form: TripForm): boolean {
+  return (
+    !!form.origin.trim() &&
+    !!form.destination.trim() &&
+    form.startDate >= getFutureDate(0) &&
+    Number(form.budget) > 0 &&
+    form.dayCount >= 1
+  );
+}
 
 /**
- * Ô lên lộ trình nhanh: hỏi Tripi rồi hiện thẻ ngay bên dưới, không mở khung chat. Bấm Chọn trên thẻ khách sạn,
- * chuyến bay gửi tiếp trong cùng cuộc trò chuyện để Tripi ra lộ trình từng ngày; nút Đặt trên lộ trình đưa về màn
- * Đặt theo lộ trình của tab này.
+ * Ô lên lộ trình: khách điền đủ điểm đi, điểm đến, ngày đi, ngân sách và số ngày rồi mới hỏi Tripi, để lộ trình
+ * đầu tiên sát ý. Có kết quả thì tab "Nhờ Tripi chỉnh" gửi tiếp trong cùng cuộc trò chuyện để sửa lộ trình đó.
  */
 export function AskTripiCard() {
   // Khởi tạo từ bản giữ ngoài component: bấm Đặt sang màn lộ trình, thanh toán rồi quay lại vẫn còn cuộc trò chuyện.
-  const [text, setText] = useState(savedChat.text);
+  const [form, setForm] = useState(savedChat.form);
+  const [revision, setRevision] = useState(savedChat.revision);
   const [conversationId, setConversationId] = useState(savedChat.conversationId);
   const [messages, setMessages] = useState<AssistantMessage[]>(savedChat.messages);
   const [trip, setTrip] = useState<AssistantTrip | null>(savedChat.trip);
+  const [tab, setTab] = useState(0);
   useEffect(() => {
-    savedChat = { text, conversationId, messages, trip };
-  }, [text, conversationId, messages, trip]);
+    savedChat = { form, revision, conversationId, messages, trip };
+  }, [form, revision, conversationId, messages, trip]);
   const turn = useMutation({
     retry: false,
     mutationFn: ({ message, action }: { message: string; action?: AssistantAction }) =>
@@ -126,20 +154,39 @@ export function AskTripiCard() {
         { id: `u${current.length}`, role: 'user', text: message },
         { id: `a${current.length}`, role: 'assistant', ...reply },
       ]);
+      setTab(0);
     },
   });
-  const reset = () => {
+  const updateForm = (patch: Partial<TripForm>) => setForm((current) => ({ ...current, ...patch }));
+  const isComplete = isFormComplete(form);
+  const hasResult = messages.length > 0;
+  const refill = () => {
     setConversationId(newTripiConversationId());
     setMessages([]);
     setTrip(null);
+    setRevision('');
+    setTab(0);
     turn.reset();
   };
   const ask = () => {
-    const request = text.trim();
+    if (!isComplete || turn.isPending) return;
+    // Câu đầu nói rõ cần lộ trình để Tripi không chỉ gợi ý reel.
+    const request = t('mobile.tripPlan.askTripiFormMessage', {
+      origin: form.origin.trim(),
+      destination: form.destination.trim(),
+      date: formatDate(form.startDate),
+      days: form.dayCount,
+      nights: form.dayCount - 1,
+      budget: money(Number(form.budget)),
+    });
+    turn.mutate({ message: copy.askTripiPrefix + request });
+  };
+  const revise = () => {
+    const request = revision.trim();
     if (!request || turn.isPending) return;
-    // Câu đầu nói rõ cần lộ trình để Tripi không chỉ gợi ý reel; câu sau là trả lời tiếp trong cuộc trò chuyện.
-    turn.mutate({ message: messages.length ? request : copy.askTripiPrefix + request });
-    setText('');
+    // Nói rõ là sửa lộ trình vừa lập, câu ngắn như "ở 4 ngày" dễ bị Tripi hiểu thành tìm video.
+    turn.mutate({ message: copy.askTripiRevisePrefix + request });
+    setRevision('');
   };
   const latest = messages.at(-1);
   return (
@@ -154,48 +201,116 @@ export function AskTripiCard() {
           </View>
           <Image source={assets.welcome} contentFit="contain" style={layout.askMascot} />
         </View>
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          maxLength={200}
-          placeholder={copy.askTripiPlaceholder}
-          placeholderTextColor={x.day.textSecondary}
-          returnKeyType="send"
-          onSubmitEditing={ask}
-          editable={!turn.isPending}
-          accessibilityLabel={copy.askTripiTitle}
-          style={layout.askInput}
-        />
-        <Button icon="sparkles-outline" disabled={!text.trim() || turn.isPending} onPress={ask}>
-          {copy.askTripiSend}
-        </Button>
-        {messages.length > 0 && (
-          <Button tone="text" icon="refresh" disabled={turn.isPending} onPress={reset}>
-            {copy.askTripiAgain}
+        {hasResult ? (
+          <Button tone="text" icon="refresh" disabled={turn.isPending} onPress={refill}>
+            {copy.askTripiRefill}
           </Button>
+        ) : (
+          <View style={{ gap: spacing.sm }}>
+            <Txt variant="small" style={styles.muted}>
+              {copy.askTripiRequired}
+            </Txt>
+            <Field
+              label={copy.askTripiOrigin}
+              value={form.origin}
+              onChangeText={(origin) => updateForm({ origin })}
+              maxLength={60}
+              placeholder={copy.askTripiOriginPlaceholder}
+              editable={!turn.isPending}
+            />
+            <Field
+              label={copy.askTripiDestination}
+              value={form.destination}
+              onChangeText={(destination) => updateForm({ destination })}
+              maxLength={60}
+              placeholder={copy.askTripiDestinationPlaceholder}
+              editable={!turn.isPending}
+            />
+            {/* Ngày đi và ngân sách chung một hàng cho form gọn. */}
+            <Row style={layout.pairRow}>
+              <View style={ui.flex}>
+                <DateSingleField
+                  label={copy.askTripiDate}
+                  value={form.startDate}
+                  min={getFutureDate(0)}
+                  isDisabled={turn.isPending}
+                  onChange={(startDate) => updateForm({ startDate })}
+                />
+              </View>
+              <View style={ui.flex}>
+                <Field
+                  label={copy.askTripiBudget}
+                  value={formatBudget(form.budget)}
+                  onChangeText={(value) => updateForm({ budget: readBudgetDigits(value) })}
+                  keyboardType="number-pad"
+                  placeholder={copy.askTripiBudgetPlaceholder}
+                  editable={!turn.isPending}
+                />
+              </View>
+            </Row>
+            <Row style={layout.daysRow}>
+              <View style={ui.flex}>
+                <Txt variant="label">{copy.askTripiDays}</Txt>
+                <Txt variant="small" style={styles.muted}>
+                  {t('mobile.tripPlan.askTripiDuration', { days: form.dayCount, nights: form.dayCount - 1 })}
+                </Txt>
+              </View>
+              <Stepper
+                label={copy.askTripiDays}
+                value={form.dayCount}
+                canDecrease={form.dayCount > 1 && !turn.isPending}
+                canIncrease={form.dayCount < MAX_TRIP_DAYS && !turn.isPending}
+                onChange={(dayCount) => updateForm({ dayCount })}
+              />
+            </Row>
+            <Button icon="sparkles-outline" disabled={!isComplete || turn.isPending} onPress={ask}>
+              {copy.askTripiSend}
+            </Button>
+          </View>
         )}
       </View>
       {turn.isPending && <LoadingDots />}
       {turn.isError && <Txt style={styles.muted}>{vi.assistant.error}</Txt>}
       {latest && !turn.isPending && (
         <>
-          {/* Tripi hỏi lại hoặc từ chối thì khách trả lời ngay ở ô trên. */}
-          {!!latest.text && (
-            <Row style={layout.reply}>
-              <Icon name="sparkles" size={18} color={x.day.text} />
-              <Txt style={[layout.bodyText, ui.flex]}>{latest.text}</Txt>
-            </Row>
-          )}
-          {!!latest.cards?.length && (
-            <AssistantCards
-              cards={latest.cards}
-              onOpen={() => undefined}
-              actions={{
-                act: (label, action) => turn.mutate({ message: label, action }),
-                canUndo: messages.length > 2,
-                trip,
-              }}
-            />
+          <Segments options={[copy.askTripiResultTab, copy.askTripiReviseTab]} selected={tab} onSelect={setTab} />
+          {tab === 0 ? (
+            <>
+              {!!latest.text && (
+                <Row style={layout.reply}>
+                  <Icon name="sparkles" size={18} color={x.day.text} />
+                  <Txt style={[layout.bodyText, ui.flex]}>{latest.text}</Txt>
+                </Row>
+              )}
+              {!!latest.cards?.length && (
+                <AssistantCards
+                  cards={latest.cards}
+                  onOpen={() => undefined}
+                  actions={{
+                    act: (label, action) => turn.mutate({ message: label, action }),
+                    canUndo: messages.length > 2,
+                    trip,
+                  }}
+                />
+              )}
+            </>
+          ) : (
+            <View style={{ gap: spacing.sm }}>
+              <Txt style={styles.muted}>{copy.askTripiReviseHint}</Txt>
+              <Field
+                label={copy.askTripiReviseTab}
+                hideLabel
+                value={revision}
+                onChangeText={setRevision}
+                maxLength={200}
+                multiline
+                placeholder={copy.askTripiRevisePlaceholder}
+                style={layout.reviseInput}
+              />
+              <Button icon="sparkles-outline" disabled={!revision.trim()} onPress={revise}>
+                {copy.askTripiReviseSend}
+              </Button>
+            </View>
           )}
         </>
       )}
@@ -256,15 +371,7 @@ const layout = StyleSheet.create({
   askCopy: { flex: 1, gap: spacing.xs },
   askTitle: { fontFamily: nativeFonts.bold, fontSize: 22, lineHeight: 30, color: x.day.text },
   askMascot: { width: 96, height: 104 },
-  askInput: {
-    ...typeStyle('label'),
-    fontFamily: nativeFonts.regular,
-    color: x.day.text,
-    minHeight: 44,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: x.day.line,
-    backgroundColor: x.day.surface,
-  },
+  daysRow: { alignItems: 'center', gap: spacing.md },
+  pairRow: { alignItems: 'flex-end', gap: spacing.sm },
+  reviseInput: { minHeight: 88, paddingTop: spacing.sm, textAlignVertical: 'top' },
 });
