@@ -20,7 +20,6 @@ import {
   Screen,
   Txt,
   ui,
-  type IconName,
 } from '@/components/mobile-ui';
 import { NotificationBell } from '@/features/account/notification-bell';
 import { FeaturedTrips } from '@/features/booking/featured-trips';
@@ -167,58 +166,12 @@ export function ExploreFeed() {
         <ExploreHotelResults key={hotelQuery} q={hotelQuery} />
       ) : (
         <>
-          <ServiceTiles onStay={() => setKind('hotel')} />
           <HotelSuggestions />
           <AssistantPrompt />
           <FeaturedTrips onPicked={() => router.navigate('/(tabs)/book')} />
         </>
       )}
     </Screen>
-  );
-}
-
-type ServiceTile = { key: string; label: string; hint: string; icon: IconName; onPress: () => void };
-
-/** Chỉ hiện dịch vụ đã đặt được; ô "Sắp có" làm hàng lối tắt trông như quảng cáo thứ chưa có. */
-function ServiceTiles({ onStay }: { onStay: () => void }) {
-  const tiles: ServiceTile[] = [
-    {
-      key: 'stay',
-      label: explorerCopy.serviceStay,
-      hint: explorerCopy.serviceStayHint,
-      icon: 'bed',
-      onPress: onStay,
-    },
-    {
-      key: 'flight',
-      label: explorerCopy.serviceFlight,
-      hint: explorerCopy.serviceFlightHint,
-      icon: 'airplane',
-      onPress: () => router.push('/flights'),
-    },
-  ];
-  return (
-    <View accessibilityLabel={explorerCopy.servicesLabel} style={styles.services}>
-      {tiles.map((tile) => (
-        <Pressable
-          key={tile.key}
-          accessibilityRole="button"
-          accessibilityLabel={tile.label}
-          onPress={tile.onPress}
-          style={({ pressed }) => [styles.service, pressed && styles.pressed]}
-        >
-          <View style={styles.serviceIcon}>
-            <Icon name={tile.icon} size={22} color={x.day.link} />
-          </View>
-          <Txt numberOfLines={1} style={styles.serviceLabel}>
-            {tile.label}
-          </Txt>
-          <Txt numberOfLines={1} style={styles.serviceHint}>
-            {tile.hint}
-          </Txt>
-        </Pressable>
-      ))}
-    </View>
   );
 }
 
@@ -474,28 +427,6 @@ const styles = StyleSheet.create({
     fontSize: x.type.body.fontSize,
     color: x.day.text,
   },
-  services: { flexDirection: 'row', gap: x.space.xs },
-  service: {
-    ...card,
-    flex: 1,
-    minWidth: 0,
-    borderRadius: x.radius.lg,
-    paddingVertical: x.space.sm,
-    paddingHorizontal: x.space.xxs,
-    alignItems: 'center',
-    gap: x.space.xxs,
-  },
-  serviceIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: x.radius.md,
-    backgroundColor: x.day.tintExplore,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: x.space.xxs,
-  },
-  serviceLabel: { fontFamily: nativeFonts.semibold, fontSize: 13, lineHeight: 18, color: x.day.text },
-  serviceHint: { fontSize: 12, lineHeight: 16, color: x.day.textSecondary },
   section: { gap: x.space.sm },
   bleed: { marginHorizontal: -x.gutter },
   hotelRow: { gap: x.space.sm, paddingHorizontal: x.gutter, paddingBottom: x.space.xs },
