@@ -62,31 +62,42 @@ export function Stepper({
       accessibilityLabel={`${sign === '+' ? vi.hotel.increaseGuests : vi.hotel.decreaseGuests} ${label}`}
       disabled={!isEnabled}
       accessibilityState={{ disabled: !isEnabled }}
+      hitSlop={4}
       onPress={() => onChange(next)}
-      style={{
-        width: 44,
-        height: 44,
-        borderRadius: radius.sm,
-        backgroundColor: x.day.canvas,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
+      style={({ pressed }) => [
+        {
+          width: 36,
+          height: 36,
+          borderRadius: radius.pill,
+          backgroundColor: x.day.surface,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        !isEnabled && { opacity: 0.35 },
+        pressed && { transform: [{ scale: 0.88 }], backgroundColor: x.day.canvas },
+      ]}
     >
-      <Txt style={{ color: isEnabled ? x.day.text : x.day.textSecondary, fontSize: 18, lineHeight: 26 }}>
-        {sign}
-      </Txt>
+      <Icon name={sign === '+' ? 'add' : 'remove'} size={18} color={x.day.link} />
     </Pressable>
   );
+  // Cùng dáng bộ chỉnh số ở Tự lên lộ trình: nền xanh nhạt, hai nút tròn, số ở giữa.
   return (
-    <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
+    <Row
+      style={{
+        alignItems: 'center',
+        padding: 4,
+        borderRadius: radius.pill,
+        backgroundColor: x.day.tintExplore,
+      }}
+    >
       {button('−', canDecrease, value - 1)}
       <Txt
         style={{
-          minWidth: unit ? 56 : 20,
+          minWidth: unit ? 56 : 36,
           textAlign: 'center',
-          fontSize: 14,
-          lineHeight: 23,
-          fontFamily: nativeFonts.semibold,
+          fontSize: 16,
+          lineHeight: 24,
+          fontFamily: nativeFonts.bold,
         }}
       >
         {value}
