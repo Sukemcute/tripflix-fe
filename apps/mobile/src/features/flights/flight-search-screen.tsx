@@ -729,6 +729,12 @@ function FlightCard({
                         </View>
                         <View style={[ui.flex, { gap: 4 }]}>
                           <Txt style={ticketStyles.fareName}>{option.name}</Txt>
+                          {option.pricePerPerson != null && (
+                            <Txt style={ticketStyles.farePrice}>
+                              {money(option.pricePerPerson)}
+                              <Txt style={ticketStyles.farePerPerson}>{copy.perGuestSuffix}</Txt>
+                            </Txt>
+                          )}
                           <Txt
                             style={[
                               ticketStyles.fareNote,
@@ -754,9 +760,6 @@ function FlightCard({
                             )}
                           </Row>
                         </View>
-                        {option.pricePerPerson != null && (
-                          <Txt style={ticketStyles.farePrice}>{money(option.pricePerPerson)}</Txt>
-                        )}
                       </Pressable>
                     );
                   })}
@@ -998,7 +1001,8 @@ const ticketStyles = StyleSheet.create({
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  farePrice: { ...typeStyle('label'), fontFamily: nativeFonts.bold, color: x.day.price },
+  farePrice: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.extraBold, color: x.day.price },
+  farePerPerson: { ...typeStyle('caption'), fontFamily: nativeFonts.regular, color: x.day.textSecondary },
   stub: { gap: spacing.xs, padding: spacing.md, paddingTop: spacing.xs },
   total: { fontSize: 26, lineHeight: 32, fontFamily: nativeFonts.bold, color: x.day.price },
   stubRows: {
