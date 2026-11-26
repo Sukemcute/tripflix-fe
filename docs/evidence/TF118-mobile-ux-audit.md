@@ -1,7 +1,7 @@
 # TF118 — Đánh giá UI/UX mobile và cải thiện theo audit
 
 - Jira: SCRUM-190 (TF118) · Nhánh: `trang/TF118-mobile-ux-audit` · Người làm: Trang (dùng AI: có) · Ngày: 2026-11-26
-- Phụ thuộc: nhánh `trang/TF71-tripi-di-bo` (vòng bước đi của Tripi dùng ở màn chờ) — merge TF71 trước.
+- Phụ thuộc: nhánh `trang/TF71-tripi-di-bo` (vòng bước đi của Tripi dùng ở màn chờ) — [PR #366](https://github.com/Sukemcute/tripflix-fe/pull/366) cần merge trước.
 
 ## Đã làm
 - Báo cáo audit UI/UX mobile (EN + `vi/`) và lộ trình cải thiện trong `docs/ui-ux-review/`.
@@ -22,6 +22,13 @@
 
 ## Kết quả kiểm tra
 `pnpm turbo run lint typecheck test`: 26/26 task thành công; lint mobile 0 lỗi, 21 cảnh báo (bằng mức trước thay đổi); test mobile 26 pass; tokens 47 pass.
+
+### Kiểm lại sau khi đồng bộ develop (26/11/2026)
+
+- Đã merge `origin/develop` tại `4ebe037c` vào nhánh TF118. Nhánh chứa các commit của PR TF71.
+- `pnpm turbo run lint typecheck test --affected` với `TURBO_SCM_BASE=origin/develop`: 17/17 tác vụ đạt. Mobile 26/26 test, lint 0 lỗi và 21 cảnh báo. Tokens 47/47 test.
+- `node tools/check-boundaries.mjs` và `git diff --check origin/develop...HEAD`: đạt.
+- Evidence giao diện hiện tại chụp trên Expo Web 390 px. Còn cần nghiệm thu màn chờ và giao diện trên Android thật.
 
 ## Cách kiểm lại
 1. `pnpm turbo run lint typecheck test`.
