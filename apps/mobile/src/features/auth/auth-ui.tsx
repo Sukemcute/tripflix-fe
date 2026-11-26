@@ -67,6 +67,7 @@ export function AuthButton({
 
 export function AuthField({
   label,
+  icon,
   trailing,
   error,
   focusOnError = false,
@@ -76,6 +77,8 @@ export function AuthField({
   ...props
 }: Omit<ComponentProps<typeof TextInput>, 'style'> & {
   label: string;
+  /** Icon nhỏ đầu ô, đổi màu khi ô đang được nhập. */
+  icon?: IconName;
   error?: string;
   focusOnError?: boolean;
   trailing?: ReactNode;
@@ -91,6 +94,11 @@ export function AuthField({
     <View style={styles.field}>
       <Txt style={styles.label}>{label} *</Txt>
       <View style={[styles.inputFrame, focused && styles.focused, !!error && styles.invalid]}>
+        {icon && (
+          <View style={styles.leading}>
+            <Icon name={icon} size={20} color={focused ? x.day.link : x.day.textSecondary} />
+          </View>
+        )}
         <TextInput
           {...props}
           ref={input}
@@ -108,7 +116,7 @@ export function AuthField({
             setFocused(false);
             onBlur?.(event);
           }}
-          style={[styles.input, style]}
+          style={[styles.input, !!icon && styles.inputWithIcon, style]}
         />
         {trailing}
       </View>
@@ -256,8 +264,15 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.8 },
   field: { gap: 8 },
   label: { fontSize: 14, lineHeight: 22, fontFamily: fonts.medium, color: x.day.text },
-  inputFrame: { ...authInputFrame, flexDirection: 'row', alignItems: 'center' },
-  focused: { borderColor: x.day.link },
+  inputFrame: {
+    ...authInputFrame,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: x.day.canvas,
+  },
+  focused: { borderColor: x.day.link, borderWidth: 2, backgroundColor: x.day.surface },
+  leading: { paddingLeft: 14 },
+  inputWithIcon: { paddingLeft: 10 },
   invalid: { borderColor: x.day.text },
   fieldError: { color: x.day.text, fontSize: 13, lineHeight: 22 },
   input: {
