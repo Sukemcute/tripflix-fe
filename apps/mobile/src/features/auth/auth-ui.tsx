@@ -93,7 +93,7 @@ export function AuthField({
   return (
     <View style={styles.field}>
       <Txt style={styles.label}>{label} *</Txt>
-      <View style={[styles.inputFrame, focused && styles.focused, !!error && styles.invalid]}>
+      <View nativeID={`tripflix-auth-field-${errorId}`} style={[styles.inputFrame, focused && styles.focused, !!error && styles.invalid]}>
         {icon && (
           <View style={styles.leading}>
             <Icon name={icon} size={20} color={focused ? x.day.link : x.day.textSecondary} />
