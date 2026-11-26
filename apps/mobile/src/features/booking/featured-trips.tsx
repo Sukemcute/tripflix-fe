@@ -28,7 +28,8 @@ export function FeaturedTrips({
   isDisabled?: boolean;
   onPicked?: () => void;
 }) {
-  const feed = useReelsFeed();
+  // Xếp theo độ Hot (tương tác gần đây, nửa đời 48 giờ) thay vì thứ tự ngẫu nhiên của Dành cho bạn.
+  const feed = useReelsFeed({ tab: 'hot' });
   const pathname = usePathname();
   const origin = pathname;
   const [destination, setDestination] = useState<string | null>(null);
