@@ -176,7 +176,14 @@ const TURNS = [
               'access-control-allow-methods': '*',
             },
           });
-        const { events } = TURNS[turn++ % TURNS.length];
+        if (turn === TURNS.length) {
+          return route.fulfill({
+            status: 500,
+            headers: { 'access-control-allow-origin': '*' },
+            body: '',
+          });
+        }
+        const { events } = TURNS[turn++];
         await new Promise((resolve) => setTimeout(resolve, 2500));
         return route.fulfill({
           status: 200,
@@ -197,18 +204,27 @@ const TURNS = [
         'Gợi ý mở đầu vẫn bấm được',
       );
       await page.screenshot({ path: join(output, `${width}-a-welcome.png`) });
+      const waiting = page.getByLabel('Tripi đang chuẩn bị gợi ý…');
       for (const [index, step] of TURNS.entries()) {
         await input.fill(step.ask);
         await page.getByRole('button', { name: 'Gửi tin nhắn cho Tripi' }).click();
         if (index === 0) {
-          await page.getByLabel('Tripi đang chuẩn bị gợi ý…').waitFor();
+          await waiting.waitFor();
+          assert.equal((await waiting.innerText()).trim(), '', 'Chỉ hiện ba chấm, không có ghi chú');
           await page.getByText('Đang suy nghĩ…').waitFor();
           await page.screenshot({ path: join(output, `${width}-b-thinking.png`) });
         }
         for (const text of step.expect) await page.getByText(text, { exact: false }).first().waitFor();
+        assert.equal(await waiting.count(), 0, 'Dừng ba chấm ngay khi câu trả lời đã hiện');
         await page.waitForTimeout(500);
         await page.screenshot({ path: join(output, `${width}-${step.shot}.png`) });
       }
+      await input.fill('Lượt thử phản hồi lỗi');
+      await page.getByRole('button', { name: 'Gửi tin nhắn cho Tripi' }).click();
+      await page.getByText('Chưa gửi được tin nhắn. Ý tưởng của bạn vẫn được giữ lại.').waitFor();
+      assert.equal(await waiting.count(), 0, 'Lỗi hiện ngay, ba chấm không chờ chạy hết vòng');
+      await page.getByRole('button', { name: 'Thử gửi lại' }).waitFor();
+
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
       assert.equal(overflow, false, `Không tràn ngang ở ${width}px`);
       process.stdout.write(`PASS ${width}px: chào, đang nghĩ, lộ trình, thời tiết, trả lời dài + 5 thẻ\n`);

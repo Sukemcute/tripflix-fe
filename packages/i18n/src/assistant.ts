@@ -87,13 +87,6 @@ export const assistant = {
   online: 'Đang sẵn sàng',
   thinkingOnline: 'Đang suy nghĩ…',
   greeting: 'Chào bạn, mình là Tripi!',
-  thinkingSteps: [
-    'Tripi đang lục bản đồ…',
-    'Đang xem reel hợp gu bạn…',
-    'Đang xếp lịch trình cho gọn…',
-    'Sắp xong rồi nè…',
-  ],
-  /** Câu chờ riêng cho web: nhẹ nhàng, hợp cả khi khách chỉ chào hỏi. Mobile vẫn dùng `thinkingSteps`. */
   thinkingStepsWeb: ['Đợi Tripi suy nghĩ xíu nghen…', 'Xíu nữa thôi nha…'],
   itinerarySummary: '{days} ngày · {stops} điểm dừng',
   itineraryStops: '{stops} điểm dừng',

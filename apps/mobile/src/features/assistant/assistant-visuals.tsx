@@ -1,10 +1,10 @@
 import { vi } from '@tripflix/i18n';
-import { explorer as x, nativeFonts as f, radius, spacing as s } from '@tripflix/tokens';
+import { explorer as x, radius, spacing as s } from '@tripflix/tokens';
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, {
-  FadeIn,
+  cancelAnimation,
   ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
@@ -14,7 +14,6 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { Txt } from '@/components/mobile-ui';
 import {
   TRIPI_ANIMATIONS,
   TRIPI_ASSETS,
@@ -61,7 +60,10 @@ export function TripiFace({
 function Dot({ index, isStill }: { index: number; isStill: boolean }) {
   const lift = useSharedValue(0);
   useEffect(() => {
-    if (isStill) return;
+    if (isStill) {
+      lift.set(0);
+      return;
+    }
     lift.set(
       withDelay(
         index * 140,
@@ -74,20 +76,14 @@ function Dot({ index, isStill }: { index: number; isStill: boolean }) {
         ),
       ),
     );
+    return () => cancelAnimation(lift);
   }, [index, isStill, lift]);
   const motion = useAnimatedStyle(() => ({ transform: [{ translateY: lift.get() }] }));
   return <Animated.View style={[styles.dot, { opacity: 0.45 + index * 0.25 }, motion]} />;
 }
 
-/** Tripi đang nghĩ: ảnh động "đang tìm", ba chấm nhảy và câu trạng thái đổi dần. */
 export function AssistantThinking() {
   const reducedMotion = useReducedMotion();
-  const [step, setStep] = useState(0);
-  useEffect(() => {
-    if (reducedMotion) return;
-    const timer = setInterval(() => setStep((current) => (current + 1) % copy.thinkingSteps.length), 1800);
-    return () => clearInterval(timer);
-  }, [reducedMotion]);
   return (
     <View accessibilityLiveRegion="polite" accessibilityLabel={copy.thinking} style={styles.thinkingRow}>
       <TripiFace animation="searching" size={52} />
@@ -97,9 +93,6 @@ export function AssistantThinking() {
             <Dot key={index} index={index} isStill={reducedMotion} />
           ))}
         </View>
-        <Animated.View key={step} entering={FadeIn.duration(220).reduceMotion(ReduceMotion.System)}>
-          <Txt style={styles.thinkingText}>{copy.thinkingSteps[step]}</Txt>
-        </Animated.View>
       </View>
     </View>
   );
@@ -110,8 +103,7 @@ const styles = StyleSheet.create({
   thinkingRow: { flexDirection: 'row', alignItems: 'flex-end', gap: s.sm },
   thinkingBubble: {
     flexShrink: 1,
-    gap: s.xs,
-    paddingVertical: s.md,
+    paddingVertical: s.sm,
     paddingHorizontal: s.lg,
     borderRadius: 20,
     borderBottomLeftRadius: 6,
@@ -121,5 +113,4 @@ const styles = StyleSheet.create({
   },
   dots: { flexDirection: 'row', gap: 5, height: 12, alignItems: 'flex-end' },
   dot: { width: 7, height: 7, borderRadius: radius.pill, backgroundColor: x.brand.coral },
-  thinkingText: { ...chatType.small, fontFamily: f.medium, color: x.day.textSecondary },
 });

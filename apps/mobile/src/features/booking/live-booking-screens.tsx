@@ -426,6 +426,15 @@ function CheckoutForm() {
       return next;
     });
   };
+  const accountName = user?.displayName?.trim();
+  const accountPhone = user?.phone?.trim();
+  const accountEmail = user?.email?.trim();
+  const hasAccountContact = Boolean(accountName || accountPhone || accountEmail);
+  const accountContactMatches =
+    hasAccountContact &&
+    (!accountName || accountName === name) &&
+    (!accountPhone || accountPhone === phone) &&
+    (!accountEmail || accountEmail === email);
   const payTotal = order ? (acceptedTotal ?? order.total) : 0;
   const isPayDisabled =
     isLocked || !hasConsent || newTotal !== undefined || (method === 0 && !cardNumber.trim());
@@ -436,9 +445,25 @@ function CheckoutForm() {
       footer={
         canPay ? (
           <View style={checkoutStyles.footer}>
-            <Row style={{ justifyContent: 'space-between', gap: spacing.md, flexWrap: 'wrap' }}>
-              <Txt style={checkoutStyles.meta}>{text.checkoutPayable}</Txt>
-              <Txt style={checkoutStyles.total}>{money(payTotal)}</Txt>
+            <Row style={checkoutStyles.footerRow}>
+              <View>
+                <Txt style={checkoutStyles.meta}>{text.checkoutPayable}</Txt>
+                <Txt style={checkoutStyles.total}>{money(payTotal)}</Txt>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ disabled: isPayDisabled, busy: payment.isPending }}
+                disabled={isPayDisabled}
+                onPress={() => payment.mutate('pay')}
+                style={({ pressed }) => [
+                  checkoutStyles.payAction,
+                  isPayDisabled && checkoutStyles.payDisabled,
+                  pressed && ui.pressed,
+                ]}
+              >
+                <Txt style={checkoutStyles.payLabel}>{payment.isPending ? vi.api.loading : text.pay}</Txt>
+                <Icon name="arrow-forward-outline" size={18} color={x.day.text} />
+              </Pressable>
             </Row>
             {isPayDisabled && !isLocked && (
               <Txt style={checkoutStyles.meta}>
@@ -449,9 +474,6 @@ function CheckoutForm() {
                     : text.checkoutMethodHint}
               </Txt>
             )}
-            <Button disabled={isPayDisabled} onPress={() => payment.mutate('pay')} style={checkoutStyles.pay}>
-              {payment.isPending ? vi.api.loading : text.pay}
-            </Button>
           </View>
         ) : undefined
       }
@@ -465,22 +487,11 @@ function CheckoutForm() {
       {query.isPending && <LoadingDots />}
       {order && (
         <>
-          {order.status === 'pending' && !isExpired && (
-            <Row
-              style={{
-                gap: spacing.sm,
-                alignItems: 'center',
-                paddingHorizontal: spacing.md,
-                paddingVertical: spacing.sm,
-                borderRadius: radius.sm,
-                backgroundColor: x.day.tintWarm,
-              }}
-            >
-              <Icon name="time-outline" size={18} color={x.day.text} />
-              <HoldTimer expiresAt={order.holdExpiresAt} />
-            </Row>
-          )}
-          <CheckoutSummary order={order} total={canPay ? undefined : payTotal} />
+          <CheckoutSummary
+            order={order}
+            total={payTotal}
+            showHoldTimer={order.status === 'pending' && !isExpired}
+          />
           {isExpired ? (
             <>
               <Notice tone="error">{order.status === 'cancelled' ? text.holdCancelled : text.expired}</Notice>
@@ -488,28 +499,34 @@ function CheckoutForm() {
             </>
           ) : isPayingVnpay ? null : (
             <>
-              <FormCard title={text.contact} icon="person-outline">
+              <FormSection title={text.contact} icon="person-outline">
                 <Txt style={checkoutStyles.meta}>{text.checkoutGuests.requiredHint}</Txt>
                 <Button
                   tone="secondary"
                   style={checkoutStyles.copyButton}
-                  disabled={isLocked || !!challenge}
+                  disabled={isLocked || !!challenge || !hasAccountContact || accountContactMatches}
                   onPress={() => {
-                    setName((previous) => previous || user?.displayName || '');
-                    setPhone((previous) => previous || user?.phone || '');
-                    setEmail((previous) => previous || user?.email || '');
+                    if (accountName) setName(accountName);
+                    if (accountPhone) setPhone(accountPhone);
+                    if (accountEmail) setEmail(accountEmail);
                     setFieldErrors((previous) => {
                       const next = { ...previous };
-                      if (!name && user?.displayName) delete next['contact.fullName'];
-                      if (!phone && user?.phone) delete next['contact.phone'];
-                      if (!email && user?.email) delete next['contact.email'];
+                      if (accountName && accountName !== name) delete next['contact.fullName'];
+                      if (accountPhone && accountPhone !== phone) delete next['contact.phone'];
+                      if (accountEmail && accountEmail !== email) delete next['contact.email'];
                       return next;
                     });
                   }}
                 >
                   {text.checkoutGuests.useAccount}
                 </Button>
-                <Txt style={checkoutStyles.meta}>{text.checkoutGuests.accountHint}</Txt>
+                <Txt accessibilityLiveRegion="polite" style={checkoutStyles.meta}>
+                  {accountContactMatches
+                    ? text.checkoutGuests.accountApplied
+                    : hasAccountContact
+                      ? text.checkoutGuests.accountHint
+                      : text.checkoutGuests.accountUnavailable}
+                </Txt>
                 <Field
                   label={text.checkoutGuests.contactName}
                   value={name}
@@ -539,9 +556,9 @@ function CheckoutForm() {
                   error={fieldErrors['contact.email']}
                   autoCapitalize="none"
                 />
-              </FormCard>
+              </FormSection>
               {Array.from({ length: order.passengersRequired }, (_, index) => (
-                <FormCard
+                <FormSection
                   key={index}
                   icon="people-outline"
                   title={`${text.guest} ${index + 1}`}
@@ -624,35 +641,39 @@ function CheckoutForm() {
                     }}
                     error={fieldErrors[`guests[${index}].birthdate`]}
                   />
-                </FormCard>
+                </FormSection>
               ))}
               {!challenge && (
-                <FormCard title={text.paymentMethod} icon="card-outline">
+                <FormSection title={text.paymentMethod} icon="card-outline">
                   {!isLocked && (
-                    <Row style={{ gap: spacing.sm, flexWrap: 'wrap' }}>
-                      {[text.card, text.vnpay].map((label, index) => (isCardUnavailable && index === 0 ? null : (
-                        <Pressable
-                          key={label}
-                          accessibilityRole="tab"
-                          accessibilityState={{ selected: method === index }}
-                          onPress={() => setMethod(index)}
-                          style={({ pressed }) => [
-                            checkoutStyles.method,
-                            method === index && checkoutStyles.selectedMethod,
-                            pressed && ui.pressed,
-                          ]}
-                        >
-                          <Txt
-                            style={[
-                              checkoutStyles.methodLabel,
-                              method === index && checkoutStyles.selectedLabel,
+                    <View accessibilityRole="radiogroup" style={checkoutStyles.methods}>
+                      {[text.card, text.vnpay].map((label, index) => {
+                        if (isCardUnavailable && index === 0) return null;
+                        const selected = method === index;
+                        return (
+                          <Pressable
+                            key={label}
+                            accessibilityRole="radio"
+                            accessibilityState={{ checked: selected }}
+                            aria-checked={selected}
+                            onPress={() => setMethod(index)}
+                            style={({ pressed }) => [
+                              checkoutStyles.method,
+                              selected && checkoutStyles.selectedMethod,
+                              pressed && ui.pressed,
                             ]}
                           >
-                            {label}
-                          </Txt>
-                        </Pressable>
-                      )))}
-                    </Row>
+                            <Icon name={index === 0 ? 'card-outline' : 'wallet-outline'} size={20} color={x.day.link} />
+                            <Txt style={checkoutStyles.methodLabel}>{label}</Txt>
+                            <Icon
+                              name={selected ? 'radio-button-on-outline' : 'radio-button-off-outline'}
+                              size={21}
+                              color={selected ? x.day.link : x.day.input}
+                            />
+                          </Pressable>
+                        );
+                      })}
+                    </View>
                   )}
                   {method === 0 ? (
                     <>
@@ -711,7 +732,7 @@ function CheckoutForm() {
                       </Txt>
                     </Row>
                   )}
-                </FormCard>
+                </FormSection>
               )}
               {!challenge && (
                 <Pressable
@@ -720,7 +741,7 @@ function CheckoutForm() {
                   aria-checked={hasConsent}
                   disabled={isLocked}
                   onPress={() => setConsent(!hasConsent)}
-                  style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' }}
+                  style={checkoutStyles.consent}
                 >
                   <View
                     style={{
@@ -731,15 +752,15 @@ function CheckoutForm() {
                       borderWidth: 2,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      borderColor: hasConsent ? x.action.primary : x.day.input,
-                      backgroundColor: hasConsent ? x.action.primary : x.day.surface,
+                      borderColor: hasConsent ? x.day.link : x.day.input,
+                      backgroundColor: hasConsent ? x.day.link : x.day.surface,
                     }}
                   >
                     {hasConsent && <Icon name="checkmark" size={15} color={x.action.onPrimary} />}
                   </View>
                   <View style={{ flex: 1 }}>
                     <Txt variant="small">{text.policy}</Txt>
-                    <Txt variant="small" style={[ui.muted, { fontSize: 11 }]}>
+                    <Txt style={checkoutStyles.meta}>
                       {text.policyVersion}: {order.policyVersion}
                     </Txt>
                   </View>
@@ -762,7 +783,7 @@ function CheckoutForm() {
                 </>
               )}
               {challenge && (
-                <FormCard title={text.otp} icon="key-outline">
+                <FormSection title={text.otp} icon="key-outline">
                   <Notice>{text.otpHint}</Notice>
                   <Field
                     label={text.otp}
@@ -779,7 +800,7 @@ function CheckoutForm() {
                   >
                     {text.confirmOtp}
                   </Button>
-                </FormCard>
+                </FormSection>
               )}
             </>
           )}
@@ -834,8 +855,7 @@ function CheckoutForm() {
   );
 }
 
-/** Group fields without nesting another white card inside the checkout. */
-function FormCard({
+function FormSection({
   title,
   subtitle,
   icon,
@@ -848,9 +868,11 @@ function FormCard({
 }) {
   return (
     <View style={checkoutStyles.form}>
-      <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
-        <Icon name={icon} size={22} color={x.day.link} />
-        <View style={{ flex: 1 }}>
+      <Row style={checkoutStyles.formHeading}>
+        <View style={checkoutStyles.formIcon}>
+          <Icon name={icon} size={21} color={x.day.link} />
+        </View>
+        <View style={checkoutStyles.headingText}>
           <Txt accessibilityRole="header" style={checkoutStyles.formTitle}>
             {title}
           </Txt>
@@ -863,43 +885,92 @@ function FormCard({
 }
 
 const checkoutStyles = StyleSheet.create({
-  copyButton: { borderRadius: radius.sm, minHeight: 48, backgroundColor: x.day.tintExplore, borderWidth: 0 },
+  copyButton: {
+    alignSelf: 'flex-start',
+    borderRadius: x.radius.md,
+    minHeight: x.control.touch,
+    backgroundColor: x.day.surface,
+    borderColor: x.day.line,
+  },
   copyGroup: {
-    padding: spacing.md,
-    gap: spacing.sm,
-    backgroundColor: x.day.tintSun,
-    borderRadius: radius.sm,
+    paddingLeft: x.space.sm,
+    gap: x.space.xs,
+    borderLeftWidth: 2,
+    borderLeftColor: x.day.line,
   },
   input: {
-    borderRadius: radius.sm,
-    minHeight: 52,
+    borderRadius: x.radius.md,
+    minHeight: x.control.primary,
     fontSize: 16,
-    lineHeight: 25,
-    backgroundColor: x.day.surface,
-  },
-  footer: { gap: spacing.sm },
-  total: { fontSize: 24, lineHeight: 34, fontFamily: nativeFonts.bold, color: x.day.price },
-  meta: { fontSize: 13, lineHeight: 22, color: x.day.text },
-  pay: { minHeight: 52 },
-  form: {
-    gap: spacing.lg,
-    padding: spacing.lg,
-    borderRadius: radius.md,
+    lineHeight: 24,
     backgroundColor: x.day.canvas,
   },
-  formTitle: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: x.day.text },
-  method: {
-    minHeight: 48,
+  footer: { gap: x.space.xxs },
+  footerRow: { flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: x.space.xs },
+  total: {
+    fontSize: 22,
+    lineHeight: 29,
+    fontFamily: nativeFonts.bold,
+    fontVariant: ['tabular-nums'],
+    color: x.day.price,
+  },
+  meta: { fontSize: 13, lineHeight: 20, color: x.day.textSecondary },
+  pay: { minHeight: x.control.primary },
+  payAction: {
+    minHeight: x.control.primary,
     flexGrow: 1,
-    padding: spacing.md,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.sm,
+    gap: x.space.xs,
+    paddingHorizontal: x.space.sm,
+    paddingVertical: x.space.xs,
+    borderRadius: x.radius.md,
+    backgroundColor: x.action.primary,
+  },
+  payDisabled: { backgroundColor: x.day.line },
+  payLabel: { fontSize: 15, lineHeight: 22, fontFamily: nativeFonts.bold, color: x.day.text, flexShrink: 1 },
+  form: {
+    gap: x.space.sm,
+    paddingTop: x.space.lg,
+    borderTopWidth: 1,
+    borderTopColor: x.day.line,
+  },
+  formHeading: { gap: x.space.sm, alignItems: 'center' },
+  formIcon: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: x.radius.md,
+    backgroundColor: x.day.tintExplore,
+  },
+  headingText: { flex: 1, gap: x.space.xxs },
+  formTitle: { fontSize: 20, lineHeight: 26, letterSpacing: -0.3, fontFamily: nativeFonts.bold, color: x.day.text },
+  methods: { gap: x.space.xs },
+  method: {
+    minHeight: x.control.primary,
+    flexDirection: 'row',
+    gap: x.space.sm,
+    paddingHorizontal: x.space.sm,
+    paddingVertical: x.space.xs,
+    alignItems: 'center',
+    borderRadius: x.radius.md,
+    borderWidth: 1,
+    borderColor: x.day.line,
     backgroundColor: x.day.surface,
   },
-  selectedMethod: { backgroundColor: x.day.text },
-  methodLabel: { fontSize: 15, lineHeight: 24, color: x.day.text, fontFamily: nativeFonts.semibold },
-  selectedLabel: { color: x.day.surface },
+  selectedMethod: { backgroundColor: x.day.tintExplore, borderColor: x.day.link },
+  methodLabel: { flex: 1, fontSize: 15, lineHeight: 22, color: x.day.text, fontFamily: nativeFonts.semibold },
+  consent: {
+    minHeight: x.control.touch,
+    flexDirection: 'row',
+    gap: x.space.xs,
+    alignItems: 'flex-start',
+    padding: x.space.sm,
+    borderRadius: x.radius.md,
+    backgroundColor: x.day.canvas,
+  },
 });
 
 export function OrderSummary({ order }: { order: NonNullable<ReturnType<typeof useCommerceOrder>['data']> }) {

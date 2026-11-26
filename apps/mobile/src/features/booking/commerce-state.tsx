@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AppState } from 'react-native';
+import { AppState, type StyleProp, type TextStyle } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { commerceApi, HttpError, useApiSession } from '@tripflix/api-client';
@@ -39,7 +39,7 @@ export function useCommerceOrder(id: string) {
   useRefreshOnOpen(query.refetch, isReady && !!user && !!id);
   return query;
 }
-export function HoldTimer({ expiresAt }: { expiresAt: string }) {
+export function HoldTimer({ expiresAt, style }: { expiresAt: string; style?: StyleProp<TextStyle> }) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -48,7 +48,7 @@ export function HoldTimer({ expiresAt }: { expiresAt: string }) {
   const countdown = holdCountdown(expiresAt, now);
   const time = `${Math.floor(countdown.secondsLeft / 60)}:${String(countdown.secondsLeft % 60).padStart(2, '0')}`;
   return (
-    <Txt accessibilityLiveRegion="polite">
+    <Txt accessibilityLiveRegion="polite" style={style}>
       {countdown.expired ? vi.booking.holdExpired : t('booking.holdExpiresIn', { time })}
     </Txt>
   );
