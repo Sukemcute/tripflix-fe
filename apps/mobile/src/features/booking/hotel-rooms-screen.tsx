@@ -9,11 +9,12 @@ import {
   isValidAssistantStay,
 } from '@tripflix/app-core';
 import { vi } from '@tripflix/i18n';
-import { explorer as x, radius, spacing } from '@tripflix/tokens';
+import { explorer as x } from '@tripflix/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { DateRangeField } from '@/components/date-sheet';
-import { Button, Empty, Notice, Row, Screen, Txt, ui } from '@/components/mobile-ui';
+import { Button, Card, Empty, Notice, Row, Screen, Sheet, Txt, ui } from '@/components/mobile-ui';
+import { InfoField } from '@/features/flights/flight-ui';
 import { CommerceError } from './commerce-state';
 import { CartLink, SelectionBar, Stepper } from './cart-ui';
 import { saveBookingSelection, useBookingSelection } from './cart-store';
@@ -63,7 +64,7 @@ export function HotelRoomsScreen() {
     infants: isTripi ? Number(params.infants) : Number(params.infants ?? 0) || 0,
   });
   const [stay, setStay] = useState({ ...dates, ...guests });
-  const [isEditing, setEditing] = useState(isTripi && !isValidAssistantStay(stay, today));
+  const [isGuestsOpen, setGuestsOpen] = useState(false);
   const selection = useBookingSelection();
   const valid = isTripi
     ? isValidAssistantStay({ ...dates, ...guests }, today)
@@ -102,6 +103,14 @@ export function HotelRoomsScreen() {
   const canAdd = countBookingCartGuests(guests) < MAX_GUESTS;
   const nights = Math.max(1, Math.round((Date.parse(stay.checkOut) - Date.parse(stay.checkIn)) / 86_400_000));
   const formatDay = (iso: string) => iso.split('-').reverse().slice(0, 2).join('/');
+  const formatGuests = (count: Guests) =>
+    [
+      `${count.adults} ${hotelText.adultsLabel.toLowerCase()}`,
+      count.children ? `${count.children} ${hotelText.childrenLabel.toLowerCase()}` : '',
+      count.infants ? `${count.infants} ${hotelText.infantsLabel.toLowerCase()}` : '',
+    ]
+      .filter(Boolean)
+      .join(' · ');
   const guestRow = (label: string, hint: string | undefined, key: keyof Guests, min: number) => (
     <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <View style={{ flex: 1 }}>
@@ -150,80 +159,57 @@ export function HotelRoomsScreen() {
           {vi.mobile.tripPlan.pickRoomTitle} · {vi.mobile.tripPlan.pickNotice}
         </Notice>
       )}
-      {/* Tóm tắt kỳ ở, bấm Đổi mới mở phần chỉnh để màn chọn phòng gọn. */}
-      <View
-        style={{
-          padding: spacing.md,
-          gap: spacing.md,
-          borderRadius: radius.md,
-          backgroundColor: x.day.canvas,
-        }}
-      >
-        <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flex: 1 }}>
-            <Row style={{ flexWrap: 'wrap', gap: spacing.md }}>
-              {[
-                { label: hotelText.checkIn, value: stay.checkIn },
-                { label: hotelText.checkOut, value: stay.checkOut },
-              ].map((date) => (
-                <View key={date.label} style={{ gap: spacing.xs }}>
-                  <Txt style={{ fontSize: 13, lineHeight: 22, color: x.day.textSecondary }}>{date.label}</Txt>
-                  <Txt style={{ fontSize: 14, lineHeight: 23, color: x.day.text }}>
-                    {formatDay(date.value)}
-                  </Txt>
-                </View>
-              ))}
-            </Row>
-            <Txt style={{ fontSize: 13, lineHeight: 22, color: x.day.textSecondary }}>
-              {nights} {text.nights}
-            </Txt>
-            <Txt style={{ fontSize: 13, lineHeight: 22, color: x.day.textSecondary }}>
-              {stay.adults} {hotelText.adultsLabel.toLowerCase()}
-              {stay.children ? ` · ${stay.children} ${hotelText.childrenLabel.toLowerCase()}` : ''}
-              {stay.infants ? ` · ${stay.infants} ${hotelText.infantsLabel.toLowerCase()}` : ''}
-            </Txt>
-          </View>
-          {!isTripPick && (
-            <Button
-              style={{ borderRadius: radius.sm, minHeight: 44 }}
-              tone="text"
-              onPress={() => setEditing((value) => !value)}
-            >
-              {isEditing ? hotelText.showLess : hotelText.changeStay}
-            </Button>
-          )}
-        </Row>
-        {!isTripPick && isEditing && (
+      {/* Cùng dáng form tìm vé máy bay: ô ngày, ô số khách mở bảng chọn, nút cập nhật chỉ hiện khi đã đổi. */}
+      <Card>
+        {isTripPick ? (
+          <InfoField
+            icon="calendar-outline"
+            label={hotelText.stayDates}
+            value={`${formatDay(stay.checkIn)} → ${formatDay(stay.checkOut)} · ${nights} ${text.nights}`}
+            isDisabled
+          />
+        ) : (
+          <DateRangeField
+            startLabel={hotelText.checkIn}
+            endLabel={hotelText.checkOut}
+            start={dates.checkIn}
+            end={dates.checkOut}
+            min={today}
+            onChange={({ start, end }) => setDates({ checkIn: start, checkOut: end })}
+          />
+        )}
+        <InfoField
+          icon="people-outline"
+          label={hotelText.guestsField}
+          value={formatGuests(isTripPick ? stay : guests)}
+          isDisabled={isTripPick}
+          onPress={isTripPick ? undefined : () => setGuestsOpen(true)}
+        />
+        {!isTripPick && !isUnchanged && (
           <>
-            <DateRangeField
-              startLabel={vi.api.checkIn}
-              endLabel={vi.api.checkOut}
-              start={dates.checkIn}
-              end={dates.checkOut}
-              min={today}
-              onChange={({ start, end }) => setDates({ checkIn: start, checkOut: end })}
-            />
-            {guestRow(hotelText.adultsLabel, undefined, 'adults', 1)}
-            {guestRow(hotelText.childrenLabel, hotelText.childrenHint, 'children', 0)}
-            {guestRow(hotelText.infantsLabel, hotelText.infantsHint, 'infants', 0)}
             {!valid && <Notice tone="error">{text.invalidStay}</Notice>}
             <Button
               icon="search"
-              disabled={!valid || !params.id || query.isFetching || isUnchanged}
-              // Kỳ ở sai đã có thông báo lỗi ngay trên; chỉ cần nói thêm khi chưa đổi gì.
-              disabledHint={valid && isUnchanged ? hotelText.stayUnchanged : undefined}
+              disabled={!valid || !params.id || query.isFetching}
               onPress={() => {
                 // Đổi số khách thì phòng đang chọn đi theo đoàn mới, giống web.
                 if (selection.items.length) saveBookingSelection({ ...selection, ...guests });
                 setStay({ ...dates, ...guests });
-                setEditing(false);
               }}
             >
               {hotelText.update}
             </Button>
           </>
         )}
-      </View>
+      </Card>
+      {isGuestsOpen && (
+        <Sheet title={hotelText.guestsSheet} visible onClose={() => setGuestsOpen(false)}>
+          {guestRow(hotelText.adultsLabel, undefined, 'adults', 1)}
+          {guestRow(hotelText.childrenLabel, hotelText.childrenHint, 'children', 0)}
+          {guestRow(hotelText.infantsLabel, hotelText.infantsHint, 'infants', 0)}
+          <Button onPress={() => setGuestsOpen(false)}>{vi.mobile.common.done}</Button>
+        </Sheet>
+      )}
       <CommerceError
         error={query.error}
         retry={() => {
@@ -239,7 +225,7 @@ export function HotelRoomsScreen() {
           title={hotelText.noRoomsTitle}
           body={hotelText.noRoomsBody}
           action={isTripPick ? undefined : hotelText.noRoomsAction}
-          onAction={isTripPick ? undefined : () => setEditing(true)}
+          onAction={isTripPick ? undefined : () => setGuestsOpen(true)}
         />
       )}
       {hotel?.rooms.map((room) => (
