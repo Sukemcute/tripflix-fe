@@ -73,6 +73,8 @@ export function Section({
         padding: spacing.md,
         gap: spacing.md,
         borderRadius: radius.xl,
+        borderWidth: 1,
+        borderColor: x.day.line,
         backgroundColor: x.day.surface,
         shadowColor: x.shadow,
         shadowOffset: { width: 0, height: 4 },

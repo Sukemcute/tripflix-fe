@@ -357,12 +357,12 @@ const styles = StyleSheet.create({
     fontFamily: nativeFonts.extraBold,
     fontVariant: ['tabular-nums'],
   },
-  // Nền kem để các thẻ trắng của từng mục nổi lên, thay cho các mục xếp phẳng ngăn bằng đường kẻ.
+  // Nền trắng; các thẻ của từng mục tách nhau bằng viền mảnh và bóng nhẹ.
   sections: {
     gap: spacing.md,
     paddingHorizontal: mobileLayout.gutter,
     paddingTop: spacing.md,
-    backgroundColor: x.day.canvas,
+    backgroundColor: x.day.surface,
   },
   loading: { paddingVertical: spacing.lg, color: x.day.textSecondary, fontSize: 14, lineHeight: 23 },
 });
