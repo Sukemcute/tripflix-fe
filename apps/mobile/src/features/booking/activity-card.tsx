@@ -5,7 +5,7 @@ import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { typeStyle } from '@/components/type-scale';
 import { Field, Icon, IconButton, Row, Txt, ui, type IconName } from '@/components/mobile-ui';
-import { ChoiceChip } from './trip-plan-parts';
+import { ChoiceChip, styles as planStyles } from './trip-plan-parts';
 
 const copy = vi.mobile.tripBuilder;
 
@@ -73,7 +73,7 @@ export function ActivityCard({
 }) {
   const isTimeInvalid = !!item.time && !TRIP_PLAN_TIME_PATTERN.test(item.time);
   return (
-    <View style={[styles.activity, isOpen && styles.activityOpen]}>
+    <View style={[planStyles.cardSurface, isOpen && styles.activityOpen]}>
       {handle(
         <View style={styles.activityHead} accessibilityHint={vi.mobile.tripPlan.editor.dragHint}>
           <Icon name="reorder-three" size={22} color={x.day.textSecondary} />
@@ -154,12 +154,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addTimeText: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold, color: x.day.link },
-  activity: {
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: x.day.line,
-    backgroundColor: x.day.surface,
-  },
   activityOpen: { borderColor: x.day.link },
   activityHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, padding: spacing.sm },
   activityBody: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

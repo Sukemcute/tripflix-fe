@@ -922,7 +922,7 @@ const ticketStyles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: x.day.line,
-    backgroundColor: x.day.canvas,
+    backgroundColor: x.day.surface,
   },
   fareNote: { ...typeStyle('caption'), fontFamily: nativeFonts.regular, color: x.day.link },
   currency: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold, color: x.day.textSecondary },

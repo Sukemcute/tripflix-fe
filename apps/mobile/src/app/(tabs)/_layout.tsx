@@ -1,4 +1,5 @@
 import { t, type MessageKey } from '@tripflix/i18n';
+import { explorer } from '@tripflix/tokens';
 import { Redirect, Tabs, router, useGlobalSearchParams, usePathname } from 'expo-router';
 import { useApiSession } from '@tripflix/api-client';
 import { useState } from 'react';
@@ -60,6 +61,7 @@ function ReadyTabs({ offerOnEntry }: { offerOnEntry: boolean }) {
         screenOptions={{
           headerShown: false,
           animation: 'none',
+          sceneStyle: { backgroundColor: explorer.day.surface },
         }}
       >
         {TABS.map((tab) => (

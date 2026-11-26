@@ -133,7 +133,7 @@ export function HotelRoomsScreen() {
   // Không có khách sạn thì kỳ ở và danh sách phòng đều vô nghĩa: chỉ hướng người dùng đi chọn khách sạn.
   if (!params.id)
     return (
-      <Screen background={x.day.canvas} title={hotelText.rooms}>
+      <Screen background={x.day.surface} title={hotelText.rooms}>
         <Empty
           pose="curious"
           title={hotelText.missingHotelTitle}
@@ -145,7 +145,7 @@ export function HotelRoomsScreen() {
     );
   return (
     <Screen
-      background={x.day.canvas}
+      background={x.day.surface}
       title={hotel?.name ?? hotelText.rooms}
       right={isTripPick ? undefined : <CartLink />}
       footer={

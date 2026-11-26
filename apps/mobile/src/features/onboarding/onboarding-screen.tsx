@@ -22,7 +22,7 @@ import { useOnboarding } from './onboarding-provider';
 import type { Interest, OnboardingStep, Pace } from './onboarding-model';
 
 const ACCENT = x.day.link;
-const BACKGROUND = x.day.canvas;
+const BACKGROUND = x.day.surface;
 const INK = x.day.text;
 const enter = FadeInDown.duration(280).reduceMotion(ReduceMotion.System);
 type InterestOption = {
