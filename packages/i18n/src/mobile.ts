@@ -223,6 +223,7 @@ export const mobile = {
     addActivity: 'Hoạt động',
     addActivityToDay: 'Thêm hoạt động',
     addDay: 'Thêm ngày {day}',
+    addToPlanTitle: 'Thêm vào lộ trình',
     startDate: 'Ngày bắt đầu',
     newActivity: 'Hoạt động mới',
     removeActivity: 'Bỏ hoạt động',

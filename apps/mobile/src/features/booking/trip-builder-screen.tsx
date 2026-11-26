@@ -676,58 +676,65 @@ export function TripBuilderScreen() {
             onChange={setStartDate}
           />
         )}
-        <View style={planStyles.timeline}>
-          {days.map((day, dayIndex) => (
-            <View key={day} style={planStyles.day}>
-              {dayIndex < days.length - 1 && <View style={planStyles.rail} />}
-              <View style={planStyles.dayDot}>
-                <Txt style={planStyles.dayDotText}>{day}</Txt>
-              </View>
-              <View style={planStyles.dayContent}>
-                <Row style={styles.dayHead}>
-                  <Txt style={[planStyles.dayLabel, ui.flex]}>
-                    {t('mobile.tripPlan.dayDate', { day, date: formatDay(getTripDayDate(firstDate, day)) })}
-                  </Txt>
-                  {day === days.length && canRemoveLastDay && (
-                    <IconButton
-                      name="trash-outline"
-                      label={t('mobile.tripPlan.editor.removeDay', { day })}
-                      onPress={removeLastDay}
-                    />
-                  )}
-                </Row>
-                {/* Trả phòng (12:00) đứng đầu ngày: thường trước các chặng buổi chiều. */}
-                {checkOuts
-                  .filter((out) => dayOf(out.date) === day)
-                  .map((out) => (
-                    <Row key={out.key} style={styles.timedRow}>
-                      <TimeTag time={HOTEL_CHECK_OUT_TIME} />
-                      <Row style={[ui.flex, styles.checkOut]}>
-                        <Icon name="log-out-outline" size={16} color={x.day.textSecondary} />
-                        <Txt style={styles.muted}>
-                          {t('mobile.tripBuilder.checkOut', { hotel: out.name })}
-                        </Txt>
+        <View style={styles.planCard}>
+          <View style={planStyles.timeline}>
+            {days.map((day, dayIndex) => (
+              <View key={day} style={planStyles.day}>
+                {dayIndex < days.length - 1 && <View style={planStyles.rail} />}
+                <View style={planStyles.dayDot}>
+                  <Txt style={planStyles.dayDotText}>{day}</Txt>
+                </View>
+                <View style={planStyles.dayContent}>
+                  <Row style={styles.dayHead}>
+                    <Txt style={[planStyles.dayLabel, ui.flex]}>
+                      {t('mobile.tripPlan.dayDate', { day, date: formatDay(getTripDayDate(firstDate, day)) })}
+                    </Txt>
+                    {day === days.length && canRemoveLastDay && (
+                      <IconButton
+                        name="trash-outline"
+                        label={t('mobile.tripPlan.editor.removeDay', { day })}
+                        onPress={removeLastDay}
+                      />
+                    )}
+                  </Row>
+                  {/* Trả phòng (12:00) đứng đầu ngày: thường trước các chặng buổi chiều. */}
+                  {checkOuts
+                    .filter((out) => dayOf(out.date) === day)
+                    .map((out) => (
+                      <Row key={out.key} style={styles.timedRow}>
+                        <TimeTag time={HOTEL_CHECK_OUT_TIME} />
+                        <Row style={[ui.flex, styles.checkOut]}>
+                          <Icon name="log-out-outline" size={16} color={x.day.textSecondary} />
+                          <Txt style={styles.muted}>
+                            {t('mobile.tripBuilder.checkOut', { hotel: out.name })}
+                          </Txt>
+                        </Row>
                       </Row>
-                    </Row>
-                  ))}
-                <DragSortList
-                  items={itemsOfDay(day)}
-                  onMove={(from, to) => moveInDay(itemsOfDay(day), from, to)}
-                  onDragChange={setDragging}
-                  renderItem={(item, _index, handle) => renderItem(item, handle)}
-                />
-                <View style={styles.dayAdd}>
-                  <Button tone="text" icon="add" onPress={() => addActivity(getTripDayDate(firstDate, day))}>
+                    ))}
+                  <DragSortList
+                    items={itemsOfDay(day)}
+                    onMove={(from, to) => moveInDay(itemsOfDay(day), from, to)}
+                    onDragChange={setDragging}
+                    renderItem={(item, _index, handle) => renderItem(item, handle)}
+                  />
+                  <Button
+                    tone="text"
+                    icon="add"
+                    style={styles.inlineAction}
+                    onPress={() => addActivity(getTripDayDate(firstDate, day))}
+                  >
                     {copy.addActivityToDay}
                   </Button>
                 </View>
               </View>
-            </View>
-          ))}
+            ))}
+          </View>
+          <View style={styles.addDay}>
+            <Button tone="text" icon="calendar-outline" style={styles.inlineAction} onPress={addDay}>
+              {t('mobile.tripBuilder.addDay', { day: days.length + 1 })}
+            </Button>
+          </View>
         </View>
-        <Button tone="text" icon="calendar-outline" onPress={addDay}>
-          {t('mobile.tripBuilder.addDay', { day: days.length + 1 })}
-        </Button>
 
         {hotelDraft && (
           <View style={styles.draft}>
@@ -810,6 +817,7 @@ export function TripBuilderScreen() {
           />
         )}
 
+        <Txt style={styles.sectionTitle}>{copy.addToPlanTitle}</Txt>
         <Row style={styles.addRow}>
           <AddButton
             icon="bed"
@@ -1071,7 +1079,24 @@ const styles = StyleSheet.create({
   addRow: { gap: spacing.sm },
   checkOut: { alignItems: 'center', gap: spacing.xs, minHeight: 28 },
   dayHead: { alignItems: 'center', gap: spacing.xs },
-  dayAdd: { alignItems: 'flex-start', paddingLeft: 48 },
+  // Khối lộ trình nằm trong thẻ riêng để tách khỏi nhóm nút thêm dịch vụ bên dưới.
+  planCard: {
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
+  },
+  // Nút chữ mặc định giãn hết bề ngang nên chữ bị căn giữa; giữ sát lề trái dưới ngày của nó.
+  inlineAction: { alignSelf: 'flex-start', minHeight: 36, paddingHorizontal: 0 },
+  addDay: { borderTopWidth: 1, borderTopColor: x.day.line, paddingTop: spacing.xs },
+  sectionTitle: {
+    ...typeStyle('subhead'),
+    fontFamily: nativeFonts.semibold,
+    color: x.day.text,
+    marginTop: spacing.sm,
+  },
   timedRow: { alignItems: 'flex-start', gap: spacing.sm },
   add: {
     flex: 1,
