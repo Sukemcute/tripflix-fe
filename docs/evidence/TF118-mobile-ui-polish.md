@@ -5,12 +5,12 @@
 
 ## Thay đổi đã kiểm
 
-| Hạng mục | Kết quả |
-| --- | --- |
-| Đăng nhập | Màu nền ô tự điền đồng bộ với khung đăng nhập trên web. Hai ô vẫn khai báo autofill email và mật khẩu. |
-| Checkout | Phiếu giữ chỗ màu xanh ngọc hiển thị giá từng dịch vụ, thời hạn và tổng tiền. Form liên hệ, hành khách, lựa chọn phương thức và thanh thanh toán có bố cục mới. |
-| Dùng thông tin tài khoản | Điền các trường có trong hồ sơ, giữ lại dữ liệu ở trường hồ sơ còn thiếu. Form báo khi thông tin đã khớp. |
-| Tripi | Hiện ba chấm trong lúc chờ phản hồi. Cả câu trả lời và lỗi đều kết thúc trạng thái chờ. |
+| Hạng mục                 | Kết quả                                                                                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Đăng nhập                | Màu nền ô tự điền đồng bộ với khung đăng nhập trên web. Hai ô vẫn khai báo autofill email và mật khẩu.                                                          |
+| Checkout                 | Phiếu giữ chỗ màu xanh ngọc hiển thị giá từng dịch vụ, thời hạn và tổng tiền. Form liên hệ, hành khách, lựa chọn phương thức và thanh thanh toán có bố cục mới. |
+| Dùng thông tin tài khoản | Điền các trường có trong hồ sơ, giữ lại dữ liệu ở trường hồ sơ còn thiếu. Form báo khi thông tin đã khớp.                                                       |
+| Tripi                    | Hiện ba chấm trong lúc chờ phản hồi. Cả câu trả lời và lỗi đều kết thúc trạng thái chờ.                                                                         |
 
 ## Kiểm tra
 
@@ -29,12 +29,12 @@ Các thay đổi nằm trong mobile, chuỗi i18n và bộ test giao diện. Ph�
 
 Tiếp nối PR #368 đã merge. Năm commit mới, chỉ đổi giao diện mobile và một chuỗi i18n:
 
-| Hạng mục | Kết quả |
-| --- | --- |
-| Chọn hành khách (vé máy bay) | Dùng lại bộ chỉnh số tròn chung (`Stepper`), giống bảng chọn số khách ở khách sạn. |
-| Onboarding | Nút "Chọn gu của tôi" bo 12px như nút chung, bỏ dạng viên thuốc. |
-| Chi tiết khách sạn | Mỗi mục thành thẻ trắng có viền mảnh, tiêu đề cùng cỡ kèm icon, dùng một bộ cỡ chữ chung. Chính sách thành danh sách có icon (ẩn mức cọc 0đ vì trùng dòng "Không yêu cầu đặt cọc"). Đánh giá: tóm tắt ý kiến có vạch vàng, thanh sắp xếp và lọc chủ đề cuộn ngang, mỗi đánh giá một ô viền. |
-| i18n | Thêm `hotel.filterByTopic`. Không đổi chuỗi có sẵn. |
+| Hạng mục                     | Kết quả                                                                                                                                                                                                                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chọn hành khách (vé máy bay) | Dùng lại bộ chỉnh số tròn chung (`Stepper`), giống bảng chọn số khách ở khách sạn.                                                                                                                                                                                                          |
+| Onboarding                   | Nút "Chọn gu của tôi" bo 12px như nút chung, bỏ dạng viên thuốc.                                                                                                                                                                                                                            |
+| Chi tiết khách sạn           | Mỗi mục thành thẻ trắng có viền mảnh, tiêu đề cùng cỡ kèm icon, dùng một bộ cỡ chữ chung. Chính sách thành danh sách có icon (ẩn mức cọc 0đ vì trùng dòng "Không yêu cầu đặt cọc"). Đánh giá: tóm tắt ý kiến có vạch vàng, thanh sắp xếp và lọc chủ đề cuộn ngang, mỗi đánh giá một ô viền. |
+| i18n                         | Thêm `hotel.filterByTopic`. Không đổi chuỗi có sẵn.                                                                                                                                                                                                                                         |
 
 ### Kiểm tra
 
