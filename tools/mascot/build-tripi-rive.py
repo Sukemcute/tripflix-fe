@@ -38,7 +38,48 @@ base = load('rig-base.png')
 body = load('rig-body-no-arms.png')
 blank = load('rig-face-blank.png')
 save('tail', body, polygon([(840,590),(1254,590),(1254,1150),(860,1150)]))
-save('body', body, polygon([(250,650),(835,650),(858,900),(860,1254),(300,1254),(300,900)]))
+body_area = polygon([(250,650),(835,650),(858,900),(860,1254),(300,1254),(300,900)])
+
+# Chân tách khỏi thân để Tripi bước được. Hai đùi dính nhau tới háng nên cắt theo nếp đùi cong; thân chỉ khoét
+# đúng ống chân dưới nếp, còn phần chân nằm khuất sau thân thì hẹp hơn ống chân để nhấc lên không lòi ra ngoài.
+CROTCH = (599, 1083)
+HIP_LEFT, HIP_RIGHT = (340, 1066), (860, 1068)
+LEG_LEFT, LEG_RIGHT = (360, 580), (618, 842)
+LEG_HIDDEN = 70
+
+def fold_y(x):
+    start, end = (HIP_LEFT, CROTCH) if x <= CROTCH[0] else (HIP_RIGHT, CROTCH)
+    t = max(0.0, (x - start[0]) / (end[0] - start[0]))
+    return start[1] + (end[1] - start[1]) * t ** 1.6
+
+ys = np.arange(SIZE)[:, None]
+xs = np.arange(SIZE)[None, :]
+fold = np.array([fold_y(x) for x in range(SIZE)])[None, :]
+
+def tube(span, inset):
+    centre, half = (span[0] + span[1]) / 2, (span[1] - span[0]) / 2 - inset
+    return np.clip((half - np.abs(xs - centre)) / 3 + 0.5, 0, 1)
+
+def leg_mask(span):
+    # Sát nếp đùi giữ đủ bề ngang ống chân: thân nhún lên khi bước, mép mềm của thân vẫn có chân nằm dưới.
+    hidden = (ys >= fold - LEG_HIDDEN) & (ys < fold - 30)
+    near_fold = (ys >= fold - 30) & (ys < fold)
+    return np.maximum.reduce([tube(span, 0) * (ys >= fold), tube(span, 0) * near_fold, tube(span, 8) * hidden])
+
+def as_mask(values):
+    return Image.fromarray((np.clip(values, 0, 1) * 255).astype('uint8'))
+
+area = np.array(body_area) / 255
+below_fold = np.clip((ys - fold) / 6 + 0.5, 0, 1)
+torso = 1 - np.maximum(tube(LEG_LEFT, 5), tube(LEG_RIGHT, 5)) * below_fold
+save('body', body, as_mask(area * torso))
+save('leg-left', body, as_mask(area * leg_mask(LEG_LEFT)))
+save('leg-right', body, as_mask(area * leg_mask(LEG_RIGHT)))
+# Bóng nếp đùi đi theo thân, phủ lên đầu chân để chỗ giáp trông như nếp lông.
+shade = Image.new('RGBA', (SIZE, SIZE), (120, 50, 10, 255))
+shade.putalpha(body.getchannel('A'))
+in_legs = np.maximum(tube(LEG_LEFT, 0), tube(LEG_RIGHT, 0))
+save('hip-shade', shade, as_mask(area * in_legs * (ys >= fold) * np.exp(-np.clip(ys - fold, 0, None) / 9) * 0.22))
 save('head', blank, polygon([(0,0),(1254,0),(1254,665),(0,665)]))
 
 def patch(name, filename, boxes):
@@ -84,16 +125,24 @@ def image(parent,name,pivot=(626,1203),opacity=1):
     m=manifest[name];asset=uid();id=uid();groups[name]=id
     el(doc,'ImageAsset',id=asset,name=name,file='assets/'+name+'.png')
     return el(parent,'Image',id=id,name=name,assetId=asset,originX=0,originY=0,x=m['x']-pivot[0]*SCALE,y=m['y']-pivot[1]*SCALE,opacity=opacity)
-tail=node(root,'Tail',308*SCALE, -260*SCALE)
+image(node(root,'LegLeft'),'leg-left')
+image(node(root,'LegRight'),'leg-right')
+# Phần thân trên xoay và nhún quanh háng khi bước; Upper đặt ở háng, UpperInner trả gốc toạ độ về như cũ.
+crotch=((CROTCH[0]-626)*SCALE,(CROTCH[1]-1203)*SCALE)
+upper=node(root,'Upper',*crotch)
+upper_inner=node(upper,'UpperInner',-crotch[0],-crotch[1])
+tail=node(upper_inner,'Tail',308*SCALE, -260*SCALE)
 image(tail,'tail',pivot=(934,943))
-image(root,'arm-back')
-torso=node(root,'Body')
+image(upper_inner,'arm-back')
+torso=node(upper_inner,'Body')
 image(torso,'body')
-head=node(root,'Head',0,-550*SCALE)
+# Bóng nếp đùi chỉ hiện khi bước, để dáng đứng giữ nguyên như trước khi tách chân.
+image(torso,'hip-shade',opacity=0)
+head=node(upper_inner,'Head',0,-550*SCALE)
 image(head,'head',pivot=(626,653))
 for name in ['eyes-open','eyes-closed','eyes-happy','eyes-wink','mouth-smile','mouth-laugh','mouth-grin']:
     image(head,name,pivot=(626,653),opacity=1 if name in ['eyes-open','mouth-smile'] else 0)
-armgroup=node(root,'ArmWave',-267*SCALE,-480*SCALE)
+armgroup=node(upper_inner,'ArmWave',-267*SCALE,-480*SCALE)
 arm_rest_pivot=node(armgroup,'Arm lift')
 image(arm_rest_pivot,'arm-rest',pivot=(359,723))
 image(armgroup,'arm-wave',pivot=(359,723),opacity=0)
@@ -105,6 +154,10 @@ for name in ['wave','blink','wink','laugh','celebrate']:
     p=uid();props[name]=p
     el(vm,'ViewModelPropertyTrigger',id=p,name=name)
     el(inst,'ViewModelInstanceTrigger',viewModelPropertyId=p,propertyValue=0)
+# Bật walking thì Tripi bước tại chỗ (màn chờ trên mobile); mặc định đứng yên như trước.
+props['walking']=uid()
+el(vm,'ViewModelPropertyBoolean',id=props['walking'],name='walking')
+el(inst,'ViewModelInstanceBoolean',viewModelPropertyId=props['walking'],propertyValue='false')
 
 sm=el(art,'StateMachine',id='0:2',name='Tripi')
 anims={}
@@ -154,6 +207,20 @@ celebrate=animation('celebrate',78)
 key(celebrate,'Root','scaleY',[(0,1),(10,.96),(21,1.035),(40,.97),(54,1.01),(78,1)])
 key(celebrate,'Root','y',[(0,737),(10,740),(27,714),(44,737),(56,733),(78,737)])
 
+# Một chu kỳ hai bước: chân trái nhấc ở nửa đầu, chân phải ở nửa sau; thân nhún mỗi bước và nghiêng về chân trụ.
+WALK=64
+LIFT=52*SCALE
+BOB=14*SCALE
+walk=animation('walk',WALK,True)
+key(walk,'LegLeft','y',[(0,0),(16,-LIFT),(32,0),(64,0)])
+key(walk,'LegRight','y',[(0,0),(32,0),(48,-LIFT),(64,0)])
+key(walk,'Upper','y',[(0,crotch[1]),(16,crotch[1]-BOB),(32,crotch[1]),(48,crotch[1]-BOB),(64,crotch[1])])
+key(walk,'Upper','rotation',[(0,0),(16,.035),(32,0),(48,-.035),(64,0)])
+key(walk,'Head','rotation',[(0,0),(16,-.025),(32,0),(48,.025),(64,0)])
+key(walk,'Tail','rotation',[(0,-.02),(16,.07),(32,-.02),(48,.07),(64,-.02)])
+key(walk,'ArmWave','rotation',[(0,0),(16,-.07),(32,0),(48,.07),(64,0)])
+key(walk,'hip-shade','opacity',[(0,1)],True)
+
 def condition(trig):
     c=X.Element('TransitionViewModelCondition')
     comp=el(c,'TransitionPropertyViewModelComparator');bp=el(comp,'BindablePropertyTrigger')
@@ -177,12 +244,28 @@ layer('Arm','armRest',[('wave','wave')])
 layer('Expression','neutral',[(x,x) for x in ['blink','wink','laugh']])
 empty=animation('rest',1)
 layer('Celebration','rest',[('celebrate','celebrate')])
+def walking_is(value):
+    c=X.Element('TransitionViewModelCondition')
+    comp=el(c,'TransitionPropertyViewModelComparator');bp=el(comp,'BindablePropertyBoolean')
+    el(bp,'DataBindContext',sourcePathIds='0:3-'+props['walking'],propertyKey=634)
+    el(c,'TransitionValueBooleanComparator',value='true' if value else 'false')
+    return c
+# Lớp cuối cùng: lúc bước thì đè lên dáng thở, lắc đầu và tay.
+walk_layer=el(sm,'StateMachineLayer',name='Walk',id=uid())
+stand_state,walk_state=uid(),uid()
+el(el(walk_layer,'EntryState',x=0,y=0),'StateTransition',stateToId=stand_state)
+el(walk_layer,'ExitState',x=600,y=-160)
+el(walk_layer,'AnyState',x=160,y=-160)
+stand=el(walk_layer,'AnimationState',id=stand_state,animationId=anims['rest'],x=160,y=0)
+el(stand,'StateTransition',stateToId=walk_state,duration=120).append(walking_is(True))
+walking=el(walk_layer,'AnimationState',id=walk_state,animationId=anims['walk'],x=360,y=0)
+el(walking,'StateTransition',stateToId=stand_state,duration=120).append(walking_is(False))
 for event,trigger in [('enter','wave'),('click','laugh')]:
     listener=el(sm,'StateMachineListenerSingle',targetId=groups['head'],listenerTypeValue=event,name=event)
     change=el(listener,'ListenerViewModelChange');bp=el(change,'BindablePropertyTrigger',propertyValue=1)
     el(bp,'DataBindContext',sourcePathIds='0:3-'+props[trigger],propertyKey=686,direction='true')
 # Rive declares front-to-back, unlike the bottom-to-top authoring above.
-for parent in [root,head,armgroup]:
+for parent in [root,upper_inner,torso,head,armgroup]:
     children=list(parent)
     parent[:]=list(reversed(children))
 style=uid()
