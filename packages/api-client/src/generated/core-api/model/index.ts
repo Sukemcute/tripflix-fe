@@ -329,6 +329,7 @@ export * from './postImageDto';
 export * from './postReactionDto';
 export * from './postRecommendationItemDto';
 export * from './postRecommendationItemDtoSource';
+export * from './postRecommendationsControllerRecommendPostsFresh';
 export * from './postRecommendationsControllerRecommendPostsMode';
 export * from './postRecommendationsControllerRecommendPostsParams';
 export * from './postRecommendationsControllerRecommendPostsPostType';

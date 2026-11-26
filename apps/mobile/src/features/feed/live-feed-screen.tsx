@@ -2,7 +2,7 @@ import { useApiSession, useSocialPosts } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { explorer as x, nativeFonts } from '@tripflix/tokens';
 import type { SocialPostDto } from '@tripflix/api-client/core-api/model/index';
-import { router } from 'expo-router';
+import { router, useIsFocused } from 'expo-router';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Button, Card, copy, Empty, Icon, Notice, Screen, Txt, ui } from '@/components/mobile-ui';
@@ -37,8 +37,11 @@ export function LivePostCard({ post }: { post: SocialPostDto }) {
 }
 export function LiveFeedScreen({ kind = 'public' }: { kind?: 'public' | 'mine' | 'bookmarks' }) {
   const { user, isReady } = useApiSession();
+  const isFocused = useIsFocused();
   // Màn này là danh sách bài viết cho cả công khai, bài của tôi và đã lưu; Reels có màn riêng.
-  const query = useSocialPosts(kind, '', 'vlog');
+  const query = useSocialPosts(kind, '', 'vlog', kind === 'public' ? 'recommended' : 'latest', {
+    refreshOnReturn: kind === 'public' && isFocused,
+  });
   const { width } = useWindowDimensions();
   if (!isReady || (kind === 'mine' && !user)) return <RequireAccount />;
   const posts = query.data?.pages.flatMap((page) => page.items);

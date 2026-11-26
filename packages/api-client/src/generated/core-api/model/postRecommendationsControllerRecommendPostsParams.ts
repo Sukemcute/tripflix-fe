@@ -4,10 +4,13 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { PostRecommendationsControllerRecommendPostsFresh } from './postRecommendationsControllerRecommendPostsFresh';
 import type { PostRecommendationsControllerRecommendPostsMode } from './postRecommendationsControllerRecommendPostsMode';
 import type { PostRecommendationsControllerRecommendPostsPostType } from './postRecommendationsControllerRecommendPostsPostType';
 
 export type PostRecommendationsControllerRecommendPostsParams = {
+  /** true khi người xem tự tải lại: mở phiên mới, đẩy xuống mọi bài đã gợi ý */
+  fresh?: PostRecommendationsControllerRecommendPostsFresh;
   cursor?: unknown;
   /** 1–20, mặc định 20 */
   limit?: unknown;
