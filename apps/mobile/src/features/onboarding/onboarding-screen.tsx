@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
   noteText: { color: x.day.link, fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18, flexShrink: 1 },
   action: {
     minHeight: x.control.primary,
-    borderRadius: x.radius.pill,
+    borderRadius: x.radius.md,
     backgroundColor: x.action.primary,
     paddingVertical: x.space.sm,
     paddingHorizontal: x.space.lg,

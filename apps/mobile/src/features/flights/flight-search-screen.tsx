@@ -43,6 +43,7 @@ import {
 } from '@/components/mobile-ui';
 import { saveTripPick, type TripBookingOffer } from '@/features/booking/trip-booking-store';
 import { CommerceError } from '@/features/booking/commerce-state';
+import { Stepper } from '@/features/booking/cart-ui';
 import { LoadingDots } from '@/components/loading-dots';
 import { typeStyle } from '@/components/type-scale';
 import {
@@ -304,21 +305,13 @@ export function FlightSearchScreen() {
                     {copy.passengerTypes[type].hint}
                   </Txt>
                 </View>
-                <Row style={{ gap: spacing.sm }}>
-                  <Button
-                    tone="secondary"
-                    disabled={!canDecrease}
-                    onPress={() => changePassengers(field, -1)}
-                  >
-                    −
-                  </Button>
-                  <Txt variant="label" accessibilityLabel={label + ' ' + count}>
-                    {count}
-                  </Txt>
-                  <Button tone="secondary" disabled={!canIncrease} onPress={() => changePassengers(field, 1)}>
-                    +
-                  </Button>
-                </Row>
+                <Stepper
+                  value={count}
+                  label={label}
+                  canDecrease={canDecrease}
+                  canIncrease={canIncrease}
+                  onChange={(next) => changePassengers(field, next > count ? 1 : -1)}
+                />
               </Row>
             );
           })}
