@@ -45,6 +45,13 @@ const ICONS: Record<string, IconName> = {
   pet: 'paw-outline',
   check: 'checkmark-circle-outline',
 };
+const POLICY_ICONS: Record<string, IconName> = {
+  child: 'people-outline',
+  extraBed: 'bed-outline',
+  deposit: 'card-outline',
+  depositAmount: 'cash-outline',
+  stay: 'moon-outline',
+};
 const iconOf = (name?: string | null): IconName => (name && ICONS[name]) || 'sparkles-outline';
 
 /** Cỡ chữ dùng chung cho cả màn chi tiết: tiêu đề mục, chữ thường, chữ đậm, chữ phụ. */
@@ -147,6 +154,8 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
   const shownGroups = isAmenitiesOpen ? groups : groups.slice(0, COLLAPSED_AMENITY_GROUPS);
   const facts = Object.entries(hotel.facts ?? {}).filter(([, value]) => hasValue(value));
   const policies = Object.entries(hotel.policies ?? {}).filter(([, value]) => hasValue(value));
+  // Mức cọc 0đ trùng với dòng "Không yêu cầu đặt cọc" nên không hiện riêng.
+  const visiblePolicies = policies.filter(([key, value]) => key !== 'depositAmount' || Number(value) > 0);
   const hasPolicies = policies.length > 0 || !!hotel.checkInTime || !!hotel.checkOutTime;
   return (
     <>
@@ -267,17 +276,52 @@ export function HotelInfoSections({ hotel }: { hotel: CommerceHotel }) {
                 ))}
             </Row>
           )}
-          {policies.map(([key, value]) => (
+          {visiblePolicies.length > 0 && (
             <View
-              key={key}
-              style={{ gap: 2, padding: spacing.md, borderRadius: radius.md, backgroundColor: x.day.canvas }}
+              style={{
+                borderRadius: radius.lg,
+                borderWidth: 1,
+                borderColor: x.day.line,
+                overflow: 'hidden',
+              }}
             >
-              <Txt style={T.strong}>{labelOf(copy.policyLabels, key)}</Txt>
-              <Txt style={[T.body, { color: x.day.textSecondary }]}>
-                {key === 'depositAmount' ? money(Number(value)) : String(value)}
-              </Txt>
+              {visiblePolicies.map(([key, value], index) => (
+                <Row
+                  key={key}
+                  style={{
+                    gap: spacing.md,
+                    alignItems: 'flex-start',
+                    padding: spacing.md,
+                    borderTopWidth: index > 0 ? 1 : 0,
+                    borderTopColor: x.day.line,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: radius.sm,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: x.day.tintWarm,
+                    }}
+                  >
+                    <Icon
+                      name={POLICY_ICONS[key] ?? 'document-text-outline'}
+                      size={18}
+                      color={x.brand.coral}
+                    />
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Txt style={T.strong}>{labelOf(copy.policyLabels, key)}</Txt>
+                    <Txt style={[T.body, { color: x.day.textSecondary }]}>
+                      {key === 'depositAmount' ? money(Number(value)) : String(value)}
+                    </Txt>
+                  </View>
+                </Row>
+              ))}
             </View>
-          ))}
+          )}
         </Section>
       )}
     </>
@@ -487,7 +531,8 @@ export function HotelReviewsSection({ id }: { id: string }) {
             gap: spacing.sm,
             padding: spacing.md,
             borderRadius: radius.lg,
-            backgroundColor: x.day.canvas,
+            borderWidth: 1,
+            borderColor: x.day.line,
           }}
         >
           <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
