@@ -37,7 +37,7 @@ export function AssistantStayScreen() {
   return (
     <Screen
       title={text.title}
-      background={x.day.canvas}
+      background={x.day.surface}
       footer={
         <Button
           disabled={!valid}

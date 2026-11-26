@@ -574,7 +574,7 @@ export function TripBuilderScreen() {
   return (
     <Screen
       title={copy.title}
-      background={x.day.canvas}
+      background={x.day.surface}
       scroll={false}
       padded={false}
       footer={

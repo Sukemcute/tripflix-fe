@@ -63,6 +63,7 @@ export const hotel = {
   noRoomsTitle: 'Khách sạn chưa mở phòng',
   noRoomsBody: 'Khách sạn này chưa công bố loại phòng nào. Bạn thử đổi ngày hoặc xem khách sạn khác nhé.',
   noRoomsAction: 'Đổi ngày ở',
+  filterByTopic: 'Lọc theo chủ đề',
   guestsField: 'Số khách',
   guestsSheet: 'Chọn số khách',
   stayDates: 'Ngày ở',

@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
     padding: spacing.xl,
-    backgroundColor: x.day.canvas,
+    backgroundColor: x.day.surface,
   },
   // Tripi to hơn quầng sáng để tràn ra ngoài vòng tròn, trông nổi hơn là nằm gọn trong một huy hiệu.
   stage: {

@@ -22,7 +22,7 @@ import { useOnboarding } from './onboarding-provider';
 import type { Interest, OnboardingStep, Pace } from './onboarding-model';
 
 const ACCENT = x.day.link;
-const BACKGROUND = x.day.canvas;
+const BACKGROUND = x.day.surface;
 const INK = x.day.text;
 const enter = FadeInDown.duration(280).reduceMotion(ReduceMotion.System);
 type InterestOption = {
@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
   noteText: { color: x.day.link, fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18, flexShrink: 1 },
   action: {
     minHeight: x.control.primary,
-    borderRadius: x.radius.pill,
+    borderRadius: x.radius.md,
     backgroundColor: x.action.primary,
     paddingVertical: x.space.sm,
     paddingHorizontal: x.space.lg,

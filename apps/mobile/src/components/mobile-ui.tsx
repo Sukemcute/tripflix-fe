@@ -436,7 +436,7 @@ export function Screen({
   header,
   padded = true,
   scroll = true,
-  background = d.canvas,
+  background = d.surface,
   compact = false,
 }: PropsWithChildren<{
   title?: string;
@@ -628,6 +628,8 @@ export const ui = StyleSheet.create({
   card: {
     padding: x.space.md,
     borderRadius: x.radius.lg,
+    borderWidth: 1,
+    borderColor: d.line,
     gap: s.md,
     backgroundColor: d.surface,
   },

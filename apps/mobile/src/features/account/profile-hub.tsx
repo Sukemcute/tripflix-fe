@@ -10,6 +10,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { assets, copy, Icon, money, Txt } from '@/components/mobile-ui';
 import { useRefreshOnOpen } from '@/features/booking/commerce-state';
+import { TRIPI_ASSETS } from '@/features/mascot/tripi-assets';
 
 const text = copy.profile.hub;
 
@@ -23,7 +24,23 @@ export function OwnProfileHeading({
   isGuest?: boolean;
 }) {
   return (
-    <View style={styles.profileCard}>
+    <View style={styles.hero}>
+      <LinearGradient
+        colors={[x.day.tintExplore, x.day.tintWarm]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.sun} pointerEvents="none">
+        <LinearGradient colors={x.sunset} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.fill} />
+      </View>
+      <Image
+        source={TRIPI_ASSETS['hero-welcome'].source}
+        contentFit="contain"
+        accessible={false}
+        aria-hidden
+        style={styles.tripi}
+      />
       <View style={styles.identity}>
         <LinearGradient
           colors={x.sunset}
@@ -47,16 +64,14 @@ export function OwnProfileHeading({
             )}
           </View>
         </LinearGradient>
-        <View style={styles.identityCopy}>
-          <Txt accessibilityRole="header" style={styles.name}>
-            {name}
-          </Txt>
-        </View>
+        <Txt accessibilityRole="header" numberOfLines={2} style={styles.name}>
+          {name}
+        </Txt>
       </View>
       {!!stats.length && (
         <View style={styles.stats}>
-          {stats.map((stat) => (
-            <View key={stat.label} style={styles.stat}>
+          {stats.map((stat, index) => (
+            <View key={stat.label} style={[styles.stat, index > 0 && styles.statDivider]}>
               <Txt style={styles.number}>{formatProfileCount(stat.value)}</Txt>
               <Txt style={styles.statLabel}>{stat.label}</Txt>
             </View>
@@ -196,23 +211,32 @@ export function ProfileHub() {
           accessibilityRole="button"
           accessibilityLabel={text.viewTrips}
           onPress={() => open('/my-trips')}
-          style={({ pressed }) => [styles.shortcut, styles.sea, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.shortcut, pressed && styles.pressed]}
         >
-          <Icon name="ticket-outline" size={24} color={x.day.link} />
-          <Txt style={styles.shortcutTitle}>{text.trips}</Txt>
-          <Txt style={styles.meta}>{text.tripHint}</Txt>
-          <Icon name="arrow-forward" size={20} color={x.day.link} />
+          <View style={[styles.shortcutIcon, styles.sea]}>
+            <Icon name="ticket-outline" size={22} color={x.day.link} />
+          </View>
+          <View style={styles.shortcutCopy}>
+            <Txt style={styles.shortcutTitle}>{text.trips}</Txt>
+            <Txt style={styles.meta}>{text.tripHint}</Txt>
+          </View>
+          <Icon name="chevron-forward" size={20} color={x.day.textSecondary} />
         </Pressable>
+        <View style={styles.shortcutDivider} />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={text.viewSaved}
           onPress={() => open('/saved')}
-          style={({ pressed }) => [styles.shortcut, styles.yellow, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.shortcut, pressed && styles.pressed]}
         >
-          <Icon name="bookmark-outline" size={24} color={x.day.text} />
-          <Txt style={styles.shortcutTitle}>{text.saved}</Txt>
-          <Txt style={styles.meta}>{text.savedHint}</Txt>
-          <Icon name="arrow-forward" size={20} color={x.day.text} />
+          <View style={[styles.shortcutIcon, styles.yellow]}>
+            <Icon name="bookmark-outline" size={22} color={x.day.text} />
+          </View>
+          <View style={styles.shortcutCopy}>
+            <Txt style={styles.shortcutTitle}>{text.saved}</Txt>
+            <Txt style={styles.meta}>{text.savedHint}</Txt>
+          </View>
+          <Icon name="chevron-forward" size={20} color={x.day.textSecondary} />
         </Pressable>
       </View>
     </View>
@@ -231,13 +255,33 @@ const card = {
 
 const styles = StyleSheet.create({
   group: { gap: x.space.md },
-  profileCard: { ...card, padding: x.space.md, gap: x.space.md },
-  identity: { flexDirection: 'row', alignItems: 'center', gap: x.space.sm },
-  avatarRing: { width: 72, height: 72, borderRadius: x.radius.pill, padding: 3 },
+  hero: {
+    overflow: 'hidden',
+    padding: x.space.md,
+    gap: x.space.md,
+    borderRadius: x.radius.xl,
+    borderWidth: 1,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
+  },
+  fill: { flex: 1 },
+  sun: {
+    position: 'absolute',
+    top: -26,
+    right: -18,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: 'hidden',
+    opacity: 0.9,
+  },
+  tripi: { position: 'absolute', top: 6, right: 8, width: 92, height: 92 },
+  identity: { flexDirection: 'row', alignItems: 'center', gap: x.space.sm, paddingRight: 96 },
+  avatarRing: { width: 76, height: 76, borderRadius: x.radius.pill, padding: 3 },
   avatar: {
     flex: 1,
     borderRadius: x.radius.pill,
-    backgroundColor: x.day.tintWarm,
+    backgroundColor: x.day.surface,
     borderWidth: 2,
     borderColor: x.day.surface,
     alignItems: 'center',
@@ -245,9 +289,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   guestArt: { width: 58, height: 62, marginTop: 8 },
-  initialsText: { fontSize: 22, lineHeight: 28, fontFamily: nativeFonts.extraBold, color: x.day.text },
-  identityCopy: { flex: 1, gap: 2 },
+  initialsText: { fontSize: 24, lineHeight: 30, fontFamily: nativeFonts.extraBold, color: x.day.text },
   name: {
+    flex: 1,
     fontSize: x.type.title.fontSize - 2,
     lineHeight: 30,
     fontFamily: nativeFonts.extraBold,
@@ -256,15 +300,17 @@ const styles = StyleSheet.create({
   },
   stats: {
     flexDirection: 'row',
-    gap: x.space.xs,
-    padding: x.space.sm,
+    paddingVertical: x.space.sm,
     borderRadius: x.radius.lg,
-    backgroundColor: x.day.tintExplore,
+    borderWidth: 1,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
   stat: { flex: 1, gap: 2, alignItems: 'center' },
+  statDivider: { borderStartWidth: 1, borderStartColor: x.day.line },
   number: {
-    fontSize: 20,
-    lineHeight: 26,
+    fontSize: 22,
+    lineHeight: 28,
     fontFamily: nativeFonts.extraBold,
     color: x.day.text,
     fontVariant: ['tabular-nums'],
@@ -278,9 +324,30 @@ const styles = StyleSheet.create({
     color: x.day.text,
   },
   panel: { ...card, padding: x.space.md, gap: x.space.xs, borderRadius: x.radius.lg },
-  shortcuts: { flexDirection: 'row', gap: x.space.sm },
-  shortcut: { flex: 1, padding: x.space.md, borderRadius: x.radius.lg, gap: x.space.xs },
-  shortcutTitle: { fontSize: 17, lineHeight: 24, fontFamily: nativeFonts.bold, color: x.day.text },
+  shortcuts: {
+    borderRadius: x.radius.xl,
+    borderWidth: 1,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
+    overflow: 'hidden',
+  },
+  shortcut: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: x.space.sm,
+    minHeight: 72,
+    padding: x.space.md,
+  },
+  shortcutIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: x.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shortcutCopy: { flex: 1, gap: 2 },
+  shortcutDivider: { height: 1, marginHorizontal: x.space.md, backgroundColor: x.day.line },
+  shortcutTitle: { fontSize: 16, lineHeight: 22, fontFamily: nativeFonts.bold, color: x.day.text },
   panelTitle: { fontSize: 18, lineHeight: 26, fontFamily: nativeFonts.bold, color: x.day.text },
   coral: { backgroundColor: x.day.tintWarm },
   yellow: { backgroundColor: x.day.tintSun },

@@ -733,6 +733,8 @@ export const mobile = {
       latestDraft: 'Bản nháp gần nhất',
       continueDraft: 'Viết tiếp bản nháp',
       posts: 'Bạn đã chia sẻ',
+      shareFirst: 'Đăng chuyến đi đầu tiên',
+      shareFirstHint: 'Kể lại chuyến đi để mọi người cùng lên lộ trình.',
       tripError: 'Chưa tải được đơn gần đây.',
       draftError: 'Chưa tải được bản nháp.',
       loading: 'Đang tìm đơn và bản nháp cần tiếp tục…',

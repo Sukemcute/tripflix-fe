@@ -64,7 +64,13 @@ export function ProductCard({
   const accent = tone === 'flight' ? x.brand.teal : x.brand.coral;
   const ink = x.brand.ink;
   return (
-    <View style={[styles.card, { borderColor: x.day.line, backgroundColor: x.day.surface }]}>
+    <View
+      style={[
+        styles.cardSurface,
+        styles.card,
+        isSelected && !isDisabled && { borderStartColor: tone === 'flight' ? x.day.link : x.day.price },
+      ]}
+    >
       <View style={styles.cardRow}>
         {onToggle && (
           <Pressable
@@ -259,12 +265,17 @@ export const styles = StyleSheet.create({
   dayDotText: { color: x.action.onPrimary, fontFamily: nativeFonts.bold, fontSize: 14, lineHeight: 18 },
   dayContent: { flex: 1, minWidth: 0, gap: spacing.sm },
   dayLabel: { ...typeStyle('subhead'), fontFamily: nativeFonts.semibold, color: x.day.text },
-  card: {
-    borderWidth: 0,
+  cardSurface: {
+    borderWidth: 1,
+    borderColor: x.day.line,
     borderRadius: radius.lg,
+    backgroundColor: x.day.surface,
+    boxShadow: `0 5px 14px -7px ${x.backdrop}`,
+  },
+  card: {
+    borderStartWidth: 3,
     padding: spacing.md,
     gap: spacing.sm,
-    backgroundColor: x.day.surface,
   },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   cardIcon: {
