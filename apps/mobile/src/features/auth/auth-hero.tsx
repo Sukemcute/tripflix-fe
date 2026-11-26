@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
+  cancelAnimation,
   Easing,
   FadeIn,
   FadeInDown,
@@ -30,16 +31,19 @@ import {
 /** Việc người dùng đang làm trên form, để Tripi phản ứng theo. */
 export type AuthMood = keyof typeof vi.api.mobileAuthTripi;
 
-/** Tripi ứng với từng tâm trạng: ảnh động khi có, dáng tĩnh khi không (hoặc khi giảm chuyển động). */
+/**
+ * Tripi ứng với từng tâm trạng. Chỉ lời chào lúc mở trang dùng ảnh động (WebP 512px, 72 khung); các tâm trạng
+ * đổi theo lúc gõ dùng ảnh tĩnh để máy yếu không phải giải mã ảnh động mới đúng lúc bàn phím bật lên.
+ */
 const MOOD_TRIPI: Record<AuthMood, { animation?: TripiAnimation; pose: TripiPose }> = {
   hello: { animation: 'greeting', pose: 'hero-welcome' },
-  register: { animation: 'excited', pose: 'expr-excited' },
-  booking: { animation: 'departure', pose: 'action-depart' },
-  email: { animation: 'curious', pose: 'expr-curious' },
+  register: { pose: 'expr-excited' },
+  booking: { pose: 'action-depart' },
+  email: { pose: 'expr-curious' },
   // Nét riêng của Tripflix: gõ mật khẩu thì Tripi quay lưng, hiện mật khẩu thì Tripi giật mình.
   password: { pose: 'turn-back' },
   peek: { pose: 'expr-surprised' },
-  busy: { animation: 'searching', pose: 'ui-searching' },
+  busy: { pose: 'ui-searching' },
   error: { pose: 'expr-overload' },
 };
 
@@ -56,9 +60,12 @@ export function AuthHero({
   accent,
   body,
   isCompact,
+  isTyping,
   back,
 }: {
   mood: AuthMood;
+  /** Đang gõ (bàn phím mở): dừng cảnh nền để máy dồn sức cho bàn phím; Tripi vẫn đổi biểu cảm. */
+  isTyping: boolean;
   title: string;
   /** Dòng tiêu đề thứ hai tô màu nhấn; bỏ trống thì tiêu đề chỉ một màu. */
   accent?: string;
@@ -67,6 +74,7 @@ export function AuthHero({
   back: ReactNode;
 }) {
   const reducedMotion = useReducedMotion();
+  const isStill = reducedMotion || isTyping;
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const height = isCompact ? 210 : 270;
@@ -77,13 +85,21 @@ export function AuthHero({
   const glow = useSharedValue(0);
 
   useEffect(() => {
-    if (reducedMotion) return;
+    if (isStill) {
+      // Dừng các vòng lặp và đưa cảnh về thế nghỉ êm, không đứng khựng giữa chừng.
+      [float, flight, drift, glow].forEach((value) => cancelAnimation(value));
+      const settle = { duration: 240 };
+      float.set(withTiming(0, settle));
+      drift.set(withTiming(0.5, settle));
+      glow.set(withTiming(0, settle));
+      return;
+    }
     const sine = Easing.inOut(Easing.sin);
     float.set(withRepeat(withTiming(1, { duration: FLOAT_MS, easing: sine }), -1, true));
     flight.set(withRepeat(withTiming(1, { duration: FLIGHT_MS, easing: Easing.linear }), -1, false));
     drift.set(withRepeat(withTiming(1, { duration: 5_200, easing: sine }), -1, true));
     glow.set(withRepeat(withTiming(1, { duration: 2_600, easing: sine }), -1, true));
-  }, [reducedMotion, float, flight, drift, glow]);
+  }, [isStill, float, flight, drift, glow]);
 
   const tripi = MOOD_TRIPI[mood];
   const source =
@@ -136,14 +152,14 @@ export function AuthHero({
         <Animated.View style={[styles.cloud, { top: insets.top + 66, right: 4, opacity: 0.8 }, cloudB]}>
           <Cloud scale={0.7} />
         </Animated.View>
-        {!reducedMotion && (
+        {!isStill && (
           <Animated.View style={[styles.plane, { top: insets.top + 6 }, planeStyle]}>
             <Icon name="airplane" size={20} color={x.day.link} />
           </Animated.View>
         )}
-        <Sparkle top={insets.top + 70} left={width * 0.42} delay={0} isStill={reducedMotion} />
-        <Sparkle top={insets.top + 22} left={width * 0.58} delay={700} isStill={reducedMotion} />
-        <Sparkle top={insets.top + 128} left={width - 34} delay={1_300} isStill={reducedMotion} />
+        <Sparkle top={insets.top + 70} left={width * 0.42} delay={0} isStill={isStill} />
+        <Sparkle top={insets.top + 22} left={width * 0.58} delay={700} isStill={isStill} />
+        <Sparkle top={insets.top + 128} left={width - 34} delay={1_300} isStill={isStill} />
       </View>
 
       <View style={styles.back}>{back}</View>
@@ -217,7 +233,11 @@ function Sparkle({
 }) {
   const twinkle = useSharedValue(0.6);
   useEffect(() => {
-    if (isStill) return;
+    if (isStill) {
+      cancelAnimation(twinkle);
+      twinkle.set(withTiming(0.6, { duration: 240 }));
+      return;
+    }
     twinkle.set(
       withDelay(
         delay,

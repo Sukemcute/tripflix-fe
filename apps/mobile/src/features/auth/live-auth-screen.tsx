@@ -246,6 +246,7 @@ export function LiveLoginScreen() {
       <View style={styles.page}>
         <AuthHero
           mood={mood}
+          isTyping={!!focusedField}
           isCompact={isRegistering || bookingContext || height < 700 || fontScale > 1.2}
           title={
             isRegistering
