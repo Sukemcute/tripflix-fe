@@ -103,7 +103,7 @@ class CheckoutPage {
   const checks = [],
     errors = [];
   try {
-    for (const width of [375, 390, 430]) {
+    for (const width of [320, 375, 390, 430]) {
       const context = await browser.newContext({
         viewport: { width, height: 844 },
         isMobile: true,
@@ -125,7 +125,7 @@ class CheckoutPage {
               id: 'qa-member',
               email: 'an@example.test',
               displayName: 'Nguyễn An',
-              phone: '0901234567',
+              phone: width === 320 ? null : '0901234567',
               role: 'member',
               emailVerified: true,
               dateOfBirth: '1995-01-01',
@@ -211,21 +211,16 @@ class CheckoutPage {
         await page.getByText(propertyB, { exact: true }).waitFor();
         await page.getByText('HAN → CXR', { exact: true }).waitFor();
         await page.getByText('CXR → HAN', { exact: true }).waitFor();
-        const serviceSurface = await page.getByText(propertyA, { exact: true }).evaluate((node) => {
-          let parent = node.parentElement;
-          while (parent && getComputedStyle(parent).borderTopLeftRadius !== '10px')
-            parent = parent.parentElement;
-          return parent
-            ? {
-                background: getComputedStyle(parent).backgroundColor,
-                border: getComputedStyle(parent).borderTopWidth,
-              }
-            : null;
-        });
+        const ticket = page.getByTestId('checkout-ticket');
+        for (const service of [propertyA, propertyB, 'HAN → CXR', 'CXR → HAN']) {
+          assert(await ticket.getByText(service, { exact: true }).isVisible(), 'services share one ticket');
+        }
+        assert(await ticket.getByText(/^Giữ chỗ còn /).isVisible(), 'the ticket shows the hold timer');
+        assert(await ticket.getByRole('heading', { name: 'Dịch vụ đang giữ chỗ' }).isVisible());
+        assert(await ticket.getByText('3.000.000đ', { exact: true }).isVisible(), 'line prices are visible');
         assert(
-          serviceSurface &&
-            serviceSurface.background !== 'rgb(255, 255, 255)' &&
-            serviceSurface.border === '0px',
+          await ticket.getByText('12.500.000đ', { exact: true }).isVisible(),
+          'the receipt shows the total',
         );
         assert(await ui.button('Thanh toán').isDisabled());
         await page
@@ -233,15 +228,19 @@ class CheckoutPage {
           .waitFor();
         assert.equal(
           await page.getByText('12.500.000đ', { exact: true }).count(),
-          1,
-          'grand total appears once in pending checkout',
+          2,
+          'the receipt and payment bar display the same total',
         );
         await ui.button('Xem phòng, gói giá và điều kiện').click();
         await page.getByText('Gói linh hoạt gồm bữa sáng', { exact: false }).first().waitFor();
         await ui.snapshot(`expanded-summary-${width}`);
         await ui.button('Thu gọn chi tiết').click();
-        await page.getByRole('tab', { name: 'VNPay', exact: true }).click();
-        await page.getByRole('tab', { name: 'Thẻ giả lập', exact: true }).click();
+        const vnpay = page.getByRole('radio', { name: 'VNPay', exact: true });
+        const card = page.getByRole('radio', { name: 'Thẻ giả lập', exact: true });
+        await vnpay.click();
+        assert(await vnpay.isChecked());
+        await card.click();
+        assert(await card.isChecked());
         assert.equal(
           await page
             .locator('[dir="auto"]')
@@ -266,18 +265,26 @@ class CheckoutPage {
         );
         assert.equal(requests.length, 0, 'invalid form never sends guest/payment request');
         await ui.snapshot(`form-errors-${width}`);
-        await page.getByLabel('Họ và tên người liên hệ *', { exact: true }).fill('Trần Liên Hệ');
-        await ui.button('Dùng thông tin tài khoản').click();
-        await page.getByLabel('Họ và tên người liên hệ *', { exact: true }).scrollIntoViewIfNeeded();
+        const contactName = page.getByLabel('Họ và tên người liên hệ *', { exact: true });
+        const contactPhone = page.getByLabel('Số điện thoại người liên hệ *', { exact: true });
+        const contactEmail = page.getByLabel('Email người liên hệ (tuỳ chọn)', { exact: true });
+        const useAccount = ui.button('Dùng thông tin tài khoản');
+        await contactName.fill('Trần Liên Hệ');
+        await contactPhone.fill('0909876543');
+        await contactEmail.fill('sai-email');
+        await contactName.click();
+        await page.getByText('Email chưa đúng định dạng.', { exact: true }).waitFor();
+        await useAccount.click();
+        await page.getByText('Thông tin liên hệ đã khớp với tài khoản.', { exact: true }).waitFor();
+        assert(await useAccount.isDisabled());
+        assert.equal(await contactName.inputValue(), 'Nguyễn An');
+        assert.equal(await contactPhone.inputValue(), width === 320 ? '0909876543' : '0901234567');
+        assert.equal(await contactEmail.inputValue(), 'an@example.test');
+        assert.equal(await page.getByText('Email chưa đúng định dạng.', { exact: true }).count(), 0);
+        await contactName.scrollIntoViewIfNeeded();
         await ui.snapshot(`account-fill-${width}`);
-        assert.equal(
-          await page.getByLabel('Họ và tên người liên hệ *', { exact: true }).inputValue(),
-          'Trần Liên Hệ',
-        );
-        assert.equal(
-          await page.getByLabel('Số điện thoại người liên hệ *', { exact: true }).inputValue(),
-          '0901234567',
-        );
+        await contactName.fill('Trần Liên Hệ');
+        assert(await useAccount.isEnabled());
         await page.getByLabel('Email người liên hệ (tuỳ chọn)', { exact: true }).fill('sai-email');
         await page.getByLabel('Họ và tên người liên hệ *', { exact: true }).click();
         await page.getByText('Email chưa đúng định dạng.', { exact: true }).waitFor();
@@ -376,7 +383,7 @@ class CheckoutPage {
           await ui.snapshot('landscape-expired-preview');
         }
         checks.push(
-          `${width}px: two hotels/two flight legs, blur validation, account fill preserves edits, contact copied once to guest 1, guest 2 independent, dates and server field rejection preserve inputs/no pay, summary/method/required validation, hotel-only guest/payment payload, OTP/expired`,
+          `${width}px: two hotels/two flight legs, blur validation, account fill replaces available fields and preserves ones missing from profile, contact copied once to guest 1, guest 2 independent, dates and server field rejection preserve inputs/no pay, summary/method/required validation, hotel-only guest/payment payload, OTP/expired`,
         );
       }
       await context.close();
