@@ -813,26 +813,6 @@ function DraftEditor({
               </Pressable>
             </Row>
           </View>
-          {/* Gợi ý caption bằng AI chưa có API; chỉ là bản xem trước, không bấm được. */}
-          <View
-            accessible
-            accessibilityLabel={vi.mobile.explorer.tripiCaptionSoonLabel}
-            accessibilityState={{ disabled: true }}
-            style={styles.tripiPreview}
-          >
-            <Mascot size={48} />
-            <View style={styles.flex}>
-              <Txt variant="label">{vi.mobile.explorer.tripiAssistant}</Txt>
-              <Txt variant="caption" style={ui.muted}>
-                {vi.mobile.explorer.tripiCaptionSoon}
-              </Txt>
-            </View>
-            <View style={styles.comingSoon}>
-              <Txt variant="caption" style={styles.comingSoonText}>
-                {vi.mobile.explorer.comingSoon}
-              </Txt>
-            </View>
-          </View>
           <Field
             label={copy.create.hashtagsLabel}
             placeholder={copy.create.hashtagsPlaceholder}
@@ -1179,22 +1159,6 @@ const styles = StyleSheet.create({
     backgroundColor: x.day.tintExplore,
   },
   uploadReadyText: { color: x.day.link },
-  tripiPreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderRadius: x.radius.xl,
-    backgroundColor: x.day.tintExplore,
-    opacity: 0.8,
-  },
-  comingSoon: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-    backgroundColor: x.day.surface,
-  },
-  comingSoonText: { color: x.day.textSecondary },
   media: {
     flexDirection: 'row',
     alignItems: 'center',

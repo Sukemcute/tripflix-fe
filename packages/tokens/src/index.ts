@@ -97,6 +97,8 @@ const explorerDay = {
   line: '#EADFD8',
   input: '#7A8794',
   error: '#BA1A1A',
+  /** Số tiền (giá, tổng): đỏ đậm đạt 4.5:1 trên mọi nền ngày. */
+  price: '#C8281F',
   success: '#006C63',
 } as const;
 
@@ -112,6 +114,7 @@ const explorerNight = {
   line: '#26343C',
   input: '#8A97A3',
   error: '#FF8A80',
+  price: '#FF7A6E',
   success: '#3DD6C6',
 } as const;
 

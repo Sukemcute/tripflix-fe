@@ -15,7 +15,7 @@ import {
   type WeatherSky,
 } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { colors as c, nativeFonts as f, radius, spacing as s } from '@tripflix/tokens';
+import { colors as c, explorer as x, nativeFonts as f, radius, spacing as s } from '@tripflix/tokens';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router, usePathname } from 'expo-router';
@@ -121,11 +121,11 @@ const PART_ICONS: Record<DayPart, IconName> = {
   night: 'moon',
 };
 const PART_TONES: Record<DayPart, { background: string; color: string }> = {
-  morning: { background: c.sunSoft, color: c.navy },
-  noon: { background: c.sunSoft, color: c.navy },
-  afternoon: { background: c.coralTint, color: c.coralInk },
-  evening: { background: c.seaMist, color: c.tealInk },
-  night: { background: c.surfaceMuted, color: c.navy },
+  morning: { background: x.day.tintSun, color: x.day.text },
+  noon: { background: x.day.tintSun, color: x.day.text },
+  afternoon: { background: x.day.tintWarm, color: c.coralInk },
+  evening: { background: x.day.tintExplore, color: x.day.link },
+  night: { background: x.day.line, color: x.day.text },
 };
 const SKY_ICONS: Record<WeatherSky, IconName> = {
   sunny: 'sunny-outline',
@@ -278,7 +278,7 @@ function StopRow({ stop, isLast }: { stop: ItineraryStop; isLast: boolean }) {
         )}
         {!!stop.partLabel && (
           <View style={[styles.partBadge, tone && { backgroundColor: tone.background }]}>
-            {stop.part && <Icon name={PART_ICONS[stop.part]} size={13} color={tone?.color ?? c.navy} />}
+            {stop.part && <Icon name={PART_ICONS[stop.part]} size={13} color={tone?.color ?? x.day.text} />}
             <Txt style={[styles.partText, tone && { color: tone.color }]}>{stop.partLabel}</Txt>
           </View>
         )}
@@ -286,7 +286,7 @@ function StopRow({ stop, isLast }: { stop: ItineraryStop; isLast: boolean }) {
         {!!stop.place && <Txt style={styles.stopMeta}>{stop.place}</Txt>}
         {!!leg && (
           <View style={styles.leg}>
-            <Icon name="car-outline" size={13} color={c.textMuted} />
+            <Icon name="car-outline" size={13} color={x.day.textSecondary} />
             <Txt style={styles.stopMeta}>{leg}</Txt>
           </View>
         )}
@@ -359,7 +359,7 @@ function WeatherCard({ card }: { card: AssistantCard }) {
         return (
           <View key={`${card.ref}-${index}`} style={[styles.weatherRow, index > 0 && styles.divider]}>
             <View style={styles.weatherIcon}>
-              <Icon name={SKY_ICONS[weather.skyKind]} size={22} color={c.tealInk} />
+              <Icon name={SKY_ICONS[weather.skyKind]} size={22} color={x.day.link} />
             </View>
             <View style={{ flex: 1 }}>
               <Txt style={styles.weatherDay}>{line.label}</Txt>
@@ -373,7 +373,7 @@ function WeatherCard({ card }: { card: AssistantCard }) {
               )}
               {weather.rainChance !== null && (
                 <View style={styles.rainChip}>
-                  <Icon name="water-outline" size={12} color={c.tealInk} />
+                  <Icon name="water-outline" size={12} color={x.day.link} />
                   <Txt style={styles.rainText}>
                     {t('assistant.rainChance', { percent: weather.rainChance })}
                   </Txt>
@@ -399,7 +399,7 @@ function ListCard({ card, actions }: { card: AssistantCard; actions?: CardAction
         <View key={`${card.ref}-${index}`} style={[styles.listRow, index > 0 && styles.divider]}>
           {isChecklist && (
             <View style={styles.check}>
-              <Icon name="checkmark" size={14} color={c.background} />
+              <Icon name="checkmark" size={14} color={x.day.surface} />
             </View>
           )}
           <View style={{ flex: 1 }}>
@@ -441,10 +441,10 @@ function VideoCard({ card, reel, onPlay }: { card: AssistantCard; reel?: Reel; o
       {reel ? (
         <Image source={reel.poster} style={StyleSheet.absoluteFill} contentFit="cover" />
       ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: c.tealInk }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: x.day.link }]} />
       )}
       <View style={styles.play}>
-        <Icon name="play" size={16} color={c.background} />
+        <Icon name="play" size={16} color={x.day.surface} />
       </View>
       <View style={styles.videoCaption}>
         <Txt numberOfLines={3} style={styles.videoTitle}>
@@ -525,7 +525,7 @@ export function AssistantCards({
                 </Txt>
               )}
             </View>
-            <Icon name="chevron-forward" size={18} color={c.textMuted} />
+            <Icon name="chevron-forward" size={18} color={x.day.textSecondary} />
           </Pressable>
           <ServerActions card={card} actions={actions} onOpen={onOpen} />
         </Fragment>
@@ -540,9 +540,9 @@ const styles = StyleSheet.create({
     padding: s.lg,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: c.border,
-    backgroundColor: c.background,
-    boxShadow: `0 6px 18px -12px ${c.overlay}`,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
+    boxShadow: `0 6px 18px -12px ${x.backdrop}`,
   },
   pressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: s.md },
@@ -552,33 +552,33 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: c.coralTint,
+    backgroundColor: x.day.tintWarm,
   },
-  cardTitle: { ...chatType.title, fontFamily: f.bold, color: c.navy },
-  cardSubtitle: { ...chatType.meta, fontFamily: f.medium, color: c.textMuted },
+  cardTitle: { ...chatType.title, fontFamily: f.bold, color: x.day.text },
+  cardSubtitle: { ...chatType.meta, fontFamily: f.medium, color: x.day.textSecondary },
   day: { gap: s.sm },
   dayHead: { flexDirection: 'row', alignItems: 'center', gap: s.sm },
   dayChip: {
     ...chatType.meta,
     fontFamily: f.bold,
-    color: c.background,
-    backgroundColor: c.navy,
+    color: x.day.surface,
+    backgroundColor: x.day.text,
     paddingHorizontal: s.sm,
     paddingVertical: 3,
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  dayRule: { flex: 1, height: 1, backgroundColor: c.border },
+  dayRule: { flex: 1, height: 1, backgroundColor: x.day.line },
   stop: { flexDirection: 'row', gap: s.md },
   rail: { width: 14, alignItems: 'center', paddingTop: 6 },
   railDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: c.coral,
+    backgroundColor: x.brand.coral,
     borderWidth: 2,
-    borderColor: c.background,
-    boxShadow: `0 0 0 2px ${c.border}`,
+    borderColor: x.day.surface,
+    boxShadow: `0 0 0 2px ${x.day.line}`,
   },
   // Nét đứt nối các mốc trong ngày; nền viền thường quá nhạt, không thấy được đường đi.
   railLine: {
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     borderLeftWidth: 2,
     borderStyle: 'dashed',
-    borderColor: c.coralSoft,
+    borderColor: x.brand.coral,
   },
   stopBody: { flex: 1, gap: 3, paddingBottom: s.md },
   // Chuyến bay, khách sạn Tripflix trong lộ trình: nổi bật để khách thấy phần đặt được.
@@ -596,8 +596,8 @@ const styles = StyleSheet.create({
     marginBottom: s.sm,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: c.coral,
-    backgroundColor: c.coralTint,
+    borderColor: x.brand.coral,
+    backgroundColor: x.day.tintWarm,
   },
   serviceBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   serviceText: { ...chatType.meta, fontFamily: f.semibold, color: c.coralInk },
@@ -609,39 +609,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: s.sm,
     paddingVertical: 2,
     borderRadius: radius.pill,
-    backgroundColor: c.surfaceMuted,
+    backgroundColor: x.day.line,
   },
-  partText: { ...chatType.meta, fontFamily: f.semibold, color: c.navy },
-  stopTitle: { ...chatType.body, fontFamily: f.semibold, color: c.ink },
-  stopMeta: { ...chatType.meta, color: c.textMuted },
+  partText: { ...chatType.meta, fontFamily: f.semibold, color: x.day.text },
+  stopTitle: { ...chatType.body, fontFamily: f.semibold, color: x.day.text },
+  stopMeta: { ...chatType.meta, color: x.day.textSecondary },
   leg: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  source: { ...chatType.meta, color: c.textMuted },
+  source: { ...chatType.meta, color: x.day.textSecondary },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: s.sm },
   action: {
     minHeight: 40,
     justifyContent: 'center',
     paddingHorizontal: s.lg,
-    borderRadius: radius.pill,
+    borderRadius: x.radius.md,
     borderWidth: 1,
-    borderColor: c.border,
-    backgroundColor: c.background,
+    borderColor: x.day.line,
+    backgroundColor: x.day.surface,
   },
-  actionPrimary: { borderColor: c.coral, backgroundColor: c.coral },
-  actionText: { ...chatType.small, fontFamily: f.semibold, color: c.navy },
-  actionPrimaryText: { color: c.background },
+  actionPrimary: { borderColor: x.brand.coral, backgroundColor: x.brand.coral },
+  actionText: { ...chatType.small, fontFamily: f.semibold, color: x.day.text },
+  actionPrimaryText: { color: x.day.surface, fontSize: 14, lineHeight: 20 },
   weatherRow: { flexDirection: 'row', alignItems: 'center', gap: s.md },
-  divider: { paddingTop: s.md, borderTopWidth: 1, borderTopColor: c.border },
+  divider: { paddingTop: s.md, borderTopWidth: 1, borderTopColor: x.day.line },
   weatherIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: c.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
-  weatherDay: { ...chatType.body, fontFamily: f.semibold, color: c.ink },
+  weatherDay: { ...chatType.body, fontFamily: f.semibold, color: x.day.text },
   weatherRight: { alignItems: 'flex-end', gap: 4 },
-  temperature: { ...chatType.title, fontFamily: f.bold, color: c.navy },
+  temperature: { ...chatType.title, fontFamily: f.bold, color: x.day.text },
   rainChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -649,9 +649,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: radius.pill,
-    backgroundColor: c.seaMist,
+    backgroundColor: x.day.tintExplore,
   },
-  rainText: { ...chatType.meta, fontFamily: f.semibold, color: c.tealInk },
+  rainText: { ...chatType.meta, fontFamily: f.semibold, color: x.day.link },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: s.md },
   check: {
     width: 22,
@@ -659,11 +659,11 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: c.teal,
+    backgroundColor: x.brand.teal,
   },
-  listLabel: { ...chatType.body, fontFamily: f.semibold, color: c.ink },
+  listLabel: { ...chatType.body, fontFamily: f.semibold, color: x.day.text },
   row: { flexDirection: 'row', alignItems: 'center', gap: s.md, padding: s.md },
-  price: { ...chatType.small, fontFamily: f.semibold, color: c.coralInk },
+  price: { ...chatType.small, fontFamily: f.semibold, color: x.day.price },
   video: {
     width: 120,
     height: 180,
@@ -680,8 +680,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: c.overlay,
+    backgroundColor: x.backdrop,
   },
-  videoCaption: { padding: s.sm, backgroundColor: c.overlayHeavy },
-  videoTitle: { ...chatType.meta, fontFamily: f.semibold, color: c.background },
+  videoCaption: { padding: s.sm, backgroundColor: x.scrim[2] },
+  videoTitle: { ...chatType.meta, fontFamily: f.semibold, color: x.day.surface },
 });

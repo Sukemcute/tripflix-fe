@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     color: x.day.text,
   },
   code: { fontSize: 17, lineHeight: 27, fontFamily: nativeFonts.semibold, color: x.day.link },
-  amount: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: x.day.text },
+  amount: { fontSize: 22, lineHeight: 32, fontFamily: nativeFonts.semibold, color: x.day.price },
   button: {
     minHeight: 52,
     borderRadius: radius.sm,

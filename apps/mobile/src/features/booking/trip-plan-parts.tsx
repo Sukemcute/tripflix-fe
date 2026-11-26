@@ -1,9 +1,23 @@
+import { t } from '@tripflix/i18n';
 import { explorer as x, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { compactType } from '@/components/mobile-scale';
+import { typeStyle } from '@/components/type-scale';
 import { Icon, Txt, type IconName } from '@/components/mobile-ui';
+import { listPassengerGroups, type PassengerCounts } from './passenger-groups';
 const DAY_DOT = 28;
+
+/** "2 người lớn · 1 trẻ em": chỉ nhóm có người, ngắn hơn bản luôn in đủ ba nhóm. */
+export function formatPassengerSummary(counts: PassengerCounts): string {
+  const labels = {
+    adults: 'mobile.tripPlan.passengerAdults',
+    children: 'mobile.tripPlan.passengerChildren',
+    infants: 'mobile.tripPlan.passengerInfants',
+  } as const;
+  return listPassengerGroups(counts)
+    .map((group) => t(labels[group.kind], { count: group.count }))
+    .join(' · ');
+}
 export function formatDay(date: string) {
   return new Date(`${date}T00:00:00Z`).toLocaleDateString('vi-VN', {
     weekday: 'short',
@@ -87,12 +101,15 @@ export function ProductCard({
                 {detail}
               </Txt>
             )}
+            {/* Giá nằm dưới tên, không chen ngang hàng: tên khách sạn, chuyến bay có trọn bề ngang để đọc hết. */}
+            {(!!price || !!status) && (
+              <View style={styles.cardPriceRow}>
+                {price ? <Txt style={[styles.price, { color: x.day.price }]}>{price}</Txt> : null}
+                {!!status && <Txt style={styles.cardStatus}>{status}</Txt>}
+              </View>
+            )}
           </View>
           {onExpand && <Icon name="chevron-forward" size={16} color={ink} />}
-          <View style={styles.cardPrice}>
-            {price ? <Txt style={[styles.price, { color: ink }]}>{price}</Txt> : null}
-            {!!status && <Txt style={styles.cardStatus}>{status}</Txt>}
-          </View>
         </Pressable>
       </View>
       {!!actionLabel && onAction && (
@@ -184,7 +201,7 @@ export const styles = StyleSheet.create({
   },
   passengers: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   passenger: { gap: spacing.xs },
-  muted: { ...compactType.meta, color: x.day.textSecondary },
+  muted: { ...typeStyle('micro'), color: x.day.textSecondary },
   pressed: { opacity: 0.7 },
   hero: { gap: spacing.xs, marginBottom: spacing.md },
   heroChips: { gap: spacing.xs, flexWrap: 'wrap' },
@@ -197,7 +214,7 @@ export const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: x.day.tintExplore,
   },
-  heroChipText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.link },
+  heroChipText: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold, color: x.day.link },
   bookPanel: {
     gap: spacing.xs,
     padding: spacing.sm,
@@ -217,8 +234,8 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: x.day.line,
   },
-  label: { ...compactType.label, fontFamily: nativeFonts.semibold },
-  status: { ...compactType.meta, color: x.day.error },
+  label: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold },
+  status: { ...typeStyle('micro'), color: x.day.error },
   timeline: { gap: 0 },
   day: { flexDirection: 'row', gap: spacing.md, paddingBottom: spacing.lg },
   rail: {
@@ -239,9 +256,9 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayDotText: { color: x.action.onPrimary, fontFamily: nativeFonts.bold, fontSize: 13, lineHeight: 18 },
+  dayDotText: { color: x.action.onPrimary, fontFamily: nativeFonts.bold, fontSize: 14, lineHeight: 18 },
   dayContent: { flex: 1, minWidth: 0, gap: spacing.sm },
-  dayLabel: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.text },
+  dayLabel: { ...typeStyle('subhead'), fontFamily: nativeFonts.semibold, color: x.day.text },
   card: {
     borderWidth: 0,
     borderRadius: radius.lg,
@@ -259,14 +276,14 @@ export const styles = StyleSheet.create({
   },
   cardBody: { flex: 1, minWidth: 0 },
   otaBadge: {
-    ...compactType.meta,
+    ...typeStyle('micro'),
     fontFamily: nativeFonts.semibold,
   },
-  cardTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.text },
-  cardDetail: { ...compactType.meta, color: x.day.textSecondary },
-  cardPrice: { alignItems: 'flex-end', maxWidth: 110 },
-  price: { ...compactType.heading, fontFamily: nativeFonts.semibold },
-  cardStatus: { ...compactType.meta, color: x.day.error, textAlign: 'right' },
+  cardTitle: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.semibold, color: x.day.text },
+  cardDetail: { ...typeStyle('caption'), color: x.day.textSecondary },
+  cardPriceRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: spacing.sm },
+  price: { ...typeStyle('bodyStrong'), fontFamily: nativeFonts.semibold },
+  cardStatus: { ...typeStyle('micro'), color: x.day.error },
   cardAction: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -277,7 +294,7 @@ export const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: x.day.tintExplore,
   },
-  cardActionText: { ...compactType.label, fontFamily: nativeFonts.semibold },
+  cardActionText: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold },
   chooser: { gap: spacing.xs },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   choice: {
@@ -289,18 +306,18 @@ export const styles = StyleSheet.create({
     backgroundColor: x.day.surface,
   },
   choiceSelected: { backgroundColor: x.day.link, borderColor: x.day.link },
-  choiceText: { ...compactType.label, color: x.day.text },
+  choiceText: { ...typeStyle('caption'), color: x.day.text },
   choiceTextSelected: { color: x.brand.white, fontFamily: nativeFonts.semibold },
   community: { gap: spacing.xs, paddingTop: 2 },
   communityLabel: {
-    ...compactType.meta,
+    ...typeStyle('micro'),
     fontFamily: nativeFonts.semibold,
     color: x.day.textSecondary,
   },
   stop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs },
   stopText: { flex: 1, gap: 1 },
-  description: { ...compactType.body, color: x.day.text },
+  description: { ...typeStyle('label'), color: x.day.text },
   totalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  total: { ...compactType.title, fontFamily: nativeFonts.semibold, color: x.day.text },
+  total: { ...typeStyle('subhead'), fontFamily: nativeFonts.extraBold, color: x.day.price },
   actions: { gap: spacing.sm, justifyContent: 'flex-end', flexWrap: 'wrap' },
 });

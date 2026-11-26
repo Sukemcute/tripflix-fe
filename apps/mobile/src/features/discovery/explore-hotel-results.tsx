@@ -8,7 +8,6 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ApiErrorNotice } from '@/components/api-state';
 import { LoadingDots } from '@/components/loading-dots';
-import { compactType } from '@/components/mobile-scale';
 import { Icon, money, Notice, Row, Txt, ui } from '@/components/mobile-ui';
 import { StayPhoto } from './stay-photo';
 
@@ -260,7 +259,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 26,
     fontFamily: nativeFonts.extraBold,
-    color: x.day.text,
+    color: x.day.price,
     fontVariant: ['tabular-nums'],
   },
   pager: { justifyContent: 'center', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
@@ -276,7 +275,12 @@ const styles = StyleSheet.create({
     backgroundColor: x.day.surface,
   },
   pageButtonSelected: { backgroundColor: x.day.link, borderColor: x.day.link },
-  pageText: { ...compactType.body, fontFamily: nativeFonts.semibold, color: x.day.text },
+  pageText: {
+    fontSize: x.type.label.fontSize,
+    lineHeight: 20,
+    fontFamily: nativeFonts.semibold,
+    color: x.day.text,
+  },
   pageTextSelected: { color: x.brand.white },
-  ellipsis: { ...compactType.body, color: x.day.textSecondary },
+  ellipsis: { fontSize: x.type.label.fontSize, lineHeight: 20, color: x.day.textSecondary },
 });

@@ -27,6 +27,9 @@ import { ReportButton } from './report-button';
 import { LoadingDots } from '@/components/loading-dots';
 import { HeldComment, ModeratedComment } from './moderated-comment';
 import { CreatorCommentControls } from './creator-comment-controls';
+import { getDisplayName } from '@/features/account/display-name';
+import { getNameInitials } from '@tripflix/app-core';
+import { getRelativeTimeParts, pickAvatarTone } from './comment-display';
 import { ReplyQuote } from './reply-quote';
 import { appendReply, commentItems, shouldShowReplyQuote } from './reply-quote-state';
 
@@ -62,6 +65,54 @@ function CommentAction({
       </Txt>
     </Pressable>
   );
+}
+
+// Mỗi người một tông ấm của thương hiệu, để lướt qua là phân biệt được ai đang nói.
+const AVATAR_TONES = [
+  { background: x.day.tintWarm, foreground: colors.coralInk },
+  { background: x.day.tintExplore, foreground: x.day.link },
+  { background: x.day.tintSun, foreground: x.day.text },
+] as const;
+
+function CommentAvatar({ authorId, name, isReply }: { authorId: string; name?: string; isReply: boolean }) {
+  const tone = AVATAR_TONES[pickAvatarTone(authorId, AVATAR_TONES.length)] ?? AVATAR_TONES[0];
+  const initials = name ? getNameInitials(name) : '';
+  return (
+    <View
+      accessible={false}
+      style={[styles.avatar, isReply && styles.replyAvatar, { backgroundColor: tone.background }]}
+    >
+      {initials ? (
+        <Txt
+          allowFontScaling={false}
+          style={[styles.avatarInitials, isReply && styles.replyAvatarInitials, { color: tone.foreground }]}
+        >
+          {initials}
+        </Txt>
+      ) : (
+        <Icon name="person" size={isReply ? 12 : 16} color={tone.foreground} />
+      )}
+    </View>
+  );
+}
+
+function formatCommentTime(value: string): string {
+  const parts = getRelativeTimeParts(value, Date.now());
+  if (!parts) return '';
+  switch (parts.unit) {
+    case 'justNow':
+      return vi.api.relativeTimeJustNow;
+    case 'minutes':
+      return t('api.relativeTimeMinutes', { count: parts.count });
+    case 'hours':
+      return t('api.relativeTimeHours', { count: parts.count });
+    case 'days':
+      return t('api.relativeTimeDays', { count: parts.count });
+    case 'sameYear':
+      return t('api.relativeTimeSameYear', { day: parts.day, month: parts.month });
+    case 'otherYear':
+      return `${parts.day}/${parts.month}/${parts.year}`;
+  }
 }
 
 export function LiveComments({
@@ -250,7 +301,7 @@ export function LiveComments({
         const authorName =
           comment.authorId === user?.id
             ? user.displayName
-            : comment.authorName || comment.authorId.slice(0, 8);
+            : getDisplayName(comment.authorName, vi.mobile.common.userFallbackName);
         const likeButton = !comment.deletedAt && (
           <CommentLikeButton
             commentId={comment.id}
@@ -286,9 +337,12 @@ export function LiveComments({
             }}
           >
             {compact && (
-              <View style={[styles.avatar, !!parentCommentId && styles.replyAvatar]}>
-                <Icon name="person-outline" size={parentCommentId ? 12 : 14} color={x.day.textSecondary} />
-              </View>
+              <CommentAvatar
+                authorId={comment.authorId}
+                // Người không đặt tên thì hiện hình người thay vì chữ cái của nhãn chung.
+                name={comment.authorId === user?.id || comment.authorName?.trim() ? authorName : undefined}
+                isReply={!!parentCommentId}
+              />
             )}
             <Card
               style={[
@@ -308,6 +362,7 @@ export function LiveComments({
               >
                 {authorName}
                 {!compact && ` · ${new Date(comment.createdAt).toLocaleDateString('vi-VN')}`}
+                {compact && <Txt style={styles.date}>{` · ${formatCommentTime(comment.createdAt)}`}</Txt>}
               </Txt>
               {shouldShowReplyQuote(comment) && comment.replyToCommentId && (
                 <ReplyQuote
@@ -320,14 +375,6 @@ export function LiveComments({
               <Txt style={compact && styles.message}>{comment.body}</Txt>
               {!compact && likeButton}
               <View style={compact ? styles.actions : undefined}>
-                {compact && (
-                  <Txt variant="caption" style={styles.date}>
-                    {new Date(comment.createdAt).toLocaleDateString('vi-VN', {
-                      day: 'numeric',
-                      month: 'numeric',
-                    })}
-                  </Txt>
-                )}
                 {comment.authorId === user?.id && (
                   <>
                     <CommentAction
@@ -401,7 +448,6 @@ export function LiveComments({
                     )}
                   />
                 )}
-                {compact && likeButton}
               </View>
               {!parentCommentId && replying === comment.id && (
                 <View style={compact && styles.replyThread}>
@@ -449,6 +495,8 @@ export function LiveComments({
                 </Pressable>
               )}
             </Card>
+            {/* Tim nằm ở cột phải như TikTok: không chen vào hàng thao tác và luôn cùng một chỗ. */}
+            {compact && <View style={styles.likeColumn}>{likeButton}</View>}
           </View>
         );
       })}
@@ -581,7 +629,7 @@ export function LiveComments({
 }
 
 const styles = StyleSheet.create({
-  content: { gap: spacing.sm },
+  content: { gap: spacing.lg },
   focused: { backgroundColor: x.day.tintSun, borderRadius: 12 },
   inlineComposer: { gap: spacing.lg },
   composer: {
@@ -592,26 +640,29 @@ const styles = StyleSheet.create({
   },
   comment: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   avatar: {
-    width: 30,
-    height: 30,
+    width: 36,
+    height: 36,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: x.day.canvas,
   },
-  replyAvatar: { width: 22, height: 22 },
+  replyAvatar: { width: 24, height: 24 },
+  avatarInitials: { fontFamily: nativeFonts.bold, fontSize: 13, lineHeight: 16 },
+  replyAvatarInitials: { fontSize: 10, lineHeight: 12 },
+  likeColumn: { minWidth: 32, alignItems: 'center' },
   commentBody: {
     flex: 1,
     minWidth: 0,
     borderWidth: 0,
     backgroundColor: colors.transparent,
     padding: 0,
-    gap: 1,
+    gap: 2,
   },
-  author: { color: x.day.textSecondary, fontFamily: nativeFonts.semibold, fontSize: 12, lineHeight: 17 },
+  author: { color: x.day.text, fontFamily: nativeFonts.semibold, fontSize: 13, lineHeight: 18 },
   message: { fontSize: 15, lineHeight: 21 },
   actions: { flexDirection: 'row', alignItems: 'center', columnGap: spacing.sm, flexWrap: 'wrap' },
-  date: { color: x.day.textSecondary, fontSize: 11, lineHeight: 16 },
+  date: { color: x.day.textSecondary, fontFamily: nativeFonts.regular, fontSize: 12, lineHeight: 18 },
   pressed: { opacity: 0.5 },
   action: { minHeight: 26, justifyContent: 'center' },
   actionLabel: { color: x.day.textSecondary, fontFamily: nativeFonts.semibold, fontSize: 12, lineHeight: 16 },

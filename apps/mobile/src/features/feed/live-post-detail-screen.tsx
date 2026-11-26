@@ -64,7 +64,13 @@ function TripPlan({ trip }: { trip: TripAttachmentDto }) {
                       items.findIndex((other) => other.day === item.day) === index && styles.dayBadgeFirst,
                     ]}
                   >
-                    <Txt variant="caption" style={styles.dayText}>
+                    <Txt
+                      variant="caption"
+                      style={[
+                        styles.dayText,
+                        items.findIndex((other) => other.day === item.day) === index && styles.dayTextFirst,
+                      ]}
+                    >
                       {t('mobile.postDetail.dayShort', { day: item.day })}
                     </Txt>
                   </View>
@@ -419,7 +425,9 @@ const styles = StyleSheet.create({
   },
   // Điểm đầu của mỗi ngày nổi bật bằng coral, các điểm sau trong cùng ngày dịu hơn.
   dayBadgeFirst: { backgroundColor: x.action.primary },
-  dayText: { color: x.action.onPrimary, fontFamily: nativeFonts.bold },
+  // Chữ trắng chỉ đặt trên điểm coral; các điểm sau nền xanh nhạt nên dùng chữ xanh đậm.
+  dayText: { color: x.day.link, fontFamily: nativeFonts.bold },
+  dayTextFirst: { color: x.action.onPrimary },
   railLine: {
     flex: 1,
     width: 0,

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { feedApi, HttpError, usePostSearch, useUserSearch } from '@tripflix/api-client';
 import type { ExploreItemDto } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
-import { explorer as x, colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
@@ -11,7 +11,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Chip, Icon, IconButton, money, Txt } from '@/components/mobile-ui';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { mobileIconSize } from '@/components/mobile-scale';
 import { SHEET_CLOSE_SPRING, SHEET_OPEN_SPRING } from '@/components/motion';
 import { LoadingDots } from '@/components/loading-dots';
 
@@ -331,7 +331,7 @@ function UserResults({ query, onOpenReel }: { query: string; onOpenReel: (postId
 }
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: colors.overlay },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: x.backdrop },
   panel: {
     position: 'absolute',
     top: 0,
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: x.day.tintExplore,
   },
-  input: { flex: 1, color: x.day.text, ...compactType.body },
+  input: { flex: 1, color: x.day.text, fontSize: x.type.label.fontSize, lineHeight: 21 },
   tabs: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   results: { flex: 1 },
   resultsContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md },

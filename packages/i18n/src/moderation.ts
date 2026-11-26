@@ -251,6 +251,7 @@ export const moderation = {
   logSystem: 'Hệ thống tự động',
   logStaff: 'Nhân sự xử lý',
   heldTitle: 'Đang kiểm tra',
+  heldTabShort: 'Chờ duyệt',
   heldPostsEmpty: 'Bạn không có bài viết đang chờ kiểm tra.',
   heldPost: 'Bài viết đang được kiểm tra, chưa hiển thị công khai.',
   heldComment: 'Bình luận đang được kiểm tra. Chỉ bạn và kiểm duyệt viên thấy nội dung này.',

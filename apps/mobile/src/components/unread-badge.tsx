@@ -1,5 +1,5 @@
 import { formatUnreadBadge } from '@tripflix/app-core';
-import { colors as c, nativeFonts } from '@tripflix/tokens';
+import { explorer as x, nativeFonts } from '@tripflix/tokens';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 /** Chấm đỏ có số, đặt chồng lên góc phải trên của icon; số 0 thì ẩn. */
@@ -24,9 +24,9 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: c.coral,
+    backgroundColor: x.brand.coral,
     borderWidth: 1.5,
-    borderColor: c.background,
+    borderColor: x.day.surface,
   },
-  text: { color: c.background, fontFamily: nativeFonts.semibold, fontSize: 10, lineHeight: 12 },
+  text: { color: x.day.surface, fontFamily: nativeFonts.semibold, fontSize: 10, lineHeight: 12 },
 });

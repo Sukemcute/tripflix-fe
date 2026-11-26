@@ -27,7 +27,7 @@ function contrast(a: string, b: string): number {
 describe('explorer v2 contrast (WCAG AA)', () => {
   const textPairs = (['day', 'night'] as const).flatMap((mode) => {
     const s = explorer[mode];
-    return [s.text, s.textSecondary, s.link, s.error].flatMap((fg) =>
+    return [s.text, s.textSecondary, s.link, s.error, s.price].flatMap((fg) =>
       [s.canvas, s.surface, s.tintExplore, s.tintWarm].map((bg) => [mode, fg, bg] as const),
     );
   });

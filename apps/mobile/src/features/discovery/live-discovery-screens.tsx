@@ -1,15 +1,13 @@
-import * as Linking from 'expo-linking';
 import {
   useApiSession,
   getApiErrorKind,
   usePostSearch,
   type ExploreItemDto,
-  type ExploreUnderstoodDto,
   type SearchPostsRequestDtoPostType,
 } from '@tripflix/api-client';
 import type { SearchPostsRequestDtoSort } from '@tripflix/api-client/core-api/model/index';
 import { homeRecommendationsControllerRecommendForHome } from '@tripflix/api-client/core-api/discovery/discovery';
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import { explorer as x, mobileLayout, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
@@ -37,7 +35,7 @@ import { HotelSearchResults, TripHotelSearchScreen } from './hotel-search-result
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SearchDropPanel } from './search-drop-panel';
-import { compactType, mobileIconSize } from '@/components/mobile-scale';
+import { mobileIconSize } from '@/components/mobile-scale';
 import { NotificationBell } from '@/features/account/notification-bell';
 import {
   ExploreHome,
@@ -46,105 +44,38 @@ import {
   ExploreStaysLoading,
   ExploreStaysNotice,
 } from './explore-home';
-import { LoadingDots } from '@/components/loading-dots';
+import { SkeletonCards } from '@/components/skeleton-card';
+import { SearchResultFilters } from './search-result-filters';
+import { relaxBudgetQuery, relaxDaysQuery } from './search-query-relax';
+import { UnderstoodBar } from './understood-bar';
 
 const RECOMMENDATION_LIMIT = 3;
 
-function relaxBudgetQuery(query: string, place?: string | null): string {
-  const cleaned = query
-    .replace(/(dưới|tầm|khoảng|<|<=)?\s*\d+([.,]\d+)?\s*(tr|triệu|k|nghìn|ngàn|vnd|đ)/gi, '')
-    .replace(/ngân sách/gi, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return cleaned || place || query;
-}
+/** Địa điểm đã nhận ra trong câu tìm: mở kết quả khách sạn ngay trong app, không đưa người dùng sang web. */
+function HotelResultsCard({ place }: { place: string }) {
+  const openHotels = () => router.push({ pathname: '/explore', params: { q: place } });
 
-function relaxDaysQuery(query: string, place?: string | null): string {
-  const cleaned = query
-    .replace(/\d+\s*n\s*\d+\s*đ/gi, '')
-    .replace(/\d+\s*(ngày|đêm)/gi, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return cleaned || place || query;
-}
-
-function UnderstoodChips({
-  understood,
-  onRemoveBudget,
-  onRemoveDays,
-}: {
-  understood: ExploreUnderstoodDto;
-  onRemoveBudget?: () => void;
-  onRemoveDays?: () => void;
-}) {
-  const chips: { label: string; onRemove?: () => void }[] = [];
-  if (understood.place) {
-    chips.push({ label: `📍 ${understood.place}` });
-  }
-  if (understood.budget) {
-    chips.push({
-      label: `≤ ${money(understood.budget)} / người`,
-      onRemove: onRemoveBudget,
-    });
-  }
-  if (understood.days) {
-    chips.push({
-      label: `${understood.days} ngày`,
-      onRemove: onRemoveDays,
-    });
-  }
-  for (const [from, to] of Object.entries(understood.fixed ?? {})) {
-    chips.push({ label: `"${from}" → "${to}"` });
-  }
-  for (const name of understood.names ?? []) {
-    chips.push({ label: name });
-  }
-
-  if (chips.length === 0) return null;
-
+  // Cả thẻ là một nút: tiêu đề có trọn bề ngang, không phải nhường chỗ cho nút riêng rồi xuống dòng.
   return (
-    <View style={{ gap: spacing.xs }}>
-      <Txt variant="caption" style={ui.muted}>
-        {vi.api.exploreUnderstood}:
-      </Txt>
-      <Row style={styles.categories}>
-        {chips.map((chip, idx) => (
-          <Badge key={idx} icon="sparkles-outline">
-            {chip.label}
-          </Badge>
-        ))}
-      </Row>
-    </View>
-  );
-}
-
-function HotelWebRedirectCard({ place }: { place: string }) {
-  const openWeb = () => {
-    const webUrl = process.env.EXPO_PUBLIC_WEB_URL ?? 'http://localhost:3000';
-    const destinationUrl = `${webUrl}/hotels?q=${encodeURIComponent(place)}`;
-    void Linking.openURL(destinationUrl);
-  };
-
-  return (
-    <Card style={{ backgroundColor: x.day.tintExplore, borderColor: x.day.link, borderWidth: 1 }}>
-      <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <View style={{ flex: 1, gap: spacing.xs, paddingRight: spacing.sm }}>
-          <Row style={{ gap: spacing.xs, alignItems: 'center' }}>
-            <Icon name="business-outline" size={16} color={x.day.link} />
-            <Txt variant="caption" style={{ color: x.day.link, fontFamily: nativeFonts.semibold }}>
-              TRIPFLIX WEB
-            </Txt>
-          </Row>
-          <Txt variant="heading">Khách sạn tại {place}</Txt>
-          <Txt variant="small" style={ui.muted}>
-            Xem danh sách phòng, giá và đặt chỗ trên website TripFlix
-          </Txt>
-        </View>
-        <Button tone="teal" icon="arrow-forward" onPress={openWeb}>
-          Mở Web
-        </Button>
-      </Row>
-    </Card>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${t('mobile.explore.searchHotelsTitle', { place })}. ${vi.mobile.explore.searchHotelsAction}`}
+      onPress={openHotels}
+      style={({ pressed }) => [styles.hotelCard, pressed && styles.hotelCardPressed]}
+    >
+      <View style={styles.hotelIcon}>
+        <Icon name="bed" size={22} color={x.brand.white} />
+      </View>
+      <View style={styles.hotelCopy}>
+        <Txt variant="heading" numberOfLines={1}>
+          {t('mobile.explore.searchHotelsTitle', { place })}
+        </Txt>
+        <Txt variant="small" style={ui.muted} numberOfLines={2}>
+          {vi.mobile.explore.searchHotelsBody}
+        </Txt>
+      </View>
+      <Icon name="chevron-forward" size={22} color={x.day.link} />
+    </Pressable>
   );
 }
 
@@ -307,65 +238,39 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
             onSubmitEditing={() => submitSearch()}
             style={styles.searchInput}
           />
-          {text.length > 0 && (
+          {/* Một nút mỗi lúc: chữ đang gõ khác từ đã tìm thì nút tìm, đã tìm rồi thì nút xoá. */}
+          {text.trim() && text.trim() !== submittedQuery ? (
+            <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={() => submitSearch()} />
+          ) : text.length > 0 ? (
             <IconButton name="close-circle-outline" label="Xoá tìm kiếm" onPress={clearSearch} />
-          )}
-          <IconButton name="arrow-forward-outline" label={vi.api.search} onPress={() => submitSearch()} />
+          ) : null}
         </View>
       )}
 
       {!isBrowsing && (
         <>
-          {submittedQuery !== '' && <HotelSearchResults q={submittedQuery} />}
-          {/* Post Type Filter Tabs */}
-          <Row style={styles.categories}>
-            <Chip selected={postType === 'all'} onPress={() => handlePostTypeChange('all')}>
-              Tất cả
-            </Chip>
-            <Chip selected={postType === 'plan'} onPress={() => handlePostTypeChange('plan')}>
-              Lộ trình
-            </Chip>
-            <Chip selected={postType === 'video'} onPress={() => handlePostTypeChange('video')}>
-              Video
-            </Chip>
-            <Chip selected={postType === 'post'} onPress={() => handlePostTypeChange('post')}>
-              Bài viết
-            </Chip>
-          </Row>
-
-          {/* Sort Tabs */}
-          <Row style={styles.categories}>
-            <Chip selected={sort === 'relevance'} onPress={() => handleSortChange('relevance')}>
-              {vi.api.postSortRelevance}
-            </Chip>
-            <Chip selected={sort === 'trending'} onPress={() => handleSortChange('trending')}>
-              {vi.api.postSortTrending}
-            </Chip>
-            <Chip selected={sort === 'recent'} onPress={() => handleSortChange('recent')}>
-              {vi.api.postSortRecent}
-            </Chip>
-          </Row>
-
-          {/* Understood Chips */}
+          {/* Hệ thống hiểu câu tìm thế nào: ngay dưới ô tìm, trước mọi kết quả. */}
           {understood && (
-            <UnderstoodChips
+            <UnderstoodBar
               understood={understood}
-              onRemoveBudget={() => {
-                const next = relaxBudgetQuery(submittedQuery, understood.place);
-                submitSearch(next);
-              }}
-              onRemoveDays={() => {
-                const next = relaxDaysQuery(submittedQuery, understood.place);
-                submitSearch(next);
-              }}
+              onRemoveBudget={() => submitSearch(relaxBudgetQuery(submittedQuery, understood.place))}
+              onRemoveDays={() => submitSearch(relaxDaysQuery(submittedQuery, understood.place))}
             />
           )}
+          {submittedQuery !== '' && <HotelSearchResults q={submittedQuery} />}
+          {/* Lọc loại nội dung và sắp xếp: thanh tab + nút sắp xếp (search-result-filters.tsx). */}
+          <SearchResultFilters
+            postType={postType}
+            sort={sort}
+            total={search.data ? total : undefined}
+            onPostTypeChange={handlePostTypeChange}
+            onSortChange={handleSortChange}
+          />
 
-          {/* Web Redirect Banner if destination is recognized */}
-          {understood?.place && <HotelWebRedirectCard place={understood.place} />}
+          {understood?.place && <HotelResultsCard place={understood.place} />}
 
-          {/* Loading */}
-          {search.isPending && <LoadingDots />}
+          {/* Khung thẻ giữ chỗ khi đang tìm; chưa bấm tìm thì không có gì để tải. */}
+          {search.isPending && submittedQuery !== '' && <SkeletonCards />}
 
           {/* Error */}
           <ApiErrorNotice
@@ -429,14 +334,6 @@ export function LiveSearchScreen({ back = false }: { back?: boolean } = {}) {
           {/* Results List */}
           {items.length > 0 && (
             <>
-              <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                <Txt variant="title" style={ui.flex}>
-                  Kết quả tìm kiếm
-                </Txt>
-                <Txt variant="small" style={ui.muted}>
-                  {total} bài viết
-                </Txt>
-              </Row>
               {items.map((item) => (
                 <PostSearchResultCard key={item.id} item={item} />
               ))}
@@ -565,8 +462,29 @@ const styles = StyleSheet.create({
     minHeight: mobileLayout.touchTarget,
     fontFamily: nativeFonts.regular,
     color: x.day.text,
-    ...compactType.body,
+    fontSize: x.type.label.fontSize,
+    lineHeight: 21,
   },
+  hotelCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: x.day.link,
+    backgroundColor: x.day.tintExplore,
+  },
+  hotelCardPressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
+  hotelIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: x.day.link,
+  },
+  hotelCopy: { flex: 1, minWidth: 0, gap: 2 },
   result: { alignItems: 'flex-start' },
   resultPhoto: { width: 90, height: 112, borderRadius: radius.md, backgroundColor: x.day.tintExplore },
   categories: { flexWrap: 'wrap', gap: spacing.sm },

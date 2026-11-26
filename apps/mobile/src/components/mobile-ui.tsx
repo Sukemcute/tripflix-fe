@@ -13,6 +13,7 @@ import {
   createContext,
   useContext,
   useRef,
+  useState,
   type ComponentProps,
   type ComponentRef,
   type PropsWithChildren,
@@ -33,7 +34,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { compactType, mobileIconSize } from './mobile-scale';
+import { mobileIconSize } from './mobile-scale';
 
 const d = x.day;
 
@@ -59,13 +60,15 @@ export function formatDate(value: string): string {
 }
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 const CompactScreenContext = createContext(false);
+// Màn "gọn" vẫn dùng thang chữ explorer, chỉ hạ một bậc so với màn thường; không còn chữ 10–12px của compactType
+// (audit UI/UX: chữ tối thiểu 12px, tiêu đề không bé hơn nhãn).
 const compactText = {
-  title: compactType.title,
-  heading: compactType.heading,
-  label: compactType.label,
-  body: compactType.body,
-  small: compactType.body,
-  caption: compactType.meta,
+  title: { fontSize: x.type.headline.fontSize, lineHeight: x.type.headline.lineHeight },
+  heading: { fontSize: x.type.subhead.fontSize, lineHeight: x.type.subhead.lineHeight },
+  label: { fontSize: x.type.label.fontSize, lineHeight: x.type.label.lineHeight },
+  body: { fontSize: x.type.label.fontSize, lineHeight: 21 },
+  small: { fontSize: x.type.caption.fontSize, lineHeight: 19 },
+  caption: { fontSize: x.type.micro.fontSize, lineHeight: x.type.micro.lineHeight },
 };
 
 export function Icon({ name, size, color = d.text }: { name: IconName; size?: number; color?: string }) {
@@ -111,10 +114,13 @@ export function Button({
   style,
   testID,
   compact: compactOverride,
+  disabledHint,
 }: PropsWithChildren<{
   onPress: () => void;
   tone?: 'primary' | 'secondary' | 'teal' | 'text';
   disabled?: boolean;
+  /** Vì sao nút đang tắt, hiện ngay dưới nút: nút mờ mà không giải thích thì người dùng không biết thiếu gì. */
+  disabledHint?: string;
   icon?: IconName;
   style?: StyleProp<ViewStyle>;
   testID?: string;
@@ -124,7 +130,8 @@ export function Button({
   const compact = compactOverride ?? compactScreen;
   const foreground =
     tone === 'primary' ? x.action.onPrimary : tone === 'teal' || tone === 'text' ? d.link : d.text;
-  return (
+  const hint = disabled && disabledHint ? disabledHint : undefined;
+  const button = (
     <Pressable
       testID={testID}
       accessibilityRole="button"
@@ -142,12 +149,28 @@ export function Button({
     >
       <Txt
         variant="label"
-        style={[{ color: foreground, flexShrink: 1, textAlign: 'center' }, compact && ui.compactLabel]}
+        // Chữ trắng trên coral chỉ đọc được khi đậm và đủ lớn: nút chính không thu nhãn về 11px như nút gọn khác.
+        style={[
+          { color: foreground, flexShrink: 1, textAlign: 'center' },
+          compact && tone !== 'primary' && ui.compactLabel,
+        ]}
       >
         {children}
       </Txt>
       {icon && <Icon name={icon} color={foreground} size={compact ? mobileIconSize.control : 20} />}
     </Pressable>
+  );
+  if (!hint) return button;
+  return (
+    <View style={ui.hintedButton}>
+      {button}
+      <Row style={ui.buttonHint}>
+        <Icon name="information-circle-outline" size={16} color={d.textSecondary} />
+        <Txt variant="small" style={[ui.muted, { flex: 1 }]}>
+          {hint}
+        </Txt>
+      </Row>
+    </View>
   );
 }
 export function IconButton({
@@ -231,8 +254,8 @@ export function Notice({
           tone === 'error'
             ? 'alert-circle-outline'
             : tone === 'warning'
-              ? 'information-circle-outline'
-              : 'shield-checkmark-outline'
+              ? 'warning-outline'
+              : 'information-circle-outline'
         }
         color={tone === 'error' ? d.error : d.link}
         size={compact ? mobileIconSize.control : 20}
@@ -248,25 +271,48 @@ export function Field({
   error,
   style,
   compact: compactOverride,
+  hideLabel = false,
+  onFocus,
+  onBlur,
   ...props
 }: ComponentProps<typeof TextInput> & {
   label: string;
   error?: string;
   compact?: boolean;
+  /** Ẩn nhãn nhìn thấy khi màn đã có tiêu đề riêng; nhãn vẫn đọc được bằng trình đọc màn hình. */
+  hideLabel?: boolean;
   style?: StyleProp<TextStyle>;
 }) {
   const compactScreen = useContext(CompactScreenContext);
   const compact = compactOverride ?? compactScreen;
+  // Viền xanh khi đang gõ, như ô ở màn đăng nhập: thấy ngay ô nào đang nhận chữ.
+  const [isFocused, setFocused] = useState(false);
   return (
     <View style={{ gap: compact ? s.xs : s.sm }}>
-      <Txt variant="label" style={compact && ui.compactLabel}>
-        {label}
-      </Txt>
+      {!hideLabel && (
+        <Txt variant="label" style={compact && ui.compactLabel}>
+          {label}
+        </Txt>
+      )}
       <TextInput
         {...props}
         accessibilityLabel={label}
         placeholderTextColor={d.textSecondary}
-        style={[ui.input, compact && ui.compactInput, error && { borderColor: d.error }, style]}
+        onFocus={(event) => {
+          setFocused(true);
+          onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setFocused(false);
+          onBlur?.(event);
+        }}
+        style={[
+          ui.input,
+          compact && ui.compactInput,
+          isFocused && ui.inputFocused,
+          error && { borderColor: d.error },
+          style,
+        ]}
       />
       {error && (
         <Txt accessibilityRole="alert" variant="small" style={{ color: d.error }}>
@@ -510,7 +556,9 @@ export function PriceRow({
       <Txt variant={total ? 'label' : 'small'} style={{ flex: 1, color: total ? d.text : d.textSecondary }}>
         {label}
       </Txt>
-      <Txt variant={total ? 'heading' : 'label'}>{amount}</Txt>
+      <Txt variant={total ? 'heading' : 'label'} style={{ color: d.price }}>
+        {amount}
+      </Txt>
     </Row>
   );
 }
@@ -548,9 +596,10 @@ export const ui = StyleSheet.create({
   label: { fontSize: x.type.label.fontSize, lineHeight: 22, fontFamily: f.semibold },
   muted: { color: d.textSecondary },
   center: { textAlign: 'center' },
+  // Nút chữ nhật bo 12px (cùng ô nhập); dạng viên thuốc chỉ còn ở chip lọc và huy hiệu.
   button: {
     minHeight: x.control.primary,
-    borderRadius: x.radius.pill,
+    borderRadius: x.radius.md,
     paddingHorizontal: x.space.lg,
     paddingVertical: x.space.sm,
     flexDirection: 'row',
@@ -559,13 +608,15 @@ export const ui = StyleSheet.create({
     gap: s.sm,
   },
   compactButton: { minHeight: x.control.compact, paddingVertical: s.sm, paddingHorizontal: s.lg, gap: s.xs },
-  compactLabel: compactType.label,
+  compactLabel: { fontSize: x.type.label.fontSize, lineHeight: x.type.label.lineHeight },
   primary: { backgroundColor: x.action.primary },
   primaryPressed: { backgroundColor: x.action.primaryPressed },
   secondary: { backgroundColor: d.surface, borderWidth: 1, borderColor: d.line },
   teal: { backgroundColor: d.tintExplore },
   text: { backgroundColor: c.transparent },
   disabled: { opacity: 0.45 },
+  hintedButton: { gap: s.xs },
+  buttonHint: { gap: s.xs, alignItems: 'flex-start' },
   pressed: { opacity: 0.78 },
   iconButton: {
     width: x.control.touch,
@@ -597,6 +648,7 @@ export const ui = StyleSheet.create({
     alignItems: 'flex-start',
     gap: s.sm,
   },
+  inputFocused: { borderColor: d.link },
   input: {
     minHeight: x.control.primary,
     borderWidth: 1,
@@ -611,7 +663,8 @@ export const ui = StyleSheet.create({
   },
   compactInput: {
     minHeight: layout.touchTarget,
-    ...compactType.body,
+    fontSize: x.type.label.fontSize,
+    lineHeight: 21,
     paddingVertical: s.sm,
     paddingHorizontal: s.md,
   },

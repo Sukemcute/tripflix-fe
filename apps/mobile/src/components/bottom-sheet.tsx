@@ -1,4 +1,4 @@
-import { explorer as x, colors, mobileLayout, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, mobileLayout, radius, spacing } from '@tripflix/tokens';
 import { useEffect, useState, type PropsWithChildren, type ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
@@ -25,7 +25,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { IconButton, Txt, copy } from './mobile-ui';
-import { compactType, mobileIconSize } from './mobile-scale';
+import { mobileIconSize } from './mobile-scale';
 import { SHEET_CLOSE_SPRING, SHEET_OPEN_SPRING } from './motion';
 import { useSheetListDrag } from './use-sheet-list-drag';
 
@@ -199,7 +199,7 @@ export function BottomSheet({
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: colors.overlay },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: x.backdrop },
   keyboard: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
     width: '100%',
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
   compactHandle: { marginTop: spacing.sm },
   compactHeading: { paddingLeft: spacing.lg, paddingVertical: 0 },
-  compactTitle: compactType.heading,
+  compactTitle: { fontSize: x.type.subhead.fontSize, lineHeight: x.type.subhead.lineHeight },
   compactBodyContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   compactFooter: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
 });

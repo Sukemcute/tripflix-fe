@@ -3,7 +3,7 @@ import { vi } from '@tripflix/i18n';
 import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { compactType } from '@/components/mobile-scale';
+import { typeStyle } from '@/components/type-scale';
 import { Field, Icon, IconButton, Row, Txt, ui, type IconName } from '@/components/mobile-ui';
 import { ChoiceChip } from './trip-plan-parts';
 
@@ -137,10 +137,10 @@ export function ActivityCard({
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.6 },
-  muted: { ...compactType.body, fontFamily: nativeFonts.regular, color: x.day.textSecondary },
+  muted: { ...typeStyle('caption'), fontFamily: nativeFonts.regular, color: x.day.textSecondary },
   chips: { alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
   timeTag: { width: 48, paddingTop: spacing.md, alignItems: 'center' },
-  timeText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.text },
+  timeText: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold, color: x.day.text },
   addTime: {
     flexDirection: 'row',
     gap: 2,
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     borderColor: x.day.link,
     justifyContent: 'center',
   },
-  addTimeText: { ...compactType.label, fontFamily: nativeFonts.semibold, color: x.day.link },
+  addTimeText: { ...typeStyle('caption'), fontFamily: nativeFonts.semibold, color: x.day.link },
   activity: {
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: x.day.canvas,
   },
-  activityTitle: { ...compactType.heading, fontFamily: nativeFonts.semibold, color: x.day.text },
+  activityTitle: { ...typeStyle('label'), fontFamily: nativeFonts.semibold, color: x.day.text },
   activityForm: { gap: spacing.sm, paddingHorizontal: spacing.sm, paddingBottom: spacing.sm },
   activityFields: { gap: spacing.sm, alignItems: 'flex-start' },
   timeField: { width: 88 },

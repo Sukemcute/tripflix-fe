@@ -56,7 +56,7 @@ export function TripCard({
           {trip.days} {vi.demo.common.days} {trip.nights} {vi.demo.common.nights}
         </Txt>
         <Row style={{ gap: s.xs, flexWrap: 'wrap' }}>
-          <Txt variant="label" style={{ color: x.day.text }}>
+          <Txt variant="label" style={{ color: x.day.price }}>
             {money(trip.pricePerGuest)}
           </Txt>
           <Txt variant="caption" style={ui.muted}>

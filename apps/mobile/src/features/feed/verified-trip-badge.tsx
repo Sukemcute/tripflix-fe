@@ -1,7 +1,7 @@
 import { vi } from '@tripflix/i18n';
-import { explorer as x, colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { StyleSheet, View } from 'react-native';
-import { compactType } from '@/components/mobile-scale';
+import { typeStyle } from '@/components/type-scale';
 import { Icon, Txt } from '@/components/mobile-ui';
 
 /** Tích "Đã đi" (TF105): lộ trình lấy từ chuyến đã đi xong của chính người đăng, server xác thực lúc đăng. */
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     borderRadius: radius.pill,
   },
-  light: { backgroundColor: colors.overlay },
+  light: { backgroundColor: x.glass },
   dark: { backgroundColor: x.day.tintExplore },
-  text: { ...compactType.label, fontFamily: nativeFonts.semibold },
+  text: { ...typeStyle('micro'), fontFamily: nativeFonts.semibold },
 });

@@ -16,12 +16,13 @@ import {
   type BookingCart,
 } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
-import { explorer as x, nativeFonts, radius, spacing } from '@tripflix/tokens';
+import { explorer as x, colors, nativeFonts, radius, spacing } from '@tripflix/tokens';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import {
   Button,
   Card,
+  Empty,
   formatDate,
   Icon,
   money,
@@ -61,31 +62,42 @@ export function Stepper({
       accessibilityLabel={`${sign === '+' ? vi.hotel.increaseGuests : vi.hotel.decreaseGuests} ${label}`}
       disabled={!isEnabled}
       accessibilityState={{ disabled: !isEnabled }}
+      hitSlop={4}
       onPress={() => onChange(next)}
-      style={{
-        width: 44,
-        height: 44,
-        borderRadius: radius.sm,
-        backgroundColor: x.day.canvas,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
+      style={({ pressed }) => [
+        {
+          width: 36,
+          height: 36,
+          borderRadius: radius.pill,
+          backgroundColor: x.day.surface,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        !isEnabled && { opacity: 0.35 },
+        pressed && { transform: [{ scale: 0.88 }], backgroundColor: x.day.canvas },
+      ]}
     >
-      <Txt style={{ color: isEnabled ? x.day.text : x.day.textSecondary, fontSize: 18, lineHeight: 26 }}>
-        {sign}
-      </Txt>
+      <Icon name={sign === '+' ? 'add' : 'remove'} size={18} color={x.day.link} />
     </Pressable>
   );
+  // Cùng dáng bộ chỉnh số ở Tự lên lộ trình: nền xanh nhạt, hai nút tròn, số ở giữa.
   return (
-    <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
+    <Row
+      style={{
+        alignItems: 'center',
+        padding: 4,
+        borderRadius: radius.pill,
+        backgroundColor: x.day.tintExplore,
+      }}
+    >
       {button('−', canDecrease, value - 1)}
       <Txt
         style={{
-          minWidth: unit ? 56 : 20,
+          minWidth: unit ? 56 : 36,
           textAlign: 'center',
-          fontSize: 14,
-          lineHeight: 23,
-          fontFamily: nativeFonts.semibold,
+          fontSize: 16,
+          lineHeight: 24,
+          fontFamily: nativeFonts.bold,
         }}
       >
         {value}
@@ -175,7 +187,8 @@ export function CartLink() {
             height: 18,
             paddingHorizontal: 4,
             borderRadius: radius.pill,
-            backgroundColor: x.action.primary,
+            // Số nhỏ 11px: nền coral đậm để chữ trắng đủ tương phản (coral sáng chỉ dành cho nhãn nút lớn).
+            backgroundColor: colors.coralInk,
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -239,7 +252,9 @@ export function SelectionBar({ returnTo }: { returnTo: string }) {
         <Txt variant="small" style={ui.muted}>
           {roomCount} {text.cartRooms} · {text.cartSubtotal}
         </Txt>
-        <Txt variant="heading">{money(calculateBookingCartTotal(selection))}</Txt>
+        <Txt variant="heading" style={{ color: x.day.price }}>
+          {money(calculateBookingCartTotal(selection))}
+        </Txt>
       </Row>
       {discount > 0 && (
         <Txt variant="small" style={{ color: x.day.link }}>
@@ -323,8 +338,12 @@ export function CartScreen() {
   if (!cart.items.length)
     return (
       <Screen title={text.cartTitle}>
-        <Notice>{text.cartEmpty}</Notice>
-        <Button onPress={() => router.navigate('/(tabs)/explore')}>{text.findHotel}</Button>
+        <Empty
+          title={text.cartEmpty}
+          body={text.cartEmptyHint}
+          action={text.findHotel}
+          onAction={() => router.navigate('/(tabs)/explore')}
+        />
       </Screen>
     );
   const discount = calculateBookingCartChildDiscount(cart);
@@ -468,7 +487,7 @@ const cartStyles = StyleSheet.create({
   dates: { gap: spacing.md, flexWrap: 'wrap' },
   date: { flexGrow: 1, flexBasis: 120, gap: spacing.xs },
   dateValue: { fontSize: 14, lineHeight: 23, fontFamily: nativeFonts.medium, color: x.day.text },
-  price: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.text },
+  price: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.price },
   controls: { justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
   remove: {
     minHeight: 44,

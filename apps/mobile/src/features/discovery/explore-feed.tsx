@@ -5,7 +5,7 @@ import { getNextWeekendDates } from '@tripflix/app-core';
 import { t, vi } from '@tripflix/i18n';
 import { explorer as x, nativeFonts } from '@tripflix/tokens';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { LoadingDots } from '@/components/loading-dots';
@@ -26,6 +26,7 @@ import { NotificationBell } from '@/features/account/notification-bell';
 import { FeaturedTrips } from '@/features/booking/featured-trips';
 import { ExploreHotelResults } from './explore-hotel-results';
 import { StayPhoto } from './stay-photo';
+import { getExploreHotelQuery } from './explore-query-param';
 
 const text = vi.mobile.explore;
 const explorerCopy = vi.mobile.explorer;
@@ -52,6 +53,16 @@ export function ExploreFeed() {
   const [input, setInput] = useState('');
   const [hotelQuery, setHotelQuery] = useState('');
   const [isResolving, setIsResolving] = useState(false);
+  // Thẻ khách sạn ở Tìm kiếm mở Khám phá kèm địa điểm đã hiểu (`?q=`): hiện ngay kết quả khách sạn trong app.
+  const placeParam = getExploreHotelQuery(useLocalSearchParams<{ q?: string | string[] }>().q);
+  // Cập nhật ngay khi render lúc tham số đổi (không qua effect): tránh một lần vẽ thừa với ô tìm cũ.
+  const [appliedPlaceParam, setAppliedPlaceParam] = useState('');
+  if (placeParam && placeParam !== appliedPlaceParam) {
+    setAppliedPlaceParam(placeParam);
+    setKind('hotel');
+    setInput(placeParam);
+    setHotelQuery(placeParam);
+  }
   const submit = async () => {
     const value = input.trim();
     if (value.length < 2 || isResolving) return;
@@ -166,9 +177,9 @@ export function ExploreFeed() {
   );
 }
 
-type ServiceTile = { key: string; label: string; hint?: string; icon: IconName; onPress?: () => void };
+type ServiceTile = { key: string; label: string; hint: string; icon: IconName; onPress: () => void };
 
-/** Bốn dịch vụ như thiết kế Stitch; xe và tour chưa có tồn kho nên hiện dạng "Sắp có", không bấm được. */
+/** Chỉ hiện dịch vụ đã đặt được; ô "Sắp có" làm hàng lối tắt trông như quảng cáo thứ chưa có. */
 function ServiceTiles({ onStay }: { onStay: () => void }) {
   const tiles: ServiceTile[] = [
     {
@@ -185,37 +196,28 @@ function ServiceTiles({ onStay }: { onStay: () => void }) {
       icon: 'airplane',
       onPress: () => router.push('/flights'),
     },
-    { key: 'car', label: explorerCopy.serviceCar, icon: 'bus' },
-    { key: 'tour', label: explorerCopy.serviceTour, icon: 'map' },
   ];
   return (
     <View accessibilityLabel={explorerCopy.servicesLabel} style={styles.services}>
-      {tiles.map((tile) => {
-        const isAvailable = !!tile.onPress;
-        return (
-          <Pressable
-            key={tile.key}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isAvailable ? tile.label : t('mobile.explorer.comingSoonLabel', { name: tile.label })
-            }
-            accessibilityState={{ disabled: !isAvailable }}
-            disabled={!isAvailable}
-            onPress={tile.onPress}
-            style={({ pressed }) => [styles.service, pressed && styles.pressed]}
-          >
-            <View style={[styles.serviceIcon, !isAvailable && styles.serviceIconMuted]}>
-              <Icon name={tile.icon} size={22} color={isAvailable ? x.day.link : x.day.textSecondary} />
-            </View>
-            <Txt numberOfLines={1} style={[styles.serviceLabel, !isAvailable && ui.muted]}>
-              {tile.label}
-            </Txt>
-            <Txt numberOfLines={1} style={styles.serviceHint}>
-              {isAvailable ? tile.hint : explorerCopy.comingSoon}
-            </Txt>
-          </Pressable>
-        );
-      })}
+      {tiles.map((tile) => (
+        <Pressable
+          key={tile.key}
+          accessibilityRole="button"
+          accessibilityLabel={tile.label}
+          onPress={tile.onPress}
+          style={({ pressed }) => [styles.service, pressed && styles.pressed]}
+        >
+          <View style={styles.serviceIcon}>
+            <Icon name={tile.icon} size={22} color={x.day.link} />
+          </View>
+          <Txt numberOfLines={1} style={styles.serviceLabel}>
+            {tile.label}
+          </Txt>
+          <Txt numberOfLines={1} style={styles.serviceHint}>
+            {tile.hint}
+          </Txt>
+        </Pressable>
+      ))}
     </View>
   );
 }
@@ -492,7 +494,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: x.space.xxs,
   },
-  serviceIconMuted: { backgroundColor: x.day.canvas },
   serviceLabel: { fontFamily: nativeFonts.semibold, fontSize: 13, lineHeight: 18, color: x.day.text },
   serviceHint: { fontSize: 12, lineHeight: 16, color: x.day.textSecondary },
   section: { gap: x.space.sm },
@@ -522,7 +523,7 @@ const styles = StyleSheet.create({
     fontFamily: nativeFonts.extraBold,
     fontSize: 19,
     lineHeight: 24,
-    color: x.day.text,
+    color: x.day.price,
     fontVariant: ['tabular-nums'],
   },
   assistant: {

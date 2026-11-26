@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   date: { flexShrink: 1 },
   details: { gap: spacing.sm, paddingTop: spacing.sm },
   fees: { gap: spacing.xs, padding: spacing.md, borderRadius: radius.sm, backgroundColor: x.day.tintWarm },
-  linePrice: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.text },
+  linePrice: { fontSize: 20, lineHeight: 30, fontFamily: nativeFonts.semibold, color: x.day.price },
   toggle: {
     minHeight: 48,
     paddingHorizontal: spacing.md,
