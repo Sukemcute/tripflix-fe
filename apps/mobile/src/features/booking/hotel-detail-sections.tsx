@@ -380,7 +380,7 @@ function SortTabs({
       style={{ marginHorizontal: -spacing.md }}
       contentContainerStyle={{ paddingHorizontal: spacing.md }}
     >
-      <Row style={{ padding: 4, gap: 4, borderRadius: radius.md, backgroundColor: x.day.canvas }}>
+      <Row style={{ padding: 4, gap: 4, borderRadius: radius.md, borderWidth: 1, borderColor: x.day.line }}>
         {(['newest', 'highest', 'lowest', 'helpful'] as const).map((sort) => {
           const isActive = value === sort;
           return (
@@ -484,13 +484,33 @@ export function HotelReviewsSection({ id }: { id: string }) {
       )}
       {summary?.aiSummary && (
         <View
-          style={{ padding: spacing.md, borderRadius: radius.lg, backgroundColor: x.day.tintSun, gap: 4 }}
+          style={{
+            flexDirection: 'row',
+            borderRadius: radius.lg,
+            borderWidth: 1,
+            borderColor: x.day.line,
+            overflow: 'hidden',
+          }}
         >
-          <Row style={{ gap: 6 }}>
-            <Icon name="sparkles-outline" size={16} color={x.day.text} />
-            <Txt style={T.strong}>{copy.reviewSummary}</Txt>
-          </Row>
-          <Txt style={T.body}>{summary.aiSummary}</Txt>
+          <View style={{ width: 4, backgroundColor: x.brand.sun }} />
+          <View style={{ flex: 1, padding: spacing.md, gap: spacing.xs }}>
+            <Row style={{ gap: spacing.sm, alignItems: 'center' }}>
+              <View
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: radius.sm,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: x.day.tintSun,
+                }}
+              >
+                <Icon name="sparkles" size={16} color={x.day.text} />
+              </View>
+              <Txt style={T.strong}>{copy.reviewSummary}</Txt>
+            </Row>
+            <Txt style={T.body}>{summary.aiSummary}</Txt>
+          </View>
         </View>
       )}
       <SortTabs value={filters.sort} onChange={(sort) => update({ sort })} />
