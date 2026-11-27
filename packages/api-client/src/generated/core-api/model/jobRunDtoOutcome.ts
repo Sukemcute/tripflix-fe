@@ -12,4 +12,5 @@ export const JobRunDtoOutcome = {
   succeeded: 'succeeded',
   skipped: 'skipped',
   failed: 'failed',
+  cancelled: 'cancelled',
 } as const;
