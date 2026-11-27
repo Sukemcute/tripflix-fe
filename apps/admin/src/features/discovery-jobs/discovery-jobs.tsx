@@ -4,15 +4,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApiSession } from '@tripflix/api-client';
 import {
   adminDiscoveryJobsControllerList,
+  adminDiscoveryJobsControllerResume,
   adminDiscoveryJobsControllerRun,
   adminDiscoveryJobsControllerSetCandidateLimit,
   adminDiscoveryJobsControllerSetInterval,
+  adminDiscoveryJobsControllerStop,
 } from '@tripflix/api-client/core-api/admin-discovery-jobs/admin-discovery-jobs';
 import type {
   CandidateLimitDto,
   DiscoveryJobDto,
   DiscoveryJobsDto,
   JobRunDto,
+  JobStopDto,
   RecommendStatsDto,
 } from '@tripflix/api-client/core-api/model/index';
 import { t, vi } from '@tripflix/i18n';
@@ -20,6 +23,7 @@ import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { AdminButton } from '@/ui/button';
 import { DataTable, type DataColumn } from '@/ui/data-table';
+import { ConfirmDialog } from '@/ui/dialog';
 import { SelectInput, TextField } from '@/ui/form-field';
 import { MetricStrip } from '@/ui/metric-strip';
 import { EmptyState, LoadingState } from '@/ui/states';
@@ -28,6 +32,7 @@ import { Panel } from '../shell/operations-ui';
 import { AdminApiError } from '../shell/api-state';
 import { toCandidateLimit } from './candidate-limit';
 import { formatInterval, INTERVAL_PRESET_MINUTES, toIntervalMs } from './interval';
+import { STOP_REASON_LIMITS, toStopReason } from './stop';
 import { VocabGaps } from './vocab-gaps';
 
 const copy = vi.discoveryJobs;
@@ -77,7 +82,14 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
 
   const run = useMutation({
     mutationFn: async (job: DiscoveryJobDto['job']) => (await adminDiscoveryJobsControllerRun(job)).data,
-    onSuccess: (result) => setNotice(result?.accepted === false ? copy.rejectedRunning : ''),
+    onSuccess: (result) =>
+      setNotice(
+        result?.accepted !== false
+          ? ''
+          : result.reason === 'paused'
+            ? copy.rejectedPaused
+            : copy.rejectedRunning,
+      ),
     onSettled: () => client.invalidateQueries({ queryKey }),
   });
 
@@ -121,6 +133,12 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
               value: countOutcome('skipped'),
               hint: vi.adminOperations.loadedLog,
             },
+            {
+              id: 'cancelled',
+              label: copy.outcome.cancelled,
+              value: countOutcome('cancelled'),
+              hint: vi.adminOperations.loadedLog,
+            },
           ]}
         />
       )}
@@ -140,12 +158,28 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
             }`}
             action={
               canRun && (
-                <AdminButton variant="primary" disabled={isBusy} onClick={() => run.mutate(job.job)}>
-                  {isBusy ? copy.running : copy.run}
-                </AdminButton>
+                <div className="flex flex-wrap gap-2">
+                  {!job.pause && <StopJobButton job={job.job} queryKey={queryKey} onStopped={setNotice} />}
+                  <AdminButton
+                    variant="primary"
+                    disabled={isBusy || !!job.pause}
+                    onClick={() => run.mutate(job.job)}
+                  >
+                    {isBusy ? copy.running : copy.run}
+                  </AdminButton>
+                </div>
               )
             }
           >
+            {job.pause && (
+              <PausedBanner
+                job={job.job}
+                pause={job.pause}
+                currentUserId={user?.id}
+                canResume={canRun}
+                queryKey={queryKey}
+              />
+            )}
             {canRun && job.canChangeInterval && <IntervalEditor job={job} queryKey={queryKey} />}
             <JobDurationChart runs={job.runs} />
             <RunsTable runs={job.runs} />
@@ -158,6 +192,104 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
       )}
       {data?.recommendStats && <RecommendStats stats={data.recommendStats} />}
       {group === 'search' && <VocabGaps />}
+    </div>
+  );
+}
+
+function StopJobButton({
+  job,
+  queryKey,
+  onStopped,
+}: {
+  job: DiscoveryJobDto['job'];
+  queryKey: string[];
+  onStopped: (notice: string) => void;
+}) {
+  const client = useQueryClient();
+  const [isOpen, setIsOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const stop = useMutation({
+    mutationFn: async (value: string) =>
+      (await adminDiscoveryJobsControllerStop(job, { reason: value })).data,
+    onSuccess: (result) => {
+      setIsOpen(false);
+      setReason('');
+      if (result && 'cancelledRuns' in result)
+        onStopped(t('discoveryJobs.stop.stopped', { count: result.cancelledRuns }));
+    },
+    onSettled: () => client.invalidateQueries({ queryKey }),
+  });
+  const validReason = toStopReason(reason);
+  return (
+    <>
+      <AdminButton variant="danger" onClick={() => setIsOpen(true)}>
+        {copy.stop.button}
+      </AdminButton>
+      {isOpen && (
+        <ConfirmDialog
+          title={t('discoveryJobs.stop.title', { job: copy.jobs[job] })}
+          description={copy.stop.body}
+          confirmLabel={copy.stop.confirm}
+          tone="danger"
+          isPending={stop.isPending}
+          onClose={() => setIsOpen(false)}
+          onConfirm={() => {
+            if (validReason !== null) stop.mutate(validReason);
+          }}
+        >
+          <TextField
+            label={copy.stop.reason}
+            required
+            minLength={STOP_REASON_LIMITS.min}
+            maxLength={STOP_REASON_LIMITS.max}
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
+          <p className="mt-1 text-xs text-text-muted">{copy.stop.reasonHint}</p>
+          {stop.isError && <AdminApiError error={stop.error} />}
+        </ConfirmDialog>
+      )}
+    </>
+  );
+}
+
+function PausedBanner({
+  job,
+  pause,
+  currentUserId,
+  canResume,
+  queryKey,
+}: {
+  job: DiscoveryJobDto['job'];
+  pause: JobStopDto;
+  currentUserId: string | undefined;
+  canResume: boolean;
+  queryKey: string[];
+}) {
+  const client = useQueryClient();
+  const resume = useMutation({
+    mutationFn: async () => {
+      await adminDiscoveryJobsControllerResume(job);
+    },
+    onSettled: () => client.invalidateQueries({ queryKey }),
+  });
+  const who =
+    pause.by === currentUserId
+      ? copy.stop.byYou
+      : t('discoveryJobs.stop.byAdmin', { id: pause.by.slice(0, 8) });
+  return (
+    <div className="flex flex-wrap items-center gap-3 border-b border-border bg-coral-tint px-4 py-3">
+      <StatusBadge tone="danger">{copy.stop.paused}</StatusBadge>
+      <p className="min-w-0 flex-1 text-[13px]">
+        {t('discoveryJobs.stop.pausedBy', { who, time: formatAt(pause.at), reason: pause.reason })}
+        <span className="block text-xs text-text-muted">{copy.stop.resumeHint}</span>
+      </p>
+      {canResume && (
+        <AdminButton disabled={resume.isPending} onClick={() => resume.mutate()}>
+          {resume.isPending ? copy.stop.resuming : copy.stop.resume}
+        </AdminButton>
+      )}
+      {resume.isError && <AdminApiError error={resume.error} />}
     </div>
   );
 }
@@ -403,7 +535,15 @@ function CandidateLimitEditor({ info, queryKey }: { info: CandidateLimitDto; que
 }
 
 const outcomeTone = (outcome: JobRunDto['outcome']): StatusTone =>
-  outcome === 'succeeded' ? 'success' : outcome === 'failed' ? 'danger' : outcome === 'running' ? 'info' : 'neutral';
+  outcome === 'succeeded'
+    ? 'success'
+    : outcome === 'failed'
+      ? 'danger'
+      : outcome === 'running'
+        ? 'info'
+        : outcome === 'cancelled'
+          ? 'warning'
+          : 'neutral';
 
 const runColumns: DataColumn<JobRunDto>[] = [
   { id: 'startedAt', header: copy.columns.startedAt, cell: (r) => formatAt(r.startedAt) },
