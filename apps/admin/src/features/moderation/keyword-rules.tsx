@@ -6,11 +6,13 @@ import {
   adminModerationKeywordRulesControllerCreate,
   adminModerationKeywordRulesControllerList,
   adminModerationKeywordRulesControllerListBuiltIn,
+  adminModerationKeywordRulesControllerRemove,
   adminModerationKeywordRulesControllerUpdate,
 } from '@tripflix/api-client/core-api/moderation-admin/moderation-admin';
 import type { ModerationKeywordRuleDto } from '@tripflix/api-client/core-api/model/index';
-import { vi } from '@tripflix/i18n';
+import { t, vi } from '@tripflix/i18n';
 import { AdminButton } from '@/ui/button';
+import { ConfirmDialog } from '@/ui/dialog';
 import { TextField } from '@/ui/form-field';
 import { EmptyState, LoadingState } from '@/ui/states';
 import { StatusBadge } from '@/ui/status-badge';
@@ -23,11 +25,13 @@ const queryKey = ['moderation', 'keyword-rules'] as const;
 type Change =
   | { action: 'create'; keyword: string }
   | { action: 'rename'; id: string; keyword: string }
+  | { action: 'delete'; id: string }
   | { action: 'toggle'; id: string; enabled: boolean };
 
 export function ModerationKeywordRules() {
   const client = useQueryClient();
   const [editing, setEditing] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<ModerationKeywordRuleDto | null>(null);
   const [keyword, setKeyword] = useState('');
   const query = useQuery({
     queryKey,
@@ -46,10 +50,23 @@ export function ModerationKeywordRules() {
           return (await adminModerationKeywordRulesControllerUpdate(change.id, { keyword: change.keyword })).data;
         case 'toggle':
           return (await adminModerationKeywordRulesControllerUpdate(change.id, { enabled: change.enabled })).data;
+        case 'delete':
+          await adminModerationKeywordRulesControllerRemove(change.id);
+          return;
       }
     },
     onSuccess: async (_rule, change) => {
-      if (change.action !== 'toggle') {
+      if (change.action === 'delete') {
+        client.setQueryData<ModerationKeywordRuleDto[]>(queryKey, (rules) =>
+          rules?.filter((rule) => rule.id !== change.id),
+        );
+        setDeleting(null);
+      }
+      if (
+        change.action === 'create' ||
+        change.action === 'rename' ||
+        (change.action === 'delete' && editing === change.id)
+      ) {
         setEditing(null);
         setKeyword('');
       }
@@ -98,8 +115,12 @@ export function ModerationKeywordRules() {
       </form>
 
       <AdminApiError error={query.error} retry={() => void query.refetch()} />
-      <AdminApiError error={duplicate ? null : save.error} />
-      {save.isSuccess && <output className="block text-[13px] text-teal-ink">{copy.saved}</output>}
+      <AdminApiError error={duplicate || deleting ? null : save.error} />
+      {save.isSuccess && (
+        <output className="block text-[13px] text-teal-ink">
+          {save.variables?.action === 'delete' ? copy.deleted : copy.saved}
+        </output>
+      )}
       {query.isPending && <LoadingState rows={3} />}
       {query.isSuccess && !rules.length && <EmptyState title={copy.empty} />}
       {rules.length > 0 && (
@@ -115,7 +136,7 @@ export function ModerationKeywordRules() {
                 </div>
                 <p className="text-xs text-text-muted">{copy.updated} {formatDateTime(rule.updatedAt)}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <AdminButton disabled={save.isPending} onClick={() => edit(rule)} aria-label={`${copy.edit} ${rule.keyword}`}>
                   {copy.edit}
                 </AdminButton>
@@ -126,10 +147,37 @@ export function ModerationKeywordRules() {
                 >
                   {rule.enabled ? copy.turnOff : copy.turnOn}
                 </AdminButton>
+                <AdminButton
+                  variant="danger"
+                  disabled={save.isPending}
+                  onClick={() => {
+                    save.reset();
+                    setDeleting(rule);
+                  }}
+                  aria-label={`${copy.delete} ${rule.keyword}`}
+                >
+                  {copy.delete}
+                </AdminButton>
               </div>
             </li>
           ))}
         </ul>
+      )}
+      {deleting && (
+        <ConfirmDialog
+          title={copy.deleteTitle}
+          description={t('moderationConsole.keywordRules.deleteDescription', { keyword: deleting.keyword })}
+          confirmLabel={copy.delete}
+          tone="danger"
+          isPending={save.isPending}
+          onClose={() => {
+            save.reset();
+            setDeleting(null);
+          }}
+          onConfirm={() => save.mutate({ action: 'delete', id: deleting.id })}
+        >
+          <AdminApiError error={save.error} />
+        </ConfirmDialog>
       )}
       <section aria-labelledby="moderation-built-in-rules" className="space-y-2 border-t border-border pt-4">
         <h2 id="moderation-built-in-rules" className="text-sm font-semibold">{copy.builtInHeading}</h2>
