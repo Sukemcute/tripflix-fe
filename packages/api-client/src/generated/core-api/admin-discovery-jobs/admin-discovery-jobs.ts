@@ -22,9 +22,11 @@ import type {
 
 import type {
   AdminDiscoveryJobsControllerListParams,
+  CandidateLimitDto,
   DiscoveryJobsDto,
   JobIntervalDto,
   RunJobDto,
+  SetCandidateLimitRequestDto,
   SetJobIntervalRequestDto,
 } from '../model';
 
@@ -453,4 +455,135 @@ export const useAdminDiscoveryJobsControllerSetInterval = <TError = void, TConte
   TContext
 > => {
   return useMutation(getAdminDiscoveryJobsControllerSetIntervalMutationOptions(options), queryClient);
+};
+export type adminDiscoveryJobsControllerSetCandidateLimitResponse200 = {
+  data: CandidateLimitDto;
+  status: 200;
+};
+
+export type adminDiscoveryJobsControllerSetCandidateLimitResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type adminDiscoveryJobsControllerSetCandidateLimitResponseSuccess =
+  adminDiscoveryJobsControllerSetCandidateLimitResponse200 & {
+    headers: Headers;
+  };
+export type adminDiscoveryJobsControllerSetCandidateLimitResponseError =
+  adminDiscoveryJobsControllerSetCandidateLimitResponse400 & {
+    headers: Headers;
+  };
+
+export type adminDiscoveryJobsControllerSetCandidateLimitResponse =
+  | adminDiscoveryJobsControllerSetCandidateLimitResponseSuccess
+  | adminDiscoveryJobsControllerSetCandidateLimitResponseError;
+
+export const getAdminDiscoveryJobsControllerSetCandidateLimitUrl = () => {
+  return `/api/v1/admin/discovery/jobs/candidate-limit`;
+};
+
+/**
+ * @summary Đặt số ứng viên hot gợi ý for_you xếp mỗi trang đầu; có hiệu lực trong vòng 1 phút, không cần deploy
+ */
+export const adminDiscoveryJobsControllerSetCandidateLimit = async (
+  setCandidateLimitRequestDto: SetCandidateLimitRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<adminDiscoveryJobsControllerSetCandidateLimitResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<adminDiscoveryJobsControllerSetCandidateLimitResponse>(
+    getAdminDiscoveryJobsControllerSetCandidateLimitUrl(),
+    {
+      ...options,
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+      body: JSON.stringify(setCandidateLimitRequestDto),
+    },
+  );
+};
+
+export const getAdminDiscoveryJobsControllerSetCandidateLimitMutationKey = () =>
+  ['adminDiscoveryJobsControllerSetCandidateLimit'] as const;
+
+export const getAdminDiscoveryJobsControllerSetCandidateLimitMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetCandidateLimit>>,
+    TError,
+    AdminDiscoveryJobsControllerSetCandidateLimitMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetCandidateLimit>>,
+  TError,
+  AdminDiscoveryJobsControllerSetCandidateLimitMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminDiscoveryJobsControllerSetCandidateLimitMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetCandidateLimit>>,
+    AdminDiscoveryJobsControllerSetCandidateLimitMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminDiscoveryJobsControllerSetCandidateLimit(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminDiscoveryJobsControllerSetCandidateLimitMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetCandidateLimit>>
+>;
+export type AdminDiscoveryJobsControllerSetCandidateLimitMutationBody = SetCandidateLimitRequestDto;
+export type AdminDiscoveryJobsControllerSetCandidateLimitMutationError = void;
+export type AdminDiscoveryJobsControllerSetCandidateLimitMutationVariables = {
+  data: SetCandidateLimitRequestDto;
+};
+
+/**
+ * @summary Đặt số ứng viên hot gợi ý for_you xếp mỗi trang đầu; có hiệu lực trong vòng 1 phút, không cần deploy
+ */
+export const useAdminDiscoveryJobsControllerSetCandidateLimit = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetCandidateLimit>>,
+      TError,
+      AdminDiscoveryJobsControllerSetCandidateLimitMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerSetCandidateLimit>>,
+  TError,
+  AdminDiscoveryJobsControllerSetCandidateLimitMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminDiscoveryJobsControllerSetCandidateLimitMutationOptions(options), queryClient);
 };
