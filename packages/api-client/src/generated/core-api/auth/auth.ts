@@ -307,6 +307,143 @@ export function useAuthControllerPasswordKey<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export type authControllerAdminPasswordKeyResponse200 = {
+  data: PasswordKeyDto;
+  status: 200;
+};
+
+export type authControllerAdminPasswordKeyResponse503 = {
+  data: void;
+  status: 503;
+};
+
+export type authControllerAdminPasswordKeyResponseSuccess = authControllerAdminPasswordKeyResponse200 & {
+  headers: Headers;
+};
+export type authControllerAdminPasswordKeyResponseError = authControllerAdminPasswordKeyResponse503 & {
+  headers: Headers;
+};
+
+export type authControllerAdminPasswordKeyResponse =
+  authControllerAdminPasswordKeyResponseSuccess | authControllerAdminPasswordKeyResponseError;
+
+export const getAuthControllerAdminPasswordKeyUrl = () => {
+  return `/api/admin/auth/password-key`;
+};
+
+export const authControllerAdminPasswordKey = async (
+  options?: Parameters<typeof http>[1],
+): Promise<authControllerAdminPasswordKeyResponse> => {
+  return http<authControllerAdminPasswordKeyResponse>(getAuthControllerAdminPasswordKeyUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getAuthControllerAdminPasswordKeyQueryKey = () => {
+  return [`/api/admin/auth/password-key`] as const;
+};
+
+export const getAuthControllerAdminPasswordKeyQueryOptions = <
+  TData = Awaited<ReturnType<typeof authControllerAdminPasswordKey>>,
+  TError = void,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerAdminPasswordKey>>, TError, TData>>;
+  request?: SecondParameter<typeof http>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAuthControllerAdminPasswordKeyQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof authControllerAdminPasswordKey>>> = ({ signal }) =>
+    authControllerAdminPasswordKey({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof authControllerAdminPasswordKey>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AuthControllerAdminPasswordKeyQueryResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerAdminPasswordKey>>
+>;
+export type AuthControllerAdminPasswordKeyQueryError = void;
+
+export function useAuthControllerAdminPasswordKey<
+  TData = Awaited<ReturnType<typeof authControllerAdminPasswordKey>>,
+  TError = void,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof authControllerAdminPasswordKey>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof authControllerAdminPasswordKey>>,
+          TError,
+          Awaited<ReturnType<typeof authControllerAdminPasswordKey>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAuthControllerAdminPasswordKey<
+  TData = Awaited<ReturnType<typeof authControllerAdminPasswordKey>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof authControllerAdminPasswordKey>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof authControllerAdminPasswordKey>>,
+          TError,
+          Awaited<ReturnType<typeof authControllerAdminPasswordKey>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAuthControllerAdminPasswordKey<
+  TData = Awaited<ReturnType<typeof authControllerAdminPasswordKey>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof authControllerAdminPasswordKey>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useAuthControllerAdminPasswordKey<
+  TData = Awaited<ReturnType<typeof authControllerAdminPasswordKey>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof authControllerAdminPasswordKey>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAuthControllerAdminPasswordKeyQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export type authControllerRegisterResponse201 = {
   data: UserDto;
   status: 201;
@@ -627,6 +764,119 @@ export const useAuthControllerLogin = <TError = void, TContext = unknown>(
 > => {
   return useMutation(getAuthControllerLoginMutationOptions(options), queryClient);
 };
+export type authControllerAdminLoginResponse200 = {
+  data: TokenPairDto;
+  status: 200;
+};
+
+export type authControllerAdminLoginResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type authControllerAdminLoginResponseSuccess = authControllerAdminLoginResponse200 & {
+  headers: Headers;
+};
+export type authControllerAdminLoginResponseError = authControllerAdminLoginResponse403 & {
+  headers: Headers;
+};
+
+export type authControllerAdminLoginResponse =
+  authControllerAdminLoginResponseSuccess | authControllerAdminLoginResponseError;
+
+export const getAuthControllerAdminLoginUrl = () => {
+  return `/api/admin/auth/login`;
+};
+
+export const authControllerAdminLogin = async (
+  loginDto: LoginDto,
+  options?: Parameters<typeof http>[1],
+): Promise<authControllerAdminLoginResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<authControllerAdminLoginResponse>(getAuthControllerAdminLoginUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(loginDto),
+  });
+};
+
+export const getAuthControllerAdminLoginMutationKey = () => ['authControllerAdminLogin'] as const;
+
+export const getAuthControllerAdminLoginMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerAdminLogin>>,
+    TError,
+    AuthControllerAdminLoginMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authControllerAdminLogin>>,
+  TError,
+  AuthControllerAdminLoginMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAuthControllerAdminLoginMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authControllerAdminLogin>>,
+    AuthControllerAdminLoginMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return authControllerAdminLogin(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerAdminLoginMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerAdminLogin>>
+>;
+export type AuthControllerAdminLoginMutationBody = LoginDto;
+export type AuthControllerAdminLoginMutationError = void;
+export type AuthControllerAdminLoginMutationVariables = { data: LoginDto };
+
+export const useAuthControllerAdminLogin = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerAdminLogin>>,
+      TError,
+      AuthControllerAdminLoginMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authControllerAdminLogin>>,
+  TError,
+  AuthControllerAdminLoginMutationVariables,
+  TContext
+> => {
+  return useMutation(getAuthControllerAdminLoginMutationOptions(options), queryClient);
+};
 export type authControllerLoginWithGoogleResponse200 = {
   data: TokenPairDto;
   status: 200;
@@ -867,6 +1117,84 @@ export const useAuthControllerRefresh = <TError = void, TContext = unknown>(
 > => {
   return useMutation(getAuthControllerRefreshMutationOptions(options), queryClient);
 };
+export type authControllerAdminRefreshResponse200 = {
+  data: TokenPairDto;
+  status: 200;
+};
+
+export type authControllerAdminRefreshResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type authControllerAdminRefreshResponseSuccess = authControllerAdminRefreshResponse200 & {
+  headers: Headers;
+};
+export type authControllerAdminRefreshResponseError = authControllerAdminRefreshResponse403 & {
+  headers: Headers;
+};
+
+export type authControllerAdminRefreshResponse =
+  authControllerAdminRefreshResponseSuccess | authControllerAdminRefreshResponseError;
+
+export const getAuthControllerAdminRefreshUrl = () => {
+  return `/api/admin/auth/refresh`;
+};
+
+export const authControllerAdminRefresh = async (
+  options?: Parameters<typeof http>[1],
+): Promise<authControllerAdminRefreshResponse> => {
+  return http<authControllerAdminRefreshResponse>(getAuthControllerAdminRefreshUrl(), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getAuthControllerAdminRefreshMutationKey = () => ['authControllerAdminRefresh'] as const;
+
+export const getAuthControllerAdminRefreshMutationOptions = <TError = void, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerAdminRefresh>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<Awaited<ReturnType<typeof authControllerAdminRefresh>>, TError, void, TContext> => {
+  const mutationKey = getAuthControllerAdminRefreshMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof authControllerAdminRefresh>>, void> = () => {
+    return authControllerAdminRefresh(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerAdminRefreshMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerAdminRefresh>>
+>;
+
+export type AuthControllerAdminRefreshMutationError = void;
+
+export const useAuthControllerAdminRefresh = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerAdminRefresh>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof authControllerAdminRefresh>>, TError, void, TContext> => {
+  return useMutation(getAuthControllerAdminRefreshMutationOptions(options), queryClient);
+};
 export type authControllerCreateAdminHandoffResponse200 = {
   data: AdminHandoffDto;
   status: 200;
@@ -1081,6 +1409,125 @@ export const useAuthControllerExchangeAdminHandoff = <TError = void, TContext = 
 > => {
   return useMutation(getAuthControllerExchangeAdminHandoffMutationOptions(options), queryClient);
 };
+export type authControllerAdminExchangeHandoffResponse200 = {
+  data: TokenPairDto;
+  status: 200;
+};
+
+export type authControllerAdminExchangeHandoffResponse403 = {
+  data: void;
+  status: 403;
+};
+
+export type authControllerAdminExchangeHandoffResponseSuccess =
+  authControllerAdminExchangeHandoffResponse200 & {
+    headers: Headers;
+  };
+export type authControllerAdminExchangeHandoffResponseError =
+  authControllerAdminExchangeHandoffResponse403 & {
+    headers: Headers;
+  };
+
+export type authControllerAdminExchangeHandoffResponse =
+  authControllerAdminExchangeHandoffResponseSuccess | authControllerAdminExchangeHandoffResponseError;
+
+export const getAuthControllerAdminExchangeHandoffUrl = () => {
+  return `/api/admin/auth/handoff/exchange`;
+};
+
+export const authControllerAdminExchangeHandoff = async (
+  adminHandoffExchangeDto: AdminHandoffExchangeDto,
+  options?: Parameters<typeof http>[1],
+): Promise<authControllerAdminExchangeHandoffResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<authControllerAdminExchangeHandoffResponse>(getAuthControllerAdminExchangeHandoffUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(adminHandoffExchangeDto),
+  });
+};
+
+export const getAuthControllerAdminExchangeHandoffMutationKey = () =>
+  ['authControllerAdminExchangeHandoff'] as const;
+
+export const getAuthControllerAdminExchangeHandoffMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerAdminExchangeHandoff>>,
+    TError,
+    AuthControllerAdminExchangeHandoffMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof authControllerAdminExchangeHandoff>>,
+  TError,
+  AuthControllerAdminExchangeHandoffMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAuthControllerAdminExchangeHandoffMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof authControllerAdminExchangeHandoff>>,
+    AuthControllerAdminExchangeHandoffMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return authControllerAdminExchangeHandoff(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerAdminExchangeHandoffMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerAdminExchangeHandoff>>
+>;
+export type AuthControllerAdminExchangeHandoffMutationBody = AdminHandoffExchangeDto;
+export type AuthControllerAdminExchangeHandoffMutationError = void;
+export type AuthControllerAdminExchangeHandoffMutationVariables = { data: AdminHandoffExchangeDto };
+
+export const useAuthControllerAdminExchangeHandoff = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerAdminExchangeHandoff>>,
+      TError,
+      AuthControllerAdminExchangeHandoffMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof authControllerAdminExchangeHandoff>>,
+  TError,
+  AuthControllerAdminExchangeHandoffMutationVariables,
+  TContext
+> => {
+  return useMutation(getAuthControllerAdminExchangeHandoffMutationOptions(options), queryClient);
+};
 export type authControllerLogoutResponse204 = {
   data: void;
   status: 204;
@@ -1138,6 +1585,74 @@ export const useAuthControllerLogout = <TError = unknown, TContext = unknown>(
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof authControllerLogout>>, TError, void, TContext> => {
   return useMutation(getAuthControllerLogoutMutationOptions(options), queryClient);
+};
+export type authControllerAdminLogoutResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type authControllerAdminLogoutResponseSuccess = authControllerAdminLogoutResponse204 & {
+  headers: Headers;
+};
+export type authControllerAdminLogoutResponse = authControllerAdminLogoutResponseSuccess;
+
+export const getAuthControllerAdminLogoutUrl = () => {
+  return `/api/admin/auth/logout`;
+};
+
+export const authControllerAdminLogout = async (
+  options?: Parameters<typeof http>[1],
+): Promise<authControllerAdminLogoutResponse> => {
+  return http<authControllerAdminLogoutResponse>(getAuthControllerAdminLogoutUrl(), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getAuthControllerAdminLogoutMutationKey = () => ['authControllerAdminLogout'] as const;
+
+export const getAuthControllerAdminLogoutMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof authControllerAdminLogout>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<Awaited<ReturnType<typeof authControllerAdminLogout>>, TError, void, TContext> => {
+  const mutationKey = getAuthControllerAdminLogoutMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof authControllerAdminLogout>>, void> = () => {
+    return authControllerAdminLogout(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AuthControllerAdminLogoutMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authControllerAdminLogout>>
+>;
+
+export type AuthControllerAdminLogoutMutationError = unknown;
+
+export const useAuthControllerAdminLogout = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof authControllerAdminLogout>>,
+      TError,
+      void,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof authControllerAdminLogout>>, TError, void, TContext> => {
+  return useMutation(getAuthControllerAdminLogoutMutationOptions(options), queryClient);
 };
 export type authControllerGetMeResponse200 = {
   data: MyProfileDto;

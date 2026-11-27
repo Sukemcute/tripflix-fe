@@ -32,7 +32,7 @@ it('đổi mã một lần lấy phiên admin: gửi Origin admin, chế độ w
   expect(response.status).toBe(204);
   expect(response.headers.get('set-cookie')).toMatch(/tripflix-admin=[^;]+;.*HttpOnly/i);
   const [url, init] = fetchMock.mock.calls[0]!;
-  expect(String(url)).toMatch(/\/api\/auth\/admin-handoff\/exchange$/);
+  expect(String(url)).toMatch(/\/api\/admin\/auth\/handoff\/exchange$/);
   expect(JSON.parse(String(init!.body))).toEqual({ code: 'handoff-code' });
   const headers = new Headers(init!.headers);
   expect(headers.get('origin')).toBe(ADMIN_ORIGIN);
@@ -56,7 +56,7 @@ it('không phải nhân viên: thu hồi phiên vừa tạo, không đặt cooki
 
   expect(response.status).toBe(403);
   expect(response.headers.get('set-cookie')).toBeNull();
-  expect(String(fetchMock.mock.calls[2]![0])).toMatch(/\/api\/auth\/logout$/);
+  expect(String(fetchMock.mock.calls[2]![0])).toMatch(/\/api\/admin\/auth\/logout$/);
 });
 
 it('body đổi mã sai dạng thì 400, không gọi core', async () => {
@@ -69,7 +69,7 @@ it('body đổi mã sai dạng thì 400, không gọi core', async () => {
 it('phiên làm việc stateless (SEC-02): không bị trần cứng 1000 session gây DoS 503', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input: unknown) => {
     const url = String(input);
-    if (url.endsWith('/api/auth/login')) {
+    if (url.endsWith('/api/admin/auth/login')) {
       return json(200, { accessToken: 'access-ok', tokenType: 'Bearer', expiresIn: 900 }, {
         'set-cookie': 'tripflix_refresh=secret; Path=/api/auth; HttpOnly',
       });

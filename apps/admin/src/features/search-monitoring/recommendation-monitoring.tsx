@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getHomeRecommendations } from '@tripflix/api-client';
+import { homeRecommendationsControllerMonitorHomeRecommendations } from '@tripflix/api-client/core-api/discovery/discovery';
 import { vi } from '@tripflix/i18n';
 import { AdminButton } from '@/ui/button';
 import { AdminApiError } from '../shell/api-state';
@@ -21,7 +21,11 @@ export function RecommendationMonitoring() {
     refetchOnWindowFocus: false,
     queryFn: async ({ signal }) => {
       const started = performance.now();
-      const items = await getHomeRecommendations(request, signal);
+      const { data } = await homeRecommendationsControllerMonitorHomeRecommendations({
+        limit: request.limit,
+        recentPlaceIds: request.recentPlaceIds.join(',') || undefined,
+      }, { signal });
+      const items = data?.items ?? [];
       return { items, elapsedMs: Math.round(performance.now() - started), receivedAt: Date.now(), request };
     },
   });

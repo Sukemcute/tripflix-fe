@@ -235,6 +235,7 @@ const traceColumns: DataColumn<TraceRow>[] = [
 export function AnalyticsWorkspace() {
   const [range, setRange] = useState<Range>('1h');
   const [service, setService] = useState('');
+  const [audience, setAudience] = useState<'' | 'admin' | 'user'>('');
   const [tab, setTab] = useState<TabId>('overview');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [errorsOnly, setErrorsOnly] = useState(false);
@@ -250,16 +251,20 @@ export function AnalyticsWorkspace() {
   } = useDetailParam();
   const interval = autoRefresh ? 30_000 : false;
   const overview = useQuery({
-    queryKey: ['analytics', 'overview', range, service],
+    queryKey: ['analytics', 'overview', range, service, audience],
     queryFn: async ({ signal }) =>
-      (await observabilityControllerGetOverview({ range, ...(service ? { service } : {}) }, { signal })).data,
+      (await observabilityControllerGetOverview({
+        range,
+        ...(service ? { service } : {}),
+        ...(audience ? { audience } : {}),
+      }, { signal })).data,
     refetchInterval: interval,
     refetchIntervalInBackground: false,
     retry: false,
   });
   // Keep the service picker complete when the main query is narrowed to one service.
   const catalog = useQuery({
-    queryKey: ['analytics', 'overview', range, ''],
+    queryKey: ['analytics', 'overview', range, '', ''],
     enabled: !!service,
     queryFn: async ({ signal }) => (await observabilityControllerGetOverview({ range }, { signal })).data,
     refetchInterval: interval,
@@ -348,6 +353,18 @@ export function AnalyticsWorkspace() {
             clearTrace();
           }}
         />
+        {tab === 'overview' && (
+          <SelectField
+            label={copy.audience}
+            value={audience}
+            allLabel={copy.allAudiences}
+            options={[
+              { value: 'user', label: copy.userAudience },
+              { value: 'admin', label: copy.adminAudience },
+            ]}
+            onChange={(value) => setAudience(value === 'admin' || value === 'user' ? value : '')}
+          />
+        )}
         <label className={checkbox}>
           <input
             type="checkbox"
@@ -398,8 +415,8 @@ export function AnalyticsWorkspace() {
                 },
               ]}
             />
-            {overviewData?.metricsSource.status === 'ready' && !overviewData.services.length && (
-              <Notice title={copy.noData}>{copy.warmup}</Notice>
+            {overviewData?.metricsSource.status === 'ready' && summary?.requests === null && (
+              <Notice title={copy.noData}>{audience ? copy.audienceNoData : copy.warmup}</Notice>
             )}
             <div className="grid gap-4 xl:grid-cols-2">
               <MetricChart

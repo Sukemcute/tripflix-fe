@@ -23,6 +23,7 @@ import type {
 import type {
   ExploreRequestDto,
   ExploreResponseDto,
+  HomeRecommendationsControllerMonitorHomeRecommendationsParams,
   HomeRecommendationsControllerRecommendForHomeParams,
   HomeRecommendationsDto,
   PlacesControllerPlacesParams,
@@ -793,6 +794,220 @@ export const useExploreControllerSearchPosts = <TError = void, TContext = unknow
 > => {
   return useMutation(getExploreControllerSearchPostsMutationOptions(options), queryClient);
 };
+export type exploreControllerMonitorSearchResponse200 = {
+  data: ExploreResponseDto;
+  status: 200;
+};
+
+export type exploreControllerMonitorSearchResponseSuccess = exploreControllerMonitorSearchResponse200 & {
+  headers: Headers;
+};
+export type exploreControllerMonitorSearchResponse = exploreControllerMonitorSearchResponseSuccess;
+
+export const getExploreControllerMonitorSearchUrl = () => {
+  return `/api/admin/search`;
+};
+
+export const exploreControllerMonitorSearch = async (
+  exploreRequestDto: ExploreRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<exploreControllerMonitorSearchResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<exploreControllerMonitorSearchResponse>(getExploreControllerMonitorSearchUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(exploreRequestDto),
+  });
+};
+
+export const getExploreControllerMonitorSearchMutationKey = () => ['exploreControllerMonitorSearch'] as const;
+
+export const getExploreControllerMonitorSearchMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof exploreControllerMonitorSearch>>,
+    TError,
+    ExploreControllerMonitorSearchMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof exploreControllerMonitorSearch>>,
+  TError,
+  ExploreControllerMonitorSearchMutationVariables,
+  TContext
+> => {
+  const mutationKey = getExploreControllerMonitorSearchMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof exploreControllerMonitorSearch>>,
+    ExploreControllerMonitorSearchMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return exploreControllerMonitorSearch(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ExploreControllerMonitorSearchMutationResult = NonNullable<
+  Awaited<ReturnType<typeof exploreControllerMonitorSearch>>
+>;
+export type ExploreControllerMonitorSearchMutationBody = ExploreRequestDto;
+export type ExploreControllerMonitorSearchMutationError = unknown;
+export type ExploreControllerMonitorSearchMutationVariables = { data: ExploreRequestDto };
+
+export const useExploreControllerMonitorSearch = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof exploreControllerMonitorSearch>>,
+      TError,
+      ExploreControllerMonitorSearchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof exploreControllerMonitorSearch>>,
+  TError,
+  ExploreControllerMonitorSearchMutationVariables,
+  TContext
+> => {
+  return useMutation(getExploreControllerMonitorSearchMutationOptions(options), queryClient);
+};
+export type exploreControllerMonitorSearchPostsResponse200 = {
+  data: SearchPostsResponseDto;
+  status: 200;
+};
+
+export type exploreControllerMonitorSearchPostsResponseSuccess =
+  exploreControllerMonitorSearchPostsResponse200 & {
+    headers: Headers;
+  };
+export type exploreControllerMonitorSearchPostsResponse = exploreControllerMonitorSearchPostsResponseSuccess;
+
+export const getExploreControllerMonitorSearchPostsUrl = () => {
+  return `/api/admin/search/posts`;
+};
+
+export const exploreControllerMonitorSearchPosts = async (
+  searchPostsRequestDto: SearchPostsRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<exploreControllerMonitorSearchPostsResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<exploreControllerMonitorSearchPostsResponse>(getExploreControllerMonitorSearchPostsUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(searchPostsRequestDto),
+  });
+};
+
+export const getExploreControllerMonitorSearchPostsMutationKey = () =>
+  ['exploreControllerMonitorSearchPosts'] as const;
+
+export const getExploreControllerMonitorSearchPostsMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof exploreControllerMonitorSearchPosts>>,
+    TError,
+    ExploreControllerMonitorSearchPostsMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof exploreControllerMonitorSearchPosts>>,
+  TError,
+  ExploreControllerMonitorSearchPostsMutationVariables,
+  TContext
+> => {
+  const mutationKey = getExploreControllerMonitorSearchPostsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof exploreControllerMonitorSearchPosts>>,
+    ExploreControllerMonitorSearchPostsMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return exploreControllerMonitorSearchPosts(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ExploreControllerMonitorSearchPostsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof exploreControllerMonitorSearchPosts>>
+>;
+export type ExploreControllerMonitorSearchPostsMutationBody = SearchPostsRequestDto;
+export type ExploreControllerMonitorSearchPostsMutationError = unknown;
+export type ExploreControllerMonitorSearchPostsMutationVariables = { data: SearchPostsRequestDto };
+
+export const useExploreControllerMonitorSearchPosts = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof exploreControllerMonitorSearchPosts>>,
+      TError,
+      ExploreControllerMonitorSearchPostsMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof exploreControllerMonitorSearchPosts>>,
+  TError,
+  ExploreControllerMonitorSearchPostsMutationVariables,
+  TContext
+> => {
+  return useMutation(getExploreControllerMonitorSearchPostsMutationOptions(options), queryClient);
+};
 export type exploreControllerSearchPlacesResponse200 = {
   data: SearchPlacesResponseDto;
   status: 200;
@@ -1111,6 +1326,190 @@ export function useHomeRecommendationsControllerRecommendForHome<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getHomeRecommendationsControllerRecommendForHomeQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type homeRecommendationsControllerMonitorHomeRecommendationsResponse200 = {
+  data: HomeRecommendationsDto;
+  status: 200;
+};
+
+export type homeRecommendationsControllerMonitorHomeRecommendationsResponseSuccess =
+  homeRecommendationsControllerMonitorHomeRecommendationsResponse200 & {
+    headers: Headers;
+  };
+export type homeRecommendationsControllerMonitorHomeRecommendationsResponse =
+  homeRecommendationsControllerMonitorHomeRecommendationsResponseSuccess;
+
+export const getHomeRecommendationsControllerMonitorHomeRecommendationsUrl = (
+  params?: HomeRecommendationsControllerMonitorHomeRecommendationsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/recommendations/home?${stringifiedParams}`
+    : `/api/admin/recommendations/home`;
+};
+
+export const homeRecommendationsControllerMonitorHomeRecommendations = async (
+  params?: HomeRecommendationsControllerMonitorHomeRecommendationsParams,
+  options?: Parameters<typeof http>[1],
+): Promise<homeRecommendationsControllerMonitorHomeRecommendationsResponse> => {
+  return http<homeRecommendationsControllerMonitorHomeRecommendationsResponse>(
+    getHomeRecommendationsControllerMonitorHomeRecommendationsUrl(params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getHomeRecommendationsControllerMonitorHomeRecommendationsQueryKey = (
+  params?: HomeRecommendationsControllerMonitorHomeRecommendationsParams,
+) => {
+  return [`/api/admin/recommendations/home`, ...(params ? [params] : [])] as const;
+};
+
+export const getHomeRecommendationsControllerMonitorHomeRecommendationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+  TError = unknown,
+>(
+  params?: HomeRecommendationsControllerMonitorHomeRecommendationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getHomeRecommendationsControllerMonitorHomeRecommendationsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>
+  > = ({ signal }) =>
+    homeRecommendationsControllerMonitorHomeRecommendations(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type HomeRecommendationsControllerMonitorHomeRecommendationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>
+>;
+export type HomeRecommendationsControllerMonitorHomeRecommendationsQueryError = unknown;
+
+export function useHomeRecommendationsControllerMonitorHomeRecommendations<
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+  TError = unknown,
+>(
+  params: undefined | HomeRecommendationsControllerMonitorHomeRecommendationsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+          TError,
+          Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useHomeRecommendationsControllerMonitorHomeRecommendations<
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+  TError = unknown,
+>(
+  params?: HomeRecommendationsControllerMonitorHomeRecommendationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+          TError,
+          Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useHomeRecommendationsControllerMonitorHomeRecommendations<
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+  TError = unknown,
+>(
+  params?: HomeRecommendationsControllerMonitorHomeRecommendationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useHomeRecommendationsControllerMonitorHomeRecommendations<
+  TData = Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+  TError = unknown,
+>(
+  params?: HomeRecommendationsControllerMonitorHomeRecommendationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof homeRecommendationsControllerMonitorHomeRecommendations>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getHomeRecommendationsControllerMonitorHomeRecommendationsQueryOptions(
+    params,
+    options,
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
