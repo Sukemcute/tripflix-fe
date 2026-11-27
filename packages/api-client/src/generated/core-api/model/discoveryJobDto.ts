@@ -7,6 +7,7 @@
 import type { DiscoveryJobDtoGroup } from './discoveryJobDtoGroup';
 import type { DiscoveryJobDtoJob } from './discoveryJobDtoJob';
 import type { JobRunDto } from './jobRunDto';
+import type { JobStopDto } from './jobStopDto';
 
 export interface DiscoveryJobDto {
   job: DiscoveryJobDtoJob;
@@ -27,4 +28,9 @@ export interface DiscoveryJobDto {
   isRunning: boolean;
   /** 20 lần chạy gần nhất, mới nhất trước */
   runs: JobRunDto[];
+  /**
+   * Đang tạm dừng (dừng khẩn cấp); null = chạy bình thường
+   * @nullable
+   */
+  pause: JobStopDto | null;
 }

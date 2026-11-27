@@ -28,6 +28,8 @@ import type {
   RunJobDto,
   SetCandidateLimitRequestDto,
   SetJobIntervalRequestDto,
+  StopJobDto,
+  StopJobRequestDto,
 } from '../model';
 
 import { http } from '../../../http';
@@ -314,6 +316,254 @@ export const useAdminDiscoveryJobsControllerRun = <TError = void, TContext = unk
   TContext
 > => {
   return useMutation(getAdminDiscoveryJobsControllerRunMutationOptions(options), queryClient);
+};
+export type adminDiscoveryJobsControllerStopResponse200 = {
+  data: StopJobDto;
+  status: 200;
+};
+
+export type adminDiscoveryJobsControllerStopResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type adminDiscoveryJobsControllerStopResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type adminDiscoveryJobsControllerStopResponseSuccess = adminDiscoveryJobsControllerStopResponse200 & {
+  headers: Headers;
+};
+export type adminDiscoveryJobsControllerStopResponseError = (
+  adminDiscoveryJobsControllerStopResponse400 | adminDiscoveryJobsControllerStopResponse404
+) & {
+  headers: Headers;
+};
+
+export type adminDiscoveryJobsControllerStopResponse =
+  adminDiscoveryJobsControllerStopResponseSuccess | adminDiscoveryJobsControllerStopResponseError;
+
+export const getAdminDiscoveryJobsControllerStopUrl = (
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',
+) => {
+  return `/api/v1/admin/discovery/jobs/${job}/stop`;
+};
+
+/**
+ * Lượt đang chạy (ở bất kỳ process nào) dừng trong vòng vài giây, tại điểm dừng an toàn kế tiếp; phần đã ghi trước đó giữ nguyên. Job không tự chạy và không chạy tay được tới khi gọi …/resume. Gọi lại khi đã dừng chỉ cập nhật lý do.
+ * @summary Dừng khẩn cấp: tạm dừng lịch và báo lượt đang chạy dừng lại
+ */
+export const adminDiscoveryJobsControllerStop = async (
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',
+  stopJobRequestDto: StopJobRequestDto,
+  options?: Parameters<typeof http>[1],
+): Promise<adminDiscoveryJobsControllerStopResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return http<adminDiscoveryJobsControllerStopResponse>(getAdminDiscoveryJobsControllerStopUrl(job), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(stopJobRequestDto),
+  });
+};
+
+export const getAdminDiscoveryJobsControllerStopMutationKey = () =>
+  ['adminDiscoveryJobsControllerStop'] as const;
+
+export const getAdminDiscoveryJobsControllerStopMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerStop>>,
+    TError,
+    AdminDiscoveryJobsControllerStopMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerStop>>,
+  TError,
+  AdminDiscoveryJobsControllerStopMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminDiscoveryJobsControllerStopMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerStop>>,
+    AdminDiscoveryJobsControllerStopMutationVariables
+  > = (props) => {
+    const { job, data } = props ?? {};
+
+    return adminDiscoveryJobsControllerStop(job, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminDiscoveryJobsControllerStopMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerStop>>
+>;
+export type AdminDiscoveryJobsControllerStopMutationBody = StopJobRequestDto;
+export type AdminDiscoveryJobsControllerStopMutationError = void;
+export type AdminDiscoveryJobsControllerStopMutationVariables = {
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge';
+  data: StopJobRequestDto;
+};
+
+/**
+ * @summary Dừng khẩn cấp: tạm dừng lịch và báo lượt đang chạy dừng lại
+ */
+export const useAdminDiscoveryJobsControllerStop = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminDiscoveryJobsControllerStop>>,
+      TError,
+      AdminDiscoveryJobsControllerStopMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerStop>>,
+  TError,
+  AdminDiscoveryJobsControllerStopMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminDiscoveryJobsControllerStopMutationOptions(options), queryClient);
+};
+export type adminDiscoveryJobsControllerResumeResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type adminDiscoveryJobsControllerResumeResponse404 = {
+  data: void;
+  status: 404;
+};
+
+export type adminDiscoveryJobsControllerResumeResponseSuccess =
+  adminDiscoveryJobsControllerResumeResponse204 & {
+    headers: Headers;
+  };
+export type adminDiscoveryJobsControllerResumeResponseError =
+  adminDiscoveryJobsControllerResumeResponse404 & {
+    headers: Headers;
+  };
+
+export type adminDiscoveryJobsControllerResumeResponse =
+  adminDiscoveryJobsControllerResumeResponseSuccess | adminDiscoveryJobsControllerResumeResponseError;
+
+export const getAdminDiscoveryJobsControllerResumeUrl = (
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',
+) => {
+  return `/api/v1/admin/discovery/jobs/${job}/resume`;
+};
+
+/**
+ * @summary Tiếp tục lịch sau khi dừng khẩn cấp; lượt kế tiếp chạy theo chu kỳ như thường (muốn ngay thì bấm Chạy ngay)
+ */
+export const adminDiscoveryJobsControllerResume = async (
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge',
+  options?: Parameters<typeof http>[1],
+): Promise<adminDiscoveryJobsControllerResumeResponse> => {
+  return http<adminDiscoveryJobsControllerResumeResponse>(getAdminDiscoveryJobsControllerResumeUrl(job), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getAdminDiscoveryJobsControllerResumeMutationKey = () =>
+  ['adminDiscoveryJobsControllerResume'] as const;
+
+export const getAdminDiscoveryJobsControllerResumeMutationOptions = <
+  TError = void,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerResume>>,
+    TError,
+    AdminDiscoveryJobsControllerResumeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerResume>>,
+  TError,
+  AdminDiscoveryJobsControllerResumeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminDiscoveryJobsControllerResumeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDiscoveryJobsControllerResume>>,
+    AdminDiscoveryJobsControllerResumeMutationVariables
+  > = (props) => {
+    const { job } = props ?? {};
+
+    return adminDiscoveryJobsControllerResume(job, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminDiscoveryJobsControllerResumeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerResume>>
+>;
+
+export type AdminDiscoveryJobsControllerResumeMutationError = void;
+export type AdminDiscoveryJobsControllerResumeMutationVariables = {
+  job: 'explore' | 'suggest' | 'recommend_build' | 'recommend_purge';
+};
+
+/**
+ * @summary Tiếp tục lịch sau khi dừng khẩn cấp; lượt kế tiếp chạy theo chu kỳ như thường (muốn ngay thì bấm Chạy ngay)
+ */
+export const useAdminDiscoveryJobsControllerResume = <TError = void, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminDiscoveryJobsControllerResume>>,
+      TError,
+      AdminDiscoveryJobsControllerResumeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminDiscoveryJobsControllerResume>>,
+  TError,
+  AdminDiscoveryJobsControllerResumeMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminDiscoveryJobsControllerResumeMutationOptions(options), queryClient);
 };
 export type adminDiscoveryJobsControllerSetIntervalResponse200 = {
   data: JobIntervalDto;

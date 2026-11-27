@@ -9,7 +9,7 @@ import type { RunJobDtoReason } from './runJobDtoReason';
 export interface RunJobDto {
   accepted: boolean;
   /**
-   * 'running': job đang chạy, không chạy chồng
+   * 'running': job đang chạy, không chạy chồng; 'paused': job đang tạm dừng
    * @nullable
    */
   reason: RunJobDtoReason;

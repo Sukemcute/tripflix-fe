@@ -6,11 +6,12 @@
  */
 
 /**
- * 'running': job đang chạy, không chạy chồng
+ * 'running': job đang chạy, không chạy chồng; 'paused': job đang tạm dừng
  * @nullable
  */
 export type RunJobDtoReason = (typeof RunJobDtoReason)[keyof typeof RunJobDtoReason] | null;
 
 export const RunJobDtoReason = {
   running: 'running',
+  paused: 'paused',
 } as const;
