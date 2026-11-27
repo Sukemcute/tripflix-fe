@@ -4,6 +4,7 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { CandidateLimitDto } from './candidateLimitDto';
 import type { RecommendAlgoDto } from './recommendAlgoDto';
 import type { RecommendJobStateDto } from './recommendJobStateDto';
 
@@ -14,4 +15,6 @@ export interface RecommendStatsDto {
   usersWithFeatures: number;
   algos: RecommendAlgoDto[];
   jobStates: RecommendJobStateDto[];
+  /** Số ứng viên hot của for_you (chỉnh bằng PUT …/jobs/candidate-limit) */
+  candidateLimit: CandidateLimitDto;
 }

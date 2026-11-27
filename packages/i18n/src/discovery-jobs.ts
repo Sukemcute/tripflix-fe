@@ -74,6 +74,27 @@ export const discoveryJobs = {
     variants: 'Biến thể',
     samples: 'Câu tìm mẫu',
   },
+  candidates: {
+    title: 'Số ứng viên gợi ý for_you',
+    description:
+      'Số bài hot mà ranker {ranker} xếp hạng cho mỗi phiên Reels/for_you. Nhiều hơn thì gợi ý sát gu hơn một chút nhưng tốn CPU hơn, chịu được ít lượt xem cùng lúc hơn.',
+    current: 'Đang dùng',
+    defaultValue: 'Mặc định trong code',
+    overridden: 'Admin đã đặt',
+    isDefault: 'Mặc định',
+    rankTiming: 'Thời gian dựng phiên (p50 · p95)',
+    rankTimingHint: '{samples} phiên gần nhất trên máy chủ trả lời trang này',
+    noSamples: 'Chưa có phiên nào từ lần khởi động hoặc lần đổi gần nhất',
+    label: 'Số ứng viên mới',
+    save: 'Lưu số ứng viên',
+    saving: 'Đang lưu…',
+    reset: 'Về mặc định ({limit})',
+    invalid: 'Số ứng viên phải là số nguyên từ {min} đến {max}.',
+    saved: 'Đã lưu. Có hiệu lực trong vòng 1 phút; số đo thời gian bắt đầu đếm lại.',
+    notTunable: 'Ranker {ranker} không xếp hạng theo số ứng viên nên không chỉnh được.',
+    guide:
+      'Đo ngày 27/11: 1.000 ứng viên giữ 98% điểm top 10 so với 5.000 và chịu tải Reels gấp 2,5 lần. Dưới 1.000 chất lượng tụt rõ.',
+  },
   stats: {
     title: 'Số liệu gợi ý',
     interactionsLast10m: 'Dòng thô nạp trong 10 phút',
