@@ -2,13 +2,14 @@
 
 import { useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getPostSearchResults, readEntity } from '@tripflix/api-client';
-import { exploreControllerSearch } from '@tripflix/api-client/core-api/discovery/discovery';
+import { readEntity } from '@tripflix/api-client';
+import { exploreControllerMonitorSearch, exploreControllerMonitorSearchPosts } from '@tripflix/api-client/core-api/discovery/discovery';
 import type {
   ExploreItemDto,
   ExploreRequestDto,
   ExploreResponseDto,
   SearchPostsRequestDto,
+  SearchPostsResponseDto,
 } from '@tripflix/api-client/core-api/model/index';
 import { vi } from '@tripflix/i18n';
 import { AdminButton } from '@/ui/button';
@@ -113,7 +114,7 @@ export function SearchMonitoring() {
       }
       try {
         if (request.endpoint === 'explore') {
-          const response = await exploreControllerSearch(request.body, { signal });
+          const response = await exploreControllerMonitorSearch(request.body, { signal });
           const data = readEntity(response.data, [
             'understood',
             'sections',
@@ -133,7 +134,10 @@ export function SearchMonitoring() {
             receivedAt: new Date().toISOString(),
           };
         }
-        const data = await getPostSearchResults(request.body, signal);
+        const response = await exploreControllerMonitorSearchPosts(request.body, { signal });
+        const data = readEntity(response.data, [
+          'understood', 'items', 'total', 'nextCursor',
+        ]) as SearchPostsResponseDto;
         recordObservation(data.total, Object.keys(data.understood.fixed).length, []);
         return {
           endpoint: 'posts' as const,
@@ -382,7 +386,7 @@ export function SearchMonitoring() {
                   <p>
                     {copy.received}{' '}
                     {new Date(result.receivedAt).toLocaleString('vi-VN', { timeZone: 'Asia/Bangkok' })} ·{' '}
-                    <code>{result.endpoint === 'explore' ? '/api/search' : '/api/search/posts'}</code>
+                    <code>{result.endpoint === 'explore' ? '/api/admin/search' : '/api/admin/search/posts'}</code>
                   </p>
                 </div>
                 <AdminButton onClick={downloadResult}>

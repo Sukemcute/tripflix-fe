@@ -12,7 +12,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 async function login() {
   const fetch = vi.fn(async (input: URL, _init?: RequestInit) => {
-    if (input.pathname === '/api/auth/login')
+    if (input.pathname === '/api/admin/auth/login')
       return new Response(JSON.stringify({ accessToken: 'fixture-access', expiresIn: 3600 }), {
         headers: {
           'content-type': 'application/json',
@@ -76,4 +76,30 @@ it('keeps AI usage read-only and rejects unrelated analytics paths', async () =>
   );
   expect(unknown.status).toBe(404);
   expect(fetch).not.toHaveBeenCalled();
+});
+
+it('forwards staff discovery routes and rejects the public versions', async () => {
+  const { fetch, cookie } = await login();
+  for (const route of ['search', 'search/posts', 'recommendations/home']) {
+    const method = route.startsWith('search') ? 'POST' : 'GET';
+    const handle = method === 'POST' ? POST : GET;
+    const headers = { origin, cookie };
+    const path = 'admin/' + route;
+    const query = '?limit=4';
+    const response = await handle(
+      new NextRequest(origin + '/bff/api/' + path + query, { method, headers }),
+      context(path),
+    );
+    expect(response.status).toBe(200);
+    expect(fetch.mock.calls.at(-1)![0].pathname).toBe('/api/' + path);
+    expect(fetch.mock.calls.at(-1)![0].search).toBe(query);
+    fetch.mockClear();
+
+    const old = await handle(
+      new NextRequest(origin + '/bff/api/' + route, { method, headers }),
+      context(route),
+    );
+    expect(old.status).toBe(404);
+    expect(fetch).not.toHaveBeenCalled();
+  }
 });

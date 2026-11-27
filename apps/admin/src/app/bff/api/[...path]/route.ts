@@ -177,9 +177,8 @@ function allowed(path: string, method: string) {
   // Hành vi người dùng (SCRUM-177): API tự chặn người không phải superadmin.
   if (method === 'GET' && /^\/api\/analytics\/user-activity(?:\/(?:overview|[0-9a-f-]{36}))?$/i.test(path)) return true;
   if (method === 'GET' && /^\/api\/analytics\/observability(?:\/traces(?:\/[a-f0-9]{32})?)?$/i.test(path)) return true;
-  if (path.startsWith('/api/admin/') || path.startsWith('/api/v1/admin/')) return true;
-  if (method === 'GET') return path === '/api/auth/me' || path === '/api/recommendations/home';
-  return method === 'POST' && (path === '/api/search' || path === '/api/search/posts');
+  return !path.startsWith('/api/admin/auth/') &&
+    (path.startsWith('/api/admin/') || path.startsWith('/api/v1/admin/'));
 }
 
 async function login(request: NextRequest, rawCookie: string | undefined) {
@@ -189,14 +188,14 @@ async function login(request: NextRequest, rawCookie: string | undefined) {
     return reply(400);
   }
   const body = JSON.stringify({ email: data.email, encPassword: data.encPassword });
-  return openSession(request, rawCookie, '/api/auth/login', body);
+  return openSession(request, rawCookie, '/api/admin/auth/login', body);
 }
 
 /** Nút "Mở trang quản trị" bên web: đổi mã một lần (POST /api/auth/admin-handoff) lấy phiên, không đăng nhập lại. */
 async function exchangeHandoff(request: NextRequest, rawCookie: string | undefined) {
   const data = await request.json().catch(() => null);
   if (!data || typeof data.code !== 'string' || Object.keys(data).length !== 1) return reply(400);
-  return openSession(request, rawCookie, '/api/auth/admin-handoff/exchange', JSON.stringify({ code: data.code }));
+  return openSession(request, rawCookie, '/api/admin/auth/handoff/exchange', JSON.stringify({ code: data.code }));
 }
 
 async function openSession(request: NextRequest, rawCookie: string | undefined, path: string, body: string) {
@@ -205,7 +204,7 @@ async function openSession(request: NextRequest, rawCookie: string | undefined, 
   const tokens = await readTokens(response);
   const profile = await upstream(request, '/api/admin/me', { method: 'GET', access: tokens.access });
   if (!profile.ok) {
-    await upstream(request, '/api/auth/logout', { access: tokens.access }).catch(() => undefined);
+    await upstream(request, '/api/admin/auth/logout', { access: tokens.access }).catch(() => undefined);
     return authError(profile);
   }
   await profile.body?.cancel();
@@ -227,7 +226,7 @@ async function openSession(request: NextRequest, rawCookie: string | undefined, 
 }
 
 function refreshUpstream(request: NextRequest, session: Session) {
-  return upstream(request, '/api/auth/refresh', { web: true, cookie: session.refreshCookie, body: '{}' });
+  return upstream(request, '/api/admin/auth/refresh', { web: true, cookie: session.refreshCookie, body: '{}' });
 }
 
 async function refresh(request: NextRequest, session: Session) {
@@ -259,13 +258,13 @@ async function logout(request: NextRequest, session: Session) {
   if (session.closing) return reply(409);
   session.closing = true;
   try {
-    let response = await upstream(request, '/api/auth/logout', { access: session.access });
+    let response = await upstream(request, '/api/admin/auth/logout', { access: session.access });
     if (response.status === 401) {
       const rotated = await refreshUpstream(request, session);
       if (rotated.status === 401) return clearSession();
       if (!rotated.ok) return authError(rotated);
       const newTokens = await readTokens(rotated);
-      response = await upstream(request, '/api/auth/logout', { access: newTokens.access });
+      response = await upstream(request, '/api/admin/auth/logout', { access: newTokens.access });
     }
     if (!response.ok) return authError(response);
     return clearSession();
@@ -288,14 +287,15 @@ async function handle(request: NextRequest, context: RouteContext<'/bff/api/[...
   const session = unsealSession(rawCookie);
   try {
     if (method === 'GET' && path === '/api/auth/password-key') {
-      return forward(await upstream(request, path));
+      return forward(await upstream(request, '/api/admin/auth/password-key'));
     }
     if (method === 'POST' && path === '/api/auth/login') return await login(request, rawCookie);
     if (method === 'POST' && path === '/api/auth/admin-handoff/exchange') return await exchangeHandoff(request, rawCookie);
 
+    const target = method === 'GET' && path === '/api/auth/me' ? '/api/admin/me' : path;
     const isRefresh = method === 'POST' && path === '/api/auth/refresh';
     const isLogout = method === 'POST' && path === '/api/auth/logout';
-    if (!isRefresh && !isLogout && !allowed(path, method)) return reply(404);
+    if (!isRefresh && !isLogout && !allowed(target, method)) return reply(404);
     if (!rawCookie || !session || session.expires <= Date.now()) {
       const result = reply(isLogout ? 204 : 401);
       if (rawCookie) setSessionCookie(result, '', 0);
@@ -318,7 +318,7 @@ async function handle(request: NextRequest, context: RouteContext<'/bff/api/[...
       });
     }
     const body = method === 'GET' || !request.body ? undefined : await request.text();
-    return forward(await upstream(request, path + request.nextUrl.search, { access: session.access, body }));
+    return forward(await upstream(request, target + request.nextUrl.search, { access: session.access, body }));
   } catch {
     return reply(503);
   }

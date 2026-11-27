@@ -4,9 +4,11 @@
  * Tripflix core-api
  * OpenAPI spec version: 0.1.0
  */
+import type { ObservabilityControllerGetOverviewAudience } from './observabilityControllerGetOverviewAudience';
 import type { ObservabilityControllerGetOverviewRange } from './observabilityControllerGetOverviewRange';
 
 export type ObservabilityControllerGetOverviewParams = {
+  audience?: ObservabilityControllerGetOverviewAudience;
   service?: string;
   range?: ObservabilityControllerGetOverviewRange;
 };
