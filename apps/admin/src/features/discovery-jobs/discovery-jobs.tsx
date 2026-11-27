@@ -5,9 +5,11 @@ import { useApiSession } from '@tripflix/api-client';
 import {
   adminDiscoveryJobsControllerList,
   adminDiscoveryJobsControllerRun,
+  adminDiscoveryJobsControllerSetCandidateLimit,
   adminDiscoveryJobsControllerSetInterval,
 } from '@tripflix/api-client/core-api/admin-discovery-jobs/admin-discovery-jobs';
 import type {
+  CandidateLimitDto,
   DiscoveryJobDto,
   DiscoveryJobsDto,
   JobRunDto,
@@ -24,6 +26,7 @@ import { EmptyState, LoadingState } from '@/ui/states';
 import { StatusBadge, type StatusTone } from '@/ui/status-badge';
 import { Panel } from '../shell/operations-ui';
 import { AdminApiError } from '../shell/api-state';
+import { toCandidateLimit } from './candidate-limit';
 import { formatInterval, INTERVAL_PRESET_MINUTES, toIntervalMs } from './interval';
 import { VocabGaps } from './vocab-gaps';
 
@@ -150,6 +153,9 @@ export function DiscoveryJobs({ group }: { group: DiscoveryJobGroup }) {
         );
       })}
 
+      {data?.recommendStats?.candidateLimit && (
+        <CandidateLimitPanel info={data.recommendStats.candidateLimit} canEdit={canRun} queryKey={queryKey} />
+      )}
       {data?.recommendStats && <RecommendStats stats={data.recommendStats} />}
       {group === 'search' && <VocabGaps />}
     </div>
@@ -272,6 +278,124 @@ function IntervalEditor({ job, queryKey }: { job: DiscoveryJobDto; queryKey: str
         <output className="block text-xs text-coral-ink">{copy.interval.invalid}</output>
       )}
       {job.job === 'recommend_build' && <p className="text-xs text-text-muted">{copy.interval.recommendNote}</p>}
+      {notice && <output className="block text-xs text-text-muted">{notice}</output>}
+      {save.isError && <AdminApiError error={save.error} />}
+    </div>
+  );
+}
+
+const formatCount = (n: number) => n.toLocaleString('vi-VN');
+
+function CandidateLimitPanel({
+  info,
+  canEdit,
+  queryKey,
+}: {
+  info: CandidateLimitDto;
+  canEdit: boolean;
+  queryKey: string[];
+}) {
+  const { limit, defaultLimit, rankTiming } = info;
+  const rows: { label: string; value: string; hint?: string }[] = [
+    {
+      label: copy.candidates.current,
+      value:
+        limit === null
+          ? '—'
+          : `${formatCount(limit)} · ${info.isOverridden ? copy.candidates.overridden : copy.candidates.isDefault}`,
+    },
+    { label: copy.candidates.defaultValue, value: defaultLimit === null ? '—' : formatCount(defaultLimit) },
+    rankTiming.samples === 0
+      ? { label: copy.candidates.rankTiming, value: copy.candidates.noSamples }
+      : {
+          label: copy.candidates.rankTiming,
+          value: `${formatDuration(rankTiming.p50Ms)} · ${formatDuration(rankTiming.p95Ms)}`,
+          hint: t('discoveryJobs.candidates.rankTimingHint', { samples: rankTiming.samples }),
+        },
+  ];
+  return (
+    <Panel
+      title={copy.candidates.title}
+      description={t('discoveryJobs.candidates.description', { ranker: info.ranker })}
+    >
+      <dl className="divide-y divide-border text-[13px]">
+        {rows.map((row) => (
+          <div key={row.label} className="flex justify-between gap-4 px-4 py-2.5">
+            <dt className="text-text-muted">{row.label}</dt>
+            <dd className="text-right tabular-nums">
+              {row.value}
+              {row.hint && <span className="block text-xs text-text-muted">{row.hint}</span>}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {limit === null ? (
+        <p className="border-t border-border px-4 py-3 text-xs text-text-muted">
+          {t('discoveryJobs.candidates.notTunable', { ranker: info.ranker })}
+        </p>
+      ) : (
+        canEdit && <CandidateLimitEditor info={info} queryKey={queryKey} />
+      )}
+    </Panel>
+  );
+}
+
+function CandidateLimitEditor({ info, queryKey }: { info: CandidateLimitDto; queryKey: string[] }) {
+  const client = useQueryClient();
+  const [value, setValue] = useState(info.limit === null ? '' : String(info.limit));
+  const [notice, setNotice] = useState('');
+  const save = useMutation({
+    mutationFn: async (limit: number | null) =>
+      (await adminDiscoveryJobsControllerSetCandidateLimit({ limit })).data,
+    onSuccess: (result) => {
+      if (result && 'limit' in result && result.limit !== null) setValue(String(result.limit));
+      setNotice(copy.candidates.saved);
+    },
+    onSettled: () => client.invalidateQueries({ queryKey }),
+  });
+  const limit = toCandidateLimit(value, info);
+
+  return (
+    <div className="space-y-2 border-t border-border px-4 py-3">
+      <form
+        className="flex flex-wrap items-end gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (limit !== null) save.mutate(limit);
+        }}
+      >
+        <div className="w-48">
+          <TextField
+            label={copy.candidates.label}
+            type="number"
+            min={info.min}
+            max={info.max}
+            step={100}
+            required
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+          />
+        </div>
+        <AdminButton
+          type="submit"
+          size="lg"
+          variant="primary"
+          disabled={save.isPending || limit === null || limit === info.limit}
+        >
+          {save.isPending ? copy.candidates.saving : copy.candidates.save}
+        </AdminButton>
+        {info.isOverridden && info.defaultLimit !== null && (
+          <AdminButton size="lg" disabled={save.isPending} onClick={() => save.mutate(null)}>
+            {t('discoveryJobs.candidates.reset', { limit: formatCount(info.defaultLimit) })}
+          </AdminButton>
+        )}
+      </form>
+      {value !== '' && limit === null && (
+        <output className="block text-xs text-coral-ink">
+          {t('discoveryJobs.candidates.invalid', { min: formatCount(info.min), max: formatCount(info.max) })}
+        </output>
+      )}
+      <p className="text-xs text-text-muted">{copy.candidates.guide}</p>
       {notice && <output className="block text-xs text-text-muted">{notice}</output>}
       {save.isError && <AdminApiError error={save.error} />}
     </div>
