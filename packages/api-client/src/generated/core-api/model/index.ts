@@ -88,6 +88,7 @@ export * from './avatarDecorResponseDto';
 export * from './avatarStickerDto';
 export * from './bookmarksControllerListMyBookmarksParams';
 export * from './bookmarksControllerListMyBookmarksPostType';
+export * from './builtInModerationRuleDto';
 export * from './calendarDayDto';
 export * from './cancelHoldResultDto';
 export * from './cancelHoldResultDtoStatus';
