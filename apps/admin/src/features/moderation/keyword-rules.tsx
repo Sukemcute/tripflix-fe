@@ -5,6 +5,7 @@ import { HttpError } from '@tripflix/api-client';
 import {
   adminModerationKeywordRulesControllerCreate,
   adminModerationKeywordRulesControllerList,
+  adminModerationKeywordRulesControllerListBuiltIn,
   adminModerationKeywordRulesControllerUpdate,
 } from '@tripflix/api-client/core-api/moderation-admin/moderation-admin';
 import type { ModerationKeywordRuleDto } from '@tripflix/api-client/core-api/model/index';
@@ -17,6 +18,7 @@ import { AdminApiError } from '../shell/api-state';
 import { formatDateTime } from './moderation-shared';
 
 const copy = vi.moderationConsole.keywordRules;
+const builtInLabels: Readonly<Record<string, string>> = copy.builtInLabels;
 const queryKey = ['moderation', 'keyword-rules'] as const;
 type Change =
   | { action: 'create'; keyword: string }
@@ -30,6 +32,10 @@ export function ModerationKeywordRules() {
   const query = useQuery({
     queryKey,
     queryFn: async ({ signal }) => (await adminModerationKeywordRulesControllerList({ signal })).data,
+  });
+  const builtIn = useQuery({
+    queryKey: ['moderation', 'built-in-keyword-rules'],
+    queryFn: async ({ signal }) => (await adminModerationKeywordRulesControllerListBuiltIn({ signal })).data,
   });
   const save = useMutation({
     mutationFn: async (change: Change) => {
@@ -68,6 +74,7 @@ export function ModerationKeywordRules() {
 
   return (
     <div className="space-y-4">
+      <h2 className="text-sm font-semibold">{copy.customHeading}</h2>
       <p className="text-[13px] text-text-muted">{copy.hint}</p>
       <form className="flex flex-wrap items-end gap-3" onSubmit={submit}>
         <TextField
@@ -124,6 +131,26 @@ export function ModerationKeywordRules() {
           ))}
         </ul>
       )}
+      <section aria-labelledby="moderation-built-in-rules" className="space-y-2 border-t border-border pt-4">
+        <h2 id="moderation-built-in-rules" className="text-sm font-semibold">{copy.builtInHeading}</h2>
+        <p className="text-[13px] text-text-muted">{copy.builtInHint}</p>
+        <AdminApiError error={builtIn.error} retry={() => void builtIn.refetch()} />
+        {builtIn.isPending && <LoadingState rows={3} />}
+        {builtIn.isSuccess && !builtIn.data.length && <EmptyState title={copy.builtInEmpty} />}
+        {builtIn.data?.map((rule) => (
+          <details key={rule.code} className="rounded-lg border border-border px-3 py-2">
+            <summary className="cursor-pointer text-[13px] font-medium">{builtInLabels[rule.code] ?? rule.code}</summary>
+            <p className="mt-2 text-xs text-text-muted">{copy.patternHint}</p>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {rule.patterns.map((pattern) => (
+                <li key={pattern} className="min-w-0 max-w-full rounded border border-border px-2 py-1">
+                  <code className="break-all text-xs">{pattern}</code>
+                </li>
+              ))}
+            </ul>
+          </details>
+        ))}
+      </section>
     </div>
   );
 }
