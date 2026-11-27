@@ -2408,3 +2408,97 @@ export const useAdminModerationKeywordRulesControllerUpdate = <TError = unknown,
 > => {
   return useMutation(getAdminModerationKeywordRulesControllerUpdateMutationOptions(options), queryClient);
 };
+export type adminModerationKeywordRulesControllerRemoveResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type adminModerationKeywordRulesControllerRemoveResponseSuccess =
+  adminModerationKeywordRulesControllerRemoveResponse204 & {
+    headers: Headers;
+  };
+export type adminModerationKeywordRulesControllerRemoveResponse =
+  adminModerationKeywordRulesControllerRemoveResponseSuccess;
+
+export const getAdminModerationKeywordRulesControllerRemoveUrl = (id: string) => {
+  return `/api/v1/admin/moderation/keyword-rules/${id}`;
+};
+
+export const adminModerationKeywordRulesControllerRemove = async (
+  id: string,
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationKeywordRulesControllerRemoveResponse> => {
+  return http<adminModerationKeywordRulesControllerRemoveResponse>(
+    getAdminModerationKeywordRulesControllerRemoveUrl(id),
+    {
+      ...options,
+      method: 'DELETE',
+    },
+  );
+};
+
+export const getAdminModerationKeywordRulesControllerRemoveMutationKey = () =>
+  ['adminModerationKeywordRulesControllerRemove'] as const;
+
+export const getAdminModerationKeywordRulesControllerRemoveMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminModerationKeywordRulesControllerRemove>>,
+    TError,
+    AdminModerationKeywordRulesControllerRemoveMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof http>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminModerationKeywordRulesControllerRemove>>,
+  TError,
+  AdminModerationKeywordRulesControllerRemoveMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAdminModerationKeywordRulesControllerRemoveMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminModerationKeywordRulesControllerRemove>>,
+    AdminModerationKeywordRulesControllerRemoveMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return adminModerationKeywordRulesControllerRemove(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminModerationKeywordRulesControllerRemoveMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationKeywordRulesControllerRemove>>
+>;
+
+export type AdminModerationKeywordRulesControllerRemoveMutationError = unknown;
+export type AdminModerationKeywordRulesControllerRemoveMutationVariables = { id: string };
+
+export const useAdminModerationKeywordRulesControllerRemove = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminModerationKeywordRulesControllerRemove>>,
+      TError,
+      AdminModerationKeywordRulesControllerRemoveMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminModerationKeywordRulesControllerRemove>>,
+  TError,
+  AdminModerationKeywordRulesControllerRemoveMutationVariables,
+  TContext
+> => {
+  return useMutation(getAdminModerationKeywordRulesControllerRemoveMutationOptions(options), queryClient);
+};
