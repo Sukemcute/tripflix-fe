@@ -8,7 +8,7 @@ export const SLA_FILTERS = ['all', 'overdue', 'due_soon'] as const;
 export type SlaFilter = (typeof SLA_FILTERS)[number];
 export const ASSIGNMENT_FILTERS = ['all', 'unassigned', 'mine'] as const;
 export const CATEGORY_FILTERS = ['all', 'post', 'comment', 'report'] as const;
-export const MODERATION_TABS = ['queue', 'appeals', 'scans', 'ocr', 'log', 'posts'] as const;
+export const MODERATION_TABS = ['queue', 'appeals', 'scans', 'ocr', 'log', 'posts', 'settings'] as const;
 export type ModerationTab = (typeof MODERATION_TABS)[number];
 
 export const formatDateTime = (value: string) => new Date(value).toLocaleString('vi-VN');

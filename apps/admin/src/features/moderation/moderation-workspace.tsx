@@ -1,6 +1,6 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
-import { moderationApi } from '@tripflix/api-client';
+import { moderationApi, useApiSession } from '@tripflix/api-client';
 import { vi } from '@tripflix/i18n';
 import { MetricStrip } from '@/ui/metric-strip';
 import { TabPanel, Tabs } from '@/ui/tabs';
@@ -10,6 +10,7 @@ import { AdminApiError } from '../shell/api-state';
 import { AppealQueue } from './appeal-queue';
 import { CoverOcrMonitor } from './cover-ocr-monitor';
 import { FailedScans } from './failed-scans';
+import { ModerationKeywordRules } from './keyword-rules';
 import { ModerationLog } from './moderation-log';
 import { ModerationQueue } from './moderation-queue';
 import { MODERATION_TABS, REFRESH_MS, formatDateTime } from './moderation-shared';
@@ -20,12 +21,14 @@ const copy = vi.moderationConsole;
 const reviewText = vi.moderation.review;
 
 /**
- * Màn Kiểm duyệt: dải số liệu (mỗi ô dẫn tới hàng đã lọc), 6 tab, và nội dung của tab đang chọn.
+ * Màn Kiểm duyệt: dải số liệu (mỗi ô dẫn tới hàng đã lọc) và nội dung của tab đang chọn.
  * Tab, bộ lọc và hồ sơ đang mở đều nằm trên URL nên F5 và liên kết chia sẻ giữ nguyên ngữ cảnh.
  */
 export function ModerationWorkspace() {
+  const { user } = useApiSession();
+  const tabs = user?.role === 'superadmin' ? MODERATION_TABS : MODERATION_TABS.filter((id) => id !== 'settings');
   const { params, update } = useUrlParams();
-  const tab = readEnumParam(params.get('tab'), MODERATION_TABS, 'queue');
+  const tab = readEnumParam(params.get('tab'), tabs, 'queue');
   const view = params.get('view');
   const sla = params.get('sla');
 
@@ -103,7 +106,7 @@ export function ModerationWorkspace() {
         idPrefix="moderation"
         active={tab}
         onChange={(next) => goTo(next)}
-        tabs={MODERATION_TABS.map((id) => ({
+        tabs={tabs.map((id) => ({
           id,
           label: copy.tabs[id],
           count: id === 'queue' ? summary?.pendingTotal : undefined,
@@ -116,6 +119,7 @@ export function ModerationWorkspace() {
         {tab === 'ocr' && <CoverOcrMonitor />}
         {tab === 'log' && <ModerationLog />}
         {tab === 'posts' && <PostModeration />}
+        {tab === 'settings' && <ModerationKeywordRules />}
       </TabPanel>
     </div>
   );
