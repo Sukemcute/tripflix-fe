@@ -29,6 +29,7 @@ import type {
   AppealDto,
   AppealOutcomeDto,
   AppealQueuePageDto,
+  BuiltInModerationRuleDto,
   CoverOcrPageDto,
   CreateModerationKeywordRuleDto,
   DecisionDto,
@@ -2136,6 +2137,161 @@ export const useAdminModerationKeywordRulesControllerCreate = <TError = unknown,
 > => {
   return useMutation(getAdminModerationKeywordRulesControllerCreateMutationOptions(options), queryClient);
 };
+export type adminModerationKeywordRulesControllerListBuiltInResponse200 = {
+  data: BuiltInModerationRuleDto[];
+  status: 200;
+};
+
+export type adminModerationKeywordRulesControllerListBuiltInResponseSuccess =
+  adminModerationKeywordRulesControllerListBuiltInResponse200 & {
+    headers: Headers;
+  };
+export type adminModerationKeywordRulesControllerListBuiltInResponse =
+  adminModerationKeywordRulesControllerListBuiltInResponseSuccess;
+
+export const getAdminModerationKeywordRulesControllerListBuiltInUrl = () => {
+  return `/api/v1/admin/moderation/keyword-rules/built-in`;
+};
+
+export const adminModerationKeywordRulesControllerListBuiltIn = async (
+  options?: Parameters<typeof http>[1],
+): Promise<adminModerationKeywordRulesControllerListBuiltInResponse> => {
+  return http<adminModerationKeywordRulesControllerListBuiltInResponse>(
+    getAdminModerationKeywordRulesControllerListBuiltInUrl(),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
+};
+
+export const getAdminModerationKeywordRulesControllerListBuiltInQueryKey = () => {
+  return [`/api/v1/admin/moderation/keyword-rules/built-in`] as const;
+};
+
+export const getAdminModerationKeywordRulesControllerListBuiltInQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+  TError = unknown,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof http>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminModerationKeywordRulesControllerListBuiltInQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>
+  > = ({ signal }) => adminModerationKeywordRulesControllerListBuiltIn({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type AdminModerationKeywordRulesControllerListBuiltInQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>
+>;
+export type AdminModerationKeywordRulesControllerListBuiltInQueryError = unknown;
+
+export function useAdminModerationKeywordRulesControllerListBuiltIn<
+  TData = Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+  TError = unknown,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationKeywordRulesControllerListBuiltIn<
+  TData = Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+          TError,
+          Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAdminModerationKeywordRulesControllerListBuiltIn<
+  TData = Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+export function useAdminModerationKeywordRulesControllerListBuiltIn<
+  TData = Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+  TError = unknown,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof adminModerationKeywordRulesControllerListBuiltIn>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof http>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAdminModerationKeywordRulesControllerListBuiltInQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export type adminModerationKeywordRulesControllerUpdateResponse200 = {
   data: ModerationKeywordRuleDto;
   status: 200;
